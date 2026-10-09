@@ -1,0 +1,1278 @@
+{
+  "version": "omni-cis-ig1-content-review-1",
+  "baseline": "83d88e3cbc31d618060c4e094335963f5bacf096",
+  "reviewed_on": "2026-10-09",
+  "status": "Authored content correction proposal; independent QA pending",
+  "corrections": [],
+  "source_interpretations": [
+    {
+      "id": "11.1",
+      "element_id": "11.1-guided-backup-procedures",
+      "decision": "Retain existing criterion; independent QA must explicitly review authoritative-source discrepancy",
+      "navigator": "https://www.cisecurity.org/controls/cis-controls-navigator",
+      "cas": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#111-establish-and-maintain-a-data-recovery-process",
+      "reason": "The current Navigator v8.1 paragraph omits detailed backup procedures, whereas the current CAS v8.1 normative safeguard paragraph explicitly includes them. This is not a CAS measurement percentage or invented tool requirement. Existing program-2 already records the criterion. No silent new stricter inherited-group criterion or historical remapping is proposed.",
+      "stable_meaning_mapping": true
+    }
+  ],
+  "control1V4": {
+    "version": "cis-v8.1-control1-4",
+    "framework_id": "cis-ig1",
+    "framework_version": "8.1",
+    "reviewed_on": "2026-10-09",
+    "basis": "Source-bounded current 1.2 correction only. Control1-2 and all historical answers remain immutable; approved 1.1 control1-3 is not replaced.",
+    "definitions": {
+      "1.2": {
+        "title": "Address Unauthorized Assets",
+        "groups": [
+          1,
+          2,
+          3
+        ],
+        "root": "process",
+        "related": [
+          "1.1"
+        ],
+        "prerequisites": [
+          "1.1"
+        ],
+        "requirement_elements": [
+          "process",
+          "frequency",
+          "actions"
+        ],
+        "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#12-address-unauthorized-assets",
+        "guidance": "Address unauthorized assets through the current process at least weekly. Removal, denial of remote connection, or quarantine are alternatives; no prescribed product, separate inventory certification, or uploaded evidence is required.",
+        "context_prerequisites": [
+          "1.1"
+        ],
+        "prerequisite_policy": "Read-only neighboring context; does not score this safeguard"
+      }
+    },
+    "safeguards": {
+      "1.2": [
+        {
+          "id": "process",
+          "prompt": "Is a process in place to address unauthorized assets?",
+          "help": "Report the current process. Formal documentation or a named product is not a separate requirement of Safeguard 1.2.",
+          "type": "select",
+          "choices": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "critical": true,
+          "element": "process",
+          "status_impact": "Reported source requirement; unknown or incomplete answers prevent an unqualified implementation recommendation",
+          "narrative_template": "process: {recorded_answer}",
+          "gap_template": "Confirm or address: Does a documented or consistently followed process address unauthorized assets?",
+          "evidence_guidance": "Evidence should demonstrate process; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:process",
+          "unknown_template": "Confirm: Does a documented or consistently followed process address unauthorized assets?",
+          "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+        },
+        {
+          "id": "existing",
+          "prompt": "What happens today when an unauthorized asset is discovered, and who can verify it?",
+          "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+          "type": "text",
+          "choices": [],
+          "critical": false,
+          "element": "existing",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "existing: {recorded_answer}",
+          "gap_template": "Confirm or address: What happens today when an unauthorized asset is discovered, and who can verify it?",
+          "evidence_guidance": "Evidence should demonstrate existing; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "when": {
+            "process": [
+              "No",
+              "Not sure"
+            ]
+          },
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:existing",
+          "unknown_template": "Confirm: What happens today when an unauthorized asset is discovered, and who can verify it?",
+          "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+        },
+        {
+          "id": "inventory_dependency",
+          "prompt": "Is a usable authorized asset inventory available for comparison?",
+          "help": "Optional context from Safeguard 1.1. This interview never answers or writes 1.1, and missing inventory context is not a new mandatory 1.2 requirement.",
+          "type": "select",
+          "choices": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "critical": false,
+          "element": "inventory_dependency",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "inventory dependency: {recorded_answer}",
+          "gap_template": "Confirm or address: Is a usable authorized asset inventory available for comparison?",
+          "evidence_guidance": "Evidence should demonstrate inventory dependency; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "when": {
+            "process": [
+              "Yes",
+              "Partially"
+            ]
+          },
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:inventory_dependency",
+          "unknown_template": "Confirm: Is a usable authorized asset inventory available for comparison?",
+          "next_step_template": "This relates to Safeguard 1.1. This interview never changes the assessment of 1.1."
+        },
+        {
+          "id": "detection",
+          "prompt": "Are unauthorized assets consistently identified using relevant systems and reports?",
+          "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+          "type": "select",
+          "choices": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "critical": false,
+          "element": "detection",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "detection: {recorded_answer}",
+          "gap_template": "Confirm or address: Are unauthorized assets consistently identified using relevant systems and reports?",
+          "evidence_guidance": "Evidence should demonstrate detection; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "when": {
+            "process": [
+              "Yes",
+              "Partially"
+            ]
+          },
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:detection",
+          "unknown_template": "Confirm: Are unauthorized assets consistently identified using relevant systems and reports?",
+          "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+        },
+        {
+          "id": "system",
+          "prompt": "Which detection systems, alerts, or teams identify unauthorized assets?",
+          "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+          "type": "text",
+          "choices": [],
+          "critical": false,
+          "element": "system",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "system: {recorded_answer}",
+          "gap_template": "Confirm or address: Which detection systems, alerts, or teams identify unauthorized assets?",
+          "evidence_guidance": "Evidence should demonstrate system; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "when": {
+            "process": [
+              "Yes",
+              "Partially"
+            ]
+          },
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:system",
+          "unknown_template": "Confirm: Which detection systems, alerts, or teams identify unauthorized assets?",
+          "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+        },
+        {
+          "id": "owner",
+          "prompt": "Who investigates and responds? Include client and provider responsibilities.",
+          "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+          "type": "text",
+          "choices": [],
+          "critical": false,
+          "element": "owner",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "owner: {recorded_answer}",
+          "gap_template": "Confirm or address: Who investigates and responds? Include client and provider responsibilities.",
+          "evidence_guidance": "Evidence should demonstrate owner; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "when": {
+            "process": [
+              "Yes",
+              "Partially"
+            ]
+          },
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:owner",
+          "unknown_template": "Confirm: Who investigates and responds? Include client and provider responsibilities.",
+          "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+        },
+        {
+          "id": "frequency",
+          "prompt": "How frequently does the process address unauthorized assets?",
+          "help": "The source requires weekly addressing, or more frequently. Ad hoc operation or intervals longer than a week do not satisfy this requirement.",
+          "type": "select",
+          "choices": [
+            "Daily or more frequently",
+            "Weekly",
+            "Every two weeks",
+            "Monthly",
+            "Ad hoc",
+            "Not sure"
+          ],
+          "critical": true,
+          "element": "frequency",
+          "status_impact": "Reported source requirement; unknown or incomplete answers prevent an unqualified implementation recommendation",
+          "narrative_template": "frequency: {recorded_answer}",
+          "gap_template": "Confirm or address: How frequently are unauthorized assets reviewed and addressed?",
+          "evidence_guidance": "Evidence should demonstrate frequency; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:frequency",
+          "unknown_template": "Confirm: How frequently are unauthorized assets reviewed and addressed?",
+          "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+          "deficient_values": [
+            "Every two weeks",
+            "Monthly",
+            "Ad hoc"
+          ]
+        },
+        {
+          "id": "actions",
+          "prompt": "Which permitted response actions are consistently used?",
+          "help": "Choose the response actually used: remove the asset from the network, deny its remote connection, or quarantine/isolate it. One effective alternative is sufficient. None and Not sure are exclusive choices.",
+          "type": "multi",
+          "choices": [
+            "Remove from network",
+            "Deny remote connection",
+            "Quarantine or isolate",
+            "None",
+            "Not sure"
+          ],
+          "critical": true,
+          "element": "actions",
+          "status_impact": "Reported source requirement; unknown or incomplete answers prevent an unqualified implementation recommendation",
+          "narrative_template": "actions: {recorded_answer}",
+          "gap_template": "Confirm or address: Which permitted response actions are consistently used?",
+          "evidence_guidance": "Evidence should demonstrate actions; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:actions",
+          "unknown_template": "Confirm: Which permitted response actions are consistently used?",
+          "next_step_template": "One effective permitted response may be sufficient; all three are not required."
+        },
+        {
+          "id": "disposition",
+          "prompt": "Are disposition decisions consistently tracked?",
+          "help": "Operational decision support, not a prescribed document format.",
+          "type": "select",
+          "choices": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "critical": false,
+          "element": "disposition",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "disposition: {recorded_answer}",
+          "gap_template": "Confirm or address: Are disposition decisions consistently tracked?",
+          "evidence_guidance": "Evidence should demonstrate disposition; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "when": {
+            "process": [
+              "Yes",
+              "Partially"
+            ]
+          },
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:disposition",
+          "unknown_template": "Confirm: Are disposition decisions consistently tracked?",
+          "next_step_template": "Operational decision support, not a prescribed document format."
+        },
+        {
+          "id": "confirmation",
+          "prompt": "Is it confirmed that the asset is no longer reachable or has otherwise been addressed?",
+          "help": "Optional reported follow-up. This is not evidence verification, and lack of this optional answer does not lower status.",
+          "type": "select",
+          "choices": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "critical": false,
+          "element": "confirmation",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "confirmation: {recorded_answer}",
+          "gap_template": "Confirm or address: Is it confirmed that the asset is no longer reachable or has otherwise been addressed?",
+          "evidence_guidance": "Evidence should demonstrate confirmation; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "when": {
+            "process": [
+              "Yes",
+              "Partially"
+            ]
+          },
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:confirmation",
+          "unknown_template": "Confirm: Is it confirmed that the asset is no longer reachable or has otherwise been addressed?",
+          "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+        },
+        {
+          "id": "exceptions",
+          "prompt": "Are exceptions approved and tracked when used?",
+          "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+          "type": "select",
+          "choices": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure",
+            "No exceptions used"
+          ],
+          "critical": false,
+          "element": "exceptions",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "exceptions: {recorded_answer}",
+          "gap_template": "Confirm or address: Are exceptions approved and tracked when used?",
+          "evidence_guidance": "Evidence should demonstrate exceptions; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "when": {
+            "process": [
+              "Yes",
+              "Partially"
+            ]
+          },
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:exceptions",
+          "unknown_template": "Confirm: Are exceptions approved and tracked when used?",
+          "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+        },
+        {
+          "id": "reconciled",
+          "prompt": "Are unauthorized assets reconciled against the authorized inventory?",
+          "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+          "type": "select",
+          "choices": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "critical": false,
+          "element": "reconciled",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "reconciled: {recorded_answer}",
+          "gap_template": "Confirm or address: Are unauthorized assets reconciled against the authorized inventory?",
+          "evidence_guidance": "Evidence should demonstrate reconciled; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "when": {
+            "process": [
+              "Yes",
+              "Partially"
+            ]
+          },
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:reconciled",
+          "unknown_template": "Confirm: Are unauthorized assets reconciled against the authorized inventory?",
+          "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+        },
+        {
+          "id": "unresolved",
+          "prompt": "Do unauthorized assets remain unresolved beyond the required response interval?",
+          "help": "Optional current observation. Describe any known weekly response failure as a confirmed gap. An unanswered backlog question is not a confirmed failure.",
+          "type": "select",
+          "choices": [
+            "Yes",
+            "Partially",
+            "No",
+            "Not sure"
+          ],
+          "critical": false,
+          "element": "unresolved",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "unresolved: {recorded_answer}",
+          "gap_template": "Confirm or address: Do unauthorized assets remain unresolved beyond the required response interval?",
+          "evidence_guidance": "Evidence should demonstrate unresolved; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "when": {
+            "process": [
+              "Yes",
+              "Partially"
+            ]
+          },
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:unresolved",
+          "unknown_template": "Confirm: Do unauthorized assets remain unresolved beyond the required response interval?",
+          "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+        },
+        {
+          "id": "evidence",
+          "prompt": "What evidence is retained and what does it demonstrate?",
+          "help": "Optional records that may substantiate the reported process or response, such as operational tickets or response configuration. Uploading evidence is not required to record implementation, and verification remains separate.",
+          "type": "text",
+          "choices": [],
+          "critical": false,
+          "element": "evidence",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "evidence: {recorded_answer}",
+          "gap_template": "Confirm or address: What evidence is retained and what does it demonstrate?",
+          "evidence_guidance": "Examples: detection records, investigation tickets, quarantine configuration/logs, disposition approvals, reachability checks, inventory reconciliation. Evidence remains unverified.",
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:evidence",
+          "unknown_template": "Confirm: What evidence is retained and what does it demonstrate?",
+          "next_step_template": "Examples: detection records, investigation tickets, quarantine configuration/logs, disposition approvals, reachability checks, inventory reconciliation. Evidence remains unverified."
+        },
+        {
+          "id": "gaps",
+          "prompt": "Describe confirmed missing or incomplete requirement elements.",
+          "help": "Confirmed gaps only. Record uncertainty separately. Optional supporting artifacts are not mandatory process requirements.",
+          "type": "text",
+          "choices": [],
+          "critical": false,
+          "element": "gaps",
+          "status_impact": "Optional operating context; missing context does not change implementation status",
+          "narrative_template": "gaps: {recorded_answer}",
+          "gap_template": "Confirm or address: Describe missing, inconsistent, or unknown process steps and who can resolve them.",
+          "evidence_guidance": "Evidence should demonstrate gaps; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+          "question_id": "1.2:gaps",
+          "unknown_template": "Confirm: Describe missing, inconsistent, or unknown process steps and who can resolve them.",
+          "next_step_template": "Leave blank when there are no additional confirmed gaps. Record only actual missing elements or unresolved questions."
+        },
+        {
+          "id": "unknowns",
+          "prompt": "Which requirement elements still need confirmation, and who can verify them?",
+          "help": "Uncertainty is not a confirmed gap.",
+          "type": "text",
+          "choices": [],
+          "critical": false,
+          "element": "unknowns",
+          "status_impact": "Reported requirement uncertainty prevents an unqualified recommendation",
+          "safeguard_id": "1.2",
+          "question_set_version": "cis-v8.1-control1-4",
+          "question_id": "1.2:unknowns",
+          "narrative_template": "",
+          "gap_template": "",
+          "unknown_template": "Reviewer-reported uncertainty",
+          "next_step_template": "Confirm the reported requirement uncertainty with the responsible team",
+          "evidence_guidance": "Use relevant records and responsible-owner confirmation."
+        }
+      ]
+    },
+    "groups": {
+      "1.2": [
+        {
+          "name": "Current process",
+          "ids": [
+            "process",
+            "existing",
+            "system",
+            "owner"
+          ],
+          "note": "process"
+        },
+        {
+          "name": "Identification context",
+          "ids": [
+            "inventory_dependency",
+            "detection"
+          ],
+          "note": "detection"
+        },
+        {
+          "name": "Weekly response",
+          "ids": [
+            "frequency",
+            "actions",
+            "disposition",
+            "confirmation"
+          ],
+          "note": "actions"
+        },
+        {
+          "name": "Reported follow-up",
+          "ids": [
+            "exceptions",
+            "reconciled",
+            "unresolved"
+          ],
+          "note": "exceptions"
+        },
+        {
+          "name": "Review and confirmation",
+          "ids": [
+            "evidence",
+            "gaps",
+            "unknowns"
+          ],
+          "note": "evidence"
+        }
+      ]
+    }
+  },
+  "question_changes": [
+    {
+      "safeguard_id": "1.2",
+      "question_id": "process",
+      "old_critical": true,
+      "new_critical": true,
+      "old_prompt": "Does a documented or consistently followed process address unauthorized assets?",
+      "new_prompt": "Is a process in place to address unauthorized assets?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Direct source requirement or permitted response alternative; retain answer meanings and expose substantive questions for partial or uncertain process reports.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "existing",
+      "old_critical": false,
+      "new_critical": false,
+      "old_prompt": "What happens today when an unauthorized asset is discovered, and who can verify it?",
+      "new_prompt": "What happens today when an unauthorized asset is discovered, and who can verify it?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "inventory_dependency",
+      "old_critical": false,
+      "new_critical": false,
+      "old_prompt": "Is a usable authorized asset inventory available for comparison?",
+      "new_prompt": "Is a usable authorized asset inventory available for comparison?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "detection",
+      "old_critical": true,
+      "new_critical": false,
+      "old_prompt": "Are unauthorized assets consistently identified using relevant systems and reports?",
+      "new_prompt": "Are unauthorized assets consistently identified using relevant systems and reports?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "system",
+      "old_critical": false,
+      "new_critical": false,
+      "old_prompt": "Which detection systems, alerts, or teams identify unauthorized assets?",
+      "new_prompt": "Which detection systems, alerts, or teams identify unauthorized assets?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "owner",
+      "old_critical": false,
+      "new_critical": false,
+      "old_prompt": "Who investigates and responds? Include client and provider responsibilities.",
+      "new_prompt": "Who investigates and responds? Include client and provider responsibilities.",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "frequency",
+      "old_critical": true,
+      "new_critical": true,
+      "old_prompt": "How frequently are unauthorized assets reviewed and addressed?",
+      "new_prompt": "How frequently does the process address unauthorized assets?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Direct source requirement or permitted response alternative; retain answer meanings and expose substantive questions for partial or uncertain process reports.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "actions",
+      "old_critical": true,
+      "new_critical": true,
+      "old_prompt": "Which permitted response actions are consistently used?",
+      "new_prompt": "Which permitted response actions are consistently used?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Direct source requirement or permitted response alternative; retain answer meanings and expose substantive questions for partial or uncertain process reports.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "disposition",
+      "old_critical": false,
+      "new_critical": false,
+      "old_prompt": "Are disposition decisions consistently tracked?",
+      "new_prompt": "Are disposition decisions consistently tracked?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "confirmation",
+      "old_critical": false,
+      "new_critical": false,
+      "old_prompt": "Is it confirmed that the asset is no longer reachable or has otherwise been addressed?",
+      "new_prompt": "Is it confirmed that the asset is no longer reachable or has otherwise been addressed?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "exceptions",
+      "old_critical": false,
+      "new_critical": false,
+      "old_prompt": "Are exceptions approved and tracked when used?",
+      "new_prompt": "Are exceptions approved and tracked when used?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "reconciled",
+      "old_critical": false,
+      "new_critical": false,
+      "old_prompt": "Are unauthorized assets reconciled against the authorized inventory?",
+      "new_prompt": "Are unauthorized assets reconciled against the authorized inventory?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "unresolved",
+      "old_critical": true,
+      "new_critical": false,
+      "old_prompt": "Do unauthorized assets remain unresolved beyond the required response interval?",
+      "new_prompt": "Do unauthorized assets remain unresolved beyond the required response interval?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "evidence",
+      "old_critical": false,
+      "new_critical": false,
+      "old_prompt": "What evidence is retained and what does it demonstrate?",
+      "new_prompt": "What evidence is retained and what does it demonstrate?",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    },
+    {
+      "safeguard_id": "1.2",
+      "question_id": "gaps",
+      "old_critical": false,
+      "new_critical": false,
+      "old_prompt": "Describe any confirmed missing or incomplete requirement elements.",
+      "new_prompt": "Describe confirmed missing or incomplete requirement elements.",
+      "stable_meaning_mapping": true,
+      "new_required_information": false,
+      "reason": "Preserve historical semantic context without treating a neighboring safeguard, named product, owner, optional artifact, or additional outcome proof as a new mandatory 1.2 clause.",
+      "source_version": "cis-v8.1-control1-2",
+      "mapping_qualification": "Applies to actual composite control1-2, including inherited frontend critical/context and gaps wording corrections. Historical pilot-1 is a separate immutable semantic version."
+    }
+  ],
+  "engine_requests": [
+    {
+      "id": "IG1-ENGINE-ROOT-PRECEDENCE",
+      "scope": "New current generic version and new 1.2 version only; approved 1.1 and historical versions unchanged",
+      "request": "Keep substantive atomic questions reachable when root practice is No or Not sure. Use source-founded facts rather than interview completion. All unknown is Not Assessed; affirmed absent practice without meaningful contrary facts is Not Implemented; known mixed/incomplete/unknown requirements or contradictory reports are Partially Implemented; complete applicable substantive requirements plus consistent root is Implemented."
+    },
+    {
+      "id": "IG1-ENGINE-1.2-CONTEXT",
+      "scope": "1.2 control1-4 only",
+      "request": "Remove inventory_dependency/detection comparisonConflict from implementation scoring; retain neighboring context read-only. Only process/frequency/actions are required criteria. Optional unanswered fields must not lower status."
+    },
+    {
+      "id": "IG1-ENGINE-1.2-ACTIONS",
+      "scope": "1.2 actions field",
+      "request": "Reject None or Not sure selected together with a permitted response; one permitted alternative is enough. Do not require all three responses or automatically approve exceptions."
+    },
+    {
+      "id": "IG1-ENGINE-NA",
+      "scope": "All CIS current definitions",
+      "request": "Only source-conditioned atomic rows may accept Not applicable with explicit rationale. All excluded conditional rows mean insufficient implementation basis, not automatic whole-safeguard N/A. Whole N/A remains the existing authorized native applicability approval path."
+    },
+    {
+      "id": "IG1-ENGINE-1.2-UNRESOLVED-CONTEXT",
+      "scope": "1.2 control1-4 stable optional unresolved observation",
+      "request": "Retain legacy unresolved wording as non-scoring context. Unresolved can refer to an open record after valid quarantine rather than a confirmed missed weekly addressing obligation. Confirm actual source requirement using authoritative weekly frequency/response answers or explicitly reviewed confirmed gaps; never silently turn optional Yes or blank into a hidden criterion."
+    },
+    {
+      "id": "IG1-ENGINE-UNKNOWN-ROOT-KNOWN-ABSENCE",
+      "scope": "New generic current version",
+      "request": "Unknown aggregate plus every substantive atomic practice No is affirmed absence (Not Implemented). Unknown aggregate plus only some No and all remaining atoms unknown has insufficient overall basis (Not Assessed with known row gaps). Any meaningful atomic Yes/Partially or affirmative partial practice plus unresolved/unmet requirements is Partially Implemented."
+    }
+  ],
+  "compatibility": {
+    "old_versions": "Keep all old catalogs/questions/evaluators available; no bulk interview or native-assessment rewrite.",
+    "mapping_1_2": "Version-aware explicit mapping: actual control1-2 stable answers retain their confirmed-gap/unknown separation; historical pilot-1 mixed gap/unknown prose is not mapped into new confirmed gaps without review. Old source documents and manual narrative remain untouched.",
+    "approved_1_1": "Keep control1-3 questions, evaluator, summary/UI reference unchanged.",
+    "inactive_answers": "Retain in stored history; exclude inactive answers from present evaluation and generated prose.",
+    "version_mappings": [
+      {
+        "from": "cis-v8.1-control1-2",
+        "to": "cis-v8.1-control1-4",
+        "stable_fields": [
+          "process",
+          "existing",
+          "inventory_dependency",
+          "detection",
+          "system",
+          "owner",
+          "frequency",
+          "actions",
+          "disposition",
+          "confirmation",
+          "exceptions",
+          "reconciled",
+          "unresolved",
+          "evidence",
+          "gaps",
+          "unknowns"
+        ],
+        "preserve_answers_after_explicit_version_review": true,
+        "automatic_assessment_rewrite": false,
+        "reason": "Actual composite control1-2 already uses confirmed-gap and separated-unknown semantics; unchanged IDs and response option meanings may be retained."
+      },
+      {
+        "from": "brawndo-cis-pilot-1",
+        "to": "cis-v8.1-control1-4",
+        "stable_fields": [
+          "process",
+          "existing",
+          "inventory_dependency",
+          "detection",
+          "system",
+          "owner",
+          "frequency",
+          "actions",
+          "disposition",
+          "confirmation",
+          "exceptions",
+          "reconciled",
+          "unresolved",
+          "evidence"
+        ],
+        "unmapped_fields": [
+          "gaps"
+        ],
+        "new_unanswered_fields": [
+          "gaps",
+          "unknowns"
+        ],
+        "reason": "Historical pilot-1 gaps prompt allowed unknown steps. Never reinterpret that free text as confirmed deficiencies. Preserve its original record/history/manual narrative and present it as legacy context for explicit user review.",
+        "preserve_answers_after_explicit_version_review": true,
+        "automatic_assessment_rewrite": false
+      }
+    ]
+  },
+  "navigator_verification": {
+    "url": "https://www.cisecurity.org/controls/cis-controls-navigator",
+    "framework_version": "8.1",
+    "fetched_at": "2026-10-09T20:03:08.891Z",
+    "html_sha256": "8a101716a0a42f852966df421652eb3083f87018b3d66351f97ae30b11b6fd56",
+    "source_count": 153,
+    "rows": [
+      {
+        "id": "1.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "bed4603532b52c2d2b46347f054699b15589521729e165a4a82272ded367d4a6",
+        "canonical_text_sha256": "bed4603532b52c2d2b46347f054699b15589521729e165a4a82272ded367d4a6"
+      },
+      {
+        "id": "1.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "549f3f669de33de7e369f2baaed7a2fe6824ce49912c3bd7bfa9c8c2a3fcae44",
+        "canonical_text_sha256": "549f3f669de33de7e369f2baaed7a2fe6824ce49912c3bd7bfa9c8c2a3fcae44"
+      },
+      {
+        "id": "2.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "b743291acf5d888bbb4e0200ca2e01be40a1898383d21ccefc98398c9f245bff",
+        "canonical_text_sha256": "b743291acf5d888bbb4e0200ca2e01be40a1898383d21ccefc98398c9f245bff"
+      },
+      {
+        "id": "2.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "68d3d8c7f249e8f43d0ca336c7a53963e4a988b538116979acc9628c8c1c1f3b",
+        "canonical_text_sha256": "68d3d8c7f249e8f43d0ca336c7a53963e4a988b538116979acc9628c8c1c1f3b"
+      },
+      {
+        "id": "2.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "4ff016d91d2fbac4f02f0211dcfcfd40559b5b99d94b418ee5bb3accf29e58ef",
+        "canonical_text_sha256": "4ff016d91d2fbac4f02f0211dcfcfd40559b5b99d94b418ee5bb3accf29e58ef"
+      },
+      {
+        "id": "3.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "67c7c20485883402e609e82e0f5349242304791f4c8d7415a1a857a32a70a4b2",
+        "canonical_text_sha256": "67c7c20485883402e609e82e0f5349242304791f4c8d7415a1a857a32a70a4b2"
+      },
+      {
+        "id": "3.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "fb29b6b90506509648d41d38e74f489996eec612de8ec17b6e036d9ec89133e4",
+        "canonical_text_sha256": "fb29b6b90506509648d41d38e74f489996eec612de8ec17b6e036d9ec89133e4"
+      },
+      {
+        "id": "3.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "5f0d85968598eb8da36bec33e02bdf28514a84a04a955c6454ab7a87120f444c",
+        "canonical_text_sha256": "5f0d85968598eb8da36bec33e02bdf28514a84a04a955c6454ab7a87120f444c"
+      },
+      {
+        "id": "3.4",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "0f467187729fc7bc543275f9f2149e6184d43bb5dfa2a9beb2432fda2abc979e",
+        "canonical_text_sha256": "0f467187729fc7bc543275f9f2149e6184d43bb5dfa2a9beb2432fda2abc979e"
+      },
+      {
+        "id": "3.5",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "bb8b3bcc60929087418363ed82748b9ced1a12494aeb5186c00ff7aeb7d17b7d",
+        "canonical_text_sha256": "bb8b3bcc60929087418363ed82748b9ced1a12494aeb5186c00ff7aeb7d17b7d"
+      },
+      {
+        "id": "3.6",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "9a479dec650331397ab4c24c82ec3549264689b759ad29f8299411d400d30f95",
+        "canonical_text_sha256": "9a479dec650331397ab4c24c82ec3549264689b759ad29f8299411d400d30f95"
+      },
+      {
+        "id": "4.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "a0153fda7e42db84183dfd208df6c2125ba12e36313c5347ee94c7e8cb765395",
+        "canonical_text_sha256": "a0153fda7e42db84183dfd208df6c2125ba12e36313c5347ee94c7e8cb765395"
+      },
+      {
+        "id": "4.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "ec30d35106e09440c87d69e5f981ea22f1beac235b94cccd7246c41e8547922f",
+        "canonical_text_sha256": "ec30d35106e09440c87d69e5f981ea22f1beac235b94cccd7246c41e8547922f"
+      },
+      {
+        "id": "4.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "703fb1e1745a10573d13ad170df038615f55ae4082938c61df17bec7c7ea7524",
+        "canonical_text_sha256": "703fb1e1745a10573d13ad170df038615f55ae4082938c61df17bec7c7ea7524"
+      },
+      {
+        "id": "4.4",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "34ed4a6e3cb80fe583e7b7e86da4a06b7334787c0e799de9eb5c11f5448a6175",
+        "canonical_text_sha256": "34ed4a6e3cb80fe583e7b7e86da4a06b7334787c0e799de9eb5c11f5448a6175"
+      },
+      {
+        "id": "4.5",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "14c74ce261b0b088b57fb2d843a277a2a91a95de98967fa37c6b4b5ebf40ba4c",
+        "canonical_text_sha256": "14c74ce261b0b088b57fb2d843a277a2a91a95de98967fa37c6b4b5ebf40ba4c"
+      },
+      {
+        "id": "4.6",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "0b7a7568b796f7a40a292f8802bb30bbb622ecb629e5d64104ee4ae5b7b8373e",
+        "canonical_text_sha256": "0b7a7568b796f7a40a292f8802bb30bbb622ecb629e5d64104ee4ae5b7b8373e"
+      },
+      {
+        "id": "4.7",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "fdd5cc01c8138741bd33dc43f14f69a7bfc13f6090212c4fad6cefaaabd0ee0a",
+        "canonical_text_sha256": "fdd5cc01c8138741bd33dc43f14f69a7bfc13f6090212c4fad6cefaaabd0ee0a"
+      },
+      {
+        "id": "5.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "594f5a2212542117463314154ecd0eb4e48e264c1b8677ed5a4659838593ec0a",
+        "canonical_text_sha256": "594f5a2212542117463314154ecd0eb4e48e264c1b8677ed5a4659838593ec0a"
+      },
+      {
+        "id": "5.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "84f97410e4872af206857357638fdd282b1bb95771301d59c05087ac807c3524",
+        "canonical_text_sha256": "84f97410e4872af206857357638fdd282b1bb95771301d59c05087ac807c3524"
+      },
+      {
+        "id": "5.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "a90e00a0431548d5dabc21fddcc293bb670bdc09f595e58b6b9c2742f3529e1d",
+        "canonical_text_sha256": "a90e00a0431548d5dabc21fddcc293bb670bdc09f595e58b6b9c2742f3529e1d"
+      },
+      {
+        "id": "5.4",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "c02c4c7b0e69c4ab9e0c4c31b631bfdd9209d8d7c11d957acc6d1e6b286935e2",
+        "canonical_text_sha256": "c02c4c7b0e69c4ab9e0c4c31b631bfdd9209d8d7c11d957acc6d1e6b286935e2"
+      },
+      {
+        "id": "6.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "57aed5a250c16af159da98dfe83add436b9f3bb8889cee0795089cf61084f88a",
+        "canonical_text_sha256": "57aed5a250c16af159da98dfe83add436b9f3bb8889cee0795089cf61084f88a"
+      },
+      {
+        "id": "6.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "2bc31bdb0d8326bc6dd46b003e16dbcda647e679efafbc71a1a2206759eff6d0",
+        "canonical_text_sha256": "2bc31bdb0d8326bc6dd46b003e16dbcda647e679efafbc71a1a2206759eff6d0"
+      },
+      {
+        "id": "6.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "fb842a39598fdaed3466fc61a1bc8a7dd05a4ed9e15c7eb02dad5ee0d0882f0c",
+        "canonical_text_sha256": "fb842a39598fdaed3466fc61a1bc8a7dd05a4ed9e15c7eb02dad5ee0d0882f0c"
+      },
+      {
+        "id": "6.4",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "180fdd61cd7ccb86d4cc48437b5da8313da1ec66e3e960fcd9f8a3c265f0ccfd",
+        "canonical_text_sha256": "180fdd61cd7ccb86d4cc48437b5da8313da1ec66e3e960fcd9f8a3c265f0ccfd"
+      },
+      {
+        "id": "6.5",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "beaf4660b51455a1ffac17b9b697cefe91df55fb2b30b92930f872c2ec76567c",
+        "canonical_text_sha256": "beaf4660b51455a1ffac17b9b697cefe91df55fb2b30b92930f872c2ec76567c"
+      },
+      {
+        "id": "7.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "971c473691ec9ddcbcd779e9534997cc2df228001b9cb3bfa83adf029db7fb05",
+        "canonical_text_sha256": "971c473691ec9ddcbcd779e9534997cc2df228001b9cb3bfa83adf029db7fb05"
+      },
+      {
+        "id": "7.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "e7b6cece1408123c833d85de118cde7cad1cb4febdc7e4840b350dc9854be994",
+        "canonical_text_sha256": "e7b6cece1408123c833d85de118cde7cad1cb4febdc7e4840b350dc9854be994"
+      },
+      {
+        "id": "7.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "6b7720a0a8064084279a6a9497fc805f255314693b8a1c2c6e97593409505a5a",
+        "canonical_text_sha256": "6b7720a0a8064084279a6a9497fc805f255314693b8a1c2c6e97593409505a5a"
+      },
+      {
+        "id": "7.4",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "434d5715cc61716261700eabde58e1379812c4b381ab5328e15cd4e539486eff",
+        "canonical_text_sha256": "434d5715cc61716261700eabde58e1379812c4b381ab5328e15cd4e539486eff"
+      },
+      {
+        "id": "8.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "f81b90d6ec4708d6de65f8252fa9b2082f8daf7433a029346ed842544510403b",
+        "canonical_text_sha256": "f81b90d6ec4708d6de65f8252fa9b2082f8daf7433a029346ed842544510403b"
+      },
+      {
+        "id": "8.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "214cd870512df7d747de4718b5d1853f81318052f4c8b31597e8863694259fbd",
+        "canonical_text_sha256": "214cd870512df7d747de4718b5d1853f81318052f4c8b31597e8863694259fbd"
+      },
+      {
+        "id": "8.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "95b236889b3ff46d6e5218a7f526d5512f6b0452e202094c930900673cd5ab33",
+        "canonical_text_sha256": "95b236889b3ff46d6e5218a7f526d5512f6b0452e202094c930900673cd5ab33"
+      },
+      {
+        "id": "9.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "67edef9c9204ad25a6b0aa9961da1ce70b72953f2308f3aa8d2c0056a3320692",
+        "canonical_text_sha256": "67edef9c9204ad25a6b0aa9961da1ce70b72953f2308f3aa8d2c0056a3320692"
+      },
+      {
+        "id": "9.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "ee595a915576b459b18829ede0dca8328f57aa2b9b6c74b89ef747239c231437",
+        "canonical_text_sha256": "ee595a915576b459b18829ede0dca8328f57aa2b9b6c74b89ef747239c231437"
+      },
+      {
+        "id": "10.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "01a03d83a29e9e4f0d7dad4cfe4ba869ae14777286d34fe58865620f591273de",
+        "canonical_text_sha256": "01a03d83a29e9e4f0d7dad4cfe4ba869ae14777286d34fe58865620f591273de"
+      },
+      {
+        "id": "10.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "f1a83442ec98b137e3a2898a6c4d2ba59f7b5ff5a95e0a5c4d01c8c2efbb5ad3",
+        "canonical_text_sha256": "f1a83442ec98b137e3a2898a6c4d2ba59f7b5ff5a95e0a5c4d01c8c2efbb5ad3"
+      },
+      {
+        "id": "10.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "ba35924e061a4efc39f437fcb24be5876f0495c65394655f3b02114929d765b1",
+        "canonical_text_sha256": "ba35924e061a4efc39f437fcb24be5876f0495c65394655f3b02114929d765b1"
+      },
+      {
+        "id": "11.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "a1787cfd7193ede3f33fd44da0ecdbebcf91d4c8845159ad706f1c2d7d578f33",
+        "canonical_text_sha256": "a1787cfd7193ede3f33fd44da0ecdbebcf91d4c8845159ad706f1c2d7d578f33"
+      },
+      {
+        "id": "11.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "898acd5f66078b7239155e385f86f042d94fd82d9f5d6566f5896ca1f9d4646b",
+        "canonical_text_sha256": "898acd5f66078b7239155e385f86f042d94fd82d9f5d6566f5896ca1f9d4646b"
+      },
+      {
+        "id": "11.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "02b2dfdb6a50451590105b81b0cf6be77dce4d155b7a4a5877f2da0b4125701b",
+        "canonical_text_sha256": "02b2dfdb6a50451590105b81b0cf6be77dce4d155b7a4a5877f2da0b4125701b"
+      },
+      {
+        "id": "11.4",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "f7f9e45205d279d4342819f14ffc754d1e793ad7470c7abc411a0694d33b535b",
+        "canonical_text_sha256": "f7f9e45205d279d4342819f14ffc754d1e793ad7470c7abc411a0694d33b535b"
+      },
+      {
+        "id": "12.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "ae44b95808839eb8d481c15fc11c28ceb1890a4c3bf3f56992ee51da46901ecf",
+        "canonical_text_sha256": "ae44b95808839eb8d481c15fc11c28ceb1890a4c3bf3f56992ee51da46901ecf"
+      },
+      {
+        "id": "14.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "7f2d46d92655385fe1331c1d42b932251a48984ba6e4f1455a5d4229f66f0a18",
+        "canonical_text_sha256": "7f2d46d92655385fe1331c1d42b932251a48984ba6e4f1455a5d4229f66f0a18"
+      },
+      {
+        "id": "14.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "e18c5706e2f884248600fce1ab0c0e43d60bcc0cbd45cf80d8f5f83b4aae7d1d",
+        "canonical_text_sha256": "e18c5706e2f884248600fce1ab0c0e43d60bcc0cbd45cf80d8f5f83b4aae7d1d"
+      },
+      {
+        "id": "14.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "e6836f4674957a7b5867838806b459192d0d75044c927b528e066b083a5e82b3",
+        "canonical_text_sha256": "e6836f4674957a7b5867838806b459192d0d75044c927b528e066b083a5e82b3"
+      },
+      {
+        "id": "14.4",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "3d898c680b3c86eeeee79f2aaff02c83cbe259fef4744e19bcdf265679efae03",
+        "canonical_text_sha256": "3d898c680b3c86eeeee79f2aaff02c83cbe259fef4744e19bcdf265679efae03"
+      },
+      {
+        "id": "14.5",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "bc9b845660dfb30bb471a58274e08519473e922389866247cd1ffb483f7f0dc1",
+        "canonical_text_sha256": "bc9b845660dfb30bb471a58274e08519473e922389866247cd1ffb483f7f0dc1"
+      },
+      {
+        "id": "14.6",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "5050193279df8866d95bc7bd616092b055398b220130fd7b1bb55a00189ad9c8",
+        "canonical_text_sha256": "5050193279df8866d95bc7bd616092b055398b220130fd7b1bb55a00189ad9c8"
+      },
+      {
+        "id": "14.7",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "ff058eed1a8063178b0c7c3c0775ee249b4e393669b6d71ed55ca955aa8d2007",
+        "canonical_text_sha256": "ff058eed1a8063178b0c7c3c0775ee249b4e393669b6d71ed55ca955aa8d2007"
+      },
+      {
+        "id": "14.8",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "faea0bc52455d8a85bd9f46186080a50f4ddd02fc707b94447d628b4f3fbb336",
+        "canonical_text_sha256": "faea0bc52455d8a85bd9f46186080a50f4ddd02fc707b94447d628b4f3fbb336"
+      },
+      {
+        "id": "15.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "bf240c83ad86da03eb516b77d97cc1f180ccf3eb287952bda079798f5f996a10",
+        "canonical_text_sha256": "bf240c83ad86da03eb516b77d97cc1f180ccf3eb287952bda079798f5f996a10"
+      },
+      {
+        "id": "17.1",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "1627652d75d908a2b1266e5e97bd4366c3c4d9635ca4c634b7a04401bdfd9605",
+        "canonical_text_sha256": "1627652d75d908a2b1266e5e97bd4366c3c4d9635ca4c634b7a04401bdfd9605"
+      },
+      {
+        "id": "17.2",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "e6717c328bac1099815a9e316271d6aff6c6860d2f9e6f4e0f458fbb449d0f54",
+        "canonical_text_sha256": "e6717c328bac1099815a9e316271d6aff6c6860d2f9e6f4e0f458fbb449d0f54"
+      },
+      {
+        "id": "17.3",
+        "title_match": true,
+        "text_match": true,
+        "groups_match": true,
+        "navigator_text_sha256": "f504474c4a01d31c397498a129bb0155a2e2d8c77c9c524aac744913116191c3",
+        "canonical_text_sha256": "f504474c4a01d31c397498a129bb0155a2e2d8c77c9c524aac744913116191c3"
+      }
+    ]
+  }
+}
