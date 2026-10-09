@@ -186,3 +186,25 @@ test('1.2 shows the saved 1.1 inventory context without importing answers or cha
   const context=document.querySelector('[aria-label="Saved safeguard 1.1 inventory context"]');expect(context).toBeTruthy();expect(context.textContent).toContain('server coverage not yet confirmed');expect(context.textContent).toContain('not proof of inventory completeness');
   expect(stored.answers.inventory_dependency).toBe('Not sure');expect(inventoryContext).toEqual(original);expect(api.put).not.toHaveBeenCalled();expect(props.onApply).not.toHaveBeenCalled();expect(props.onUpdateImplementation).not.toHaveBeenCalled();
 });
+
+test.each(['1.1','1.2'].flatMap(id=>['supported','gap','missing result'].map(kind=>[id,kind])))('%s opening and remounting a completed %s interview preserves its recorded output without applying or saving',async(id,kind)=>{
+  const answers=completeAnswers(id),version=versionForSafeguard(id,true);
+  if(kind==='gap'){answers.frequency=id==='1.1'?'Annually':'Monthly';answers.frequency_detail='PERSISTED synthetic explanation: required operating interval is not currently met.';}
+  const narrative='PERSISTED synthetic narrative '+id+' '+kind+': retain the recorded reviewer wording and original question version.';
+  const result=kind==='missing result'?null:{...focusedResult(id,answers,version),narrative,basis:['PERSISTED reviewer-reported basis']};
+  stored={...interview(id),revision:7,answers,completed:true,version,narrative,result,generated_at:generated,updated_at:generated};
+  const original=copy(stored),current=record(id);props={...props,record:current,current,form:copy(current)};
+  await render();await open();
+  for(let visit=0;visit<2;visit++){
+    expect(stored).toEqual(original);expect(stored.version).toBe(version);expect(stored.narrative).toBe(narrative);expect(stored.result).toEqual(result);
+    expect(document.body.textContent).toContain('Question set: '+version);
+    if(kind==='supported'){expect(document.querySelector('[aria-label="Guided Current Implementation draft"]').value).toBe(narrative);expect(document.body.textContent).toContain('PERSISTED reviewer-reported basis');}
+    if(kind==='gap'){
+      const frequency=catalogForVersion(version).safeguards[id].find(question=>question.id==='frequency');
+      expect(document.querySelector('.guided-panel legend').textContent).toBe(frequency.prompt);expect(document.querySelector('.guided-panel fieldset select').value).toBe(answers.frequency);expect(document.querySelector('[aria-label="Missing elements or verification owner"]').value).toBe(answers.frequency_detail);
+    }
+    if(kind==='missing result')expect(button('Apply to Assessment')).toBeUndefined();
+    expect(api.put).not.toHaveBeenCalled();expect(props.onApply).not.toHaveBeenCalled();expect(props.onUpdateImplementation).not.toHaveBeenCalled();
+    if(visit===0){await remount();await open();}
+  }
+});
