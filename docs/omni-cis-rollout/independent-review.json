@@ -191,11 +191,11 @@
     "visual_diff_review": "Git-blob equality verified for approved artwork/window/CSS,1.1 V3, canonical CIS and representativeISO/SOC catalogs and dependencies. Actual visual comparison remains lead responsibility."
   },
   "remaining_required_evidence": [
-    "Required backend CI offline suites and disposable Mongo recovery/authorization verification; both CI123 attempts failed before checkout. Final composite required gate must succeed after report integration; existing workflow/provider settings stay unchanged.",
-    "Remaining supported-entry-point, conditional/lifecycle and visual comparison acceptance after339/339 independently audited local browser placements. No pixel equality inferred from accessibility snapshots.",
-    "Authenticated Render deployed OmniBot lifecycle: saves/updates/Save&close/cancel/exact reload/manual/native edits/actual logout-login/denial/isolation/failure-retry/duplicates/stale writers. All three known fictional limited test identities are Disabled, contributor has0 assigned clients and user reports test credentials unavailable; existing admin session is preserved. No account/role/membership/credential changes or simulated hosted denials substitute for these checks.",
-    "Deployed rollout defaults for all persistent showcase groups and supported future/mixed onboarding/group upgrades with inherited history and safe temporary fixture treatment. InitechIG2/HooliIG3 durable provisioning itself is now evidenced under existing live app.",
-    "Actual rollout deployment revision verification, approved1.1/excluded-framework rendered visual and interaction comparisons, and full unchanged native record values where no assessment save was authorized."
+    "Lead-reported Live deployment is frozen b0f on dep-db4mgtvlk1mc73d5q2c0 with fresh main.3b13e84a.js. Preserve deployment/source proof and complete final hosted acceptance; this reviewer did not operate Render. Required CI123 combined gate passed, and report documentation head is not claimed CI-tested or deployed.",
+    "Remaining supported entry-point/conditional/lifecycle and exact visual/interaction comparisons after339/339 audited local browser placements; accessibility snapshots do not prove pixel equality.",
+    "Authenticated deployed OmniBot positive fixture lifecycles on each group: fresh/partial/save/update/Save&close/cancel/exact reload/manual/native edits/revised answers/failure-retry/duplicate/stale/concurrent writers. Existing SuperAdmin may be used only within authorized isolated QA fixtures.",
+    "Actual logout/login and restricted-identity denial/client-isolation proof. Current administrator all-client scope does not prove restricted authorization. Known limited fictional identities remain Disabled; no credential/account/access changes were made.",
+    "Future/mixed CIS defaults and supported group upgrades with inherited history, deployed showcase context, excluded-framework/full-record preservation and safe QA fixture archival remain required. Persistent InitechIG2/HooliIG3 provisioning is already separately evidenced."
   ],
   "rows": [
     {
@@ -4069,7 +4069,7 @@
   ],
   "tested_runtime_sha": "aa03c1ee0a13027365e53a0cf55f4e49f8b5c1aa",
   "code_content_review_accepted": true,
-  "final_decision": "Independent source/content/runtime/scope review accepted. Local actual-browser safeguard placement coverage is now339/339 with independent raw/compact evidence audit. Persistent staging InitechIG2/HooliIG3 provisioning is independently evidenced through authoritative audit IDs and fresh authenticated UI loads under existing live app. CI123 frontend and both builds passed on synthetic PR merge with identical complete Git tree to rollout head; backend CI remains blocked before checkout/tests by DockerHub timeouts/unauthenticated pull quota. Remaining entry-point/visual acceptance and authenticated deployed OmniBot lifecycle/permission/conflict checks remain required; this is not release acceptance.",
+  "final_decision": "Independent source/content/runtime/scope and339 local actual-browser placement review accepted. Required CI123 is successful on complete-tree-equivalent frozen b0f; lead reports that exact candidate now Live on existing Render staging. The first IG1 hosted isolated fixture confirms question progress/resume,1363-character exact native save/reload and1258-character revised Save&close/reload, with Partial status and NotVerified preserved. This is partial hosted coverage. Final release acceptance remains false for incomplete remaining groups/lifecycles/history/authorization and required visual/entry-point checks.",
   "corrective_verification": {
     "actual_module_calls": {
       "sha": "aa03c1ee0a13027365e53a0cf55f4e49f8b5c1aa",
@@ -4661,40 +4661,76 @@
           "compiled_successfully": true
         }
       ],
-      "boundary": "Tests/builds run against complete-tree-equivalent candidate, not a direct head checkout and not deployed/hosted proof."
+      "boundary": "Tests/builds run against complete-tree-equivalent candidate, not a direct head checkout and not deployed/hosted proof.",
+      "job_id": 114047619674
     },
     "backend": {
-      "state": "blocked_provider_container_initialization",
-      "attempts": 2,
-      "action": "/usr/bin/docker pull mongo:8.0",
-      "failed_before_checkout": true,
-      "offline_suites_executed": false,
-      "disposable_mongo_recovery_executed": false,
-      "errors": [
-        "DockerHub auth token endpoint Client.Timeout/context deadline exceeded while awaiting headers",
-        "toomanyrequests: You have reached your unauthenticated pull rate limit.",
-        "Docker pull failed with exit code1"
-      ],
-      "failure_classification": "Remote GitHub runner DockerHub registry/token network and unauthenticated pull-quota failures. No application assertion or Mongo persistence verification ran; logs do not establish invalid credentials.",
-      "logs": [
-        {
-          "name": "ci123-backend-provider-failure.log",
-          "bytes": 4873,
-          "sha256": "19acfdd26d9e845bd1e43292c607cd55af1e0bf218ba86f37d7ae8a872d604f0"
-        },
-        {
-          "name": "ci123-backend-provider-retry-failure.log",
-          "bytes": 5027,
-          "sha256": "f05ec25d4fa723071114fc161c5b95d2d6c5b398f71c2a2e4fd90f630e17abae"
-        }
-      ]
+      "state": "passed_required_offline_and_disposable_mongo",
+      "job_id": 114047617961,
+      "conclusion": "success",
+      "attempts": 3,
+      "initialize_containers_passed": true,
+      "checkout_step_passed": true,
+      "offline_suites_executed": true,
+      "offline_suites_conclusion": "success",
+      "disposable_mongo_recovery_executed": true,
+      "disposable_mongo_conclusion": "success",
+      "complete_job_conclusion": "success",
+      "metadata_source": "Independent github.fetch_commit_workflow_runs association with exact b0f head, and github.fetch_workflow_run_jobs for run37992644774, including all step conclusions.",
+      "raw_success_log_reviewed": false,
+      "raw_success_log_limit": "Two independent github.fetch_workflow_job_logs calls for job114047617961 returned Transport closed. Workflow metadata, steps and gate log requests succeeded. This is a connector transport failure, not provider permission denial. No raw success totals are invented or copied from local backend718.",
+      "raw_log_provenance_request": "Lead asked to retain/download the exact backend success log through its supported existing read workflow.",
+      "same_checkout_provenance": {
+        "original_actual_checkout": "716c1951b836d57f93c9bced97dfdf5b17661c95",
+        "original_exact_tree_matches_head": true,
+        "same_workflow_run_retried": true,
+        "github_official_behavior": "Retries retain original GITHUB_SHA and GITHUB_REF.",
+        "source": "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs",
+        "classification": "The successful retry is associated with the exact original run/head. Its original synthetic merge is independently tree-equivalent to frozen b0f. Raw backend retry checkout was not separately read because of connector transport failure."
+      },
+      "previous_provider_failures": {
+        "state": "blocked_provider_container_initialization",
+        "attempts": 2,
+        "action": "/usr/bin/docker pull mongo:8.0",
+        "failed_before_checkout": true,
+        "offline_suites_executed": false,
+        "disposable_mongo_recovery_executed": false,
+        "errors": [
+          "DockerHub auth token endpoint Client.Timeout/context deadline exceeded while awaiting headers",
+          "toomanyrequests: You have reached your unauthenticated pull rate limit.",
+          "Docker pull failed with exit code1"
+        ],
+        "failure_classification": "Remote GitHub runner DockerHub registry/token network and unauthenticated pull-quota failures. No application assertion or Mongo persistence verification ran; logs do not establish invalid credentials.",
+        "logs": [
+          {
+            "name": "ci123-backend-provider-failure.log",
+            "bytes": 4873,
+            "sha256": "19acfdd26d9e845bd1e43292c607cd55af1e0bf218ba86f37d7ae8a872d604f0"
+          },
+          {
+            "name": "ci123-backend-provider-retry-failure.log",
+            "bytes": 5027,
+            "sha256": "f05ec25d4fa723071114fc161c5b95d2d6c5b398f71c2a2e4fd90f630e17abae"
+          }
+        ]
+      }
     },
     "release_gate": {
-      "passed": false,
-      "requirement": "Existing release-gate requires both frontend and backend success. Local backend passing tests cannot substitute for required backend CI.",
-      "deployment_performed": false,
-      "ci_or_provider_settings_changed": false
-    }
+      "job_id": 114049871180,
+      "passed": true,
+      "requirement": "Existing gate requires both completed successful frontend/backend jobs.",
+      "raw_gate_environment": {
+        "FRONTEND_RESULT": "success",
+        "BACKEND_RESULT": "success"
+      },
+      "independently_read_gate_log": true,
+      "deployment_performed_by_reviewer": false,
+      "ci_or_provider_settings_changed": false,
+      "release_acceptance": false
+    },
+    "status": "completed",
+    "conclusion": "success",
+    "independently_refreshed_at": "2026-10-09T22:19:27Z"
   },
   "effective_access_and_blocker_classification": {
     "local_profile": {
@@ -4710,9 +4746,19 @@
       "real_approval_request_issued": false,
       "approval_request_prevented": false,
       "reason": "This is an unavailable/rate-limited provider dependency in an existing permitted CI action, not a pending user authorization request.",
-      "smallest_supported_recovery": "Restore DockerHub network/token service and existing pull quota availability, then rerun the unchanged required job on the same candidate. No workspace setting change is indicated. New registry credentials, image mirror, workflow/provider settings changes are outside the current no-settings-change authority and were not attempted."
+      "smallest_supported_recovery": "Restore DockerHub network/token service and existing pull quota availability, then rerun the unchanged required job on the same candidate. No workspace setting change is indicated. New registry credentials, image mirror, workflow/provider settings changes are outside the current no-settings-change authority and were not attempted.",
+      "state": "resolved_by_normal_retry",
+      "resolution": "Third backend attempt Initializecontainers succeeded and both required verification steps passed without workflow/provider/credential changes. Original two infrastructure failure logs remain preserved; not an active CI blocker now."
     },
-    "render_provider_permissions": "No rollout deployment attempted while required CI gate is red; no Render permission failure inferred."
+    "render_provider_permissions": "No rollout deployment attempted while required CI gate is red; no Render permission failure inferred.",
+    "connector_log_read": {
+      "tool": "github.fetch_workflow_job_logs",
+      "job_id": 114047617961,
+      "attempts": 2,
+      "error": "Transport closed",
+      "approval_denial": false,
+      "metadata_and_gate_log_succeeded": true
+    }
   },
   "browser_layer_B_partial_audit": {
     "observed_at": "2026-10-09T21:49:10.668Z",
@@ -4949,7 +4995,8 @@
     "observed_current_live_ui": "Fresh program views still show legacy Open Omni guided assessment, consistent with existing deployed app. New approved OmniBot rollout is not yet deployed; these views do not accept its guide/save implementation.",
     "authentication_limit": "Fresh tab reuses existing authenticated administrator session; actual logout/login remains unverified. Three known fictional limited identities are Disabled, with contributor0 client assignments; user reports test credentials unavailable. No account/access configuration changed.",
     "hosted_omnibot_native_save_verified": false,
-    "rollout_deployed": false
+    "rollout_deployed": false,
+    "observed_before_rollout_deployment": true
   },
   "hosted_identity_access_blocker": {
     "evidence": {
@@ -4975,19 +5022,147 @@
       "role": "Super Admin",
       "assigned_scope": "All clients",
       "status": "Active",
-      "session": "Existing authenticated staging administrator preserved"
+      "session": "Existing authenticated staging administrator preserved",
+      "email_identified_by_user": "staging-admin@example.com"
     },
     "credential_state": "Lead relays user reply: Test credentials are unavailable. No test credentials supplied; actual administrator logout/login also not verified.",
     "blocked_actions": [
-      "Authenticate as an active isolated read-only/contributor identity for hosted denial/client-isolation scenarios",
-      "Actual logout/login and resumed deployed OmniBot interview/native assessment checks"
+      "Hosted limited-permission denial/client isolation using an active restricted authorized identity",
+      "Actual logout/login and resume where credentials/login availability have not yet been verified"
     ],
     "restrictions_source": "Authoritative normal Users&Access UI shows three fictional test identities disabled; contributor has no assigned client. Missing credentials are separately user-reported, not a local sandbox or connector approval error.",
     "real_approval_request_issued": false,
     "approval_request_prevented": false,
     "attempted_logout": false,
     "security_changes_performed": false,
-    "smallest_supported_resolution": "Owner must identify active authorized isolated test identities with correct client scope and provide login availability through the secure browser/normal account workflow. No account enabling, role/client membership, password, reset or credential change is authorized or performed by this review.",
-    "limitation": "Existing admin can prove current authenticated provisioning, but an all-client SuperAdmin session cannot establish limited-identity authorization denial or actual logout/login."
+    "smallest_supported_resolution": "Owner must identify usable active restricted isolated test identities with correct client scope and secure login availability for negative authorization proof. Actual administrator logout/login requires available re-authentication. No account enabling, role/membership, password or credential changes were performed. Lead may use the existing authenticated SuperAdmin for authorized positive fixture lifecycles, separately.",
+    "limitation": "Existing admin can prove current authenticated provisioning, but an all-client SuperAdmin session cannot establish limited-identity authorization denial or actual logout/login.",
+    "updated_user_identity_information": "User supplied existing active staging-admin@example.com and the isolated QA client names OmniBot QA — CIS IG1 / IG2 / IG3. Current Staging Administrator is an all-client SuperAdmin. No usable restricted-identity credential/scope proof or actual logout/login is established."
+  },
+  "predeployment_disposition": {
+    "candidate": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+    "draft_pr": 63,
+    "accepted_code_content": true,
+    "accepted_local_browser_placements": 339,
+    "required_ci_gate_passed": true,
+    "known_material_code_source_placement_blockers": [],
+    "controlled_staging_validation_supported": true,
+    "conditions": "Lead alone refreshes staging ownership/current deployment/newer work, deploys the intended tested frozen revision through the existing workflow, then proves the actual served commit and hosted behavior.",
+    "final_release_accepted": false,
+    "reviewer_deployment": false,
+    "report_documentation_head": "01b8be3588c0ef7b8e734c9dda9834bb6da3e208",
+    "product_delta_since_tested_candidate": "None in backend/frontend/shared/.github. Subsequent report/coverage/task evidence is separate from deployed frozen b0f.",
+    "now_deployed_by_lead_as_reported": true,
+    "deployment_id": "dep-db4mgtvlk1mc73d5q2c0"
+  },
+  "matrix_browser_join_review": {
+    "source": "scripts/omni-cis-rollout-matrix.cjs",
+    "root_documentation_sha": "01b8be3588c0ef7b8e734c9dda9834bb6da3e208",
+    "root_generator_and_matrix_uncommitted_when_reviewed": true,
+    "read_only": true,
+    "rows": 153,
+    "canonical_local_placement_references": 339,
+    "counts": [
+      56,
+      130,
+      153
+    ],
+    "native_assessment_saves": 0,
+    "hosted_saves": 0,
+    "release_acceptance": false,
+    "raw_sha256": "825d1e33996540e8182430be84b88e5dc0efd581656dd0bb32d216559d9373f7",
+    "compact_sha256_after_added_raw_hash": "3ec93b98320408103094c5dfcbcc37fb02ba4a752ed2a6bef3e587dcd79890e8",
+    "validation_errors": [],
+    "method": "Checked every per-safeguard inherited group placement and exact compact-record equality. The raw hash matches the339 independently audited records. The generator reads/validates the339 local manifest and explicitly records zero hosted/native assessment saves without claiming hosted acceptance."
+  },
+  "authorized_isolated_hosted_fixtures": {
+    "names": [
+      "OmniBot QA — CIS IG1",
+      "OmniBot QA — CIS IG2",
+      "OmniBot QA — CIS IG3"
+    ],
+    "authority": "User supplied through the lead current task; normal client/program workflow only.",
+    "state": "Lead preparation pending at independent predeployment review; no creation or hosted assessment save performed by reviewer.",
+    "treatment": "Keep synthetic QA narratives isolated from showcases; preserve history and use the existing recoverable archive workflow after verification. No reset/deletion or synthetic data masquerading as real implementation."
+  },
+  "reported_staging_deployment": {
+    "reported_by": "Lead actual Render Live/specific-commit workflow and fresh candidate browser verification",
+    "candidate": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+    "deployment_id": "dep-db4mgtvlk1mc73d5q2c0",
+    "environment": "https://omnisciente-staging.onrender.com",
+    "state": "Live",
+    "fresh_bundle": "main.3b13e84a.js",
+    "reviewer_operated_provider_or_browser": false,
+    "no_main_merge_or_provider_setting_change_reported": true,
+    "final_release_accepted": false
+  },
+  "hosted_layer_C_partial_audit": {
+    "source": "outputs/omni-cis-rollout/hosted-layer-C-actual-b0f.jsonl",
+    "time_bound": "First12 records through2026-10-09T22:24:38.835Z; growing log, not final file hash.",
+    "fixture_client": "OmniBot QA — CIS IG1",
+    "native_assessment_id": "fw_7682b639c2565159aea31369f6f41dcf",
+    "environment": "https://omnisciente-staging.onrender.com",
+    "authenticated_identity": "Existing staging SuperAdmin; no restricted-role or actual logout/login claim.",
+    "independently_audited": {
+      "question_stage_saves_leave_native_empty": true,
+      "refresh_resumes_group2of5": true,
+      "final_group_opens_summary": true,
+      "first_native_saved_and_reloaded_exact_text_chars": 1363,
+      "first_text_contains_three_headings_operator_edit_and_trailing_newline": true,
+      "first_native_status": "Partially Implemented",
+      "verification_stays": "Not verified",
+      "changed_required_answer_preserves_reviewed_text_until_explicit_refresh_reported_by_lead": true,
+      "actual_revised_proposed_status": "Partially Implemented",
+      "initial_runner_expectedStatus_Implemented_not_actual": true,
+      "confirmed_save_close_guide_absent_after_success": true,
+      "revised_native_save_and_reload_exact_text_chars": 1258,
+      "audit_errors": []
+    },
+    "remaining": "Other group lifecycles, manual/native edits and conflicts, failed/retry/duplicates, final history/record preservation, visual/entry-point comparisons, actual logout/login and restricted identity authorization remain incomplete.",
+    "acceptance": false
+  },
+  "approved_1_1_date_adjudication": {
+    "authority": "Normative CISv8.1 safeguard1.1 actual review/update at least bi-annually; CAS1.1 Input3 last-update date and Operation3 elapsed-month calculation; existing approved immutable1.1V3 contract.",
+    "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/",
+    "bounded_interpretation": "Unknown last complete review leaves actual operating cadence unconfirmed, despite a reported six-month schedule. This is operational implementation confirmation, not a mandatory evidence upload, new cadence, global date rule or CIS certification outcome.",
+    "approved_critical_field": "last_review",
+    "approved_schema_blob_unchanged": true,
+    "actual_code_unchanged_from_approved_reference": true,
+    "independent_execution": {
+      "candidate": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+      "version": "cis-v8.1-control1-3",
+      "clock": "2026-10-09",
+      "method": "Actual generateResult execution through existing Node24.19/Babel with source-derived answers; no product edits.",
+      "cases": [
+        {
+          "input": "All other critical answers Yes; frequency Every six months; date unknown",
+          "expected": "in_progress",
+          "actual": "in_progress",
+          "gaps": [],
+          "unknowns": [
+            "Last complete inventory review — not confirmed: Not recorded"
+          ]
+        },
+        {
+          "input": "Same with current2026-10-09 last review",
+          "expected": "addressed",
+          "actual": "addressed"
+        },
+        {
+          "input": "Same with last review2026-03-01 beyond six months",
+          "expected": "in_progress",
+          "actual": "in_progress"
+        },
+        {
+          "input": "Same with future2026-10-10 last review",
+          "expected": "in_progress",
+          "actual": "in_progress"
+        }
+      ],
+      "passed": 4,
+      "failed": 0
+    },
+    "hosted_result": "Actual reviewed DOM remains Partially Implemented after correcting coverage because last_review is unanswered. The raw runner expectedStatusImplemented is an unfulfilled fixture expectation, not a demonstrated application defect or actual result.",
+    "disposition": "No approved reference/runtime change justified. Exercise complete-date branch only using clearly synthetic authorized QA facts; do not invent dates for genuine assessments."
   }
 }
