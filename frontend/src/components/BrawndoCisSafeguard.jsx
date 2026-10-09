@@ -19,6 +19,7 @@ import './BrawndoCisSafeguard.css';
 import GuidedAssessor from './GuidedAssessor';
 import {useAuth} from '@/context/AuthContext';
 import {isWorkspacePresentation} from '@/lib/reference';
+import {focusedOmniEnabled} from '@/lib/focusedOmni';
 
 // Shared CIS IG1 workspace. The historical name is retained for existing callers.
 // Read-only guidance never writes assessment responses, status or verification.
@@ -37,6 +38,7 @@ export default function BrawndoCisSafeguard({state,actions}){
   const guidance=guidanceData.requirements[id];
   const saved=verificationOf(current),presentation=presentationData.requirements[id];
   const programLabel=ctx?cisLabel(ctx.configuration):breadcrumb?.[0]?.label||'CIS';
+  const inventoryContext=id==='1.2'&&focusedOmniEnabled(clientId,user,record.framework_key,ctx?.configuration,id)?ctx?.inventoryContext:undefined;
   return <AssessmentShell open={open} title={definition.title} description={<span className="sr-only">Safeguard assessment workspace</span>}
     status={<><span aria-label="Saved implementation status"><CisStatusPill status={current.status} framework="cis-ig1"/></span><span aria-label="Saved verification" className={`cis-flag cis-tone-${VERIFICATION_TONE[saved]}`}>{VERIFICATION_LABELS[saved]}</span></>}
     {...{position,previous,next,close,busy}} testId="brawndo-cis-assessment" ariaModal
@@ -66,6 +68,6 @@ export default function BrawndoCisSafeguard({state,actions}){
 </div></div>
     {form.notes&&<details className="brawndo-disclosure"><summary>Previously recorded notes</summary><Textarea aria-label="Previously recorded notes" disabled={disabled} value={form.notes} onChange={e=>put('notes',e.target.value)}/></details>}
     </AssessmentLayout>
-    {ctx&&<GuidedAssessor clientId={clientId} framework={record.framework_key} configuration={ctx.configuration} record={{...record,title:definition.title}} current={current} related={related} people={ctx.users} contextComplete={current.work?.context_complete===true} assessmentDirty={dirty} onOpenNative={(kind,record)=>kind==='evidence'?actions.download?.(record):setNested({kind,record})} form={form} disabled={disabled} onApply={actions.applyGuided} onDraftChange={actions.setGuidedDraft}/>}
+    {ctx&&<GuidedAssessor clientId={clientId} framework={record.framework_key} configuration={ctx.configuration} record={{...record,title:definition.title}} current={current} related={related} people={ctx.users} inventoryContext={inventoryContext} contextComplete={current.work?.context_complete===true} assessmentDirty={dirty&&!state.focusedImplementationOnly} onOpenNative={(kind,record)=>kind==='evidence'?actions.download?.(record):setNested({kind,record})} form={form} disabled={disabled} onApply={actions.applyGuided} onDraftChange={actions.setGuidedDraft} onUpdateImplementation={disabled?undefined:actions.stageGuidedImplementation}/>}
   </AssessmentShell>;
 }
