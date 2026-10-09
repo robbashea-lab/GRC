@@ -24,5 +24,6 @@ test('coverage and detail prose describes actual answers without fabricated owne
   const answers={inventory:'Yes',system:'SyntheticTool',coverage:Object.fromEntries(coverage.rows.map((row,index)=>[row,index===0?'Partially':'Not sure']))};
   const summary=inventorySummary(answers,version);
   expect(summary.result.narrative).toContain('SyntheticTool');expect(summary.result.narrative).toContain(coverage.rows[0]);expect(summary.result.narrative).not.toContain('Responsibility is held');
+  expect(summary.result.narrative).toContain('The inventory only partly includes');
   expect(summary.breakdown.find(row=>row.area===coverage.rows[0]).state).toBe('Incomplete or missing');expect(summary.breakdown.find(row=>row.area===coverage.rows[1]).state).toBe('Needs confirmation');
 });

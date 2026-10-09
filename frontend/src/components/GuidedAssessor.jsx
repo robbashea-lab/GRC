@@ -85,7 +85,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     if(!directAssessment&&current?.status==='addressed'&&(!draft.revision||supported))setView('changes');
     else if(supported)setView('result');
     else{setResult(null);setStep(nextFocusedQuestion(id,draft.answers,draft.version));setView('interview');}
-  },[focused,record,draft,loaded,current?.status,id]);
+  },[focused,record,draft,loaded,current?.status,id,directAssessment]);
   useEffect(()=>{if(!applied)return;const timer=setTimeout(()=>setApplied(false),1200);return()=>clearTimeout(timer);},[applied]);
   useEffect(()=>{onDraftChange?.(dirty||!!incremental);return()=>onDraftChange?.(false);},[dirty,incremental,onDraftChange]);
   useEffect(()=>{

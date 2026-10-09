@@ -19,7 +19,8 @@ export function inventorySummary(answers,version){
     const question=questions.find(q=>q.id===key);
     for(const [value,verb] of [['Yes','include'],['Partially','only partly include'],['No','do not include'],['Not sure','have unconfirmed information for']]){
       const rows=question?.rows.filter(row=>active[key]?.[row]===value)||[];
-      if(rows.length)prose.push(`${subject} ${verb} ${rows.join(', ')}, as reported.`);
+      const agreement=key==='coverage'?{include:'includes','only partly include':'only partly includes','do not include':'does not include','have unconfirmed information for':'has unconfirmed information for'}[verb]:verb;
+      if(rows.length)prose.push(`${subject} ${agreement} ${rows.join(', ')}, as reported.`);
     }
   }
   const operations={Yes:'Asset additions, retirements and removals are consistently reflected in the inventory, as reported.',Partially:'Asset additions, retirements and removals are only partly reflected in the inventory.',No:'Asset additions, retirements and removals are not consistently reflected in the inventory.','Not sure':'The process for updating asset records needs confirmation.'};
