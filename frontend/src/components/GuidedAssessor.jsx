@@ -118,7 +118,10 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   }
   function requireFocusedComparison(){
     if(!focused||!draft?.revision||context?.lineageStale===false)return false;
-    setCompareTarget(question?.id||'resume');setReuseAnswers(false);return true;
+    setReuseAnswers(false);
+    if(updated){setCompareTarget(null);setRestart(true);}
+    else setCompareTarget(question?.id||'resume');
+    return true;
   }
   async function proceed(){
     if(requireFocusedComparison())return;
@@ -134,6 +137,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     setResult(null);setReplace(false);setStep(Math.max(0,questions.findIndex(q=>q.id===topic)));setView('interview');
   }
   async function compareAndContinue(){
+    if(updated){setCompareTarget(null);setReuseAnswers(false);setRestart(true);return;}
     const retained=answers,target=compareTarget,fresh=await save(0,false,{},true);if(!fresh)return;
     const next=target==='resume'?nextFocusedQuestion(id,retained,fresh.version):Math.max(0,visibleQuestions(id,retained,fresh.version).findIndex(q=>q.id===target));
     setResult(null);setNarrative('');setReplace(false);setCompareTarget(null);setReuseAnswers(false);setView('interview');setIncremental(null);setStagedImplementation(null);

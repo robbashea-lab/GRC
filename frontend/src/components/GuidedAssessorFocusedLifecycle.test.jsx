@@ -105,6 +105,26 @@ test('a later scope change still requires comparison even when the native record
   expect(api.put).not.toHaveBeenCalled();expect(props.onApply).not.toHaveBeenCalled();
 });
 
+test.each([['1.1','cis-v8.1-control1-2'],['1.2','brawndo-cis-pilot-1']])('%s direct Save and exit keeps older %s answers out of a new current-version review',async(id,legacyVersion)=>{
+  const topic=id==='1.1'?'inventory':'process',answers={[topic]:'No'},result=focusedResult(id,answers,legacyVersion);
+  stored={...interview(id),version:legacyVersion,revision:7,answers,completed:true,result,narrative:'PERSISTED older-version reviewer wording.',generated_at:generated};
+  const original=copy(stored),earlier={...original,revision:2,narrative:'PERSISTED earlier interview history.'};history=[earlier];
+  const current={...record(id),last_saved:newToken,implementation:'PERSISTED native position; no replacement authorized.'};props={...props,record:current,current,form:copy(current)};
+  await render();await open();await value('.guided-panel fieldset select','Not sure');
+  await value('[aria-label="Missing elements or verification owner"]','PENDING older-version explanation; keep it unless I explicitly restart.');
+  await click('Save and exit');
+  const restart=document.querySelector('[aria-label="Confirm restart"]');expect(restart).toBeTruthy();expect(restart.querySelector('input')).toBeNull();
+  expect(document.querySelector('[aria-label="Compare saved assessment"]')).toBeNull();expect(api.put).not.toHaveBeenCalled();
+  expect(stored).toEqual(original);expect(history).toEqual([earlier]);expect(props.current).toEqual(current);
+  await click('Cancel restart');
+  expect(document.querySelector('.guided-panel fieldset select').value).toBe('Not sure');
+  expect(document.querySelector('[aria-label="Missing elements or verification owner"]').value).toContain('PENDING older-version explanation');expect(props.onDraftChange).toHaveBeenLastCalledWith(true);
+  await click('Save and exit');await click('Confirm restart');
+  expect(api.put).toHaveBeenCalledTimes(1);expect(api.put).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({restart:true,version:versionForSafeguard(id,true),answers:{},completed:false,result:null,expected_revision:7}));
+  expect(stored.version).toBe(versionForSafeguard(id,true));expect(stored.answers).toEqual({});expect(stored.completed).toBe(false);expect(stored.result).toBeNull();
+  expect(history).toEqual([earlier,original]);expect(props.current).toEqual(current);expect(props.onApply).not.toHaveBeenCalled();expect(props.onUpdateImplementation).not.toHaveBeenCalled();
+});
+
 test.each(['1.1','1.2'])('%s retains a saved native Implemented position without demanding an initial interview',async id=>{
   stored=interview(id);const current={...record(id),status:'addressed',implementation:'SYNTHETIC existing supported native position; no Omni interview recorded.'};props={...props,record:current,current,form:copy(current)};
   await render();expect(document.querySelector('.guided-context-prompt').textContent).toContain('has a saved Implemented position');expect(document.querySelector('.guided-context-prompt').textContent).toContain('no new interview is required');
