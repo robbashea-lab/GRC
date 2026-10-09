@@ -91,3 +91,10 @@ test('overview uses supplied user-scoped draft summaries without fetching every 
   await render({record:undefined,current:undefined,rows:[record('2.1'),record()],draftSummaries:{'2.1':{revision:2,completed:false}},onSelect:jest.fn()});await open();
   expect(button('Open safeguard 2.1')).toBeTruthy();expect(api.get).not.toHaveBeenCalled();expect(document.body.textContent).not.toContain('· Control 1');
 });
+
+test.each(['1.1','1.2'])('original v1 safeguard %s opens the approved window and saves exact historical progress without native mutation',async id=>{
+  const current=record(id);props={...props,record:current,current,form:{...current}};
+  draft={...interview(id),version:'brawndo-cis-pilot-1',answers:{[id==='1.1'?'inventory':'process']:'Not sure',gaps:'Mixed missing-or-unknown historical notes'},narrative:'Retained manual interview text.\nExact second line.',revision:4};
+  const original={...draft};await render();await open();expect(document.querySelector('.omni-workspace-window')).toBeTruthy();expect(button('Not sure').getAttribute('aria-pressed')).toBe('true');
+  expect(api.put).not.toHaveBeenCalled();await click('Save & close');expect(draft.version).toBe(original.version);expect(draft.answers).toEqual(original.answers);expect(draft.narrative).toBe(original.narrative);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
