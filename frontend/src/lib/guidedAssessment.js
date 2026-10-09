@@ -67,12 +67,12 @@ export function compatibleInterviewAnswers(id,answers,fromVersion,toVersion){
         const criterion=next.criterion_ids?.[index];
         const source=oldQuestions.find(q=>q.type==='matrix'&&q.rows.some((row,rowIndex)=>row===text&&q.criterion_ids?.[rowIndex]===criterion)&&q.choices.includes('Not applicable')===next.choices.includes('Not applicable'));
         const value=source&&answers[source.id]?.[text];
-        if(value&&next.choices.includes(value))rows[text]=value;
+        if(value&&(next.row_choices?.[text]||next.choices).includes(value))rows[text]=value;
       });
       if(Object.keys(rows).length)mapped[next.id]=rows;
-    }else if(old&&(fromVersion===toVersion||id==='1.2'&&toVersion===control1V4.version&&stable12.has(next.id)||old.prompt===next.prompt&&old.critical===next.critical)&&answers[old.id]!==undefined){
+    }else if(old&&(fromVersion===toVersion||id==='1.2'&&toVersion===control1V4.version&&stable12.has(next.id)||old.prompt===next.prompt&&(old.critical===next.critical||contextOnly.has(next.id)&&next.critical===false))&&answers[old.id]!==undefined){
       const value=answers[old.id];
-      if(['text','date'].includes(next.type)||next.type==='multi'&&value.every(item=>next.choices.includes(item))||next.choices.includes(value))mapped[next.id]=value;
+      if(['text','date'].includes(next.type)||next.type==='multi'&&value.every(item=>next.choices.includes(item))&&!(toVersion===control1V4.version&&value.length>1&&value.some(item=>['None','Not sure'].includes(item)))||next.choices.includes(value))mapped[next.id]=value;
       if(mapped[next.id]!==undefined&&answers[old.id+'_detail']!==undefined)mapped[next.id+'_detail']=answers[old.id+'_detail'];
     }
   }

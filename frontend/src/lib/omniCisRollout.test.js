@@ -102,3 +102,21 @@ test.each(['1.1','1.2'])('%s historical version without definition metadata rema
   expect(text).not.toContain('Reviewer-reported deficiencies: May be missing');
   expect(compatibleInterviewAnswers(id,answers,version,versionForSafeguard(id)).gaps).toBeUndefined();
 });
+
+test.each(['brawndo-cis-pilot-1','cis-v8.1-control1-2'])('legacy %s contradictory actions are retained historically and not copied into a reviewed v4 assessment',version=>{
+  for(const actions of [['None','Quarantine or isolate'],['Not sure','Remove from network']]){
+    const answers={process:'Yes',frequency:'Weekly',actions};
+    expect(()=>validateAnswers('1.2',answers,version)).not.toThrow();
+    const original=JSON.stringify(answers),mapped=compatibleInterviewAnswers('1.2',answers,version,versionForSafeguard('1.2'));
+    expect(mapped.process).toBe('Yes');expect(mapped.frequency).toBe('Weekly');expect(mapped.actions).toBeUndefined();expect(JSON.stringify(answers)).toBe(original);
+    expect(()=>validateAnswers('1.2',{actions},versionForSafeguard('1.2'))).toThrow('Invalid answer selection');
+  }
+});
+test('original1.1 source-constrained matrix choices stay unanswered while unchanged optional context retains meaning',()=>{
+  const old='brawndo-cis-pilot-1',answers={inventory:'Yes',system:'Original inventory system',owner:'Original responsible team',sources:'One source',reconciled:'Yes',attributes:{'Hardware address':'Not applicable'}};
+  expect(()=>validateAnswers('1.1',answers,old)).not.toThrow();const original=JSON.stringify(answers);
+  const mapped=compatibleInterviewAnswers('1.1',answers,old,versionForSafeguard('1.1'));
+  expect(mapped.inventory).toBe('Yes');expect(mapped.system).toBe(answers.system);expect(mapped.owner).toBe(answers.owner);expect(mapped.sources).toBe(answers.sources);expect(mapped.reconciled).toBe(answers.reconciled);
+  expect(mapped.attributes?.['Hardware address']).toBeUndefined();expect(JSON.stringify(answers)).toBe(original);
+  expect(()=>validateAnswers('1.1',{attributes:{'Hardware address':'Not applicable'}},versionForSafeguard('1.1'))).toThrow('Invalid matrix answer');
+});

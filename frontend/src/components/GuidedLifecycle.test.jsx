@@ -125,3 +125,23 @@ test('explicit reviewed upgrade retains compatible answers and manual text in a 
   stored=completed({version:guided.control1Catalog.version,narrative:'Manual historical multiline context.\nKeep this exact line.'});const before=copy(stored);await render();await open();expect(button('Update assessment').disabled).toBe(true);await click('Begin a new review');await act(async()=>document.querySelector('[aria-label="Confirm restart"] input').click());await click('Confirm restart');
   expect(stored.version).toBe(guided.versionForSafeguard('1.1'));expect(stored.completed).toBe(false);expect(stored.answers.inventory).toBe(before.answers.inventory);expect(stored.narrative).toBe(before.narrative);expect(history[0]).toEqual(before);expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
+
+test.each(['brawndo-cis-pilot-1','cis-v8.1-control1-2'])('explicit1.2 reuse upgrade from %s leaves contradictory legacy actions unanswered and preserves historical text',version=>{
+  const current=record({definition_id:'1.2',framework_assessment_id:'lifecycle-1.2',title:'Address Unauthorized Assets'});props={...props,record:current,current,form:copy(current)};
+  stored=interview({assessment_id:'lifecycle-1.2',version,revision:4,answers:{process:'Yes',frequency:'Weekly',actions:['None','Quarantine or isolate']},narrative:'Historical reviewed manual text.\nKeep this exact line.'});
+  const before=copy(stored);return (async()=>{await render();await open();await click('Begin a new review');await act(async()=>document.querySelector('[aria-label="Confirm restart"] input').click());await click('Confirm restart');
+    expect(stored.version).toBe(guided.versionForSafeguard('1.2'));expect(stored.completed).toBe(false);expect(stored.answers.process).toBe('Yes');expect(stored.answers.frequency).toBe('Weekly');expect(stored.answers.actions).toBeUndefined();expect(stored.narrative).toBe(before.narrative);expect(history[0]).toEqual(before);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  })();
+});
+test('explicit1.1 v1 reuse retains optional factual context and safely leaves newly invalid row unanswered',async()=>{
+  stored=interview({version:'brawndo-cis-pilot-1',revision:4,answers:{inventory:'Yes',system:'Original inventory system',owner:'Original responsible team',sources:'One source',reconciled:'Yes',attributes:{'Hardware address':'Not applicable'}},narrative:'Unchanged historical manual implementation.'});const before=copy(stored);
+  await render();await open();await click('Begin a new review');await act(async()=>document.querySelector('[aria-label="Confirm restart"] input').click());await click('Confirm restart');
+  expect(stored.version).toBe(guided.versionForSafeguard('1.1'));for(const key of ['system','owner','sources','reconciled'])expect(stored.answers[key]).toBe(before.answers[key]);
+  expect(stored.answers.attributes?.['Hardware address']).toBeUndefined();expect(stored.narrative).toBe(before.narrative);expect(history[0]).toEqual(before);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('unexpected compatibility preparation failure leaves the saved interview intact and gives an actionable retry',async()=>{
+  stored=completed({version:guided.control1Catalog.version});const before=copy(stored);await render();await open();await click('Begin a new review');await act(async()=>document.querySelector('[aria-label="Confirm restart"] input').click());
+  jest.spyOn(guided,'compatibleInterviewAnswers').mockImplementationOnce(()=>{throw new Error('Synthetic compatibility preparation failure');});await click('Confirm restart');
+  expect(api.put).not.toHaveBeenCalled();expect(stored).toEqual(before);expect(document.querySelector('[role="alert"]').textContent).toContain('Your saved interview is unchanged');expect(document.querySelector('[role="alert"]').textContent).toContain('Cancel this new review and reopen it before retrying');expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});

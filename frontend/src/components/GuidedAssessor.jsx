@@ -310,7 +310,10 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     setResult(null);setStep(questions.findIndex(q=>q.id===last.questions[0].id));setView('interview');
   }
   async function confirmRestart(){
-    const retained=focused&&reuseAnswers?compatibleInterviewAnswers(id,answers,version,currentVersion):null,retainedNarrative=retained?narrative:'';
+    let retained;
+    try{retained=focused&&reuseAnswers?compatibleInterviewAnswers(id,answers,version,currentVersion):null;}
+    catch(e){setError('Compatible answers could not be prepared. Your saved interview is unchanged. Cancel this new review and reopen it before retrying. '+formatError(e));return;}
+    const retainedNarrative=retained?narrative:'';
     const fresh=await save(0,false,{},workspacePilot);if(!fresh)return;
 
     setResult(null);setNarrative(retainedNarrative);setSummaryEdited(!!retainedNarrative);setSummaryBasis('');setRestart(false);setReuseAnswers(false);setView('interview');setIncremental(null);setSaveNotice('');
