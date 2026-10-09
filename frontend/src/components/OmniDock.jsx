@@ -37,10 +37,10 @@ function FreeDock({preferenceKey,children,name='Omni',focused=false}){
     onPointerCancel={()=>{drag.current=null;}}
     onClickCapture={e=>{if(moved.current){e.preventDefault();e.stopPropagation();moved.current=false;}}}
     onKeyDown={e=>{if(!e.target.closest('.omni-launch-button')||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();const unit=e.shiftKey?30:10;move(point.x+(e.key==='ArrowRight'?unit:e.key==='ArrowLeft'?-unit:0),point.y+(e.key==='ArrowDown'?unit:e.key==='ArrowUp'?-unit:0));}}>
-    {children}<details className="omni-position-controls"><summary aria-label={"Reposition "+name}>•••</summary><div>
+    {children}{!focused&&<details className="omni-position-controls"><summary aria-label={"Reposition "+name}>•••</summary><div>
       <button type="button" onClick={()=>move(8,window.innerHeight-260)}>Place on left</button><button type="button" onClick={()=>move(window.innerWidth-190,window.innerHeight-260)}>Place on right</button><button type="button" onClick={()=>move(window.innerWidth-190,window.innerHeight-260)}>Reset {name} position</button>
       <p>Focus {name} and use arrow keys to reposition.</p>
-    </div></details>
+    </div></details>}
   </div>;
 }
 function ClassicDock({preferenceKey,inAssessment,children}){

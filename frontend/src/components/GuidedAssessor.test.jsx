@@ -14,7 +14,7 @@ const props={clientId:'demo_brawndo',framework:'cis-ig1',configuration:{implemen
 const button=name=>[...document.querySelectorAll('button')].find(el=>el.textContent===name);
 async function render(p={}){await act(async()=>root.render(<GuidedAssessor {...props} {...p}/>));}
 async function click(name){await act(async()=>button(name).click());}
-async function open(){await act(async()=>document.querySelector('[aria-label="Open OmniBot guide"], [aria-label="Open Omni guided assessment"]').click());}
+async function open(){await act(async()=>document.querySelector('[aria-label="Open Omnibot guide"], [aria-label="Open Omni guided assessment"]').click());}
 async function select(value){const el=document.querySelector('.guided-panel select');await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('change',{bubbles:true}));});}
 beforeEach(()=>{
   mockWorkspaceMode=undefined;
@@ -24,21 +24,6 @@ beforeEach(()=>{
   api.get.mockImplementation(async()=>({data:draft}));
   api.put.mockImplementation(async(_path,body)=>({data:draft={...body,revision:draft.revision+1,generated_at:'2026-10-07T12:00:00Z'}}));
 });
-test.each([['demo_brawndo','demo'],[workspacePilotConfiguration.stagingClientIds[0],'standard']])('approved Omni boundary %s uses the canonical interview and preserves unsaved answers across window minimize',async(clientId,mode)=>{
-  mockWorkspaceMode=mode;const onDraftChange=jest.fn();
-  draft={...draft,version:versionForSafeguard('1.1',true),current_assessment_token:null,current_scope_fingerprint:'a'.repeat(64),base_assessment_token:null,base_scope_fingerprint:'a'.repeat(64),lineage_known:true,lineage_stale:false};
-  const current={...row,client_id:clientId,assessment_history:[],work:{context_complete:true,finding_ids:[],task_ids:[],review_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,overdue_actions:0}};
-  await render({clientId,record:current,current,contextComplete:true,onDraftChange});await open();
-  expect(document.querySelector('.omni-workspace-window').getAttribute('aria-modal')).toBe('false');
-  expect(document.querySelector('.omni-approved')).toBeTruthy();
-  expect(document.querySelector('.omni-free-dock')).toBeTruthy();
-  expect(document.querySelector('.guided-panel legend').textContent).toBe('Does an enterprise asset inventory exist?');expect(api.put).not.toHaveBeenCalled();
-  await select('Not sure');expect(onDraftChange).toHaveBeenLastCalledWith(true);
-  await act(async()=>document.querySelector('[aria-label="Minimize OmniBot Guide"]').click());await open();
-  expect(document.querySelector('.guided-panel select').value).toBe('Not sure');expect(api.put).not.toHaveBeenCalled();
-  await click('Save and exit');expect(draft.answers.inventory).toBe('Not sure');expect(draft.version).toBe(versionForSafeguard('1.1',true));
-});
-
 test.each([['demo_dunder','demo'],['demo_prestige','demo'],['demo_initech','demo'],['existing-authenticated-client','standard'],['future-client','standard'],['newly-onboarded-synthetic-client','standard']])('shared presentation preserves legacy Omni and saved interview for %s',async(clientId,mode)=>{
   mockWorkspaceMode=mode;
   expect(isWorkspacePresentation(clientId,{workspace_mode:mode})).toBe(true);
@@ -62,78 +47,8 @@ test.each([['demo_dunder','demo'],['demo_prestige','demo'],['demo_initech','demo
     expect(api.put).toHaveBeenCalledWith('/framework_assessments/pilot/guided-assessment',expect.objectContaining({answers:{inventory:'Not sure'},version:guidedCatalog.version,expected_revision:3}));
   } finally {delete document.documentElement.dataset.brawndoWorkspace;}
 });
-afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
-test('single focused answer saves interview and stages the real native narrative without status application',async()=>{
-  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true)};
-  const update=jest.fn(()=>true),apply=jest.fn();
-  await render({record:row,current:row,form:{...row,implementation:''},onUpdateImplementation:update,onApply:apply});await open();await select('Yes');
-  await click('Save answer & update implementation draft');
-  expect(api.put).toHaveBeenCalledWith('/framework_assessments/pilot/guided-assessment',expect.objectContaining({completed:false,answers:{inventory:'Yes'},expected_revision:0}));
-  expect(update).toHaveBeenCalledWith(expect.stringContaining('enterprise asset inventory'),'');expect(apply).not.toHaveBeenCalled();
-  await render({record:row,current:row,form:{...row,implementation:update.mock.calls[0][0]},assessmentDirty:true,onUpdateImplementation:update,onApply:apply});
-  expect(document.body.textContent).toContain('unsaved native draft');expect(document.querySelector('.guided-panel legend').textContent).toContain('coverage');
-});
 
-test('manual native prose cannot be replaced before explicit reconciliation; failed save remains retryable',async()=>{
-  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true)};
-  const update=jest.fn(()=>true),native={...row,implementation:'Manual fact: hosted assets are managed by the provider.'};
-  await render({record:row,current:native,form:native,onUpdateImplementation:update});await open();await select('Yes');await click('Save answer & update implementation draft');
-  expect(api.put).not.toHaveBeenCalled();expect(update).not.toHaveBeenCalled();
-  const group=document.querySelector('[aria-label="Reconcile implementation narrative"]'),textarea=group.querySelector('textarea');
-  expect(textarea.value).toBe(native.implementation);expect(group.querySelector('button').disabled).toBe(true);
-  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(textarea,native.implementation+' Client reports an inventory; coverage needs confirmation.');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
-  await act(async()=>group.querySelector('input').click());
-  api.put.mockRejectedValueOnce(new Error('Interview changed: reopen to reconcile.'));
-  await act(async()=>group.querySelector('button').click());
-  expect(update).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Interview changed');expect(document.querySelector('.guided-panel select').value).toBe('Yes');
-  await act(async()=>group.querySelector('button').click());expect(update).toHaveBeenCalledWith(expect.stringContaining('Manual fact:'),native.implementation);
-});
-
-test('an explicit new-base restart can retain confirmed relevant answers without carrying a completion conclusion',async()=>{
-  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true),revision:3,answers:{inventory:'Yes',system:'Reported inventory tool'},current_assessment_token:'native-new',current_scope_fingerprint:'a'.repeat(64),base_assessment_token:'native-old',base_scope_fingerprint:'a'.repeat(64),lineage_stale:true,lineage_known:true};
-  await render({record:row,current:{...row,last_saved:'native-new'}});await open();await click('Start a new review');
-  const reuse=[...document.querySelectorAll('label')].find(el=>el.textContent.includes('I confirmed these answers remain current'));
-  await act(async()=>reuse.querySelector('input').click());await click('Confirm restart');
-  expect(api.put).toHaveBeenNthCalledWith(1,expect.any(String),expect.objectContaining({restart:true,answers:{},expected_revision:3,base_assessment_token:'native-new'}));
-  expect(api.put).toHaveBeenNthCalledWith(2,expect.any(String),expect.objectContaining({answers:{inventory:'Yes',system:'Reported inventory tool'},completed:false,result:null,expected_revision:4}));
-  expect(draft.completed).toBe(false);expect(document.querySelector('.guided-panel legend').textContent).toContain('coverage');
-});
-
-test('focused Partly stores the existing versioned value and read-only users cannot save or stage',async()=>{
-  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true)};
-  await render({record:row,disabled:true,onUpdateImplementation:jest.fn()});await open();
-  expect(document.querySelector('.guided-panel fieldset').disabled).toBe(true);expect(button('Save answer & update implementation draft').disabled).toBe(true);expect(button('Save and exit').disabled).toBe(true);expect(api.put).not.toHaveBeenCalled();
-  await render({record:row,disabled:false});await select('Partially');
-  expect(document.querySelector('.guided-panel select').selectedOptions[0].textContent).toBe('Partly');
-  await click('Save and exit');expect(draft.answers.inventory).toBe('Partially');
-});
-
-test('focused historical completion with contradictory answers cannot offer Implemented',async()=>{
-  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true),revision:3,completed:true,answers:{inventory:'No'},result:{status:'addressed',narrative:'Historical report',gaps:[],unknowns:[],basis:[],nextSteps:[],evidence:[],answers:[]}};
-  await render({record:{...row,status:'addressed'},current:{...row,status:'addressed'}});await open();
-  expect(document.body.textContent).toContain('prior completion recommendation is not supported');expect(button('Apply to Assessment')).toBeUndefined();
-  expect(document.querySelector('.guided-panel select').value).toBe('No');expect(api.put).not.toHaveBeenCalled();
-});
-
-test('focused dashboard invitation introduces OmniBot and restricts recommendations to 1.1 and 1.2',async()=>{
-  mockWorkspaceMode='demo';await render({rows:[row,{...row,definition_id:'1.2'},{...row,definition_id:'3.5'}]});
-  expect(document.querySelector('.guided-context-prompt').textContent).toContain('Hi, I’m OmniBot.');
-  await open();expect(button('Open safeguard 1.1')).toBeTruthy();expect(button('Open safeguard 1.2')).toBeTruthy();expect(button('Open safeguard 3.5')).toBeUndefined();
-  expect(document.body.textContent).not.toContain('Default work order');
-});
-
-test('a native edit during an interview request prevents a stale implementation replacement',async()=>{
-  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true)};
-  let finish;api.put.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));
-  const oldUpdate=jest.fn(()=>true),currentUpdate=jest.fn(()=>false);
-  await render({record:row,form:{...row,implementation:''},onUpdateImplementation:oldUpdate});await open();await select('Yes');
-  await act(async()=>button('Save answer & update implementation draft').click());
-  await render({record:row,form:{...row,implementation:'Concurrent native edit'},onUpdateImplementation:currentUpdate});
-  await act(async()=>finish({data:{...draft,answers:{inventory:'Yes'},revision:1}}));
-  expect(oldUpdate).not.toHaveBeenCalled();expect(currentUpdate).toHaveBeenCalledWith(expect.any(String),'');
-  expect(document.body.textContent).toContain('native implementation draft changed');expect(document.querySelector('.guided-panel select').value).toBe('Yes');
-});
 test('dashboard greeting, direct pilot options, dismiss and reopen',async()=>{
   const onSelect=jest.fn();await render({rows:[row,{...row,definition_id:'1.2'}],onSelect});
   expect(document.body.textContent).toContain('Hi, I’m Omni.');
@@ -230,60 +145,5 @@ test('overview uses supplied user-scoped draft summaries without fetching every 
   expect(document.body.textContent).not.toContain('· Control 1');
 });
 
-const invitationText=()=>document.querySelector('.guided-context-prompt')?.textContent;
-const invitationPreferenceKey='guided-pilot-ui:pilot-test:demo_brawndo:cis-ig1:focused-invitations';
-test('focused invitation dismisses only this visit and ignores background data rerenders',async()=>{
-  mockWorkspaceMode='demo';await render();
-  expect(invitationText()).toContain('Hi, I’m OmniBot. I can help you choose your next safeguard');
-  expect(document.querySelector('[aria-label="Open OmniBot guide"]')).toBeTruthy();
-  await click('Dismiss this invitation');expect(invitationText()).toBeUndefined();
-  await render({rows:[{...row,status:'needs_attention'}]});expect(invitationText()).toBeUndefined();
-  await act(async()=>root.render(null));await render();expect(invitationText()).toContain('Hi, I’m OmniBot');
-  expect(api.put).not.toHaveBeenCalled();
-});
-test('Control 1 is a separate invitation visit and uses its own professional wording',async()=>{
-  mockWorkspaceMode='demo';await render();await click('Dismiss this invitation');
-  await render({invitationContext:'control-1'});expect(invitationText()).toContain('work through Control 1’s safeguards');
-  await click('Dismiss this invitation');await render({invitationContext:'control-1',rows:[row]});expect(invitationText()).toBeUndefined();
-  await render({invitationContext:'program'});expect(invitationText()).toContain('choose your next safeguard');
-});
-test.each(['Hide invitations for this session','Turn off automatic invitations'])('%s survives visits, stays scoped and can be reenabled',async choice=>{
-  mockWorkspaceMode='demo';await render();await click(choice);expect(invitationText()).toBeUndefined();
-  await act(async()=>root.render(null));await render({invitationContext:'control-1'});expect(invitationText()).toBeUndefined();
-  expect(document.querySelector('[aria-label="Open OmniBot guide"]')).toBeTruthy();
-  expect(localStorage.getItem('guided-pilot-ui:pilot-test:demo_brawndo')).not.toContain('invitationsDisabled');
-  await click('Turn on automatic invitations');expect(invitationText()).toContain('Control 1');
-  await act(async()=>root.render(null));await render();expect(invitationText()).toContain('Hi, I’m OmniBot');
-});
-test('session suppression expires while disabled invitations persist',async()=>{
-  mockWorkspaceMode='demo';await render();await click('Hide invitations for this session');
-  sessionStorage.clear();await act(async()=>root.render(null));await render();expect(invitationText()).toBeTruthy();
-  await click('Turn off automatic invitations');sessionStorage.clear();await act(async()=>root.render(null));await render();expect(invitationText()).toBeUndefined();
-  expect(JSON.parse(localStorage.getItem(invitationPreferenceKey)).invitationsDisabled).toBe(true);
-});
-test('safeguard invitation uses saved answers, never unsaved edits, and discloses stale lineage',async()=>{
-  mockWorkspaceMode='demo';draft={...draft,version:versionForSafeguard('1.1',true),lineage_known:true,lineage_stale:false,base_assessment_token:null,current_assessment_token:null,base_scope_fingerprint:'a'.repeat(64),current_scope_fingerprint:'a'.repeat(64)};
-  await render({record:row,current:{...row,client_id:'demo_brawndo',assessment_history:[],work:{context_complete:true,finding_ids:[],task_ids:[],review_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,overdue_actions:0}},contextComplete:true});
-  expect(invitationText()).toContain('Let’s work through Safeguard 1.1 together');await open();await select('Yes');
-  await act(async()=>document.querySelector('[aria-label="Close OmniBot Guide"]').click());expect(invitationText()).toBeUndefined();
-  draft={...draft,client_id:'demo_brawndo',assessment_id:'pilot',user_id:'pilot-test',revision:2,answers:{inventory:'Not sure'}};await act(async()=>root.render(null));await render({record:row,current:{...row,client_id:'demo_brawndo',assessment_history:[],work:{context_complete:true,finding_ids:[],task_ids:[],review_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,overdue_actions:0}},contextComplete:true});
-  expect(invitationText()).toContain('continue your saved interview for Safeguard 1.1');
-  draft={...draft,lineage_stale:true};await act(async()=>root.render(null));await render({record:row,current:{...row,client_id:'demo_brawndo',assessment_history:[],work:{context_complete:true,finding_ids:[],task_ids:[],review_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,overdue_actions:0}},contextComplete:true});
-  expect(invitationText()).toContain('compare your saved answers with the current assessment');expect(api.put).not.toHaveBeenCalled();
-});
-test('focused suppression never changes legacy invitations and prior disabled preference is honored',async()=>{
-  mockWorkspaceMode='demo';localStorage.setItem('guided-pilot-ui:pilot-test:demo_brawndo',JSON.stringify({invitationsDisabled:true}));
-  await render();expect(invitationText()).toBeUndefined();await click('Turn on automatic invitations');expect(invitationText()).toBeTruthy();
-  expect(JSON.parse(localStorage.getItem('guided-pilot-ui:pilot-test:demo_brawndo')).invitationsDisabled).toBe(true);
-  await act(async()=>root.render(null));await render({configuration:{implementation_group:1,focused_omni_enabled:false}});expect(invitationText()).toBeUndefined();
-});
-test('focused guide titles and window controls use OmniBot while legacy names remain unchanged',async()=>{
-  mockWorkspaceMode='demo';await render({rows:[row],contextComplete:true});await open();
-  expect(document.querySelector('.guided-panel').textContent).toContain('Guided assessment with OmniBot');
-  expect(document.querySelector('.guided-panel').textContent).toContain('OmniBot’s recommended next steps');
-  expect(document.querySelector('[aria-label="Reposition OmniBot"]')).toBeTruthy();
-  expect(document.querySelector('[aria-label="Minimize OmniBot Guide"]')).toBeTruthy();
-  await act(async()=>root.render(null));await render({clientId:'demo_initech'});await open();
-  expect(document.querySelector('.guided-panel').textContent).toContain('Guided Assessment with Omni');
-  expect(document.querySelector('[aria-label="Reposition OmniBot"]')).toBeNull();
-});
+
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});

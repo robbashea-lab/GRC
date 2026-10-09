@@ -17,6 +17,16 @@ test('window bounds remain reachable at desktop, tablet and tiny viewport sizes'
     expect(r.x+r.w).toBeLessThanOrEqual(width-8);expect(r.y+r.h).toBeLessThanOrEqual(height-8);
   }
 });
+
+test('refined header provides keyboard movement and resizing without a position menu',async()=>{
+  global.IS_REACT_ACT_ENVIRONMENT=true;const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
+  try{
+    await act(async()=>root.render(<OmniWindow id="refined" refined anchor={()=>({left:20,right:80,top:20})}><header className="omni-panel-header" tabIndex={0}><h2 id="refined-title">Omnibot guide</h2></header><p id="refined-description">Keyboard movement and resize</p></OmniWindow>));
+    expect(host.querySelector('.omni-window-controls details')).toBeNull();const dialog=host.querySelector('[role=dialog]'),header=host.querySelector('header'),initialLeft=parseInt(dialog.style.left,10),initialWidth=parseInt(dialog.style.width,10);
+    await act(async()=>header.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})));expect(parseInt(dialog.style.left,10)).toBe(initialLeft+10);
+    await act(async()=>header.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',altKey:true,bubbles:true})));expect(parseInt(dialog.style.width,10)).toBe(initialWidth+10);
+  }finally{await act(async()=>root.unmount());host.remove();}
+});
 test('reopening measures the expanded launcher after mount rather than its minimized bounds',async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;
   const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
