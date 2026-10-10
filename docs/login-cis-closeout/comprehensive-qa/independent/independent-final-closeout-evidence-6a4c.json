@@ -1,0 +1,82 @@
+{
+  "generated_utc": "2026-10-10T16:59:06.162Z",
+  "runtime": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+  "tree": "c08a2390f75457c2147b430788658ec4679e69f9",
+  "deployment": "dep-db56e2d9fdbs73bpcq50",
+  "review": "Independent final read-only documentary consistency and artifact integrity audit. No new test, browser, account, source, root-document or staging action.",
+  "reviewed": [
+    {
+      "file": "closeout.md",
+      "sha256": "bc85692d1a157c516b68cadf53ef9f81cd244957fd77cfe92be04d929ff2cb8d"
+    },
+    {
+      "file": "acceptance-register.json",
+      "sha256": "3793679c36f584a14774cebdb64e38058bc76449c9ea5c78e1a6ab68537a85a7"
+    },
+    {
+      "file": "coverage-matrix-current.json",
+      "sha256": "b8bad81ce1f3b4b36a53121cee3b44aff7d10494ab6f70fbf4c01dabd5b09361"
+    },
+    {
+      "file": "provenance.json",
+      "sha256": "02e8f4d59d147f1cbb4bb82c1ded6318ca0c93b70b71d8580f3386446470bdb0"
+    },
+    {
+      "file": "proof-manifest.json",
+      "sha256": "e5b69bc71e5673bda80bcf4ea1c8638aeb967f33fe97799129b74e68403ed49a"
+    }
+  ],
+  "checks": [
+    {
+      "name": "All 154 frozen manifest artifacts preserve recorded byte lengths/hashes; 31 JSON artifacts parse",
+      "passed": true
+    },
+    {
+      "name": "Staged Git index retains exact frozen artifact bytes with the scoped evidence attribute",
+      "passed": true
+    },
+    {
+      "name": "Runtime and CI tree remain exact 6a4; staged changes are scoped documentary evidence only",
+      "passed": true
+    },
+    {
+      "name": "All 153 current versions and group totals remain revision-attributed and bounded",
+      "passed": true
+    },
+    {
+      "name": "Final metadata agrees with independently fetched successful CI129 job/step evidence",
+      "passed": true
+    },
+    {
+      "name": "Captured hosted JSON and reviewed text copies preserve raw values/hashes; authored release/limitation metadata stays distinct",
+      "passed": true
+    },
+    {
+      "name": "Live deployment/startup/Render-build asset claims are supported and avoid cross-OS identity",
+      "passed": true
+    },
+    {
+      "name": "Actual restricted denials and current showcase/cleanup gaps remain unexecuted, no inferred permission/application defect",
+      "passed": true
+    },
+    {
+      "name": "Final closeout and preserved-evidence relative references resolve",
+      "passed": true
+    }
+  ],
+  "artifacts_verified": 154,
+  "manifest_captured_utc": "2026-10-10T16:58:33.868Z",
+  "json_artifacts_parsed": 31,
+  "material_findings": [],
+  "code_content_disposition": "Preserves prior independently reviewed exact 6a4 source/content acceptance; no new product change or material evidence inconsistency.",
+  "evidence_hygiene": "Directory-scoped comprehensive-qa/.gitattributes uses * -text to retain captured bytes and recorded hashes across Windows autocrlf. No global attribute/config change; all current staged changes are documentary only.",
+  "audit_provenance": "Initial audit diagnostics are preserved separately. Two reviewer harness assumptions were corrected: documentation was staged during the review, and release/limitation JSON are authored metadata, not captured raw-file duplicates. No product or acceptance expectation changed.",
+  "evidence_limit": "Hosted observations remain lead-recorded normal UI evidence, independently reviewed without a second browser replay. Artifact hashes establish integrity, not functional execution.",
+  "pending": [
+    "Actual restricted-identity server write denial and unauthorized-client access/write denial; target remains Disabled Contributor with zero memberships and no approved access change.",
+    "Selective current Initech/Hooli 17.5 and Brawndo 1.1 read-only placement checks, blocked by unresolved same-browser automation input/focus behavior.",
+    "Reversible archive confirmation of the completed synthetic QAIG3 fixture; latest authoritative portfolio still active. QAIG2 intentionally retained for restricted tests."
+  ],
+  "release_approval": false,
+  "final_disposition": "No remaining material documentation error. Documentation-only handoff is coherent; deployed for validation, final release acceptance remains blocked."
+}

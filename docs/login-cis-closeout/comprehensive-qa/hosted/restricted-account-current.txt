@@ -1,0 +1,157 @@
+- banner:
+  - button "Toggle client navigation":
+  - link "Omnisciente CLARITY FOR A STRONGER TOMORROW":
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button "Use light workspace theme":
+  - button "Your notifications":
+  - button "Staging Administrator super admin":
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - navigation "Platform":
+    - link "Portfolio":
+      - /url: /clients
+      - generic: Portfolio
+    - generic: Clients
+    - group "Client list scope":
+      - button "All" [pressed]
+      - button "Mine"
+    - textbox "Search clients":
+      - /placeholder: Search clients…
+    - button "Brawndo":
+      - generic: B
+      - generic: Brawndo
+    - button "Hooli":
+      - generic: H
+      - generic: Hooli
+    - button "Initech":
+      - generic: I
+      - generic: Initech
+    - button "OmniBot QA — CIS IG2":
+      - generic: O
+      - generic: OmniBot QA — CIS IG2
+    - button "OmniBot QA — Closeout CIS IG3":
+      - generic: O
+      - generic: OmniBot QA — Closeout CIS IG3
+    - button "Staging QA bec984b1 A":
+      - generic: S
+      - generic: Staging QA bec984b1 A
+    - button "Staging QA bec984b1 B":
+      - generic: S
+      - generic: Staging QA bec984b1 B
+    - button "Synthetic PR36 Assessment Release QA":
+      - generic: S
+      - generic: Synthetic PR36 Assessment Release QA
+    - button "SYNTHETIC PR52 DIRECT UPGRADE 20261007":
+      - generic: S
+      - generic: SYNTHETIC PR52 DIRECT UPGRADE 20261007
+    - button "SYNTHETIC PR52 TEMP Control1 20261007":
+      - generic: S
+      - generic: SYNTHETIC PR52 TEMP Control1 20261007
+    - button "SYNTHETIC PR57 PLATFORM THEME QA 20261007":
+      - generic: S
+      - generic: SYNTHETIC PR57 PLATFORM THEME QA 20261007
+    - button "SYNTHETIC RC55 DIRECT IG QA 20261007":
+      - generic: S
+      - generic: SYNTHETIC RC55 DIRECT IG QA 20261007
+    - button "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007":
+      - generic: S
+      - generic: SYNTHETIC RC55 SEQUENTIAL IG QA 20261007
+    - group "Administration":
+      - generic: Administration
+      - link "Client Management":
+        - /url: /admin/clients
+        - generic: Client Management
+      - link "Users & Access" [active]:
+        - /url: /admin/users
+        - generic: Users & Access
+      - link "Roles & Permissions":
+        - /url: /admin/roles
+        - generic: Roles & Permissions
+      - link "Security & Auth":
+        - /url: /admin/security
+        - generic: Security & Auth
+      - link "Audit Log":
+        - /url: /admin/audit
+        - generic: Audit Log
+- main:
+  - paragraph: Platform Administration
+  - heading "Users & Access" [level=1]
+  - paragraph: Invite internal team members, assign platform roles and manage which clients each user can access.
+  - textbox "Search users":
+    - /placeholder: Search users…
+  - generic: 4 / 4
+  - button "Add user":
+    - text: Add user
+  - table:
+    - rowgroup:
+      - 'row "User: sort and filter Role: sort and filter Client access: sort and filter Status: sort and filter Last login: sort and filter"':
+        - 'columnheader "User: sort and filter"':
+          - 'button "User: sort and filter"':
+            - text: User
+        - 'columnheader "Role: sort and filter"':
+          - 'button "Role: sort and filter"':
+            - text: Role
+        - 'columnheader "Client access: sort and filter"':
+          - 'button "Client access: sort and filter"':
+            - text: Client access
+        - 'columnheader "Status: sort and filter"':
+          - 'button "Status: sort and filter"':
+            - text: Status
+        - 'columnheader "Last login: sort and filter"':
+          - 'button "Last login: sort and filter"':
+            - text: Last login
+        - columnheader
+    - rowgroup:
+      - row "Staging Administrator staging-admin@example.com Super Admin All clients active 10/10/2026":
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Super Admin"
+        - cell "All clients"
+        - cell "active":
+          - generic: active
+        - cell "10/10/2026"
+        - cell
+      - row "Fictional client_readonly bec984b1-client_readonly@example.com Client Read Only 1 client(s) disabled — Actions for Fictional client_readonly":
+        - cell "Fictional client_readonly bec984b1-client_readonly@example.com":
+          - generic: Fictional client_readonly
+          - generic: bec984b1-client_readonly@example.com
+        - cell "Client Read Only"
+        - cell "1 client(s)"
+        - cell "disabled":
+          - generic: disabled
+        - cell "—"
+        - cell "Actions for Fictional client_readonly":
+          - button "Actions for Fictional client_readonly":
+      - row "Fictional client_readonly bec984b1-client_readonly-verified@example.com Client Read Only 1 client(s) disabled 10/5/2026 Actions for Fictional client_readonly":
+        - cell "Fictional client_readonly bec984b1-client_readonly-verified@example.com":
+          - generic: Fictional client_readonly
+          - generic: bec984b1-client_readonly-verified@example.com
+        - cell "Client Read Only"
+        - cell "1 client(s)"
+        - cell "disabled":
+          - generic: disabled
+        - cell "10/5/2026"
+        - cell "Actions for Fictional client_readonly":
+          - button "Actions for Fictional client_readonly":
+      - row "Fictional client_contributor bec984b1-client_contributor-verified@example.com Client Contributor 0 client(s) disabled 10/5/2026 Actions for Fictional client_contributor":
+        - cell "Fictional client_contributor bec984b1-client_contributor-verified@example.com":
+          - generic: Fictional client_contributor
+          - generic: bec984b1-client_contributor-verified@example.com
+        - cell "Client Contributor"
+        - cell "0 client(s)"
+        - cell "disabled":
+          - generic: disabled
+        - cell "10/5/2026"
+        - cell "Actions for Fictional client_contributor":
+          - button "Actions for Fictional client_contributor":
+  - navigation "Table pages":
+    - generic: 1–4 of 4
+    - button "Previous" [disabled]
+    - generic: Page 1 of 1
+    - button "Next" [disabled]
+- region "Notifications alt+T"

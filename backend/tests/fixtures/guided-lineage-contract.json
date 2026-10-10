@@ -21,8 +21,13 @@
     },
     "cis_configuration_updated_at": "2026-10-07T10:00:00Z"
   },
-  "base": {
+  "legacy_base": {
     "base_assessment_token": "2026-09-01T12:00:00Z",
     "base_scope_fingerprint": "e60935134d41a25d4cf99a502871bf6ba09094291c4a0d6123382f3961e5870d"
+  },
+  "current_question_version": "cis-v8.1-program-3",
+  "base": {
+    "base_assessment_token": "2026-09-01T12:00:00Z",
+    "base_scope_fingerprint": "cf4464a20a3d0d25b76633a3af766de56e535a7b4bd8c4d9f6d616810c4c3d6d"
   }
 }

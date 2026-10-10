@@ -1,0 +1,208 @@
+- banner:
+  - button:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: O
+  - generic: Client
+  - generic: OmniBot QA — Closeout CIS IG3
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG3
+    - link:
+      - /url: /risks
+      - generic: Risks
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG3
+  - heading [level=1]: CIS IG3
+  - button: Continue with 1.1
+  - region:
+    - generic: 2.0%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 18 controls · 153 IG3 safeguards
+    - term: Implemented
+    - definition:
+      - text: "3"
+      - generic: of 153
+    - term: Assessed
+    - definition:
+      - text: "3"
+      - generic: of 153
+    - button:
+      - text: Implemented
+      - strong: "3"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "150"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG3
+        - text: ›
+        - button: Control 1
+        - listitem: ›Safeguard 1.3
+    - textbox:
+      - /placeholder: Search by number or title…
+    - text: Safeguard scope
+    - combobox
+    - generic: Display filter; full program totals unchanged
+    - paragraph: Inventory and Control of Enterprise Assets
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "1.1"
+            - text: Establish and Maintain Detailed Enterprise Asset Inventory
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "1.2"
+            - text: Address Unauthorized Assets
+            - generic: IG1 baseline
+          - cell:
+            - generic: Implemented
+        - link:
+          - cell:
+            - generic: "1.3"
+            - text: Utilize an Active Discovery Tool
+            - generic: Added in IG2
+          - cell:
+            - generic: Implemented
+        - link:
+          - cell:
+            - generic: "1.4"
+            - text: Use Dynamic Host Configuration Protocol (DHCP) Logging to Update Enterprise Asset Inventory
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "1.5"
+            - text: Use a Passive Asset Discovery Tool
+            - generic: Added in IG3
+          - cell:
+            - generic: Not Assessed
+- region "Notifications alt+T"
+- dialog "Utilize an Active Discovery Tool":
+  - banner:
+    - navigation "CIS IG3 location":
+      - list:
+        - button "CIS IG3"
+        - text: ›
+        - button "Control 1"
+        - listitem: ›Safeguard 1.3
+    - heading "Utilize an Active Discovery Tool" [active] [level=2]
+    - paragraph:
+      - generic: Safeguard assessment workspace
+    - generic "Saved implementation status":
+      - generic: Implemented
+    - generic "Saved verification": Not verified
+    - navigation "Assessment navigation":
+      - button "Previous"
+      - generic: 3 of 153
+      - button "Next"
+  - tablist "Assessment sections":
+    - tab "Requirement & implementation" [selected]
+    - tab "Findings"
+  - tabpanel "Requirement & implementation":
+    - generic "Requirement summary"
+    - heading "What CIS requires" [level=3]
+    - paragraph: Official requirement · CIS v8.1 · Safeguard 1.3
+    - paragraph: Utilize an active discovery tool to identify assets connected to the enterprise’s network. Configure the active discovery tool to execute daily, or more frequently.
+    - paragraph:
+      - strong: "Required operation / trigger:"
+      - text: Execute active discovery daily or more frequently.
+    - link "Official CIS source":
+      - /url: https://cas.docs.cisecurity.org/en/latest/source/Controls1/#13-utilize-an-active-discovery-tool
+    - region "Implementation status section":
+      - heading "Implementation status" [level=3]
+      - group "Implementation status":
+        - generic: Implementation status
+        - radio "Implemented" [checked]
+        - generic: Implemented
+        - radio "Partially Implemented"
+        - generic: Partially Implemented
+        - radio "Not Implemented"
+        - generic: Not Implemented
+        - radio "Not Assessed"
+        - generic: Not Assessed
+        - radio "Not Applicable"
+        - generic: Not Applicable
+    - region "Current implementation section":
+      - heading "Current implementation" [level=3]
+      - generic: Current implementation
+      - textbox "Current implementation": "OVERVIEW OmniBot QA — Closeout CIS IG3 reports the practice to utilize an active discovery tool is in place. IMPLEMENTATION BREAKDOWN In place - Discovery tool use: Yes. - Network discovery coverage: Yes. - Operating frequency: More frequently than daily. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. SYNTHETIC QA ONLY — comprehensive workflow test; not client facts. - Preserve this exact reviewer line for 1.3. - Preserve this blank line."
+    - generic "Assessment guidance & working checklist"
+  - button "Open Omnibot guide":
+  - complementary "Omnibot invitation":
+    - paragraph: Your implementation is saved. I can help you maintain Safeguard 1.3, update a recorded fact, or review outstanding verification.
+    - button "Close invitation": ×
+  - generic: Interview complete
+  - contentinfo:
+    - status: Changes remain in your draft until saved.
+    - button "Save assessment"
+    - button "Save & next"
+  - button "Close":
+    - generic: Close

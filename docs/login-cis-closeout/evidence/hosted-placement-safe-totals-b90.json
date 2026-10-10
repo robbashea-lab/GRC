@@ -1,0 +1,190 @@
+{
+  "kind": "hosted-placement-totals-with-separate-authorized-compatibility-followups",
+  "candidate": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "deployment": "dep-db53ifrrjlhs73ca0ht0",
+  "environment": "https://omnisciente-staging.onrender.com",
+  "generated_at": "2026-10-10T14:17:39.900Z",
+  "evidence_layers": {
+    "source_definition_review": "Existing153-row source review; not rerun by this utility.",
+    "local_full_populated_rendering": "Existing339 local Demo placements; not hosted saves.",
+    "hosted_visible_initial_or_resumed_question_groups": {
+      "raw_observations": 348,
+      "unique_placements": 339,
+      "duplicate_focused_observations": 9,
+      "cumulative_clients": {
+        "Brawndo": 56,
+        "Initech": 130,
+        "Hooli": 153
+      },
+      "raw_classifications": {
+        "current_compatible_version_unresolved": 8,
+        "definite_historical_prompt": 2,
+        "historical_version_interlock_observed": 1,
+        "current_compatible_no_version_interlock_recorded": 337
+      },
+      "latest_unique_classifications": {
+        "current_compatible_no_version_interlock_recorded": 337,
+        "definite_historical_prompt": 1,
+        "historical_version_interlock_observed": 1
+      },
+      "resolved_initial_ambiguities": [
+        {
+          "client": "Brawndo",
+          "id": "1.1",
+          "original_observation_index": 0,
+          "resolving_observation_index": 339
+        },
+        {
+          "client": "Brawndo",
+          "id": "2.1",
+          "original_observation_index": 2,
+          "resolving_observation_index": 341
+        },
+        {
+          "client": "Brawndo",
+          "id": "2.2",
+          "original_observation_index": 3,
+          "resolving_observation_index": 342
+        },
+        {
+          "client": "Brawndo",
+          "id": "2.3",
+          "original_observation_index": 4,
+          "resolving_observation_index": 343
+        },
+        {
+          "client": "Brawndo",
+          "id": "3.1",
+          "original_observation_index": 5,
+          "resolving_observation_index": 344
+        },
+        {
+          "client": "Brawndo",
+          "id": "3.2",
+          "original_observation_index": 6,
+          "resolving_observation_index": 345
+        },
+        {
+          "client": "Brawndo",
+          "id": "3.3",
+          "original_observation_index": 7,
+          "resolving_observation_index": 346
+        },
+        {
+          "client": "Brawndo",
+          "id": "3.4",
+          "original_observation_index": 8,
+          "resolving_observation_index": 347
+        }
+      ]
+    },
+    "hosted_current_source_visibility": {
+      "unique_placements_including_separately_disclosed_authorized_followups": 339,
+      "total_required": 339,
+      "current_source_unique_by_client": {
+        "Brawndo": 56,
+        "Initech": 130,
+        "Hooli": 153
+      },
+      "remaining": []
+    },
+    "hosted_native_assessment_write_coverage": "Not inferred from opening348 guides or restart exceptions; quantify separately from actual authenticated lifecycle evidence."
+  },
+  "reporting_adapter_provenance": [
+    "Initial adapter assumed the3.5 summary schema for1.2; it was corrected to the actual1.2 before/after schema. No application source or test assertion changed.",
+    "The full1.2 native-history accessible tree includes surrounding program content. Its first page difference is Continue with1.1 versus Continue with1.2. Native preservation compares the complete exact 1.2 Manage dialog subtree, as the source evidence explicitly scopes it; that subtree is identical, including21 native-history entries and activity."
+  ],
+  "input_comparison": {
+    "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\omnibot-cis-runtime\\outputs\\cis-fresh-state-b90\\hosted-prompt-version-comparison-b90.json",
+    "sha256": "7f7cfeedca08d9b8e501d065f207913c2fb20df57854c6a97d18e8b4fe407203",
+    "ledger": {
+      "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-placements-b90.json",
+      "sha256": "8f13fb8a152c70409047250f795e33ef86ee5d8bb43e702cbd60849a6f68c6c1",
+      "snapshot_observation_count": 348,
+      "last_observation": "2026-10-10T13:56:26.294Z",
+      "incremental_boundary": "The live lead-owned ledger grows; this is an immutable comparison of this read snapshot. Rerun the same utility after final339 observations, without altering original records."
+    }
+  },
+  "authorized_interview_only_followups": [
+    {
+      "client": "Brawndo",
+      "group": 1,
+      "id": "3.5",
+      "status": "current_source_visible_after_separately_authorized_interview_only_restart",
+      "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\brawndo-3.5-authorized-exception-b90.json",
+      "sha256": "ec52be20396a44c6120aa8711817d26fae4647b0d9d7df9bf0607cdd11705492",
+      "input_schema": "3.5-summary-with-linked-evidence",
+      "explicit_authorization": "User one-record interview-only exception 2026-10-10",
+      "assessment_id": "fw_b4a32e7631ed5c1d9c67a415ebd226c2",
+      "confirm_restart_activations": 1,
+      "reused_historical_answers": false,
+      "new_interview_unanswered": true,
+      "current_source_visible": true,
+      "native_assessment_save_activations": 0,
+      "interview_history_write": true,
+      "entirely_read_only": false,
+      "native_implementation_unchanged": true,
+      "native_status_unchanged": true,
+      "native_visible_values_unchanged": true,
+      "native_metadata_unchanged": true,
+      "native_history_and_activity_unchanged": true,
+      "linked_finding_unchanged": true,
+      "preserved_interview_revisions": [
+        9,
+        18
+      ],
+      "observed_questions": [
+        "Is the practice “Securely Dispose of Data” in place and operating?"
+      ],
+      "expected_fresh_current_question_titles": [
+        "Is the practice “Securely Dispose of Data” in place and operating?"
+      ],
+      "observed_current_prompt_match": true,
+      "limitation": "Public native metadata/history and linked finding compared; not a full database export."
+    },
+    {
+      "client": "Brawndo",
+      "group": 1,
+      "id": "1.2",
+      "status": "current_source_visible_after_separately_authorized_interview_only_restart",
+      "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\brawndo-1.2-authorized-exception-b90.json",
+      "sha256": "038c412a499610a2be60416e21adba3f8b6a95b47c858d2ad89b0bd806b34d4c",
+      "input_schema": "1.2-detailed-accessible-tree-before-after",
+      "explicit_authorization": "User explicitly authorized interview-only current-source review for exact synthetic Brawndo 1.2",
+      "assessment_id": "fw_086abb33d7dc5c1ebb55df6f2ffbbc13",
+      "confirm_restart_activations": 1,
+      "reused_historical_answers": false,
+      "new_interview_unanswered": true,
+      "current_source_visible": true,
+      "native_assessment_save_activations": 0,
+      "interview_history_write": true,
+      "entirely_read_only": false,
+      "native_implementation_unchanged": true,
+      "native_status_unchanged": true,
+      "native_visible_values_unchanged": true,
+      "native_metadata_unchanged": true,
+      "native_history_and_activity_unchanged": true,
+      "linked_finding_unchanged": null,
+      "preserved_interview_revisions": [
+        75,
+        76
+      ],
+      "observed_questions": [
+        "Is a process in place to address unauthorized assets?"
+      ],
+      "expected_fresh_current_question_titles": [
+        "Is a process in place to address unauthorized assets?"
+      ],
+      "observed_current_prompt_match": true,
+      "limitation": "Exact recorded native visible-values/row/native-manage accessible-tree equality independently compared. This does not establish equality of unobserved database fields or every linked record."
+    }
+  ],
+  "boundaries": [
+    "Original ambiguous/historical observations remain in raw evidence; latest-per-client/group/id selection prevents duplicates from inflating339.",
+    "Opening guides did not exercise every reachable group or153 status/evaluator combinations; source QA/full-branch local rendering and hosted native lifecycle writes remain separate layers.",
+    "Current-compatible with recorded no-version-interlock is observed source-context evidence, not uniquely identified version from shared prompt wording alone.",
+    "Exceptions intentionally write the versioned interview/history after explicit one-record authorization. They are not wholly read-only and are not native assessment saves.",
+    "Public native fields/history/linked-record observations are not a complete database export or proof of unobserved fields.",
+    "Unseen and previously saved draft state cannot be inferred from client names, native NotAssessed status, blank native text, or approved CSS."
+  ]
+}

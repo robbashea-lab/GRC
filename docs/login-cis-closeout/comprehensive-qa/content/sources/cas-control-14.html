@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 14: Security Awareness and Skills Training - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 14: Security Awareness and Skills Training";
+        var mkdocs_page_input_path = "source/Controls14.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls14/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 14: Security Awareness and Skills Training</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#141-establish-and-maintain-a-security-awareness-program">14.1: Establish and Maintain a Security Awareness Program</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#initial-training-compliance">Initial Training Compliance</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#up-to-date-training">Up to Date Training</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#142-train-workforce-members-to-recognize-social-engineering-attacks">14.2: Train Workforce Members to Recognize Social Engineering Attacks</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#initial-training-compliance_1">Initial Training Compliance</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#up-to-date-training_1">Up to Date Training</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#143-train-workforce-members-on-authentication-best-practices">14.3: Train Workforce Members on Authentication Best Practices</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#initial-training-compliance_2">Initial Training Compliance</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#up-to-date-training_2">Up to Date Training</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#144-train-workforce-on-data-handling-best-practices">14.4: Train Workforce on Data Handling Best Practices</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#initial-training-compliance_3">Initial Training Compliance</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#up-to-date-training_3">Up to Date Training</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#145-train-workforce-members-on-causes-of-unintentional-data-exposure">14.5: Train Workforce Members on Causes of Unintentional Data Exposure</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#initial-training-compliance_4">Initial Training Compliance</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#up-to-date-training_4">Up to Date Training</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#146-train-workforce-members-on-recognizing-and-reporting-security-incidents">14.6: Train Workforce Members on Recognizing and Reporting Security Incidents</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#initial-training-compliance_5">Initial Training Compliance</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#up-to-date-training_5">Up to Date Training</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#147-train-workforce-on-how-to-identify-and-report-if-their-enterprise-assets-are-missing-security-updates">14.7: Train Workforce on How to Identify and Report if Their Enterprise Assets are Missing Security Updates</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#initial-training-compliance_6">Initial Training Compliance</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#up-to-date-training_6">Up to Date Training</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#148-train-workforce-on-the-dangers-of-connecting-to-and-transmitting-enterprise-data-over-insecure-networks">14.8: Train Workforce on the Dangers of Connecting to and Transmitting Enterprise Data Over Insecure Networks</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_7">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_7">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_7">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_7">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#initial-training-compliance_7">Initial Training Compliance</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#up-to-date-training_7">Up to Date Training</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#149-conduct-role-specific-security-awareness-and-skills-training">14.9: Conduct Role-Specific Security Awareness and Skills Training</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_8">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_8">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_8">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_8">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#initial-training-compliance_8">Initial Training Compliance</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#up-to-date-training_8">Up to Date Training</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 14: Security Awareness and Skills Training</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls14.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-14-security-awareness-and-skills-training">CIS Control 14: Security Awareness and Skills Training</h1>
+<p>Establish and maintain a security awareness program to influence
+behavior among the workforce to be security conscious and properly
+skilled to reduce cybersecurity risks to the enterprise.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>The actions of people play a critical part in the success or failure of
+an enterprise's security program. It is easier for an attacker to entice
+a user to click a link or open an email attachment to install malware in
+order to get into an enterprise, than to find a network exploit to do it
+directly.</p>
+<p>Users themselves, both intentionally and unintentionally, can cause
+incidents as a result of mishandling sensitive data, sending an email
+with sensitive data to the wrong recipient, losing a portable end-user
+device, using weak passwords, or using the same password they use on
+public sites.</p>
+<p>No security program can effectively address cyber risk without a means
+to address this fundamental human vulnerability. Users at every level of
+the enterprise has different risks. For example, executives manage more
+sensitive data; system administrators have the ability to control access
+to systems and applications, and users in finance, human resources, and
+contracts all have access to different types of sensitive data that can
+make them targets.</p>
+<p>The training should be updated regularly. This will increase the culture
+of security and discourage risky workarounds.</p>
+<hr />
+<h2 id="141-establish-and-maintain-a-security-awareness-program">14.1: Establish and Maintain a Security Awareness Program</h2>
+<p>Establish and maintain a security awareness program. The purpose of a
+security awareness program is to educate the enterprise's workforce on
+how to interact with enterprise assets and data in a secure manner.
+Conduct training at hire and, at a minimum, annually. Review and update
+content annually, or when significant enterprise changes occur that
+could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li>Security Awareness Program</li>
+<li><code>GV43</code>: List of Workforce Members</li>
+<li>List of most recent security awareness training completion dates for
+    each workforce member</li>
+<li>Date of last review or update to security awareness program content</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Check enterprise to determine if Input 1 exists</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Compare the date in Input 4 to the current date and capture
+    the timeframe in months (M2)</p>
+</li>
+<li>
+<p>For every member of the workforce in <code>GV43</code>, determine whether the member has completed training</p>
+<ol>
+<li>Identify and enumerate members who have completed at least initial training (M4)</li>
+<li>Identify and enumerate members who have not completed any  training (M5)</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 3.1, Identify the date of most recently completed security awareness
+    training</p>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 3.1, use the output of Operation 4 and compare the date to the current date. Capture timeframe in months.</p>
+<ol>
+<li>Identify and enumerate members whose most recent training date is less than or equal to twelve months from the current date (M6)</li>
+<li>Identify and enumerate members whose most recent training date is greater than twelve months from the current date (M7)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Output of Operation 2</li>
+<li>M3 = Count of Input 2 <code>GV43</code></li>
+<li>M4 = Count of workforce members that have completed training</li>
+<li>M5 = Count of workforce members that have not completed training</li>
+<li>M6 = Count of workforce members whose training is up to date</li>
+<li>M7 = Count of workforce members whose training is not up to date</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is measured at a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M2 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="initial-training-compliance">Initial Training Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of workforce members that have received initial training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="up-to-date-training">Up to Date Training</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of compliant workforce members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M6 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="142-train-workforce-members-to-recognize-social-engineering-attacks">14.2: Train Workforce Members to Recognize Social Engineering Attacks</h2>
+<p>Train workforce members to recognize social engineering attacks, such as phishing, business email compromise (BEC), pretexting, and tailgating. </p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li>Recognizing Social Engineering Attacks training module</li>
+<li><code>GV43</code>: List of Workforce Members</li>
+<li>List of most recent module training completion dates for each
+    workforce member</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Check enterprise to determine if Input 1 exists</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce in <code>GV43</code>, determine whether the member has completed training</p>
+<ol>
+<li>Identify and enumerate members who have completed at least initial training (M3)</li>
+<li>Identify and enumerate members who have not completed any training (M4)</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, identify the date of the most recently completed module training</p>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, use the output of Operation 4 and compare the date to the current date. Capture timeframe in months.</p>
+<ol>
+<li>Identify and enumerate members whose most recent training date is less than or equal to twelve months from the current date (M5)</li>
+<li>Identify and enumerate members whose most recent training date is greater than twelve months from the current date (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of <code>GV43</code></li>
+<li>M3 = Count of workforce members that have completed training</li>
+<li>M4 = Count of workforce members that have not completed training</li>
+<li>M5 = Count of workforce members whose training is up to date</li>
+<li>M6 = Count of workforce members whose training is not up to date</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M1 is measured at a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="initial-training-compliance_1">Initial Training Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of workforce members that have received initial training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="up-to-date-training_1">Up to Date Training</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of compliant workforce members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="143-train-workforce-members-on-authentication-best-practices">14.3: Train Workforce Members on Authentication Best Practices</h2>
+<p>Train workforce members on authentication best practices. Example topics
+include MFA, password composition, and credential management.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li>Authentication Best Practices training module</li>
+<li><code>GV43</code>: List of Workforce Members</li>
+<li>List of most recent module training completion dates for each
+    workforce member</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Check enterprise to determine if Input 1 exists</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>
+<ol>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce in <code>GV43</code>, determine whether the member has completed training</p>
+<ol>
+<li>Identify and enumerate members who have completed at least initial training (M3)</li>
+<li>Identify and enumerate members who have not completed any training (M4)</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1,
+    identify the date of most recently completed module training</p>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, use the output of Operation 4 and compare the date to the current date. Capture timeframe in months.</p>
+<ol>
+<li>Identify and enumerate members whose most recent training date is less than or equal to twelve months from the current date (M5)</li>
+<li>Identify and enumerate members whose most recent training date is greater than twelve months from the current date (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of <code>GV43</code></li>
+<li>M3 = Count of workforce members that have completed training</li>
+<li>M4 = Count of workforce members that have not completed training</li>
+<li>M5 = Count of workforce members whose training is up to date</li>
+<li>M6 = Count of workforce members whose training is not up to date</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<ul>
+<li>If M1 is measured at a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="initial-training-compliance_2">Initial Training Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of workforce members that have received initial training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="up-to-date-training_2">Up to Date Training</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of compliant workforce members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="144-train-workforce-on-data-handling-best-practices">14.4: Train Workforce on Data Handling Best Practices</h2>
+<p>Train workforce members on how to identify and properly store, transfer,
+archive, and destroy sensitive data. This also includes training
+workforce members on clear screen and desk best practices, such as
+locking their screen when they step away from their enterprise asset,
+erasing physical and virtual whiteboards at the end of meetings, and
+storing data and assets securely.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li>Data Handling Best Practices training module</li>
+<li><code>GV43</code>: List of Workforce Members</li>
+<li>List of most recent module training completion dates for each
+    workforce member</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Check enterprise to determine if Input 1 exists</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce in <code>GV43</code>, determine whether the member has completed training</p>
+<ol>
+<li>Identify and enumerate members who have completed at least initial training (M3)</li>
+<li>Identify and enumerate members who have not completed any training (M4)</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1,
+    identify the date of most recently completed module training</p>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, use the output of Operation 4 and compare the date to the current date. Capture timeframe in months.</p>
+<ol>
+<li>Identify and enumerate members whose most recent training date is less than or equal to twelve months from the current date (M5)</li>
+<li>Identify and enumerate members whose most recent training date is greater than twelve months from the current date (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of <code>GV43</code></li>
+<li>M3 = Count of workforce members that have completed training</li>
+<li>M4 = Count of workforce members that have not completed training</li>
+<li>M5 = Count of workforce members whose training is up to date</li>
+<li>M6 = Count of workforce members whose training is not up to date</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<ul>
+<li>If M1 is measured at a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="initial-training-compliance_3">Initial Training Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of workforce members that have received initial training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="up-to-date-training_3">Up to Date Training</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of compliant workforce members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="145-train-workforce-members-on-causes-of-unintentional-data-exposure">14.5: Train Workforce Members on Causes of Unintentional Data Exposure</h2>
+<p>Train workforce members to be aware of causes for unintentional data exposure.
+Example topics include the mis-delivery of sensitive data, losing a portable
+end-user device, or publishing data to unintended audiences.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li>Causes of Unintentional Data Exposure training module</li>
+<li><code>GV43</code>: List of Workforce Members</li>
+<li>List of most recent module training completion dates for each
+    workforce member</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Check enterprise to determine if Input 1 exists</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>
+<ol>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce in <code>GV43</code>, determine whether the member has completed training</p>
+<ol>
+<li>Identify and enumerate members who have completed at least initial training (M3)</li>
+<li>Identify and enumerate members who have not completed any training (M4)</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1,
+    identify the date of most recently completed module training</p>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, use the output of Operation 4 and compare the date to the current date. Capture timeframe in months.</p>
+<ol>
+<li>Identify and enumerate members whose most recent training date is less than or equal to twelve months from the current date (M5)</li>
+<li>Identify and enumerate members whose most recent training date is greater than twelve months from the current date (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of <code>GV43</code></li>
+<li>M3 = Count of workforce members that have completed training</li>
+<li>M4 = Count of workforce members that have not completed training</li>
+<li>M5 = Count of workforce members whose training is up to date</li>
+<li>M6 = Count of workforce members whose training is not up to date</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<ul>
+<li>If M1 is measured at a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="initial-training-compliance_4">Initial Training Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of workforce members that have received initial training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="up-to-date-training_4">Up to Date Training</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of compliant workforce members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="146-train-workforce-members-on-recognizing-and-reporting-security-incidents">14.6: Train Workforce Members on Recognizing and Reporting Security Incidents</h2>
+<p>Train workforce members to be able to recognize a potential incident and
+be able to report such an incident.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li>Recognizing and Reporting Security Incidents training module</li>
+<li><code>GV43</code>: List of Workforce Members</li>
+<li>List of most recent module training completion dates for each
+    workforce member</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Check enterprise to determine if Input 1 exists</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>
+<ol>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce in <code>GV43</code>, determine whether the member has completed training</p>
+<ol>
+<li>Identify and enumerate members who have completed at least initial training (M3)</li>
+<li>Identify and enumerate members who have not completed any training (M4)</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1,
+    identify the date of most recently completed module training</p>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, use the output of Operation 4 and compare the date to the current date. Capture timeframe in months.</p>
+<ol>
+<li>Identify and enumerate members whose most recent training date is less than or equal to twelve months from the current date (M5)</li>
+<li>Identify and enumerate members whose most recent training date is greater than twelve months from the current date (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of <code>GV43</code></li>
+<li>M3 = Count of workforce members that have completed training</li>
+<li>M4 = Count of workforce members that have not completed training</li>
+<li>M5 = Count of workforce members whose training is up to date</li>
+<li>M6 = Count of workforce members whose training is not up to date</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<ul>
+<li>If M1 is measured at a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="initial-training-compliance_5">Initial Training Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of workforce members that have received initial training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="up-to-date-training_5">Up to Date Training</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of compliant workforce members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="147-train-workforce-on-how-to-identify-and-report-if-their-enterprise-assets-are-missing-security-updates">14.7: Train Workforce on How to Identify and Report if Their Enterprise Assets are Missing Security Updates</h2>
+<p>Train the workforce to understand how to verify and report out-of-date software
+patches or any failures in automated processes and tools. Part of this
+training should include notifying IT personnel of any failures in
+automated processes and tools.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li>How to Identify and Report if Their Enterprise Assets are Missing
+    Security Updates training module</li>
+<li><code>GV43</code>: List of Workforce Members</li>
+<li>List of most recent module training completion dates for each
+    workforce member</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Check enterprise to determine if Input 1 exists</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>
+<ol>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce in <code>GV43</code>, determine whether the member has completed training</p>
+<ol>
+<li>Identify and enumerate members who have completed at least initial training (M3)</li>
+<li>Identify and enumerate members who have not completed any training (M4)</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, identify the date of most recently completed module training</p>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, use the output of Operation 4 and compare the date to the current date. Capture timeframe in months.</p>
+<ol>
+<li>Identify and enumerate members whose most recent training date is less than or equal to twelve months from the current date (M5)</li>
+<li>Identify and enumerate members whose most recent training  date is greater than twelve months from the current date (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of <code>GV43</code></li>
+<li>M3 = Count of workforce members that have completed training</li>
+<li>M4 = Count of workforce members that have not completed training</li>
+<li>M5 = Count of workforce members whose training is up to date</li>
+<li>M6 = Count of workforce members whose training is not up to date</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<ul>
+<li>If M1 is measured at a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="initial-training-compliance_6">Initial Training Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of workforce members that have received initial training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="up-to-date-training_6">Up to Date Training</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of compliant workforce members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="148-train-workforce-on-the-dangers-of-connecting-to-and-transmitting-enterprise-data-over-insecure-networks">14.8: Train Workforce on the Dangers of Connecting to and Transmitting Enterprise Data Over Insecure Networks</h2>
+<p>Train workforce members on the dangers of connecting to and transmitting data
+over insecure networks for enterprise activities. If the enterprise has
+remote workers, training must include guidance to ensure that all users
+securely configure their home network infrastructure.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_7">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_7">Inputs</h3>
+<ol>
+<li>Dangers of Connecting to and Transmitting Enterprise Data Over
+    Insecure Networks training module</li>
+<li><code>GV43</code>: List of Workforce Members</li>
+<li>List of most recent module training completion dates for each
+    workforce member</li>
+</ol>
+<h3 id="operations_7">Operations</h3>
+<ol>
+<li>
+<p>Check enterprise to determine if Input 1 exists</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce in <code>GV43</code>, determine whether the member has completed training</p>
+<ol>
+<li>Identify and enumerate members who have completed at least initial training (M3)</li>
+<li>Identify and enumerate members who have not completed any training (M4)</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1,
+    identify the date of most recently completed module training</p>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, use the output of Operation 4 and compare the date to the current date. Capture timeframe in months.</p>
+<ol>
+<li>Identify and enumerate members whose most recent training date is less than or equal to twelve months from the current date (M5)</li>
+<li>Identify and enumerate members whose most recent training date is greater than twelve months from the current date (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_7">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of <code>GV43</code></li>
+<li>M3 = Count of workforce members that have completed training</li>
+<li>M4 = Count of workforce members that have not completed training</li>
+<li>M5 = Count of workforce members whose training is up to date</li>
+<li>M6 = Count of workforce members whose training is not up to date</li>
+</ul>
+<h3 id="metrics_7">Metrics</h3>
+<ul>
+<li>If M1 is measured at a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="initial-training-compliance_7">Initial Training Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of workforce members that have received initial training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="up-to-date-training_7">Up to Date Training</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of compliant workforce members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="149-conduct-role-specific-security-awareness-and-skills-training">14.9: Conduct Role-Specific Security Awareness and Skills Training</h2>
+<p>Conduct role-specific security awareness and skills training. Example
+implementations include secure system administration courses for IT
+professionals, OWASP® Top 10 vulnerability awareness and prevention
+training for web application developers, and advanced social engineering
+awareness training for high-profile roles.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_8">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_8">Inputs</h3>
+<ol>
+<li>Role-Specific Security Awareness and Skills Training module</li>
+<li><code>GV43</code>: List of Workforce Members</li>
+<li>List of most recent module training completion dates for each
+    workforce member</li>
+</ol>
+<h3 id="operations_8">Operations</h3>
+<ol>
+<li>
+<p>Check enterprise to determine if Input 1 exists</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce in <code>GV43</code>, determine whether the member has completed training</p>
+<ol>
+<li>Identify and enumerate members who have completed at least initial training (M3)</li>
+<li>Identify and enumerate members who have not completed any training (M4)</li>
+</ol>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, identify the date of most recently completed module training</p>
+</li>
+<li>
+<p>For every member of the workforce identified in Operation 2.1, use the output of Operation 4 and compare the date to the current date. Capture timeframe in months.</p>
+<ol>
+<li>Identify and enumerate members whose most recent training date is less than or equal to twelve months from the current date (M5)</li>
+<li>Identify and enumerate members whose most recent training date is greater than twelve months from the current date (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_8">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of <code>GV43</code></li>
+<li>M3 = Count of workforce members that have completed training</li>
+<li>M4 = Count of workforce members that have not completed training</li>
+<li>M5 = Count of workforce members whose training is up to date</li>
+<li>M6 = Count of workforce members whose training is not up to date</li>
+</ul>
+<h3 id="metrics_8">Metrics</h3>
+<ul>
+<li>If M1 is measured at a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="initial-training-compliance_8">Initial Training Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of workforce members that have received initial training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="up-to-date-training_8">Up to Date Training</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of compliant workforce members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls13/" class="btn btn-neutral float-left" title="CIS Control 13: Network Monitoring and Defense"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls15/" class="btn btn-neutral float-right" title="CIS Control 15: Service Provider Management">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

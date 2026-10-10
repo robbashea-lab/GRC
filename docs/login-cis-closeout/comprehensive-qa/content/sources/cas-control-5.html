@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 5: Account Management - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 5: Account Management";
+        var mkdocs_page_input_path = "source/Controls5.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls5/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 5: Account Management</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#51-establish-and-maintain-an-inventory-of-accounts">5.1: Establish and Maintain an Inventory of Accounts</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-inventory">Completeness of Inventory</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#accuracy-of-inventory">Accuracy of Inventory</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#52-use-unique-passwords">5.2: Use Unique Passwords</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-password-policy">Completeness of Password Policy</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#strength-of-policy">Strength of Policy</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#53-disable-dormant-accounts">5.3: Disable Dormant Accounts</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#dormant-accounts">Dormant Accounts</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#enabled-dormant-accounts">Enabled Dormant Accounts</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#54-restrict-administrator-privileges-to-dedicated-administrator-accounts">5.4: Restrict Administrator Privileges to Dedicated Administrator Accounts</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions_1">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#administrator-user-accounts">Administrator User Accounts</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#unauthorized-administrator-accounts">Unauthorized Administrator Accounts</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#55-establish-and-maintain-an-inventory-of-service-accounts">5.5: Establish and Maintain an Inventory of Service Accounts</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-inventory_1">Completeness of Inventory</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#accuracy-of-inventory_1">Accuracy of Inventory</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#56-centralize-account-management">5.6: Centralize Account Management</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 5: Account Management</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls5.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-5-account-management">CIS Control 5: Account Management</h1>
+<p>Use processes and tools to assign and manage authorization to
+credentials for user accounts, including administrator accounts, as well
+as service accounts to enterprise assets and software.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>It is easier for an external or internal threat actor to gain
+unauthorized access to enterprise assets or data through using valid
+user credentials than through "hacking" the environment. There are many
+ways to covertly obtain access to user accounts, including weak
+passwords account still valid after a user leaves the enterprise,
+dormant or lingering test accounts, shared accounts that have not been
+changed in months or years, service accounts embedded in applications
+for scripts, a user having the same password as one they use for an
+an online account that has been compromised (in a public password dump),
+social engineering a user to give their password or using malware to
+capture passwords or tokens in memory or over the network.</p>
+<p>Administrative or highly privileged accounts are a particular target,
+because they allow attackers to add other accounts or make changes to
+assets that could make them more vulnerable to other attacks. Service
+accounts are also sensitive, as they are often shared among teams,
+internal and external to the enterprise, and sometimes not known about,
+only to be revealed in standard account management audits.</p>
+<p>Finally, account logging and monitoring is a critical component of
+security operations. While account logging and monitoring are covered in
+CIS Control 8 (Audit Log Management) is important in the development
+of a comprehensive Identity and Access Management (IAM) program.</p>
+<hr />
+<h2 id="51-establish-and-maintain-an-inventory-of-accounts">5.1: Establish and Maintain an Inventory of Accounts</h2>
+<p>Establish and maintain an inventory of all accounts managed in the enterprise. The inventory must at a minimum include user, administrator accounts, and service accounts. The inventory, at a minimum, should contain the person’s name, username, start/stop dates, and department. Validate that all active accounts are authorized, on a recurring schedule at a minimum quarterly, or more frequently.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Identify</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV22</code>: Inventory of Accounts</li>
+<li>Date of last review of the inventory of accounts</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Check if the enterprise maintains an inventory of user and administrative accounts (Input 2):</p>
+<ol>
+<li>If the inventory exists, M1 = 1</li>
+<li>If the inventory does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Using the inventory of accounts <code>GV22</code>, determine if the inventory captures the following elements: person's name, username, start/stop dates, and department:</p>
+<ol>
+<li>Each element is assigned a value of 1 if it exists and 0 if it does not. Total the number of elements that exist (M3).</li>
+</ol>
+</li>
+<li>
+<p>Using <code>GV22</code>, check each account for elements: person's name, username, start/stop dates, and department:</p>
+<ol>
+<li>Identify and enumerate accounts with all elements (M4)</li>
+<li>Identify and enumerate accounts missing or with incomplete elements (M5)</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify authentication systems or other software that manages accounts <code>GV23</code>.</p>
+</li>
+<li>
+<p>Using the output of Operation 4, enumerate all current user and administrative accounts throughout the enterprise (M6)</p>
+</li>
+<li>
+<p>Compare the output of Operation 5 with <code>GV22</code>:</p>
+<ol>
+<li>Identify and enumerate accounts that are supposed to be active/enabled (M7)</li>
+<li>Identify and enumerate accounts that are supposed to be disabled/removed (M8)</li>
+</ol>
+</li>
+<li>
+<p>Compare the current date to the date provided in Input 3 and enumerate the timeframe in months (M9)</p>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Does the account inventory exist (Output of Operation 1)</li>
+<li>M2 = Count of accounts in <code>GV22</code></li>
+<li>M3 = Count of elements provided in the inventory</li>
+<li>M4 = Count of accounts in inventory with complete information</li>
+<li>M5 = Count of accounts in inventory with missing or incomplete information</li>
+<li>M6 = Count of current accounts identified through Operation 5</li>
+<li>M7 = Count of authorized accounts</li>
+<li>M8 = Count of unauthorized accounts</li>
+<li>M9 = Timeframe of the last update in months</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score, and other metrics don't apply.</li>
+<li>If M9 is greater than three, this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-inventory">Completeness of Inventory</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of minimum elements included in the inventory.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / 4</code></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of accounts with complete information.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / 2</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="accuracy-of-inventory">Accuracy of Inventory</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of accurately listed accounts in the inventory.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M8 / M6</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="52-use-unique-passwords">5.2: Use Unique Passwords</h2>
+<p>Use unique passwords for all enterprise assets. Best practice implementation includes, at a minimum, an 8-character password for accounts using Multi-Factor Authentication (MFA) and a 14-character password for accounts not using MFA. </p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV20</code>: Unique Password Policy</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Check if the enterprise has a unique password policy <code>GV20</code>:</p>
+</li>
+<li>
+<p>If the policy is available, M1 = 1</p>
+</li>
+<li>
+<p>Otherwise M1 = 0</p>
+</li>
+<li>
+<p>Review the policy and determine whether it includes password guidance for accounts without MFA:</p>
+</li>
+<li>
+<p>If guidance is included, M2 = 1</p>
+<ol>
+<li>
+<p>Does guidance, at a minimum, require a fourteen-character password:</p>
+<ol>
+<li>If password guidance is fourteen characters or longer, M3 = 1</li>
+<li>Otherwise M3 = 0</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>
+<p>Otherwise M2 = 0</p>
+</li>
+<li>
+<p>Review the policy and determine whether it includes password guidance for accounts with MFA:</p>
+</li>
+<li>
+<p>If guidance is included, M4 = 1</p>
+<ol>
+<li>
+<p>Does guidance, at a minimum, require an eight-character password:</p>
+</li>
+<li>
+<p>If password guidance is eight characters or longer, M5 = 1</p>
+</li>
+<li>Otherwise M5 = 0</li>
+</ol>
+</li>
+<li>
+<p>Otherwise M4 = 0</p>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Does a password policy exist?</li>
+<li>M2 = Does guidance exist for accounts without MFA?</li>
+<li>M3 = Does guidance for accounts without MFA meet minimum guidance?</li>
+<li>M4 = Does guidance exist for accounts with MFA?</li>
+<li>M5 = Does guidance for accounts with MFA meet minimum guidance?</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M1 is 0, the Safeguard receives a failing score. Other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-password-policy">Completeness of Password Policy</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of completeness of the unique password policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>(M2 + M4) / 2</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="strength-of-policy">Strength of Policy</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of password guidance that meets minimum character length standards</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>(M3 + M5) / 2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="53-disable-dormant-accounts">5.3: Disable Dormant Accounts</h2>
+<p>Delete or disable any dormant accounts after a period of 45 days of inactivity, where supported.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 5.1: Establish and Maintain an Inventory of Accounts</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV22</code>: Inventory of Accounts</li>
+<li>Enterprise-defined policy for dormant threshold</li>
+</ol>
+<h3 id="assumptions">Assumptions</h3>
+<ul>
+<li>The list of accounts for the enterprise includes OS-level, database, internal and external application accounts.</li>
+<li>A query interface is assumed to enable the collection of a “last activity” timestamp, such as the last login, as well as a status indicating if the account is enabled or disabled.</li>
+</ul>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Review Input 2 and note the dormant threshold in terms of days (M2).</p>
+</li>
+<li>
+<p>For each account in <code>GV22</code>, query the interface and collect:</p>
+<ol>
+<li>The date of the last activity for each account.</li>
+<li>Whether the account is disabled or not.</li>
+</ol>
+</li>
+<li>
+<p>Using the output of Operation 2.1 and Input 2:</p>
+<ol>
+<li>Identify and enumerate accounts that have exceeded the dormant threshold (M3).</li>
+<li>Identify and enumerate accounts that are still within the dormant threshold (M4).</li>
+</ol>
+</li>
+<li>
+<p>Use the output of Operation 2.2 and 3.1 (M3):</p>
+<ol>
+<li>Identify and enumerate accounts that are disabled (M5).</li>
+<li>Identify and enumerate accounts that are still enabled (M6).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of accounts in <code>GV22</code></li>
+<li>M2 = Timeframe of dormant threshold in days</li>
+<li>M3 = Count of dormant accounts</li>
+<li>M4 = Count of active accounts</li>
+<li>M5 = Count of dormant accounts that have been disabled</li>
+<li>M6 = Count of dormant accounts still enabled</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<h4 id="dormant-accounts">Dormant Accounts</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of dormant accounts still included in the inventory.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M6 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="enabled-dormant-accounts">Enabled Dormant Accounts</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of dormant accounts still enabled.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M6 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="54-restrict-administrator-privileges-to-dedicated-administrator-accounts">5.4: Restrict Administrator Privileges to Dedicated Administrator Accounts</h2>
+<p>Restrict administrator privileges to dedicated administrator accounts on enterprise assets. Conduct general computing activities, such as internet browsing, email, and productivity suite use, from the user’s primary, non-privileged account.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 5.1: Establish and Maintain an Inventory of Accounts</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV22</code>: Inventory of Accounts</li>
+<li>List of users identified as administrators</li>
+</ol>
+<h3 id="assumptions_1">Assumptions</h3>
+<ul>
+<li>For the purpose of this control, it is assumed that users identified as administrators that have active administrator and non-administrator accounts have properly dedicated accounts for administrative privileges.</li>
+</ul>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Using <code>GV22</code> and Input 2:</p>
+<ol>
+<li>Identify and enumerate users identified as administrators with active administrator accounts (M1).</li>
+<li>Identify and enumerate users identified as administrators without active administrator accounts (M2).</li>
+<li>Identify and enumerate users not identified as administrators with active administrator accounts (M3).</li>
+</ol>
+</li>
+<li>
+<p>Using <code>GV22</code> and the output of Operation 1.1:</p>
+<ol>
+<li>Identify and enumerate users identified as administrators that have an active non-administrator account (M4).</li>
+<li>Identify and enumerate users identified as administrators that do not have an active non-administrator account (M5).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of authorized administrator users with active administrator accounts</li>
+<li>M2 = Count of authorized administrator users without active administrator accounts</li>
+<li>M3 = Count of non-administrative users with active administrator accounts</li>
+<li>M4 = Count of authorized administrator users with an active administrator and non-administrator account</li>
+<li>M5 = Count of authorized administrator users without an active administrator and non-administrator account</li>
+<li>M6 = Count of Input 2</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<h4 id="administrator-user-accounts">Administrator User Accounts</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of administrator users with both an administrator account and a non-administrator account.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M6</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="unauthorized-administrator-accounts">Unauthorized Administrator Accounts</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of unauthorized administrator accounts.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / (M1 + M3)</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="55-establish-and-maintain-an-inventory-of-service-accounts">5.5: Establish and Maintain an Inventory of Service Accounts</h2>
+<p>Establish and maintain an inventory of service accounts. The inventory, at a minimum, must contain the department owner, review date, and purpose. Perform service account reviews to validate that all active accounts are authorized on a recurring schedule at a minimum quarterly, or more frequently.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Identify</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 6.6: Establish and Maintain an Inventory of Authentication and Authorization Systems</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV23</code>: Inventory of Authentication and Authorization Systems </li>
+<li>Inventory of Service Accounts</li>
+<li>Date of last review of the inventory of service accounts</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Check if the enterprise maintains an inventory of service accounts (Input 2):</p>
+<ol>
+<li>If the inventory exists, set M1 = 1.</li>
+<li>If the inventory does not exist, set M1 = 0.</li>
+</ol>
+</li>
+<li>
+<p>Using the inventory of accounts (Input 2), determine if the inventory captures the following elements: department owner, review date, and purpose:</p>
+<ol>
+<li>Each element is assigned a value of 1 if it exists and 0 if it does not. Total the number of elements that exist (M3).</li>
+</ol>
+</li>
+<li>
+<p>Using Input 2, check each account for elements: department owner, review date, and purpose:</p>
+<ol>
+<li>Identify and enumerate accounts with all elements (M4).</li>
+<li>Identify and enumerate accounts missing or with incomplete elements (M5).</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV23</code> to identify authentication systems or other software that manages service accounts.</p>
+</li>
+<li>
+<p>Using the output of Operation 4, enumerate all current service accounts throughout the enterprise (M6).</p>
+</li>
+<li>
+<p>Compare the output of Operation 5 with Input 2:</p>
+<ol>
+<li>Identify and enumerate accounts that are supposed to be active/enabled (M7).</li>
+<li>Identify and enumerate accounts that are supposed to be disabled/removed (M8).</li>
+</ol>
+</li>
+<li>
+<p>Compare the current date to the date provided in Input 3 and enumerate the timeframe in months (M9).</p>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Does the account inventory exist (Output of Operation 1)</li>
+<li>M2 = Count of accounts in Input 2</li>
+<li>M3 = Count of elements provided in inventory</li>
+<li>M4 = Count of accounts in inventory with complete information</li>
+<li>M5 = Count of accounts in inventory with missing or incomplete information</li>
+<li>M6 = Count of current service accounts identified through Operation 5</li>
+<li>M7 = Count of authorized accounts</li>
+<li>M8 = Count of unauthorized accounts</li>
+<li>M9 = Timeframe of last update in months</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score and other metrics don't apply.</li>
+<li>If M9 is greater than three, this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-inventory_1">Completeness of Inventory</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of minimum elements included in the inventory.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / 4</code></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of accounts with complete information.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / 2</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="accuracy-of-inventory_1">Accuracy of Inventory</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of accurately listed accounts in the inventory.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M8 / M6</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="56-centralize-account-management">5.6: Centralize Account Management</h2>
+<p>Centralize account management through a directory or identity service.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Govern</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Using <code>GV1</code> identify and enumerate centralized authentication points (M1)</p>
+</li>
+<li>
+<p>For each centralized authentication point identified in Operation 1, determine whether it is necessary or can be consolidated:</p>
+<ol>
+<li>Identify and enumerate authentication points that are unnecessary or can be consolidated (M2)</li>
+<li>Identify and enumerate authentication points that are necessary and cannot be consolidated (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Count of centralized authentication points in the enterprise</li>
+<li>M2 = Count of unnecessary centralized authentication points</li>
+<li>M3 = Count of necessary centralized authentication points</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>Percentage of properly centralized authentication points.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M1</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls4/" class="btn btn-neutral float-left" title="CIS Control 4: Secure Configuration of Enterprise Assets and Software"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls6/" class="btn btn-neutral float-right" title="CIS Control 6: Access Control Management">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

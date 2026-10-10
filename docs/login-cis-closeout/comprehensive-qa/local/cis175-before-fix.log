@@ -1,0 +1,96 @@
+FAIL src/lib/cis175SourceCondition.test.js
+  × only 17.5 selects the additive corrected source version (4 ms)
+  × relevance-backed third-party exclusion accepts complete internal response without invented remediation (1 ms)
+  √ unknown relevance or absent relevant assignments remains unresolved: Not sure (1 ms)
+  √ unknown relevance or absent relevant assignments remains unresolved: No (1 ms)
+  × an exclusion without rationale never supplies a complete implementation result
+  × old program3 answers remain readable and the changed condition is unanswered after explicit mapping (1 ms)
+
+  ● only 17.5 selects the additive corrected source version
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "cis-v8.1-program-4"
+    Received: "cis-v8.1-program-3"
+
+      14 |
+      15 | test('only 17.5 selects the additive corrected source version',()=>{
+    > 16 |   expect(versionForSafeguard(id)).toBe('cis-v8.1-program-4');
+         |                                   ^
+      17 |   for(const row of cis.requirements.filter(row=>row.control!==1&&row.id!==id))expect(versionForSafeguard(row.id)).toBe(program3.version);
+      18 | });
+      19 |
+
+      at Object.<anonymous> (src/lib/cis175SourceCondition.test.js:16:35)
+      at TestScheduler.scheduleTests (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● relevance-backed third-party exclusion accepts complete internal response without invented remediation
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected value: "Not applicable"
+    Received array: ["Yes", "Partially", "No", "Not sure"]
+
+      20 | test('relevance-backed third-party exclusion accepts complete internal response without invented remediation',()=>{
+      21 |   const version=versionForSafeguard(id),{question,row}=thirdParty(version),answers=complete(version);
+    > 22 |   expect(question.choices).toContain('Not applicable');
+         |                            ^
+      23 |   answers[question.id][row]='Not applicable';
+      24 |   answers.scope_reason='SYNTHETIC QA: no third party performs a relevant incident-response role; all required functions are assigned internally.';
+      25 |   validateAnswers(id,answers,version);
+
+      at Object.<anonymous> (src/lib/cis175SourceCondition.test.js:22:28)
+      at TestScheduler.scheduleTests (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● an exclusion without rationale never supplies a complete implementation result
+
+    Invalid matrix answer
+
+      50 |     if(!q)throw new Error('Unknown question');
+      51 |     if(detail||['text','date'].includes(q.type)){if(typeof value!=='string'||value.length>2000)throw new Error('Invalid answer text');}
+    > 52 |     else if(q.type==='matrix'){if(!value||typeof value!=='object'||Array.isArray(value)||Object.entries(value).some(([k,v])=>!q.rows.includes(k)||!(q.row_choices?.[k]||q.choices).includes(v)))throw new Error('Invalid matrix answer');}
+         |                                                                                                                                                                                                       ^
+      53 |     else if(q.type==='multi'){if(!Array.isArray(value)||value.length>q.choices.length||new Set(value).size!==value.length||value.some(v=>!q.choices.includes(v))||(version===control1V4.version&&value.length>1&&value.some(v=>['None','Not sure'].includes(v))))throw new Error('Invalid answer selection');}
+      54 |     else if(!q.choices.includes(value))throw new Error('Invalid answer selection');
+      55 |   }
+
+      at validateAnswers (src/lib/guidedAssessment.js:52:199)
+      at generateCurrentCisResult (src/lib/guidedAssessment.js:187:3)
+      at generateResult (src/lib/guidedAssessment.js:129:69)
+      at Object.<anonymous> (src/lib/cis175SourceCondition.test.js:44:24)
+      at TestScheduler.scheduleTests (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● old program3 answers remain readable and the changed condition is unanswered after explicit mapping
+
+    expect(received).toBeUndefined()
+
+    Received: "Yes"
+
+      50 |   answers.operation='SYNTHETIC QA: preserve unchanged operating context.';
+      51 |   const original=JSON.stringify(answers),mapped=compatibleInterviewAnswers(id,answers,old,next),newRow=thirdParty(next);
+    > 52 |   expect(mapped[newRow.question.id]?.[newRow.row]).toBeUndefined();
+         |                                                    ^
+      53 |   expect(mapped.practice).toBe('Yes');
+      54 |   expect(mapped.operation).toBe(answers.operation);
+      55 |   const mappedRows=Object.entries(mapped).filter(([key])=>key.startsWith('requirements_')).flatMap(([,rows])=>Object.keys(rows));
+
+      at Object.<anonymous> (src/lib/cis175SourceCondition.test.js:52:52)
+      at TestScheduler.scheduleTests (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:173:3)
+
+Test Suites: 1 failed, 1 total
+Tests:       4 failed, 2 passed, 6 total
+Snapshots:   0 total
+Time:        1.518 s
+Ran all test suites within paths "src/lib/cis175SourceCondition.test.js".

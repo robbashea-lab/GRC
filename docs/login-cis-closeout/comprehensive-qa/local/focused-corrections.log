@@ -1,0 +1,8 @@
+PASS src/lib/cisRequiredUncertainty.test.js
+PASS src/lib/cis175SourceCondition.test.js
+
+Test Suites: 2 passed, 2 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        1.398 s, estimated 2 s
+Ran all test suites within paths "src/lib/cisRequiredUncertainty.test.js", "src/lib/cis175SourceCondition.test.js".

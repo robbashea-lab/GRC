@@ -1,0 +1,1081 @@
+[
+  {
+    "case": "IG1 partial-progress save and refresh resume",
+    "client": "OmniBot QA — Closeout CIS IG1",
+    "group": 1,
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "time": "2026-10-10T13:57:55.448Z",
+    "source": "b90a327",
+    "result": "verified",
+    "native": {
+      "status": [
+        "not_assessed"
+      ],
+      "text": ""
+    },
+    "interviewSave": true,
+    "resumed": "Question group 2 of 5"
+  },
+  {
+    "case": "IG1 first authoritative native save with exact reviewed text",
+    "time": "2026-10-10T13:59:09.179Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1334,
+    "sha256": "85d9c72fe1085368f85f9b25c3a779cc2cc3e57af190b7c786cb4acd42bd3a2d",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 saved text and separate status full reload",
+    "time": "2026-10-10T13:59:12.402Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1334,
+    "sha256": "85d9c72fe1085368f85f9b25c3a779cc2cc3e57af190b7c786cb4acd42bd3a2d",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 completed interview reopens exact saved manual wording",
+    "time": "2026-10-10T13:59:12.831Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1334,
+    "sha256": "85d9c72fe1085368f85f9b25c3a779cc2cc3e57af190b7c786cb4acd42bd3a2d",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 update cancellation preserves native record",
+    "time": "2026-10-10T13:59:37.092Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.\n\nSYNTHETIC cancellation attempt — must not reach native assessment.",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1334,
+    "sha256": "85d9c72fe1085368f85f9b25c3a779cc2cc3e57af190b7c786cb4acd42bd3a2d",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 Save-close cancellation leaves guide open and native unchanged",
+    "time": "2026-10-10T13:59:37.868Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.\n\nSYNTHETIC cancellation attempt — must not reach native assessment.",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1334,
+    "sha256": "85d9c72fe1085368f85f9b25c3a779cc2cc3e57af190b7c786cb4acd42bd3a2d",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 explicit Update assessment completed exact text",
+    "time": "2026-10-10T13:59:46.131Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.\n\nSYNTHETIC confirmed Update assessment — exact reviewed wording β.",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC reviewer edit α: retain this exact multiline wording.\n- This QA scenario does not verify evidence or real operations.\n\nEnd of isolated QA write-up.\n\nSYNTHETIC confirmed Update assessment — exact reviewed wording β.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1401,
+    "sha256": "1766b8650e8e49b14acc4a8166b66069fd624fb33acf8fac8c4153c124d751dd",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 changed requirement Partially Implemented Save-close completed",
+    "time": "2026-10-10T14:01:00.959Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "in_progress"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- Asset coverage: End-user devices are missing or incomplete.\n\nITEMS TO ADDRESS\n\nRemediation\n- Add or complete inventory coverage for End-user devices.\n\nSYNTHETIC reviewer edit retained after explicit factual refresh: no real operating claim.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1155,
+    "sha256": "ccb46df41aa9dc1bfef77424fe254fac5a856583fe2c7c169e01a201dc040c43",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 changed status/write-up exact refresh",
+    "time": "2026-10-10T14:01:03.823Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "in_progress"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- Asset coverage: End-user devices are missing or incomplete.\n\nITEMS TO ADDRESS\n\nRemediation\n- Add or complete inventory coverage for End-user devices.\n\nSYNTHETIC reviewer edit retained after explicit factual refresh: no real operating claim.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1155,
+    "sha256": "ccb46df41aa9dc1bfef77424fe254fac5a856583fe2c7c169e01a201dc040c43",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 restore required answer Implemented and Save-close completed",
+    "time": "2026-10-10T14:01:43.909Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1340,
+    "sha256": "36ddd6f602352b1036e54ef17f1a486f5903cdec5021c042fa1316e668da750f",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 rapid duplicate activation keeps one reviewed native value",
+    "time": "2026-10-10T14:02:37.857Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1415,
+    "sha256": "7e96027581dc25ea69b61bfd893a5931cab7c612e5801a36025d54be860de7c1",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 real stale summary Save-close fails without closing or overwriting native winner",
+    "time": "2026-10-10T14:03:33.507Z",
+    "source": "b90a327",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "group": 1,
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "loserSummary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.\n\nSYNTHETIC stale summary attempt — must not overwrite the native winner.",
+    "nativeWinner": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.\n\nSYNTHETIC native concurrent writer — preserve this authoritative wording γ.",
+    "error": "The interview, assessment or scope changed. Reopen the assessment before starting a new review.",
+    "guideRemainsOpen": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 native concurrent writer survived stale failure and refresh",
+    "time": "2026-10-10T14:03:55.725Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.\n\nSYNTHETIC native concurrent writer — preserve this authoritative wording γ.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1492,
+    "sha256": "d2b0833885d5a43baaab9e379b6e1284115bc7ef56d54a41875b69a1b5b51450",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 browser-tab recovery preserved authenticated native winner",
+    "time": "2026-10-10T14:05:00.903Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.\n\nSYNTHETIC native concurrent writer — preserve this authoritative wording γ.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1492,
+    "sha256": "d2b0833885d5a43baaab9e379b6e1284115bc7ef56d54a41875b69a1b5b51450",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 real failed-save explicit comparison retry preserves native edit and closes after success",
+    "time": "2026-10-10T14:05:24.245Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.\n\nSYNTHETIC native concurrent writer — preserve this authoritative wording γ.\n\nSYNTHETIC retry after explicit comparison — native winner wording preserved.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1570,
+    "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 recovered exact native text refresh",
+    "time": "2026-10-10T14:05:34.644Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.\n\nSYNTHETIC native concurrent writer — preserve this authoritative wording γ.\n\nSYNTHETIC retry after explicit comparison — native winner wording preserved.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1570,
+    "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 fresh blank baseline",
+    "time": "2026-10-10T14:14:26.850Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "not_assessed"
+    ],
+    "text": "",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 partial progress does not save native assessment",
+    "time": "2026-10-10T14:14:41.763Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "not_assessed"
+    ],
+    "text": "",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 first native Save assessment exact text",
+    "time": "2026-10-10T14:15:08.787Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.",
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1502,
+    "sha256": "0a95ad836f72d428017f64ce060d3c8d389e67c455da2c29e99d8595937ffb64",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 refreshed exact write-up and separate Implemented status",
+    "time": "2026-10-10T14:15:18.189Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1502,
+    "sha256": "0a95ad836f72d428017f64ce060d3c8d389e67c455da2c29e99d8595937ffb64",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 cancelled Update preserves previously saved native text",
+    "time": "2026-10-10T14:15:30.135Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.\nSYNTHETIC UNSAVED CANCEL ATTEMPT",
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1502,
+    "sha256": "0a95ad836f72d428017f64ce060d3c8d389e67c455da2c29e99d8595937ffb64",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 cancelled Save and close stays open and preserves native",
+    "time": "2026-10-10T14:15:30.888Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.\nSYNTHETIC UNSAVED CANCEL ATTEMPT",
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1502,
+    "sha256": "0a95ad836f72d428017f64ce060d3c8d389e67c455da2c29e99d8595937ffb64",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 confirmed Update completion exact text",
+    "time": "2026-10-10T14:15:37.210Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.\n\nSYNTHETIC CONFIRMED IG2 UPDATE β\n- Exact reviewer edit, separate from factual answers.",
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.\n\nSYNTHETIC CONFIRMED IG2 UPDATE β\n- Exact reviewer edit, separate from factual answers.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1590,
+    "sha256": "db06b209a7adfbfdc0d994788f9b6362e27515d9296c3c6eb37e749ccaba113b",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 revised answers do not silently replace native or manual wording",
+    "time": "2026-10-10T14:15:56.691Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.\n\nSYNTHETIC CONFIRMED IG2 UPDATE β\n- Exact reviewer edit, separate from factual answers.",
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC REVIEWED WORDING — IG2 α\n- Preserve this exact bullet.\n\nBlank lines remain intentional.\n\nSYNTHETIC CONFIRMED IG2 UPDATE β\n- Exact reviewer edit, separate from factual answers.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1590,
+    "sha256": "db06b209a7adfbfdc0d994788f9b6362e27515d9296c3c6eb37e749ccaba113b",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 successful Save and close exact partial text",
+    "time": "2026-10-10T14:15:58.385Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "in_progress"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports partial implementation of the practice to classify service providers. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- Classifications are updated and reviewed. Reported as absent.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\nRemediation\n- Address the reported deficiency: Classifications are updated and reviewed.\n\nSYNTHETIC IG2 REVIEWED PARTIAL — preserve α wording after explicit factual review.\n- Classification maintenance requires remediation in this fictional scenario.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1447,
+    "sha256": "73344b97f9e8531300fe34f2dffb49117e8a750ebb31c74b31185425294748a7",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 refresh preserves Partial status and exact reviewed text",
+    "time": "2026-10-10T14:16:17.384Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "in_progress"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports partial implementation of the practice to classify service providers. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- Classifications are updated and reviewed. Reported as absent.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\nRemediation\n- Address the reported deficiency: Classifications are updated and reviewed.\n\nSYNTHETIC IG2 REVIEWED PARTIAL — preserve α wording after explicit factual review.\n- Classification maintenance requires remediation in this fictional scenario.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1447,
+    "sha256": "73344b97f9e8531300fe34f2dffb49117e8a750ebb31c74b31185425294748a7",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 targeted resumed correction exact final Implemented write",
+    "time": "2026-10-10T14:16:19.838Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG2 FINAL REVIEWED α\n- Fictional maintenance gap corrected; preserve exact lines.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1496,
+    "sha256": "f63ccbc1ccb830f330c752cfb5a9ae818d764896e1085879dc7aa4875239d8e3",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 rapid duplicate confirmation final exact text",
+    "time": "2026-10-10T14:16:59.431Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG2 FINAL REVIEWED α\n- Fictional maintenance gap corrected; preserve exact lines.\n\nSYNTHETIC IG2 DUPLICATE ACTIVATION — one reviewed update.",
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG2 FINAL REVIEWED α\n- Fictional maintenance gap corrected; preserve exact lines.\n\nSYNTHETIC IG2 DUPLICATE ACTIVATION — one reviewed update.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1555,
+    "sha256": "d155d04da844eda28d9aad53ec744f5dfa6ed984b11bd9c8ee1171d9babc5efc",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 failed stale save keeps native winner after refresh",
+    "time": "2026-10-10T14:17:48.096Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG2 FINAL REVIEWED α\n- Fictional maintenance gap corrected; preserve exact lines.\n\nSYNTHETIC IG2 DUPLICATE ACTIVATION — one reviewed update.\n\nSYNTHETIC IG2 NATIVE CONCURRENT WINNER γ\n- Preserve this native edit during retry.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1639,
+    "sha256": "cc6522598ac98db53461f00f9bafa209f21e7fcad5453a39ca55f7144d7a8ebc",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 reviewed retry succeeds preserving native edit",
+    "time": "2026-10-10T14:18:01.774Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG2 FINAL REVIEWED α\n- Fictional maintenance gap corrected; preserve exact lines.\n\nSYNTHETIC IG2 DUPLICATE ACTIVATION — one reviewed update.\n\nSYNTHETIC IG2 NATIVE CONCURRENT WINNER γ\n- Preserve this native edit during retry.\n\nSYNTHETIC IG2 RETRY — reviewed after native comparison.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1696,
+    "sha256": "9fe09ccb23bb5406c6ddeb575f3f6db631d2831081e8418c946c0e4a0a481723",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 direct-onboarding fresh assessment blank",
+    "time": "2026-10-10T14:18:38.798Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "not_assessed"
+    ],
+    "text": "",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 partial progress refresh leaves native blank Not Assessed",
+    "time": "2026-10-10T14:18:44.703Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "not_assessed"
+    ],
+    "text": "",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 first native Save exact text and Implemented with contract alternative",
+    "time": "2026-10-10T14:19:05.380Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1454,
+    "sha256": "7028a63a828899a4697bf983fc967aacd8eb440d0bf8d97cae475fbddf73eed5",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 refreshed exact native write-up",
+    "time": "2026-10-10T14:19:18.572Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1454,
+    "sha256": "7028a63a828899a4697bf983fc967aacd8eb440d0bf8d97cae475fbddf73eed5",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 cancelled Update preserves saved native",
+    "time": "2026-10-10T14:19:19.802Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.\nSYNTHETIC UNSAVED CANCEL",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1454,
+    "sha256": "7028a63a828899a4697bf983fc967aacd8eb440d0bf8d97cae475fbddf73eed5",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 cancelled Save and close keeps window open and saved native",
+    "time": "2026-10-10T14:19:20.564Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.\nSYNTHETIC UNSAVED CANCEL",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1454,
+    "sha256": "7028a63a828899a4697bf983fc967aacd8eb440d0bf8d97cae475fbddf73eed5",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 confirmed Update exact text",
+    "time": "2026-10-10T14:19:36.927Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.\n\nSYNTHETIC IG3 CONFIRMED UPDATE β\n- Exact reviewer note without changing factual answers.",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.\n\nSYNTHETIC IG3 CONFIRMED UPDATE β\n- Exact reviewer note without changing factual answers.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1544,
+    "sha256": "9718d8149b1e75899eda1cfd9e3006af8fd41434e7292319edd80e91f9b22116",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 revised answers protect native and manual wording",
+    "time": "2026-10-10T14:19:38.749Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.\n\nSYNTHETIC IG3 CONFIRMED UPDATE β\n- Exact reviewer note without changing factual answers.",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 REVIEWED WORDING α\n- Preserve multiline bullets.\n\nIntentional blank line retained.\n\nSYNTHETIC IG3 CONFIRMED UPDATE β\n- Exact reviewer note without changing factual answers.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1544,
+    "sha256": "9718d8149b1e75899eda1cfd9e3006af8fd41434e7292319edd80e91f9b22116",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 successful Save and close exact Partial text",
+    "time": "2026-10-10T14:19:40.257Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "in_progress"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports partial implementation of the practice to assess service providers. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n\nIncomplete or missing\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as absent.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\nRemediation\n- Address the reported deficiency: Providers are reassessed annually at minimum, or with new and renewed contracts.\n\nSYNTHETIC IG3 PARTIAL REVIEWED α\n- Fictional provider reassessment is not operating.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1363,
+    "sha256": "c411666b9c84f22b03df8c30ff6495f78e1a1e6d48491bfbbf2b8fb94e88656f",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 refreshed Partial exact text",
+    "time": "2026-10-10T14:19:57.313Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "in_progress"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports partial implementation of the practice to assess service providers. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n\nIncomplete or missing\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as absent.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\nRemediation\n- Address the reported deficiency: Providers are reassessed annually at minimum, or with new and renewed contracts.\n\nSYNTHETIC IG3 PARTIAL REVIEWED α\n- Fictional provider reassessment is not operating.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1363,
+    "sha256": "c411666b9c84f22b03df8c30ff6495f78e1a1e6d48491bfbbf2b8fb94e88656f",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 targeted resume and corrected final Implemented exact write",
+    "time": "2026-10-10T14:19:59.749Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 FINAL α\n- Contract-trigger reassessment restored after explicit answer review.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1450,
+    "sha256": "4124fb6483b6666ca83b7dc3affbdc294ae66cee01fb594e11f718c03087a332",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 rapid duplicate confirmation exact text",
+    "time": "2026-10-10T14:20:31.388Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "addressed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 FINAL α\n- Contract-trigger reassessment restored after explicit answer review.\n\nSYNTHETIC IG3 DUPLICATE ACTIVATION — one reviewed update.",
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 FINAL α\n- Contract-trigger reassessment restored after explicit answer review.\n\nSYNTHETIC IG3 DUPLICATE ACTIVATION — one reviewed update.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1509,
+    "sha256": "f85075d6e5d0a1d082158459cd904715cbf863de4a04447d7ad880f2c122bdb4",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 stale save preserves native winner after refresh",
+    "time": "2026-10-10T14:21:13.234Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 FINAL α\n- Contract-trigger reassessment restored after explicit answer review.\n\nSYNTHETIC IG3 DUPLICATE ACTIVATION — one reviewed update.\n\nSYNTHETIC IG3 NATIVE WINNER γ\n- Preserve native operating note during retry.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1587,
+    "sha256": "4678626ee9fb4489139d59eb390c9b3c7c8d877f61fee9fca92ebcc34f8c8f9e",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 explicit reviewed retry succeeds preserving native winner",
+    "time": "2026-10-10T14:21:16.956Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 FINAL α\n- Contract-trigger reassessment restored after explicit answer review.\n\nSYNTHETIC IG3 DUPLICATE ACTIVATION — one reviewed update.\n\nSYNTHETIC IG3 NATIVE WINNER γ\n- Preserve native operating note during retry.\n\nSYNTHETIC IG3 RETRY — reviewed after native comparison.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1644,
+    "sha256": "45b26c241e94ec2fd0d26bf22f2a9574076ddf145effcedcdaefea9d14be83da",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 server interview CAS leaves native blank",
+    "time": "2026-10-10T14:22:06.703Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "not_assessed"
+    ],
+    "text": "",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7197f963a08452cc9946a904e49ec2c0",
+    "verification": "Not verified",
+    "characters": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 1.2 boundary evaluation never applies native assessment",
+    "time": "2026-10-10T14:25:17.398Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "not_assessed"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports the practice to address unauthorized assets is in place.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- process: Yes\n- frequency: Weekly\n- actions: Quarantine or isolate\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported unauthorized-asset process context: SYNTHETIC IG1 CAS WINNER — interview progress only.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.",
+    "text": "",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7c86ba63e0e35d83ad43f5c31264db1e",
+    "verification": "Not verified",
+    "characters": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "Viewing and completing 1.2 interview leaves 1.1 native unchanged",
+    "time": "2026-10-10T14:25:18.201Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 0,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.\n\nSYNTHETIC native concurrent writer — preserve this authoritative wording γ.\n\nSYNTHETIC retry after explicit comparison — native winner wording preserved.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1570,
+    "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG1 actual logout-login exact native restore",
+    "time": "2026-10-10T14:29:37.910Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.\n\nSYNTHETIC native concurrent writer — preserve this authoritative wording γ.\n\nSYNTHETIC retry after explicit comparison — native winner wording preserved.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1570,
+    "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 actual logout-login exact native restore",
+    "time": "2026-10-10T14:29:51.014Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to classify service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are classified. Reported as met.\n- Classifications are updated and reviewed. Reported as met.\n- Review and updates occur annually and when significant changes could affect the safeguard. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA 2026-10-10: fictional provider classification exercise only; not client implementation evidence.\n- Reported context for Safeguard requirements: SYNTHETIC CLOSEOUT QA: classification register and annual/change reviews are fictional accepted answers.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional providers are classified; classifications are reviewed annually and after significant changes. No real implementation or evidence verification is asserted.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG2 FINAL REVIEWED α\n- Fictional maintenance gap corrected; preserve exact lines.\n\nSYNTHETIC IG2 DUPLICATE ACTIVATION — one reviewed update.\n\nSYNTHETIC IG2 NATIVE CONCURRENT WINNER γ\n- Preserve this native edit during retry.\n\nSYNTHETIC IG2 RETRY — reviewed after native comparison.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+    "verification": "Not verified",
+    "characters": 1696,
+    "sha256": "9fe09ccb23bb5406c6ddeb575f3f6db631d2831081e8418c946c0e4a0a481723",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG3 actual logout-login exact native restore",
+    "time": "2026-10-10T14:30:01.092Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG3Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG3 reports the practice to assess service providers is in place. Reported operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- Service providers are assessed consistently with the provider-management policy. Reported as met.\n- Providers are reassessed annually at minimum, or with new and renewed contracts. Reported as met.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC CLOSEOUT QA IG3 2026-10-10 — fictional provider assessment exercise; not genuine client facts.\n- Reported context for Safeguard requirements: SYNTHETIC IG3 CONTRACT ALTERNATIVE — fictional reassessment occurs with new and renewed contracts; no blanket annual-only criterion.\n- Day-to-day operation: SYNTHETIC CLOSEOUT QA IG3 — fictional providers are assessed according to policy and reassessed with new and renewed contracts. No real provider is asserted or evidence verified.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\nSYNTHETIC IG3 FINAL α\n- Contract-trigger reassessment restored after explicit answer review.\n\nSYNTHETIC IG3 DUPLICATE ACTIVATION — one reviewed update.\n\nSYNTHETIC IG3 NATIVE WINNER γ\n- Preserve native operating note during retry.\n\nSYNTHETIC IG3 RETRY — reviewed after native comparison.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+    "verification": "Not verified",
+    "characters": 1644,
+    "sha256": "45b26c241e94ec2fd0d26bf22f2a9574076ddf145effcedcdaefea9d14be83da",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "Supported IG1 to IG2 preserves inherited 1.1 exact native value",
+    "time": "2026-10-10T14:35:22.384Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.\n\nSYNTHETIC native concurrent writer — preserve this authoritative wording γ.\n\nSYNTHETIC retry after explicit comparison — native winner wording preserved.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1570,
+    "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "Supported IG2 to IG3 preserves inherited 1.1 exact native value",
+    "time": "2026-10-10T14:35:53.679Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — Closeout CIS IG1Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "addressed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..\n\nIMPLEMENTATION BREAKDOWN\n\nIn place\n- An enterprise asset inventory is maintained.\n- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.\n- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.\n- Asset additions, changes and retirements are reflected in the inventory.\n- Periodic review: The complete inventory is reviewed every six months.\n- Periodic review: The last reported complete review was 2026-10-10.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nITEMS TO ADDRESS\n\n- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.\n- Evidence verification remains separate; no real-client completion claim.\n\nSYNTHETIC duplicate-activation test: one resulting native history append.\n\nSYNTHETIC native concurrent writer — preserve this authoritative wording γ.\n\nSYNTHETIC retry after explicit comparison — native winner wording preserved.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+    "verification": "Not verified",
+    "characters": 1570,
+    "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 affirmative absence saves exact Not Implemented native assessment",
+    "time": "2026-10-10T14:39:51.712Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 1,
+    "status": [
+      "needs_attention"
+    ],
+    "summary": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to ensure service provider contracts include security requirements is not currently in place.\n\nIMPLEMENTATION BREAKDOWN\n\nIncomplete or missing\n- Service-provider contracts include security requirements. Reported as absent.\n- Contract requirements are consistent with the service-provider management policy. Reported as absent.\n- Contracts are reviewed annually for missing security requirements. Reported as absent.\n- Reviewer-reported deficiencies: SYNTHETIC IG2 STATUS QA — confirmed absence of contract security clauses, policy alignment and annual review in this fictional scenario only.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC IG2 AFFIRMATIVE ABSENCE — the fictional scenario has no contract security requirements practice, not an unknown answer.\n\nITEMS TO ADDRESS\n\nRemediation\n- Address the reported deficiency: Service-provider contracts include security requirements.\n- Address the reported deficiency: Contract requirements are consistent with the service-provider management policy.\n- Address the reported deficiency: Contracts are reviewed annually for missing security requirements.\n- Address the reported deficiencies: SYNTHETIC IG2 STATUS QA — confirmed absence of contract security clauses, policy alignment and annual review in this fictional scenario only.\n\nSYNTHETIC IG2 AFFIRMATIVE-ABSENCE REVIEW — not real client facts.",
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2 reports the practice to ensure service provider contracts include security requirements is not currently in place.\n\nIMPLEMENTATION BREAKDOWN\n\nIncomplete or missing\n- Service-provider contracts include security requirements. Reported as absent.\n- Contract requirements are consistent with the service-provider management policy. Reported as absent.\n- Contracts are reviewed annually for missing security requirements. Reported as absent.\n- Reviewer-reported deficiencies: SYNTHETIC IG2 STATUS QA — confirmed absence of contract security clauses, policy alignment and annual review in this fictional scenario only.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC IG2 AFFIRMATIVE ABSENCE — the fictional scenario has no contract security requirements practice, not an unknown answer.\n\nITEMS TO ADDRESS\n\nRemediation\n- Address the reported deficiency: Service-provider contracts include security requirements.\n- Address the reported deficiency: Contract requirements are consistent with the service-provider management policy.\n- Address the reported deficiency: Contracts are reviewed annually for missing security requirements.\n- Address the reported deficiencies: SYNTHETIC IG2 STATUS QA — confirmed absence of contract security clauses, policy alignment and annual review in this fictional scenario only.\n\nSYNTHETIC IG2 AFFIRMATIVE-ABSENCE REVIEW — not real client facts.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_d53f1e355c8f50f08b1d447df7e97576",
+    "verification": "Not verified",
+    "characters": 1428,
+    "sha256": "fb1518571e9dd65f4b2407307e22189b3b4f5ce04946fd09e8f8600c3cd6c9e8",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  },
+  {
+    "case": "IG2 all unknown saves exact Not Assessed without confirmed deficiencies",
+    "time": "2026-10-10T14:39:56.094Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "actor": "Staging Administrator / SuperAdmin",
+    "client": "OmniBot QA — CIS IG2Open authorized client directory",
+    "guideCount": 1,
+    "guideWindowCount": 0,
+    "status": [
+      "not_assessed"
+    ],
+    "text": "OVERVIEW\n\nOmniBot QA — CIS IG2’s implementation of the practice to ensure service provider contracts include security requirements needs confirmation.\n\nIMPLEMENTATION BREAKDOWN\n\nNeeds confirmation\n- Service-provider contracts include security requirements. Requires confirmation.\n- Contract requirements are consistent with the service-provider management policy. Requires confirmation.\n- Contracts are reviewed annually for missing security requirements. Requires confirmation.\n\nIncomplete or missing\n- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.\n\nReported operating context\n- Reported reported practice context: SYNTHETIC IG2 ALL-UNKNOWN QA — no substantive requirement is confirmed; no affirmative absence is asserted in this revised fictional scenario.\n\nITEMS TO ADDRESS\n\nConfirmation work\n- Confirm: Service-provider contracts include security requirements.\n- Confirm: Contract requirements are consistent with the service-provider management policy.\n- Confirm: Contracts are reviewed annually for missing security requirements.\n\nSYNTHETIC IG2 ALL-UNKNOWN REVIEW — insufficient information is Not Assessed, not failure or implementation.",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_d53f1e355c8f50f08b1d447df7e97576",
+    "verification": "Not verified",
+    "characters": 1209,
+    "sha256": "46c5fd189b791f723e5d97cdde1995441469c33bfb030e78e7a0760edc8116c5",
+    "reviewedEqualsNative": true,
+    "result": "verified"
+  }
+]

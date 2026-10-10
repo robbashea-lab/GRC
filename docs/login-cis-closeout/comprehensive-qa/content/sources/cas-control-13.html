@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 13: Network Monitoring and Defense - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 13: Network Monitoring and Defense";
+        var mkdocs_page_input_path = "source/Controls13.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls13/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 13: Network Monitoring and Defense</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#131-centralize-security-event-alerting">13.1: Centralize Security Event Alerting</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#132-deploy-a-host-based-intrusion-detection-solution">13.2: Deploy a Host-Based Intrusion Detection Solution</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_1">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#133-deploy-a-network-intrusion-detection-solution">13.3: Deploy a Network Intrusion Detection Solution</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_2">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#134-perform-traffic-filtering-between-network-segments">13.4: Perform Traffic Filtering Between Network Segments</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_3">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#135-manage-access-control-for-remote-assets">13.5: Manage Access Control for Remote Assets</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#authorization-system-compliance">Authorization System Compliance</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_4">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#136-collect-network-traffic-flow-logs">13.6: Collect Network Traffic Flow Logs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_5">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#137-deploy-a-host-based-intrusion-prevention-solution">13.7: Deploy a Host-Based Intrusion Prevention Solution</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_6">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#138-deploy-a-network-intrusion-prevention-solutions">13.8: Deploy a Network Intrusion Prevention Solutions</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_7">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_7">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_7">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_7">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_7">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#139-deploy-port-level-access-control">13.9: Deploy Port-Level Access Control</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_8">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_8">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_8">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_8">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#authenticator-coverage">Authenticator Coverage</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#authentication-server-coverage">Authentication Server Coverage</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#client-authentication-certificate-coverage">Client Authentication Certificate Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#1310-perform-application-layer-filtering">13.10: Perform Application Layer Filtering</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_9">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_9">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_9">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_9">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_9">Metrics</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#coverage_8">Coverage</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#1311-tune-security-event-alerting-thresholds">13.11: Tune Security Event Alerting Thresholds</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_10">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_10">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_10">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_10">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_10">Metrics</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 13: Network Monitoring and Defense</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls13.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-13-network-monitoring-and-defense">CIS Control 13: Network Monitoring and Defense</h1>
+<p>Operate processes and tooling to establish and maintain comprehensive
+network monitoring and defense against security threats across the
+enterprise's network infrastructure and user base.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>We cannot rely on network defenses to be perfect. Adversaries continue
+to evolve and mature as they share or sell information among their
+community on exploits and bypasses security controls. Even if
+security tools work "as advertised," it takes an understanding of the
+enterprise risk posture to configure, tune, and log them to be
+effective. Often, misconfigurations due to human error or lack of
+knowledge of tool capabilities give enterprises a false sense of
+security.</p>
+<p>Security tools can only be effective if they support a process of
+continuous monitoring that allows staff the ability to be alerted and
+respond to security incidents quickly. Enterprises that adopt a purely
+technology-driven approach will also experience more false positives
+due to their over-reliance on alerts from tools. Identifying and
+responding to these threats requires visibility into all threat vectors
+of the infrastructure and leveraging humans in the process of detection,
+analysis, and response. It is critical for large or heavily targeted
+enterprises to have a security operations capability to prevent, detect,
+and quickly respond to cyber threats before they can impact the
+enterprise. This process will generate activity reports and metrics that
+will help enhance security policies and support regulatory compliance
+for many enterprises.</p>
+<p>As we have seen many times in the press, enterprises have been
+compromised for weeks, months, or years before discovery. The primary
+benefit of having comprehensive situational awareness is to increase the
+speed of detection and response. This is critical to respond quickly
+when malware is discovered, credentials are stolen, or when sensitive
+data is compromised to reduce impact on the enterprise.</p>
+<p>Through good situational awareness (i.e., security operations),
+enterprises will identify and catalog Tactics, Techniques, and
+Procedures (TTPs) of attackers, including their IOCs, that will help the
+enterprise become more proactive in identifying future threats or
+incidents. Recovery can be achieved faster when the response has access
+to complete information about the environment and enterprise structure
+to develop efficient response strategies.</p>
+<hr />
+<h2 id="131-centralize-security-event-alerting">13.1: Centralize Security Event Alerting</h2>
+<p>Centralize security event alerting across enterprise assets for log
+correlation and analysis. Best practice implementation requires the use
+of an SIEM, which includes vendor-defined event correlation alerts. A log
+analytics platform configured with security-relevant correlation alerts
+also satisfies this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV42</code>: Log Correlation or Log Analytic Tool</li>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Check if <code>GV42</code> exists within the enterprise</p>
+<ol>
+<li>If <code>GV42</code> exists, M1 = 1</li>
+<li>
+<ol>
+<li>If <code>GV42</code> does not exist, M1 = 0</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate enterprise assets that produce security event logs (M2)</p>
+</li>
+<li>
+<p>For every asset identified in Operation 2, check if logs are centralized at the location of the log correlation or log analytic tool Input 1</p>
+<ol>
+<li>Identify and enumerate assets whose logs are centralized (M3)</li>
+<li>Identify and enumerate assets whose logs are not centralized (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of assets that produce security event logs</li>
+<li>M3 = Count of assets with security event logs being centralized</li>
+<li>M4 = Count of assets with security event logs not being centralized</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets whose security logs are centralized</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="132-deploy-a-host-based-intrusion-detection-solution">13.2: Deploy a Host-Based Intrusion Detection Solution</h2>
+<p>Deploy a host-based intrusion detection solution on enterprise assets,
+where appropriate and/or supported.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets capable of supporting host based intrusion detection systems (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify authorized host-based intrusion detection software</p>
+</li>
+<li>
+<p>For each asset identified in Operation 1, check if it is covered by at least one authorized host-based intrusion detection software</p>
+<ol>
+<li>Identify and enumerate assets with host-based intrusion detection software installed (M2)</li>
+<li>Identify and enumerate assets without host-based intrusion detection software installed (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Count of enterprise assets capable of supporting host-based
+    intrusion detection systems</li>
+<li>M2 = Count of assets with host-based intrusion detection systems</li>
+<li>M3 = Count of assets without host-based intrusion detection systems</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<h4 id="coverage_1">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets capable of supporting host-based intrusion detection systems with host-based intrusion detection software installed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="133-deploy-a-network-intrusion-detection-solution">13.3: Deploy a Network Intrusion Detection Solution</h2>
+<p>Deploy a network intrusion detection solution on enterprise assets,
+where appropriate. Example implementations include the use of a Network
+Intrusion Detection System (NIDS) or equivalent cloud service provider
+(CSP) service.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 12.4: Establish and Maintain Architecture Diagram(s)</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV35</code>: Assets that are Part of the Network Infrastructure</li>
+<li><code>GV4</code>: Enterprise Network Architecture Documentation</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV35</code> to identify the network intrusion detection
+    solutions for the enterprise</p>
+</li>
+<li>
+<p>Use <code>GV4</code> to identify and enumerate network boundaries (M1)</p>
+</li>
+<li>
+<p>For each network boundary identified in Operation 2, determine whether it is covered by at least one network intrusion detection solution</p>
+<ol>
+<li>Identify and enumerate boundaries covered by at least one network intrusion detection solution (M2)</li>
+<li>Identify and enumerate boundaries not covered by at least one network intrusion detection solution (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of network boundaries</li>
+<li>M2 = Count of network boundaries covered by a network intrusion
+    detection solution</li>
+<li>M3 = Count of network boundaries not covered by a network intrusion
+    detection solution</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<h4 id="coverage_2">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of network boundaries covered by network intrusion detection solutions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="134-perform-traffic-filtering-between-network-segments">13.4: Perform Traffic Filtering Between Network Segments</h2>
+<p>Perform traffic filtering between network segments, where appropriate.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV36</code>: Segments within the Enterprise Network</li>
+<li><code>GV35</code>: Assets that are Part of the Network Infrastructure</li>
+<li><code>GV37</code>: Network Infrastructure Configuration Standards</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV36</code> to identify and enumerate network segments that
+    require communication with other network segments (M1)</p>
+</li>
+<li>
+<p>For each network segment identified in Operation 1, use <code>GV35</code> to identify network infrastructure assets responsible for
+    traffic filtering</p>
+</li>
+<li>
+<p>For each network infrastructure asset identified in Operation 1, check configurations using <code>GV37</code> to determine whether each segment is properly configured to filter traffic</p>
+<ol>
+<li>Identify and enumerate network segments with properly configured filtering assets (M2)</li>
+<li>Identify and enumerate network segments with improperly configured filtering assets (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of network segments that communicate with other networks
+    segments</li>
+<li>M2 = Count of network segments with properly configured filtering
+    assets</li>
+<li>M3 = Count of network segments with improperly configured filtering
+    assets</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<h4 id="coverage_3">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of network segments properly configured to filter traffic between segments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="135-manage-access-control-for-remote-assets">13.5: Manage Access Control for Remote Assets</h2>
+<p>Manage access control for assets remotely connecting to enterprise
+resources. Determine the amount of access to enterprise resources based on:
+up-to-date anti-malware software installed, configuration compliance
+with the enterprise's secure configuration process and ensure the
+operating system and applications are up-to-date.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+<li>Safeguard 6.6: Establish and Maintain an Inventory of Authentication
+    and Authorization Systems</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV23</code>: Inventory of Authentication and Authorization Systems</li>
+<li><code>GV3</code>: Configuration Standard</li>
+<li><code>GV39</code>: Remote Enterprise Assets</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV23</code> to identify and enumerate authorization systems
+    that allow remote logins (M1)</p>
+</li>
+<li>
+<p>For each authorization system identified in Operation 1, use <code>GV3</code> to check if the configuration for each type of policy</p>
+<ol>
+<li>Identify and enumerate authorization systems properly configured for all the policies (M2)</li>
+<li>Identify and enumerate authorization systems for which at least one configuration does not comply with the policies (M3)</li>
+</ol>
+</li>
+<li>
+<p>For each remote enterprise asset from <code>GV39</code>, compared to the output of Operation 2.1</p>
+<ol>
+<li>Identify and enumerate assets that are covered by at least one compliant authorization system (M4)</li>
+<li>Identify and enumerate assets that are not covered by a compliant authorization system (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Count of authorization systems that allow remote logins</li>
+<li>M2 = Count of authorization systems properly configured to comply
+    with policies</li>
+<li>M3 = Count of authorization systems not properly configured to
+    comply with policies</li>
+<li>M4 = Count of remote enterprise assets covered by a compliant
+    authorization system</li>
+<li>M5 = Count of remote enterprise assets not covered by a compliant
+    authorization system</li>
+<li>M6 = Count of remote enterprise assets <code>GV39</code></li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<h4 id="authorization-system-compliance">Authorization System Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of properly configured authorization systems that allow remote login</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="coverage_4">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of remote enterprise assets covered by compliant authorization systems</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M6</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="136-collect-network-traffic-flow-logs">13.6: Collect Network Traffic Flow Logs</h2>
+<p>Collect network traffic flow logs and/or network traffic to review and
+alert upon from network devices.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 4.2: Establish and Maintain a Secure Configuration Process
+    for Network Infrastructure</li>
+<li>Safeguard 12.4: Establish and Maintain Architecture Diagram(s)</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV35</code>: Assets that are Part of the Network Infrastructure</li>
+<li><code>GV37</code>: Network Infrastructure Configuration Standards</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV35</code> to identify and enumerate network boundary assets
+    (M1)</p>
+</li>
+<li>
+<p>For each network boundary asset identified in Operation 1, check configuration <code>GV37</code> to determine if network traffic or network traffic flow logging is enabled</p>
+<ol>
+<li>Identify and enumerate assets with either network traffic flow or network traffic logging enabled (M2)</li>
+<li>Identify and enumerate assets that have neither network traffic flow nor network traffic logging enabled (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Count of network boundary assets</li>
+<li>M2 = Count of properly configured network boundary assets</li>
+<li>M3 = Count of improperly configured network boundary assets</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<h4 id="coverage_5">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of network boundary assets properly configured to log network traffic flow or network traffic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="137-deploy-a-host-based-intrusion-prevention-solution">13.7: Deploy a Host-Based Intrusion Prevention Solution</h2>
+<p>Deploy a host-based intrusion prevention solution on enterprise assets,
+where appropriate and/or supported. Example implementations include the use
+of an Endpoint Detection and Response (EDR) client or host-based IPS
+agent.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets capable of supporting host-based intrusion prevention systems (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify authorized host-based intrusion prevention software</p>
+</li>
+<li>
+<p>For each asset identified in Operation 1, check if it is covered by at least one authorized host-based intrusion prevention software</p>
+<ol>
+<li>Identify and enumerate assets with host-based intrusion prevention software installed (M2)</li>
+<li>Identify and enumerate assets without host-based intrusion prevention software installed (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Count of enterprise assets capable of supporting host-based
+    intrusion prevention systems</li>
+<li>M2 = Count of assets with host-based intrusion prevention systems</li>
+<li>M3 = Count of assets without host-based intrusion prevention systems</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<h4 id="coverage_6">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets capable of supporting host-based intrusion prevention systems with software installed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="138-deploy-a-network-intrusion-prevention-solutions">13.8: Deploy a Network Intrusion Prevention Solutions</h2>
+<p>Deploy a network intrusion prevention solution, where appropriate.
+Example implementations include the use of a Network Intrusion
+Prevention System (NIPS) or equivalent CSP service.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_7">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 12.4: Establish and Maintain Architecture Diagram(s)</li>
+</ul>
+<h3 id="inputs_7">Inputs</h3>
+<ol>
+<li><code>GV35</code>: Assets that are Part of the Network Infrastructure</li>
+<li><code>GV40</code>: Network Boundaries</li>
+</ol>
+<h3 id="operations_7">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV35</code> to identify the network intrusion prevention
+    solutions for the enterprise</p>
+</li>
+<li>
+<p>For each network boundary identified in Input 2, determine whether it is covered by at least one network intrusion prevention solution</p>
+<ol>
+<li>Identify and enumerate boundaries covered by at least one network intrusion prevention solution (M2)</li>
+<li>Identify and enumerate boundaries not covered by at least one network intrusion prevention solution (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_7">Measures</h3>
+<ul>
+<li>M1 = Count of network boundaries <code>GV40</code></li>
+<li>M2 = Count of network boundaries covered by a network intrusion
+    prevention solution</li>
+<li>M3 = Count of network boundaries not covered by a network intrusion
+    prevention solution</li>
+</ul>
+<h3 id="metrics_7">Metrics</h3>
+<h4 id="coverage_7">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of network boundaries covered by network intrusion prevention solutions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="139-deploy-port-level-access-control">13.9: Deploy Port-Level Access Control</h2>
+<p>Deploy port-level access control. Port-level access control utilizes
+802.1x, or similar network access control protocols, such as
+certificates, and may incorporate user and/or device authentication.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_8">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+</ul>
+<h3 id="inputs_8">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV38</code>: AAA Services within the Enterprise</li>
+<li><code>GV41</code>: List of Configuration Management Database (CMDB) Servers</li>
+<li><code>GV35</code>: Assets that are Part of the Network Infrastructure</li>
+<li><code>GV37</code>: Network Infrastructure Configuration Standards</li>
+</ol>
+<h3 id="operations_8">Operations</h3>
+<ol>
+<li>
+<p>If the enterprise uses an 802.1x network design to control network access:</p>
+<ol>
+<li>Use <code>GV5</code> to identify and enumerate 802.1x authenticators</li>
+</ol>
+</li>
+<li>
+<p>For each authenticator identified in Operation 1, use <code>GV37</code> to check configurations</p>
+<ol>
+<li>Identify and enumerate properly configured authenticators (M2)</li>
+<li>Identify and enumerate improperly configured authenticators (M3)</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV38</code> to identify 802.1x authentication servers (M4)</p>
+</li>
+<li>
+<p>For each authentication server identified in Operation 3, use <code>GV37</code> to check configurations to ensure a connection to at least one CMDB server from <code>GV41</code></p>
+<ol>
+<li>Identify and enumerate properly configured authentication servers (M5)</li>
+<li>Identify and enumerate improperly configured authentication servers (M6)</li>
+</ol>
+</li>
+<li>
+<p>If the enterprise does not use 802.1x network design to control network access:</p>
+<ol>
+<li>
+<p>For each asset in <code>GV35</code>, use <code>GV37</code> to check client authentication certificate configuration</p>
+<ol>
+<li>Identify and enumerate properly configured assets (M8)</li>
+<li>Identify and enumerate improperly configured assets (M9)</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_8">Measures</h3>
+<ul>
+<li>M1 = Count of 802.1x authenticators</li>
+<li>M2 = Count of 802.1x properly configured authenticators</li>
+<li>M3 = Count of 802.1x improperly configured authenticators</li>
+<li>M4 = Count of 802.1x authentication servers</li>
+<li>M5 = Count of 802.1x properly configured authentication servers</li>
+<li>M6 = Count of 802.1x improperly configured authentication servers</li>
+<li>M7 = Count of <code>GV35</code></li>
+<li>M8 = Count of assets properly configured for client authentication
+    certificates</li>
+<li>M9 = Count of assets improperly configured for client authentication
+    certificates</li>
+</ul>
+<h3 id="metrics_8">Metrics</h3>
+<ul>
+<li>If the enterprise uses an 802.1x network design to control network access:</li>
+</ul>
+<h4 id="authenticator-coverage">Authenticator Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of properly configured authenticators</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="authentication-server-coverage">Authentication Server Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of properly configured authentication servers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M5 / M4</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>If the enterprise does not use 802.1x network design to control network access:</li>
+</ul>
+<h4 id="client-authentication-certificate-coverage">Client Authentication Certificate Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets properly configured for authentication certificate coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M8 / M7</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1310-perform-application-layer-filtering">13.10: Perform Application Layer Filtering</h2>
+<p>Perform application layer filtering. Example implementations include a
+filtering proxy, application layer firewall, or gateway.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_9">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_9">Inputs</h3>
+<ol>
+<li><code>GV35</code>: Assets that are Part of the Network Infrastructure</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+</ol>
+<h3 id="operations_9">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify software used for application layer filtering</p>
+</li>
+<li>
+<p>For each asset in `GV35, determine whether it is covered by at least one software identified in Operation 1</p>
+<ol>
+<li>Identify and enumerate assets covered by application layer filtering software (M2)</li>
+<li>Identify and enumerate assets not covered by application layer filtering software (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_9">Measures</h3>
+<ul>
+<li>M1 = Count of network infrastructure assets</li>
+<li>M2 = Count of network infrastructure assets covered by the application
+    layer filtering software</li>
+<li>M3 = Count of network infrastructure assets not covered by
+    application layer filtering software</li>
+</ul>
+<h3 id="metrics_9">Metrics</h3>
+<h3 id="coverage_8">Coverage</h3>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of network infrastructure assets covered by application layering software</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1311-tune-security-event-alerting-thresholds">13.11: Tune Security Event Alerting Thresholds</h2>
+<p>Tune security event alerting thresholds monthly, or more frequently.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Detect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_10">Dependencies</h3>
+<ul>
+<li>Safeguard 13.1: Centralize Security Event Alerting</li>
+</ul>
+<h3 id="inputs_10">Inputs</h3>
+<ol>
+<li>Date of last tuning of security event alert thresholds of <code>GV42</code> Log Correlation or Log Analytic Tool</li>
+</ol>
+<h3 id="operations_10">Operations</h3>
+<ol>
+<li>Compare Input 1 to the current date and capture the timeframe in days</li>
+</ol>
+<h3 id="measures_10">Measures</h3>
+<ul>
+<li>M1 = Timeframe in days since the last tuning of security event alert thresholds for log correlation or log analytic tool</li>
+</ul>
+<h3 id="metrics_10">Metrics</h3>
+<ul>
+<li>If M1 is greater than thirty days, then this Safeguard is measured at a 0 and receives a failing score.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls12/" class="btn btn-neutral float-left" title="CIS Control 12: Network Infrastructure Management"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls14/" class="btn btn-neutral float-right" title="CIS Control 14: Security Awareness and Skills Training">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

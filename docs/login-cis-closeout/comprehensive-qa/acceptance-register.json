@@ -1,0 +1,254 @@
+{
+  "schema": 1,
+  "purpose": "Canonical register for the authorized comprehensive CIS QA extension; historical evidence remains unchanged.",
+  "baseline": {
+    "pr": 65,
+    "branch": "codex/login-cis-closeout",
+    "repositoryHead": "4f73e0cf3180e4b91de6518427b5bbb23ffccb1f",
+    "testedDeployedRuntime": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "service": "srv-db1s0cugekts73f72reg",
+    "url": "https://omnisciente-staging.onrender.com",
+    "ci128": "success: frontend full suite/both builds, backend offline/disposable Mongo, release gate; run38062682596",
+    "state": "Deployed for validation — final acceptance pending"
+  },
+  "ownership": {
+    "integrationDeploymentBrowser": "root",
+    "contentOwnerVerification": "cis_ig1_content",
+    "workflowOwnerVerification": "cis_shared_workflow",
+    "independentAdjudicationAndRetest": "cis_independent_qa",
+    "independence": "Content and workflow owners cannot independently approve their own previous implementation. Separate reviewer adjudicates final evidence and corrections."
+  },
+  "preservedEvidence": {
+    "sourceMatrix": "../../omni-cis-rollout/coverage-matrix.json",
+    "originalDefectLog": "../../omni-cis-rollout/defect-log.md",
+    "originalIndependentReview": "../../omni-cis-rollout/independent-review.md",
+    "hostedPlacements": "../evidence/hosted-placements-b90.json",
+    "hostedPlacementTotals": "../evidence/hosted-placement-safe-totals-b90.json",
+    "hostedLifecycles": "../evidence/hosted-lifecycles-b90.json",
+    "combinedHandoff": "../handoff.md",
+    "counts": {
+      "uniqueDefinitions": 153,
+      "localPlacements": 339,
+      "hostedPlacements": 339,
+      "hostedLifecycleObservations": 54,
+      "nativeTextObservations": 52
+    },
+    "interpretation": "Completed baseline evidence is retained, attributed to its exact revision and layer. Counts are not hosted save counts or exhaustive answer combinations."
+  },
+  "items": [
+    {
+      "id": "QA-EXT-ACCESS",
+      "kind": "blocked_required_test",
+      "safeguard": null,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "severity": "release_blocking",
+      "actual": "Suitable existing restricted identities are disabled; SuperAdmin available",
+      "expected": "Actual server-enforced read-only write denial and unauthorized-client access/write denial",
+      "source": "Approved hosted authorization acceptance criteria",
+      "status": "blocked",
+      "account": "bec984b1-client_contributor-verified@example.com",
+      "restriction": "User is away and explicitly forbids enabling users, changing roles, memberships or owners; no access exception is approved",
+      "action": "Prepare minimum proposal, supported tests and exact restoration procedure only; keep QA—CIS IG2 active",
+      "independentDisposition": "Must not substitute SuperAdmin, UI hiding or simulated roles"
+    },
+    {
+      "id": "QA-EXT-CONTENT",
+      "kind": "additional_verification",
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "expected": "153 current source-to-question/condition reviews with per-row result",
+      "status": "153 fresh source/question reviews and independent current-matrix audit passed; two findings corrected with independent frozen source review"
+    },
+    {
+      "id": "QA-EXT-DECISIONS",
+      "kind": "additional_verification",
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "expected": "153 independently justified decision and summary case sets, including applicable conditional/alternative/unknown/reassessment cases",
+      "status": "153 baseline rows / 9653 independently recorded scenarios; selective correction checks separate"
+    },
+    {
+      "id": "QA-EXT-WORKFLOWS",
+      "kind": "additional_verification",
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "expected": "Missing meaningful interview-design and persistence paths tested with layer distinctions",
+      "status": "Current153 fresh/full groups and339 real guide/native adapter local paths;25 designs cover cancel/retry/duplicate/checkpoints/stale locally;25 original designs represented by real hosted positive save examples. Negative hosted cases are cohort/shared-handler coverage, not per-design exhaustive coverage."
+    },
+    {
+      "id": "QA-EXT-BROWSER-CLEANUP",
+      "kind": "completed_bounded_execution",
+      "severity": "resolved_with_read_only_limits",
+      "actual": "Normal supported browser navigation recovered in existing authorized session. All three targeted read-only initial guides/context/native preservation checked. Exact QAIG3 is archived after refresh; audit Archive success and Restore control verified without restoration.",
+      "expected": "Selective current read-only showcase spotchecks; confirmed reversible archive and supported Restore availability for the completed synthetic IG3 fixture without restoring it",
+      "status": "completed for supported read-only scope; deeper write-dependent showcase questions explicitly unexecuted",
+      "reference": "hosted/targeted-closeout-20261010/targeted-closeout-results.json",
+      "action": "No browser credential entry needed for this SuperAdmin checkpoint. Do not reconcile Brawndo or advance showcase groups through Save; preserve history and read-only limit. QAIG2 stays active for restricted tests."
+    },
+    {
+      "id": "QA-CLOSEOUT-CI130",
+      "kind": "verification",
+      "expected": "Actual completed GitHub CI130 result on documentation head a10114df486fea16fa1393f94fc4e5aacd60dbd0",
+      "status": "passed: backend, frontend full suite/both builds and Release gate all completed/success",
+      "reference": "workflow/ci130-confirmed.json",
+      "runtimeUnchanged": true
+    }
+  ],
+  "confirmedNewDefects": [
+    {
+      "id": "CONTENT-CIS-001",
+      "safeguard": "17.5",
+      "minimumGroup": 2,
+      "severity": "material status/applicability",
+      "actual": "Relevant-third-party criterion is unconditional in program3; No yields Partial/remediation and rationale-backed exclusion is rejected.",
+      "expected": "Exclude only this criterion when no relevant third-party response role exists and explicit rationale is supplied; unresolved relevance remains unknown and relevant unassigned roles remain deficient.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#175-assign-key-roles-and-responsibilities",
+      "correctiveAction": "Selective additive program4 for17.5; ten unchanged criteria/stable IDs retained; changed condition unanswered on explicit reuse; program3 schema remains readable.",
+      "components": [
+        "shared/catalogs/guidedCisProgramV4.json",
+        "frontend/src/lib/guidedAssessment.js",
+        "backend/guided_assessment.py"
+      ],
+      "tests": "6 frontend cases (4 failed before/all6 after); 2 new backend schema/history/native-write cases included in successful CI129 backend; independent18 exact-source checks passed.",
+      "compatibility": "No bulk migration/regeneration; archived text/answers/native assessment unchanged until normal reviewed apply.",
+      "status": "fixed; local, exact CI and authenticated hosted condition/version/native persistence checks passed",
+      "independentDisposition": "Frozen code/source review and hosted evidence consistency review passed; reviewer did not independently replay the shared browser."
+    },
+    {
+      "id": "CONTENT-CIS-002",
+      "safeguard": "8.10 exemplar;148 current program definitions",
+      "minimumGroup": 2,
+      "severity": "input-contract ambiguity",
+      "actual": "Broad What still needs confirmation wording can encourage optional owner/context uncertainty in the required-practice uncertainty field. That preserved field qualifies an otherwise complete result.",
+      "expected": "Clearly distinguish substantive requirement uncertainty from optional tool/owner/record context; preserve old text and explicit review.",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#810-retain-audit-logs",
+      "correctiveAction": "Clarify only current CIS program3/4 unknowns prompt/help/status metadata; narrowly map exact stable field semantics across supported program versions during explicit reuse.",
+      "tests": "6 focused frontend cases (prompt failed before; all6 after), old program1/2/3 exact text/detail retained; optional owner context does not lower8.10.",
+      "compatibility": "No evaluator/scoring changes or automatic free-text classification. The original optional-owner string placed in unknowns still qualifies status; historical text is neither cleared nor retroactively reinterpreted.",
+      "status": "input clarification fixed; local, exact CI and authenticated hosted optional/substantive uncertainty and native persistence checks passed",
+      "independentDisposition": "Bounded clarification/mapping and hosted evidence consistency review passed; scoring unchanged, historical uncertainty text preserved."
+    }
+  ],
+  "scope": {
+    "cisOnly": true,
+    "loginFrozen": true,
+    "visualsFrozen": true,
+    "excludedFrameworksFrozen": true,
+    "showcaseWrites": false,
+    "accountChanges": false,
+    "mainMerge": false,
+    "productionOrSites": false,
+    "settingsChanges": false,
+    "destructiveDataActions": false
+  },
+  "releaseAccepted": false,
+  "correctionCandidate": {
+    "sha": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+    "ci": {
+      "number": 129,
+      "run": 38065883834,
+      "status": "completed/success; frontend full collection, both builds, backend offline/disposable Mongo, release gate",
+      "syntheticMergeCommit": "3ce94d7b30e4a04bb8e5a0043e77151be15c9cb8",
+      "testedTree": "c08a2390f75457c2147b430788658ec4679e69f9",
+      "rawLogLimitation": "Connector raw-log retrieval returned Transport closed; job/step metadata independently confirms completed success. Exact CI test counts were not extracted."
+    },
+    "deployed": true,
+    "tree": "c08a2390f75457c2147b430788658ec4679e69f9",
+    "local": {
+      "frontend": {
+        "suites": 260,
+        "tests": 7269,
+        "snapshots": 1,
+        "exit": 0,
+        "seconds": 1186.58,
+        "note": "Full260 collection predates addition of the component suite; same runtime plus two correction suites. Component suite recorded separately; CI129 executes combined final collection."
+      },
+      "component": {
+        "tests": 615,
+        "exit": 0,
+        "seconds": 47.776,
+        "note": "Exact final fixed-clock source: 615 passed, 47.776s, exit0; separate from the 260-suite collection. CI129 executes combined final collection."
+      },
+      "stagingBuild": "passed",
+      "previewBuild": "passed; not published",
+      "python": "unavailable local: Store alias and bundled Python lacks pytest; exact CI backend passed"
+    },
+    "deployment": "dep-db56e2d9fdbs73bpcq50",
+    "liveSourceVerified": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+    "hostedEvidence": "hosted/hosted-corrections-6a4c.json"
+  },
+  "independentCodeDisposition": "No material source/code/content blocker: 153 refreshed source reviews, 4280 focused tests, 18 exact-source checks, seven current-matrix checks and nine hosted/CI evidence checks passed. Release acceptance false because actual restricted-user denial remains blocked; targeted current read-only guides/context/native preservation and IG3 archive now confirmed, with deeper showcase groups/reconciliation explicitly unexecuted.",
+  "targetedCheckpoint": {
+    "capturedAt": "2026-10-10T18:36:55.543Z",
+    "evidence": "hosted/targeted-closeout-20261010/targeted-closeout-results.json",
+    "runtime": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+    "deployment": "dep-db56e2d9fdbs73bpcq50",
+    "documentationHeadChecked": "a10114df486fea16fa1393f94fc4e5aacd60dbd0",
+    "ci130": {
+      "run": 38069960767,
+      "status": "completed/success",
+      "frontend": 114265180391,
+      "backend": 114265180255,
+      "releaseGate": 114269899967
+    },
+    "targetedPlacements": [
+      {
+        "client": "Initech",
+        "group": 2,
+        "safeguard": "17.5",
+        "result": "read-only entry/context/initial-guide/preservation passed; deeper conditional display unexecuted",
+        "limit": "Later conditional group requires Save & next, which persists interview progress; not executed on read-only showcase. Existing isolated6a4 correction proof remains separate."
+      },
+      {
+        "client": "Hooli",
+        "group": 3,
+        "safeguard": "17.5",
+        "result": "read-only entry/context/initial-guide/preservation passed; deeper conditional display unexecuted",
+        "limit": "Later conditional group requires Save & next, which persists interview progress; not executed on read-only showcase. Existing isolated6a4 correction proof remains separate."
+      },
+      {
+        "client": "Brawndo",
+        "group": 1,
+        "safeguard": "1.1",
+        "result": "reference entry/visible guide/answer-history/native preservation passed; reconciliation and later groups unexecuted",
+        "limit": "Existing saved-assessment reconciliation warning: Compare & continue may change interview state; not activated. No additional review, answer edits or saves. No new full visual/pointer/animation regression pass claimed."
+      }
+    ],
+    "cleanup": {
+      "client": "OmniBot QA — Closeout CIS IG3",
+      "clientId": "cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7",
+      "group": 3,
+      "status": "archived confirmed after refresh",
+      "action": "Already archived when inspected; no new Archive or Restore issued this checkpoint. Prior unconfirmed archive is now verified by persisted row and success audit.",
+      "audit": {
+        "event": "Archive",
+        "outcome": "success",
+        "dateTimeDisplayed": "10/10/2026, 12:53:36 PM",
+        "previous": "active",
+        "next": "archived"
+      },
+      "proof": "Absent from refreshed active portfolio; exact data-client-id on archived row; Restore client available but not executed; retained audit39 events includes prior assessment history; actual archive event detail success.",
+      "restoreExecuted": false,
+      "historyDeletion": false,
+      "ig2RetainedActive": true,
+      "ig2ClientId": "cli_c65cd90ca6d92c2a86f5cffc8972a19f22bf1d791ec0cc9ec1684a811f0bd1b0"
+    },
+    "browserBlocker": null,
+    "restrictedServerDenial": "blocked; specific Reader access/activation approval and direct normal credential entry remain pending; separate Manager-to-Reader transition not approved",
+    "noRuntimeChangeOrRedeploy": true
+  }
+}

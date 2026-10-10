@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 11: Data Recovery - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 11: Data Recovery";
+        var mkdocs_page_input_path = "source/Controls11.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls11/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 11: Data Recovery</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#111-establish-and-maintain-a-data-recovery-process">11.1: Establish and Maintain a Data Recovery Process</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#112-perform-automated-backups">11.2: Perform Automated Backups</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#compliance">Compliance</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#113-protect-recovery-data">11.3: Protect Recovery Data</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_1">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#114-establish-and-maintain-an-isolated-instance-of-recovery-data">11.4: Establish and Maintain an Isolated Instance of Recovery Data</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_2">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#115-test-data-recovery">11.5: Test Data Recovery</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumption">Assumption</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#backup-integrity-quality">Backup Integrity Quality</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 11: Data Recovery</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls11.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-11-data-recovery">CIS Control 11: Data Recovery</h1>
+<p>Establish and maintain data recovery practices sufficient to restore
+in-scope enterprise assets to a pre-incident and trusted state.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>In the cybersecurity triad -- Confidentiality, Integrity, and
+Availability (CIA) -- the availability of data is, in some cases, more
+critical than its confidentiality. Enterprises need many types of data
+to make business decisions, and when that data is not available or is
+untrusted, then it could impact the enterprise. An easy example is
+weather information to a transportation enterprise.</p>
+<p>When attackers compromise assets, they make changes to configurations,
+add accounts, and often add software or scripts. These changes are not
+always easy to identify, as attackers might have corrupted or replaced
+trusted applications with malicious versions, or the changes might
+appear to be standard-looking account names. Configuration changes can
+include adding or changing registry entries, opening ports, turning off
+security services, deleting logs, or other malicious actions that make a
+system insecure. These actions do not have to be malicious; human error
+can cause each of these as well. Therefore, it is important to have an
+ability to have recent backups or mirrors to recover enterprise assets
+and data back to a known trusted state.</p>
+<p>There has been an exponential rise in ransomware over the last few
+years. It is not a new threat, though it has become more commercialized
+and organized as a reliable method for attackers to make money. If an
+attacker encrypts an enterprise's data and demands ransom for its
+restoration, having a recent backup to recover to a known, trusted state
+can be helpful. However, as ransomware has evolved, it has also become
+an extortion technique, where data is exfiltrated before being
+encrypted, and the attacker asks for payment to restore the enterprise's
+data, as well as to keep it from being sold or publicized. In this case,
+restoration would only solve the issue of restoring systems to a trusted
+state and continuing operations. Leveraging the guidance within the CIS
+Controls will help reduce the risk of ransomware through improved cyber
+hygiene, as attackers usually use older or basic exploits on insecure
+systems.</p>
+<hr />
+<h2 id="111-establish-and-maintain-a-data-recovery-process">11.1: Establish and Maintain a Data Recovery Process</h2>
+<p>Establish and maintain a documented data recovery process that includes detailed backup procedures. In the process, address the scope of data recovery activities, recovery prioritization, and the security of backup data. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li>Data Recovery Process for the enterprise</li>
+<li>Date of last update to the Data Recovery Process</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Check if the enterprise has a data recovery process Input 1</p>
+<ol>
+<li>If so, M1 = 1</li>
+<li>If not, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Examine the enterprise's data recovery process and determine if it addresses, at a minimum, the scope of data recovery activities, recovery prioritization, and the security of backup data</p>
+<ol>
+<li>For each element included within the process, assign the element a value of 1. M2 = sum of all the values.</li>
+</ol>
+</li>
+<li>
+<p>Compare the date of the last update to the data recovery process to the curren date and capture the timeframe in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Sum of elements included in the data recovery process</li>
+<li>M3 = Timeframe in months of the last update to the data recovery process</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is 0, the Safeguard receives a failing score. The other metrics don't apply. </li>
+<li>If M3 is greater than twelve, this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of elements included in the data recovery process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="112-perform-automated-backups">11.2: Perform Automated Backups</h2>
+<p>Perform automated backups of in-scope enterprise assets. Run backups weekly, or more frequently, based on the sensitivity of the data.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Recover</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>For each asset in <code>GV1</code> identify and enumerate assets that are in-scope for automated backups: <code>GV33</code> (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify authorized backup software and for each asset identified in Operation 1</p>
+<ol>
+<li>Identify and enumerate assets covered by at least one authorized backup software: <code>GV34</code> (M2)</li>
+<li>Identify and enumerate assets not covered by at least one authorized backup software (M3)</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV3</code> to check if the software on assets identified in Operation 2.1 is configured correctly</p>
+<ol>
+<li>Identify and enumerate assets with properly configured backup software (M4)</li>
+<li>Identify and enumerate assets with improperly configured backup software (M5)</li>
+</ol>
+</li>
+<li>
+<p>For each asset with backup software identified in Operation 2.1, examine logs to determine the most recent successful backup date. Compare that date to the current date and capture the timeframe in days.</p>
+<ol>
+<li>Identify and enumerate assets that have been backup within seven days or less (M6)</li>
+<li>Identify and enumerate assets that have been backed up outside of a seven-day window (M7)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Count of assets within scope for automated backups</li>
+<li>M2 = Count of in-scope assets with authorized backup software
+    installed</li>
+<li>M3 = Count of in-scope assets without authorized backup software
+    installed</li>
+<li>M4 = Count of in-scope assets with properly configured backup
+    software</li>
+<li>M5 = Count of in-scope assets with improperly configured backup
+    software</li>
+<li>M6 = Count of in-scope assets backed up within a week</li>
+<li>M7 = Count of in-scope assets not backed up within a week</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of in-scope assets with properly configured authorized backup software</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="compliance">Compliance</h3>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of in-scope assets backed up within a week timeframe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M6 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="113-protect-recovery-data">11.3: Protect Recovery Data</h2>
+<p>Protect recovery data with equivalent controls to the original data.
+Reference encryption or data separation, based on requirements.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV33</code>: Assets that are In-Scope for Automated Backups</li>
+<li><code>GV34</code>: Assets with Authorized Backup Software Installed</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>For each asset with backup software installed <code>GV34</code>, use <code>GV3</code> to check if encryption is configured for backups</p>
+<ol>
+<li>Identify and enumerate assets with software configured to encrypt backups (M2)</li>
+<li>Identify and enumerate assets with software not configured to encrypt backups (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of Input 1: <code>GV33</code></li>
+<li>M2 = Count of software configured to encrypt backups</li>
+<li>M3 = Count of software not configured to encrypt backups</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<h4 id="coverage_1">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of in-scope assets with backup software properly configured to encrypt backups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="114-establish-and-maintain-an-isolated-instance-of-recovery-data">11.4: Establish and Maintain an Isolated Instance of Recovery Data</h2>
+<p>Establish and maintain an isolated instance of recovery data. Example
+implementations include, version-controlling backup destinations through
+offline, cloud, or off-site systems or services.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Recover</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV33</code>: Assets that are In-Scope for Automated Backups</li>
+<li><code>GV34</code>: Assets with Authorized Backup Software Installed</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="assumptions">Assumptions</h3>
+<p>Configuration for backups will contain information about the destination of backups</p>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>For each asset in <code>GV34</code>, use configuration standards in <code>GV3</code> to check the destination of backups</p>
+<ol>
+<li>Identify and enumerate assets properly configured to send backups to an isolated instance (M2)</li>
+<li>Identify and enumerate assets not properly configured to send backups to an isolated instance (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of Input 1 <code>GV33</code></li>
+<li>M2 = Count of assets with backups sent to an isolated instance</li>
+<li>M3 = Count of assets with backups not sent to an isolated instance</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<h4 id="coverage_2">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets configured to send backups to an isolated instance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="115-test-data-recovery">11.5: Test Data Recovery</h2>
+<p>Test backup recovery quarterly, or more frequently, for a sampling of
+in-scope enterprise assets.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Recover</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li>Current set of backups for the enterprise</li>
+<li>Date of last backup recovery test</li>
+</ol>
+<h3 id="assumption">Assumption</h3>
+<ol>
+<li>Enterprise will know what a properly working restored backup looks
+    like.</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Use Input 1 to restore a sampling of the backups to a temporary location</p>
+<ol>
+<li>Enumerate the total number of backups restored (M1)</li>
+<li>Identify and enumerate backups that are properly working after being restored (M2)</li>
+<li>Identify and enumerate backups that did not properly work after being restored (M3)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the time frame in months
+    (M4)</p>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Count of backups being tested</li>
+<li>M2 = Count of properly working backups after restoration</li>
+<li>M3 = Count of backups not properly working after restoration</li>
+<li>M4 = Timeframe between tests of backup recovery</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<ul>
+<li>If M4 is greater than three months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="backup-integrity-quality">Backup Integrity Quality</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of restored backup sampling deemed to be properly working</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls10/" class="btn btn-neutral float-left" title="CIS Control 10: Malware Defenses"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls12/" class="btn btn-neutral float-right" title="CIS Control 12: Network Infrastructure Management">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

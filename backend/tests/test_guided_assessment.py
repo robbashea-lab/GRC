@@ -23,7 +23,9 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
         await server.db.clients.insert_one({'client_id':'demo_brawndo','name':'Brawndo','status':'active'})
         await server.db.framework_assessments.insert_one({**self.row,'_id':self.aid,'framework_assessment_id':self.aid,'client_id':'demo_brawndo','owner_id':'member'})
         self.path='/api/framework_assessments/'+self.aid+'/guided-assessment'
-        self.pilot_body={'version':current_version('1.1'),'answers':{'inventory':'No','existing':'Manual records'},'step':1,'completed':False,'expected_revision':0}
+        initial=(await self.client.get(self.path)).json()
+        self.pilot_body={'version':current_version('1.1'),'answers':{'inventory':'No','existing':'Manual records'},'step':1,'completed':False,'expected_revision':0,
+            **{key:initial[key] for key in ('base_assessment_token','base_scope_fingerprint')}}
 
     async def test_pilot_save_resume_is_separate_and_conflict_safe(self):
         before=await server.db.framework_assessments.find_one({'framework_assessment_id':self.aid})
@@ -66,14 +68,16 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
         edited=await self.client.patch('/api/framework_assessments/'+self.aid,json={'implementation':'Manually revised'})
         self.assertEqual(edited.status_code,200,edited.text)
         self.assertIsNone(edited.json()['guided_assessment_source'])
-        self.assertEqual(edited.json()['assessment_history'][-2]['guided_assessment_source']['version'],CONTROL1['version'])
+        self.assertEqual(edited.json()['assessment_history'][-2]['guided_assessment_source']['version'],current_version('1.1'))
 
     async def test_version_transition_archives_exact_old_answers_and_narrative(self):
         identity=self.aid+':admin'
         old={'version':LEGACY['version'],'answers':{'inventory':'No'},'step':0,'completed':True,'revision':4,'narrative':'Original client-written summary','client_id':'demo_brawndo','generated_at':'2026-09-01T12:00:00Z'}
         await server.db.guided_assessment_pilot.insert_one({'_id':identity,**old})
-        self.assertEqual((await self.client.get(self.path)).json(),old)
-        started=await self.client.put(self.path,json={**self.pilot_body,'answers':{},'step':0,'expected_revision':4})
+        read=(await self.client.get(self.path)).json()
+        self.assertEqual({key:read[key] for key in old},old)
+        self.assertFalse(read['lineage_known'])
+        started=await self.client.put(self.path,json={**self.pilot_body,'answers':{},'step':0,'expected_revision':4,'restart':True})
         self.assertEqual(started.status_code,200,started.text)
         archived=await server.db.guided_assessment_history.find_one({'_id':identity+':4'})
         self.assertEqual(archived['answers'],old['answers'])
@@ -97,13 +101,14 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
         aid='expanded-2.1'
         await server.db.framework_assessments.insert_one({**self.row,'_id':aid,'framework_assessment_id':aid,'client_id':'demo_brawndo','definition_id':'2.1'})
         path='/api/framework_assessments/'+aid+'/guided-assessment'
-        body={**self.pilot_body,'version':current_version('2.1'),'answers':{'practice':'Partially','operation':'Synthetic software inventory process'},'narrative':'Original operator narrative'}
+        initial=(await self.client.get(path)).json()
+        body={**self.pilot_body,'version':current_version('2.1'),'answers':{'practice':'Partially','operation':'Synthetic software inventory process'},'narrative':'Original operator narrative',**{key:initial[key] for key in ('base_assessment_token','base_scope_fingerprint')}}
         first=await self.client.put(path,json=body)
         self.assertEqual(first.status_code,200,first.text)
         self.assertEqual((await self.client.get(path)).json()['answers'],body['answers'])
         workspace=await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'demo_brawndo'})
         self.assertEqual(workspace.status_code,200,workspace.text)
-        self.assertEqual(workspace.json()['guided_assessment_drafts']['2.1'],{'revision':1,'completed':False})
+        self.assertEqual(workspace.json()['guided_assessment_drafts']['2.1'],{'revision':1,'completed':False,'version':current_version('2.1'),'generated_at':None,'user_id':'admin'})
         self.sign_in('member')
         self.assertEqual((await self.client.get(path)).status_code,403)
         await server.db.users.update_one({'user_id':'member'},{'$addToSet':{'client_ids':'demo_brawndo'}})
@@ -137,6 +142,66 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(HTTPException):
                         validate_answers(definition,excluded,current_version(definition,upgraded=True))
 
+    async def test_175_source_condition_changes_only_its_current_schema(self):
+        self.assertEqual(current_version('17.5'), 'cis-v8.1-program-4')
+        for definition in PROGRAM['definitions']:
+            if definition != '17.5':
+                self.assertEqual(current_version(definition), PROGRAM['version'])
+        old = VERSIONS[PROGRAM['version']]['safeguards']['17.5']
+        corrected = VERSIONS[current_version('17.5')]['safeguards']['17.5']
+        old_row = 'Incident-response responsibilities include relevant third parties.'
+        new_row = 'Where relevant, third parties have assigned incident-response roles and responsibilities.'
+        self.assertNotIn('Not applicable', next(q for q in old if old_row in q.get('rows', []))['choices'])
+        matrix = next(q for q in corrected if new_row in q.get('rows', []))
+        validate_answers('17.5', {matrix['id']: {new_row: 'Not applicable'}, 'scope_reason': 'Synthetic internally assigned response'}, current_version('17.5'))
+        with self.assertRaises(HTTPException):
+            validate_answers('17.5', {matrix['id']: {old_row: 'Yes'}}, current_version('17.5'))
+
+    async def test_175_explicit_upgrade_preserves_old_interview_and_native_record_until_apply(self):
+        aid = 'synthetic-17.5'
+        await server.db.clients.update_one({'client_id': 'demo_brawndo'}, {'$set': {'framework_settings.cis-ig1.implementation_group': 2}})
+        native = {**self.row, '_id': aid, 'framework_assessment_id': aid, 'client_id': 'demo_brawndo', 'definition_id': '17.5',
+                  'implementation': 'SYNTHETIC QA: exact existing native wording.\n\n- Retain history.', 'status': 'in_progress'}
+        await server.db.framework_assessments.insert_one(native)
+        path = '/api/framework_assessments/' + aid + '/guided-assessment'
+        old_questions = VERSIONS[PROGRAM['version']]['safeguards']['17.5']
+        old_answers = {'practice': 'Yes', 'unknowns': 'Original required-practice uncertainty',
+                       **{q['id']: {row: 'Yes' for row in q['rows']} for q in old_questions if q['type'] == 'matrix'}}
+        old = {'version': PROGRAM['version'], 'answers': old_answers, 'step': 4, 'completed': True, 'revision': 7,
+               'narrative': 'SYNTHETIC QA: completed historical reviewed wording.\n- Retain this.', 'client_id': 'demo_brawndo'}
+        await server.db.guided_assessment_pilot.insert_one({'_id': aid + ':admin', **old})
+        read = (await self.client.get(path)).json()
+        self.assertEqual({key: read[key] for key in old}, old)
+        upgrade = {**self.pilot_body, 'version': current_version('17.5'), 'answers': {}, 'step': 0, 'completed': False,
+                   'narrative': '', 'expected_revision': 7, 'restart': True,
+                   'base_assessment_token': read['current_assessment_token'], 'base_scope_fingerprint': read['current_scope_fingerprint']}
+        restarted = await self.client.put(path, json=upgrade)
+        self.assertEqual(restarted.status_code, 200, restarted.text)
+        self.assertEqual(restarted.json()['answers'], {})
+        self.assertEqual(await server.db.framework_assessments.find_one({'framework_assessment_id': aid}), native)
+        history = (await self.client.get(path + '/history')).json()['items']
+        self.assertEqual(len(history), 1)
+        self.assertEqual(history[0]['answers'], old_answers)
+        self.assertEqual(history[0]['narrative'], old['narrative'])
+        self.assertEqual(history[0]['version'], PROGRAM['version'])
+        current = restarted.json()
+        answers = {'practice': 'Yes', 'scope_reason': 'SYNTHETIC QA: no relevant third-party role',
+                   **{q['id']: {row: 'Not applicable' if 'Not applicable' in q['choices'] else 'Yes' for row in q['rows']}
+                      for q in VERSIONS[current_version('17.5')]['safeguards']['17.5'] if q['type'] == 'matrix'}}
+        text = 'OVERVIEW\nSYNTHETIC QA ONLY.\n\nIMPLEMENTATION BREAKDOWN\n- Internal response assigned.\n\nITEMS TO ADDRESS\n- Reviewed manual line.'
+        completed = await self.client.put(path, json={**upgrade, 'restart': False, 'expected_revision': current['revision'],
+                                                     'answers': answers, 'completed': True, 'narrative': text})
+        self.assertEqual(completed.status_code, 200, completed.text)
+        self.assertEqual(await server.db.framework_assessments.find_one({'framework_assessment_id': aid}), native)
+        source = {key: completed.json()[key] for key in ('version', 'revision', 'generated_at')}
+        applied = await self.client.patch('/api/framework_assessments/' + aid,
+                                         json={'implementation': text, 'status': 'addressed', 'guided_assessment_source': source})
+        self.assertEqual(applied.status_code, 200, applied.text)
+        self.assertEqual(applied.json()['implementation'], text)
+        self.assertEqual(applied.json()['status'], 'addressed')
+        self.assertNotEqual(applied.json().get('verification'), 'verified')
+        self.assertEqual(applied.json()['assessment_history'][-1]['guided_assessment_source']['version'], current_version('17.5'))
+
 
 class PilotHistoryTests(unittest.IsolatedAsyncioTestCase):
     sign_in=harness.FrameworkTests.sign_in
@@ -165,25 +230,24 @@ class PilotHistoryTests(unittest.IsolatedAsyncioTestCase):
                 'base_assessment_token':current['current_assessment_token'],
                 'base_scope_fingerprint':current['current_scope_fingerprint']}
 
-    async def test_read_is_nonmutating_and_nonpilot_contract_stays_legacy(self):
+    async def test_read_is_nonmutating_and_all_configured_clients_receive_current_lineage_contract(self):
         self.assertTrue(self.initial['lineage_known'])
         self.assertFalse(self.initial['lineage_stale'])
         self.assertEqual(await server.db.guided_assessment_pilot.count_documents({}),0)
         self.assertEqual(await server.db.guided_assessment_history.count_documents({}),0)
         legacy='/api/framework_assessments/'+self.foreign+'/guided-assessment'
         response=(await self.client.get(legacy)).json()
-        self.assertEqual(set(response),{'version','answers','step','completed','revision'})
+        self.assertTrue(response['lineage_known'])
+        self.assertFalse(response['lineage_stale'])
         self.assertEqual(response['version'],current_version('1.1'))
-        body={k:v for k,v in self.pilot_body.items() if not k.startswith('base_')}
-        body['version']=response['version']
+        body={**self.pilot_body,'version':response['version'],**{key:response[key] for key in ('base_assessment_token','base_scope_fingerprint')}}
         saved=await self.client.put(legacy,json=body)
         self.assertEqual(saved.status_code,200,saved.text)
-        self.assertNotIn('base_scope_fingerprint',saved.json())
-        self.assertEqual((await self.client.get(legacy+'/history')).status_code,404)
-        for key,value in (('base_assessment_token',None),('base_scope_fingerprint','0'*64),('restart',False),('result',None)):
-            rejected=await self.client.put(legacy,json={**body,'expected_revision':1,key:value})
-            self.assertEqual(rejected.status_code,422,rejected.text)
-        denied=await self.client.put(legacy,json={**body,'version':current_version('1.1',upgraded=True),'expected_revision':1})
+        self.assertIn('base_scope_fingerprint',saved.json())
+        self.assertEqual((await self.client.get(legacy+'/history')).status_code,200)
+        rejected=await self.client.put(legacy,json={**body,'expected_revision':1,'base_scope_fingerprint':'0'*64})
+        self.assertEqual(rejected.status_code,409,rejected.text)
+        denied=await self.client.put(legacy,json={**body,'version':CONTROL1['version'],'expected_revision':1})
         self.assertEqual(denied.status_code,409,denied.text)
 
     async def test_non_cis_pilot_workspace_retains_legacy_work_contract(self):
@@ -201,6 +265,50 @@ class PilotHistoryTests(unittest.IsolatedAsyncioTestCase):
     async def test_shared_lineage_fixture_matches_current_backend_formula(self):
         contract=json.loads((Path(__file__).parent/'fixtures/guided-lineage-contract.json').read_text(encoding='utf-8'))
         self.assertEqual(guided_assessment.current_base(contract['row'],contract['client']),contract['base'])
+
+    async def test_explicit_same_version_compare_preserves_answers_wording_history_and_rejects_forged_rebase(self):
+        old={'version':LEGACY['version'],'answers':{'inventory':'No','gaps':'Historical unknown steps'},
+             'step':0,'completed':True,'revision':3,'narrative':'Manual historical wording\n- Preserve exactly\n','client_id':self.cid}
+        await server.db.guided_assessment_pilot.insert_one({'_id':self.aid+':admin',**old})
+        current=(await self.client.get(self.path)).json()
+        body={'version':old['version'],'answers':old['answers'],'step':0,'completed':False,'narrative':old['narrative'],
+              'expected_revision':3,'rebase':True,'base_assessment_token':current['current_assessment_token'],
+              'base_scope_fingerprint':current['current_scope_fingerprint']}
+        for changes in ({'answers':{'inventory':'Yes'}},{'narrative':'Replaced'},{'base_scope_fingerprint':'0'*64},{'rebase':'yes'}):
+            response=await self.client.put(self.path,json={**body,**changes})
+            self.assertIn(response.status_code,(409,422),response.text)
+        saved=await self.client.put(self.path,json=body)
+        self.assertEqual(saved.status_code,200,saved.text)
+        self.assertEqual(saved.json()['answers'],old['answers']);self.assertEqual(saved.json()['narrative'],old['narrative'])
+        self.assertEqual(saved.json()['version'],old['version']);self.assertFalse(saved.json()['lineage_stale'])
+        self.assertEqual((await self.client.get(self.path+'/history')).json()['items'][0]['narrative'],old['narrative'])
+        self.assertEqual((await self.client.put(self.path,json=body)).status_code,409)
+        complete=await self.client.put(self.path,json={**body,'expected_revision':4,'completed':True,'rebase':False})
+        self.assertEqual(complete.status_code,200,complete.text)
+        source={key:complete.json()[key] for key in ('version','revision','generated_at')}
+        self.assertEqual((await self.client.patch('/api/framework_assessments/'+self.aid,json={'implementation':'Must not apply old source','status':'addressed','guided_assessment_source':source})).status_code,409)
+        self.sign_in('member')
+        self.assertEqual((await self.client.get(self.path)).status_code,403)
+
+    async def test_all_153_native_save_adapters_preserve_the_whole_reviewed_writeup_status_and_verification(self):
+        await server.db.clients.update_one({'client_id':self.cid},{'$set':{'framework_settings.cis-ig1.implementation_group':3}})
+        for definition in CATALOG['definitions']:
+            with self.subTest(safeguard=definition):
+                aid='exact-writeup-'+definition
+                original={**self.row,'_id':aid,'framework_assessment_id':aid,'client_id':self.cid,'definition_id':definition,'status':'not_assessed','implementation':'','verification':'not_verified','notes':'Unrelated native notes'}
+                await server.db.framework_assessments.insert_one(original)
+                path='/api/framework_assessments/'+aid+'/guided-assessment';initial=(await self.client.get(path)).json()
+                reviewed='OVERVIEW\n\nSynthetic isolated client '+definition+' only.\n\nIMPLEMENTATION BREAKDOWN\n\nNeeds confirmation\n- Actual requirements are unanswered.\n\nITEMS TO ADDRESS\n\nConfirmation work\n- Confirm the actual practice.\n\nOperator edit\n- Keep punctuation and line breaks.\n'
+                snapshot={'version':initial['version'],'status':'not_assessed','narrative':reviewed,'basis':[],'gaps':[],'unknowns':[],'nextSteps':[],'evidence':[],'answers':[],'signals':[]}
+                interview=await self.client.put(path,json={'version':initial['version'],'answers':{},'step':0,'completed':True,'narrative':reviewed,'result':snapshot,'expected_revision':0,
+                    **{key:initial[key] for key in ('base_assessment_token','base_scope_fingerprint')}})
+                self.assertEqual(interview.status_code,200,interview.text)
+                source={key:interview.json()[key] for key in ('version','revision','generated_at')}
+                saved=await self.client.patch('/api/framework_assessments/'+aid,json={'implementation':reviewed,'status':'not_assessed','guided_assessment_source':source,'expected_last_assessed':original.get('last_saved') or original.get('last_assessed')})
+                self.assertEqual(saved.status_code,200,saved.text)
+                record=(await self.client.get('/api/framework_assessments/'+aid)).json()
+                self.assertEqual(record['implementation'],reviewed);self.assertEqual(record['status'],'not_assessed');self.assertEqual(record['verification'],'not_verified');self.assertEqual(record['notes'],'Unrelated native notes')
+                self.assertEqual(record['guided_assessment_source']['answers'],{})
 
     async def test_completed_edit_and_explicit_incomplete_restart_preserve_checkpoints(self):
         complete=(await self.client.put(self.path,json={**self.pilot_body,'completed':True,'narrative':'Original completed narrative'})).json()
@@ -263,16 +371,20 @@ class PilotHistoryTests(unittest.IsolatedAsyncioTestCase):
                 await server.db.framework_assessments.insert_one({**self.row,'_id':aid,'framework_assessment_id':aid,'client_id':self.cid,'definition_id':case['id']})
                 path='/api/framework_assessments/'+aid+'/guided-assessment'
                 base=(await self.client.get(path)).json()
+                # These unchanged fixtures record historical program-2 engine output.
+                await server.db.guided_assessment_pilot.insert_one({'_id':aid+':admin','client_id':self.cid,
+                    'version':case['version'],'answers':{},'step':0,'completed':False,'narrative':'','revision':1,
+                    **{key:base[key] for key in ('base_assessment_token','base_scope_fingerprint')}})
                 body={**self.pilot_body,'version':case['version'],'answers':case['answers'],'completed':True,
-                      'narrative':'Reviewed narrative differs from generated original','result':case['result'],
+                      'narrative':'Reviewed narrative differs from generated original','result':case['result'],'expected_revision':1,
                       **{k:base[k] for k in ('base_assessment_token','base_scope_fingerprint')}}
                 response=await self.client.put(path,json=body)
                 self.assertEqual(response.status_code,200,response.text)
                 self.assertEqual(response.json()['result'],case['result'])
                 self.assertEqual((await self.client.get(path)).json()['result'],case['result'])
-                mismatch=await self.client.put(path,json={**body,'expected_revision':1,'result':{**case['result'],'version':'different-version'}})
+                mismatch=await self.client.put(path,json={**body,'expected_revision':2,'result':{**case['result'],'version':'different-version'}})
                 self.assertEqual(mismatch.status_code,422,mismatch.text)
-                edit=await self.client.put(path,json={**body,'expected_revision':1,'completed':False,'result':None,'narrative':''})
+                edit=await self.client.put(path,json={**body,'expected_revision':2,'completed':False,'result':None,'narrative':''})
                 self.assertEqual(edit.status_code,200,edit.text)
                 self.assertEqual((await self.client.get(path+'/history')).json()['items'][0]['result'],case['result'])
 

@@ -1,0 +1,34 @@
+FAIL src/lib/cisRequiredUncertainty.test.js
+  × current CIS uncertainty field identifies substantive requirements and directs optional context elsewhere (3 ms)
+  √ optional owner context does not lower 8.10 while retained substantive uncertainty still does (2 ms)
+  √ explicit reuse from cis-v8.1-program-1 preserves the exact stable substantive uncertainty field (1 ms)
+  √ explicit reuse from cis-v8.1-program-2 preserves the exact stable substantive uncertainty field (1 ms)
+  √ explicit reuse from cis-v8.1-program-3 preserves the exact stable substantive uncertainty field (1 ms)
+  √ the clarification leaves legacy program wording and approved 1.1 unchanged
+
+  ● current CIS uncertainty field identifies substantive requirements and directs optional context elsewhere
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Which substantive safeguard requirements still need confirmation, and who can verify them?"
+    Received: "What still needs confirmation, and who can verify it?"
+
+       6 |   for(const id of ['8.10','17.5']){
+       7 |     const q=catalogForVersion(versionForSafeguard(id)).safeguards[id].find(q=>q.id==='unknowns');
+    >  8 |     expect(q.prompt).toBe('Which substantive safeguard requirements still need confirmation, and who can verify them?');
+         |                      ^
+       9 |     expect(q.help).toContain('Optional tool, owner or record details belong in the context fields');
+      10 |     expect(q.status_impact).toBe('Unresolved substantive requirements qualify the proposed status; optional context does not.');
+      11 |   }
+
+      at Object.<anonymous> (src/lib/cisRequiredUncertainty.test.js:8:22)
+      at TestScheduler.scheduleTests (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:173:3)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 5 passed, 6 total
+Snapshots:   0 total
+Time:        1.07 s
+Ran all test suites within paths "src/lib/cisRequiredUncertainty.test.js".

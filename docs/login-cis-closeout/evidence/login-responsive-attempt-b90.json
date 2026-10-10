@@ -1,0 +1,107 @@
+{
+  "requestedWidths": [
+    1440,
+    1024,
+    768,
+    390,
+    320
+  ],
+  "observed": [
+    {
+      "form": {
+        "bottom": 603.5625457763672,
+        "left": 853.5,
+        "right": 1236,
+        "top": 73.54167175292969
+      },
+      "overlap": false,
+      "robot": {
+        "bottom": 632.0104370117188,
+        "left": 66.640625,
+        "right": 326.2552185058594,
+        "top": 242.58334350585935
+      },
+      "scrollWidth": 1270,
+      "viewport": 1270
+    },
+    {
+      "form": {
+        "bottom": 603.5625457763672,
+        "left": 853.5,
+        "right": 1236,
+        "top": 73.54167175292969
+      },
+      "overlap": false,
+      "robot": {
+        "bottom": 632.0104370117188,
+        "left": 66.640625,
+        "right": 326.2552185058594,
+        "top": 242.58334350585935
+      },
+      "scrollWidth": 1270,
+      "viewport": 1270
+    },
+    {
+      "form": {
+        "bottom": 603.5625457763672,
+        "left": 853.5,
+        "right": 1236,
+        "top": 73.54167175292969
+      },
+      "overlap": false,
+      "robot": {
+        "bottom": 632.0104370117188,
+        "left": 66.640625,
+        "right": 326.2552185058594,
+        "top": 242.58334350585935
+      },
+      "scrollWidth": 1270,
+      "viewport": 1270
+    },
+    {
+      "form": {
+        "bottom": 603.5625457763672,
+        "left": 853.5,
+        "right": 1236,
+        "top": 73.54167175292969
+      },
+      "overlap": false,
+      "robot": {
+        "bottom": 632.0104370117188,
+        "left": 66.640625,
+        "right": 326.2552185058594,
+        "top": 242.58334350585935
+      },
+      "scrollWidth": 1270,
+      "viewport": 1270
+    },
+    {
+      "form": {
+        "bottom": 603.5625457763672,
+        "left": 853.5,
+        "right": 1236,
+        "top": 73.54167175292969
+      },
+      "overlap": false,
+      "robot": {
+        "bottom": 632.0104370117188,
+        "left": 66.640625,
+        "right": 326.2552185058594,
+        "top": 242.58334350585935
+      },
+      "scrollWidth": 1270,
+      "viewport": 1270
+    }
+  ],
+  "freshTabRequestedWidth": 320,
+  "freshTabObserved": {
+    "scrollWidth": 1270,
+    "viewport": 1270
+  },
+  "verifiedWidths": [
+    1270
+  ],
+  "viewportOverrideEffective": false,
+  "interpretation": "Capability did not change actual rendered width in this browser. These are not five responsive passes. Existing approved Login local breakpoint evidence is retained separately; current hosted geometry only at actual1270px. No application defect established.",
+  "overrideReset": true
+}

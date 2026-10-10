@@ -1,0 +1,140 @@
+{
+  "candidate_sha": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+  "candidate_tree": "c08a2390f75457c2147b430788658ec4679e69f9",
+  "generated_utc": "2026-10-10T16:41:26.655Z",
+  "deployment": "dep-db56e2d9fdbs73bpcq50",
+  "environment": "https://omnisciente-staging.onrender.com",
+  "review": "Independent read-only review of lead-recorded authenticated hosted evidence; no shared browser or database action.",
+  "checks": [
+    {
+      "name": "Exact corrected runtime and live deployment/source/startup evidence",
+      "passed": true
+    },
+    {
+      "name": "Reviewed exact-text artifacts match recorded native character counts and hashes",
+      "passed": true
+    },
+    {
+      "name": "17.5 ten stable answers reused and changed clause remains initially unanswered",
+      "passed": true
+    },
+    {
+      "name": "17.5 unknown versus affirmative absence remains distinct",
+      "passed": true
+    },
+    {
+      "name": "17.5 rationale exclusion and manual/native progress protection retain proper boundaries",
+      "passed": true
+    },
+    {
+      "name": "17.5 original completed/manual program3 snapshot remains accessible alongside program4",
+      "passed": true
+    },
+    {
+      "name": "8.10 optional and substantive uncertainty, resolution and SaveClose evidence remains accurate",
+      "passed": true
+    },
+    {
+      "name": "CI129 actual commit-filtered metadata and all required jobs/builds succeeded",
+      "passed": true
+    },
+    {
+      "name": "Synthetic CI checkout commit has the exact candidate tree",
+      "passed": true
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "hosted-corrections-6a4c.json",
+      "sha256": "a619813e921dcc7e33ec9a1b398cc1cc81ab0c3ae7ebad3daa79f28845dcf382"
+    },
+    {
+      "file": "render-correction-live.txt",
+      "sha256": "94090e66da6ca59f327ad7bf34dad869325f8e26e553ce03dbce038fd5fd2b99"
+    },
+    {
+      "file": "17.5-current-reviewed-value.txt",
+      "sha256": "ec45d4dab1cd6cd1e9dedac85b0e80b10159056c0ab95150bd3b9ed4486b584c"
+    },
+    {
+      "file": "17.5-current-native-after-refresh.txt",
+      "sha256": "84c19a0dc8a2faa40fd8460d4ed27b156358275851e34d52adb707a669af0882"
+    },
+    {
+      "file": "17.5-ten-compatible-criteria.json",
+      "sha256": "e0e9ad86db093483c252d6cbc93a967a17350c61e46d50f9310ba323fd79755a"
+    },
+    {
+      "file": "17.5-changed-clause-unanswered.txt",
+      "sha256": "236b4ccb0d2ad7aa778e58b181f4f01bf99b57f18cc05a7aeeff0889004b9def"
+    },
+    {
+      "file": "17.5-source-condition-unknown-value.txt",
+      "sha256": "6a64ca7eefc0cc8d735ed1662ee170c1074b73e7ad1c9a8dd88938f2473f3d6d"
+    },
+    {
+      "file": "17.5-source-condition-no-value.txt",
+      "sha256": "3242341298acfa5ee27f06bad3e068963411e8305af5cafb60477af4af5ea794"
+    },
+    {
+      "file": "17.5-summary-manual-protection.txt",
+      "sha256": "7ebf56529a99b655b4d7c149a72a5bf0a2d46da57749dfedffb8e5a566971ca1"
+    },
+    {
+      "file": "17.5-native-value-before-upgrade.txt",
+      "sha256": "861e81fc9468358227588fb88dd048440ba66c2c46ebffa80e96fb4433641fc4"
+    },
+    {
+      "file": "17.5-current-history-preserved.txt",
+      "sha256": "76fa97a41304313fdcc1b4bdeba537930eac8798ef337400f37cb0494f393058"
+    },
+    {
+      "file": "8.10-current-clarified-prompt.txt",
+      "sha256": "d30893cce19d3f5c5a7ab35297bb99f0dd60aeb082c1fd5ff8abe96837b04964"
+    },
+    {
+      "file": "8.10-optional-context-status.txt",
+      "sha256": "3ddeed161ffdeaf17a94ceabe92a2bb74620a3f1d315676886d2bf26676d7b45"
+    },
+    {
+      "file": "8.10-substantive-unknown-value.txt",
+      "sha256": "f6a9bf4dd52225cf31f61ad4ae3964d5c27fe4ae81841208e7693589173793aa"
+    },
+    {
+      "file": "8.10-current-reviewed-value.txt",
+      "sha256": "16aa031d3c13d4bf36526ad985c089a8e2f927fd6803fbc4362c04a4733f10d9"
+    },
+    {
+      "file": "8.10-current-native-after-refresh.txt",
+      "sha256": "048752424b678cc5348460f6580d24785f9f9773c32771be7806d38bf3f214b9"
+    }
+  ],
+  "ci_metadata_sha256": "a6233ce75edaa94fb12f6b4759d092ad12e4714dd0ce44abba93a444105e0d65",
+  "reviewed_texts": [
+    {
+      "safeguard": "17.5",
+      "version": "cis-v8.1-program-4",
+      "characters": 1788,
+      "sha256": "ec45d4dab1cd6cd1e9dedac85b0e80b10159056c0ab95150bd3b9ed4486b584c",
+      "source": "Reviewed plaintext matches recorded native-equality/hash observations; DOM captures establish rendered status/verification. Independent reviewer did not repeat browser extraction or native save."
+    },
+    {
+      "safeguard": "8.10",
+      "version": "cis-v8.1-program-3",
+      "characters": 779,
+      "sha256": "16aa031d3c13d4bf36526ad985c089a8e2f927fd6803fbc4362c04a4733f10d9",
+      "source": "Reviewed plaintext matches recorded native-equality/hash observations; DOM captures establish rendered status/verification. Independent reviewer did not repeat browser extraction or native save."
+    }
+  ],
+  "remaining": {
+    "restricted_identity": "Blocked: exact existing target Disabled Contributor / zero memberships; no approved account/role/membership change. Actual server read-only and unauthorized-client denial remain unexecuted; SuperAdmin is insufficient.",
+    "final_showcase_cleanup": "Lead spot checks/reversible archive and final consolidated closeout were still being completed at this checkpoint."
+  },
+  "precision_correction": {
+    "reported": "CI integration tree mislabeled synthetic merge commit3ce94d7b...",
+    "actual": "Synthetic CI checkout commit3ce94d7b... has treec08a2390..., identical to6a4c.",
+    "sent_to_lead": true
+  },
+  "disposition": "Corrected source/status/history/text evidence is coherent and supports the bounded affected hosted checks. No new material product defect found. Independent code disposition remains accepted; release acceptance remains blocked by real restricted-identity proof.",
+  "release_approval": false
+}

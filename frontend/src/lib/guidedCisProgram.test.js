@@ -1,13 +1,14 @@
 import cis from '@catalogs/cisIG1.json';
-import program from '@catalogs/guidedCisProgram.json';
+import program from '@catalogs/guidedCisProgramV2.json';
 import programV1 from '@catalogs/guidedCisProgramV1.json';
-import {guidedCatalog,control1Catalog,versionForSafeguard,legacyVersionForSafeguard,catalogForPilot,catalogForVersion,pilotEnabled,visibleQuestions as visibleVersionQuestions,validateAnswers as validateVersionAnswers,generateResult as generateVersionResult,prioritizeGuidedRows} from './guidedAssessment';
+import {guidedCatalog as currentCatalog,control1Catalog,versionForSafeguard as currentVersionForSafeguard,legacyVersionForSafeguard,catalogForPilot,catalogForVersion,pilotEnabled,visibleQuestions as visibleVersionQuestions,validateAnswers as validateVersionAnswers,generateResult as generateVersionResult,prioritizeGuidedRows} from './guidedAssessment';
 
-// These tests exercise the approved upgraded catalog explicitly. Default callers
-// retain the original versions until their trusted pilot selection opts in.
-const visibleQuestions=(id,answers,version=versionForSafeguard(id,true))=>visibleVersionQuestions(id,answers,version);
-const validateAnswers=(id,answers,version=versionForSafeguard(id,true))=>validateVersionAnswers(id,answers,version);
-const generateResult=(id,answers,today,version=versionForSafeguard(id,true))=>generateVersionResult(id,answers,today,version);
+// Historical program-2 assertions remain intact; new source decisions have a separate suite.
+const guidedCatalog=catalogForVersion(program.version);
+const versionForSafeguard=(id)=>guidedCatalog.definitions[id]?.question_set_version;
+const visibleQuestions=(id,answers,version=versionForSafeguard(id))=>visibleVersionQuestions(id,answers,version);
+const validateAnswers=(id,answers,version=versionForSafeguard(id))=>validateVersionAnswers(id,answers,version);
+const generateResult=(id,answers,today,version=versionForSafeguard(id))=>generateVersionResult(id,answers,today,version);
 
 const complete=id=>Object.fromEntries(guidedCatalog.safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'': 'Yes']));
 test('all 18 Controls have exactly the canonical 56/130/153 cumulative Safeguards',()=>{
@@ -32,17 +33,17 @@ test('unchanged Control 1 questions keep their version and historical 1.1 remain
   expect(catalogForVersion('brawndo-cis-pilot-1')).toBeTruthy();
 });
 
-test('non-pilot default selection keeps original question versions across all safeguards',()=>{
-  expect(catalogForPilot()).toBe(catalogForVersion('cis-v8.1-program-1'));
-  expect(catalogForPilot(true)).toBe(guidedCatalog);
+test('CIS defaults use the reviewed current catalog while original question versions remain explicit',()=>{
+  expect(catalogForPilot(false)).toBe(catalogForVersion('cis-v8.1-program-1'));
+  expect(catalogForPilot()).toBe(currentCatalog);
   for(const id of Object.keys(guidedCatalog.definitions)){
     const original=id.startsWith('1.')?control1Catalog.version:programV1.version;
-    expect(versionForSafeguard(id)).toBe(original);
+    expect(currentVersionForSafeguard(id,false)).toBe(original);
     expect(legacyVersionForSafeguard(id)).toBe(original);
   }
-  const old=catalogForPilot(),id='13.2';
+  const old=catalogForPilot(false),id='13.2';
   const answers=Object.fromEntries(old.safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':'Yes']));
-  expect(generateVersionResult(id,answers).version).toBe(programV1.version);
+  expect(generateVersionResult(id,answers,new Date(),programV1.version).version).toBe(programV1.version);
 });
 
 test.each(['13.2','13.3','13.4','13.7','13.8'])('%s keeps original program-1 matrix keys while new scope applies to every material row',id=>{

@@ -1,0 +1,3896 @@
+{
+  "schema": 1,
+  "kind": "Closeout evidence and acceptance-gap ledger; no release acceptance by compiler",
+  "generated_at": "2026-10-10T14:50:48.491Z",
+  "compiler": {
+    "agent": "cis_shared_workflow",
+    "role": "Implementation-owner read-only evidence compilation; not independent QA",
+    "actions": "Read existing root/owned evidence and source metadata only; no browser, tests, records, account changes, source edits, provider actions or deploy. Wrote own reporting utility/output only.",
+    "source_head": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0"
+  },
+  "release": {
+    "candidate": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "tested_tree": "6b4697296edb42d7ea4015282553f2cfcc99d42e",
+    "branch": "codex/login-cis-closeout",
+    "draft_pr": 65,
+    "dependent_prs": [
+      63,
+      64
+    ],
+    "unmerged_pilot_reference_pr": 62,
+    "approved_1_1_reference": "83d88e3cbc31d618060c4e094335963f5bacf096",
+    "main_baseline": "911706cebc7a70c0443f500fcd4bc19260c1db60",
+    "environment": "https://omnisciente-staging.onrender.com",
+    "service": "srv-db1s0cugekts73f72reg",
+    "deployment": "dep-db53ifrrjlhs73ca0ht0",
+    "state": "Deploy succeeded / Live in final recorded Render snapshot",
+    "served_assets": [
+      {
+        "name": "main.f518447e.js",
+        "url": "https://omnisciente-staging.onrender.com/static/js/main.f518447e.js"
+      },
+      {
+        "name": "main.fe2057c8.css",
+        "url": "https://omnisciente-staging.onrender.com/static/css/main.fe2057c8.css"
+      }
+    ],
+    "evidence": [
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\render-final-live-b90.txt"
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\render-emitted-assets-b90.txt"
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\served-assets-b90.json"
+      }
+    ],
+    "checkpoint_superseded": "predeployment.json records building at dispatch. Recorded final Render Live state supersedes that historical checkpoint; this utility does not live-query Render.",
+    "boundaries": {
+      "main_merge": false,
+      "production": false,
+      "sites_publication": false,
+      "provider_or_auth_settings_changed": false
+    }
+  },
+  "preserved_earlier_evidence": {
+    "source": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+    "deployment": "dep-db4mgtvlk1mc73d5q2c0",
+    "hosted_observations": 48,
+    "release_accepted": false,
+    "correction_source": "79075e0f85bebdb9651d381762e945c01f79c108",
+    "correction_deployment_checkpoint": "dep-db4n4iflk1mc73d83cs0; Deploy succeeded / Live at exact79075 after successful CI124; new authenticated checks blocked on sign-in",
+    "evidence": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\docs\\omni-cis-rollout\\hosted-lifecycle-evidence.json",
+    "boundary": "48 b0f observations, earlier supported upgrades/mixed-framework addition, and 79075 onboarding/default checks remain original-source evidence. They are not relabeled as b90 executions. Earlier doc pending-login/339/lifecycle/label items are superseded only by specific b90 records below."
+  },
+  "unchanged_content_review": {
+    "unique_definitions": 153,
+    "minimum_group_increments": [
+      56,
+      74,
+      23
+    ],
+    "cumulative": [
+      56,
+      130,
+      153
+    ],
+    "authored_status_cases": 4267,
+    "independent_source_review": "Existing independent153-source/question review retained; not rerun by compiler or combined Login-only integration.",
+    "local_rendered_placements": {
+      "uniquePlacements": 339,
+      "counts": [
+        56,
+        130,
+        153
+      ],
+      "nativeAssessmentSaves": 0,
+      "hostedSaves": 0,
+      "rawEvidenceSha256": "825d1e33996540e8182430be84b88e5dc0efd581656dd0bb32d216559d9373f7",
+      "environment": "Isolated local Demo at http://127.0.0.1:4357; not authenticated hosted persistence"
+    },
+    "source_matrix": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\docs\\omni-cis-rollout\\coverage-matrix.json",
+    "boundary": "Definition/decision cases, local fully populated rendering, hosted visible initial groups, and hosted writes are separate layers; no exhaustive answer-combination claim."
+  },
+  "combined_local_and_ci": {
+    "local": {
+      "platform": "Windows",
+      "node": "24.19.0",
+      "frontend": {
+        "suites": 258,
+        "tests": 7257,
+        "snapshots": 1,
+        "seconds": 1500.636,
+        "exit": 0,
+        "command": "CI=true; node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand",
+        "log": "frontend-full-b90a327.log"
+      },
+      "builds": [
+        {
+          "command": "CI=true; node scripts/staging.cjs",
+          "exit": 0,
+          "js": "main.1f686f6f.js",
+          "css": "main.fe2057c8.css",
+          "log": "build-staging-b90a327.log"
+        },
+        {
+          "command": "CI=true; node scripts/preview.cjs build",
+          "exit": 0,
+          "js": "main.41cea737.js",
+          "css": "main.30d7a029.css",
+          "log": "build-preview-b90a327.log"
+        }
+      ]
+    },
+    "ci": {
+      "id": 38052767065,
+      "number": 127,
+      "result": "success",
+      "mergeSha": "a507978e4ae5012718d056cd1233081079fdd407",
+      "mergeTree": "6b4697296edb42d7ea4015282553f2cfcc99d42e",
+      "frontend": {
+        "suites": 258,
+        "tests": 7257,
+        "snapshots": 1,
+        "seconds": 813.621,
+        "builds": "both passed",
+        "stagingJs": "main.f518447e.js",
+        "stagingCss": "main.fe2057c8.css"
+      },
+      "backend": "Every classified offline suite and disposable Mongo persistence/recovery/authorization steps succeeded",
+      "gate": "success",
+      "backendRawLog": "Connector returned Transport closed; job/step success metadata directly verified",
+      "source_identity": {
+        "synthetic_merge": "a507978e4ae5012718d056cd1233081079fdd407",
+        "synthetic_merge_tree": "6b4697296edb42d7ea4015282553f2cfcc99d42e",
+        "candidate_tree": "6b4697296edb42d7ea4015282553f2cfcc99d42e",
+        "trees_equal": true
+      },
+      "jobs": [
+        {
+          "name": "frontend",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run corepack enable",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run yarn install --frozen-lockfile",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run yarn test --watchAll=false --runInBand",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build authenticated Render application",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build isolated private Demo preview",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "backend",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Initialize containers",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+              "conclusion": "success"
+            },
+            {
+              "name": "Install runtime and isolated-test dependencies",
+              "conclusion": "success"
+            },
+            {
+              "name": "Every classified offline suite",
+              "conclusion": "success"
+            },
+            {
+              "name": "Disposable Mongo persistence, recovery and authorization",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "conclusion": "success"
+            },
+            {
+              "name": "Stop containers",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "Release gate",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Require completed successful verification jobs",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    "independent": {
+      "reviewer": "cis_independent_qa; separate non-implementation owner",
+      "scope": {
+        "composite": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "tree": "6b4697296edb42d7ea4015282553f2cfcc99d42e",
+        "exactLoginFiles": 17,
+        "loginBlobsEqual": true,
+        "retainedNonLoginFiles": 1166,
+        "allNonLoginGitEntriesEqualCis": true,
+        "ancestry": [
+          "7b63a444b5b1fd50b81539c7c90e613fbb000194",
+          "e7704c4b85efaf4dd8b077effca66424fd691708",
+          "83d88e3cbc31d618060c4e094335963f5bacf096"
+        ],
+        "unchanged": {
+          "backend": true,
+          "shared": true,
+          "frontend/src/context": true,
+          "frontend/src/lib": true,
+          "frontend/src/preview": true,
+          ".github": true,
+          "deploy": true,
+          "frontend/package.json": true,
+          "frontend/yarn.lock": true,
+          "frontend/src/App.js": true,
+          "frontend/src/App.css": true,
+          "frontend/src/components/Layout.jsx": true,
+          "frontend/src/components/OmniWindow.jsx": true,
+          "frontend/src/components/OmniCharacter.jsx": true,
+          "frontend/src/components/GuidedAssessor.jsx": true,
+          "frontend/src/components/RefinedOmniInterview.jsx": true
+        },
+        "cssScopedSelectors": 272,
+        "cssNamespacedKeyframes": 5,
+        "dependencyHashes": {
+          "frontend/package.json": {
+            "own": "cb9830eb03756654e88557110391f98fc7bc1e55b45866e15908926e01d3167d",
+            "root": "cb9830eb03756654e88557110391f98fc7bc1e55b45866e15908926e01d3167d"
+          },
+          "frontend/yarn.lock": {
+            "own": "296ce65824eeeb3ee7785c0eefe6529d02fa2674409ce84c8095270151c3debb",
+            "root": "296ce65824eeeb3ee7785c0eefe6529d02fa2674409ce84c8095270151c3debb"
+          }
+        },
+        "release_approval": false
+      },
+      "focused_tests": {
+        "source_sha": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "command": "CI=true; node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand --runTestsByPath src/pages/Login.test.jsx src/pages/Login.css.test.js src/components/login/LoginWelcome.test.jsx src/components/login/loginPlacement.test.js src/components/login/useLoginMotion.test.jsx src/context/AuthContext.test.jsx src/context/AuthContext.logout.test.jsx src/components/OmniDock.test.jsx src/components/OmniWindow.test.jsx src/lib/brawndoPortalTheme.test.jsx src/components/GuidedLifecycleNative.test.jsx src/components/GuidedAssessorFocusedLifecycle.test.jsx src/components/OmniCisRolloutRendered.test.jsx src/lib/omniCisSummary.test.js",
+        "workdir": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-independent-qa/frontend",
+        "node_version": "v24.19.0",
+        "installed_craco": "7.1.0",
+        "installed_react": "19.0.0",
+        "suites": 14,
+        "tests": 588,
+        "snapshots": 0,
+        "seconds": 45.194,
+        "exit_code": 0,
+        "log": "outputs/independent-composite-focused-b90.log",
+        "sha256": "101c94895de7168bd3c4b10256e7a1c76f44faead03534c846500b2ccc09ee33",
+        "assertions_timing_budgets_skips_unchanged": true,
+        "boundary": "React/JSDOM/function/mocked API checks; not real browser authentication or hosted persistence. No independent full backend/frontend run or builds claimed."
+      },
+      "material_findings": [],
+      "accepted_for_controlled_validation": true,
+      "release_approval": false,
+      "boundary": "Actual separate QA code review/focused tests are attributed to its owner. No release approval by compiler. Earlier pending full CI/Live items in the independent checkpoint are superseded by explicit later evidence."
+    }
+  },
+  "hosted_placements": {
+    "raw_observations": 348,
+    "unique_placements": 339,
+    "duplicate_focused_observations": 9,
+    "cumulative_clients": {
+      "Brawndo": 56,
+      "Initech": 130,
+      "Hooli": 153
+    },
+    "raw_classifications": {
+      "current_compatible_version_unresolved": 8,
+      "definite_historical_prompt": 2,
+      "historical_version_interlock_observed": 1,
+      "current_compatible_no_version_interlock_recorded": 337
+    },
+    "latest_unique_classifications": {
+      "current_compatible_no_version_interlock_recorded": 337,
+      "definite_historical_prompt": 1,
+      "historical_version_interlock_observed": 1
+    },
+    "resolved_initial_ambiguities": [
+      {
+        "client": "Brawndo",
+        "id": "1.1",
+        "original_observation_index": 0,
+        "resolving_observation_index": 339
+      },
+      {
+        "client": "Brawndo",
+        "id": "2.1",
+        "original_observation_index": 2,
+        "resolving_observation_index": 341
+      },
+      {
+        "client": "Brawndo",
+        "id": "2.2",
+        "original_observation_index": 3,
+        "resolving_observation_index": 342
+      },
+      {
+        "client": "Brawndo",
+        "id": "2.3",
+        "original_observation_index": 4,
+        "resolving_observation_index": 343
+      },
+      {
+        "client": "Brawndo",
+        "id": "3.1",
+        "original_observation_index": 5,
+        "resolving_observation_index": 344
+      },
+      {
+        "client": "Brawndo",
+        "id": "3.2",
+        "original_observation_index": 6,
+        "resolving_observation_index": 345
+      },
+      {
+        "client": "Brawndo",
+        "id": "3.3",
+        "original_observation_index": 7,
+        "resolving_observation_index": 346
+      },
+      {
+        "client": "Brawndo",
+        "id": "3.4",
+        "original_observation_index": 8,
+        "resolving_observation_index": 347
+      }
+    ],
+    "current_source_visibility": {
+      "unique_placements_including_separately_disclosed_authorized_followups": 339,
+      "total_required": 339,
+      "current_source_unique_by_client": {
+        "Brawndo": 56,
+        "Initech": 130,
+        "Hooli": 153
+      },
+      "remaining": []
+    },
+    "authorized_interview_only_followups": [
+      {
+        "client": "Brawndo",
+        "group": 1,
+        "id": "3.5",
+        "status": "current_source_visible_after_separately_authorized_interview_only_restart",
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\brawndo-3.5-authorized-exception-b90.json",
+        "sha256": "ec52be20396a44c6120aa8711817d26fae4647b0d9d7df9bf0607cdd11705492",
+        "input_schema": "3.5-summary-with-linked-evidence",
+        "explicit_authorization": "User one-record interview-only exception 2026-10-10",
+        "assessment_id": "fw_b4a32e7631ed5c1d9c67a415ebd226c2",
+        "confirm_restart_activations": 1,
+        "reused_historical_answers": false,
+        "new_interview_unanswered": true,
+        "current_source_visible": true,
+        "native_assessment_save_activations": 0,
+        "interview_history_write": true,
+        "entirely_read_only": false,
+        "native_implementation_unchanged": true,
+        "native_status_unchanged": true,
+        "native_visible_values_unchanged": true,
+        "native_metadata_unchanged": true,
+        "native_history_and_activity_unchanged": true,
+        "linked_finding_unchanged": true,
+        "preserved_interview_revisions": [
+          9,
+          18
+        ],
+        "observed_questions": [
+          "Is the practice “Securely Dispose of Data” in place and operating?"
+        ],
+        "expected_fresh_current_question_titles": [
+          "Is the practice “Securely Dispose of Data” in place and operating?"
+        ],
+        "observed_current_prompt_match": true,
+        "limitation": "Public native metadata/history and linked finding compared; not a full database export."
+      },
+      {
+        "client": "Brawndo",
+        "group": 1,
+        "id": "1.2",
+        "status": "current_source_visible_after_separately_authorized_interview_only_restart",
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\brawndo-1.2-authorized-exception-b90.json",
+        "sha256": "038c412a499610a2be60416e21adba3f8b6a95b47c858d2ad89b0bd806b34d4c",
+        "input_schema": "1.2-detailed-accessible-tree-before-after",
+        "explicit_authorization": "User explicitly authorized interview-only current-source review for exact synthetic Brawndo 1.2",
+        "assessment_id": "fw_086abb33d7dc5c1ebb55df6f2ffbbc13",
+        "confirm_restart_activations": 1,
+        "reused_historical_answers": false,
+        "new_interview_unanswered": true,
+        "current_source_visible": true,
+        "native_assessment_save_activations": 0,
+        "interview_history_write": true,
+        "entirely_read_only": false,
+        "native_implementation_unchanged": true,
+        "native_status_unchanged": true,
+        "native_visible_values_unchanged": true,
+        "native_metadata_unchanged": true,
+        "native_history_and_activity_unchanged": true,
+        "linked_finding_unchanged": null,
+        "preserved_interview_revisions": [
+          75,
+          76
+        ],
+        "observed_questions": [
+          "Is a process in place to address unauthorized assets?"
+        ],
+        "expected_fresh_current_question_titles": [
+          "Is a process in place to address unauthorized assets?"
+        ],
+        "observed_current_prompt_match": true,
+        "limitation": "Exact recorded native visible-values/row/native-manage accessible-tree equality independently compared. This does not establish equality of unobserved database fields or every linked record."
+      }
+    ],
+    "boundary": "339 current-source visible initial/resumed guide placements, not339 native saves or every conditional branch. Brawndo1.2/3.5 are separate explicitly authorized interview/history writes; the combined sweep is not entirely read-only."
+  },
+  "hosted_native_lifecycle": {
+    "observations": 54,
+    "latest_observation": "2026-10-10T14:39:56.094Z",
+    "distinct_primary_lifecycle_native_assessments": 3,
+    "additional_status_case_native_assessments": 1,
+    "isolated_interview_cas_assessments": 3,
+    "per_group": [
+      {
+        "group": 1,
+        "client": "OmniBot QA — Closeout CIS IG1",
+        "assessment_id": "fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "safeguard": "1.1",
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "actor": "Existing Staging Administrator / super_admin; same-account tabs",
+        "synthetic_fixture": true,
+        "final_native_text": {
+          "characters": 1570,
+          "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec"
+        },
+        "scenarios": [
+          {
+            "scenario": "Fresh/partial progress and refresh resume; interview save keeps native blank",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 0
+              }
+            ],
+            "boundary": "Native Not Assessed is separate from interview progress. IG2/IG3 resume snapshots additionally recorded in per-group partial-resume AX files."
+          },
+          {
+            "scenario": "Final applicable group opens complete summary; explicit Save and exact native reload",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 1
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 2
+              }
+            ],
+            "boundary": "Actual hosted native assessment write; plain-text headings, multiline text and separate status are retained."
+          },
+          {
+            "scenario": "Resume existing answers for targeted correction",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 3
+              }
+            ],
+            "boundary": "No forced restart; targeted corrections use the existing interview."
+          },
+          {
+            "scenario": "Cancel Update and cancel Save & close",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 4
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 5
+              }
+            ],
+            "boundary": "Unsaved edited summary differs from the preserved native record by design; cancellation leaves the guide open."
+          },
+          {
+            "scenario": "Confirmed ordinary Update assessment",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 6
+              }
+            ],
+            "boundary": "Exact reviewed text is written, not regenerated during submission."
+          },
+          {
+            "scenario": "Manual text protection, revised substantive answers, Partial to Implemented, Save & close",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 7
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 8
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 9
+              }
+            ],
+            "boundary": "Changed answers do not silently overwrite existing native/manual text; closure is recorded after successful native save."
+          },
+          {
+            "scenario": "Rapid duplicate activation",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 10
+              }
+            ],
+            "boundary": "UI suppression is proven by one changed native history entry; not a claim of backend idempotency for arbitrarily replayed requests."
+          },
+          {
+            "scenario": "Concurrent native writer wins; stale summary cannot overwrite it",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 11
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 12
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 13
+              }
+            ],
+            "boundary": "Normal native edits and rendered stale/version guard; no intercepted request or invented HTTP status. Explicit server interview CAS is separately recorded."
+          },
+          {
+            "scenario": "Failed stale native save followed by explicit comparison and reviewed retry",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 14
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 15
+              }
+            ],
+            "boundary": "Winner text retained, success closes guide. Does not establish unrelated network outage or backend 500 handling."
+          },
+          {
+            "scenario": "Actual normal logout/login and exact native/summary restoration",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 47
+              }
+            ],
+            "boundary": "Same active SuperAdmin; no MFA challenge occurred, no credential contents read."
+          }
+        ],
+        "duplicate_history": {
+          "before": 4,
+          "after": 5,
+          "delta": 1,
+          "evidence": [
+            {
+              "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-native-history-before-duplicate-b90.txt"
+            },
+            {
+              "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-native-history-after-duplicate-b90.txt"
+            }
+          ]
+        },
+        "partial_resume_snapshot": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-partial-resume-b90.txt"
+        },
+        "actual_login_resume_snapshot": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-actual-login-resume-b90.txt"
+        }
+      },
+      {
+        "group": 2,
+        "client": "OmniBot QA — CIS IG2",
+        "assessment_id": "fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "safeguard": "15.3",
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "actor": "Existing Staging Administrator / super_admin; same-account tabs",
+        "synthetic_fixture": true,
+        "final_native_text": {
+          "characters": 1696,
+          "sha256": "9fe09ccb23bb5406c6ddeb575f3f6db631d2831081e8418c946c0e4a0a481723"
+        },
+        "scenarios": [
+          {
+            "scenario": "Fresh/partial progress and refresh resume; interview save keeps native blank",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 16
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 17
+              }
+            ],
+            "boundary": "Native Not Assessed is separate from interview progress. IG2/IG3 resume snapshots additionally recorded in per-group partial-resume AX files."
+          },
+          {
+            "scenario": "Final applicable group opens complete summary; explicit Save and exact native reload",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 18
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 19
+              }
+            ],
+            "boundary": "Actual hosted native assessment write; plain-text headings, multiline text and separate status are retained."
+          },
+          {
+            "scenario": "Resume existing answers for targeted correction",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 26
+              }
+            ],
+            "boundary": "No forced restart; targeted corrections use the existing interview."
+          },
+          {
+            "scenario": "Cancel Update and cancel Save & close",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 20
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 21
+              }
+            ],
+            "boundary": "Unsaved edited summary differs from the preserved native record by design; cancellation leaves the guide open."
+          },
+          {
+            "scenario": "Confirmed ordinary Update assessment",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 22
+              }
+            ],
+            "boundary": "Exact reviewed text is written, not regenerated during submission."
+          },
+          {
+            "scenario": "Manual text protection, revised substantive answers, Partial to Implemented, Save & close",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 23
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 24
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 25
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 26
+              }
+            ],
+            "boundary": "Changed answers do not silently overwrite existing native/manual text; closure is recorded after successful native save."
+          },
+          {
+            "scenario": "Rapid duplicate activation",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 27
+              }
+            ],
+            "boundary": "UI suppression is proven by one changed native history entry; not a claim of backend idempotency for arbitrarily replayed requests."
+          },
+          {
+            "scenario": "Concurrent native writer wins; stale summary cannot overwrite it",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 28
+              }
+            ],
+            "boundary": "Normal native edits and rendered stale/version guard; no intercepted request or invented HTTP status. Explicit server interview CAS is separately recorded."
+          },
+          {
+            "scenario": "Failed stale native save followed by explicit comparison and reviewed retry",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 29
+              }
+            ],
+            "boundary": "Winner text retained, success closes guide. Does not establish unrelated network outage or backend 500 handling."
+          },
+          {
+            "scenario": "Actual normal logout/login and exact native/summary restoration",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 48
+              }
+            ],
+            "boundary": "Same active SuperAdmin; no MFA challenge occurred, no credential contents read."
+          }
+        ],
+        "duplicate_history": {
+          "before": 4,
+          "after": 5,
+          "delta": 1,
+          "evidence": [
+            {
+              "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-native-history-before-duplicate-b90.txt"
+            },
+            {
+              "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-native-history-after-duplicate-b90.txt"
+            }
+          ]
+        },
+        "partial_resume_snapshot": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-partial-resume-b90.txt"
+        },
+        "actual_login_resume_snapshot": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-actual-login-resume-b90.txt"
+        }
+      },
+      {
+        "group": 3,
+        "client": "OmniBot QA — Closeout CIS IG3",
+        "assessment_id": "fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "safeguard": "15.5",
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "actor": "Existing Staging Administrator / super_admin; same-account tabs",
+        "synthetic_fixture": true,
+        "final_native_text": {
+          "characters": 1644,
+          "sha256": "45b26c241e94ec2fd0d26bf22f2a9574076ddf145effcedcdaefea9d14be83da"
+        },
+        "scenarios": [
+          {
+            "scenario": "Fresh/partial progress and refresh resume; interview save keeps native blank",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 30
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 31
+              }
+            ],
+            "boundary": "Native Not Assessed is separate from interview progress. IG2/IG3 resume snapshots additionally recorded in per-group partial-resume AX files."
+          },
+          {
+            "scenario": "Final applicable group opens complete summary; explicit Save and exact native reload",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 32
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 33
+              }
+            ],
+            "boundary": "Actual hosted native assessment write; plain-text headings, multiline text and separate status are retained."
+          },
+          {
+            "scenario": "Resume existing answers for targeted correction",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 40
+              }
+            ],
+            "boundary": "No forced restart; targeted corrections use the existing interview."
+          },
+          {
+            "scenario": "Cancel Update and cancel Save & close",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 34
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 35
+              }
+            ],
+            "boundary": "Unsaved edited summary differs from the preserved native record by design; cancellation leaves the guide open."
+          },
+          {
+            "scenario": "Confirmed ordinary Update assessment",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 36
+              }
+            ],
+            "boundary": "Exact reviewed text is written, not regenerated during submission."
+          },
+          {
+            "scenario": "Manual text protection, revised substantive answers, Partial to Implemented, Save & close",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 37
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 38
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 39
+              },
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 40
+              }
+            ],
+            "boundary": "Changed answers do not silently overwrite existing native/manual text; closure is recorded after successful native save."
+          },
+          {
+            "scenario": "Rapid duplicate activation",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 41
+              }
+            ],
+            "boundary": "UI suppression is proven by one changed native history entry; not a claim of backend idempotency for arbitrarily replayed requests."
+          },
+          {
+            "scenario": "Concurrent native writer wins; stale summary cannot overwrite it",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 42
+              }
+            ],
+            "boundary": "Normal native edits and rendered stale/version guard; no intercepted request or invented HTTP status. Explicit server interview CAS is separately recorded."
+          },
+          {
+            "scenario": "Failed stale native save followed by explicit comparison and reviewed retry",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 43
+              }
+            ],
+            "boundary": "Winner text retained, success closes guide. Does not establish unrelated network outage or backend 500 handling."
+          },
+          {
+            "scenario": "Actual normal logout/login and exact native/summary restoration",
+            "evidence_status": "recorded verified on combined candidate",
+            "observations": [
+              {
+                "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+                "observation_index": 49
+              }
+            ],
+            "boundary": "Same active SuperAdmin; no MFA challenge occurred, no credential contents read."
+          }
+        ],
+        "duplicate_history": {
+          "before": 4,
+          "after": 5,
+          "delta": 1,
+          "evidence": [
+            {
+              "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-native-history-before-duplicate-b90.txt"
+            },
+            {
+              "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-native-history-after-duplicate-b90.txt"
+            }
+          ]
+        },
+        "partial_resume_snapshot": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-partial-resume-b90.txt"
+        },
+        "actual_login_resume_snapshot": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-actual-login-resume-b90.txt"
+        }
+      }
+    ],
+    "compact_observations": [
+      {
+        "index": 0,
+        "case": "IG1 partial-progress save and refresh resume",
+        "time": "2026-10-10T13:57:55.448Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "abbreviated source resolved against pinned lead checkout and same-deployment ledger",
+        "recorded_deployment": null,
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "not_assessed"
+        ],
+        "native_text": {
+          "characters": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "recorded_hash_matches": null
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": null,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 0
+        }
+      },
+      {
+        "index": 1,
+        "case": "IG1 first authoritative native save with exact reviewed text",
+        "time": "2026-10-10T13:59:09.179Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1334,
+          "sha256": "85d9c72fe1085368f85f9b25c3a779cc2cc3e57af190b7c786cb4acd42bd3a2d",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 1
+        }
+      },
+      {
+        "index": 2,
+        "case": "IG1 saved text and separate status full reload",
+        "time": "2026-10-10T13:59:12.402Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1334,
+          "sha256": "85d9c72fe1085368f85f9b25c3a779cc2cc3e57af190b7c786cb4acd42bd3a2d",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 2
+        }
+      },
+      {
+        "index": 3,
+        "case": "IG1 completed interview reopens exact saved manual wording",
+        "time": "2026-10-10T13:59:12.831Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1334,
+          "sha256": "85d9c72fe1085368f85f9b25c3a779cc2cc3e57af190b7c786cb4acd42bd3a2d",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 3
+        }
+      },
+      {
+        "index": 4,
+        "case": "IG1 update cancellation preserves native record",
+        "time": "2026-10-10T13:59:37.092Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1334,
+          "sha256": "85d9c72fe1085368f85f9b25c3a779cc2cc3e57af190b7c786cb4acd42bd3a2d",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": false,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 4
+        }
+      },
+      {
+        "index": 5,
+        "case": "IG1 Save-close cancellation leaves guide open and native unchanged",
+        "time": "2026-10-10T13:59:37.868Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1334,
+          "sha256": "85d9c72fe1085368f85f9b25c3a779cc2cc3e57af190b7c786cb4acd42bd3a2d",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": false,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 5
+        }
+      },
+      {
+        "index": 6,
+        "case": "IG1 explicit Update assessment completed exact text",
+        "time": "2026-10-10T13:59:46.131Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1401,
+          "sha256": "1766b8650e8e49b14acc4a8166b66069fd624fb33acf8fac8c4153c124d751dd",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 6
+        }
+      },
+      {
+        "index": 7,
+        "case": "IG1 changed requirement Partially Implemented Save-close completed",
+        "time": "2026-10-10T14:01:00.959Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "in_progress"
+        ],
+        "native_text": {
+          "characters": 1155,
+          "sha256": "ccb46df41aa9dc1bfef77424fe254fac5a856583fe2c7c169e01a201dc040c43",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 7
+        }
+      },
+      {
+        "index": 8,
+        "case": "IG1 changed status/write-up exact refresh",
+        "time": "2026-10-10T14:01:03.823Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "in_progress"
+        ],
+        "native_text": {
+          "characters": 1155,
+          "sha256": "ccb46df41aa9dc1bfef77424fe254fac5a856583fe2c7c169e01a201dc040c43",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 8
+        }
+      },
+      {
+        "index": 9,
+        "case": "IG1 restore required answer Implemented and Save-close completed",
+        "time": "2026-10-10T14:01:43.909Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1340,
+          "sha256": "36ddd6f602352b1036e54ef17f1a486f5903cdec5021c042fa1316e668da750f",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 9
+        }
+      },
+      {
+        "index": 10,
+        "case": "IG1 rapid duplicate activation keeps one reviewed native value",
+        "time": "2026-10-10T14:02:37.857Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1415,
+          "sha256": "7e96027581dc25ea69b61bfd893a5931cab7c612e5801a36025d54be860de7c1",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 10
+        }
+      },
+      {
+        "index": 11,
+        "case": "IG1 real stale summary Save-close fails without closing or overwriting native winner",
+        "time": "2026-10-10T14:03:33.507Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "abbreviated source resolved against pinned lead checkout and same-deployment ledger",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": null,
+        "native_text": null,
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": null,
+        "guide_window_count": null,
+        "rejection": "The interview, assessment or scope changed. Reopen the assessment before starting a new review.",
+        "guide_remains_open": true,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 11
+        }
+      },
+      {
+        "index": 12,
+        "case": "IG1 native concurrent writer survived stale failure and refresh",
+        "time": "2026-10-10T14:03:55.725Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1492,
+          "sha256": "d2b0833885d5a43baaab9e379b6e1284115bc7ef56d54a41875b69a1b5b51450",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": null,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 12
+        }
+      },
+      {
+        "index": 13,
+        "case": "IG1 browser-tab recovery preserved authenticated native winner",
+        "time": "2026-10-10T14:05:00.903Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1492,
+          "sha256": "d2b0833885d5a43baaab9e379b6e1284115bc7ef56d54a41875b69a1b5b51450",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 13
+        }
+      },
+      {
+        "index": 14,
+        "case": "IG1 real failed-save explicit comparison retry preserves native edit and closes after success",
+        "time": "2026-10-10T14:05:24.245Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1570,
+          "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 14
+        }
+      },
+      {
+        "index": 15,
+        "case": "IG1 recovered exact native text refresh",
+        "time": "2026-10-10T14:05:34.644Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1570,
+          "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 15
+        }
+      },
+      {
+        "index": 16,
+        "case": "IG2 fresh blank baseline",
+        "time": "2026-10-10T14:14:26.850Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "not_assessed"
+        ],
+        "native_text": {
+          "characters": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 16
+        }
+      },
+      {
+        "index": 17,
+        "case": "IG2 partial progress does not save native assessment",
+        "time": "2026-10-10T14:14:41.763Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "not_assessed"
+        ],
+        "native_text": {
+          "characters": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 17
+        }
+      },
+      {
+        "index": 18,
+        "case": "IG2 first native Save assessment exact text",
+        "time": "2026-10-10T14:15:08.787Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1502,
+          "sha256": "0a95ad836f72d428017f64ce060d3c8d389e67c455da2c29e99d8595937ffb64",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 18
+        }
+      },
+      {
+        "index": 19,
+        "case": "IG2 refreshed exact write-up and separate Implemented status",
+        "time": "2026-10-10T14:15:18.189Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1502,
+          "sha256": "0a95ad836f72d428017f64ce060d3c8d389e67c455da2c29e99d8595937ffb64",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 19
+        }
+      },
+      {
+        "index": 20,
+        "case": "IG2 cancelled Update preserves previously saved native text",
+        "time": "2026-10-10T14:15:30.135Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1502,
+          "sha256": "0a95ad836f72d428017f64ce060d3c8d389e67c455da2c29e99d8595937ffb64",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": false,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 20
+        }
+      },
+      {
+        "index": 21,
+        "case": "IG2 cancelled Save and close stays open and preserves native",
+        "time": "2026-10-10T14:15:30.888Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1502,
+          "sha256": "0a95ad836f72d428017f64ce060d3c8d389e67c455da2c29e99d8595937ffb64",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": false,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 21
+        }
+      },
+      {
+        "index": 22,
+        "case": "IG2 confirmed Update completion exact text",
+        "time": "2026-10-10T14:15:37.210Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1590,
+          "sha256": "db06b209a7adfbfdc0d994788f9b6362e27515d9296c3c6eb37e749ccaba113b",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 22
+        }
+      },
+      {
+        "index": 23,
+        "case": "IG2 revised answers do not silently replace native or manual wording",
+        "time": "2026-10-10T14:15:56.691Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1590,
+          "sha256": "db06b209a7adfbfdc0d994788f9b6362e27515d9296c3c6eb37e749ccaba113b",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 23
+        }
+      },
+      {
+        "index": 24,
+        "case": "IG2 successful Save and close exact partial text",
+        "time": "2026-10-10T14:15:58.385Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "in_progress"
+        ],
+        "native_text": {
+          "characters": 1447,
+          "sha256": "73344b97f9e8531300fe34f2dffb49117e8a750ebb31c74b31185425294748a7",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 24
+        }
+      },
+      {
+        "index": 25,
+        "case": "IG2 refresh preserves Partial status and exact reviewed text",
+        "time": "2026-10-10T14:16:17.384Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "in_progress"
+        ],
+        "native_text": {
+          "characters": 1447,
+          "sha256": "73344b97f9e8531300fe34f2dffb49117e8a750ebb31c74b31185425294748a7",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 25
+        }
+      },
+      {
+        "index": 26,
+        "case": "IG2 targeted resumed correction exact final Implemented write",
+        "time": "2026-10-10T14:16:19.838Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1496,
+          "sha256": "f63ccbc1ccb830f330c752cfb5a9ae818d764896e1085879dc7aa4875239d8e3",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 26
+        }
+      },
+      {
+        "index": 27,
+        "case": "IG2 rapid duplicate confirmation final exact text",
+        "time": "2026-10-10T14:16:59.431Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1555,
+          "sha256": "d155d04da844eda28d9aad53ec744f5dfa6ed984b11bd9c8ee1171d9babc5efc",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 27
+        }
+      },
+      {
+        "index": 28,
+        "case": "IG2 failed stale save keeps native winner after refresh",
+        "time": "2026-10-10T14:17:48.096Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1639,
+          "sha256": "cc6522598ac98db53461f00f9bafa209f21e7fcad5453a39ca55f7144d7a8ebc",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 28
+        }
+      },
+      {
+        "index": 29,
+        "case": "IG2 reviewed retry succeeds preserving native edit",
+        "time": "2026-10-10T14:18:01.774Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1696,
+          "sha256": "9fe09ccb23bb5406c6ddeb575f3f6db631d2831081e8418c946c0e4a0a481723",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 29
+        }
+      },
+      {
+        "index": 30,
+        "case": "IG3 direct-onboarding fresh assessment blank",
+        "time": "2026-10-10T14:18:38.798Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "not_assessed"
+        ],
+        "native_text": {
+          "characters": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 30
+        }
+      },
+      {
+        "index": 31,
+        "case": "IG3 partial progress refresh leaves native blank Not Assessed",
+        "time": "2026-10-10T14:18:44.703Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "not_assessed"
+        ],
+        "native_text": {
+          "characters": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 31
+        }
+      },
+      {
+        "index": 32,
+        "case": "IG3 first native Save exact text and Implemented with contract alternative",
+        "time": "2026-10-10T14:19:05.380Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1454,
+          "sha256": "7028a63a828899a4697bf983fc967aacd8eb440d0bf8d97cae475fbddf73eed5",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 32
+        }
+      },
+      {
+        "index": 33,
+        "case": "IG3 refreshed exact native write-up",
+        "time": "2026-10-10T14:19:18.572Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1454,
+          "sha256": "7028a63a828899a4697bf983fc967aacd8eb440d0bf8d97cae475fbddf73eed5",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 33
+        }
+      },
+      {
+        "index": 34,
+        "case": "IG3 cancelled Update preserves saved native",
+        "time": "2026-10-10T14:19:19.802Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1454,
+          "sha256": "7028a63a828899a4697bf983fc967aacd8eb440d0bf8d97cae475fbddf73eed5",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": false,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 34
+        }
+      },
+      {
+        "index": 35,
+        "case": "IG3 cancelled Save and close keeps window open and saved native",
+        "time": "2026-10-10T14:19:20.564Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1454,
+          "sha256": "7028a63a828899a4697bf983fc967aacd8eb440d0bf8d97cae475fbddf73eed5",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": false,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 35
+        }
+      },
+      {
+        "index": 36,
+        "case": "IG3 confirmed Update exact text",
+        "time": "2026-10-10T14:19:36.927Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1544,
+          "sha256": "9718d8149b1e75899eda1cfd9e3006af8fd41434e7292319edd80e91f9b22116",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 36
+        }
+      },
+      {
+        "index": 37,
+        "case": "IG3 revised answers protect native and manual wording",
+        "time": "2026-10-10T14:19:38.749Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1544,
+          "sha256": "9718d8149b1e75899eda1cfd9e3006af8fd41434e7292319edd80e91f9b22116",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 37
+        }
+      },
+      {
+        "index": 38,
+        "case": "IG3 successful Save and close exact Partial text",
+        "time": "2026-10-10T14:19:40.257Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "in_progress"
+        ],
+        "native_text": {
+          "characters": 1363,
+          "sha256": "c411666b9c84f22b03df8c30ff6495f78e1a1e6d48491bfbbf2b8fb94e88656f",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 38
+        }
+      },
+      {
+        "index": 39,
+        "case": "IG3 refreshed Partial exact text",
+        "time": "2026-10-10T14:19:57.313Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "in_progress"
+        ],
+        "native_text": {
+          "characters": 1363,
+          "sha256": "c411666b9c84f22b03df8c30ff6495f78e1a1e6d48491bfbbf2b8fb94e88656f",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 39
+        }
+      },
+      {
+        "index": 40,
+        "case": "IG3 targeted resume and corrected final Implemented exact write",
+        "time": "2026-10-10T14:19:59.749Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1450,
+          "sha256": "4124fb6483b6666ca83b7dc3affbdc294ae66cee01fb594e11f718c03087a332",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 40
+        }
+      },
+      {
+        "index": 41,
+        "case": "IG3 rapid duplicate confirmation exact text",
+        "time": "2026-10-10T14:20:31.388Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1509,
+          "sha256": "f85075d6e5d0a1d082158459cd904715cbf863de4a04447d7ad880f2c122bdb4",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 41
+        }
+      },
+      {
+        "index": 42,
+        "case": "IG3 stale save preserves native winner after refresh",
+        "time": "2026-10-10T14:21:13.234Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1587,
+          "sha256": "4678626ee9fb4489139d59eb390c9b3c7c8d877f61fee9fca92ebcc34f8c8f9e",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 42
+        }
+      },
+      {
+        "index": 43,
+        "case": "IG3 explicit reviewed retry succeeds preserving native winner",
+        "time": "2026-10-10T14:21:16.956Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1644,
+          "sha256": "45b26c241e94ec2fd0d26bf22f2a9574076ddf145effcedcdaefea9d14be83da",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 43
+        }
+      },
+      {
+        "index": 44,
+        "case": "IG3 server interview CAS leaves native blank",
+        "time": "2026-10-10T14:22:06.703Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7197f963a08452cc9946a904e49ec2c0",
+        "native_status": [
+          "not_assessed"
+        ],
+        "native_text": {
+          "characters": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 44
+        }
+      },
+      {
+        "index": 45,
+        "case": "IG1 1.2 boundary evaluation never applies native assessment",
+        "time": "2026-10-10T14:25:17.398Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7c86ba63e0e35d83ad43f5c31264db1e",
+        "native_status": [
+          "not_assessed"
+        ],
+        "native_text": {
+          "characters": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": false,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 45
+        }
+      },
+      {
+        "index": 46,
+        "case": "Viewing and completing 1.2 interview leaves 1.1 native unchanged",
+        "time": "2026-10-10T14:25:18.201Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1570,
+          "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 46
+        }
+      },
+      {
+        "index": 47,
+        "case": "IG1 actual logout-login exact native restore",
+        "time": "2026-10-10T14:29:37.910Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1570,
+          "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 47
+        }
+      },
+      {
+        "index": 48,
+        "case": "IG2 actual logout-login exact native restore",
+        "time": "2026-10-10T14:29:51.014Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1696,
+          "sha256": "9fe09ccb23bb5406c6ddeb575f3f6db631d2831081e8418c946c0e4a0a481723",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 48
+        }
+      },
+      {
+        "index": 49,
+        "case": "IG3 actual logout-login exact native restore",
+        "time": "2026-10-10T14:30:01.092Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 3,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1644,
+          "sha256": "45b26c241e94ec2fd0d26bf22f2a9574076ddf145effcedcdaefea9d14be83da",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 49
+        }
+      },
+      {
+        "index": 50,
+        "case": "Supported IG1 to IG2 preserves inherited 1.1 exact native value",
+        "time": "2026-10-10T14:35:22.384Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 1,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1570,
+          "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 50
+        }
+      },
+      {
+        "index": 51,
+        "case": "Supported IG2 to IG3 preserves inherited 1.1 exact native value",
+        "time": "2026-10-10T14:35:53.679Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "native_status": [
+          "addressed"
+        ],
+        "native_text": {
+          "characters": 1570,
+          "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 51
+        }
+      },
+      {
+        "index": 52,
+        "case": "IG2 affirmative absence saves exact Not Implemented native assessment",
+        "time": "2026-10-10T14:39:51.712Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_d53f1e355c8f50f08b1d447df7e97576",
+        "native_status": [
+          "needs_attention"
+        ],
+        "native_text": {
+          "characters": 1428,
+          "sha256": "fb1518571e9dd65f4b2407307e22189b3b4f5ce04946fd09e8f8600c3cd6c9e8",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": true,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 1,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 52
+        }
+      },
+      {
+        "index": 53,
+        "case": "IG2 all unknown saves exact Not Assessed without confirmed deficiencies",
+        "time": "2026-10-10T14:39:56.094Z",
+        "reported_result": "verified",
+        "recorded_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "resolved_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "source_resolution": "full source explicitly recorded",
+        "recorded_deployment": "dep-db53ifrrjlhs73ca0ht0",
+        "implementation_group": 2,
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_d53f1e355c8f50f08b1d447df7e97576",
+        "native_status": [
+          "not_assessed"
+        ],
+        "native_text": {
+          "characters": 1209,
+          "sha256": "46c5fd189b791f723e5d97cdde1995441469c33bfb030e78e7a0760edc8116c5",
+          "recorded_hash_matches": true
+        },
+        "current_summary_equals_native": null,
+        "recorded_reviewed_equals_native": true,
+        "guide_window_count": 0,
+        "rejection": null,
+        "guide_remains_open": null,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 53
+        }
+      }
+    ],
+    "text_integrity": "All recorded native-text SHA256 and character lengths recomputed and matched without editing source records. Cancellation and interview-only summaries intentionally differ from native; reviewedEqualsNative is not reinterpreted as active textarea equality.",
+    "actor_boundary": "SuperAdmin authenticated fixture results do not prove restricted-role write denial, cross-tenant membership denial or different-user isolation."
+  },
+  "server_interview_cas": {
+    "groups": [
+      {
+        "group": 3,
+        "client": "OmniBot QA — Closeout CIS IG3",
+        "assessment": "fw_7197f963a08452cc9946a904e49ec2c0",
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7197f963a08452cc9946a904e49ec2c0",
+        "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "error": "Interview changed in another window; reload before saving",
+        "assertions": {
+          "loserEditsRetained": true,
+          "winnerAnswerRetained": true,
+          "winnerNoteRetained": true,
+          "nativeBlank": true
+        },
+        "native_writes": 0,
+        "winner_answer": [
+          "Yes"
+        ],
+        "winner_note_sha256": "e46ff119a2119db7474a374eb269fe14410559f676bf414c18b45d6f5d40f852",
+        "loser_unsaved_note_sha256": "025376d8371d49028b8f64045c73aec3bb46b863fbafd498d95d60793cdc732a",
+        "reopen_behavior": null
+      },
+      {
+        "group": 2,
+        "client": "OmniBot QA — CIS IG2",
+        "assessment": "fw_cc4dcb44ebf1519c948bf99b7426b0f8",
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_cc4dcb44ebf1519c948bf99b7426b0f8",
+        "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "error": "Interview changed in another window; reload before saving",
+        "assertions": {
+          "loserEditsRetained": true,
+          "winnerAnswerRetained": true,
+          "winnerNoteRetained": true,
+          "nativeBlank": true
+        },
+        "native_writes": 0,
+        "winner_answer": [
+          "Yes"
+        ],
+        "winner_note_sha256": "3f2d3c8d8ea46e28ade1fc78be39d9ca9ef1b3a090635e8abf07b4adfa42f6ad",
+        "loser_unsaved_note_sha256": "26d0faf60f1c2ca528cbbcdf636c92d7d80f7c7eafa5a63527cf8bb011adc035",
+        "reopen_behavior": null
+      },
+      {
+        "group": 1,
+        "client": "OmniBot QA — Closeout CIS IG1",
+        "assessment": "fw_7c86ba63e0e35d83ad43f5c31264db1e",
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7c86ba63e0e35d83ad43f5c31264db1e",
+        "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+        "error": "Interview changed in another window; reload before saving",
+        "assertions": {
+          "loserEditsRetained": true,
+          "winnerAnswerRetained": true,
+          "winnerNoteRetained": true,
+          "nativeBlank": true
+        },
+        "native_writes": 0,
+        "winner_answer": [
+          "Yes"
+        ],
+        "winner_note_sha256": "62ab76ae513c9ddae97d7275bbf3695cb0bdb188206df943cd1e7ad33c3ff624",
+        "loser_unsaved_note_sha256": "a1bc2143ca58b897a7df9878577e24d3b29030dc1f8935a079bff50448160f88",
+        "reopen_behavior": "Focused unresolved group resumed; navigated Back to actual saved group1 before checking winner answers. Initial helper inspected later group and was corrected."
+      }
+    ],
+    "evidence": {
+      "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-server-interview-cas-b90.json"
+    },
+    "boundary": "Actual rendered server message after normal same-account two-tab interview saves; winner accepted answer/note and loser unsaved note retained, native remains blank. Separate from stale native/version guard and restricted identity proof."
+  },
+  "source_specific_hosted_checks": {
+    "service_provider_contracts_15_4": {
+      "group": 2,
+      "assessment": "fw_d53f1e355c8f50f08b1d447df7e97576",
+      "prior_synthetic_native_text": {
+        "characters": 988,
+        "sha256": "8097dff3a2811f769aca972c9702bde911b326cb5d13c3c8b6d6fcdc261f87b4"
+      },
+      "affirmative_absence": {
+        "proposed_status": "Not Implemented",
+        "native_status": [
+          "needs_attention"
+        ],
+        "native_text": {
+          "characters": 1428,
+          "sha256": "fb1518571e9dd65f4b2407307e22189b3b4f5ce04946fd09e8f8600c3cd6c9e8"
+        },
+        "reviewed_text_exactly_native": true
+      },
+      "all_required_unknown": {
+        "proposed_status": "Not Assessed",
+        "native_status": [
+          "not_assessed"
+        ],
+        "native_text": {
+          "characters": 1209,
+          "sha256": "46c5fd189b791f723e5d97cdde1995441469c33bfb030e78e7a0760edc8116c5"
+        },
+        "reviewed_text_exactly_native": true
+      },
+      "evidence": [
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-status-cases-b90.json"
+        },
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 52
+        },
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 53
+        }
+      ],
+      "boundary": "Actual normal reviewed native Save & close on an isolated pre-existing synthetic record. Prior988-character text retained in evidence; lead reports original native synthetic history preserved. No after-history count/assertion is invented from this status-case JSON. These are selected hosted status branches, not153 hosted saves or exhaustive answer combinations."
+    },
+    "unauthorized_assets_1_2": {
+      "process": "Yes",
+      "insufficient_cadence": "Every two weeks",
+      "insufficient_proposed_status": "Partially Implemented",
+      "sufficient_cadence": "Weekly",
+      "accepted_single_action": "Quarantine or isolate",
+      "sufficient_proposed_status": "Implemented",
+      "optional_scored_context": "Optional owner/tool/inventory context was not required; synthetic progress note retained as non-scoring context.",
+      "native_status": [
+        "not_assessed"
+      ],
+      "native_text_characters": 0,
+      "native_save": false,
+      "adjacent_1_1_native_unchanged": true,
+      "evidence": [
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-1.2-boundary-b90.json"
+        },
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 45
+        },
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 46
+        }
+      ],
+      "boundary": "Proposed evaluation and interview progress only; native remains Not Assessed, not Not Applicable. No adjacent native write."
+    },
+    "corrected_group_note_label_15_5": {
+      "visible_label_present": true,
+      "internal_requirements_key_absent": true,
+      "exact_final_native_reload": true,
+      "evidence": [
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 32
+        },
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 43
+        },
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 49
+        }
+      ]
+    }
+  },
+  "actual_logout_login": {
+    "actual_logout": true,
+    "normal_return_sign_in": true,
+    "time": "2026-10-10T14:29:18.492Z",
+    "url": "https://omnisciente-staging.onrender.com/clients",
+    "actor": "SA\nStaging Administrator\nSUPER ADMIN",
+    "login_layers": {
+      "character": 0,
+      "education": 0,
+      "root": 0,
+      "speech": 0
+    },
+    "credential_handling": "Submitted normal form already filled by existing browser credentials; password/token not inspected, read or extracted",
+    "mfa": "No challenge was presented; configured MFA preservation is source/test evidence, not hosted challenge proof",
+    "group_restored_summaries_and_answers": [
+      {
+        "group": 1,
+        "client": "OmniBot QA — Closeout CIS IG1",
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+        "summaryExact": true,
+        "reviewAnswers": {
+          "frequency": "Every six months",
+          "lastReview": "2026-10-10"
+        },
+        "rootAnswers": [
+          "Yes"
+        ]
+      },
+      {
+        "group": 2,
+        "client": "OmniBot QA — CIS IG2",
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+        "summaryExact": true,
+        "requiredAnswers": [
+          {
+            "label": "Service providers are classified.",
+            "value": "Yes"
+          },
+          {
+            "label": "Classifications are updated and reviewed.",
+            "value": "Yes"
+          },
+          {
+            "label": "Review and updates occur annually and when significant changes could affect the safeguard.",
+            "value": "Yes"
+          }
+        ]
+      },
+      {
+        "group": 3,
+        "client": "OmniBot QA — Closeout CIS IG3",
+        "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+        "summaryExact": true,
+        "requiredAnswers": [
+          {
+            "label": "Service providers are assessed consistently with the provider-management policy.",
+            "value": "Yes"
+          },
+          {
+            "label": "Providers are reassessed annually at minimum, or with new and renewed contracts.",
+            "value": "Yes"
+          }
+        ]
+      }
+    ],
+    "earlier_pending_handoff_superseded": true,
+    "evidence": [
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\actual-logout-login-handoff-b90.json"
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\actual-logout-login-return-b90.json"
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\actual-logout-login-group-resumes-b90.json"
+      }
+    ],
+    "boundary": "Three final native values and completed summaries restored after actual logout/login. Saved root/review fields for1.1 and all substantive criterion Yes answers for15.3/15.5 were recorded in targeted normal-UI resume checks. No hosted MFA challenge or restricted-role login inferred."
+  },
+  "excluded_frameworks": [
+    {
+      "framework": "iso",
+      "before_source": "79075e0f85bebdb9651d381762e945c01f79c108",
+      "after_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+      "url": "https://omnisciente-staging.onrender.com/compliance/iso-27001?iso_view=isms_clause&assessment=fw_8b4a95ddbb4c5241ad79d5995b23b119",
+      "equal_visible_fields": [
+        "guideCount",
+        "headings",
+        "implementation",
+        "status",
+        "url"
+      ],
+      "native_implementation_and_status_unchanged": true,
+      "guide_count": 0,
+      "evidence": [
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\iso-native-before-79075.json"
+        },
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\iso-native-after-b90.json"
+        }
+      ],
+      "boundary": "Exact equality of captured DOM/native values/headings only; no full database or pixel-identical image comparison inferred."
+    },
+    {
+      "framework": "soc2",
+      "before_source": "79075e0f85bebdb9651d381762e945c01f79c108",
+      "after_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+      "url": "https://omnisciente-staging.onrender.com/compliance/soc-2?assessment=fw_e58eb6676b845fb8a3a284a158d34df1",
+      "equal_visible_fields": [
+        "guideCount",
+        "headings",
+        "implementation",
+        "status",
+        "url"
+      ],
+      "native_implementation_and_status_unchanged": true,
+      "guide_count": 0,
+      "evidence": [
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\soc2-native-before-79075.json"
+        },
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\soc2-native-after-b90.json"
+        }
+      ],
+      "boundary": "Exact equality of captured DOM/native values/headings only; no full database or pixel-identical image comparison inferred."
+    }
+  ],
+  "final_showcase_program_dashboard": {
+    "recorded": [
+      {
+        "client": "Initech",
+        "group": 2,
+        "total": 130,
+        "dashboardLoaded": true,
+        "noAssessmentWrites": true
+      },
+      {
+        "client": "Hooli",
+        "group": 3,
+        "total": 153,
+        "dashboardLoaded": true,
+        "noAssessmentWrites": true
+      }
+    ],
+    "source_resolution": "Candidate is pinned b90; these final snapshot rows omit a separate source/time field, so exact per-row metadata is retained without fabricating it.",
+    "evidence": {
+      "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\showcase-program-dashboard-final-b90.json"
+    },
+    "program_and_dashboard_snapshots": [
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\initech-program-final-b90.txt"
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\initech-dashboard-final-b90.txt"
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hooli-program-final-b90.txt"
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hooli-dashboard-final-b90.txt"
+      }
+    ],
+    "boundary": "Normal read-only InitechIG2/130 and HooliIG3/153 program/dashboard context. Earlier BrawndoIG1/56 program evidence remains separate. No native saves or dashboard redesign."
+  },
+  "final_login_hosted": {
+    "responsive": {
+      "candidate": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+      "startedAt": "2026-10-10T14:46:43.373Z",
+      "priorAttemptPreserved": "login-responsive-attempt-b90.json",
+      "results": [
+        {
+          "requestedWidth": 1440,
+          "artwork": {
+            "height": 446.2604370117187,
+            "width": 297.5,
+            "x": 73.89583587646484,
+            "y": 358.19793701171875
+          },
+          "bodyScrollWidth": 1440,
+          "form": {
+            "height": 227.11459350585935,
+            "width": 361.375,
+            "x": 1007.6979370117188,
+            "y": 328.04168701171875
+          },
+          "headings": [
+            "Clarity across your security program.",
+            "Sign in to your workspace"
+          ],
+          "height": 900,
+          "main": {
+            "height": 582.96875,
+            "width": 427.2708435058594,
+            "x": 974.75,
+            "y": 157.21875
+          },
+          "scrollWidth": 1440,
+          "signIn": {
+            "height": 49.36458587646485,
+            "width": 361.375,
+            "x": 1007.6979370117188,
+            "y": 505.7916870117187
+          },
+          "url": "https://omnisciente-staging.onrender.com/login",
+          "width": 1440
+        },
+        {
+          "requestedWidth": 1024,
+          "artwork": {
+            "height": 360.10418701171875,
+            "width": 240.0625,
+            "x": 75.3125,
+            "y": 282.5833435058594
+          },
+          "bodyScrollWidth": 1024,
+          "form": {
+            "height": 205.53125,
+            "width": 323.375,
+            "x": 640.4791870117188,
+            "y": 347.6458435058594
+          },
+          "headings": [
+            "Clarity across your security program.",
+            "Sign in to your workspace"
+          ],
+          "height": 900,
+          "main": {
+            "height": 530.0208740234375,
+            "width": 382.5,
+            "x": 610.9166870117188,
+            "y": 193.73959350585935
+          },
+          "scrollWidth": 1024,
+          "signIn": {
+            "height": 44.19791793823242,
+            "width": 323.375,
+            "x": 640.4791870117188,
+            "y": 508.9791870117187
+          },
+          "url": "https://omnisciente-staging.onrender.com/login",
+          "width": 1024
+        },
+        {
+          "requestedWidth": 768,
+          "artwork": {
+            "height": 344.88543701171875,
+            "width": 229.9166717529297,
+            "x": 36,
+            "y": 282.5833435058594
+          },
+          "bodyScrollWidth": 768,
+          "form": {
+            "height": 205.53125,
+            "width": 229.8854217529297,
+            "x": 484.7604370117187,
+            "y": 352.13543701171875
+          },
+          "headings": [
+            "Clarity across your security program.",
+            "Sign in to your workspace"
+          ],
+          "height": 900,
+          "main": {
+            "height": 574.1771240234375,
+            "width": 289.01043701171875,
+            "x": 455.1979370117187,
+            "y": 171.6666717529297
+          },
+          "scrollWidth": 768,
+          "signIn": {
+            "height": 44.19791793823242,
+            "width": 229.8854217529297,
+            "x": 484.7604370117187,
+            "y": 513.46875
+          },
+          "url": "https://omnisciente-staging.onrender.com/login",
+          "width": 768
+        },
+        {
+          "requestedWidth": 390,
+          "artwork": {
+            "height": 261.5625,
+            "width": 174.375,
+            "x": 33.208335876464844,
+            "y": 222.4375
+          },
+          "bodyScrollWidth": 380,
+          "form": {
+            "height": 239.25,
+            "width": 306.66668701171875,
+            "x": 36.66666793823242,
+            "y": 749.9166870117188
+          },
+          "headings": [
+            "Clarity across your security program.",
+            "Sign in to your workspace"
+          ],
+          "height": 900,
+          "main": {
+            "height": 594.03125,
+            "width": 348,
+            "x": 16,
+            "y": 586
+          },
+          "scrollWidth": 380,
+          "signIn": {
+            "height": 52,
+            "width": 306.66668701171875,
+            "x": 36.66666793823242,
+            "y": 937.1666870117188
+          },
+          "url": "https://omnisciente-staging.onrender.com/login",
+          "width": 390
+        },
+        {
+          "requestedWidth": 320,
+          "artwork": {
+            "height": 250,
+            "width": 166.6666717529297,
+            "x": 18,
+            "y": 260.47918701171875
+          },
+          "bodyScrollWidth": 310,
+          "form": {
+            "height": 239.25,
+            "width": 236.6666717529297,
+            "x": 36.66666793823242,
+            "y": 807.6458740234375
+          },
+          "headings": [
+            "Clarity across your security program.",
+            "Sign in to your workspace"
+          ],
+          "height": 900,
+          "main": {
+            "height": 644.4791870117188,
+            "width": 278,
+            "x": 16,
+            "y": 612.4791870117188
+          },
+          "scrollWidth": 310,
+          "signIn": {
+            "height": 52,
+            "width": 236.6666717529297,
+            "x": 36.66666793823242,
+            "y": 994.8958740234376
+          },
+          "url": "https://omnisciente-staging.onrender.com/login",
+          "width": 320
+        }
+      ],
+      "assertions": {
+        "allFiveWidthsActuallyApplied": true,
+        "noHorizontalPageOverflow": true,
+        "signInWithinWidth": true,
+        "artworkPresent": true
+      },
+      "evidence": {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-responsive-final-b90.json"
+      },
+      "prior_ineffective_attempt": {
+        "requestedWidths": [
+          1440,
+          1024,
+          768,
+          390,
+          320
+        ],
+        "observed": [
+          {
+            "form": {
+              "bottom": 603.5625457763672,
+              "left": 853.5,
+              "right": 1236,
+              "top": 73.54167175292969
+            },
+            "overlap": false,
+            "robot": {
+              "bottom": 632.0104370117188,
+              "left": 66.640625,
+              "right": 326.2552185058594,
+              "top": 242.58334350585935
+            },
+            "scrollWidth": 1270,
+            "viewport": 1270
+          },
+          {
+            "form": {
+              "bottom": 603.5625457763672,
+              "left": 853.5,
+              "right": 1236,
+              "top": 73.54167175292969
+            },
+            "overlap": false,
+            "robot": {
+              "bottom": 632.0104370117188,
+              "left": 66.640625,
+              "right": 326.2552185058594,
+              "top": 242.58334350585935
+            },
+            "scrollWidth": 1270,
+            "viewport": 1270
+          },
+          {
+            "form": {
+              "bottom": 603.5625457763672,
+              "left": 853.5,
+              "right": 1236,
+              "top": 73.54167175292969
+            },
+            "overlap": false,
+            "robot": {
+              "bottom": 632.0104370117188,
+              "left": 66.640625,
+              "right": 326.2552185058594,
+              "top": 242.58334350585935
+            },
+            "scrollWidth": 1270,
+            "viewport": 1270
+          },
+          {
+            "form": {
+              "bottom": 603.5625457763672,
+              "left": 853.5,
+              "right": 1236,
+              "top": 73.54167175292969
+            },
+            "overlap": false,
+            "robot": {
+              "bottom": 632.0104370117188,
+              "left": 66.640625,
+              "right": 326.2552185058594,
+              "top": 242.58334350585935
+            },
+            "scrollWidth": 1270,
+            "viewport": 1270
+          },
+          {
+            "form": {
+              "bottom": 603.5625457763672,
+              "left": 853.5,
+              "right": 1236,
+              "top": 73.54167175292969
+            },
+            "overlap": false,
+            "robot": {
+              "bottom": 632.0104370117188,
+              "left": 66.640625,
+              "right": 326.2552185058594,
+              "top": 242.58334350585935
+            },
+            "scrollWidth": 1270,
+            "viewport": 1270
+          }
+        ],
+        "freshTabRequestedWidth": 320,
+        "freshTabObserved": {
+          "scrollWidth": 1270,
+          "viewport": 1270
+        },
+        "verifiedWidths": [
+          1270
+        ],
+        "viewportOverrideEffective": false,
+        "interpretation": "Capability did not change actual rendered width in this browser. These are not five responsive passes. Existing approved Login local breakpoint evidence is retained separately; current hosted geometry only at actual1270px. No application defect established.",
+        "overrideReset": true
+      },
+      "prior_attempt_preserved": true,
+      "prior_unsupported_width_check_superseded": true,
+      "boundary": "Actual browser widths1440/1024/768/390/320, all dimensions recorded and no horizontal page overflow. Small-width sign-in is below the initial900px fold in a vertically scrollable page; no fixed-fold or hardware/mobile-Safari assertion inferred."
+    },
+    "controls": {
+      "pause_shows_resume": true,
+      "replay_action_snapshot_present": true,
+      "orb_visible": true,
+      "robot_geometry_before": {
+        "height": 98.86470794677734,
+        "width": 77.3375473022461,
+        "x": 146.38877868652344,
+        "y": 550.6800537109375
+      },
+      "robot_geometry_after": {
+        "height": 115.8064422607422,
+        "width": 89.90438079833984,
+        "x": 146.95999145507812,
+        "y": 534.501953125
+      },
+      "governance_keyboard": {
+        "dialog": "OMNI · YOUR PROGRAM GUIDE\nWhat is Governance?\n\nGovernance gives your program direction: clear policies, named owners, leadership decisions, and regular oversight. It helps everyone understand what is expected and who is accountable.\n\n← Omni menu\nReady to sign in →",
+        "focus": {
+          "tag": "H3",
+          "text": "What is Governance?"
+        }
+      },
+      "ready_to_sign_in": {
+        "educationDialogs": 0,
+        "focusedEmail": true
+      },
+      "recovery": {
+        "url": "https://omnisciente-staging.onrender.com/forgot-password",
+        "snapshot": "- generic \"Omnisciente by Prestige Worldwide\":\n  - generic: O\n  - generic: Omnisciente\n  - generic: BY PRESTIGE WORLDWIDE\n- heading \"Reset your password\" [level=2]\n- paragraph: We'll email you a secure link to choose a new password.\n- text: Email\n- textbox\n- button \"Send reset link\"\n- link \"Back to sign in\":\n  - /url: /login\n- region \"Notifications alt+T\"",
+        "emailDeliveryTriggered": false,
+        "passwordReset": false
+      },
+      "demo": {
+        "url": "https://omnisciente-staging.onrender.com/clients",
+        "actor": "Demo Explorer",
+        "login_layers": {
+          "education": 0,
+          "loginShell": 0,
+          "opticalEffect": 0
+        },
+        "hosted_persistence_evidence": false,
+        "backend_assessment_writes": 0,
+        "normal_sign_out": {
+          "performedThrough": "Demo Explorer menu -> Sign out",
+          "urlAfter": "https://omnisciente-staging.onrender.com/login",
+          "loginVisible": true,
+          "backendAssessmentWrites": 0
+        }
+      },
+      "light_theme": "true",
+      "dark_restored": "true",
+      "evidence": {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-final-controls-b90.json"
+      },
+      "lead_reported_actions": [
+        "Pause/resume, replay, Orb/Robot and right-key movement through normal controls"
+      ],
+      "boundary": "Actual Login controls, keyboard focus, recovery navigation and Demo entry/logout; recovery caused no delivery/reset and Demo caused zero backend assessment writes. Recorded animated robot before/after geometry alone is not an independent movement metric. Normal authenticated persistence is established only by separate real-account lifecycle records."
+    }
+  },
+  "reversible_qa_cleanup": {
+    "candidate": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "workflow": "normal reversible Archive; no delete/reset/history deletion",
+    "started_at": "2026-10-10T14:44:55.141Z",
+    "completed_at": "2026-10-10T14:45:20.410Z",
+    "archived": [
+      {
+        "name": "OmniBot QA — CIS IG1",
+        "id": "cli_f5384b6f8ee3805b602ef5c5404ea44ae1fcc6fc2558f51e65d2936f472a1db0",
+        "actualGroup": 3,
+        "after": "OmniBot QA — CIS IG1\t—\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore"
+      },
+      {
+        "name": "OmniBot QA — CIS IG3",
+        "id": "cli_76cfe57656626255009c3fbda48cda38d639cc8b9446eb8e5eda32ad5b73b199",
+        "actualGroup": 3,
+        "mixedISO": true,
+        "after": "OmniBot QA — CIS IG3\t—\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore"
+      },
+      {
+        "name": "OmniBot QA — Closeout CIS IG1",
+        "id": "cli_03461153428aef4af525ac083a42098242b3009d4fa5c0c0ecdc192c3d2c7c03",
+        "actualGroup": 3,
+        "after": "OmniBot QA — Closeout CIS IG1\tSynthetic closeout verification\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore"
+      },
+      {
+        "name": "OmniBot QA — Closeout CIS IG3",
+        "id": "cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7",
+        "actualGroup": 3,
+        "after": "OmniBot QA — Closeout CIS IG3\tSynthetic closeout verification\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore"
+      }
+    ],
+    "retained_pending": "OmniBot QA — CIS IG2",
+    "assertions": {
+      "fourRestoreControls": true,
+      "showcasesRetained": true,
+      "restrictedFixtureActive": true
+    },
+    "evidence": {
+      "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-reversible-cleanup-b90.json"
+    },
+    "boundary": "Four completed QA clients are archived with normal Restore controls; no deletion or history purge. QA—CIS IG2 remains intentionally active only for the blocked restricted-identity scenarios. Genuine showcase and other client identities are retained."
+  },
+  "approved_visual_and_window_evidence": {
+    "frozen_shared_components": "Independent composite scope confirms all non-Login Git entries equal accepted CIS candidate, including OmniWindow/OmniCharacter/GuidedAssessor/RefinedOmniInterview/global styles; no new design or question logic in b90.",
+    "omni_window": {
+      "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+      "group": 3,
+      "safeguard": "15.5",
+      "before": {
+        "height": 414,
+        "width": 489,
+        "x": 8,
+        "y": 82
+      },
+      "moved": {
+        "height": 414,
+        "width": 489,
+        "x": 8,
+        "y": 82
+      },
+      "resized": {
+        "height": 414,
+        "width": 489,
+        "x": 8,
+        "y": 82
+      },
+      "expanded": {
+        "height": 414,
+        "width": 489,
+        "x": 8,
+        "y": 82
+      },
+      "minimizedGuideAbsent": true,
+      "summaryPreserved": true,
+      "actualViewport": {
+        "height": 504,
+        "width": 505
+      },
+      "afterRight": "left: 8px; top: 82px; width: 489px; height: 414px;",
+      "afterHeightResize": "left: 8px; top: 82px; width: 489px; height: 414px;",
+      "requestedDesktop": {
+        "width": 1024,
+        "height": 900
+      },
+      "observedDesktopAttempt": {
+        "height": 900,
+        "width": 1024
+      },
+      "desktopBefore": {
+        "height": 470,
+        "width": 490,
+        "x": 8,
+        "y": 82
+      },
+      "desktopMove": {
+        "height": 470,
+        "width": 490,
+        "x": 18,
+        "y": 82
+      },
+      "desktopResize": {
+        "height": 470,
+        "width": 490,
+        "x": 18,
+        "y": 82
+      },
+      "desktopMaximized": {
+        "height": 810,
+        "width": 1008,
+        "x": 8,
+        "y": 82
+      },
+      "desktopResizeRight": "left: 18px; top: 82px; width: 500px; height: 470px;",
+      "assertions": {
+        "keyboardMove": true,
+        "keyboardResize": true,
+        "maximize": true,
+        "minimizeRestore": true
+      },
+      "earlierClamp": "505×504 real visible pane left/size actions were clamped at available bounds; no failure inferred"
+    },
+    "boundary": "Actual recorded IG3 representative desktop keyboard move/resize/maximize/minimize/restore assertions; earlier505×504 clamped geometry remains evidence, not a product failure or proof of all-group visual equivalence. No independent pixel comparison by compiler."
+  },
+  "future_default_and_compatibility_layers": {
+    "current_supported_ig_upgrades": {
+      "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+      "client": "OmniBot QA — Closeout CIS IG1",
+      "client_id": "cli_03461153428aef4af525ac083a42098242b3009d4fa5c0c0ecdc192c3d2c7c03",
+      "original_fixture_group": 1,
+      "current_group": 3,
+      "stages": [
+        {
+          "group": 2,
+          "native_exact": true
+        },
+        {
+          "group": 3,
+          "native_exact": true
+        }
+      ],
+      "native_text": {
+        "characters": 1570,
+        "sha256": "f2a427f3a74ae189c1841624cf0b7da9012179828bdc55cf63bf68b6f64910ec"
+      },
+      "native_history_before": 7,
+      "native_history_after": 7,
+      "native_history_dialog_exactly_unchanged": true,
+      "interview_history_headers_unchanged": true,
+      "evidence": {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\supported-ig-upgrades-b90.json"
+      },
+      "lifecycle_observations": [
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 50
+        },
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+          "observation_index": 51
+        }
+      ],
+      "boundary": "The fixture named Closeout CIS IG1 is now actually IG3. Prior IG1 lifecycle observations keep their original group/time; its current group is not inferred from its display name."
+    },
+    "current_mixed_framework_native_preservation": {
+      "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+      "client": "OmniBot QA — CIS IG3",
+      "clientId": "cli_76cfe57656626255009c3fbda48cda38d639cc8b9446eb8e5eda32ad5b73b199",
+      "onboardingSource": "b0f87baabeb0726c6d6825051a78173a1a650bde; existing normal ISO-only then Add CIS proof retained, not repeated",
+      "url": "https://omnisciente-staging.onrender.com/compliance/iso-27001?iso_view=isms_clause&assessment=fw_c2637801eef35f75bbce24fa9b7f8d99",
+      "observed": {
+        "headings": [
+          "Assessment progress",
+          "Context and external issues",
+          "ISMS requirement & reference",
+          "Implementation status",
+          "Current implementation",
+          "ISO assessment criteria",
+          "Clause 4.1 checklist",
+          "Review guidance",
+          "Expected outcome",
+          "Findings"
+        ],
+        "implementation": "",
+        "omniGuides": 0,
+        "status": [
+          "not_assessed"
+        ]
+      },
+      "nativeSaveActivations": 0,
+      "boundary": "Actual b90 ISO-native observation on the original mixed fixture; normal ISO-only then Add CIS setup remains attributed to b0f and was not repeated. No native save."
+    },
+    "prior_supported_ig_upgrades": {
+      "source": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+      "steps": "Original QA IG1→IG2→IG3 through supported UI",
+      "preserved": "Same native1.1 identity/text/status and seven interview-history entries per original handoff; client is now IG3.",
+      "current_candidate_replay": "Separate current b90 upgrade evidence is recorded above; original b0f evidence stays attributed to its original source."
+    },
+    "prior_mixed_framework_addition": {
+      "source": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+      "steps": "Original QA IG3 initially ISO-only, then normal addition of CIS",
+      "preserved": "Original ISO native/main values preserved, plus b90 captured ISO values/headings equal before79075.",
+      "current_candidate_configuration_replay": "Not inferred from before/after native-view equality."
+    },
+    "prior_79075_normal_new_clients": {
+      "IG1": {
+        "client": "OmniBot QA — Closeout CIS IG1",
+        "count": 56,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\new-ig1-default-CIS-56-79075.txt"
+        }
+      },
+      "IG3": {
+        "client": "OmniBot QA — Closeout CIS IG3",
+        "count": 153,
+        "evidence": {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\direct-ig3-default-153-79075.txt"
+        }
+      },
+      "boundary": "Normal persistent onboarding was performed on79075. Their fresh native lifecycles are actual b90 evidence; creation is not relabeled as b90."
+    },
+    "historical_versions": "Existing approved1.1 Control1-v3; corrected1.2 Control1-v4;1.3–1.5 Control1-v2;148 other current program-v3; immutable historical catalogs retained. Source-specific explicit interview restarts preserve originals/history and leave fresh fields unanswered.",
+    "recovery": "Preserve new interview/history and current readers/writers for program-v3/Control1-v4 plus tenant/version/native-lineage/CAS. Prefer narrow forward correction or independently tested compatible revision. No blind rollback to83d pilot writer, destructive reset/reseed, bulk regeneration, downgrade or history deletion."
+  },
+  "remaining_checks": [
+    {
+      "id": "HOSTED-RESTRICTED-IDENTITY",
+      "status": "blocked; specific restricted identity/access authorization and usable normal credentials not established",
+      "requirement": "Hosted read-only save denial and client-membership isolation",
+      "observed": "Only active StagingAdministrator/SuperAdmin; recorded fictional client_readonly users Disabled and QA membership checkboxes unchecked.",
+      "evidence": [
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\users-current-before-any-change.txt"
+        },
+        {
+          "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\readonly-original-memberships.txt"
+        }
+      ],
+      "restriction_source": "Existing application account status/membership and ownership authorization; not filesystem/network or MCP approval denial.",
+      "smallest_supported_next_step": "Owner authorize/use one restricted client_readonly identity with normal credentials and explicitly scoped isolated QA membership; normal admin workflow only. Read-only role cannot perform native/interview writes, and an unassigned client must remain denied.",
+      "approval_by_compiler": "No request or identity/member change made by compiler. Lead owns any specific approval/account handoff."
+    },
+    {
+      "id": "QA-FINAL-RESTRICTED-FIXTURE-ARCHIVE",
+      "status": "one retained pending fixture; four completed fixtures reversibly archived",
+      "requirement": "Final normal Archive of OmniBot QA — CIS IG2 after authorized restricted-identity scenarios and final registry disposition",
+      "next": "Retain the needed fixture while the access blocker remains; normal Archive/Restore afterwards. No delete/reset/history purge and no genuine-client cleanup."
+    },
+    {
+      "id": "VISUAL-ENTRY-DEVICE-BOUNDARIES",
+      "status": "not fully established by this read-only compilation",
+      "requirement": "Remaining approved reference comparisons, supported entry paths, actual OS reduced-motion/device targets and hosted MFA when configured",
+      "observed": "Source freeze/excluded captured values and representative Omni window assertions recorded; no independent pixel comparison, all-branch accessibility claim or hosted MFA challenge.",
+      "next": "Lead/reviewer disposition only with concrete evidence; no app/source changes to manufacture proof."
+    }
+  ],
+  "acceptance": {
+    "release_accepted": false,
+    "independent_release_approval_not_given_by_compiler": true,
+    "independent_code_review_controlled_validation_only": true,
+    "material_required_unexecuted_checks_not_waived": true
+  },
+  "preserved_diagnostic_boundaries": {
+    "older_failure_logs": "Original content-adapter, stale pilot-expectation, wrong CRACO entry path, provider Mongo initialization and browser-runner teardown records remain in earlier report/log sources. Current b90 successful Jest/CI evidence does not erase original failures or resolve an unexecuted browser-runner teardown.",
+    "ci_backend_log": "Transport closed is a connector raw-log retrieval failure, while exact CI job/step success metadata is available. No backend test count invented.",
+    "reporting_utility": "First compilation stopped before output because the lead ledger grew from50 to52 during work. New upgrade rows were inspected and added to the mapping; this is a reporting snapshot guard, not an application defect. No original evidence modified."
+  },
+  "snapshots": {
+    "dynamic_boundary": "This is a hashed read snapshot of lead-owned records. Later files may supersede open items; do not infer they were executed from planned followups.",
+    "prior_compiled_52_observation_snapshot": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\omnibot-cis-runtime\\outputs\\cis-fresh-state-b90\\closeout-acceptance-ledger-b90-snapshot-52.json",
+    "input_files": [
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\predeployment.json",
+        "sha256": "9443bc2834319b585ae162c8528ddd51b0973eb60d6d3dbf342f2a6a28b6c7e4",
+        "bytes": 2677
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\independent-composite-review-b90.json",
+        "sha256": "cead0e6026d611045dbc415bac98e4991acb7586ed82d9c6a1ad5b4486653fd3",
+        "bytes": 5076
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+        "sha256": "05e3e14dc15c74cdbe8d12a5ddae9ea0ba8a2ed3452042d3f70c3b2987f5b2bf",
+        "bytes": 143484
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\closeout-qa-records-b90.json",
+        "sha256": "b5d7286071b5e309abbfa04d240a1a29be00fbcae329a2c5e5315d708aad523a",
+        "bytes": 18716
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-server-interview-cas-b90.json",
+        "sha256": "86b6028be81918c0716019cba98902c1849e31752ff1601366c8e4331d8458a5",
+        "bytes": 2721
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\actual-logout-login-return-b90.json",
+        "sha256": "af0619c2b031827f34d5ac86290665a3547efc6af87bb4d24aee3be62991d061",
+        "bytes": 624
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\actual-logout-login-group-resumes-b90.json",
+        "sha256": "b41ada39918a76e5bd4038bae2d99936792da56a9742a229306c50536ca8438e",
+        "bytes": 2275
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\omni-window-behavior-b90.json",
+        "sha256": "64f6d552051e70efb2be6faae4834a0a6a957fb1175f42f811dadd214ad03258",
+        "bytes": 1503
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-responsive-attempt-b90.json",
+        "sha256": "53683ade05ad6d217e36a5d39198f872b248ed78f10d3fb798b05cb3abc95a96",
+        "bytes": 2524
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\ci127-jobs.json",
+        "sha256": "abe3a7efca36570fa184092cb4cfea86522794af7303f89f13c2003274f76406",
+        "bytes": 4928
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\docs\\omni-cis-rollout\\coverage-matrix.json",
+        "sha256": "9826b42d4b2f17a092974a3161720076aba3a24176b3050faa4c403b0b6c3506",
+        "bytes": 3063076
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\docs\\omni-cis-rollout\\hosted-lifecycle-evidence.json",
+        "sha256": "37c0b412a7f12d6c658fcd3ec39c199fcf9c9a18c471e94f267c999f4cb6e013",
+        "bytes": 11276
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\omnibot-cis-runtime\\outputs\\cis-fresh-state-b90\\hosted-placement-safe-totals-b90.json",
+        "sha256": "05e5ab11bd2c78907e6443f7a3598565f683d903cc5ef5f38d64d46d3cc32932",
+        "bytes": 9067
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-1.2-boundary-b90.json",
+        "sha256": "42e2f1940a3cb7eadf697cbe00c2d55e12042cc28c7e8a7c7723d85448fa22e9",
+        "bytes": 2498
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\supported-ig-upgrades-b90.json",
+        "sha256": "ebb16d89f64330d1a36927ce5d2095fdb3b681cae393e7c40b273c669355ee9e",
+        "bytes": 68733
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-mixed-iso-native-final-b90.json",
+        "sha256": "e8faf694f339015654256951a118b0831edb8e3882d15667111d7f80d92768bc",
+        "bytes": 922
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-status-cases-b90.json",
+        "sha256": "cfe22e8cc391fa3836903f075c779287c66075b47e3df474f6290a9168c4be63",
+        "bytes": 5321
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-reversible-cleanup-b90.json",
+        "sha256": "077fae8343d0518af395de71cf8500275d151e481c00d1c829e4e5c3458af335",
+        "bytes": 4949
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-responsive-final-b90.json",
+        "sha256": "1463cfc2e8a4e1aea92d13e14287a83f2ad2216455939044bc9c8ed8ef87993c",
+        "bytes": 4852
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-final-controls-b90.json",
+        "sha256": "7fc4c25f6f3d3d9cae7e2793094017913829ffca815824341a88be4a091f0797",
+        "bytes": 16802
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\showcase-program-dashboard-final-b90.json",
+        "sha256": "67c3326a966c8da37f55b0a5f0d46a23f2850bdab1465919546fec543fd435d3",
+        "bytes": 256
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\served-assets-b90.json",
+        "sha256": "be63c8644123abd2fd655120d02d92734ef06a07d478ebe9209a2e59a452ca1f",
+        "bytes": 24834
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-native-history-before-duplicate-b90.txt",
+        "sha256": "786ce7488745da483d407d279eb396e76f4907592f5ef638ccf1fa21086e6968",
+        "bytes": 8219
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-native-history-after-duplicate-b90.txt",
+        "sha256": "4382445c9bece1e1f168e53b2d28f03cb894b6e75990c994a4b5373bacdfa5c5",
+        "bytes": 9978
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-native-history-before-duplicate-b90.txt",
+        "sha256": "15b3a4e91dcb7504dffdc3bb455d6d28fb58c7eb0b89d2c83b976a83e07c2d5f",
+        "bytes": 12873
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-native-history-after-duplicate-b90.txt",
+        "sha256": "0a924828968e21e14f4bc791dfbaba1028e4ea053ef40ac00db2d6820acae124",
+        "bytes": 14827
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-native-history-before-duplicate-b90.txt",
+        "sha256": "cff7b410170a073d283dbb89b998cb0fd0f1ce179f944f81e1040957b2d5dc00",
+        "bytes": 13764
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-native-history-after-duplicate-b90.txt",
+        "sha256": "92921322220c525b134e167a49f8f3828b74377cbcd1b3f2ef837719281e1ee7",
+        "bytes": 15676
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\iso-native-before-79075.json",
+        "sha256": "3c667370fd83c8d1d7957daf31eae2332ec02527b4dee22cec8e8d8b643fe3df",
+        "bytes": 524
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\iso-native-after-b90.json",
+        "sha256": "3c667370fd83c8d1d7957daf31eae2332ec02527b4dee22cec8e8d8b643fe3df",
+        "bytes": 524
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\soc2-native-before-79075.json",
+        "sha256": "044340eb5906944d674665eeab65f2b23da014c09a3bc1d05eb44361d236157c",
+        "bytes": 475
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\soc2-native-after-b90.json",
+        "sha256": "044340eb5906944d674665eeab65f2b23da014c09a3bc1d05eb44361d236157c",
+        "bytes": 475
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\render-final-live-b90.txt",
+        "sha256": "dc8d0200b2fcd673f4b977ab9a8fa043faeac2d941ccebadba84fe1d68157a0f",
+        "bytes": 14208
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\users-current-before-any-change.txt",
+        "sha256": "c68e477354100d6855dfc796f92fdabd1f0d70f6ed0ff794ebc4f7338f5389e0",
+        "bytes": 5158
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\readonly-original-memberships.txt",
+        "sha256": "12f6fd7c65222926c3790576d11c78f84881df3db4d93410dc857a8833b86c42",
+        "bytes": 2436
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\docs\\omni-cis-rollout\\handoff.md",
+        "sha256": "59fe91c3d368742f195e5f616673180229265b642f91c6e4f1962856d9777383",
+        "bytes": 14838
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\docs\\omni-cis-rollout\\phase-ledger.md",
+        "sha256": "914e2b6c4d6fa077093f2b25fe85fedc7b036eae09b7fc2d7718fd2d858b549a",
+        "bytes": 8042
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\docs\\omni-cis-rollout\\defect-log.md",
+        "sha256": "d27d63a2ff2ab73f7583330c3719a6e06fe8cd26945159efb874f42d4d6efcca",
+        "bytes": 8176
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\backend\\authorization.py",
+        "sha256": "08f6088a60f7161eee43e25d57eb39336c856249970d4e225d76e1f109d3b8ec",
+        "bytes": 12975
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\backend\\server.py",
+        "sha256": "655da1522388e9d97fc93d3b9145b7eabbad749e0f57db8c9308bc8e0922cc05",
+        "bytes": 268739
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\backend\\framework_governance.py",
+        "sha256": "d34108a38ed7301764fd55b8a74e58d0e1f2c9121d3a953fbce8cfea53817adc",
+        "bytes": 57387
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\frontend\\src\\pages\\ClientManagement.jsx",
+        "sha256": "d5ea67df0f60a0fb81bd9f935c2e908f32d9c117c7594d54ff7664aa618ade60",
+        "bytes": 8823
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\frontend-full-b90a327.log",
+        "sha256": "e131e7c70de98265e03bc7b7a49a53a6f8c5d72e7b476b778e10a00a6be3454b",
+        "bytes": 42579
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\ci127-frontend.log",
+        "sha256": "149ea70adfadb2baf1d5be97ccedc8de262607ccfaf41f60349c6aa47f62a698",
+        "bytes": 73112
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\build-staging-b90a327.log",
+        "sha256": "8323be309cdefdd783b75a0f222e4134cf6a92ce273894914f8ca52661b989ba",
+        "bytes": 1026
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\build-preview-b90a327.log",
+        "sha256": "3afaae8dbd3e9098a7a20c5729df2cea9aac270bd2acd3821e4a708e3bbb4e69",
+        "bytes": 996
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\render-emitted-assets-b90.txt",
+        "sha256": "358eba4f8e6d6adb59863e15e497580e244721dc1e3555ec9917e98d9810713f",
+        "bytes": 7299
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\actual-logout-login-handoff-b90.json",
+        "sha256": "79c4b83d1144ded71bf9a4594ea9766fc10407154eefd812371d695fa0e66831",
+        "bytes": 316
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\new-ig1-default-CIS-56-79075.txt",
+        "sha256": "a3d3c114b96e23e178c0deea8f2b52c3bca620f7cf8d7959e93f783702d1a859",
+        "bytes": 9208
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\direct-ig3-default-153-79075.txt",
+        "sha256": "28ef28b2f0dc86acb01e202f76734b7a10d9890ecdef7b58665f4c31e076bb5b",
+        "bytes": 10297
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-partial-resume-b90.txt",
+        "sha256": "bc886464fda1da65d35be52f1a8add47f211fbc007b1bc42d0bda1e597d7b2d2",
+        "bytes": 9283
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-partial-resume-b90.txt",
+        "sha256": "67107b37a2bf17cbf81d0138a4baa6379f70505079bef1aee01f2610db241888",
+        "bytes": 6525
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-partial-resume-b90.txt",
+        "sha256": "e925d59f30f07f11b88df4bbb23f1c3e3bb32bbc7614f718611b1e0050640869",
+        "bytes": 6329
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-actual-login-resume-b90.txt",
+        "sha256": "8c38546a2790a12aa36cad8428e923077ba5f261b5e48bad68c38536a788e07d",
+        "bytes": 8962
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-actual-login-resume-b90.txt",
+        "sha256": "3201ddf1c8a3e4c3af8f6a577071db80450de536c421efe7fa6ed660c46eed99",
+        "bytes": 8521
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-actual-login-resume-b90.txt",
+        "sha256": "883ea44ece2a03aab7551fa8ebf53b666b0231cc40fa59654dfdd32995076c15",
+        "bytes": 8509
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-actual-login-answers-b90.txt",
+        "sha256": "0c1865817077a21c608d59ae23e54e8ff0c379483356c0d884ff5a25a3ddce3a",
+        "bytes": 9006
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-actual-login-answers-b90.txt",
+        "sha256": "3d44b6f32ef19c0af6ccc6a79bace528fa3862d26000e79c0f5dba685531af9a",
+        "bytes": 8338
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-actual-login-answers-b90.txt",
+        "sha256": "b99498763fccbcb472fe93288c297aaa023deb922a54a6b14c3353f3ef346fac",
+        "bytes": 8148
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-native-history-before-upgrade-b90.txt",
+        "sha256": "025469691eb67d9394e81fd8563d5325e80478f34408e9e518187fee7c51276a",
+        "bytes": 16731
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-native-history-after-upgrade-b90.txt",
+        "sha256": "77469afab7b677447c893931e7ad2ead63bf9f0dfbed77e11e99b3f28f9e73c2",
+        "bytes": 18052
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-upgrade-ig2-interview-history-b90.txt",
+        "sha256": "dc9fbdb90fc05a53493382a55b9dd3e0f5cb6362525ff0525d261fde7c122344",
+        "bytes": 14977
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-upgrade-ig3-interview-history-b90.txt",
+        "sha256": "8b46c75c31cf7477f8c481bae753d69931a64f323b02e67bbe373d14d398c80f",
+        "bytes": 15351
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\initech-program-final-b90.txt",
+        "sha256": "7855a1a4a9e2140243d9b7b2593cc2974a9008eaa3bbf99ad33c234174d1fb10",
+        "bytes": 10829
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\initech-dashboard-final-b90.txt",
+        "sha256": "f7c5122d4ca12253fd5cf98d2210baf5f1bf4591ad3d938912dbe7eddfeb7273",
+        "bytes": 8639
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hooli-program-final-b90.txt",
+        "sha256": "25cd71aa6e455f19597758fc67c8064c275e73eafa2c4faa767a8b7af45247d5",
+        "bytes": 10900
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hooli-dashboard-final-b90.txt",
+        "sha256": "3b754949c572a9b7cf3c23a1cd11301d117d0799f9e14df4386fe0d73e3cb685",
+        "bytes": 8631
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-mixed-iso-native-final-b90.txt",
+        "sha256": "ed0273955551a8cff5f17e04b3bb0cde77cb8550d07f73c919ef27dd8836a1ad",
+        "bytes": 3496
+      },
+      {
+        "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-15.4-native-history-original-79075.txt",
+        "sha256": "b42fde175e418fae43e0aa703dc0365f60d695f997c6eebb87b27775cd079803",
+        "bytes": 2963
+      }
+    ]
+  }
+}

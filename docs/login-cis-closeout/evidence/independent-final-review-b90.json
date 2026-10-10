@@ -1,0 +1,790 @@
+{
+  "kind": "Independent combined closeout evidence review",
+  "at": "2026-10-10T15:08:13.216Z",
+  "candidate": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "deployment": "dep-db53ifrrjlhs73ca0ht0",
+  "branch": "codex/login-cis-closeout",
+  "draft_pr": 65,
+  "root_head": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "root_dirty": "A  docs/login-cis-closeout/.gitattributes\nA  docs/login-cis-closeout/evidence/actual-combined-login-entry-b90.json\nA  docs/login-cis-closeout/evidence/actual-logout-login-group-resumes-b90.json\nA  docs/login-cis-closeout/evidence/actual-logout-login-return-b90.json\nA  docs/login-cis-closeout/evidence/brawndo-1.2-authorized-exception-b90.json\nA  docs/login-cis-closeout/evidence/brawndo-1.2-native-history-after-b90.txt\nA  docs/login-cis-closeout/evidence/brawndo-1.2-native-history-before-b90.txt\nA  docs/login-cis-closeout/evidence/brawndo-3.5-authorized-exception-b90.json\nA  docs/login-cis-closeout/evidence/brawndo-3.5-native-history-after-b90.txt\nA  docs/login-cis-closeout/evidence/brawndo-3.5-native-history-before-b90.txt\nA  docs/login-cis-closeout/evidence/ci127-jobs.json\nA  docs/login-cis-closeout/evidence/closeout-acceptance-ledger-b90.json\nA  docs/login-cis-closeout/evidence/closeout-qa-records-b90.json\nA  docs/login-cis-closeout/evidence/hooli-dashboard-final-b90.txt\nA  docs/login-cis-closeout/evidence/hooli-program-final-b90.txt\nA  docs/login-cis-closeout/evidence/hosted-lifecycles-b90.json\nA  docs/login-cis-closeout/evidence/hosted-placement-safe-totals-b90.json\nA  docs/login-cis-closeout/evidence/hosted-placements-b90.json\nA  docs/login-cis-closeout/evidence/hosted-server-interview-cas-b90.json\nA  docs/login-cis-closeout/evidence/independent-composite-review-b90.json\nA  docs/login-cis-closeout/evidence/independent-final-review-b90.json\nA  docs/login-cis-closeout/evidence/initech-dashboard-final-b90.txt\nA  docs/login-cis-closeout/evidence/initech-program-final-b90.txt\nA  docs/login-cis-closeout/evidence/iso-native-after-b90.json\nA  docs/login-cis-closeout/evidence/iso-native-before-79075.json\nA  docs/login-cis-closeout/evidence/login-final-1024-b90.png\nA  docs/login-cis-closeout/evidence/login-final-1440-b90.png\nA  docs/login-cis-closeout/evidence/login-final-320-b90.png\nA  docs/login-cis-closeout/evidence/login-final-390-b90.png\nA  docs/login-cis-closeout/evidence/login-final-768-b90.png\nA  docs/login-cis-closeout/evidence/login-final-controls-b90.json\nA  docs/login-cis-closeout/evidence/login-light-final-b90.png\nA  docs/login-cis-closeout/evidence/login-public-controls-b90.json\nA  docs/login-cis-closeout/evidence/login-responsive-attempt-b90.json\nA  docs/login-cis-closeout/evidence/login-responsive-final-b90.json\nA  docs/login-cis-closeout/evidence/omni-window-behavior-b90.json\nA  docs/login-cis-closeout/evidence/predeployment.json\nA  docs/login-cis-closeout/evidence/qa-ig1-1.2-boundary-b90.json\nA  docs/login-cis-closeout/evidence/qa-ig1-actual-login-answers-b90.txt\nA  docs/login-cis-closeout/evidence/qa-ig1-actual-login-resume-b90.txt\nA  docs/login-cis-closeout/evidence/qa-ig1-native-history-after-upgrade-b90.txt\nA  docs/login-cis-closeout/evidence/qa-ig1-native-history-before-upgrade-b90.txt\nA  docs/login-cis-closeout/evidence/qa-ig2-15.4-native-history-final-b90.txt\nA  docs/login-cis-closeout/evidence/qa-ig2-actual-login-answers-b90.txt\nA  docs/login-cis-closeout/evidence/qa-ig2-actual-login-resume-b90.txt\nA  docs/login-cis-closeout/evidence/qa-ig2-status-cases-b90.json\nA  docs/login-cis-closeout/evidence/qa-ig3-actual-login-answers-b90.txt\nA  docs/login-cis-closeout/evidence/qa-ig3-actual-login-resume-b90.txt\nA  docs/login-cis-closeout/evidence/qa-mixed-iso-native-final-b90.json\nA  docs/login-cis-closeout/evidence/qa-reversible-cleanup-b90.json\nA  docs/login-cis-closeout/evidence/qa-reversible-cleanup-b90.png\nA  docs/login-cis-closeout/evidence/render-closeout-current-b90.json\nA  docs/login-cis-closeout/evidence/render-closeout-current-b90.png\nA  docs/login-cis-closeout/evidence/render-closeout-current-b90.txt\nA  docs/login-cis-closeout/evidence/render-emitted-assets-b90.txt\nA  docs/login-cis-closeout/evidence/served-assets-b90.json\nA  docs/login-cis-closeout/evidence/showcase-program-dashboard-final-b90.json\nA  docs/login-cis-closeout/evidence/soc2-native-after-b90.json\nA  docs/login-cis-closeout/evidence/soc2-native-before-79075.json\nA  docs/login-cis-closeout/evidence/supported-ig-upgrades-b90.json\nA  docs/login-cis-closeout/handoff.md\nA  docs/login-cis-closeout/independent-review.md\nA  docs/login-cis-closeout/proof-manifest.json\n?? outputs/",
+  "reviewer": "cis_independent_qa; no product implementation, browser/account/provider ownership",
+  "new_tests_source_browser_record_or_provider_changes": false,
+  "reports_written_only_to_independent_checkout_outputs": true,
+  "release_approval": false,
+  "final_hosted_acceptance": false,
+  "material_application_findings": [],
+  "evidence_validation_issues": [],
+  "preserved_accepted_layers": {
+    "source_unique": 153,
+    "cumulative": [
+      56,
+      130,
+      153
+    ],
+    "authored_status_cases": 4267,
+    "local_fully_traversed_placements": 339,
+    "environment": "Isolated local Demo; no hosted native-save proof",
+    "independent_composite": "17 Login Git blobs match e770; other1166 Git entries match CIS7b63; exactb90 independent14 suites/588 tests pass; immutable backend/auth/CIS/assets/dependencies retained",
+    "exact_candidate_ci": "CI127 synthetic merge tree equals b90 complete Git tree; frontend258 suites/7257 tests/1 snapshot and both builds passed; backend classified offline/disposable-Mongo job+step metadata passed, raw connector log unavailable (Transport closed)."
+  },
+  "current_hosted": {
+    "placement_observations": 348,
+    "unique_placements": 339,
+    "supplementary_rechecks": 9,
+    "counts": {
+      "Brawndo": {
+        "expected": 56,
+        "observed": 56
+      },
+      "Initech": {
+        "expected": 130,
+        "observed": 130
+      },
+      "Hooli": {
+        "expected": 153,
+        "observed": 153
+      }
+    },
+    "limitation": "Visible initial/resumed question/context, one refined guide and native-field equality. Two explicitly authorized synthetic interview-only current-version restarts supplement historical Brawndo3.5/1.2 observations. Not all atomic/conditional branches, all339 summaries or339 writes.",
+    "lifecycle_observations": 54,
+    "native_text_observations": 52,
+    "native_text_integrity": "Recomputed hashes, lengths and exactly three plain headings for nonblank summaries; blank unassessed baselines valid. Observations are not writes.",
+    "all_group_auth_return": "Prior independently audited actual logout/login native values1570/1696/1644, editable reviewed summaries and targeted saved answers restored in all three groups.",
+    "concurrency": "Native stale scenarios were authoritative frontend GET/read guards before PUT, then reviewed retry. Separate actual hosted two-tab interview revision rejection on all three groups uniquely originates as backendHTTP409; raw HTTP status is not stored. Same actor only, not role/membership proof.",
+    "duplicates": "Previously independently counted4→5 visible native history entries on each primary group; one rapid-activation outcome, not global idempotency."
+  },
+  "status_cases": {
+    "safeguard": "15.4",
+    "assessment": "fw_d53f1e355c8f50f08b1d447df7e97576",
+    "accepted_answers_interpretation": "Three required contract-security/policy-consistency/annual-review clauses affirmatively absent => Not Implemented; all required clauses unknown with no substantive supported practice => Not Assessed. This independently follows the reviewed source/decision contract, not interview completion.",
+    "absence_native_characters": 1428,
+    "unknown_native_characters": 1209,
+    "exact_reviewed_native": true,
+    "verification_unchanged": "Not verified",
+    "current_status": "Not Assessed",
+    "history": {
+      "entries": 3,
+      "original988CharacterNarrativeRetained": true,
+      "absenceAndUnknownNarrativesRetained": true,
+      "owner": "Unassigned",
+      "comparison": "History UI collapses multiline spacing; normalized complete narrative content independently matches all three native strings. Not an exact-byte history text export."
+    },
+    "limitation": "Additional isolated status-case record, distinct from the primary IG2 15.3 lifecycle record and old b0f observations. Summary/native/proposal evidence, not an exhaustive answer export."
+  },
+  "upgrades": {
+    "client": "OmniBot QA — Closeout CIS IG1",
+    "client_id": "cli_03461153428aef4af525ac083a42098242b3009d4fa5c0c0ecdc192c3d2c7c03",
+    "actual_current_group": 3,
+    "stages": [
+      2,
+      3
+    ],
+    "native_characters": 1570,
+    "native_history_dialog_exact": true,
+    "native_history_entries_before": 7,
+    "after": 7,
+    "displayed_interview_headers_ig2_to_ig3_exact": true,
+    "displayed_revision_headers": 11,
+    "limitation": "Normal supported upgrades preserve captured native1.1 identity/text/status/history. Existing scope/base warning requires explicit comparison; no forced interview reset or new native write. Public history capture, not database-wide export."
+  },
+  "mixed_framework": {
+    "client": "OmniBot QA — CIS IG3",
+    "client_id": "cli_76cfe57656626255009c3fbda48cda38d639cc8b9446eb8e5eda32ad5b73b199",
+    "assessment_url": "https://omnisciente-staging.onrender.com/compliance/iso-27001?iso_view=isms_clause&assessment=fw_c2637801eef35f75bbce24fa9b7f8d99",
+    "old_onboarding_source": "b0f; ISO-only client plus normal AddCISIG3",
+    "current_source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "native_implementation": "",
+    "native_status": "not_assessed",
+    "omni_guides": 0,
+    "native_write_activations": 0,
+    "limitation": "Same assessment compared to older pre-addition baseline. Current captured values/headings/no-guide only; old main DOM before/after addition was exact. Not whole-page or pixel byte equivalence."
+  },
+  "login": {
+    "actual_widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "no_horizontal_page_overflow": true,
+    "actual_screenshots_visually_inspected": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "visual_findings": [],
+    "visual_scope": "All five show artwork, login form, primary/recovery/Demo controls and topic cards contained in the page. Narrow widths use vertical scrolling. Approved movable/dismissible greeting overlays the introductory text; no new styling correction inferred. Snapshot inspection is not pixel-identical baseline comparison or WCAG conformance.",
+    "light_screenshot_visually_inspected": true,
+    "light_then_dark_restored": true,
+    "topics": "Earlier b90 Risk/Compliance/GRC/CIS/ISO/SOC2 topic content retained; final Governance Enter focus and Ready-to-sign-in email focus confirmed.",
+    "controls": "Pause/Resume label, invoked Replay and Orb/Robot switch, Governance Enter→heading focus→Ready/email focus; recovery route without delivery/reset. Demo Explorer entry has zero Login layers, then normal Signout returnsLogin; zero backend assessment writes recorded.",
+    "movement_limit": "Animated Login robot bounds before/after Right-key do not establish a precise movement metric. The separate Omni guide desktop keyboard move+10px/width resize/maximize/minimize/reopen evidence passed; pointer dragging/all-axis resize and exhaustive pixels are not independently executed.",
+    "mfa": "No challenge presented on normal active admin login; source/configured behavior preserved by code/tests. No actual challenge completion claim."
+  },
+  "cleanup": {
+    "archived": [
+      {
+        "name": "OmniBot QA — CIS IG1",
+        "id": "cli_f5384b6f8ee3805b602ef5c5404ea44ae1fcc6fc2558f51e65d2936f472a1db0",
+        "current_group": 3,
+        "restore_control": true
+      },
+      {
+        "name": "OmniBot QA — CIS IG3",
+        "id": "cli_76cfe57656626255009c3fbda48cda38d639cc8b9446eb8e5eda32ad5b73b199",
+        "current_group": 3,
+        "restore_control": true
+      },
+      {
+        "name": "OmniBot QA — Closeout CIS IG1",
+        "id": "cli_03461153428aef4af525ac083a42098242b3009d4fa5c0c0ecdc192c3d2c7c03",
+        "current_group": 3,
+        "restore_control": true
+      },
+      {
+        "name": "OmniBot QA — Closeout CIS IG3",
+        "id": "cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7",
+        "current_group": 3,
+        "restore_control": true
+      }
+    ],
+    "registry_names_before_after_exact": true,
+    "showcases_retained": [
+      "Brawndo",
+      "Initech",
+      "Hooli"
+    ],
+    "retained_pending": "OmniBot QA — CIS IG2",
+    "final_cleanup_accepted": false,
+    "reason": "One isolated IG2 client remains active for genuinely blocked restricted-identity checks; normal archive follows those checks. No history deletion/database reset; restore controls recorded."
+  },
+  "final_showcase_program_dashboard": [
+    {
+      "client": "Initech",
+      "group": 2,
+      "total": 130,
+      "dashboardLoaded": true,
+      "noAssessmentWrites": true
+    },
+    {
+      "client": "Hooli",
+      "group": 3,
+      "total": 153,
+      "dashboardLoaded": true,
+      "noAssessmentWrites": true
+    }
+  ],
+  "shared_ledger": {
+    "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\omnibot-cis-runtime\\outputs\\cis-fresh-state-b90\\closeout-acceptance-ledger-b90.json",
+    "sha256": "023f0ee40bbdf767814d915faa9c51bebc754af6f3206d6bb5ca32109f01e960",
+    "release_accepted": false,
+    "material_overclaims_found": [],
+    "limitation": "Implementation-owner compilation, not independent approval. All authoritative hosted browser operation remains attributed to lead; independent evidence validation does not claim second-browser execution."
+  },
+  "consolidated_handoff": {
+    "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\docs\\login-cis-closeout\\handoff.md",
+    "sha256": "b0c6cbc121ff81fbac173fcc387f41e0e4d8588710e38c1f12842bd92621d733",
+    "precision_corrections_requested": [],
+    "resolved_corrections": [
+      "54 lifecycle rows versus52 native-text observations clarified",
+      "Login Right-key action no longer described as quantified animated movement",
+      "Original local physical pointer evidence explicitly scoped to Login robot, not hosted CIS guide"
+    ],
+    "material_application_defects": [],
+    "note": "Root report is read-only to reviewer; corrections communicated to lead and applied by lead, never edited here."
+  },
+  "proof_manifest": {
+    "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\docs\\login-cis-closeout\\proof-manifest.json",
+    "sha256": "45ad9ab4487e2305c37d1e10ebda0f613195df02f08e0234c0737daa317a5fcf",
+    "local_original_entries": 179,
+    "selected_repository_evidence_entries": 59,
+    "all_file_hashes_and_lengths_match": true,
+    "distinction": "Committed JSON/TXT copies use LF. Outer transcript line-end whitespace is trimmed in TXT copies only. JSON string values and original captures remain unchanged. localOriginals hashes refer to original bytes; committedEvidence hashes refer to portable copies."
+  },
+  "remaining_original_required_gates": [
+    {
+      "gate": "Actual hosted restricted-role write denial and unassigned-client server isolation",
+      "state": "blocked",
+      "basis": "Only usable active identity is SuperAdmin; existing restricted users disabled/no authorized temporary scoped membership or normal usable login yet. SuperAdmin context switching and mocked/CI denials do not substitute.",
+      "smallest_action": "Resolve the already-pending specific owner request for existing bec984b1-client_contributor-verified@example.com: temporary enable, only isolated QA—CISIG2 membership and synthetic15.4 owner assignment if needed for Contributor writes, then explicitly authorized ReadOnly/revoked-membership denial checks via normal human login. Restore Unassigned owner, Contributor role, zero memberships and Disabled state before final QA client archive. An already-active suitably restricted authorized identity can also satisfy the prerequisite. No new general authorization request is issued by reviewer; no changes until the pending specific approval is received.",
+      "restriction_type": "Application identity/access and explicit ownership boundary; no local filesystem/network or connector permission denial."
+    },
+    {
+      "gate": "Final reversible archive of remaining isolated IG2 fixture",
+      "state": "pending above required denial checks",
+      "basis": "Four completed QA clients already archived with Restore controls; retainedIG2 is correctly disclosed."
+    }
+  ],
+  "non_claims": [
+    "No exhaustive answer-combination coverage",
+    "No339 hosted native saves",
+    "No hosted different-user denial/client isolation proof",
+    "No whole-platform security/accessibility certification",
+    "No hosted MFA challenge completion",
+    "No fullJS byte-identical local/CI build claim",
+    "No all-pixel/all-axis/pointer equivalence; source freeze and bounded visual/function evidence remain explicit"
+  ],
+  "disposition": "No material application defect found by final connected-source/evidence/screenshot review. Exact tested b90 is deployed for controlled validation. Final rollout acceptance remains false because required restricted-identity hosted proof and its fixture cleanup are unresolved.",
+  "evidence": [
+    {
+      "name": "hosted-lifecycles-b90.json",
+      "sha256": "05e3e14dc15c74cdbe8d12a5ddae9ea0ba8a2ed3452042d3f70c3b2987f5b2bf",
+      "bytes": 143484
+    },
+    {
+      "name": "hosted-placements-b90.json",
+      "sha256": "8f13fb8a152c70409047250f795e33ef86ee5d8bb43e702cbd60849a6f68c6c1",
+      "bytes": 481779
+    },
+    {
+      "name": "qa-ig2-status-cases-b90.json",
+      "sha256": "725cccc2339208c7ab40715227892d20c85269a63de1fa7012b940c26f70afaa",
+      "bytes": 5523
+    },
+    {
+      "name": "qa-ig2-15.4-native-history-final-b90.txt",
+      "sha256": "09bb336301a777f25fd140166943b02dcae3b82662fbeecc7cf1f9c69bbce066",
+      "bytes": 10135
+    },
+    {
+      "name": "supported-ig-upgrades-b90.json",
+      "sha256": "ebb16d89f64330d1a36927ce5d2095fdb3b681cae393e7c40b273c669355ee9e",
+      "bytes": 68733
+    },
+    {
+      "name": "qa-mixed-iso-native-final-b90.json",
+      "sha256": "e8faf694f339015654256951a118b0831edb8e3882d15667111d7f80d92768bc",
+      "bytes": 922
+    },
+    {
+      "name": "login-responsive-final-b90.json",
+      "sha256": "1463cfc2e8a4e1aea92d13e14287a83f2ad2216455939044bc9c8ed8ef87993c",
+      "bytes": 4852
+    },
+    {
+      "name": "login-final-controls-b90.json",
+      "sha256": "7fc4c25f6f3d3d9cae7e2793094017913829ffca815824341a88be4a091f0797",
+      "bytes": 16802
+    },
+    {
+      "name": "qa-reversible-cleanup-b90.json",
+      "sha256": "077fae8343d0518af395de71cf8500275d151e481c00d1c829e4e5c3458af335",
+      "bytes": 4949
+    },
+    {
+      "name": "showcase-program-dashboard-final-b90.json",
+      "sha256": "67c3326a966c8da37f55b0a5f0d46a23f2850bdab1465919546fec543fd435d3",
+      "bytes": 256
+    }
+  ],
+  "previous_checkpoint": "2026-10-10T15:00:46.563Z",
+  "documentation_only_review": {
+    "at": "2026-10-10T15:08:13.216Z",
+    "root_head": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "manifest_sha256": "45ad9ab4487e2305c37d1e10ebda0f613195df02f08e0234c0737daa317a5fcf",
+    "originals": 179,
+    "original_hashes_and_sizes_all_match_preserved_manifest": true,
+    "selected": 59,
+    "portable_hashes_and_sizes_all_match": true,
+    "json_parsed_value_comparisons": 32,
+    "txt_normalized_transcript_comparisons": 19,
+    "binary_exact_comparisons": 8,
+    "staged_paths": [
+      "docs/login-cis-closeout/.gitattributes",
+      "docs/login-cis-closeout/evidence/actual-combined-login-entry-b90.json",
+      "docs/login-cis-closeout/evidence/actual-logout-login-group-resumes-b90.json",
+      "docs/login-cis-closeout/evidence/actual-logout-login-return-b90.json",
+      "docs/login-cis-closeout/evidence/brawndo-1.2-authorized-exception-b90.json",
+      "docs/login-cis-closeout/evidence/brawndo-1.2-native-history-after-b90.txt",
+      "docs/login-cis-closeout/evidence/brawndo-1.2-native-history-before-b90.txt",
+      "docs/login-cis-closeout/evidence/brawndo-3.5-authorized-exception-b90.json",
+      "docs/login-cis-closeout/evidence/brawndo-3.5-native-history-after-b90.txt",
+      "docs/login-cis-closeout/evidence/brawndo-3.5-native-history-before-b90.txt",
+      "docs/login-cis-closeout/evidence/ci127-jobs.json",
+      "docs/login-cis-closeout/evidence/closeout-acceptance-ledger-b90.json",
+      "docs/login-cis-closeout/evidence/closeout-qa-records-b90.json",
+      "docs/login-cis-closeout/evidence/hooli-dashboard-final-b90.txt",
+      "docs/login-cis-closeout/evidence/hooli-program-final-b90.txt",
+      "docs/login-cis-closeout/evidence/hosted-lifecycles-b90.json",
+      "docs/login-cis-closeout/evidence/hosted-placement-safe-totals-b90.json",
+      "docs/login-cis-closeout/evidence/hosted-placements-b90.json",
+      "docs/login-cis-closeout/evidence/hosted-server-interview-cas-b90.json",
+      "docs/login-cis-closeout/evidence/independent-composite-review-b90.json",
+      "docs/login-cis-closeout/evidence/independent-final-review-b90.json",
+      "docs/login-cis-closeout/evidence/initech-dashboard-final-b90.txt",
+      "docs/login-cis-closeout/evidence/initech-program-final-b90.txt",
+      "docs/login-cis-closeout/evidence/iso-native-after-b90.json",
+      "docs/login-cis-closeout/evidence/iso-native-before-79075.json",
+      "docs/login-cis-closeout/evidence/login-final-1024-b90.png",
+      "docs/login-cis-closeout/evidence/login-final-1440-b90.png",
+      "docs/login-cis-closeout/evidence/login-final-320-b90.png",
+      "docs/login-cis-closeout/evidence/login-final-390-b90.png",
+      "docs/login-cis-closeout/evidence/login-final-768-b90.png",
+      "docs/login-cis-closeout/evidence/login-final-controls-b90.json",
+      "docs/login-cis-closeout/evidence/login-light-final-b90.png",
+      "docs/login-cis-closeout/evidence/login-public-controls-b90.json",
+      "docs/login-cis-closeout/evidence/login-responsive-attempt-b90.json",
+      "docs/login-cis-closeout/evidence/login-responsive-final-b90.json",
+      "docs/login-cis-closeout/evidence/omni-window-behavior-b90.json",
+      "docs/login-cis-closeout/evidence/predeployment.json",
+      "docs/login-cis-closeout/evidence/qa-ig1-1.2-boundary-b90.json",
+      "docs/login-cis-closeout/evidence/qa-ig1-actual-login-answers-b90.txt",
+      "docs/login-cis-closeout/evidence/qa-ig1-actual-login-resume-b90.txt",
+      "docs/login-cis-closeout/evidence/qa-ig1-native-history-after-upgrade-b90.txt",
+      "docs/login-cis-closeout/evidence/qa-ig1-native-history-before-upgrade-b90.txt",
+      "docs/login-cis-closeout/evidence/qa-ig2-15.4-native-history-final-b90.txt",
+      "docs/login-cis-closeout/evidence/qa-ig2-actual-login-answers-b90.txt",
+      "docs/login-cis-closeout/evidence/qa-ig2-actual-login-resume-b90.txt",
+      "docs/login-cis-closeout/evidence/qa-ig2-status-cases-b90.json",
+      "docs/login-cis-closeout/evidence/qa-ig3-actual-login-answers-b90.txt",
+      "docs/login-cis-closeout/evidence/qa-ig3-actual-login-resume-b90.txt",
+      "docs/login-cis-closeout/evidence/qa-mixed-iso-native-final-b90.json",
+      "docs/login-cis-closeout/evidence/qa-reversible-cleanup-b90.json",
+      "docs/login-cis-closeout/evidence/qa-reversible-cleanup-b90.png",
+      "docs/login-cis-closeout/evidence/render-closeout-current-b90.json",
+      "docs/login-cis-closeout/evidence/render-closeout-current-b90.png",
+      "docs/login-cis-closeout/evidence/render-closeout-current-b90.txt",
+      "docs/login-cis-closeout/evidence/render-emitted-assets-b90.txt",
+      "docs/login-cis-closeout/evidence/served-assets-b90.json",
+      "docs/login-cis-closeout/evidence/showcase-program-dashboard-final-b90.json",
+      "docs/login-cis-closeout/evidence/soc2-native-after-b90.json",
+      "docs/login-cis-closeout/evidence/soc2-native-before-79075.json",
+      "docs/login-cis-closeout/evidence/supported-ig-upgrades-b90.json",
+      "docs/login-cis-closeout/handoff.md",
+      "docs/login-cis-closeout/independent-review.md",
+      "docs/login-cis-closeout/proof-manifest.json"
+    ],
+    "unstaged_paths": [],
+    "all_changes_scoped_to_closeout_docs": true,
+    "scoped_attributes": [
+      "evidence/*.json text eol=lf",
+      "evidence/*.txt text eol=lf",
+      "proof-manifest.json text eol=lf"
+    ],
+    "attribute_observations": "docs/login-cis-closeout/evidence/hosted-lifecycles-b90.json: text: set\ndocs/login-cis-closeout/evidence/hosted-lifecycles-b90.json: eol: lf\nfrontend/src/pages/Login.jsx: text: unspecified\nfrontend/src/pages/Login.jsx: eol: unspecified\nbackend/server.py: text: unspecified\nbackend/server.py: eol: unspecified\nshared/catalogs/cisIG1.json: text: unspecified\nshared/catalogs/cisIG1.json: eol: unspecified\n",
+    "staged_diff_check_exit": 0,
+    "validation_issues": [],
+    "comparisons": [
+      {
+        "file": "evidence/actual-combined-login-entry-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\actual-combined-login-entry-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "a52f3d5ce549edf4be8759cc3ba4e1c0e16481b223c0020789034ca48914d612",
+        "original_sha256": "a52f3d5ce549edf4be8759cc3ba4e1c0e16481b223c0020789034ca48914d612"
+      },
+      {
+        "file": "evidence/actual-logout-login-group-resumes-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\actual-logout-login-group-resumes-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "b41ada39918a76e5bd4038bae2d99936792da56a9742a229306c50536ca8438e",
+        "original_sha256": "b41ada39918a76e5bd4038bae2d99936792da56a9742a229306c50536ca8438e"
+      },
+      {
+        "file": "evidence/actual-logout-login-return-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\actual-logout-login-return-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "af0619c2b031827f34d5ac86290665a3547efc6af87bb4d24aee3be62991d061",
+        "original_sha256": "af0619c2b031827f34d5ac86290665a3547efc6af87bb4d24aee3be62991d061"
+      },
+      {
+        "file": "evidence/brawndo-1.2-authorized-exception-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\brawndo-1.2-authorized-exception-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "038c412a499610a2be60416e21adba3f8b6a95b47c858d2ad89b0bd806b34d4c",
+        "original_sha256": "038c412a499610a2be60416e21adba3f8b6a95b47c858d2ad89b0bd806b34d4c"
+      },
+      {
+        "file": "evidence/brawndo-1.2-native-history-after-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\brawndo-1.2-native-history-after-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "6df708f0eb0f68e4c2cf204d38ec3936818e3a2197f6d724f1552cbf51633fea",
+        "original_sha256": "6df708f0eb0f68e4c2cf204d38ec3936818e3a2197f6d724f1552cbf51633fea"
+      },
+      {
+        "file": "evidence/brawndo-1.2-native-history-before-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\brawndo-1.2-native-history-before-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "c87d6130ad6f54ab06f1783737fea792edd38bcc7d81e41c7404d941a54f34aa",
+        "original_sha256": "c87d6130ad6f54ab06f1783737fea792edd38bcc7d81e41c7404d941a54f34aa"
+      },
+      {
+        "file": "evidence/brawndo-3.5-authorized-exception-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\brawndo-3.5-authorized-exception-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "ec52be20396a44c6120aa8711817d26fae4647b0d9d7df9bf0607cdd11705492",
+        "original_sha256": "ec52be20396a44c6120aa8711817d26fae4647b0d9d7df9bf0607cdd11705492"
+      },
+      {
+        "file": "evidence/brawndo-3.5-native-history-after-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\brawndo-3.5-native-history-after-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "bd9e20d69c27bf764d1c74c5e1bb96e5534941b7253b72ee0603cc5585e4bf77",
+        "original_sha256": "bd9e20d69c27bf764d1c74c5e1bb96e5534941b7253b72ee0603cc5585e4bf77"
+      },
+      {
+        "file": "evidence/brawndo-3.5-native-history-before-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\brawndo-3.5-native-history-before-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "bd9e20d69c27bf764d1c74c5e1bb96e5534941b7253b72ee0603cc5585e4bf77",
+        "original_sha256": "bd9e20d69c27bf764d1c74c5e1bb96e5534941b7253b72ee0603cc5585e4bf77"
+      },
+      {
+        "file": "evidence/ci127-jobs.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\ci127-jobs.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "abe3a7efca36570fa184092cb4cfea86522794af7303f89f13c2003274f76406",
+        "original_sha256": "abe3a7efca36570fa184092cb4cfea86522794af7303f89f13c2003274f76406"
+      },
+      {
+        "file": "evidence/closeout-acceptance-ledger-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\omnibot-cis-runtime\\outputs\\cis-fresh-state-b90\\closeout-acceptance-ledger-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "023f0ee40bbdf767814d915faa9c51bebc754af6f3206d6bb5ca32109f01e960",
+        "original_sha256": "023f0ee40bbdf767814d915faa9c51bebc754af6f3206d6bb5ca32109f01e960"
+      },
+      {
+        "file": "evidence/closeout-qa-records-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\closeout-qa-records-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "b5d7286071b5e309abbfa04d240a1a29be00fbcae329a2c5e5315d708aad523a",
+        "original_sha256": "b5d7286071b5e309abbfa04d240a1a29be00fbcae329a2c5e5315d708aad523a"
+      },
+      {
+        "file": "evidence/hooli-dashboard-final-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hooli-dashboard-final-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "3b754949c572a9b7cf3c23a1cd11301d117d0799f9e14df4386fe0d73e3cb685",
+        "original_sha256": "3b754949c572a9b7cf3c23a1cd11301d117d0799f9e14df4386fe0d73e3cb685"
+      },
+      {
+        "file": "evidence/hooli-program-final-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hooli-program-final-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "25cd71aa6e455f19597758fc67c8064c275e73eafa2c4faa767a8b7af45247d5",
+        "original_sha256": "25cd71aa6e455f19597758fc67c8064c275e73eafa2c4faa767a8b7af45247d5"
+      },
+      {
+        "file": "evidence/hosted-lifecycles-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-lifecycles-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "05e3e14dc15c74cdbe8d12a5ddae9ea0ba8a2ed3452042d3f70c3b2987f5b2bf",
+        "original_sha256": "05e3e14dc15c74cdbe8d12a5ddae9ea0ba8a2ed3452042d3f70c3b2987f5b2bf"
+      },
+      {
+        "file": "evidence/hosted-placements-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-placements-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "8f13fb8a152c70409047250f795e33ef86ee5d8bb43e702cbd60849a6f68c6c1",
+        "original_sha256": "8f13fb8a152c70409047250f795e33ef86ee5d8bb43e702cbd60849a6f68c6c1"
+      },
+      {
+        "file": "evidence/hosted-server-interview-cas-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\hosted-server-interview-cas-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "86b6028be81918c0716019cba98902c1849e31752ff1601366c8e4331d8458a5",
+        "original_sha256": "86b6028be81918c0716019cba98902c1849e31752ff1601366c8e4331d8458a5"
+      },
+      {
+        "file": "evidence/independent-composite-review-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\independent-composite-review-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "cead0e6026d611045dbc415bac98e4991acb7586ed82d9c6a1ad5b4486653fd3",
+        "original_sha256": "cead0e6026d611045dbc415bac98e4991acb7586ed82d9c6a1ad5b4486653fd3"
+      },
+      {
+        "file": "evidence/independent-final-review-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-independent-qa\\outputs\\independent-final-closeout-b90-2026-10-10T15-00-46-563Z.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "36ab3c0c338d56686b103965db17f1586be5ce7bbcfd3eb57b670e8ead5b5908",
+        "original_sha256": "36ab3c0c338d56686b103965db17f1586be5ce7bbcfd3eb57b670e8ead5b5908"
+      },
+      {
+        "file": "evidence/initech-dashboard-final-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\initech-dashboard-final-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "f7c5122d4ca12253fd5cf98d2210baf5f1bf4591ad3d938912dbe7eddfeb7273",
+        "original_sha256": "f7c5122d4ca12253fd5cf98d2210baf5f1bf4591ad3d938912dbe7eddfeb7273"
+      },
+      {
+        "file": "evidence/initech-program-final-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\initech-program-final-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "7855a1a4a9e2140243d9b7b2593cc2974a9008eaa3bbf99ad33c234174d1fb10",
+        "original_sha256": "7855a1a4a9e2140243d9b7b2593cc2974a9008eaa3bbf99ad33c234174d1fb10"
+      },
+      {
+        "file": "evidence/iso-native-after-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\iso-native-after-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "3c667370fd83c8d1d7957daf31eae2332ec02527b4dee22cec8e8d8b643fe3df",
+        "original_sha256": "3c667370fd83c8d1d7957daf31eae2332ec02527b4dee22cec8e8d8b643fe3df"
+      },
+      {
+        "file": "evidence/iso-native-before-79075.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\iso-native-before-79075.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "3c667370fd83c8d1d7957daf31eae2332ec02527b4dee22cec8e8d8b643fe3df",
+        "original_sha256": "3c667370fd83c8d1d7957daf31eae2332ec02527b4dee22cec8e8d8b643fe3df"
+      },
+      {
+        "file": "evidence/login-final-1024-b90.png",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-final-1024-b90.png",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "66e0517fef4744812a57b6390aa355d8a69b312707a19e80c4e48bcc7899315a",
+        "original_sha256": "66e0517fef4744812a57b6390aa355d8a69b312707a19e80c4e48bcc7899315a"
+      },
+      {
+        "file": "evidence/login-final-1440-b90.png",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-final-1440-b90.png",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "74717d4abcbd0bf09be16f65480a782b9f5b1450a43af2b68b1ee2d296981b87",
+        "original_sha256": "74717d4abcbd0bf09be16f65480a782b9f5b1450a43af2b68b1ee2d296981b87"
+      },
+      {
+        "file": "evidence/login-final-320-b90.png",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-final-320-b90.png",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "f2436e7d2c9058493d4d360f04cff4a66e43c1d802ca8814130fbfe661483eb5",
+        "original_sha256": "f2436e7d2c9058493d4d360f04cff4a66e43c1d802ca8814130fbfe661483eb5"
+      },
+      {
+        "file": "evidence/login-final-390-b90.png",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-final-390-b90.png",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "8c5fa4c7d7cf07b6a7c7e8b05988a0c0c0cb8266d70df37210665d16e229e873",
+        "original_sha256": "8c5fa4c7d7cf07b6a7c7e8b05988a0c0c0cb8266d70df37210665d16e229e873"
+      },
+      {
+        "file": "evidence/login-final-768-b90.png",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-final-768-b90.png",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "cee20784b9df972331aa5eb236889f6ec00ec8cde8323edb52155340c6facc02",
+        "original_sha256": "cee20784b9df972331aa5eb236889f6ec00ec8cde8323edb52155340c6facc02"
+      },
+      {
+        "file": "evidence/login-final-controls-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-final-controls-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "7fc4c25f6f3d3d9cae7e2793094017913829ffca815824341a88be4a091f0797",
+        "original_sha256": "7fc4c25f6f3d3d9cae7e2793094017913829ffca815824341a88be4a091f0797"
+      },
+      {
+        "file": "evidence/login-light-final-b90.png",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-light-final-b90.png",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "2f5a2c8e14a5153a3fc874094cba84c229604447e25636d6b7373ac284ec3ab3",
+        "original_sha256": "2f5a2c8e14a5153a3fc874094cba84c229604447e25636d6b7373ac284ec3ab3"
+      },
+      {
+        "file": "evidence/login-public-controls-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-public-controls-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "bcde7023556d637d69805892f3f4e6f06c83a2e700fdee0fcec4ba39b5e5bea2",
+        "original_sha256": "bcde7023556d637d69805892f3f4e6f06c83a2e700fdee0fcec4ba39b5e5bea2"
+      },
+      {
+        "file": "evidence/login-responsive-attempt-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-responsive-attempt-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "53683ade05ad6d217e36a5d39198f872b248ed78f10d3fb798b05cb3abc95a96",
+        "original_sha256": "53683ade05ad6d217e36a5d39198f872b248ed78f10d3fb798b05cb3abc95a96"
+      },
+      {
+        "file": "evidence/login-responsive-final-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\login-responsive-final-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "1463cfc2e8a4e1aea92d13e14287a83f2ad2216455939044bc9c8ed8ef87993c",
+        "original_sha256": "1463cfc2e8a4e1aea92d13e14287a83f2ad2216455939044bc9c8ed8ef87993c"
+      },
+      {
+        "file": "evidence/omni-window-behavior-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\omni-window-behavior-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "64f6d552051e70efb2be6faae4834a0a6a957fb1175f42f811dadd214ad03258",
+        "original_sha256": "64f6d552051e70efb2be6faae4834a0a6a957fb1175f42f811dadd214ad03258"
+      },
+      {
+        "file": "evidence/predeployment.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\predeployment.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "9443bc2834319b585ae162c8528ddd51b0973eb60d6d3dbf342f2a6a28b6c7e4",
+        "original_sha256": "9443bc2834319b585ae162c8528ddd51b0973eb60d6d3dbf342f2a6a28b6c7e4"
+      },
+      {
+        "file": "evidence/qa-ig1-1.2-boundary-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-1.2-boundary-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "42e2f1940a3cb7eadf697cbe00c2d55e12042cc28c7e8a7c7723d85448fa22e9",
+        "original_sha256": "42e2f1940a3cb7eadf697cbe00c2d55e12042cc28c7e8a7c7723d85448fa22e9"
+      },
+      {
+        "file": "evidence/qa-ig1-actual-login-answers-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-actual-login-answers-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "0c1865817077a21c608d59ae23e54e8ff0c379483356c0d884ff5a25a3ddce3a",
+        "original_sha256": "0c1865817077a21c608d59ae23e54e8ff0c379483356c0d884ff5a25a3ddce3a"
+      },
+      {
+        "file": "evidence/qa-ig1-actual-login-resume-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-actual-login-resume-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "e0b683963809be95058123ce0829839b7cae27abaed330b79562c586a58a4d36",
+        "original_sha256": "8c38546a2790a12aa36cad8428e923077ba5f261b5e48bad68c38536a788e07d"
+      },
+      {
+        "file": "evidence/qa-ig1-native-history-after-upgrade-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-native-history-after-upgrade-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "77469afab7b677447c893931e7ad2ead63bf9f0dfbed77e11e99b3f28f9e73c2",
+        "original_sha256": "77469afab7b677447c893931e7ad2ead63bf9f0dfbed77e11e99b3f28f9e73c2"
+      },
+      {
+        "file": "evidence/qa-ig1-native-history-before-upgrade-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig1-native-history-before-upgrade-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "025469691eb67d9394e81fd8563d5325e80478f34408e9e518187fee7c51276a",
+        "original_sha256": "025469691eb67d9394e81fd8563d5325e80478f34408e9e518187fee7c51276a"
+      },
+      {
+        "file": "evidence/qa-ig2-15.4-native-history-final-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-15.4-native-history-final-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "09bb336301a777f25fd140166943b02dcae3b82662fbeecc7cf1f9c69bbce066",
+        "original_sha256": "09bb336301a777f25fd140166943b02dcae3b82662fbeecc7cf1f9c69bbce066"
+      },
+      {
+        "file": "evidence/qa-ig2-actual-login-answers-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-actual-login-answers-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "3d44b6f32ef19c0af6ccc6a79bace528fa3862d26000e79c0f5dba685531af9a",
+        "original_sha256": "3d44b6f32ef19c0af6ccc6a79bace528fa3862d26000e79c0f5dba685531af9a"
+      },
+      {
+        "file": "evidence/qa-ig2-actual-login-resume-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-actual-login-resume-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "baa376bd5e9e029e53e1142f0869d9d07f51265b9dd4ea03ed7b7104d6bad534",
+        "original_sha256": "3201ddf1c8a3e4c3af8f6a577071db80450de536c421efe7fa6ed660c46eed99"
+      },
+      {
+        "file": "evidence/qa-ig2-status-cases-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig2-status-cases-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "725cccc2339208c7ab40715227892d20c85269a63de1fa7012b940c26f70afaa",
+        "original_sha256": "725cccc2339208c7ab40715227892d20c85269a63de1fa7012b940c26f70afaa"
+      },
+      {
+        "file": "evidence/qa-ig3-actual-login-answers-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-actual-login-answers-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "b99498763fccbcb472fe93288c297aaa023deb922a54a6b14c3353f3ef346fac",
+        "original_sha256": "b99498763fccbcb472fe93288c297aaa023deb922a54a6b14c3353f3ef346fac"
+      },
+      {
+        "file": "evidence/qa-ig3-actual-login-resume-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-ig3-actual-login-resume-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "61bf67313e776d1230f81f0f27d0c9a2d13290e81fa699995fe7ae7f41cac178",
+        "original_sha256": "883ea44ece2a03aab7551fa8ebf53b666b0231cc40fa59654dfdd32995076c15"
+      },
+      {
+        "file": "evidence/qa-mixed-iso-native-final-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-mixed-iso-native-final-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "e8faf694f339015654256951a118b0831edb8e3882d15667111d7f80d92768bc",
+        "original_sha256": "e8faf694f339015654256951a118b0831edb8e3882d15667111d7f80d92768bc"
+      },
+      {
+        "file": "evidence/qa-reversible-cleanup-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-reversible-cleanup-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "077fae8343d0518af395de71cf8500275d151e481c00d1c829e4e5c3458af335",
+        "original_sha256": "077fae8343d0518af395de71cf8500275d151e481c00d1c829e4e5c3458af335"
+      },
+      {
+        "file": "evidence/qa-reversible-cleanup-b90.png",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\qa-reversible-cleanup-b90.png",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "54b2947a64006894ea980818240489f0e5a4b22d712dcc2fe1dff39eb70fc5bb",
+        "original_sha256": "54b2947a64006894ea980818240489f0e5a4b22d712dcc2fe1dff39eb70fc5bb"
+      },
+      {
+        "file": "evidence/render-closeout-current-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\render-closeout-current-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "d2ab72b21c068f0c86232e51f1c8509e5155efed4ce8419a570736ace501359b",
+        "original_sha256": "d2ab72b21c068f0c86232e51f1c8509e5155efed4ce8419a570736ace501359b"
+      },
+      {
+        "file": "evidence/render-closeout-current-b90.png",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\render-closeout-current-b90.png",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "e3a4deb7b890e5f85f0555261b8d79c10ea5ba40815873702a88cff42215270e",
+        "original_sha256": "e3a4deb7b890e5f85f0555261b8d79c10ea5ba40815873702a88cff42215270e"
+      },
+      {
+        "file": "evidence/render-closeout-current-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\render-closeout-current-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "dc8d0200b2fcd673f4b977ab9a8fa043faeac2d941ccebadba84fe1d68157a0f",
+        "original_sha256": "dc8d0200b2fcd673f4b977ab9a8fa043faeac2d941ccebadba84fe1d68157a0f"
+      },
+      {
+        "file": "evidence/render-emitted-assets-b90.txt",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\render-emitted-assets-b90.txt",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "358eba4f8e6d6adb59863e15e497580e244721dc1e3555ec9917e98d9810713f",
+        "original_sha256": "358eba4f8e6d6adb59863e15e497580e244721dc1e3555ec9917e98d9810713f"
+      },
+      {
+        "file": "evidence/served-assets-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\served-assets-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "be63c8644123abd2fd655120d02d92734ef06a07d478ebe9209a2e59a452ca1f",
+        "original_sha256": "be63c8644123abd2fd655120d02d92734ef06a07d478ebe9209a2e59a452ca1f"
+      },
+      {
+        "file": "evidence/showcase-program-dashboard-final-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\showcase-program-dashboard-final-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "67c3326a966c8da37f55b0a5f0d46a23f2850bdab1465919546fec543fd435d3",
+        "original_sha256": "67c3326a966c8da37f55b0a5f0d46a23f2850bdab1465919546fec543fd435d3"
+      },
+      {
+        "file": "evidence/soc2-native-after-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\soc2-native-after-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "044340eb5906944d674665eeab65f2b23da014c09a3bc1d05eb44361d236157c",
+        "original_sha256": "044340eb5906944d674665eeab65f2b23da014c09a3bc1d05eb44361d236157c"
+      },
+      {
+        "file": "evidence/soc2-native-before-79075.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\soc2-native-before-79075.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "044340eb5906944d674665eeab65f2b23da014c09a3bc1d05eb44361d236157c",
+        "original_sha256": "044340eb5906944d674665eeab65f2b23da014c09a3bc1d05eb44361d236157c"
+      },
+      {
+        "file": "evidence/supported-ig-upgrades-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\login-cis-closeout\\outputs\\login-cis-closeout\\supported-ig-upgrades-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "ebb16d89f64330d1a36927ce5d2095fdb3b681cae393e7c40b273c669355ee9e",
+        "original_sha256": "ebb16d89f64330d1a36927ce5d2095fdb3b681cae393e7c40b273c669355ee9e"
+      },
+      {
+        "file": "evidence/hosted-placement-safe-totals-b90.json",
+        "source": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-07\\omnisciente-visual-consistency\\work\\omnibot-cis-runtime\\outputs\\cis-fresh-state-b90\\hosted-placement-safe-totals-b90.json",
+        "parsed_values_or_normalized_transcript_or_binary_equal": true,
+        "portable_sha256": "05e5ab11bd2c78907e6443f7a3598565f683d903cc5ef5f38d64d46d3cc32932",
+        "original_sha256": "05e5ab11bd2c78907e6443f7a3598565f683d903cc5ef5f38d64d46d3cc32932"
+      }
+    ],
+    "no_runtime_source_or_gate_config_change": true,
+    "release_approval": false,
+    "limitation": "Snapshot before lead copies this updated independent report/refreshes portable report hash. Original capture integrity remains separate from portable LF/transcript normalization; JSON string values were compared after parsing, not whitespace-trimmed. No tests/browser/product/provider writes performed.",
+    "auditor_source_mapping_resolution": "Compact totals producer file is in shared-engineer reporting checkout, not root original-capture directory. Discovered through rg --files; parsed JSON matches the portable copy. No original source gap remains."
+  }
+}

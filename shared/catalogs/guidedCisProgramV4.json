@@ -1,0 +1,83 @@
+{
+  "version": "cis-v8.1-program-4",
+  "framework_id": "cis-ig1",
+  "framework_version": "8.1",
+  "reviewed_on": "2026-10-10",
+  "criteria_revision": "2026-10-05",
+  "guidance_revision": "2026-10-04",
+  "basis": "Authored safeguard assessment criteria; CIS v8.1 requirements, not CAS metrics. Evidence examples and optional context do not impose additional obligations.",
+  "definitions": {
+    "17.5": {
+      "title": "Assign Key Roles and Responsibilities",
+      "control": 17,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#175-assign-key-roles-and-responsibilities",
+      "guidance": "Record who fulfils each relevant incident-response function, including providers where applicable. One person or team may fulfil multiple functions; separate departments are not required.",
+      "evidence": [
+        "Role roster and contact/escalation record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "17.5-c5",
+          "text": "Key incident-response roles and responsibilities are assigned.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c8",
+          "text": "Incident roles cover legal personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c9",
+          "text": "Incident roles cover IT personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c10",
+          "text": "Incident roles cover information-security personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c11",
+          "text": "Incident roles cover facilities personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c12",
+          "text": "Incident roles cover public-relations personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c3",
+          "text": "Assignments are reviewed annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c13",
+          "text": "Incident roles cover HR personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c14",
+          "text": "Incident roles cover incident responders.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c15",
+          "text": "Incident roles cover analysts.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-guided-third-parties",
+          "text": "Where relevant, third parties have assigned incident-response roles and responsibilities.",
+          "conditional": true
+        }
+      ]
+    }
+  }
+}

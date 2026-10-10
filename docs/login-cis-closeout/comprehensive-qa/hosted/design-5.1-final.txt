@@ -1,0 +1,215 @@
+- banner:
+  - button:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: O
+  - generic: Client
+  - generic: OmniBot QA — Closeout CIS IG3
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG3
+    - link:
+      - /url: /risks
+      - generic: Risks
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG3
+  - heading [level=1]: CIS IG3
+  - button: Continue with 1.1
+  - region:
+    - generic: 9.8%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 18 controls · 153 IG3 safeguards
+    - term: Implemented
+    - definition:
+      - text: "15"
+      - generic: of 153
+    - term: Assessed
+    - definition:
+      - text: "15"
+      - generic: of 153
+    - button:
+      - text: Implemented
+      - strong: "15"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "138"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG3
+        - text: ›
+        - button: Control 5
+        - listitem: ›Safeguard 5.1
+    - textbox:
+      - /placeholder: Search by number or title…
+    - text: Safeguard scope
+    - combobox
+    - generic: Display filter; full program totals unchanged
+    - paragraph: Account Management
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "5.1"
+            - text: Establish and Maintain an Inventory of Accounts
+            - generic: IG1 baseline
+          - cell:
+            - generic: Implemented
+        - link:
+          - cell:
+            - generic: "5.2"
+            - text: Use Unique Passwords
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "5.3"
+            - text: Disable Dormant Accounts
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "5.4"
+            - text: Restrict Administrator Privileges to Dedicated Administrator Accounts
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "5.5"
+            - text: Establish and Maintain an Inventory of Service Accounts
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "5.6"
+            - text: Centralize Account Management
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+- region "Notifications alt+T"
+- dialog "Establish and Maintain an Inventory of Accounts":
+  - banner:
+    - navigation "CIS IG3 location":
+      - list:
+        - button "CIS IG3"
+        - text: ›
+        - button "Control 5"
+        - listitem: ›Safeguard 5.1
+    - heading "Establish and Maintain an Inventory of Accounts" [active] [level=2]
+    - paragraph:
+      - generic: Safeguard assessment workspace
+    - generic "Saved implementation status":
+      - generic: Implemented
+    - generic "Saved verification": Not verified
+    - navigation "Assessment navigation":
+      - button "Previous"
+      - generic: 39 of 153
+      - button "Next"
+  - tablist "Assessment sections":
+    - tab "Requirement & implementation" [selected]
+    - tab "Findings"
+  - tabpanel "Requirement & implementation":
+    - generic "Requirement summary"
+    - heading "What CIS requires" [level=3]
+    - paragraph: Official requirement · CIS v8.1 · Safeguard 5.1
+    - paragraph: Establish and maintain an inventory of all accounts managed in the enterprise. The inventory must at a minimum include user, administrator accounts, and service accounts. The inventory, at a minimum, should contain the person’s name, username, start/stop dates, and department. Validate that all active accounts are authorized, on a recurring schedule at a minimum quarterly, or more frequently.
+    - paragraph:
+      - strong: "Required operation / trigger:"
+      - text: Validate active-account authorization at least quarterly.
+    - link "Official CIS source":
+      - /url: https://cas.docs.cisecurity.org/en/latest/source/Controls5/#51-establish-and-maintain-an-inventory-of-accounts
+    - region "Implementation status section":
+      - heading "Implementation status" [level=3]
+      - group "Implementation status":
+        - generic: Implementation status
+        - radio "Implemented" [checked]
+        - generic: Implemented
+        - radio "Partially Implemented"
+        - generic: Partially Implemented
+        - radio "Not Implemented"
+        - generic: Not Implemented
+        - radio "Not Assessed"
+        - generic: Not Assessed
+        - radio "Not Applicable"
+        - generic: Not Applicable
+    - region "Current implementation section":
+      - heading "Current implementation" [level=3]
+      - generic: Current implementation
+      - textbox "Current implementation": OVERVIEW OmniBot QA — Closeout CIS IG3 reports the practice to establish and maintain an inventory of accounts is in place. IMPLEMENTATION BREAKDOWN In place - The maintained account inventory covers all enterprise-managed user accounts. Reported as met. - The maintained account inventory covers all enterprise-managed administrator accounts. Reported as met. - The maintained account inventory covers all enterprise-managed service accounts. Reported as met. - Records contain person name. Reported as met. - Records contain username. Reported as met. - Records contain start dates. Reported as met. - Records contain stop dates. Reported as met. - Records contain department. Reported as met. - All active accounts are validated as authorized at least quarterly. Reported as met. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. SYNTHETIC QA ONLY — comprehensive workflow test; not client facts. - Preserve this exact reviewer line for 5.1. - Preserve this blank line.
+    - generic "Assessment guidance & working checklist"
+  - button "Open Omnibot guide":
+  - complementary "Omnibot invitation":
+    - paragraph: Your implementation is saved. I can help you maintain Safeguard 5.1, update a recorded fact, or review outstanding verification.
+    - button "Close invitation": ×
+  - generic: Interview complete
+  - contentinfo:
+    - status: Changes remain in your draft until saved.
+    - button "Save assessment"
+    - button "Save & next"
+  - button "Close":
+    - generic: Close

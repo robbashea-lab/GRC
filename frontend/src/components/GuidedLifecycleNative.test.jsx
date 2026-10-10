@@ -8,6 +8,8 @@ jest.mock('@/lib/api', () => ({__esModule: true, default: {get: jest.fn(), patch
 const mockNested = jest.fn();
 jest.mock('./RecordDrawer', () => props => {mockNested(props); return <div data-testid="native-record-drawer">{props.kind}</div>;});
 jest.mock('./GuidedAssessor', () => props => <div>
+  <button onClick={() => props.onSaveAssessment?.({implementation:'Reviewed synthetic inventory',status:'in_progress',guided_assessment_source:{version:require('@/lib/guidedAssessment').versionForSafeguard(props.record.definition_id),revision:9,generated_at:'2026-10-09T12:00:00Z'}},JSON.stringify(props.form))}>Save Omni native assessment</button>
+  <button onClick={() => props.onSaveAssessment?.({implementation:'Must not apply',status:'addressed'},'stale native snapshot')}>Save stale Omni native assessment</button>
   <button onClick={() => props.onOpenNative('evidence', props.related.evidence[0])}>Open Omni native evidence</button>
   <button onClick={() => props.onOpenNative('findings', props.related.findings[0])}>Open Omni native Finding</button>
 </div>);
@@ -49,4 +51,35 @@ test('Omni Finding navigation retains the existing native RecordDrawer callback'
   expect(mockNested).toHaveBeenLastCalledWith(expect.objectContaining({kind: 'findings', record: finding}));
   expect(api.get.mock.calls.some(([path]) => path.endsWith('/download'))).toBe(false);
   expect(api.patch).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();
+});
+
+test('scoped Omni save reuses native PATCH, CAS and fields without changing verification',async()=>{
+  api.patch.mockImplementation(async (_path,body)=>({data:{...saved,...body,last_saved:'2026-10-09T12:01:00Z',assessment_history:[saved]}}));
+  await render();await click('Save Omni native assessment');
+  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.1',expect.objectContaining({implementation:'Reviewed synthetic inventory',status:'in_progress',verification:'verified',expected_last_assessed:null,guided_assessment_source:{version:'cis-v8.1-control1-3',revision:9,generated_at:'2026-10-09T12:00:00Z'}}));
+  expect(container.textContent).toContain('Assessment saved.');
+});
+
+test('stale native snapshot refuses PATCH and retains the native record',async()=>{
+  await render();await click('Save stale Omni native assessment');expect(api.patch).not.toHaveBeenCalled();expect(container.textContent).toContain('unsaved or changed content');
+});
+
+test('native rejection does not claim successful assessment saving',async()=>{
+  api.patch.mockRejectedValueOnce(new Error('Synthetic native CAS conflict'));
+  await render();await click('Save Omni native assessment');expect(api.patch).toHaveBeenCalledTimes(1);expect(container.textContent).toContain('Synthetic native CAS conflict');expect(container.textContent).not.toContain('Assessment saved.');
+});
+
+test.each(['1.2','2.1'])('native save adapter uses the same authoritative path for newly authorized CIS safeguard %s',async id=>{
+  const other={...saved,definition_id:id,framework_assessment_id:'native-'+id};api.patch.mockImplementation(async(_path,body)=>({data:{...other,...body}}));await act(async()=>root.render(<FrameworkDrawer open record={other} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
+  await click('Save Omni native assessment');expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-'+id,expect.objectContaining({verification:'verified',guided_assessment_source:expect.objectContaining({version:require('@/lib/guidedAssessment').versionForSafeguard(id)})}));
+});
+
+test.each([{definition_id:'1.3'},{framework_key:'soc-2',definition_id:'CC1.1'},{framework_key:'iso-27001',definition_id:'A.5.1'},{client_id:'foreign-client'}])('native save adapter refuses excluded configuration or identity %j',async changes=>{
+  const other={...saved,...changes};await act(async()=>root.render(<FrameworkDrawer open record={other} clientId="demo_brawndo" onOpenChange={()=>{}}/>));if(changes.definition_id==='1.3')await click('Save Omni native assessment');else expect([...container.querySelectorAll('button')].find(button=>button.textContent==='Save Omni native assessment')).toBeUndefined();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('native adapter guards duplicate pending submissions',async()=>{
+  let finish;api.patch.mockImplementation(()=>new Promise(resolve=>{finish=()=>resolve({data:saved});}));await render();
+  const target=[...container.querySelectorAll('button')].find(button=>button.textContent==='Save Omni native assessment');await act(async()=>{target.click();target.click();});
+  expect(api.patch).toHaveBeenCalledTimes(1);await act(async()=>finish());
 });

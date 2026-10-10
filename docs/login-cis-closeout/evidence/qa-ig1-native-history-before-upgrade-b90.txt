@@ -1,0 +1,200 @@
+- banner:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - searchbox
+  - generic: Ctrl K
+  - button:
+    - text: OmniBot QA — Closeout CIS IG1
+    - generic: Open authorized client directory
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: O
+  - generic: Client
+  - generic: OmniBot QA — Closeout CIS IG1
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG1
+    - link:
+      - /url: /risks
+      - generic: Risks
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG1
+  - heading [level=1]: CIS IG1
+  - button: Continue with 1.2
+  - region:
+    - generic: 1.8%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 15 controls · 56 IG1 safeguards
+    - term: Implemented
+    - definition:
+      - text: "1"
+      - generic: of 56
+    - term: Assessed
+    - definition:
+      - text: "1"
+      - generic: of 56
+    - button:
+      - text: Implemented
+      - strong: "1"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "55"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG1
+        - listitem: ›Control 1
+    - textbox:
+      - /placeholder: Search by number or title…
+    - paragraph: Inventory and Control of Enterprise Assets
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+          - columnheader: Verification
+          - columnheader: Owner
+          - columnheader: Last assessed
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "1.1"
+            - generic: Establish and Maintain Detailed Enterprise Asset Inventory
+          - cell:
+            - generic: Implemented
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Oct 10, 2026
+        - link:
+          - cell:
+            - generic: "1.2"
+            - generic: Address Unauthorized Assets
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+- region "Notifications alt+T"
+- dialog "1.1 · Establish and Maintain Detailed Enterprise Asset Inventory":
+  - button "Close":
+    - generic: Close
+  - heading "1.1 · Establish and Maintain Detailed Enterprise Asset Inventory" [level=2]
+  - paragraph: CIS Controls v8.1 · 1.1
+  - text: Assessment Owner
+  - button "Assessment Owner":
+    - generic: Unassigned
+  - paragraph: Only active platform users with access to this client can be assigned. Contacts alone are not eligible.
+  - link "Manage people in a new tab":
+    - /url: /contacts
+    - text: Manage people →
+  - button "Save owner" [disabled]
+  - generic "View History" [active]
+  - paragraph: Assessment history · 7
+  - list:
+    - paragraph: Implemented · 2026-10-10
+    - paragraph: Staging Administrator
+    - paragraph: "OVERVIEW OmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation.. IMPLEMENTATION BREAKDOWN In place - An enterprise asset inventory is maintained. - Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included. - Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded. - Asset additions, changes and retirements are reflected in the inventory. - Periodic review: The complete inventory is reviewed every six months. - Periodic review: The last reported complete review was 2026-10-10. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. - SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets. - Evidence verification remains separate; no real-client completion claim. SYNTHETIC duplicate-activation test: one resulting native history append. SYNTHETIC native concurrent writer — preserve this authoritative wording γ. SYNTHETIC retry after explicit comparison — native winner wording preserved."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-3 · generated 2026-10-10T14:05:25.478625+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-10
+    - paragraph: Staging Administrator
+    - paragraph: "OVERVIEW OmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation.. IMPLEMENTATION BREAKDOWN In place - An enterprise asset inventory is maintained. - Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included. - Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded. - Asset additions, changes and retirements are reflected in the inventory. - Periodic review: The complete inventory is reviewed every six months. - Periodic review: The last reported complete review was 2026-10-10. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. - SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets. - Evidence verification remains separate; no real-client completion claim. SYNTHETIC duplicate-activation test: one resulting native history append. SYNTHETIC native concurrent writer — preserve this authoritative wording γ."
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-10
+    - paragraph: Staging Administrator
+    - paragraph: "OVERVIEW OmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation.. IMPLEMENTATION BREAKDOWN In place - An enterprise asset inventory is maintained. - Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included. - Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded. - Asset additions, changes and retirements are reflected in the inventory. - Periodic review: The complete inventory is reviewed every six months. - Periodic review: The last reported complete review was 2026-10-10. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. - SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets. - Evidence verification remains separate; no real-client completion claim. SYNTHETIC duplicate-activation test: one resulting native history append."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-3 · generated 2026-10-10T14:02:39.104483+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-10
+    - paragraph: Staging Administrator
+    - paragraph: "OVERVIEW OmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation.. IMPLEMENTATION BREAKDOWN In place - An enterprise asset inventory is maintained. - Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included. - Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded. - Asset additions, changes and retirements are reflected in the inventory. - Periodic review: The complete inventory is reviewed every six months. - Periodic review: The last reported complete review was 2026-10-10. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. - SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets. - Evidence verification remains separate; no real-client completion claim."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-3 · generated 2026-10-10T14:01:45.022197+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Partially Implemented · 2026-10-10
+    - paragraph: Staging Administrator
+    - paragraph: "OVERVIEW OmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation.. IMPLEMENTATION BREAKDOWN In place - An enterprise asset inventory is maintained. - Asset coverage: Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included. - Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded. - Asset additions, changes and retirements are reflected in the inventory. - Periodic review: The complete inventory is reviewed every six months. - Periodic review: The last reported complete review was 2026-10-10. Incomplete or missing - Asset coverage: End-user devices are missing or incomplete. ITEMS TO ADDRESS Remediation - Add or complete inventory coverage for End-user devices. SYNTHETIC reviewer edit retained after explicit factual refresh: no real operating claim."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-3 · generated 2026-10-10T14:00:39.671063+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-10
+    - paragraph: Staging Administrator
+    - paragraph: "OVERVIEW OmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation.. IMPLEMENTATION BREAKDOWN In place - An enterprise asset inventory is maintained. - Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included. - Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded. - Asset additions, changes and retirements are reflected in the inventory. - Periodic review: The complete inventory is reviewed every six months. - Periodic review: The last reported complete review was 2026-10-10. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. - SYNTHETIC reviewer edit α: retain this exact multiline wording. - This QA scenario does not verify evidence or real operations. End of isolated QA write-up. SYNTHETIC confirmed Update assessment — exact reviewed wording β."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-3 · generated 2026-10-10T13:59:40.225412+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-10
+    - paragraph: Staging Administrator
+    - paragraph: "OVERVIEW OmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation.. IMPLEMENTATION BREAKDOWN In place - An enterprise asset inventory is maintained. - Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included. - Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded. - Asset additions, changes and retirements are reflected in the inventory. - Periodic review: The complete inventory is reviewed every six months. - Periodic review: The last reported complete review was 2026-10-10. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. - SYNTHETIC reviewer edit α: retain this exact multiline wording. - This QA scenario does not verify evidence or real operations. End of isolated QA write-up."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-3 · generated 2026-10-10T13:58:49.147363+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+  - heading "Activity" [level=4]
+  - paragraph: Framework assessment updated · 2026-10-10T14:05:25.598556+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-10T14:03:18.644347+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-10T14:02:39.209050+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-10T14:01:45.136479+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-10T14:00:39.778275+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-10T13:59:40.322589+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-10T13:58:49.258330+00:00 · Staging Administrator
+  - link "Reviews":
+    - /url: /reviews?client_id=cli_03461153428aef4af525ac083a42098242b3009d4fa5c0c0ecdc192c3d2c7c03&framework_key=cis-ig1&framework_assessment=fw_06ff0298befa59b59c2c197e42c1f4cb
+  - status
+  - button "Close"

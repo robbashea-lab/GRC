@@ -1,0 +1,220 @@
+- banner:
+  - link "Omnisciente CLARITY FOR A STRONGER TOMORROW":
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - searchbox "Search workspace pages and active work"
+  - generic: Ctrl K
+  - button "Initech Open authorized client directory":
+    - text: Initech
+    - generic: Open authorized client directory
+  - button "Use light workspace theme":
+  - button "Your notifications":
+  - button "Staging Administrator super admin":
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button "Return to portfolio":
+    - text: Portfolio
+  - generic: I
+  - generic: Client
+  - generic: Initech
+  - navigation "Client workspace":
+    - group "Work":
+      - generic: Work
+      - link "Dashboard" [active]:
+        - /url: /dashboard
+        - generic: Dashboard
+      - link "Calendar":
+        - /url: /calendar
+        - generic: Calendar
+      - link "Reviews":
+        - /url: /reviews
+        - generic: Reviews
+      - link "Action Items":
+        - /url: /action-items
+        - generic: Action Items
+    - group "Program":
+      - generic: Program
+      - link "CIS IG2":
+        - /url: /compliance/cis-ig1
+        - generic: CIS IG2
+      - link "Risks":
+        - /url: /risks
+        - generic: Risks
+      - link "Policies":
+        - /url: /policies
+        - generic: Policies
+      - link "Vendors":
+        - /url: /vendors
+        - generic: Vendors
+      - link "Evidence Library":
+        - /url: /evidence
+        - generic: Evidence Library
+    - group "Client":
+      - generic: Client
+      - link "Contacts":
+        - /url: /contacts
+        - generic: Contacts
+      - link "Systems & Scope":
+        - /url: /systems
+        - generic: Systems & Scope
+      - link "AI Governance":
+        - /url: /ai-governance
+        - generic: AI Governance
+      - link "Client Profile":
+        - /url: /client-profile
+        - generic: Client Profile
+- main:
+  - paragraph: CIS IG2 program
+  - heading "Initech Dashboard" [level=1]
+  - generic: As of 10/10/2026
+  - complementary "Program condition":
+    - region "CIS IG2":
+      - 'group "CIS IG2: 0 Implemented (0.0%, 0 of 130), 0 Partially Implemented (0.0%, 0 of 130), 0 Not Implemented (0.0%, 0 of 130), 130 Not Assessed (100.0%, 130 of 130)"':
+        - img "Not Assessed · 100.0% · 130 of 130 safeguards"
+        - generic: 0.0%
+        - generic: IMPLEMENTED
+      - paragraph: Your active program
+      - heading "CIS IG2" [level=2]
+      - paragraph: 18 controls · 130 safeguards
+      - term: Implemented
+      - definition:
+        - text: "0"
+        - generic: of 130
+      - term: Assessed
+      - definition:
+        - text: "0"
+        - generic: of 130
+      - 'img "CIS IG2 assessment distribution: 0 Implemented, 0 Partially Implemented, 0 Not Implemented, 130 Not Assessed"'
+      - list:
+        - link "Implemented 0":
+          - /url: /compliance/cis-ig1?view=addressed
+          - generic: Implemented
+          - strong: "0"
+        - link "Partially Implemented 0":
+          - /url: /compliance/cis-ig1?view=in_progress
+          - generic: Partially Implemented
+          - strong: "0"
+        - link "Not Implemented 0":
+          - /url: /compliance/cis-ig1?view=needs_attention
+          - generic: Not Implemented
+          - strong: "0"
+        - link "Not Assessed 130":
+          - /url: /compliance/cis-ig1?view=not_assessed
+          - generic: Not Assessed
+          - strong: "130"
+      - generic "Validation and remediation"
+      - paragraph: Assessment progress, not a compliance determination.
+      - link "View program →":
+        - /url: /compliance/cis-ig1
+  - region "Priority overview":
+    - heading "Priority overview" [level=2]
+    - paragraph: Focus on work that needs a decision, an owner, or a next step.
+    - button "View all 15 items":
+      - text: View all 15 items
+    - group "Priority overview filters":
+      - button "All 15" [pressed]:
+        - text: All
+        - generic: "15"
+      - button "Overdue 0":
+        - text: Overdue
+        - generic: "0"
+      - button "Due in 30 days 0":
+        - text: Due in 30 days
+        - generic: "0"
+      - button "Unassigned 15":
+        - text: Unassigned
+        - generic: "15"
+    - text: Framework
+    - combobox "Framework":
+      - option "All frameworks" [selected]
+      - option "CIS IG2"
+    - generic: Search priority work
+    - searchbox "Search priority work"
+    - status: 15 matching items
+    - region "Work queue":
+      - table "Current actionable work, ordered by lateness and priority. Open an item to work in its authoritative record.":
+        - caption: Current actionable work, ordered by lateness and priority. Open an item to work in its authoritative record.
+        - rowgroup:
+          - row "Priority item Type Owner Due date Status":
+            - columnheader "Priority item"
+            - columnheader "Type"
+            - columnheader "Owner"
+            - columnheader "Due date"
+            - columnheader "Status"
+        - rowgroup:
+          - row "Enterprise Asset Inventory Review Review Unassigned Not scheduled Needs scheduling":
+            - cell "Enterprise Asset Inventory Review":
+              - button "Enterprise Asset Inventory Review"
+            - cell "Review"
+            - cell "Unassigned"
+            - cell "Not scheduled":
+              - time: Not scheduled
+            - cell "Needs scheduling"
+          - row "Software Authorization & Support Review Review Unassigned Not scheduled Needs scheduling":
+            - cell "Software Authorization & Support Review":
+              - button "Software Authorization & Support Review"
+            - cell "Review"
+            - cell "Unassigned"
+            - cell "Not scheduled":
+              - time: Not scheduled
+            - cell "Needs scheduling"
+          - row "Data Management & Inventory Review Review Unassigned Not scheduled Needs scheduling":
+            - cell "Data Management & Inventory Review":
+              - button "Data Management & Inventory Review"
+            - cell "Review"
+            - cell "Unassigned"
+            - cell "Not scheduled":
+              - time: Not scheduled
+            - cell "Needs scheduling"
+          - row "Secure Configuration Process Review Review Unassigned Not scheduled Needs scheduling":
+            - cell "Secure Configuration Process Review":
+              - button "Secure Configuration Process Review"
+            - cell "Review"
+            - cell "Unassigned"
+            - cell "Not scheduled":
+              - time: Not scheduled
+            - cell "Needs scheduling"
+          - row "Account Authorization & Access Review Review Unassigned Not scheduled Needs scheduling":
+            - cell "Account Authorization & Access Review":
+              - button "Account Authorization & Access Review"
+            - cell "Review"
+            - cell "Unassigned"
+            - cell "Not scheduled":
+              - time: Not scheduled
+            - cell "Needs scheduling"
+          - row "Vulnerability & Remediation Process Review Review Unassigned Not scheduled Needs scheduling":
+            - cell "Vulnerability & Remediation Process Review":
+              - button "Vulnerability & Remediation Process Review"
+            - cell "Review"
+            - cell "Unassigned"
+            - cell "Not scheduled":
+              - time: Not scheduled
+            - cell "Needs scheduling"
+          - row "Audit Log Management Process Review Review Unassigned Not scheduled Needs scheduling":
+            - cell "Audit Log Management Process Review":
+              - button "Audit Log Management Process Review"
+            - cell "Review"
+            - cell "Unassigned"
+            - cell "Not scheduled":
+              - time: Not scheduled
+            - cell "Needs scheduling"
+          - row "Data Recovery Governance Review Review Unassigned Not scheduled Needs scheduling":
+            - cell "Data Recovery Governance Review":
+              - button "Data Recovery Governance Review"
+            - cell "Review"
+            - cell "Unassigned"
+            - cell "Not scheduled":
+              - time: Not scheduled
+            - cell "Needs scheduling"
+          - row "Security Awareness Program Review Review Unassigned Not scheduled Needs scheduling":
+            - cell "Security Awareness Program Review":
+              - button "Security Awareness Program Review"
+            - cell "Review"
+            - cell "Unassigned"
+            - cell "Not scheduled":
+              - time: Not scheduled
+            - cell "Needs scheduling"
+- region "Notifications alt+T"

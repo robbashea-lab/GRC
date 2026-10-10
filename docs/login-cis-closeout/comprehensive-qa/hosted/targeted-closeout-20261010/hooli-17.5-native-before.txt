@@ -1,0 +1,297 @@
+- banner:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - searchbox
+  - generic: Ctrl K
+  - button:
+    - text: Hooli
+    - generic: Open authorized client directory
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: H
+  - generic: Client
+  - generic: Hooli
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG3
+    - link:
+      - /url: /risks
+      - generic: Risks
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG3
+  - heading [level=1]: CIS IG3
+  - button: Continue with 17.5
+  - region:
+    - generic: 0.0%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 18 controls · 153 IG3 safeguards
+    - term: Implemented
+    - definition:
+      - text: "0"
+      - generic: of 153
+    - term: Assessed
+    - definition:
+      - text: "0"
+      - generic: of 153
+    - button:
+      - text: Implemented
+      - strong: "0"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "153"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG3
+        - text: ›
+        - button: Control 17
+        - listitem: ›Safeguard 17.5
+    - textbox:
+      - /placeholder: Search by number or title…
+    - text: Safeguard scope
+    - combobox
+    - generic: Display filter; full program totals unchanged
+    - paragraph: Incident Response Management
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+          - columnheader: Verification
+          - columnheader: Owner
+          - columnheader: Last assessed
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "17.1"
+            - text: Designate Personnel to Manage Incident Handling
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "17.2"
+            - text: Establish and Maintain Contact Information for Reporting Security Incidents
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "17.3"
+            - text: Establish and Maintain an Enterprise Process for Reporting Incidents
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "17.4"
+            - text: Establish and Maintain an Incident Response Process
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "17.5"
+            - text: Assign Key Roles and Responsibilities
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "17.6"
+            - text: Define Mechanisms for Communicating During Incident Response
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "17.7"
+            - text: Conduct Routine Incident Response Exercises
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "17.8"
+            - text: Conduct Post-Incident Reviews
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "17.9"
+            - text: Establish and Maintain Security Incident Thresholds
+            - generic: Added in IG3
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+- region "Notifications alt+T"
+- dialog "Assign Key Roles and Responsibilities":
+  - banner:
+    - navigation "CIS IG3 location":
+      - list:
+        - button "CIS IG3"
+        - text: ›
+        - button "Control 17"
+        - listitem: ›Safeguard 17.5
+    - heading "Assign Key Roles and Responsibilities" [active] [level=2]
+    - paragraph:
+      - generic: Safeguard assessment workspace
+    - generic "Saved implementation status":
+      - generic: Not Assessed
+    - generic "Saved verification": Not verified
+    - navigation "Assessment navigation":
+      - button "Previous"
+      - generic: 144 of 153
+      - button "Next"
+  - tablist "Assessment sections":
+    - tab "Requirement & implementation" [selected]
+    - tab "Findings"
+  - tabpanel "Requirement & implementation":
+    - generic "Requirement summary"
+    - heading "What CIS requires" [level=3]
+    - paragraph: Official requirement · CIS v8.1 · Safeguard 17.5
+    - paragraph: Assign key roles and responsibilities for incident response, including staff from legal, IT, information security, facilities, public relations, human resources, incident responders, and analysts. Review annually, or when significant enterprise changes occur that could impact this Safeguard.
+    - paragraph:
+      - strong: "Required operation / trigger:"
+      - text: Review annually, or when significant enterprise changes could affect this safeguard.
+    - link "Official CIS source":
+      - /url: https://cas.docs.cisecurity.org/en/latest/source/Controls17/#175-assign-key-roles-and-responsibilities
+    - region "Implementation status section":
+      - heading "Implementation status" [level=3]
+      - group "Implementation status":
+        - generic: Implementation status
+        - radio "Implemented"
+        - generic: Implemented
+        - radio "Partially Implemented"
+        - generic: Partially Implemented
+        - radio "Not Implemented"
+        - generic: Not Implemented
+        - radio "Not Assessed" [checked]
+        - generic: Not Assessed
+        - radio "Not Applicable"
+        - generic: Not Applicable
+    - region "Current implementation section":
+      - heading "Current implementation" [level=3]
+      - generic: Current implementation
+      - textbox "Current implementation"
+    - generic "Assessment guidance & working checklist"
+  - button "Open Omnibot guide":
+  - complementary "Omnibot invitation":
+    - paragraph: Let’s work through Safeguard 17.5 together. I’ll ask about your current practices and help you prepare an implementation summary for your review.
+    - button "Close invitation": ×
+  - generic: Omnibot is available
+  - contentinfo:
+    - status: Changes remain in your draft until saved.
+    - button "Save assessment"
+    - button "Save & next"
+  - button "Close":
+    - generic: Close

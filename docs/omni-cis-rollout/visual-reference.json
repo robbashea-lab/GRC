@@ -1,0 +1,39 @@
+{
+  "reference": "83d88e3cbc31d618060c4e094335963f5bacf096",
+  "files": [
+    {
+      "path": "frontend/src/components/RefinedOmni.css",
+      "sha256": "E7171FE3CAC74517FADA3003A3FF28544198D9F18172DE32B743E8D8E3246F59"
+    },
+    {
+      "path": "frontend/src/components/OmniWindow.jsx",
+      "sha256": "70E3084D74CDC9A9061AE4A2C9B6EC2FEBF2B54BAC76FC24D2502711DE25D92C"
+    },
+    {
+      "path": "frontend/src/components/OmniCharacter.jsx",
+      "sha256": "8D8CFCC3C330A1D22EA3465CE289FFA1A144E0514109C84BFD1C45FC8D181BC0"
+    },
+    {
+      "path": "frontend/src/assets/omni-approved-shell.png",
+      "sha256": "3DE77E7CC41DE3C9D7AE31C1F5C215DF93354ABEABD01D3A42F8ACBF96FE5BD6"
+    },
+    {
+      "path": "frontend/src/components/BrawndoCisWorkspace.css",
+      "sha256": "FC94C39EA737B2B7749EC66DC806AFAE234E616A18CE55D36FC63558C73522CB"
+    }
+  ],
+  "screenshots": [
+    "outputs/omni-cis-rollout/baseline-brawndo-program.png",
+    "outputs/omni-cis-rollout/baseline-brawndo-1.1.png",
+    "outputs/omni-cis-rollout/baseline-excluded-iso.png",
+    "outputs/omni-cis-rollout/baseline-excluded-iso-native.png",
+    "outputs/omni-cis-rollout/baseline-excluded-soc.png",
+    "outputs/omni-cis-rollout/baseline-excluded-soc-native.png"
+  ],
+  "capture": "Authenticated existing Render staging, read-only navigation; no native saves",
+  "excludedClient": "SYNTHETIC PR57 PLATFORM THEME QA 20261007",
+  "excludedNative": {
+    "iso": "4.1 Not Assessed, empty Current implementation",
+    "soc": "CC1.1 Not Assessed, empty Current implementation"
+  }
+}

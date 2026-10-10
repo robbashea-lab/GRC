@@ -1,0 +1,208 @@
+{
+  "capturedAt": "2026-10-10T18:37:11.713Z",
+  "repository": "robbashea-lab/GRC",
+  "pr": 65,
+  "head": "a10114df486fea16fa1393f94fc4e5aacd60dbd0",
+  "kind": "GitHub connector current CI metadata; documentation-only head, not a deployment",
+  "runtime": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+  "runs": {
+    "workflow_runs": [
+      {
+        "id": 38069960767,
+        "name": "Release verification",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 130,
+        "jobs_url": "https://api.github.com/repos/robbashea-lab/GRC/actions/runs/38069960767/jobs",
+        "logs_url": "https://api.github.com/repos/robbashea-lab/GRC/actions/runs/38069960767/logs",
+        "workflow_id": 375724489
+      }
+    ]
+  },
+  "jobs": {
+    "jobs": [
+      {
+        "id": 114265180255,
+        "name": "backend",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 38069960767,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install runtime and isolated-test dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Every classified offline suite",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Disposable Mongo persistence, recovery and authorization",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          },
+          {
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          }
+        ]
+      },
+      {
+        "id": 114265180391,
+        "name": "frontend",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 38069960767,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run corepack enable",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run yarn install --frozen-lockfile",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run yarn test --watchAll=false --runInBand",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Build authenticated Render application",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Build isolated private Demo preview",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      },
+      {
+        "id": 114269899967,
+        "name": "Release gate",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 38069960767,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Require completed successful verification jobs",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          }
+        ]
+      }
+    ]
+  },
+  "url": "https://github.com/robbashea-lab/GRC/actions/runs/38069960767",
+  "exactTestCountsExtracted": false
+}

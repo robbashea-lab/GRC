@@ -1,0 +1,223 @@
+FAIL src/lib/omniCisComprehensiveIndependent.test.js (6.334 s)
+  √ 1.1 independent reassessment, substantive decisions, context and summary (195 ms)
+  × 1.2 independent reassessment, substantive decisions, context and summary (45 ms)
+  √ 1.3 independent reassessment, substantive decisions, context and summary (46 ms)
+  √ 1.4 independent reassessment, substantive decisions, context and summary (39 ms)
+  √ 1.5 independent reassessment, substantive decisions, context and summary (35 ms)
+  √ 2.1 independent reassessment, substantive decisions, context and summary (76 ms)
+  √ 2.2 independent reassessment, substantive decisions, context and summary (34 ms)
+  √ 2.3 independent reassessment, substantive decisions, context and summary (21 ms)
+  √ 2.4 independent reassessment, substantive decisions, context and summary (33 ms)
+  √ 2.5 independent reassessment, substantive decisions, context and summary (35 ms)
+  √ 2.6 independent reassessment, substantive decisions, context and summary (37 ms)
+  √ 2.7 independent reassessment, substantive decisions, context and summary (36 ms)
+  √ 3.1 independent reassessment, substantive decisions, context and summary (38 ms)
+  √ 3.2 independent reassessment, substantive decisions, context and summary (20 ms)
+  √ 3.3 independent reassessment, substantive decisions, context and summary (29 ms)
+  √ 3.4 independent reassessment, substantive decisions, context and summary (29 ms)
+  √ 3.5 independent reassessment, substantive decisions, context and summary (18 ms)
+  √ 3.6 independent reassessment, substantive decisions, context and summary (15 ms)
+  √ 3.7 independent reassessment, substantive decisions, context and summary (27 ms)
+  √ 3.8 independent reassessment, substantive decisions, context and summary (33 ms)
+  √ 3.9 independent reassessment, substantive decisions, context and summary (27 ms)
+  √ 3.10 independent reassessment, substantive decisions, context and summary (21 ms)
+  √ 3.11 independent reassessment, substantive decisions, context and summary (45 ms)
+  √ 3.12 independent reassessment, substantive decisions, context and summary (37 ms)
+  √ 3.13 independent reassessment, substantive decisions, context and summary (48 ms)
+  √ 3.14 independent reassessment, substantive decisions, context and summary (33 ms)
+  √ 4.1 independent reassessment, substantive decisions, context and summary (40 ms)
+  √ 4.2 independent reassessment, substantive decisions, context and summary (17 ms)
+  √ 4.3 independent reassessment, substantive decisions, context and summary (26 ms)
+  √ 4.4 independent reassessment, substantive decisions, context and summary (22 ms)
+  √ 4.5 independent reassessment, substantive decisions, context and summary (18 ms)
+  √ 4.6 independent reassessment, substantive decisions, context and summary (22 ms)
+  √ 4.7 independent reassessment, substantive decisions, context and summary (19 ms)
+  √ 4.8 independent reassessment, substantive decisions, context and summary (29 ms)
+  √ 4.9 independent reassessment, substantive decisions, context and summary (28 ms)
+  √ 4.10 independent reassessment, substantive decisions, context and summary (50 ms)
+  √ 4.11 independent reassessment, substantive decisions, context and summary (37 ms)
+  √ 4.12 independent reassessment, substantive decisions, context and summary (24 ms)
+  √ 5.1 independent reassessment, substantive decisions, context and summary (46 ms)
+  √ 5.2 independent reassessment, substantive decisions, context and summary (12 ms)
+  √ 5.3 independent reassessment, substantive decisions, context and summary (18 ms)
+  √ 5.4 independent reassessment, substantive decisions, context and summary (19 ms)
+  √ 5.5 independent reassessment, substantive decisions, context and summary (45 ms)
+  √ 5.6 independent reassessment, substantive decisions, context and summary (31 ms)
+  √ 6.1 independent reassessment, substantive decisions, context and summary (21 ms)
+  √ 6.2 independent reassessment, substantive decisions, context and summary (18 ms)
+  √ 6.3 independent reassessment, substantive decisions, context and summary (20 ms)
+  √ 6.4 independent reassessment, substantive decisions, context and summary (13 ms)
+  √ 6.5 independent reassessment, substantive decisions, context and summary (27 ms)
+  √ 6.6 independent reassessment, substantive decisions, context and summary (42 ms)
+  √ 6.7 independent reassessment, substantive decisions, context and summary (33 ms)
+  √ 6.8 independent reassessment, substantive decisions, context and summary (38 ms)
+  √ 7.1 independent reassessment, substantive decisions, context and summary (18 ms)
+  √ 7.2 independent reassessment, substantive decisions, context and summary (18 ms)
+  √ 7.3 independent reassessment, substantive decisions, context and summary (19 ms)
+  √ 7.4 independent reassessment, substantive decisions, context and summary (19 ms)
+  √ 7.5 independent reassessment, substantive decisions, context and summary (41 ms)
+  √ 7.6 independent reassessment, substantive decisions, context and summary (34 ms)
+  √ 7.7 independent reassessment, substantive decisions, context and summary (36 ms)
+  √ 8.1 independent reassessment, substantive decisions, context and summary (29 ms)
+  √ 8.2 independent reassessment, substantive decisions, context and summary (14 ms)
+  √ 8.3 independent reassessment, substantive decisions, context and summary (11 ms)
+  √ 8.4 independent reassessment, substantive decisions, context and summary (33 ms)
+  √ 8.5 independent reassessment, substantive decisions, context and summary (61 ms)
+  √ 8.6 independent reassessment, substantive decisions, context and summary (23 ms)
+  √ 8.7 independent reassessment, substantive decisions, context and summary (22 ms)
+  √ 8.8 independent reassessment, substantive decisions, context and summary (21 ms)
+  √ 8.9 independent reassessment, substantive decisions, context and summary (38 ms)
+  √ 8.10 independent reassessment, substantive decisions, context and summary (22 ms)
+  √ 8.11 independent reassessment, substantive decisions, context and summary (33 ms)
+  √ 8.12 independent reassessment, substantive decisions, context and summary (22 ms)
+  √ 9.1 independent reassessment, substantive decisions, context and summary (24 ms)
+  √ 9.2 independent reassessment, substantive decisions, context and summary (18 ms)
+  √ 9.3 independent reassessment, substantive decisions, context and summary (29 ms)
+  √ 9.4 independent reassessment, substantive decisions, context and summary (27 ms)
+  √ 9.5 independent reassessment, substantive decisions, context and summary (39 ms)
+  √ 9.6 independent reassessment, substantive decisions, context and summary (21 ms)
+  √ 9.7 independent reassessment, substantive decisions, context and summary (32 ms)
+  √ 10.1 independent reassessment, substantive decisions, context and summary (18 ms)
+  √ 10.2 independent reassessment, substantive decisions, context and summary (13 ms)
+  √ 10.3 independent reassessment, substantive decisions, context and summary (17 ms)
+  √ 10.4 independent reassessment, substantive decisions, context and summary (28 ms)
+  √ 10.5 independent reassessment, substantive decisions, context and summary (32 ms)
+  √ 10.6 independent reassessment, substantive decisions, context and summary (34 ms)
+  √ 10.7 independent reassessment, substantive decisions, context and summary (43 ms)
+  √ 11.1 independent reassessment, substantive decisions, context and summary (56 ms)
+  √ 11.2 independent reassessment, substantive decisions, context and summary (34 ms)
+  √ 11.3 independent reassessment, substantive decisions, context and summary (13 ms)
+  √ 11.4 independent reassessment, substantive decisions, context and summary (13 ms)
+  √ 11.5 independent reassessment, substantive decisions, context and summary (47 ms)
+  √ 12.1 independent reassessment, substantive decisions, context and summary (23 ms)
+  √ 12.2 independent reassessment, substantive decisions, context and summary (49 ms)
+  √ 12.3 independent reassessment, substantive decisions, context and summary (29 ms)
+  √ 12.4 independent reassessment, substantive decisions, context and summary (46 ms)
+  √ 12.5 independent reassessment, substantive decisions, context and summary (53 ms)
+  √ 12.6 independent reassessment, substantive decisions, context and summary (38 ms)
+  √ 12.7 independent reassessment, substantive decisions, context and summary (50 ms)
+  √ 12.8 independent reassessment, substantive decisions, context and summary (43 ms)
+  √ 13.1 independent reassessment, substantive decisions, context and summary (49 ms)
+  √ 13.2 independent reassessment, substantive decisions, context and summary (32 ms)
+  √ 13.3 independent reassessment, substantive decisions, context and summary (28 ms)
+  √ 13.4 independent reassessment, substantive decisions, context and summary (32 ms)
+  √ 13.5 independent reassessment, substantive decisions, context and summary (63 ms)
+  √ 13.6 independent reassessment, substantive decisions, context and summary (38 ms)
+  √ 13.7 independent reassessment, substantive decisions, context and summary (45 ms)
+  √ 13.8 independent reassessment, substantive decisions, context and summary (27 ms)
+  √ 13.9 independent reassessment, substantive decisions, context and summary (40 ms)
+  √ 13.10 independent reassessment, substantive decisions, context and summary (25 ms)
+  √ 13.11 independent reassessment, substantive decisions, context and summary (34 ms)
+  √ 14.1 independent reassessment, substantive decisions, context and summary (29 ms)
+  √ 14.2 independent reassessment, substantive decisions, context and summary (19 ms)
+  √ 14.3 independent reassessment, substantive decisions, context and summary (17 ms)
+  √ 14.4 independent reassessment, substantive decisions, context and summary (51 ms)
+  √ 14.5 independent reassessment, substantive decisions, context and summary (15 ms)
+  √ 14.6 independent reassessment, substantive decisions, context and summary (22 ms)
+  √ 14.7 independent reassessment, substantive decisions, context and summary (22 ms)
+  √ 14.8 independent reassessment, substantive decisions, context and summary (37 ms)
+  √ 14.9 independent reassessment, substantive decisions, context and summary (47 ms)
+  √ 15.1 independent reassessment, substantive decisions, context and summary (31 ms)
+  √ 15.2 independent reassessment, substantive decisions, context and summary (80 ms)
+  √ 15.3 independent reassessment, substantive decisions, context and summary (68 ms)
+  √ 15.4 independent reassessment, substantive decisions, context and summary (55 ms)
+  √ 15.5 independent reassessment, substantive decisions, context and summary (39 ms)
+  √ 15.6 independent reassessment, substantive decisions, context and summary (23 ms)
+  √ 15.7 independent reassessment, substantive decisions, context and summary (20 ms)
+  √ 16.1 independent reassessment, substantive decisions, context and summary (69 ms)
+  √ 16.2 independent reassessment, substantive decisions, context and summary (113 ms)
+  √ 16.3 independent reassessment, substantive decisions, context and summary (34 ms)
+  √ 16.4 independent reassessment, substantive decisions, context and summary (61 ms)
+  √ 16.5 independent reassessment, substantive decisions, context and summary (42 ms)
+  √ 16.6 independent reassessment, substantive decisions, context and summary (42 ms)
+  √ 16.7 independent reassessment, substantive decisions, context and summary (32 ms)
+  √ 16.8 independent reassessment, substantive decisions, context and summary (36 ms)
+  √ 16.9 independent reassessment, substantive decisions, context and summary (43 ms)
+  √ 16.10 independent reassessment, substantive decisions, context and summary (48 ms)
+  √ 16.11 independent reassessment, substantive decisions, context and summary (46 ms)
+  √ 16.12 independent reassessment, substantive decisions, context and summary (33 ms)
+  √ 16.13 independent reassessment, substantive decisions, context and summary (28 ms)
+  √ 16.14 independent reassessment, substantive decisions, context and summary (43 ms)
+  √ 17.1 independent reassessment, substantive decisions, context and summary (45 ms)
+  √ 17.2 independent reassessment, substantive decisions, context and summary (20 ms)
+  √ 17.3 independent reassessment, substantive decisions, context and summary (40 ms)
+  √ 17.4 independent reassessment, substantive decisions, context and summary (50 ms)
+  √ 17.5 independent reassessment, substantive decisions, context and summary (119 ms)
+  √ 17.6 independent reassessment, substantive decisions, context and summary (44 ms)
+  √ 17.7 independent reassessment, substantive decisions, context and summary (53 ms)
+  √ 17.8 independent reassessment, substantive decisions, context and summary (40 ms)
+  √ 17.9 independent reassessment, substantive decisions, context and summary (39 ms)
+  √ 18.1 independent reassessment, substantive decisions, context and summary (65 ms)
+  √ 18.2 independent reassessment, substantive decisions, context and summary (50 ms)
+  √ 18.3 independent reassessment, substantive decisions, context and summary (40 ms)
+  √ 18.4 independent reassessment, substantive decisions, context and summary (30 ms)
+  √ 18.5 independent reassessment, substantive decisions, context and summary (40 ms)
+  √ 17.5 actual-function reproduction: source-relevant third parties cannot be excluded on b90 (1 ms)
+  × 8.10 actual-function pairing distinguishes optional context from declared requirement uncertainty (1 ms)
+
+  ● 1.2 independent reassessment, substantive decisions, context and summary
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 20
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "actual": "in_progress",
+    +     "error": "expect(received).toBe(expected) // Object.is equality
+    +
+    + Expected: \"needs_attention\"
+    + Received: \"in_progress\"",
+    +     "expected": "needs_attention",
+    +     "id": "independent:control1-monotonic:process:select:unsatisfied",
+    +   },
+    +   Object {
+    +     "actual": "in_progress",
+    +     "error": "expect(received).toBe(expected) // Object.is equality
+    +
+    + Expected: \"not_assessed\"
+    + Received: \"in_progress\"",
+    +     "expected": "not_assessed",
+    +     "id": "independent:control1-monotonic:process:select:unknown",
+    +   },
+    + ]
+
+      220 |   }
+      221 |   const failures=record.cases.filter(c=>!c.passed).map(c=>({id:c.id,expected:c.expected,actual:c.actual,error:c.error}));
+    > 222 |   expect(failures).toEqual([]);
+          |                    ^
+      223 | });
+      224 |
+      225 | test('17.5 actual-function reproduction: source-relevant third parties cannot be excluded on b90',()=>{
+
+      at src/lib/omniCisComprehensiveIndependent.test.js:222:20
+      at TestScheduler.scheduleTests (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● 8.10 actual-function pairing distinguishes optional context from declared requirement uncertainty
+
+    TypeError: Cannot read properties of undefined (reading 'answers')
+
+      250 |   const id='8.10',baseline=authored.find(c=>c.id==='IG1-8.10-complete'),version=versionForSafeguard(id);
+      251 |   const note='The optional log-owner name still needs confirmation.';
+    > 252 |   const contextual={...copy(baseline.answers),owner:note};
+          |                                      ^
+      253 |   const uncertainty={...copy(baseline.answers),unknowns:note};
+      254 |   const direct=generateResult(id,contextual,new Date(fixedDay+'T12:00:00'),version);
+      255 |   const scoped=generateResult(id,uncertainty,new Date(fixedDay+'T12:00:00'),version);
+
+      at Object.<anonymous> (src/lib/omniCisComprehensiveIndependent.test.js:252:38)
+      at TestScheduler.scheduleTests (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/@jest/core/build/cli/index.js:173:3)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 153 passed, 155 total
+Snapshots:   0 total
+Time:        6.83 s
+Ran all test suites within paths "src/lib/omniCisComprehensiveIndependent.test.js".

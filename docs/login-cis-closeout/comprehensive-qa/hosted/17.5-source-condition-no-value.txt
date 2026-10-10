@@ -1,0 +1,25 @@
+OVERVIEW
+
+OmniBot QA — Closeout CIS IG3 reports partial implementation of the practice to assign key roles and responsibilities.
+
+IMPLEMENTATION BREAKDOWN
+
+In place
+- Key incident-response roles and responsibilities are assigned. Reported as met.
+- Incident roles cover legal personnel. Reported as met.
+- Incident roles cover IT personnel. Reported as met.
+- Incident roles cover information-security personnel. Reported as met.
+- Incident roles cover facilities personnel. Reported as met.
+- Incident roles cover public-relations personnel. Reported as met.
+- Assignments are reviewed annually and when significant changes could affect the safeguard. Reported as met.
+- Incident roles cover HR personnel. Reported as met.
+- Incident roles cover incident responders. Reported as met.
+- Incident roles cover analysts. Reported as met.
+
+Incomplete or missing
+- Where relevant, third parties have assigned incident-response roles and responsibilities. Reported as absent.
+
+ITEMS TO ADDRESS
+
+Remediation
+- Address the reported deficiency: Where relevant, third parties have assigned incident-response roles and responsibilities.

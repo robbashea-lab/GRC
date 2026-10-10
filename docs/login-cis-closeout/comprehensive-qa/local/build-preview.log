@@ -1,0 +1,29 @@
+(node:23216) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  881.14 kB (+443 B)  build\static\js\main.c22c8023.js
+  103.64 kB           build\static\js\257.f1e78ec9.chunk.js
+  56.42 kB            build\static\css\main.30d7a029.css
+  500 B               build\static\js\217.163655b8.chunk.js
+
+The bundle size is significantly larger than recommended.
+Consider reducing it with code splitting: https://goo.gl/9VhYWB
+You can also analyze the project dependencies: https://goo.gl/LeUzfb
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The ..\build folder is ready to be deployed.
+You may serve it with a static server:
+
+  yarn global add serve
+  serve -s ..\build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+

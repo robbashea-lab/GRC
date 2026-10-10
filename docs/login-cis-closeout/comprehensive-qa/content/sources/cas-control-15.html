@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 15: Service Provider Management - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 15: Service Provider Management";
+        var mkdocs_page_input_path = "source/Controls15.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls15/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 15: Service Provider Management</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#151-establish-and-maintain-an-inventory-of-service-providers">15.1: Establish and Maintain an Inventory of Service Providers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-inventory">Completeness of Inventory</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#accuracy-of-inventory">Accuracy of Inventory</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#152-establish-and-maintain-a-service-provider-management-policy">15.2: Establish and Maintain a Service Provider Management Policy</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-policy">Completeness of Policy</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#153-classify-service-providers">15.3: Classify Service Providers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#154-ensure-service-provider-contracts-include-security-requirements">15.4: Ensure Service Provider Contracts Include Security Requirements</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#155-assess-service-providers">15.5: Assess Service Providers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance_1">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#156-monitor-service-providers">15.6: Monitor Service Providers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance_2">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#157-securely-decommission-service-providers">15.7: Securely Decommission Service Providers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance_3">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 15: Service Provider Management</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls15.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-15-service-provider-management">CIS Control 15: Service Provider Management</h1>
+<p>Develop a process to evaluate service providers who hold sensitive data,
+or are responsible for an enterprise's critical IT platforms or
+processes to ensure these providers are protecting those platforms and
+data appropriately.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>In our modern, connected world, enterprises rely on vendors and partners
+to help manage their data or rely on infrastructure for core
+applications or functions.</p>
+<p>There have been numerous examples where third-party breaches have
+significantly impacted an enterprise; for example, as early as the late
+2000s, payment cards were compromised after attackers infiltrated
+smaller service providers in the retail industry. More recent examples
+include ransomware attacks that impact an enterprise indirectly due to
+one of its service providers being locked down, causing disruption to
+business. Or worse, if directly connected, a ransomware attack could
+encrypt data on the main enterprise.</p>
+<p>Most data security and privacy regulations require their protection
+extend to service providers, such as Health Insurance
+Portability and Accountability Act (HIPAA) Business Associate agreements
+in healthcare, Federal Financial Institutions Examination Council
+(FFIEC) requirements for the financial industry and the United Kingdom
+(U.K.) Cyber Essentials. Third-party trust is a core Governance Risk and
+Compliance (GRC) function, as risks that are not managed within the
+enterprise is transferred to entities outside the enterprise.</p>
+<p>While reviewing the security of third parties has been a task performed
+for decades, there is no universal standard for assessing security;
+and many service providers are being audited by their customers
+multiple times a month, causing impacts on their own productivity. This
+is because every enterprise has a different "checklist" or set of
+standards to grade the service provider. There are only a few industry
+standards, such as in finance, with the Shared Assessments program, or
+in higher education, with their Higher Education Community Vendor
+Assessment Toolkit (HECVAT). Insurance companies selling cybersecurity
+policies also have their own measurements.</p>
+<p>While an enterprise might put a lot of scrutiny into large cloud or
+application hosting companies because they are hosting their email or
+critical business applications, smaller firms are often a greater risk.
+Oftentimes, a service provider contracts with additional
+parties to provide other plugins or services, such as when a third-party
+uses a fourth-party platform or product to support the main enterprise.</p>
+<hr />
+<h2 id="151-establish-and-maintain-an-inventory-of-service-providers">15.1: Establish and Maintain an Inventory of Service Providers</h2>
+<p>Establish and maintain an inventory of service providers. The inventory
+is to list all known service providers, including classification(s), and
+designate an enterprise contact for each service provider. Review and
+update the inventory annually, or when significant enterprise changes
+occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Identify</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV44</code>: Service Provider Inventory List</li>
+<li><code>GV46</code>: Date of Last Review or Update of the  Service Provider Inventory</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise maintains a service provider inventory list by checking for <code>GV44</code>,</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 2 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Review Input 1 and determine if it includes, at a minimum, the following components: service provider, classification of provider, and an enterprise contact for the provider</p>
+<ol>
+<li>For each component included, assign a value of 1. Sum all values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>For each service provider identified in <code>GV44</code>, determine whether they are accurately listed</p>
+<ol>
+<li>Identify and enumerate providers that are accurately listed (M4)</li>
+<li>Identify and enumerate providers that are erroneously listed (M5)</li>
+<li>Identify and enumerate providers that should be listed but are missing (M6)</li>
+</ol>
+</li>
+<li>
+<p>Compare the date from <code>GV46</code> with the current date and capture the time frame in months (M7)</p>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included in the inventory</li>
+<li>M3 = Count of service providers in the inventory</li>
+<li>M4 = Count of accurately listed providers</li>
+<li>M5 = Count of erroneously listed providers</li>
+<li>M6 = Count of missing providers from the list</li>
+<li>M7 = Timeframe since the last update or review of the inventory</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M7 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-inventory">Completeness of Inventory</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the inventory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 3</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="accuracy-of-inventory">Accuracy of Inventory</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of accurately listed service providers in the inventory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / (M3 - M5 + M6)</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="152-establish-and-maintain-a-service-provider-management-policy">15.2: Establish and Maintain a Service Provider Management Policy</h2>
+<p>Establish and maintain a service provider management policy. Ensure the
+policy addresses the classification, inventory, assessment, monitoring,
+and decommissioning of service providers. Review and update the policy
+annually, or when significant enterprise changes occur that could impact
+this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV45</code>: Service Provider Management Policy</li>
+<li>Date of last review or update of the policy</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise maintains a service provider management policy by checking for <code>GV45</code>,</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 2 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Review <code>GV45</code> and determine if it includes, at a minimum, the following components: service provider inventory, classification, assessment, monitoring, and decommissioning of service providers</p>
+<ol>
+<li>For each component included, assign a value of 1. Sum all values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare the date from Input 2 with the current date and capture the time frame in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included in the policy</li>
+<li>M3 = Timeframe since the last update or review of the policy</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M1 is a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-policy">Completeness of Policy</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 5</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="153-classify-service-providers">15.3: Classify Service Providers</h2>
+<p>Classify service providers. Classification considerations may include one
+or more characteristics, such as data sensitivity, data volume,
+availability requirements, applicable regulations, inherent risk, and
+mitigated risk. Update and review classifications annually, or when
+significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Govern</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 15.1: Establish and Maintain an Inventory of Service
+    Providers</li>
+<li>Safeguard 15.2: Establish and Maintain a Service Provider Management
+    Policy</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV44</code>: Service Provider Inventory List</li>
+<li><code>GV45</code>: Service Provider Management Policy</li>
+<li><code>GV46</code>: Date of Last Review or Update of the Service Provider Inventory</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV45</code> to determine if the enterprise policy includes the classification process of service providers by one or more characteristics</p>
+<ol>
+<li>If the process exists, M1 = 1</li>
+<li>If the process does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Compare the date of <code>GV46</code> to the current date and capture timeframe in months (M2)</p>
+</li>
+<li>
+<p>Review <code>GV44</code> and determine whether service providers are classified using one or more characteristics per the enterprise's policy</p>
+<ol>
+<li>Identify and enumerate service providers with an assigned classification (M4)</li>
+<li>Identify and enumerate service providers without a classification (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Timeframe since the last update or review of the service provider
+    inventory</li>
+<li>M3 = Count of service providers in inventory</li>
+<li>M4 = Count of service providers with classification</li>
+<li>M5 = Count of service providers without classification</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<ul>
+<li>If M1 is a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M2 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h3 id="coverage">Coverage</h3>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of service providers with a classification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="154-ensure-service-provider-contracts-include-security-requirements">15.4: Ensure Service Provider Contracts Include Security Requirements</h2>
+<p>Ensure service provider contracts include security requirements. Example requirements
+may include minimum security program requirements, security incident
+and/or data breach notification and response, data encryption
+requirements, and data disposal commitments. These security requirements
+must be consistent with the enterprise's service provider management
+policy. Review service provider contracts annually to ensure contracts
+are not missing security requirements.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 15.1: Establish and Maintain an Inventory of Service
+    Providers</li>
+<li>Safeguard 15.2: Establish and Maintain a Service Provider Management
+    Policy</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV44</code>: Service Provider Inventory List</li>
+<li><code>GV45</code>: Service Provider Management Policy</li>
+<li>Date of last update or review of contracts</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV45</code> to determine if the enterprise policy includes security program requirements for service providers</p>
+<ol>
+<li>If the security requirements exist, M1 = 1</li>
+<li>If the security requirements do not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV44</code> to determine if each listed service provider has a contract</p>
+<ol>
+<li>Identify and enumerate service providers with contracts (M3)</li>
+<li>Identify and enumerate service providers without contracts (M4)</li>
+</ol>
+</li>
+<li>
+<p>For each service provider with a contract identified in Operation 2.1, compare the date from input 3 to the current date and capture the timeframe in months</p>
+<ol>
+<li>Identify and enumerate service providers whose contract has been reviewed within twelve months or less (M5)</li>
+<li>Identify and enumerate service providers whose contract has been reviewed outside the twelve-month window (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of service providers in inventory</li>
+<li>M3 = Count of service providers with contracts</li>
+<li>M4 = Count of service providers without contracts</li>
+<li>M5 = Count of service providers with up-to-date contracts</li>
+<li>M6 = Count of service providers without outdated contracts</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<ul>
+<li>If M1 is a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="compliance">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of service providers with up-to-date contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M5 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="155-assess-service-providers">15.5: Assess Service Providers</h2>
+<p>Assess service providers consistent with the enterprise's service
+provider management policy. Assessment scope may vary based on
+classification(s), and may include review of standardized assessment
+reports, such as Service Organization Control 2 (SOC 2) and Payment Card
+Industry (PCI) Attestation of Compliance (AoC), customized
+questionnaires or other appropriately rigorous processes. Reassess
+service providers annually, at a minimum, or with new and renewed
+contracts.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Govern</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 15.1: Establish and Maintain an Inventory of Service
+    Providers</li>
+<li>Safeguard 15.2: Establish and Maintain a Service Provider Management
+    Policy</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV44</code>: Service Provider Inventory List</li>
+<li><code>GV45</code>: Service Provider Management Policy</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV45</code> to determine if the enterprise policy includes monitoring guidance for service providers</p>
+<ol>
+<li>If the assessment scope exists, M1 = 1</li>
+<li>If the assessment scope does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV44</code> to determine if each listed service provider has monitoring guidance included in the policy</p>
+<ol>
+<li>Identify and enumerate service providers with monitoring guidance (M3)</li>
+<li>Identify and enumerate service providers without monitoring guidance (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of service providers in inventory</li>
+<li>M3 = Count of service providers with monitoring guidance</li>
+<li>M4 = Count of service providers without monitoring guidance</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<ul>
+<li>If M1 is a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="compliance_1">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of service providers with monitoring guidance included in policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="156-monitor-service-providers">15.6: Monitor Service Providers</h2>
+<p>Monitor service providers consistent with the enterprise's service
+provider management policy. Monitoring may include periodic reassessment
+of service provider compliance, monitoring service provider release
+notes, and dark web monitoring.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Govern</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 15.1: Establish and Maintain an Inventory of Service
+    Providers</li>
+<li>Safeguard 15.2: Establish and Maintain a Service Provider Management
+    Policy</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV44</code>: Service Provider Inventory List</li>
+<li><code>GV45</code>: Service Provider Management Policy</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV45</code> to determine if the enterprise policy includes monitoring guidance for service providers</p>
+<ol>
+<li>If the monitoring guidance exists, M1 = 1</li>
+<li>If the monitoring guidance does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV44</code> to determine if each listed service provider has monitoring guidance provided in the policy</p>
+<ol>
+<li>Identify and enumerate service providers with monitoring guidance provided (M3)</li>
+<li>Identify and enumerate service providers without monitoring guidance provided (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of service providers in inventory</li>
+<li>M3 = Count of service providers with monitoring guidance provided</li>
+<li>M4 = Count of service providers without monitoring guidance provided</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<ul>
+<li>If M1 is a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="compliance_2">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of service providers with up-to-date assessments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="157-securely-decommission-service-providers">15.7: Securely Decommission Service Providers</h2>
+<p>Securely decommissioned service providers. Example considerations include
+user and service account deactivation, termination of data flows, and
+secure disposal of enterprise data within service provider systems.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 15.1: Establish and Maintain an Inventory of Service
+    Providers</li>
+<li>Safeguard 15.2: Establish and Maintain a Service Provider Management
+    Policy</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li><code>GV44</code>: Service Provider Inventory List</li>
+<li><code>GV45</code>: Service Provider Management Policy</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV45</code> to determine if the enterprise policy includes guidance for securely decommissioning service providers</p>
+<ol>
+<li>If the monitoring guidance exists, M1 = 1</li>
+<li>If the monitoring guidance does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV44</code> to identify and enumerate any service providers terminated over the last twelve months (M2)</p>
+</li>
+<li>
+<p>For each service provider identified in Operation 2, determine if the provider was decommissioned per the policy</p>
+<ol>
+<li>Identify and enumerate service providers properly terminated (M3)</li>
+<li>Identify and enumerate service providers improperly terminated (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of service providers terminated over the last twelve
+    months</li>
+<li>M3 = Count of service providers properly terminated</li>
+<li>M4 = Count of service providers improperly terminated</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<ul>
+<li>If M1 is a 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="compliance_3">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of service providers properly terminated</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls14/" class="btn btn-neutral float-left" title="CIS Control 14: Security Awareness and Skills Training"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls16/" class="btn btn-neutral float-right" title="CIS Control 16: Application Software Security">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

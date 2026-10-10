@@ -66,6 +66,7 @@ html[data-brawndo-workspace] .omni-free-dock{position:fixed!important;right:auto
 html[data-brawndo-workspace] .omni-free-dock .omni-launch-button{width:168px;height:154px;border-radius:16px}
 html[data-brawndo-workspace] .omni-free-dock .omni-launch-button.is-minimized{width:86px;height:80px}
 html[data-brawndo-workspace] .omni-free-dock :is(.guided-greeting,.guided-context-prompt){position:absolute;bottom:100%;right:0;width:245px;margin-bottom:8px;background:var(--color-bg-surface);border-color:#4c9df1;color:var(--color-text-primary)}
+html[data-brawndo-workspace] .omni-free-dock[data-focused-omni] :is(.guided-context-prompt,.omni-position-controls>div){position:fixed;right:auto;bottom:auto;margin:0;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow-y:auto}
 html[data-brawndo-workspace] .omni-free-dock .omni-position-controls summary{min-height:32px;padding:2px 14px;color:var(--color-link);font-weight:700}
 html[data-brawndo-workspace] .omni-approved-eyes{transform-origin:170px 122px;animation:omni-blink 7s ease-in-out infinite}
 html[data-brawndo-workspace] .omni-workspace-window{position:fixed;z-index:70;transform:none;display:flex;flex-direction:column;gap:0;padding:0;max-width:none;max-height:none;overflow:visible;border:1px solid #6cc8ff;border-radius:17px;background:#f2f7ff;color:#132a49;box-shadow:0 22px 65px #071b4055}
