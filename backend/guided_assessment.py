@@ -13,6 +13,7 @@ for safeguard in ('1.1', '1.2'):
 PROGRAM = json.loads((ROOT / 'guidedCisProgram.json').read_text(encoding='utf-8'))
 PROGRAM_V1 = json.loads((ROOT / 'guidedCisProgramV1.json').read_text(encoding='utf-8'))
 PROGRAM_V2 = json.loads((ROOT / 'guidedCisProgramV2.json').read_text(encoding='utf-8'))
+PROGRAM_V4 = json.loads((ROOT / 'guidedCisProgramV4.json').read_text(encoding='utf-8'))
 CONTROL1_V3 = json.loads((ROOT / 'guidedControl1V3.json').read_text(encoding='utf-8'))
 CONTROL1_V4 = json.loads((ROOT / 'guidedControl1V4.json').read_text(encoding='utf-8'))
 
@@ -39,10 +40,15 @@ PROGRAM2_CATALOG = {**PROGRAM2_BASE,
     'definitions': {**PROGRAM2_BASE['definitions'], **{id: {**d, 'question_set_version': CONTROL1_V3['version']} for id, d in CONTROL1_V3['definitions'].items()}},
     'safeguards': {**PROGRAM2_BASE['safeguards'], **CONTROL1_V3['safeguards']}}
 CURRENT_PROGRAM = program_catalog(PROGRAM)
-CATALOG = {**CURRENT_PROGRAM,
+PROGRAM3_CATALOG = {**CURRENT_PROGRAM,
     'definitions': {**CURRENT_PROGRAM['definitions'], **{id: {**d, 'question_set_version': CONTROL1_V3['version']} for id, d in CONTROL1_V3['definitions'].items()}, **{id: {**d, 'question_set_version': CONTROL1_V4['version']} for id, d in CONTROL1_V4['definitions'].items()}},
     'safeguards': {**CURRENT_PROGRAM['safeguards'], **CONTROL1_V3['safeguards'], **CONTROL1_V4['safeguards']}}
-VERSIONS = {LEGACY['version']: LEGACY, CONTROL1['version']: CONTROL1, PROGRAM_V1['version']: PROGRAM1_CATALOG, PROGRAM_V2['version']: PROGRAM2_CATALOG, CONTROL1_V3['version']: CONTROL1_V3, CONTROL1_V4['version']: CONTROL1_V4, PROGRAM['version']: CATALOG}
+PROGRAM4_CATALOG = program_catalog(PROGRAM_V4)
+# Preserve other current versions and immutable program3 interview semantics.
+CATALOG = {**PROGRAM3_CATALOG,
+    'definitions': {**PROGRAM3_CATALOG['definitions'], **{id: PROGRAM4_CATALOG['definitions'][id] for id in PROGRAM_V4['definitions']}},
+    'safeguards': {**PROGRAM3_CATALOG['safeguards'], **{id: PROGRAM4_CATALOG['safeguards'][id] for id in PROGRAM_V4['definitions']}}}
+VERSIONS = {LEGACY['version']: LEGACY, CONTROL1['version']: CONTROL1, PROGRAM_V1['version']: PROGRAM1_CATALOG, PROGRAM_V2['version']: PROGRAM2_CATALOG, CONTROL1_V3['version']: CONTROL1_V3, CONTROL1_V4['version']: CONTROL1_V4, PROGRAM['version']: PROGRAM3_CATALOG, PROGRAM_V4['version']: PROGRAM4_CATALOG}
 
 def current_version(id, upgraded=True):
     catalog = CATALOG if upgraded else PROGRAM1_CATALOG

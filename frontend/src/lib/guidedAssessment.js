@@ -4,13 +4,14 @@ import additions from '@catalogs/guidedControl1Additional.json';
 import program from '@catalogs/guidedCisProgram.json';
 import programV1 from '@catalogs/guidedCisProgramV1.json';
 import programV2 from '@catalogs/guidedCisProgramV2.json';
+import programV4 from '@catalogs/guidedCisProgramV4.json';
 import control1V3 from '@catalogs/guidedControl1V3.json';
 import control1V4 from '@catalogs/guidedControl1V4.json';
 const contextOnly=new Set(['system','owner','sources','reconciled','inventory_dependency','disposition','confirmation','exceptions']);
 const inherited=Object.fromEntries(Object.entries(legacy.safeguards).map(([id,questions])=>[id,[...questions.map(q=>({...q,critical:q.critical&&!contextOnly.has(q.id),question_set_version:pack.version,...(q.id==='gaps'?{prompt:'Describe any confirmed missing or incomplete requirement elements.',help:'Record known deficiencies here. Put uncertainty in Items requiring verification.'}:{}),unknown_template:`Confirm: ${q.prompt}`,next_step_template:q.help})),{id:'unknowns',prompt:'Which requirement elements still need confirmation, and who can verify them?',help:'Uncertainty is not a confirmed gap.',type:'text',choices:[],critical:false,element:'unknowns',status_impact:'Reported uncertainty prevents an unqualified recommendation',safeguard_id:id,question_set_version:pack.version,question_id:id+':unknowns',narrative_template:'',gap_template:'',unknown_template:'Reviewer-reported uncertainty',next_step_template:'Confirm the reported uncertainty with the responsible team',evidence_guidance:'Use relevant records and responsible-owner confirmation.'}]]));
 export const control1Catalog={...pack,safeguards:{...inherited,...additions.safeguards}};
 function programQuestions(id,definition,version){
-  const current=version===program.version;
+  const current=[program.version,programV4.version].includes(version);
   const evidence=definition.evidence.join(' '),when={practice:['Yes','Partially']};
   const question=(key,prompt,type,critical,extra={})=>({id:key,prompt,type,critical,choices:type==='text'?[]:['Yes','Partially','No','Not sure'],help:definition.guidance,element:key,safeguard_id:id,question_id:id+':'+key,question_set_version:version,status_impact:critical?'Reported implementation only; unresolved gaps or unknowns prevent an unqualified recommendation':'Context only; not a mandatory artifact',evidence_guidance:evidence,...extra});
   const questions=[question('practice',`Is the practice “${definition.title}” in place and operating?`,'select',true),question('existing','What relevant practice or information exists, and who can confirm it?','text',false,{when:{practice:['No','Not sure']}})];
@@ -22,7 +23,7 @@ function programQuestions(id,definition,version){
       questions.push(question(key,'How fully are these safeguard requirements met?','matrix',true,{...(!current?{when}:{}),rows:chunk.map(e=>e.text),criterion_ids:chunk.map(e=>e.id),choices:['Yes','Partially','No','Not sure',...(conditional?['Not applicable']:[])],help:conditional?'Use Not applicable only when the stated source condition does not apply; explain why. Uncertainty is Not sure, not an exclusion.':'Confirm each statement against current operation. Yes means it is fully addressed, not merely planned.'}));
     }
   }
-  questions.push(question('scope_reason','Explain any source-conditioned exclusions.','text',false,{...(!current?{when}:{}),condition:'not_applicable'}),question('system','Which systems or processes support this practice?','text',false,{when,help:'Optional context; name actual systems or processes, not proposed products.'}),question('owner','Who operates this practice?','text',false,{when,help:'Optional context; record the responsible business, IT, security or provider team.'}),question('operation','How is this safeguard implemented in day-to-day work?','text',false,{when,help:'Record the actual process and relevant timing. This is optional narrative context, not verification.'}),question('evidence','What records could substantiate the reported implementation?','text',false,{help:evidence}),question('gaps','Describe confirmed missing or incomplete requirement elements.','text',false,{help:'Confirmed gaps only. Record uncertainty separately.'}),question('unknowns','What still needs confirmation, and who can verify it?','text',false,{help:'Unknowns are not confirmed gaps.'}));
+  questions.push(question('scope_reason','Explain any source-conditioned exclusions.','text',false,{...(!current?{when}:{}),condition:'not_applicable'}),question('system','Which systems or processes support this practice?','text',false,{when,help:'Optional context; name actual systems or processes, not proposed products.'}),question('owner','Who operates this practice?','text',false,{when,help:'Optional context; record the responsible business, IT, security or provider team.'}),question('operation','How is this safeguard implemented in day-to-day work?','text',false,{when,help:'Record the actual process and relevant timing. This is optional narrative context, not verification.'}),question('evidence','What records could substantiate the reported implementation?','text',false,{help:evidence}),question('gaps','Describe confirmed missing or incomplete requirement elements.','text',false,{help:'Confirmed gaps only. Record uncertainty separately.'}),question('unknowns',current?'Which substantive safeguard requirements still need confirmation, and who can verify them?':'What still needs confirmation, and who can verify it?','text',false,current?{help:'Record uncertainty about the required safeguard practices, not a confirmed deficiency. Optional tool, owner or record details belong in the context fields and do not qualify the proposed status.',status_impact:'Unresolved substantive requirements qualify the proposed status; optional context does not.'}:{help:'Unknowns are not confirmed gaps.'}));
   return questions;
 }
 function programCatalog(source){
@@ -32,11 +33,14 @@ const program1Catalog=programCatalog(programV1);
 const program2Base=programCatalog(programV2);
 const program2Catalog={...program2Base,definitions:{...program2Base.definitions,...Object.fromEntries(Object.entries(control1V3.definitions).map(([id,d])=>[id,{...d,question_set_version:control1V3.version}]))},safeguards:{...program2Base.safeguards,...control1V3.safeguards}};
 const currentProgram=programCatalog(program);
-export const guidedCatalog={...currentProgram,definitions:{...currentProgram.definitions,...Object.fromEntries(Object.entries(control1V3.definitions).map(([id,d])=>[id,{...d,question_set_version:control1V3.version}])),...Object.fromEntries(Object.entries(control1V4.definitions).map(([id,d])=>[id,{...d,question_set_version:control1V4.version}]))},safeguards:{...currentProgram.safeguards,...control1V3.safeguards,...control1V4.safeguards}};
+const program3Catalog={...currentProgram,definitions:{...currentProgram.definitions,...Object.fromEntries(Object.entries(control1V3.definitions).map(([id,d])=>[id,{...d,question_set_version:control1V3.version}])),...Object.fromEntries(Object.entries(control1V4.definitions).map(([id,d])=>[id,{...d,question_set_version:control1V4.version}]))},safeguards:{...currentProgram.safeguards,...control1V3.safeguards,...control1V4.safeguards}};
+const program4Catalog=programCatalog(programV4);
+// Only corrected safeguards change versions; program3 interviews remain readable.
+export const guidedCatalog={...program3Catalog,definitions:{...program3Catalog.definitions,...Object.fromEntries(Object.keys(programV4.definitions).map(id=>[id,program4Catalog.definitions[id]]))},safeguards:{...program3Catalog.safeguards,...Object.fromEntries(Object.keys(programV4.definitions).map(id=>[id,program4Catalog.safeguards[id]]))}};
 export const catalogForPilot=(upgraded=true)=>upgraded?guidedCatalog:program1Catalog;
 export const legacyVersionForSafeguard=id=>program1Catalog.definitions[id]?.question_set_version;
 export const versionForSafeguard=(id,upgraded=true)=>catalogForPilot(upgraded).definitions[id]?.question_set_version;
-export const catalogForVersion=version=>version===legacy.version?legacy:version===pack.version?control1Catalog:version===programV1.version?program1Catalog:version===programV2.version?program2Catalog:version===control1V3.version?control1V3:version===control1V4.version?control1V4:version===program.version?guidedCatalog:null;
+export const catalogForVersion=version=>version===legacy.version?legacy:version===pack.version?control1Catalog:version===programV1.version?program1Catalog:version===programV2.version?program2Catalog:version===control1V3.version?control1V3:version===control1V4.version?control1V4:version===program.version?program3Catalog:version===programV4.version?program4Catalog:null;
 export const pilotEnabled=(client,framework,configuration,id)=>!!client&&framework===pack.framework_id&&[1,2,3].includes(configuration?.implementation_group??1)&&configuration?.guided_assessment_enabled!==false&&(!id||!!guidedCatalog.definitions[id]?.groups.includes(configuration?.implementation_group??1));
 export function visibleQuestions(id,answers,version=versionForSafeguard(id)){
   return (catalogForVersion(version)?.safeguards[id]||[]).filter(q=>!q.when||Object.entries(q.when).every(([key,values])=>values.includes(answers[key]))).filter(q=>q.condition!=='not_applicable'||(catalogForVersion(version)?.safeguards[id]||[]).some(matrix=>matrix.type==='matrix'&&Object.values(answers[matrix.id]||{}).includes('Not applicable')));
@@ -59,8 +63,13 @@ export function validateAnswers(id,answers,version=versionForSafeguard(id)){
 export function compatibleInterviewAnswers(id,answers,fromVersion,toVersion){
   const oldQuestions=visibleQuestions(id,answers,fromVersion),newQuestions=catalogForVersion(toVersion)?.safeguards[id]||[],mapped={};
   const stable12=new Set(['process','existing','inventory_dependency','detection','system','owner','frequency','actions','disposition','confirmation','exceptions','reconciled','unresolved','evidence',...(fromVersion==='cis-v8.1-control1-2'?['gaps','unknowns']:[])]);
+  const programVersions=new Set([programV1.version,programV2.version,program.version,programV4.version]);
+  const uncertaintyPrompts=new Set(['What still needs confirmation, and who can verify it?','Which substantive safeguard requirements still need confirmation, and who can verify them?']);
   for(const next of newQuestions){
     const old=oldQuestions.find(q=>q.id===next.id&&q.type===next.type);
+    // This wording clarification preserves the existing required-practice meaning.
+    // It must never drop or reclassify a saved uncertainty during explicit reuse.
+    const stableProgramUncertainty=next.id==='unknowns'&&next.type==='text'&&old?.critical===false&&next.critical===false&&programVersions.has(fromVersion)&&programVersions.has(toVersion)&&uncertaintyPrompts.has(old.prompt)&&uncertaintyPrompts.has(next.prompt);
     if(next.type==='matrix'){
       const rows={};
       next.rows.forEach((text,index)=>{
@@ -70,7 +79,7 @@ export function compatibleInterviewAnswers(id,answers,fromVersion,toVersion){
         if(value&&(next.row_choices?.[text]||next.choices).includes(value))rows[text]=value;
       });
       if(Object.keys(rows).length)mapped[next.id]=rows;
-    }else if(old&&(fromVersion===toVersion||id==='1.2'&&toVersion===control1V4.version&&stable12.has(next.id)||old.prompt===next.prompt&&(old.critical===next.critical||contextOnly.has(next.id)&&next.critical===false))&&answers[old.id]!==undefined){
+    }else if(old&&(fromVersion===toVersion||stableProgramUncertainty||id==='1.2'&&toVersion===control1V4.version&&stable12.has(next.id)||old.prompt===next.prompt&&(old.critical===next.critical||contextOnly.has(next.id)&&next.critical===false))&&answers[old.id]!==undefined){
       const value=answers[old.id];
       if(['text','date'].includes(next.type)||next.type==='multi'&&value.every(item=>next.choices.includes(item))&&!(toVersion===control1V4.version&&value.length>1&&value.some(item=>['None','Not sure'].includes(item)))||next.choices.includes(value))mapped[next.id]=value;
       if(mapped[next.id]!==undefined&&answers[old.id+'_detail']!==undefined)mapped[next.id+'_detail']=answers[old.id+'_detail'];
@@ -126,7 +135,7 @@ function generateLegacyResult(id,answers,today=new Date(),version=guidedCatalog.
 
 // One canonical requirement definition is inherited by applicable implementation groups.
 export function generateResult(id,answers,today=new Date(),version=versionForSafeguard(id)){
-  if(version===program.version||version===control1V4.version)return generateCurrentCisResult(id,answers,version);
+  if([program.version,programV4.version,control1V4.version].includes(version))return generateCurrentCisResult(id,answers,version);
   if(version===legacy.version)return generateLegacyResult(id,answers,today,version);
   validateAnswers(id,answers,version);
   const definition=catalogForVersion(version)?.definitions[id],questions=visibleQuestions(id,answers,version);

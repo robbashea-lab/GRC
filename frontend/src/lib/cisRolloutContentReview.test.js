@@ -10,7 +10,10 @@ import {omniCisSummary} from './omniCisSummary';
 // the evaluator under test. Hosted writes and browser coverage are separate.
 const copy = value => JSON.parse(JSON.stringify(value));
 function encodeSourceCase(row) {
-  const version = versionForSafeguard(row.safeguard_id), catalog = catalogForVersion(version);
+  // These immutable authored 17.5 cases include the old mandatory third-party
+  // rejection. Preserve them as program3 compatibility evidence; current
+  // source-conditioned outcomes are tested in cis175SourceCondition.test.js.
+  const version = row.safeguard_id === '17.5' ? 'cis-v8.1-program-3' : versionForSafeguard(row.safeguard_id), catalog = catalogForVersion(version);
   const questions = catalog.safeguards[row.safeguard_id], definition = catalog.definitions[row.safeguard_id];
   const review = [...ig2Review.rows, ...ig3Review.rows].find(item => item.id === row.safeguard_id);
   const answers = {};

@@ -142,6 +142,66 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(HTTPException):
                         validate_answers(definition,excluded,current_version(definition,upgraded=True))
 
+    async def test_175_source_condition_changes_only_its_current_schema(self):
+        self.assertEqual(current_version('17.5'), 'cis-v8.1-program-4')
+        for definition in PROGRAM['definitions']:
+            if definition != '17.5':
+                self.assertEqual(current_version(definition), PROGRAM['version'])
+        old = VERSIONS[PROGRAM['version']]['safeguards']['17.5']
+        corrected = VERSIONS[current_version('17.5')]['safeguards']['17.5']
+        old_row = 'Incident-response responsibilities include relevant third parties.'
+        new_row = 'Where relevant, third parties have assigned incident-response roles and responsibilities.'
+        self.assertNotIn('Not applicable', next(q for q in old if old_row in q.get('rows', []))['choices'])
+        matrix = next(q for q in corrected if new_row in q.get('rows', []))
+        validate_answers('17.5', {matrix['id']: {new_row: 'Not applicable'}, 'scope_reason': 'Synthetic internally assigned response'}, current_version('17.5'))
+        with self.assertRaises(HTTPException):
+            validate_answers('17.5', {matrix['id']: {old_row: 'Yes'}}, current_version('17.5'))
+
+    async def test_175_explicit_upgrade_preserves_old_interview_and_native_record_until_apply(self):
+        aid = 'synthetic-17.5'
+        await server.db.clients.update_one({'client_id': 'demo_brawndo'}, {'$set': {'framework_settings.cis-ig1.implementation_group': 2}})
+        native = {**self.row, '_id': aid, 'framework_assessment_id': aid, 'client_id': 'demo_brawndo', 'definition_id': '17.5',
+                  'implementation': 'SYNTHETIC QA: exact existing native wording.\n\n- Retain history.', 'status': 'in_progress'}
+        await server.db.framework_assessments.insert_one(native)
+        path = '/api/framework_assessments/' + aid + '/guided-assessment'
+        old_questions = VERSIONS[PROGRAM['version']]['safeguards']['17.5']
+        old_answers = {'practice': 'Yes', 'unknowns': 'Original required-practice uncertainty',
+                       **{q['id']: {row: 'Yes' for row in q['rows']} for q in old_questions if q['type'] == 'matrix'}}
+        old = {'version': PROGRAM['version'], 'answers': old_answers, 'step': 4, 'completed': True, 'revision': 7,
+               'narrative': 'SYNTHETIC QA: completed historical reviewed wording.\n- Retain this.', 'client_id': 'demo_brawndo'}
+        await server.db.guided_assessment_pilot.insert_one({'_id': aid + ':admin', **old})
+        read = (await self.client.get(path)).json()
+        self.assertEqual({key: read[key] for key in old}, old)
+        upgrade = {**self.pilot_body, 'version': current_version('17.5'), 'answers': {}, 'step': 0, 'completed': False,
+                   'narrative': '', 'expected_revision': 7, 'restart': True,
+                   'base_assessment_token': read['current_assessment_token'], 'base_scope_fingerprint': read['current_scope_fingerprint']}
+        restarted = await self.client.put(path, json=upgrade)
+        self.assertEqual(restarted.status_code, 200, restarted.text)
+        self.assertEqual(restarted.json()['answers'], {})
+        self.assertEqual(await server.db.framework_assessments.find_one({'framework_assessment_id': aid}), native)
+        history = (await self.client.get(path + '/history')).json()['items']
+        self.assertEqual(len(history), 1)
+        self.assertEqual(history[0]['answers'], old_answers)
+        self.assertEqual(history[0]['narrative'], old['narrative'])
+        self.assertEqual(history[0]['version'], PROGRAM['version'])
+        current = restarted.json()
+        answers = {'practice': 'Yes', 'scope_reason': 'SYNTHETIC QA: no relevant third-party role',
+                   **{q['id']: {row: 'Not applicable' if 'Not applicable' in q['choices'] else 'Yes' for row in q['rows']}
+                      for q in VERSIONS[current_version('17.5')]['safeguards']['17.5'] if q['type'] == 'matrix'}}
+        text = 'OVERVIEW\nSYNTHETIC QA ONLY.\n\nIMPLEMENTATION BREAKDOWN\n- Internal response assigned.\n\nITEMS TO ADDRESS\n- Reviewed manual line.'
+        completed = await self.client.put(path, json={**upgrade, 'restart': False, 'expected_revision': current['revision'],
+                                                     'answers': answers, 'completed': True, 'narrative': text})
+        self.assertEqual(completed.status_code, 200, completed.text)
+        self.assertEqual(await server.db.framework_assessments.find_one({'framework_assessment_id': aid}), native)
+        source = {key: completed.json()[key] for key in ('version', 'revision', 'generated_at')}
+        applied = await self.client.patch('/api/framework_assessments/' + aid,
+                                         json={'implementation': text, 'status': 'addressed', 'guided_assessment_source': source})
+        self.assertEqual(applied.status_code, 200, applied.text)
+        self.assertEqual(applied.json()['implementation'], text)
+        self.assertEqual(applied.json()['status'], 'addressed')
+        self.assertNotEqual(applied.json().get('verification'), 'verified')
+        self.assertEqual(applied.json()['assessment_history'][-1]['guided_assessment_source']['version'], current_version('17.5'))
+
 
 class PilotHistoryTests(unittest.IsolatedAsyncioTestCase):
     sign_in=harness.FrameworkTests.sign_in
