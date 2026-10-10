@@ -1,142 +1,209 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { FileCheck2, Landmark, Radar } from 'lucide-react';
-import OmniCharacter from '@/components/OmniCharacter';
-import { loginGreeting, loginLessons, loginMenu, loginTopics } from './loginEducation';
+import { Building2, FileCheck2, TriangleAlert, X, Hexagon, Bot } from 'lucide-react';
+import LoginEnvironment, { LoginHologram } from './LoginEnvironment';
+import { characterPlacement, clamp, educationPlacement } from './loginPlacement';
+import { loginGreeting, loginMenu, loginTopics, loginWelcomeMessage } from './loginEducation';
+import { useLoginMotion } from './useLoginMotion';
 
-// Public education only. The supplied children own the existing authentication flows.
+const cards = [
+  ['governance', 'Governance', 'Direction & accountability', Building2],
+  ['risk', 'Risk', 'Visibility & response', TriangleAlert],
+  ['compliance', 'Compliance', 'Evidence & assurance', FileCheck2],
+];
+const initialPlacement = { x: 130, y: 500, width: 180, height: 270, visible: true, mobile: false, unit: 1, bounds: {} };
+const asset = name => `${process.env.PUBLIC_URL || ''}/login/${name}`;
+
 export default function LoginWelcome({ theme, setTheme, children }) {
-  const root = useRef(null), hero = useRef(null), bot = useRef(null), guide = useRef(null);
-  const timers = useRef([]), drag = useRef(null), suppressClick = useRef(false);
-  const guideFocus = useRef(false);
-  const [open, setOpen] = useState(false);
-  const [selection, setSelection] = useState(null);
-  const [greeting, setGreeting] = useState(loginGreeting);
-  const [reduced, setReduced] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
-  const [paused, setPaused] = useState(false);
-  const motionOff = reduced || paused;
-  const clearTimers = useCallback(() => { timers.current.forEach(clearTimeout); timers.current = []; }, []);
-  const dock = useCallback(() => {
-    if (!bot.current || !hero.current) return;
-    // Leave room for the character label and the replay/motion controls below it.
-    Object.assign(bot.current.style, { left:'27px', top:`${hero.current.offsetTop + hero.current.offsetHeight - 225}px`, bottom:'auto', width:'125px', transform:'none' });
-  }, []);
-  const dismiss = useCallback(() => { clearTimers(); setOpen(false); dock(); }, [clearTimers, dock]);
-  const welcome = useCallback(() => { setSelection(null); setGreeting(loginGreeting()); }, []);
-  const replay = useCallback(() => {
-    clearTimers(); welcome(); setOpen(false);
-    if (motionOff) { dock(); setOpen(true); return; }
-    Object.assign(bot.current.style, { transition:'none', left:'-150px', top:'-160px', bottom:'auto', width:'160px', transform:'rotate(-22deg)' });
-    timers.current.push(setTimeout(() => {
-      if (!bot.current) return;
-      Object.assign(bot.current.style, { transition:'', left:`${Math.max(24, hero.current.clientWidth / 2 - 80)}px`, top:`${hero.current.offsetTop + 230}px`, transform:'none' });
-    }, 70));
-    timers.current.push(setTimeout(() => setOpen(true), 1000));
-    timers.current.push(setTimeout(dock, 2700));
-  }, [clearTimers, dock, motionOff, welcome]);
+  const rootRef = useRef(null), guideRef = useRef(null), triggerRef = useRef(null), dragRef = useRef(null);
+  const [reduced, setReduced] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || false);
+  const [userPaused, setUserPaused] = useState(false);
+  const paused = reduced || userPaused;
+  const [placement, setPlacement] = useState(initialPlacement);
+  const [custom, setCustom] = useState(null);
+  const [mode, setMode] = useState('robot');
+  const [ready, setReady] = useState({ robot: false, orb: false });
+  const [artError, setArtError] = useState(false);
+  const [scanning, setScanning] = useState(false), [replay, setReplay] = useState(0);
+  const scanStarted = useRef(false);
+  const [greeting, setGreeting] = useState(false), [topic, setTopic] = useState(null);
+  const [dragging, setDragging] = useState(false);
+  const visiblePlacement = custom ? { ...placement, ...custom } : placement;
+  const finishScan = useCallback(() => { setScanning(false); setGreeting(true); }, []);
+  useLoginMotion(rootRef, { paused, scanning, replay, dragging, placement: visiblePlacement, onScanComplete: finishScan });
 
-  const initialReplay = useRef(replay);
-  useEffect(() => { initialReplay.current(); return clearTimers; }, [clearTimers]);
-  useEffect(() => {
-    if (motionOff) {
-      clearTimers(); dock();
-      bot.current.style.setProperty('--eye-x', '0px');
-      bot.current.style.setProperty('--eye-y', '0px');
-    }
-  }, [motionOff, clearTimers, dock]);
+  const measure = useCallback(() => {
+    const root = rootRef.current;
+    const rect = selector => root.querySelector(selector).getBoundingClientRect();
+    setPlacement(characterPlacement({
+      zone: rect('#login-landing-zone'), copy: rect('.hero-copy'), footer: rect('.hero-footer'),
+      login: rect('.login'), cards: rect('#login-grc-cards'), header: rect('.top'),
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+    }));
+  }, []);
+  useLayoutEffect(() => {
+    measure();
+    const resize = () => { setCustom(null); measure(); };
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+    observer?.observe(rootRef.current.querySelector('.hero'));
+    observer?.observe(rootRef.current.querySelector('.login'));
+    window.addEventListener('resize', resize);
+    window.addEventListener('scroll', resize, { passive: true });
+    return () => { observer?.disconnect(); window.removeEventListener('resize', resize); window.removeEventListener('scroll', resize); };
+  }, [measure]);
   useEffect(() => {
     const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(media.matches);
-    media?.addEventListener('change', update);
-    return () => media?.removeEventListener('change', update);
+    if (!media) return;
+    const change = () => setReduced(media.matches);
+    media.addEventListener('change', change);
+    return () => media.removeEventListener('change', change);
   }, []);
+  useEffect(() => {
+    if (!ready.robot || !ready.orb) return;
+    if (!scanStarted.current) {
+      scanStarted.current = true;
+      setScanning(!paused); setGreeting(paused);
+    } else if (paused) {
+      setScanning(false); setGreeting(true);
+    }
+    // Resuming ambient motion must not restart a completed scan. Replay is explicit.
+  }, [ready.robot, ready.orb, paused]);
   useLayoutEffect(() => {
-    const fit = () => {
-      const minimum = window.innerWidth <= 760 ? 700 : 774;
-      hero.current.style.minHeight = `${open ? Math.max(minimum, guide.current.offsetTop + guide.current.offsetHeight - hero.current.offsetTop + 250) : minimum}px`;
-      if (!drag.current) dock();
-    };
-    fit();
-    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(fit) : null;
-    observer?.observe(guide.current);
-    window.addEventListener('resize', fit);
-    return () => { observer?.disconnect(); window.removeEventListener('resize', fit); };
-  }, [open, selection, dock]);
+    if (!topic) return;
+    const guide = guideRef.current;
+    // Use the destination geometry, not an intermediate morph-frame bounding box.
+    const size = Math.min(visiblePlacement.height * .55, placement.mobile ? 132 : 170 * placement.unit);
+    const width = mode === 'orb' ? size : visiblePlacement.width;
+    const top = mode === 'orb' ? visiblePlacement.y - size * .68 - size * 572 / 600 / 2 : visiblePlacement.y - visiblePlacement.height;
+    const character = { left: visiblePlacement.x - width / 2, right: visiblePlacement.x + width / 2, top };
+    const position = educationPlacement(character, guide.scrollHeight, { width: window.innerWidth, height: window.innerHeight });
+    Object.assign(guide.style, Object.fromEntries(Object.entries(position).map(([key, value]) => [key, `${value}px`])));
+  }, [topic, mode, visiblePlacement.height, visiblePlacement.width, visiblePlacement.x, visiblePlacement.y, placement.mobile, placement.unit]);
+  useLayoutEffect(() => {
+    if (topic) { guideRef.current.scrollTop = 0; guideRef.current.querySelector('h3').focus({ preventScroll: true }); }
+  }, [topic]);
 
+  function closeGuide(restoreFocus = true) {
+    setTopic(null);
+    if (restoreFocus) {
+      const trigger = triggerRef.current;
+      const available = trigger?.isConnected && !trigger.disabled && !trigger.closest('[hidden],[aria-hidden="true"]');
+      const target = available ? trigger : rootRef.current.querySelector(mode === 'orb' ? '#login-orbHit' : '#login-robotHit');
+      target?.focus();
+    }
+  }
+  function openTopic(key) {
+    if (!topic) triggerRef.current = document.activeElement;
+    if (!visiblePlacement.visible || visiblePlacement.y - visiblePlacement.height < 160) {
+      setCustom(null);
+      rootRef.current.querySelector('#login-landing-zone').scrollIntoView({ block: 'center' });
+      measure();
+    }
+    setScanning(false); setGreeting(false); setTopic(key);
+  }
+  function replayScan() {
+    setCustom(null); setMode('robot'); setTopic(null); setReplay(value => value + 1);
+    setScanning(!paused); setGreeting(paused);
+    rootRef.current.querySelector('#login-landing-zone').scrollIntoView({ block: 'center' });
+  }
+  function toggleMode() {
+    setScanning(false); setGreeting(false); setMode(value => value === 'robot' ? 'orb' : 'robot');
+  }
   useLayoutEffect(() => {
-    if (open && guideFocus.current) {
-      guideFocus.current = false;
-      guide.current.querySelector('.topic')?.focus();
-    }
-  }, [open, selection]);
-  function choose(key, focusQuestions = false) {
-    clearTimers();
-    if (focusQuestions) {
-      if (open && selection === key) guide.current.querySelector('.topic')?.focus();
-      else guideFocus.current = true;
-    }
-    setSelection(key); setOpen(true); dock();
+    const active = document.activeElement;
+    if (active?.id === 'login-robotHit' && mode === 'orb') rootRef.current.querySelector('#login-orbHit').focus({ preventScroll: true });
+    if (active?.id === 'login-orbHit' && mode === 'robot') rootRef.current.querySelector('#login-robotHit').focus({ preventScroll: true });
+  }, [mode]);
+  function signInShortcut() {
+    closeGuide(false);
+    const form = rootRef.current.querySelector('.login');
+    const control = form.querySelector('#email:not(:disabled)') || form.querySelector('[data-testid="explore-demo"]') || form.querySelector('h2');
+    control?.focus();
   }
-  function move(event) {
-    if (drag.current && event.pointerId === drag.current.id) {
-      const start = drag.current, dx = event.clientX - start.x, dy = event.clientY - start.y;
-      if (Math.abs(dx) + Math.abs(dy) > 5) { start.moved = true; setOpen(false); }
-      bot.current.style.left = `${Math.max(0, Math.min(root.current.clientWidth - bot.current.offsetWidth, start.left + dx))}px`;
-      bot.current.style.top = `${Math.max(78, Math.min(root.current.clientHeight - bot.current.offsetHeight - 22, start.top + dy))}px`;
-    }
-    if (!motionOff && event.pointerType !== 'touch') {
-      const box = bot.current.getBoundingClientRect();
-      bot.current.style.setProperty('--eye-x', `${Math.max(-5, Math.min(5, (event.clientX - box.left - box.width / 2) / 45))}px`);
-      bot.current.style.setProperty('--eye-y', `${Math.max(-4, Math.min(4, (event.clientY - box.top - box.height / 2) / 60))}px`);
-    }
+  function pointerDown(event) {
+    if (event.button !== 0 || dragRef.current) return;
+    dragRef.current = { id: event.pointerId, startX: event.clientX, startY: event.clientY, x: visiblePlacement.x, y: visiblePlacement.y, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
   }
-  function drop(event) {
-    if (!drag.current || event.pointerId !== drag.current.id) return;
-    suppressClick.current = event.type === 'pointerup' && drag.current.moved;
-    drag.current = null;
-    bot.current.classList.remove('dragging');
-    if (bot.current.hasPointerCapture?.(event.pointerId)) bot.current.releasePointerCapture(event.pointerId);
-    const access = root.current.querySelector('.access').getBoundingClientRect(), box = bot.current.getBoundingClientRect();
-    if (box.right > access.left && box.left < access.right && box.bottom > access.top && box.top < access.bottom) dock();
+  function pointerMove(event) {
+    const drag = dragRef.current;
+    if (!drag || drag.id !== event.pointerId) return;
+    const dx = event.clientX - drag.startX, dy = event.clientY - drag.startY;
+    if (Math.hypot(dx, dy) <= 6 && !drag.moved) return;
+    drag.moved = true; setDragging(true); setScanning(false); setGreeting(false);
+    setCustom({ x: clamp(drag.x + dx, placement.bounds.minX, placement.bounds.maxX), y: clamp(drag.y + dy, placement.bounds.minY, placement.bounds.maxY) });
   }
-  const [topic, question = '0'] = selection?.split(':') ?? [];
-  const lesson = loginLessons[topic];
-  const current = lesson ? lesson.questions[Number(question)] : loginTopics[topic];
-  const heading = lesson ? current[1] : current?.[0] ?? greeting;
-  const answer = lesson ? current[2] : current?.[1] ?? 'Welcome to Omnisciente. I’m here to help make security and compliance easier to understand. Explore a quick introduction below, or head straight to your workspace.';
-  const items = lesson ? lesson.questions.map((item, index) => [`${topic}:${index}`, item[0]]) : loginMenu;
-  return <div id="omni-login" ref={root} className={`login-shell ${theme === 'dark' ? 'dark' : ''} ${motionOff ? 'motion-off' : ''}`} data-theme={theme}
-    onPointerMove={move} onFocusCapture={event => { if (event.target.closest('.access')) dismiss(); }}
-    onKeyDown={event => { if (event.key === 'Escape' && open) { event.preventDefault(); dismiss(); bot.current.focus(); } }}>
-    <header className="top"><div className="brand"><span className="ring" aria-hidden="true"/><div><strong>Omnisciente</strong><small>SEE FURTHER. BE STRONGER.</small></div></div>
-      <div className="theme" role="group" aria-label="Appearance">{['light','dark'].map(value => <button key={value} type="button" aria-pressed={theme === value} onClick={() => setTheme(value)}>{value === 'light' ? 'Light' : 'Dark'}</button>)}</div>
+  function pointerEnd(event) {
+    const drag = dragRef.current;
+    if (!drag || drag.id !== event.pointerId) return;
+    event.currentTarget.dataset.dragged = String(drag.moved);
+    dragRef.current = null; setDragging(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+  function characterClick(event) {
+    if (event.currentTarget.dataset.dragged === 'true') { event.currentTarget.dataset.dragged = 'false'; return; }
+    openTopic('welcome');
+  }
+  function characterKey(event) {
+    if (!event.key.startsWith('Arrow')) return;
+    event.preventDefault(); setScanning(false); setGreeting(false);
+    const step = event.shiftKey ? 25 : 8;
+    setCustom({
+      x: clamp(visiblePlacement.x + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0), placement.bounds.minX, placement.bounds.maxX),
+      y: clamp(visiblePlacement.y + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0), placement.bounds.minY, placement.bounds.maxY),
+    });
+  }
+  function pageKey(event) {
+    if (event.key === 'Escape') { if (topic) closeGuide(); else setGreeting(false); return; }
+    if (event.ctrlKey || event.altKey || event.metaKey || event.repeat || event.target.closest('input,textarea,select')) return;
+    if (event.key.toLowerCase() === 'r') { event.preventDefault(); replayScan(); }
+    if (event.key.toLowerCase() === 't') { event.preventDefault(); toggleMode(); }
+  }
+  const characterEvents = { onPointerDown: pointerDown, onPointerMove: pointerMove, onPointerUp: pointerEnd, onPointerCancel: pointerEnd, onLostPointerCapture: pointerEnd, onClick: characterClick, onKeyDown: characterKey };
+  const activeLesson = loginTopics[topic] || [loginGreeting(), loginWelcomeMessage];
+  const orbSize = Math.min(visiblePlacement.height * .55, placement.mobile ? 132 : 170 * placement.unit);
+  const characterStyle = { left: visiblePlacement.x, top: visiblePlacement.y, width: visiblePlacement.width, height: visiblePlacement.height };
+
+  return <div ref={rootRef} id="omni-login" className={`login-shell${theme === 'dark' ? ' dark' : ''}${paused ? ' motion-paused' : ''}${dragging ? ' dragging' : ''}`} data-login-scan={scanning ? 'scanning' : 'idle'} onKeyDown={pageKey}>
+    <LoginEnvironment/>
+    <header className="top">
+      <div className="brand"><span className="ring" aria-hidden="true"/><div><strong className="wordmark">Omni<span>sciente</span></strong><small>SEE FURTHER. BE STRONGER.</small></div></div>
+      <div className="theme" role="group" aria-label="Appearance">{['light', 'dark'].map(value => <button key={value} type="button" aria-pressed={theme === value} onClick={() => setTheme(value)}>{value === 'light' ? 'Light' : 'Dark'}</button>)}</div>
     </header>
-    <div className="layout"><section ref={hero} className="hero" aria-label="Explore governance, risk and compliance">
-      <div className="eyebrow">GOVERNANCE, RISK &amp; COMPLIANCE</div><h1>Clarity across your security program.</h1><p className="intro">A shared workspace for governance, risk, and compliance.</p>
-      <div className="network"><div className="orbital" aria-hidden="true"/><div className="orbital two" aria-hidden="true"/>{['one','two','three'].map(value => <div key={value} className={`beam ${value}`} aria-hidden="true"/>)}
-        {[['governance','Governance','Direction & accountability',Landmark],['risk','Risk','Visibility & response',Radar],['compliance','Compliance','Evidence & assurance',FileCheck2]].map(([key,label,detail,Icon]) => <button type="button" className={`node ${key}`} key={key} aria-controls="login-omni-guide" aria-expanded={open && topic === key} onClick={() => choose(key, true)}><Icon aria-hidden="true"/><span><strong>{label}</strong><small>{detail}</small></span></button>)}
-        <div className="shield-aura" aria-hidden="true"/><div className="shield" role="img" aria-label="Illuminated titanium security shield and locked padlock"><span className="shield-depth"/><span className="shield-metal"/><span className="shield-rim"/><span className="shield-glass"/><span className="lock-sculpture"><span className="lock-shackle"/><span className="lock-body"><span className="keyhole"/></span></span></div><div className="shield-base" aria-hidden="true"/>
+    <div className="stage">
+      <LoginHologram/>
+      <section className="hero" id="login-hero" aria-label="Explore governance, risk and compliance">
+        <div className="hero-copy"><div className="eyebrow">GOVERNANCE, RISK &amp; COMPLIANCE</div><h1>Clarity across your security program.</h1><span className="accent-bar" aria-hidden="true"/><p className="intro">A shared workspace for governance, risk, and compliance.</p></div>
+        <div className="landing-zone" id="login-landing-zone" aria-hidden="true"/>
+        <div className="hero-footer"><button type="button" className="text-button" onClick={replayScan} disabled={!ready.robot || !ready.orb}>↻ Replay scan</button><button type="button" className="text-button" aria-pressed={paused} disabled={reduced} onClick={() => setUserPaused(value => !value)}>{reduced ? 'Reduced motion enabled' : paused ? 'Resume motion' : 'Pause motion'}</button></div>
+      </section>
+      <div className="cards" id="login-grc-cards" role="group" aria-label="Learn the basics of governance, risk and compliance">
+        {cards.map(([key, label, caption, Icon]) => <button key={key} className={`grc-card ${key}`} type="button" aria-controls="login-education" aria-expanded={topic === key} onClick={() => openTopic(key)}><Icon className="ico card-icon" aria-hidden="true"/><strong>{label}</strong><small>{caption}</small><svg className="card-chart" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true">{key === 'risk' ? <path d="M0 24 10 21 18 24 26 16 34 19 42 11 50 17 58 6 66 14 74 9 82 18 90 12 98 20 106 15 120 21" fill="none" stroke="currentColor" strokeWidth="1.4"/> : Array.from({ length: 13 }, (_, i) => <rect key={i} x={2+i*9} y={key === 'compliance' ? 22-i*1.6 : 4+Math.abs(i-5)*3} width="5" height={key === 'compliance' ? 6+i*1.6 : 24-Math.abs(i-5)*3} fill="currentColor" opacity=".75"/>)}</svg><span className="card-cta">Explore</span></button>)}
       </div>
-      <div className="hero-footer"><button className="text-button" type="button" onClick={replay}>↻ Replay welcome</button><button className="text-button" type="button" aria-pressed={motionOff} disabled={reduced} onClick={() => setPaused(value => !value)}>{reduced ? 'Reduced motion enabled' : paused ? 'Resume motion' : 'Pause motion'}</button></div>
-    </section><section className="access" aria-label="Sign in">{children}</section></div>
-    <button className="bot" ref={bot} type="button" aria-label="Meet Omni. Drag to move, or activate to open the guide." aria-controls="login-omni-guide" aria-expanded={open}
-      onPointerDown={event => {
-        if (event.button !== 0 || drag.current) return;
-        clearTimers();
-        drag.current = { id:event.pointerId, x:event.clientX, y:event.clientY, left:bot.current.offsetLeft, top:bot.current.offsetTop, moved:false };
-        bot.current.classList.add('dragging'); bot.current.setPointerCapture(event.pointerId);
-      }} onPointerUp={drop} onPointerCancel={drop} onLostPointerCapture={drop}
-      onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } clearTimers(); dock(); if (open) dismiss(); else { welcome(); setOpen(true); } }}>
-      <span className="robot"><OmniCharacter approved trackPointer={false}/></span><span className="bot-label">Meet Omni · drag to move</span>
-    </button>
-    <section id="login-omni-guide" className={`guide ${open ? 'open' : ''}`} hidden={!open} ref={guide} aria-label="Omni welcome guide">
-      <div className="guide-head"><strong>{lesson ? `OMNI EXPLAINS · ${lesson.name.toUpperCase()}` : 'OMNI · YOUR PROGRAM GUIDE'}</strong><button className="close" type="button" aria-label="Close Omni guide" onClick={() => { dismiss(); bot.current.focus(); }}>×</button></div>
-      <div className="guide-content" aria-live="polite"><h3>{heading}</h3><p className="answer">{answer}</p>{lesson && <p className="lesson-example">For example: {current[3]}</p>}</div>
-      <div className="topics">{items.map(([key,label]) => <button className="topic" type="button" key={key} aria-pressed={selection === key || (lesson && key === `${topic}:${question}`)} onClick={() => choose(key)}>{label}</button>)}</div>
-      <div className="guide-bottom"><button type="button" onClick={() => { welcome(); choose(null, true); }}>← Omni menu</button>{!lesson && current?.[2] && <a className="source" target="_blank" rel="noopener noreferrer" href={current[2]}>Official overview ↗</a>}<button type="button" onClick={() => {
-        dismiss();
-        const target = root.current.querySelector('#email:not(:disabled)') ?? root.current.querySelector('[data-testid="explore-demo"]:not(:disabled)');
-        target?.focus();
-      }}>Ready to sign in →</button></div>
+      <section className="access" aria-label="Workspace access" onFocusCapture={() => { setGreeting(false); if (topic) closeGuide(false); }}>{children}</section>
+    </div>
+    <canvas id="login-fx" aria-hidden="true"/>
+    <div id="login-character-layer" hidden={!visiblePlacement.visible}>
+      <div id="login-ground" aria-hidden="true" style={{ left: visiblePlacement.x, top: visiblePlacement.y, width: visiblePlacement.width * 1.16, height: visiblePlacement.width * .2 }}><div className="pool"/><div className="contact"/></div>
+      <div id="login-floor" aria-hidden="true" style={{ left: visiblePlacement.x, top: visiblePlacement.y, width: visiblePlacement.width * 1.02, height: visiblePlacement.width * .17 }}/>
+      <div id="login-actor" data-form={mode} aria-hidden={mode !== 'robot'} data-optic={scanning ? 'armed' : 'rest'} style={characterStyle}>
+        <img id="login-standing-art" src={asset('omni-standing.png')} alt="" draggable="false" onLoad={() => setReady(value => ({ ...value, robot: true }))} onError={() => setArtError(true)}/>
+        <button id="login-robotHit" type="button" aria-label="OmniBot. Open quick introductions; drag or use arrow keys to move." aria-controls="login-education" aria-expanded={!!topic} tabIndex={mode === 'robot' ? 0 : -1} disabled={mode !== 'robot'} {...characterEvents}/>
+      </div>
+      <div id="login-orbActor" data-form={mode} aria-hidden={mode !== 'orb'} style={{ left: visiblePlacement.x, top: visiblePlacement.y - orbSize * .68, width: orbSize, height: orbSize * 572 / 600 }}>
+        <div className="orb-halo" aria-hidden="true"/><img id="login-nova-art" src={asset('omni-orb.png')} alt="" draggable="false" onLoad={() => setReady(value => ({ ...value, orb: true }))} onError={() => setArtError(true)}/>
+        <button id="login-orbHit" type="button" aria-label="Omni Orb. Open quick introductions; drag or use arrow keys to move." aria-controls="login-education" aria-expanded={!!topic} tabIndex={mode === 'orb' ? 0 : -1} disabled={mode !== 'orb'} {...characterEvents}/>
+      </div>
+      <canvas id="login-fx-front" aria-hidden="true"/>
+      <button type="button" className="on-character" data-form={mode} aria-label={mode === 'robot' ? 'Switch to Omni Orb' : 'Switch to OmniBot robot'} aria-pressed={mode === 'orb'} disabled={!ready.robot || !ready.orb} onClick={toggleMode} style={{ left: clamp(visiblePlacement.x - 54, 8, window.innerWidth - 116), top: visiblePlacement.y + 7 }}><span>{mode === 'robot' ? 'Orb mode' : 'Robot mode'}</span><span className="transform-icon">{mode === 'robot' ? <Hexagon aria-hidden="true"/> : <Bot aria-hidden="true"/>}</span></button>
+      <aside id="login-speech" hidden={!greeting || !!topic} aria-label="Omni greeting" className="above" style={{ left: clamp(visiblePlacement.x - 90, 12, window.innerWidth - 280), top: Math.max(12, visiblePlacement.y - visiblePlacement.height - 100) }}><button id="login-speech-close" type="button" aria-label="Dismiss greeting" onClick={() => setGreeting(false)}><X aria-hidden="true"/></button><small>OMNI</small><p>{loginGreeting()}</p></aside>
+    </div>
+    <div id="login-scan-status" hidden={!scanning || !visiblePlacement.visible} role="status" style={{ left: Math.max(12, Math.min(window.innerWidth - 220, placement.x + placement.width)), top: 90 }}><span className="scan-light" aria-hidden="true"/><div><strong>OPTIC ARRAY</strong><span>Visual effect only</span></div><span id="login-scan-number" aria-hidden="true">00%</span></div>
+    <section ref={guideRef} id="login-education" className="guide" hidden={!topic} role="dialog" aria-modal="false" aria-labelledby="login-edu-title" aria-describedby="login-edu-answer">
+      <div className="guide-head"><strong>OMNI · YOUR PROGRAM GUIDE</strong><button type="button" className="guide-close" aria-label="Close education" onClick={() => closeGuide()}><X aria-hidden="true"/></button></div>
+      <h3 id="login-edu-title" tabIndex="-1">{activeLesson[0]}</h3><p className="answer" id="login-edu-answer">{activeLesson[1]}</p>
+      <div className="topics" hidden={['governance', 'risk', 'compliance'].includes(topic)} aria-label="Quick introductions">{loginMenu.map(([key, label]) => <button className="topic" key={key} type="button" aria-pressed={topic === key} onClick={() => openTopic(key)}>{label}</button>)}</div>
+      <div className="guide-bottom"><button type="button" hidden={topic === 'welcome'} onClick={() => openTopic('welcome')}>← Omni menu</button><button type="button" onClick={signInShortcut}>Ready to sign in →</button></div>
     </section>
+    {artError && <div className="login-art-error"><p role="status">Omni’s artwork could not load. Sign-in remains available.</p><button type="button" onClick={() => openTopic('welcome')}>Open Omni’s introductions</button></div>}
   </div>;
 }
