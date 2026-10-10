@@ -17,6 +17,7 @@ import create_requests
 import authorization
 import shared_review_plans
 import guided_assessment
+import soc_guided_lease
 from framework_catalog import CATALOGS, CIS, FRAMEWORKS, ROOT as CATALOG_ROOT, capabilities, definition_for, assessment_title, active_definitions
 from csf_profile import CsfProfile
 from soc_readiness import SocConfiguration, ManagementControl, configuration as soc_configuration
@@ -323,16 +324,20 @@ def router_for(s):
         return client
     async def parent(aid,user,write=False):
         return await s._authorized_parent('framework_assessments',aid,user,write)
+    async def guided_scope(row,client):
+        guided_assessment.check_scope(row,client)
+        if row['framework_key']=='soc-2' and not await s.db.requirements.find_one({'client_id':row['client_id'],'baseline_key':'soc-2','baseline_response':'applies'}):
+            raise HTTPException(404,'SOC 2 guided assessment is not active for this client')
     @router.get('/framework_assessments/{aid}/guided-assessment')
     async def get_guided(aid:str,user=Depends(s.get_current_user)):
         row=await parent(aid,user)
         client=await scoped(row['client_id'],user)
-        guided_assessment.check_scope(row,client)
+        await guided_scope(row,client)
         return await guided_assessment.read_draft(s,row,user,client,upgraded=guided_assessment.upgraded_pilot(row,user))
     @router.get('/framework_assessments/{aid}/guided-assessment/history')
     async def get_guided_history(aid:str,limit:int=Query(25,ge=1,le=100),before_revision:Optional[int]=Query(None,ge=1),user=Depends(s.get_current_user)):
         row=await parent(aid,user)
-        guided_assessment.check_scope(row,await scoped(row['client_id'],user))
+        await guided_scope(row,await scoped(row['client_id'],user))
         if not guided_assessment.upgraded_pilot(row,user):
             raise HTTPException(404,'Interview history is not available for this pilot')
         return await guided_assessment.read_history(s,row,user,limit,before_revision)
@@ -340,7 +345,7 @@ def router_for(s):
     async def put_guided(aid:str,body:guided_assessment.InterviewWrite,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True)
         client=await scoped(row['client_id'],user)
-        guided_assessment.check_scope(row,client)
+        await guided_scope(row,client)
         return await guided_assessment.save_draft(s,row,user,body,client,upgraded=guided_assessment.upgraded_pilot(row,user))
     async def target_record(kind,record_id,user):
         if kind!='evidence':return await s._authorized_parent(kind,record_id,user)
@@ -367,7 +372,7 @@ def router_for(s):
         config=client_configuration(key,client)
         retained={a['definition_id'] for a in rows}
         controls = await s.db.organizational_controls.find({'client_id':client_id},{'_id':0,'control_id':1,'legacy_id':1,'assessment_ids':1,'design':1,'conflicts':1,'observations.operating':1,'observations.expected_instances':1,'observations.collected_instances':1}).to_list(None) if key=='soc-2' else []
-        upgraded=key=='cis-ig1' and guided_assessment.upgraded_pilot({'client_id':client_id,'framework_key':key},user)
+        upgraded=key in ('cis-ig1','soc-2') and guided_assessment.upgraded_pilot({'client_id':client_id,'framework_key':key},user)
         guided_drafts = {}
         if key == 'cis-ig1' and config.get('guided_assessment_enabled') is not False:
             identities = {a['framework_assessment_id'] + ':' + user['user_id']: a['definition_id'] for a in rows
@@ -380,6 +385,11 @@ def router_for(s):
             if upgraded:
                 for draft in drafts:
                     guided_drafts[identities[draft['_id']]].update({field:draft.get(field) for field in ('version','generated_at','user_id')})
+        if key=='soc-2' and program:
+            active_ids={d['id'] for d in active_definitions(key,config)}
+            identities={a['framework_assessment_id']+':'+user['user_id']:a['definition_id'] for a in rows if a['definition_id'] in active_ids}
+            drafts=await s.db.guided_assessment_pilot.find({'client_id':client_id,'_id':{'$in':list(identities)}},{'_id':1,'revision':1,'completed':1,'version':1,'generated_at':1,'user_id':1}).to_list(61)
+            guided_drafts={identities[d['_id']]:{field:d.get(field) for field in ('revision','completed','version','generated_at','user_id')} for d in drafts}
         return {'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
                 'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
                 'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows,upgraded=upgraded),'guided_assessment_drafts':guided_drafts,
@@ -493,9 +503,16 @@ def router_for(s):
 
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
-        old=await parent(aid,user,True);changes=body.model_dump(exclude_unset=True)
+        old=await parent(aid,user,True)
+        if old['framework_key']=='soc-2':
+            async def locked(lease):
+                return await update_assessment(aid,body,user,await parent(aid,user,True),lease)
+            return await soc_guided_lease.run(s,old,locked)
+        return await update_assessment(aid,body,user,old)
+    async def update_assessment(aid,body,user,old,lease=None):
+        changes=body.model_dump(exclude_unset=True)
         if 'guided_assessment_source' in changes:
-            guided_assessment.check_scope(old,await scoped(old['client_id'],user))
+            await guided_scope(old,await scoped(old['client_id'],user))
             if changes['guided_assessment_source']:
                 source_client=await scoped(old['client_id'],user)
                 upgraded=guided_assessment.upgraded_pilot(old,user)
@@ -504,9 +521,19 @@ def router_for(s):
                 if not draft['completed'] or source!={k:draft.get(k) for k in ('version','revision','generated_at')}:
                     raise HTTPException(409,'Guided result changed; regenerate before applying')
                 if upgraded:
-                    if draft['version'] != guided_assessment.current_version(old['definition_id'], upgraded=True):
+                    if draft['version'] != guided_assessment.current_version(old['definition_id'], upgraded=True, framework=old['framework_key']):
                         raise HTTPException(409, 'Current-source interview review is required before saving a new assessment')
                     guided_assessment.require_current_lineage(draft,old,source_client)
+                if old['framework_key']=='soc-2':
+                    from soc_guided_assessment import result_status, validate_completion
+                    validate_completion(old['definition_id'],draft['answers'],draft['version'])
+                    if draft.get('summary_review') != {'version':draft['version'],'answers':draft['answers']}:
+                        raise HTTPException(409,'Review SOC wording against the current answers before saving')
+                    if changes.get('implementation')!=draft.get('narrative') or changes.get('status')!=result_status(old['definition_id'],draft['answers'],draft['version']):
+                        raise HTTPException(422,'Save the exact reviewed SOC 2 text and proposed readiness status')
+                    allowed={'implementation','status','guided_assessment_source','expected_last_assessed','record_assessment'}
+                    if any(key not in allowed and value!=old.get(key) for key,value in changes.items()):
+                        raise HTTPException(422,'A SOC 2 guided save cannot change other native fields')
                 changes['guided_assessment_source']={**source,'origin':'guided-assessment-pilot','answers':draft['answers'],'by':user['user_id']}
                 if upgraded:
                     changes['guided_assessment_source'].update({key:draft[key] for key in ('base_assessment_token','base_scope_fingerprint')})
@@ -600,7 +627,11 @@ def router_for(s):
         if changed or record_assessment:
             if changes.get('guided_assessment_source') and guided_assessment.upgraded_pilot(old,user):
                 source_client=await scoped(old['client_id'],user)
-                guided_assessment.check_scope(old,source_client)
+                await guided_scope(old,source_client)
+                if old['framework_key']=='soc-2':
+                    latest=await guided_assessment.read_draft(s,old,user,source_client,upgraded=True)
+                    if not latest.get('completed') or any(latest.get(k)!=draft.get(k) for k in ('version','revision','generated_at','answers','narrative','summary_review')):
+                        raise HTTPException(409,'SOC interview changed while saving; review the latest summary')
                 guided_assessment.require_current_lineage(draft,old,source_client)
             history_verification=set(VERIFICATION_FIELDS)&set(supported)
             at=s._next_write_time(old.get('last_saved') or old.get('last_assessed'))
@@ -620,6 +651,8 @@ def router_for(s):
             if not ownership_only:
                 write['$set'].update(last_assessed=at,assessed_by=user['user_id'])
                 write['$push']={'assessment_history':snapshot}
+            if lease is not None:
+                await lease.check()
             result=await s.db.framework_assessments.update_one(predicate,write)
             if not result.matched_count:raise HTTPException(409,'Assessment changed since it was opened; reload before saving')
             await s.audit(user,'Framework assessment updated','framework_assessment',aid,old['client_id'],meta={'changed_fields':changed,'status':data['status']})

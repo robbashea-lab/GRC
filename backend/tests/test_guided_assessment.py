@@ -259,7 +259,8 @@ class PilotHistoryTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(response.status_code,200,response.text)
             work=response.json()['work'][aid]
             for field in ('task_ids','context_complete','priority_records'):
-                self.assertNotIn(field,work)
+                if key=='soc-2':self.assertIn(field,work)
+                else:self.assertNotIn(field,work)
             self.assertEqual(response.json()['guided_assessment_drafts'],{})
 
     async def test_shared_lineage_fixture_matches_current_backend_formula(self):
