@@ -1,0 +1,4 @@
+# Keep committed text copies portable; original captures and hashes are retained.
+evidence/*.json text eol=lf
+evidence/*.txt text eol=lf
+proof-manifest.json text eol=lf

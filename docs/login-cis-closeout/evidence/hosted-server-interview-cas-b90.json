@@ -1,0 +1,77 @@
+[
+  {
+    "group": 3,
+    "client": "OmniBot QA — Closeout CIS IG3",
+    "assessment": "fw_7197f963a08452cc9946a904e49ec2c0",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7197f963a08452cc9946a904e49ec2c0",
+    "nativeBefore": "",
+    "error": "Interview changed in another window; reload before saving",
+    "loserNote": "SYNTHETIC IG3 CAS LOSER — must retain unsaved edits.",
+    "console": [],
+    "winnerPersisted": {
+      "native": "",
+      "note": "SYNTHETIC IG3 CAS WINNER — interview progress only.",
+      "selected": [
+        "Yes"
+      ],
+      "noteSelector": "Known gaps or uncertainties"
+    },
+    "nativeWrites": 0,
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "assertions": {
+      "loserEditsRetained": true,
+      "winnerAnswerRetained": true,
+      "winnerNoteRetained": true,
+      "nativeBlank": true
+    }
+  },
+  {
+    "group": 2,
+    "client": "OmniBot QA — CIS IG2",
+    "assessment": "fw_cc4dcb44ebf1519c948bf99b7426b0f8",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_cc4dcb44ebf1519c948bf99b7426b0f8",
+    "nativeBefore": "",
+    "error": "Interview changed in another window; reload before saving",
+    "loserNote": "SYNTHETIC IG2 CAS LOSER — retain unsaved edits.",
+    "winnerPersisted": {
+      "selected": [
+        "Yes"
+      ],
+      "note": "SYNTHETIC IG2 CAS WINNER — interview progress only.",
+      "native": ""
+    },
+    "nativeWrites": 0,
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "assertions": {
+      "loserEditsRetained": true,
+      "winnerAnswerRetained": true,
+      "winnerNoteRetained": true,
+      "nativeBlank": true
+    }
+  },
+  {
+    "group": 1,
+    "client": "OmniBot QA — Closeout CIS IG1",
+    "assessment": "fw_7c86ba63e0e35d83ad43f5c31264db1e",
+    "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7c86ba63e0e35d83ad43f5c31264db1e",
+    "nativeBefore": "",
+    "error": "Interview changed in another window; reload before saving",
+    "loserNote": "SYNTHETIC IG1 CAS LOSER — retain unsaved edits.",
+    "winnerPersisted": {
+      "selected": [
+        "Yes"
+      ],
+      "note": "SYNTHETIC IG1 CAS WINNER — interview progress only.",
+      "native": ""
+    },
+    "nativeWrites": 0,
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "assertions": {
+      "loserEditsRetained": true,
+      "winnerAnswerRetained": true,
+      "winnerNoteRetained": true,
+      "nativeBlank": true
+    },
+    "reopenBehavior": "Focused unresolved group resumed; navigated Back to actual saved group1 before checking winner answers. Initial helper inspected later group and was corrected."
+  }
+]

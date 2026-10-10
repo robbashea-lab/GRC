@@ -1,0 +1,77 @@
+{
+  "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "group": 3,
+  "safeguard": "15.5",
+  "before": {
+    "height": 414,
+    "width": 489,
+    "x": 8,
+    "y": 82
+  },
+  "moved": {
+    "height": 414,
+    "width": 489,
+    "x": 8,
+    "y": 82
+  },
+  "resized": {
+    "height": 414,
+    "width": 489,
+    "x": 8,
+    "y": 82
+  },
+  "expanded": {
+    "height": 414,
+    "width": 489,
+    "x": 8,
+    "y": 82
+  },
+  "minimizedGuideAbsent": true,
+  "summaryPreserved": true,
+  "actualViewport": {
+    "height": 504,
+    "width": 505
+  },
+  "afterRight": "left: 8px; top: 82px; width: 489px; height: 414px;",
+  "afterHeightResize": "left: 8px; top: 82px; width: 489px; height: 414px;",
+  "requestedDesktop": {
+    "width": 1024,
+    "height": 900
+  },
+  "observedDesktopAttempt": {
+    "height": 900,
+    "width": 1024
+  },
+  "desktopBefore": {
+    "height": 470,
+    "width": 490,
+    "x": 8,
+    "y": 82
+  },
+  "desktopMove": {
+    "height": 470,
+    "width": 490,
+    "x": 18,
+    "y": 82
+  },
+  "desktopResize": {
+    "height": 470,
+    "width": 490,
+    "x": 18,
+    "y": 82
+  },
+  "desktopMaximized": {
+    "height": 810,
+    "width": 1008,
+    "x": 8,
+    "y": 82
+  },
+  "desktopResizeRight": "left: 18px; top: 82px; width: 500px; height: 470px;",
+  "assertions": {
+    "keyboardMove": true,
+    "keyboardResize": true,
+    "maximize": true,
+    "minimizeRestore": true
+  },
+  "earlierClamp": "505×504 real visible pane left/size actions were clamped at available bounds; no failure inferred"
+}

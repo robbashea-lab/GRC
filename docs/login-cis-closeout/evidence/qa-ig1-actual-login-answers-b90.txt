@@ -1,0 +1,152 @@
+Browser tab: 64, Title: "Omnisciente | Prestige Worldwide", URL: "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb".
+1 AXWebArea Omnisciente | Prestige Worldwide, URL: omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb
+	2 container
+		3 container Notifications alt+T
+		4 container Establish and Maintain Detailed Enterprise Asset Inventory, ID: radix-:r7:
+			5 container
+				6 container CIS IG1 location
+					7 content list
+						8 button CIS IG1
+						9 container
+							10 text ›
+							11 button Control 1
+						12 container
+							13 text › Safeguard 1.1
+				14 heading Establish and Maintain Detailed Enterprise Asset Inventory, Value: 2, ID: radix-:r8:
+					15 text Establish and Maintain Detailed Enterprise Asset Inventory
+				16 text Safeguard assessment workspace
+				17 container Saved implementation status
+					18 text Implemented
+				19 container Saved verification
+					20 text Not verified
+				21 container Assessment navigation
+					22 button (disabled) Previous
+					23 text 1 of 56
+					24 button Next
+			25 container
+				26 tab group Assessment sections
+					27 tab (selected, settable, boolean) Requirement & implementation, Value: 1, ID: radix-:rd:-trigger-implementation
+					28 tab (selectable, settable, boolean) Findings, Value: 0, ID: radix-:rd:-trigger-findings
+				29 container Description: Requirement & implementation, ID: radix-:rd:-content-implementation
+					30 button (collapsed) Requirement summary, Secondary Actions: Expand
+						31 text Requirement summary
+					32 container
+						33 heading What CIS requires, Value: 3
+							34 text What CIS requires
+						35 text Official requirement ·  CIS v8.1 · Safeguard 1.1 Establish and maintain an accurate, detailed, and up-to-date inventory of all enterprise assets with the potential to store or process data, to include: end-user devices (including portable and mobile), network devices, non-computing/IoT devices, and servers. Ensure the inventory records the network address (if static), hardware address, machine name, enterprise asset owner, department for each asset, and whether the asset has been approved to connect to the network. For mobile end-user devices, MDM type tools can support this process, where appropriate. This inventory includes assets connected to the infrastructure physically, virtually, remotely, and those within cloud environments. Additionally, it includes assets that are regularly connected to the enterprise’s network infrastructure, even if they are not under control of the enterprise. Review and update the inventory of all enterprise assets bi-annually, or more frequently.
+						36 text Required operation / trigger:
+						37 text Review and update the inventory at least every six months.
+						38 link Description: Official CIS source, Value: cas.docs.cisecurity.org/en/latest/source/Controls1/#11-establish-and-maintain-detailed-enterprise-asset-inventory
+					39 container Implementation status section
+						40 heading Implementation status, Value: 3
+							41 text Implementation status
+						42 container Implementation status
+							43 text Implementation status
+							44 container
+								45 radio button (settable, integer) Description: Implemented, Value: 1
+								46 text Implemented
+							47 container
+								48 radio button (settable, integer) Description: Partially Implemented, Value: 0
+								49 text Partially Implemented
+							50 container
+								51 radio button (settable, integer) Description: Not Implemented, Value: 0
+								52 text Not Implemented
+							53 container
+								54 radio button (settable, integer) Description: Not Assessed, Value: 0
+								55 text Not Assessed
+							56 container
+								57 radio button (settable, integer) Description: Not Applicable, Value: 0
+								58 text Not Applicable
+					59 container Current implementation section
+						60 heading Current implementation, Value: 3
+							61 text Current implementation
+						62 container
+							63 text Current implementation
+							64 text entry area (settable) Description: Current implementation, Value: OVERVIEW
+
+OmniBot QA — Closeout CIS IG1 reports maintaining an enterprise asset inventory. The inventory uses SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation..
+
+IMPLEMENTATION BREAKDOWN
+
+In place
+- An enterprise asset inventory is maintained.
+- Asset coverage: End-user devices, Portable and mobile devices, Servers, Network devices, Non-computing and IoT devices, Virtual assets, Remote assets, Cloud-hosted assets, Regularly connected assets outside enterprise control are included.
+- Inventory details: Static network address where applicable, Hardware address, Machine name, Asset owner, Department, Approved to connect are recorded.
+- Asset additions, changes and retirements are reflected in the inventory.
+- Periodic review: The complete inventory is reviewed every six months.
+- Periodic review: The last reported complete review was 2026-10-10.
+
+Incomplete or missing
+- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.
+
+ITEMS TO ADDRESS
+
+- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.
+
+- SYNTHETIC CLOSEOUT FINAL REVIEW: exact native wording, retained blank lines and bullets.
+- Evidence verification remains separate; no real-client completion claim.
+
+SYNTHETIC duplicate-activation test: one resulting native history append.
+
+SYNTHETIC native concurrent writer — preserve this authoritative wording γ.
+
+SYNTHETIC retry after explicit comparison — native winner wording preserved.
+					65 button (collapsed) Assessment guidance & working checklist, Secondary Actions: Expand
+						66 text Assessment guidance & working checklist
+				67 container
+					68 button (expanded) Description: Open Omnibot guide, Secondary Actions: Collapse
+					69 text Guided review active
+				70 container Omnibot guide · Safeguard 1.1, ID: :rh:
+					71 container
+						72 button Minimize Omnibot Guide
+						73 button Expand Omnibot Guide
+						74 button Close Omnibot Guide
+					75 heading Omnibot guide · Safeguard 1.1, Value: 2, ID: :rh:-title
+						76 text Omnibot guide · Safeguard 1.1
+					77 text Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.
+					78 container
+						95 container Question group 1 of 5
+							96 container
+								97 text Question group  1  of  5
+							98 text Inventory
+						99 container Inventory
+							100 text Inventory
+							145 container
+								146 heading Does an enterprise asset inventory exist?, Value: 3
+									147 text Does an enterprise asset inventory exist?
+								148 text Answer from current practice. Choose Not sure when this has not been confirmed.
+								149 container Does an enterprise asset inventory exist?
+									150 checkbox ✓ Yes, Value: 1
+									151 checkbox Partially, Value: 0
+									152 checkbox No, Value: 0
+									153 checkbox Not sure, Value: 0
+							154 container
+								155 text Where do you maintain your inventory? Answer from current practice. Choose Not sure when this has not been confirmed.
+								156 text entry area (settable) Description: Where do you maintain your inventory?, ID: omni-answer-system, Value: SYNTHETIC CLOSEOUT QA 2026-10-10 — fictional inventory fixture; not evidence of real client operation.
+							157 container
+								158 text Do you use one inventory or combine several sources? Answer from current practice. Choose Not sure when this has not been confirmed.
+								159 pop up button (collapsed, settable) Description: Do you use one inventory or combine several sources?, Value: Choose an answer, ID: omni-answer-sources, Secondary Actions: Expand
+									160 menu
+										161 (selected) Choose an answer
+										162 One source
+										163 Multiple reconciled sources
+										164 Multiple unreconciled sources
+										165 Not sure
+							166 container
+								167 text Who keeps it up to date? Answer from current practice. Choose Not sure when this has not been confirmed.
+								168 text entry area (settable) Description: Who keeps it up to date?, ID: omni-answer-owner
+							138 container
+								139 text Known gaps or uncertainties  (optional)
+							140 text Record anything missing, anything not yet confirmed, or who can help confirm it.
+							141 text entry area (settable) Description: Known gaps or uncertainties, ID: omni-notes-inventory
+						142 button (disabled) Back
+						143 button Save & next
+						144 button Save & close
+						89 button Review interview history
+			90 container
+				91 text Changes remain in your draft until saved.
+				92 button Save assessment
+				93 button Save & next
+			94 button Close
+
+The focused UI element is 75 heading Omnibot guide · Safeguard 1.1, Value: 2, ID: :rh:-title

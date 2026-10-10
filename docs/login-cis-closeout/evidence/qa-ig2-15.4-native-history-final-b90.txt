@@ -1,0 +1,207 @@
+- banner:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - searchbox
+  - generic: Ctrl K
+  - button:
+    - text: OmniBot QA — CIS IG2
+    - generic: Open authorized client directory
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: O
+  - generic: Client
+  - generic: OmniBot QA — CIS IG2
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG2
+    - link:
+      - /url: /risks
+      - generic: Risks
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG2
+  - heading [level=1]: CIS IG2
+  - button: Continue with 1.1
+  - region:
+    - generic: 0.8%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 18 controls · 130 IG2 safeguards
+    - term: Implemented
+    - definition:
+      - text: "1"
+      - generic: of 130
+    - term: Assessed
+    - definition:
+      - text: "1"
+      - generic: of 130
+    - button:
+      - text: Implemented
+      - strong: "1"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "129"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG2
+        - listitem: ›Control 15
+    - textbox:
+      - /placeholder: Search by number or title…
+    - checkbox
+    - text: Added in IG2 only · display filter; full program totals unchanged
+    - paragraph: Service Provider Management
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+          - columnheader: Verification
+          - columnheader: Owner
+          - columnheader: Last assessed
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "15.1"
+            - text: Establish and Maintain an Inventory of Service Providers
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "15.2"
+            - text: Establish and Maintain a Service Provider Management Policy
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "15.3"
+            - text: Classify Service Providers
+            - generic: Added in IG2
+          - cell:
+            - generic: Implemented
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Oct 10, 2026
+        - link:
+          - cell:
+            - generic: "15.4"
+            - text: Ensure Service Provider Contracts Include Security Requirements
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+- region "Notifications alt+T"
+- dialog "15.4 · Ensure Service Provider Contracts Include Security Requirements":
+  - button "Close":
+    - generic: Close
+  - heading "15.4 · Ensure Service Provider Contracts Include Security Requirements" [level=2]
+  - paragraph: CIS Controls v8.1 · 15.4
+  - text: Assessment Owner
+  - button "Assessment Owner":
+    - generic: Unassigned
+  - paragraph: Only active platform users with access to this client can be assigned. Contacts alone are not eligible.
+  - link "Manage people in a new tab":
+    - /url: /contacts
+    - text: Manage people →
+  - button "Save owner" [disabled]
+  - generic "View History" [active]
+  - paragraph: Assessment history · 3
+  - list:
+    - paragraph: Not Assessed · 2026-10-10
+    - paragraph: Staging Administrator
+    - paragraph: "OVERVIEW OmniBot QA — CIS IG2’s implementation of the practice to ensure service provider contracts include security requirements needs confirmation. IMPLEMENTATION BREAKDOWN Needs confirmation - Service-provider contracts include security requirements. Requires confirmation. - Contract requirements are consistent with the service-provider management policy. Requires confirmation. - Contracts are reviewed annually for missing security requirements. Requires confirmation. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. Reported operating context - Reported reported practice context: SYNTHETIC IG2 ALL-UNKNOWN QA — no substantive requirement is confirmed; no affirmative absence is asserted in this revised fictional scenario. ITEMS TO ADDRESS Confirmation work - Confirm: Service-provider contracts include security requirements. - Confirm: Contract requirements are consistent with the service-provider management policy. - Confirm: Contracts are reviewed annually for missing security requirements. SYNTHETIC IG2 ALL-UNKNOWN REVIEW — insufficient information is Not Assessed, not failure or implementation."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-program-3 · generated 2026-10-10T14:39:57.519120+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Implemented · 2026-10-10
+    - paragraph: Staging Administrator
+    - paragraph: "OVERVIEW OmniBot QA — CIS IG2 reports the practice to ensure service provider contracts include security requirements is not currently in place. IMPLEMENTATION BREAKDOWN Incomplete or missing - Service-provider contracts include security requirements. Reported as absent. - Contract requirements are consistent with the service-provider management policy. Reported as absent. - Contracts are reviewed annually for missing security requirements. Reported as absent. - Reviewer-reported deficiencies: SYNTHETIC IG2 STATUS QA — confirmed absence of contract security clauses, policy alignment and annual review in this fictional scenario only. Reported operating context - Reported reported practice context: SYNTHETIC IG2 AFFIRMATIVE ABSENCE — the fictional scenario has no contract security requirements practice, not an unknown answer. ITEMS TO ADDRESS Remediation - Address the reported deficiency: Service-provider contracts include security requirements. - Address the reported deficiency: Contract requirements are consistent with the service-provider management policy. - Address the reported deficiency: Contracts are reviewed annually for missing security requirements. - Address the reported deficiencies: SYNTHETIC IG2 STATUS QA — confirmed absence of contract security clauses, policy alignment and annual review in this fictional scenario only. SYNTHETIC IG2 AFFIRMATIVE-ABSENCE REVIEW — not real client facts."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-program-3 · generated 2026-10-10T14:39:34.749316+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "OVERVIEW OmniBot QA — CIS IG2’s implementation of the practice to ensure service provider contracts include security requirements needs confirmation. IMPLEMENTATION BREAKDOWN Needs confirmation - Service-provider contracts include security requirements. Requires confirmation. - Contract requirements are consistent with the service-provider management policy. Requires confirmation. - Contracts are reviewed annually for missing security requirements. Requires confirmation. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS Confirmation work - Confirm: Service-provider contracts include security requirements. - Confirm: Contract requirements are consistent with the service-provider management policy. - Confirm: Contracts are reviewed annually for missing security requirements. - SYNTHETIC QA ONLY — facts deliberately unknown; no deficiency or implementation is asserted."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-program-3 · generated 2026-10-09T22:27:02.108678+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+  - heading "Activity" [level=4]
+  - paragraph: Framework assessment updated · 2026-10-10T14:39:57.633438+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-10T14:39:34.861207+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T22:27:02.249788+00:00 · Staging Administrator
+  - link "Reviews":
+    - /url: /reviews?client_id=cli_c65cd90ca6d92c2a86f5cffc8972a19f22bf1d791ec0cc9ec1684a811f0bd1b0&framework_key=cis-ig1&framework_assessment=fw_d53f1e355c8f50f08b1d447df7e97576
+  - status
+  - button "Close"

@@ -1,0 +1,16 @@
+[
+  {
+    "client": "Initech",
+    "group": 2,
+    "total": 130,
+    "dashboardLoaded": true,
+    "noAssessmentWrites": true
+  },
+  {
+    "client": "Hooli",
+    "group": 3,
+    "total": 153,
+    "dashboardLoaded": true,
+    "noAssessmentWrites": true
+  }
+]

@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "candidate": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "tree": "6b4697296edb42d7ea4015282553f2cfcc99d42e",
+  "branch": "codex/login-cis-closeout",
+  "pr": 65,
+  "base": "911706cebc7a70c0443f500fcd4bc19260c1db60",
+  "parents": {
+    "cis": "7b63a444b5b1fd50b81539c7c90e613fbb000194",
+    "login": "e7704c4b85efaf4dd8b077effca66424fd691708"
+  },
+  "scope": {
+    "approvedLoginPaths": 17,
+    "unchangedOtherEntries": 1166,
+    "backendChanged": false,
+    "sharedCisChanged": false,
+    "dependenciesChanged": false
+  },
+  "local": {
+    "platform": "Windows",
+    "node": "24.19.0",
+    "frontend": {
+      "suites": 258,
+      "tests": 7257,
+      "snapshots": 1,
+      "seconds": 1500.636,
+      "exit": 0,
+      "command": "CI=true; node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand",
+      "log": "frontend-full-b90a327.log"
+    },
+    "builds": [
+      {
+        "command": "CI=true; node scripts/staging.cjs",
+        "exit": 0,
+        "js": "main.1f686f6f.js",
+        "css": "main.fe2057c8.css",
+        "log": "build-staging-b90a327.log"
+      },
+      {
+        "command": "CI=true; node scripts/preview.cjs build",
+        "exit": 0,
+        "js": "main.41cea737.js",
+        "css": "main.30d7a029.css",
+        "log": "build-preview-b90a327.log"
+      }
+    ]
+  },
+  "ci": {
+    "id": 38052767065,
+    "number": 127,
+    "result": "success",
+    "mergeSha": "a507978e4ae5012718d056cd1233081079fdd407",
+    "mergeTree": "6b4697296edb42d7ea4015282553f2cfcc99d42e",
+    "frontend": {
+      "suites": 258,
+      "tests": 7257,
+      "snapshots": 1,
+      "seconds": 813.621,
+      "builds": "both passed",
+      "stagingJs": "main.f518447e.js",
+      "stagingCss": "main.fe2057c8.css"
+    },
+    "backend": "Every classified offline suite and disposable Mongo persistence/recovery/authorization steps succeeded",
+    "gate": "success",
+    "backendRawLog": "Connector returned Transport closed; job/step success metadata directly verified"
+  },
+  "independent": {
+    "review": "independent-composite-review-b90.json",
+    "focused": {
+      "suites": 14,
+      "tests": 588,
+      "exit": 0
+    },
+    "materialDefects": 0,
+    "acceptedForControlledValidation": true,
+    "releaseApproval": false
+  },
+  "deployment": {
+    "service": "srv-db1s0cugekts73f72reg",
+    "id": "dep-db53ifrrjlhs73ca0ht0",
+    "requestedSource": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "state": "building at dispatch; actual Live verification pending",
+    "url": "https://omnisciente-staging.onrender.com",
+    "mainMerged": false,
+    "productionDeployed": false,
+    "settingsChanged": false
+  },
+  "acceptance": false
+}

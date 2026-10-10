@@ -1,0 +1,193 @@
+{
+  "candidate": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "startedAt": "2026-10-10T14:46:43.373Z",
+  "priorAttemptPreserved": "login-responsive-attempt-b90.json",
+  "results": [
+    {
+      "requestedWidth": 1440,
+      "artwork": {
+        "height": 446.2604370117187,
+        "width": 297.5,
+        "x": 73.89583587646484,
+        "y": 358.19793701171875
+      },
+      "bodyScrollWidth": 1440,
+      "form": {
+        "height": 227.11459350585935,
+        "width": 361.375,
+        "x": 1007.6979370117188,
+        "y": 328.04168701171875
+      },
+      "headings": [
+        "Clarity across your security program.",
+        "Sign in to your workspace"
+      ],
+      "height": 900,
+      "main": {
+        "height": 582.96875,
+        "width": 427.2708435058594,
+        "x": 974.75,
+        "y": 157.21875
+      },
+      "scrollWidth": 1440,
+      "signIn": {
+        "height": 49.36458587646485,
+        "width": 361.375,
+        "x": 1007.6979370117188,
+        "y": 505.7916870117187
+      },
+      "url": "https://omnisciente-staging.onrender.com/login",
+      "width": 1440
+    },
+    {
+      "requestedWidth": 1024,
+      "artwork": {
+        "height": 360.10418701171875,
+        "width": 240.0625,
+        "x": 75.3125,
+        "y": 282.5833435058594
+      },
+      "bodyScrollWidth": 1024,
+      "form": {
+        "height": 205.53125,
+        "width": 323.375,
+        "x": 640.4791870117188,
+        "y": 347.6458435058594
+      },
+      "headings": [
+        "Clarity across your security program.",
+        "Sign in to your workspace"
+      ],
+      "height": 900,
+      "main": {
+        "height": 530.0208740234375,
+        "width": 382.5,
+        "x": 610.9166870117188,
+        "y": 193.73959350585935
+      },
+      "scrollWidth": 1024,
+      "signIn": {
+        "height": 44.19791793823242,
+        "width": 323.375,
+        "x": 640.4791870117188,
+        "y": 508.9791870117187
+      },
+      "url": "https://omnisciente-staging.onrender.com/login",
+      "width": 1024
+    },
+    {
+      "requestedWidth": 768,
+      "artwork": {
+        "height": 344.88543701171875,
+        "width": 229.9166717529297,
+        "x": 36,
+        "y": 282.5833435058594
+      },
+      "bodyScrollWidth": 768,
+      "form": {
+        "height": 205.53125,
+        "width": 229.8854217529297,
+        "x": 484.7604370117187,
+        "y": 352.13543701171875
+      },
+      "headings": [
+        "Clarity across your security program.",
+        "Sign in to your workspace"
+      ],
+      "height": 900,
+      "main": {
+        "height": 574.1771240234375,
+        "width": 289.01043701171875,
+        "x": 455.1979370117187,
+        "y": 171.6666717529297
+      },
+      "scrollWidth": 768,
+      "signIn": {
+        "height": 44.19791793823242,
+        "width": 229.8854217529297,
+        "x": 484.7604370117187,
+        "y": 513.46875
+      },
+      "url": "https://omnisciente-staging.onrender.com/login",
+      "width": 768
+    },
+    {
+      "requestedWidth": 390,
+      "artwork": {
+        "height": 261.5625,
+        "width": 174.375,
+        "x": 33.208335876464844,
+        "y": 222.4375
+      },
+      "bodyScrollWidth": 380,
+      "form": {
+        "height": 239.25,
+        "width": 306.66668701171875,
+        "x": 36.66666793823242,
+        "y": 749.9166870117188
+      },
+      "headings": [
+        "Clarity across your security program.",
+        "Sign in to your workspace"
+      ],
+      "height": 900,
+      "main": {
+        "height": 594.03125,
+        "width": 348,
+        "x": 16,
+        "y": 586
+      },
+      "scrollWidth": 380,
+      "signIn": {
+        "height": 52,
+        "width": 306.66668701171875,
+        "x": 36.66666793823242,
+        "y": 937.1666870117188
+      },
+      "url": "https://omnisciente-staging.onrender.com/login",
+      "width": 390
+    },
+    {
+      "requestedWidth": 320,
+      "artwork": {
+        "height": 250,
+        "width": 166.6666717529297,
+        "x": 18,
+        "y": 260.47918701171875
+      },
+      "bodyScrollWidth": 310,
+      "form": {
+        "height": 239.25,
+        "width": 236.6666717529297,
+        "x": 36.66666793823242,
+        "y": 807.6458740234375
+      },
+      "headings": [
+        "Clarity across your security program.",
+        "Sign in to your workspace"
+      ],
+      "height": 900,
+      "main": {
+        "height": 644.4791870117188,
+        "width": 278,
+        "x": 16,
+        "y": 612.4791870117188
+      },
+      "scrollWidth": 310,
+      "signIn": {
+        "height": 52,
+        "width": 236.6666717529297,
+        "x": 36.66666793823242,
+        "y": 994.8958740234376
+      },
+      "url": "https://omnisciente-staging.onrender.com/login",
+      "width": 320
+    }
+  ],
+  "assertions": {
+    "allFiveWidthsActuallyApplied": true,
+    "noHorizontalPageOverflow": true,
+    "signInWithinWidth": true,
+    "artworkPresent": true
+  }
+}
