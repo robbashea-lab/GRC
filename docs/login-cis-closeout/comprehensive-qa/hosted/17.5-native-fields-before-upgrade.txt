@@ -1,0 +1,43 @@
+CIS IG3
+Control 17
+Safeguard 17.5
+Assign Key Roles and Responsibilities
+
+Safeguard assessment workspace
+
+Implemented
+Not verified
+Previous
+144 of 153
+Next
+Requirement & implementation
+Findings
+Requirement summary
+What CIS requires
+
+Official requirement · CIS v8.1 · Safeguard 17.5
+
+Assign key roles and responsibilities for incident response, including staff from legal, IT, information security, facilities, public relations, human resources, incident responders, and analysts. Review annually, or when significant enterprise changes occur that could impact this Safeguard.
+
+Required operation / trigger: Review annually, or when significant enterprise changes could affect this safeguard.
+
+Official CIS source
+Implementation status
+Implementation status
+Implemented
+Partially Implemented
+Not Implemented
+Not Assessed
+Not Applicable
+Current implementation
+Current implementation
+Assessment guidance & working checklist
+
+Welcome back. Let’s compare your saved answers with the current assessment, then continue with the relevant changes.
+
+×
+Interview complete
+Changes remain in your draft until saved.
+Save assessment
+Save & next
+Close

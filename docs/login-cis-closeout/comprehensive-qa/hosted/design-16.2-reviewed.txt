@@ -1,0 +1,33 @@
+OVERVIEW
+
+OmniBot QA — Closeout CIS IG3 reports the practice to establish and maintain a process to accept and address software vulnerabilities is in place.
+
+IMPLEMENTATION BREAKDOWN
+
+In place
+- A maintained process accepts and addresses software vulnerability reports. Reported as met.
+- External entities have a means to report vulnerabilities. Reported as met.
+- The handling policy identifies the reporting process. Reported as met.
+- The handling policy identifies responsible parties. Reported as met.
+- The vulnerability-handling process addresses intake. Reported as met.
+- The vulnerability-handling process addresses assignment. Reported as met.
+- The vulnerability-handling process addresses remediation. Reported as met.
+- The vulnerability-handling process addresses remediation testing. Reported as met.
+- A vulnerability-tracking system records severity ratings. Reported as met.
+- Tracking includes metrics for vulnerability identification timing. Reported as met.
+- Tracking includes metrics for vulnerability analysis timing. Reported as met.
+- Tracking includes metrics for vulnerability remediation timing. Reported as met.
+- Documentation is reviewed and updated annually and when significant changes could affect the safeguard. Reported as met.
+- Where the enterprise develops applications for third parties, it considers an externally facing vulnerability-handling policy to set expectations for outside stakeholders. Reported as met.
+
+Incomplete or missing
+- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.
+
+ITEMS TO ADDRESS
+
+- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.
+
+SYNTHETIC QA ONLY — comprehensive workflow test; not client facts.
+- Preserve this exact reviewer line for 16.2.
+
+- Preserve this blank line.

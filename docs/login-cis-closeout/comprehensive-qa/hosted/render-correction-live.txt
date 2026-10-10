@@ -1,0 +1,446 @@
+Upcoming maintenance
+We will be upgrading critical infrastructure on October 13th, 9:00 pm EDT (October 14th, 1:00 am UTC). Follow our status page for updates.
+M
+My Workspace
+Projects
+My project
+Production
+omnisciente-staging
+Deploys
+dep-db56e2d9fdbs73bpcq50
+Search
+CTRL
++
+K
+K
+New
+Upgrade
+R
+Environment
+omnisciente-staging
+Deploys
+Settings
+MONITOR
+Events
+Logs
+Metrics
+MANAGE
+Compute
+Environment
+Shell
+Previews
+Disk
+One-Off Jobs
+Introducing Workflows
+An orchestration and execution engine for long-running, distributed tasks.
+Learn more
+Changelog
+Status
+Collapse
+Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more.
+Upgrade now
+Correct CIS third-party condition and required uncertainty guidance
+STATUS
+Deploy succeeded|Live
+DURATION
+1m19s
+DEPLOYED
+
+Oct 10, 2026
+at
+12:25:46 PM
+EDT
+
+TRIGGER
+Manually deployed by you via Dashboard
+SOURCE
+6a4c0c7
+All logs
+Search
+Live tail
+Oct 10
+12:25:48 PM
+==> Cloning from https://github.com/robbashea-lab/GRC
+12:25:49 PM
+==> Checking out commit 6a4c0c7612195605c39d3285bf11c2560e15d74e in branch main
+12:25:51 PM
+#1 [internal] load build definition from RenderStaging.Dockerfile
+12:25:51 PM
+#1 transferring dockerfile: 1.63kB done
+12:25:51 PM
+#1 DONE 0.0s
+12:25:51 PM
+12:25:51 PM
+#2 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+12:25:51 PM
+#2 ...
+12:25:51 PM
+12:25:51 PM
+#3 [auth] library/python:pull render-prod/docker-mirror-repository/library/python:pull token for us-west1-docker.pkg.dev
+12:25:51 PM
+#3 DONE 0.0s
+12:25:51 PM
+12:25:51 PM
+#4 [auth] library/node:pull render-prod/docker-mirror-repository/library/node:pull token for us-west1-docker.pkg.dev
+12:25:51 PM
+#4 DONE 0.0s
+12:25:51 PM
+12:25:51 PM
+#5 [internal] load metadata for docker.io/library/python:3.12-slim
+12:25:53 PM
+#5 DONE 1.8s
+12:25:53 PM
+12:25:53 PM
+#2 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+12:25:53 PM
+#2 DONE 2.1s
+12:25:53 PM
+12:25:53 PM
+#6 [internal] load build context
+12:25:53 PM
+#6 DONE 0.0s
+12:25:53 PM
+12:25:53 PM
+#7 [stage-1  1/12] FROM docker.io/library/python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
+12:25:53 PM
+#7 resolve docker.io/library/python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1 done
+12:25:53 PM
+#7 DONE 0.0s
+12:25:53 PM
+12:25:53 PM
+#8 [frontend 1/7] FROM docker.io/library/node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392
+12:25:53 PM
+#8 resolve docker.io/library/node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 done
+12:25:53 PM
+#8 DONE 0.0s
+12:25:53 PM
+12:25:53 PM
+#9 importing cache manifest
+12:25:53 PM
+#9 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+12:25:53 PM
+#9 DONE 0.1s
+12:25:53 PM
+12:25:53 PM
+#7 [stage-1  1/12] FROM docker.io/library/python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
+12:25:53 PM
+#7 DONE 0.0s
+12:25:53 PM
+12:25:53 PM
+#6 [internal] load build context
+12:25:53 PM
+#6 transferring context: 11.62MB 0.1s done
+12:25:53 PM
+#6 DONE 0.1s
+12:25:53 PM
+12:25:53 PM
+#10 [frontend 3/7] COPY frontend/package.json frontend/yarn.lock ./
+12:25:53 PM
+#10 CACHED
+12:25:53 PM
+12:25:53 PM
+#11 [frontend 2/7] WORKDIR /app/frontend
+12:25:53 PM
+#11 CACHED
+12:25:53 PM
+12:25:53 PM
+#12 [stage-1  2/12] WORKDIR /app/backend
+12:25:53 PM
+#12 CACHED
+12:25:53 PM
+12:25:53 PM
+#13 [stage-1  3/12] COPY backend/requirements-runtime.txt ./
+12:25:53 PM
+#13 CACHED
+12:25:53 PM
+12:25:53 PM
+#14 [stage-1  4/12] RUN pip install --no-cache-dir -r requirements-runtime.txt
+12:25:53 PM
+#14 DONE 0.5s
+12:25:53 PM
+12:25:53 PM
+#15 [frontend 4/7] RUN yarn install --frozen-lockfile --non-interactive
+12:25:54 PM
+#15 extracting sha256:7fd1ebe418b5079d4aa36f416af9b143d127bc75b0155d71cb5fd559b5e04d39
+12:25:54 PM
+#15 extracting sha256:7fd1ebe418b5079d4aa36f416af9b143d127bc75b0155d71cb5fd559b5e04d39 0.5s done
+12:25:55 PM
+#15 extracting sha256:f0400f4b55b0ad346bf6167a1b64a258e4d73db608c457798ce35e4ffeebfaaf 0.0s done
+12:25:55 PM
+#15 extracting sha256:d22c69a95cf463f4cb74462bd2899597ce505d82bd4c01ceddf7845e12f13856
+12:25:55 PM
+#15 ...
+12:25:55 PM
+12:25:55 PM
+#14 [stage-1  4/12] RUN pip install --no-cache-dir -r requirements-runtime.txt
+12:25:55 PM
+#14 extracting sha256:ecc510c1e359bdc007b39802570bb7e4dec7d6ebccf357c3201a74299113e05e 0.5s done
+12:25:55 PM
+#14 extracting sha256:75b6a36c64a1cf3520fc4b4aae4739d5caa8a6a05c27835a920a61784c9c32f8 0.4s done
+12:25:55 PM
+#14 extracting sha256:6912e23eb44595b44dc6d9882b34f305ad6f6e9667cec70b13e5dbc4f8cd97f4 0.3s done
+12:25:55 PM
+#14 extracting sha256:bbc5a12237474ec0b23b5051260d56d6436a24d70d9cad961adebe7a037ed813 0.0s done
+12:25:55 PM
+#14 extracting sha256:bfef5fb874100ad72280be8b981edf2c8596f82db3abd9eaa291796909c6829b done
+12:25:55 PM
+#14 extracting sha256:f6d5a6820f9004487923d3e8afc334124e6c0e414f5b2297bd3670b714e50f1a done
+12:25:55 PM
+#14 extracting sha256:f6f9edb0d000165d6c83a05726e92c3faaaf43061961a42a85ebc16d36c3ed70 0.5s done
+12:25:55 PM
+#14 DONE 2.2s
+12:25:55 PM
+12:25:55 PM
+#16 [stage-1  5/12] COPY backend/*.py ./
+12:25:55 PM
+#16 DONE 0.0s
+12:25:55 PM
+12:25:55 PM
+#17 [stage-1  6/12] COPY backend/common_passwords.txt ./
+12:25:55 PM
+#17 DONE 0.0s
+12:25:55 PM
+12:25:55 PM
+#18 [stage-1  7/12] COPY backend/routes ./routes
+12:25:55 PM
+#18 DONE 0.0s
+12:25:55 PM
+12:25:55 PM
+#19 [stage-1  8/12] COPY frontend/src/lib/*.json /app/frontend/src/lib/
+12:25:55 PM
+#19 DONE 0.0s
+12:25:55 PM
+12:25:55 PM
+#20 [stage-1  9/12] COPY shared/catalogs /app/shared/catalogs
+12:25:55 PM
+#20 DONE 0.0s
+12:25:55 PM
+12:25:55 PM
+#15 [frontend 4/7] RUN yarn install --frozen-lockfile --non-interactive
+12:25:55 PM
+#15 extracting sha256:d22c69a95cf463f4cb74462bd2899597ce505d82bd4c01ceddf7845e12f13856 0.8s done
+12:25:55 PM
+#15 extracting sha256:2cfab517365cfc6b4bd1f8c4cb01754884ef75bc38758b3c41e291c696f019f5 0.0s done
+12:25:55 PM
+#15 extracting sha256:a8de9fa052209313d8e45435a8486e29b20eebaa820e2e7f63a7c3c94b4fa567 done
+12:25:55 PM
+#15 extracting sha256:8498b3beb21fac4929db1d4c26c223355f860a06d9da275e8444324b9ab89958 done
+12:25:55 PM
+#15 extracting sha256:50b8cd160add28e640e1b79dcb923a0b6f43f3285dadad06efb78e0139a09870 done
+12:25:55 PM
+#15 extracting sha256:18315bc6cb268b2f7678d5b8e2eb370dfb1b8522db4bf87d54654fb6f28f9bb7
+Oct 10
+12:26:38 PM
+       
+#23 25.79   881.24 kB  dist/static/js/main.76d23b98.js
+12:26:38 PM
+       
+#23 25.79   103.59 kB  dist/static/js/336.7bf0557f.chunk.js
+12:26:38 PM
+       
+#23 25.79   56.37 kB   dist/static/css/main.fe2057c8.css
+12:26:38 PM
+       
+#23 25.80   460 B      dist/static/js/346.fe953bcb.chunk.js
+12:26:38 PM
+       
+#23 25.80 
+12:26:38 PM
+       
+#23 25.80 The bundle size is significantly larger than recommended.
+12:26:38 PM
+       
+#23 25.80 Consider reducing it with code splitting: https://goo.gl/9VhYWB
+12:26:38 PM
+       
+#23 25.80 You can also analyze the project dependencies: https://goo.gl/LeUzfb
+12:26:38 PM
+       
+#23 25.80 
+12:26:38 PM
+       
+#23 25.80 The project was built assuming it is hosted at /.
+12:26:38 PM
+       
+#23 25.80 You can control this with the homepage field in your package.json.
+12:26:38 PM
+       
+#23 25.80 
+12:26:38 PM
+       
+#23 25.80 The ../deploy/cloudflare/dist folder is ready to be deployed.
+12:26:38 PM
+       
+#23 25.80 You may serve it with a static server:
+12:26:38 PM
+       
+#23 25.80 
+12:26:38 PM
+       
+#23 25.80   yarn global add serve
+12:26:38 PM
+       
+#23 25.80   serve -s ../deploy/cloudflare/dist
+12:26:38 PM
+       
+#23 25.80 
+12:26:38 PM
+       
+#23 25.80 Find out more about deployment here:
+12:26:38 PM
+       
+#23 25.80 
+12:26:38 PM
+       
+#23 25.80   https://cra.link/deployment
+12:26:38 PM
+       
+#23 25.80 
+12:26:38 PM
+       
+#23 DONE 26.1s
+12:26:38 PM
+       
+12:26:38 PM
+       
+#24 [stage-1 10/12] COPY --from=frontend /app/deploy/cloudflare/dist /app/frontend/build
+12:26:38 PM
+       
+#24 DONE 0.0s
+12:26:38 PM
+       
+12:26:38 PM
+       
+#25 [stage-1 11/12] COPY deploy/render_staging.py ./render_staging.py
+12:26:38 PM
+       
+#25 DONE 0.0s
+12:26:38 PM
+       
+12:26:38 PM
+       
+#26 [stage-1 12/12] RUN useradd --create-home --uid 10001 app
+12:26:38 PM
+       
+#26 DONE 0.1s
+12:26:39 PM
+       
+12:26:39 PM
+       
+#27 exporting to image
+12:26:39 PM
+       
+#27 exporting layers 0.1s done
+12:26:39 PM
+       
+#27 pushing layers
+12:26:40 PM
+       
+#27 pushing layers 1.5s done
+12:26:40 PM
+       
+#27 DONE 1.8s
+12:26:40 PM
+       
+12:26:40 PM
+       
+#28 exporting cache to registry
+12:26:40 PM
+       
+#28 sending cache export
+12:26:42 PM
+       
+#28 sending cache export 3.3s done
+12:26:42 PM
+       
+#28 DONE 3.7s
+12:26:43 PM
+       
+==> Deploying...
+12:26:43 PM
+       
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+12:26:58 PM
+[xkqwt]
+INFO:     Started server process [7]
+12:26:58 PM
+[xkqwt]
+INFO:     Waiting for application startup.
+12:27:00 PM
+[xkqwt]
+INFO:     Application startup complete.
+12:27:00 PM
+[xkqwt]
+INFO:     Uvicorn running on http://0.0.0.0:10000 (Press CTRL+C to quit)
+12:27:00 PM
+[xkqwt]
+INFO:     127.0.0.1:46496 - "HEAD / HTTP/1.1" 200 OK
+12:27:03 PM
+[xkqwt]
+INFO:     10.235.26.77:40344 - "GET /api/ HTTP/1.1" 200 OK
+12:27:03 PM
+[xkqwt]
+INFO:     10.235.26.77:40346 - "GET /api/ HTTP/1.1" 200 OK
+12:27:04 PM
+       
+==> Your service is live 🎉
+12:27:04 PM
+       
+==> 
+12:27:04 PM
+       
+==> ///////////////////////////////////////////////////////////
+12:27:04 PM
+       
+==> 
+12:27:04 PM
+       
+==> Available at your primary URL https://omnisciente-staging.onrender.com
+12:27:04 PM
+       
+==> 
+12:27:04 PM
+       
+==> ///////////////////////////////////////////////////////////
+12:27:05 PM
+[xkqwt]
+INFO:     10.29.158.153:0 - "GET / HTTP/1.1" 200 OK
+12:27:08 PM
+[xkqwt]
+INFO:     10.235.26.77:40348 - "GET /api/ HTTP/1.1" 200 OK
+12:27:12 PM
+[xkqwt]
+INFO:     10.25.202.240:0 - "GET /api/clients?include_archived=true HTTP/1.1" 200 OK
+12:27:12 PM
+[xkqwt]
+INFO:     10.25.202.240:0 - "GET /api/notifications HTTP/1.1" 200 OK
+12:27:13 PM
+[xkqwt]
+INFO:     10.235.26.77:58660 - "GET /api/ HTTP/1.1" 200 OK
+12:27:13 PM
+[xkqwt]
+INFO:     10.235.26.77:58666 - "GET /api/ HTTP/1.1" 200 OK
+12:27:18 PM
+[xkqwt]
+INFO:     10.235.26.77:58668 - "GET /api/ HTTP/1.1" 200 OK
+12:27:23 PM
+[xkqwt]
+INFO:     10.235.26.77:43738 - "GET /api/ HTTP/1.1" 200 OK
+12:27:28 PM
+[xkqwt]
+INFO:     10.235.26.77:43740 - "GET /api/ HTTP/1.1" 200 OK
+12:27:33 PM
+[xkqwt]
+INFO:     10.235.26.77:35386 - "GET /api/ HTTP/1.1" 200 OK
+
+Need better ways to work with logs? Try theRender CLI, Render MCP Server, or set up a log stream integration 
+
+/
+Overview
+Build Logs
+Linked Services
+Commits
+Build not found
+This build may have been deleted, or the link may be incorrect.
+0 services selected:
+Move

@@ -1,0 +1,23 @@
+{
+  "sha": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+  "tree": "c08a2390f75457c2147b430788658ec4679e69f9",
+  "deployment": "dep-db56e2d9fdbs73bpcq50",
+  "service": "srv-db1s0cugekts73f72reg",
+  "url": "https://omnisciente-staging.onrender.com",
+  "status": "Deploy succeeded / Live",
+  "sourceProof": "Live source GitHub commit link plus Render checkout log; manual Deploy specific commit full6a4 after CI129 release gate success",
+  "startedAt": "2026-10-10T16:25:46Z",
+  "duration": "1m19s",
+  "frontend": {
+    "renderBuildJs": "main.76d23b98.js",
+    "servedReloadedJs": "main.76d23b98.js",
+    "renderBuildCss": "main.fe2057c8.css",
+    "servedReloadedCss": "main.fe2057c8.css",
+    "windowsJs": "main.163a9475.js",
+    "byteIdenticalCrossOsClaim": false
+  },
+  "availableLogs": "Application startup complete; Uvicorn10000; service Live; no unresolved release-related startup error in available log",
+  "config": "Existing RenderStaging.Dockerfile/source configuration preserved; no provider/env/autodeploy settings changed",
+  "recovery": "Forward correction retaining program3/4 readers; do not blindly revert to older b90 writer after program4 writes",
+  "evidenceOnlyRedeployment": false
+}

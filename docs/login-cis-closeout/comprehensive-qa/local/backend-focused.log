@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\RobbA\Documents\Codex\2026-10-07\omnisciente-visual-consistency\work\login-cis-closeout\backend\tests\run_isolated.py", line 4, in <module>
+    import pytest
+ModuleNotFoundError: No module named 'pytest'

@@ -1,0 +1,104 @@
+{
+  "candidate_sha": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+  "generated_utc": "2026-10-10T16:22:04.167Z",
+  "reviewed": {
+    "matrix_sha256": "4018faa5966eac0c90a4bb7cdefc41b7bb0c8a9c68fc748cdba1dae8698ec9de",
+    "acceptance_register_sha256": "d60904b0024ff81b8a9f7da5692e3d29a7053e908b8e6d5271f181ebdcc686c5"
+  },
+  "read_only": true,
+  "cases": [
+    {
+      "name": "153 unique canonical IDs/titles/groups",
+      "passed": true
+    },
+    {
+      "name": "all153 current versions and exact question contracts",
+      "passed": true
+    },
+    {
+      "name": "current atomic mappings, with explicitly superseded historical17.5 map",
+      "passed": true
+    },
+    {
+      "name": "fresh/Yes/No/Unknown visible questions and groups match actual source",
+      "passed": true
+    },
+    {
+      "name": "148 uncertainty records are input clarification with unchanged scoring/history",
+      "passed": true
+    },
+    {
+      "name": "retained historical17.5 source fixtures stay program3",
+      "passed": true
+    },
+    {
+      "name": "layer boundaries and acceptance remain explicit",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "references": [
+    {
+      "key": "sourceMatrix",
+      "value": "../../omni-cis-rollout/coverage-matrix.json",
+      "exists": true
+    },
+    {
+      "key": "originalDefectLog",
+      "value": "../../omni-cis-rollout/defect-log.md",
+      "exists": true
+    },
+    {
+      "key": "originalIndependentReview",
+      "value": "../../omni-cis-rollout/independent-review.md",
+      "exists": true
+    },
+    {
+      "key": "hostedPlacements",
+      "value": "../evidence/hosted-placements-b90.json",
+      "exists": true
+    },
+    {
+      "key": "hostedPlacementTotals",
+      "value": "../evidence/hosted-placement-safe-totals-b90.json",
+      "exists": true
+    },
+    {
+      "key": "hostedLifecycles",
+      "value": "../evidence/hosted-lifecycles-b90.json",
+      "exists": true
+    },
+    {
+      "key": "combinedHandoff",
+      "value": "../handoff.md",
+      "exists": true
+    }
+  ],
+  "release_approval": false,
+  "precision_notes": [
+    "17.5 raw atomicRequirementsAndQuestions retains its historical program3 row. The explicit sourceCorrection/currentQuestionContract supersession is coherent; it must not be treated as a second current requirement.",
+    "153/339 component paths are locally mocked adapter results; the current-source contract is separate from original b90 execution.",
+    "The469 mapping records include specialized Control1 field/matrix records; they are not469 hosted writes or independently exercised atomic branches."
+  ],
+  "versions": {
+    "cis-v8.1-control1-3": 1,
+    "cis-v8.1-control1-4": 1,
+    "cis-v8.1-control1-2": 3,
+    "cis-v8.1-program-3": 147,
+    "cis-v8.1-program-4": 1
+  },
+  "question_fields": 1571,
+  "mapping_records": 469,
+  "owner_ledger_audit": {
+    "read_only": true,
+    "rows": 153,
+    "original_designs": 25,
+    "fixed_clock_owner_tests": 614,
+    "failed": 0,
+    "test_and_result_sha256_match": true,
+    "independent_614_execution": false,
+    "limits": "Original b90 owner execution/25 original structural designs and22 lead extension observations remain separate from current17.5 program4 and new hosted acceptance. Restricted identity proposal is explicitly unapproved and restores the exact original Contributor role, zero memberships and Disabled state.",
+    "precision_correction_communicated": "revision_boundaries.baseline_b9054native-observation wording should be54 lifecycle /52native-text observations; owner notified. Correct totals already appear elsewhere."
+  },
+  "disposition": "No material coverage overclaim or current source/question gap found. All153 current contracts match frozen source, and148 uncertainty records preserve input-contract meaning. Historical17.5 mapping is expressly superseded by the program4 current contract; old authored cases remainprogram3. Final hosted/identity/CI acceptance stays open."
+}

@@ -1,0 +1,32 @@
+Omnibot guide · Safeguard 8.10
+
+Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.
+
+Question group 3 of 3
+Review and confirmation
+
+Review and confirmation
+How is this safeguard implemented in day-to-day work?
+
+Record the actual process and relevant timing. This is optional narrative context, not verification.
+
+What records could substantiate the reported implementation?
+
+Retention configuration and oldest retrievable sample. Use representative records covering the stated population. Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards.
+
+Describe confirmed missing or incomplete requirement elements.
+
+Confirmed gaps only. Record uncertainty separately.
+
+Which substantive safeguard requirements still need confirmation, and who can verify them?
+
+Record uncertainty about the required safeguard practices, not a confirmed deficiency. Optional tool, owner or record details belong in the context fields and do not qualify the proposed status.
+
+Known gaps or uncertainties (optional)
+
+Record anything missing, anything not yet confirmed, or who can help confirm it.
+
+Back
+Save & next
+Save & close
+Review interview history

@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 4: Secure Configuration of Enterprise Assets and Software - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 4: Secure Configuration of Enterprise Assets and Software";
+        var mkdocs_page_input_path = "source/Controls4.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls4/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#41-establish-and-maintain-a-secure-configuration-process">4.1: Establish and Maintain a Secure Configuration Process</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#standard-configuration-coverage">Standard Configuration Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#42-establish-and-maintain-a-secure-configuration-process-for-network-infrastructure">4.2: Establish and Maintain a Secure Configuration Process for Network Infrastructure</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#standard-configuration-coverage_1">Standard Configuration Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#43-configure-automatic-session-locking-on-enterprise-assets">4.3: Configure Automatic Session Locking on Enterprise Assets</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#properly-configured-assets">Properly Configured Assets</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#44-implement-and-manage-a-firewall-on-servers">4.4: Implement and Manage a Firewall on Servers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#implementation-of-firewalls">Implementation of Firewalls</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#45-implement-and-manage-a-firewall-on-end-user-devices">4.5: Implement and Manage a Firewall on End-User Devices</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#46-securely-manage-enterprise-assets-and-software">4.6: Securely Manage Enterprise Assets and Software</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_1">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#47-manage-default-accounts-on-enterprise-assets-and-software">4.7: Manage Default Accounts on Enterprise Assets and Software</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#unusable-default-accounts">Unusable Default Accounts</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#48-uninstall-or-disable-unnecessary-services-on-enterprise-assets-and-software">4.8: Uninstall or Disable Unnecessary Services on Enterprise Assets and Software</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_7">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_7">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_7">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_7">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliant-services">Compliant Services</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#non-compliant-services">Non-compliant Services</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#49-configure-trusted-dns-servers-on-enterprise-assets">4.9: Configure Trusted DNS Servers on Enterprise Assets</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_8">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_8">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_8">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_8">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_2">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#410-enforce-automatic-device-lockout-on-portable-end-user-devices">4.10: Enforce Automatic Device Lockout on Portable End-User Devices</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_9">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_9">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_9">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_9">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_9">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance-of-default-lockout">Compliance of Default Lockout</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#411-enforce-remote-wipe-capability-on-portable-end-user-devices">4.11: Enforce Remote Wipe Capability on Portable End-User Devices</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_10">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_10">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_10">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_10">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_10">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance-of-remote-wipe">Compliance of Remote Wipe</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#412-separate-enterprise-workspaces-on-mobile-end-user-devices">4.12: Separate Enterprise Workspaces on Mobile End-User Devices</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_11">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_11">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_11">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_11">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_11">Metrics</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#compliance-of-separation-of-enterprise-workspace">Compliance of Separation of Enterprise Workspace</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 4: Secure Configuration of Enterprise Assets and Software</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls4.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-4-secure-configuration-of-enterprise-assets-and-software">CIS Control 4: Secure Configuration of Enterprise Assets and Software</h1>
+<p>Establish and maintain the secure configuration of enterprise assets (end-user devices, including portable and mobile, network devices, non-computing/IoT devices, and servers) and software (operating systems and applications).</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>As delivered by manufacturers and resellers, the default configurations for enterprise assets and software are normally geared towards ease of deployment and ease of use rather than security. Basic controls, open services and ports, default accounts or passwords, pre-configured Domain Name System (DNS) settings, older (vulnerable) protocols, and pre-installation of unnecessary software can all be exploitable if left in their default state. Further, these security configuration updates need to be managed and maintained over the life cycle of enterprise assets and software. Configuration updates need to be tracked and approved through the configuration management workflow process to maintain a record that can be reviewed for compliance, leveraged for incident response, and support audits. This CIS Control is important to on-premises devices, as well as remote devices, network devices, and cloud environments.</p>
+<p>Service providers play a key role in modern infrastructures, especially for smaller enterprises. They often are not set up by default in the most secure configuration to provide flexibility for their customers to apply their own security policies. Therefore, the presence of default accounts or passwords, excessive access, or unnecessary services are common in default configurations. These could introduce weaknesses that are under the responsibility of the enterprise that is using the software rather than the service provider. This extends to ongoing management and updates, as some Platform as a Service (PaaS) only extend to the operating system, so patching and updating hosted applications are under the responsibility of the enterprise.</p>
+<p>Even after a strong initial configuration is developed and applied, it must be continually managed to avoid degrading security as software is updated or patched, new security vulnerabilities are reported, and configurations are “tweaked” to allow the installation of new software or to support new operational requirements.</p>
+<hr />
+<h2 id="41-establish-and-maintain-a-secure-configuration-process">4.1: Establish and Maintain a Secure Configuration Process</h2>
+<p>Establish and maintain a documented secure configuration process for enterprise assets (end-user devices, including portable and mobile, non-computing/IoT devices, and servers) and software (operating systems and applications). Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard<ol>
+<li>This should include any enterprise-approved deviations from industry-standard baselines such as CIS benchmarks, DISA Security Technical Implementation Guides (STIGs), or U.S. government configuration baselines (USGCB).</li>
+</ol>
+</li>
+<li>Date of last review and update of Configuration Standard</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Identify whether Input 2 exists:</p>
+<ol>
+<li>If it exists, M1 = 1</li>
+<li>If it does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Identify and enumerate end-user devices, including portable and mobile, non-computing/IoT devices, and servers in <code>GV1</code> (M2)</p>
+</li>
+<li>
+<p>Using the output of Operation 2 (M2), identify and enumerate the software installed on the assets using <code>GV5</code> (M3)</p>
+</li>
+<li>
+<p>For each software identified in Operation 3 (M3):</p>
+<ol>
+<li>Enumerate software that is listed in the configuration standard <code>GV3</code> (M4)</li>
+<li>Enumerate software that is not listed in the configuration standard <code>GV3</code> (M5)</li>
+</ol>
+</li>
+<li>
+<p>Compare the current date to the date provided in Input 4. Note the timeframe in months (M6)</p>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of applicable enterprise assets</li>
+<li>M3 = Count of software installed on applicable enterprise assets</li>
+<li>M4 = Count of software that is listed in the configuration standard</li>
+<li>M5 = Count of software that is not listed in the configuration
+    standard</li>
+<li>M6 = Timeframe since last review and update in months</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M6 is greater than twelve, this Safeguard is measured at 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="standard-configuration-coverage">Standard Configuration Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of authorized software with secure configuration standards documented and maintained.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="42-establish-and-maintain-a-secure-configuration-process-for-network-infrastructure">4.2: Establish and Maintain a Secure Configuration Process for Network Infrastructure</h2>
+<p>Establish and maintain a documented secure configuration process for network devices. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard<ol>
+<li>This should include any enterprise approved deviations from industry standard baselines such as CIS benchmarks, DISA Security Technical Implementation Guides (STIGs), or U.S. government configuration baselines (USGCB).</li>
+</ol>
+</li>
+<li>Date of last review and update of the Configuration Standard</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Identify whether Input 2 exists:</p>
+<ol>
+<li>If it exists, M1 = 1</li>
+<li>If it does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Identify and enumerate network infrastructure assets in <code>GV1</code> (M2)</p>
+</li>
+<li>
+<p>Using the output of Operation 2 (M2), identify and enumerate the software installed on the assets using <code>GV5</code> (M3)</p>
+</li>
+<li>
+<p>For each software identified in Operation 3 (M3):</p>
+<ol>
+<li>Enumerate software that is listed in the configuration standard <code>GV3</code> (M4)</li>
+<li>Enumerate software that is not listed in the configuration standard <code>GV3</code> (M5)</li>
+</ol>
+</li>
+<li>
+<p>Compare the current date to the date provided in Input 4. Note the timeframe in months (M6)</p>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of applicable enterprise assets</li>
+<li>M3 = Count of software installed on applicable enterprise assets</li>
+<li>M4 = Count of software that is listed in the configuration standard</li>
+<li>M5 = Count of software that is not listed in the configuration
+    standard</li>
+<li>M6 = Timeframe since last review and update in months</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M6 is greater than twelve, this Safeguard is measured at 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="standard-configuration-coverage_1">Standard Configuration Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of authorized software with secure configuration standards documented and maintained.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="43-configure-automatic-session-locking-on-enterprise-assets">4.3: Configure Automatic Session Locking on Enterprise Assets</h2>
+<p>Configure automatic session locking on enterprise assets after a defined period of inactivity. For general-purpose operating systems, the period must not exceed 15 minutes. For mobile end-user devices, the period must not exceed 2 minutes.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Identify and enumerate assets within <code>GV1</code> that support automatic session locking due to inactivity (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate assets from Operation 1 with authorized software installed (M2)</p>
+</li>
+<li>
+<p>Check the configurations for the software using <code>GV3</code>:</p>
+<ol>
+<li>For general computing assets, enumerate those assets with properly configured automatic session locking (15 minutes or less) (M3)</li>
+<li>For general computing assets, enumerate those assets with improperly configured automatic session locking (greater than 15 minutes) (M4)</li>
+<li>For mobile assets, enumerate those assets with properly configured automatic session locking (2 minutes or less) (M5)</li>
+<li>For mobile assets, enumerate those assets with improperly configured automatic session locking (greater than 2 minutes) (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of assets capable of supporting automatic session locking</li>
+<li>M2 = Count of assets with authorized software installed to allow automatic session locking</li>
+<li>M3 = Count of general computing assets with properly configured automatic session locking</li>
+<li>M4 = Count of general computing assets with improperly configured automatic session locking</li>
+<li>M5 = Count of mobile assets with properly configured automatic session locking</li>
+<li>M6 = Count of mobile assets with improperly configured automatic session locking</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<h4 id="properly-configured-assets">Properly Configured Assets</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets properly configured for automatic session locking.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>(M3 + M5) / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="44-implement-and-manage-a-firewall-on-servers">4.4: Implement and Manage a Firewall on Servers</h2>
+<p>Implement and manage a firewall on servers, where supported. Example implementations include a virtual firewall, an operating system firewall, or a third-party firewall agent.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Identify and enumerate servers capable of hosting a firewall using <code>GV1</code> (M1)</p>
+</li>
+<li>
+<p>Identify and enumerate applications capable of hosting a firewall using <code>GV5</code> (M2)</p>
+</li>
+<li>
+<p>Using configuration standards <code>GV3</code> to check if firewalls are properly configured:</p>
+<ol>
+<li>Enumerate servers from Operation 1 with properly configured firewalls (M3)</li>
+<li>Enumerate servers from Operation 1 with improperly configured firewalls (M4)</li>
+<li>Enumerate applications from Operation 2 with properly configured firewalls (M3)</li>
+<li>Enumerate applications from Operation 2 with improperly configured firewalls (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of servers enterprise assets capable of hosting a firewall</li>
+<li>M2 = Count of applications of hosting a firewall</li>
+<li>M3 = Count of servers with properly configured firewalls</li>
+<li>M4 = Count of servers with improperly configured firewalls</li>
+<li>M5 = Count of applications with properly configured firewalls</li>
+<li>M6 = Count of applications with improperly configured firewalls</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<h4 id="implementation-of-firewalls">Implementation of Firewalls</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of properly configured firewalls within the enterprise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>(M3 + M5) / (M1 + M2)</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="45-implement-and-manage-a-firewall-on-end-user-devices">4.5: Implement and Manage a Firewall on End-User Devices</h2>
+<p>Implement and manage a host-based firewall or port-filtering tool on end-user devices with a default-deny rule that drops all traffic except those services and ports that are explicitly allowed.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Identify and enumerate end-user devices capable of hosting a firewall or a deny rule using <code>GV1</code> (M1)</p>
+</li>
+<li>
+<p>Using configuration standards <code>GV3</code> to check if firewalls or deny rules are properly configured on end-user devices:</p>
+<ol>
+<li>Enumerate assets from Operation 1 with properly configured firewalls or a configured default deny rule (M3)</li>
+<li>Enumerate assets from Operation 1 with improperly configured firewalls and lacking a configured default deny rule (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Count of end-user devices capable of hosting a firewall</li>
+<li>M2 = Count of end-user devices with a properly configured firewall or default deny rule</li>
+<li>M3 = Count of end-user devices with an improperly configured firewall and lacking a configured default deny rule</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of properly configured firewalls or deny rule on end-user devices</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="46-securely-manage-enterprise-assets-and-software">4.6: Securely Manage Enterprise Assets and Software</h2>
+<p>Securely manage enterprise assets and software. Example implementations include managing configuration through version-controlled Infrastructure-as-Code (IaC) and accessing administrative interfaces over secure network protocols, such as Secure Shell (SSH) and Hypertext Transfer Protocol Secure (HTTPS). Do not use insecure management protocols, such as Telnet (Teletype Network) and HTTP, unless operationally essential.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Using <code>GV5</code>, identify and enumerate authorized management software (M1)</p>
+</li>
+<li>
+<p>Using <code>GV1</code>, identify and enumerate assets capable of supporting management software (M2)</p>
+</li>
+<li>
+<p>Using the output of Operations 1 and 2, identify and enumerate assets with authorized management software installed (M3)</p>
+</li>
+<li>
+<p>Using configuration standards <code>GV3</code> to check if management software is configured properly:</p>
+<ol>
+<li>Enumerate assets from Operation 3 with properly configured management software (M4)</li>
+<li>Enumerate assets from Operation 1 with improperly configured management software (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Count of authorized management software</li>
+<li>M2 = Count of enterprise assets capable of supporting management software</li>
+<li>M3 = Count of assets with authorized management software installed</li>
+<li>M4 = Count of assets with properly configured management software</li>
+<li>M5 = Count of assets with improperly configured management software</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<h4 id="coverage_1">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets with properly configured authorized management software</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="47-manage-default-accounts-on-enterprise-assets-and-software">4.7: Manage Default Accounts on Enterprise Assets and Software</h2>
+<p>Manage default accounts on enterprise assets and software, such as root, administrator, and other pre-configured vendor accounts. Example implementations can include: disabling default accounts or making them unusable.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 5.2: Use Unique Passwords</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV20</code>: Unique Password Policy</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate authorized operating software, applications, and third-party software that contain default accounts (M1)</p>
+</li>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets with software from Operation 1, installed (M2)</p>
+</li>
+<li>
+<p>For each asset identified in Operation 2, enumerate default accounts (M3)</p>
+</li>
+<li>
+<p>Check if default accounts can be disabled:</p>
+<ol>
+<li>Enumerate accounts that are disabled (M4)</li>
+<li>Enumerate accounts that are enabled (M5)</li>
+</ol>
+</li>
+<li>
+<p>If accounts cannot be disabled, ensure to change default passwords according to <code>GV20</code>: the enterprise's unique password policy:</p>
+<ol>
+<li>Enumerate accounts with changed passwords (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Count of software that uses default accounts</li>
+<li>M2 = Count of assets with software installed that uses default accounts</li>
+<li>M3 = Count of default accounts identified</li>
+<li>M4 = Count of default accounts that have been disabled</li>
+<li>M5 = Count of default accounts that are enabled</li>
+<li>M6 = Count of enabled default accounts with changed passwords</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<h4 id="unusable-default-accounts">Unusable Default Accounts</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of default accounts that have been rendered unusable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 + M6</code> / <code>M3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="48-uninstall-or-disable-unnecessary-services-on-enterprise-assets-and-software">4.8: Uninstall or Disable Unnecessary Services on Enterprise Assets and Software</h2>
+<p>Uninstall or disable unnecessary services on enterprise assets and software, such as an unused file sharing service, web application module, or service function.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_7">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_7">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_7">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate authorized services (M1)</p>
+</li>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate services on enterprise assets (M2)</p>
+</li>
+<li>
+<p>Compare outputs from Operations 1 and 2:</p>
+<ol>
+<li>Identify and enumerate authorized services on assets (M3)</li>
+<li>Identify and enumerate unauthorized services on assets (M4)</li>
+</ol>
+</li>
+<li>
+<p>For authorized services in Operation 3.2, use <code>GV3</code> to check configurations:</p>
+<ol>
+<li>Identify and enumerate services that are configured correctly (disabled) (M5)</li>
+<li>Identify and enumerate services that are configured improperly (enabled) (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_7">Measures</h3>
+<ul>
+<li>M1 = Count of authorized services</li>
+<li>M2 = Count of services on enterprise assets</li>
+<li>M3 = Count of authorized services on assets</li>
+<li>M4 = Count of unauthorized services on assets</li>
+<li>M5 = Count of unauthorized services that are disabled</li>
+<li>M6 = Count of unauthorized services that are enabled</li>
+</ul>
+<h3 id="metrics_7">Metrics</h3>
+<h4 id="compliant-services">Compliant Services</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of services installed/running that are enterprise essential</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>(M3 + M5) / M2</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="non-compliant-services">Non-compliant Services</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of services installed/running that are enterprise essential</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M6 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="49-configure-trusted-dns-servers-on-enterprise-assets">4.9: Configure Trusted DNS Servers on Enterprise Assets</h2>
+<p>Configure trusted DNS servers on network infrastructure. Example implementations include configuring network devices to use enterprise-controlled DNS servers and/or reputable externally accessible DNS servers.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_8">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_8">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_8">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate authorized DNS servers (M1)</p>
+</li>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets configured for authorized DNS servers (M2)</p>
+</li>
+<li>
+<p>Use <code>GV3</code> to check the configuration of DNS servers identified on assets in Operation 2:</p>
+<ol>
+<li>Identify and enumerate assets with DNS servers that are properly configured (M3)</li>
+<li>Identify and enumerate assets with DNS servers that are improperly configured (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_8">Measures</h3>
+<ul>
+<li>M1 = Count of authorized DNS servers</li>
+<li>M2 = Count of enterprise assets configured for DNS servers</li>
+<li>M3 = Count of assets with properly configured DNS servers</li>
+<li>M4 = Count of assets with improperly configured DNS servers</li>
+</ul>
+<h3 id="metrics_8">Metrics</h3>
+<h4 id="coverage_2">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets with properly configured DNS servers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="410-enforce-automatic-device-lockout-on-portable-end-user-devices">4.10: Enforce Automatic Device Lockout on Portable End-User Devices</h2>
+<p>Enforce automatic device lockout following a predetermined threshold of local failed authentication attempts on portable end-user devices, where supported. For laptops, do not allow more than 20 failed authentication attempts; for tablets and smartphones, no more than 10 failed authentication attempts. Example implementations include Microsoft® InTune Device Lock and Apple® Configuration Profile maxFailedAttempts.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_9">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_9">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_9">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate all portable devices (M1)</p>
+</li>
+<li>
+<p>Use <code>GV3</code> to check failed authentication configuration for all portable devices:</p>
+<ol>
+<li>Identify and enumerate failed authentication on laptops that are properly configured (20 failed attempts or less) (M2)</li>
+<li>Identify and enumerate failed authentication on laptops that are not properly configured (greater than 20 failed attempts) (M3)</li>
+<li>Identify and enumerate failed authentication on mobile devices that are properly configured (10 failed attempts or less) (M4)</li>
+<li>Identify and enumerate failed authentication on mobile devices that are not properly configured (greater than 10 failed attempts) (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_9">Measures</h3>
+<ul>
+<li>M1 = Count of portable devices</li>
+<li>M2 = Count of properly configured laptops</li>
+<li>M3 = Count of improperly configured laptops</li>
+<li>M4 = Count of properly configured mobile devices</li>
+<li>M5 = Count of improperly configured mobile devices</li>
+</ul>
+<h3 id="metrics_9">Metrics</h3>
+<h4 id="compliance-of-default-lockout">Compliance of Default Lockout</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of portable devices with properly configured failed authentication.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>(M2 + M4) / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="411-enforce-remote-wipe-capability-on-portable-end-user-devices">4.11: Enforce Remote Wipe Capability on Portable End-User Devices</h2>
+<p>Remotely wipe enterprise data from enterprise-owned portable end-user devices when deemed appropriate such as lost or stolen devices, or when an individual no longer supports the enterprise.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_10">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_10">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_10">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate portable end-user devices that support remote wipe (M1)</p>
+</li>
+<li>
+<p>Use <code>GV3</code> to check configuration for remote wipe on portable devices capable of supporting as identified in Operation 1:</p>
+<ol>
+<li>Identify and enumerate portable devices with properly configured remote wipe (M2)</li>
+<li>Identify and enumerate portable devices with improperly configured remote wipe (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_10">Measures</h3>
+<ul>
+<li>M1 = Count of portable devices capable of supporting remote wipe</li>
+<li>M2 = Count of properly configured portable devices</li>
+<li>M3 = Count of improperly configured portable devices</li>
+</ul>
+<h3 id="metrics_10">Metrics</h3>
+<h4 id="compliance-of-remote-wipe">Compliance of Remote Wipe</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of portable devices with properly configured remote wipe.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="412-separate-enterprise-workspaces-on-mobile-end-user-devices">4.12: Separate Enterprise Workspaces on Mobile End-User Devices</h2>
+<p>Ensure separate enterprise workspaces are used on mobile end-user devices, where supported. Example implementations include using an Apple® Configuration Profile or Android™ Work Profile to separate enterprise applications and data from personal applications and data.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_11">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_11">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_11">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate authorized mobile device management software (M1)</p>
+</li>
+<li>
+<p>Use <code>GV1</code> to identify mobile devices capable of supporting mobile device management software (M2)</p>
+</li>
+<li>
+<p>Compare the output of Operations 1 and 2:</p>
+<ol>
+<li>Identify and enumerate mobile devices with authorized mobile device management software (M3)</li>
+<li>Identify and enumerate mobile devices without authorized mobile device management software (M4)</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV3</code> to check configurations of mobile devices with mobile device management software:</p>
+<ol>
+<li>Identify and enumerate mobile devices with properly configured mobile device management software to separate enterprise workspace (M5)</li>
+<li>Identify and enumerate mobile devices with improperly configured mobile device management software (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_11">Measures</h3>
+<ul>
+<li>M1 = Count of authorized mobile device management software</li>
+<li>M2 = Count of mobile devices capable of supporting mobile device management software</li>
+<li>M3 = Count of mobile devices with mobile device management software</li>
+<li>M4 = Count of mobile devices without mobile device management software</li>
+<li>M5 = Count of assets with properly configured mobile device management software</li>
+<li>M6 = Count of assets with improperly configured mobile device management software</li>
+</ul>
+<h3 id="metrics_11">Metrics</h3>
+<h3 id="compliance-of-separation-of-enterprise-workspace">Compliance of Separation of Enterprise Workspace</h3>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of mobile devices with properly separated enterprise workspace.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M5 / M2</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls3/" class="btn btn-neutral float-left" title="CIS Control 3: Data Protection"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls5/" class="btn btn-neutral float-right" title="CIS Control 5: Account Management">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

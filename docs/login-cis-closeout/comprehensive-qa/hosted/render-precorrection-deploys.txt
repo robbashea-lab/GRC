@@ -1,0 +1,865 @@
+- alert:
+  - generic: Upcoming maintenance
+  - text: We will be upgrading critical infrastructure on October 13th, 9:00 pm EDT (October 14th, 1:00 am UTC). Follow our
+  - link "status page":
+    - /url: https://status.render.com/incidents/bwd9ycdxqps4
+  - text: for updates.
+  - button "Close notification":
+- banner:
+  - link "Render":
+    - /url: /
+    - img "Render"
+  - button "M My Workspace":
+    - generic: M
+    - generic "My Workspace"
+  - navigation "Breadcrumbs":
+    - list:
+      - link "Projects":
+        - /url: /
+        - generic: Projects
+      - link "My project":
+        - /url: /project/prj-db1s0cp42hec73e1oo60
+        - generic: My project
+      - button "Switch Project":
+      - link "Production":
+        - /url: /project/prj-db1s0cp42hec73e1oo60/environment/evm-db1s0cp42hec73e1oo6g
+        - generic: Production
+      - button "Switch Environment":
+      - link "omnisciente-staging":
+        - /url: /web/srv-db1s0cugekts73f72reg
+        - generic: omnisciente-staging
+      - button "Switch Service":
+      - generic: Deploys
+      - button "Switch page":
+  - button "Search Ctrl + K":
+    - text: Search
+    - generic: Ctrl
+    - generic: +
+    - generic: K
+    - generic: K
+  - button "New":
+    - generic: New
+  - button "Upgrade":
+    - generic: Upgrade
+  - button "Help":
+    - img "Help"
+  - button "Account menu":
+    - generic: r
+- navigation:
+  - separator "Resize sidebar"
+  - link "Environment":
+    - /url: /project/prj-db1s0cp42hec73e1oo60/environment/evm-db1s0cp42hec73e1oo6g
+    - generic: Environment
+  - generic: omnisciente-staging
+  - list:
+    - link "Deploys":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys
+      - generic: Deploys
+    - link "Settings":
+      - /url: /web/srv-db1s0cugekts73f72reg/settings
+      - generic: Settings
+  - generic: Monitor
+  - list "Monitor":
+    - link "Events":
+      - /url: /web/srv-db1s0cugekts73f72reg/events
+      - generic: Events
+    - link "Logs":
+      - /url: /web/srv-db1s0cugekts73f72reg/logs
+      - generic: Logs
+    - link "Metrics":
+      - /url: /web/srv-db1s0cugekts73f72reg/metrics
+      - generic: Metrics
+  - generic: Manage
+  - list "Manage":
+    - link "Compute":
+      - /url: /web/srv-db1s0cugekts73f72reg/compute
+      - generic: Compute
+    - link "Environment":
+      - /url: /web/srv-db1s0cugekts73f72reg/env
+      - generic: Environment
+    - link "Shell":
+      - /url: /web/srv-db1s0cugekts73f72reg/shell
+      - generic: Shell
+      - status:
+    - link "Previews":
+      - /url: /web/srv-db1s0cugekts73f72reg/previews
+      - generic: Previews
+    - link "Disk":
+      - /url: /web/srv-db1s0cugekts73f72reg/disks
+      - generic: Disk
+      - status:
+    - link "One-Off Jobs":
+      - /url: /web/srv-db1s0cugekts73f72reg/jobs
+      - generic: One-Off Jobs
+      - status:
+  - alert:
+    - generic: Introducing Workflows
+    - generic: An orchestration and execution engine for long-running, distributed tasks.
+    - link "Learn more":
+      - /url: https://render.com/workflows
+      - text: Learn more
+    - button "Close notification":
+  - list "Footer navigation":
+    - link "Changelog":
+      - /url: https://render.com/changelog
+      - generic: Changelog
+  - link "Status":
+    - /url: https://status.render.com
+    - generic: Status
+  - button "Collapse":
+    - generic: Collapse
+- banner:
+  - generic: Web Service
+  - heading "omnisciente-staging Docker Free Upgrade your instance" [level=1]:
+    - generic: omnisciente-staging
+    - generic: Docker
+    - link "Free":
+      - /url: /web/srv-db1s0cugekts73f72reg/compute
+      - generic: Free
+    - link "Upgrade your instance":
+      - /url: /web/srv-db1s0cugekts73f72reg/compute
+      - text: Upgrade your instance
+  - button "Connect":
+    - generic: Connect
+  - button "Manual Deploy":
+    - generic: Manual Deploy
+  - generic: "Service ID:"
+  - generic "Service ID:":
+    - generic: srv-db1s0cugekts73f72reg
+    - button "Copy":
+  - img "GitHub"
+  - link "robbashea-lab / GRC main":
+    - /url: https://github.com/robbashea-lab/GRC/tree/main
+    - generic: robbashea-lab / GRC
+    - generic: main
+  - link "Last successfully deployed commit":
+    - /url: https://github.com/robbashea-lab/GRC/commit/b90a327d1b3afd2f352d4fdb7933ab0133cd39e0
+    - generic: b90a327
+  - link "Live":
+    - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db53ifrrjlhs73ca0ht0
+    - text: Live
+  - generic "Copy":
+    - link "https://omnisciente-staging.onrender.com":
+      - /url: https://omnisciente-staging.onrender.com
+    - button "Copy":
+  - alert:
+    - strong: Auto-Deploy
+    - text: has been disabled to prevent accidental deploys. This service was deployed with a specific commit.
+    - link "Auto-Deploy Settings":
+      - /url: /web/srv-db1s0cugekts73f72reg/settings#deploy
+- main:
+  - alert:
+    - generic: Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more.
+    - link "Upgrade now":
+      - /url: /web/srv-db1s0cugekts73f72reg/plan
+  - textbox "Search deploys and commits"
+  - heading "Deploy 30 deploys" [level=6]:
+    - generic: Deploy
+    - generic "30 deploys": "30"
+    - generic: Trigger
+    - generic: Duration
+  - list:
+    - link "Live":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db53ifrrjlhs73ca0ht0
+      - img "Live"
+    - link "Deploy Integrate approved Login with compatible CIS OmniBot rollout Trigger Manual Duration 1m34s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db53ifrrjlhs73ca0ht0
+      - term: Deploy
+      - definition:
+        - paragraph: Integrate approved Login with compatible CIS OmniBot rollout
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m34s
+    - link "b90a327":
+      - /url: https://github.com/robbashea-lab/GRC/commit/b90a327d1b3afd2f352d4fdb7933ab0133cd39e0
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "2h ago":
+        - time: 2h ago
+      - generic: by
+      - generic: you
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4n4iflk1mc73d83cs0
+      - img "Deploy succeeded"
+    - link "Deploy Use visible CIS interview group labels in summary notes Trigger Manual Duration 1m19s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4n4iflk1mc73d83cs0
+      - term: Deploy
+      - definition:
+        - paragraph: Use visible CIS interview group labels in summary notes
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m19s
+    - link "79075e0":
+      - /url: https://github.com/robbashea-lab/GRC/commit/79075e0f85bebdb9651d381762e945c01f79c108
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "17h ago":
+        - time: 17h ago
+      - generic: by
+      - generic: you
+    - link "Rollback":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4n4iflk1mc73d83cs0/rollback
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4mgtvlk1mc73d5q2c0
+      - img "Deploy succeeded"
+    - link "Deploy Record independent CIS review and separate release coverage gates Trigger Manual Duration 1m19s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4mgtvlk1mc73d5q2c0
+      - term: Deploy
+      - definition:
+        - paragraph: Record independent CIS review and separate release coverage gates
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m19s
+    - link "b0f87ba":
+      - /url: https://github.com/robbashea-lab/GRC/commit/b0f87baabeb0726c6d6825051a78173a1a650bde
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "17h ago":
+        - time: 17h ago
+      - generic: by
+      - generic: you
+    - link "Rollback":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4mgtvlk1mc73d5q2c0/rollback
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4juunf3r2c739q4gcg
+      - img "Deploy succeeded"
+    - link "Deploy Save the complete readable OmniBot inventory write-up Trigger Manual Duration 1m30s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4juunf3r2c739q4gcg
+      - term: Deploy
+      - definition:
+        - paragraph: Save the complete readable OmniBot inventory write-up
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m30s
+    - link "83d88e3":
+      - /url: https://github.com/robbashea-lab/GRC/commit/83d88e3cbc31d618060c4e094335963f5bacf096
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "20h ago":
+        - time: 20h ago
+      - generic: by
+      - generic: you
+    - link "Rollback":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4juunf3r2c739q4gcg/rollback
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4j60ks728c73fgrok0
+      - img "Deploy succeeded"
+    - link "Deploy Polish inventory prose and include scoped effect dependency Trigger Manual Duration 1m27s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4j60ks728c73fgrok0
+      - term: Deploy
+      - definition:
+        - paragraph: Polish inventory prose and include scoped effect dependency
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m27s
+    - link "90f0431":
+      - /url: https://github.com/robbashea-lab/GRC/commit/90f04310931b34cd7225663799d4334b780dce17
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "21h ago":
+        - time: 21h ago
+      - generic: by
+      - generic: you
+    - link "Rollback":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4j60ks728c73fgrok0/rollback
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4hup2d0e5s73cdkdgg
+      - img "Deploy succeeded"
+    - link "Deploy Match summary Back flow and retain recorded reconciliation facts Trigger Manual Duration 1m19s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4hup2d0e5s73cdkdgg
+      - term: Deploy
+      - definition:
+        - paragraph: Match summary Back flow and retain recorded reconciliation facts
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m19s
+    - link "b96af6e":
+      - /url: https://github.com/robbashea-lab/GRC/commit/b96af6e5509e984513beb4841e259bea6f11bcf8
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "23h ago":
+        - time: 23h ago
+      - generic: by
+      - generic: you
+    - link "Rollback":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4hup2d0e5s73cdkdgg/rollback
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4eafad0e5s73en59c0
+      - img "Deploy succeeded"
+    - link "Deploy Keep focused interview retention within its question-set version Trigger Manual Duration 1m21s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4eafad0e5s73en59c0
+      - term: Deploy
+      - definition:
+        - paragraph: Keep focused interview retention within its question-set version
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m21s
+    - link "0739c01":
+      - /url: https://github.com/robbashea-lab/GRC/commit/0739c01aea1b4b62ea088f5570ca4d35e84dd53c
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "1d ago":
+        - time: 1d ago
+      - generic: by
+      - generic: you
+    - link "Rollback":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4eafad0e5s73en59c0/rollback
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4dm5qjnfac73b22fqg
+      - img "Deploy succeeded"
+    - link "Deploy Keep focused invitations from regenerating legacy interview results Trigger Manual Duration 1m36s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db4dm5qjnfac73b22fqg
+      - term: Deploy
+      - definition:
+        - paragraph: Keep focused invitations from regenerating legacy interview results
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m36s
+    - link "1fa5053":
+      - /url: https://github.com/robbashea-lab/GRC/commit/1fa5053d5494d32daa599586d5e9d3a62cb5bc0a
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "1d ago":
+        - time: 1d ago
+      - generic: by
+      - generic: you
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db45otnlot8c73ftgogg
+      - img "Deploy succeeded"
+    - link "Deploy Refine scoped OmniBot invitations and visit recurrence Trigger Manual Duration 1m17s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db45otnlot8c73ftgogg
+      - term: Deploy
+      - definition:
+        - paragraph: Refine scoped OmniBot invitations and visit recurrence
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m17s
+    - link "18ecd87":
+      - /url: https://github.com/robbashea-lab/GRC/commit/18ecd876bcc4e6bbacb113cd80c0cd354ea6ec6e
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "1d ago":
+        - time: 1d ago
+      - generic: by
+      - generic: you
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db452oflk1mc73erurp0
+      - img "Deploy succeeded"
+    - link "Deploy Anchor reopened Omni guide to expanded character bounds Trigger Manual Duration 1m21s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db452oflk1mc73erurp0
+      - term: Deploy
+      - definition:
+        - paragraph: Anchor reopened Omni guide to expanded character bounds
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m21s
+    - link "13b0e16":
+      - /url: https://github.com/robbashea-lab/GRC/commit/13b0e16da489d9651f13bf3d06d5571151dd5c59
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "1d ago":
+        - time: 1d ago
+      - generic: by
+      - generic: you
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3tr6flot8c73c0vl10
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #58 from robbashea-lab/codex/omni-cis-lifecycle Omni: preserve CIS lifecycle history and pilot-scoped guidance Trigger Manual Duration 43.3s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3tr6flot8c73c0vl10
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #58 from robbashea-lab/codex/omni-cis-lifecycle Omni: preserve CIS lifecycle history and pilot-scoped guidance"
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 43.3s
+    - link "911706c":
+      - /url: https://github.com/robbashea-lab/GRC/commit/911706cebc7a70c0443f500fcd4bc19260c1db60
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "1d ago":
+        - time: 1d ago
+      - generic: by
+      - generic: you
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3rtknavr4c73av6ak0
+      - img "Deploy succeeded"
+    - link "Deploy Merge agreed Login main baseline into Omni lifecycle candidate Trigger Manual Duration 1m23s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3rtknavr4c73av6ak0
+      - term: Deploy
+      - definition:
+        - paragraph: Merge agreed Login main baseline into Omni lifecycle candidate
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m23s
+    - link "4c978c8":
+      - /url: https://github.com/robbashea-lab/GRC/commit/4c978c89586db830af242efae26a3ce65d76cd21
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "2d ago":
+        - time: 2d ago
+      - generic: by
+      - generic: you
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3rm4e7bikc73cecho0
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #60 from robbashea-lab/codex/approved-dimensional-login Approved dimensional login and public Omni welcome Trigger Auto-Deploy Duration 1m47s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3rm4e7bikc73cecho0
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #60 from robbashea-lab/codex/approved-dimensional-login Approved dimensional login and public Omni welcome"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m47s
+    - link "f9806bc":
+      - /url: https://github.com/robbashea-lab/GRC/commit/f9806bc275d07ecccfe5ae832c7324a314d5b38f
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "2d ago":
+        - time: 2d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3pnp67bikc73cb5270
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #59 from robbashea-lab/codex/vendor-filter-assurance-fix Correct Vendor filters and Assurance tab navigation Trigger Auto-Deploy Duration 1m27s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3pnp67bikc73cb5270
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #59 from robbashea-lab/codex/vendor-filter-assurance-fix Correct Vendor filters and Assurance tab navigation"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m27s
+    - link "c9fc679":
+      - /url: https://github.com/robbashea-lab/GRC/commit/c9fc67942cc1c4d4cd94c015c1e7e4d7b9df3f47
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "2d ago":
+        - time: 2d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3e17eq1p3s73f4n210
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #57 from robbashea-lab/codex/platform-visual-standardization Standardize approved Brawndo presentation across the platform without expanding Omni Trigger Auto-Deploy Duration 33.0s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3e17eq1p3s73f4n210
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #57 from robbashea-lab/codex/platform-visual-standardization Standardize approved Brawndo presentation across the platform without expanding Omni"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 33.0s
+    - link "b10e688":
+      - /url: https://github.com/robbashea-lab/GRC/commit/b10e688b16e9f3f2d4ab6a9ec62e85f9e4282f50
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "2d ago":
+        - time: 2d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3ce5d9fdbs73d64pvg
+      - img "Deploy succeeded"
+    - link "Deploy Track the selected vendor filter in memo dependencies Trigger Manual Duration 1m22s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3ce5d9fdbs73d64pvg
+      - term: Deploy
+      - definition:
+        - paragraph: Track the selected vendor filter in memo dependencies
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m22s
+    - link "fe01c38":
+      - /url: https://github.com/robbashea-lab/GRC/commit/fe01c3813bee719e2e69d1bd0b9135d8856f8924
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "2d ago":
+        - time: 2d ago
+      - generic: by
+      - generic: you
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3agpvlk1mc739vn2rg
+      - img "Deploy succeeded"
+    - link "Deploy Align pilot regression assertions with approved control overview Trigger Manual Duration 1m15s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db3agpvlk1mc739vn2rg
+      - term: Deploy
+      - definition:
+        - paragraph: Align pilot regression assertions with approved control overview
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m15s
+    - link "60ebe3f":
+      - /url: https://github.com/robbashea-lab/GRC/commit/60ebe3f83e03c17bbb84b2921a8c8d9c1fc2dd1b
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "2d ago":
+        - time: 2d ago
+      - generic: by
+      - generic: you
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db39n6e0tbcc739a5ao0
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #55 from robbashea-lab/codex/combined-release-readiness-20261007 Combined Omni, Administration and visual release with logout recovery Trigger Auto-Deploy Duration 1m20s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db39n6e0tbcc739a5ao0
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #55 from robbashea-lab/codex/combined-release-readiness-20261007 Combined Omni, Administration and visual release with logout recovery"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m20s
+    - link "5a57a2e":
+      - /url: https://github.com/robbashea-lab/GRC/commit/5a57a2e69b386147a5d90b21b43b01af234e9355
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "2d ago":
+        - time: 2d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db37v98m7kps73dc4610
+      - img "Deploy succeeded"
+    - link "Deploy Recheck password requirement during account mutations Trigger Manual Duration 1m30s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db37v98m7kps73dc4610
+      - term: Deploy
+      - definition:
+        - paragraph: Recheck password requirement during account mutations
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m30s
+    - link "c34802d":
+      - /url: https://github.com/robbashea-lab/GRC/commit/c34802dd5510cd99023076f2eac75738b3bf220f
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "2d ago":
+        - time: 2d ago
+      - generic: by
+      - generic: you
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db354hqjnfac738o1op0
+      - img "Deploy succeeded"
+    - link "Deploy Complete versioned Omni Control 1 guidance and constrained character interactions Trigger Manual Duration 1m23s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db354hqjnfac738o1op0
+      - term: Deploy
+      - definition:
+        - paragraph: Complete versioned Omni Control 1 guidance and constrained character interactions
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m23s
+    - link "5fd3fd3":
+      - /url: https://github.com/robbashea-lab/GRC/commit/5fd3fd310c2e38e360a9123baeb04e9f26e7be18
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "3d ago":
+        - time: 3d ago
+      - generic: by
+      - generic: you
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db33j48m7kps73ctllvg
+      - img "Deploy succeeded"
+    - link "Deploy Record combined dashboard verification and refine Omni close target Trigger Manual Duration 1m15s":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db33j48m7kps73ctllvg
+      - term: Deploy
+      - definition:
+        - paragraph: Record combined dashboard verification and refine Omni close target
+      - term: Trigger
+      - definition: Manual
+      - term: Duration
+      - definition:
+        - time: 1m15s
+    - link "cefc2c2":
+      - /url: https://github.com/robbashea-lab/GRC/commit/cefc2c26c99f06c86b409ed9903e0037bcdfea8e
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "3d ago":
+        - time: 3d ago
+      - generic: by
+      - generic: you
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db33b63rjlhs73824pq0
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #51 from robbashea-lab/codex/client-dashboard-priority-filters Shared client dashboard: framework-first layout and priority filters Trigger Auto-Deploy Duration 1m42s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db33b63rjlhs73824pq0
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #51 from robbashea-lab/codex/client-dashboard-priority-filters Shared client dashboard: framework-first layout and priority filters"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m42s
+    - link "7b9455b":
+      - /url: https://github.com/robbashea-lab/GRC/commit/7b9455bd64b6f6494786396e0d1c9de67504882b
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "3d ago":
+        - time: 3d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2o5k15efls73c6fk40
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #50 from robbashea-lab/codex/risks-policies-approved Apply approved Risks and Policies layouts across clients Trigger Auto-Deploy Duration 1m22s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2o5k15efls73c6fk40
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #50 from robbashea-lab/codex/risks-policies-approved Apply approved Risks and Policies layouts across clients"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m22s
+    - link "79fb270":
+      - /url: https://github.com/robbashea-lab/GRC/commit/79fb270910b818afd179d593b07b3c87a57d37b7
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "3d ago":
+        - time: 3d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2ln9jbc2fs73fo6ohg
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #49 from robbashea-lab/codex/reviews-actions-approved Apply approved Reviews and Action Items layouts Trigger Auto-Deploy Duration 1m20s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2ln9jbc2fs73fo6ohg
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #49 from robbashea-lab/codex/reviews-actions-approved Apply approved Reviews and Action Items layouts"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m20s
+    - link "1d5e26e":
+      - /url: https://github.com/robbashea-lab/GRC/commit/1d5e26eebf5f6ae67052e63479bd43f87d91779e
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "3d ago":
+        - time: 3d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2k343ncjis738lfj80
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #48 from robbashea-lab/codex/final-release-verification Patch dependency advisories and document final release verification Trigger Auto-Deploy Duration 1m48s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2k343ncjis738lfj80
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #48 from robbashea-lab/codex/final-release-verification Patch dependency advisories and document final release verification"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m48s
+    - link "efa5059":
+      - /url: https://github.com/robbashea-lab/GRC/commit/efa5059eb430a2768d6f786d4ad30c2990f2f574
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "3d ago":
+        - time: 3d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2iisrncjis738j2jpg
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #44 from robbashea-lab/codex/approved-calendar-redesign Implement approved Calendar scheduling redesign Trigger Auto-Deploy Duration 1m25s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2iisrncjis738j2jpg
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #44 from robbashea-lab/codex/approved-calendar-redesign Implement approved Calendar scheduling redesign"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m25s
+    - link "6cb6a92":
+      - /url: https://github.com/robbashea-lab/GRC/commit/6cb6a92974b5d10b71c24fd8d4686a13ebcefe3b
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "3d ago":
+        - time: 3d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2i473ncjis73codahg
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #43 from robbashea-lab/codex/assessment-findings-tab Move assessment Findings into the shared third tab Trigger Auto-Deploy Duration 1m35s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2i473ncjis73codahg
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #43 from robbashea-lab/codex/assessment-findings-tab Move assessment Findings into the shared third tab"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m35s
+    - link "89b6eb3":
+      - /url: https://github.com/robbashea-lab/GRC/commit/89b6eb318590b5608fff082cf39c9492fde4eb23
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "3d ago":
+        - time: 3d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2g3begekts73a17v30
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #42 from robbashea-lab/codex/full-width-framework-program Use approved full-width framework program cards on every client dashboard Trigger Auto-Deploy Duration 1m21s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2g3begekts73a17v30
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #42 from robbashea-lab/codex/full-width-framework-program Use approved full-width framework program cards on every client dashboard"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m21s
+    - link "9f5c256":
+      - /url: https://github.com/robbashea-lab/GRC/commit/9f5c256e2a3671e186655ad1715fc1d6b6c970ee
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "4d ago":
+        - time: 4d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2d1c6q1p3s73ehvl2g
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #47 from robbashea-lab/codex/linked-review-close Keep deep-linked Reviews closed during deferred navigation Trigger Auto-Deploy Duration 1m16s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2d1c6q1p3s73ehvl2g
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #47 from robbashea-lab/codex/linked-review-close Keep deep-linked Reviews closed during deferred navigation"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m16s
+    - link "382d10f":
+      - /url: https://github.com/robbashea-lab/GRC/commit/382d10f03a6eda3139e484cdff9d7cf60b577120
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "4d ago":
+        - time: 4d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+    - link "Deploy succeeded":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2c48jncjis73cfjej0
+      - img "Deploy succeeded"
+    - 'link "Deploy Merge pull request #46 from robbashea-lab/codex/demo-selection-isolation Isolate Demo client selection from authenticated tabs Trigger Auto-Deploy Duration 1m50s"':
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys/dep-db2c48jncjis73cfjej0
+      - term: Deploy
+      - definition:
+        - paragraph: "Merge pull request #46 from robbashea-lab/codex/demo-selection-isolation Isolate Demo client selection from authenticated tabs"
+      - term: Trigger
+      - definition: Auto-Deploy
+      - term: Duration
+      - definition:
+        - time: 1m50s
+    - link "36c54e6":
+      - /url: https://github.com/robbashea-lab/GRC/commit/36c54e61d0f5966b0ad65499e83141a3b1c08754
+    - generic: •
+    - paragraph:
+      - generic: Deployed
+      - button "4d ago":
+        - time: 4d ago
+    - button "Rollback" [disabled]:
+      - text: Rollback
+- generic: "0 services selected:"
+- button:
+  - generic: Move
+- separator
+- button:
+- iframe [id="intercom-frame"]

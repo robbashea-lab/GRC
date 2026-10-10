@@ -1,0 +1,171 @@
+- banner:
+  - button "Toggle client navigation":
+  - link "Omnisciente CLARITY FOR A STRONGER TOMORROW":
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button "Use light workspace theme":
+  - button "Your notifications":
+  - button "Staging Administrator super admin":
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button "Return to portfolio":
+    - text: Portfolio
+  - generic: O
+  - generic: Client
+  - generic: OmniBot QA — CIS IG2
+  - navigation "Client workspace":
+    - group "Work":
+      - generic: Work
+      - link "Dashboard":
+        - /url: /dashboard
+        - generic: Dashboard
+      - link "Calendar":
+        - /url: /calendar
+        - generic: Calendar
+      - link "Reviews":
+        - /url: /reviews
+        - generic: Reviews
+      - link "Action Items":
+        - /url: /action-items
+        - generic: Action Items
+    - group "Program":
+      - generic: Program
+      - link "CIS IG2":
+        - /url: /compliance/cis-ig1
+        - generic: CIS IG2
+      - link "Risks":
+        - /url: /risks
+        - generic: Risks
+      - link "Policies":
+        - /url: /policies
+        - generic: Policies
+      - link "Vendors":
+        - /url: /vendors
+        - generic: Vendors
+      - link "Evidence Library":
+        - /url: /evidence
+        - generic: Evidence Library
+    - group "Client":
+      - generic: Client
+      - link "Contacts":
+        - /url: /contacts
+        - generic: Contacts
+      - link "Systems & Scope":
+        - /url: /systems
+        - generic: Systems & Scope
+      - link "AI Governance":
+        - /url: /ai-governance
+        - generic: AI Governance
+      - link "Client Profile":
+        - /url: /client-profile
+        - generic: Client Profile
+- main:
+  - button "Open Omnibot guide" [expanded]:
+  - generic: Guided review active
+  - dialog "Guided assessment with Omnibot":
+    - button "Minimize Omnibot Guide":
+    - button "Expand Omnibot Guide":
+    - button "Close Omnibot Guide":
+    - heading "Guided assessment with Omnibot" [active] [level=2]
+    - paragraph: Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.
+    - paragraph: A practical way forward
+    - heading "Omnibot’s recommended next steps" [level=3]
+    - article:
+      - paragraph: Safeguard 15.1
+      - heading "Establish and Maintain an Inventory of Service Providers" [level=4]
+      - generic: Not Assessed
+      - list:
+        - listitem: This safeguard has not been assessed yet.
+      - button "Open safeguard 15.1"
+    - article:
+      - paragraph: Safeguard 15.2
+      - heading "Establish and Maintain a Service Provider Management Policy" [level=4]
+      - generic: Not Assessed
+      - list:
+        - listitem: This safeguard has not been assessed yet.
+      - button "Open safeguard 15.2"
+  - paragraph: CIS Controls v8.1 IG2
+  - heading "CIS IG2" [level=1]
+  - 'button "Continue assessment: 1.1 Establish and Maintain Detailed Enterprise Asset Inventory"': Continue with 1.1
+  - region "Assessment progress":
+    - 'group "CIS IG2: 1 Implemented (0.8%, 1 of 130), 0 Partially implemented (0.0%, 0 of 130), 0 Not implemented (0.0%, 0 of 130), 129 Not assessed (99.2%, 129 of 130)"':
+      - img "Implemented · 0.8% · 1 of 130 safeguards"
+      - img "Not assessed · 99.2% · 129 of 130 safeguards"
+      - generic: 0.8%
+      - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading "Assessment progress" [level=2]
+    - paragraph: 18 controls · 130 IG2 safeguards
+    - term: Implemented
+    - definition:
+      - text: "1"
+      - generic: of 130
+    - term: Assessed
+    - definition:
+      - text: "1"
+      - generic: of 130
+    - group "Assessment progress by status":
+      - 'img "Implemented: 1 of 130 safeguards, 1%"'
+      - 'img "Not assessed: 129 of 130 safeguards, 99%"'
+    - group "Filter by assessment status":
+      - button "Implemented 1":
+        - text: Implemented
+        - strong: "1"
+      - button "Partial 0":
+        - text: Partial
+        - strong: "0"
+      - button "Not implemented 0":
+        - text: Not implemented
+        - strong: "0"
+      - button "Not assessed 129":
+        - text: Not assessed
+        - strong: "129"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region "Controls":
+    - navigation "CIS IG2 location":
+      - list:
+        - button "CIS IG2"
+        - listitem: ›Control 15
+    - textbox "Search safeguards":
+      - /placeholder: Search by number or title…
+    - checkbox "Added in IG2 only · display filter; full program totals unchanged"
+    - text: Added in IG2 only · display filter; full program totals unchanged
+    - paragraph: Service Provider Management
+    - 'table "Control 15 — Service Provider Management: 4 safeguards"':
+      - rowgroup:
+        - row "Safeguard Implementation status":
+          - columnheader "Safeguard"
+          - columnheader "Implementation status"
+      - rowgroup:
+        - link "Open safeguard 15.1 Establish and Maintain an Inventory of Service Providers":
+          - cell "15.1 Establish and Maintain an Inventory of Service Providers IG1 baseline":
+            - generic: "15.1"
+            - text: Establish and Maintain an Inventory of Service Providers
+            - generic: IG1 baseline
+          - cell "Not Assessed":
+            - generic: Not Assessed
+        - link "Open safeguard 15.2 Establish and Maintain a Service Provider Management Policy":
+          - cell "15.2 Establish and Maintain a Service Provider Management Policy Added in IG2":
+            - generic: "15.2"
+            - text: Establish and Maintain a Service Provider Management Policy
+            - generic: Added in IG2
+          - cell "Not Assessed":
+            - generic: Not Assessed
+        - link "Open safeguard 15.3 Classify Service Providers":
+          - cell "15.3 Classify Service Providers Added in IG2":
+            - generic: "15.3"
+            - text: Classify Service Providers
+            - generic: Added in IG2
+          - cell "Implemented":
+            - generic: Implemented
+        - link "Open safeguard 15.4 Ensure Service Provider Contracts Include Security Requirements":
+          - cell "15.4 Ensure Service Provider Contracts Include Security Requirements Added in IG2":
+            - generic: "15.4"
+            - text: Ensure Service Provider Contracts Include Security Requirements
+            - generic: Added in IG2
+          - cell "Not Assessed":
+            - generic: Not Assessed
+- region "Notifications alt+T"

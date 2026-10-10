@@ -1,0 +1,2 @@
+# Preserve captured evidence bytes and SHA256 manifests across Windows checkouts.
+* -text

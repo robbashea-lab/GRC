@@ -1,0 +1,271 @@
+- banner:
+  - button:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: O
+  - generic: Client
+  - generic: OmniBot QA — Closeout CIS IG3
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG3
+    - link:
+      - /url: /risks
+      - generic: Risks
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG3
+  - heading [level=1]: CIS IG3
+  - button: Continue with 1.1
+  - region:
+    - generic: 5.9%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 18 controls · 153 IG3 safeguards
+    - term: Implemented
+    - definition:
+      - text: "9"
+      - generic: of 153
+    - term: Assessed
+    - definition:
+      - text: "9"
+      - generic: of 153
+    - button:
+      - text: Implemented
+      - strong: "9"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "144"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG3
+        - text: ›
+        - button: Control 3
+        - listitem: ›Safeguard 3.1
+    - textbox:
+      - /placeholder: Search by number or title…
+    - text: Safeguard scope
+    - combobox
+    - generic: Display filter; full program totals unchanged
+    - paragraph: Data Protection
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "3.1"
+            - text: Establish and Maintain a Data Management Process
+            - generic: IG1 baseline
+          - cell:
+            - generic: Implemented
+        - link:
+          - cell:
+            - generic: "3.2"
+            - text: Establish and Maintain a Data Inventory
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.3"
+            - text: Configure Data Access Control Lists
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.4"
+            - text: Enforce Data Retention
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.5"
+            - text: Securely Dispose of Data
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.6"
+            - text: Encrypt Data on End-User Devices
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.7"
+            - text: Establish and Maintain a Data Classification Scheme
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.8"
+            - text: Document Data Flows
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.9"
+            - text: Encrypt Data on Removable Media
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.10"
+            - text: Encrypt Sensitive Data in Transit
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.11"
+            - text: Encrypt Sensitive Data at Rest
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.12"
+            - text: Segment Data Processing and Storage Based on Sensitivity
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.13"
+            - text: Deploy a Data Loss Prevention Solution
+            - generic: Added in IG3
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "3.14"
+            - text: Log Sensitive Data Access
+            - generic: Added in IG3
+          - cell:
+            - generic: Not Assessed
+- region "Notifications alt+T"
+- dialog "Establish and Maintain a Data Management Process":
+  - banner:
+    - navigation "CIS IG3 location":
+      - list:
+        - button "CIS IG3"
+        - text: ›
+        - button "Control 3"
+        - listitem: ›Safeguard 3.1
+    - heading "Establish and Maintain a Data Management Process" [active] [level=2]
+    - paragraph:
+      - generic: Safeguard assessment workspace
+    - generic "Saved implementation status":
+      - generic: Implemented
+    - generic "Saved verification": Not verified
+    - navigation "Assessment navigation":
+      - button "Previous"
+      - generic: 13 of 153
+      - button "Next"
+  - tablist "Assessment sections":
+    - tab "Requirement & implementation" [selected]
+    - tab "Findings"
+  - tabpanel "Requirement & implementation":
+    - generic "Requirement summary"
+    - heading "What CIS requires" [level=3]
+    - paragraph: Official requirement · CIS v8.1 · Safeguard 3.1
+    - paragraph: Establish and maintain a documented data management process. In the process, address data sensitivity, data owner, handling of data, data retention limits, and disposal requirements, based on sensitivity and retention standards for the enterprise. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.
+    - paragraph:
+      - strong: "Required operation / trigger:"
+      - text: Review and update documentation annually, or when significant enterprise changes could affect this safeguard.
+    - link "Official CIS source":
+      - /url: https://cas.docs.cisecurity.org/en/latest/source/Controls3/#31-establish-and-maintain-a-data-management-process
+    - region "Implementation status section":
+      - heading "Implementation status" [level=3]
+      - group "Implementation status":
+        - generic: Implementation status
+        - radio "Implemented" [checked]
+        - generic: Implemented
+        - radio "Partially Implemented"
+        - generic: Partially Implemented
+        - radio "Not Implemented"
+        - generic: Not Implemented
+        - radio "Not Assessed"
+        - generic: Not Assessed
+        - radio "Not Applicable"
+        - generic: Not Applicable
+    - region "Current implementation section":
+      - heading "Current implementation" [level=3]
+      - generic: Current implementation
+      - textbox "Current implementation": OVERVIEW OmniBot QA — Closeout CIS IG3 reports the practice to establish and maintain a data management process is in place. IMPLEMENTATION BREAKDOWN In place - A documented data-management process is established and maintained. Reported as met. - The process addresses data sensitivity. Reported as met. - The process identifies data owners. Reported as met. - The process addresses data handling. Reported as met. - The process addresses retention limits based on enterprise sensitivity and retention standards. Reported as met. - The process addresses disposal requirements based on enterprise sensitivity and retention standards. Reported as met. - Documentation is reviewed and updated annually and when significant changes could affect the safeguard. Reported as met. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. SYNTHETIC QA ONLY — comprehensive workflow test; not client facts. - Preserve this exact reviewer line for 3.1. - Preserve this blank line.
+    - generic "Assessment guidance & working checklist"
+  - button "Open Omnibot guide":
+  - complementary "Omnibot invitation":
+    - paragraph: Your implementation is saved. I can help you maintain Safeguard 3.1, update a recorded fact, or review outstanding verification.
+    - button "Close invitation": ×
+  - generic: Interview complete
+  - contentinfo:
+    - status: Changes remain in your draft until saved.
+    - button "Save assessment"
+    - button "Save & next"
+  - button "Close":
+    - generic: Close
