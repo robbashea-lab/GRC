@@ -1,5 +1,28 @@
 # SOC 2 OmniBot validation and release boundary
 
+## Current real-driver correction checkpoint — 2026-10-10
+
+The frozen/deployment sections below are historical `b384b28` evidence. The
+coordinator reported actual SOC staging validation deployment
+`dep-db5blmflk1mc739e7frg`, fresh `main.7ef84294.js` / `main.fe2057c8.css`, and
+positive A1.1/CC1.1 native save/refresh/resume. Agent 2 did not use its session.
+That runtime has a now-confirmed delayed-driver cancellation defect (SOC-B02).
+Its SOC-only correction and real-Mongo evidence are in
+[mongo-lease-validation.md](mongo-lease-validation.md); final corrected commit,
+CI and hosted retest must be attributed separately, not inferred from #133.
+
+The independent reviewer reproduced B02 using staging-compatible Python 3.12.14
+and the exact pinned Motor/PyMongo versions, then independently passed the
+corrected timeout/cancellation real-Mongo probes and 77 regression tests with
+2,214 subtests. Review ownership is released; no runtime correction beyond
+the reproduced SOC lease defect or change to CIS/content/UI was made.
+
+Hosted Prestige placement is currently unavailable: the coordinator verified
+the real directory has no Prestige tenant. The earlier local 38-criterion
+Prestige campaign does not establish hosted placement or permit inventing a
+reference tenant. Real Reader/wrong-client sessions are also unavailable.
+These remain acceptance limitations, not failures disguised as mock passes.
+
 ## Frozen application and dependency
 
 - Branch: `codex/soc2-omnibot-rollout`; draft PR [#66](https://github.com/robbashea-lab/GRC/pull/66), stacked on Agent 1's PR #65.

@@ -7,6 +7,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 import unittest
 from unittest.mock import patch
+from pymongo.errors import AutoReconnect, NetworkTimeout, OperationFailure, WriteConcernError
 import guided_assessment
 import soc_guided_lease
 import test_framework_governance as harness
@@ -189,7 +190,19 @@ class SocGuidedRoutes(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual((await self.client.get(path+'/guided-assessment')).json(),before_draft)
         await self.assert_negative_retry_rejects_old_native(path,write,negative)
 
-    async def test_timed_out_and_cancelled_save_release_lease_without_draft_loss(self):
+    async def assert_lease_held_then_expire(self, row, path, payload):
+        aid=row['framework_assessment_id']
+        locks=server.db.soc_guided_locks
+        held=await locks.find_one({'_id':aid})
+        self.assertTrue(held.get('token'))
+        self.assertGreater(datetime.fromisoformat(held['until']),datetime.now(timezone.utc))
+        self.assertEqual((await self.client.put(path+'/guided-assessment',json=payload)).status_code,409)
+        self.assertEqual(await locks.find_one({'_id':aid}),held)
+        # Controlled-clock/unit boundary only; the separate real-Motor probe
+        # waits for the actual unchanged 120-second expiration.
+        await locks.update_one({'_id':aid},{'$set':{'until':(datetime.now(timezone.utc)-timedelta(seconds=1)).isoformat()}})
+
+    async def test_timed_out_and_cancelled_save_retain_lease_without_draft_loss(self):
         row,path,_,negative=await self.race_fixture()
         original=guided_assessment._save_draft
         before=(await self.client.get(path+'/guided-assessment')).json()
@@ -203,7 +216,7 @@ class SocGuidedRoutes(unittest.IsolatedAsyncioTestCase):
             response=await self.client.put(path+'/guided-assessment',json=negative)
         self.assertTrue(entered.is_set())
         self.assertEqual(response.status_code,503,response.text)
-        await self.assert_lease_released(row['framework_assessment_id'])
+        await self.assert_lease_held_then_expire(row,path,negative)
         self.assertEqual((await self.client.get(path+'/guided-assessment')).json(),before)
         entered.clear()
         with patch.object(guided_assessment,'_save_draft',side_effect=blocked):
@@ -217,9 +230,52 @@ class SocGuidedRoutes(unittest.IsolatedAsyncioTestCase):
                     request.cancel()
                     try:await request
                     except asyncio.CancelledError:pass
-        await self.assert_lease_released(row['framework_assessment_id'])
+        await self.assert_lease_held_then_expire(row,path,negative)
         self.assertEqual((await self.client.get(path+'/guided-assessment')).json(),before)
         self.assertEqual((await self.client.put(path+'/guided-assessment',json=negative)).status_code,200)
+        await self.assert_lease_released(row['framework_assessment_id'])
+
+    async def test_indeterminate_driver_errors_retain_lease_and_require_reload(self):
+        row,path,write,negative=await self.race_fixture()
+        before=(await self.client.get(path)).json()
+        errors=(NetworkTimeout('Synthetic timeout'),AutoReconnect('Synthetic connection loss'),
+                WriteConcernError('Synthetic uncertain acknowledgement'),
+                OperationFailure('Synthetic retryable write',details={'errorLabels':['RetryableWriteError']}))
+        for error in errors:
+            with self.subTest(error=type(error).__name__):
+                with patch.object(guided_assessment,'read_draft',side_effect=error):
+                    response=await self.client.patch(path,json=write)
+                self.assertEqual(response.status_code,503,response.text)
+                self.assertIn('reload',response.json()['detail'])
+                self.assertEqual((await self.client.get(path)).json(),before)
+                await self.assert_lease_held_then_expire(row,path,negative)
+        self.assertEqual((await self.client.patch(path,json=write)).status_code,200)
+        await self.assert_lease_released(row['framework_assessment_id'])
+
+    async def test_driver_deadline_is_soc_scoped_and_cleanup_has_no_expired_deadline(self):
+        from pymongo import _csot
+        row,path,write,_=await self.race_fixture()
+        collection=server.db.framework_assessments
+        locks=server.db.soc_guided_locks
+        original_write=collection.update_one
+        original_lock=locks.update_one
+        write_deadlines=[]
+        cleanup_deadlines=[]
+        async def write_cas(*args,**kwargs):
+            write_deadlines.append(_csot.get_timeout())
+            return await original_write(*args,**kwargs)
+        async def lock_cas(query,update,*args,**kwargs):
+            if update.get('$unset',{}).get('token')=='':
+                cleanup_deadlines.append(_csot.get_timeout())
+            return await original_lock(query,update,*args,**kwargs)
+        with patch.object(server.db,'framework_assessments',collection), patch.object(collection,'update_one',side_effect=write_cas), patch.object(server.db,'soc_guided_locks',locks), patch.object(locks,'update_one',side_effect=lock_cas):
+            response=await self.client.patch(path,json=write)
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(write_deadlines,[soc_guided_lease.DRIVER_TIMEOUT_SECONDS])
+        self.assertEqual(cleanup_deadlines,[None])
+        self.assertIsNone(_csot.get_timeout())
+        self.assertLess(soc_guided_lease.DRIVER_TIMEOUT_SECONDS,soc_guided_lease.SAVE_TIMEOUT_SECONDS)
+        self.assertLess(soc_guided_lease.SAVE_TIMEOUT_SECONDS,soc_guided_lease.LEASE_SECONDS)
 
     async def test_expired_holder_cannot_write_or_release_successor(self):
         row,path,_,negative=await self.race_fixture()

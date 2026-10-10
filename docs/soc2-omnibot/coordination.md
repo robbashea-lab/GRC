@@ -35,6 +35,27 @@ Latest refresh retained base `a527d4e79bfab36629b0a0b71eb10c6c018d00bb`; main wa
 
 ## Evidence boundaries
 
+### Latest coordinated correction checkpoint (2026-10-10)
+
+Agent 1 reported SOC validation deployment `dep-db5blmflk1mc739e7frg` at
+`b384b28`, with fresh assets and two positive A1.1/CC1.1 native persistence
+paths. Agent 2 neither deployed nor accessed that authenticated session. Agent
+1 retains sole ownership and held exhaustive hosted writes after SOC-B02.
+
+Agent 1 explicitly acknowledged Agent 2 ownership of the SOC-only lease/hooks
+correction. Independent reviewer Bacon reproduced the real-Motor cancellation
+defect and verified the bounded CSOT/uncertain-lease-retention correction,
+including actual 90/120-second process probes, 77 tests / 2,214 subtests, no
+edits/deployment and released review ownership. See
+[real-Mongo evidence](mongo-lease-validation.md). No CIS, auth, environment,
+dependency, provider or shared visual changes were made for this correction.
+
+The coordinator's actual hosted directory has no Prestige client; no ID is
+inferred from global branding or an old anonymous fixture. Local Prestige is
+Demo-only. Existing disabled restricted identities are not reused/enabled;
+real SOC restricted-session acceptance remains open. The two authorized
+synthetic SOC fixture paths do not authorize a new showcase/reference tenant.
+
 Source review, automated tests, Demo/local-browser tests, hosted placement, hosted authenticated writes, and restricted-session denial are separate gates. No existing CIS test closes a SOC gate. PR remains draft while material gates are unresolved.
 
 No production, main merge, Sites publication, provider-setting change, authentication change, external AI, or database reset is authorized.

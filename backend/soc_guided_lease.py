@@ -4,10 +4,12 @@ from datetime import datetime, timedelta, timezone
 import uuid
 
 from fastapi import HTTPException
-from pymongo.errors import DuplicateKeyError
+from pymongo import timeout
+from pymongo.errors import ConnectionFailure, DuplicateKeyError, PyMongoError, WriteConcernError
 
 LEASE_SECONDS = 120
 SAVE_TIMEOUT_SECONDS = 90
+DRIVER_TIMEOUT_SECONDS = 80
 
 
 class SocGuidedLease:
@@ -40,11 +42,26 @@ async def run(s, row, operation):
     if not acquired.modified_count:
         raise HTTPException(409, 'Another SOC interview or assessment save is in progress; reload before retrying')
     lease = SocGuidedLease(collection, identity, token)
+    release = True
     try:
-        # Finish/cancel before expiry, leaving the same safety margin as other leases.
-        return await asyncio.wait_for(operation(lease), timeout=SAVE_TIMEOUT_SECONDS)
+        # Cancelling a Motor future does not stop its PyMongo executor thread.
+        # Motor copies this deadline into that thread, including queued commands.
+        with timeout(DRIVER_TIMEOUT_SECONDS):
+            return await asyncio.wait_for(operation(lease), timeout=SAVE_TIMEOUT_SECONDS)
+    except asyncio.CancelledError:
+        release = False
+        raise
     except asyncio.TimeoutError as error:
+        release = False
         raise HTTPException(503, 'SOC save timed out; reload to confirm the saved state before retrying') from error
+    except PyMongoError as error:
+        if error.timeout or isinstance(error, (ConnectionFailure, WriteConcernError)) or error.has_error_label('RetryableWriteError'):
+            release = False
+            raise HTTPException(503, 'SOC save could not be confirmed; reload to confirm the saved state before retrying') from error
+        raise
     finally:
-        # An expired holder must never release a successor's lease.
-        await collection.update_one(lease.owner, {'$set': {'until': ''}, '$unset': {'token': ''}})
+        # An uncertain driver operation can outlive the request. Keep its lease
+        # until expiry rather than admit a newer interview underneath that write.
+        # Normal cleanup is outside CSOT and must not release a successor's token.
+        if release:
+            await collection.update_one(lease.owner, {'$set': {'until': ''}, '$unset': {'token': ''}})

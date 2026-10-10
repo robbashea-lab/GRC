@@ -20,6 +20,35 @@ Independent content reviewer: Laplace (no implementation ownership). Independent
 
 ## Remaining gates, not confirmed defects
 
+### Current update: real-driver cancellation defect and bounded correction
+
+- **SOC-B02 / Medium, all SOC native saves:** real Motor future cancellation
+  left its PyMongo executor pending. At `b384b28`, a native 503 immediately
+  unlocked; a newer interview revision 2 saved, then the original revision 1
+  readiness/history CAS committed. Independently reproduced on real MongoDB
+  8.0.28 with the pinned drivers and Python 3.12.14. No client record deleted.
+- Correction is SOC-only driver CSOT 80s, existing request 90s/lease 120s;
+  uncertain cancellation/timeout/network/write-acknowledgement keeps the lease.
+  Normal/validation cleanup remains owner-matched and outside CSOT. No CIS,
+  global client setting, schema migration or dependency change.
+- Implementer and independent real-driver probes passed timeout and early
+  cancellation, competing 409, actual expiry, later 200 and no late native
+  mutation. Independent regression: 77 tests / 2,214 subtests passed; patch
+  lease-file SHA256 `9577ae472c02fe47d7623bd60ac40b9167ee63e05a24527cb93f1df31bbf9c74`.
+  [Execution details](mongo-lease-validation.md). This closes the reproduced
+  delayed-send defect, not transactions or already-dispatched uncertainty.
+- Agent 1 reported validation deployment `dep-db5blmflk1mc739e7frg` at exact
+  `b384b28` and two positive A1.1/CC1.1 hosted save/refresh/resume paths. That
+  deployment predates B02's correction; exhaustive hosted writes are held for
+  a corrected exact candidate. Agent 2 still owns no staging/session slot.
+- No hosted Prestige tenant exists in the coordinator's current directory.
+  Local 38-criterion Prestige evidence is Demo-only; do not create/rename a
+  hosted reference tenant to manufacture that check.
+- Real restricted-account SOC access, exhaustive hosted lifecycle and
+  after-last-check clock skew/server-dispatch ambiguity remain open. Read the
+  entries below as the earlier checkpoint, not a claim that B02 was merely an
+  unverified hypothetical or that staging is still on the pre-SOC source.
+
 - Shared staging slot has not been transferred by Agent 1. No SOC deployment or authenticated fixture mutation occurred.
 - Real read-only/wrong-client sessions for SOC route/writer/file checks are not available to Agent 2; mocked tests do not close this gate.
 - Hosted logout/login resume, actual durable Mongo persistence, provider-source/fresh-asset verification and risk-bearing hosted lifecycle cases remain unexecuted.

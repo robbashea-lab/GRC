@@ -108,6 +108,11 @@ Re-ran the content self-check after F2: all 61 criteria and the 155-group / 174-
 
 ## Bounded validation performed for this content handoff
 
+**Historical content-only handoff checkpoint.** The Pending language below
+describes the initial author's disposition before independent review; it is
+not the current 61-row review status. The completed content dispositions above
+and current `validation.md`/defect register supersede that checkpoint.
+
 Executed a Node assert-based self-check: exact ordered equality to all 61 canonical IDs; exact titles/categories; source-page equality to reviewed guidance; globally unique question IDs and distinct prompts; locally unique group IDs; nonempty prompt/help/topic and substantive/context remediation; the two unscored optional text prompts intentionally have no remediation; valid choices; context-condition references and ordering; optional text excluded from substantive choices; 2-4 groups and at most 8 questions per criterion, below the 8-group/20-question ceilings. Inventory: 155 groups and 174 questions = 166 substantive selects + 6 contexts + 2 optional text prompts; 11 conditional children. Independently simulated Relevant, Outside, and Not sure activation for every definition and verified conditional children are active only for Relevant. Verified all answer IDs and objectives appear in the 61-row matrix, all review dispositions remain Pending, and both files have no trailing whitespace. This is structural/content-contract evidence, not runtime, browser, backend, or hosted execution.
 
 Independent source preflight was reported by the coordinator as confirming the edition and all 61 page mappings with the CC1.1/CC1.2/Privacy/Type 2 constraints above. It is not independent approval of this new candidate. Final dispositions remain Pending.

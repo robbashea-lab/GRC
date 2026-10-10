@@ -2,6 +2,16 @@
 
 Prepared 2026-10-10 for Agent 1, the sole Render deployment/shared authenticated-browser owner. This is an execution plan, **not executed hosted evidence**. Do not repeat the completed source, content or local campaigns to substitute for these cases.
 
+**Current update:** Agent 1 reported b384 validation deployment
+`dep-db5blmflk1mc739e7frg` and two positive A1.1/CC1.1 hosted paths. SOC-B02
+was then reproduced on a real local database and narrowly corrected; affected
+hosted writes must be rerun on the corrected candidate after exact CI. No
+Agent 2 session/deployment slot transferred. Prestige is absent from the actual
+hosted directory: H02 remains unavailable, not permission to create/rename it.
+H23 now has bounded real process/deadline evidence in
+[mongo-lease-validation.md](mongo-lease-validation.md), not a universal fencing
+or hosted-authentication pass. H20/H21 restricted identities remain unavailable.
+
 ## Candidate and ownership
 
 - PR #66 remains draft/unmerged, stacked on PR #65 base `a527d4e79bfab36629b0a0b71eb10c6c018d00bb`.
@@ -13,7 +23,7 @@ Prepared 2026-10-10 for Agent 1, the sole Render deployment/shared authenticated
 
 ## Deployment prerequisites and data compatibility
 
-No new configuration variables, services, package changes, seeds or destructive schema migration are required. The SOC-specific `soc_guided_locks` collection is lazy/additive in the existing database. Existing tenant authorization still precedes lease acquisition. The application bounds an operation to 90 seconds inside a 120-second lease; this is not a cross-document transaction guarantee.
+No new configuration variables, services, package changes, seeds or destructive schema migration are required. The SOC-specific `soc_guided_locks` collection is lazy/additive in the existing database. Existing tenant authorization still precedes lease acquisition. The correction bounds driver work to 80 seconds inside the existing 90-second coroutine timeout and 120-second lease; uncertain outcomes retain the lease until expiry. This is not a cross-document transaction guarantee.
 
 Retain every CIS question version and reader/writer inherited from PR #65, plus `soc2-omni-1`, SOC `summary_review` answer/version metadata, native `guided_assessment_source` and both interview/native histories. A narrative-only legacy record must not acquire fabricated answers. An older interview without reviewed-answer metadata must require explicit wording review rather than erase or silently approve it.
 
