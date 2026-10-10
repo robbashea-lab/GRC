@@ -11,7 +11,7 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn
 jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'test-request-id'}));
 jest.mock('./RecordDrawer',()=>()=>null);
 jest.mock('./AssigneeSelect',()=>({value,onChange,disabled})=><select aria-label="Owner" value={value||''} disabled={disabled} onChange={e=>onChange(e.target.value||null)}><option value="">Unassigned</option><option value="david">David Wallace</option></select>);
-jest.mock('./ui/dialog',()=>{const R=require('react'),Close=R.createContext(null);return {Dialog:({children,onOpenChange})=><Close.Provider value={onOpenChange}><div>{children}</div></Close.Provider>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}<Close.Consumer>{close=><button onClick={()=>close(false)}>Close</button>}</Close.Consumer></div>,DialogTitle:R.forwardRef((props,ref)=><h2 {...props} ref={ref}/>),DialogDescription:({children})=><p>{children}</p>};});
+jest.mock('./ui/dialog',()=>{const R=require('react'),Close=R.createContext(null);return {Dialog:({open,children,onOpenChange})=>open?<Close.Provider value={onOpenChange}><div>{children}</div></Close.Provider>:null,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}<Close.Consumer>{close=><button onClick={()=>close(false)}>Close</button>}</Close.Consumer></div>,DialogTitle:R.forwardRef((props,ref)=><h2 {...props} ref={ref}/>),DialogDescription:({children})=><p>{children}</p>};});
 
 let root,container,record,close,related;
 const button=name=>[...document.querySelectorAll('button')].find(b=>b.textContent===name);

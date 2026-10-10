@@ -53,7 +53,7 @@ test('applicable CIS clients start clean and unrelated frameworks reject access'
   const cis=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data;
   const interview=(await api.get('/framework_assessments/'+cis.assessments.find(a=>a.definition_id==='1.1').framework_assessment_id+'/guided-assessment')).data;
   expect(interview.answers).toEqual({});expect(interview.revision).toBe(0);
-  for(const [framework,cid] of [['soc-2','demo_prestige'],['iso-27001','demo_dunder']]){
+  for(const [framework,cid] of [['iso-27001','demo_dunder']]){
     const w=(await api.get('/frameworks/'+framework,{params:{client_id:cid}})).data;
     if(w.assessments?.length)await expect(api.get('/framework_assessments/'+w.assessments[0].framework_assessment_id+'/guided-assessment')).rejects.toMatchObject({response:{status:404}});
   }
@@ -260,7 +260,9 @@ test('CIS work context uses native relationships and non-CIS work keeps its orig
   for(const key of ['soc-2','iso-27001']){
     editStore(db=>{db.framework_assessments.push({...row,framework_assessment_id:'demo-other-'+key,framework_key:key,definition_id:key==='soc-2'?'CC1.1':'A.5.1'});});
     const other=(await api.get('/frameworks/'+key,{params:{client_id:'demo_brawndo'}})).data.work['demo-other-'+key];
-    expect(other).not.toHaveProperty('context_complete');expect(other).not.toHaveProperty('priority_records');expect(other).not.toHaveProperty('task_ids');
+    for(const field of ['context_complete','priority_records','task_ids']){
+      if(key==='soc-2')expect(other).toHaveProperty(field);else expect(other).not.toHaveProperty(field);
+    }
   }
 });
 

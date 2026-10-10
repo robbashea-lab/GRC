@@ -5,6 +5,7 @@ import cis from '@catalogs/cisIG1.json';
 import {catalogForVersion,versionForSafeguard,visibleQuestions} from '@/lib/guidedAssessment';
 import {omniGroups} from '@/lib/refinedOmni';
 import {omniCisSummary} from '@/lib/omniCisSummary';
+import {socGuidedCatalog} from '@/lib/socGuidedAssessment';
 import ig1Cases from '../../../docs/omni-cis-rollout/ig1-status-cases.json';
 import ig2Cases from '../../../docs/omni-cis-rollout/ig2-status-cases.json';
 import ig3Cases from '../../../docs/omni-cis-rollout/ig3-status-cases.json';
@@ -227,7 +228,12 @@ test.each([[1,'1.1'],[2,'16.2'],[3,'4.12']])('IG%s %s read-only component contex
 test.each(['scope-disabled','group-inapplicable','foreign-client','soc-2','iso-27001'])('excluded context %s cannot mount or write a CIS guide through the native parent',async kind=>{
   setup(kind==='group-inapplicable'?'1.3':'1.1',1,{completed:true});if(kind==='scope-disabled')configurationExtra.guided_assessment_enabled=false;
   if(kind==='foreign-client')native.client_id='synthetic-foreign';
-  if(kind==='soc-2'){native.framework_key='soc-2';native.definition_id='CC1.1';}
+  if(kind==='soc-2'){native.framework_key='soc-2';native.definition_id='CC1.1';stored={...stored,version:socGuidedCatalog.version,answers:{},completed:false,revision:0,narrative:'',result:null};configurationExtra.categories=['security'];}
   if(kind==='iso-27001'){native.framework_key='iso-27001';native.definition_id='A.5.1';}
-  const baseline=copy(native);await render();expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();expect(native).toEqual(baseline);expect(api.put).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+  const baseline=copy(native);await render();
+  if(kind==='soc-2'){
+    expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();expect(document.querySelector('[data-testid="soc-guided-assessment"]')).toBeTruthy();
+    await open();expect(document.body.textContent).toContain('Omnibot guide · Criterion CC1.1');expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
+  }else expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
+  expect(native).toEqual(baseline);expect(api.put).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
