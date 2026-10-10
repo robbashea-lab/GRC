@@ -91,13 +91,21 @@
     },
     {
       "id": "QA-EXT-BROWSER-CLEANUP",
-      "kind": "blocked_execution",
-      "severity": "closeout_pending",
-      "actual": "Original coordinator tab input/focus timeout; fresh same-browser tab can read/reload but semantic input does not change UI. No current JS dialog reported. QAIG3 still active.",
-      "expected": "Selective current showcase spotchecks and reversible Archive/Restore confirmation of the completed synthetic IG3 fixture",
-      "status": "pending; not a demonstrated application defect or permission denial",
-      "reference": "hosted/browser-execution-limit.json",
-      "action": "Recover normal browser control, complete affected read-only placements and archive only the completed IG3 fixture; retain active QAIG2 for restricted tests."
+      "kind": "completed_bounded_execution",
+      "severity": "resolved_with_read_only_limits",
+      "actual": "Normal supported browser navigation recovered in existing authorized session. All three targeted read-only initial guides/context/native preservation checked. Exact QAIG3 is archived after refresh; audit Archive success and Restore control verified without restoration.",
+      "expected": "Selective current read-only showcase spotchecks; confirmed reversible archive and supported Restore availability for the completed synthetic IG3 fixture without restoring it",
+      "status": "completed for supported read-only scope; deeper write-dependent showcase questions explicitly unexecuted",
+      "reference": "hosted/targeted-closeout-20261010/targeted-closeout-results.json",
+      "action": "No browser credential entry needed for this SuperAdmin checkpoint. Do not reconcile Brawndo or advance showcase groups through Save; preserve history and read-only limit. QAIG2 stays active for restricted tests."
+    },
+    {
+      "id": "QA-CLOSEOUT-CI130",
+      "kind": "verification",
+      "expected": "Actual completed GitHub CI130 result on documentation head a10114df486fea16fa1393f94fc4e5aacd60dbd0",
+      "status": "passed: backend, frontend full suite/both builds and Release gate all completed/success",
+      "reference": "workflow/ci130-confirmed.json",
+      "runtimeUnchanged": true
     }
   ],
   "confirmedNewDefects": [
@@ -183,5 +191,64 @@
     "liveSourceVerified": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
     "hostedEvidence": "hosted/hosted-corrections-6a4c.json"
   },
-  "independentCodeDisposition": "No material source/code/content blocker: 153 refreshed source reviews, 4280 focused tests, 18 exact-source checks, seven current-matrix checks and nine hosted/CI evidence checks passed. Release acceptance false because actual restricted-user denial remains blocked; current showcase spotchecks and IG3 cleanup remain pending."
+  "independentCodeDisposition": "No material source/code/content blocker: 153 refreshed source reviews, 4280 focused tests, 18 exact-source checks, seven current-matrix checks and nine hosted/CI evidence checks passed. Release acceptance false because actual restricted-user denial remains blocked; targeted current read-only guides/context/native preservation and IG3 archive now confirmed, with deeper showcase groups/reconciliation explicitly unexecuted.",
+  "targetedCheckpoint": {
+    "capturedAt": "2026-10-10T18:36:55.543Z",
+    "evidence": "hosted/targeted-closeout-20261010/targeted-closeout-results.json",
+    "runtime": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+    "deployment": "dep-db56e2d9fdbs73bpcq50",
+    "documentationHeadChecked": "a10114df486fea16fa1393f94fc4e5aacd60dbd0",
+    "ci130": {
+      "run": 38069960767,
+      "status": "completed/success",
+      "frontend": 114265180391,
+      "backend": 114265180255,
+      "releaseGate": 114269899967
+    },
+    "targetedPlacements": [
+      {
+        "client": "Initech",
+        "group": 2,
+        "safeguard": "17.5",
+        "result": "read-only entry/context/initial-guide/preservation passed; deeper conditional display unexecuted",
+        "limit": "Later conditional group requires Save & next, which persists interview progress; not executed on read-only showcase. Existing isolated6a4 correction proof remains separate."
+      },
+      {
+        "client": "Hooli",
+        "group": 3,
+        "safeguard": "17.5",
+        "result": "read-only entry/context/initial-guide/preservation passed; deeper conditional display unexecuted",
+        "limit": "Later conditional group requires Save & next, which persists interview progress; not executed on read-only showcase. Existing isolated6a4 correction proof remains separate."
+      },
+      {
+        "client": "Brawndo",
+        "group": 1,
+        "safeguard": "1.1",
+        "result": "reference entry/visible guide/answer-history/native preservation passed; reconciliation and later groups unexecuted",
+        "limit": "Existing saved-assessment reconciliation warning: Compare & continue may change interview state; not activated. No additional review, answer edits or saves. No new full visual/pointer/animation regression pass claimed."
+      }
+    ],
+    "cleanup": {
+      "client": "OmniBot QA — Closeout CIS IG3",
+      "clientId": "cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7",
+      "group": 3,
+      "status": "archived confirmed after refresh",
+      "action": "Already archived when inspected; no new Archive or Restore issued this checkpoint. Prior unconfirmed archive is now verified by persisted row and success audit.",
+      "audit": {
+        "event": "Archive",
+        "outcome": "success",
+        "dateTimeDisplayed": "10/10/2026, 12:53:36 PM",
+        "previous": "active",
+        "next": "archived"
+      },
+      "proof": "Absent from refreshed active portfolio; exact data-client-id on archived row; Restore client available but not executed; retained audit39 events includes prior assessment history; actual archive event detail success.",
+      "restoreExecuted": false,
+      "historyDeletion": false,
+      "ig2RetainedActive": true,
+      "ig2ClientId": "cli_c65cd90ca6d92c2a86f5cffc8972a19f22bf1d791ec0cc9ec1684a811f0bd1b0"
+    },
+    "browserBlocker": null,
+    "restrictedServerDenial": "blocked; specific Reader access/activation approval and direct normal credential entry remain pending; separate Manager-to-Reader transition not approved",
+    "noRuntimeChangeOrRedeploy": true
+  }
 }

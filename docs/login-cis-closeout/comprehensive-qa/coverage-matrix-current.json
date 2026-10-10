@@ -14,7 +14,7 @@
     "sourceQuestion": "153 fresh source/question reviews; 1571 question fields /469 substantive mappings",
     "decision": "153 independently reviewed baseline rows /9653 recorded scenarios, not exhaustive combinations; current selective condition and exact uncertainty/history tests separately run",
     "localRendered": "339 original local browser placements; final connected component actual153/339 paths with mocked API/Auth/Org/Dialog boundary",
-    "hostedPlacement": "339 actual baseline b90 authenticated placements retained; selective corrected-candidate showcase spotchecks pending because browser input became unavailable. No claim of 339 fresh6a4 placements.",
+    "hostedPlacement": "339 actual baseline b90 authenticated placements retained. Three targeted6a4 showcase initial guide/context/native-preservation checks separately executed; later17.5 groups and1.1 reconciliation unexecuted under read-only boundary. No claim of339 fresh6a4 placements or saves.",
     "hostedWrite": "54 original lifecycle/52 native-text observations plus22 additional b90 isolated design representatives and two6a4 affected corrections; not153 or339 hosted save lifecycles."
   },
   "releaseAccepted": false,
@@ -1864,6 +1864,14 @@
           3
         ],
         "meaning": "Read-only opening/guide/current questions/native navigation (two specifically authorized synthetic interview-only exceptions documented separately), not save lifecycles."
+      },
+      "targetedHostedReadOnlyEvidence": {
+        "reference": "hosted/targeted-closeout-20261010/targeted-closeout-results.json",
+        "runtime": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+        "clients": [
+          "Brawndo"
+        ],
+        "scope": "Visible initial guide/client/group/native preservation only; no interview or assessment write. Limits retained in result artifact."
       }
     },
     {
@@ -155267,6 +155275,15 @@
         "layer": "authenticated hosted normal UI on isolated IG3 fixture; independent evidence review, not independent browser replay",
         "reference": "hosted/hosted-corrections-6a4c.json",
         "safeguard": "17.5"
+      },
+      "targetedHostedReadOnlyEvidence": {
+        "reference": "hosted/targeted-closeout-20261010/targeted-closeout-results.json",
+        "runtime": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+        "clients": [
+          "Initech",
+          "Hooli"
+        ],
+        "scope": "Visible initial guide/client/group/native preservation only; no interview or assessment write. Limits retained in result artifact."
       }
     },
     {
@@ -165082,5 +165099,6 @@
         "meaning": "Read-only opening/guide/current questions/native navigation (two specifically authorized synthetic interview-only exceptions documented separately), not save lifecycles."
       }
     }
-  ]
+  ],
+  "targetedCheckpoint": "hosted/targeted-closeout-20261010/targeted-closeout-results.json"
 }

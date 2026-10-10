@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "capturedAt": "2026-10-10T18:44:22.372Z",
+  "capturedAt": "2026-10-10T18:40:33.195Z",
   "runtime": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
   "interpretation": "Integrity manifest, not proof of functional test execution. Original and current revision/layer boundaries remain in each artifact. This file excludes itself.",
   "uniqueRows": 153,
@@ -9,7 +9,7 @@
     130,
     153
   ],
-  "jsonFilesParsed": 37,
+  "jsonFilesParsed": 35,
   "files": [
     {
       "path": ".gitattributes",
@@ -23,8 +23,8 @@
     },
     {
       "path": "closeout.md",
-      "bytes": 17726,
-      "sha256": "ebfb11e6d242f865273d5c9f57b9cad8b2c77d2fd7f163de201813626c2df000"
+      "bytes": 17193,
+      "sha256": "e858c584a6aeeba9474ec3c82698bcd7413c3fed37be8daf2d75364ec844071e"
     },
     {
       "path": "content/153-row-source-question-review.json",
@@ -780,21 +780,6 @@
       "path": "independent/independent-hosted-correction-review-6a4c.md",
       "bytes": 2231,
       "sha256": "ff435b62b5c31550a6b6da3c0314ef560b1727f28251707b695d5ee05cd6a2e5"
-    },
-    {
-      "path": "independent/independent-targeted-closeout-20261010.json",
-      "bytes": 3001,
-      "sha256": "e2f7a71478206f14b821b11d68165d344951f68eb758641e977581dc77be05fa"
-    },
-    {
-      "path": "independent/independent-targeted-closeout-20261010.md",
-      "bytes": 1241,
-      "sha256": "b694601dc27d351935491043a24b54a2ca7a115c6128c88ec840161234a52f0a"
-    },
-    {
-      "path": "independent/targeted-reviewed-manifest-183.json",
-      "bytes": 32488,
-      "sha256": "a4633692bcbc37cc25acca581419578355ffef7c3e4f3fa6346944ef11c1b1bf"
     },
     {
       "path": "local/backend-focused.log",
