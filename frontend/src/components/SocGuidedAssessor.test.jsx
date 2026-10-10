@@ -78,6 +78,31 @@ test('replacement cancellation, native failure and Save & close preserve reviewe
   props.onSaveAssessment.mockResolvedValueOnce(false);await click('Save & close');await click('Yes, update assessment');expect(document.body.textContent).toContain('Your interview and wording are retained');expect(document.querySelector('[aria-label="Omnibot implementation summary"]')).toBeTruthy();
   await click('Save & close');await click('Yes, update assessment');expect(document.querySelector('.omni-workspace-window')).toBeNull();
 });
+test('unconfirmed native save retains exact wording and does not claim rejection or success',async()=>{
+  await render();await open();await complete();
+  const textarea=document.querySelector('[aria-label="Omnibot implementation summary"]'),reviewed='OVERVIEW\nReviewed synthetic practice.\n\nIMPLEMENTATION BREAKDOWN\n- Retained wording.\n\nITEMS TO ADDRESS\n- Confirm saved state.';
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(textarea,reviewed);textarea.dispatchEvent(new Event('input',{bubbles:true}));});
+  props.onSaveAssessment.mockResolvedValueOnce(false);await click('Save & close');
+  expect(document.body.textContent).toContain('The assessment save could not be confirmed');
+  expect(document.body.textContent).toContain('Reload the saved assessment before retrying');
+  expect(document.body.textContent).not.toContain('The assessment was not saved');
+  expect(document.body.textContent).not.toContain('Assessment saved.');
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(reviewed);
+  expect(stored.narrative).toBe(reviewed);expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);
+  expect(props.current.implementation).toBe('');expect(document.querySelector('.omni-workspace-window')).toBeTruthy();
+});
+test.each(['native','interview'])('new %s failure clears the prior success notice without closing or retrying',async stage=>{
+  await render();await open();await complete();await click('Save assessment');
+  expect(document.body.textContent).toContain('Assessment saved.');
+  const wording=document.querySelector('[aria-label="Omnibot implementation summary"]').value;
+  if(stage==='native')props.onSaveAssessment.mockResolvedValueOnce(false);else failWrite=true;
+  await click('Save & close');
+  expect(document.body.textContent).not.toContain('Assessment saved.');
+  expect(document.body.textContent).toContain(stage==='native'?'The assessment save could not be confirmed':'Synthetic save unavailable');
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(wording);
+  expect(document.querySelector('.omni-workspace-window')).toBeTruthy();
+  expect(props.onSaveAssessment).toHaveBeenCalledTimes(stage==='native'?2:1);
+});
 test('native drafts block summary application and read-only mode blocks progress writes',async()=>{
   await render({disabled:true});await open();expect(button('Start').disabled).toBe(true);expect(api.put).not.toHaveBeenCalled();
   await render({disabled:false});await complete();await render({assessmentDirty:true});expect(button('Save assessment').disabled).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();

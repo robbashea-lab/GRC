@@ -62,6 +62,22 @@ Final commit/CI and any hosted retest are recorded in the PR/coordination record
 they must not be inferred from this local table. The two executable regressions
 fail the original immediate-unlock behavior at the expected 409 assertion.
 
+### Frozen correction and current hosted attribution
+
+The correction was committed at `5c3594c2c5b012e547c86990286f4a1790ae5fa0`;
+the committed lease hash above was independently reread and matches the
+executed probe correction. [CI #134](https://github.com/robbashea-lab/GRC/actions/runs/38092857199)
+passed at this exact source. Agent 1 verified Live Render deployment
+`dep-db5cbcbrjlhs73d606o0` and subsequently completed all 61 positive native
+save/refresh/resume paths. Those are coordinator-owned browser results, not
+Agent 2's real-Mongo probe results or restricted-user evidence.
+
+SOC-U10 is a separate, subsequent two-line frontend message/notice correction:
+the boolean native-save adapter must not describe an uncertain outcome as
+“not saved” or retain an earlier success notice after failure. It does not
+change this deadline/lease implementation or strengthen its guarantees. Its
+exact source/CI and affected hosted retest are recorded on PR #66.
+
 ## Reproduce using an already approved disposable Mongo process
 
 From the repository root, with existing project runtime/test dependencies:
@@ -98,7 +114,10 @@ preparation was reused, without touching its old data/certificates or cleanup:
   store, elevated operation or install. Local implementing interpreter 3.13;
   independent reproducer used staging-compatible Python 3.12.14.
 - The new log/data and original failing probes are retained locally as evidence.
-  Stopping the exact run-owned process is separate from deleting resources.
+  PID 22884 was stopped after its exact loopback bind/port/data path were
+  verified; only UUID-named probe databases were dropped. Remaining databases
+  were admin/config/local. Stopping that run-owned process is separate from
+  deleting retained resources.
   No old PR #24 certificate/private-key/data/package cleanup is authorized here.
 
 ## Remaining limitations

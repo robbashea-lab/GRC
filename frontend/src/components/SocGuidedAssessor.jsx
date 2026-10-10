@@ -101,13 +101,14 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
   function requestSave(close=false){setCloseAfter(close);if(current?.implementation?.trim()||current?.status!=='not_assessed')setConfirmUpdate(true);else commit(close);}
   async function commit(close=false){
     if(blocked||relatedDraft||pending.current||!onSaveAssessment||!narrative.trim()||edited&&basis!==JSON.stringify(answers))return;
+    setNotice('');
     const expected=JSON.stringify(native.current.form),token=native.current.current?.last_saved;
     const data=await persist(index,true,{narrative});if(!data)return;
     pending.current=true;setBusy(true);setConfirmUpdate(false);
     try{
       const latest=native.current;
       if(latest.assessmentDirty||latest.relatedDraft||JSON.stringify(latest.form)!==expected||latest.current?.last_saved!==token)throw new Error('The native assessment or a related-record draft changed while the interview was saving. Review it before retrying.');
-      if(!await latest.onSaveAssessment({implementation:data.narrative,status:data.result.status,guided_assessment_source:source(data)},expected))throw new Error('The assessment was not saved. Your interview and wording are retained; review the native error and retry.');
+      if(!await latest.onSaveAssessment({implementation:data.narrative,status:data.result.status,guided_assessment_source:source(data)},expected))throw new Error('The assessment save could not be confirmed. Your interview and wording are retained. Review the native error. Reload the saved assessment before retrying.');
       if(active.current){setNotice('Assessment saved. Evidence verification and linked work are unchanged.');setBasis(JSON.stringify(answers));if(close){setConfirmClose(false);changeMode('collapsed');}}
     }catch(e){if(active.current)setError(formatError(e));}finally{pending.current=false;if(active.current)setBusy(false);}
   }

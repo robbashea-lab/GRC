@@ -12,11 +12,12 @@ Independent content reviewer: Laplace (no implementation ownership). Independent
 | SOC-U04 / Medium | All: unsupported retained interview version could break rendering. | Restore an unknown future version with saved text. | SOC controller. | Bounded error, retained draft, disabled generation/application; component regression passed. |
 | SOC-U05 / Medium | All: manual wording review warning disappeared after a second remount. | Complete, manually edit, change a substantive answer, progress save, reopen twice. | SOC interview metadata/controller/Demo/native validation. | Add SOC-only reviewed answer/version basis; incomplete/older metadata requires review. Independent frozen native/remount probes passed. |
 | SOC-U06 / Medium | All: own native-save attribution could bypass changed scope. | Save own proposal then change configured scope before another update. | SOC controller. | Fresh base/context comparison before own-source rebase; scope rejection regression passed. |
-| SOC-B01 / Medium | All: native write could race with a newer interview and save an older readiness proposal. | Independent ASGI interleaves before and after fresh read. Mongo single-document atomicity does not serialize separate records. | SOC-only interview/native persistence boundary. | SOC-only expiring database-backed lease, ownership checks and bounded operation timeout. Independent ASGI race probes and regression tests passed. Real Mongo multiworker/process-stall/clock-skew/cancellation behavior remains unverified; this is not a cross-document transaction claim. |
+| SOC-B01 / Medium | All: native write could race with a newer interview and save an older readiness proposal. | Independent ASGI interleaves before and after fresh read. Mongo single-document atomicity does not serialize separate records. | SOC-only interview/native persistence boundary. | SOC-only expiring database-backed lease, ownership checks and bounded operation timeout. Independent ASGI races and subsequent real-Mongo contention/pre-check stall/clock/cancellation probes passed their bounded cases. SOC-B02 corrects the independently reproduced delayed-driver defect; neither is a cross-document transaction/fencing claim. |
 | SOC-U07 / Low | All: history click event was interpreted as pagination request. | Click first Interview history with no previous page. | SOC controller. | Explicit zero-argument handler; pagination regression passed. |
 | SOC-T01 / Low | Test harness: closed confirmation dialogs rendered actionable Close buttons; shared native Close assertion hit a hidden mock button. | Focused native suite; runtime dialogs correctly honor open state. | Existing SOC component test mock only. | Mock honors open; native close assertion unchanged and passes. |
 | SOC-U08 / Low | Null optional Org context crashed isolated connected component tests. | Full regression run outside an Org provider. | SOC controller context label only. | Use existing guarded context pattern; focused workspace/native tests pass. |
 | SOC-U09 / Medium | All: same-client directory/name refresh silently discarded unsaved answers and manual summary. | Independent frozen-candidate probe; two new regressions failed with interview reads 1→2. | SOC controller hydration and two regression cases. | Separate display-name context from hydration identity using a current-name ref; no effect suppression. Independent rereview: reads 1→1, answers/wording/dirty state retained, current name in replacement confirmation, explicit reload still requires approval. All 75 component tests passed. |
+| SOC-U10 / Medium | All: uncertain native callback said “not saved”; success → later native/progress failure retained “Assessment saved.” | Independently reproduced rendered component-contract assertions on `5c3594c2`; independent Jest teardown did not finish normally. Implementer added three durable regressions: all failed before correction with clean exit 1, then all passed within five suites / 1,093 passing tests (normal exit 0). Not a hosted injected-fault result. | SOC controller outcome text/notice and its component tests only. | Clear notice after the native commit guard, before progress save; describe the unconfirmed outcome without claiming rollback and require authoritative native reload before retry. Exact wording/draft, open-window and no-automatic-retry assertions retained. Both optimized builds succeeded. Correction CI/hosted revision is recorded on PR #66. No writer/content/auth/shared-style change. |
 
 ## Remaining gates, not confirmed defects
 
@@ -37,21 +38,24 @@ Independent content reviewer: Laplace (no implementation ownership). Independent
   lease-file SHA256 `9577ae472c02fe47d7623bd60ac40b9167ee63e05a24527cb93f1df31bbf9c74`.
   [Execution details](mongo-lease-validation.md). This closes the reproduced
   delayed-send defect, not transactions or already-dispatched uncertainty.
-- Agent 1 reported validation deployment `dep-db5blmflk1mc739e7frg` at exact
-  `b384b28` and two positive A1.1/CC1.1 hosted save/refresh/resume paths. That
-  deployment predates B02's correction; exhaustive hosted writes are held for
-  a corrected exact candidate. Agent 2 still owns no staging/session slot.
-- No hosted Prestige tenant exists in the coordinator's current directory.
-  Local 38-criterion Prestige evidence is Demo-only; do not create/rename a
-  hosted reference tenant to manufacture that check.
+- Agent 1 subsequently verified corrected Live `dep-db5cbcbrjlhs73d606o0` /
+  exact `5c3594c2`, CI #134 success, fresh assets and all 61 positive native
+  save/refresh/resume paths across 155 groups. Earlier `b384b28` placement/two
+  save evidence remains separate. The SOC-U10 follow-up still requires its
+  own exact source/CI/publication and affected hosted feedback checks. Agent 2
+  owns no staging/session slot.
+- Prestige was absent from the coordinator's hosted directory. Agent 1 has
+  separate permission to create one empty permanent 38-criterion showcase;
+  record its actual ID and placement before claiming hosted proof. Local
+  38-criterion Prestige evidence remains Demo-only; never copy its assessments.
 - Real restricted-account SOC access, exhaustive hosted lifecycle and
   after-last-check clock skew/server-dispatch ambiguity remain open. Read the
   entries below as the earlier checkpoint, not a claim that B02 was merely an
   unverified hypothetical or that staging is still on the pre-SOC source.
 
-- Shared staging slot has not been transferred by Agent 1. No SOC deployment or authenticated fixture mutation occurred.
+- Shared staging slot has not been transferred. Agent 1 performed the reported SOC deployment and synthetic fixture campaign; Agent 2 did not use that session.
 - Real read-only/wrong-client sessions for SOC route/writer/file checks are not available to Agent 2; mocked tests do not close this gate.
-- Hosted logout/login resume, actual durable Mongo persistence, provider-source/fresh-asset verification and risk-bearing hosted lifecycle cases remain unexecuted.
+- The coordinator's exact `5c3594c2` source/assets and 61 positive durable save/refresh/resume cases are completed. Remaining logout/login, restricted access and targeted risk-bearing/fault cases must retain their individual executed/blocked dispositions.
 - Agent 1's documented CIS restricted-access gates remain owned by Agent 1; this change neither waives nor closes them.
 
 The feature remains draft and is not a production-readiness, audit, or compliance conclusion.

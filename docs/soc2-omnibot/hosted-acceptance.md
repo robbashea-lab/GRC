@@ -1,21 +1,42 @@
 # SOC Omni coordinated hosted acceptance
 
-Prepared 2026-10-10 for Agent 1, the sole Render deployment/shared authenticated-browser owner. This is an execution plan, **not executed hosted evidence**. Do not repeat the completed source, content or local campaigns to substitute for these cases.
+Prepared 2026-10-10 for Agent 1, the sole Render deployment/shared authenticated-browser owner. The H01–H23 table remains the acceptance plan; the checkpoint below separates reported executions from pending cases. Do not repeat completed source, content or local campaigns to substitute for hosted cases.
 
-**Current update:** Agent 1 reported b384 validation deployment
-`dep-db5blmflk1mc739e7frg` and two positive A1.1/CC1.1 hosted paths. SOC-B02
-was then reproduced on a real local database and narrowly corrected; affected
-hosted writes must be rerun on the corrected candidate after exact CI. No
-Agent 2 session/deployment slot transferred. Prestige is absent from the actual
-hosted directory: H02 remains unavailable, not permission to create/rename it.
-H23 now has bounded real process/deadline evidence in
-[mongo-lease-validation.md](mongo-lease-validation.md), not a universal fencing
-or hosted-authentication pass. H20/H21 restricted identities remain unavailable.
+**Current checkpoint:** Agent 1 verified Live deployment
+`dep-db5cbcbrjlhs73d606o0` / source
+`5c3594c2c5b012e547c86990286f4a1790ae5fa0`, healthy API and fresh
+`main.7ef84294.js` / `main.fe2057c8.css`. It completed all 61 positive native
+save/refresh/resume cases: 59 fresh cases and two normal retained-interview
+updates, spanning all 155 question groups. Exact multiline wording and
+SOC-native status were checked separately from existing friendly labels.
+Earlier `b384b28` evidence is only 61 placements and two native saves; it does
+not substitute for these corrected-runtime executions. Targeted H09–H22
+results must be recorded separately by the coordinator.
+
+SOC-U10 was then independently reproduced at the component boundary: an
+unconfirmed native result said “not saved,” and a later failed attempt retained
+the previous success notice. The accompanying SOC-only message correction
+changes neither the catalog nor persistence. Its exact new CI/source/deployment
+and affected hosted retest must be read back before claiming publication.
+
+No Agent 2 session/deployment slot transferred. Prestige was absent in the
+hosted directory; Agent 1 subsequently received separate authorization to
+create one empty permanent showcase with 38 criteria, without copying Demo
+assessments. Its persisted ID is
+`cli_28568b9f2db30bc11977775bc203fac65eecefd9f6cc0bfb2146739b611eca7c`:
+33 Security/Common plus three Availability and two Confidentiality, all Not
+Assessed; Privacy/Processing Integrity remain off. Eight normal unscheduled,
+unowned Reviews, 17 honestly Unsure policy responses and no people or operating
+history were imported. Read-only placement remains a separate coordinator case.
+H20/H21 restricted identities remain unavailable; their authorization is
+separate from showcase creation. H23 has bounded real process/deadline evidence
+in [mongo-lease-validation.md](mongo-lease-validation.md), not universal fencing
+or hosted-authentication proof. **Deployed for validation — final acceptance pending.**
 
 ## Candidate and ownership
 
 - PR #66 remains draft/unmerged, stacked on PR #65 base `a527d4e79bfab36629b0a0b71eb10c6c018d00bb`.
-- Frozen runtime: `b384b28d121a698f162cf4701a25e5158fed8da9`; [CI #133](https://github.com/robbashea-lab/GRC/actions/runs/38082617286) passed on this exact SHA. Subsequent documentation commits do not change application files.
+- Verified deployed baseline: `5c3594c2c5b012e547c86990286f4a1790ae5fa0`; [CI #134](https://github.com/robbashea-lab/GRC/actions/runs/38092857199) passed on this exact SHA. The subsequent SOC-U10 correction is not yet this deployment; final source and CI are recorded on PR #66. Documentation alone does not require redeployment.
 - Target: existing `https://omnisciente-staging.onrender.com`, service `srv-db1s0cugekts73f72reg`. No main merge, Sites publication, production, provider settings, account/role/membership/owner changes or database reset.
 - Agent 2 has no transferred staging/browser/account/fixture slot. Agent 1 may execute the coordinated cases itself or explicitly reserve a bounded slot. Do not use its CIS fixtures or disabled restricted identity.
 - Before deployment, Agent 1 must read actual live source, current pending deployments and the current approved composite. Older deployment references in `validation.md` are historical, not a current live-source claim.
@@ -27,7 +48,7 @@ No new configuration variables, services, package changes, seeds or destructive 
 
 Retain every CIS question version and reader/writer inherited from PR #65, plus `soc2-omni-1`, SOC `summary_review` answer/version metadata, native `guided_assessment_source` and both interview/native histories. A narrative-only legacy record must not acquire fabricated answers. An older interview without reviewed-answer metadata must require explicit wording review rather than erase or silently approve it.
 
-There is no prior hosted SOC recovery target yet. After SOC writes, prefer a tested compatible forward correction. Do not use older main/Login-only/CIS-only code as a blind rollback or reset/reseed records. A proposed recovery revision must first demonstrate that it preserves all stored current/historical CIS and SOC versions. Capture actual prior deployment/source before publication without treating it as data-compatible after new SOC writes.
+After SOC writes, prefer a tested compatible forward correction. `5c3594c2` / `dep-db5cbcbrjlhs73d606o0` is the corrected-writer baseline for the message-only follow-up, not permission to recover to `b384b28` (SOC-B02) or older main/Login-only/CIS-only code. A proposed recovery revision must demonstrate that it preserves all stored current/historical CIS and SOC versions. Never reset/reseed records.
 
 ## Evidence record
 
@@ -72,7 +93,7 @@ Create only two clearly labelled **Agent 2 SOC staging QA** clients through norm
 | H13 | Change answers after manual summary editing; save progress and remount twice; review/retain wording or explicitly refresh from answers | Manual wording retained; stale conclusions cannot silently apply; reviewed-answer basis survives remount; explicit regeneration required before replacement |
 | H14 | Make a native text draft and separately an unfinished Finding/Review/comment/Control draft; attempt guided native save/navigation; cancel close | Native/related drafts block native summary application/unsafe navigation, not progress saves; cancellation preserves drafts; saved verification/checklists/Controls/Reviews/Evidence/Findings/Actions unchanged |
 | H15 | Two permitted views of the same fixture; change native assessment or interview in one; attempt stale application in the other; repeat submit rapidly | Conflict/review path, no silent last-writer overwrite or duplicate native assessment event; reload/cancel retains unsaved wording until explicitly discarded |
-| H16 | Observe a controlled save failure only through an existing supported browser/test facility; retry after restoring normal connectivity | No false success/navigation, exact draft retained, no native conclusion after failed save; safe recheck/retry rather than infinite retry. Do not stop shared services or alter security/provider settings to force failure |
+| H16 | Observe a controlled save failure only through an existing supported browser/test facility; recheck authoritative state and retry only when appropriate | Definite validation rejection leaves native state unchanged. Lost acknowledgement/timeout/cancellation is **unconfirmed**, not proof of rollback: no success or “not saved” claim; retain exact wording, remain open, reload the saved assessment before retrying. Clear any earlier success notice and do not retry automatically. Do not stop shared services or alter security/provider settings to force failure |
 | H17 | Begin a new review and explicitly save a revision; inspect interview history and native assessment history; manually edit the native text later | Earlier answers/write-ups/source attribution retained; changed native baseline requires explicit comparison; no inference of new interview answers from legacy text or checklist selections |
 | H18 | Owner coordinates the exclusive sign-out/sign-in window; human enters credentials/MFA normally; reopen A/B | Same server-held answers, exact native text/status and history. Logout may revoke the administrator's other sessions: never do this while another agent uses them |
 | H19 | 1440/1024/768, light/dark, keyboard focus/Escape, shared launcher movement/resize/minimize and physical pointer drag if supported | Approved shared interaction/geometry retained, no clipping or broken controls; report unsupported pointer/device actions as not executed |
@@ -88,7 +109,7 @@ Every design receives a positive hosted path; targeted negative/conditional/life
 | H22 | In a fixture's approved direct-request interface, tamper framework/criterion/category, result status, unrelated native fields, version/revision/lineage and reviewed-answer basis | Disabled category/program 404; unsupported/invalid data 409/422; foreign/ineligible records denied by normal auth. Existing tests document these responses; do not modify global permissions |
 | H23 | Separately controlled real-Mongo multiworker harness with approved process/fault controls: concurrent interview/native operations, lease expiry/stall/cancel/clock boundary and recovery | Expiring holder cannot release successor; no stale native result or silent data loss. ASGI/mongomock interleaving and general CI Mongo tests do not establish this proof |
 
-H20/H21 require authorized restricted sessions not currently handed to Agent 2. H23 requires controlled process-level access not available through normal administrator UI. Neither requirement justifies new accounts, changes to authentication, shared service restarts or broader infrastructure provisioning. Leave cases not executed until the precise resource is available.
+H20/H21 require authorized restricted sessions not currently handed to Agent 2. H23's recorded real-Mongo process probes close their bounded local reproductions, not the remaining after-last-check/server-dispatch limitations or hosted restricted access. None justifies new accounts, authentication changes, shared-service restarts or broader infrastructure provisioning. Leave unexecuted cases open until their precise resource is available.
 
 ## Closeout
 

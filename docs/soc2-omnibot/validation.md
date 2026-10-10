@@ -1,29 +1,62 @@
 # SOC 2 OmniBot validation and release boundary
 
-## Current real-driver correction checkpoint — 2026-10-10
+## Current corrected-runtime acceptance checkpoint — 2026-10-10
 
-The frozen/deployment sections below are historical `b384b28` evidence. The
-coordinator reported actual SOC staging validation deployment
-`dep-db5blmflk1mc739e7frg`, fresh `main.7ef84294.js` / `main.fe2057c8.css`, and
-positive A1.1/CC1.1 native save/refresh/resume. Agent 2 did not use its session.
-That runtime has a now-confirmed delayed-driver cancellation defect (SOC-B02).
-Its SOC-only correction and real-Mongo evidence are in
-[mongo-lease-validation.md](mongo-lease-validation.md); final corrected commit,
-CI and hosted retest must be attributed separately, not inferred from #133.
+The sections explicitly headed historical below retain earlier `b384b28`
+evidence. Current corrected-writer source is
+`5c3594c2c5b012e547c86990286f4a1790ae5fa0`, tree
+`9bc3e5a2cb5bebcb9032f0206ccfec25eb082d0a`.
+[Release verification #134](https://github.com/robbashea-lab/GRC/actions/runs/38092857199)
+passed at that exact provider SHA: full frontend tests, both optimized builds,
+backend checks and the release gate. The current offline backend run passed
+743 tests / 3,215 subtests, with eight existing FastAPI deprecation warnings.
+Its bounded SOC-B02 correction and real-Mongo evidence are in
+[mongo-lease-validation.md](mongo-lease-validation.md).
+
+Agent 1 verified actual Live deployment `dep-db5cbcbrjlhs73d606o0`, the full
+`5c3594c2` source, healthy API and fresh `main.7ef84294.js` /
+`main.fe2057c8.css`. It reported 61/61 hosted positive native saves, refreshes
+and resumes across 155 groups: 59 fresh cases plus two normal updates of the
+earlier A1.1/CC1.1 interviews. Manual wording and history were preserved.
+Agent 2 did not use that session. Earlier `b384b28` supplied 61 placements
+and two native saves, not this campaign. Targeted negative/access cases are
+separate; consult the coordinator's final H01–H23 dispositions.
 
 The independent reviewer reproduced B02 using staging-compatible Python 3.12.14
 and the exact pinned Motor/PyMongo versions, then independently passed the
 corrected timeout/cancellation real-Mongo probes and 77 regression tests with
-2,214 subtests. Review ownership is released; no runtime correction beyond
-the reproduced SOC lease defect or change to CIS/content/UI was made.
+2,214 subtests. The current correction hash remains
+`9577ae472c02fe47d7623bd60ac40b9167ee63e05a24527cb93f1df31bbf9c74`.
+It closes the reproduced delayed-send defect, not all server-dispatch or
+after-last-check concurrency risks.
 
-Hosted Prestige placement is currently unavailable: the coordinator verified
-the real directory has no Prestige tenant. The earlier local 38-criterion
-Prestige campaign does not establish hosted placement or permit inventing a
-reference tenant. Real Reader/wrong-client sessions are also unavailable.
-These remain acceptance limitations, not failures disguised as mock passes.
+Independent source/component review then reproduced SOC-U10: unconfirmed
+native saves were described as “not saved,” and a later failed attempt retained
+the previous success notice. Three implementing regression cases failed on
+the old controller with normal Jest exit 1. The accompanying two-line SOC-only
+correction clears the old notice before any new commit attempt and asks the
+operator to reload authoritative native state before retrying an unconfirmed
+save. No writer, version, content, permission, authentication or style changed.
+Final correction SHA/CI/hosted retest are recorded on PR #66, not inferred from
+the prior `5c3594c2` deployment or the independent reproduction's incomplete
+Jest teardown. The implementing corrected campaign then completed normally:
+five focused suites / 1,093 tests passed (SOC controller, native workspace,
+SOC evaluator, Demo adapter and CIS comprehensive compatibility), including
+all three new regressions. Both optimized builds succeeded: authenticated
+`main.22e382e4.js` / `main.fe2057c8.css`, Demo `main.b389fd6b.js` /
+`main.30d7a029.css`. Existing large-bundle and Node `fs.F_OK` advisories remain.
+Controller SHA256: `62fa7f7a0e52d7df5e8c29ac39294a96e4f228519d63fc87de9c634b0a3742cd`.
 
-## Frozen application and dependency
+Prestige was absent from hosted records; Agent 1 received separate permission
+to create an empty 38-criterion showcase. Its actual persisted ID is
+`cli_28568b9f2db30bc11977775bc203fac65eecefd9f6cc0bfb2146739b611eca7c`,
+all 38 Not Assessed, no copied Demo facts/answers; eight normal unscheduled,
+unowned Reviews and 17 Unsure policy responses. Read-only placement remains
+its own coordinator result. Real SOC Reader
+and wrong-client sessions remain unavailable. Showcase creation is not access
+authorization. **Deployed for validation — final acceptance pending.**
+
+## Historical frozen application and dependency (before SOC-B02/SOC-U10)
 
 - Branch: `codex/soc2-omnibot-rollout`; draft PR [#66](https://github.com/robbashea-lab/GRC/pull/66), stacked on Agent 1's PR #65.
 - Agreed base: `a527d4e79bfab36629b0a0b71eb10c6c018d00bb`. Base runtime: `6a4c0c7612195605c39d3285bf11c2560e15d74e`.
@@ -52,9 +85,9 @@ Content reviewer Laplace and functional/security reviewer Bacon had no implement
 - Content/source/decision review: all 61 criteria passed. 1,917 independently generated in-memory cases produced no JS/Python difference or assertion failure, including 1,098 optional-prose invariance cases and 46 targeted Privacy fulfillment cases. This is content/decision evidence, not API/database/browser acceptance.
 - Functional review of `94680c4`: 1,151 tests across nine frontend suites, 47 backend tests with 2,196 subtests and three independent ASGI race/metadata probes passed. It reproduced SOC-U09 rather than approving the candidate without qualification.
 - SOC-U09: two regressions failed before correction (same-client refresh read count 1→2); after correction, all 75 SOC component tests and independent probes passed, including retained unsaved answers, manual multiline wording, dirty indicator, current-name replacement confirmation and protected explicit reload. Final independent disposition is attributed to `b384b28d121a698f162cf4701a25e5158fed8da9` and matching file hashes.
-- Previously reported stale-scope, repeated-remount manual-review and interview/native race defects passed the independent retest. Real Mongo multiworker/process-stall, clock-skew and in-flight cancellation cases remain unverified.
+- Previously reported stale-scope, repeated-remount manual-review and interview/native race defects passed the independent retest. Subsequent real-Mongo multiworker/pre-check stall/clock/cancellation executions are recorded separately in the current checkpoint and real-Mongo report; they do not establish universal fencing.
 
-## Automated checks actually executed
+## Historical automated checks actually executed (through b384b28)
 
 Commands used the repository's existing dependencies and scripts; no package manifest/lockfile upgrades, authentication changes or new runtime services.
 
@@ -111,14 +144,14 @@ Both Agent 2 local fixtures were archived reversibly through Client Management. 
 
 ## Open hosted/release gates
 
-Agent 1 retains exclusive Render deployment/shared authenticated-session ownership. No staging handoff was recorded. Agent 2 did not deploy, navigate that session, create hosted clients, reuse restricted identities or alter provider configuration. Existing reference service `srv-db1s0cugekts73f72reg` / deployment `dep-db56e2d9fdbs73bpcq50` is not a SOC publication.
+Agent 1 retains exclusive Render deployment/shared authenticated-session ownership. No staging handoff was recorded. Agent 2 did not deploy, navigate that session, create hosted clients, reuse restricted identities or alter provider configuration. Current service is `srv-db1s0cugekts73f72reg`; the coordinator's corrected `5c3594c2` deployment and positive saves are recorded above. Old `dep-db56e2d9fdbs73bpcq50` is historical, not the current source.
 
 Not executed, therefore not passed:
 
-1. Exact corrected SOC source publication and fresh served-asset/provider-source verification in Render staging.
-2. Real authenticated SOC positive writes/reload/logout-login resume, history, native edits, concurrency, duplicate-submit and controlled failed-save retry in hosted fixtures.
+1. Publication/fresh-asset verification and affected hosted retest of the subsequent SOC-U10 message correction; the `5c3594c2` deployment itself is verified.
+2. Remaining targeted H09–H19 hosted lifecycle/fault/logout scenarios as separately attributed by the coordinator; all 61 `5c3594c2` positive native save/refresh/resume paths are completed, not pending.
 3. Real Reader and wrong-client denial of SOC route/interview/native writes under existing authorized accounts; mocked/Demo denial does not close this material gate.
-4. Real Mongo multiworker/process-stall, clock-skew and cancellation behavior of the SOC-specific lease. Its bounded serialization is not a cross-document transaction guarantee.
+4. After-last-check takeover/clock skew and already-dispatched command ambiguity. Recorded real-Mongo contention, pre-check stall/clock and cancellation probes passed their bounded cases; serialization is not a cross-document transaction/fencing guarantee.
 5. Full physical-pointer drag/docking and every negative answer permutation. All criterion-positive designs plus targeted local branches were tested; every permutation was not.
 
 Agent 1's own pending CIS restricted-access gates remain separate and unwaived. PR #66 remains draft/unmerged while required acceptance remains unresolved. Main, production and Sites are unchanged; no external AI/API dependency was introduced.
@@ -129,4 +162,4 @@ After exact CI and independent review finish, Agent 1 must record an exclusive s
 
 Resume checkpoint 2026-10-10: fresh fetch retained main `911706ce`, PR #65/base `a527d4e`, frozen tested SOC runtime `b384b28` and evidence-only remote head `7fcdcb0`, with clean worktree and terminal CI #133 success. Agent 1 reported its Render browser connection recovered and is rechecking actual provider state; its earlier empty-inventory limitation must not be repeated as current. No staging/session slot transferred to Agent 2 and no hosted pass was recorded. The [coordinator hosted runbook](hosted-acceptance.md) is prepared, not executed, and separates read-only/administrator fixture checks from restricted-session and process-level gates.
 
-The first SOC release must retain both current and historical CIS readers/writers inherited from the agreed base, plus `soc2-omni-1`, SOC reviewed-answer metadata and native source/history compatibility. Prefer a narrow verified forward correction. Do not deploy older main or a Login-only/CIS-only writer after SOC interviews exist; do not reset/reseed records as rollback. Any rollback target must be tested to read and preserve these versions before use. No compatible prior hosted SOC rollback target exists yet because SOC has not been deployed.
+Every SOC revision must retain current and historical CIS readers/writers inherited from the agreed base, plus `soc2-omni-1`, SOC reviewed-answer metadata and native source/history compatibility. Prefer a narrow verified forward correction. Do not deploy older main, the defective `b384b28` writer, or Login-only/CIS-only code after SOC interviews exist; never reset/reseed records. The verified `5c3594c2` / `dep-db5cbcbrjlhs73d606o0` writer is unchanged by the message correction, but any recovery candidate still needs explicit compatible-source verification.
