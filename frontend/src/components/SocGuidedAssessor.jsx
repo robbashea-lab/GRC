@@ -24,6 +24,9 @@ export default function SocGuidedAssessor(props){
 
 function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,draftSummaries={},contextComplete=false,onSelect,onViewAll,form,assessmentDirty=false,relatedDraft=false,onDraftChange,onSaveAssessment,disabled=false}){
   const org=useOrg(),clientName=org?.clients?.find(client=>client.client_id===clientId)?.name||(org?.currentClient?.client_id===clientId?org.currentClient.name:null)||'The organization';
+  // A directory refresh changes display context, not interview identity. Explicit
+  // hydration uses the latest name without reloading and discarding dirty work.
+  const clientNameRef=useRef(clientName);clientNameRef.current=clientName;
   const key='guided-pilot-ui:'+user.user_id+':'+clientId+':soc-2',initial=preferences(key),panelId=useId(),stateId=useId();
   const [mode,setMode]=useState(record&&new URLSearchParams(window.location.search).get('guided')==='pilot'?'expanded':'collapsed');
   const [prompt,setPrompt]=useState(!initial.invitationsDisabled),[draft,setDraft]=useState(null),[answers,setAnswers]=useState({}),[step,setStep]=useState(0),[view,setView]=useState('position');
@@ -50,13 +53,13 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
     setDraft(data);setAnswers(data.answers||{});setStep(data.step||0);setNarrative(data.narrative||'');saved.current={answers:JSON.stringify(data.answers||{}),narrative:data.narrative||''};
     if(restoring){
       let manual=!!data.narrative;
-      try{manual=manual&&data.narrative!==socGuidedResult(id,data.answers||{},data.version,clientName).narrative;}catch{ /* Retain unreadable drafts; the validation alert prevents application. */ }
+      try{manual=manual&&data.narrative!==socGuidedResult(id,data.answers||{},data.version,clientNameRef.current).narrative;}catch{ /* Retain unreadable drafts; the validation alert prevents application. */ }
       setEdited(manual||!!data.narrative&&!data.summary_review);
       // Completion alone is not wording approval: retained metadata binds the
       // wording to its reviewed answers, including across failed saves/reloads.
       setBasis(data.summary_review?.version===data.version?JSON.stringify(data.summary_review.answers):'');
     }
-  },[id,clientName]);
+  },[id]);
   useEffect(()=>{
     if(!route)return;const controller=new AbortController();
     api.get(route,{signal:controller.signal}).then(({data})=>{if(!controller.signal.aborted){adopt(data,true);setLoaded(true);}}).catch(e=>{if(!controller.signal.aborted){setError(formatError(e));setLoaded(true);}});

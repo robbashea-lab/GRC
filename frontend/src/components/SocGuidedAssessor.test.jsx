@@ -6,9 +6,9 @@ import api from '@/lib/api';
 
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'soc-actor',role:'super_admin'}})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({clients:[{client_id:'soc-fixture',name:'Agent 2 SOC fixture'}]})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 const copy=value=>JSON.parse(JSON.stringify(value)),fingerprint='a'.repeat(64);
-let root,container,stored,props,failWrite;
+let root,container,stored,props,failWrite,mockOrg;
 const button=name=>[...document.querySelectorAll('button')].find(item=>item.textContent.trim()===name);
 async function click(name){const target=button(name);expect(target).toBeTruthy();expect(target.disabled).toBe(false);await act(async()=>target.click());}
 async function render(extra={}){props={...props,...extra};await act(async()=>root.render(<SocGuidedAssessor {...props}/>));}
@@ -18,7 +18,7 @@ function setup(id){
   props={clientId:'soc-fixture',configuration:{categories:['security','availability','confidentiality','processing_integrity','privacy']},record:current,current,form:copy(current),onSaveAssessment:jest.fn(async()=>true),onDraftChange:jest.fn()};
 }
 beforeEach(()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();window.history.replaceState({},'', '/');container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);failWrite=false;setup('CC1.1');
+  global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();window.history.replaceState({},'', '/');container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);failWrite=false;mockOrg={clients:[{client_id:'soc-fixture',name:'Agent 2 SOC fixture'}]};setup('CC1.1');
   api.get.mockImplementation(async path=>({data:path.endsWith('/history')?{items:[],has_more:false}:copy(stored)}));
   api.put.mockImplementation(async (_path,body)=>{if(failWrite)throw new Error('Synthetic save unavailable');if(body.expected_revision!==stored.revision)throw new Error('Stale revision');stored={...stored,...copy(body),revision:stored.revision+1,generated_at:body.completed?'2026-10-10T12:00:00Z':null};return {data:copy(stored)};});
 });
@@ -48,6 +48,29 @@ test('failed progress save retains answers, group and native values; retry succe
   await act(async()=>document.querySelectorAll('.omni-answer-choices button').forEach(item=>{if(item.textContent==='Yes')item.click();}));
   failWrite=true;await click('Save & next');expect(document.body.textContent).toContain('Synthetic save unavailable');expect(document.body.textContent).toContain(group.title);expect(stored.revision).toBe(0);expect(props.onSaveAssessment).not.toHaveBeenCalled();
   failWrite=false;await click('Save & next');expect(stored.revision).toBe(1);
+});
+test('same-client display-name refresh retains unsaved answers without rehydration',async()=>{
+  await render();await open();await click('Start');
+  await act(async()=>document.querySelectorAll('.omni-answer-choices button').forEach(item=>{if(item.textContent==='No')item.click();}));
+  const reads=api.get.mock.calls.length;
+  mockOrg={clients:[{client_id:'soc-fixture',name:'Renamed SOC fixture'}]};await render();
+  expect(api.get.mock.calls.length).toBe(reads);
+  expect(document.querySelector('.omni-answer-choices [aria-pressed="true"]').textContent).toBe('No');
+  expect(document.body.textContent).toContain('Interview edits are not saved yet');
+  expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+test('same-client display-name refresh retains unsaved manual write-up and uses current confirmation name',async()=>{
+  props.current={...props.current,implementation:'Existing native wording',status:'in_progress'};props.form=copy(props.current);
+  await render();await open();await complete();
+  const textarea=document.querySelector('[aria-label="Omnibot implementation summary"]');
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(textarea,'Reviewed manual wording\nwith a retained second line.');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
+  const reads=api.get.mock.calls.length;
+  mockOrg={clients:[{client_id:'soc-fixture',name:'Renamed SOC fixture'}]};await render();
+  expect(api.get.mock.calls.length).toBe(reads);
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Reviewed manual wording\nwith a retained second line.');
+  expect(document.body.textContent).toContain('Interview edits are not saved yet');
+  await click('Update assessment');expect(document.body.textContent).toContain('Renamed SOC fixture — Criterion CC1.1');
+  await click('Cancel');expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
 test('replacement cancellation, native failure and Save & close preserve reviewed work',async()=>{
   props.current={...props.current,status:'in_progress',implementation:'Existing manual SOC text'};props.form=copy(props.current);
