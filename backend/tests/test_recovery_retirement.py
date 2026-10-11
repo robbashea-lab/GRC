@@ -191,7 +191,9 @@ class RecoveryRetirementTests(unittest.IsolatedAsyncioTestCase):
         self.mail.assert_not_awaited()
 
     async def test_overlapping_issuance_has_one_current_credential_and_single_redemption(self):
-        await asyncio.gather(self.issue(), self.issue())
+        results = await asyncio.gather(*(self.client.post('/api/auth/forgot-password',
+            json={'email': 'member@example.com'}) for _ in range(2)))
+        self.assertTrue(all(result.status_code == 200 for result in results))
         tokens = [re.search(r'reset-password\?token=([^"< ]+)', call.kwargs['html'])[1]
                   for call in self.mail.await_args_list]
         self.assertGreaterEqual(len(tokens), 1)
