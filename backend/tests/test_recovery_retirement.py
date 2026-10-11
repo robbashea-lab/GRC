@@ -52,6 +52,23 @@ class RecoveryRetirementTests(unittest.IsolatedAsyncioTestCase):
         result = await self.client.patch('/api/users/member', json={'email': 'new@example.com'})
         self.assertEqual(result.status_code, 200, result.text)
 
+    async def existing_auth_material(self):
+        jwt = server.create_access_token('member', 'member@example.com')
+        opaque = secrets.token_urlsafe(32)
+        await server.db.sessions.insert_one({'user_id': 'member', 'session_token': opaque,
+            'environment': server.security_runtime.environment(), 'created_at': server._now(),
+            'expires_at': (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()})
+        for token in (jwt, opaque):
+            self.client.headers['Authorization'] = 'Bearer ' + token
+            self.assertEqual((await self.client.get('/api/auth/me')).status_code, 200)
+        return jwt, opaque
+
+    async def assert_auth_material_revoked(self, material):
+        for token in material:
+            self.client.headers['Authorization'] = 'Bearer ' + token
+            self.assertEqual((await self.client.get('/api/auth/me')).status_code, 401)
+        self.assertEqual(await server.db.sessions.count_documents({'user_id': 'member'}), 0)
+
     async def test_old_reset_cannot_replace_changed_password(self):
         token = await self.issue()
         replacement = await self.change_password()
@@ -232,15 +249,63 @@ class RecoveryRetirementTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_cleanup_failure_cannot_keep_an_old_link_current(self):
         token = await self.issue()
+        material = await self.existing_auth_material()
+        replacement = secrets.token_urlsafe(24)
         self.client._transport.raise_app_exceptions = False
         with patch.object(server, '_retire_recovery_generation', AsyncMock(side_effect=RuntimeError('synthetic cleanup failure'))):
             self.sign_in('member')
             result = await self.client.patch('/api/me/password', json={
-                'current_password': self.password, 'new_password': secrets.token_urlsafe(24)})
+                'current_password': self.password, 'new_password': replacement})
             self.assertEqual(result.status_code, 500)
         before = await server.db.users.find_one({'user_id': 'member'})
+        self.assertTrue(server.verify_password(replacement, before['password_hash']))
+        await self.assert_auth_material_revoked(material)
         self.assertEqual((await self.redeem(token)).status_code, 400)
         self.assertEqual(await server.db.users.find_one({'user_id': 'member'}), before)
+
+    async def test_reset_cleanup_failure_cannot_keep_prior_sessions_accepted(self):
+        token = await self.issue()
+        material = await self.existing_auth_material()
+        before = await server.db.users.find_one({'user_id': 'member'})
+        replacement = secrets.token_urlsafe(24)
+        self.client._transport.raise_app_exceptions = False
+        with patch.object(server, '_retire_recovery_generation', AsyncMock(side_effect=RuntimeError('synthetic cleanup failure'))):
+            result = await self.client.post('/api/auth/reset-password', json={
+                'token': token, 'new_password': replacement})
+            self.assertEqual(result.status_code, 500)
+        after = await server.db.users.find_one({'user_id': 'member'})
+        self.assertTrue(server.verify_password(replacement, after['password_hash']))
+        for field in ['status', 'role', 'client_ids', 'email']:
+            self.assertEqual(after[field], before[field])
+        await self.assert_auth_material_revoked(material)
+        self.assertEqual((await self.redeem(token)).status_code, 400)
+        self.assertEqual(await server.db.users.find_one({'user_id': 'member'}), after)
+
+    async def test_failed_session_revocation_is_not_reported_as_success(self):
+        for action in ['self_password', 'reset']:
+            with self.subTest(action=action):
+                await server.db.users.update_one({'user_id': 'member'}, {'$set': {
+                    'password_hash': server.hash_password(self.password)}})
+                token = await self.issue()
+                await self.existing_auth_material()
+                self.client._transport.raise_app_exceptions = False
+                collection = server.db.sessions
+                delete = type(collection).delete_many
+                async def failed_revocation(instance, *args, **kwargs):
+                    if instance.name == 'sessions':
+                        raise RuntimeError('synthetic revocation failure')
+                    return await delete(instance, *args, **kwargs)
+                with patch.object(type(collection), 'delete_many', failed_revocation), \
+                     patch.object(server, '_retire_recovery_generation', AsyncMock()) as cleanup:
+                    if action == 'self_password':
+                        self.sign_in('member')
+                        result = await self.client.patch('/api/me/password', json={
+                            'current_password': self.password, 'new_password': secrets.token_urlsafe(24)})
+                    else:
+                        result = await self.redeem(token)
+                    self.assertEqual(result.status_code, 500)
+                    self.assertNotIn('"ok":true', result.text)
+                    cleanup.assert_not_awaited()
 
     async def test_lost_password_write_acknowledgment_still_retires_old_material(self):
         token = await self.issue()

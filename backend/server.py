@@ -947,9 +947,9 @@ async def reset_password_endpoint(body: ResetIn):
     )
     if changed.matched_count != 1:
         raise HTTPException(400, "Invalid or expired reset link")
-    await _retire_recovery_generation(account)
-    # Kill all existing OAuth sessions for this user so any stolen cookie stops working.
+    # Required revocation must precede ancillary recovery-row cleanup.
     sessions_del = await db.sessions.delete_many({"user_id": rec["user_id"]})
+    await _retire_recovery_generation(account)
     await audit(account, "password_reset", "user", rec["user_id"])
     return {"ok": True, "sessions_revoked": sessions_del.deleted_count}
 
@@ -1011,8 +1011,9 @@ async def update_me_password(body: MePasswordIn, user: Dict = Depends(get_curren
     )
     if changed.matched_count != 1:
         raise HTTPException(409, "Password changed during this request; sign in again before retrying")
-    await _retire_recovery_generation(full)
+    # Required revocation must precede ancillary recovery-row cleanup.
     revoked = await db.sessions.delete_many({"user_id": user["user_id"]})
+    await _retire_recovery_generation(full)
     await audit(user, "password_change", "user", user["user_id"], meta={"self": True})
     return {"ok": True, "sessions_revoked": revoked.deleted_count}
 
