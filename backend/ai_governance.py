@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional, Literal
 from fastapi import APIRouter, Depends, HTTPException, Header
-from pydantic import BaseModel, Field, ConfigDict, StrictBool
+from pydantic import BaseModel, Field, ConfigDict, StrictBool, model_validator
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 import review_occurrences
@@ -37,6 +37,22 @@ class AIInput(BaseModel):
     oversight_owner_id: Optional[str] = None
     oversight_notes: str = ''
     governance_notes: str = ''
+
+class AILinkInput(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    kind: Literal['risks','findings','tasks','policies','requirements','vendors']
+    id: str = Field(min_length=1, max_length=160)
+    classification: str = 'Context'
+    source: str = ''
+    rationale: str = ''
+
+    @model_validator(mode='after')
+    def valid_relationship(self):
+        if not self.id.strip(): raise ValueError('A concrete record identifier is required')
+        if self.classification not in CATALOG['relationship_classes']: raise ValueError('Invalid relationship classification')
+        if self.classification.startswith(('Explicit','Required')) and not (self.source.strip() and self.rationale.strip()):
+            raise ValueError('Requirement claims need an authoritative source and applicability rationale')
+        return self
 
 def screening(row):
     answers = row.get('screening') or {}
@@ -213,17 +229,12 @@ def router_for(s):
             # The alert initiates reassessment through the existing Review; no automatic duplicate.
             return await view({**row,'material_change_at':at,'material_change_note':body['note'],'updated_at':at})
     @router.post('/ai_systems/{aid}/links')
-    async def link_ai(aid:str,body:dict,user=Depends(s.get_current_user)):
+    async def link_ai(aid:str,body:AILinkInput,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True)
         if row['status']=='retired': raise HTTPException(409,'Retired AI is historical')
-        kind=body.get('kind');key=s.ID_FIELD_MAP.get(kind)
-        if kind not in ('risks','findings','tasks','policies','requirements','vendors') or not key: raise HTTPException(422,'Unsupported relationship')
-        target=await s._authorized_parent(kind,body.get('id'),user)
+        target=await s._authorized_parent(body.kind,body.id,user)
         if target['client_id']!=row['client_id']: raise HTTPException(422,'Relationship must belong to the same client')
-        classification=body.get('classification','Context')
-        if classification not in CATALOG['relationship_classes']: raise HTTPException(422,'Invalid relationship classification')
-        if classification.startswith(('Explicit','Required')) and not (body.get('source','').strip() and body.get('rationale','').strip()): raise HTTPException(422,'Requirement claims need an authoritative source and applicability rationale')
-        link={'kind':kind,'id':body['id'],'classification':classification,'source':body.get('source',''),'rationale':body.get('rationale','')}
+        link=body.model_dump()
         changed=await s.db.ai_systems.update_one({'ai_system_id':aid,'status':{'$ne':'retired'}},{'$addToSet':{'related_links':link}})
         if not changed.matched_count: raise HTTPException(409,'Retired AI is historical')
         await s.audit(user,'AI record linked','ai_system',aid,row['client_id'],meta=link)
