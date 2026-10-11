@@ -79,6 +79,7 @@
     "test_bulk_outcomes.py"
   ],
   "environment": [
+    "test_platform_iso_inventory.py",
     "backend_test.py",
     "test_audit_logs.py",
     "test_iteration10.py",
