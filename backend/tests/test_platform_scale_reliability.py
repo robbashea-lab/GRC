@@ -19,7 +19,9 @@ import unittest
 import uuid
 from unittest.mock import AsyncMock, patch
 
-from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
+import test_client_dashboard_sources as harness
+
+server = harness.server
 
 
 AS_OF = '2037-01-15T12:00:00Z'
@@ -51,7 +53,7 @@ def bounded_case(seconds):
 
 
 class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
-    sign_in = Harness.sign_in
+    sign_in = harness.ClientDashboardSourcesTests.sign_in
 
     async def asyncSetUp(self):
         self.report = {'test': self._testMethodName, 'status': 'started_not_completed', 'interval': [START, END],
@@ -66,7 +68,7 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
                            'Board PDF date/generated labels and recent-policy 90-day cutoff use actual server.datetime; no recent-policy fixture or full-clock claim.',
                            'Cleanup receipt is author-harness evidence; coordinator independently checks the exact recorded database afterward.',
                        ]}
-        await Harness.asyncSetUp(self)
+        await harness.ClientDashboardSourcesTests.asyncSetUp(self)
         self.real_mongo = None
         mongo_url = os.environ.get('PLATFORM_ACCEPTANCE_SCALE_MONGO')
         if mongo_url:

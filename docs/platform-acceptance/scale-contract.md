@@ -3,17 +3,27 @@
 Authoring baseline: product tree from `28b806716024ec149af2ec5da621a5a618c669d5`.
 Author: product/persona workstream. Root owns registry classification, runtime,
 execution slot, integration and shared browser/staging. This contract and its new
-test module are authored, not executed. No product correction is proposed.
+test module were initially authored without execution. Actual results from
+tested QA revision `7c0f89b` are retained separately in `scale-results-summary.md`
+and the original run receipts/log. No product correction is proposed.
 
 ## Exact registry entry and execution boundary
 
 New module: `backend/tests/test_platform_scale_reliability.py`
 
-Proposed registry category: **offline**, because all HTTP requests use the
+Root-classified registry category: **offline**, because all HTTP requests use the
 existing in-process ASGI harness, signed isolated actors and synthetic records.
 Default persistence is `mongomock_motor`. Do not classify that as real Mongo or
-hosted role evidence. Root must add the module to `backend/tests/suites.json`
-before normal pytest collection; the author does not own that registry file.
+hosted role evidence. Root's registry commit `e6b44c1` was cherry-picked as
+`43dce4b`; the author did not edit that shared registry file.
+
+The original pytest run collected four new real-Mongo cases plus two existing
+mock Harness methods through the imported unittest class. Its six-pass count
+and raw log are preserved. Final QA source now imports the fixture module
+instead of exposing the class to collection; assertions/runtime paths are
+unchanged. Root independently executes the final exact four-method class.
+The original author run is not relabeled as an execution of this import-only
+cleanup revision.
 
 After root grants the slot and classifies the suite, use the configured entry:
 
