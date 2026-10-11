@@ -1,0 +1,54 @@
+{
+  "recorded_date": "2026-10-11",
+  "evidence_layer": "source inspection plus explicitly bounded prototype execution; not final acceptance",
+  "branch": "codex/acceptance-shared-lifecycle-20261011",
+  "inspected_commit": "28b806716024ec149af2ec5da621a5a618c669d5",
+  "application_changes": false,
+  "tests_executed": [
+    {"name":"initial CIS IG1 ten-year Mongo-mock prototype","result":"PASS 1142 occurrences","boundary":"weaker prototype assertions; not frozen final acceptance"},
+    {"name":"actual Mongo Calendar date-only boundaries","result":"PASS","boundary":"not browser/user-timezone display"},
+    {"name":"stronger actual Mongo CIS IG1 prototype","result":"years2027-2032 exact annual counts PASS; stopped Year7 on harness rejection-code error","annual_counts":[115,229,343,457,571,686],"boundary":"not a product defect or completed ten-year run"},
+    {"name":"pure extracted recurrence oracle","result":"PASS 120/40/20/10/521/1","application_imports":0,"service_calls":0}
+  ],
+  "frameworks": [
+    {"name":"CIS IG1","framework_key":"cis-ig1","implementation_group":1,"version":"8.1","definitions":56,"applicable_catalog_plans":12,"fresh_default_plans":12},
+    {"name":"CIS IG2","framework_key":"cis-ig1","implementation_group":2,"version":"8.1","definitions":130,"applicable_catalog_plans":15,"fresh_default_plans":15},
+    {"name":"CIS IG3","framework_key":"cis-ig1","implementation_group":3,"version":"8.1","definitions":153,"applicable_catalog_plans":20,"fresh_default_plans":15,"optional_added_plans":5},
+    {"name":"ISO/IEC 27001","framework_key":"iso-27001","version":"2022 + Amd 1:2024","definitions":123,"isms_definitions":30,"annex_a_definitions":93,"applicable_catalog_plans":10},
+    {"name":"SOC 2","framework_key":"soc-2","version":"2017 TSC - revised points of focus 2022","categories":["security","availability","confidentiality"],"definitions":38,"applicable_catalog_plans":8,"all_category_catalog_definitions":61}
+  ],
+  "recurrence_contract": {
+    "supported_values":["none","monthly","quarterly","semiannual","annual","custom"],
+    "weekly_encoding":{"recurrence":"custom","custom_recurrence_days":7},
+    "advance_trigger":"explicit successful Review completion",
+    "advance_count_per_completion":1,
+    "anchor":"scheduled due date plus persistent day/month-end anchor",
+    "calendar_read_advances":false,
+    "missed_periods":"remain overdue; each is completed separately",
+    "autonomous_occurrence_generation_scheduler_found":false,
+    "notification_cron_paths":["/api/cron/overdue-reminders","/api/cron/weekly-my-work"],
+    "durable_notification_job_retry_contract":"not found / unresolved"
+  },
+  "proposed_ten_year_interval":{"start_inclusive":"2027-01-01","end_exclusive":"2037-01-01","clock":"14:00 UTC","display_boundary_zones":["America/New_York","Pacific/Auckland"],"framework_content_frozen":true},
+  "independent_probe_expected_counts":{
+    "monthly_first_2027_01_31":120,
+    "quarterly_first_2027_01_31":40,
+    "semiannual_first_2027_01_31":20,
+    "annual_first_2027_01_31":10,
+    "custom_7_days_first_2027_01_08":521,
+    "none_first_2027_01_31":1,
+    "event_and_continuous":"no automatic recurrence; explicit documented operator events only"
+  },
+  "existing_harnesses":[
+    {"path":"backend/tests/test_ten_year_operation.py","frameworks":["CIS IG1"],"duration":"ten years","storage":"Mongo mock","current_run_executed":false},
+    {"path":"backend/tests/test_framework_three_year.py","frameworks":["CIS IG1","SOC Security33","ISO123"],"duration":"36 months","storage":"Mongo mock; explicit loopback runner optionally substitutes actual Mongo","current_run_executed":false},
+    {"path":"backend/tests/test_cis_six_year.py","frameworks":["CIS cumulative derivative"],"duration":"six years","storage":"Mongo mock; explicit loopback runner optionally substitutes actual Mongo","current_run_executed":false},
+    {"path":"frontend/src/preview/frameworkFiveYear.test.js","layer":"Demo adapter","current_run_executed":false},
+    {"path":"frontend/src/preview/brawndoTenYear.test.js","layer":"Demo adapter","current_run_executed":false}
+  ],
+  "current_scale_boundaries":{"generic_register_records":1000,"legacy_evidence_list_records":1000,"upgraded_framework_source_records":10000,"calendar_records_per_source":5000,"calendar_max_inclusive_days":367,"over_limit_behavior":"413; no partial results","performance_pass_threshold":"unspecified; report measured observations"},
+  "report_only_or_unsupported":["new weekly enum","autonomous full missed/future occurrence generation","structured Backlog promotion workflow not found","new continuous/event recurrence rules","in-place evidence bytes replacement/version family not found","hosted restricted-user proof from synthetic harness tokens","production capacity inferred from mock timings"],
+  "next_file_ownership_proposed":["backend/tests/test_platform_ten_year_lifecycle.py","new bounded scale test (name and exact ownership to be agreed)"],
+  "confirmed_defects":[],
+  "remaining":"Final frozen five-framework ten-year execution, independent retest, scale interpretation and hosted scenarios remain pending. CPU/service execution held for coordinator scheduling."
+}
