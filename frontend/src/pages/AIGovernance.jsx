@@ -13,6 +13,7 @@ import RegisterLoadError from '@/components/RegisterLoadError';
 import AIDrawer from '@/components/AIDrawer';
 import AIIntake from '@/components/AIIntake';
 import {ranks} from '@/lib/tableFilters';
+import {AI_RELATIONSHIP_NOTICE} from '@/lib/aiGovernance';
 import {isReferencePresentation,isBrawndoReference,isReferenceWorkflow} from '@/lib/reference';
 import {AI_VIEWS,aiMatches} from '@/lib/brawndoAI';
 import BrawndoAICards from '@/components/BrawndoAICards';
@@ -47,6 +48,7 @@ export default function AIGovernance(){
       action={addAction?<HeaderActions>{addAction}</HeaderActions>:null}/>}
     {data?.intake.usage==='no'&&<div className="register-notice">AI usage is marked No. Historical records remain accessible; update intake before adding new systems.<AIIntake clientId={currentClientId} canWrite={writable} onSaved={()=>setRevision(n=>n+1)}/></div>}
     {!approvalPilot&&data?.intake.usage==='unsure'&&<p className="register-notice">AI applicability is not yet confirmed. Record known use cases and confirm intake in Client Profile.</p>}
+    {rows.some(r=>r.relationship_integrity_warning)&&<p role="status" className="register-notice">{AI_RELATIONSHIP_NOTICE}</p>}
     <div className="register-toolbar">
       <SearchField label="Search AI systems" placeholder="Search AI systems…" value={search} onChange={setSearch} testid="ai-system-search"/>
       {referenceWorkflow?<BrawndoChips label="AI system views" chips={AI_VIEWS.filter(([id])=>approvalPilot||id!=='pending').map(([id,label])=>({id,label,pressed:quick===id,onClick:()=>setQuick(id),testid:`ai-system-view-${id}`}))}/>:<ViewTabs views={presets.map(([id,label])=>({id,label}))} active={quick} onPick={setQuick} counts={counts} label="AI system views" testid="ai-system-views" testIdPrefix="ai-system-view-"/>}

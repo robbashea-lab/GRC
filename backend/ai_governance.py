@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional, Literal
 from fastapi import APIRouter, Depends, HTTPException, Header
-from pydantic import BaseModel, Field, ConfigDict, StrictBool, model_validator
+from pydantic import BaseModel, Field, ConfigDict, StrictBool, ValidationError, model_validator
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 import review_occurrences
@@ -54,6 +54,16 @@ class AILinkInput(BaseModel):
             raise ValueError('Requirement claims need an authoritative source and applicability rationale')
         return self
 
+def readable_links(row):
+    stored=row.get('related_links',[])
+    if not isinstance(stored,list): return []
+    links=[]
+    for link in stored:
+        try: AILinkInput.model_validate(link)
+        except ValidationError: continue
+        links.append(link)
+    return links
+
 def screening(row):
     answers = row.get('screening') or {}
     complete = all(type(answers.get(q['key'])) is bool for q in CATALOG['questions'])
@@ -69,6 +79,10 @@ def projection(row, reviews, risks, today=None):
     done += [r.get('completion_date') for r in linked if r.get('status') == 'completed']
     dates = [r['due_date'] for r in linked if r.get('status') not in ('completed','cancelled') and r.get('due_date')]
     result = {k:v for k,v in row.items() if not k.startswith('_')}
+    links=readable_links(row)
+    stored=row.get('related_links',[])
+    # Projection excludes unreadable context; stored relationships and history are never repaired here.
+    result.update(related_links=links,relationship_integrity_warning=not isinstance(stored,list) or len(links)!=len(stored))
     result.update(screening(row), last_review=max(filter(None,done),default=None), next_review=min(dates,default=None))
     periodic = next((r for r in linked if r.get('ai_review_purpose') == 'periodic' and r.get('status') not in ('completed','cancelled')), None)
     result['review_cadence'] = periodic.get('recurrence') if periodic else None
@@ -81,7 +95,7 @@ def projection(row, reviews, risks, today=None):
     alert('owner','AI Owner Missing',not row.get('owner_id'))
     alert('schedule','AI Review Not Scheduled',not result['next_review'])
     alert('overdue','AI Review Overdue',bool(result['next_review'] and result['next_review'][:10] < (today or datetime.now(timezone.utc).date().isoformat())))
-    ids = {x['id'] for x in row.get('related_links',[]) if x['kind']=='risks'}
+    ids = {x['id'] for x in links if x['kind']=='risks'}
     assessed = any(r['client_id']==row['client_id'] and r.get('risk_id') in ids and r.get('status') not in ('closed','retired') and type(r.get('likelihood_score')) is int and type(r.get('impact_score')) is int for r in risks)
     alert('risk','High-Risk AI Without Risk Assessment',result['risk_tier']=='high' and not assessed)
     alert('screening','AI Governance Assessment Missing',not result['screening_complete'])

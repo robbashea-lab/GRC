@@ -234,3 +234,42 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
                     self.assertEqual(stored['status'],'retired')
                     self.assertEqual(stored['related_links'],[])
                 self.assertEqual(await server.db.audit_logs.count_documents({'action':'AI record linked','entity_id':aid}),0)
+
+    async def test_legacy_malformed_links_remain_stored_but_reader_projection_is_safe(self):
+        row=await self.create(screening={'consequential':True});aid=row['ai_system_id']
+        valid={'kind':'risks','id':'valid-risk','classification':'Context','source':'','rationale':''}
+        legacy=[{'kind':'risks','id':{'$eq':'valid-risk'},'classification':'Context','source':'','rationale':''},
+            {'kind':'requirements','id':'legacy-req','classification':'Context','source':{'unexpected':'object'},'rationale':''},
+            None,{'id':'missing-kind'}]
+        await server.db.risks.insert_one({'risk_id':'valid-risk','client_id':'a','title':'Synthetic risk',
+            'likelihood_score':3,'impact_score':3,'status':'open'})
+        await server.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{'related_links':[valid,*legacy]}})
+        before=await server.db.ai_systems.find_one({'ai_system_id':aid})
+        audit_count=await server.db.audit_logs.count_documents({})
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
+        self.sign_in('member')
+        current=(await self.client.get('/api/ai_systems?client_id=a')).json()[0]
+        self.assertEqual(current['related_links'],[valid])
+        self.assertTrue(current['relationship_integrity_warning'])
+        self.assertNotIn('risk',[alert['key'] for alert in current['alerts']])
+        self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),before)
+        self.assertEqual(await server.db.audit_logs.count_documents({}),audit_count)
+        self.assertEqual((await self.client.get('/api/ai_systems?client_id=b')).status_code,403)
+        for links in (legacy,{'kind':'risks','id':'valid-risk'},None):
+            await server.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{'related_links':links}})
+            stored=await server.db.ai_systems.find_one({'ai_system_id':aid})
+            current=(await self.client.get('/api/ai_systems?client_id=a')).json()[0]
+            self.assertEqual(current['related_links'],[])
+            self.assertTrue(current['relationship_integrity_warning'])
+            self.assertIn('risk',[alert['key'] for alert in current['alerts']])
+            self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),stored)
+
+    async def test_legacy_valid_links_keep_exact_values_without_an_integrity_warning(self):
+        row=await self.create();aid=row['ai_system_id']
+        valid={'kind':'requirements','id':'legacy-readable'}
+        await server.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{'related_links':[valid],'status':'retired'}})
+        before=await server.db.ai_systems.find_one({'ai_system_id':aid})
+        current=(await self.client.get('/api/ai_systems?client_id=a')).json()[0]
+        self.assertEqual(current['related_links'],[valid])
+        self.assertFalse(current['relationship_integrity_warning'])
+        self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),before)
