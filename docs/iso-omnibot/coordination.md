@@ -26,3 +26,36 @@ An excluded or undecided reference control is not an implementation deficiency. 
 Content catalog coverage is not full normative validation. Primary public edition/amendment/SoA sources and original repository guidance are recorded separately from publicly corroborated implementation interpretation. Missing licensed-source comparisons remain explicit. Local/Demo tests are not hosted authentication, durable Mongo persistence or restricted-account proof.
 
 No production, Sites publication, account/security changes, database reset, or shared-session use is part of local implementation. Hosted deployment requires an acknowledged exclusive window and preservation of newer Agent 1 corrections. Existing CIS/SOC acceptance gaps remain open.
+
+## Targeted closeout — 2026-10-11
+
+- Frozen application source remains `3193e564899473fddea0eabd7356fbb643d5fe1b`
+  on Live staging deployment `dep-db5qgdtckfvc73b3qaa0`. PR68 is draft/unmerged
+  over unchanged PR67 `1ba91c30`; main remains `911706ce`.
+- Agent 1's fresh availability acknowledgment is
+  [6110912609](https://github.com/robbashea-lab/GRC/pull/57#issuecomment-6110912609);
+  exact H2 case acknowledgment is
+  [6110981802](https://github.com/robbashea-lab/GRC/pull/57#issuecomment-6110981802);
+  the completed window is
+  [6111120394](https://github.com/robbashea-lab/GRC/pull/57#issuecomment-6111120394).
+  Root exclusively operated the hosted browser, preserved 4.1/A.5.1 and closed
+  the window without transferring the session or authorizing a deployment.
+- Only six additional native definitions in the dedicated ISO synthetic fixture
+  were written, with one extra read-only recommendation destination. No showcase,
+  Dunder replacement, audit/personnel/account/permission action or reset.
+- The existing Agent 3 Security Review chat received the exact source/files,
+  routes, shared field ownership, lease semantics and unresolved access/fault
+  gaps; its explicit acknowledgment and bounded report preserve review-only
+  authority. Existing Medium findings and hosted security gaps are not waived.
+- Existing independent reviewers owned only the three assurance annotations and
+  the single execution register, respectively, then released those files. The
+  ISO owner added the actual H2 evidence and focused test corrections. No shared
+  runtime, CIS/SOC/Login content, dependency or global style was edited.
+- Before the evidence push, Agent 1 re-read Render settings: staging source
+  branch main, Auto-Deploy Off after a specific-commit deployment, PR Previews
+  Off. An ordinary PR68 branch push does not publish this service under those
+  settings. No settings were changed, and no additional manual deploy is needed.
+- [targeted-closeout.md](targeted-closeout.md) and
+  [coverage-matrix.md](coverage-matrix.md) retain per-ID evidence, attribution,
+  source/technical limits and the minimum follow-up. Later test/documentation
+  commits are not a newly tested/deployed application version.

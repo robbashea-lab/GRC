@@ -41,7 +41,9 @@ test('new/add/mixed program defaults and repeated activation retain other progra
 const batches=Object.keys(isoGuidedCatalog.definitions).reduce((all,id,index)=>{const batch=Math.floor(index/25);(all[batch]||=[]).push(id);return all;},[]);
 test.each(batches.map((ids,index)=>[index+1,ids]))('catalog batch %s: exact native text/status, unrelated fields/history; progress is separate',async(_batch,ids)=>{
   const ws=await configure();
-  for(let row of ws.assessments.filter(row=>ids.includes(row.definition_id))){
+  const selected=ws.assessments.filter(row=>ids.includes(row.definition_id));
+  expect(selected.map(row=>row.definition_id).sort()).toEqual([...ids].sort());
+  for(let row of selected){
     if(isoGuidedCatalog.definitions[row.definition_id].specification==='annex_control')row=(await api.patch(nativePath(row),{soa_applicability:'included',soa_justification:'Synthetic risk-treatment basis',expected_last_assessed:row.last_saved||row.last_assessed||null})).data;
     const before=JSON.parse(JSON.stringify(row)),draft=await complete(row);
     expect((await api.get(nativePath(row))).data).toEqual(before);

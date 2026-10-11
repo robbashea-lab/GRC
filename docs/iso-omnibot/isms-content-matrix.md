@@ -103,6 +103,113 @@ The current ISO/IEC Directives page was also inspected, but it identifies the
 | G0 | Optional practical context only; no unresolved mandatory duty is created by this note. |
 | Lx | Exact licensed-source gap for unit x, detailed in the gap ledger below. |
 
+## Shared assurance source boundary
+
+Targeted closeout at clean baseline `3193e564899473fddea0eabd7356fbb643d5fe1b`,
+2026-10-11. This section and the per-definition tables in the three existing
+matrices reuse the [completed independent review and remediation disposition](independent-content-review.md).
+Catalog/evaluator hashes match that remediated snapshot. They are not a fresh
+execution campaign or a replacement for the source-to-question rows below.
+
+The shared missing-source record is stated here once; all new assurance rows
+refer to its codes with an exact target, instead of repeating a missing-PDF claim:
+
+| Boundary | Actual access / exact comparison target | What can and cannot be concluded |
+| --- | --- | --- |
+| B0 | `ISO-PREVIEW`, actual ISO/IEC 27001:2022 clause 4–6 bodies, printed pp. 1–5; `ISO-CLIMATE`, actual amendment communication for 4.1/4.2 | Direct normative support for the represented exposed dimensions/qualifiers. A native unit/title match is not proof that every independent obligation is captured. Optional authored notes are not normative requirements. |
+| B1 | Legitimate complete ISO/IEC 27001:2022 clause 7–10 bodies, at the exact clause number in each row; publication identity is `ISO-EDITION`, and detailed local gaps are `L7.1`–`L10.2` below | These full bodies were absent from accessed material. BSI interpretations and selected ANAB/SGS changed-text comparisons corroborate specific topics/dimensions only; they cannot supply all unchanged subjects, conditions, records or timing. |
+| B2 | Legitimate complete ISO/IEC 27001:2022 Annex A statement at each `A.x.y`; separately, ISO/IEC 27002:2022 implementation body at corresponding `x.y` when that guidance is used; official publication pointers are `ISO-EDITION` and the 27002 records in the companion matrices | Neither complete body was available in the reviewed previews. Official 27002 contents corroborate topic IDs, not control statements. Primary NIST related practice is not ISO normative authority/equivalence; the existing authored guide is not the standard. A `B2 A.x.y` row points to both exact standard/control locations, not to a source asserted to have been read. |
+
+No additional standard copies were obtained for this closeout. Public sources
+and their access bounds remain those registered above/in the companion ledgers.
+The full licensed comparison must use legitimate access; 27002 guidance cannot
+silently become extra 27001 certification requirements. These limits also apply
+to all source/confidence labels in the original question rows.
+
+### Assurance and evaluator legend
+
+- **S**: represented dimensions supported by accessible actual normative excerpt
+  (`B0`); not a claim of full substantive completeness.
+- **U**: represented practical dimensions/topic corroborated, but exact normative
+  coverage/qualifiers unresolved (`B1`/`B2`). Each row names a concrete comparison
+  question; the absence of full text alone is not a defect.
+- **N**: no demonstrated defect; the named qualifier/dimension remains to verify
+  where support is U. **O?**: potential omitted required qualifier/dimension,
+  with a specific query-strength/formality question. **E?**: potential extra
+  separately scored obligation where a practical technique may be only one
+  implementation option. O?/E? are comparison priorities, not proven violations
+  or instructions to change deployed wording. Confirmed must-fix defects: zero.
+- **R** (all rows): active substantive selects determine reported status. Any
+  `No` yields `needs_attention`; with meaningful affirmative/partial input,
+  `Partially` or unresolved substantive/context answers yield `in_progress`;
+  absent meaningful input yields `not_assessed`; otherwise `addressed`. These
+  are implementation reports, not evidence verification or ISO conformity.
+- **C**: the named context parent activates only its dependent children when
+  `Relevant`. `Not relevant here` requires a reason; `Not sure` retains an
+  unresolved signal despite hiding children. Unconditional substantive questions
+  remain. Neither context nor status changes SoA or makes a whole clause N/A.
+- **O**: named optional text and every `_detail` are status-neutral. The universal
+  optional gap/confirmation/evidence fields are also neutral; notes remain
+  separate from selected-answer actions. Details cannot override a substantive
+  `No` or resolve `Not sure`; approved alternatives must be in question meaning.
+  Responsibilities/approvals themselves, unlike owner/tool names, are substantive.
+
+Local effects below supplement R, which applies to every row. Gate/note suffixes
+resolve to the exact `ISO-<ID>-<suffix>` question in the existing question rows.
+Historical F1/F2 are resolved in the completed review; no runtime meaning,
+question version or previously deployed answer was changed in this closeout.
+
+## Per-definition assurance disposition
+
+Counts for this matrix: **30 definitions; S 12 / U 18; N 30 / O? 0 / E? 0**.
+Across all three matrices: **123 definitions; S 12 / U 111; N 114 / O? 5 / E? 4;
+confirmed defects 0**. Concern classification and source support are separate
+axes: N does not close a U source gap. These rows summarize actual represented
+dimensions/conditions, not merely the presence of citations. Main owns fresh
+123-definition execution coverage, overview tests and hosted/handoff verification.
+
+Documentation verification on this baseline: **1,038 local in-memory assertions
+passed**, checking all native assurance IDs, classification totals, exact source
+targets and explicit context/optional effects. The pre-existing contents of all
+three matrices (including every question/source row) are preserved byte-for-byte
+when these inserted sections are removed. Catalogs, evaluator, evaluator tests
+and independent review remain byte-identical to the baseline. Scoped
+`git diff --check` passed. No runtime suite, browser, hosted operation, commit,
+push or deployment was repeated; concurrent main-owned files were left untouched.
+
+| Native ID | Represented substantive dimensions / qualifiers | Support / exact target | Class | Specific comparison or disposition | Evaluator effects beyond R |
+| --- | --- | --- | --- | --- | --- |
+| 4.1 | Internal/external context; climate relevance determination | S; B0 §4.1 + amendment | N | A reasoned climate-irrelevant decision differs from skipping the determination; no climate programme inferred. | O `context-note` |
+| 4.2 | Relevant parties/requirements; which the ISMS addresses | S; B0 §4.2 + amendment note | N | Climate stakeholder context is considered within actual requirements, not a standalone mandatory control. | R only |
+| 4.3 | Scope boundaries, context, requirements, interfaces and documented scope | S; B0 §4.3 | N | Dependencies and outsourced interfaces represented; boundaries do not exclude mandatory clauses. | R only |
+| 4.4 | Connected ISMS processes; establishment, operation, maintenance and improvement | S; B0 §4.4 | N | Process operation is queried separately from documentation; no demonstrated dimension mismatch. | R only |
+| 5.1 | Management direction, integration, resources, communication, outcomes and support | S; B0 §5.1 | N | Distinct leadership contributions represented; no mandatory job title/committee substituted. | R only |
+| 5.2 | Appropriate policy, commitments, documented availability and communication | S; B0 §5.2 | N | Interested-party availability remains appropriately qualified; no prescribed policy name. | R only |
+| 5.3 | Assigned/communicated responsibilities and authority; conformity/performance reporting | S; B0 §5.3 | N | Substantive assignment/reporting differs from knowing a contact's name. | O `contact-note` |
+| 6.1.1 | Context-informed risks/opportunities, actions, process integration and effectiveness | S; B0 §6.1.1 | N | Planning and evaluation are separate; no extra risk-scoring method inferred. | R only |
+| 6.1.2 | Criteria, repeatability, CIA risks/owners, analysis, evaluation and process records | S; B0 §6.1.2 | N | Separate method dimensions represented; answers do not independently validate assessments. | R only |
+| 6.1.3 | Treatment options/necessary controls, Annex comparison, SoA and owner decisions | S; B0 §6.1.3 | N | SoA inclusion/exclusion reasons and implementation are distinct; Annex is not an exhaustive necessary-control list. | R only; no SoA mutation |
+| 6.2 | Objective qualities, practicable measurability, monitoring and delivery/evaluation planning | S; B0 §6.2 | N | Practicability and appropriate updating preserved; no invented metric/cadence. | R only |
+| 6.3 | Planned-change arrangement and actual execution when a change occurs | S; B0 §6.3 | N | No change scopes the execution example, not the standing planning duty. | C `change-context` |
+| 7.1 | Determine/provide necessary ISMS resources | U; B1 §7.1; L7.1 | N | Verify full establishment/operation/maintenance/improvement resource qualifiers, not purchase of a named tool. | O `tools-note` |
+| 7.2 | Competence needs/bases, relevant actions/effectiveness and retained support | U; B1 §7.2; L7.2 | N | Verify personnel scope and where-applicable action/effectiveness/retention qualifiers; public comparison is partial. | C `action-context` |
+| 7.3 | Policy awareness, contribution/benefits and implications | U; B1 §7.3; L7.3 | N | Verify exact personnel and contribution/benefit/implication list; attendance alone is not awareness. | R only |
+| 7.4 | What, when, with whom and how communication occurs | U; B1 §7.4; L7.4 | N | Compared 2022 dimensions supported; verify full clause rather than restoring the older separately required communicator item. | O `contact-note` |
+| 7.5.1 | Standard-required and organization-needed documented information | U; B1 §7.5.1; L7.5.1 | N | Verify complete cross-referenced record obligations and necessity qualifiers; no fixed artifact inventory inferred. | R only |
+| 7.5.2 | Identification/description, format/media, review and approval | U; B1 §7.5.2; L7.5.2 | N | Verify each creation/update qualification; fine-grained queries remain original low-confidence interpretation. | R only |
+| 7.5.3 | Availability/suitability, disclosure/use/integrity protection and lifecycle controls | U; B1 §7.5.3; L7.5.3 | N | Verify as-applicable handling list, external-information identification/control and any additional protection qualifier. | C `external-context` |
+| 8.1 | Operational criteria/control/records; planned/unintended changes; external provision | U; B1 §8.1; L8.1 | N | Compared external processes/products/services supported; verify change/mitigation and record qualifiers, not outsourcing exemption. | C `planned-context`, `unintended-context`, `external-context` |
+| 8.2 | Planned/change-triggered risk assessments, established criteria and results | U; B1 §8.2; L8.2 | N | Verify proposed/occurring significant-change trigger and results-retention wording; no numerical interval. | C `change-context` |
+| 8.3 | Implement treatment plan and retain execution results | U; B1 §8.3; L8.3 | N | Verify exact execution/result-information duty; risk-owner approval remains a separate 6.1.3 decision. | R only |
+| 9.1 | Subjects/methods, valid measurement, timing/roles, analysis/evaluation and results | U; B1 §9.1; L9.1 | N | Validity/comparability/reproducibility changes corroborated; verify all subjects, roles and record qualifiers. | R only |
+| 9.2.1 | Planned internal audits of conformity and effective implementation/maintenance | U; B1 §9.2.1; L9.2.1 | N | Verify all conformity subjects and planned-interval qualifications; neither certification nor annual cadence inferred. | R only |
+| 9.2.2 | Programme, priorities, frequency/methods, per-audit criteria/scope, impartiality and records | U; B1 §9.2.2; L9.2.2 | N | Verify full programme/reporting/information qualifications; no mandatory external auditor. | R only |
+| 9.3.1 | Top-management planned review of continuing suitability/adequacy/effectiveness | U; B1 §9.3.1; L9.3.1 | N | Verify exact review subject/timing qualifiers, not a required committee or minute format. | R only |
+| 9.3.2 | Previous actions, changes, parties, performance trends, feedback, risks/treatment and opportunities | U; B1 §9.3.2; L9.3.2 | N | Verify complete input/trend enumeration and qualifiers; changed interested-party needs are only partially corroborated. | R only |
+| 9.3.3 | Improvement/change decisions and available review-result information | U; B1 §9.3.3; L9.3.3 | N | Selected decision/record dimensions corroborated; verify all output/availability qualifiers. | R only |
+| 10.1 | Continual improvement of suitability, adequacy and effectiveness | U; B1 §10.1; L10.1 | N | Verify exact improvement duty; no quota of initiatives or review cadence inferred. | R only |
+| 10.2 | Standing response approach; triggered correction, causes, recurrence, action/effectiveness and records | U; B1 §10.2; L10.2 | N | Verify necessary-action/proportionality/ISMS-change and complete record qualifiers; no event does not exclude the clause. | C `event-context` (14 children) |
+
 ## Source-to-question matrix
 
 | Question ID | Native unit | Source / section or intended mapping | Mandatory / conditional / guidance | Confidence | Unresolved exact licensed requirements |

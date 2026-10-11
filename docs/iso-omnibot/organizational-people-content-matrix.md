@@ -88,6 +88,74 @@ Select choices are exactly `Yes`, `Partially`, `No`, `Not sure`. Optional owner/
 
 Total: **45 controls, 164 groups, 186 questions**: 159 unconditional substantive, 9 context gates, 16 conditional substantive, 2 optional text.
 
+## Per-definition assurance disposition
+
+Targeted closeout at `3193e564899473fddea0eabd7356fbb643d5fe1b`, 2026-10-11,
+reuses the [completed independent review, including F1/F2 remediation](independent-content-review.md#remediation-re-review--2026-10-11).
+The [shared source boundary and evaluator/classification legend](isms-content-matrix.md#shared-assurance-source-boundary)
+is recorded once in the ISMS matrix. Here **B2 A.x.y** identifies the exact
+27001 Annex A statement and separate corresponding 27002 implementation section
+for comparison; it does not assert access. **U** is unresolved normative coverage,
+despite supported topics/practical dimensions. All existing question/source rows
+below remain the detailed mapping. NIST primary practice and R01 authored guidance
+do not become ISO normative requirements.
+
+Counts: **45 definitions; S 0 / U 45; N 43 / O? 2 / E? 0; confirmed defects 0**.
+N means no demonstrated defect, not licensed completeness. O? identifies a specific
+potential missing qualifier to compare, not a proven obligation. **R applies to
+all rows**; C/O effects are qualified by the shared legend. Suffixes identify
+`ISO-<ID>-<suffix>` in the existing question matrix. SoA remains separate, and
+outsourcing alone never explains a whole-control exclusion. This is documentation
+only: no deployed question meaning, version, catalog or evaluator is changed.
+
+| Native ID | Represented substantive dimensions / qualifiers | Support / exact target | Class | Specific comparison or disposition | Evaluator effects beyond R |
+| --- | --- | --- | --- | --- | --- |
+| A.5.1 | Policy documentation/approval, communication/acknowledgement and planned/change review | U; B2 A.5.1 | N | Verify exact audience, acknowledgement and review-trigger qualifications; no numerical cadence inferred. | R only |
+| A.5.2 | Assigned/communicated responsibilities and accountable delegation | U; B2 A.5.2 | N | Verify allocation/delegation scope; responsibility is substantive, unlike optional owner identity. | O `owner-note` |
+| A.5.3 | Identify conflicts; separation or justified evaluated effective checks; assess remaining conflicts | U; B2 A.5.3 | N | F1 resolved: alternative explicit, accepted exception alone insufficient. Verify whether the specific arrangement satisfies the selected control. | R; all three affirmative for `addressed`; prose cannot override `No` |
+| A.5.4 | Management expectations/support for security practice and handling departures | U; B2 A.5.4 | N | Verify exact personnel/management expectations and application qualifications; no fixed title. | R only |
+| A.5.5 | Relevant authority contacts, use circumstances, workable route and maintenance | U; B2 A.5.5 | N | Verify contact/notification circumstances against applicable obligations; no universal authority or reporting deadline. | R only |
+| A.5.6 | Appropriate security-community contacts and useful information/support | U; B2 A.5.6 | N | Verify exact contact/group scope; membership in a particular paid body is not inferred. | R only |
+| A.5.7 | Collect relevant threat information, analyze and use it in decisions | U; B2 A.5.7 | N | Verify intelligence collection/analysis/use qualifiers; a named feed is not the duty. | O `tool-note` |
+| A.5.8 | Project security needs, decisions, assigned work and delivery follow-through | U; B2 A.5.8 | N | Verify project/lifecycle scope and integration qualifiers; existing project processes may supply the practice. | R only |
+| A.5.9 | Information/asset inventory, ownership and current usable records | U; B2 A.5.9 | N | Verify complete information/associated-asset scope and maintenance qualifications; NIST component inventory alone is narrower. | R only |
+| A.5.10 | Known acceptable-use/handling rules and applied practice | U; B2 A.5.10 | N | Verify identification/documentation/implementation subjects; no prescribed policy name. | R only |
+| A.5.11 | Asset-return expectations, actual return and unresolved items on departure/change | U; B2 A.5.11 | N | Verify personnel/relationship/change scope and return qualifiers; no departure event is manufactured. | R; qualified absence explained in details, not whole-control N/A |
+| A.5.12 | Protection needs, classification choices and suitability/consistent use | U; B2 A.5.12 | N | Verify classification factors and consistency qualifiers; no fixed levels or names. | R only |
+| A.5.13 | Suitable classification identification/labels and consistent handling | U; B2 A.5.13 | N | Verify exact labeling procedures/application qualifications and acceptable alternatives. | R only |
+| A.5.14 | Protected transfers/arrangements; external-party agreement when relevant | U; B2 A.5.14 | N | Verify full transfer scope and external agreement qualifiers; internal transfer practice remains assessed. | C `external-context` |
+| A.5.15 | Business/risk-driven physical/logical access rules and enforcement | U; B2 A.5.15 | N | Verify rule definition/implementation/review and access subjects; no universal access architecture. | R only |
+| A.5.16 | Identity creation, use, changes and closure accountability | U; B2 A.5.16 | N | Verify full identity lifecycle, uniqueness/exception scope and management qualifications. | R only |
+| A.5.17 | Secure credential allocation/protection, guidance, change/recovery and closure | U; B2 A.5.17 | N | Verify authentication-information management/user duties; no fixed password rotation or provider. | R only |
+| A.5.18 | Authorized access provision, review, adjustment and removal | U; B2 A.5.18 | N | Verify lifecycle/review qualifications against access rules; no invented periodic minimum. | R only |
+| A.5.19 | Supplier security risks, suitable controls, responsibilities and continued handling | U; B2 A.5.19 | N | Verify relationship/type/risk-process scope and qualifications; supplier certification is not automatic implementation. | R only |
+| A.5.20 | Relevant supplier security terms, responsibilities and handling expectations | U; B2 A.5.20 | N | Verify agreement subjects/relationship qualifiers and enforceability separately; no compulsory contract template. | R only |
+| A.5.21 | ICT supply-chain dependencies, risks and requirements/checks | U; B2 A.5.21 | N | Verify ICT/downstream scope and required processes; local dependency records are implementation options. | R only |
+| A.5.22 | Monitor/review actual supplier service and handle security/material changes | U; B2 A.5.22 | N | Verify monitoring/review/change-management subjects and qualifiers, not a fixed review cadence. | R only |
+| A.5.23 | Standing cloud governance plus acquisition/use/change/exit when used | U; B2 A.5.23 | N | Verify cloud lifecycle and shared-responsibility qualifiers; no cloud use hides only four activity children. | C `cloud-context` |
+| A.5.24 | Incident roles/plans, response readiness and relevant external coordination | U; B2 A.5.24 | N | Verify planning/preparation and external-party qualifications; previous incidents do not determine relevant parties. | C `external-context` |
+| A.5.25 | Event evaluation/classification and incident-treatment decisions | U; B2 A.5.25 | N | Verify assessment/decision criteria and scope; no mandatory severity scale or ticket tool. | R only |
+| A.5.26 | Established response approach and actual response/follow-through if an incident occurred | U; B2 A.5.26 | N | Verify documented-procedure and event-execution qualifications; readiness does not prove actual operation. | C `incident-context` |
+| A.5.27 | Learning readiness and actual incident lessons/improvement use | U; B2 A.5.27 | N | Verify knowledge collection/use and relevant incident scope; absence does not prove learning effectiveness. | C `incident-context` |
+| A.5.28 | Evidence identification/collection/preservation readiness and actual handling | U; B2 A.5.28 | N | Verify identification/collection/acquisition/preservation scope and procedures; legal admissibility remains separate. | C `evidence-context` |
+| A.5.29 | Security arrangements/readiness during disruption and actual execution | U; B2 A.5.29 | N | Verify protective level and disruption qualifications; no disruption is not exclusion. | C `disruption-context` |
+| A.5.30 | Business-driven recovery needs, prepared ICT, exercising and follow-up | U; B2 A.5.30 | N | Verify planning/implementation/maintenance/testing qualifications; recovery targets and intervals are local decisions. | R only |
+| A.5.31 | Identify, record, maintain and apply relevant security obligations | U; B2 A.5.31 | N | Verify exact documented legal/regulatory/contractual subjects; interview facts do not determine legal applicability. | R only |
+| A.5.32 | Relevant rights/licences and protective procedures/practice | U; B2 A.5.32 | N | Verify IP rights/procedure subjects and legal qualifications; reported use is not legal assurance. | R only |
+| A.5.33 | Protect records from loss/damage/falsification/unauthorized access or release; retention/availability | U; B2 A.5.33 | N | Verify complete protection list and retention/legal/contract qualifiers; no universal retention duration. | R only |
+| A.5.34 | Personal-data scope, relevant obligations and applied safeguards | U; B2 A.5.34 | N | Verify privacy/PII protection qualifications; no inferred law, consent basis or required officer title. | R only |
+| A.5.35 | Review coverage, competence/independence, performed planned review, change reconsideration and follow-up | U; B2 A.5.35 | O? | `change-review` asks reconsideration, not performance. Verify whether the exact significant-change qualifier requires executed review; no obligation alleged without that comparison. | R; affirmative reconsideration can score positively without performed triggered review |
+| A.5.36 | Check actual adherence to applicable security rules and handle deviations | U; B2 A.5.36 | N | Verify compliance-review subjects/qualifiers; this is distinct from independent evaluation and certification. | R only |
+| A.5.37 | Documented, available, usable/current operating instructions | U; B2 A.5.37 | N | Verify procedure scope/documentation/availability qualifications; no mandatory runbook product. | R only |
+| A.6.1 | Lawful proportionate screening/decisions and relevant external-personnel assurance | U; B2 A.6.1 | N | Verify employment/relationship/personnel scope and proportionality; no universal criminal/credit check. | C `external-context` |
+| A.6.2 | Known maintained employment-related security commitments | U; B2 A.6.2 | N | Verify personnel/employer responsibilities and employment-agreement qualifications; enforceability is jurisdiction-specific. | R only |
+| A.6.3 | Appropriate awareness/education/training and effectiveness/change needs | U; B2 A.6.3 | N | Verify workforce/other-party scope and updating qualifications; no annual course/certificate inferred. | R only |
+| A.6.4 | Defined known proportionate disciplinary process for security breaches | U; B2 A.6.4 | N | Verify formal-process/personnel/communication scope and law; no prescribed penalty or lawful-action conclusion. | R only |
+| A.6.5 | Responsibilities surviving departure/change, communication and handoffs | U; B2 A.6.5 | N | Verify continuing-duty/personnel/change qualifiers; no actual departure is needed to describe arrangements. | R only |
+| A.6.6 | Needs-based documented confidentiality commitments, agreement and suitability review | U; B2 A.6.6 | O? | `acceptance` asks agreement; verify exact signing/acknowledgement and review qualifications rather than equating any agreement with required formality. | R; agreement `Yes` can score positively without proving a signature |
+| A.6.7 | Remote-work governance and workspace/device/connection protection when used | U; B2 A.6.7 | N | Verify personnel/remote-working safeguards; NIST AC-17 alone does not establish physical-workspace coverage. | C `remote-context` |
+| A.6.8 | Known usable event-reporting route, promptness and receipt | U; B2 A.6.8 | N | Verify observed-event/personnel/timing/channel qualifications; no invented reporting deadline/platform. | R only |
+
 ## Source-to-question matrix
 
 Every row records a practical dimension, source section, activation/authority, confidence and unresolved exact licensed qualifications. Conditional dependencies are explicit. No row claims that its authored prompt or examples are fully verified normative wording.

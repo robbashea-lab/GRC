@@ -123,6 +123,76 @@ definitions/groups/questions structure, not its criterion semantics or content.
 | A.8.33 | Protected test information | 4 | 4 | 1 | 0 |
 | A.8.34 | Safe audit testing | 4 | 5 | 0 | 0 |
 
+## Per-definition assurance disposition
+
+Targeted closeout at `3193e564899473fddea0eabd7356fbb643d5fe1b`, 2026-10-11,
+reuses the [completed independent review and remediation](independent-content-review.md).
+Use the single [shared source boundary and evaluator/classification legend](isms-content-matrix.md#shared-assurance-source-boundary):
+**B2 A.x.y** identifies the exact 27001 Annex A statement and corresponding
+27002 implementation section, not a claim of accessed control bodies. Existing
+`U:A.x.y` entries below supply detailed comparison context. Official topic
+contents and related primary NIST practice support original practical dimensions,
+not ISO normative equivalence or full substantive completeness.
+
+Counts: **48 definitions; S 0 / U 48; N 41 / O? 3 / E? 4; confirmed defects 0**.
+O?/E? name comparison priorities, not demonstrated violations. In particular,
+E? flags a separately scored supporting practice that may be an implementation
+option rather than an independent required obligation; compare before deciding.
+**R applies to every row**, including original guidance selects. N does not close
+an unresolved source gap. Suffixes resolve to `ISO-<ID>-<suffix>` below. No catalog,
+question meaning/version, evaluator or deployed data is changed by these notes.
+
+| Native ID | Represented substantive dimensions / qualifiers | Support / exact target | Class | Specific comparison or disposition | Evaluator effects beyond R |
+| --- | --- | --- | --- | --- | --- |
+| A.7.1 | Appropriate site boundary/perimeter, access limits and actual effectiveness | U; B2 A.7.1 | N | Verify perimeter design/strength and implementation qualifications; provider premises may remain relevant. | R only |
+| A.7.2 | Authorized entry, visitor handling and effective controls; relevant delivery access | U; B2 A.7.2 | N | Verify entry/access-point/visitor and delivery-route scope; no compulsory badge/guard arrangement. | C `delivery-context` |
+| A.7.3 | Facilities protection for actual use, access and unattended exposure | U; B2 A.7.3 | N | Verify facility design/application/protection qualifiers; visibility and unattended probes are authored practice. | R only |
+| A.7.4 | Monitoring coverage, working detection and response | U; B2 A.7.4 | O? | `detection` says when protection is needed; verify exact continuity/coverage qualification. PE-6/topic identity does not settle that wording. | R; qualified operating detection `Yes` does not independently establish continuous coverage |
+| A.7.5 | Relevant physical/environmental threats, safeguards and functioning protection | U; B2 A.7.5 | N | Verify natural/deliberate/other threat subjects and protection qualifications; no equipment bundle inferred. | R only |
+| A.7.6 | Defined understood applied secure-area work precautions | U; B2 A.7.6 | N | Verify secure-area activity/personnel qualifiers; recording restrictions are risk-based, not a universal ban. | R only |
+| A.7.7 | Appropriate desk/media and screen protection, rules and applied practice | U; B2 A.7.7 | N | Verify paper/media/screen subjects and policy qualification; no fixed lock timeout. | R only |
+| A.7.8 | Equipment placement/protection against access and environmental exposure | U; B2 A.7.8 | N | Verify siting and protection qualifiers including confidentiality; no universal locked-room design. | R only |
+| A.7.9 | Accountable offsite custody/handling and loss/compromise response readiness | U; B2 A.7.9 | E? | Compare `loss` reporting/containment readiness: independent control duty or one supporting offsite-protection practice? Do not infer a remote-wipe mandate. | R; `loss=No` yields `needs_attention` despite affirmative custody/handling |
+| A.7.10 | Media acquisition/use/transport/disposal and classification-based protection | U; B2 A.7.10 | N | Verify full media lifecycle and classification qualifiers; technique choice is local. | R only |
+| A.7.11 | Utility needs, interruption protection and usable resilience | U; B2 A.7.11 | N | Verify supporting-utility disruption/maintenance qualifiers; no generator/runtime/test interval inferred. | R only |
+| A.7.12 | Power/data cable risks and applied protection | U; B2 A.7.12 | N | Verify interception/interference/damage scope and cable subjects; no universal conduit design. | R only |
+| A.7.13 | Suitable maintenance and service access/information safeguards | U; B2 A.7.13 | N | Verify maintenance objectives/authorized-service qualifiers; offsite release is only a conditional subpart. | C `offsite-context` |
+| A.7.14 | Identify retained data/software, appropriate removal/protection and checked retirement/reuse | U; B2 A.7.14 | N | Verify sensitive-data/licensed-software checking/removal qualifiers; NIST sanitization options do not mandate a certificate/method. | R only |
+| A.8.1 | Relevant endpoint rules/protection and maintained operation | U; B2 A.8.1 | N | Verify storage/processing/access scope and protection qualifiers; no required MDM/antivirus product. | R only |
+| A.8.2 | Identify, authorize/restrict, review and manage privileged access | U; B2 A.8.2 | N | Verify allocation/use restrictions and oversight qualifiers; no compulsory privileged-access suite. | R only |
+| A.8.3 | Suitable information access needs, restrictions and enforcement | U; B2 A.8.3 | N | Verify access-rule relationship and restriction/exception scope; an entitlement list alone is not enforcement. | R only |
+| A.8.4 | Controlled authorized source/development access, changes and protection | U; B2 A.8.4 | N | Verify read/write scope across code, development tools and libraries; hosted tooling is not exemption. | R only |
+| A.8.5 | Authentication appropriate to restrictions, credential protection and operation | U; B2 A.8.5 | N | Verify procedure/technology/access-restriction qualifiers; no universal MFA/SSO factor/product obligation. | R only |
+| A.8.6 | Current/future capacity needs, monitoring and suitable response | U; B2 A.8.6 | N | Verify expected-use projection and adjustment qualifiers; thresholds/forecast format remain local. | R only |
+| A.8.7 | Relevant malware prevention/detection/response, awareness and maintenance | U; B2 A.8.7 | N | Verify protection/user-awareness subjects and qualifiers; no universal agent or course cadence. | R only |
+| A.8.8 | Vulnerability information, exposure/risk evaluation and treatment | U; B2 A.8.8 | N | Verify information/evaluation/action and timing qualifiers; no scanner/patch deadline inferred. | R only |
+| A.8.9 | Suitable configuration baselines, applied settings, change control and review | U; B2 A.8.9 | N | Verify establishing/documenting/implementing/monitoring/reviewing dimensions and subjects; no mandatory benchmark. | R only |
+| A.8.10 | Deletion decisions, actual removal and result handling across copies/providers | U; B2 A.8.10 | N | Verify no-longer-required/retention qualification and system/media scope; backups depend on actual retention design. | R only |
+| A.8.11 | Protection needs, suitable masking/access/use and re-identification risks | U; B2 A.8.11 | N | Verify access-rule/policy/business/legal qualifiers; a masking technique is not universally required for every field. | R only |
+| A.8.12 | Relevant leakage paths/information, prevention and effective operation/response | U; B2 A.8.12 | N | Verify system/network/device scope and prevention qualifications; marketed DLP software is not the duty. | R only |
+| A.8.13 | Backup coverage, protection, appropriate schedules and recovery checks | U; B2 A.8.13 | N | Verify information/software/system scope, policy and maintenance/testing qualifiers; no daily/restore interval inferred. | R; F2 notes retained separately and unscored |
+| A.8.14 | Availability needs, sufficient redundancy and actual resilience | U; B2 A.8.14 | N | Verify sufficiency/availability qualifications; no active-active topology or failover target imposed. | R only |
+| A.8.15 | Relevant log events/generation, storage/protection and usable analysis | U; B2 A.8.15 | N | Verify production/storage/protection/analysis subjects and qualifications; retention/field design is local. | R only |
+| A.8.16 | Meaningful activity monitoring, anomaly detection and evaluation/response | U; B2 A.8.16 | N | Verify network/system/application and anomalous-behavior/action scope; no universal continuous human watch. | R only |
+| A.8.17 | Suitable time references, synchronization and problem handling | U; B2 A.8.17 | N | Verify approved-source/relevant-system qualifiers; no mandated protocol/tolerance/observation interval. | R only |
+| A.8.18 | Powerful utility scope, restricted/authorized use and traceable significant activity | U; B2 A.8.18 | E? | Compare `accountability` tracing/examination as independent obligation versus supporting restricted-use technique; alternatives include supervised work, not just logs. | R; `accountability=No` yields `needs_attention` despite affirmative restrictions |
+| A.8.19 | Installation rules/permissions, secure procedures and failed/unauthorized outcome handling | U; B2 A.8.19 | E? | Compare `outcome` failure-handling as separate required criterion versus supporting secure-installation practice; no package-manager mandate. | R; `outcome=No` yields `needs_attention` despite affirmative rules/procedure |
+| A.8.20 | Appropriate network/device boundaries, management and protective operation | U; B2 A.8.20 | N | Verify network/device control and information/application protection qualifications; no prescribed firewall topology. | R only |
+| A.8.21 | Network-service needs, agreed security/delivery and actual oversight | U; B2 A.8.21 | N | Verify security mechanisms, service levels and service-management/delivery qualifiers; no universal SLA. | R only |
+| A.8.22 | Appropriate segmentation and enforced group boundaries | U; B2 A.8.22 | N | Verify information-service/user/system segregation subjects; logical/physical design alternatives remain local. | R only |
+| A.8.23 | External-content risks, suitable access management and handled exceptions | U; B2 A.8.23 | N | Verify website-access purpose/qualification; categories and filtering methods are local choices. | R only |
+| A.8.24 | Effective suitable cryptographic use and key management | U; B2 A.8.24 | N | Verify rules/key lifecycle/protection qualifiers; no algorithm, vendor or key-rotation interval inferred. | O `arrangement-note` |
+| A.8.25 | Security rules and actual software/system development lifecycle application | U; B2 A.8.25 | N | Verify development/lifecycle scope and application qualifications; SSDF is related practice, not ISO authority. | R only |
+| A.8.26 | Application needs identification/agreement, acceptance usefulness and change review | U; B2 A.8.26 | O? | `agreement` asks agreed requirements; verify exact specification/approval formality for development/acquisition rather than equating agreement with approval. | R; agreement `Yes` need not prove formal approval |
+| A.8.27 | Established principles, actual design application and material-change review | U; B2 A.8.27 | O? | Verify exact documentation/maintenance of engineering principles; establishment/application alone may not establish those distinct dimensions. | R; affirmative principles/application do not prove documented maintenance |
+| A.8.28 | Appropriate coding rules/use, review and defect correction | U; B2 A.8.28 | N | Verify secure-coding application scope/qualification; SSDF techniques are supplemental options. | R only |
+| A.8.29 | Relevant testing plans/execution/results and informed acceptance | U; B2 A.8.29 | N | Verify process definition/implementation across development/acceptance; no mandatory test count or technique. | R only |
+| A.8.30 | Directed/monitored/reviewed external development and suitable acceptance | U; B2 A.8.30 | N | Verify exact oversight qualifications; contracts/acceptance are practical probes, not supplier certification mandates. | R only |
+| A.8.31 | Development/test/production separation, access/change protection and operation | U; B2 A.8.31 | N | Verify separation/protection subjects and qualifiers; no universal physical/account topology. | R only |
+| A.8.32 | Change impact, authorization, implementation checks and relevant urgent routing | U; B2 A.8.32 | N | Verify processing-facility/system change duties; urgent routing is a conditional supporting subpart. | C `urgent-context` |
+| A.8.33 | Appropriate test-data selection/protection/handling and live-derived safeguards | U; B2 A.8.33 | N | Verify test-information management qualifiers; use of live-derived data is optional context, not a mandated source. | C `live-context` |
+| A.8.34 | Agreed audit scope/access, safe execution, oversight and appropriate closure | U; B2 A.8.34 | E? | Compare `closure` access/copy cleanup as separate control duty versus supporting agreed-test/access practice; exact planning/agreement qualification remains open. | R; `closure=No` yields `needs_attention` despite affirmative scope/safeguards |
+
 ## Source-to-question matrix
 
 Each row names its stable question ID and exact reference sections or repository fields.
