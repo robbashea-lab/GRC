@@ -48,14 +48,15 @@ export function inventorySummary(answers,version,clientName='Brawndo'){
   if(active.sources==='Multiple unreconciled sources'){sections['Incomplete or missing'].push('Inventory sources: Multiple sources are reported as unreconciled.');actions.remediation.push('Reconcile the reported inventory sources and their coverage.');}
   if(['One source','Multiple reconciled sources'].includes(active.sources))sections['In place'].push(active.sources==='One source'?'One inventory source is reported.':'Multiple inventory sources are reported as reconciled.');
   if(active.reconciled==='Yes')sections['In place'].push('The inventory is compared with other device records.');
-  else if(['No','Partially'].includes(active.reconciled)){sections['Incomplete or missing'].push('Comparison with other device records is absent or incomplete.');actions.remediation.push('Address the reported gaps in comparison with other device records.');}
-  else if(active.reconciled==='Not sure'){sections['Needs confirmation'].push('Comparison: Whether the inventory is compared with other device records.');actions.confirmation.push('Confirm the comparison process for other device records.');}
   if(active.gaps?.trim()){
     if(version==='brawndo-cis-pilot-1'){sections['Needs confirmation'].push(`Historical reported follow-up, not classified as a confirmed deficiency: ${active.gaps.trim()}`);actions.confirmation.push(`Review and classify the historical follow-up: ${active.gaps.trim()}`);}
     else{sections['Incomplete or missing'].push(`Reviewer-reported deficiencies: ${active.gaps.trim()}`);actions.remediation.push(`Address the reported deficiencies: ${active.gaps.trim()}`);}
   }
   if(active.unknowns?.trim()){sections['Needs confirmation'].push(`Reviewer-reported uncertainty: ${active.unknowns.trim()}`);actions.confirmation.push(`Confirm with the responsible team: ${active.unknowns.trim()}`);}
   const context=[];
+  if(active.reconciled==='No')context.push('Optional comparison with other device records is not currently performed.');
+  else if(active.reconciled==='Partially')context.push('Optional comparison with other device records is only partly performed.');
+  else if(active.reconciled==='Not sure')context.push('Optional comparison with other device records has not been confirmed.');
   for(const [key,label] of [['existing','Current practice'],['owner','Responsibility'],['maintenance_detail','Update process'],['scope_reason','Scope explanation'],['evidence','Reported supporting records']])if(active[key]?.trim())context.push(`${label}: ${active[key].trim()}`);
   if(active.sources?.startsWith('Multiple')&&active.sources_detail?.trim())context.push(`Sources and coverage: ${active.sources_detail.trim()}`);
   for(const q of questions)if(active[q.id+'_detail']?.trim()&&!['sources','maintenance'].includes(q.id))context.push(`Reported ${q.id==='coverage'?'coverage':q.id==='attributes'?'inventory details':q.id==='inventory'?'inventory':q.id==='evidence'?'review':q.id.replaceAll('_',' ')} context: ${active[q.id+'_detail'].trim()}`);

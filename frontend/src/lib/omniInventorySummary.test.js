@@ -46,3 +46,22 @@ test('resolved uncertainty disappears and reported material context remains',()=
   const changed={...answers,gaps:'',unknowns:''};const resolved=inventorySummary(changed,version).result;
   expect(resolved.narrative).not.toContain('Needs confirmation');expect(resolved.narrative).not.toContain('Synthetic outstanding confirmation');expect(resolved.status).toBe(focusedResult('1.1',changed,version).status);
 });
+
+test.each([
+  ['No','is not currently performed'],
+  ['Partially','is only partly performed'],
+  ['Not sure','has not been confirmed']
+])('optional comparison %s remains context without a mandatory assessment gap', (reconciled,reportedFact)=>{
+  const answers={...complete(),last_review:new Date().toISOString().slice(0,10),reconciled};
+  const original=JSON.parse(JSON.stringify(answers));
+  const summary=inventorySummary(answers,version,'Synthetic QA Client');
+  expect(summary.result.status).toBe('addressed');
+  expect(summary.deficiencies).toEqual([]);expect(summary.confirmations).toEqual([]);
+  expect(summary.result.narrative).toContain('Reported operating context');
+  expect(summary.result.narrative).toContain('Optional comparison with other device records');
+  expect(summary.result.narrative).toContain(reportedFact);
+  expect(summary.result.narrative).not.toMatch(/Remediation|Confirmation work|Address the reported gaps in comparison|Confirm the comparison process/);
+  expect(summary.result.narrative).toContain('No confirmed deficiencies were identified');
+  expect(summary.result.narrative).toContain('No outstanding next steps were identified');
+  expect(answers).toEqual(original);
+});
