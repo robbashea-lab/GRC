@@ -83,7 +83,7 @@ SOC canonical catalog is 61; primary Security/Availability/Confidentiality is 38
 | SHARED-business_owner-onboard | Business/product owner | Create one client without fabricated organizational facts: Client Management → Add Client → Create client → Open Client Profile → four-step onboarding | not_tested |
 | SHARED-business_owner-scope_expansion | Business/product owner | Add a program later/reuse a mixed-framework practice: Client Profile → Program Configuration → Applicability → Confirm program change | not_tested |
 | SHARED-business_owner-archive | Business/product owner | Archive/reactivate an authorized disposable client: Client Management → Archive / Restore → confirmation | not_tested |
-| SHARED-business_owner-reporting | Business/product owner | Reconcile portfolio and supported exports: Portfolio filters/drilldowns; Audit Log Export CSV; register Export CSV | not_tested |
+| SHARED-business_owner-reporting | Business/product owner | Reconcile portfolio and supported exports: Portfolio filters/drilldowns; Audit Log Export CSV; register Export CSV. Existing Board Report API, with UI entry separately unverified. | not_tested |
 | SHARED-ciso-reviews | CISO/vISO | Inspect scheduled work and immutable occurrence history: Reviews filters → Review History; Calendar exact chip → source | not_tested |
 | SHARED-ciso-risk | CISO/vISO | Record acceptance/deferral and later reassessment: Risks → Treatment/decision/linked Review; supported Exceptions records | not_tested |
 | SHARED-ciso-policy | CISO/vISO | Inspect issued version and independent approval: Policies → Policy → workflow/approval/version/evidence | not_tested |
@@ -146,14 +146,14 @@ Disposition: Exercise supported custom7 separately and existing state/event cont
 
 Source: `frontend/src/lib/schemas.js:47`, `backend/review_occurrences.py:5`, `frontend/src/lib/frameworks.js`
 
-### RP-06: unsupported_capability
+### RP-06: report_only_discoverability_and_untested_reporting
 
-CSV registers and Audit Log export exist. An audit event label Board Report is not a board-report route or full audit-package export.
+Existing `GET /api/reports/board` produces the Board Report PDF and an audit event; CSV registers and Audit Log export also exist. No visible Board Report control was found in the inspected current frontend, and `Dashboard.test.jsx` deliberately excludes that wording.
 
-Impact: Year10 handoff must name actual files/records, not unsupported reporting module.
-Disposition: Exercise actual exports/history reconstruction; additional board/audit package capability remains report-only.
+Impact: The report API is supported but unexecuted here. Its normal unaided UI entry/discoverability remains unverified; API success would not prove users can find the report.
+Disposition: Exercise existing report generation and reconcile its source totals; trace any UI entry separately without adding a button or route. No full audit-package capability is inferred.
 
-Source: `frontend/src/App.js`, `frontend/src/pages/AdminAudit.jsx:36`, `frontend/src/pages/AdminAudit.jsx:190`, `frontend/src/pages/RecordListPage.jsx:480`
+Source: `backend/server.py:4778`, `backend/server.py:4897`, `frontend/src/pages/Dashboard.test.jsx:21`, `frontend/src/pages/AdminAudit.jsx:36`, `frontend/src/pages/AdminAudit.jsx:190`
 
 ## Minimal uncovered checks
 
@@ -184,3 +184,5 @@ node scripts/platform-acceptance-freeze.cjs --baseline 28b806716024ec149af2ec5da
 No install is needed. The already-installed parser used here was under the existing security-remediation-closeout frontend package root. The extractor is partial: dynamic/computed copy can be missed; conservative strings include non-visible technical/API keys and require diff review. It does not inspect backend static messages or replace matching deployed screenshots. Its nonzero exit flags frozen asset/catalog or visible-token changes, rather than claiming every other change preserves behavior. Do not overwrite the approved source baseline to accept a candidate.
 
 Normal creation requires the actual Platform Owner role; provider administration alone cannot POST a new client. Role and allowed memberships remain server-authoritative.
+
+Source inventory correction INV-CORRECTION-01: earlier RP-06 overclassified Board Report as unsupported. The existing API is now explicitly recorded; it is not a new tested result or UI discovery pass. No runtime change.

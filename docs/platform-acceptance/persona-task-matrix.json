@@ -2171,9 +2171,9 @@
       "persona": "Business/product owner",
       "task": "Reconcile portfolio and supported exports",
       "normal_entry_route": null,
-      "visible_controls": "Portfolio filters/drilldowns; Audit Log Export CSV; register Export CSV",
+      "visible_controls": "Portfolio filters/drilldowns; Audit Log Export CSV; register Export CSV. Existing Board Report API GET /api/reports/board?client_id=<id>; no current visible UI entry established.",
       "authoritative_records": "portfolio/dashboard source; audit_logs; export rows",
-      "expected_outcome": "Files/totals match actual authorized populations; no fabricated Board Report route or full audit-package export.",
+      "expected_outcome": "Files/totals match actual authorized source populations; report API capability is tested separately from unaided UI access. No complete audit-package export is inferred.",
       "framework_constraints": null,
       "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
       "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
@@ -2185,7 +2185,8 @@
       "source_files": [
         "frontend/src/pages/ClientDirectory.jsx",
         "frontend/src/pages/AdminAudit.jsx",
-        "frontend/src/pages/RecordListPage.jsx"
+        "frontend/src/pages/RecordListPage.jsx",
+        "backend/server.py"
       ],
       "existing_test_references": [
         "backend/tests/test_portfolio_overview.py",
@@ -2682,15 +2683,16 @@
     },
     {
       "id": "RP-06",
-      "classification": "unsupported_capability",
-      "description": "CSV registers and Audit Log export exist. An audit event label Board Report is not a board-report route or full audit-package export.",
-      "impact": "Year10 handoff must name actual files/records, not unsupported reporting module.",
-      "proposed_remedy": "Exercise actual exports/history reconstruction; additional board/audit package capability remains report-only.",
+      "classification": "report_only_discoverability_and_untested_reporting",
+      "description": "Existing GET /api/reports/board produces the Board Report PDF and an audit event; CSV registers and Audit Log export also exist. No visible Board Report control was found in the inspected current frontend, and Dashboard.test.jsx deliberately excludes that wording.",
+      "impact": "The report API is supported but unexecuted in this workstream. Its normal unaided UI entry/discoverability remains unverified; a working API would not prove that users can find the report.",
+      "proposed_remedy": "Exercise existing report generation and reconcile its source totals. Trace any current UI entry separately; report a missing/discoverability gap without adding a button or route. No whole audit-package capability is inferred.",
       "source_references": [
-        "frontend/src/App.js",
+        "backend/server.py:4778",
+        "backend/server.py:4897",
+        "frontend/src/pages/Dashboard.test.jsx:21",
         "frontend/src/pages/AdminAudit.jsx:36",
-        "frontend/src/pages/AdminAudit.jsx:190",
-        "frontend/src/pages/RecordListPage.jsx:480"
+        "frontend/src/pages/AdminAudit.jsx:190"
       ],
       "confirmed_functional_defect": false
     }
@@ -2728,5 +2730,12 @@
     "conservative_tokens": 27439,
     "result": "Source capture/self-checks passed; no visual or functional acceptance claim",
     "execution_command": "node scripts/platform-acceptance-freeze.cjs --baseline 28b806716024ec149af2ec5da621a5a618c669d5 --candidate <exact-sha> --dependencies <existing-frontend-package-root> --out <candidate-report.json>"
-  }
+  },
+  "corrections": [
+    {
+      "id": "INV-CORRECTION-01",
+      "scope": "Source inventory only",
+      "description": "Earlier RP-06 unsupported Board Report classification was too strong; subsequent source inspection confirmed /api/reports/board. Corrected supported API versus missing/unverified UI entry, with no runtime edit or test pass."
+    }
+  ]
 }
