@@ -39,12 +39,13 @@ export function AuthProvider({ children }) {
       const { data } = await api.get("/auth/me");
       if (generation === sessionGeneration.current) {
         try { setUser(data); }
-        catch {
+        catch (error) {
           setAccessToken(null);
           queryClient.clear();
           userRef.current = null;
           setUserState(null);
-          cleanupWarning();
+          if (error.code === 'PENDING_COMMAND_OWNERSHIP_UNVERIFIED') toast.error(error.message, {id:'pending-ownership-unverified',duration:Infinity});
+          else cleanupWarning();
         }
       }
     } catch (error) {
