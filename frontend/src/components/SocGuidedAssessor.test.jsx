@@ -172,3 +172,40 @@ test('own native source never bypasses a changed scope',async()=>{
   await render({current:nextCurrent,form:copy(nextCurrent)});await click('Back to questions');const writes=api.put.mock.calls.length;await click('Save & next');
   expect(document.body.textContent).toContain('scope changed');expect(api.put.mock.calls.length).toBe(writes);expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
+
+test.each(['compare','restart'])('%s requires explicit discard of unsaved answers and exact multiline wording',async action=>{
+  await render();await open();await complete();
+  stored={...stored,narrative:'SAVED MANUAL WORDING\nsecond saved line',result:{...stored.result,narrative:'SAVED MANUAL WORDING\nsecond saved line'},lineage_stale:true,current_assessment_token:'own-save'};
+  const savedInterview=copy(stored),ownCurrent={...props.current,last_saved:'own-save',implementation:stored.narrative,status:stored.result.status,guided_assessment_source:{version:stored.version,revision:stored.revision,by:'soc-actor'}};
+  await act(async()=>root.unmount());root=createRoot(container);await render({current:ownCurrent,form:copy(ownCurrent)});await open();await click('Resume your review');
+  const wording='UNSAVED EXACT WORDING\nsecond line\n\nKeep these line breaks.',detail='UNSAVED ANSWER DETAIL\nsecond answer line';
+  async function changeInput(target,value){await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(target,value);target.dispatchEvent(new Event('input',{bubbles:true}));});}
+  await changeInput(document.querySelector('[aria-label="Omnibot implementation summary"]'),wording);await click('Back to questions');
+  const question=socGroups('CC1.1',stored.answers,stored.version).at(-1).questions.find(q=>!q.type||q.type==='select');expect(question).toBeTruthy();
+  const choices=()=>[...document.querySelectorAll('.omni-answer-choices')].find(group=>group.getAttribute('aria-label')===question.prompt);
+  const partial=[...choices().querySelectorAll('button')].find(item=>item.textContent==='Partially');expect(partial.closest('fieldset').disabled).toBe(false);
+  await act(async()=>partial.click());await changeInput(document.getElementById('soc-detail-'+question.id),detail);
+  const changedCurrent={...ownCurrent,last_saved:'external-save',implementation:'Native record changed elsewhere.\nRetain this saved position.',guided_assessment_source:null};
+  stored={...stored,current_assessment_token:changedCurrent.last_saved};await render({current:changedCurrent,form:copy(changedCurrent)});
+  expect(document.body.textContent).toContain('saved assessment or scope changed');
+  const reads=api.get.mock.calls.length,writes=api.put.mock.calls.length,nativeBefore=copy(props.current);
+  async function request(){
+    if(action==='compare'){
+      await click('Compare & continue');const check=document.querySelector('input[type="checkbox"]');if(!check.checked)await act(async()=>check.click());await click('Retain answers & continue');
+    }else{
+      await click('Current position');await click('Begin a new review');
+      const confirmation=[...document.querySelector('.omni-refined-close').querySelectorAll('button')].find(item=>item.textContent==='Begin a new review');
+      if(confirmation)await act(async()=>confirmation.click());
+    }
+  }
+  await request();expect(api.get.mock.calls.length).toBe(reads);expect(api.put.mock.calls.length).toBe(writes);
+  expect(document.querySelector('.omni-refined-close').textContent).toContain('unsaved');await click('Keep editing');
+  await click('Current position');await click('Resume your review');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(wording);
+  await click('Back to questions');expect(document.getElementById('soc-detail-'+question.id).value).toBe(detail);
+  expect(choices().querySelector('[aria-pressed="true"]').textContent).toBe('Partially');expect(stored.answers).toEqual(savedInterview.answers);expect(stored.narrative).toBe(savedInterview.narrative);
+  await request();await click(action==='compare'?'Discard unsaved edits & continue':'Discard unsaved edits & begin new review');
+  expect(api.get.mock.calls.length).toBe(reads+1);expect(api.put.mock.calls.length).toBe(writes+1);
+  expect(api.put.mock.calls.at(-1)[1]).toMatchObject(action==='compare'?{rebase:true,answers:savedInterview.answers,narrative:savedInterview.narrative}:{restart:true,answers:{},narrative:'',summary_review:null});
+  expect(api.put.mock.calls.at(-1)[1].expected_revision).toBe(savedInterview.revision);
+  expect(props.current).toEqual(nativeBefore);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(document.querySelector('.omni-refined-close')).toBeNull();
+});

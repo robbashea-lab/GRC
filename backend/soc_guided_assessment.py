@@ -1,8 +1,9 @@
-"""SOC-specific interview validation and reported-readiness evaluation; no writes."""
+"""SOC interview validation, reported-readiness evaluation and live write scope."""
 import hashlib
 import json
 
 from fastapi import HTTPException
+import authorization
 from framework_catalog import ROOT, client_configuration
 
 CATALOG = json.loads((ROOT / 'guidedSoc2.json').read_text(encoding='utf-8'))
@@ -62,6 +63,24 @@ def check_scope(row, client):
             or any(category not in {d['category'] for d in CATALOG['definitions'].values()} for category in categories)
             or definition['category'] not in categories):
         raise HTTPException(404, 'SOC guided assessment is not enabled for this criterion')
+
+
+async def write_context(s, aid, user, guided=False):
+    """Recheck live authority after acquiring the SOC interview/native lease."""
+    actor = await s.db.users.find_one({'user_id': user['user_id'], 'status': 'active'}, {'_id': 0})
+    if not actor or actor.get('password_change_required'):
+        raise HTTPException(403, 'SOC write access is no longer available')
+    row = await s._authorized_parent('framework_assessments', aid, actor, True)
+    authorization.require_assigned(actor, 'framework_assessments', row)
+    client = await s.db.clients.find_one({'client_id': row['client_id']}, {'_id': 0})
+    if client and client.get('status') == 'archived' and authorization.role_of(actor) != authorization.OWNER:
+        raise HTTPException(403, 'Archived clients are read-only')
+    if guided:
+        check_scope(row, client)
+        if not await s.db.requirements.find_one(
+                {'client_id': row['client_id'], 'baseline_key': 'soc-2', 'baseline_response': 'applies'}):
+            raise HTTPException(404, 'SOC guided assessment is not active for this client')
+    return row, client, actor
 
 
 def validate_answers(id, answers, version=None):

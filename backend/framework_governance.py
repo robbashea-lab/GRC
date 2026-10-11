@@ -18,6 +18,7 @@ import authorization
 import shared_review_plans
 import guided_assessment
 import soc_guided_lease
+import soc_guided_assessment
 import iso_guided_assessment
 import iso_guided_lease
 from framework_catalog import CATALOGS, CIS, FRAMEWORKS, ROOT as CATALOG_ROOT, capabilities, definition_for, assessment_title, active_definitions
@@ -523,8 +524,10 @@ def router_for(s):
                 return await update_assessment(aid,body,actor,current,lease)
             return await iso_guided_lease.run(s,old,locked_iso)
         if old['framework_key']=='soc-2':
+            old,_,user=await soc_guided_assessment.write_context(s,aid,user)
             async def locked(lease):
-                return await update_assessment(aid,body,user,await parent(aid,user,True),lease)
+                current,_,actor=await soc_guided_assessment.write_context(s,aid,user)
+                return await update_assessment(aid,body,actor,current,lease)
             return await soc_guided_lease.run(s,old,locked)
         return await update_assessment(aid,body,user,old)
     async def update_assessment(aid,body,user,old,lease=None):

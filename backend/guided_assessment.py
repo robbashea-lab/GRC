@@ -221,10 +221,10 @@ async def save_draft(s, row, user, body, client=None, upgraded=False):
             return await _save_draft(s, current, actor, body, context, upgraded, lease)
         return await iso_guided_lease.run(s, row, locked_iso)
     if row['framework_key'] == 'soc-2':
-        row = await s._authorized_parent('framework_assessments', row['framework_assessment_id'], user, True)
+        row, client, user = await soc_guided_assessment.write_context(s, row['framework_assessment_id'], user, guided=True)
         async def locked(lease):
-            current = await s._authorized_parent('framework_assessments', row['framework_assessment_id'], user, True)
-            return await _save_draft(s, current, user, body, client, upgraded, lease)
+            current, context, actor = await soc_guided_assessment.write_context(s, row['framework_assessment_id'], user, guided=True)
+            return await _save_draft(s, current, actor, body, context, upgraded, lease)
         return await soc_guided_lease.run(s, row, locked)
     return await _save_draft(s, row, user, body, client, upgraded)
 

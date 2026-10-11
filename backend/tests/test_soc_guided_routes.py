@@ -35,6 +35,85 @@ class SocGuidedRoutes(unittest.IsolatedAsyncioTestCase):
     def answers(self,id):
         return {q['id']:('Relevant' if q['type']=='context' else '' if q['type']=='text' else 'Yes') for q in _questions(id)}
 
+    async def assert_revocation_at_soc_lease(self, interview):
+        """Use modeled identity, real route authorization and isolated Mongo only."""
+        workspace = await self.setup_soc()
+        row = next(a for a in workspace['assessments'] if a['definition_id'] == 'CC1.1')
+        aid = row['framework_assessment_id']
+        path = '/api/framework_assessments/' + aid
+        await server.db.framework_assessments.update_one({'framework_assessment_id': aid}, {'$set': {'owner_id': 'member'}})
+        self.sign_in('member')
+        draft = (await self.client.get(path + '/guided-assessment')).json()
+        payload = ({'version': draft['version'], 'answers': self.answers('CC1.1'), 'step': 0,
+                    'completed': False, 'expected_revision': draft['revision'],
+                    **{k: draft[k] for k in ('base_assessment_token', 'base_scope_fingerprint')}}
+                   if interview else {'implementation': 'Synthetic local revocation test only',
+                                      'status': 'in_progress', 'expected_last_assessed': row.get('last_saved') or row.get('last_assessed')})
+        actor = await server.db.users.find_one({'user_id': 'member'})
+        assessment = await server.db.framework_assessments.find_one({'framework_assessment_id': aid})
+        requirement = await server.db.requirements.find_one({'client_id': 'a', 'baseline_key': 'soc-2'})
+        lease_run = soc_guided_lease.run
+        for collection, query, changes, expected in (
+                ('users', {'user_id': 'member'}, {'role': 'client_readonly'}, 403),
+                ('users', {'user_id': 'member'}, {'client_ids': ['b']}, 403),
+                ('users', {'user_id': 'member'}, {'status': 'disabled'}, 403),
+                ('users', {'user_id': 'member'}, {'password_change_required': True}, 403),
+                ('framework_assessments', {'framework_assessment_id': aid}, {'owner_id': None}, 403),
+                ('requirements', {'client_id': 'a', 'baseline_key': 'soc-2'}, {'baseline_response': 'does_not_apply'}, 404)):
+            if not interview and collection == 'requirements':
+                continue  # Native retained-record edits do not require guide activation.
+            with self.subTest(interview=interview, collection=collection, changes=changes):
+                async def revoked(s, current, operation):
+                    async def after_acquisition(lease):
+                        await s.db[collection].update_one(query, {'$set': changes})
+                        return await operation(lease)
+                    return await lease_run(s, current, after_acquisition)
+                before_interview = await server.db.guided_assessment_pilot.find({}).to_list(None)
+                before_history = await server.db.guided_assessment_history.find({}).to_list(None)
+                with patch.object(soc_guided_lease, 'run', side_effect=revoked):
+                    response = (await self.client.put(path + '/guided-assessment', json=payload) if interview
+                                else await self.client.patch(path, json=payload))
+                self.assertEqual(response.status_code, expected, response.text)
+                expected_assessment = {**assessment, **(changes if collection == 'framework_assessments' else {})}
+                self.assertEqual(await server.db.framework_assessments.find_one({'framework_assessment_id': aid}), expected_assessment)
+                self.assertEqual(await server.db.guided_assessment_pilot.find({}).to_list(None), before_interview)
+                self.assertEqual(await server.db.guided_assessment_history.find({}).to_list(None), before_history)
+                await self.assert_lease_released(aid)
+            # Each isolated subcase starts from the same fixture even when its
+            # assertion exposes the old writer. These are in-memory rows only.
+            await server.db.users.replace_one({'user_id': 'member'}, actor)
+            await server.db.framework_assessments.replace_one({'framework_assessment_id': aid}, assessment)
+            await server.db.requirements.replace_one({'client_id': 'a', 'baseline_key': 'soc-2'}, requirement)
+            await server.db.guided_assessment_pilot.delete_many({})
+            await server.db.guided_assessment_history.delete_many({})
+            if before_interview:
+                await server.db.guided_assessment_pilot.insert_many(before_interview)
+            if before_history:
+                await server.db.guided_assessment_history.insert_many(before_history)
+
+    async def test_native_rechecks_actor_and_assignment_after_soc_lease_acquisition(self):
+        await self.assert_revocation_at_soc_lease(False)
+
+    async def test_progress_rechecks_actor_and_assignment_after_soc_lease_acquisition(self):
+        await self.assert_revocation_at_soc_lease(True)
+
+    async def test_native_retained_soc_edits_preserve_existing_program_and_category_scope(self):
+        workspace = await self.setup_soc()
+        row = next(a for a in workspace['assessments'] if a['definition_id'] == 'A1.2')
+        path = '/api/framework_assessments/' + row['framework_assessment_id']
+        await server.db.clients.update_one({'client_id': 'a'}, {'$set': {'framework_settings.soc-2.categories': ['security']}})
+        for applies in ('applies', 'does_not_apply'):
+            with self.subTest(baseline=applies):
+                await server.db.requirements.update_one({'client_id': 'a', 'baseline_key': 'soc-2'}, {'$set': {'baseline_response': applies}})
+                before = (await self.client.get(path)).json()
+                response = await self.client.patch(path, json={'notes': 'Synthetic retained-record edit: ' + applies,
+                                                              'expected_last_assessed': before.get('last_saved') or before.get('last_assessed')})
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertEqual(response.json()['notes'], 'Synthetic retained-record edit: ' + applies)
+                self.assertEqual(response.json()['implementation'], before['implementation'])
+                self.assertEqual(response.json()['status'], before['status'])
+                self.assertEqual((await self.client.get(path + '/guided-assessment')).status_code, 404)
+
     async def complete(self,row,changes=None):
         path='/api/framework_assessments/'+row['framework_assessment_id']+'/guided-assessment'
         draft=(await self.client.get(path)).json()
