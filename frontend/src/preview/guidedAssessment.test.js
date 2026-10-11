@@ -49,14 +49,15 @@ test('Apply uses normal save and preserves verification and history attribution'
   expect(edited.guided_assessment_source).toBeNull();
   expect(edited.assessment_history.at(-2).guided_assessment_source).toEqual(result.guided_assessment_source);
 });
-test('applicable CIS clients start clean and unrelated frameworks reject access',async()=>{
+test('applicable CIS clients start clean, ISO uses its own version, and inactive ISO rejects access',async()=>{
   const cis=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data;
   const interview=(await api.get('/framework_assessments/'+cis.assessments.find(a=>a.definition_id==='1.1').framework_assessment_id+'/guided-assessment')).data;
   expect(interview.answers).toEqual({});expect(interview.revision).toBe(0);
-  for(const [framework,cid] of [['iso-27001','demo_dunder']]){
-    const w=(await api.get('/frameworks/'+framework,{params:{client_id:cid}})).data;
-    if(w.assessments?.length)await expect(api.get('/framework_assessments/'+w.assessments[0].framework_assessment_id+'/guided-assessment')).rejects.toMatchObject({response:{status:404}});
-  }
+  const iso=(await api.get('/frameworks/iso-27001',{params:{client_id:'demo_dunder'}})).data;
+  const route='/framework_assessments/'+iso.assessments[0].framework_assessment_id+'/guided-assessment';
+  expect((await api.get(route)).data.version).toBe('iso27001-omni-1');
+  await api.patch('/onboarding/programs/iso-27001',{client_id:'demo_dunder',applicability:'does_not_apply'});
+  await expect(api.get(route)).rejects.toMatchObject({response:{status:404}});
 });
 
 test.each([1,2,3])('new IG%i clients receive canonical clean interviews and preserve inherited work on upgrade',async group=>{
@@ -248,7 +249,7 @@ test('configured CIS clients use trusted current defaults and reject forged base
   expect((await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data.guided_assessment_drafts['1.1']).toEqual({revision:1,completed:false,version:first.version,generated_at:null,user_id:'demo_admin'});
 });
 
-test('CIS work context uses native relationships and non-CIS work keeps its original shape',async()=>{
+test('CIS work context uses native relationships and supported SOC/ISO work has scoped context',async()=>{
   const workspace=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_brawndo'}})).data;
   const work=workspace.work[row.framework_assessment_id];
   expect(work.context_complete).toBe(true);expect(work.task_ids).toEqual([...new Set(work.task_ids)].sort());
@@ -261,7 +262,7 @@ test('CIS work context uses native relationships and non-CIS work keeps its orig
     editStore(db=>{db.framework_assessments.push({...row,framework_assessment_id:'demo-other-'+key,framework_key:key,definition_id:key==='soc-2'?'CC1.1':'A.5.1'});});
     const other=(await api.get('/frameworks/'+key,{params:{client_id:'demo_brawndo'}})).data.work['demo-other-'+key];
     for(const field of ['context_complete','priority_records','task_ids']){
-      if(key==='soc-2')expect(other).toHaveProperty(field);else expect(other).not.toHaveProperty(field);
+      expect(other).toHaveProperty(field);
     }
   }
 });

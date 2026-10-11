@@ -23,6 +23,10 @@ async function close(){await act(async()=>button('Close assessment').click());aw
 test('closing an assessment returns to its connected page opener',async()=>{
   const opener=await openExample();await close();expect(document.activeElement).toBe(opener);
 });
+test('without an Escape hook the native dialog closes and restores its connected opener',async()=>{
+  const opener=await openExample();await act(async()=>document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));await flushClose();
+  expect(document.querySelector('[data-assessment-shell]')).toBeNull();expect(document.activeElement).toBe(opener);
+});
 test('a removed opener falls back to the page heading without creating a tab stop',async()=>{
   await openExample({removeOpener:true});await close();
   expect(document.activeElement).toBe(container.querySelector('h1'));

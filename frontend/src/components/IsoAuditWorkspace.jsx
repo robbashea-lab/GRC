@@ -1,5 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {isoGuideEntry} from './IsoRequirementGuide';
+import IsoGuidedAssessor from './IsoGuidedAssessor';
+import IsoAuditGuide from './IsoAuditGuide';
 import AssessmentLayout,{AssessmentChecklist,AssessmentRequirement} from './AssessmentLayout';
 import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 import RemediationTickets from './RemediationTickets';
@@ -43,7 +45,7 @@ function IssuedReport({id}) {
   return report?<div className="brawndo-linked-row"><span>{report.display_name||report.filename}</span><EvidenceDownload row={report}/></div>:<p role="status">Loading issued report…</p>;
 }
 
-function AuditItemWorkspace({review,centralReview=review,item,position,previous,next,onClose,onSaved,users,frozen=false}) {
+function AuditItemWorkspace({review,centralReview=review,item,position,previous,next,onClose,onSaved,users,configuration,frozen=false}) {
   const {user}=useAuth(),initial=review.iso_audit.items[item.key]||blankAuditItem();
   const [form,setForm]=useState(initial),[saved,setSaved]=useState(initial),[error,setError]=useState(''),[busy,setBusy]=useState(false),[feedback,setFeedback]=useState('');
   const [version,setVersion]=useState(review.updated_at),[finding,setFinding]=useState(null),[nested,setNested]=useState(null),[pending,setPending]=useState(null),[related,setRelated]=useState(null),[evidence,setEvidence]=useState([]),[relatedRevision,setRelatedRevision]=useState(0);
@@ -84,10 +86,12 @@ function AuditItemWorkspace({review,centralReview=review,item,position,previous,
   const source=sourcePresentation(frameworkDefinition('iso-27001',item.definition_id)),criteria=isoCriteria.requirements[item.definition_id],guide=isoGuideEntry(item.definition_id);
   const linkedFindings=(related?.findings||[]).filter(f=>form.finding_ids.includes(f.finding_id));
   const disabled=!writable||busy;
-  return <><AssessmentShell ariaModal title={'ISO audit · '+item.reference+' — '+item.title} description={auditPackage(review.iso_audit.package_key).title+' · '+item.area+' · Cycle '+review.iso_audit.cycle}
+  return <><AssessmentShell ariaModal testId="iso-audit-workpaper" title={'ISO audit · '+item.reference+' — '+item.title} description={auditPackage(review.iso_audit.package_key).title+' · '+item.area+' · Cycle '+review.iso_audit.cycle}
+    onEscapeKeyDown={e=>{if(document.activeElement?.closest('[data-testid="iso-audit-workpaper"] [data-testid="iso-guided-assessment"] .omni-workspace-window'))e.preventDefault();}}
     status={<span className="text-sm">{AUDIT_STATUSES[saved.status]} · {AUDIT_RESULTS[saved.result]||'Result not recorded'}{frozen?' · Historical workpaper':''}</span>}
     position={position} previous={previous?()=>leave(previous):null} next={next?()=>leave(next):null} close={()=>leave(onClose)} busy={busy} returnSelector={`[data-audit-item="${item.key}"]`}
     footer={<><div className="min-w-0 flex-1">{error&&<p role="alert" className="text-sm text-semantic-critical">{error}</p>}<p role="status" className="text-sm">{feedback||'Audit progress is separate from the result.'}{dirty&&' · Unsaved workpaper changes'}</p>{finding&&<p className="text-xs">Finish or cancel the Finding draft before Save & next.</p>}</div><Button variant="ghost" disabled={busy} onClick={()=>leave(onClose)}>Close assessment</Button>{writable&&<><Button variant="outline" disabled={busy} onClick={save}>Save assessment</Button>{next&&<Button disabled={busy||!!finding} onClick={async()=>{if(await save())next();}}>Save & next</Button>}</>}</>}>
+    <IsoGuidedAssessor clientId={review.client_id} configuration={configuration} programLabel="Internal Audit" programContent={({close})=><IsoAuditGuide review={review} item={item} historical={frozen} onOpen={()=>{close();setNested({kind:'reviews',record:centralReview,initialValues:frozen?{occurrence:review}:undefined});}}/>}/>
     <AssessmentLayout criteriaSummary="Omnisciente guidance for assessing this requirement. These are not additional ISO requirements." criteriaTitle="ISO assessment criteria" reference={`ISO/IEC 27001:2022 · ${item.definition_id}`} key={review.client_id+':'+review.review_id+':'+oid+':'+item.key}
       summary={`Examine ${item.reference} against the agreed audit criteria and record an independent conclusion. ${item.intent}`}
       requirement={<AssessmentRequirement heading={item.definition_id.startsWith('A.')?'Annex A control & reference':'ISMS requirement & reference'} text={source.text||guide?.plain} official={!!source.text} trigger={criteria?.trigger} source={source.url} label="Official ISO source"/>}
@@ -118,7 +122,7 @@ function AuditItemWorkspace({review,centralReview=review,item,position,previous,
   </>;
 }
 
-export default function IsoAuditWorkspace({clientId}) {
+export default function IsoAuditWorkspace({clientId,configuration}) {
   const {user}=useAuth(),[params,setParams]=useSearchParams();
   const [data,setData]=useState(null),[users,setUsers]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
   const [draft,setDraft]=useState({start_date:'',first_package:isoAuditCatalog.packages[0].key,auditor_id:null,scope:'',independence:''}),[preview,setPreview]=useState(false);
@@ -141,6 +145,7 @@ export default function IsoAuditWorkspace({clientId}) {
   const years=auditProgrammeYears(data.reviews),now=String(new Date().getFullYear()),year=params.get('audit_year')||(years.includes(now)?now:years.at(-1)||now),progress=auditProgrammeMetrics(data.reviews,year);
   const openAudit=record=>{const p=new URLSearchParams(params);p.set('package',record.package_key);if(record.occurrence_id)p.set('audit_occurrence',record.occurrence_id);else p.delete('audit_occurrence');setParams(p);setItemKey(null);setSearch('');};
   return <section className="space-y-4" aria-label="Internal Audit Program">
+    {!item&&<IsoGuidedAssessor clientId={clientId} configuration={configuration} programLabel="Internal Audit" programContent={({close})=><IsoAuditGuide review={review} onOpen={review?()=>{close();setNested({kind:'reviews',record:current,initialValues:historical?{occurrence:historical}:undefined});}:undefined}/>}/>}
     <p className="text-sm text-ink-secondary">Quarterly grouping organizes this program; ISO requires planned intervals and does not mandate quarters. Audit completion is independent of corrective-action closure.</p>
     <label className="block text-sm">Audit-program year <select aria-label="Audit-program year" className={SELECT} value={year} onChange={e=>{const p=new URLSearchParams(params);p.set('audit_year',e.target.value);setParams(p);}}>{(years.length?years:[now]).map(y=><option key={y}>{y}</option>)}</select></label>
     <div className="iso-program-grid" aria-label="Quarterly audit progress">{progress.quarters.map(q=><section key={q.quarter} className="bcis-card p-4"><h3>Q{q.quarter} · {year}</h3><p>{q.total?`${q.complete} of ${q.total} planned checks complete · ${Math.round(q.complete/q.total*100)}%`:'Not scheduled'}</p>{q.records.map(r=><Button key={r.review_id+':'+r.occurrence_id} variant="ghost" size="sm" onClick={()=>openAudit(r)}>{auditPackage(r.package_key).title}{r.occurrence_id?' · historical occurrence':''}</Button>)}</section>)}</div>
@@ -169,7 +174,7 @@ export default function IsoAuditWorkspace({clientId}) {
           <IssuedReport id={review.iso_audit.report_evidence_id}/>
           {writable&&<EvidenceCatalogPicker clientId={clientId} disabled={busy} label="Link issued audit report" linkedIds={[review.iso_audit.report_evidence_id]} onLink={id=>run(async()=>{const r=await api.patch('/reviews/'+review.review_id+'/iso-audit',{report_evidence_id:id,occurrence_id:occurrenceId(review),expected_updated_at:review.updated_at??null});savedReview(r.data);})}/>}
         </details>
-        {item&&<AuditItemWorkspace key={(review.occurrence_id||occurrenceId(review))+':'+itemKey} {...{review,item,users}} centralReview={current} frozen={!!historical} position={(index+1)+' of '+items.length} previous={index>0?()=>setItemKey(items[index-1].key):null} next={index>=0&&index<items.length-1?()=>setItemKey(items[index+1].key):null} onClose={()=>{setItemKey(null);setRevision(n=>n+1);}} onSaved={savedReview}/>}
+        {item&&<AuditItemWorkspace key={(review.occurrence_id||occurrenceId(review))+':'+itemKey} {...{review,item,users,configuration}} centralReview={current} frozen={!!historical} position={(index+1)+' of '+items.length} previous={index>0?()=>setItemKey(items[index-1].key):null} next={index>=0&&index<items.length-1?()=>setItemKey(items[index+1].key):null} onClose={()=>{setItemKey(null);setRevision(n=>n+1);}} onSaved={savedReview}/>}
       </>}
     </>}
     {nested&&<RecordDrawer {...nested} open clientId={clientId} users={users} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}

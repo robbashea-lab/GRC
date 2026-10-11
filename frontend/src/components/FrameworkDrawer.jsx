@@ -4,6 +4,7 @@ import { personLabel } from '@/lib/people';
 import {useEffect,useRef,useState} from 'react';
 import {inventorySummaryEnabled} from '@/lib/omniInventorySummary';
 import {socGuidedEnabled} from '@/lib/socGuidedAssessment';
+import {isoGuidedEnabled} from '@/lib/isoGuidedAssessment';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
 import {Button} from './ui/button';
 import {Input} from './ui/input';
@@ -59,7 +60,7 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     setCtx(old=>prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old:null);
     setError('');const opts={params:{client_id:clientId},signal:c.signal};
     Promise.all([api.get(`/framework_assessments/${aid}/related`,{signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal}),api.get('/contacts',opts),api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal}),api.get('/frameworks/'+record.framework_key,opts)]).then(([related,users,contacts,comments,activity,workspace])=>{
-      if(!c.signal.aborted)setCtx(old=>({related:related.data,users:users.data,contacts:contacts.data,comments:comments.data,activity:activity.data,configuration:{...(workspace.data.configuration||{}),...(record.framework_key==='soc-2'?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid)),options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}));
+      if(!c.signal.aborted)setCtx(old=>({related:related.data,users:users.data,contacts:contacts.data,comments:comments.data,activity:activity.data,configuration:{...(workspace.data.configuration||{}),...(['soc-2','iso-27001'].includes(record.framework_key)?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid)),options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}));
     }).catch(e=>{if(!c.signal.aborted){setCtx(null);setError(formatError(e));}});return()=>c.abort();
   },[aid,clientId,record.framework_key,revision,prototype]);
   const contextLoaded=!!ctx;
@@ -88,13 +89,23 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   async function saveGuidedAssessment(values,expected){
     const latest=nativeSnapshot.current;
     const socEnabled=isSoc&&socGuidedEnabled(clientId,user,record.framework_key,ctx?.configuration,record.definition_id);
-    if((!socEnabled&&!inventorySummaryEnabled(clientId,user,record.framework_key,ctx?.configuration,record))||!latest.writable||latest.busy||guidedSavePending.current)return false;
-    if(socEnabled&&latest.relatedDraft){setError('Finish or discard the related-record draft before saving this summary.');return false;}
+    const isoEnabled=isoGuidedEnabled(clientId,user,record.framework_key,ctx?.configuration,record.definition_id);
+    if((!isoEnabled&&!socEnabled&&!inventorySummaryEnabled(clientId,user,record.framework_key,ctx?.configuration,record))||!latest.writable||latest.busy||guidedSavePending.current)return false;
+    if((isoEnabled||socEnabled)&&latest.relatedDraft){setError('Finish or discard the related-record draft before saving this summary.');return false;}
     if(JSON.stringify(latest.form)!==expected||JSON.stringify(latest.form)!==JSON.stringify(latest.savedForm)){
       setError('The native assessment has unsaved or changed content. Review it before saving this summary.');return false;
     }
     guidedSavePending.current=true;
     try{
+      if(isoEnabled)return await run(async()=>{
+        const decision=Object.hasOwn(values,'soa_applicability');
+        const fields=decision?['soa_applicability','soa_justification']:['implementation','status','guided_assessment_source'];
+        const body=Object.fromEntries(fields.map(key=>[key,values[key]]));
+        const {data}=await api.patch('/framework_assessments/'+aid,{...body,expected_last_assessed:latest.savedForm.last_saved||latest.savedForm.last_assessed||null});
+        setForm(data);setSavedForm(data);setCtx(previous=>previous?{...previous,current:{...data,work:previous.current?.work}}:previous);
+        if(!decision)setGuidedDraft(false);
+        setFeedback(decision?'Applicability decision saved. Implementation and prior approvals are unchanged.':'Assessment saved. Applicability, verification and linked work are unchanged.');
+      });
       if(socEnabled)return await run(async()=>{
         const {data}=await api.patch('/framework_assessments/'+aid,{implementation:values.implementation,status:values.status,guided_assessment_source:values.guided_assessment_source,record_assessment:values.status!=='not_assessed',expected_last_assessed:latest.savedForm.last_saved||latest.savedForm.last_assessed||null});
         setForm(data);setSavedForm(data);setGuidedDraft(false);setFeedback('Assessment saved. Verification and linked work are unchanged.');
@@ -113,12 +124,12 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   const overlays=<><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved assessment is unchanged. Continue editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</>;
   if(recordManagement||reviewManagement)return <><FrameworkRecordAccess reviewsOnly={reviewManagement} state={{open,current,definition,catalog,ctx,form,dirty,busy,error,feedback,writable,comment,link}} actions={{put,saveOwner,run,setComment,setLink,setNested,setReviewDraft,close:()=>leave(()=>onOpenChange(false)),openReviews:url=>leave(()=>onReviews?.(url)),reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}/>{overlays}</>;
 if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{open,record,definition,form,current,ctx,related,finding,error,busy,dirty,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),feedback,writable,position,otherDraft:guidedDraft||reviewDraft||!!finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{put,save,run,download,applyGuided,saveGuidedAssessment,stageGuidedImplementation,setGuidedDraft,setFinding,setNested,setFeedback,setReviewDraft,reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');},retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!guidedDraft&&!reviewDraft&&!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{open,record,definition,form,current,ctx,error,busy,dirty,relatedDraft:reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft,otherDraft:guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{put,save,saveGuidedAssessment,setGuidedDraft,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
-    state={{open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c),otherDraft:reviewDraft||controlDraft||!!finding||!!comment.trim()}}
-    actions={{put,save,run,download,setComment,setFinding,setTab,setNested,setFeedback,setReviewDraft,setLink,setControlDraft,
+    state={{open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c),otherDraft:guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),relatedDraft:reviewDraft||controlDraft||!!finding||!!comment.trim()}}
+    actions={{put,save,saveGuidedAssessment,setGuidedDraft,run,download,setComment,setFinding,setTab,setNested,setFeedback,setReviewDraft,setLink,setControlDraft,
       controlSaved:()=>{setRevision(n=>n+1);onSaved?.();},
       retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),
       previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,
-      saveAndNext:onNext?async()=>{if(!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null,
+      saveAndNext:onNext?async()=>{if(!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null,
       reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}
   />}{overlays}</>;
   return <><Sheet open={open} onOpenChange={v=>{if(!v)leave(()=>onOpenChange(false));}}><SheetContent className="w-full sm:max-w-3xl overflow-y-auto bg-surface-card" data-testid="framework-drawer"><SheetHeader><SheetTitle>{program} {definition.id} · {definition.title}</SheetTitle><SheetDescription>Assess the scoped implementation, link evidence and follow remediation.</SheetDescription></SheetHeader>

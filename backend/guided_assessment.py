@@ -6,6 +6,8 @@ from fastapi import HTTPException
 from framework_catalog import ROOT, client_configuration
 import soc_guided_assessment
 import soc_guided_lease
+import iso_guided_assessment
+import iso_guided_lease
 
 LEGACY = json.loads((ROOT / 'guidedAssessmentPilot.json').read_text(encoding='utf-8'))
 CONTROL1 = json.loads((ROOT / 'guidedControl1.json').read_text(encoding='utf-8'))
@@ -53,6 +55,8 @@ CATALOG = {**PROGRAM3_CATALOG,
 VERSIONS = {LEGACY['version']: LEGACY, CONTROL1['version']: CONTROL1, PROGRAM_V1['version']: PROGRAM1_CATALOG, PROGRAM_V2['version']: PROGRAM2_CATALOG, CONTROL1_V3['version']: CONTROL1_V3, CONTROL1_V4['version']: CONTROL1_V4, PROGRAM['version']: PROGRAM3_CATALOG, PROGRAM_V4['version']: PROGRAM4_CATALOG}
 
 def current_version(id, upgraded=True, framework='cis-ig1'):
+    if framework == 'iso-27001':
+        return iso_guided_assessment.current_version(id)
     if framework == 'soc-2':
         return soc_guided_assessment.current_version(id)
     catalog = CATALOG if upgraded else PROGRAM1_CATALOG
@@ -84,7 +88,7 @@ class ResultSnapshot(BaseModel):
     signals: list[ResultSignal] | None = Field(default=None, max_length=300)
 
 class SocSummaryReview(BaseModel):
-    """Bounded answer basis reviewed with SOC wording; not evidence assurance."""
+    """Bounded answer basis reviewed with SOC/ISO wording; not evidence assurance."""
     model_config = ConfigDict(extra='forbid', strict=True)
     version: str = Field(max_length=100)
     answers: dict
@@ -111,6 +115,8 @@ class GuidedSource(BaseModel):
     generated_at: str = Field(max_length=100)
 
 def check_scope(row, client):
+    if row['framework_key'] == 'iso-27001':
+        return iso_guided_assessment.check_scope(row, client)
     if row['framework_key'] == 'soc-2':
         return soc_guided_assessment.check_scope(row, client)
     configuration = client_configuration('cis-ig1', client)
@@ -121,6 +127,8 @@ def check_scope(row, client):
         raise HTTPException(404, 'Guided pilot is not enabled for this assessment')
 
 def validate_answers(id, answers, version=None):
+    if version in iso_guided_assessment.VERSIONS:
+        return iso_guided_assessment.validate_answers(id, answers, version)
     if version in soc_guided_assessment.VERSIONS:
         return soc_guided_assessment.validate_answers(id, answers, version)
     catalog = VERSIONS.get(version or current_version(id))
@@ -147,9 +155,11 @@ def validate_answers(id, answers, version=None):
 
 def upgraded_pilot(row, user):
     # The router authenticates tenant/record access and canonical group scope first.
-    return bool(user and row.get('client_id') and row.get('framework_key') in ('cis-ig1', 'soc-2'))
+    return bool(user and row.get('client_id') and row.get('framework_key') in ('cis-ig1', 'soc-2', 'iso-27001'))
 
 def current_base(row, client):
+    if row['framework_key'] == 'iso-27001':
+        return iso_guided_assessment.current_base(row, client)
     if row['framework_key'] == 'soc-2':
         return soc_guided_assessment.current_base(row, client)
     import hashlib
@@ -204,6 +214,12 @@ async def read_history(s, row, user, limit=25, before_revision=None):
     return {'items': items, 'has_more': more, 'next_before_revision': items[-1]['revision'] if more else None}
 
 async def save_draft(s, row, user, body, client=None, upgraded=False):
+    if row['framework_key'] == 'iso-27001':
+        row, client, user = await iso_guided_assessment.write_context(s, row['framework_assessment_id'], user)
+        async def locked_iso(lease):
+            current, context, actor = await iso_guided_assessment.write_context(s, row['framework_assessment_id'], user)
+            return await _save_draft(s, current, actor, body, context, upgraded, lease)
+        return await iso_guided_lease.run(s, row, locked_iso)
     if row['framework_key'] == 'soc-2':
         row = await s._authorized_parent('framework_assessments', row['framework_assessment_id'], user, True)
         async def locked(lease):
@@ -213,7 +229,7 @@ async def save_draft(s, row, user, body, client=None, upgraded=False):
     return await _save_draft(s, row, user, body, client, upgraded)
 
 async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=None):
-    if row['framework_key'] != 'soc-2' and 'summary_review' in body.model_fields_set:
+    if row['framework_key'] not in ('soc-2', 'iso-27001') and 'summary_review' in body.model_fields_set:
         raise HTTPException(422, 'Summary review metadata applies only to SOC 2')
     if not upgraded:
         if body.model_fields_set & {'base_assessment_token', 'base_scope_fingerprint', 'restart', 'rebase', 'result'}:
@@ -243,6 +259,18 @@ async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=Non
         if body.result is not None and body.result.version is not None and body.result.version != body.version:
             raise HTTPException(422, 'Recorded result question version must match the interview')
         validate_answers(row['definition_id'], body.answers, body.version)
+        if row['framework_key'] == 'iso-27001':
+            if body.version not in iso_guided_assessment.VERSIONS:
+                raise HTTPException(409, 'ISO interview version is unavailable')
+            if body.summary_review:
+                if body.summary_review.version != body.version:
+                    raise HTTPException(422, 'ISO wording review must retain its question version')
+                iso_guided_assessment.validate_answers(row['definition_id'], body.summary_review.answers, body.summary_review.version)
+            if body.completed:
+                iso_guided_assessment.validate_completion(row['definition_id'], body.answers, body.version)
+                proposed = iso_guided_assessment.result_status(row['definition_id'], body.answers, body.version)
+                if body.result is None or body.result.status != proposed or body.result.narrative != body.narrative:
+                    raise HTTPException(422, 'ISO summary status and reviewed text must match this completed interview')
         if row['framework_key'] == 'soc-2':
             if body.version not in soc_guided_assessment.VERSIONS:
                 raise HTTPException(409, 'SOC 2 interview version is unavailable')
@@ -281,6 +309,8 @@ async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=Non
     if upgraded:
         data['result'] = body.result.model_dump(exclude_none=True) if body.result is not None else None
     if row['framework_key'] == 'soc-2':
+        data['summary_review'] = body.summary_review.model_dump() if body.summary_review else None if body.restart or 'summary_review' in body.model_fields_set else old.get('summary_review')
+    if row['framework_key'] == 'iso-27001':
         data['summary_review'] = body.summary_review.model_dump() if body.summary_review else None if body.restart or 'summary_review' in body.model_fields_set else old.get('summary_review')
     if lease is not None:
         await lease.check()

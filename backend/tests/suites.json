@@ -1,5 +1,7 @@
 {
   "offline": [
+    "test_iso_guided_assessment.py",
+    "test_iso_guided_routes.py",
     "test_soc_guided_assessment.py",
     "test_soc_guided_routes.py",
     "test_guided_assessment.py",

@@ -1,4 +1,5 @@
 import {isoGuideEntry} from './IsoRequirementGuide';
+import IsoGuidedAssessor from './IsoGuidedAssessor';
 import AssessmentLayout,{AssessmentChecklist,AssessmentRequirement} from './AssessmentLayout';
 import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 import BrawndoCisFindings from './BrawndoCisFindings';
@@ -22,7 +23,7 @@ import './BrawndoCisWorkspace.css';
 
 export default function FrameworkAssessmentWorkspace({state,actions}){
   const {open,record,definition,form,current,ctx,related,error,busy,dirty,feedback,writable,finding,position,otherDraft,breadcrumb}=state;
-  const {put,save,saveAndNext,run,setFinding,setNested,close,previous,next,retry,setFeedback}=actions;
+  const {put,save,saveAndNext,saveGuidedAssessment,setGuidedDraft,run,setFinding,setNested,close,previous,next,retry,setFeedback}=actions;
   const clientId=record.client_id,framework=record.framework_key,isCis=framework==='cis-ig1',isIso=framework==='iso-27001';
   const isoGuide=isIso?isoGuideEntry(definition.id):null,criteria=isoCriteria.requirements[definition.id];
   const program=operatorProgram(framework),vocab=operatorVocabulary(framework);
@@ -34,9 +35,12 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
     description={`${definition.control_name||definition.category||definition.specification||'Framework assessment'} · ${definition.source_citation||definition.id}`}
     status={<><span aria-label="Saved conclusion"><CisStatusPill status={current.status} framework={framework}/></span><span className="text-xs text-ink-secondary">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}</span></>}
     {...{position,previous,next,close,busy}} testId={isIso?'iso-assessment-workspace':clientId==='demo_brawndo'&&isCis?'brawndo-cis-assessment':'framework-assessment-workspace'}
+    // Radix handles Escape during document capture, before the guide's own close/draft guard.
+    onEscapeKeyDown={isIso?e=>{if(document.activeElement?.closest('[data-testid="iso-assessment-workspace"] [data-testid="iso-guided-assessment"] .omni-workspace-window'))e.preventDefault();}:undefined}
     ariaModal crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb} label={`${program} location`}/>:null}
     returnSelector={`[data-testid="requirement-${definition.id}"] button, [data-testid="requirement-${definition.id}"][tabindex], .cis-summary-head button`}
-    footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes remain in your draft until saved.')}</span>{otherDraft&&<p id="brawndo-other-draft" className="text-xs text-ink-secondary">Finish or cancel the open Finding before using Save & next.</p>}</div><div className="flex flex-wrap gap-2">{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={otherDraft?'brawndo-other-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
+    footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes remain in your draft until saved.')}</span>{otherDraft&&<p id="brawndo-other-draft" className="text-xs text-ink-secondary">{isIso?'Save or discard the open interview or related-record draft before using Save & next.':'Finish or cancel the open Finding before using Save & next.'}</p>}</div><div className="flex flex-wrap gap-2">{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={otherDraft?'brawndo-other-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
+    {isIso&&ctx&&<IsoGuidedAssessor clientId={clientId} configuration={ctx.configuration} record={record} current={current} form={form} assessmentDirty={dirty} relatedDraft={state.relatedDraft} onDraftChange={setGuidedDraft} onSaveAssessment={saveGuidedAssessment} disabled={disabled}/>}
     <AssessmentLayout criteriaSummary="Omnisciente guidance for assessing this requirement. These are not additional ISO requirements." criteriaTitle="ISO assessment criteria" reference={`ISO/IEC 27001:2022 · ${definition.id}`} key={clientId+':'+definition.id} summary={isoGuide?.plain||guide.meaning}
       requirement={<AssessmentRequirement heading={definition.specification==='isms_clause'?'ISMS requirement & reference':'Annex A control & reference'} text={source.text||guide.meaning} official={!!source.text} trigger={criteria?.trigger} source={source.url} label="Official ISO source"/>}
       checklist={<AssessmentChecklist title={`${definition.specification==='isms_clause'?'Clause':'Control'} ${definition.id} checklist`} items={criteria?.coverage==='verified'?criteria.criteria:[]} value={form.iso_assessment_checks||[]} disabled={disabled} onChange={value=>put('iso_assessment_checks',value)}/>}
