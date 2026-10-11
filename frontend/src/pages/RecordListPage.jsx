@@ -222,7 +222,13 @@ function EntityListPage({ kind }) {
   const activeBulkScope = useRef(bulkScope);
   activeBulkScope.current = bulkScope;
   const bulkCommand = useCreateIntent(async(path, body, options) => {
-    const response = await api.post(path, body, options);
+    let response;
+    try { response = await api.post(path, body, options); }
+    catch (error) {
+      const receipt = error.response?.data?.detail?.bulk_receipt;
+      if (receipt) error.bulkReceipt = receipt;
+      throw error;
+    }
     if (response.data.results?.some(row => row.outcome === 'uncertain')) {
       throw Object.assign(new Error('Some records need recovery or reconciliation.'), {bulkReceipt: response.data});
     }

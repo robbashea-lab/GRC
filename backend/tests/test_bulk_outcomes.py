@@ -1,5 +1,6 @@
 """Truthful bulk receipts preserve native conditional writes and recovery."""
 import unittest
+import asyncio
 from unittest.mock import AsyncMock, patch
 
 import test_client_dashboard_sources as harness
@@ -65,8 +66,9 @@ class BulkOutcomeTests(unittest.IsolatedAsyncioTestCase):
             return await audit(*args, **kwargs)
         with patch.object(server, 'audit', fail_first):
             result = await self.submit()
-        self.assertEqual(result.status_code, 200, result.text)
-        self.assertEqual([row['outcome'] for row in result.json()['results']], ['uncertain', 'not_attempted'])
+        self.assertEqual(result.status_code, 503, result.text)
+        self.assertEqual([row['outcome'] for row in result.json()['detail']['bulk_receipt']['results']], ['uncertain', 'not_attempted'])
+        self.assertNotEqual(result.headers.get('X-Create-Rejected'), 'true')
         first = await server.db.findings.find_one({'finding_id': 'one'})
         self.assertEqual(first['remediation_plan'], 'Synthetic audit recovery')
         self.assertIsNone((await server.db.findings.find_one({'finding_id': 'two'})).get('remediation_plan'))
@@ -79,11 +81,18 @@ class BulkOutcomeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_fresh_stale_selection_rejects_before_any_write(self):
         self.body['payload'] = {'remediation_plan': 'Conditional save'}
-        await server.db.findings.update_one({'finding_id': 'two'}, {'$set': {'updated_at': 'newer'}})
+        newer = '2026-10-11T17:00:00+00:00'
+        await server.db.findings.update_one({'finding_id': 'two'}, {'$set': {'updated_at': newer}})
         result = await self.submit()
         self.assertEqual(result.status_code, 409, result.text)
+        self.assertEqual(result.headers.get('X-Create-Rejected'), 'true')
         self.assertIsNone((await server.db.findings.find_one({'finding_id': 'one'})).get('remediation_plan'))
-        self.assertEqual(await server.db.create_requests.count_documents({}), 0)
+        self.assertEqual(await server.db.create_requests.count_documents({'primary_started': True}), 0)
+        self.body['expected_versions']['two'] = newer
+        self.headers['Idempotency-Key'] += '-refreshed'
+        refreshed = await self.submit()
+        self.assertEqual(refreshed.status_code, 200, refreshed.text)
+        self.assertTrue(refreshed.json()['ok'])
 
     async def test_post_preflight_conflict_reports_applied_and_rejected(self):
         self.body['payload'] = {'remediation_plan': 'Conditional save'}
@@ -119,7 +128,55 @@ class BulkOutcomeTests(unittest.IsolatedAsyncioTestCase):
             return await audit(*args, **kwargs)
         with patch.object(server, 'audit', fail_completion):
             result = await self.submit()
-        self.assertEqual(result.status_code, 200, result.text)
-        self.assertEqual([row['outcome'] for row in result.json()['results']], ['uncertain', 'not_attempted'])
+        self.assertEqual(result.status_code, 503, result.text)
+        self.assertEqual([row['outcome'] for row in result.json()['detail']['bulk_receipt']['results']], ['uncertain', 'not_attempted'])
+        self.assertNotEqual(result.headers.get('X-Create-Rejected'), 'true')
         self.assertIsNone(await server.db.assets.find_one({'asset_id': 'one'}))
         self.assertIsNotNone(await server.db.assets.find_one({'asset_id': 'two'}))
+
+    async def test_duplicate_inflight_parent_is_retained_not_declared_no_effect(self):
+        self.body['payload'] = {'remediation_plan': 'Synthetic duplicate protection'}
+        entered, release = asyncio.Event(), asyncio.Event()
+        validate = server.assignment_eligibility.validate
+        async def blocked(*args, **kwargs):
+            entered.set()
+            await release.wait()
+            return await validate(*args, **kwargs)
+        with patch.object(server.assignment_eligibility, 'validate', blocked):
+            first = asyncio.create_task(self.submit())
+            await asyncio.wait_for(entered.wait(), 10)
+            duplicate = await self.submit()
+            self.assertEqual(duplicate.status_code, 409, duplicate.text)
+            self.assertNotEqual(duplicate.headers.get('X-Create-Rejected'), 'true')
+            release.set()
+            self.assertTrue((await first).json()['ok'])
+        self.assertEqual(await server.db.audit_logs.count_documents({'action': 'update'}), 2)
+
+    async def test_parent_fingerprint_rejects_changed_original_payload(self):
+        self.body['payload'] = {'remediation_plan': 'Original synthetic request'}
+        self.assertTrue((await self.submit()).json()['ok'])
+        before = await server.db.findings.find({}).to_list(None)
+        self.body['payload']['remediation_plan'] = 'Different request with same key'
+        changed = await self.submit()
+        self.assertEqual(changed.status_code, 409, changed.text)
+        self.assertNotEqual(changed.headers.get('X-Create-Rejected'), 'true')
+        self.assertEqual(await server.db.findings.find({}).to_list(None), before)
+
+    async def test_lost_parent_completion_ack_replays_without_repeating_effects(self):
+        self.body['payload'] = {'remediation_plan': 'Lost parent acknowledgment'}
+        cls = type(server.db.create_requests)
+        update = cls.update_one
+        async def lose_parent_ack(instance, query, change, *args, **kwargs):
+            result = await update(instance, query, change, *args, **kwargs)
+            if instance.name == 'create_requests' and change.get('$set', {}).get('result', {}).get('operation_key'):
+                raise RuntimeError('Synthetic lost parent acknowledgment')
+            return result
+        with patch.object(cls, 'update_one', lose_parent_ack):
+            lost = await self.submit()
+        self.assertEqual(lost.status_code, 503, lost.text)
+        before = await server.db.findings.find({}).to_list(None)
+        events = await server.db.audit_logs.count_documents({})
+        replay = await self.submit()
+        self.assertTrue(replay.json()['ok'], replay.text)
+        self.assertEqual(await server.db.findings.find({}).to_list(None), before)
+        self.assertEqual(await server.db.audit_logs.count_documents({}), events)

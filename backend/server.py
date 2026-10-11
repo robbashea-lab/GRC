@@ -4544,7 +4544,7 @@ def _bulk_record_key(operation_key, item_id):
     return create_requests.digest([operation_key, item_id])
 
 
-async def _bulk_apply_records(body, docs, user, operation_key, updates=None):
+async def _bulk_apply_records(body, docs, user, operation_key, parent_command, updates=None):
     """Sequential, explicit outcomes. This is not a multi-document transaction."""
     id_field = ENTITY_MAP[body.kind][2]
     indexed = {doc[id_field]: doc for doc in docs}
@@ -4562,6 +4562,9 @@ async def _bulk_apply_records(body, docs, user, operation_key, updates=None):
         command = create_requests.digest([user['user_id'], existing['client_id'],
                                          body.kind + '/' + item_id + '/update', key])
         try:
+            # Once a child may write, the batch can no longer be declared a
+            # fresh no-effect rejection. Keep its original recovery identity.
+            await db.create_requests.update_one({'_id': parent_command}, {'$set': {'primary_started': True}})
             if body.action == 'delete':
                 await delete_entity(body.kind, item_id, user, {'expected_updated_at': body.expected_versions[item_id]})
                 await audit(user, 'bulk-delete', ENTITY_MAP[body.kind][0], item_id, existing['client_id'],
@@ -4591,8 +4594,13 @@ async def _bulk_apply_records(body, docs, user, operation_key, updates=None):
                             'detail': 'Outcome is unconfirmed; inspect the record and history before another action'})
             stopped = True
     count = sum(row['outcome'] == 'applied' for row in results)
-    return {'ok': count == len(results), 'count': count, 'results': results,
-            'operation_key': operation_key, 'retry_supported': body.action != 'delete'}
+    receipt = {'ok': count == len(results), 'count': count, 'results': results,
+               'operation_key': operation_key, 'retry_supported': body.action != 'delete'}
+    if any(row['outcome'] == 'uncertain' for row in results):
+        # The parent must remain pending so retry reaches child recovery,
+        # rather than caching an uncertain outcome as a completed operation.
+        raise HTTPException(503, {'message': 'Bulk save needs recovery or reconciliation', 'bulk_receipt': receipt})
+    return receipt
 
 
 @app.post("/api/bulk")
@@ -4604,8 +4612,6 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user), requ
     entity_type, _M, id_field, _p = ENTITY_MAP[body.kind]
     coll = db[body.kind]
     docs = await coll.find({id_field: {"$in": body.ids}}, {"_id": 0}).to_list(len(body.ids) + 1)
-    if not docs:
-        raise HTTPException(404, "No records found")
     for d in docs:
         if not _can_access_client(user, d["client_id"]):
             raise HTTPException(403, "Forbidden for one or more records")
@@ -4613,6 +4619,30 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user), requ
     operation_key = operation_key or uuid.uuid4().hex
     if not re.fullmatch(r'[A-Za-z0-9_-]{16,128}', operation_key):
         raise HTTPException(422, 'Invalid Idempotency-Key')
+    if body.action == 'delete':
+        if user.get('role') not in ('super_admin', 'platform_admin'):
+            raise HTTPException(403, 'Destructive action restricted')
+    elif not _writable(user):
+        raise HTTPException(403, 'Read-only role')
+
+    async def execute(parent_command):
+        try:
+            return await _execute_bulk(body, docs, user, operation_key, parent_command)
+        except HTTPException as exc:
+            parent = await db.create_requests.find_one({'_id': parent_command})
+            if exc.status_code in (400, 403, 404, 409, 422, 428) and not parent.get('primary_started'):
+                exc.headers = {**(exc.headers or {}), 'X-Create-Rejected': 'true'}
+            raise
+    # Actor-owned parent identity serializes preflight and binds the entire
+    # selection/body. Current record permissions above still precede replay.
+    return await create_requests.run(db, operation_key, user['user_id'], 'bulk',
+                                     'bulk/' + body.kind, body.model_dump(), execute)
+
+
+async def _execute_bulk(body, docs, user, operation_key, parent_command):
+    id_field = ENTITY_MAP[body.kind][2]
+    if not docs:
+        raise HTTPException(404, 'No records found')
 
     if body.action == "delete":
         if await db.create_requests.find_one({'_id':{'$in':[d['_save_command'] for d in docs if d.get('_save_command')]},'state':'pending'}):
@@ -4639,7 +4669,7 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user), requ
             if d[id_field] not in body.expected_versions:
                 raise HTTPException(428, "Reload selected records before deleting; edit versions are required")
             _require_snapshot({'expected_updated_at':body.expected_versions[d[id_field]]},d)
-        return await _bulk_apply_records(body, docs, user, operation_key)
+        return await _bulk_apply_records(body, docs, user, operation_key, parent_command)
 
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
@@ -4692,7 +4722,7 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user), requ
         await assignment_eligibility.validate(db, body.kind, {**d, **checked}, _can_access_client, d)
         if body.kind == "tasks":
             await action_items.prepare(db, {**d, **checked}, _can_access_client, d)
-    return await _bulk_apply_records(body, docs, user, operation_key, updates)
+    return await _bulk_apply_records(body, docs, user, operation_key, parent_command, updates)
 
 
 # ---------------- Calendar ----------------

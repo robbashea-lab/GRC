@@ -56,8 +56,11 @@ test('partial receipts report honest applied counts and retain only unresolved s
   expect(node('bulk-recover')).toBeNull();
 });
 
-test('uncertain receipt survives remount and retries its exact original body, versions and command key',async()=>{
-  api.post.mockResolvedValueOnce(result([['synthetic-asset-a','applied'],['synthetic-asset-b','uncertain','Save outcome requires recovery']],1));
+test('server uncertain receipt survives remount and retries its exact original body, versions and command key',async()=>{
+  const receipt=result([['synthetic-asset-a','applied'],['synthetic-asset-b','uncertain','Save outcome requires recovery']],1).data;
+  api.post.mockRejectedValueOnce(Object.assign(new Error('Synthetic save needs recovery'), {
+    response:{status:503,headers:{},data:{detail:{message:'Bulk save needs recovery or reconciliation',bulk_receipt:receipt}}}
+  }));
   await mount();await selectBoth();await click('bulk-close');
   expect(node('bulk-operation-report').textContent).toContain('Synthetic asset B: uncertain');
   expect(node('bulk-selected-count').textContent).toBe('1');
@@ -71,6 +74,25 @@ test('uncertain receipt survives remount and retries its exact original body, ve
   expect(api.post.mock.calls[1]).toEqual(original);
   expect(node('bulk-recover')).toBeNull();
   expect(node('bulk-action-bar')).toBeNull();
+});
+
+test('definitive fresh rejection clears pending intent and allows the refreshed versions in a new operation',async()=>{
+  api.post.mockImplementationOnce(async()=>{
+    rows=rows.map(row=>({...row,updated_at:'refreshed-version'}));
+    throw Object.assign(new Error('Record changed; reload before saving'),{
+      response:{status:409,headers:{'x-create-rejected':'true'},data:{detail:'Record changed; reload before saving'}}
+    });
+  });
+  await mount();await selectBoth();await click('bulk-close');
+  const original=api.post.mock.calls[0];
+  expect(node('bulk-recover')).toBeNull();
+  expect(node('bulk-selected-count').textContent).toBe('2');
+  expect([...Array(sessionStorage.length)].map((_,index)=>sessionStorage.key(index)).filter(key=>key.startsWith('grc_pending_command_v1:'))).toEqual([]);
+  await remount();await selectBoth();await click('bulk-close');
+  expect(api.post).toHaveBeenCalledTimes(2);
+  expect(api.post.mock.calls[1][1].expected_versions).toEqual({'synthetic-asset-a':'refreshed-version','synthetic-asset-b':'refreshed-version'});
+  expect(api.post.mock.calls[1][2].headers['Idempotency-Key']).not.toBe(original[2].headers['Idempotency-Key']);
+  expect(toast.success).toHaveBeenCalledWith('2 record(s) updated');
 });
 
 test('duplicate clicks dispatch one bulk command while the first response is pending',async()=>{
