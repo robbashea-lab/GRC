@@ -320,6 +320,31 @@ async def _get_user_from_token(token: str) -> Optional[Dict]:
         return None
 
 
+def _opaque_session_is_current(session: Dict, user: Dict) -> bool:
+    # Account fences remain authoritative even if deleting session rows fails.
+    for field in ("password_changed_at", "sessions_revoked_at"):
+        fence = user.get(field)
+        if fence is None:
+            continue
+        created = session.get("created_at")
+        try:
+            if isinstance(fence, str):
+                fence = datetime.fromisoformat(fence)
+            if isinstance(created, str):
+                created = datetime.fromisoformat(created)
+            if not isinstance(fence, datetime) or not isinstance(created, datetime):
+                return False
+            if fence.tzinfo is None:
+                fence = fence.replace(tzinfo=timezone.utc)
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            if created <= fence:
+                return False
+        except (ValueError, TypeError, OverflowError):
+            return False
+    return True
+
+
 async def _get_user_from_session(token: str) -> Optional[Dict]:
     sess = await db.sessions.find_one({"session_token": token}, {"_id": 0})
     if not sess:
@@ -339,7 +364,8 @@ async def _get_user_from_session(token: str) -> Optional[Dict]:
     if exp < datetime.now(timezone.utc):
         return None
     user = await db.users.find_one({"user_id": sess["user_id"]}, {"_id": 0, "password_hash": 0})
-    return user if user and user.get("status") == "active" else None
+    return user if (user and user.get("status") == "active"
+                    and _opaque_session_is_current(sess, user)) else None
 
 
 async def get_current_user(request: Request) -> Dict:
