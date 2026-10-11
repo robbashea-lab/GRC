@@ -2,6 +2,7 @@ import catalog from '@catalogs/cisIG1.json';
 import guidance from '@catalogs/operatorGuidance/cisAssessmentGuidance.json';
 import criteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import guide from '@catalogs/operatorGuidance/cisRequirementGuide.json';
+import guidedProgram from '@catalogs/guidedCisProgram.json';
 import {cisReviewBriefs} from './cisOperations';
 
 test.each([
@@ -38,19 +39,34 @@ test('every safeguard retains all non-repeated grouped Review prompts and suppor
 });
 
 
-test('11.1 consistently separates recovery-process requirements from optional backup detail',()=>{
+test('11.1 retains recovery-process scope, cadence and the approved CAS requirement',()=>{
   const definition=catalog.requirements.find(r=>r.id==='11.1');
   const checks=guidance.requirements['11.1'],help=guide.requirements['11.1'];
   for(const text of [definition.guidance,checks.outcome[0],criteria.requirements['11.1'].criteria.map(c=>c.text).join(' '),help.plain]){
     expect(text).toMatch(/scope/i);expect(text).toMatch(/prioriti/i);expect(text).toMatch(/(?=.*backup)(?=.*secur)/i);
-    expect(text).not.toMatch(/how backups are made|details backup procedures/i);
   }
-  expect(checks.review[0]).toMatch(/backup procedures.*not a separate requirement/i);
-  expect(help.plain).toMatch(/backup procedures.*not required/i);
-  expect(help.ask).toMatch(/backup instructions.*optional/i);
-  expect(help.gaps).toMatch(/Do not require detailed backup procedures/i);
+  // CAS includes this clause; Navigator omits it. Retain the reviewed rollout interpretation.
+  expect(guidedProgram.definitions['11.1'].elements).toContainEqual({
+    id:'11.1-guided-backup-procedures',
+    text:'The documented recovery process includes detailed backup procedures.',
+    conditional:false,
+  });
+  expect(help.plain).toMatch(/annually.*significant.*changes/i);
+  expect(checks.review[1]).toMatch(/annual.*significant changes/i);
+  expect(checks.outcome[1]).toMatch(/annual.*significant-change/i);
+  expect(help.gaps).toMatch(/(?:Do not require|Do not add).*separate higher-group restore-test frequency/i);
   const [brief]=cisReviewBriefs({framework_key:'cis-ig1',framework_plan_key:'data-recovery',framework_safeguards:['11.1']},['11.1']);
   expect(brief.items[0].outcome).toBe(checks.outcome[0]);
+});
+
+test.each([
+  ...Object.entries(guide.requirements['11.1']).map(([field,text])=>[`guide.${field}`,text]),
+  ['assessment.review',guidance.requirements['11.1'].review[0]],
+  ['assessment.evidence',guidance.requirements['11.1'].evidence[0]],
+  ['assessment.outcome',guidance.requirements['11.1'].outcome[0]],
+])('11.1 %s covers detailed backup procedures without contradicting the interview',(_field,text)=>{
+  expect(text).toMatch(/detailed backup procedures/i);
+  expect(text).not.toMatch(/(?:backup procedures|backup instructions).*?(?:optional|not required|not a separate requirement)|Do not require detailed backup procedures/i);
 });
 
 test('3.8 setup covers internal and provider flows under the data management process',()=>{
