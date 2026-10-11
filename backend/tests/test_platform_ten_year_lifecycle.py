@@ -194,6 +194,19 @@ class PlatformTenYearTests(unittest.IsolatedAsyncioTestCase):
     async def edit(self, path, body, **kwargs):
         return await self.request('PATCH', path, json=body, **kwargs)
 
+    def assessment_mapping(self, rows):
+        expected = definition_ids(self.key, self.config)
+        actual = [row['definition_id'] for row in rows]
+        self.assertEqual(set(actual), expected)
+        self.assertEqual(len(actual), len(expected), 'Exactly one assessment per expected definition')
+        identities = [row['framework_assessment_id'] for row in rows]
+        self.assertEqual(len(set(identities)), len(expected), 'Assessment IDs must be unique')
+        for row in rows:
+            self.assertEqual(row['client_id'], self.cid)
+            self.assertEqual(row['framework_key'], self.key)
+            self.assertEqual(row['framework_version'], CATALOGS[self.key]['version'])
+        return {row['definition_id']: row['framework_assessment_id'] for row in rows}
+
     def event(self, year, scenario, **details):
         self.report['events'].append({'year': year, 'scenario': scenario, 'executed': True, **details})
 
@@ -244,6 +257,10 @@ class PlatformTenYearTests(unittest.IsolatedAsyncioTestCase):
         workspace = await self.get('/frameworks/' + key, client_id=self.cid)
         self.assertEqual(len(workspace['assessments']), count)
         self.assertEqual(set(workspace['active_definition_ids']), definition_ids(key, config))
+        self.definition_map = self.assessment_mapping(workspace['assessments'])
+        persisted = await server.db.framework_assessments.find({'client_id': self.cid}, {'_id': 0}).to_list(None)
+        self.assertEqual(self.assessment_mapping(persisted), self.definition_map)
+        self.report['initial_definition_assessment_ids'] = copy.deepcopy(self.definition_map)
         for row in workspace['assessments']:
             self.assertEqual(row['status'], 'not_assessed')
             self.assertFalse(row.get('implementation'))
@@ -616,6 +633,7 @@ class PlatformTenYearTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(await server.db.reviews.count_documents({'review_id': row['review_id']}), 1)
         actual_inventory = await self.get('/frameworks/' + self.key, client_id=self.cid)
         self.assertEqual(len(actual_inventory['active_definition_ids']), self.report['expected_inventory'])
+        self.assertEqual(self.assessment_mapping(actual_inventory['assessments']), self.definition_map)
         self.assertEqual((await self.get(self.ap))['assessment_history'], self.native_history)
         registers = {kind: await self.get('/' + kind, client_id=self.cid) for kind in KEYS if kind != 'reviews'}
         if year >= 2034:
@@ -642,6 +660,7 @@ class PlatformTenYearTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual({r[field] for r in rows}, self.expected_records[kind], (kind, 'missing/unexpected records'))
             self.assertEqual(len(rows), len(self.expected_records[kind]), (kind, 'duplicate IDs'))
             raw[kind] = {r[field]: r for r in rows}
+        self.assertEqual(self.assessment_mapping(list(raw['framework_assessments'].values())), self.definition_map)
         for kind, identity, field, target_kind, target_id in self.expected_relationships:
             self.assertEqual(raw[kind][identity][field], target_id)
             if target_kind == 'occurrence':
