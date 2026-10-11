@@ -32,6 +32,7 @@
     "test_record_contracts.py",
     "test_record_integrity.py",
     "test_engineering_reliability.py",
+    "test_platform_scale_reliability.py",
     "test_evidence_context.py",
     "test_evidence_library.py",
     "test_framework_capability_contract.py",
