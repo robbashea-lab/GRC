@@ -1,7 +1,8 @@
 # ISO functional acceptance inventory
 
-This is the initial **read-only source/test/handoff inventory**, not acceptance,
-new test execution, a standards-content rewrite or a release decision.
+This preserves the initial **read-only source/test/handoff inventory** and adds
+the separately assigned bounded real-Mongo execution below. It is not full
+platform acceptance, a standards-content rewrite or a release decision.
 
 ## Ownership and baseline
 
@@ -70,9 +71,10 @@ Annex exclusion to N/A does not describe the current independent decision model.
 
 ## Supported tests and evidence layers
 
-No suite below has run under this new assignment. Commands are **prepared only**
-and await coordinator CPU ownership. The JSON records exact test paths and class
-selectors. Direct class/node selections avoid inherited/imported test duplication.
+The existing suites below were inventoried, not rerun by this assignment. The
+new separate module's actual execution is recorded at the end. These existing
+commands remain **prepared only**; the JSON records exact test paths/class
+selectors. Direct class/node selections avoid inherited/imported duplication.
 
 | Existing test source | What it can establish if executed | What it cannot establish |
 | --- | --- | --- |
@@ -179,3 +181,54 @@ proceed, but heavy execution, actual database operations and any claim of passed
 integration wait for that assignment. The root-approved shared ten-year engine
 remains a separate workstream. No runtime repair is permitted until a genuine
 red case is retained and exact file ownership is acknowledged.
+
+## Executed bounded real-Mongo acceptance
+
+After explicit coordinator CPU allocation, the seven new methods ran once and
+passed: **7 tests, 0 failures/errors/skips, 176.172 seconds, exit 0**. No runtime
+defect was reproduced and no product repair was made. Product source was
+`28b806716024ec149af2ec5da621a5a618c669d5`; QA checkout HEAD was
+`179d513aa93ed5119fa3a36d7b3b5090d0ae228f` plus the then-uncommitted frozen test
+whose SHA-256 is `9cba91f74772d808bd1a59de1cd9cd2351e1a736f83012215691e374daf0c41f`.
+The preceding commits changed only the owned inventory and root-authored suite
+registry; no application/catalog/visual file changed.
+
+Command: `python -m unittest -v
+backend.tests.test_platform_iso_inventory.PlatformIsoInventoryTests`, using the
+existing staging-compatible Python/Motor/PyMongo environment, explicit
+`PLATFORM_ACCEPTANCE_MONGO_URL=mongodb://127.0.0.1:58749`, process-local test
+environment and empty mail/admin seed settings. This does not change saved
+application configuration. Normal handler auth/authorization were retained;
+signed modelled actors are not real hosted password/cookie/TLS/MFA acceptance.
+
+| Actual case | Recorded result | Boundary |
+| --- | --- | --- |
+| All native identities/defaults | 123 IDs, 30/93 split, empty interviews, repeat activation IDs/Reviews unchanged | Backend initialization, not unaided hosted onboarding or native UI placement |
+| Progress / reviewed save / history | 123 definitions x four independently fixed status vectors = 492 explicit native text/status writes; exact Unicode/multiline rereads; stale-token 409; all 123 read from fresh Motor connections; histories 4 entries for 30 ISMS /5 for 93 Annex | Reviewed serialization/application-path vectors, not independently licensed content or exhaustive generated-summary/611-answer validation |
+| Applicability | All 30 clause N/A/SoA-field rejections; all 93 undecided/rationale/inclusion/exclusion/re-inclusion cases, same native ID and retained implementation/history | No invented ISO exclusion interpretation; source gap stays open |
+| Relationships / actual file | All 123 same-client links; 246 foreign Evidence/Review link rejections; actual content hash matched; unlink retained artifact | Real Mongo/API, not browser/file-link access after actual hosted account revocation |
+| Modelled access | 123 read-only native denials, 123 progress denials, 123 wrong-client native reads, four unauthenticated protected-operation denials | Database-backed modelled JWT actors, not real hosted restricted-user/session proof |
+| Conditional context | 21 reason-required gates; retained inactive No ignored; exact saved answers; interview-only/native unchanged | Selected gate vectors, not every negative combination or normative qualifier |
+| Legacy / extra fields | Missing new `last_saved` uses original token fallback; actual earlier native-written history/notes retained; unauthorized extra guided field rejected without native change | One legacy shape and rejected write, not every historical import/edition |
+
+Original untruncated log:
+`C:/Users/RobbA/Documents/Codex/2026-10-11/platform-acceptance/iso-test-evidence/iso-real-mongo-first-9cba91f7.log`,
+SHA-256 `5b8bbba01e72928804996d051d6d1ae41acd9b0330e4807e43a613c264f9f8e0`.
+Expected denied/stale/invalid 403/409/422 responses are not suppressed or counted
+as unexpected failures. Seven sanitized case markers were retained before cleanup.
+
+All seven new UUID16 databases were cleaned by guarded, owned, database-scoped
+commands; independent post-run scoped reads found zero remaining collections in
+each. No shared/admin/global database operation or process control occurred.
+A first postcheck shell-quoting error happened before connection; the corrected
+read-only check succeeded. It was an evidence-tool wrapper error, not a product
+failure or a rerun of the seven-method campaign. Before execution, QA-only URI/
+name-limit/response-shape/HTTP-method assumptions were corrected by source review;
+no original failing application result was hidden or reclassified as a pass.
+
+The CPU/test/database slot is released. No full suite, build, browser/provider,
+hosted account operation, protected-client write, merge, push or deployment was
+performed. Independent non-author review/retest and integrated exact-candidate
+checks remain coordinator-owned. The 111-source comparison, actual hosted
+personas/fresh auth, real server/database restart, fault/concurrency/lease fencing,
+ten-year ledger and rendered visual-freeze checks remain separate open items.
