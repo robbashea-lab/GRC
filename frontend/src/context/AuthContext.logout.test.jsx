@@ -6,7 +6,8 @@ import api from '@/lib/api';
 
 jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:false,STANDARD_AUTH_ENABLED:true,
   default:{get:jest.fn(),post:jest.fn()},setWorkspaceMode:jest.fn(),setAccessToken:jest.fn(),formatError:e=>e.message}));
-jest.mock('@tanstack/react-query',()=>({useQueryClient:()=>({clear:jest.fn()})}));
+const mockQueryClient={clear:jest.fn()};
+jest.mock('@tanstack/react-query',()=>({useQueryClient:()=>mockQueryClient}));
 
 test('real sign-out warning survives failed Retry and disappears after successful Retry',async()=>{
   jest.useFakeTimers();

@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import api, { formatError, setAccessToken } from "@/lib/api";
+import { formatError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 export default function AuthCallback() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { signInWithGoogleSession } = useAuth();
   const processed = useRef(false);
 
   useEffect(() => {
@@ -19,17 +19,11 @@ export default function AuthCallback() {
     (async () => {
       try {
         const sessionId = decodeURIComponent(match[1]);
-        const { data } = await api.post("/auth/google/session", { session_id: sessionId });
-        if (!data?.session_token || !data.user?.user_id || !data.user?.role) {
-          throw new Error("Google sign-in did not return a valid application session.");
-        }
-        setAccessToken(data.session_token);
-        setUser(data.user);
+        await signInWithGoogleSession(sessionId);
         window.history.replaceState({}, "", "/");
         navigate("/", { replace: true });
       } catch (err) {
-        setAccessToken(null);
-        setUser(null);
+        if (err.code === 'AUTH_ATTEMPT_SUPERSEDED') return;
         toast.error(formatError(err));
         navigate("/login", { replace: true });
       }

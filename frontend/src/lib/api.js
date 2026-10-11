@@ -1,6 +1,7 @@
 import axios from "axios";
 import {recordUuid} from './recordUuid';
 import {demoStorageError} from './demoStorageErrors';
+import {clearPendingCommands, assertPendingCommandGeneration} from './createIntent';
 
 // Standard authentication and operational data always use the configured API.
 // Only intentional Explore Demo sessions use the isolated, session-local adapter.
@@ -21,6 +22,7 @@ export let PREVIEW_MODE = storedMode() === "demo" && DEMO_AVAILABLE;
 export function setWorkspaceMode(mode) {
   if (!["standard", "demo"].includes(mode) || (mode === "demo" && !DEMO_AVAILABLE)) throw new Error("Workspace unavailable.");
   const wasDemo = PREVIEW_MODE;
+  if (wasDemo !== (mode === 'demo')) clearPendingCommands();
   PREVIEW_MODE = mode === "demo";
   accessToken = null;
   try {
@@ -40,6 +42,8 @@ const api = axios.create({
 
 // Use a document-local bearer during this session; reload relies on HttpOnly cookies.
 api.interceptors.request.use((cfg) => {
+  // Axios queues this interceptor; an identity can change after the form called post.
+  assertPendingCommandGeneration(cfg.pendingCommandGeneration);
   // A transport retry keeps the same command identity. Forms retain it for resubmission.
   if (cfg.method === 'post' && /^\/reviews\/[^/]+\/create-finding$/.test(cfg.url)) {
     const data = typeof cfg.data === 'string' ? JSON.parse(cfg.data) : {...cfg.data};
@@ -68,6 +72,14 @@ api.interceptors.request.use((cfg) => {
   if (cfg.cookieAuthOnly) delete cfg.headers.Authorization;
   else if (t) cfg.headers.Authorization = `Bearer ${t}`;
   return cfg;
+});
+
+api.interceptors.response.use(response => {
+  assertPendingCommandGeneration(response.config?.pendingCommandGeneration);
+  return response;
+}, error => {
+  assertPendingCommandGeneration(error.config?.pendingCommandGeneration);
+  return Promise.reject(error);
 });
 
 export function formatError(e) {
