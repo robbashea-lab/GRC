@@ -161,13 +161,59 @@ class BulkOutcomeTests(unittest.IsolatedAsyncioTestCase):
         from fastapi import HTTPException
         with patch.object(server.assignment_eligibility, 'validate', AsyncMock(side_effect=HTTPException(422, 'Synthetic preflight rejection'))):
             blocked = await self.submit()
-        self.assertEqual(blocked.status_code, 422, blocked.text)
+        self.assertEqual(blocked.status_code, 200, blocked.text)
+        self.assertEqual([row['outcome'] for row in blocked.json()['results']], ['applied', 'rejected'])
         self.assertNotEqual(blocked.headers.get('X-Create-Rejected'), 'true')
         self.assertEqual(await server.db.findings.find_one({'finding_id': 'one'}), first)
         recovered = await self.submit()
         self.assertEqual(recovered.status_code, 200, recovered.text)
-        self.assertTrue(recovered.json()['ok'])
+        self.assertEqual(recovered.json(), blocked.json())
         self.assertEqual((await server.db.findings.find_one({'finding_id': 'one'}))['updated_at'], first['updated_at'])
+
+    async def test_pending_child_recovers_when_unstarted_recipient_becomes_ineligible(self):
+        await server.db.users.insert_one({'user_id': 'synthetic-recipient', 'role': 'platform_admin',
+            'client_ids': ['a', 'b'], 'status': 'active'})
+        self.body['payload'] = {'owner_id': 'synthetic-recipient'}
+        with patch.object(server, 'audit', AsyncMock(side_effect=RuntimeError('Synthetic audit outage'))):
+            uncertain = await self.submit()
+        self.assertEqual(uncertain.status_code, 503, uncertain.text)
+        first = await server.db.findings.find_one({'finding_id': 'one'})
+        await server.db.users.update_one({'user_id': 'synthetic-recipient'}, {'$set': {'status': 'disabled'}})
+        recovered = await self.submit()
+        self.assertEqual(recovered.status_code, 200, recovered.text)
+        self.assertEqual([row['outcome'] for row in recovered.json()['results']], ['applied', 'rejected'])
+        self.assertEqual(recovered.json()['results'][1]['status'], 422)
+        self.assertEqual(await server.db.findings.find_one({'finding_id': 'one'}), first)
+        self.assertIsNone((await server.db.findings.find_one({'finding_id': 'two'})).get('owner_id'))
+        receipt = await server.db.create_requests.find_one({'_id': first['_save_command']})
+        self.assertEqual(receipt['state'], 'complete')
+
+    async def test_parent_deadline_retains_known_child_outcomes(self):
+        self.body['payload'] = {'remediation_plan': 'Synthetic controlled parent deadline'}
+        audit, wait_for = server.audit, asyncio.wait_for
+        entered = asyncio.Event()
+        async def blocked_second(*args, **kwargs):
+            if len(args) > 3 and args[1] == 'update' and args[3] == 'two':
+                entered.set()
+                await asyncio.Event().wait()
+            return await audit(*args, **kwargs)
+        async def controlled_deadline(awaitable, timeout):
+            if getattr(getattr(awaitable, 'cr_code', None), 'co_qualname', '') == 'bulk_action.<locals>.execute':
+                task = asyncio.create_task(awaitable)
+                await wait_for(entered.wait(), 10)
+                return await wait_for(task, .01)
+            return await wait_for(awaitable, timeout)
+        with patch.object(server, 'audit', blocked_second), patch.object(asyncio, 'wait_for', controlled_deadline):
+            deadline = await self.submit()
+        self.assertEqual(deadline.status_code, 503, deadline.text)
+        self.assertNotEqual(deadline.headers.get('X-Create-Rejected'), 'true')
+        self.assertEqual([row['outcome'] for row in deadline.json()['detail']['bulk_receipt']['results']], ['applied', 'uncertain'])
+        before = await server.db.findings.find({}).to_list(None)
+        recovered = await self.submit()
+        self.assertEqual(recovered.status_code, 200, recovered.text)
+        self.assertTrue(recovered.json()['ok'])
+        self.assertEqual(await server.db.findings.find({}).to_list(None), before)
+        self.assertEqual(await server.db.audit_logs.count_documents({'action': 'bulk-update'}), 2)
 
     async def test_duplicate_inflight_parent_is_retained_not_declared_no_effect(self):
         self.body['payload'] = {'remediation_plan': 'Synthetic duplicate protection'}

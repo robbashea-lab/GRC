@@ -4547,6 +4547,7 @@ def _bulk_record_key(operation_key, item_id):
 
 async def _bulk_apply_records(body, docs, user, operation_key, parent_command, updates=None):
     """Sequential, explicit outcomes. This is not a multi-document transaction."""
+    from asyncio import CancelledError
     id_field = ENTITY_MAP[body.kind][2]
     indexed = {doc[id_field]: doc for doc in docs}
     results, stopped = [], False
@@ -4589,6 +4590,12 @@ async def _bulk_apply_records(body, docs, user, operation_key, parent_command, u
             results.append({'id': item_id, 'outcome': outcome, 'status': exc.status_code,
                             'detail': exc.detail if rejected else 'Required save effects are unconfirmed; retry the original save'})
             stopped = not rejected
+        except CancelledError:
+            # Preserve known earlier outcomes when the parent deadline cancels
+            # an in-flight child; that child's result is still unconfirmed.
+            results.append({'id': item_id, 'outcome': 'uncertain', 'status': 503,
+                            'detail': 'Save timed out; retry the original save to recover its outcome'})
+            stopped = True
         except Exception as exc:
             logging.error('Bulk %s needs reconciliation (%s)', body.kind, type(exc).__name__)
             results.append({'id': item_id, 'outcome': 'uncertain', 'status': 503,
@@ -4718,15 +4725,13 @@ async def _execute_bulk(body, docs, user, operation_key, parent_command):
         # still needs per-record outcomes; this is not batch atomicity.
         for d in docs:
             _require_snapshot({'expected_updated_at': body.expected_versions[d[id_field]]}, d)
-    for d in docs:
-        if retained[d[id_field]]:
-            # The native writer verifies the original fingerprint and repairs
-            # its required effects; never reinterpret an already-applied edit.
-            continue
-        checked = _editable_patch(body.kind, dict(updates), d, user=user)
-        await assignment_eligibility.validate(db, body.kind, {**d, **checked}, _can_access_client, d)
-        if body.kind == "tasks":
-            await action_items.prepare(db, {**d, **checked}, _can_access_client, d)
+        for d in docs:
+            checked = _editable_patch(body.kind, dict(updates), d, user=user)
+            await assignment_eligibility.validate(db, body.kind, {**d, **checked}, _can_access_client, d)
+            if body.kind == "tasks":
+                await action_items.prepare(db, {**d, **checked}, _can_access_client, d)
+    # Once children exist, each native writer repairs its retained intent or
+    # rejects that unstarted record without blocking other required recovery.
     return await _bulk_apply_records(body, docs, user, operation_key, parent_command, updates)
 
 
