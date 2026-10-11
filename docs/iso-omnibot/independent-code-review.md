@@ -189,3 +189,58 @@ The backend owner's append is received and matches the unchanged reviewed source
 ### Subsequent nested-Escape correction — overall disposition pending
 
 After the three-finding recheck, the coordinator reported a browser reproduction in which Escape closes both the ISO guide and its native assessment: the parent Radix document-capture handler runs before the guide's bubbling stop. This reviewer has not accessed that browser or independently claimed browser reproduction. Findings 1–3 remain closed; **the overall final code-review disposition is pending the requested correction and its actual nested-dialog regression**. The authorized owner correction is an optional `AssessmentShell` Escape callback forwarded at the dialog boundary, with only the ISO caller preventing default for focus inside its own guide window. The re-review must confirm normal/default and CIS/SOC Escape behavior remains unchanged. No implementation change is made by this reviewer.
+
+## Independent nested-Escape final disposition — frozen runtime
+
+**Accepted on runtime SHA `d031408933d133c7f7624407a854a44fcb55ddaf`.** Findings 1–3 remain closed; the subsequent nested-Escape pending status above is superseded by this acceptance. No new reproducible rejection finding was established in this correction. This is scoped code/fixture acceptance before CI, not release, hosted-security or whole-application assurance.
+
+### Frozen identity and connected code
+
+At `2026-10-11T14:36:33Z`, HEAD was `d031408933d133c7f7624407a854a44fcb55ddaf`, with exact committed Git tree **`f6cd90e137fafdd9f78bafe8721ad6b4f48e9184`**. The worktree was clean before this append; `git diff --name-only HEAD -- frontend/src shared backend` returned no runtime/test differences. The source bytes below matched those used for the independent checks before and after the owner freeze. This append changes only the report and does not create a new runtime SHA or commit.
+
+| Correction source | SHA-256 |
+| --- | --- |
+| `frontend/src/components/AssessmentShell.jsx` | `69d6ebc8b727d869e5fb221156887c546b0af09421baafc904e26c9540be4419` |
+| `frontend/src/components/AssessmentShell.test.jsx` | `d38c4bf53068ff89d9194c3a32497a68377135ac86547f7a6f74b3507d882246` |
+| `frontend/src/components/FrameworkAssessmentWorkspace.jsx` | `632a5f9ffb49e3e67b2ceb988f9d408fb5f988a8f464867d96858037bdacdc0f` |
+| `frontend/src/components/IsoAuditWorkspace.jsx` | `b32a8a791e4a608de0eb872c409d64c604efbb968644fdad10c1a49fd59b36be` |
+| `frontend/src/components/IsoGuidedAssessor.test.jsx` | `b28a021a6443af80a1e8988bf171c5e01ba6905a9ea4f1bbb6c8bfef2d1fa01b` |
+
+`IsoGuidedAssessor.jsx` still has SHA-256 `8d0209cd7b8c7acbd4f15e2a5a0a7b63f9c59bd1539bfb8aaac4be02c582a64a`; all four backend hashes still match their earlier dispositions. No backend behavior was altered by this Escape correction.
+
+- `AssessmentShell.jsx:9,15` accepts and forwards the optional callback to the real dialog boundary. It adds no shared interception or new default behavior. The installed Radix dismissable-layer code calls this hook during document capture and respects `defaultPrevented` before dismissal.
+- `FrameworkAssessmentWorkspace.jsx:37-39` passes a callback only for ISO; CIS/SOC receive `undefined`. Its predicate requires focus inside an ISO guide window descended from `iso-assessment-workspace`, so focus in the native form uses the normal native close/draft guard.
+- `IsoAuditWorkspace.jsx:89-94` identifies the workpaper shell as `iso-audit-workpaper` and uses that distinct ancestor in its guide predicate. It preserves native `leave(onClose)` and workpaper draft handling.
+- All production `AssessmentShell` callers were searched. `BrawndoCisSafeguard.jsx:42-48` and `PrestigeSocAssessment.jsx:38-42` supply no new Escape hook and have no implementation diff. Their established close/navigation behavior is not rewritten.
+
+### Independent executed evidence
+
+With `CI=true`, the normal `craco test --watch=false --runInBand --no-cache --runTestsByPath ...` command ran the controller, shell, audit workspace, Brawndo CIS assessment and Prestige SOC assessment suites: **5 suites / 335 tests passed**, 34.951 seconds. The two older CIS/SOC mocked-dialog suites emitted React unknown-prop warnings because their mock spreads `onEscapeKeyDown` onto a DOM element. These are disclosed test-double warnings, not failures from the real Radix boundary.
+
+After freeze, the controller/shell/audit suites were independently rerun at the full SHA above: **3 suites / 61 tests passed**, 12.736 seconds. This includes clean guide closure without native closure, dirty-guide confirmation and confirmation Escape, busy-save retention without extra writes, default no-hook native Escape and connected-opener restoration. The new default shell case is at `AssessmentShell.test.jsx:26-29`; the three real-parent controller cases are at `IsoGuidedAssessor.test.jsx:45-69`. No assertion was removed or disabled to make these pass.
+
+**Helper versus production selectors is explicitly separated.** The three controller cases mount the real, unmocked `AssessmentShell`/Radix parent, but their helper predicate at `IsoGuidedAssessor.test.jsx:15-19` is less specific than the production ancestor predicates. Those cases prove capture forwarding and guide close/dirty/busy behavior; they are not claimed as production-selector coverage.
+
+To check production wiring separately, five in-memory tests rendered the actual `FrameworkAssessmentWorkspace` and `IsoAuditWorkspace`, using their real callbacks and real shell/dialog primitives. **All five passed before freeze and again at frozen SHA**; the frozen replay took 5.598 seconds. The assessment probes covered ISO guide-only Escape followed by native-form Escape, plus normal CIS and SOC native Escape. The audit probes covered both clean workpaper closure after guide-only Escape and dirty multiline/blank-line notes retained through guide Escape, native leave confirmation and Keep editing. No guide/native save was triggered. The assessment fixture stubs unrelated Finding content; the audit fixture uses its existing mocked storage and RecordDrawer boundary. No application, test or fixture file was written.
+
+A fresh-process sensitivity check removed only the shell's callback forwarding in memory. All three real-parent regressions failed on unexpected `nativeClose` calls at `:47`, `:56` and `:67`. These are **three expected synthetic-mutation failures**, not candidate failures, and show that the new tests detect the original event-order defect. `git diff --check` passed.
+
+### Accepted scope and remaining boundaries
+
+Verdict: **accept the reviewed fixes on `d031408933d133c7f7624407a854a44fcb55ddaf` for the next CI gate**. There is no remaining independent code-review blocker from the three initial findings or this nested-Escape correction on that source. This does not authorize a merge, deployment or publication.
+
+Not checked: CI/builds on the frozen revision, authenticated/hosted sessions, live Mongo behavior or normative ISO completeness. The coordinator's actual local-browser assessment/theme/viewport observations are attributed evidence, not this reviewer's browser work; actual browser audit-workpaper Escape remains coordinator verification. This reviewer made no product edit, commit, session/provider/client access or deployment. Only this report was appended.
+
+## Coordinator audit-browser follow-up and completed review handoff
+
+The coordinator subsequently reports a successful **local Demo browser** check of the actual `IsoAuditWorkspace` at runtime `d031408933d133c7f7624407a854a44fcb55ddaf`:
+
+- In the existing 4.1 workpaper with unsaved notes, Escape inside the audit guide closed only the guide. The native workpaper and notes remained, and focus returned to the guide launcher.
+- Escape from Auditor notes used the existing native Leave guard. Keep editing retained the exact notes.
+- Normal close followed by Discard returned focus to the `4-1` workpaper opener. No save occurred.
+
+The coordinator also confirms that the previously reported actual `FrameworkAssessmentWorkspace` browser checks passed. These observations are **coordinator-reported evidence**, not browser executions or session inspection by this independent reviewer. They supersede only the audit-browser pending note immediately above. The independently executed production-wiring probes, real-Radix regressions and their test-double limitations remain separately recorded.
+
+**Final independent disposition: accepted on `d031408933d133c7f7624407a854a44fcb55ddaf`; no remaining code-review blocker in the examined fixes.** Findings 1–3 and the nested-Escape correction are closed. HEAD and committed tree were rechecked unchanged as `d031408933d133c7f7624407a854a44fcb55ddaf` / `f6cd90e137fafdd9f78bafe8721ad6b4f48e9184`. This completes the requested independent review handoff for the owner's documentation commit and final CI submission; it is not a CI pass or release authorization.
+
+No broader review or test rerun was performed for this evidence-only append. The only file changed by this reviewer remains this report. Frozen-revision CI/builds, authenticated/hosted acceptance, live Mongo behavior and licensed normative completeness remain unverified by this reviewer. No commit, push, deployment, product edit or client/browser/provider/session access was performed.
