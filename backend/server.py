@@ -4708,7 +4708,11 @@ async def _execute_bulk(body, docs, user, operation_key, parent_command):
         key = _bulk_record_key(operation_key, d[id_field])
         retained[d[id_field]] = await db.create_requests.find_one({'_id': create_requests.digest([
             user['user_id'], d['client_id'], body.kind + '/' + d[id_field] + '/update', key])})
-    if not any(retained.values()):
+    if any(retained.values()):
+        # Older writers have child receipts without a parent; do not describe
+        # their recovery as a fresh rejection with no possible prior effects.
+        await db.create_requests.update_one({'_id': parent_command}, {'$set': {'primary_started': True}})
+    else:
         # Preserve the existing fresh-selection preflight. A later conflict
         # still needs per-record outcomes; this is not batch atomicity.
         for d in docs:

@@ -134,6 +134,41 @@ class BulkOutcomeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(await server.db.assets.find_one({'asset_id': 'one'}))
         self.assertIsNotNone(await server.db.assets.find_one({'asset_id': 'two'}))
 
+    async def test_completed_delete_receipt_replays_without_duplicate_audits(self):
+        self.body.update(kind='assets', action='delete', payload=None)
+        await server.db.assets.insert_many([{'asset_id': 'one', 'client_id': 'a', 'name': 'First', 'updated_at': None},
+                                           {'asset_id': 'two', 'client_id': 'a', 'name': 'Second', 'updated_at': None}])
+        saved = await self.submit()
+        self.assertEqual(saved.status_code, 200, saved.text)
+        self.assertTrue(saved.json()['ok'])
+        self.assertEqual(saved.json()['count'], 2)
+        self.assertEqual(await server.db.assets.count_documents({}), 0)
+        events = await server.db.audit_logs.find({'entity_id': {'$in': ['one', 'two']}}).to_list(None)
+        replay = await self.submit()
+        self.assertEqual(replay.status_code, 200, replay.text)
+        self.assertEqual(replay.json(), saved.json())
+        self.assertEqual(await server.db.audit_logs.find({'entity_id': {'$in': ['one', 'two']}}).to_list(None), events)
+
+    async def test_legacy_child_recovery_is_not_declared_fresh_no_effect(self):
+        self.body['payload'] = {'remediation_plan': 'Synthetic legacy recovery'}
+        with patch.object(server, 'audit', AsyncMock(side_effect=RuntimeError('Synthetic audit outage'))):
+            uncertain = await self.submit()
+        self.assertEqual(uncertain.status_code, 503, uncertain.text)
+        first = await server.db.findings.find_one({'finding_id': 'one'})
+        # The preceding deployed writer created child receipts but no parent.
+        parent = server.create_requests.digest(['admin', 'bulk', 'bulk/findings', self.headers['Idempotency-Key']])
+        await server.db.create_requests.delete_one({'_id': parent})
+        from fastapi import HTTPException
+        with patch.object(server.assignment_eligibility, 'validate', AsyncMock(side_effect=HTTPException(422, 'Synthetic preflight rejection'))):
+            blocked = await self.submit()
+        self.assertEqual(blocked.status_code, 422, blocked.text)
+        self.assertNotEqual(blocked.headers.get('X-Create-Rejected'), 'true')
+        self.assertEqual(await server.db.findings.find_one({'finding_id': 'one'}), first)
+        recovered = await self.submit()
+        self.assertEqual(recovered.status_code, 200, recovered.text)
+        self.assertTrue(recovered.json()['ok'])
+        self.assertEqual((await server.db.findings.find_one({'finding_id': 'one'}))['updated_at'], first['updated_at'])
+
     async def test_duplicate_inflight_parent_is_retained_not_declared_no_effect(self):
         self.body['payload'] = {'remediation_plan': 'Synthetic duplicate protection'}
         entered, release = asyncio.Event(), asyncio.Event()
