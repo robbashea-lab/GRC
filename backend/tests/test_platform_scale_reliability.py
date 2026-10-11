@@ -265,6 +265,8 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(evidence_ids), 120)
                 filtered = (await self.measured('GET', '/api/evidence/catalog', params={'client_id': cid,
                     'state': json.dumps({'filters': {'years': ['2036']}}), 'page_size': 100})).json()
+                self.assertEqual(filtered['total'], 12)
+                self.assertEqual(len(filtered['items']), 12)
                 self.assertEqual({row['evidence_id'] for row in filtered['items']}, {f'{cid}-evidence-2036-{month:02}' for month in range(1, 13)})
                 exported = await self.measured('GET', '/api/export/tasks', params={'client_id': cid})
                 csv_rows = list(csv.DictReader(io.StringIO(exported.text)))
@@ -322,7 +324,7 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
         cap = await self.measured('GET', '/api/calendar', expected=413, params=params)
         self.assertIn('no partial results', cap.json()['detail'])
         self.assertNotIn('tasks', cap.json())
-        for start, end in [('2037-01-01', '2037-01-02'), ('2037-02-30', '2037-03-31'), ('2037-01-31', '2037-01-01')]:
+        for start, end in [('2037-01-01', '2038-01-03'), ('2037-02-30', '2037-03-31'), ('2037-01-31', '2037-01-01')]:
             await self.measured('GET', '/api/calendar', expected=422, params={**params, 'start': start, 'end': end})
         self.assertEqual(await server.db.tasks.count_documents({'client_id': cid}), 5001)
         self.report['volume'] = {'cap_only_tasks': 5001, 'calendar_limit': 5000, 'window_limit_days_inclusive': 367}
