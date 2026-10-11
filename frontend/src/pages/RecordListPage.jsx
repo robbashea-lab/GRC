@@ -48,6 +48,7 @@ import {
 import AssigneeSelect from "@/components/AssigneeSelect";
 import { Trash2, Download, MoreHorizontal, CheckCircle2, UserPlus, X, CalendarDays, MoreVertical, Pencil, Filter } from "lucide-react";
 import { toast } from "sonner";
+import {useCreateIntent} from '@/lib/createIntent';
 
 const ID_FIELD = {
   reviews: "review_id", findings: "finding_id", risks: "risk_id", policies: "policy_id",
@@ -214,6 +215,22 @@ function EntityListPage({ kind }) {
   const [pickedOwner, setPickedOwner] = useState("");
   const [dueDatePickerOpen, setDueDatePickerOpen] = useState(false);
   const [pickedDueDate, setPickedDueDate] = useState("");
+  const [bulkReport, setBulkReport] = useState(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const bulkRunning = useRef(false);
+  const bulkScope = `bulk:${user?.user_id}:${currentClientId}:${kind}`;
+  const activeBulkScope = useRef(bulkScope);
+  activeBulkScope.current = bulkScope;
+  const bulkCommand = useCreateIntent(async(path, body, options) => {
+    const response = await api.post(path, body, options);
+    if (response.data.results?.some(row => row.outcome === 'uncertain')) {
+      throw Object.assign(new Error('Some records need recovery or reconciliation.'), {bulkReceipt: response.data});
+    }
+    return response;
+  }, bulkScope, true);
+  const pendingBulkRequest = bulkCommand.pendingRequest();
+  const pendingBulkAction = pendingBulkRequest?.[1]?.action;
+  useEffect(() => { setBulkReport(null); setBulkBusy(false); bulkRunning.current = false; }, [bulkScope]);
 
   // Register-wide creation, scheduling and bulk actions require program administration.
   const canWrite = ["super_admin", "platform_admin"].includes(user?.role);
@@ -226,7 +243,7 @@ function EntityListPage({ kind }) {
   const users = useClientPeople(currentClientId);
   const userMap = useMemo(() => peopleMap(users), [users]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options) => {
     const sequence = ++loadSequence.current;
     if (!currentClientId) { setRows([]); setLoading(false); return; }
     setLoading(true); setLoadError('');
@@ -242,7 +259,7 @@ function EntityListPage({ kind }) {
       }
       if (sequence !== loadSequence.current) return;
       setRows(data);
-      setChecked(new Set());
+      setChecked(new Set(options?.selection || []));
     } catch (e) { if (sequence === loadSequence.current) { setRows([]); setLoadError(formatError(e)); } }
     finally { if (sequence === loadSequence.current) setLoading(false); }
   }, [kind, currentClientId]);
@@ -474,17 +491,41 @@ function EntityListPage({ kind }) {
     } catch (e) { toast.error(e.message || "Export failed"); }
   }
 
-  async function bulk(action, payload) {
+  async function bulk(action, payload, recover = false) {
     const ids = [...checked];
-    if (!ids.length) return;
+    if (bulkRunning.current || (!recover && !ids.length)) return;
+    if (!recover && bulkCommand.unconfirmed()) {
+      toast.error('Recover or reconcile the previous bulk operation before starting another one.');
+      return;
+    }
+    const requestScope = bulkScope;
+    bulkRunning.current = true;
+    setBulkBusy(true);
+    async function showReceipt(data) {
+      const results = data.results || ids.map(id => ({id, outcome: 'applied'}));
+      const unresolved = results.filter(row => row.outcome !== 'applied').map(row => row.id);
+      setBulkReport({...data, results, action: action || bulkReport?.action});
+      if (unresolved.length) toast.error(`${data.count} applied; ${unresolved.length} unresolved. Review the per-record outcomes.`);
+      else toast.success(`${data.count} record(s) ${action === 'delete' ? 'deleted' : 'updated'}`);
+      setOwnerPicker(false); setPickedOwner("");
+      await load({selection: unresolved});
+    }
     try {
       const expected_versions=Object.fromEntries(rows.filter(row=>checked.has(row[idField])).map(row=>[row[idField],row.updated_at??null]));
-      const { data } = await api.post("/bulk", { kind, ids, action, payload, expected_versions });
-      toast.success(`${data.count} record(s) updated`);
-      setChecked(new Set());
-      setOwnerPicker(false); setPickedOwner("");
-      load();
-    } catch (e) { toast.error(formatError(e)); }
+      const expected_occurrences = isReviews ? Object.fromEntries(rows.filter(row=>checked.has(row[idField])).map(row=>[row[idField],occurrenceId(row)])) : {};
+      const { data } = await (recover ? bulkCommand.retry() : bulkCommand("/bulk", { kind, ids, action, payload, expected_versions, expected_occurrences }));
+      if (activeBulkScope.current === requestScope) await showReceipt(data);
+    } catch (e) {
+      if (activeBulkScope.current !== requestScope) return;
+      if (e.bulkReceipt) await showReceipt(e.bulkReceipt);
+      else {
+        toast.error(formatError(e));
+        setBulkReport({action: action || bulkReport?.action, detail: formatError(e), retry_supported: action !== 'delete'});
+        await load({selection: ids});
+      }
+    } finally {
+      if (activeBulkScope.current === requestScope) { bulkRunning.current = false; setBulkBusy(false); }
+    }
   }
 
   return (
@@ -547,6 +588,14 @@ function EntityListPage({ kind }) {
         {!policiesPilot && <RegisterCount shown={filtered.length} total={isReviews && !columnStatusActive && signal?.id!=='recent' ? tableSource.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : tableSource.length} />}
       </div>
 
+      {(bulkReport || pendingBulkRequest) && <div role="status" aria-live="polite" data-testid="bulk-operation-report">
+        {bulkReport?.detail && <p>{bulkReport.detail}</p>}
+        {bulkReport?.results?.filter(row => row.outcome !== 'applied').map(row => <p key={row.id}>{rows.find(record => record[idField] === row.id)?.title || rows.find(record => record[idField] === row.id)?.name || row.id}: {row.outcome.replace('_', ' ')} — {typeof row.detail === 'string' ? row.detail : 'Reload and review this record before retrying.'}</p>)}
+        {pendingBulkRequest && <p>A previous bulk operation is unconfirmed. Its original records, values and edit versions are retained.</p>}
+        {bulkCommand.unconfirmed() && (pendingBulkAction !== 'delete'
+          ? <Button disabled={bulkBusy} onClick={() => bulk(undefined, undefined, true)} data-testid="bulk-recover">Retry original bulk save</Button>
+          : <p>Deletion outcome is unconfirmed. Reconcile the record and its history before another deletion; do not retry the batch.</p>)}
+      </div>}
       {/* Bulk action bar */}
       {checked.size > 0 && (
         <div className="mx-[var(--register-gutter)] mt-2 rounded-md border border-brand-charcoal bg-primary text-primary-foreground px-3 py-2 flex items-center gap-3" data-testid="bulk-action-bar">

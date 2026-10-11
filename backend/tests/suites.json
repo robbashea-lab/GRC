@@ -72,7 +72,9 @@
     "test_ten_year_operation.py",
     "test_vendor_governance.py",
     "test_workflow_integrity.py",
-    "test_workspace_work_context.py"
+    "test_workspace_work_context.py",
+    "test_recovery_retirement.py",
+    "test_bulk_outcomes.py"
   ],
   "environment": [
     "backend_test.py",
