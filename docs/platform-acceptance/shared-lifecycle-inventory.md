@@ -1,9 +1,10 @@
 # Shared lifecycle acceptance inventory
 
-Recorded 2026-10-11. This is source inspection and a proposed execution contract,
-not a test pass or a readiness verdict. No application changes, test execution,
-browser actions, staging writes, account changes, commits or deployments occurred
-in this inventory pass.
+Recorded 2026-10-11. The initial inventory was source inspection only. The final
+execution section below records the subsequently authorized local service/API
+campaign. Neither section establishes hosted acceptance or production readiness.
+No application changes, browser actions, staging writes, live account changes or
+deployments were performed by this workstream.
 
 ## Baseline and ownership
 
@@ -12,9 +13,9 @@ in this inventory pass.
 - Branch: `codex/acceptance-shared-lifecycle-20261011`.
 - Inspected source: `28b806716024ec149af2ec5da621a5a618c669d5`.
 - The coordinator owns shared backend changes, integration, staging and the
-  authenticated browser. This workstream initially owns only this inventory and
-  its JSON counterpart. Runtime/test files below are proposed ownership, not an
-  existing file reservation.
+  authenticated browser. This workstream owns the new ten-year lifecycle test and
+  these inventory artifacts. It has no runtime-file reservation or deployment
+  authority. The scale campaign is separately owned by the coordinator.
 - No repository `AGENTS.md` was found. The user's engineering instructions and
   interface/static-copy freeze apply. Existing history and newer work must survive.
 
@@ -236,10 +237,106 @@ application imports or service calls. Installed Windows TimeZoneInfo validates
 the independent New York offset boundary where Python IANA data is unavailable;
 the API date-only check does not prove browser/user-timezone display.
 
-Final five-framework ten-year execution, independent retest and bounded scale
-interpretation remain pending. The CPU slot was returned to the coordinator;
-there is no active service test or independent staging activity in this branch.
-No hosted, actual sign-in, restricted-role, notification-delivery or real worker
-fault claim follows from these local, modeled-identity prototypes.
+The historical prototypes above do not establish complete ten-year readiness.
+The final execution results follow. No hosted, actual sign-in, restricted-role,
+notification-delivery or real worker fault claim follows from either campaign.
 
-Risk: partial/prototype evidence does not establish complete ten-year readiness.
+## Final local execution and revision register
+
+All five primary configurations completed the fixed interval
+`[2027-01-01,2037-01-01)` through existing API/service commands, with UTC module
+clocks, actual Motor/Mongo storage and isolated modeled local identities. The
+application source remained `28b806716024ec149af2ec5da621a5a618c669d5` throughout.
+Python 3.12.14, Motor 3.7.1, PyMongo 4.18.2 and MongoDB 8.0.28 were used. There was
+no application or dependency correction.
+
+| Configuration | Definitions | Expected = stored occurrences | Retained file hashes | Requests | Elapsed seconds | Frozen QA source |
+|---|---:|---:|---:|---:|---:|---|
+| CIS IG1 | 56 | 1,138 | 1,149 | 3,948 | 141.9703 | `8ff3f195c1b057b3ff33e3baff54f795bf28fac1` |
+| CIS IG2 | 130 | 1,308 | 1,319 | 4,494 | 151.3083 | `8ff3f195c1b057b3ff33e3baff54f795bf28fac1` |
+| CIS IG3 | 153 | 1,308 | 1,319 | 4,494 | 147.6918 | `8ff3f195c1b057b3ff33e3baff54f795bf28fac1` |
+| ISO/IEC 27001 | 123 | 898 | 909 | 4,489 | 130.7051 | `d4870423edc1ca66234741a41d0c7ab4b1005974` |
+| SOC 2 Security / Availability / Confidentiality | 38 | 838 | 849 | 3,001 | 98.4926 | `d4870423edc1ca66234741a41d0c7ab4b1005974` |
+
+The original `8ff` run passed Calendar and all three CIS cases, then stopped on
+an ISO harness error: it submitted the CIS/SOC-only `verification` field. The
+existing native contract correctly rejected 422. Original red output and the
+partial ISO ledger are retained. Commit `d487` sends/asserts verification only
+for CIS/SOC, matching `framework_governance.py:624–626` and the existing three-year
+helper. ISO retains its implementation/status/owner/SoA path. This changes no
+runtime behavior and leaves the CIS payload unchanged.
+
+The final targeted command ran only ISO, SOC and the independent date/count
+oracle: three tests passed in 229.804 seconds, exit 0. Unchanged CIS and Calendar
+were not repeated. These are seven successful method results across two frozen
+QA revisions, not a single-revision seven-case suite pass. The QA file SHA256
+values are:
+
+- `8ff`: `fed3a08c8a9cb9c59301b59b4c07c22da81c0c8594e48d38a057d8d363d9bf2d`.
+- `d487`: `e4a9e317af8d14b70c4b2e61b134577b97b36db9b997caf343ec3d218cb0e517`.
+
+## Annual ledger and executed themes
+
+Each checkpoint independently asserted the exact configured definition-to-native
+record mapping, enabled Review cohort, original anchors/cadences, immutable
+occurrence dates/content, captured record/relationship graph, evidence hashes,
+native history prefix, Policy approvals, Calendar identities and dashboard
+populations. All 50 framework/year rows passed. Each final history retained ten
+native assessment entries and ten separate Policy approvals. No duplicated
+Review IDs, historical content mismatches or raw orphan/cross-client references
+were found in the captured expected graph. Other initial populations are an
+observed starting graph, not a claim of exhaustive onboarding completeness.
+
+| Year / calendar year | CIS IG1 | CIS IG2 | CIS IG3 | ISO | SOC 2 | Additional executed theme in every configuration |
+|---|---:|---:|---:|---:|---:|---|
+| 1 / 2027 | 115 | 132 | 132 | 91 | 85 | Normal onboarding/replay, native update, separate Policy approval, multiple Actions and explicit validation |
+| 2 / 2028 | 229 | 263 | 263 | 181 | 169 | Partial remediation stays overdue; missed Reviews caught up individually without cadence drift |
+| 3 / 2029 | 343 | 394 | 394 | 271 | 253 | Isolated modeled operator disabled/reassigned; original attribution retained |
+| 4 / 2030 | 457 | 525 | 525 | 361 | 337 | New Evidence record and supporting unlink; both hashes and native fields retained; supplier change |
+| 5 / 2031 | 571 | 656 | 656 | 451 | 421 | Supported scope/program addition on isolated derivative; inherited native marker/history retained |
+| 6 / 2032 | 686 | 788 | 788 | 542 | 506 | Accepted Risk exposure retained; Exception approval and post-expiry projection; dedicated Finding reopen/revalidation |
+| 7 / 2033 | 799 | 918 | 918 | 631 | 589 | Client archive/restore and denied write; Vendor offboarding; unsupported Review/Vendor reopen rejected without changes |
+| 8 / 2034 | 912 | 1048 | 1048 | 720 | 672 | Interrupted sourced-ticket command recovery/replay; no external notification; long-gap catch-up |
+| 9 / 2035 | 1025 | 1178 | 1178 | 809 | 755 | Stale native editor rejected unchanged; concurrent async completion yields one occurrence |
+| 10 / 2036 | 1138 | 1308 | 1308 | 898 | 838 | First-year actor/record/event still recoverable through existing audit export; retained bytes/history reconstructed |
+
+The explicit validator is a distinct locally modeled actor. Event text that
+says “independent validation” describes separation of that workflow role; it is
+not independent QA or real hosted authorization proof. Parallel completion is
+two async requests, not a real OS-worker fencing test. The interrupted-ticket
+case mocks only its external notification boundary and does not test email.
+
+## Evidence, cleanup and remaining boundaries
+
+The JSON counterpart contains all 50 annual ledgers, final record populations,
+per-framework source/test hashes, theme dispositions, report paths and artifact
+receipts. Original `shared-lifecycle-frozen-8ff` output and all prior prototype
+red logs remain preserved. ISO/SOC/oracle final output is in
+`shared-lifecycle-frozen-d487`; no earlier result has been relabeled.
+
+Each test used a fresh root-owned loopback child database under
+`platform_acceptance_20261011_tenyear_`. After normal cleanup, a bounded read-only
+reread of the known run-owned child names returned zero collections. No global
+drop, process control, shared storage, installed environment or live identity was
+modified. The coordinator owns the Mongo process and CPU slot; this workstream
+has released execution.
+
+The Calendar API date-only checks passed on DST dates, leap day and year-end.
+The independent recurrence oracle passed monthly/quarter/semiannual/annual/
+custom-7/one-time counts `120/40/20/10/521/1`, leap-day return and New York offset
+boundaries using the installed Windows timezone provider. Actual browser/user
+timezone display and the proposed Auckland boundary remain unexecuted.
+
+Request observations are capped at the first 100 requests per operation/year.
+They measure local ASGI plus loopback storage and response size, not hosted
+latency, production capacity or an approved SLO. Original response populations
+are retained; a separate scale campaign owns capacity interpretation.
+
+Independent source/assertion review passed the frozen `8ff` test; the coordinator
+also reviewed the exact `d487` scope correction against the native source guard.
+Non-author operational retest remains coordinator-owned. Hosted sign-in/roles,
+human usability, actual browser timezone, notification delivery and real
+worker/driver disruption remain separate unavailable or pending checks. Missing
+features described in the source inventory are not invented or waived. No
+genuine application defect was demonstrated by this local campaign, and no
+global acceptance or production-readiness conclusion is claimed.
