@@ -1,0 +1,2732 @@
+{
+  "schema_version": 1,
+  "mandate_attachment": "9256a985-a0d0-4338-8474-4c45616d67ca",
+  "baseline_commit": "28b806716024ec149af2ec5da621a5a618c669d5",
+  "branch": "codex/acceptance-product-personas-20261011",
+  "workstream": "product/persona/task acceptance and interface freeze inventory",
+  "evidence_layer": "current source inspection only",
+  "execution_counts": {
+    "product_mutations": 0,
+    "browser_scenarios": 0,
+    "hosted_requests": 0,
+    "application_test_runs": 0
+  },
+  "evidence_boundary": "Source/test references are inspected current contracts, not new passes. No shared browser/staging/accounts/fixtures use. Coordinator adds actual execution evidence. Historical pass totals stay at their original revisions.",
+  "frameworks": [
+    {
+      "id": "CIS-IG1",
+      "route": "/compliance/cis-ig1",
+      "key": "cis-ig1",
+      "version": "8.1",
+      "count": 56,
+      "configuration": {
+        "implementation_group": 1
+      },
+      "catalog": "shared/catalogs/cisIG1.json",
+      "guide": "frontend/src/components/GuidedAssessor.jsx",
+      "native": "frontend/src/components/BrawndoCisSafeguard.jsx",
+      "constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "tests": [
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ]
+    },
+    {
+      "id": "CIS-IG2",
+      "route": "/compliance/cis-ig1",
+      "key": "cis-ig1",
+      "version": "8.1",
+      "count": 130,
+      "configuration": {
+        "implementation_group": 2
+      },
+      "catalog": "shared/catalogs/cisIG1.json",
+      "guide": "frontend/src/components/GuidedAssessor.jsx",
+      "native": "frontend/src/components/BrawndoCisSafeguard.jsx",
+      "constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "tests": [
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ]
+    },
+    {
+      "id": "CIS-IG3",
+      "route": "/compliance/cis-ig1",
+      "key": "cis-ig1",
+      "version": "8.1",
+      "count": 153,
+      "configuration": {
+        "implementation_group": 3
+      },
+      "catalog": "shared/catalogs/cisIG1.json",
+      "guide": "frontend/src/components/GuidedAssessor.jsx",
+      "native": "frontend/src/components/BrawndoCisSafeguard.jsx",
+      "constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "tests": [
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ]
+    },
+    {
+      "id": "ISO27001",
+      "route": "/compliance/iso-27001",
+      "key": "iso-27001",
+      "version": "2022 + Amd 1:2024",
+      "count": 123,
+      "configuration": {},
+      "catalog": "shared/catalogs/iso27001.json",
+      "guide": "frontend/src/components/IsoGuidedAssessor.jsx",
+      "native": "frontend/src/components/FrameworkAssessmentWorkspace.jsx",
+      "constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "tests": [
+        "frontend/src/components/IsoGuidedAssessor.test.jsx",
+        "frontend/src/components/IsoAuditWorkspace.test.jsx",
+        "backend/tests/test_iso_guided_routes.py",
+        "backend/tests/test_iso_audit_program.py"
+      ]
+    },
+    {
+      "id": "SOC2",
+      "route": "/compliance/soc-2",
+      "key": "soc-2",
+      "version": "2017 TSC, revised points of focus 2022",
+      "count": 38,
+      "canonical_count": 61,
+      "configuration": {
+        "categories": [
+          "security",
+          "availability",
+          "confidentiality"
+        ]
+      },
+      "catalog": "shared/catalogs/soc2.json",
+      "guide": "frontend/src/components/SocGuidedAssessor.jsx",
+      "native": "frontend/src/components/PrestigeSocAssessment.jsx",
+      "constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "tests": [
+        "frontend/src/components/SocGuidedAssessor.test.jsx",
+        "frontend/src/components/PrestigeSocAssessment.test.jsx",
+        "backend/tests/test_soc_guided_routes.py",
+        "backend/tests/test_soc_framework.py"
+      ]
+    }
+  ],
+  "role_contract": {
+    "source": "backend/authorization.py",
+    "roles": {
+      "super_admin": "Platform Owner, global client scope",
+      "platform_admin": "Provider administrator; explicit all_clients or memberships required",
+      "client_grc_manager": "Permitted client operations; existing-user assignment",
+      "client_contributor": "Assigned-record operations and field allowlist; supported own task creation",
+      "client_readonly": "Read client scope; mutation denied"
+    },
+    "personas_are_not_roles": true,
+    "contacts_are_not_accounts": true
+  },
+  "task_rows": [
+    {
+      "id": "CIS-IG1-business_owner-inventory",
+      "framework": "CIS-IG1",
+      "persona": "Business/product owner",
+      "task": "Establish truthful enabled-program inventory",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Portfolio → client → program; Client Profile → Program Configuration; program cards/search",
+      "authoritative_records": "clients.framework_settings; requirements; framework_assessments",
+      "expected_outcome": "Counts match canonical active IDs; repeated initialization creates no duplicates; inactive/retired rows stay out of active denominators.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/lib/frameworks.js",
+        "frontend/src/components/DashboardPrograms.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_standard_initialization.py",
+        "backend/tests/test_framework_program.py",
+        "frontend/src/components/DashboardPrograms.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG1-business_owner-portfolio",
+      "framework": "CIS-IG1",
+      "persona": "Business/product owner",
+      "task": "Trace a high-level result to its source",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Portfolio tiles/filters → client Dashboard → work/program count → authoritative drawer",
+      "authoritative_records": "dashboard/portfolio projection; reviews; findings; tasks; risks; framework_assessments",
+      "expected_outcome": "Counts reconcile to exact source IDs/client; activity and implementation are not treated as independent assurance.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/ClientDirectory.jsx",
+        "frontend/src/components/ClientWorkDashboard.jsx",
+        "frontend/src/lib/dashboardWorkQueue.js"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_portfolio_overview.py",
+        "backend/tests/test_dashboard_work_queue.py",
+        "frontend/src/components/ClientWorkDashboard.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG1-business_owner-history",
+      "framework": "CIS-IG1",
+      "persona": "Business/product owner",
+      "task": "Reconstruct a prior decision and hand it over",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Native requirement Activity / History; Review History; source Evidence; existing CSV exports",
+      "authoritative_records": "assessment_history; interview snapshots; review_occurrences; evidence; audit_logs",
+      "expected_outcome": "Prior conclusions, actors, scope and supporting evidence remain traceable after later saves; an export represents its actual record population.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/AssessmentHistory.jsx",
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/pages/AdminAudit.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_core_audit.py",
+        "backend/tests/test_review_occurrences.py",
+        "backend/tests/test_record_integrity.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG1-ciso-assurance",
+      "framework": "CIS-IG1",
+      "persona": "CISO/vISO",
+      "task": "Separate implementation from verification and operating evidence",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Program overview → native requirement; implementation/verification fields and supporting Controls",
+      "authoritative_records": "framework_assessments.status/implementation/verification; organizational Controls; evidence",
+      "expected_outcome": "Saving a proposal does not verify evidence or claim effectiveness; unknown/unassessed information is not a successful conclusion.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkDrawer.jsx",
+        "frontend/src/components/OrganizationalControls.jsx",
+        "backend/framework_governance.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assessment_verification.py",
+        "backend/tests/test_organizational_controls.py",
+        "frontend/src/components/FrameworkMappings.test.jsx",
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG1-ciso-material_work",
+      "framework": "CIS-IG1",
+      "persona": "CISO/vISO",
+      "task": "Determine exposure, gaps, treatment and next obligation",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Dashboard work filters → Risks / Action Items / Reviews → source-linked drawer",
+      "authoritative_records": "risks; findings; tasks; reviews; exceptions",
+      "expected_outcome": "Accepted/deferred exposure and Pending Validation remain distinct from completion; finishing a task does not validate a Finding or reassess native implementation.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/RiskRegister.jsx",
+        "frontend/src/pages/BrawndoActionItems.jsx",
+        "frontend/src/components/RemediationTickets.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_risk_lifecycle.py",
+        "backend/tests/test_remediation_tickets.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": [
+        "RP-01"
+      ]
+    },
+    {
+      "id": "CIS-IG1-ciso-scope",
+      "framework": "CIS-IG1",
+      "persona": "CISO/vISO",
+      "task": "Inspect actual scope and a supported scope change",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Client Profile → Program Configuration; program scope/retained-record controls; ISO SoA/audit views",
+      "authoritative_records": "requirements.baseline_response; clients.framework_settings; native assessments/history",
+      "expected_outcome": "Only configured program/group/categories are active; retained records and explicit applicability decisions do not silently confer assurance.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/components/CisProgramSettings.jsx",
+        "frontend/src/components/SocReadiness.jsx",
+        "frontend/src/components/IsoProgramWorkspace.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_client_profile.py",
+        "backend/tests/test_multi_framework.py",
+        "frontend/src/components/ProgramConfiguration.test.jsx",
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG1-analyst-guide",
+      "framework": "CIS-IG1",
+      "persona": "GRC analyst/team member",
+      "task": "Complete/resume the safeguard-specific interview",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Program OmniBot invitation → recommended native requirement → guide → groups → Save & next → summary",
+      "authoritative_records": "guided_assessment version/revision; selected framework_assessment_id",
+      "expected_outcome": "Correct selected client/requirement and active questions; progress does not change native assessment; final applicable group opens the complete summary.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/GuidedAssessor.jsx",
+        "frontend/src/components/BrawndoCisSafeguard.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG1-analyst-save",
+      "framework": "CIS-IG1",
+      "persona": "GRC analyst/team member",
+      "task": "Save/update exact reviewed Current Implementation",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Summary editable field → Save assessment / Update assessment / Save & close → confirmation → native field/refresh",
+      "authoritative_records": "framework_assessments.implementation/status/guided_assessment_source; assessment_history",
+      "expected_outcome": "Exact edited multiline text and separate proposed status persist once; cancel/native draft/stale writer fail safely; no second external save or automatic verification.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkDrawer.jsx",
+        "backend/framework_governance.py",
+        "frontend/src/components/GuidedAssessor.jsx",
+        "frontend/src/components/BrawndoCisSafeguard.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/GuidedLifecycleNative.test.jsx",
+        "backend/tests/test_edit_versions.py",
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG1-analyst-chain",
+      "framework": "CIS-IG1",
+      "persona": "GRC analyst/team member",
+      "task": "Execute the connected operating cycle",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Native Related/Reviews/Evidence → Review → Raise Finding → Action Item → independent validation → native reassessment",
+      "authoritative_records": "framework_assessments; review_occurrences; evidence; findings; tasks; related_links",
+      "expected_outcome": "Source/occurrence identity and retained history; several Actions may belong to one Finding; validation/reassessment remains explicit.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkReviewSetup.jsx",
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/components/RemediationTicketDrawer.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_operating_model.py",
+        "backend/tests/test_governance_lifecycle_contract.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG1-client_user-assigned",
+      "framework": "CIS-IG1",
+      "persona": "Client user",
+      "task": "Find permitted assigned work unaided",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Normal client landing → Dashboard / Reviews / Action Items → owner filter/source link",
+      "authoritative_records": "actual client membership; record owner_id/assignee_id/reviewer_id",
+      "expected_outcome": "Real client role locates the assigned task without hidden-route administrator knowledge; forbidden clients stay inaccessible.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/App.js",
+        "frontend/src/lib/permissions.js",
+        "frontend/src/components/TableControls.jsx",
+        "backend/authorization.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assignment_eligibility.py",
+        "backend/tests/test_dashboard_work_queue.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG1-client_user-contribute",
+      "framework": "CIS-IG1",
+      "persona": "Client user",
+      "task": "Provide answers/evidence and return to progress",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Assigned native requirement / Review / Action Item → editable fields/Evidence/Comments → save/reopen",
+      "authoritative_records": "assigned authorized source; interview/native values; evidence/comments",
+      "expected_outcome": "Actual Contributor/Manager server permissions allow intended operations only; progress stays separate from assessment and validation.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/components/ContactAccess.jsx",
+        "frontend/src/components/FrameworkRecordAccess.jsx",
+        "backend/authorization.py",
+        "frontend/src/components/GuidedAssessor.jsx",
+        "frontend/src/components/BrawndoCisSafeguard.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_people_visibility.py",
+        "frontend/src/components/FrameworkRecordAccess.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG1-client_user-denial",
+      "framework": "CIS-IG1",
+      "persona": "Client user",
+      "task": "Verify read-only and wrong-client denial",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Real Reader UI and approved valid synthetic direct requests to permitted/forbidden fixtures",
+      "authoritative_records": "identity role/status/client_ids/all_clients; resource access/version checks",
+      "expected_outcome": "Actual Reader mutation and unauthorized-client read/write rejected; valid request structure distinguishes authorization denial from payload error.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "backend/authorization.py",
+        "backend/framework_governance.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_security_campaign.py",
+        "backend/tests/test_auth_boundaries.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-business_owner-inventory",
+      "framework": "CIS-IG2",
+      "persona": "Business/product owner",
+      "task": "Establish truthful enabled-program inventory",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Portfolio → client → program; Client Profile → Program Configuration; program cards/search",
+      "authoritative_records": "clients.framework_settings; requirements; framework_assessments",
+      "expected_outcome": "Counts match canonical active IDs; repeated initialization creates no duplicates; inactive/retired rows stay out of active denominators.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/lib/frameworks.js",
+        "frontend/src/components/DashboardPrograms.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_standard_initialization.py",
+        "backend/tests/test_framework_program.py",
+        "frontend/src/components/DashboardPrograms.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-business_owner-portfolio",
+      "framework": "CIS-IG2",
+      "persona": "Business/product owner",
+      "task": "Trace a high-level result to its source",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Portfolio tiles/filters → client Dashboard → work/program count → authoritative drawer",
+      "authoritative_records": "dashboard/portfolio projection; reviews; findings; tasks; risks; framework_assessments",
+      "expected_outcome": "Counts reconcile to exact source IDs/client; activity and implementation are not treated as independent assurance.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/ClientDirectory.jsx",
+        "frontend/src/components/ClientWorkDashboard.jsx",
+        "frontend/src/lib/dashboardWorkQueue.js"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_portfolio_overview.py",
+        "backend/tests/test_dashboard_work_queue.py",
+        "frontend/src/components/ClientWorkDashboard.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-business_owner-history",
+      "framework": "CIS-IG2",
+      "persona": "Business/product owner",
+      "task": "Reconstruct a prior decision and hand it over",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Native requirement Activity / History; Review History; source Evidence; existing CSV exports",
+      "authoritative_records": "assessment_history; interview snapshots; review_occurrences; evidence; audit_logs",
+      "expected_outcome": "Prior conclusions, actors, scope and supporting evidence remain traceable after later saves; an export represents its actual record population.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/AssessmentHistory.jsx",
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/pages/AdminAudit.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_core_audit.py",
+        "backend/tests/test_review_occurrences.py",
+        "backend/tests/test_record_integrity.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-ciso-assurance",
+      "framework": "CIS-IG2",
+      "persona": "CISO/vISO",
+      "task": "Separate implementation from verification and operating evidence",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Program overview → native requirement; implementation/verification fields and supporting Controls",
+      "authoritative_records": "framework_assessments.status/implementation/verification; organizational Controls; evidence",
+      "expected_outcome": "Saving a proposal does not verify evidence or claim effectiveness; unknown/unassessed information is not a successful conclusion.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkDrawer.jsx",
+        "frontend/src/components/OrganizationalControls.jsx",
+        "backend/framework_governance.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assessment_verification.py",
+        "backend/tests/test_organizational_controls.py",
+        "frontend/src/components/FrameworkMappings.test.jsx",
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-ciso-material_work",
+      "framework": "CIS-IG2",
+      "persona": "CISO/vISO",
+      "task": "Determine exposure, gaps, treatment and next obligation",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Dashboard work filters → Risks / Action Items / Reviews → source-linked drawer",
+      "authoritative_records": "risks; findings; tasks; reviews; exceptions",
+      "expected_outcome": "Accepted/deferred exposure and Pending Validation remain distinct from completion; finishing a task does not validate a Finding or reassess native implementation.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/RiskRegister.jsx",
+        "frontend/src/pages/BrawndoActionItems.jsx",
+        "frontend/src/components/RemediationTickets.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_risk_lifecycle.py",
+        "backend/tests/test_remediation_tickets.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": [
+        "RP-01"
+      ]
+    },
+    {
+      "id": "CIS-IG2-ciso-scope",
+      "framework": "CIS-IG2",
+      "persona": "CISO/vISO",
+      "task": "Inspect actual scope and a supported scope change",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Client Profile → Program Configuration; program scope/retained-record controls; ISO SoA/audit views",
+      "authoritative_records": "requirements.baseline_response; clients.framework_settings; native assessments/history",
+      "expected_outcome": "Only configured program/group/categories are active; retained records and explicit applicability decisions do not silently confer assurance.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/components/CisProgramSettings.jsx",
+        "frontend/src/components/SocReadiness.jsx",
+        "frontend/src/components/IsoProgramWorkspace.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_client_profile.py",
+        "backend/tests/test_multi_framework.py",
+        "frontend/src/components/ProgramConfiguration.test.jsx",
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-analyst-guide",
+      "framework": "CIS-IG2",
+      "persona": "GRC analyst/team member",
+      "task": "Complete/resume the safeguard-specific interview",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Program OmniBot invitation → recommended native requirement → guide → groups → Save & next → summary",
+      "authoritative_records": "guided_assessment version/revision; selected framework_assessment_id",
+      "expected_outcome": "Correct selected client/requirement and active questions; progress does not change native assessment; final applicable group opens the complete summary.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/GuidedAssessor.jsx",
+        "frontend/src/components/BrawndoCisSafeguard.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-analyst-save",
+      "framework": "CIS-IG2",
+      "persona": "GRC analyst/team member",
+      "task": "Save/update exact reviewed Current Implementation",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Summary editable field → Save assessment / Update assessment / Save & close → confirmation → native field/refresh",
+      "authoritative_records": "framework_assessments.implementation/status/guided_assessment_source; assessment_history",
+      "expected_outcome": "Exact edited multiline text and separate proposed status persist once; cancel/native draft/stale writer fail safely; no second external save or automatic verification.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkDrawer.jsx",
+        "backend/framework_governance.py",
+        "frontend/src/components/GuidedAssessor.jsx",
+        "frontend/src/components/BrawndoCisSafeguard.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/GuidedLifecycleNative.test.jsx",
+        "backend/tests/test_edit_versions.py",
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-analyst-chain",
+      "framework": "CIS-IG2",
+      "persona": "GRC analyst/team member",
+      "task": "Execute the connected operating cycle",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Native Related/Reviews/Evidence → Review → Raise Finding → Action Item → independent validation → native reassessment",
+      "authoritative_records": "framework_assessments; review_occurrences; evidence; findings; tasks; related_links",
+      "expected_outcome": "Source/occurrence identity and retained history; several Actions may belong to one Finding; validation/reassessment remains explicit.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkReviewSetup.jsx",
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/components/RemediationTicketDrawer.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_operating_model.py",
+        "backend/tests/test_governance_lifecycle_contract.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-client_user-assigned",
+      "framework": "CIS-IG2",
+      "persona": "Client user",
+      "task": "Find permitted assigned work unaided",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Normal client landing → Dashboard / Reviews / Action Items → owner filter/source link",
+      "authoritative_records": "actual client membership; record owner_id/assignee_id/reviewer_id",
+      "expected_outcome": "Real client role locates the assigned task without hidden-route administrator knowledge; forbidden clients stay inaccessible.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/App.js",
+        "frontend/src/lib/permissions.js",
+        "frontend/src/components/TableControls.jsx",
+        "backend/authorization.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assignment_eligibility.py",
+        "backend/tests/test_dashboard_work_queue.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-client_user-contribute",
+      "framework": "CIS-IG2",
+      "persona": "Client user",
+      "task": "Provide answers/evidence and return to progress",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Assigned native requirement / Review / Action Item → editable fields/Evidence/Comments → save/reopen",
+      "authoritative_records": "assigned authorized source; interview/native values; evidence/comments",
+      "expected_outcome": "Actual Contributor/Manager server permissions allow intended operations only; progress stays separate from assessment and validation.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/components/ContactAccess.jsx",
+        "frontend/src/components/FrameworkRecordAccess.jsx",
+        "backend/authorization.py",
+        "frontend/src/components/GuidedAssessor.jsx",
+        "frontend/src/components/BrawndoCisSafeguard.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_people_visibility.py",
+        "frontend/src/components/FrameworkRecordAccess.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG2-client_user-denial",
+      "framework": "CIS-IG2",
+      "persona": "Client user",
+      "task": "Verify read-only and wrong-client denial",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Real Reader UI and approved valid synthetic direct requests to permitted/forbidden fixtures",
+      "authoritative_records": "identity role/status/client_ids/all_clients; resource access/version checks",
+      "expected_outcome": "Actual Reader mutation and unauthorized-client read/write rejected; valid request structure distinguishes authorization denial from payload error.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "backend/authorization.py",
+        "backend/framework_governance.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_security_campaign.py",
+        "backend/tests/test_auth_boundaries.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-business_owner-inventory",
+      "framework": "CIS-IG3",
+      "persona": "Business/product owner",
+      "task": "Establish truthful enabled-program inventory",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Portfolio → client → program; Client Profile → Program Configuration; program cards/search",
+      "authoritative_records": "clients.framework_settings; requirements; framework_assessments",
+      "expected_outcome": "Counts match canonical active IDs; repeated initialization creates no duplicates; inactive/retired rows stay out of active denominators.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/lib/frameworks.js",
+        "frontend/src/components/DashboardPrograms.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_standard_initialization.py",
+        "backend/tests/test_framework_program.py",
+        "frontend/src/components/DashboardPrograms.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-business_owner-portfolio",
+      "framework": "CIS-IG3",
+      "persona": "Business/product owner",
+      "task": "Trace a high-level result to its source",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Portfolio tiles/filters → client Dashboard → work/program count → authoritative drawer",
+      "authoritative_records": "dashboard/portfolio projection; reviews; findings; tasks; risks; framework_assessments",
+      "expected_outcome": "Counts reconcile to exact source IDs/client; activity and implementation are not treated as independent assurance.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/ClientDirectory.jsx",
+        "frontend/src/components/ClientWorkDashboard.jsx",
+        "frontend/src/lib/dashboardWorkQueue.js"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_portfolio_overview.py",
+        "backend/tests/test_dashboard_work_queue.py",
+        "frontend/src/components/ClientWorkDashboard.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-business_owner-history",
+      "framework": "CIS-IG3",
+      "persona": "Business/product owner",
+      "task": "Reconstruct a prior decision and hand it over",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Native requirement Activity / History; Review History; source Evidence; existing CSV exports",
+      "authoritative_records": "assessment_history; interview snapshots; review_occurrences; evidence; audit_logs",
+      "expected_outcome": "Prior conclusions, actors, scope and supporting evidence remain traceable after later saves; an export represents its actual record population.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/AssessmentHistory.jsx",
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/pages/AdminAudit.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_core_audit.py",
+        "backend/tests/test_review_occurrences.py",
+        "backend/tests/test_record_integrity.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-ciso-assurance",
+      "framework": "CIS-IG3",
+      "persona": "CISO/vISO",
+      "task": "Separate implementation from verification and operating evidence",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Program overview → native requirement; implementation/verification fields and supporting Controls",
+      "authoritative_records": "framework_assessments.status/implementation/verification; organizational Controls; evidence",
+      "expected_outcome": "Saving a proposal does not verify evidence or claim effectiveness; unknown/unassessed information is not a successful conclusion.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkDrawer.jsx",
+        "frontend/src/components/OrganizationalControls.jsx",
+        "backend/framework_governance.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assessment_verification.py",
+        "backend/tests/test_organizational_controls.py",
+        "frontend/src/components/FrameworkMappings.test.jsx",
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-ciso-material_work",
+      "framework": "CIS-IG3",
+      "persona": "CISO/vISO",
+      "task": "Determine exposure, gaps, treatment and next obligation",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Dashboard work filters → Risks / Action Items / Reviews → source-linked drawer",
+      "authoritative_records": "risks; findings; tasks; reviews; exceptions",
+      "expected_outcome": "Accepted/deferred exposure and Pending Validation remain distinct from completion; finishing a task does not validate a Finding or reassess native implementation.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/RiskRegister.jsx",
+        "frontend/src/pages/BrawndoActionItems.jsx",
+        "frontend/src/components/RemediationTickets.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_risk_lifecycle.py",
+        "backend/tests/test_remediation_tickets.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": [
+        "RP-01"
+      ]
+    },
+    {
+      "id": "CIS-IG3-ciso-scope",
+      "framework": "CIS-IG3",
+      "persona": "CISO/vISO",
+      "task": "Inspect actual scope and a supported scope change",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Client Profile → Program Configuration; program scope/retained-record controls; ISO SoA/audit views",
+      "authoritative_records": "requirements.baseline_response; clients.framework_settings; native assessments/history",
+      "expected_outcome": "Only configured program/group/categories are active; retained records and explicit applicability decisions do not silently confer assurance.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/components/CisProgramSettings.jsx",
+        "frontend/src/components/SocReadiness.jsx",
+        "frontend/src/components/IsoProgramWorkspace.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_client_profile.py",
+        "backend/tests/test_multi_framework.py",
+        "frontend/src/components/ProgramConfiguration.test.jsx",
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-analyst-guide",
+      "framework": "CIS-IG3",
+      "persona": "GRC analyst/team member",
+      "task": "Complete/resume the safeguard-specific interview",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Program OmniBot invitation → recommended native requirement → guide → groups → Save & next → summary",
+      "authoritative_records": "guided_assessment version/revision; selected framework_assessment_id",
+      "expected_outcome": "Correct selected client/requirement and active questions; progress does not change native assessment; final applicable group opens the complete summary.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/GuidedAssessor.jsx",
+        "frontend/src/components/BrawndoCisSafeguard.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-analyst-save",
+      "framework": "CIS-IG3",
+      "persona": "GRC analyst/team member",
+      "task": "Save/update exact reviewed Current Implementation",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Summary editable field → Save assessment / Update assessment / Save & close → confirmation → native field/refresh",
+      "authoritative_records": "framework_assessments.implementation/status/guided_assessment_source; assessment_history",
+      "expected_outcome": "Exact edited multiline text and separate proposed status persist once; cancel/native draft/stale writer fail safely; no second external save or automatic verification.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkDrawer.jsx",
+        "backend/framework_governance.py",
+        "frontend/src/components/GuidedAssessor.jsx",
+        "frontend/src/components/BrawndoCisSafeguard.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/GuidedLifecycleNative.test.jsx",
+        "backend/tests/test_edit_versions.py",
+        "frontend/src/components/CisComprehensiveWorkflowCoverage.test.jsx",
+        "frontend/src/components/OmniCisRolloutRendered.test.jsx",
+        "backend/tests/test_guided_assessment.py",
+        "backend/tests/test_cis_ig2.py",
+        "backend/tests/test_cis_ig3_scope.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-analyst-chain",
+      "framework": "CIS-IG3",
+      "persona": "GRC analyst/team member",
+      "task": "Execute the connected operating cycle",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Native Related/Reviews/Evidence → Review → Raise Finding → Action Item → independent validation → native reassessment",
+      "authoritative_records": "framework_assessments; review_occurrences; evidence; findings; tasks; related_links",
+      "expected_outcome": "Source/occurrence identity and retained history; several Actions may belong to one Finding; validation/reassessment remains explicit.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkReviewSetup.jsx",
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/components/RemediationTicketDrawer.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_operating_model.py",
+        "backend/tests/test_governance_lifecycle_contract.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-client_user-assigned",
+      "framework": "CIS-IG3",
+      "persona": "Client user",
+      "task": "Find permitted assigned work unaided",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Normal client landing → Dashboard / Reviews / Action Items → owner filter/source link",
+      "authoritative_records": "actual client membership; record owner_id/assignee_id/reviewer_id",
+      "expected_outcome": "Real client role locates the assigned task without hidden-route administrator knowledge; forbidden clients stay inaccessible.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/App.js",
+        "frontend/src/lib/permissions.js",
+        "frontend/src/components/TableControls.jsx",
+        "backend/authorization.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assignment_eligibility.py",
+        "backend/tests/test_dashboard_work_queue.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-client_user-contribute",
+      "framework": "CIS-IG3",
+      "persona": "Client user",
+      "task": "Provide answers/evidence and return to progress",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Assigned native requirement / Review / Action Item → editable fields/Evidence/Comments → save/reopen",
+      "authoritative_records": "assigned authorized source; interview/native values; evidence/comments",
+      "expected_outcome": "Actual Contributor/Manager server permissions allow intended operations only; progress stays separate from assessment and validation.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/components/ContactAccess.jsx",
+        "frontend/src/components/FrameworkRecordAccess.jsx",
+        "backend/authorization.py",
+        "frontend/src/components/GuidedAssessor.jsx",
+        "frontend/src/components/BrawndoCisSafeguard.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_people_visibility.py",
+        "frontend/src/components/FrameworkRecordAccess.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "CIS-IG3-client_user-denial",
+      "framework": "CIS-IG3",
+      "persona": "Client user",
+      "task": "Verify read-only and wrong-client denial",
+      "normal_entry_route": "/compliance/cis-ig1",
+      "visible_controls": "Real Reader UI and approved valid synthetic direct requests to permitted/forbidden fixtures",
+      "authoritative_records": "identity role/status/client_ids/all_clients; resource access/version checks",
+      "expected_outcome": "Actual Reader mutation and unauthorized-client read/write rejected; valid request structure distinguishes authorization denial from payload error.",
+      "framework_constraints": "One cumulative safeguard namespace; inherited answers/criteria do not become stricter in a higher group. Only isolated derivative fixtures may expand scope.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "backend/authorization.py",
+        "backend/framework_governance.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_security_campaign.py",
+        "backend/tests/test_auth_boundaries.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-business_owner-inventory",
+      "framework": "ISO27001",
+      "persona": "Business/product owner",
+      "task": "Establish truthful enabled-program inventory",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Portfolio → client → program; Client Profile → Program Configuration; program cards/search",
+      "authoritative_records": "clients.framework_settings; requirements; framework_assessments",
+      "expected_outcome": "Counts match canonical active IDs; repeated initialization creates no duplicates; inactive/retired rows stay out of active denominators.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/lib/frameworks.js",
+        "frontend/src/components/DashboardPrograms.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_standard_initialization.py",
+        "backend/tests/test_framework_program.py",
+        "frontend/src/components/DashboardPrograms.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-business_owner-portfolio",
+      "framework": "ISO27001",
+      "persona": "Business/product owner",
+      "task": "Trace a high-level result to its source",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Portfolio tiles/filters → client Dashboard → work/program count → authoritative drawer",
+      "authoritative_records": "dashboard/portfolio projection; reviews; findings; tasks; risks; framework_assessments",
+      "expected_outcome": "Counts reconcile to exact source IDs/client; activity and implementation are not treated as independent assurance.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/ClientDirectory.jsx",
+        "frontend/src/components/ClientWorkDashboard.jsx",
+        "frontend/src/lib/dashboardWorkQueue.js"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_portfolio_overview.py",
+        "backend/tests/test_dashboard_work_queue.py",
+        "frontend/src/components/ClientWorkDashboard.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-business_owner-history",
+      "framework": "ISO27001",
+      "persona": "Business/product owner",
+      "task": "Reconstruct a prior decision and hand it over",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Native requirement Activity / History; Review History; source Evidence; existing CSV exports",
+      "authoritative_records": "assessment_history; interview snapshots; review_occurrences; evidence; audit_logs",
+      "expected_outcome": "Prior conclusions, actors, scope and supporting evidence remain traceable after later saves; an export represents its actual record population.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/AssessmentHistory.jsx",
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/pages/AdminAudit.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_core_audit.py",
+        "backend/tests/test_review_occurrences.py",
+        "backend/tests/test_record_integrity.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-ciso-assurance",
+      "framework": "ISO27001",
+      "persona": "CISO/vISO",
+      "task": "Separate implementation from verification and operating evidence",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Program overview → native requirement; implementation/verification fields and supporting Controls",
+      "authoritative_records": "framework_assessments.status/implementation/verification; organizational Controls; evidence",
+      "expected_outcome": "Saving a proposal does not verify evidence or claim effectiveness; unknown/unassessed information is not a successful conclusion.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkDrawer.jsx",
+        "frontend/src/components/OrganizationalControls.jsx",
+        "backend/framework_governance.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assessment_verification.py",
+        "backend/tests/test_organizational_controls.py",
+        "frontend/src/components/FrameworkMappings.test.jsx",
+        "frontend/src/components/IsoGuidedAssessor.test.jsx",
+        "frontend/src/components/IsoAuditWorkspace.test.jsx",
+        "backend/tests/test_iso_guided_routes.py",
+        "backend/tests/test_iso_audit_program.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-ciso-material_work",
+      "framework": "ISO27001",
+      "persona": "CISO/vISO",
+      "task": "Determine exposure, gaps, treatment and next obligation",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Dashboard work filters → Risks / Action Items / Reviews → source-linked drawer",
+      "authoritative_records": "risks; findings; tasks; reviews; exceptions",
+      "expected_outcome": "Accepted/deferred exposure and Pending Validation remain distinct from completion; finishing a task does not validate a Finding or reassess native implementation.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/RiskRegister.jsx",
+        "frontend/src/pages/BrawndoActionItems.jsx",
+        "frontend/src/components/RemediationTickets.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_risk_lifecycle.py",
+        "backend/tests/test_remediation_tickets.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": [
+        "RP-01"
+      ]
+    },
+    {
+      "id": "ISO27001-ciso-scope",
+      "framework": "ISO27001",
+      "persona": "CISO/vISO",
+      "task": "Inspect actual scope and a supported scope change",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Client Profile → Program Configuration; program scope/retained-record controls; ISO SoA/audit views",
+      "authoritative_records": "requirements.baseline_response; clients.framework_settings; native assessments/history",
+      "expected_outcome": "Only configured program/group/categories are active; retained records and explicit applicability decisions do not silently confer assurance.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/components/CisProgramSettings.jsx",
+        "frontend/src/components/SocReadiness.jsx",
+        "frontend/src/components/IsoProgramWorkspace.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_client_profile.py",
+        "backend/tests/test_multi_framework.py",
+        "frontend/src/components/ProgramConfiguration.test.jsx",
+        "frontend/src/components/IsoGuidedAssessor.test.jsx",
+        "frontend/src/components/IsoAuditWorkspace.test.jsx",
+        "backend/tests/test_iso_guided_routes.py",
+        "backend/tests/test_iso_audit_program.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-analyst-guide",
+      "framework": "ISO27001",
+      "persona": "GRC analyst/team member",
+      "task": "Complete/resume the safeguard-specific interview",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Program OmniBot invitation → recommended native requirement → guide → groups → Save & next → summary",
+      "authoritative_records": "guided_assessment version/revision; selected framework_assessment_id",
+      "expected_outcome": "Correct selected client/requirement and active questions; progress does not change native assessment; final applicable group opens the complete summary.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/IsoGuidedAssessor.jsx",
+        "frontend/src/components/FrameworkAssessmentWorkspace.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/IsoGuidedAssessor.test.jsx",
+        "frontend/src/components/IsoAuditWorkspace.test.jsx",
+        "backend/tests/test_iso_guided_routes.py",
+        "backend/tests/test_iso_audit_program.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-analyst-save",
+      "framework": "ISO27001",
+      "persona": "GRC analyst/team member",
+      "task": "Save/update exact reviewed Current Implementation",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Summary editable field → Save assessment / Update assessment / Save & close → confirmation → native field/refresh",
+      "authoritative_records": "framework_assessments.implementation/status/guided_assessment_source; assessment_history",
+      "expected_outcome": "Exact edited multiline text and separate proposed status persist once; cancel/native draft/stale writer fail safely; no second external save or automatic verification.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkDrawer.jsx",
+        "backend/framework_governance.py",
+        "frontend/src/components/IsoGuidedAssessor.jsx",
+        "frontend/src/components/FrameworkAssessmentWorkspace.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/GuidedLifecycleNative.test.jsx",
+        "backend/tests/test_edit_versions.py",
+        "frontend/src/components/IsoGuidedAssessor.test.jsx",
+        "frontend/src/components/IsoAuditWorkspace.test.jsx",
+        "backend/tests/test_iso_guided_routes.py",
+        "backend/tests/test_iso_audit_program.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-analyst-chain",
+      "framework": "ISO27001",
+      "persona": "GRC analyst/team member",
+      "task": "Execute the connected operating cycle",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Native Related/Reviews/Evidence → Review → Raise Finding → Action Item → independent validation → native reassessment",
+      "authoritative_records": "framework_assessments; review_occurrences; evidence; findings; tasks; related_links",
+      "expected_outcome": "Source/occurrence identity and retained history; several Actions may belong to one Finding; validation/reassessment remains explicit.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkReviewSetup.jsx",
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/components/RemediationTicketDrawer.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_operating_model.py",
+        "backend/tests/test_governance_lifecycle_contract.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-client_user-assigned",
+      "framework": "ISO27001",
+      "persona": "Client user",
+      "task": "Find permitted assigned work unaided",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Normal client landing → Dashboard / Reviews / Action Items → owner filter/source link",
+      "authoritative_records": "actual client membership; record owner_id/assignee_id/reviewer_id",
+      "expected_outcome": "Real client role locates the assigned task without hidden-route administrator knowledge; forbidden clients stay inaccessible.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/App.js",
+        "frontend/src/lib/permissions.js",
+        "frontend/src/components/TableControls.jsx",
+        "backend/authorization.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assignment_eligibility.py",
+        "backend/tests/test_dashboard_work_queue.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-client_user-contribute",
+      "framework": "ISO27001",
+      "persona": "Client user",
+      "task": "Provide answers/evidence and return to progress",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Assigned native requirement / Review / Action Item → editable fields/Evidence/Comments → save/reopen",
+      "authoritative_records": "assigned authorized source; interview/native values; evidence/comments",
+      "expected_outcome": "Actual Contributor/Manager server permissions allow intended operations only; progress stays separate from assessment and validation.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/components/ContactAccess.jsx",
+        "frontend/src/components/FrameworkRecordAccess.jsx",
+        "backend/authorization.py",
+        "frontend/src/components/IsoGuidedAssessor.jsx",
+        "frontend/src/components/FrameworkAssessmentWorkspace.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_people_visibility.py",
+        "frontend/src/components/FrameworkRecordAccess.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "ISO27001-client_user-denial",
+      "framework": "ISO27001",
+      "persona": "Client user",
+      "task": "Verify read-only and wrong-client denial",
+      "normal_entry_route": "/compliance/iso-27001",
+      "visible_controls": "Real Reader UI and approved valid synthetic direct requests to permitted/forbidden fixtures",
+      "authoritative_records": "identity role/status/client_ids/all_clients; resource access/version checks",
+      "expected_outcome": "Actual Reader mutation and unauthorized-client read/write rejected; valid request structure distinguishes authorization denial from payload error.",
+      "framework_constraints": "30 ISMS clause units + 93 Annex A controls. SoA applicability is separate from implementation; ISMS clauses cannot be excluded. Audit progress/result is separate from implementation or remediation closure.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "backend/authorization.py",
+        "backend/framework_governance.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_security_campaign.py",
+        "backend/tests/test_auth_boundaries.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SOC2-business_owner-inventory",
+      "framework": "SOC2",
+      "persona": "Business/product owner",
+      "task": "Establish truthful enabled-program inventory",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Portfolio → client → program; Client Profile → Program Configuration; program cards/search",
+      "authoritative_records": "clients.framework_settings; requirements; framework_assessments",
+      "expected_outcome": "Counts match canonical active IDs; repeated initialization creates no duplicates; inactive/retired rows stay out of active denominators.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/lib/frameworks.js",
+        "frontend/src/components/DashboardPrograms.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_standard_initialization.py",
+        "backend/tests/test_framework_program.py",
+        "frontend/src/components/DashboardPrograms.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SOC2-business_owner-portfolio",
+      "framework": "SOC2",
+      "persona": "Business/product owner",
+      "task": "Trace a high-level result to its source",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Portfolio tiles/filters → client Dashboard → work/program count → authoritative drawer",
+      "authoritative_records": "dashboard/portfolio projection; reviews; findings; tasks; risks; framework_assessments",
+      "expected_outcome": "Counts reconcile to exact source IDs/client; activity and implementation are not treated as independent assurance.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/ClientDirectory.jsx",
+        "frontend/src/components/ClientWorkDashboard.jsx",
+        "frontend/src/lib/dashboardWorkQueue.js"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_portfolio_overview.py",
+        "backend/tests/test_dashboard_work_queue.py",
+        "frontend/src/components/ClientWorkDashboard.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SOC2-business_owner-history",
+      "framework": "SOC2",
+      "persona": "Business/product owner",
+      "task": "Reconstruct a prior decision and hand it over",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Native requirement Activity / History; Review History; source Evidence; existing CSV exports",
+      "authoritative_records": "assessment_history; interview snapshots; review_occurrences; evidence; audit_logs",
+      "expected_outcome": "Prior conclusions, actors, scope and supporting evidence remain traceable after later saves; an export represents its actual record population.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/AssessmentHistory.jsx",
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/pages/AdminAudit.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_core_audit.py",
+        "backend/tests/test_review_occurrences.py",
+        "backend/tests/test_record_integrity.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SOC2-ciso-assurance",
+      "framework": "SOC2",
+      "persona": "CISO/vISO",
+      "task": "Separate implementation from verification and operating evidence",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Program overview → native requirement; implementation/verification fields and supporting Controls",
+      "authoritative_records": "framework_assessments.status/implementation/verification; organizational Controls; evidence",
+      "expected_outcome": "Saving a proposal does not verify evidence or claim effectiveness; unknown/unassessed information is not a successful conclusion.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkDrawer.jsx",
+        "frontend/src/components/OrganizationalControls.jsx",
+        "backend/framework_governance.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assessment_verification.py",
+        "backend/tests/test_organizational_controls.py",
+        "frontend/src/components/FrameworkMappings.test.jsx",
+        "frontend/src/components/SocGuidedAssessor.test.jsx",
+        "frontend/src/components/PrestigeSocAssessment.test.jsx",
+        "backend/tests/test_soc_guided_routes.py",
+        "backend/tests/test_soc_framework.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": [
+        "RP-02"
+      ]
+    },
+    {
+      "id": "SOC2-ciso-material_work",
+      "framework": "SOC2",
+      "persona": "CISO/vISO",
+      "task": "Determine exposure, gaps, treatment and next obligation",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Dashboard work filters → Risks / Action Items / Reviews → source-linked drawer",
+      "authoritative_records": "risks; findings; tasks; reviews; exceptions",
+      "expected_outcome": "Accepted/deferred exposure and Pending Validation remain distinct from completion; finishing a task does not validate a Finding or reassess native implementation.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/RiskRegister.jsx",
+        "frontend/src/pages/BrawndoActionItems.jsx",
+        "frontend/src/components/RemediationTickets.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_risk_lifecycle.py",
+        "backend/tests/test_remediation_tickets.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": [
+        "RP-01"
+      ]
+    },
+    {
+      "id": "SOC2-ciso-scope",
+      "framework": "SOC2",
+      "persona": "CISO/vISO",
+      "task": "Inspect actual scope and a supported scope change",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Client Profile → Program Configuration; program scope/retained-record controls; ISO SoA/audit views",
+      "authoritative_records": "requirements.baseline_response; clients.framework_settings; native assessments/history",
+      "expected_outcome": "Only configured program/group/categories are active; retained records and explicit applicability decisions do not silently confer assurance.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/components/CisProgramSettings.jsx",
+        "frontend/src/components/SocReadiness.jsx",
+        "frontend/src/components/IsoProgramWorkspace.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_client_profile.py",
+        "backend/tests/test_multi_framework.py",
+        "frontend/src/components/ProgramConfiguration.test.jsx",
+        "frontend/src/components/SocGuidedAssessor.test.jsx",
+        "frontend/src/components/PrestigeSocAssessment.test.jsx",
+        "backend/tests/test_soc_guided_routes.py",
+        "backend/tests/test_soc_framework.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SOC2-analyst-guide",
+      "framework": "SOC2",
+      "persona": "GRC analyst/team member",
+      "task": "Complete/resume the safeguard-specific interview",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Program OmniBot invitation → recommended native requirement → guide → groups → Save & next → summary",
+      "authoritative_records": "guided_assessment version/revision; selected framework_assessment_id",
+      "expected_outcome": "Correct selected client/requirement and active questions; progress does not change native assessment; final applicable group opens the complete summary.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/SocGuidedAssessor.jsx",
+        "frontend/src/components/PrestigeSocAssessment.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/SocGuidedAssessor.test.jsx",
+        "frontend/src/components/PrestigeSocAssessment.test.jsx",
+        "backend/tests/test_soc_guided_routes.py",
+        "backend/tests/test_soc_framework.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SOC2-analyst-save",
+      "framework": "SOC2",
+      "persona": "GRC analyst/team member",
+      "task": "Save/update exact reviewed Current Implementation",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Summary editable field → Save assessment / Update assessment / Save & close → confirmation → native field/refresh",
+      "authoritative_records": "framework_assessments.implementation/status/guided_assessment_source; assessment_history",
+      "expected_outcome": "Exact edited multiline text and separate proposed status persist once; cancel/native draft/stale writer fail safely; no second external save or automatic verification.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkDrawer.jsx",
+        "backend/framework_governance.py",
+        "frontend/src/components/SocGuidedAssessor.jsx",
+        "frontend/src/components/PrestigeSocAssessment.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/GuidedLifecycleNative.test.jsx",
+        "backend/tests/test_edit_versions.py",
+        "frontend/src/components/SocGuidedAssessor.test.jsx",
+        "frontend/src/components/PrestigeSocAssessment.test.jsx",
+        "backend/tests/test_soc_guided_routes.py",
+        "backend/tests/test_soc_framework.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SOC2-analyst-chain",
+      "framework": "SOC2",
+      "persona": "GRC analyst/team member",
+      "task": "Execute the connected operating cycle",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Native Related/Reviews/Evidence → Review → Raise Finding → Action Item → independent validation → native reassessment",
+      "authoritative_records": "framework_assessments; review_occurrences; evidence; findings; tasks; related_links",
+      "expected_outcome": "Source/occurrence identity and retained history; several Actions may belong to one Finding; validation/reassessment remains explicit.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/FrameworkReviewSetup.jsx",
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/components/RemediationTicketDrawer.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_operating_model.py",
+        "backend/tests/test_governance_lifecycle_contract.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SOC2-client_user-assigned",
+      "framework": "SOC2",
+      "persona": "Client user",
+      "task": "Find permitted assigned work unaided",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Normal client landing → Dashboard / Reviews / Action Items → owner filter/source link",
+      "authoritative_records": "actual client membership; record owner_id/assignee_id/reviewer_id",
+      "expected_outcome": "Real client role locates the assigned task without hidden-route administrator knowledge; forbidden clients stay inaccessible.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/App.js",
+        "frontend/src/lib/permissions.js",
+        "frontend/src/components/TableControls.jsx",
+        "backend/authorization.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assignment_eligibility.py",
+        "backend/tests/test_dashboard_work_queue.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SOC2-client_user-contribute",
+      "framework": "SOC2",
+      "persona": "Client user",
+      "task": "Provide answers/evidence and return to progress",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Assigned native requirement / Review / Action Item → editable fields/Evidence/Comments → save/reopen",
+      "authoritative_records": "assigned authorized source; interview/native values; evidence/comments",
+      "expected_outcome": "Actual Contributor/Manager server permissions allow intended operations only; progress stays separate from assessment and validation.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/components/ContactAccess.jsx",
+        "frontend/src/components/FrameworkRecordAccess.jsx",
+        "backend/authorization.py",
+        "frontend/src/components/SocGuidedAssessor.jsx",
+        "frontend/src/components/PrestigeSocAssessment.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_people_visibility.py",
+        "frontend/src/components/FrameworkRecordAccess.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SOC2-client_user-denial",
+      "framework": "SOC2",
+      "persona": "Client user",
+      "task": "Verify read-only and wrong-client denial",
+      "normal_entry_route": "/compliance/soc-2",
+      "visible_controls": "Real Reader UI and approved valid synthetic direct requests to permitted/forbidden fixtures",
+      "authoritative_records": "identity role/status/client_ids/all_clients; resource access/version checks",
+      "expected_outcome": "Actual Reader mutation and unauthorized-client read/write rejected; valid request structure distinguishes authorization denial from payload error.",
+      "framework_constraints": "Primary QA scope 33 Common/Security + 3 Availability + 2 Confidentiality = 38. Other supported combinations on isolated derivatives only. Implementation/readiness is separate from operating evidence, period-specific Controls, verification and auditor conclusions.",
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "backend/authorization.py",
+        "backend/framework_governance.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_security_campaign.py",
+        "backend/tests/test_auth_boundaries.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-business_owner-onboard",
+      "framework": "shared",
+      "persona": "Business/product owner",
+      "task": "Create one client without fabricated organizational facts",
+      "normal_entry_route": null,
+      "visible_controls": "Client Management → Add Client → Create client → Open Client Profile → four-step onboarding",
+      "authoritative_records": "clients; onboarding baseline; requirements/native initialized records",
+      "expected_outcome": "Repeated onboarding and program activation are idempotent; unknown details stay unknown; Contacts are not User accounts.",
+      "framework_constraints": null,
+      "required_actor": "Actual Platform Owner / super_admin; backend authorize_request rejects provider client creation",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/ClientManagement.jsx",
+        "frontend/src/components/ClientDialog.jsx",
+        "frontend/src/pages/Onboarding.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_onboarding_recovery.py",
+        "backend/tests/test_onboarding_handoff.py",
+        "backend/tests/test_client_management.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-business_owner-scope_expansion",
+      "framework": "shared",
+      "persona": "Business/product owner",
+      "task": "Add a program later/reuse a mixed-framework practice",
+      "normal_entry_route": null,
+      "visible_controls": "Client Profile → Program Configuration → Applicability → Confirm program change",
+      "authoritative_records": "requirements; assessments; framework_drivers; related_links",
+      "expected_outcome": "Only missing records initialize; shared practices neither duplicate remediation nor confer implementation on other frameworks.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ProgramConfiguration.jsx",
+        "frontend/src/lib/frameworks.js"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_multi_framework.py",
+        "backend/tests/test_client_profile.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-business_owner-archive",
+      "framework": "shared",
+      "persona": "Business/product owner",
+      "task": "Archive/reactivate an authorized disposable client",
+      "normal_entry_route": null,
+      "visible_controls": "Client Management → Archive / Restore → confirmation",
+      "authoritative_records": "clients.status; retained records/history",
+      "expected_outcome": "Reversible history-preserving workflow; protected showcases and pending fixtures unchanged.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/ClientManagement.jsx",
+        "backend/authorization.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_client_management.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-business_owner-reporting",
+      "framework": "shared",
+      "persona": "Business/product owner",
+      "task": "Reconcile portfolio and supported exports",
+      "normal_entry_route": null,
+      "visible_controls": "Portfolio filters/drilldowns; Audit Log Export CSV; register Export CSV",
+      "authoritative_records": "portfolio/dashboard source; audit_logs; export rows",
+      "expected_outcome": "Files/totals match actual authorized populations; no fabricated Board Report route or full audit-package export.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/ClientDirectory.jsx",
+        "frontend/src/pages/AdminAudit.jsx",
+        "frontend/src/pages/RecordListPage.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_portfolio_overview.py",
+        "backend/tests/test_audit_logs.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-ciso-reviews",
+      "framework": "shared",
+      "persona": "CISO/vISO",
+      "task": "Inspect scheduled work and immutable occurrence history",
+      "normal_entry_route": null,
+      "visible_controls": "Reviews filters → Review History; Calendar exact chip → source",
+      "authoritative_records": "reviews; review_occurrences",
+      "expected_outcome": "Anchors/due dates/evidence belong to actual occurrences; late completion does not drift cadence.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/ReviewDrawer.jsx",
+        "frontend/src/pages/Calendar.jsx",
+        "backend/review_occurrences.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_review_lifecycle.py",
+        "backend/tests/test_review_occurrences.py",
+        "frontend/src/pages/Calendar.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-ciso-risk",
+      "framework": "shared",
+      "persona": "CISO/vISO",
+      "task": "Record acceptance/deferral and later reassessment",
+      "normal_entry_route": null,
+      "visible_controls": "Risks → Treatment/decision/linked Review; supported Exceptions records",
+      "authoritative_records": "risk history; treatment tasks; review_occurrences; exceptions",
+      "expected_outcome": "Treatment is not closure; exposure/expiry retained under existing fields and workflow.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/RiskRecordPanels.jsx",
+        "frontend/src/components/RiskGovernanceFields.jsx",
+        "frontend/src/lib/schemas.js"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_risk_lifecycle.py",
+        "backend/tests/test_governance_integrity.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-ciso-policy",
+      "framework": "shared",
+      "persona": "CISO/vISO",
+      "task": "Inspect issued version and independent approval",
+      "normal_entry_route": null,
+      "visible_controls": "Policies → Policy → workflow/approval/version/evidence",
+      "authoritative_records": "policy versions; approval basis/decisions; evidence; reviews",
+      "expected_outcome": "Upload, acknowledgement, Review completion and policy approval separate; business responsibility does not grant approval authority.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/PolicyApprovalPanel.jsx",
+        "frontend/src/components/PolicyWorkflowPanel.jsx",
+        "frontend/src/components/BrawndoPolicyDetails.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_policy_approval.py",
+        "backend/tests/test_policy_provenance.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-ciso-vendor",
+      "framework": "shared",
+      "persona": "CISO/vISO",
+      "task": "Trace vendor assurance and central Review",
+      "normal_entry_route": null,
+      "visible_controls": "Vendors → Assurance / Contract → linked Review; register filters",
+      "authoritative_records": "vendor assurances/history; evidence; reviews",
+      "expected_outcome": "Review activity does not manufacture assurance evidence; source/queue dates and statuses reconcile.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/VendorRegister.jsx",
+        "frontend/src/components/BrawndoVendorDetails.jsx",
+        "frontend/src/components/VendorGovernancePanel.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_vendor_governance.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-ciso-evidence",
+      "framework": "shared",
+      "persona": "CISO/vISO",
+      "task": "Reconstruct prior evidence and links",
+      "normal_entry_route": null,
+      "visible_controls": "Evidence Library folders/search → file → Activity/links/Download/Include archived",
+      "authoritative_records": "evidence bytes/hash/version; references; occurrence snapshots",
+      "expected_outcome": "Later uploads cannot overwrite historical support; unlink is not delete; archive/history protections retained.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/Evidence.jsx",
+        "frontend/src/components/EvidenceItemDrawer.jsx",
+        "backend/evidence_context.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_evidence_library.py",
+        "backend/tests/test_evidence_context.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-analyst-review_execute",
+      "framework": "shared",
+      "persona": "GRC analyst/team member",
+      "task": "Start/document/complete/repeat a Review",
+      "normal_entry_route": null,
+      "visible_controls": "Reviews → New Review → Start Review → Evidence/Comments → Complete Review",
+      "authoritative_records": "review/occurrences; evidence/comments",
+      "expected_outcome": "Supported cadence/actual transitions; repeat/retry makes no duplicate completion.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/RecordListPage.jsx",
+        "frontend/src/components/ReviewDrawer.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_review_recovery.py",
+        "backend/tests/test_review_audit_recovery.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-analyst-remediate",
+      "framework": "shared",
+      "persona": "GRC analyst/team member",
+      "task": "Create one Finding/multiple Actions; validate or reject",
+      "normal_entry_route": null,
+      "visible_controls": "Action Items New Finding/New Action Item; source Raise Finding; ticket validation",
+      "authoritative_records": "findings; tasks; source relationships; remediation history",
+      "expected_outcome": "One Action cannot close other work; independent validation/reopen retains history.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/BrawndoActionItems.jsx",
+        "frontend/src/components/RemediationTicketDrawer.jsx",
+        "frontend/src/components/ActionItemFields.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_remediation_tickets.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-analyst-calendar",
+      "framework": "shared",
+      "persona": "GRC analyst/team member",
+      "task": "Reschedule permitted work without changing recurrence",
+      "normal_entry_route": null,
+      "visible_controls": "Calendar Month/Week/Day → scheduling popup/allowed drag → Save date",
+      "authoritative_records": "source due_date; recurrence_due_date/schedule_anchor",
+      "expected_outcome": "Source and edit token rechecked; terminal/historical chip immutable; original recurring anchor retained.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/Calendar.jsx",
+        "frontend/src/lib/calendarView.js"
+      ],
+      "existing_test_references": [
+        "frontend/src/pages/Calendar.test.jsx",
+        "backend/tests/test_review_occurrences.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-analyst-handoff",
+      "framework": "shared",
+      "persona": "GRC analyst/team member",
+      "task": "Reassign existing authorized user; preserve old actor",
+      "normal_entry_route": null,
+      "visible_controls": "Contacts/access context; owner controls; Activity/History",
+      "authoritative_records": "contacts; users/membership; record owner fields; historic actor snapshots",
+      "expected_outcome": "Past owner readable; no account activation or live role change to model departure.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/components/AssigneeSelect.jsx",
+        "frontend/src/components/ContactAccess.jsx",
+        "frontend/src/pages/PlatformAdmin.jsx",
+        "backend/assignment_eligibility.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_assignment_eligibility.py",
+        "backend/tests/test_people_visibility.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-analyst-systems",
+      "framework": "shared",
+      "persona": "GRC analyst/team member",
+      "task": "Maintain supported Systems & Scope/Controls",
+      "normal_entry_route": null,
+      "visible_controls": "Systems & Scope register; native Controls; existing AI Governance references",
+      "authoritative_records": "assets; organizational controls; related_links; ai_systems",
+      "expected_outcome": "Same-client references only; mapping neither auto-verifies framework nor activates a new AI integration.",
+      "framework_constraints": null,
+      "required_actor": "Authorized service-provider operator; persona is a task perspective, not a new role",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "not_tested",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": null,
+      "source_files": [
+        "frontend/src/pages/RecordListPage.jsx",
+        "frontend/src/components/OrganizationalControls.jsx",
+        "frontend/src/pages/AIGovernance.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_organizational_controls.py",
+        "backend/tests/test_ai_governance.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-client_user-landing",
+      "framework": "shared",
+      "persona": "Client user",
+      "task": "Enter permitted tenant and locate assigned responsibility",
+      "normal_entry_route": null,
+      "visible_controls": "Normal sign-in → Dashboard; permitted selector; Reviews/Action Items owner filters",
+      "authoritative_records": "actual membership; assigned work",
+      "expected_outcome": "Actual client session demonstrates work discovery/forbidden client exclusion; admin results insufficient.",
+      "framework_constraints": null,
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/App.js",
+        "frontend/src/context/OrgContext.jsx",
+        "frontend/src/lib/permissions.js"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_auth_boundaries.py",
+        "backend/tests/test_dashboard_work_queue.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-client_user-return",
+      "framework": "shared",
+      "persona": "Client user",
+      "task": "Return after actual refresh/logout/login",
+      "normal_entry_route": null,
+      "visible_controls": "Existing sign-out/sign-in; native Resume; saved question groups",
+      "authoritative_records": "session; interview/native/history",
+      "expected_outcome": "Human credentials/MFA entered in browser only; preserve admin session until readiness.",
+      "framework_constraints": null,
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/components/BrawndoSidebar.jsx",
+        "frontend/src/context/AuthContext.jsx",
+        "frontend/src/components/RefinedOmniInterview.jsx"
+      ],
+      "existing_test_references": [
+        "frontend/src/components/GuidedLifecycleNative.test.jsx",
+        "backend/tests/test_identity_lifecycle.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-client_user-download",
+      "framework": "shared",
+      "persona": "Client user",
+      "task": "Download authorized evidence/export",
+      "normal_entry_route": null,
+      "visible_controls": "Evidence Download; register Export CSV; approved direct authorization request",
+      "authoritative_records": "evidence; authorization/export endpoints",
+      "expected_outcome": "Actual restricted identity/server response, not hidden button or mocked role.",
+      "framework_constraints": null,
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/pages/Evidence.jsx",
+        "frontend/src/pages/RecordListPage.jsx"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_evidence_library.py",
+        "backend/tests/test_security_campaign.py"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    },
+    {
+      "id": "SHARED-client_user-task",
+      "framework": "shared",
+      "persona": "Client user",
+      "task": "Complete assigned remediation without altering assurance",
+      "normal_entry_route": null,
+      "visible_controls": "Action Items → Start Work/Complete Action Item → Finding pending validation",
+      "authoritative_records": "tasks; remediation history; evidence/comments",
+      "expected_outcome": "Contributor assignment/field allowlist enforced; no native assessment auto-write or unauthorized reassignment.",
+      "framework_constraints": null,
+      "required_actor": "Actual permitted Client Contributor/Client GRC Manager, with required assignment; Reader and approved wrong-client fixture for denial",
+      "source_review": "Supported paths/contracts inspected; no functional-execution conclusion",
+      "acceptance_status": "blocked",
+      "local_execution": "not_executed_this_workstream",
+      "hosted_execution": "not_executed_this_workstream",
+      "unaided_task_result": "not_tested",
+      "blocker": "Authorized real identity/human browser readiness and supported authenticated request capability pending with coordinator",
+      "source_files": [
+        "frontend/src/components/RemediationTicketDrawer.jsx",
+        "frontend/src/components/ActionItemFields.jsx",
+        "backend/authorization.py"
+      ],
+      "existing_test_references": [
+        "backend/tests/test_action_items.py",
+        "frontend/src/components/RemediationUX.test.jsx"
+      ],
+      "existing_tests_executed_here": false,
+      "evidence_revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+      "report_only_concern_ids": []
+    }
+  ],
+  "report_only_concerns": [
+    {
+      "id": "RP-01",
+      "classification": "report_only_discoverability",
+      "description": "Findings are intentionally inside Action Items; normal client sidebar has no Findings entry and /findings redirects. High / Critical Findings is an existing filter.",
+      "impact": "Unaided discovery of pending validation is untested; a known deep link does not establish acceptable client usability.",
+      "proposed_remedy": "Evaluate with a permitted real client participant; any navigation/copy remedy needs separate interface authorization.",
+      "source_references": [
+        "frontend/src/components/BrawndoSidebar.jsx:16",
+        "frontend/src/components/BrawndoSidebar.jsx:109",
+        "frontend/src/pages/BrawndoActionItems.jsx:20",
+        "frontend/src/pages/BrawndoActionItems.jsx:26"
+      ],
+      "confirmed_functional_defect": false
+    },
+    {
+      "id": "RP-02",
+      "classification": "report_only_wording",
+      "description": "SOC OmniBot calls addressed Addressed (Readiness); inherited native options call the same code Implemented.",
+      "impact": "Possible confusion of readiness/implementation with independent operating assurance; actual comprehension not tested.",
+      "proposed_remedy": "Preserve existing mapping; visible wording change requires separate approval.",
+      "source_references": [
+        "frontend/src/components/SocGuidedAssessor.jsx",
+        "frontend/src/components/PrestigeSocAssessment.jsx"
+      ],
+      "confirmed_functional_defect": false
+    },
+    {
+      "id": "RP-03",
+      "classification": "framework_source_assurance_gap",
+      "description": "ISO inventory and working guide do not establish full normative-source completeness; authorized licensed comparison gaps remain documented.",
+      "impact": "Unqualified ISO source completeness/readiness not established.",
+      "proposed_remedy": "Retain current ISO reviewer disposition; obtain authorized normative material for pending comparisons without rewriting guidance under this mandate.",
+      "source_references": [
+        "docs/framework-source-manifest.md",
+        "docs/iso-substantive-validation.md"
+      ],
+      "confirmed_functional_defect": false
+    },
+    {
+      "id": "RP-04",
+      "classification": "unsupported_capability_or_rule",
+      "description": "No operational Backlog status/control found. Historical missed-occurrence backlog is sequential outstanding work, not an enabled unscheduled/unassigned Backlog state.",
+      "impact": "Cannot claim Backlog promotion coverage; cannot reinterpret needs_scheduling as approved backlog semantics.",
+      "proposed_remedy": "Not applicable unless a current approved source supplies such a feature; execute existing unscheduled/sequential catch-up behavior.",
+      "source_references": [
+        "frontend/src/lib/schemas.js:47",
+        "frontend/src/lib/brawndoReviews.js:10",
+        "backend/review_occurrences.py:18",
+        "docs/cis-greenfield-24-month-qa.md:128"
+      ],
+      "confirmed_functional_defect": false
+    },
+    {
+      "id": "RP-05",
+      "classification": "unsupported_capability_or_rule",
+      "description": "Review enums support none, monthly, quarterly, semiannual, annual and custom(days). Weekly can be custom7 only when configured. Continuous/event-driven are requirement/practice types, not native recurrence enums.",
+      "impact": "No periodic completion should be invented for continuous/event-driven practice.",
+      "proposed_remedy": "Exercise supported custom7 separately and existing state/event context using approved requirement meaning.",
+      "source_references": [
+        "frontend/src/lib/schemas.js:47",
+        "backend/review_occurrences.py:5",
+        "frontend/src/lib/frameworks.js"
+      ],
+      "confirmed_functional_defect": false
+    },
+    {
+      "id": "RP-06",
+      "classification": "unsupported_capability",
+      "description": "CSV registers and Audit Log export exist. An audit event label Board Report is not a board-report route or full audit-package export.",
+      "impact": "Year10 handoff must name actual files/records, not unsupported reporting module.",
+      "proposed_remedy": "Exercise actual exports/history reconstruction; additional board/audit package capability remains report-only.",
+      "source_references": [
+        "frontend/src/App.js",
+        "frontend/src/pages/AdminAudit.jsx:36",
+        "frontend/src/pages/AdminAudit.jsx:190",
+        "frontend/src/pages/RecordListPage.jsx:480"
+      ],
+      "confirmed_functional_defect": false
+    }
+  ],
+  "local_harnesses_identified_not_executed": [
+    {
+      "path": "frontend/scripts/qa/operating-core.cjs",
+      "boundary": "Loopback-only Demo; roles/sessionStorage manipulated; external requests blocked. Interaction example only, not live authentication/authorization proof."
+    },
+    {
+      "path": "frontend/scripts/qa/framework-operator.cjs",
+      "boundary": "Loopback-only Demo; old generic drawer selectors and historical counts. Compare current approved shell before reuse."
+    },
+    {
+      "path": "frontend/scripts/qa/visual-preservation.cjs",
+      "boundary": "Historical gate allows named color-map/CSS changes prohibited now. Do not use unchanged as current freeze gate."
+    }
+  ],
+  "minimal_uncovered_checks": [
+    "Normal UI onboarding/default inventory on five distinct primary clients; authoritative IDs/configuration captured.",
+    "At least one complete native/Omni exact-text/resume/replacement/stale scenario for each five primary configurations; definition and placement inventories separately tracked.",
+    "Connected Review → evidence → Finding → multiple Actions → independent validation → native reassessment; counts/drilldowns reconcile for each applicable framework.",
+    "Actual permitted Contributor/Reader tasks and wrong-client server responses; admin/Demo/mocked role evidence cannot close them.",
+    "Actual human logout/login/pointer operation; preserve administrator session until readiness.",
+    "Independent ten-year execution via actual service transitions, approved recurrences and yearly source reconciliation; source inspection cannot close it.",
+    "Matching viewport/theme/fixture/role/route screenshots plus static-copy/source diff for each functional correction."
+  ],
+  "disposition": "No confirmed product/runtime defect reproduced by this workstream. No task passed solely on source presence.",
+  "freeze_manifest": {
+    "path": "docs/platform-acceptance/freeze-inventory.json",
+    "extractor": "scripts/platform-acceptance-freeze.cjs",
+    "baseline_commit": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "file_count": 430,
+    "visible_tokens": 4009,
+    "conservative_tokens": 27439,
+    "result": "Source capture/self-checks passed; no visual or functional acceptance claim",
+    "execution_command": "node scripts/platform-acceptance-freeze.cjs --baseline 28b806716024ec149af2ec5da621a5a618c669d5 --candidate <exact-sha> --dependencies <existing-frontend-package-root> --out <candidate-report.json>"
+  }
+}
