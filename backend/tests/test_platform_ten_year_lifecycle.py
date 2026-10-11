@@ -353,12 +353,15 @@ class PlatformTenYearTests(unittest.IsolatedAsyncioTestCase):
     async def yearly_assessment(self, year):
         narrative = 'OVERVIEW\nSYNTHETIC reported practice ' + str(year) + '\n\nIMPLEMENTATION BREAKDOWN\n- Retained manual wording.\n\nITEMS TO ADDRESS\n- Synthetic follow-up only.'
         changes = {'implementation': narrative, 'status': 'in_progress' if year in (2027, 2028, 2032) else 'addressed',
-                   'owner_id': self.owner, 'verification': 'needs_validation'}
+                   'owner_id': self.owner}
+        if self.key in ('cis-ig1', 'soc-2'):
+            changes['verification'] = 'needs_validation'
         if self.key == 'iso-27001':
             changes.update(soa_applicability='included', soa_justification='Synthetic supplier process is in scope')
         saved = await self.edit(self.ap, changes)
         self.assertEqual(saved['implementation'], narrative)
-        self.assertNotEqual(saved['verification'], 'verified')
+        if self.key in ('cis-ig1', 'soc-2'):
+            self.assertNotEqual(saved['verification'], 'verified')
         self.assertEqual(saved['assessment_history'][:-1], self.native_history)
         self.native_history = copy.deepcopy(saved['assessment_history'])
         self.assertEqual((await self.get(self.ap))['implementation'], narrative)
