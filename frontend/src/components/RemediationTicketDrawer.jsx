@@ -84,8 +84,8 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
   const dirty=useRef(new Set()),surface=useRef(null);
   const opener=useRef(null),openerSurface=useRef(null),discardOpener=useRef(null);
   function restoreFocus(){const target=opener.current?.isConnected&&opener.current!==document.body?opener.current:openerSurface.current?.isConnected?openerSurface.current.querySelector('button,input,[tabindex]'):document.querySelector('[data-testid="ai-search"],main h1,main h2');if(target){if(!target.matches('button,input,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true});}}
-  const decision=useCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']}),user.user_id+':'+record.client_id+':decision:'+(record.finding_id||record.task_id),true);
-  const reopen=useCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']}),user.user_id+':'+record.client_id+':reopen:'+(record.finding_id||record.task_id),true);
+  const decision=useCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']},config),user.user_id+':'+record.client_id+':decision:'+(record.finding_id||record.task_id),true);
+  const reopen=useCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']},config),user.user_id+':'+record.client_id+':reopen:'+(record.finding_id||record.task_id),true);
   const markDirty=useRef((id,value)=>value?dirty.current.add(id):dirty.current.delete(id)).current;
   useEffect(()=>{markDirty('rationale',!!rationale);return()=>markDirty('rationale',false);},[rationale,markDirty]);
   const ticket=ticketRecords(data,record.client_id||clientId).find(t=>kind==='findings'?t.finding?.finding_id===record.finding_id:t.actions.some(a=>a.task_id===record.task_id));
