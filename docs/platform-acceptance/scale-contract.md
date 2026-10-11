@@ -39,9 +39,12 @@ not hosted restricted-user proof, authentication sign-in, or multiple workers.
 
 ## Fixed bounded workload
 
-Interval: `[2026-01-01, 2036-01-01)`, UTC calendar dates. Read reconciliation as of
-`2036-01-15T12:00:00Z` patches only `server._now`, never the shared host clock.
-There is no random workload seed; identifiers and values are deterministic.
+Interval: `[2027-01-01, 2037-01-01)`, UTC calendar dates. Read reconciliation as of
+`2037-01-15T12:00:00Z` patches only `server._now`, never the shared host clock.
+This shares the agreed 2027–2037 year range, but it is a separate seeded load
+fixture and not the executed multi-year lifecycle ledger. Counts are never
+added to that ledger as completed operations. There is no random workload seed;
+identifiers and values are deterministic.
 The optional run-owned Mongo database name alone uses UUID uniqueness.
 
 Five distinct synthetic load clients represent CIS IG1/IG2/IG3, ISO and SOC.
@@ -88,12 +91,26 @@ operation or business workflow execution. They use isolated clients/databases.
 | Test method | Independent expected result |
 | --- | --- |
 | `test_five_client_history_reads_pages_filters_relationships_and_reports` | Each client has 445 Task rows. Current work queue contains exactly 52 source IDs (40 Tasks + 12 Reviews), 14 past due, 14 due in 30 days and zero unassigned. Paged/filter/search IDs reconcile; closed seeded history is excluded from active work. |
-| Same method: Calendar | The 2035 historical window contains exactly 144 Review occurrences + 20 completed Tasks = 164 distinct keys per client. Correct client/occurrence IDs; no reschedule rights or whole historical narratives in the response. |
-| Same method: relationships/Evidence/export | All 205 Finding Actions remain present. Evidence search/paging yields exactly 120 distinct IDs and 2035 year-filter yields 12 IDs. Task CSV contains the complete 445-row source set. |
+| Same method: Calendar | The 2036 historical window contains exactly 144 Review occurrences + 20 completed Tasks = 164 distinct keys per client. Correct client/occurrence IDs; no reschedule rights or whole historical narratives in the response. |
+| Same method: relationships/Evidence/export | All 205 Finding Actions remain present. Evidence search/paging yields exactly 120 distinct IDs and 2036 year-filter yields 12 IDs. Task CSV contains the complete 445-row source set. |
 | Same method: Board Report | Real ReportLab PDF generation through existing `GET /api/reports/board`. Constructor spy delegates to original `Table`; submitted KPI row must be `4,0,0,0`, with exactly four overdue Review rows. The report records five ordinary generation audit events; other seeded business values remain byte-equivalent under read fingerprints. API success is not a discovered UI control. |
 | `test_register_export_caps_fail_closed_and_export_retains_complete_set` | Register returns exactly 1,000 Assets; at 1,001 it returns 413 and no partial list. Existing export returns all 1,001; at 10,001 it returns 413 without partial CSV. |
 | `test_calendar_limit_and_invalid_windows_never_return_partial_success` | Exactly 5,000 current entries are accepted; 5,001 returns 413 without partial success. Invalid/reversed/over-367-inclusive-day windows return 422. |
-| `test_ordinary_record_parallel_stale_and_lost_ack_retry_are_single_writes` | Ordinary Asset audit-side failure after its primary write returns 503; same actor-bound idempotent retry yields one update event. Eight competing saves at one version yield one accepted write and seven conflicts. A stale new intent fails; replaying a completed old receipt cannot overwrite the winning new value. Exactly two total successful update events. |
+| `test_ordinary_record_parallel_stale_and_post_write_audit_failure_retry` | Ordinary Asset primary CAS persists, then the patched audit call throws before writing its audit event; API returns 503. Same actor-bound idempotent retry yields one update event. Eight competing saves at one version yield one accepted write and seven conflicts. A stale new intent fails; replaying a completed old receipt cannot overwrite the winning new value. Exactly two successful update events. This is not a lost driver/audit-write acknowledgement probe. |
+
+Every complete set assertion also checks exact cardinality. The 445 Task IDs
+are independently computed from the seeded 200 completed, 40 current and 205
+linked IDs, rather than using API output as CSV expectations. The 205 linked
+Actions and 164 Calendar rows require exact lengths as well as exact identity
+sets, so duplicate rows cannot pass. Register Assets require length 1,000; the
+1,001-row export requires its independently computed seed ID set and length.
+
+The partial clock deliberately leaves `server.datetime` real: the PDF's printed
+date/generation label and its recent-policy 90-day cutoff therefore use actual
+execution time. No Policy approvals are seeded in this workload. The test only
+asserts the independently justified Review subset/KPI totals derived via
+`server._now`; it does not establish full simulated-time report or Policy-cutoff
+correctness.
 
 The normal dashboard payload assertion reuses the **256,000-byte** budget in
 `backend/tests/test_dashboard_contract.py`, rather than inventing a new budget.

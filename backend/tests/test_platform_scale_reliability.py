@@ -22,8 +22,8 @@ from unittest.mock import AsyncMock, patch
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
 
 
-AS_OF = '2036-01-15T12:00:00Z'
-START, END = '2026-01-01', '2036-01-01'  # Half-open UTC date interval.
+AS_OF = '2037-01-15T12:00:00Z'
+START, END = '2027-01-01', '2037-01-01'  # Half-open UTC date interval.
 CONFIGURATIONS = (
     ('scale-cis-ig1', 'cis-ig1', {'implementation_group': 1}),
     ('scale-cis-ig2', 'cis-ig1', {'implementation_group': 2}),
@@ -86,6 +86,7 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
                            'No hosted backend/browser, real restricted identity or production capacity claim.',
                            'Latency observations have no invented pass threshold; adopted payload/cap budgets are separately asserted.',
                            'Mongo mock does not prove durability, index/query-plan or multiworker contention.',
+                           'Board PDF date/generated labels and recent-policy 90-day cutoff use actual server.datetime; no recent-policy fixture or full-clock claim.',
                        ]}
 
     async def drop_owned_database(self):
@@ -135,13 +136,13 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
                     'framework_key': framework, 'framework_version': CATALOGS[framework]['version'], 'definition_id': definition['id'],
                     'status': 'not_assessed', 'implementation': '', 'assessment_history': [
                         {'at': f'{year}-12-31T12:00:00Z', 'by': 'admin', 'status': 'in_progress',
-                         'implementation': PRIVATE_LOAD_TEXT} for year in range(2026, 2036)]})
+                         'implementation': PRIVATE_LOAD_TEXT} for year in range(2027, 2037)]})
             await server.db.framework_assessments.insert_many(assessments)
             review_rows, evidence_rows = [], []
             for number in range(12):
                 rid = f'{cid}-review-{number:02}'
                 occurrences = []
-                for year in range(2026, 2036):
+                for year in range(2027, 2037):
                     for month in range(1, 13):
                         oid = f'{rid}-{year}-{month:02}'
                         eid = f'{cid}-evidence-{year}-{month:02}'
@@ -155,7 +156,7 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
                                 'display_name': f'Synthetic criterion evidence {year}-{month:02}', 'linked_type': 'review', 'linked_id': rid,
                                 'occurrence_id': oid, 'created_at': f'{year}-{month:02}-15T14:00:00Z', 'content_base64': 'VEVTVA==',
                                 'sha256': LOAD_EVIDENCE_SHA, 'version': 1, 'uploaded_by': 'admin', 'mime_type': 'text/plain'})
-                due = '2036-01-14' if number < 4 else '2036-01-15' if number < 8 else '2036-02-15'
+                due = '2037-01-14' if number < 4 else '2037-01-15' if number < 8 else '2037-02-15'
                 review_rows.append({'review_id': rid, 'client_id': cid, 'title': f'Synthetic active Review {number}', 'review_type': 'access',
                     'status': 'upcoming', 'recurrence': 'monthly', 'due_date': due, 'owner_id': 'admin', 'framework_key': framework,
                     'current_occurrence_id': rid + '-current', 'occurrences': occurrences, 'created_at': START})
@@ -163,19 +164,19 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
             await server.db.evidence.insert_many(evidence_rows)
             tasks = [{'task_id': f'{cid}-historical-{year}-{number:02}', 'client_id': cid, 'title': f'Synthetic completed {year}-{number}',
                       'status': 'done', 'created_at': f'{year}-06-01', 'due_date': f'{year}-06-30', 'completed_at': f'{year}-06-30T14:00:00Z',
-                      'description': PRIVATE_LOAD_TEXT, 'framework_key': framework} for year in range(2026, 2036) for number in range(20)]
+                      'description': PRIVATE_LOAD_TEXT, 'framework_key': framework} for year in range(2027, 2037) for number in range(20)]
             for number in range(40):
-                due = '2036-01-14' if number < 10 else '2036-02-14' if number < 20 else '2036-02-15' if number < 30 else None
+                due = '2037-01-14' if number < 10 else '2037-02-14' if number < 20 else '2037-02-15' if number < 30 else None
                 tasks.append({'task_id': f'{cid}-open-{number:02}', 'client_id': cid, 'title': f'Synthetic open task {number:02}',
-                    'status': 'open', 'created_at': '2035-12-01', 'due_date': due, 'priority': 'medium', 'assignee_id': 'admin',
+                    'status': 'open', 'created_at': '2036-12-01', 'due_date': due, 'priority': 'medium', 'assignee_id': 'admin',
                     'framework_key': framework, 'description': PRIVATE_LOAD_TEXT})
             fid = cid + '-historical-finding'
             await server.db.findings.insert_one({'client_id': cid, 'finding_id': fid, 'title': 'Synthetic retained Finding',
-                'status': 'closed', 'created_at': '2035-01-01', 'closed_at': '2035-12-31', 'decision_history': [
-                    {'at': '2035-12-31', 'by': 'admin', 'action': 'validate', 'rationale': 'Synthetic volume only'}]})
+                'status': 'closed', 'created_at': '2036-01-01', 'closed_at': '2036-12-31', 'decision_history': [
+                    {'at': '2036-12-31', 'by': 'admin', 'action': 'validate', 'rationale': 'Synthetic volume only'}]})
             tasks += [{'client_id': cid, 'task_id': f'{cid}-linked-{number:03}', 'finding_id': fid, 'source_type': 'finding', 'source_id': fid,
-                       'title': f'Synthetic historical remediation {number:03}', 'status': 'done', 'created_at': '2035-01-01',
-                       'completed_at': '2035-12-31', 'description': PRIVATE_LOAD_TEXT} for number in range(205)]
+                       'title': f'Synthetic historical remediation {number:03}', 'status': 'done', 'created_at': '2036-01-01',
+                       'completed_at': '2036-12-31', 'description': PRIVATE_LOAD_TEXT} for number in range(205)]
             await server.db.tasks.insert_many(tasks)
             volume[cid] = {'active_definitions': len(definitions), 'reviews': 12, 'seeded_review_occurrences': 1440,
                            'tasks': 445, 'active_tasks': 40, 'evidence_files': 120, 'retained_findings': 1,
@@ -191,7 +192,11 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
         for cid, framework, _ in CONFIGURATIONS:
             with self.subTest(client=cid):
                 tasks = (await self.measured('GET', '/api/tasks', params={'client_id': cid})).json()
+                expected_tasks = {f'{cid}-historical-{year}-{n:02}' for year in range(2027, 2037) for n in range(20)}
+                expected_tasks |= {f'{cid}-open-{n:02}' for n in range(40)}
+                expected_tasks |= {f'{cid}-linked-{n:03}' for n in range(205)}
                 self.assertEqual(len(tasks), 445)
+                self.assertEqual({row['task_id'] for row in tasks}, expected_tasks)
                 self.assertTrue(all(row['client_id'] == cid for row in tasks))
                 expected_all = {f'{cid}-open-{n:02}' for n in range(40)} | {f'{cid}-review-{n:02}' for n in range(12)}
                 expected_past = {f'{cid}-open-{n:02}' for n in range(10)} | {f'{cid}-review-{n:02}' for n in range(4)}
@@ -221,18 +226,20 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
                 self.assertNotIn('assessment_history', summary.text)
                 self.assertNotIn('occurrences', summary.text)
                 calendar = (await self.measured('GET', '/api/calendar', params={'client_id': cid,
-                    'start': '2035-01-01', 'end': '2035-12-31', 'scope': 'history'})).json()
+                    'start': '2036-01-01', 'end': '2036-12-31', 'scope': 'history'})).json()
                 entries = [row for buckets in calendar.values() for bucket in buckets.values() for row in bucket]
-                expected_calendar = {('review', f'{cid}-review-{n:02}', f'{cid}-review-{n:02}-2035-{month:02}')
+                expected_calendar = {('review', f'{cid}-review-{n:02}', f'{cid}-review-{n:02}-2036-{month:02}')
                                      for n in range(12) for month in range(1, 13)}
-                expected_calendar |= {('task', f'{cid}-historical-2035-{n:02}', None) for n in range(20)}
+                expected_calendar |= {('task', f'{cid}-historical-2036-{n:02}', None) for n in range(20)}
                 self.assertEqual({(row['kind'], row['id'], row.get('occurrence_id')) for row in entries}, expected_calendar)
+                self.assertEqual(len(entries), 164)
                 self.assertEqual(len({row['key'] for row in entries}), 164)
                 self.assertTrue(all(row['client_id'] == cid and not row['can_reschedule'] for row in entries))
                 self.assertNotIn(PRIVATE_LOAD_TEXT[:80], json.dumps(calendar))
                 related = (await self.measured('GET', '/api/related', params={'entity_type': 'findings',
                     'entity_id': cid + '-historical-finding'})).json()
                 self.assertEqual({row['task_id'] for row in related['tasks']}, {f'{cid}-linked-{n:03}' for n in range(205)})
+                self.assertEqual(len(related['tasks']), 205)
                 self.assertTrue(all(row['client_id'] == cid for row in related['tasks']))
                 evidence_ids = []
                 for page_number in range(1, 9):
@@ -242,14 +249,15 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
                     self.assertLessEqual(len(page['items']), 17)
                     self.assertTrue(all(row['client_id'] == cid and 'content_base64' not in row for row in page['items']))
                     evidence_ids.extend(row['evidence_id'] for row in page['items'])
-                self.assertEqual(set(evidence_ids), {f'{cid}-evidence-{year}-{month:02}' for year in range(2026, 2036) for month in range(1, 13)})
+                self.assertEqual(set(evidence_ids), {f'{cid}-evidence-{year}-{month:02}' for year in range(2027, 2037) for month in range(1, 13)})
                 self.assertEqual(len(evidence_ids), 120)
                 filtered = (await self.measured('GET', '/api/evidence/catalog', params={'client_id': cid,
-                    'state': json.dumps({'filters': {'years': ['2035']}}), 'page_size': 100})).json()
-                self.assertEqual({row['evidence_id'] for row in filtered['items']}, {f'{cid}-evidence-2035-{month:02}' for month in range(1, 13)})
+                    'state': json.dumps({'filters': {'years': ['2036']}}), 'page_size': 100})).json()
+                self.assertEqual({row['evidence_id'] for row in filtered['items']}, {f'{cid}-evidence-2036-{month:02}' for month in range(1, 13)})
                 exported = await self.measured('GET', '/api/export/tasks', params={'client_id': cid})
                 csv_rows = list(csv.DictReader(io.StringIO(exported.text)))
-                self.assertEqual({row['task_id'] for row in csv_rows}, {row['task_id'] for row in tasks})
+                self.assertEqual(len(csv_rows), 445)
+                self.assertEqual({row['task_id'] for row in csv_rows}, expected_tasks)
                 self.assertTrue(all(row['client_id'] == cid for row in csv_rows))
                 with patch.object(server, 'Table', wraps=server.Table) as tables:
                     pdf = await self.measured('GET', '/api/reports/board', params={'client_id': cid})
@@ -270,12 +278,15 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
         rows = [{'client_id': cid, 'asset_id': f'cap-{n:05}', 'name': f'Synthetic cap {n}', 'status': 'active', 'created_at': START} for n in range(1000)]
         await server.db.assets.insert_many(copy.deepcopy(rows))
         listed = await self.measured('GET', '/api/assets', params={'client_id': cid})
+        self.assertEqual(len(listed.json()), 1000)
         self.assertEqual({row['asset_id'] for row in listed.json()}, {row['asset_id'] for row in rows})
         await server.db.assets.insert_one({'client_id': cid, 'asset_id': 'cap-01000', 'name': 'Synthetic cap 1000', 'status': 'active'})
         over_register = await self.measured('GET', '/api/assets', expected=413, params={'client_id': cid})
         self.assertIn('No partial results', over_register.json()['detail'])
         exported = await self.measured('GET', '/api/export/assets', params={'client_id': cid})
-        self.assertEqual(len(list(csv.DictReader(io.StringIO(exported.text)))), 1001)
+        exported_rows = list(csv.DictReader(io.StringIO(exported.text)))
+        self.assertEqual(len(exported_rows), 1001)
+        self.assertEqual({row['asset_id'] for row in exported_rows}, {f'cap-{n:05}' for n in range(1001)})
         await server.db.assets.insert_many([{'client_id': cid, 'asset_id': f'cap-{n:05}', 'name': f'Synthetic cap {n}', 'status': 'active'} for n in range(1001, 10001)])
         over_export = await self.measured('GET', '/api/export/assets', expected=413, params={'client_id': cid})
         self.assertIn('No partial results', over_export.json()['detail'])
@@ -290,32 +301,34 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
         cid = 'scale-cap-calendar'
         await server.db.clients.insert_one({'client_id': cid, 'name': 'Synthetic calendar cap-only fixture', 'status': 'active'})
         await server.db.tasks.insert_many([{'client_id': cid, 'task_id': f'calendar-cap-{n:05}', 'title': 'Synthetic cap-only task',
-                                          'status': 'open', 'due_date': '2036-01-15'} for n in range(5000)])
-        params = {'client_id': cid, 'start': '2036-01-01', 'end': '2036-01-31', 'scope': 'active'}
+                                          'status': 'open', 'due_date': '2037-01-15'} for n in range(5000)])
+        params = {'client_id': cid, 'start': '2037-01-01', 'end': '2037-01-31', 'scope': 'active'}
         result = (await self.measured('GET', '/api/calendar', params=params)).json()
-        self.assertEqual(len(result['tasks']['2036-01-15']), 5000)
+        self.assertEqual(len(result['tasks']['2037-01-15']), 5000)
         await server.db.tasks.insert_one({'client_id': cid, 'task_id': 'calendar-cap-05000', 'title': 'Synthetic cap-only task',
-                                         'status': 'open', 'due_date': '2036-01-15'})
+                                         'status': 'open', 'due_date': '2037-01-15'})
         cap = await self.measured('GET', '/api/calendar', expected=413, params=params)
         self.assertIn('no partial results', cap.json()['detail'])
         self.assertNotIn('tasks', cap.json())
-        for start, end in [('2036-01-01', '2037-01-02'), ('2036-02-30', '2036-03-31'), ('2036-01-31', '2036-01-01')]:
+        for start, end in [('2037-01-01', '2037-01-02'), ('2037-02-30', '2037-03-31'), ('2037-01-31', '2037-01-01')]:
             await self.measured('GET', '/api/calendar', expected=422, params={**params, 'start': start, 'end': end})
         self.assertEqual(await server.db.tasks.count_documents({'client_id': cid}), 5001)
         self.report['volume'] = {'cap_only_tasks': 5001, 'calendar_limit': 5000, 'window_limit_days_inclusive': 367}
         self.report['status'] = 'passed'
 
     @bounded_case(60)
-    async def test_ordinary_record_parallel_stale_and_lost_ack_retry_are_single_writes(self):
+    async def test_ordinary_record_parallel_stale_and_post_write_audit_failure_retry(self):
         cid = 'scale-reliability'
         await server.db.clients.insert_one({'client_id': cid, 'name': 'Synthetic ordinary save fixture', 'status': 'active'})
         path = '/api/assets/scale-retry'
         await server.db.assets.insert_one({'client_id': cid, 'asset_id': 'scale-retry', 'name': 'Before', 'status': 'active',
-                                          'updated_at': '2026-01-01T00:00:00+00:00'})
-        body = {'name': 'Reviewed exact change', 'expected_updated_at': '2026-01-01T00:00:00+00:00'}
+                                          'updated_at': '2027-01-01T00:00:00+00:00'})
+        body = {'name': 'Reviewed exact change', 'expected_updated_at': '2027-01-01T00:00:00+00:00'}
         headers = {'Idempotency-Key': 'platform-scale-retry-original'}
         with patch.object(server, 'audit', AsyncMock(side_effect=RuntimeError('isolated ordinary-record audit failure'))):
             await self.measured('PATCH', path, expected=503, json=body, headers=headers)
+        self.assertEqual((await self.measured('GET', path)).json()['name'], 'Reviewed exact change')
+        self.assertEqual(await server.db.audit_logs.count_documents({'entity_id': 'scale-retry', 'action': 'update'}), 0)
         recovered = await self.measured('PATCH', path, json=body, headers=headers)
         replayed = await self.measured('PATCH', path, json=body, headers=headers)
         self.assertEqual(replayed.json(), recovered.json())
@@ -335,5 +348,5 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await server.db.assets.count_documents({'client_id': cid}), 1)
         self.assertEqual(await server.db.audit_logs.count_documents({'entity_id': 'scale-retry', 'action': 'update'}), 2)
         self.report['concurrent_results'] = [r.status_code for r in results]
-        self.report['reliability_boundary'] = 'Injected audit-side failure after ordinary asset write; no server/process kill, driver cancellation, auth endpoint or hosted fault injection'
+        self.report['reliability_boundary'] = 'Injected exception after ordinary Asset primary CAS but before audit call writes; not lost driver/audit-write acknowledgement. No server/process kill, driver cancellation, auth endpoint or hosted fault injection'
         self.report['status'] = 'passed'
