@@ -37,6 +37,14 @@ start Mongo, install software, inspect old databases, change a server setting,
 or contact staging. A real-storage run remains modeled-identity ASGI evidence,
 not hosted restricted-user proof, authentication sign-in, or multiple workers.
 
+When report output is selected, each owned database name and the exact loopback
+origin are written immediately after freshness readback, before fixture writes.
+Cleanup later records driver acknowledgement or an error type; no credentials
+are recorded. That author-harness receipt alone is not independent cleanup
+proof. Root independently reads collections for each recorded new database
+after the worker exits. An interrupted runner's initial receipt preserves the
+exact cleanup target without sweeping other databases or relying on a prefix.
+
 ## Fixed bounded workload
 
 Interval: `[2027-01-01, 2037-01-01)`, UTC calendar dates. Read reconciliation as of

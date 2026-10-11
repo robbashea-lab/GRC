@@ -54,6 +54,18 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
     sign_in = Harness.sign_in
 
     async def asyncSetUp(self):
+        self.report = {'test': self._testMethodName, 'status': 'started_not_completed', 'interval': [START, END],
+                       'as_of': AS_OF, 'clock_boundary': 'Only server _now patched; no OS/shared clock change',
+                       'persistence': 'real_loopback_motor_mongo' if os.environ.get('PLATFORM_ACCEPTANCE_SCALE_MONGO') else 'mongomock_motor',
+                       'identity': 'isolated modeled signed actor; no live hosted role proof',
+                       'measurements': [], 'volume': {}, 'owned_database': None, 'limitations': [
+                           'Historical saves/approval/closure are seeded load volume, not executed lifecycle proof.',
+                           'No hosted backend/browser, real restricted identity or production capacity claim.',
+                           'Latency observations have no invented pass threshold; adopted payload/cap budgets are separately asserted.',
+                           'Mongo mock does not prove durability, index/query-plan or multiworker contention.',
+                           'Board PDF date/generated labels and recent-policy 90-day cutoff use actual server.datetime; no recent-policy fixture or full-clock claim.',
+                           'Cleanup receipt is author-harness evidence; coordinator independently checks the exact recorded database afterward.',
+                       ]}
         await Harness.asyncSetUp(self)
         self.real_mongo = None
         mongo_url = os.environ.get('PLATFORM_ACCEPTANCE_SCALE_MONGO')
@@ -67,6 +79,9 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
             self.assertLessEqual(len(self.database_name.encode()), 63)
             owned_database = self.real_mongo[self.database_name]
             self.assertEqual(await owned_database.list_collection_names(), [], 'Refuse to reuse a pre-existing database')
+            self.report['owned_database'] = {'origin': mongo_url, 'database_name': self.database_name,
+                                            'fresh_collection_readback': [], 'cleanup': 'not_started'}
+            self.write_report()  # Keep the owned name recoverable if the runner is interrupted.
             real_database = patch.object(server, 'db', owned_database)
             real_database.start()
             self.addCleanup(real_database.stop)
@@ -77,27 +92,24 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
         clock = patch.object(server, '_now', lambda: AS_OF)
         clock.start()
         self.addCleanup(clock.stop)
-        self.report = {'test': self._testMethodName, 'status': 'started_not_completed', 'interval': [START, END],
-                       'as_of': AS_OF, 'clock_boundary': 'Only server _now patched; no OS/shared clock change',
-                       'persistence': 'real_loopback_motor_mongo' if self.real_mongo else 'mongomock_motor',
-                       'identity': 'isolated modeled signed actor; no live hosted role proof',
-                       'measurements': [], 'volume': {}, 'limitations': [
-                           'Historical saves/approval/closure are seeded load volume, not executed lifecycle proof.',
-                           'No hosted backend/browser, real restricted identity or production capacity claim.',
-                           'Latency observations have no invented pass threshold; adopted payload/cap budgets are separately asserted.',
-                           'Mongo mock does not prove durability, index/query-plan or multiworker contention.',
-                           'Board PDF date/generated labels and recent-policy 90-day cutoff use actual server.datetime; no recent-policy fixture or full-clock claim.',
-                       ]}
 
     async def drop_owned_database(self):
         self.assertRegex(self.database_name, r'^platform_acceptance_20261011_scale_[a-f0-9]{16}$')
         self.assertLessEqual(len(self.database_name.encode()), 63)
         try:
             await self.real_mongo.drop_database(self.database_name)
+            self.report['owned_database']['cleanup'] = 'drop_acknowledged_by_driver'
+        except Exception as error:
+            self.report['owned_database']['cleanup'] = 'drop_failed'
+            self.report['owned_database']['cleanup_error_type'] = type(error).__name__
+            raise
         finally:
-            self.real_mongo.close()
+            self.write_report()
 
     async def asyncTearDown(self):
+        self.write_report()
+
+    def write_report(self):
         destination = os.environ.get('PLATFORM_ACCEPTANCE_SCALE_REPORT_DIR')
         if destination:
             directory = Path(destination)
