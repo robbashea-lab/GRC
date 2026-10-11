@@ -113,6 +113,29 @@ test('failed storage cleanup remains observable and still prevents stale dispatc
   const remove=jest.spyOn(Storage.prototype,'removeItem').mockImplementation(()=>{throw new Error('Storage unavailable');});
   expect(()=>clearPendingCommands()).toThrow('Storage unavailable');
   remove.mockRestore();
+  expect(old.pendingRequest()).toBeNull();
   await expect(old.retry()).rejects.toThrow('ended workspace');
   expect(post).toHaveBeenCalledTimes(1);
+});
+
+test('pendingRequest restores the original same-actor bulk intent without exposing a mutable or ended snapshot',async()=>{
+  const post=jest.fn().mockRejectedValueOnce(new Error('Synthetic unknown outcome')).mockResolvedValue({});
+  const scope='actor-a:client-a:bulk';
+  const body={kind:'tasks',action:'status',ids:['synthetic-task-a','synthetic-task-b'],payload:{status:'open'},expected_versions:{'synthetic-task-a':'v1','synthetic-task-b':'v2'}};
+  const intent=createIntent(post,scope);
+  expect(intent.pendingRequest()).toBeNull();
+  await expect(intent('/bulk',body)).rejects.toThrow();
+  const reloaded=createIntent(post,scope);
+  const snapshot=reloaded.pendingRequest();
+  expect(snapshot).toEqual(['/bulk',body]);
+  snapshot[1].ids.push('synthetic-unrelated-task');
+  snapshot[1].expected_versions['synthetic-task-a']='changed';
+  expect(reloaded.pendingRequest()).toEqual(['/bulk',body]);
+  expect(createIntent(post,'actor-a:client-b:bulk').pendingRequest()).toBeNull();
+  await reloaded.retry();
+  expect(post.mock.calls[1][1]).toEqual(body);
+  expect(reloaded.pendingRequest()).toBeNull();
+  clearPendingCommands();
+  expect(intent.pendingRequest()).toBeNull();
+  expect(createIntent(post,'actor-b:client-a:bulk').pendingRequest()).toBeNull();
 });

@@ -65,6 +65,7 @@ export function createIntent(post, storageScope=null) {
     return pending;
   };
   create.unconfirmed=()=>current()&&!!snapshot;
+  create.pendingRequest=()=>current()&&snapshot?JSON.parse(snapshot):null;
   create.retry=()=>!current()?Promise.reject(ended()):snapshot?create(...JSON.parse(snapshot)):Promise.reject(new Error('No unconfirmed command'));
   return create;
 }
