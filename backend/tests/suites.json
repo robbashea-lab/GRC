@@ -1,5 +1,6 @@
 {
   "offline": [
+    "test_platform_ten_year_lifecycle.py",
     "test_platform_cis_soc_inventory.py",
     "test_iso_guided_assessment.py",
     "test_iso_guided_routes.py",
