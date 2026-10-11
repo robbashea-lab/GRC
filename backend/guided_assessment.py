@@ -4,6 +4,10 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field
 from fastapi import HTTPException
 from framework_catalog import ROOT, client_configuration
+import soc_guided_assessment
+import soc_guided_lease
+import iso_guided_assessment
+import iso_guided_lease
 
 LEGACY = json.loads((ROOT / 'guidedAssessmentPilot.json').read_text(encoding='utf-8'))
 CONTROL1 = json.loads((ROOT / 'guidedControl1.json').read_text(encoding='utf-8'))
@@ -12,7 +16,10 @@ for safeguard in ('1.1', '1.2'):
     CONTROL1['safeguards'][safeguard] = [*CONTROL1['safeguards'][safeguard], {'id': 'unknowns', 'type': 'text'}]
 PROGRAM = json.loads((ROOT / 'guidedCisProgram.json').read_text(encoding='utf-8'))
 PROGRAM_V1 = json.loads((ROOT / 'guidedCisProgramV1.json').read_text(encoding='utf-8'))
+PROGRAM_V2 = json.loads((ROOT / 'guidedCisProgramV2.json').read_text(encoding='utf-8'))
+PROGRAM_V4 = json.loads((ROOT / 'guidedCisProgramV4.json').read_text(encoding='utf-8'))
 CONTROL1_V3 = json.loads((ROOT / 'guidedControl1V3.json').read_text(encoding='utf-8'))
+CONTROL1_V4 = json.loads((ROOT / 'guidedControl1V4.json').read_text(encoding='utf-8'))
 
 def program_questions(definition):
     questions = [{'id': 'practice', 'type': 'select', 'choices': ['Yes', 'Partially', 'No', 'Not sure']}]
@@ -32,13 +39,26 @@ def program_catalog(source):
         'safeguards': {**CONTROL1['safeguards'], **{id: program_questions(d) for id, d in source['definitions'].items()}}}
 
 PROGRAM1_CATALOG = program_catalog(PROGRAM_V1)
+PROGRAM2_BASE = program_catalog(PROGRAM_V2)
+PROGRAM2_CATALOG = {**PROGRAM2_BASE,
+    'definitions': {**PROGRAM2_BASE['definitions'], **{id: {**d, 'question_set_version': CONTROL1_V3['version']} for id, d in CONTROL1_V3['definitions'].items()}},
+    'safeguards': {**PROGRAM2_BASE['safeguards'], **CONTROL1_V3['safeguards']}}
 CURRENT_PROGRAM = program_catalog(PROGRAM)
-CATALOG = {**CURRENT_PROGRAM,
-    'definitions': {**CURRENT_PROGRAM['definitions'], **{id: {**d, 'question_set_version': CONTROL1_V3['version']} for id, d in CONTROL1_V3['definitions'].items()}},
-    'safeguards': {**CURRENT_PROGRAM['safeguards'], **CONTROL1_V3['safeguards']}}
-VERSIONS = {LEGACY['version']: LEGACY, CONTROL1['version']: CONTROL1, PROGRAM_V1['version']: PROGRAM1_CATALOG, CONTROL1_V3['version']: CONTROL1_V3, PROGRAM['version']: CATALOG}
+PROGRAM3_CATALOG = {**CURRENT_PROGRAM,
+    'definitions': {**CURRENT_PROGRAM['definitions'], **{id: {**d, 'question_set_version': CONTROL1_V3['version']} for id, d in CONTROL1_V3['definitions'].items()}, **{id: {**d, 'question_set_version': CONTROL1_V4['version']} for id, d in CONTROL1_V4['definitions'].items()}},
+    'safeguards': {**CURRENT_PROGRAM['safeguards'], **CONTROL1_V3['safeguards'], **CONTROL1_V4['safeguards']}}
+PROGRAM4_CATALOG = program_catalog(PROGRAM_V4)
+# Preserve other current versions and immutable program3 interview semantics.
+CATALOG = {**PROGRAM3_CATALOG,
+    'definitions': {**PROGRAM3_CATALOG['definitions'], **{id: PROGRAM4_CATALOG['definitions'][id] for id in PROGRAM_V4['definitions']}},
+    'safeguards': {**PROGRAM3_CATALOG['safeguards'], **{id: PROGRAM4_CATALOG['safeguards'][id] for id in PROGRAM_V4['definitions']}}}
+VERSIONS = {LEGACY['version']: LEGACY, CONTROL1['version']: CONTROL1, PROGRAM_V1['version']: PROGRAM1_CATALOG, PROGRAM_V2['version']: PROGRAM2_CATALOG, CONTROL1_V3['version']: CONTROL1_V3, CONTROL1_V4['version']: CONTROL1_V4, PROGRAM['version']: PROGRAM3_CATALOG, PROGRAM_V4['version']: PROGRAM4_CATALOG}
 
-def current_version(id, upgraded=False):
+def current_version(id, upgraded=True, framework='cis-ig1'):
+    if framework == 'iso-27001':
+        return iso_guided_assessment.current_version(id)
+    if framework == 'soc-2':
+        return soc_guided_assessment.current_version(id)
     catalog = CATALOG if upgraded else PROGRAM1_CATALOG
     return catalog['definitions'][id]['question_set_version']
 
@@ -67,6 +87,12 @@ class ResultSnapshot(BaseModel):
     answers: list[ResultAnswer] = Field(max_length=300)
     signals: list[ResultSignal] | None = Field(default=None, max_length=300)
 
+class SocSummaryReview(BaseModel):
+    """Bounded answer basis reviewed with SOC/ISO wording; not evidence assurance."""
+    model_config = ConfigDict(extra='forbid', strict=True)
+    version: str = Field(max_length=100)
+    answers: dict
+
 class InterviewWrite(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     version: str = Field(max_length=100)
@@ -78,7 +104,9 @@ class InterviewWrite(BaseModel):
     base_assessment_token: str | None = Field(default=None, max_length=100)
     base_scope_fingerprint: str | None = Field(default=None, max_length=64, pattern=r'^[a-f0-9]{64}$')
     restart: bool = False
+    rebase: bool = False
     result: ResultSnapshot | None = None
+    summary_review: SocSummaryReview | None = None
 
 class GuidedSource(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
@@ -87,6 +115,10 @@ class GuidedSource(BaseModel):
     generated_at: str = Field(max_length=100)
 
 def check_scope(row, client):
+    if row['framework_key'] == 'iso-27001':
+        return iso_guided_assessment.check_scope(row, client)
+    if row['framework_key'] == 'soc-2':
+        return soc_guided_assessment.check_scope(row, client)
     configuration = client_configuration('cis-ig1', client)
     definition = CATALOG['definitions'].get(row['definition_id'])
     if (row['framework_key'] != CATALOG['framework_id'] or not definition
@@ -95,6 +127,10 @@ def check_scope(row, client):
         raise HTTPException(404, 'Guided pilot is not enabled for this assessment')
 
 def validate_answers(id, answers, version=None):
+    if version in iso_guided_assessment.VERSIONS:
+        return iso_guided_assessment.validate_answers(id, answers, version)
+    if version in soc_guided_assessment.VERSIONS:
+        return soc_guided_assessment.validate_answers(id, answers, version)
     catalog = VERSIONS.get(version or current_version(id))
     if not catalog or id not in catalog['safeguards']:
         raise HTTPException(409, 'Question set is not available')
@@ -110,20 +146,22 @@ def validate_answers(id, answers, version=None):
                 valid = isinstance(value, dict) and all(k in q['rows'] and v in q.get('row_choices', {}).get(k, q['choices']) for k, v in value.items())
             elif q['type'] == 'multi':
                 valid = isinstance(value, list) and all(isinstance(v, str) and v in q['choices'] for v in value) and len(value) == len(set(value))
+                if valid and version == CONTROL1_V4['version'] and len(value) > 1 and any(v in ('None', 'Not sure') for v in value):
+                    valid = False
             else:
                 valid = isinstance(value, str) and value in q['choices']
         if not valid:
             raise HTTPException(422, 'Invalid guided interview answer')
 
-_PILOT = json.loads((ROOT / 'omniWorkspacePilot.json').read_text(encoding='utf-8'))
-
 def upgraded_pilot(row, user):
-    cid = row.get('client_id')
-    if not user or not cid:
-        return False
-    return cid == _PILOT['demoClientId'] if user.get('workspace_mode') == 'demo' else cid in _PILOT['stagingClientIds']
+    # The router authenticates tenant/record access and canonical group scope first.
+    return bool(user and row.get('client_id') and row.get('framework_key') in ('cis-ig1', 'soc-2', 'iso-27001'))
 
 def current_base(row, client):
+    if row['framework_key'] == 'iso-27001':
+        return iso_guided_assessment.current_base(row, client)
+    if row['framework_key'] == 'soc-2':
+        return soc_guided_assessment.current_base(row, client)
     import hashlib
     configuration = client_configuration('cis-ig1', client)
     scope = {'client_id': row['client_id'], 'assessment_id': row['framework_assessment_id'],
@@ -158,7 +196,7 @@ async def read_draft(s, row, user, client=None, upgraded=False):
     client = client if client is not None else await s.db.clients.find_one({'client_id': row['client_id']}, {'_id': 0})
     base = current_base(row, client)
     draft = old or {
-        'version': current_version(row['definition_id'], upgraded=True), 'answers': {}, 'step': 0,
+        'version': current_version(row['definition_id'], upgraded=True, framework=row['framework_key']), 'answers': {}, 'step': 0,
         'completed': False, 'revision': 0, **base}
     known = lineage_known(draft)
     return {**draft, 'current_assessment_token': base['base_assessment_token'],
@@ -176,8 +214,25 @@ async def read_history(s, row, user, limit=25, before_revision=None):
     return {'items': items, 'has_more': more, 'next_before_revision': items[-1]['revision'] if more else None}
 
 async def save_draft(s, row, user, body, client=None, upgraded=False):
+    if row['framework_key'] == 'iso-27001':
+        row, client, user = await iso_guided_assessment.write_context(s, row['framework_assessment_id'], user)
+        async def locked_iso(lease):
+            current, context, actor = await iso_guided_assessment.write_context(s, row['framework_assessment_id'], user)
+            return await _save_draft(s, current, actor, body, context, upgraded, lease)
+        return await iso_guided_lease.run(s, row, locked_iso)
+    if row['framework_key'] == 'soc-2':
+        row, client, user = await soc_guided_assessment.write_context(s, row['framework_assessment_id'], user, guided=True)
+        async def locked(lease):
+            current, context, actor = await soc_guided_assessment.write_context(s, row['framework_assessment_id'], user, guided=True)
+            return await _save_draft(s, current, actor, body, context, upgraded, lease)
+        return await soc_guided_lease.run(s, row, locked)
+    return await _save_draft(s, row, user, body, client, upgraded)
+
+async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=None):
+    if row['framework_key'] not in ('soc-2', 'iso-27001') and 'summary_review' in body.model_fields_set:
+        raise HTTPException(422, 'Summary review metadata applies only to SOC 2')
     if not upgraded:
-        if body.model_fields_set & {'base_assessment_token', 'base_scope_fingerprint', 'restart', 'result'}:
+        if body.model_fields_set & {'base_assessment_token', 'base_scope_fingerprint', 'restart', 'rebase', 'result'}:
             raise HTTPException(422, 'Upgraded interview fields are not available for this client')
         if body.version != current_version(row['definition_id']):
             raise HTTPException(409, 'Question set changed; reload the interview')
@@ -188,7 +243,11 @@ async def save_draft(s, row, user, body, client=None, upgraded=False):
         raise HTTPException(409, 'Interview changed in another window; reload before saving')
     base = {}
     if upgraded:
-        current = current_version(row['definition_id'], upgraded=True)
+        current = current_version(row['definition_id'], upgraded=True, framework=row['framework_key'])
+        if body.rebase and (body.restart or not old['revision'] or body.version != old['version']
+                or body.answers != old['answers'] or body.narrative != old.get('narrative', '')
+                or body.completed or body.result is not None):
+            raise HTTPException(422, 'Compare must retain the saved question version, answers and reviewed wording')
         if body.restart and (body.version != current or body.answers or body.completed or body.step != 0 or body.narrative):
             raise HTTPException(422, 'Restart must begin an empty current-version review')
         if body.version != current and (not old['revision'] or body.version != old['version'] or body.restart):
@@ -200,8 +259,32 @@ async def save_draft(s, row, user, body, client=None, upgraded=False):
         if body.result is not None and body.result.version is not None and body.result.version != body.version:
             raise HTTPException(422, 'Recorded result question version must match the interview')
         validate_answers(row['definition_id'], body.answers, body.version)
+        if row['framework_key'] == 'iso-27001':
+            if body.version not in iso_guided_assessment.VERSIONS:
+                raise HTTPException(409, 'ISO interview version is unavailable')
+            if body.summary_review:
+                if body.summary_review.version != body.version:
+                    raise HTTPException(422, 'ISO wording review must retain its question version')
+                iso_guided_assessment.validate_answers(row['definition_id'], body.summary_review.answers, body.summary_review.version)
+            if body.completed:
+                iso_guided_assessment.validate_completion(row['definition_id'], body.answers, body.version)
+                proposed = iso_guided_assessment.result_status(row['definition_id'], body.answers, body.version)
+                if body.result is None or body.result.status != proposed or body.result.narrative != body.narrative:
+                    raise HTTPException(422, 'ISO summary status and reviewed text must match this completed interview')
+        if row['framework_key'] == 'soc-2':
+            if body.version not in soc_guided_assessment.VERSIONS:
+                raise HTTPException(409, 'SOC 2 interview version is unavailable')
+            if body.summary_review:
+                if body.summary_review.version != body.version:
+                    raise HTTPException(422, 'SOC wording review must retain its question version')
+                soc_guided_assessment.validate_answers(row['definition_id'], body.summary_review.answers, body.summary_review.version)
+            if body.completed:
+                soc_guided_assessment.validate_completion(row['definition_id'], body.answers, body.version)
+                proposed = soc_guided_assessment.result_status(row['definition_id'], body.answers, body.version)
+                if body.result is None or body.result.status != proposed or body.result.narrative != body.narrative:
+                    raise HTTPException(422, 'SOC 2 summary status and reviewed text must match this completed interview')
         client = client if client is not None else await s.db.clients.find_one({'client_id': row['client_id']}, {'_id': 0})
-        if not old['revision'] or body.restart:
+        if not old['revision'] or body.restart or body.rebase:
             base = current_base(row, client)
             if not all(key in body.model_fields_set and getattr(body, key) == value for key, value in base.items()):
                 raise HTTPException(409, 'Assessment or scope changed before this review started; reload before starting')
@@ -212,17 +295,25 @@ async def save_draft(s, row, user, body, client=None, upgraded=False):
     at = s._now()
     # Archive a saved state before replacement. A losing CAS may leave this valid
     # prior-state snapshot; it is not evidence that a restart/edit succeeded.
-    archive = old['revision'] and ((old['completed'] or body.restart) if upgraded else (
+    archive = old['revision'] and ((old['completed'] or body.restart or body.rebase) if upgraded else (
         old['version'] != body.version or old['completed'] and not body.completed and not body.answers))
     if old['revision'] and archive:
+        if lease is not None:
+            await lease.check()
         await s.db.guided_assessment_history.update_one(
             {'_id': identity + ':' + str(old['revision'])},
             {'$setOnInsert': {**old, 'client_id': row['client_id'], 'assessment_id': row['framework_assessment_id'], 'user_id': user['user_id']}}, upsert=True)
-    data = {**body.model_dump(exclude={'expected_revision', 'base_assessment_token', 'base_scope_fingerprint', 'restart', 'result'}), **base, 'client_id': row['client_id'],
+    data = {**body.model_dump(exclude={'expected_revision', 'base_assessment_token', 'base_scope_fingerprint', 'restart', 'rebase', 'result', 'summary_review'}), **base, 'client_id': row['client_id'],
             'assessment_id': row['framework_assessment_id'], 'user_id': user['user_id'],
             'revision': old['revision'] + 1, 'updated_at': at, 'generated_at': at if body.completed else None}
     if upgraded:
         data['result'] = body.result.model_dump(exclude_none=True) if body.result is not None else None
+    if row['framework_key'] == 'soc-2':
+        data['summary_review'] = body.summary_review.model_dump() if body.summary_review else None if body.restart or 'summary_review' in body.model_fields_set else old.get('summary_review')
+    if row['framework_key'] == 'iso-27001':
+        data['summary_review'] = body.summary_review.model_dump() if body.summary_review else None if body.restart or 'summary_review' in body.model_fields_set else old.get('summary_review')
+    if lease is not None:
+        await lease.check()
     if old['revision']:
         predicate = {'_id': identity, 'revision': old['revision']}
         if upgraded:

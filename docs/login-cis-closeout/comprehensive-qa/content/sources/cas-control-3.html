@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 3: Data Protection - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 3: Data Protection";
+        var mkdocs_page_input_path = "source/Controls3.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls3/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 3: Data Protection</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#31-establish-and-maintain-a-data-management-process">3.1: Establish and Maintain a Data Management Process</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-data-management-process">Completeness of Data Management Process</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#32-establish-and-maintain-a-data-inventory">3.2: Establish and Maintain a Data Inventory</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-sensitive-data-inventory">Completeness of Sensitive Data Inventory</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#partial-completeness-of-sensitive-data-inventory">Partial Completeness of Sensitive Data Inventory</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#33-configure-data-access-control-lists">3.3: Configure Data Access Control Lists</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-user-access-control">Completeness of User Access Control</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#properly-configured-assets">Properly Configured Assets</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#34-enforce-data-retention">3.4: Enforce Data Retention</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-policy">Completeness of Policy</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#enforcement-of-retention-policy">Enforcement of Retention Policy</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#35-securely-dispose-of-data">3.5: Securely Dispose of Data</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-disposal-process">Completeness of Disposal Process</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance-to-disposal-process">Compliance to Disposal Process</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#36-encrypt-data-on-end-user-devices">3.6: Encrypt Data on End-User Devices</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#installed-software-coverage">Installed Software Coverage</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#appropriately-configured-devices">Appropriately Configured Devices</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#37-establish-and-maintain-a-data-classification-scheme">3.7: Establish and Maintain a Data Classification Scheme</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-classification-scheme">Completeness of Classification Scheme</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#implementation-of-the-classification-scheme">Implementation of the Classification Scheme</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#38-document-data-flows">3.8: Document Data Flows</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_7">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_7">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_7">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_7">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage-of-data-flow-documentation">Coverage of Data Flow Documentation</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#39-encrypt-data-on-removable-media">3.9: Encrypt Data on Removable Media</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_8">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions_1">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_8">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_8">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_8">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#310-encrypt-sensitive-data-in-transit">3.10: Encrypt Sensitive Data in Transit</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_9">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_9">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_9">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_9">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_9">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_1">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#311-encrypt-sensitive-data-at-rest">3.11: Encrypt Sensitive Data At Rest</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_10">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_10">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_10">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_10">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_10">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_2">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#312-segment-data-processing-and-storage-based-on-sensitivity">3.12: Segment Data Processing and Storage Based on Sensitivity</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_11">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_11">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions_2">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_11">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_11">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_11">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_3">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#313-deploy-a-data-loss-prevention-solution">3.13: Deploy a Data Loss Prevention Solution</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_12">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_12">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_12">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_12">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_12">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_4">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#314-log-sensitive-data-access">3.14: Log Sensitive Data Access</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_13">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_13">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_13">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_13">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_13">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_5">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 3: Data Protection</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls3.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-3-data-protection">CIS Control 3: Data Protection</h1>
+<p>Develop processes and technical controls to identify, classify, securely
+handle, retain, and dispose of data.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>Data is no longer only contained within an enterprise's border, it is in
+the cloud, on portable end-user devices where users work from home, and
+is often shared with partners or online services who might have it
+anywhere in the world. In addition to sensitive data an enterprise holds
+related to finances, intellectual property, and customer data, there
+also might be numerous international regulations for the protection of
+personal data. Data privacy has become increasingly important, and
+enterprises are learning that privacy is about the appropriate use and
+management of data, not just encryption. Data must be appropriately
+managed through its entire lifecycle. These privacy rules can be
+complicated for multi-national enterprises of any size. However, there
+are fundamentals that can apply to all.</p>
+<p>Once attackers have penetrated an enterprise's infrastructure, one of
+their first tasks is to find and exfiltrate data. Enterprises might not
+be aware that sensitive data is leaving their environment because they
+are not monitoring data outflows.</p>
+<p>While many attacks occur on the network, others involve physical theft
+of portable end-user devices, attacks on service providers, or other
+partners holding sensitive data. Other sensitive enterprise assets may
+also include non-computing devices that provide management and control
+of physical systems, such as Supervisory Control and Data Acquisition
+(SCADA) systems.</p>
+<p>The enterprise's loss of control over protected or sensitive data is a
+serious and often reportable business impact. While some data is
+compromised or lost as a result of theft or espionage, the vast majority
+are a result of poorly understood data management rules and user error.
+The adoption of data encryption, both in transit and at rest, can
+provide mitigation against data compromise and, more importantly, is a
+regulatory requirement for most controlled data.</p>
+<hr />
+<h2 id="31-establish-and-maintain-a-data-management-process">3.1: Establish and Maintain a Data Management Process</h2>
+<p>Establish and maintain a documented data management process. In the process, address data sensitivity, data owner, handling of data, data retention limits, and disposal requirements, based on sensitivity and retention standards for the enterprise. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV10</code>: Enterprise's Data Management Process</li>
+<li>Date of last update to the Data Management Process</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Review <code>GV10</code> to determine if, at a minimum, it includes:</p>
+<ol>
+<li>Addressing data sensitivity. If so, M1 = 1. Otherwise M1 = 0. (<code>GV11</code>)    </li>
+<li>Captures data owner. If so, M2 = 1. Otherwise M2 = 0. (<code>GV13</code>)</li>
+<li>Handling of data. If so, M3 = 1. Otherwise, M3 = 0. (<code>GV14</code>)</li>
+<li>Data retention limits based on the sensitivity of data. If so, M4 = 1. Otherwise, M4 = 0. (<code>GV15</code>)</li>
+<li>Disposal requirements based on the sensitivity of data. If so, M5 = 1. Otherwise, M5 = 0. (<code>GV16</code>)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Does the process address data sensitivity</li>
+<li>M2 = Does the process capture data owners</li>
+<li>M3 = Does the process include guidance for handling of data</li>
+<li>M4 = Does the process include data retention limits based on
+    sensitivity of data</li>
+<li>M5 = Does the process include guidance on disposal requirements
+    based on the sensitivity of the data</li>
+<li>M6 = <code>GV10</code></li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M6 is not available or does not exist, this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-data-management-process">Completeness of Data Management Process</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Metric</strong></th>
+<th style="text-align: left;">The percentage of completeness for the enterprise's data management process.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Calculation</strong></td>
+<td style="text-align: left;"><code>(M1 + M2 + M3 + M4 + M5) / 5</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="32-establish-and-maintain-a-data-inventory">3.2: Establish and Maintain a Data Inventory</h2>
+<p>Establish and maintain a data inventory based on the enterprise’s data management process. Inventory sensitive data, at a minimum. Review and update inventory annually, at a minimum, with a priority on sensitive data.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Identify</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV11</code>: Portion of Data Management Process Addressing Data Sensitivity</li>
+<li><code>GV12</code>: Sensitive Data Inventory</li>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li>Date of the last update to the sensitive data inventory</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV11</code> to map <code>GV12</code> to sensitivity per the guidance in the data management process:</p>
+<ol>
+<li>Identify and enumerate items in the data set that have a mapping (M2)</li>
+<li>Identify and enumerate items in the data set that do not have a mapping (M3)</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV1</code> and M2 from Operation 1 to map the data set to assets storing data:</p>
+<ol>
+<li>Identify and enumerate items that have complete and correct mapping to asset and sensitivity (M4)</li>
+<li>Identify and enumerate items that have partial mapping to sensitivity (M5)</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV1</code> and M3 from Operation 2 to map the data set, without sensitivity mapping, to assets storing data:</p>
+<ol>
+<li>Identify and enumerate items that have partial mapping to assets (M6)</li>
+<li>Identify and enumerate items that have no mapping at all (M7)</li>
+</ol>
+</li>
+<li>
+<p>Compare current date to Input 4 and capture timeframe in months (M8)</p>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = <code>GV11</code></li>
+<li>M2 = Count of sensitive data addressed in <code>GV11</code></li>
+<li>M3 = Count of sensitive data not addressed in <code>GV11</code></li>
+<li>M4 = Count of data with complete sensitivity and asset storage inventory</li>
+<li>M5 = Count of data with partial mapping to sensitivity</li>
+<li>M6 = Count of data with partial mapping to assets</li>
+<li>M7 = Count of data with no mapping to sensitivity or asset</li>
+<li>M8 = Timeframe since the last update to the sensitive data inventory in months</li>
+<li>M9 = Count of items in <code>GV12</code></li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M9 is greater than 12 months, this Safeguard is scored at zero and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-sensitive-data-inventory">Completeness of Sensitive Data Inventory</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Percentage of data with complete information</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M4 / M9</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="partial-completeness-of-sensitive-data-inventory">Partial Completeness of Sensitive Data Inventory</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Percentage of data with partial inventory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>(M5 + M6) / M9</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="33-configure-data-access-control-lists">3.3: Configure Data Access Control Lists</h2>
+<p>Configure data access control lists based on a user’s need to know. Apply data access control lists, also known as access permissions, to local and remote file systems, databases, and applications.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 3.2: Establish and Maintain a Data Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+<li>Safeguard 5.1: Establish and Maintain an Inventory of Accounts</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV12</code>: Sensitive Data Inventory</li>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+<li><code>GV13</code>: Portion of Data Management Process Capturing Data Owners</li>
+<li><code>GV14</code>: Portion of Data Management Process Addressing Data Handling</li>
+<li><code>GV22</code>: Inventory of Accounts</li>
+</ol>
+<h3 id="assumptions">Assumptions</h3>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Use the data management process, specifically <code>GV13</code> and <code>GV14</code>, as guidelines to map user accounts to sensitive data in <code>GV12</code>:</p>
+<ol>
+<li>Identify and enumerate sensitive data correctly mapped to user accounts from <code>GV22</code> (M1)</li>
+<li>Identify and enumerate sensitive data not correctly mapped to user accounts from <code>GV22</code> (M2)</li>
+</ol>
+</li>
+<li>
+<p>For each enterprise asset in <code>GV1</code> storing sensitive data, as outlined by <code>GV12</code>:</p>
+<ol>
+<li>Identify and enumerate all assets storing sensitive data (M3)</li>
+<li>Use <code>GV3</code> to check and enumerate assets that are properly configured to only allow users as identified in Operation 1 (M4)</li>
+<li>Use <code>GV3</code> to check and enumerate assets that are improperly configured to only allow users as identified in Operation 1 (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of sensitive data correctly mapped to user accounts per the data management process</li>
+<li>M2 = Count of sensitive data not correctly mapped to user accounts per the data management process</li>
+<li>M3 = Count of assets storing sensitive data</li>
+<li>M4 = Count of properly configured assets to support data access control</li>
+<li>M5 = Count of improperly configured assets to support data access control</li>
+<li>M6 = <code>GV17</code></li>
+<li>M7 = <code>GV13</code></li>
+<li>M8 = <code>GV14</code></li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<ul>
+<li>If either M7 or M8 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-user-access-control">Completeness of User Access Control</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Percentage of user accounts properly mapped to sensitive data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M1 / M6</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="properly-configured-assets">Properly Configured Assets</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Percentage of assets properly configured to control access of sensitive data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M4 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="34-enforce-data-retention">3.4: Enforce Data Retention</h2>
+<p>Retain data according to the enterprise’s documented data management process. Data retention must include both minimum and maximum timelines.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 3.1: Establish and Maintain a Data Management Process</li>
+<li>Safeguard 3.2: Establish and Maintain a Data Inventory</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV15</code>: Data Retention Limits Outlined in the Data Management Process</li>
+<li><code>GV11</code>: Portion of Data Management Process Addressing Data Sensitivity</li>
+<li><code>GV12</code>: Sensitive Data Inventory</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>For each sensitive data type covered in <code>GV11</code>:</p>
+<ol>
+<li>Enumerate the number of types of sensitivity (<code>GV17</code>: M1), at a minimum one to differentiate sensitive data from other data</li>
+<li>Identify and enumerate if each type has a minimum retention time (M2) as defined by <code>GV15</code></li>
+<li>Identify and enumerate if each type has a maximum retention time (M3) as defined by <code>GV15</code></li>
+</ol>
+</li>
+<li>
+<p>Using the output of Operation 1.1 and 1.2, check the data inventory <code>GV12</code> for enforcement of data retention:</p>
+<ol>
+<li>Identify and enumerate items in the inventory that comply with retention timelines (M4)</li>
+<li>Identify and enumerate items in the inventory that do not comply with retention timelines (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of sensitivity types that require retention timelines</li>
+<li>M2 = Count of sensitivity types that include minimum retention times</li>
+<li>M3 = Count of sensitivity types that include maximum retention times</li>
+<li>M4 = Count of data in inventory that comply with retention policy</li>
+<li>M5 = Count of data in inventory that do not comply with retention policy</li>
+<li>M6 = Count of <code>GV12</code></li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<ul>
+<li>If <code>GV15</code> is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-policy">Completeness of Policy</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of sensitivity types that include minimum retention timelines</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of sensitivity types that include maximum retention timelines</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M3 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="enforcement-of-retention-policy">Enforcement of Retention Policy</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of sensitivity data that complies with retention policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M4 / M6</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="35-securely-dispose-of-data">3.5: Securely Dispose of Data</h2>
+<p>Securely dispose of data as outlined in the enterprise’s documented data management process. Ensure the disposal process and method are commensurate with the data sensitivity.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 3.1: Establish and Maintain a Data Management Process</li>
+<li>Safeguard 3.2: Establish and Maintain a Data Inventory</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV16</code>: Data Disposal Requirements Outlined in the Data Management Process</li>
+<li><code>GV11</code>: Portion of Data Management Process Addressing Data Sensitivity</li>
+<li><code>GV17</code>: Sensitive Data Types</li>
+<li><code>GV12</code>: Sensitive Data Inventory</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>For each sensitive data type covered in <code>GV17</code>:</p>
+<ol>
+<li>Identify and enumerate each type that has a disposal method and process as defined by <code>GV16</code> (M2)</li>
+<li>Identify and enumerate each type that does not have a disposal method and process as defined by <code>GV16</code> (M3)</li>
+</ol>
+</li>
+<li>
+<p>For each item in <code>GV12</code>, determine whether the data complies with the disposal requirements outlined in <code>GV17</code>:</p>
+<ol>
+<li>Enumerate data that does not comply with disposal requirements (M4)</li>
+<li>Enumerate data that complies with disposal requirements (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = <code>GV17</code></li>
+<li>M2 = Count of sensitive data types with an outlined disposal method</li>
+<li>M3 = Count of sensitive data types without an outlined disposal method</li>
+<li>M4 = Count of data in inventory that does not comply with disposal requirement</li>
+<li>M5 = Count of data in inventory that complies with disposal requirement</li>
+<li>M6 = Count of items in <code>GV12</code></li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<ul>
+<li>If <code>GV16</code> is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-disposal-process">Completeness of Disposal Process</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of data sensitivity types that contain a disposal method and process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="compliance-to-disposal-process">Compliance to Disposal Process</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of compliance to the data disposal process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M5 / M6</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="36-encrypt-data-on-end-user-devices">3.6: Encrypt Data on End-User Devices</h2>
+<p>Encrypt data on end-user devices containing sensitive data. Example implementations can include, Windows BitLocker®, Apple FileVault®, Linux® dm-crypt.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>For each asset in <code>GV1</code>, identify end-user devices:</p>
+<ol>
+<li>Enumerate the end-user devices (M1)</li>
+<li>Use <code>GV5</code> to identify and enumerate the assets that have encryption software installed (M2)</li>
+<li>Use <code>GV5</code> to identify and enumerate the assets without encryption software (M3)</li>
+</ol>
+</li>
+<li>
+<p>For each encryption software installed on assets (M2), use <code>GV3</code> to determine whether the software is properly configured:</p>
+<ol>
+<li>Enumerate the encryption software that is properly configured (M4)</li>
+<li>Enumerate the encryption software that is improperly configured (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Count of approved end-user devices</li>
+<li>M2 = Count of approved end-user devices with encryption software installed</li>
+<li>M3 = Count of approved end-user devices without encryption software</li>
+<li>M4 = Count of properly configured end-user devices</li>
+<li>M5 = Count of improperly configured end-user devices</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<h4 id="installed-software-coverage">Installed Software Coverage</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of approved mobile devices that are equipped with approved encryption software.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="appropriately-configured-devices">Appropriately Configured Devices</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of approved mobile devices equipped with approved encryption software that meet or exceed the approved configuration policy.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="37-establish-and-maintain-a-data-classification-scheme">3.7: Establish and Maintain a Data Classification Scheme</h2>
+<p>Establish and maintain an overall data classification scheme for the enterprise. Enterprises may use labels, such as “Sensitive”, “Confidential,” and “Public”, and classify their data according to those labels. Review and update the classification scheme annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Identify</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 3.1: Establish and Maintain a Data Management Process</li>
+<li>Safeguard 3.2: Establish and Maintain a Data Inventory</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li>Enterprise's Data Classification Scheme</li>
+<li><code>GV17</code>: Sensitive Data Types</li>
+<li><code>GV12</code>: Sensitive Data Inventory</li>
+<li>Date of last review of the Data Classification Scheme</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Check if the enterprise has a data classification scheme (Input 1):</p>
+<ol>
+<li>If Input 1 exists, M = 1</li>
+<li>Otherwise M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Using <code>GV17</code>, determine if the enterprise has a way to categorize the type of data within the classification scheme:</p>
+<ol>
+<li>Enumerate the sensitivity types that are included in the classification scheme (M2)</li>
+<li>Enumerate the sensitivity types that are not included in the classification scheme (M3)</li>
+</ol>
+</li>
+<li>
+<p>Compare <code>GV12</code> and Input 1:</p>
+<ol>
+<li>Identify and enumerate data that contains an accurate classification per the classification scheme (M4)</li>
+<li>Identify and enumerate data that does not contain a classification or contains an inaccurate classification per the classification scheme (M5)</li>
+</ol>
+</li>
+<li>
+<p>Compare the current date to that provided in Input 4. Note the timeframe in months (M8)</p>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1 </li>
+<li>M2 = Sensitivity addressed by the classification scheme</li>
+<li>M3 = Sensitivity not addressed by the classification scheme</li>
+<li>M4 = Data properly categorized per the classification scheme</li>
+<li>M5 = Data lacking or improperly categorized per the classification scheme</li>
+<li>M6 = Count of items in <code>GV17</code></li>
+<li>M7 = Count of <code>GV12</code></li>
+<li>M8 = Count of months since the last review of the classification scheme</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M8 is greater than twelve, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-classification-scheme">Completeness of Classification Scheme</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of sensitive data types covered within the classification scheme.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M2 / M6</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="implementation-of-the-classification-scheme">Implementation of the Classification Scheme</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of data categorized using the classification scheme.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M4 / M7</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="38-document-data-flows">3.8: Document Data Flows</h2>
+<p>Document data flows. Data flow documentation includes service provider data flows and should be based on the enterprise’s data management process. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Identify</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_7">Dependencies</h3>
+<ul>
+<li>Safeguard 3.1: Establish and Maintain a Data Management Process</li>
+<li>Safeguard 3.2: Establish and Maintain a Data Inventory </li>
+</ul>
+<h3 id="inputs_7">Inputs</h3>
+<ol>
+<li>Documentation outlining data flow for enterprise-owned data. Documentation should include, at a minimum, data flows to external enterprises.</li>
+<li><code>GV12</code>: Sensitive Data Inventory</li>
+<li>Date of last review of the data flow documentation</li>
+</ol>
+<h3 id="operations_7">Operations</h3>
+<ol>
+<li>
+<p>Check if the enterprise has data flow documentation (Input 1):</p>
+<ol>
+<li>If Input 1 exists, M = 1</li>
+<li>Otherwise M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Using <code>GV12</code>, identify data that flows to external enterprises:</p>
+<ol>
+<li>Enumerate the data that flows to external enterprises (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 1 and the output of Operation 2:</p>
+<ol>
+<li>Enumerate data flows from Operation 2 that are included in Input 1 (M3)</li>
+<li>Enumerate data flows from Operation 2 that are not included in Input 1 (M4)</li>
+</ol>
+</li>
+<li>
+<p>Compare the current date to that provided in Input 3. Note the timeframe in months (M5)</p>
+</li>
+</ol>
+<h3 id="measures_7">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1 </li>
+<li>M2 = Count of data flows to external enterprises</li>
+<li>M3 = Count of data flows included in the data flow documentation</li>
+<li>M4 = Count of data flows not included in the data flow documentation</li>
+<li>M5 = Count of months since last review of the data flow documentation</li>
+</ul>
+<h3 id="metrics_7">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M5 is greater than twelve, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="coverage-of-data-flow-documentation">Coverage of Data Flow Documentation</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of existing data flows in the enterprise's data flow documentation.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="39-encrypt-data-on-removable-media">3.9: Encrypt Data on Removable Media</h2>
+<p>Encrypt data on removable media.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_8">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_8">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="assumptions_1">Assumptions</h3>
+<ul>
+<li>Enterprise asset inventory includes removable media</li>
+</ul>
+<h3 id="operations_8">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets authorized to support removable media (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify encryption software installed on assets identified in Operation 1 (M1):</p>
+<ol>
+<li>Enumerate the number of assets with encryption software installed (M2)</li>
+<li>Enumerate the number of assets without encryption software installed (M3)</li>
+</ol>
+</li>
+<li>
+<p>For assets identified in Operation 2.1, use <code>GV3</code> to check configurations of encryption software:</p>
+<ol>
+<li>Enumerate assets that have properly configured encryption software (M4)</li>
+<li>Enumerate assets that have improperly configured encryption software (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_8">Measures</h3>
+<ul>
+<li>M1 = Count of assets authorized to support removable media</li>
+<li>M2 = Count of authorized assets with encryption software installed</li>
+<li>M3 = Count of authorized assets without encryption software installed</li>
+<li>M4 = Count of authorized assets with properly configured encryption software</li>
+<li>M5 = Count of authorized assets with improperly configured encryption software</li>
+</ul>
+<h3 id="metrics_8">Metrics</h3>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of appropriately configured assets to support removable media.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="310-encrypt-sensitive-data-in-transit">3.10: Encrypt Sensitive Data in Transit</h2>
+<p>Encrypt sensitive data in transit. Example implementations can include, Transport Layer Security (TLS) and Open Secure Shell (OpenSSH).</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_9">Dependencies</h3>
+<ul>
+<li>Safeguard 3.2: Establish and Maintain a Data Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_9">Inputs</h3>
+<ol>
+<li><code>GV12</code>: Sensitive Data Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_9">Operations</h3>
+<ol>
+<li>
+<p>For each item in <code>GV12</code>, identify the means and components for encrypting data in transit.</p>
+</li>
+<li>
+<p>Compare the output of Operation 1 with <code>GV3</code> to check appropriate approved configurations:</p>
+<ol>
+<li>Enumerate the data items in <code>GV12</code> that are properly configured (M2)</li>
+<li>Enumerate the data items in <code>GV12</code> that are improperly configured (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_9">Measures</h3>
+<ul>
+<li>M1 = Count of items in <code>GV12</code> </li>
+<li>M2 = Count of data with properly configured encryption components</li>
+<li>M3 = Count of data with improperly configured encryption components</li>
+</ul>
+<h3 id="metrics_9">Metrics</h3>
+<h4 id="coverage_1">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of sensitive data properly configured to be encrypted in transit.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="311-encrypt-sensitive-data-at-rest">3.11: Encrypt Sensitive Data At Rest</h2>
+<p>Encrypt sensitive data at rest on servers, applications, and databases. Storage-layer encryption, also known as server-side encryption, meets the minimum requirement of this Safeguard. Additional encryption methods may include application-layer encryption, also known as client-side encryption, where access to the data storage device(s) does not permit access to the plain-text data. </p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_10">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_10">Inputs</h3>
+<ol>
+<li><code>GV12</code>: Sensitive Data Inventory</li>
+<li><code>GV4</code>: Enterprise Network Architecture Documentation</li>
+<li><code>GV19</code>: Enterprise Assets Storing Sensitive Data</li>
+</ol>
+<h3 id="operations_10">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate all encryption tools requiring secondary authentication systems (M1)</p>
+</li>
+<li>
+<p>Use <code>GV12</code> and <code>GV1</code> to identify and enumerate all enterprise assets storing sensitive data (<code>GV19</code>: M2)</p>
+</li>
+<li>
+<p>Compare the output of Operation 1 and Operation 2:</p>
+<ol>
+<li>Identify and enumerate assets with at least one encryption tool from M1 installed (M4)</li>
+<li>Identify and enumerate assets without at least one encryption tool from M1 installed (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_10">Measures</h3>
+<ul>
+<li>M1 = Count of authorized encryption tools requiring secondary authentication systems</li>
+<li>M2 = Count of enterprise assets storing sensitive data</li>
+<li>M3 = Count of assets with at least one encryption tool installed</li>
+<li>M4 = Count of assets without at least one encryption tool installed</li>
+</ul>
+<h3 id="metrics_10">Metrics</h3>
+<h4 id="coverage_2">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of assets storing sensitive data covered by an encryption tool.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="312-segment-data-processing-and-storage-based-on-sensitivity">3.12: Segment Data Processing and Storage Based on Sensitivity</h2>
+<p>Segment data processing and storage based on the sensitivity of the data. Do not process sensitive data on enterprise assets intended for lower sensitivity data.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_11">Dependencies</h3>
+<ul>
+<li>Safeguard 3.2: Establish and Maintain a Data Inventory</li>
+<li>Safeguard 12.4: Establish and Maintain Architecture Diagram(s)</li>
+</ul>
+<h3 id="inputs_11">Inputs</h3>
+<ol>
+<li><code>GV12</code>: Sensitive Data Inventory</li>
+<li><code>GV4</code>: Enterprise Network Architecture Documentation</li>
+</ol>
+<h3 id="assumptions_2">Assumptions</h3>
+<ol>
+<li>An asset's overall sensitivity level should be the highest sensitivity level of the data it stores/processes/transmits. If a system contains any sensitive information, that asset should be treated accordingly and should be properly separated from networks or network segments that don't have a need to access that type of sensitive information.</li>
+</ol>
+<h3 id="operations_11">Operations</h3>
+<ol>
+<li>
+<p>For each item in <code>GV12</code> identify the assets that store, process, or
+    transmit sensitive data (<code>GV18</code>: M1)</p>
+</li>
+<li>
+<p>Use the output of Operation 1 and <code>GV4</code> to identify networks/VLANs connected to the assets:</p>
+<ol>
+<li>Identify and enumerate any instances of properly separated assets from less sensitive networks (M2)</li>
+<li>Identify and enumerate any instances of improperly separated assets from less sensitive networks (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_11">Measures</h3>
+<ul>
+<li>M1 = Count of assets storing, processing, or transmitting sensitive data</li>
+<li>M2 = Count of sensitive assets properly separated from less sensitive networks</li>
+<li>M3 = Count of sensitive assets improperly separated from less sensitive networks</li>
+</ul>
+<h3 id="metrics_11">Metrics</h3>
+<h4 id="coverage_3">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Metric</strong></th>
+<th style="text-align: left;">The percentage of properly separated sensitive assets.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Calculation</strong></td>
+<td style="text-align: left;"><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="313-deploy-a-data-loss-prevention-solution">3.13: Deploy a Data Loss Prevention Solution</h2>
+<p>Implement an automated tool, such as a host-based Data Loss Prevention (DLP) tool to identify all sensitive data stored, processed, or transmitted through enterprise assets, including those located onsite or at a remote service provider, and update the enterprise's  data inventory.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_12">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 3.2: Establish and Maintain a Data Inventory</li>
+</ul>
+<h3 id="inputs_12">Inputs</h3>
+<ol>
+<li><code>GV18</code>: Enterprise Assets Storing, Processing, and Transmitting Sensitive Data</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_12">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate all data loss prevention software.</p>
+</li>
+<li>
+<p>Compare <code>GV18</code> and the output of Operation 1:</p>
+<ol>
+<li>Identify and enumerate each asset in <code>GV18</code> with data loss prevention software installed (M2)</li>
+<li>Identify and enumerate each asset in <code>GV18</code> without data loss prevention software installed (M3)</li>
+</ol>
+</li>
+<li>
+<p>For assets with data loss prevention installed from Operation 2.1, check <code>GV3</code> for configuration information:</p>
+<ol>
+<li>Identify and enumerate assets with properly configured data loss prevention software (M4)</li>
+<li>Identify and enumerate assets with improperly configured data loss prevention software (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_12">Measures</h3>
+<ul>
+<li>M1 = Count of <code>GV18</code></li>
+<li>M2 = Count of assets with data loss prevention software</li>
+<li>M3 = Count of assets without data loss prevention software</li>
+<li>M4 = Count of assets with properly configured data loss prevention software</li>
+<li>M5 = Count of assets with improperly configured data loss prevention software</li>
+</ul>
+<h3 id="metrics_12">Metrics</h3>
+<h4 id="coverage_4">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of assets covered by at least one properly configured data loss prevention software instance.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="314-log-sensitive-data-access">3.14: Log Sensitive Data Access</h2>
+<p>Log sensitive data access, including modification and disposal.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Detect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_13">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_13">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV18</code>: Enterprise Assets Storing, Processing, and Transmitting Sensitive Data</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_13">Operations</h3>
+<ol>
+<li>
+<p>Using <code>GV5</code>, identify authorized logging software.</p>
+</li>
+<li>
+<p>For each asset in <code>GV18</code>, use the output from Operation 1:</p>
+<ol>
+<li>Identify and enumerate assets with logging software installed (M2)</li>
+<li>Identify and enumerate assets that do not have logging software installed (M3)</li>
+</ol>
+</li>
+<li>
+<p>For logging software installed, check configuration using <code>GV3</code>:</p>
+<ol>
+<li>Identify and enumerate software that is properly configured (M4)</li>
+<li>Identify and enumerate software that is improperly configured (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_13">Measures</h3>
+<ul>
+<li>M1 = Count of <code>GV18</code></li>
+<li>M2 = Count of assets storing, processing, and transmitting sensitive data with logging software</li>
+<li>M3 = Count of assets storing, processing, and transmitting sensitive data without logging software</li>
+<li>M4 = Count of assets with properly configured logging</li>
+<li>M5 = Count of assets with improperly configured logging</li>
+</ul>
+<h3 id="metrics_13">Metrics</h3>
+<h4 id="coverage_5">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>The percentage of properly configured logging on assets storing, processing, and transmitting sensitive data.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calculation</td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls2/" class="btn btn-neutral float-left" title="CIS Control 2: Inventory and Control of Software Assets"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls4/" class="btn btn-neutral float-right" title="CIS Control 4: Secure Configuration of Enterprise Assets and Software">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

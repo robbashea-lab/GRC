@@ -1,0 +1,530 @@
+- banner:
+  - button:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - navigation:
+    - link:
+      - /url: /clients
+      - generic: Portfolio
+    - generic: Clients
+    - button [pressed]: All
+    - button: Mine
+    - textbox:
+      - /placeholder: Search clients…
+    - button:
+      - generic: B
+    - button:
+      - generic: H
+    - button:
+      - generic: I
+    - button:
+      - generic: O
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - generic: Administration
+    - link:
+      - /url: /admin/clients
+      - generic: Client Management
+    - link:
+      - /url: /admin/users
+      - generic: Users & Access
+    - link:
+      - /url: /admin/roles
+      - generic: Roles & Permissions
+    - link:
+      - /url: /admin/security
+      - generic: Security & Auth
+    - link:
+      - /url: /admin/audit
+      - generic: Audit Log
+- main:
+  - paragraph: 16 clients in view
+  - heading [level=1]: Client Portfolio
+  - button:
+    - generic: Past due
+    - generic: "2"
+    - generic: 2 of 16 clients · most at SYNTHETIC PR57 PLATFORM THEME QA 20261007
+  - button:
+    - generic: Critical / High
+    - generic: "1"
+    - generic: 1 of 16 clients · SYNTHETIC PR57 PLATFORM THEME QA 20261007
+  - button:
+    - generic: Significant risks
+    - generic: "1"
+    - generic: 1 of 16 clients · Brawndo
+  - button:
+    - generic: Unassigned
+    - generic: "249"
+    - generic: 15 of 16 clients · most at Synthetic PR36 Assessment Release QA
+  - generic: Due ≤30 days
+  - generic: "2"
+  - generic: 1 of 16 clients · Synthetic PR36 Assessment Release QA
+  - textbox:
+    - /placeholder: Search client, industry, lead…
+  - button [pressed]: All Clients
+  - button: Assigned to Me
+  - button: Past Due
+  - button: Critical / High
+  - button: Significant Risks
+  - button: Unassigned
+  - button:
+    - text: GRC Lead
+  - button:
+    - text: Frameworks
+  - checkbox [checked]
+  - text: Include archived
+  - generic: 16 clients
+  - generic: Most urgent first
+  - region:
+    - table:
+      - caption: Authorized client GRC priorities. Upcoming counts work due in 31 to 90 days. Critical / High counts open Findings and standalone high-priority Actions; Risks are counted separately. Last Activity is the latest lifecycle event; logins and generic edits are excluded.
+      - rowgroup:
+        - row:
+          - columnheader:
+            - button:
+              - text: Client
+          - columnheader:
+            - button:
+              - text: GRC Lead
+          - columnheader:
+            - button:
+              - text: Frameworks
+          - columnheader:
+            - button:
+              - text: Past Due
+          - columnheader:
+            - button:
+              - text: Due ≤30d
+          - columnheader:
+            - button:
+              - text: Upcoming
+          - columnheader:
+            - button:
+              - text: Critical / High
+          - columnheader:
+            - button:
+              - text: Significant Risks
+          - columnheader:
+            - button:
+              - text: Unassigned
+          - columnheader:
+            - button:
+              - text: Last Activity
+          - columnheader:
+            - generic: Actions
+      - rowgroup:
+        - row:
+          - cell:
+            - button: SYNTHETIC PR57 PLATFORM THEME QA 20261007
+            - text: Synthetic staging visual QA
+            - generic: · onboarding
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+            - button: ISO 27001
+            - button: SOC 2
+          - cell:
+            - button: "1"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "1"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "28"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: Synthetic PR36 Assessment Release QA
+            - text: —
+            - generic: · onboarding
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+            - button: ISO 27001
+            - button: SOC 2
+          - cell:
+            - button: "1"
+          - cell:
+            - button: "2"
+          - cell:
+            - button: "1"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "31"
+          - cell:
+            - time:
+              - text: Oct 6
+              - generic: · Risk closed
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: Brawndo
+            - text: Synthetic workspace pilot
+            - generic: · onboarding
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG1
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "1"
+          - cell:
+            - button: "16"
+          - cell:
+            - time:
+              - text: Oct 8
+              - generic: · Finding raised
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: OmniBot QA — CIS IG3
+            - text: —
+            - generic: · archived
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+            - button: ISO 27001
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "23"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: Hooli
+            - text: —
+            - generic: · onboarding
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "15"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: Initech
+            - text: —
+            - generic: · onboarding
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG2
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "15"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: OmniBot QA — CIS IG1
+            - text: —
+            - generic: · archived
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "15"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: OmniBot QA — CIS IG2
+            - text: —
+            - generic: · onboarding
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG2
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "15"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: OmniBot QA — Closeout CIS IG1
+            - text: Synthetic closeout verification
+            - generic: · archived
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "15"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: OmniBot QA — Closeout CIS IG3
+            - text: Synthetic closeout verification
+            - generic: · archived
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "15"
+          - cell: No activity recorded
+          - cell:
+            - button [expanded]:
+        - row:
+          - cell:
+            - button: SYNTHETIC PR52 DIRECT UPGRADE 20261007
+            - text: —
+            - generic: · onboarding
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "15"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: SYNTHETIC PR52 TEMP Control1 20261007
+            - text: —
+            - generic: · onboarding
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "15"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: SYNTHETIC RC55 DIRECT IG QA 20261007
+            - text: Release acceptance test
+            - generic: · onboarding
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "15"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: SYNTHETIC RC55 SEQUENTIAL IG QA 20261007
+            - text: Release acceptance test
+            - generic: · onboarding
+          - cell: Unassigned
+          - cell:
+            - button: CIS IG3
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "15"
+          - cell: No activity recorded
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: Staging QA bec984b1 A
+            - generic: —
+          - cell: Unassigned
+          - cell:
+            - generic: None selected
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "1"
+          - cell:
+            - time:
+              - text: Oct 5
+              - generic: · Evidence added
+          - cell:
+            - button:
+        - row:
+          - cell:
+            - button: Staging QA bec984b1 B
+            - generic: —
+          - cell: Unassigned
+          - cell:
+            - generic: None selected
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - button: "0"
+          - cell:
+            - time:
+              - text: Oct 5
+              - generic: · Evidence added
+          - cell:
+            - button:
+- region "Notifications alt+T"
+- menu "Actions for OmniBot QA — Closeout CIS IG3" [active]:
+  - menuitem "Open client workspace":
+    - text: Open client workspace
+  - menuitem "View activity":
+    - text: View activity
+  - separator
+  - menuitem "Restore client":
+    - text: Restore client

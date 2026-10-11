@@ -1,4 +1,8 @@
-import {pilotEnabled,visibleQuestions,generateResult,validateAnswers,guidedCatalog,versionForSafeguard,prioritizeGuidedRows} from './guidedAssessment';
+import {pilotEnabled,visibleQuestions as runtimeQuestions,generateResult as runtimeResult,validateAnswers as runtimeValidate,catalogForPilot,versionForSafeguard as currentVersion,prioritizeGuidedRows} from './guidedAssessment';
+const guidedCatalog=catalogForPilot(false),versionForSafeguard=id=>currentVersion(id,false);
+const visibleQuestions=(id,answers,version=versionForSafeguard(id))=>runtimeQuestions(id,answers,version);
+const generateResult=(id,answers,today,version=versionForSafeguard(id))=>runtimeResult(id,answers,today,version);
+const validateAnswers=(id,answers,version=versionForSafeguard(id))=>runtimeValidate(id,answers,version);
 const today=new Date(2026,9,7);
 test('Omni priorities are bounded, deterministic and preserve input records',()=>{
   const rows=[{definition_id:'1.4',status:'not_assessed'},{definition_id:'1.3',status:'not_assessed'},{definition_id:'1.2',status:'addressed',work:{overdue_reviews:1}},{definition_id:'1.1',status:'in_progress'},{definition_id:'2.1',status:'not_assessed'}];
@@ -55,12 +59,12 @@ test('bounded known question schemas and per-question metadata',()=>{
   expect(()=>validateAnswers('1.1',{coverage:{'Foreign asset':'Yes'}})).toThrow();
   for(const [id,questions] of Object.entries(guidedCatalog.safeguards))for(const q of questions){expect(q.safeguard_id).toBe(id);expect(q.question_set_version).toBe(versionForSafeguard(id,true));expect(q.status_impact).toBeTruthy();expect(q.evidence_guidance).toBeTruthy();}
 });
-test('legacy consumers keep the original default question versions while upgraded selection is explicit',()=>{
+test('historical callers can explicitly retain original versions; new CIS interviews default to current source',()=>{
   expect(versionForSafeguard('1.1')).toBe('cis-v8.1-control1-2');
-  expect(versionForSafeguard('1.1',true)).toBe('cis-v8.1-control1-3');
+  expect(currentVersion('1.1')).toBe('cis-v8.1-control1-3');
   expect(generateResult('1.1',{inventory:'Not sure'},today).version).toBe('cis-v8.1-control1-2');
   expect(versionForSafeguard('2.1')).toBe('cis-v8.1-program-1');
-  expect(versionForSafeguard('2.1',true)).toBe('cis-v8.1-program-2');
+  expect(currentVersion('2.1')).toBe('cis-v8.1-program-3');
 });
 test('confirmed matrix gaps remain distinct from unknown coverage and response alternatives are readable',()=>{
   const a={...complete('1.1'),system:'RMM',owner:'IT'};

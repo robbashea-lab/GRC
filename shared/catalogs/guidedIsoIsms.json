@@ -1,0 +1,4549 @@
+{
+  "version": "iso27001-omni-1",
+  "framework_id": "iso-27001",
+  "definitions": {
+    "4.1": {
+      "title": "Context and external issues",
+      "specification": "isms_clause",
+      "objective": "Understand which conditions affect the ISMS and whether climate change matters to its outcomes.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "ISO-CLIMATE",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-4.1-group-internal",
+          "title": "Conditions inside the organization",
+          "questions": [
+            {
+              "id": "ISO-4.1-internal",
+              "prompt": "Have you identified internal conditions that affect the ISMS's intended outcomes?",
+              "help": "Consider how strategy, staffing, culture, technology and working arrangements affect security. Discuss the conditions relevant to this organization's purpose, rather than copying a generic list.",
+              "topic": "Context and external issues: internal",
+              "remediation": "Identify purpose-relevant internal conditions affecting ISMS outcomes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-4.1-group-external",
+          "title": "Conditions outside the organization",
+          "questions": [
+            {
+              "id": "ISO-4.1-external",
+              "prompt": "Have you identified external conditions that affect the ISMS's intended outcomes?",
+              "help": "Consider relevant market, legal, supplier, social and technical conditions. A workshop, existing business analysis or another suitable approach can support the decision; a separate context register is optional.",
+              "topic": "Context and external issues: external",
+              "remediation": "Identify purpose-relevant external conditions affecting ISMS outcomes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-4.1-group-climate",
+          "title": "Climate relevance",
+          "questions": [
+            {
+              "id": "ISO-4.1-climate-decision",
+              "prompt": "Has the organization decided whether climate change is relevant to the ISMS?",
+              "help": "Consider effects on information security and the ISMS, such as service dependencies or changing obligations. A considered conclusion that climate change is not relevant can satisfy this inquiry; ignoring the question cannot. This does not require a separate environmental program.",
+              "topic": "Context and external issues: climate decision",
+              "remediation": "Determine whether climate change is relevant to ISMS outcomes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-4.1-context-note",
+              "prompt": "Which context decision would help explain these answers? (Optional)",
+              "help": "Describe a useful example if available. A missing example, document title or contact name does not change reported status.",
+              "topic": "Context and external issues: context note",
+              "remediation": "",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    "4.2": {
+      "title": "Stakeholder obligations",
+      "specification": "isms_clause",
+      "objective": "Understand relevant parties, their requirements and the organization's decision about what the ISMS addresses.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "ISO-CLIMATE",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-4.2-group-parties",
+          "title": "Relevant parties",
+          "questions": [
+            {
+              "id": "ISO-4.2-parties",
+              "prompt": "Have you identified the interested parties that matter to this ISMS?",
+              "help": "Consider relevant customers, workers, regulators, owners and providers. The appropriate set depends on the in-scope activities; these are examples, not a prescribed roster.",
+              "topic": "Stakeholder obligations: parties",
+              "remediation": "Identify interested parties relevant to the ISMS.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-4.2-group-requirements",
+          "title": "Relevant requirements",
+          "questions": [
+            {
+              "id": "ISO-4.2-requirements",
+              "prompt": "Have you determined which requirements from those parties are relevant?",
+              "help": "Consider actual legal, regulatory and contractual obligations and other relevant expectations. Include climate-related requirements where relevant: the 2024 note highlights that possibility without requiring every party to have one.",
+              "topic": "Stakeholder obligations: requirements",
+              "remediation": "Determine the relevant requirements of identified interested parties.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-4.2-group-response",
+          "title": "Requirements addressed by the ISMS",
+          "questions": [
+            {
+              "id": "ISO-4.2-response",
+              "prompt": "Is it clear which of those requirements the ISMS will address?",
+              "help": "Explain the organization's choices using actual requirements and scope. An obligation register, agreements or another understandable record can support the answer; this interview does not determine legal applicability.",
+              "topic": "Stakeholder obligations: response",
+              "remediation": "Determine which relevant interested-party requirements the ISMS addresses.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "4.3": {
+      "title": "ISMS boundaries",
+      "specification": "isms_clause",
+      "objective": "Understand the scope, the decisions behind its boundaries and whether people can retrieve it.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-4.3-group-boundary",
+          "title": "Scope boundary",
+          "questions": [
+            {
+              "id": "ISO-4.3-boundary",
+              "prompt": "Is it clear which parts of the organization and activities the ISMS covers?",
+              "help": "Explain the boundary in terms that fit actual services, information, locations and responsibilities. Defining a limited organizational scope does not permit excluding mandatory ISMS clauses within that scope.",
+              "topic": "ISMS boundaries: boundary",
+              "remediation": "Determine understandable ISMS boundaries and applicability.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-4.3-group-basis",
+          "title": "Basis for the boundary",
+          "questions": [
+            {
+              "id": "ISO-4.3-context",
+              "prompt": "Did scope decisions take the identified internal and external conditions into account?",
+              "help": "Trace relevant context decisions, including climate relevance where applicable, into the boundary. A diagram is optional; the reasoning matters.",
+              "topic": "ISMS boundaries: context",
+              "remediation": "Consider organizational context when determining scope.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-4.3-requirements",
+              "prompt": "Did scope decisions take relevant interested-party requirements into account?",
+              "help": "Use the actual requirements identified under 4.2, including relevant contractual interfaces. Do not infer scope from a framework label alone.",
+              "topic": "ISMS boundaries: requirements",
+              "remediation": "Consider interested-party requirements when determining scope.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-4.3-group-interfaces",
+          "title": "Interfaces and dependencies",
+          "questions": [
+            {
+              "id": "ISO-4.3-interfaces",
+              "prompt": "Were interfaces and dependencies with other organizations considered when setting the scope?",
+              "help": "Consider hosted services, shared functions and information exchanges. Outsourcing does not remove an in-scope dependency; different arrangements may explain how it is handled.",
+              "topic": "ISMS boundaries: interfaces",
+              "remediation": "Consider interfaces and dependencies with other organizations.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-4.3-group-record",
+          "title": "Available scope description",
+          "questions": [
+            {
+              "id": "ISO-4.3-documented",
+              "prompt": "Can the current ISMS scope be retrieved as documented information?",
+              "help": "A controlled page, approved description or another suitable record can work. No particular file name or boundary-diagram format is required.",
+              "topic": "ISMS boundaries: documented",
+              "remediation": "Make the ISMS scope available as documented information.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "4.4": {
+      "title": "ISMS processes",
+      "specification": "isms_clause",
+      "objective": "Understand whether the ISMS exists as connected, operating and improving processes.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-4.4-group-design",
+          "title": "Processes and connections",
+          "questions": [
+            {
+              "id": "ISO-4.4-processes",
+              "prompt": "Have the processes needed for this ISMS been established?",
+              "help": "Describe the organization's actual risk, treatment, evaluation and improvement work. Reuse existing business processes where they meet the need; a new process library is optional.",
+              "topic": "ISMS processes: processes",
+              "remediation": "Establish the processes needed for the ISMS.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-4.4-interactions",
+              "prompt": "Are the interactions between those processes established?",
+              "help": "Explain a handoff, such as a risk decision informing treatment and management review. A process map is one possible explanation, not a required artifact.",
+              "topic": "ISMS processes: interactions",
+              "remediation": "Establish the necessary ISMS process interactions.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-4.4-group-operation",
+          "title": "Implementation and upkeep",
+          "questions": [
+            {
+              "id": "ISO-4.4-implementation",
+              "prompt": "Are those processes used to implement the ISMS?",
+              "help": "Describe how the management system works in practice against its requirements. Document presence alone does not demonstrate implementation.",
+              "topic": "ISMS processes: implementation",
+              "remediation": "Implement the established ISMS processes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-4.4-maintenance",
+              "prompt": "Is the ISMS maintained as the organization operates?",
+              "help": "Discuss how existing processes continue to work and remain usable. Do not invent a universal annual review cycle.",
+              "topic": "ISMS processes: maintenance",
+              "remediation": "Maintain the ISMS and its processes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-4.4-group-improvement",
+          "title": "Continual improvement",
+          "questions": [
+            {
+              "id": "ISO-4.4-improvement",
+              "prompt": "Is the organization continually improving the ISMS?",
+              "help": "Describe improvements to how the management system works. Existing review, corrective-action and change processes may provide the mechanism.",
+              "topic": "ISMS processes: improvement",
+              "remediation": "Continually improve the ISMS.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "5.1": {
+      "title": "Leadership accountability",
+      "specification": "isms_clause",
+      "objective": "Understand how top management provides direction, support and accountability for ISMS outcomes.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-5.1-group-direction",
+          "title": "Policy, objectives and strategy",
+          "questions": [
+            {
+              "id": "ISO-5.1-policy",
+              "prompt": "Has top management ensured that an information security policy is established?",
+              "help": "Describe management's involvement in establishing policy direction. A sponsor's name alone is insufficient, and no specific committee is required.",
+              "topic": "Leadership accountability: policy",
+              "remediation": "Ensure leadership establishes information security policy direction.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-5.1-objectives",
+              "prompt": "Has top management ensured that security objectives are established?",
+              "help": "Use the organization's actual objectives, rather than a generic list of suggested targets.",
+              "topic": "Leadership accountability: objectives",
+              "remediation": "Ensure leadership establishes security objectives.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-5.1-alignment",
+              "prompt": "Do leadership's policy and objective decisions fit the organization's strategic direction?",
+              "help": "Explain how priorities reflect the organization's purpose and strategy. The standard does not prescribe a particular strategy document.",
+              "topic": "Leadership accountability: alignment",
+              "remediation": "Align security policy and objectives with organizational direction.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.1-group-business",
+          "title": "Business integration and resources",
+          "questions": [
+            {
+              "id": "ISO-5.1-integration",
+              "prompt": "Has leadership integrated ISMS requirements into relevant business processes?",
+              "help": "Consider operational decisions and responsibilities where security requirements matter. Existing planning and approval processes can support this.",
+              "topic": "Leadership accountability: integration",
+              "remediation": "Integrate ISMS requirements into relevant organizational processes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-5.1-resources",
+              "prompt": "Does leadership ensure that the ISMS resources it needs are available?",
+              "help": "Discuss actual time, capability and other resources needed to carry out ISMS work. A dedicated department or software platform is not inherently required.",
+              "topic": "Leadership accountability: resources",
+              "remediation": "Ensure needed ISMS resources are available.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.1-group-message",
+          "title": "Leadership communication",
+          "questions": [
+            {
+              "id": "ISO-5.1-communication",
+              "prompt": "Does leadership communicate why effective security management and meeting ISMS requirements matter?",
+              "help": "Consider messages people actually receive and understand. Meetings, written direction or other appropriate communications can work.",
+              "topic": "Leadership accountability: communication",
+              "remediation": "Communicate the importance of effective security management and ISMS requirements.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.1-group-outcomes",
+          "title": "Accountability for outcomes",
+          "questions": [
+            {
+              "id": "ISO-5.1-outcomes",
+              "prompt": "Does leadership ensure that the ISMS achieves its intended outcomes?",
+              "help": "Describe how management notices shortfalls and acts on them. Having a dashboard without management attention is insufficient.",
+              "topic": "Leadership accountability: outcomes",
+              "remediation": "Ensure leadership follows through on intended ISMS outcomes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.1-group-people",
+          "title": "Supporting people and managers",
+          "questions": [
+            {
+              "id": "ISO-5.1-people",
+              "prompt": "Does leadership direct and support people contributing to ISMS effectiveness?",
+              "help": "Discuss actual support for people doing security-related work; this can be practical direction and problem resolution.",
+              "topic": "Leadership accountability: people",
+              "remediation": "Direct and support people's contribution to ISMS effectiveness.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-5.1-managers",
+              "prompt": "Does leadership support other relevant managers in their security responsibilities?",
+              "help": "Consider how managers receive authority and support in their own areas. No particular management hierarchy is required.",
+              "topic": "Leadership accountability: managers",
+              "remediation": "Support relevant managers in demonstrating security leadership.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.1-group-improvement",
+          "title": "Promoting improvement",
+          "questions": [
+            {
+              "id": "ISO-5.1-improvement",
+              "prompt": "Does leadership promote continual ISMS improvement?",
+              "help": "Describe how management encourages useful changes and acts on improvement opportunities. A separate improvement committee is optional.",
+              "topic": "Leadership accountability: improvement",
+              "remediation": "Promote continual improvement of the ISMS.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "5.2": {
+      "title": "Security policy direction",
+      "specification": "isms_clause",
+      "objective": "Understand management's security direction, its commitments and how it reaches relevant people.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-5.2-group-direction",
+          "title": "Purpose and objectives",
+          "questions": [
+            {
+              "id": "ISO-5.2-purpose",
+              "prompt": "Has top management established a security policy suited to the organization's purpose?",
+              "help": "Consider the organization's actual activities and priorities. A generic template can be adapted, but its title alone does not establish suitability.",
+              "topic": "Security policy direction: purpose",
+              "remediation": "Establish a security policy appropriate to organizational purpose.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-5.2-objectives",
+              "prompt": "Does the policy include security objectives or provide a usable basis for setting them?",
+              "help": "Either approach can work. Objectives may be maintained separately when the policy gives a meaningful framework for them.",
+              "topic": "Security policy direction: objectives",
+              "remediation": "Include objectives or a framework for setting security objectives.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.2-group-commitments",
+          "title": "Policy commitments",
+          "questions": [
+            {
+              "id": "ISO-5.2-requirements",
+              "prompt": "Does the policy commit the organization to meeting applicable information security requirements?",
+              "help": "Consider the actual direction expressed in the policy; this interview does not decide which laws apply.",
+              "topic": "Security policy direction: requirements",
+              "remediation": "Include commitment to applicable information security requirements.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-5.2-improvement",
+              "prompt": "Does the policy commit the organization to continually improving the ISMS?",
+              "help": "Check management's stated direction. A particular policy title or declaration template is not required.",
+              "topic": "Security policy direction: improvement",
+              "remediation": "Include commitment to continual ISMS improvement.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.2-group-record",
+          "title": "Documented policy",
+          "questions": [
+            {
+              "id": "ISO-5.2-documented",
+              "prompt": "Is the security policy available as documented information?",
+              "help": "An accessible controlled policy page or another suitable format can work. A signed paper file is not the only option.",
+              "topic": "Security policy direction: documented",
+              "remediation": "Make the information security policy available as documented information.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.2-group-communication",
+          "title": "Internal communication",
+          "questions": [
+            {
+              "id": "ISO-5.2-internal",
+              "prompt": "Has the policy been communicated within the organization?",
+              "help": "Explain how affected people receive the current direction. An awareness platform or annual acknowledgement is not required by this question.",
+              "topic": "Security policy direction: internal",
+              "remediation": "Communicate the security policy within the organization.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.2-group-parties",
+          "title": "Availability to interested parties",
+          "questions": [
+            {
+              "id": "ISO-5.2-external",
+              "prompt": "Is the policy available to interested parties where appropriate?",
+              "help": "Use actual relationship needs. Controlled sharing or a suitable published version can be appropriate; making the full internal policy public is not universally required.",
+              "topic": "Security policy direction: external",
+              "remediation": "Make the policy appropriately available to interested parties.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "5.3": {
+      "title": "Accountable ISMS roles",
+      "specification": "isms_clause",
+      "objective": "Understand assigned security duties, authority and reporting without requiring specific job titles.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-5.3-group-assignments",
+          "title": "Responsibilities and authority",
+          "questions": [
+            {
+              "id": "ISO-5.3-assigned",
+              "prompt": "Has top management assigned relevant information security responsibilities and authority?",
+              "help": "Describe what roles are expected and empowered to do. One person may hold several compatible duties; no job title or RACI format is prescribed.",
+              "topic": "Accountable ISMS roles: assigned",
+              "remediation": "Assign relevant security responsibilities and authority.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-5.3-communicated",
+              "prompt": "Have those assignments been communicated within the organization?",
+              "help": "People should understand the duties and decision authority relevant to their work. Role descriptions, conversations or another appropriate route can work.",
+              "topic": "Accountable ISMS roles: communicated",
+              "remediation": "Communicate relevant security responsibilities and authority.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.3-group-conformity",
+          "title": "Responsibility for conformity",
+          "questions": [
+            {
+              "id": "ISO-5.3-conformity",
+              "prompt": "Has management assigned responsibility and authority for ensuring ISMS conformity?",
+              "help": "Identify the assigned duty and authority. The role need not be called CISO or ISO officer, and the interview is not a conformity opinion.",
+              "topic": "Accountable ISMS roles: conformity",
+              "remediation": "Assign responsibility and authority for ISMS conformity.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-5.3-group-reporting",
+          "title": "Performance reporting",
+          "questions": [
+            {
+              "id": "ISO-5.3-reporting",
+              "prompt": "Has management assigned responsibility and authority for reporting ISMS performance to top management?",
+              "help": "Explain the reporting responsibility and how it reaches management. This does not require a specific reporting product.",
+              "topic": "Accountable ISMS roles: reporting",
+              "remediation": "Assign responsibility and authority for reporting ISMS performance.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-5.3-contact-note",
+              "prompt": "Which role or contact can help explain the assignments? (Optional)",
+              "help": "A missing contact name does not change status. The substantive questions separately assess whether responsibility and authority are assigned.",
+              "topic": "Accountable ISMS roles: contact note",
+              "remediation": "",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    "6.1.1": {
+      "title": "Planning risks and opportunities",
+      "specification": "isms_clause",
+      "objective": "Understand how context-informed planning addresses uncertainty and makes actions and evaluation workable.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-6.1.1-group-inputs",
+          "title": "Context and requirements",
+          "questions": [
+            {
+              "id": "ISO-6.1.1-context",
+              "prompt": "Does ISMS planning consider the internal and external context identified under 4.1?",
+              "help": "Trace a relevant business condition into planning. Climate relevance can be one input, without implying a separate climate-control program.",
+              "topic": "Planning risks and opportunities: context",
+              "remediation": "Use organizational context in ISMS planning.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.1-requirements",
+              "prompt": "Does ISMS planning consider the relevant requirements identified under 4.2?",
+              "help": "Use actual interested-party requirements, not assumed obligations based on a client label.",
+              "topic": "Planning risks and opportunities: requirements",
+              "remediation": "Use relevant interested-party requirements in ISMS planning.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.1-group-uncertainty",
+          "title": "Risks and opportunities",
+          "questions": [
+            {
+              "id": "ISO-6.1.1-risks",
+              "prompt": "Have you determined which risks need attention in planning the ISMS?",
+              "help": "Consider risks to the management system's ability to work as intended. This complements the information-security risk method in 6.1.2.",
+              "topic": "Planning risks and opportunities: risks",
+              "remediation": "Determine risks requiring attention in ISMS planning.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.1-opportunities",
+              "prompt": "Have you determined which opportunities need attention in planning the ISMS?",
+              "help": "Consider useful opportunities to strengthen the management system. A separate opportunity register or invented project is optional.",
+              "topic": "Planning risks and opportunities: opportunities",
+              "remediation": "Determine opportunities requiring attention in ISMS planning.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.1-group-purpose",
+          "title": "Purpose of the planning choices",
+          "questions": [
+            {
+              "id": "ISO-6.1.1-outcomes",
+              "prompt": "Do those risk and opportunity choices support the ISMS's intended outcomes?",
+              "help": "Explain what success the planning choices protect. The organization's actual intended outcomes provide the reference.",
+              "topic": "Planning risks and opportunities: outcomes",
+              "remediation": "Address risks and opportunities needed for intended ISMS outcomes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.1-effects",
+              "prompt": "Do the choices address prevention or reduction of unwanted effects?",
+              "help": "Explain the effects planning is intended to prevent or reduce. Eliminating every possible risk is not implied.",
+              "topic": "Planning risks and opportunities: effects",
+              "remediation": "Address prevention or reduction of unwanted effects.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.1-improvement",
+              "prompt": "Do the choices address continual ISMS improvement?",
+              "help": "Discuss how the planned response supports improvement, without assuming a particular improvement project.",
+              "topic": "Planning risks and opportunities: improvement",
+              "remediation": "Address risks and opportunities needed for continual improvement.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.1-group-actions",
+          "title": "Planning actions",
+          "questions": [
+            {
+              "id": "ISO-6.1.1-actions",
+              "prompt": "Have actions been planned for the selected risks and opportunities?",
+              "help": "Describe a practicable response using existing plans or work records. This asks about chosen actions, not a prescribed plan template.",
+              "topic": "Planning risks and opportunities: actions",
+              "remediation": "Plan actions addressing selected risks and opportunities.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.1-group-delivery",
+          "title": "Integration and implementation",
+          "questions": [
+            {
+              "id": "ISO-6.1.1-integration",
+              "prompt": "Have you planned how those actions fit into the ISMS processes?",
+              "help": "Explain the connection to existing operational or management activities. A standalone action list without an integration plan leaves this unclear.",
+              "topic": "Planning risks and opportunities: integration",
+              "remediation": "Plan integration of the actions into ISMS processes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.1-implementation",
+              "prompt": "Have you planned how those actions will be carried out?",
+              "help": "Describe the organization's intended delivery approach. A new project-management product is optional.",
+              "topic": "Planning risks and opportunities: implementation",
+              "remediation": "Plan implementation of the actions through the ISMS.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.1-group-evaluation",
+          "title": "Evaluating effectiveness",
+          "questions": [
+            {
+              "id": "ISO-6.1.1-evaluation",
+              "prompt": "Have you planned how the effectiveness of those actions will be evaluated?",
+              "help": "Explain what would show the response worked. Fixed monthly, quarterly or annual intervals are not introduced here.",
+              "topic": "Planning risks and opportunities: evaluation",
+              "remediation": "Plan evaluation of the actions' effectiveness.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "6.1.2": {
+      "title": "Risk assessment method",
+      "specification": "isms_clause",
+      "objective": "Understand whether the risk method supports repeatable, meaningful decisions about in-scope information.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-6.1.2-group-method",
+          "title": "Defined and applied method",
+          "questions": [
+            {
+              "id": "ISO-6.1.2-defined",
+              "prompt": "Is an information security risk-assessment process defined?",
+              "help": "Explain the steps assessors follow. A qualitative, quantitative or mixed approach may work when it supports the required decisions.",
+              "topic": "Risk assessment method: defined",
+              "remediation": "Define the information security risk-assessment process.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-applied",
+              "prompt": "Is that process actually applied to risk assessments?",
+              "help": "Compare the method with completed assessments. Buying a risk tool or approving a method without using it is insufficient.",
+              "topic": "Risk assessment method: applied",
+              "remediation": "Apply the defined risk-assessment process.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-documented",
+              "prompt": "Is documented information about the assessment process retained?",
+              "help": "An accessible procedure or equivalent controlled record can work. A particular methodology name is optional.",
+              "topic": "Risk assessment method: documented",
+              "remediation": "Retain documented information about the risk-assessment process.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.2-group-criteria",
+          "title": "Risk criteria",
+          "questions": [
+            {
+              "id": "ISO-6.1.2-acceptance",
+              "prompt": "Are criteria for accepting information security risk established?",
+              "help": "Explain how acceptable and unacceptable risk are distinguished. A numeric threshold is one option, not a universal requirement.",
+              "topic": "Risk assessment method: acceptance",
+              "remediation": "Establish information security risk-acceptance criteria.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-acceptance-maintained",
+              "prompt": "Are the risk-acceptance criteria maintained?",
+              "help": "Explain how the adopted criteria remain usable for current decisions. No universal review interval is prescribed here.",
+              "topic": "Risk assessment method: acceptance maintained",
+              "remediation": "Maintain information security risk-acceptance criteria.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-assessment-criteria",
+              "prompt": "Are criteria for performing risk assessments established?",
+              "help": "Explain the agreed basis for assessors' decisions, such as scales or evaluation rules appropriate to the organization.",
+              "topic": "Risk assessment method: assessment criteria",
+              "remediation": "Establish criteria for performing information security risk assessments.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-assessment-maintained",
+              "prompt": "Are those assessment criteria maintained?",
+              "help": "Discuss whether current assessments still use appropriate criteria. Replacing criteria without understanding earlier results may undermine comparison.",
+              "topic": "Risk assessment method: assessment maintained",
+              "remediation": "Maintain the criteria for performing risk assessments.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.2-group-quality",
+          "title": "Quality across repeated assessments",
+          "questions": [
+            {
+              "id": "ISO-6.1.2-consistent",
+              "prompt": "Does repeated use of the method produce consistent results?",
+              "help": "Consider whether assessors apply the agreed criteria in a consistent way. Examples or calibration discussions can help explain the answer.",
+              "topic": "Risk assessment method: consistent",
+              "remediation": "Resolve inconsistency in repeated risk assessments.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-valid",
+              "prompt": "Does the method produce results that represent the risks being assessed?",
+              "help": "Consider whether judgments are grounded in actual circumstances and meaningful criteria. Automated scores are not automatically valid.",
+              "topic": "Risk assessment method: valid",
+              "remediation": "Resolve weaknesses affecting the validity of risk-assessment results.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-comparable",
+              "prompt": "Can results from repeated assessments be meaningfully compared?",
+              "help": "Explain how changes in assumptions or criteria are understood when comparing results. No specific risk-scoring system is required.",
+              "topic": "Risk assessment method: comparable",
+              "remediation": "Make repeated risk-assessment results meaningfully comparable.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.2-group-identification",
+          "title": "Risk identification and ownership",
+          "questions": [
+            {
+              "id": "ISO-6.1.2-confidentiality",
+              "prompt": "Does risk identification consider loss of confidentiality of in-scope information?",
+              "help": "Consider inappropriate access or disclosure using actual information and relationships. An asset-first or scenario-first method can both work.",
+              "topic": "Risk assessment method: confidentiality",
+              "remediation": "Identify confidentiality-loss risks to in-scope information.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-integrity",
+              "prompt": "Does risk identification consider loss of integrity of in-scope information?",
+              "help": "Consider unwanted alteration, corruption or loss of trust in information. Do not assume every risk is only a cyberattack.",
+              "topic": "Risk assessment method: integrity",
+              "remediation": "Identify integrity-loss risks to in-scope information.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-availability",
+              "prompt": "Does risk identification consider loss of availability of in-scope information?",
+              "help": "Consider inability to access needed information or services. Use the organization's actual service dependencies.",
+              "topic": "Risk assessment method: availability",
+              "remediation": "Identify availability-loss risks to in-scope information.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-scope",
+              "prompt": "Does risk identification cover information throughout the ISMS scope?",
+              "help": "Consider important interfaces and externally provided services as well as internal activities. A limited assessment sample does not define the whole scope.",
+              "topic": "Risk assessment method: scope",
+              "remediation": "Cover in-scope information in risk identification.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-owners",
+              "prompt": "Are owners identified for the information security risks?",
+              "help": "Explain who is responsible for each risk. An individual or appropriate accountable role can work; an optional contact name is not the duty being assessed.",
+              "topic": "Risk assessment method: owners",
+              "remediation": "Identify the owners of information security risks.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.2-group-analysis",
+          "title": "Risk analysis",
+          "questions": [
+            {
+              "id": "ISO-6.1.2-consequences",
+              "prompt": "Are potential consequences assessed for identified risks?",
+              "help": "Use the possible effects on the organization if the scenario occurs. A qualitative impact description can be suitable.",
+              "topic": "Risk assessment method: consequences",
+              "remediation": "Assess potential consequences of identified risks.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-likelihood",
+              "prompt": "Is realistic likelihood assessed for identified risks?",
+              "help": "Explain assumptions using actual conditions and available information. A precise probability is not inherently required.",
+              "topic": "Risk assessment method: likelihood",
+              "remediation": "Assess realistic likelihood of identified risks.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-levels",
+              "prompt": "Are risk levels determined from the analysis?",
+              "help": "Explain how the organization's method produces the level used for decisions. A particular scoring formula is optional.",
+              "topic": "Risk assessment method: levels",
+              "remediation": "Determine risk levels using the adopted analysis method.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.2-group-evaluation",
+          "title": "Evaluation and priorities",
+          "questions": [
+            {
+              "id": "ISO-6.1.2-comparison",
+              "prompt": "Are analysis results compared with the established risk criteria?",
+              "help": "Explain how the comparison informs a decision about the assessed risk. A score without evaluation does not answer this question.",
+              "topic": "Risk assessment method: comparison",
+              "remediation": "Compare analyzed risks with established risk criteria.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.2-priorities",
+              "prompt": "Are analyzed risks prioritized for treatment?",
+              "help": "Describe how the evaluation determines attention or sequence. The interview does not impose a specific ordering formula.",
+              "topic": "Risk assessment method: priorities",
+              "remediation": "Prioritize analyzed risks for treatment.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "6.1.3": {
+      "title": "Treatment decisions and SoA",
+      "specification": "isms_clause",
+      "objective": "Understand how treatment choices lead to necessary controls, justified SoA decisions and risk-owner approval.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-6.1.3-group-process",
+          "title": "Treatment process and choices",
+          "questions": [
+            {
+              "id": "ISO-6.1.3-defined",
+              "prompt": "Is an information security risk-treatment process defined?",
+              "help": "Explain how assessed risks lead to treatment decisions. Use the existing risk workflow where appropriate.",
+              "topic": "Treatment decisions and SoA: defined",
+              "remediation": "Define the information security risk-treatment process.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.3-applied",
+              "prompt": "Is that process applied to treatment decisions?",
+              "help": "Trace an actual decision from assessment to treatment. A plan template without use does not demonstrate application.",
+              "topic": "Treatment decisions and SoA: applied",
+              "remediation": "Apply the defined risk-treatment process.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.3-options",
+              "prompt": "Are appropriate treatment options selected using the risk-assessment results?",
+              "help": "Different responses can be appropriate for different risks. Do not equate acceptance with automatic completion of every control.",
+              "topic": "Treatment decisions and SoA: options",
+              "remediation": "Select appropriate treatment options using assessment results.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.3-group-controls",
+          "title": "Necessary controls and comparison",
+          "questions": [
+            {
+              "id": "ISO-6.1.3-necessary",
+              "prompt": "Have all controls needed for the chosen treatment options been determined?",
+              "help": "Consider controls designed by the organization or selected from any suitable source. Necessary controls can extend beyond Annex A.",
+              "topic": "Treatment decisions and SoA: necessary",
+              "remediation": "Determine the controls necessary for chosen treatments.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.3-annex-comparison",
+              "prompt": "Have those necessary controls been compared with Annex A?",
+              "help": "The comparison is a safeguard against omissions; it does not make every Annex A control universally necessary. Existing mapping records can support it.",
+              "topic": "Treatment decisions and SoA: annex comparison",
+              "remediation": "Compare necessary controls with the Annex A reference set.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.3-omissions",
+              "prompt": "Has the comparison been used to check that necessary controls were not missed?",
+              "help": "Explain how unmatched reference controls or treatment gaps were considered. A completed mapping alone does not establish that omissions were evaluated.",
+              "topic": "Treatment decisions and SoA: omissions",
+              "remediation": "Check the comparison for omitted necessary controls.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.3-group-soa",
+          "title": "SoA content and rationale",
+          "questions": [
+            {
+              "id": "ISO-6.1.3-soa-controls",
+              "prompt": "Does the SoA identify the necessary controls, including additional controls when needed?",
+              "help": "Use the organization's selected controls, including custom or non-Annex controls. An Annex-only list can omit necessary treatments.",
+              "topic": "Treatment decisions and SoA: SoA controls",
+              "remediation": "Include necessary controls in the Statement of Applicability.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.3-soa-inclusion",
+              "prompt": "Does the SoA explain why its necessary controls are included?",
+              "help": "Reasons may reflect risk, obligations or other relevant needs. Presence in Annex A alone is not the organization's treatment rationale.",
+              "topic": "Treatment decisions and SoA: SoA inclusion",
+              "remediation": "Record justification for including necessary controls.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.3-soa-implementation",
+              "prompt": "Does the SoA state whether the necessary controls are implemented?",
+              "help": "Keep implementation state separate from selection and exclusion decisions. Evidence links alone do not decide implementation.",
+              "topic": "Treatment decisions and SoA: SoA implementation",
+              "remediation": "Record whether the necessary controls are implemented.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.3-soa-exclusions",
+              "prompt": "Are any excluded Annex A controls justified in the SoA?",
+              "help": "If none are excluded, explain that position; do not invent an exclusion. If there are exclusions, each needs a reason based on the organization's circumstances. No answer changes whole-clause applicability.",
+              "topic": "Treatment decisions and SoA: SoA exclusions",
+              "remediation": "Justify any excluded Annex A controls in the SoA.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.3-group-plan",
+          "title": "Treatment plan",
+          "questions": [
+            {
+              "id": "ISO-6.1.3-plan",
+              "prompt": "Has an information security risk-treatment plan been formulated?",
+              "help": "An integrated plan or linked treatment records can work when they provide the needed plan. A particular plan title or project tool is optional.",
+              "topic": "Treatment decisions and SoA: plan",
+              "remediation": "Formulate an information security risk-treatment plan.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.3-group-decisions",
+          "title": "Risk-owner decisions",
+          "questions": [
+            {
+              "id": "ISO-6.1.3-approval",
+              "prompt": "Have the risk owners approved the treatment plan?",
+              "help": "Check the owners' actual approval through the organization's appropriate process. Top management review alone does not substitute for risk-owner approval.",
+              "topic": "Treatment decisions and SoA: approval",
+              "remediation": "Obtain risk-owner approval of the treatment plan.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.1.3-residual-acceptance",
+              "prompt": "Have the risk owners accepted the residual information security risks?",
+              "help": "Discuss the remaining exposure and the owners' actual acceptance decision. A completed treatment action does not itself record residual-risk acceptance.",
+              "topic": "Treatment decisions and SoA: residual acceptance",
+              "remediation": "Obtain risk-owner acceptance of residual information security risks.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.1.3-group-record",
+          "title": "Treatment-process record",
+          "questions": [
+            {
+              "id": "ISO-6.1.3-documented",
+              "prompt": "Is documented information about the treatment process retained?",
+              "help": "Use a controlled procedure or equivalent record. This is separate from the results retained under 8.3.",
+              "topic": "Treatment decisions and SoA: documented",
+              "remediation": "Retain documented information about the risk-treatment process.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "6.2": {
+      "title": "Measurable security objectives",
+      "specification": "isms_clause",
+      "objective": "Understand appropriate objectives and the delivery and evaluation arrangements supporting them.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-6.2-group-direction",
+          "title": "Objectives and direction",
+          "questions": [
+            {
+              "id": "ISO-6.2-levels",
+              "prompt": "Are security objectives established at the relevant functions and levels?",
+              "help": "Use objectives appropriate to where work and decisions occur. Every team does not need a separate objective if that level is not relevant.",
+              "topic": "Measurable security objectives: levels",
+              "remediation": "Establish security objectives at relevant functions and levels.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.2-policy",
+              "prompt": "Are those objectives consistent with the security policy?",
+              "help": "Explain how objectives reflect the adopted policy direction. A generic target list does not demonstrate that connection.",
+              "topic": "Measurable security objectives: policy",
+              "remediation": "Align objectives with information security policy.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.2-measurability",
+              "prompt": "Are the objectives measurable wherever that is practicable?",
+              "help": "Use measures suited to the objective. Where measurement is impracticable, explain why and how achievement can be evaluated; a numeric KPI is not universally required.",
+              "topic": "Measurable security objectives: measurability",
+              "remediation": "Make objectives measurable where practicable.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.2-group-inputs",
+          "title": "Inputs to objectives",
+          "questions": [
+            {
+              "id": "ISO-6.2-requirements",
+              "prompt": "Do objectives take applicable security requirements into account?",
+              "help": "Use actual obligations and requirements determined for the organization. Do not infer legal applicability from an interview answer.",
+              "topic": "Measurable security objectives: requirements",
+              "remediation": "Consider applicable security requirements when setting objectives.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.2-assessment",
+              "prompt": "Do objectives take risk-assessment results into account?",
+              "help": "Trace relevant assessed exposures into the chosen objectives where appropriate.",
+              "topic": "Measurable security objectives: assessment",
+              "remediation": "Consider risk-assessment results when setting objectives.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.2-treatment",
+              "prompt": "Do objectives take risk-treatment results into account?",
+              "help": "Consider the treatment decisions and remaining exposures affecting intended outcomes.",
+              "topic": "Measurable security objectives: treatment",
+              "remediation": "Consider risk-treatment results when setting objectives.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.2-group-use",
+          "title": "Monitoring, communication and updates",
+          "questions": [
+            {
+              "id": "ISO-6.2-monitoring",
+              "prompt": "Are the objectives monitored?",
+              "help": "Explain how progress is observed using suitable information. A dashboard is one option, and no universal monitoring interval is prescribed here.",
+              "topic": "Measurable security objectives: monitoring",
+              "remediation": "Monitor the security objectives.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.2-communication",
+              "prompt": "Are the objectives communicated to relevant people?",
+              "help": "Consider the people who need to understand or contribute to the objectives. Existing meetings or written direction can work.",
+              "topic": "Measurable security objectives: communication",
+              "remediation": "Communicate the security objectives.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.2-updates",
+              "prompt": "Are the objectives updated when appropriate?",
+              "help": "Explain how the organization responds when objectives need to change. An annual rewrite is not inherently required.",
+              "topic": "Measurable security objectives: updates",
+              "remediation": "Update security objectives as appropriate.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.2-group-record",
+          "title": "Documented objectives",
+          "questions": [
+            {
+              "id": "ISO-6.2-available",
+              "prompt": "Are the objectives available as documented information?",
+              "help": "A controlled page, plan or another suitable record can work. A dedicated objectives register is optional.",
+              "topic": "Measurable security objectives: available",
+              "remediation": "Make objectives available as documented information.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.2-retained",
+              "prompt": "Is documented information about the objectives retained?",
+              "help": "Explain how records remain available rather than being lost as objectives change. This does not invent a retention period.",
+              "topic": "Measurable security objectives: retained",
+              "remediation": "Retain documented information about the objectives.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.2-group-delivery",
+          "title": "Achievement planning",
+          "questions": [
+            {
+              "id": "ISO-6.2-work",
+              "prompt": "Does achievement planning identify what will be done?",
+              "help": "Explain the planned work supporting the objective, using existing plans where suitable.",
+              "topic": "Measurable security objectives: work",
+              "remediation": "Determine the work needed to achieve each objective.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.2-resources",
+              "prompt": "Does achievement planning identify required resources?",
+              "help": "Consider the actual people, time, capabilities and other resources needed; a specific tool is optional.",
+              "topic": "Measurable security objectives: resources",
+              "remediation": "Determine the resources needed to achieve each objective.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.2-responsibility",
+              "prompt": "Does achievement planning identify who is responsible?",
+              "help": "Identify responsibility for delivery. The label of the role is flexible; responsibility itself is substantive.",
+              "topic": "Measurable security objectives: responsibility",
+              "remediation": "Determine responsibility for achieving each objective.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.2-completion",
+              "prompt": "Does achievement planning identify when the work will be completed?",
+              "help": "Use a completion timeframe appropriate to the objective. The standard does not impose an identical deadline for all objectives.",
+              "topic": "Measurable security objectives: completion",
+              "remediation": "Determine completion timing for objective achievement work.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.2-group-evaluation",
+          "title": "Evaluating results",
+          "questions": [
+            {
+              "id": "ISO-6.2-evaluation",
+              "prompt": "Does achievement planning identify how the results will be evaluated?",
+              "help": "Explain how the organization will judge success. Finishing activities alone does not show whether an objective was achieved.",
+              "topic": "Measurable security objectives: evaluation",
+              "remediation": "Determine how objective results will be evaluated.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "6.3": {
+      "title": "Planned ISMS changes",
+      "specification": "isms_clause",
+      "objective": "Understand how needed ISMS changes are planned without treating an event-free period as clause exclusion.",
+      "source_refs": [
+        "ISO-PREVIEW",
+        "REPO-CRITERIA",
+        "REPO-GUIDE"
+      ],
+      "confidence": "high",
+      "groups": [
+        {
+          "id": "ISO-6.3-group-arrangement",
+          "title": "Planning approach",
+          "questions": [
+            {
+              "id": "ISO-6.3-planning",
+              "prompt": "Is there a workable approach for planning changes when the ISMS needs to change?",
+              "help": "Describe how an identified change would be planned before execution. An existing change process can work; no dedicated ISMS change tool, approval board or mandatory impact template is introduced. This question remains present if no change has occurred.",
+              "topic": "Planned ISMS changes: planning",
+              "remediation": "Establish a workable approach for planning identified ISMS changes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-6.3-group-execution",
+          "title": "Changes identified in this period",
+          "questions": [
+            {
+              "id": "ISO-6.3-change-context",
+              "prompt": "Were any needed ISMS changes identified in the period being discussed?",
+              "help": "Choose Not relevant here only if no needed change was identified, and give the reason. This scopes the execution example only; the planning question and mandatory clause remain.",
+              "topic": "Planned ISMS changes: change context",
+              "remediation": "Confirm whether a needed ISMS change was identified.",
+              "type": "context",
+              "choices": [
+                "Relevant",
+                "Not relevant here",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-6.3-execution",
+              "prompt": "Were the identified changes carried out in a planned way?",
+              "help": "Use an actual change to scope, processes or management-system arrangements. Existing planning records or equivalent evidence can explain what happened; no fixed project template is required.",
+              "topic": "Planned ISMS changes: execution",
+              "remediation": "Carry out identified ISMS changes in a planned manner.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-6.3-change-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "7.1": {
+      "title": "ISMS resources",
+      "specification": "isms_clause",
+      "objective": "Understand which resources the ISMS needs and whether they are provided.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-7.1-group-needs",
+          "title": "Resource needs",
+          "questions": [
+            {
+              "id": "ISO-7.1-needs",
+              "prompt": "Has the organization determined the resources needed to run and improve the ISMS?",
+              "help": "Consider the actual workload, capability, time and infrastructure needed for establishment, operation, upkeep and improvement. Existing business resource planning can be used.",
+              "topic": "ISMS resources: needs",
+              "remediation": "Determine the resources needed for the ISMS.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.1-group-provision",
+          "title": "Providing resources",
+          "questions": [
+            {
+              "id": "ISO-7.1-provided",
+              "prompt": "Are those needed resources provided?",
+              "help": "Describe how the organization makes the necessary capacity available. Internal staff, shared services or appropriate external support can work. No particular software, dedicated security team or budget format is inherently required.",
+              "topic": "ISMS resources: provided",
+              "remediation": "Provide the resources needed for the ISMS.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.1-tools-note",
+              "prompt": "Which existing tools or working arrangements help provide those resources? (Optional)",
+              "help": "Record useful context if known. Tool names, spending figures and contact names are optional and do not determine status.",
+              "topic": "ISMS resources: tools note",
+              "remediation": "",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    "7.2": {
+      "title": "Role competence",
+      "specification": "isms_clause",
+      "objective": "Understand how relevant people have the capability to perform their security-related work.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "ANAB-CHANGES",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-7.2-group-needs",
+          "title": "Competence needs",
+          "questions": [
+            {
+              "id": "ISO-7.2-needs",
+              "prompt": "Have competence needs been determined for people whose work affects information security performance?",
+              "help": "Consider people working under the organization's control, including relevant contractors. Duties may include risk assessment, operations or audit; these are examples, not a required role list.",
+              "topic": "Role competence: needs",
+              "remediation": "Determine competence needs for work affecting information security performance.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.2-group-capability",
+          "title": "Established competence",
+          "questions": [
+            {
+              "id": "ISO-7.2-competent",
+              "prompt": "Is competence established for those people on an appropriate basis?",
+              "help": "Education, training or experience can support competence. Assess what the work needs; a certificate or course attendance is not the only acceptable route.",
+              "topic": "Role competence: competent",
+              "remediation": "Ensure relevant people have the necessary competence.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.2-group-actions",
+          "title": "Actions where competence needs support",
+          "questions": [
+            {
+              "id": "ISO-7.2-action-arrangement",
+              "prompt": "Can the organization take action where competence needs to be acquired or strengthened?",
+              "help": "Explain the existing approach. Training, mentoring, reassignment or engaging competent people can be alternatives; no particular training product is required. This question remains even when no gap has been found.",
+              "topic": "Role competence: action arrangement",
+              "remediation": "Arrange appropriate action when competence needs support.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.2-action-context",
+              "prompt": "Were actions needed to establish or strengthen competence in the period discussed?",
+              "help": "Choose Not relevant here only if no such action was needed, and explain why. This scopes action examples without excluding the competence obligations.",
+              "topic": "Role competence: action context",
+              "remediation": "Confirm whether competence-support actions were needed.",
+              "type": "context",
+              "choices": [
+                "Relevant",
+                "Not relevant here",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.2-actions",
+              "prompt": "Were appropriate actions taken to address the identified competence needs?",
+              "help": "Discuss the selected action and the person's actual needs. Equivalent ways to gain competence can work; course attendance alone is not the required outcome.",
+              "topic": "Role competence: actions",
+              "remediation": "Take appropriate action to meet identified competence needs.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-7.2-action-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-7.2-effectiveness",
+              "prompt": "Was the effectiveness of those competence actions evaluated?",
+              "help": "Explain what showed that the action improved capability for the relevant work. A practical demonstration, supervision or another suitable assessment can work.",
+              "topic": "Role competence: effectiveness",
+              "remediation": "Evaluate whether competence actions achieved their purpose.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-7.2-action-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.2-group-record",
+          "title": "Competence records",
+          "questions": [
+            {
+              "id": "ISO-7.2-record",
+              "prompt": "Is suitable documented information retained to support competence?",
+              "help": "Use relevant experience, qualification, assessment or training records as appropriate. A competence matrix and a specific certificate are examples, not universal required artifacts.",
+              "topic": "Role competence: record",
+              "remediation": "Retain suitable documented information supporting competence.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "7.3": {
+      "title": "Workforce awareness",
+      "specification": "isms_clause",
+      "objective": "Understand what people working under organizational control know about the ISMS and their contribution.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-7.3-group-policy",
+          "title": "Awareness of policy",
+          "questions": [
+            {
+              "id": "ISO-7.3-policy",
+              "prompt": "Are relevant people aware of the information security policy?",
+              "help": "Consider people working under the organization's control. Check understanding appropriate to their work; an awareness platform or annual acknowledgement is optional.",
+              "topic": "Workforce awareness: policy",
+              "remediation": "Make relevant people aware of information security policy.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.3-group-contribution",
+          "title": "Contribution and benefits",
+          "questions": [
+            {
+              "id": "ISO-7.3-contribution",
+              "prompt": "Are those people aware of how their work contributes to ISMS effectiveness?",
+              "help": "Ask what they do that supports the management system. Course completion alone does not explain their contribution.",
+              "topic": "Workforce awareness: contribution",
+              "remediation": "Build awareness of each person's contribution to ISMS effectiveness.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.3-benefits",
+              "prompt": "Are those people aware of the benefits of improved information security performance?",
+              "help": "Use benefits relevant to actual work and outcomes, such as dependable service or reduced mistakes. No scripted awareness message is required.",
+              "topic": "Workforce awareness: benefits",
+              "remediation": "Build awareness of the benefits of improved security performance.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.3-group-consequences",
+          "title": "Implications of nonconformity",
+          "questions": [
+            {
+              "id": "ISO-7.3-implications",
+              "prompt": "Are those people aware of the implications of not meeting ISMS requirements?",
+              "help": "Explain appropriate consequences and effects in the organization's context. This does not mandate a particular disciplinary policy or penalty.",
+              "topic": "Workforce awareness: implications",
+              "remediation": "Build awareness of the implications of departing from ISMS requirements.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "7.4": {
+      "title": "ISMS communications",
+      "specification": "isms_clause",
+      "objective": "Understand what ISMS communication is needed and its audience, timing and method.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "ANAB-CHANGES",
+        "SGS-CHANGES",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-7.4-group-subject",
+          "title": "What to communicate",
+          "questions": [
+            {
+              "id": "ISO-7.4-subject",
+              "prompt": "Has the organization determined what internal and external ISMS information needs to be communicated?",
+              "help": "Use actual needs such as policy direction or performance information. Examples do not create a universal list of notices.",
+              "topic": "ISMS communications: subject",
+              "remediation": "Determine the needed subject matter of ISMS communications.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.4-group-timing",
+          "title": "When to communicate",
+          "questions": [
+            {
+              "id": "ISO-7.4-timing",
+              "prompt": "Has the organization determined when those communications are needed?",
+              "help": "Events or planned timing can both be appropriate. Do not assume all communications require an annual or quarterly schedule.",
+              "topic": "ISMS communications: timing",
+              "remediation": "Determine when needed ISMS communications occur.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.4-group-audience",
+          "title": "With whom to communicate",
+          "questions": [
+            {
+              "id": "ISO-7.4-audience",
+              "prompt": "Has the organization determined the intended internal and external recipients?",
+              "help": "Use the actual relationships and information needs. Outsourcing does not imply that all communication duties disappear.",
+              "topic": "ISMS communications: audience",
+              "remediation": "Determine the audiences for needed ISMS communications.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.4-group-method",
+          "title": "How to communicate",
+          "questions": [
+            {
+              "id": "ISO-7.4-method",
+              "prompt": "Has the organization determined how those communications will be delivered?",
+              "help": "Suitable meetings, written messages, shared pages or other routes may work. The 2022 comparison identifies how to communicate; it does not prescribe a communication platform.",
+              "topic": "ISMS communications: method",
+              "remediation": "Determine suitable methods for needed ISMS communications.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.4-contact-note",
+              "prompt": "Who can help explain the communication arrangements? (Optional)",
+              "help": "Names and job titles are useful context only. The 2022 source comparison removes the old separate who-shall-communicate item; uncertainty about this optional note does not determine status.",
+              "topic": "ISMS communications: contact note",
+              "remediation": "",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    "7.5.1": {
+      "title": "Required records",
+      "specification": "isms_clause",
+      "objective": "Understand the documented information needed by the standard and by the organization's own ISMS.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "ANAB-CHANGES",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-7.5.1-group-standard",
+          "title": "Standard-required information",
+          "questions": [
+            {
+              "id": "ISO-7.5.1-required",
+              "prompt": "Does the ISMS include the documented information required by the standard?",
+              "help": "Use the current requirements relevant to this ISMS. The public preview identifies some records, but exact clauses 7–10 still need licensed-text checking; an assumed document checklist is insufficient.",
+              "topic": "Required records: required",
+              "remediation": "Include the standard-required documented information in the ISMS.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.5.1-group-organization",
+          "title": "Information needed for effective operation",
+          "questions": [
+            {
+              "id": "ISO-7.5.1-necessary",
+              "prompt": "Does the ISMS include other documented information the organization needs for effective operation?",
+              "help": "Consider the complexity of work, people and processes. Existing procedures, pages or records may be enough; no universal policy manual or mandatory document title is introduced.",
+              "topic": "Required records: necessary",
+              "remediation": "Include the documented information needed for effective ISMS operation.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "7.5.2": {
+      "title": "Document creation and revision",
+      "specification": "isms_clause",
+      "objective": "Understand whether created or revised information is identifiable, usable and appropriately approved.",
+      "source_refs": [
+        "REPO-GUIDE",
+        "BSI-IMPLEMENTATION"
+      ],
+      "confidence": "low",
+      "groups": [
+        {
+          "id": "ISO-7.5.2-group-identity",
+          "title": "Identification and description",
+          "questions": [
+            {
+              "id": "ISO-7.5.2-identification",
+              "prompt": "Is new or revised documented information appropriately identified?",
+              "help": "Titles, dates, authors or reference numbers are possible ways to make a record recognizable. They are examples rather than an obligation to use every field.",
+              "topic": "Document creation and revision: identification",
+              "remediation": "Appropriately identify created and revised documented information.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.5.2-group-usability",
+          "title": "Format and medium",
+          "questions": [
+            {
+              "id": "ISO-7.5.2-format",
+              "prompt": "Is the format appropriate for the documented information's intended use?",
+              "help": "Consider language, software version or visual presentation as relevant. A word-processing file, managed page or other usable format can work.",
+              "topic": "Document creation and revision: format",
+              "remediation": "Choose appropriate formats for documented information.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.2-medium",
+              "prompt": "Is the chosen medium appropriate for the documented information's intended use?",
+              "help": "Paper and electronic records are alternatives. This does not require changing the organization's established repository or buying a document platform.",
+              "topic": "Document creation and revision: medium",
+              "remediation": "Use appropriate media for documented information.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.5.2-group-review",
+          "title": "Review and approval",
+          "questions": [
+            {
+              "id": "ISO-7.5.2-review",
+              "prompt": "Is created or revised documented information reviewed for its suitability and adequacy?",
+              "help": "Check the organization's actual review approach for the information concerned. The reviewer need not have a prescribed title.",
+              "topic": "Document creation and revision: review",
+              "remediation": "Review created and revised information for suitability and adequacy.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.2-approval",
+              "prompt": "Is created or revised documented information appropriately approved?",
+              "help": "Explain the approval appropriate to the record. Workflow approval, a recorded decision or another controlled method can work; a handwritten signature is not universally required.",
+              "topic": "Document creation and revision: approval",
+              "remediation": "Approve created and revised documented information appropriately.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "7.5.3": {
+      "title": "Document protection and availability",
+      "specification": "isms_clause",
+      "objective": "Understand availability, protection and lifecycle control of required documented information.",
+      "source_refs": [
+        "REPO-GUIDE",
+        "BSI-IMPLEMENTATION",
+        "ANAB-CHANGES"
+      ],
+      "confidence": "low",
+      "groups": [
+        {
+          "id": "ISO-7.5.3-group-availability",
+          "title": "Availability and suitability",
+          "questions": [
+            {
+              "id": "ISO-7.5.3-availability",
+              "prompt": "Can people obtain required documented information where and when they need it?",
+              "help": "Consider practical retrieval for the intended work. A shared repository, controlled paper records or another suitable arrangement can work.",
+              "topic": "Document protection and availability: availability",
+              "remediation": "Make required documented information available where and when needed.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.3-suitability",
+              "prompt": "Is the information suitable for use when people need it?",
+              "help": "Consider whether the content and version support the actual task. Being able to find an unusable record is insufficient.",
+              "topic": "Document protection and availability: suitability",
+              "remediation": "Keep required documented information suitable for its intended use.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.5.3-group-protection",
+          "title": "Protection",
+          "questions": [
+            {
+              "id": "ISO-7.5.3-protection",
+              "prompt": "Is required documented information protected against inappropriate disclosure?",
+              "help": "Consider the information's confidentiality needs. Access permissions, controlled sharing or physical protections can work according to the information.",
+              "topic": "Document protection and availability: protection",
+              "remediation": "Protect required documented information against inappropriate disclosure.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.3-improper-use",
+              "prompt": "Is required documented information protected against improper use?",
+              "help": "Consider how information can be used only in appropriate ways. The needed safeguards depend on the record and the organization's circumstances.",
+              "topic": "Document protection and availability: improper use",
+              "remediation": "Protect required documented information against improper use.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.3-integrity",
+              "prompt": "Is required documented information protected against loss of integrity?",
+              "help": "Consider unauthorized changes or corruption. Suitable permissions, controlled changes and other equivalent arrangements can support integrity.",
+              "topic": "Document protection and availability: integrity",
+              "remediation": "Protect required documented information against loss of integrity.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.5.3-group-handling",
+          "title": "Distribution, access and storage",
+          "questions": [
+            {
+              "id": "ISO-7.5.3-distribution",
+              "prompt": "Is distribution of documented information controlled as appropriate?",
+              "help": "Consider how the right information reaches the intended people. Controlled sharing or another suitable distribution arrangement can work.",
+              "topic": "Document protection and availability: distribution",
+              "remediation": "Control distribution of documented information as appropriate.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.3-access",
+              "prompt": "Is access to documented information controlled as appropriate?",
+              "help": "Consider who may view or change the information. View and edit permissions can differ; no particular repository product is required.",
+              "topic": "Document protection and availability: access",
+              "remediation": "Control access to documented information as appropriate.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.3-retrieval",
+              "prompt": "Is retrieval of documented information controlled as appropriate?",
+              "help": "Consider how people locate the correct current information. A managed repository or controlled paper filing can work.",
+              "topic": "Document protection and availability: retrieval",
+              "remediation": "Control retrieval of documented information as appropriate.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.3-use",
+              "prompt": "Is use of documented information controlled as appropriate?",
+              "help": "Consider whether people rely on appropriate versions and instructions for their work. A particular document-control platform is optional.",
+              "topic": "Document protection and availability: use",
+              "remediation": "Control use of documented information as appropriate.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.3-preservation",
+              "prompt": "Are storage and preservation arrangements appropriate for documented information?",
+              "help": "Consider the record's useful life and the risks of damage or loss. This does not prescribe a storage technology or fixed retention duration.",
+              "topic": "Document protection and availability: preservation",
+              "remediation": "Store and preserve documented information appropriately.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.3-legibility",
+              "prompt": "Do preservation arrangements keep documented information legible?",
+              "help": "Consider whether retained information remains readable when needed. A different medium or version arrangement can work if it preserves usability.",
+              "topic": "Document protection and availability: legibility",
+              "remediation": "Preserve the legibility of documented information.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.5.3-group-changes",
+          "title": "Version and lifecycle handling",
+          "questions": [
+            {
+              "id": "ISO-7.5.3-changes",
+              "prompt": "Are changes to documented information controlled as appropriate?",
+              "help": "Explain how revisions are recognized and superseded instructions handled. Version history or equivalent controls can work.",
+              "topic": "Document protection and availability: changes",
+              "remediation": "Control changes to documented information as appropriate.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.3-retention",
+              "prompt": "Are retention and disposition of documented information controlled as appropriate?",
+              "help": "Use actual operational and applicable obligation needs. No fixed number of years or automatic deletion rule is introduced.",
+              "topic": "Document protection and availability: retention",
+              "remediation": "Control retention and disposition of documented information as appropriate.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-7.5.3-group-external",
+          "title": "External documented information",
+          "questions": [
+            {
+              "id": "ISO-7.5.3-external-context",
+              "prompt": "Is externally sourced documented information needed for ISMS planning or operation?",
+              "help": "Consider material such as provider instructions or applicable external requirements. Choose Not relevant here only with a reason; this scopes external-document questions and cannot remove the rest of 7.5.3.",
+              "topic": "Document protection and availability: external context",
+              "remediation": "Determine whether necessary externally sourced information is present.",
+              "type": "context",
+              "choices": [
+                "Relevant",
+                "Not relevant here",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-7.5.3-external-identification",
+              "prompt": "Is that necessary external information identified appropriately?",
+              "help": "Use the external material the organization actually relies on. A source reference or controlled link may work; no mandatory external-document register is introduced.",
+              "topic": "Document protection and availability: external identification",
+              "remediation": "Identify necessary externally sourced documented information appropriately.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-7.5.3-external-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-7.5.3-external-control",
+              "prompt": "Is that necessary external information controlled appropriately?",
+              "help": "Consider access, currency and use within the ISMS. Receiving a supplier file alone does not explain how it is controlled.",
+              "topic": "Document protection and availability: external control",
+              "remediation": "Control necessary externally sourced documented information appropriately.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-7.5.3-external-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "8.1": {
+      "title": "Controlled operational processes",
+      "specification": "isms_clause",
+      "objective": "Understand whether planning is carried into controlled operation, including changes and external provision.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "ANAB-CHANGES",
+        "SGS-CHANGES",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-8.1-group-criteria",
+          "title": "Operating criteria",
+          "questions": [
+            {
+              "id": "ISO-8.1-criteria",
+              "prompt": "Have criteria been established for processes needed to meet requirements and implement clause 6 actions?",
+              "help": "Explain what shows that an operating process has run as intended. Existing procedures or practical criteria can work; a new process manual is optional.",
+              "topic": "Controlled operational processes: criteria",
+              "remediation": "Establish criteria for the needed operational processes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-8.1-group-operation",
+          "title": "Operation against the criteria",
+          "questions": [
+            {
+              "id": "ISO-8.1-operation",
+              "prompt": "Are those processes implemented and controlled using the established criteria?",
+              "help": "Trace a planned risk, opportunity or objective action into actual operation. A planned task alone does not demonstrate that the process is controlled.",
+              "topic": "Controlled operational processes: operation",
+              "remediation": "Implement and control processes using the established criteria.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-8.1-group-records",
+          "title": "Confidence in execution",
+          "questions": [
+            {
+              "id": "ISO-8.1-records",
+              "prompt": "Is documented information available to give the needed confidence that processes ran as planned?",
+              "help": "The amount and form should suit the process. Suitable execution records or other controlled information may work; no universal evidence-file count is imposed.",
+              "topic": "Controlled operational processes: records",
+              "remediation": "Make sufficient documented information available about operational execution.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-8.1-group-planned",
+          "title": "Planned changes",
+          "questions": [
+            {
+              "id": "ISO-8.1-planned-arrangement",
+              "prompt": "Is there a working approach for controlling planned operational changes?",
+              "help": "Describe how changes are handled using existing operational processes. This remains relevant even in a period without a change example.",
+              "topic": "Controlled operational processes: planned arrangement",
+              "remediation": "Arrange control of planned operational changes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-8.1-planned-context",
+              "prompt": "Were planned changes to relevant operational processes made in this period?",
+              "help": "If no planned change occurred, choose Not relevant here and explain why. This only scopes the execution example.",
+              "topic": "Controlled operational processes: planned context",
+              "remediation": "Confirm whether planned operational changes occurred.",
+              "type": "context",
+              "choices": [
+                "Relevant",
+                "Not relevant here",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-8.1-planned-control",
+              "prompt": "Were those planned changes controlled?",
+              "help": "Discuss how the organization controlled the actual change. An existing operational change approach can be suitable.",
+              "topic": "Controlled operational processes: planned control",
+              "remediation": "Control planned changes to relevant operational processes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-8.1-planned-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        },
+        {
+          "id": "ISO-8.1-group-unintended",
+          "title": "Unintended changes",
+          "questions": [
+            {
+              "id": "ISO-8.1-unintended-arrangement",
+              "prompt": "Can the organization review unintended changes and respond to adverse effects when needed?",
+              "help": "Explain the response approach even if no such change has occurred. No incident-management product or fixed response time is introduced.",
+              "topic": "Controlled operational processes: unintended arrangement",
+              "remediation": "Arrange review of unintended changes and response to adverse effects.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-8.1-unintended-context",
+              "prompt": "Did unintended changes affect relevant processes in the period discussed?",
+              "help": "Choose Not relevant here only if none occurred, and give the reason. Unknown event history should remain Not sure.",
+              "topic": "Controlled operational processes: unintended context",
+              "remediation": "Confirm whether relevant unintended changes occurred.",
+              "type": "context",
+              "choices": [
+                "Relevant",
+                "Not relevant here",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-8.1-unintended-review",
+              "prompt": "Were the consequences of those unintended changes reviewed?",
+              "help": "Explain what changed and the consequences the organization considered. A ticket's existence alone does not establish review.",
+              "topic": "Controlled operational processes: unintended review",
+              "remediation": "Review the consequences of unintended changes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-8.1-unintended-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-8.1-unintended-response",
+              "prompt": "Were adverse effects mitigated where necessary?",
+              "help": "Describe the response to actual adverse effects. If the review identified no need for mitigation, explain that conclusion rather than inventing a corrective task.",
+              "topic": "Controlled operational processes: unintended response",
+              "remediation": "Mitigate adverse effects of unintended changes where necessary.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-8.1-unintended-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        },
+        {
+          "id": "ISO-8.1-group-external",
+          "title": "Externally provided processes, products and services",
+          "questions": [
+            {
+              "id": "ISO-8.1-external-context",
+              "prompt": "Are externally provided processes, products or services relevant to the ISMS?",
+              "help": "Include hosting, shared services and supplied products where relevant, not only formally outsourced processes. A Not relevant here answer needs a reason and leaves the operational clause present.",
+              "topic": "Controlled operational processes: external context",
+              "remediation": "Confirm relevant externally provided processes, products and services.",
+              "type": "context",
+              "choices": [
+                "Relevant",
+                "Not relevant here",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-8.1-external-control",
+              "prompt": "Are those relevant external processes, products and services controlled?",
+              "help": "Explain the organization's actual oversight and controls. Agreements, operating checks or equivalent arrangements can support the answer; a supplier's certification does not automatically settle it.",
+              "topic": "Controlled operational processes: external control",
+              "remediation": "Control relevant externally provided processes, products and services.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-8.1-external-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "8.2": {
+      "title": "Risk assessment execution",
+      "specification": "isms_clause",
+      "objective": "Understand scheduled and change-triggered assessments using the established risk criteria.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "ISO-PREVIEW",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-8.2-group-planned",
+          "title": "Assessments at planned intervals",
+          "questions": [
+            {
+              "id": "ISO-8.2-intervals",
+              "prompt": "Are information security risk assessments carried out at the organization's planned intervals?",
+              "help": "Use the organization's adopted plan. The public guidance supports planned intervals without prescribing annual or quarterly assessment.",
+              "topic": "Risk assessment execution: intervals",
+              "remediation": "Carry out risk assessments at the planned intervals.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-8.2-group-changes",
+          "title": "Significant changes",
+          "questions": [
+            {
+              "id": "ISO-8.2-trigger-arrangement",
+              "prompt": "Can proposed or occurring significant changes trigger a risk assessment?",
+              "help": "Explain how changes needing reassessment are recognized. This inquiry remains present even if the period has no significant change; the exact trigger qualifiers await licensed-text comparison.",
+              "topic": "Risk assessment execution: trigger arrangement",
+              "remediation": "Arrange risk assessments for proposed or occurring significant changes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-8.2-change-context",
+              "prompt": "Were significant changes proposed or experienced in the period discussed?",
+              "help": "Consider significant changes affecting in-scope information or dependencies. Not relevant here requires a reason and only scopes the example.",
+              "topic": "Risk assessment execution: change context",
+              "remediation": "Confirm whether significant changes relevant to risk assessment occurred or were proposed.",
+              "type": "context",
+              "choices": [
+                "Relevant",
+                "Not relevant here",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-8.2-change-assessment",
+              "prompt": "Were risk assessments performed for those significant changes?",
+              "help": "Use the actual proposed or occurring changes. Completing the routine assessment does not necessarily show that a separate significant change was considered.",
+              "topic": "Risk assessment execution: change assessment",
+              "remediation": "Assess information security risks arising from significant changes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-8.2-change-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        },
+        {
+          "id": "ISO-8.2-group-method",
+          "title": "Using the risk criteria",
+          "questions": [
+            {
+              "id": "ISO-8.2-criteria",
+              "prompt": "Do the performed assessments use the criteria established under 6.1.2?",
+              "help": "Compare the operating assessments with the adopted method and criteria. Do not substitute a new scoring method based solely on this interview.",
+              "topic": "Risk assessment execution: criteria",
+              "remediation": "Use the established risk-assessment criteria.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-8.2-group-results",
+          "title": "Assessment results",
+          "questions": [
+            {
+              "id": "ISO-8.2-results",
+              "prompt": "Are documented results of the risk assessments retained?",
+              "help": "Use completed assessments in an appropriate controlled form. A specific risk-register product or export format is not required.",
+              "topic": "Risk assessment execution: results",
+              "remediation": "Retain documented risk-assessment results.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "8.3": {
+      "title": "Treatment execution",
+      "specification": "isms_clause",
+      "objective": "Understand whether the treatment plan is implemented and its results retained.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-8.3-group-implementation",
+          "title": "Implementing treatment",
+          "questions": [
+            {
+              "id": "ISO-8.3-implementation",
+              "prompt": "Is the information security risk-treatment plan being implemented?",
+              "help": "Trace treatment decisions into actual safeguards or other planned responses. This follows the approved plan; the interview does not prescribe a specific tool or automatically close Actions.",
+              "topic": "Treatment execution: implementation",
+              "remediation": "Implement the information security risk-treatment plan.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-8.3-group-results",
+          "title": "Retained results",
+          "questions": [
+            {
+              "id": "ISO-8.3-results",
+              "prompt": "Are documented results of risk treatment retained?",
+              "help": "Describe what records show the actual treatment results. Plan approval and residual-risk acceptance under 6.1.3 remain separate decisions.",
+              "topic": "Treatment execution: results",
+              "remediation": "Retain documented information about risk-treatment results.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "9.1": {
+      "title": "Performance measurement",
+      "specification": "isms_clause",
+      "objective": "Understand how valid monitoring and measurement lead to evaluation of security performance and ISMS effectiveness.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "BSI-SELF-ASSESSMENT",
+        "ANAB-CHANGES",
+        "SGS-CHANGES",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-9.1-group-subject",
+          "title": "What is monitored and measured",
+          "questions": [
+            {
+              "id": "ISO-9.1-subject",
+              "prompt": "Has the organization determined what needs monitoring and measurement?",
+              "help": "Consider relevant security processes and controls as well as other performance information. Existing measures can work; a universal metric list is not introduced.",
+              "topic": "Performance measurement: subject",
+              "remediation": "Determine what needs monitoring and measurement.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.1-group-method",
+          "title": "Methods and valid results",
+          "questions": [
+            {
+              "id": "ISO-9.1-measurement-method",
+              "prompt": "Have suitable monitoring and measurement methods been determined?",
+              "help": "Explain how the selected methods produce usable information for the actual measure. Manual collection or an existing tool can work.",
+              "topic": "Performance measurement: measurement method",
+              "remediation": "Determine suitable monitoring and measurement methods.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.1-evaluation-method",
+              "prompt": "Have suitable methods for analysis and evaluation been determined?",
+              "help": "Explain how raw results will be interpreted. A dashboard or count alone does not necessarily provide an evaluation method.",
+              "topic": "Performance measurement: evaluation method",
+              "remediation": "Determine suitable analysis and evaluation methods.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.1-comparable",
+              "prompt": "Do the chosen methods support comparable results?",
+              "help": "Consider how changes in definitions or populations affect comparison. No particular measurement product is prescribed.",
+              "topic": "Performance measurement: comparable",
+              "remediation": "Resolve method weaknesses that prevent comparable results.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.1-reproducible",
+              "prompt": "Do the chosen methods support reproducible results?",
+              "help": "Consider whether the same method and data can support the same result. This does not require a specific automated test or numeric precision.",
+              "topic": "Performance measurement: reproducible",
+              "remediation": "Resolve method weaknesses that prevent reproducible results.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.1-group-collection",
+          "title": "Collection timing and responsibility",
+          "questions": [
+            {
+              "id": "ISO-9.1-collection-timing",
+              "prompt": "Has the organization determined when monitoring and measurement occur?",
+              "help": "Use timing appropriate to the measures and the organization's needs. No universal monthly, quarterly or annual interval is imposed.",
+              "topic": "Performance measurement: collection timing",
+              "remediation": "Determine timing for monitoring and measurement.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.1-collection-responsibility",
+              "prompt": "Has the organization determined who performs the monitoring and measurement?",
+              "help": "Identify the responsibility for this work. A particular role title, dashboard owner field or contact name is not required.",
+              "topic": "Performance measurement: collection responsibility",
+              "remediation": "Determine who performs monitoring and measurement.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.1-group-interpretation",
+          "title": "Analysis timing and responsibility",
+          "questions": [
+            {
+              "id": "ISO-9.1-analysis-timing",
+              "prompt": "Has the organization determined when results are analyzed and evaluated?",
+              "help": "Collection and analysis may have different timing. The adopted approach should fit the decision being supported.",
+              "topic": "Performance measurement: analysis timing",
+              "remediation": "Determine when results are analyzed and evaluated.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.1-analysis-responsibility",
+              "prompt": "Has the organization determined who analyzes and evaluates the results?",
+              "help": "Explain the assigned evaluation responsibility. Unknown optional contact details do not replace an answer about whether the responsibility is determined.",
+              "topic": "Performance measurement: analysis responsibility",
+              "remediation": "Determine who analyzes and evaluates results.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.1-group-records",
+          "title": "Available results",
+          "questions": [
+            {
+              "id": "ISO-9.1-records",
+              "prompt": "Is documented information available as evidence of the results?",
+              "help": "Suitable retained data and evaluation records can work. The interview does not prescribe a separate report title or file count.",
+              "topic": "Performance measurement: records",
+              "remediation": "Make documented evidence of monitoring and measurement results available.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.1-group-evaluation",
+          "title": "Performance and effectiveness conclusions",
+          "questions": [
+            {
+              "id": "ISO-9.1-performance",
+              "prompt": "Does the organization evaluate its information security performance?",
+              "help": "Explain the conclusion drawn from relevant results and information. Merely collecting metrics does not evaluate performance.",
+              "topic": "Performance measurement: performance",
+              "remediation": "Evaluate information security performance.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.1-effectiveness",
+              "prompt": "Does the organization evaluate how effective the ISMS is?",
+              "help": "Discuss whether the management system achieves its intended outcomes. A single control check does not by itself evaluate the whole ISMS.",
+              "topic": "Performance measurement: effectiveness",
+              "remediation": "Evaluate ISMS effectiveness.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "9.2.1": {
+      "title": "ISMS audit coverage",
+      "specification": "isms_clause",
+      "objective": "Understand whether internal audits evaluate conformity and effective ISMS operation at planned intervals.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "ANAB-CHANGES",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-9.2.1-group-intervals",
+          "title": "Planned internal audit",
+          "questions": [
+            {
+              "id": "ISO-9.2.1-intervals",
+              "prompt": "Are internal audits conducted at the planned intervals?",
+              "help": "Use the organization's adopted audit plan. Public guidance supports planned intervals; it does not impose a universal annual or quarterly audit.",
+              "topic": "ISMS audit coverage: intervals",
+              "remediation": "Conduct internal audits at planned intervals.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.2.1-group-criteria",
+          "title": "Conformity information",
+          "questions": [
+            {
+              "id": "ISO-9.2.1-own-requirements",
+              "prompt": "Do audits provide information about conformity with the organization's own ISMS requirements?",
+              "help": "Consider the actual adopted rules and processes in the audit scope. A document inventory alone does not evaluate conformity.",
+              "topic": "ISMS audit coverage: own requirements",
+              "remediation": "Audit conformity with the organization's own ISMS requirements.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.1-standard-requirements",
+              "prompt": "Do audits provide information about conformity with the standard's requirements?",
+              "help": "Use legitimate access to the current standard for audit criteria. These interview questions are original readiness guidance and do not establish complete normative audit coverage.",
+              "topic": "ISMS audit coverage: standard requirements",
+              "remediation": "Audit conformity with ISO/IEC 27001 requirements.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.2.1-group-operation",
+          "title": "Implementation and maintenance",
+          "questions": [
+            {
+              "id": "ISO-9.2.1-implementation",
+              "prompt": "Do audits evaluate whether the ISMS is effectively implemented?",
+              "help": "Consider tests of actual operation rather than only checking whether procedures exist. The method should suit the audited activity.",
+              "topic": "ISMS audit coverage: implementation",
+              "remediation": "Evaluate effective implementation of the ISMS in internal audits.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.1-maintenance",
+              "prompt": "Do audits evaluate whether the ISMS is effectively maintained?",
+              "help": "Consider continued operation and upkeep. A past certification or a one-time audit does not answer the current operating question.",
+              "topic": "ISMS audit coverage: maintenance",
+              "remediation": "Evaluate effective maintenance of the ISMS in internal audits.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "9.2.2": {
+      "title": "Internal audit program",
+      "specification": "isms_clause",
+      "objective": "Understand the audit program, each audit's boundaries, impartial conduct, reporting and records.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "ANAB-CHANGES",
+        "SGS-CHANGES",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-9.2.2-group-program",
+          "title": "Operating the program",
+          "questions": [
+            {
+              "id": "ISO-9.2.2-program",
+              "prompt": "Is an internal audit program planned and established?",
+              "help": "Describe how the organization arranges internal audit activity. A program can use existing review arrangements; a new audit platform is optional.",
+              "topic": "Internal audit program: program",
+              "remediation": "Plan and establish the internal audit program.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-implementation",
+              "prompt": "Is the audit program implemented?",
+              "help": "Compare planned activity with what actually occurs. Having a calendar without audit work does not demonstrate implementation.",
+              "topic": "Internal audit program: implementation",
+              "remediation": "Implement the internal audit program.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-maintenance",
+              "prompt": "Is the audit program maintained?",
+              "help": "Explain how the program remains workable as coverage and conditions change. No universal revision interval is introduced.",
+              "topic": "Internal audit program: maintenance",
+              "remediation": "Maintain the internal audit program.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.2.2-group-arrangements",
+          "title": "Audit arrangements",
+          "questions": [
+            {
+              "id": "ISO-9.2.2-frequency",
+              "prompt": "Does the program specify its audit frequency?",
+              "help": "Use planned frequency suited to the organization. A preset quarterly product schedule is not an ISO mandate.",
+              "topic": "Internal audit program: frequency",
+              "remediation": "Specify planned frequency in the audit program.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-methods",
+              "prompt": "Does the program specify the methods used for audits?",
+              "help": "Interviews, record examination, observation and suitable testing may be combined. A specific checklist tool is optional.",
+              "topic": "Internal audit program: methods",
+              "remediation": "Specify methods in the audit program.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-responsibilities",
+              "prompt": "Does the program specify audit responsibilities?",
+              "help": "Identify responsibilities for planning and conducting work. Job titles are flexible; assignment of the duties is substantive.",
+              "topic": "Internal audit program: responsibilities",
+              "remediation": "Specify responsibilities in the audit program.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-planning",
+              "prompt": "Does the program specify audit planning requirements?",
+              "help": "Explain what needs to be arranged before an audit. No universal planning template or lead time is prescribed.",
+              "topic": "Internal audit program: planning",
+              "remediation": "Specify planning requirements in the audit program.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-reporting-arrangements",
+              "prompt": "Does the program specify reporting arrangements?",
+              "help": "Describe how audit information is recorded and communicated. An existing report or review record can work.",
+              "topic": "Internal audit program: reporting arrangements",
+              "remediation": "Specify reporting arrangements in the audit program.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.2.2-group-priorities",
+          "title": "Program priorities",
+          "questions": [
+            {
+              "id": "ISO-9.2.2-importance",
+              "prompt": "Does program planning consider the importance of the processes being audited?",
+              "help": "Explain how important processes affect attention and coverage. This does not impose an identical audit duration for every process.",
+              "topic": "Internal audit program: importance",
+              "remediation": "Consider process importance when establishing the audit program.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-previous-results",
+              "prompt": "Does program planning consider previous audit results?",
+              "help": "Use relevant prior results where they exist. For a first audit, explain that there are no earlier results rather than inventing history.",
+              "topic": "Internal audit program: previous results",
+              "remediation": "Consider previous audit results when establishing the audit program.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.2.2-group-boundaries",
+          "title": "Criteria and scope of each audit",
+          "questions": [
+            {
+              "id": "ISO-9.2.2-criteria",
+              "prompt": "Are criteria defined for each audit?",
+              "help": "Identify the requirements against which the activity will be evaluated. Document presence is not an audit criterion by itself.",
+              "topic": "Internal audit program: criteria",
+              "remediation": "Define criteria for each internal audit.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-scope",
+              "prompt": "Is the scope defined for each audit?",
+              "help": "Describe the activities, processes or parts covered. Individual audit scope can vary while the program addresses the ISMS.",
+              "topic": "Internal audit program: scope",
+              "remediation": "Define the scope of each internal audit.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.2.2-group-conduct",
+          "title": "Objectivity and impartiality",
+          "questions": [
+            {
+              "id": "ISO-9.2.2-objectivity",
+              "prompt": "Do auditor selection and audit conduct support objective conclusions?",
+              "help": "Discuss suitable skills and how facts are evaluated. Internal or external auditors can be used; a specific certification is not universally required.",
+              "topic": "Internal audit program: objectivity",
+              "remediation": "Select auditors and conduct audits supporting objective conclusions.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-impartiality",
+              "prompt": "Do auditor selection and audit conduct preserve impartiality?",
+              "help": "Consider conflicts and assessment of one's own work. Suitable arrangements must support impartial evaluation; a vendor's involvement alone does not guarantee it.",
+              "topic": "Internal audit program: impartiality",
+              "remediation": "Preserve impartiality in auditor selection and audit conduct.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.2.2-group-results",
+          "title": "Reporting and documented evidence",
+          "questions": [
+            {
+              "id": "ISO-9.2.2-management-report",
+              "prompt": "Are audit results reported to the relevant management?",
+              "help": "Explain how results reach the people who need them. Logging a finding without reporting it to relevant management is insufficient.",
+              "topic": "Internal audit program: management report",
+              "remediation": "Report audit results to relevant management.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-program-records",
+              "prompt": "Is documented information available showing implementation of the audit program?",
+              "help": "Use records demonstrating the actual program work. A particular workbook or audit-management product is optional.",
+              "topic": "Internal audit program: program records",
+              "remediation": "Make documented evidence of audit-program implementation available.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.2.2-audit-records",
+              "prompt": "Is documented information available showing the audit results?",
+              "help": "Reports, findings or equivalent controlled records can work. This interview does not automatically close Findings or change audit conclusions.",
+              "topic": "Internal audit program: audit records",
+              "remediation": "Make documented evidence of audit results available.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "9.3.1": {
+      "title": "Management review operation",
+      "specification": "isms_clause",
+      "objective": "Understand top management's planned review of the ISMS's continuing suitability, adequacy and effectiveness.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-9.3.1-group-review",
+          "title": "Top management and timing",
+          "questions": [
+            {
+              "id": "ISO-9.3.1-management",
+              "prompt": "Does top management review the ISMS?",
+              "help": "Describe management's actual evaluation, which can be supported through appropriate review arrangements. A status meeting without leadership evaluation does not settle this question.",
+              "topic": "Management review operation: management",
+              "remediation": "Ensure top management reviews the ISMS.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.3.1-intervals",
+              "prompt": "Does that review occur at the planned intervals?",
+              "help": "Use the organization's adopted review plan. No universal annual, quarterly or monthly interval is imposed.",
+              "topic": "Management review operation: intervals",
+              "remediation": "Perform management review at planned intervals.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.3.1-group-evaluation",
+          "title": "Continuing fitness of the ISMS",
+          "questions": [
+            {
+              "id": "ISO-9.3.1-suitability",
+              "prompt": "Does management review whether the ISMS continues to suit the organization?",
+              "help": "Consider whether the management system still fits actual purpose and circumstances, including relevant context changes.",
+              "topic": "Management review operation: suitability",
+              "remediation": "Review the ISMS's continuing suitability.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.3.1-adequacy",
+              "prompt": "Does management review whether the ISMS continues to be adequate for its needs?",
+              "help": "Consider whether the management system is sufficient for relevant requirements and scope. A certification label alone is insufficient.",
+              "topic": "Management review operation: adequacy",
+              "remediation": "Review the ISMS's continuing adequacy.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.3.1-effectiveness",
+              "prompt": "Does management review whether the ISMS continues to be effective?",
+              "help": "Consider actual outcomes and performance information. Completing an agenda alone does not demonstrate management's evaluation.",
+              "topic": "Management review operation: effectiveness",
+              "remediation": "Review the ISMS's continuing effectiveness.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "9.3.2": {
+      "title": "Management review inputs",
+      "specification": "isms_clause",
+      "objective": "Understand whether relevant change, performance, risk and feedback information informs management review.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "ANAB-CHANGES",
+        "SGS-CHANGES",
+        "REPO-GUIDE"
+      ],
+      "confidence": "low",
+      "groups": [
+        {
+          "id": "ISO-9.3.2-group-followup",
+          "title": "Previous decisions",
+          "questions": [
+            {
+              "id": "ISO-9.3.2-previous-actions",
+              "prompt": "Does management review consider the status of actions from earlier management reviews?",
+              "help": "Use actual decisions and follow-up records. At the first review, explain that there are no prior review actions; do not invent completed actions.",
+              "topic": "Management review inputs: previous actions",
+              "remediation": "Bring the status of earlier management-review actions into review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.3.2-group-context",
+          "title": "Changing context and requirements",
+          "questions": [
+            {
+              "id": "ISO-9.3.2-internal-changes",
+              "prompt": "Does review consider changes in relevant internal issues?",
+              "help": "Consider changes in strategy, structure, work or capabilities that affect the ISMS. If no relevant change occurred, explain that assessment.",
+              "topic": "Management review inputs: internal changes",
+              "remediation": "Bring relevant internal-context changes into management review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.3.2-external-changes",
+              "prompt": "Does review consider changes in relevant external issues?",
+              "help": "Consider actual external conditions and dependencies, including climate effects where relevant. A required input can report no relevant changes.",
+              "topic": "Management review inputs: external changes",
+              "remediation": "Bring relevant external-context changes into management review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.3.2-party-changes",
+              "prompt": "Does review consider changes in relevant interested-party needs and expectations?",
+              "help": "Use changes affecting the ISMS, including relevant climate-related requirements. This differs from general stakeholder feedback and remains its own inquiry.",
+              "topic": "Management review inputs: party changes",
+              "remediation": "Bring changes in relevant interested-party needs and expectations into review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.3.2-group-performance",
+          "title": "Performance information and trends",
+          "questions": [
+            {
+              "id": "ISO-9.3.2-nonconformity-trends",
+              "prompt": "Does review consider security-performance information and trends in nonconformities?",
+              "help": "Consider the actual issues and recurring patterns. A no-issue period can still be evaluated; do not require invented findings.",
+              "topic": "Management review inputs: nonconformity trends",
+              "remediation": "Bring nonconformity performance information and trends into review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.3.2-corrective-action-trends",
+              "prompt": "Does review consider security-performance information and trends in corrective actions?",
+              "help": "Consider progress, recurring corrective work and whether actions achieved their purpose. Action closure alone does not explain the performance trend.",
+              "topic": "Management review inputs: corrective action trends",
+              "remediation": "Bring corrective-action performance information and trends into review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.3.2-measurement-trends",
+              "prompt": "Does review consider monitoring and measurement results and their trends?",
+              "help": "Use relevant results and explain direction over time where data supports it. Lack of a dashboard product is not itself a gap.",
+              "topic": "Management review inputs: measurement trends",
+              "remediation": "Bring monitoring and measurement results and trends into review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.3.2-audit-trends",
+              "prompt": "Does review consider audit results and their trends?",
+              "help": "Use relevant audit conclusions and repeated patterns, rather than only reporting that an audit took place.",
+              "topic": "Management review inputs: audit trends",
+              "remediation": "Bring audit results and relevant trends into management review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.3.2-objective-trends",
+              "prompt": "Does review consider fulfillment of security objectives and its trends?",
+              "help": "Consider actual achievement and progress over time where comparison is meaningful. A list of targets alone does not show fulfillment.",
+              "topic": "Management review inputs: objective trends",
+              "remediation": "Bring objective fulfillment and relevant trends into review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.3.2-group-feedback",
+          "title": "Interested-party feedback",
+          "questions": [
+            {
+              "id": "ISO-9.3.2-feedback",
+              "prompt": "Does review consider feedback from interested parties?",
+              "help": "Consider actual relevant feedback, including confirmation that none was received if that is the case. This does not require surveys from every party.",
+              "topic": "Management review inputs: feedback",
+              "remediation": "Bring relevant interested-party feedback into management review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.3.2-group-risk",
+          "title": "Risk assessment and treatment",
+          "questions": [
+            {
+              "id": "ISO-9.3.2-risk-results",
+              "prompt": "Does review consider the results of risk assessment?",
+              "help": "Use the current assessment information relevant to management's decisions. This does not replace the risk owner's separate approval duties.",
+              "topic": "Management review inputs: risk results",
+              "remediation": "Bring risk-assessment results into management review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-9.3.2-treatment-status",
+              "prompt": "Does review consider the status of the risk-treatment plan?",
+              "help": "Consider actual progress and remaining work. A treatment plan's existence does not explain its implementation status.",
+              "topic": "Management review inputs: treatment status",
+              "remediation": "Bring risk-treatment plan status into management review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.3.2-group-opportunities",
+          "title": "Improvement opportunities",
+          "questions": [
+            {
+              "id": "ISO-9.3.2-opportunities",
+              "prompt": "Does review consider opportunities for continual improvement?",
+              "help": "Use meaningful opportunities from the organization's experience. A separate idea register or a new project at every review is optional.",
+              "topic": "Management review inputs: opportunities",
+              "remediation": "Bring continual-improvement opportunities into management review.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "9.3.3": {
+      "title": "Management review decisions",
+      "specification": "isms_clause",
+      "objective": "Understand the recorded decisions about improvement and changes arising from management review.",
+      "source_refs": [
+        "ANAB-CHANGES",
+        "SGS-CHANGES",
+        "BSI-IMPLEMENTATION",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-9.3.3-group-improvement",
+          "title": "Improvement decisions",
+          "questions": [
+            {
+              "id": "ISO-9.3.3-improvement-decisions",
+              "prompt": "Do review results include decisions about continual-improvement opportunities?",
+              "help": "Describe management's actual conclusion, which may include a reasoned decision not to pursue an opportunity. No new improvement project is required at every review.",
+              "topic": "Management review decisions: improvement decisions",
+              "remediation": "Record management-review decisions about improvement opportunities.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.3.3-group-changes",
+          "title": "Decisions about ISMS changes",
+          "questions": [
+            {
+              "id": "ISO-9.3.3-change-decisions",
+              "prompt": "Do review results include decisions about any need to change the ISMS?",
+              "help": "Record the decision about needed changes or the conclusion that none are needed. This question is not hidden merely because no change project was approved.",
+              "topic": "Management review decisions: change decisions",
+              "remediation": "Record management-review decisions about needed ISMS changes.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-9.3.3-group-records",
+          "title": "Documented results",
+          "questions": [
+            {
+              "id": "ISO-9.3.3-records",
+              "prompt": "Is documented information available showing the management-review results?",
+              "help": "Suitable minutes, decision records or an equivalent controlled record can work. A particular meeting title or minute template is optional.",
+              "topic": "Management review decisions: records",
+              "remediation": "Make documented evidence of management-review results available.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "10.1": {
+      "title": "Ongoing ISMS improvement",
+      "specification": "isms_clause",
+      "objective": "Understand continual improvement in the ISMS's fit, sufficiency and effectiveness.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "ANAB-CHANGES",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-10.1-group-suitability",
+          "title": "Improving suitability",
+          "questions": [
+            {
+              "id": "ISO-10.1-suitability",
+              "prompt": "Does the organization continually improve how well the ISMS suits its circumstances?",
+              "help": "Consider changes that make the management system a better fit for actual needs. Existing management review and change processes can support improvement; no dedicated improvement system is required.",
+              "topic": "Ongoing ISMS improvement: suitability",
+              "remediation": "Continually improve ISMS suitability.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-10.1-group-adequacy",
+          "title": "Improving adequacy",
+          "questions": [
+            {
+              "id": "ISO-10.1-adequacy",
+              "prompt": "Does the organization continually improve the ISMS's adequacy for its needs?",
+              "help": "Consider improvements to sufficient coverage or capability for relevant requirements. More documents are not automatically better adequacy.",
+              "topic": "Ongoing ISMS improvement: adequacy",
+              "remediation": "Continually improve ISMS adequacy.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-10.1-group-effectiveness",
+          "title": "Improving effectiveness",
+          "questions": [
+            {
+              "id": "ISO-10.1-effectiveness",
+              "prompt": "Does the organization continually improve the ISMS's effectiveness?",
+              "help": "Consider whether changes help the system achieve intended outcomes. Existing performance and review information can support the explanation; a fixed improvement quota is not required.",
+              "topic": "Ongoing ISMS improvement: effectiveness",
+              "remediation": "Continually improve ISMS effectiveness.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "10.2": {
+      "title": "Nonconformity correction",
+      "specification": "isms_clause",
+      "objective": "Understand a working response to nonconformities and the actual correction, cause and effectiveness work when one occurs.",
+      "source_refs": [
+        "BSI-IMPLEMENTATION",
+        "BSI-SELF-ASSESSMENT",
+        "ANAB-CHANGES",
+        "REPO-GUIDE"
+      ],
+      "confidence": "medium",
+      "groups": [
+        {
+          "id": "ISO-10.2-group-arrangement",
+          "title": "Response arrangements",
+          "questions": [
+            {
+              "id": "ISO-10.2-arrangement",
+              "prompt": "Is there a working approach for responding when an ISMS nonconformity occurs?",
+              "help": "Explain how an issue would reach the existing correction and corrective-action process. This remains answerable when no nonconformity occurred; no event-free period makes the whole clause N/A.",
+              "topic": "Nonconformity correction: arrangement",
+              "remediation": "Arrange an appropriate response to ISMS nonconformities.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ]
+            },
+            {
+              "id": "ISO-10.2-event-context",
+              "prompt": "Did an ISMS nonconformity occur in the period being discussed?",
+              "help": "Choose Not relevant here only if no nonconformity occurred, and give the reason. The response-arrangement question remains; this interview cannot certify an event-free period or exclude clause 10.2.",
+              "topic": "Nonconformity correction: event context",
+              "remediation": "Confirm whether nonconformity response examples are relevant.",
+              "type": "context",
+              "choices": [
+                "Relevant",
+                "Not relevant here",
+                "Not sure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ISO-10.2-group-response",
+          "title": "Correction and consequences",
+          "questions": [
+            {
+              "id": "ISO-10.2-correction",
+              "prompt": "Was action taken to control and correct the nonconformity as appropriate?",
+              "help": "Discuss the actual issue and proportionate response. A corrective-action ticket alone does not show containment or correction; not every issue needs the same response.",
+              "topic": "Nonconformity correction: correction",
+              "remediation": "Control and correct the nonconformity as appropriate.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-10.2-consequences",
+              "prompt": "Were the consequences of the nonconformity dealt with?",
+              "help": "Consider actual effects as well as the immediate defect. If no further consequence needed action, explain that assessment rather than inventing a recovery task.",
+              "topic": "Nonconformity correction: consequences",
+              "remediation": "Deal with the consequences of the nonconformity.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        },
+        {
+          "id": "ISO-10.2-group-cause",
+          "title": "Evaluating causes and recurrence",
+          "questions": [
+            {
+              "id": "ISO-10.2-review",
+              "prompt": "Was the nonconformity reviewed to understand what happened?",
+              "help": "Use actual facts from the affected work. A short review may be sufficient for a simple issue; no root-cause workshop format is imposed.",
+              "topic": "Nonconformity correction: review",
+              "remediation": "Review the nonconformity to understand the issue.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-10.2-causes",
+              "prompt": "Were the causes of the nonconformity determined?",
+              "help": "Consider why the issue happened, rather than only restating the symptom. Different analysis methods can work.",
+              "topic": "Nonconformity correction: causes",
+              "remediation": "Determine the causes of the nonconformity.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-10.2-similar-existing",
+              "prompt": "Was it determined whether similar nonconformities exist elsewhere?",
+              "help": "Consider relevant processes or records beyond the first occurrence. This does not mandate a whole-application audit for every issue.",
+              "topic": "Nonconformity correction: similar existing",
+              "remediation": "Determine whether similar nonconformities exist elsewhere.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-10.2-similar-potential",
+              "prompt": "Was it determined whether similar nonconformities could occur elsewhere?",
+              "help": "Consider where the same cause could create another issue. Avoid assuming that the first corrected record resolves all related exposure.",
+              "topic": "Nonconformity correction: similar potential",
+              "remediation": "Determine whether similar nonconformities could occur elsewhere.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-10.2-action-need",
+              "prompt": "Was the need for action to eliminate causes and prevent recurrence evaluated?",
+              "help": "Explain the decision about further action based on the actual cause and potential for recurrence. Immediate correction and evaluation of corrective-action need are separate inquiries.",
+              "topic": "Nonconformity correction: action need",
+              "remediation": "Evaluate the need for action against causes and recurrence.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        },
+        {
+          "id": "ISO-10.2-group-action",
+          "title": "Implementing appropriate corrective action",
+          "questions": [
+            {
+              "id": "ISO-10.2-necessary-action",
+              "prompt": "Was any necessary corrective action implemented?",
+              "help": "If the cause evaluation found no further action necessary, explain that basis. Otherwise describe the actual changes; creating a plan alone does not implement them.",
+              "topic": "Nonconformity correction: necessary action",
+              "remediation": "Implement necessary corrective action.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-10.2-proportionality",
+              "prompt": "Was corrective action appropriate to the effects of the nonconformity?",
+              "help": "Discuss a response suited to the actual effects. The same technical solution or approval workflow is not required for every issue.",
+              "topic": "Nonconformity correction: proportionality",
+              "remediation": "Make corrective action appropriate to the effects of the nonconformity.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        },
+        {
+          "id": "ISO-10.2-group-effect",
+          "title": "Effectiveness and ISMS changes",
+          "questions": [
+            {
+              "id": "ISO-10.2-effectiveness",
+              "prompt": "Was the effectiveness of any corrective action reviewed?",
+              "help": "Explain what showed whether the response worked. If no corrective action was needed, state the supported basis. Task completion alone does not establish effectiveness, and this question does not mandate a particular independent reviewer.",
+              "topic": "Nonconformity correction: effectiveness",
+              "remediation": "Review the effectiveness of corrective action taken.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-10.2-isms-changes",
+              "prompt": "Were changes to the ISMS made if they were necessary?",
+              "help": "Explain the decision about management-system changes and any resulting work. A reasoned conclusion that no change was needed can be appropriate.",
+              "topic": "Nonconformity correction: ISMS changes",
+              "remediation": "Make necessary changes to the ISMS following the nonconformity.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        },
+        {
+          "id": "ISO-10.2-group-records",
+          "title": "Documented response and results",
+          "questions": [
+            {
+              "id": "ISO-10.2-nature-record",
+              "prompt": "Is documented information available about the nature of the nonconformity?",
+              "help": "An existing Finding, audit record or another controlled record can describe the issue. No separate nonconformity-register product is required.",
+              "topic": "Nonconformity correction: nature record",
+              "remediation": "Make documented information about the nonconformity available.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-10.2-action-record",
+              "prompt": "Is documented information available about the subsequent actions taken?",
+              "help": "Use actual action history or equivalent records. A planned action without execution does not record an action taken.",
+              "topic": "Nonconformity correction: action record",
+              "remediation": "Make documented information about subsequent actions available.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            },
+            {
+              "id": "ISO-10.2-result-record",
+              "prompt": "Is documented information available about the results of corrective action?",
+              "help": "Record what resulted from the response. If no corrective action was needed, preserve the basis for that conclusion rather than inventing results.",
+              "topic": "Nonconformity correction: result record",
+              "remediation": "Make documented information about corrective-action results available.",
+              "type": "select",
+              "choices": [
+                "Yes",
+                "Partially",
+                "No",
+                "Not sure"
+              ],
+              "condition": {
+                "id": "ISO-10.2-event-context",
+                "equals": "Relevant"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

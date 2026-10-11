@@ -1,0 +1,639 @@
+- banner:
+  - button "Toggle client navigation":
+  - link "Omnisciente CLARITY FOR A STRONGER TOMORROW":
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button "Use light workspace theme":
+  - button "Your notifications":
+  - button "Staging Administrator super admin":
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - navigation "Platform":
+    - link "Portfolio":
+      - /url: /clients
+      - generic: Portfolio
+    - generic: Clients
+    - group "Client list scope":
+      - button "All" [pressed]
+      - button "Mine"
+    - textbox "Search clients":
+      - /placeholder: Search clients…
+    - button "Brawndo":
+      - generic: B
+      - generic: Brawndo
+    - button "Hooli":
+      - generic: H
+      - generic: Hooli
+    - button "Initech":
+      - generic: I
+      - generic: Initech
+    - button "OmniBot QA — CIS IG2":
+      - generic: O
+      - generic: OmniBot QA — CIS IG2
+    - button "Staging QA bec984b1 A":
+      - generic: S
+      - generic: Staging QA bec984b1 A
+    - button "Staging QA bec984b1 B":
+      - generic: S
+      - generic: Staging QA bec984b1 B
+    - button "Synthetic PR36 Assessment Release QA":
+      - generic: S
+      - generic: Synthetic PR36 Assessment Release QA
+    - button "SYNTHETIC PR52 DIRECT UPGRADE 20261007":
+      - generic: S
+      - generic: SYNTHETIC PR52 DIRECT UPGRADE 20261007
+    - button "SYNTHETIC PR52 TEMP Control1 20261007":
+      - generic: S
+      - generic: SYNTHETIC PR52 TEMP Control1 20261007
+    - button "SYNTHETIC PR57 PLATFORM THEME QA 20261007":
+      - generic: S
+      - generic: SYNTHETIC PR57 PLATFORM THEME QA 20261007
+    - button "SYNTHETIC RC55 DIRECT IG QA 20261007":
+      - generic: S
+      - generic: SYNTHETIC RC55 DIRECT IG QA 20261007
+    - button "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007":
+      - generic: S
+      - generic: SYNTHETIC RC55 SEQUENTIAL IG QA 20261007
+    - group "Administration":
+      - generic: Administration
+      - link "Client Management":
+        - /url: /admin/clients
+        - generic: Client Management
+      - link "Users & Access":
+        - /url: /admin/users
+        - generic: Users & Access
+      - link "Roles & Permissions":
+        - /url: /admin/roles
+        - generic: Roles & Permissions
+      - link "Security & Auth":
+        - /url: /admin/security
+        - generic: Security & Auth
+      - link "Audit Log":
+        - /url: /admin/audit
+        - generic: Audit Log
+- main:
+  - paragraph: Administration
+  - heading "Audit Log" [level=1]
+  - paragraph: Application audit records are append-only through the Omnisciente interface.
+  - combobox "Client filter":
+    - generic: OmniBot QA — Closeout CIS IG3
+  - combobox "User filter":
+    - generic: All users
+  - combobox "Action filter":
+    - generic: All actions
+  - combobox "Object or event type filter":
+    - generic: All entities
+  - combobox "Date range filter":
+    - generic: Last 30 days
+  - textbox "Search audit events":
+    - /placeholder: Search action, entity, user, record…
+  - button "Export CSV":
+    - text: Export CSV
+  - button "Clear filters":
+    - text: Clear filters
+  - generic "Active table filters":
+    - generic: "Filters:"
+    - 'button "Remove Date / Time: Last 30 days"':
+      - text: "Date / Time: Last 30 days"
+    - 'button "Remove Client: OmniBot QA — Closeout CIS IG3"':
+      - text: "Client: OmniBot QA — Closeout CIS IG3"
+    - button "Clear all"
+  - generic: 39 events · Page 1 of 1
+  - table:
+    - rowgroup:
+      - 'row "Date / Time: sort and filter Client: sort and filter User: sort and filter Action: sort and filter Entity: sort and filter Record"':
+        - 'columnheader "Date / Time: sort and filter"':
+          - 'button "Date / Time: sort and filter"':
+            - text: Date / Time
+        - 'columnheader "Client: sort and filter"':
+          - 'button "Client: sort and filter"':
+            - text: Client
+        - 'columnheader "User: sort and filter"':
+          - 'button "User: sort and filter"':
+            - text: User
+        - 'columnheader "Action: sort and filter"':
+          - 'button "Action: sort and filter"':
+            - text: Action
+        - 'columnheader "Entity: sort and filter"':
+          - 'button "Entity: sort and filter"':
+            - text: Entity
+        - columnheader "Record"
+        - columnheader
+    - rowgroup:
+      - row "10/10/2026, 12:53:36 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Archive Client OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 View Archive event for OmniBot QA — Closeout CIS IG3":
+        - cell "10/10/2026, 12:53:36 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Archive"
+        - cell "Client"
+        - cell "OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7":
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell "View Archive event for OmniBot QA — Closeout CIS IG3":
+          - button "View Archive event for OmniBot QA — Closeout CIS IG3": View
+      - row "10/10/2026, 12:53:36 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Updated Client OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 View Updated event for OmniBot QA — Closeout CIS IG3":
+        - cell "10/10/2026, 12:53:36 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Updated"
+        - cell "Client"
+        - cell "OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7":
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell "View Updated event for OmniBot QA — Closeout CIS IG3":
+          - button "View Updated event for OmniBot QA — Closeout CIS IG3": View
+      - row "10/10/2026, 12:34:55 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_ccf6cabb168256a59b052bcf6765bada fw_ccf6cabb168256a59b052bcf6765bada View Framework Assessment Updated event for fw_ccf6cabb168256a59b052bcf6765bada":
+        - cell "10/10/2026, 12:34:55 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_ccf6cabb168256a59b052bcf6765bada fw_ccf6cabb168256a59b052bcf6765bada":
+          - generic: fw_ccf6cabb168256a59b052bcf6765bada
+          - generic: fw_ccf6cabb168256a59b052bcf6765bada
+        - cell "View Framework Assessment Updated event for fw_ccf6cabb168256a59b052bcf6765bada":
+          - button "View Framework Assessment Updated event for fw_ccf6cabb168256a59b052bcf6765bada": View
+      - row "10/10/2026, 12:32:01 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_a563419bf3275395990e2a3a99a60eee fw_a563419bf3275395990e2a3a99a60eee View Framework Assessment Updated event for fw_a563419bf3275395990e2a3a99a60eee":
+        - cell "10/10/2026, 12:32:01 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_a563419bf3275395990e2a3a99a60eee fw_a563419bf3275395990e2a3a99a60eee":
+          - generic: fw_a563419bf3275395990e2a3a99a60eee
+          - generic: fw_a563419bf3275395990e2a3a99a60eee
+        - cell "View Framework Assessment Updated event for fw_a563419bf3275395990e2a3a99a60eee":
+          - button "View Framework Assessment Updated event for fw_a563419bf3275395990e2a3a99a60eee": View
+      - row "10/10/2026, 12:06:57 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_a563419bf3275395990e2a3a99a60eee fw_a563419bf3275395990e2a3a99a60eee View Framework Assessment Updated event for fw_a563419bf3275395990e2a3a99a60eee":
+        - cell "10/10/2026, 12:06:57 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_a563419bf3275395990e2a3a99a60eee fw_a563419bf3275395990e2a3a99a60eee":
+          - generic: fw_a563419bf3275395990e2a3a99a60eee
+          - generic: fw_a563419bf3275395990e2a3a99a60eee
+        - cell "View Framework Assessment Updated event for fw_a563419bf3275395990e2a3a99a60eee":
+          - button "View Framework Assessment Updated event for fw_a563419bf3275395990e2a3a99a60eee": View
+      - row "10/10/2026, 12:06:43 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_77d236deb793581a9c76e71b31396db2 fw_77d236deb793581a9c76e71b31396db2 View Framework Assessment Updated event for fw_77d236deb793581a9c76e71b31396db2":
+        - cell "10/10/2026, 12:06:43 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_77d236deb793581a9c76e71b31396db2 fw_77d236deb793581a9c76e71b31396db2":
+          - generic: fw_77d236deb793581a9c76e71b31396db2
+          - generic: fw_77d236deb793581a9c76e71b31396db2
+        - cell "View Framework Assessment Updated event for fw_77d236deb793581a9c76e71b31396db2":
+          - button "View Framework Assessment Updated event for fw_77d236deb793581a9c76e71b31396db2": View
+      - row "10/10/2026, 12:06:08 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_c19c7f8d120b5773a3e16b23979575fc fw_c19c7f8d120b5773a3e16b23979575fc View Framework Assessment Updated event for fw_c19c7f8d120b5773a3e16b23979575fc":
+        - cell "10/10/2026, 12:06:08 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_c19c7f8d120b5773a3e16b23979575fc fw_c19c7f8d120b5773a3e16b23979575fc":
+          - generic: fw_c19c7f8d120b5773a3e16b23979575fc
+          - generic: fw_c19c7f8d120b5773a3e16b23979575fc
+        - cell "View Framework Assessment Updated event for fw_c19c7f8d120b5773a3e16b23979575fc":
+          - button "View Framework Assessment Updated event for fw_c19c7f8d120b5773a3e16b23979575fc": View
+      - row "10/10/2026, 12:05:55 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_a5e8ebfd63cf5f44b15b630f7e38a8c2 fw_a5e8ebfd63cf5f44b15b630f7e38a8c2 View Framework Assessment Updated event for fw_a5e8ebfd63cf5f44b15b630f7e38a8c2":
+        - cell "10/10/2026, 12:05:55 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_a5e8ebfd63cf5f44b15b630f7e38a8c2 fw_a5e8ebfd63cf5f44b15b630f7e38a8c2":
+          - generic: fw_a5e8ebfd63cf5f44b15b630f7e38a8c2
+          - generic: fw_a5e8ebfd63cf5f44b15b630f7e38a8c2
+        - cell "View Framework Assessment Updated event for fw_a5e8ebfd63cf5f44b15b630f7e38a8c2":
+          - button "View Framework Assessment Updated event for fw_a5e8ebfd63cf5f44b15b630f7e38a8c2": View
+      - row "10/10/2026, 12:05:39 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_ea8471b1161f546db007610eb5e5e0dd fw_ea8471b1161f546db007610eb5e5e0dd View Framework Assessment Updated event for fw_ea8471b1161f546db007610eb5e5e0dd":
+        - cell "10/10/2026, 12:05:39 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_ea8471b1161f546db007610eb5e5e0dd fw_ea8471b1161f546db007610eb5e5e0dd":
+          - generic: fw_ea8471b1161f546db007610eb5e5e0dd
+          - generic: fw_ea8471b1161f546db007610eb5e5e0dd
+        - cell "View Framework Assessment Updated event for fw_ea8471b1161f546db007610eb5e5e0dd":
+          - button "View Framework Assessment Updated event for fw_ea8471b1161f546db007610eb5e5e0dd": View
+      - row "10/10/2026, 12:04:29 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_6e721131a048572c8406f1960453c8c9 fw_6e721131a048572c8406f1960453c8c9 View Framework Assessment Updated event for fw_6e721131a048572c8406f1960453c8c9":
+        - cell "10/10/2026, 12:04:29 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_6e721131a048572c8406f1960453c8c9 fw_6e721131a048572c8406f1960453c8c9":
+          - generic: fw_6e721131a048572c8406f1960453c8c9
+          - generic: fw_6e721131a048572c8406f1960453c8c9
+        - cell "View Framework Assessment Updated event for fw_6e721131a048572c8406f1960453c8c9":
+          - button "View Framework Assessment Updated event for fw_6e721131a048572c8406f1960453c8c9": View
+      - row "10/10/2026, 12:04:18 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_56300ded1088558f9f5f4a5fa94f7c87 fw_56300ded1088558f9f5f4a5fa94f7c87 View Framework Assessment Updated event for fw_56300ded1088558f9f5f4a5fa94f7c87":
+        - cell "10/10/2026, 12:04:18 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_56300ded1088558f9f5f4a5fa94f7c87 fw_56300ded1088558f9f5f4a5fa94f7c87":
+          - generic: fw_56300ded1088558f9f5f4a5fa94f7c87
+          - generic: fw_56300ded1088558f9f5f4a5fa94f7c87
+        - cell "View Framework Assessment Updated event for fw_56300ded1088558f9f5f4a5fa94f7c87":
+          - button "View Framework Assessment Updated event for fw_56300ded1088558f9f5f4a5fa94f7c87": View
+      - row "10/10/2026, 12:03:17 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_21eda6f2c43655fa8d6bd54a12b66e15 fw_21eda6f2c43655fa8d6bd54a12b66e15 View Framework Assessment Updated event for fw_21eda6f2c43655fa8d6bd54a12b66e15":
+        - cell "10/10/2026, 12:03:17 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_21eda6f2c43655fa8d6bd54a12b66e15 fw_21eda6f2c43655fa8d6bd54a12b66e15":
+          - generic: fw_21eda6f2c43655fa8d6bd54a12b66e15
+          - generic: fw_21eda6f2c43655fa8d6bd54a12b66e15
+        - cell "View Framework Assessment Updated event for fw_21eda6f2c43655fa8d6bd54a12b66e15":
+          - button "View Framework Assessment Updated event for fw_21eda6f2c43655fa8d6bd54a12b66e15": View
+      - row "10/10/2026, 12:03:05 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_c39f1ce703105276ab7352d735dbff19 fw_c39f1ce703105276ab7352d735dbff19 View Framework Assessment Updated event for fw_c39f1ce703105276ab7352d735dbff19":
+        - cell "10/10/2026, 12:03:05 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_c39f1ce703105276ab7352d735dbff19 fw_c39f1ce703105276ab7352d735dbff19":
+          - generic: fw_c39f1ce703105276ab7352d735dbff19
+          - generic: fw_c39f1ce703105276ab7352d735dbff19
+        - cell "View Framework Assessment Updated event for fw_c39f1ce703105276ab7352d735dbff19":
+          - button "View Framework Assessment Updated event for fw_c39f1ce703105276ab7352d735dbff19": View
+      - row "10/10/2026, 12:01:56 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_252d43d6aabd562e8d93b4215de48c0f fw_252d43d6aabd562e8d93b4215de48c0f View Framework Assessment Updated event for fw_252d43d6aabd562e8d93b4215de48c0f":
+        - cell "10/10/2026, 12:01:56 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_252d43d6aabd562e8d93b4215de48c0f fw_252d43d6aabd562e8d93b4215de48c0f":
+          - generic: fw_252d43d6aabd562e8d93b4215de48c0f
+          - generic: fw_252d43d6aabd562e8d93b4215de48c0f
+        - cell "View Framework Assessment Updated event for fw_252d43d6aabd562e8d93b4215de48c0f":
+          - button "View Framework Assessment Updated event for fw_252d43d6aabd562e8d93b4215de48c0f": View
+      - row "10/10/2026, 12:01:44 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_a7634bf60f58567492403d4ae6833bba fw_a7634bf60f58567492403d4ae6833bba View Framework Assessment Updated event for fw_a7634bf60f58567492403d4ae6833bba":
+        - cell "10/10/2026, 12:01:44 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_a7634bf60f58567492403d4ae6833bba fw_a7634bf60f58567492403d4ae6833bba":
+          - generic: fw_a7634bf60f58567492403d4ae6833bba
+          - generic: fw_a7634bf60f58567492403d4ae6833bba
+        - cell "View Framework Assessment Updated event for fw_a7634bf60f58567492403d4ae6833bba":
+          - button "View Framework Assessment Updated event for fw_a7634bf60f58567492403d4ae6833bba": View
+      - row "10/10/2026, 12:01:30 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_895276b8347b55f7aabe59776af0bba4 fw_895276b8347b55f7aabe59776af0bba4 View Framework Assessment Updated event for fw_895276b8347b55f7aabe59776af0bba4":
+        - cell "10/10/2026, 12:01:30 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_895276b8347b55f7aabe59776af0bba4 fw_895276b8347b55f7aabe59776af0bba4":
+          - generic: fw_895276b8347b55f7aabe59776af0bba4
+          - generic: fw_895276b8347b55f7aabe59776af0bba4
+        - cell "View Framework Assessment Updated event for fw_895276b8347b55f7aabe59776af0bba4":
+          - button "View Framework Assessment Updated event for fw_895276b8347b55f7aabe59776af0bba4": View
+      - row "10/10/2026, 12:01:19 PM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_8d9eba1d5fdd5236a0a6e60f01d176e5 fw_8d9eba1d5fdd5236a0a6e60f01d176e5 View Framework Assessment Updated event for fw_8d9eba1d5fdd5236a0a6e60f01d176e5":
+        - cell "10/10/2026, 12:01:19 PM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_8d9eba1d5fdd5236a0a6e60f01d176e5 fw_8d9eba1d5fdd5236a0a6e60f01d176e5":
+          - generic: fw_8d9eba1d5fdd5236a0a6e60f01d176e5
+          - generic: fw_8d9eba1d5fdd5236a0a6e60f01d176e5
+        - cell "View Framework Assessment Updated event for fw_8d9eba1d5fdd5236a0a6e60f01d176e5":
+          - button "View Framework Assessment Updated event for fw_8d9eba1d5fdd5236a0a6e60f01d176e5": View
+      - row "10/10/2026, 11:58:10 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_915fafb6539d58e4a12ba7f3490c56a6 fw_915fafb6539d58e4a12ba7f3490c56a6 View Framework Assessment Updated event for fw_915fafb6539d58e4a12ba7f3490c56a6":
+        - cell "10/10/2026, 11:58:10 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_915fafb6539d58e4a12ba7f3490c56a6 fw_915fafb6539d58e4a12ba7f3490c56a6":
+          - generic: fw_915fafb6539d58e4a12ba7f3490c56a6
+          - generic: fw_915fafb6539d58e4a12ba7f3490c56a6
+        - cell "View Framework Assessment Updated event for fw_915fafb6539d58e4a12ba7f3490c56a6":
+          - button "View Framework Assessment Updated event for fw_915fafb6539d58e4a12ba7f3490c56a6": View
+      - row "10/10/2026, 11:57:59 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_dbadb2b37de95a6b8289758cea3eb111 fw_dbadb2b37de95a6b8289758cea3eb111 View Framework Assessment Updated event for fw_dbadb2b37de95a6b8289758cea3eb111":
+        - cell "10/10/2026, 11:57:59 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_dbadb2b37de95a6b8289758cea3eb111 fw_dbadb2b37de95a6b8289758cea3eb111":
+          - generic: fw_dbadb2b37de95a6b8289758cea3eb111
+          - generic: fw_dbadb2b37de95a6b8289758cea3eb111
+        - cell "View Framework Assessment Updated event for fw_dbadb2b37de95a6b8289758cea3eb111":
+          - button "View Framework Assessment Updated event for fw_dbadb2b37de95a6b8289758cea3eb111": View
+      - row "10/10/2026, 11:57:06 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_1cc9030731b0582ab0c8cf2e49a0dc95 fw_1cc9030731b0582ab0c8cf2e49a0dc95 View Framework Assessment Updated event for fw_1cc9030731b0582ab0c8cf2e49a0dc95":
+        - cell "10/10/2026, 11:57:06 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_1cc9030731b0582ab0c8cf2e49a0dc95 fw_1cc9030731b0582ab0c8cf2e49a0dc95":
+          - generic: fw_1cc9030731b0582ab0c8cf2e49a0dc95
+          - generic: fw_1cc9030731b0582ab0c8cf2e49a0dc95
+        - cell "View Framework Assessment Updated event for fw_1cc9030731b0582ab0c8cf2e49a0dc95":
+          - button "View Framework Assessment Updated event for fw_1cc9030731b0582ab0c8cf2e49a0dc95": View
+      - row "10/10/2026, 11:56:57 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_1d5f0e519a285253a9f69e4d4add6d8a fw_1d5f0e519a285253a9f69e4d4add6d8a View Framework Assessment Updated event for fw_1d5f0e519a285253a9f69e4d4add6d8a":
+        - cell "10/10/2026, 11:56:57 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_1d5f0e519a285253a9f69e4d4add6d8a fw_1d5f0e519a285253a9f69e4d4add6d8a":
+          - generic: fw_1d5f0e519a285253a9f69e4d4add6d8a
+          - generic: fw_1d5f0e519a285253a9f69e4d4add6d8a
+        - cell "View Framework Assessment Updated event for fw_1d5f0e519a285253a9f69e4d4add6d8a":
+          - button "View Framework Assessment Updated event for fw_1d5f0e519a285253a9f69e4d4add6d8a": View
+      - row "10/10/2026, 11:56:01 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_e84c037beab653fbbb7257d33752e64a fw_e84c037beab653fbbb7257d33752e64a View Framework Assessment Updated event for fw_e84c037beab653fbbb7257d33752e64a":
+        - cell "10/10/2026, 11:56:01 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_e84c037beab653fbbb7257d33752e64a fw_e84c037beab653fbbb7257d33752e64a":
+          - generic: fw_e84c037beab653fbbb7257d33752e64a
+          - generic: fw_e84c037beab653fbbb7257d33752e64a
+        - cell "View Framework Assessment Updated event for fw_e84c037beab653fbbb7257d33752e64a":
+          - button "View Framework Assessment Updated event for fw_e84c037beab653fbbb7257d33752e64a": View
+      - row "10/10/2026, 11:54:07 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_6f52e4efb56e57eeb03429314abc16fb fw_6f52e4efb56e57eeb03429314abc16fb View Framework Assessment Updated event for fw_6f52e4efb56e57eeb03429314abc16fb":
+        - cell "10/10/2026, 11:54:07 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_6f52e4efb56e57eeb03429314abc16fb fw_6f52e4efb56e57eeb03429314abc16fb":
+          - generic: fw_6f52e4efb56e57eeb03429314abc16fb
+          - generic: fw_6f52e4efb56e57eeb03429314abc16fb
+        - cell "View Framework Assessment Updated event for fw_6f52e4efb56e57eeb03429314abc16fb":
+          - button "View Framework Assessment Updated event for fw_6f52e4efb56e57eeb03429314abc16fb": View
+      - row "10/10/2026, 11:53:06 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_cce5ced6b7245f5392b1c96f3c64f325 fw_cce5ced6b7245f5392b1c96f3c64f325 View Framework Assessment Updated event for fw_cce5ced6b7245f5392b1c96f3c64f325":
+        - cell "10/10/2026, 11:53:06 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_cce5ced6b7245f5392b1c96f3c64f325 fw_cce5ced6b7245f5392b1c96f3c64f325":
+          - generic: fw_cce5ced6b7245f5392b1c96f3c64f325
+          - generic: fw_cce5ced6b7245f5392b1c96f3c64f325
+        - cell "View Framework Assessment Updated event for fw_cce5ced6b7245f5392b1c96f3c64f325":
+          - button "View Framework Assessment Updated event for fw_cce5ced6b7245f5392b1c96f3c64f325": View
+      - row "10/10/2026, 11:51:54 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_6c4a5670c9165f78aa4fb8232e1989bd fw_6c4a5670c9165f78aa4fb8232e1989bd View Framework Assessment Updated event for fw_6c4a5670c9165f78aa4fb8232e1989bd":
+        - cell "10/10/2026, 11:51:54 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_6c4a5670c9165f78aa4fb8232e1989bd fw_6c4a5670c9165f78aa4fb8232e1989bd":
+          - generic: fw_6c4a5670c9165f78aa4fb8232e1989bd
+          - generic: fw_6c4a5670c9165f78aa4fb8232e1989bd
+        - cell "View Framework Assessment Updated event for fw_6c4a5670c9165f78aa4fb8232e1989bd":
+          - button "View Framework Assessment Updated event for fw_6c4a5670c9165f78aa4fb8232e1989bd": View
+      - row "10/10/2026, 11:39:36 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_c6532ed48f2359a7878f49554a0df5b5 fw_c6532ed48f2359a7878f49554a0df5b5 View Framework Assessment Updated event for fw_c6532ed48f2359a7878f49554a0df5b5":
+        - cell "10/10/2026, 11:39:36 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_c6532ed48f2359a7878f49554a0df5b5 fw_c6532ed48f2359a7878f49554a0df5b5":
+          - generic: fw_c6532ed48f2359a7878f49554a0df5b5
+          - generic: fw_c6532ed48f2359a7878f49554a0df5b5
+        - cell "View Framework Assessment Updated event for fw_c6532ed48f2359a7878f49554a0df5b5":
+          - button "View Framework Assessment Updated event for fw_c6532ed48f2359a7878f49554a0df5b5": View
+      - row "10/10/2026, 11:35:59 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Restore Client OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 View Restore event for OmniBot QA — Closeout CIS IG3":
+        - cell "10/10/2026, 11:35:59 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Restore"
+        - cell "Client"
+        - cell "OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7":
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell "View Restore event for OmniBot QA — Closeout CIS IG3":
+          - button "View Restore event for OmniBot QA — Closeout CIS IG3": View
+      - row "10/10/2026, 11:35:59 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Updated Client OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 View Updated event for OmniBot QA — Closeout CIS IG3":
+        - cell "10/10/2026, 11:35:59 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Updated"
+        - cell "Client"
+        - cell "OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7":
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell "View Updated event for OmniBot QA — Closeout CIS IG3":
+          - button "View Updated event for OmniBot QA — Closeout CIS IG3": View
+      - row "10/10/2026, 10:45:21 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Archive Client OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 View Archive event for OmniBot QA — Closeout CIS IG3":
+        - cell "10/10/2026, 10:45:21 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Archive"
+        - cell "Client"
+        - cell "OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7":
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell "View Archive event for OmniBot QA — Closeout CIS IG3":
+          - button "View Archive event for OmniBot QA — Closeout CIS IG3": View
+      - row "10/10/2026, 10:45:21 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Updated Client OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 View Updated event for OmniBot QA — Closeout CIS IG3":
+        - cell "10/10/2026, 10:45:21 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Updated"
+        - cell "Client"
+        - cell "OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7":
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell "View Updated event for OmniBot QA — Closeout CIS IG3":
+          - button "View Updated event for OmniBot QA — Closeout CIS IG3": View
+      - row "10/10/2026, 10:21:18 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+        - cell "10/10/2026, 10:21:18 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - button "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e": View
+      - row "10/10/2026, 10:20:44 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+        - cell "10/10/2026, 10:20:44 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - button "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e": View
+      - row "10/10/2026, 10:20:22 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+        - cell "10/10/2026, 10:20:22 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - button "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e": View
+      - row "10/10/2026, 10:20:01 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+        - cell "10/10/2026, 10:20:01 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - button "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e": View
+      - row "10/10/2026, 10:19:41 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+        - cell "10/10/2026, 10:19:41 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - button "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e": View
+      - row "10/10/2026, 10:19:22 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+        - cell "10/10/2026, 10:19:22 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - button "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e": View
+      - row "10/10/2026, 10:19:01 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Framework Assessment Updated Framework Assessment fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+        - cell "10/10/2026, 10:19:01 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Framework Assessment Updated"
+        - cell "Framework Assessment"
+        - cell "fw_54c3a69230de5e2ab266c0466dd1f99e fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e":
+          - button "View Framework Assessment Updated event for fw_54c3a69230de5e2ab266c0466dd1f99e": View
+      - row "10/10/2026, 8:50:35 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Onboarding Completed Client OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 View Onboarding Completed event for OmniBot QA — Closeout CIS IG3":
+        - cell "10/10/2026, 8:50:35 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Onboarding Completed"
+        - cell "Client"
+        - cell "OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7":
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell "View Onboarding Completed event for OmniBot QA — Closeout CIS IG3":
+          - button "View Onboarding Completed event for OmniBot QA — Closeout CIS IG3": View
+      - row "10/10/2026, 8:49:03 AM OmniBot QA — Closeout CIS IG3 Staging Administrator staging-admin@example.com Created Client OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 View Created event for OmniBot QA — Closeout CIS IG3":
+        - cell "10/10/2026, 8:49:03 AM"
+        - cell "OmniBot QA — Closeout CIS IG3"
+        - cell "Staging Administrator staging-admin@example.com":
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell "Created"
+        - cell "Client"
+        - cell "OmniBot QA — Closeout CIS IG3 cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7":
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell "View Created event for OmniBot QA — Closeout CIS IG3":
+          - button "View Created event for OmniBot QA — Closeout CIS IG3": View
+  - generic: Showing 1–39 of 39
+  - button "Prev" [disabled]:
+    - text: Prev
+  - generic: 1 / 1
+  - button "Next" [disabled]:
+    - text: Next
+- region "Notifications alt+T"

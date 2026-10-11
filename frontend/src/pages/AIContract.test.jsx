@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import AIGovernance from './AIGovernance';
 import AIDrawer from '@/components/AIDrawer';
 import api from '@/lib/api';
-import {AI_KEYS} from '@/lib/aiGovernance';
+import {AI_KEYS,AI_RELATIONSHIP_NOTICE} from '@/lib/aiGovernance';
 import {AI_PILOT_KEYS} from '@/lib/brawndoAI';
 
 let mockUser,mockClient;
@@ -106,4 +106,23 @@ test('Prestige stale edit keeps its draft and does not overwrite the concurrent 
  expect(document.querySelector('[aria-label="Product / System Name"]').value).toBe('Unsaved Prestige edit');
  expect(document.body.textContent).toContain('Record changed since it was opened');
  expect((await mine()).find(r=>r.ai_system_id===row.ai_system_id)).toMatchObject({name:'Concurrent Prestige AI',description:'Concurrent canonical edit'});
+});
+
+test('a historical relationship integrity notice is visible in register and drawer without a write',async()=>{
+ const row=(await api.post('/ai_systems',{client_id:mockClient,name:'Preserved historical AI'})).data;
+ const get=api.get.bind(api);
+ jest.spyOn(api,'get').mockImplementation(async(path,...args)=>{
+  const response=await get(path,...args);
+  return path==='/ai_systems'?{...response,data:response.data.map(record=>record.ai_system_id===row.ai_system_id?
+   {...record,relationship_integrity_warning:true,related_links:[]}:record)}:response;
+ });
+ const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');
+ await act(async()=>root.render(<AIGovernance/>));
+ expect(container.querySelector('[role="status"].register-notice').textContent).toBe(AI_RELATIONSHIP_NOTICE);
+ await click(container.querySelector('[aria-label="Open Preserved historical AI"]'));
+ const drawer=document.querySelector('[data-testid="ai-drawer"]');
+ expect(drawer.querySelector('[role="status"].register-notice').textContent).toBe(AI_RELATIONSHIP_NOTICE);
+ await click(buttons('Related')[0]);
+ expect(drawer.textContent).toContain(AI_RELATIONSHIP_NOTICE);
+ expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
 });

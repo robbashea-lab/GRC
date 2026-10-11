@@ -1,0 +1,4799 @@
+{
+  "version": "cis-v8.1-program-2",
+  "framework_id": "cis-ig1",
+  "framework_version": "8.1",
+  "reviewed_on": "2026-10-07",
+  "criteria_revision": "2026-10-05",
+  "guidance_revision": "2026-10-04",
+  "basis": "Authored safeguard assessment criteria; CIS v8.1 requirements, not CAS metrics. Evidence examples and optional context do not impose additional obligations.",
+  "definitions": {
+    "2.1": {
+      "title": "Establish and Maintain a Software Inventory",
+      "control": 2,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#21-establish-and-maintain-a-software-inventory",
+      "guidance": "Track installed software, ownership, licensing and business purpose.",
+      "evidence": [
+        "Software inventory or application catalog containing the relevant fields.",
+        "Dated reconciliation with installed-software reports, licensing records or provider-maintained inventories."
+      ],
+      "elements": [
+        {
+          "id": "2.1-c1",
+          "text": "A maintained inventory covers all licensed software installed on enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "2.1-c6",
+          "text": "Each entry records software title.",
+          "conditional": false
+        },
+        {
+          "id": "2.1-c7",
+          "text": "Each entry records publisher.",
+          "conditional": false
+        },
+        {
+          "id": "2.1-c8",
+          "text": "Each entry records initial install/use date.",
+          "conditional": false
+        },
+        {
+          "id": "2.1-c9",
+          "text": "Each entry records business purpose.",
+          "conditional": false
+        },
+        {
+          "id": "2.1-c3",
+          "text": "Inventory is reviewed and updated at least every six months.",
+          "conditional": false
+        },
+        {
+          "id": "2.1-c10",
+          "text": "Where appropriate, entries include software URLs.",
+          "conditional": true
+        },
+        {
+          "id": "2.1-c11",
+          "text": "Where appropriate, entries include app stores.",
+          "conditional": true
+        },
+        {
+          "id": "2.1-c12",
+          "text": "Where appropriate, entries include versions.",
+          "conditional": true
+        },
+        {
+          "id": "2.1-c13",
+          "text": "Where appropriate, entries include deployment mechanism.",
+          "conditional": true
+        },
+        {
+          "id": "2.1-c14",
+          "text": "Where appropriate, entries include decommission date.",
+          "conditional": true
+        },
+        {
+          "id": "2.1-c15",
+          "text": "Where appropriate, entries include license count.",
+          "conditional": true
+        }
+      ]
+    },
+    "2.2": {
+      "title": "Ensure Authorized Software is Currently Supported",
+      "control": 2,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#22-ensure-authorized-software-is-currently-supported",
+      "guidance": "Check vendor support and document necessary unsupported-software exceptions.",
+      "evidence": [
+        "Version inventory matched to publisher lifecycle notices and dated monthly support checks.",
+        "For necessary unsupported software, its exception and evidence that the stated mitigation operates."
+      ],
+      "elements": [
+        {
+          "id": "2.2-c4",
+          "text": "Only supported software is designated authorized unless necessary unsupported software has a documented exception.",
+          "conditional": false
+        },
+        {
+          "id": "2.2-c5",
+          "text": "Necessary unsupported-software exceptions document mitigating controls.",
+          "conditional": true
+        },
+        {
+          "id": "2.2-c6",
+          "text": "Exceptions document residual-risk acceptance.",
+          "conditional": true
+        },
+        {
+          "id": "2.2-c7",
+          "text": "Unsupported software without exception documentation is designated unauthorized.",
+          "conditional": false
+        },
+        {
+          "id": "2.2-c8",
+          "text": "Software support is reviewed at least monthly.",
+          "conditional": false
+        }
+      ]
+    },
+    "2.3": {
+      "title": "Address Unauthorized Software",
+      "control": 2,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#23-address-unauthorized-software",
+      "guidance": "Review unauthorized installations and record removal or approved exceptions.",
+      "evidence": [
+        "Monthly software reconciliation or provider review identifying unauthorized installations.",
+        "Removal results or documented exceptions tied to the software and affected assets."
+      ],
+      "elements": [
+        {
+          "id": "2.3-c1",
+          "text": "Unauthorized software is removed or has a documented exception.",
+          "conditional": false
+        },
+        {
+          "id": "2.3-c2",
+          "text": "Unauthorized-software handling is reviewed at least monthly.",
+          "conditional": false
+        }
+      ]
+    },
+    "2.4": {
+      "title": "Utilize Automated Software Inventory Tools",
+      "control": 2,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#24-utilize-automated-software-inventory-tools",
+      "guidance": "Automate installed-software visibility where possible. Maintain discovery coverage and inventory feed.",
+      "evidence": [
+        "Tool coverage and inventory samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "2.4-c3",
+          "text": "Software inventory tools automate discovery of installed software throughout the enterprise, when possible.",
+          "conditional": true
+        },
+        {
+          "id": "2.4-c4",
+          "text": "The tools automate documentation of installed software, when possible.",
+          "conditional": true
+        }
+      ]
+    },
+    "2.5": {
+      "title": "Allowlist Authorized Software",
+      "control": 2,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#25-allowlist-authorized-software",
+      "guidance": "Restrict execution/access to approved applications. Enforce application restrictions.",
+      "evidence": [
+        "Policy configuration, exception and reassessment records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "2.5-c1",
+          "text": "Technical controls permit execution or access only to authorized software.",
+          "conditional": false
+        },
+        {
+          "id": "2.5-c4",
+          "text": "The controls enforce authorized-software restrictions.",
+          "conditional": false
+        },
+        {
+          "id": "2.5-c3",
+          "text": "Controls are reassessed at least every six months.",
+          "conditional": false
+        }
+      ]
+    },
+    "2.6": {
+      "title": "Allowlist Authorized Libraries",
+      "control": 2,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#26-allowlist-authorized-libraries",
+      "guidance": "Prevent unapproved libraries loading. Enforce library controls; handle changes safely.",
+      "evidence": [
+        "Library rule samples and reassessment results. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "2.6-c1",
+          "text": "Technical controls allow only authorized software libraries to load into system processes.",
+          "conditional": false
+        },
+        {
+          "id": "2.6-c4",
+          "text": "Unauthorized libraries are blocked from loading.",
+          "conditional": false
+        },
+        {
+          "id": "2.6-c3",
+          "text": "Controls are reassessed at least every six months.",
+          "conditional": false
+        }
+      ]
+    },
+    "2.7": {
+      "title": "Allowlist Authorized Scripts",
+      "control": 2,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/#27-allowlist-authorized-scripts",
+      "guidance": "Enforce execution of authorized scripts only and block others; reassess at least every six months.",
+      "evidence": [
+        "Approved script list, enforcement configuration, safe allow/block test results, reassessment record.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "2.7-c4",
+          "text": "Technical controls allow only authorized scripts to execute.",
+          "conditional": false
+        },
+        {
+          "id": "2.7-c5",
+          "text": "Unauthorized scripts are blocked from executing.",
+          "conditional": false
+        },
+        {
+          "id": "2.7-c6",
+          "text": "Controls are reassessed at least every six months.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.1": {
+      "title": "Establish and Maintain a Data Management Process",
+      "control": 3,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#31-establish-and-maintain-a-data-management-process",
+      "guidance": "Document data ownership, sensitivity, handling, retention and disposal.",
+      "evidence": [
+        "Data-management procedures or standards addressing the required subjects.",
+        "Revision records or dated reviews explaining updates after relevant changes."
+      ],
+      "elements": [
+        {
+          "id": "3.1-c6",
+          "text": "A documented data-management process is established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "3.1-c10",
+          "text": "The process addresses data sensitivity.",
+          "conditional": false
+        },
+        {
+          "id": "3.1-c11",
+          "text": "The process identifies data owners.",
+          "conditional": false
+        },
+        {
+          "id": "3.1-c8",
+          "text": "The process addresses data handling.",
+          "conditional": false
+        },
+        {
+          "id": "3.1-c12",
+          "text": "The process addresses retention limits based on enterprise sensitivity and retention standards.",
+          "conditional": false
+        },
+        {
+          "id": "3.1-c13",
+          "text": "The process addresses disposal requirements based on enterprise sensitivity and retention standards.",
+          "conditional": false
+        },
+        {
+          "id": "3.1-c4",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.2": {
+      "title": "Establish and Maintain a Data Inventory",
+      "control": 3,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#32-establish-and-maintain-a-data-inventory",
+      "guidance": "Locate sensitive information and keep its inventory current.",
+      "evidence": [
+        "Data inventory linked to the systems or locations holding the identified data.",
+        "Dated annual reconciliation with data owners or responsible providers."
+      ],
+      "elements": [
+        {
+          "id": "3.2-c1",
+          "text": "A maintained data inventory follows the data-management process and includes sensitive data at minimum.",
+          "conditional": false
+        },
+        {
+          "id": "3.2-c2",
+          "text": "Inventory is reviewed and updated at least annually, prioritizing sensitive data.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.3": {
+      "title": "Configure Data Access Control Lists",
+      "control": 3,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#33-configure-data-access-control-lists",
+      "guidance": "Limit data permissions to justified business needs.",
+      "evidence": [
+        "Permission exports or configuration views from the relevant repositories.",
+        "Business-role information or access-review records explaining why the observed access is needed."
+      ],
+      "elements": [
+        {
+          "id": "3.3-c2",
+          "text": "Data access permissions are based on user need to know.",
+          "conditional": false
+        },
+        {
+          "id": "3.3-c5",
+          "text": "Need-to-know permissions apply to local file systems.",
+          "conditional": false
+        },
+        {
+          "id": "3.3-c6",
+          "text": "Need-to-know permissions apply to remote file systems.",
+          "conditional": false
+        },
+        {
+          "id": "3.3-c7",
+          "text": "Need-to-know permissions apply to databases.",
+          "conditional": false
+        },
+        {
+          "id": "3.3-c8",
+          "text": "Need-to-know permissions apply to applications.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.4": {
+      "title": "Enforce Data Retention",
+      "control": 3,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#34-enforce-data-retention",
+      "guidance": "Apply documented minimum and maximum retention periods.",
+      "evidence": [
+        "Retention requirements together with repository or system retention settings.",
+        "Dated retention/deletion results or provider records showing how the periods are enforced."
+      ],
+      "elements": [
+        {
+          "id": "3.4-c2",
+          "text": "Data is retained according to the documented data-management process.",
+          "conditional": false
+        },
+        {
+          "id": "3.4-c4",
+          "text": "Retention includes minimum timelines.",
+          "conditional": false
+        },
+        {
+          "id": "3.4-c5",
+          "text": "Retention includes maximum timelines.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.5": {
+      "title": "Securely Dispose of Data",
+      "control": 3,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#35-securely-dispose-of-data",
+      "guidance": "Select disposal methods appropriate to information sensitivity.",
+      "evidence": [
+        "Disposal procedure and dated deletion, sanitization or destruction records.",
+        "Provider disposal certificates or execution reports identifying the affected data or media."
+      ],
+      "elements": [
+        {
+          "id": "3.5-c2",
+          "text": "Data is securely disposed of according to the documented data-management process.",
+          "conditional": false
+        },
+        {
+          "id": "3.5-c3",
+          "text": "Disposal processes and methods are appropriate to data sensitivity.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.6": {
+      "title": "Encrypt Data on End-User Devices",
+      "control": 3,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#36-encrypt-data-on-end-user-devices",
+      "guidance": "Protect sensitive endpoint information with device encryption.",
+      "evidence": [
+        "Encryption-state reports or device configuration views matched to the sensitive-data device population.",
+        "Client or provider verification of actual encryption coverage, excluding passwords and recovery keys."
+      ],
+      "elements": [
+        {
+          "id": "3.6-c1",
+          "text": "Data is encrypted on end-user devices that contain sensitive information.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.7": {
+      "title": "Establish and Maintain a Data Classification Scheme",
+      "control": 3,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#37-establish-and-maintain-a-data-classification-scheme",
+      "guidance": "Give information consistent sensitivity classifications. Apply classification in handling decisions.",
+      "evidence": [
+        "Classification scheme and owner decisions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "3.7-c4",
+          "text": "An overall enterprise data-classification scheme is established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "3.7-c3",
+          "text": "The scheme is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.8": {
+      "title": "Document Data Flows",
+      "control": 3,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#38-document-data-flows",
+      "guidance": "Document internal and service-provider data flows using the enterprise data management process. Review and update the documentation annually and after significant relevant changes.",
+      "evidence": [
+        "Flow diagrams or equivalent controlled records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "3.8-c4",
+          "text": "Data flows are documented, including service-provider data flows.",
+          "conditional": false
+        },
+        {
+          "id": "3.8-c5",
+          "text": "Flow documentation follows the enterprise data-management process.",
+          "conditional": false
+        },
+        {
+          "id": "3.8-c3",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.9": {
+      "title": "Encrypt Data on Removable Media",
+      "control": 3,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#39-encrypt-data-on-removable-media",
+      "guidance": "Protect removable-media contents with encryption. Enforce media encryption.",
+      "evidence": [
+        "Configuration sample and coverage exceptions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "3.9-c3",
+          "text": "Data on removable media is encrypted.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.10": {
+      "title": "Encrypt Sensitive Data in Transit",
+      "control": 3,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#310-encrypt-sensitive-data-in-transit",
+      "guidance": "Protect sensitive information during transfer. Maintain encrypted transport.",
+      "evidence": [
+        "Transport configurations and sampled connection results. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "3.10-c3",
+          "text": "Sensitive data is encrypted in transit.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.11": {
+      "title": "Encrypt Sensitive Data at Rest",
+      "control": 3,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#311-encrypt-sensitive-data-at-rest",
+      "guidance": "Encrypt sensitive data at rest. Storage-layer encryption meets the minimum; application-layer or client-side encryption may provide additional protection but is not mandatory.",
+      "evidence": [
+        "Storage encryption settings and scoped assurance. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "3.11-c5",
+          "text": "Sensitive data at rest is encrypted on servers.",
+          "conditional": false
+        },
+        {
+          "id": "3.11-c7",
+          "text": "Sensitive data at rest is encrypted in applications.",
+          "conditional": false
+        },
+        {
+          "id": "3.11-c8",
+          "text": "Sensitive data at rest is encrypted in databases.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.12": {
+      "title": "Segment Data Processing and Storage Based on Sensitivity",
+      "control": 3,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#312-segment-data-processing-and-storage-based-on-sensitivity",
+      "guidance": "Keep sensitive processing out of lower-trust environments. Enforce storage and processing separation.",
+      "evidence": [
+        "Architecture and boundary configuration samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "3.12-c5",
+          "text": "Data processing is segmented by data sensitivity.",
+          "conditional": false
+        },
+        {
+          "id": "3.12-c6",
+          "text": "Data storage is segmented by data sensitivity.",
+          "conditional": false
+        },
+        {
+          "id": "3.12-c4",
+          "text": "Sensitive data is not processed on assets intended for lower-sensitivity data.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.13": {
+      "title": "Deploy a Data Loss Prevention Solution",
+      "control": 3,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#313-deploy-a-data-loss-prevention-solution",
+      "guidance": "Use automated sensitive-data discovery across enterprise and provider assets, and update the data inventory.",
+      "evidence": [
+        "Discovery coverage/export, DLP configuration, provider coverage statement and matched data-inventory update.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "3.13-c7",
+          "text": "An automated tool identifies all sensitive data stored through enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "3.13-c8",
+          "text": "An automated tool identifies all sensitive data processed through enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "3.13-c9",
+          "text": "An automated tool identifies all sensitive data transmitted through enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "3.13-c10",
+          "text": "Discovery covers enterprise assets onsite.",
+          "conditional": false
+        },
+        {
+          "id": "3.13-c11",
+          "text": "Discovery covers enterprise assets at remote service providers.",
+          "conditional": false
+        },
+        {
+          "id": "3.13-c6",
+          "text": "Discovered sensitive data updates the enterprise data inventory.",
+          "conditional": false
+        }
+      ]
+    },
+    "3.14": {
+      "title": "Log Sensitive Data Access",
+      "control": 3,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/#314-log-sensitive-data-access",
+      "guidance": "Record access to sensitive data, including changes and disposal.",
+      "evidence": [
+        "Audit-source configuration and representative access, change and disposal log entries.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "3.14-c4",
+          "text": "Sensitive-data access is logged.",
+          "conditional": false
+        },
+        {
+          "id": "3.14-c5",
+          "text": "Sensitive-data modification is logged.",
+          "conditional": false
+        },
+        {
+          "id": "3.14-c6",
+          "text": "Sensitive-data disposal is logged.",
+          "conditional": false
+        }
+      ]
+    },
+    "4.1": {
+      "title": "Establish and Maintain a Secure Configuration Process",
+      "control": 4,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#41-establish-and-maintain-a-secure-configuration-process",
+      "guidance": "Document secure device and software configurations and maintain baselines.",
+      "evidence": [
+        "Configuration procedures and relevant baseline examples.",
+        "Dated process reviews and change records showing that documentation remains current."
+      ],
+      "elements": [
+        {
+          "id": "4.1-c3",
+          "text": "A documented secure-configuration process is established and maintained for enterprise assets and software.",
+          "conditional": false
+        },
+        {
+          "id": "4.1-c7",
+          "text": "The configuration process covers end-user devices, including portable and mobile devices.",
+          "conditional": false
+        },
+        {
+          "id": "4.1-c8",
+          "text": "The configuration process covers non-computing/IoT devices.",
+          "conditional": false
+        },
+        {
+          "id": "4.1-c9",
+          "text": "The configuration process covers servers.",
+          "conditional": false
+        },
+        {
+          "id": "4.1-c10",
+          "text": "The configuration process covers operating systems.",
+          "conditional": false
+        },
+        {
+          "id": "4.1-c11",
+          "text": "The configuration process covers applications.",
+          "conditional": false
+        },
+        {
+          "id": "4.1-c6",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "4.2": {
+      "title": "Establish and Maintain a Secure Configuration Process for Network Infrastructure",
+      "control": 4,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#42-establish-and-maintain-a-secure-configuration-process-for-network-infrastructure",
+      "guidance": "Maintain documented secure network-device configurations.",
+      "evidence": [
+        "Network configuration procedures or standards, with relevant device baselines.",
+        "Annual review records and revisions resulting from network changes."
+      ],
+      "elements": [
+        {
+          "id": "4.2-c3",
+          "text": "A documented secure-configuration process is established and maintained for network devices.",
+          "conditional": false
+        },
+        {
+          "id": "4.2-c4",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "4.3": {
+      "title": "Configure Automatic Session Locking on Enterprise Assets",
+      "control": 4,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#43-configure-automatic-session-locking-on-enterprise-assets",
+      "guidance": "Enforce appropriate inactivity lock settings.",
+      "evidence": [
+        "Effective session-lock settings or policy-deployment reports by device type.",
+        "A safe observation of automatic locking on representative devices."
+      ],
+      "elements": [
+        {
+          "id": "4.3-c2",
+          "text": "Enterprise assets automatically lock sessions after a defined inactivity period.",
+          "conditional": false
+        },
+        {
+          "id": "4.3-c3",
+          "text": "General-purpose operating-system inactivity limits do not exceed 15 minutes.",
+          "conditional": false
+        },
+        {
+          "id": "4.3-c4",
+          "text": "Mobile end-user device inactivity limits do not exceed two minutes.",
+          "conditional": false
+        }
+      ]
+    },
+    "4.4": {
+      "title": "Implement and Manage a Firewall on Servers",
+      "control": 4,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#44-implement-and-manage-a-firewall-on-servers",
+      "guidance": "Enable supported server firewall protections.",
+      "evidence": [
+        "Server inventory compared with firewall coverage and effective configuration.",
+        "Management or provider records showing the deployed firewall state."
+      ],
+      "elements": [
+        {
+          "id": "4.4-c2",
+          "text": "A server firewall is implemented where supported.",
+          "conditional": true
+        },
+        {
+          "id": "4.4-c3",
+          "text": "Server firewalls are managed where supported.",
+          "conditional": true
+        }
+      ]
+    },
+    "4.5": {
+      "title": "Implement and Manage a Firewall on End-User Devices",
+      "control": 4,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#45-implement-and-manage-a-firewall-on-end-user-devices",
+      "guidance": "Use default-deny endpoint firewall rules with justified exceptions.",
+      "evidence": [
+        "Effective endpoint firewall rules and deployment/coverage reports.",
+        "Configuration observations or provider reports confirming the policy operates on devices."
+      ],
+      "elements": [
+        {
+          "id": "4.5-c2",
+          "text": "End-user devices have a managed host-based firewall or port-filtering tool.",
+          "conditional": false
+        },
+        {
+          "id": "4.5-c3",
+          "text": "Default-deny rules drop traffic except explicitly allowed services and ports.",
+          "conditional": false
+        }
+      ]
+    },
+    "4.6": {
+      "title": "Securely Manage Enterprise Assets and Software",
+      "control": 4,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#46-securely-manage-enterprise-assets-and-software",
+      "guidance": "Use secure administrative channels and controlled configuration changes.",
+      "evidence": [
+        "Administrative-interface settings, connection configurations or management procedures.",
+        "Change records or provider demonstrations showing secure administration in use and any operationally essential exception."
+      ],
+      "elements": [
+        {
+          "id": "4.6-c4",
+          "text": "Enterprise assets are securely managed.",
+          "conditional": false
+        },
+        {
+          "id": "4.6-c5",
+          "text": "Enterprise software is securely managed.",
+          "conditional": false
+        },
+        {
+          "id": "4.6-c3",
+          "text": "Insecure management protocols are used only when operationally essential.",
+          "conditional": false
+        }
+      ]
+    },
+    "4.7": {
+      "title": "Manage Default Accounts on Enterprise Assets and Software",
+      "control": 4,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#47-manage-default-accounts-on-enterprise-assets-and-software",
+      "guidance": "Disable or secure preconfigured accounts.",
+      "evidence": [
+        "Default-account configuration or account-state records for relevant systems.",
+        "Provisioning or provider records showing the treatment applied to preconfigured accounts."
+      ],
+      "elements": [
+        {
+          "id": "4.7-c2",
+          "text": "Default accounts on enterprise assets are managed.",
+          "conditional": false
+        },
+        {
+          "id": "4.7-c3",
+          "text": "Default accounts in enterprise software are managed.",
+          "conditional": false
+        }
+      ]
+    },
+    "4.8": {
+      "title": "Uninstall or Disable Unnecessary Services on Enterprise Assets and Software",
+      "control": 4,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#48-uninstall-or-disable-unnecessary-services-on-enterprise-assets-and-software",
+      "guidance": "Remove unnecessary exposed functionality. Remove or disable unnecessary services.",
+      "evidence": [
+        "Baseline and sampled service inventory. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "4.8-c3",
+          "text": "Unnecessary services on enterprise assets are uninstalled or disabled.",
+          "conditional": false
+        },
+        {
+          "id": "4.8-c4",
+          "text": "Unnecessary services in enterprise software are uninstalled or disabled.",
+          "conditional": false
+        }
+      ]
+    },
+    "4.9": {
+      "title": "Configure Trusted DNS Servers on Enterprise Assets",
+      "control": 4,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#49-configure-trusted-dns-servers-on-enterprise-assets",
+      "guidance": "Use trustworthy infrastructure name resolution. Maintain trusted resolver settings.",
+      "evidence": [
+        "Network configuration samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "4.9-c3",
+          "text": "Network infrastructure uses trusted DNS servers.",
+          "conditional": false
+        },
+        {
+          "id": "4.9-c4",
+          "text": "Network device DNS configuration points to trusted servers.",
+          "conditional": false
+        }
+      ]
+    },
+    "4.10": {
+      "title": "Enforce Automatic Device Lockout on Portable End-User Devices",
+      "control": 4,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#410-enforce-automatic-device-lockout-on-portable-end-user-devices",
+      "guidance": "Limit repeated local authentication failures on portable devices. Enforce lockout thresholds.",
+      "evidence": [
+        "Device policy and representative test result. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "4.10-c1",
+          "text": "Supported portable devices automatically lock out after predetermined local authentication failures.",
+          "conditional": true
+        },
+        {
+          "id": "4.10-c4",
+          "text": "Supported laptops allow no more than 20 local failed authentication attempts before device lockout.",
+          "conditional": true
+        },
+        {
+          "id": "4.10-c6",
+          "text": "Tablet thresholds permit no more than 10 failed attempts where supported.",
+          "conditional": true
+        },
+        {
+          "id": "4.10-c7",
+          "text": "Smartphone thresholds permit no more than 10 failed attempts where supported.",
+          "conditional": true
+        }
+      ]
+    },
+    "4.11": {
+      "title": "Enforce Remote Wipe Capability on Portable End-User Devices",
+      "control": 4,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#411-enforce-remote-wipe-capability-on-portable-end-user-devices",
+      "guidance": "Remove enterprise data remotely when appropriate. Maintain capability; execute on approved events.",
+      "evidence": [
+        "Capability coverage and authorized wipe record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "4.11-c1",
+          "text": "Enterprise data can be remotely wiped from enterprise-owned portable end-user devices.",
+          "conditional": false
+        },
+        {
+          "id": "4.11-c4",
+          "text": "Enterprise data is remotely wiped when deemed appropriate.",
+          "conditional": false
+        },
+        {
+          "id": "4.11-c5",
+          "text": "Wiping applies to the enterprise data on those devices.",
+          "conditional": false
+        }
+      ]
+    },
+    "4.12": {
+      "title": "Separate Enterprise Workspaces on Mobile End-User Devices",
+      "control": 4,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/#412-separate-enterprise-workspaces-on-mobile-end-user-devices",
+      "guidance": "Separate enterprise and personal workspaces on mobile devices wherever supported.",
+      "evidence": [
+        "Device capability inventory, management-profile configuration, representative device compliance record.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "4.12-c1",
+          "text": "Supported mobile end-user devices use separate enterprise workspaces.",
+          "conditional": true
+        }
+      ]
+    },
+    "5.1": {
+      "title": "Establish and Maintain an Inventory of Accounts",
+      "control": 5,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#51-establish-and-maintain-an-inventory-of-accounts",
+      "guidance": "Inventory accounts and verify continuing authorization.",
+      "evidence": [
+        "Account inventory and account/role exports from the client or responsible provider.",
+        "Dated quarterly authorization decisions tied to the reviewed accounts."
+      ],
+      "elements": [
+        {
+          "id": "5.1-c8",
+          "text": "The maintained account inventory covers all enterprise-managed user accounts.",
+          "conditional": false
+        },
+        {
+          "id": "5.1-c9",
+          "text": "The maintained account inventory covers all enterprise-managed administrator accounts.",
+          "conditional": false
+        },
+        {
+          "id": "5.1-c10",
+          "text": "The maintained account inventory covers all enterprise-managed service accounts.",
+          "conditional": false
+        },
+        {
+          "id": "5.1-c11",
+          "text": "Records contain person name.",
+          "conditional": false
+        },
+        {
+          "id": "5.1-c12",
+          "text": "Records contain username.",
+          "conditional": false
+        },
+        {
+          "id": "5.1-c13",
+          "text": "Records contain start dates.",
+          "conditional": false
+        },
+        {
+          "id": "5.1-c14",
+          "text": "Records contain stop dates.",
+          "conditional": false
+        },
+        {
+          "id": "5.1-c15",
+          "text": "Records contain department.",
+          "conditional": false
+        },
+        {
+          "id": "5.1-c7",
+          "text": "All active accounts are validated as authorized at least quarterly.",
+          "conditional": false
+        }
+      ]
+    },
+    "5.2": {
+      "title": "Use Unique Passwords",
+      "control": 5,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#52-use-unique-passwords",
+      "guidance": "Use distinct passwords; source guidance distinguishes MFA and non-MFA accounts.",
+      "evidence": [
+        "Password-policy configuration and credential-handling procedures without secret values.",
+        "A responsible-party demonstration or explanation of how reuse across assets is avoided; settings alone may not prove uniqueness."
+      ],
+      "elements": [
+        {
+          "id": "5.2-c1",
+          "text": "Passwords are unique across enterprise assets.",
+          "conditional": false
+        }
+      ]
+    },
+    "5.3": {
+      "title": "Disable Dormant Accounts",
+      "control": 5,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#53-disable-dormant-accounts",
+      "guidance": "Detect inactive accounts and disable or remove them.",
+      "evidence": [
+        "Account inactivity reports and dated account-state changes.",
+        "Client or provider execution records confirming which dormant accounts were disabled or deleted."
+      ],
+      "elements": [
+        {
+          "id": "5.3-c1",
+          "text": "Accounts inactive for 45 days are disabled or deleted where supported.",
+          "conditional": true
+        }
+      ]
+    },
+    "5.4": {
+      "title": "Restrict Administrator Privileges to Dedicated Administrator Accounts",
+      "control": 5,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#54-restrict-administrator-privileges-to-dedicated-administrator-accounts",
+      "guidance": "Separate privileged administration from ordinary computing.",
+      "evidence": [
+        "Privileged-account and role listings alongside ordinary user-account records.",
+        "Access procedures or representative activity records showing separation in practice."
+      ],
+      "elements": [
+        {
+          "id": "5.4-c1",
+          "text": "Administrator privileges are confined to dedicated accounts.",
+          "conditional": false
+        },
+        {
+          "id": "5.4-c2",
+          "text": "Routine computing uses the person's nonprivileged account.",
+          "conditional": false
+        }
+      ]
+    },
+    "5.5": {
+      "title": "Establish and Maintain an Inventory of Service Accounts",
+      "control": 5,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#55-establish-and-maintain-an-inventory-of-service-accounts",
+      "guidance": "Keep service-account purpose and ownership accountable. Maintain inventory through account changes.",
+      "evidence": [
+        "Service-account register and authorization decisions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "5.5-c5",
+          "text": "An inventory of service accounts is established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "5.5-c8",
+          "text": "Records identify department owner.",
+          "conditional": false
+        },
+        {
+          "id": "5.5-c10",
+          "text": "Records include review date.",
+          "conditional": false
+        },
+        {
+          "id": "5.5-c11",
+          "text": "Records include purpose.",
+          "conditional": false
+        },
+        {
+          "id": "5.5-c3",
+          "text": "Reviews validate authorization of all active service accounts at least quarterly.",
+          "conditional": false
+        }
+      ]
+    },
+    "5.6": {
+      "title": "Centralize Account Management",
+      "control": 5,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/#56-centralize-account-management",
+      "guidance": "Consolidate account administration. Operate centralized account management.",
+      "evidence": [
+        "Directory coverage and exception records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "5.6-c3",
+          "text": "Account management is centralized through a directory or identity service.",
+          "conditional": false
+        },
+        {
+          "id": "5.6-c4",
+          "text": "The directory or identity service manages enterprise accounts centrally.",
+          "conditional": false
+        }
+      ]
+    },
+    "6.1": {
+      "title": "Establish an Access Granting Process",
+      "control": 6,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#61-establish-an-access-granting-process",
+      "guidance": "Document and follow access approval and provisioning.",
+      "evidence": [
+        "Access-granting procedure and relevant hire/role-change requests.",
+        "Provisioning records or responsible-provider results showing the resulting access."
+      ],
+      "elements": [
+        {
+          "id": "6.1-c2",
+          "text": "A documented access-granting process is established.",
+          "conditional": false
+        },
+        {
+          "id": "6.1-c4",
+          "text": "The documented access-granting process is followed upon new hire.",
+          "conditional": false
+        },
+        {
+          "id": "6.1-c5",
+          "text": "The documented access-granting process is followed upon user role change.",
+          "conditional": false
+        }
+      ]
+    },
+    "6.2": {
+      "title": "Establish an Access Revoking Process",
+      "control": 6,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#62-establish-an-access-revoking-process",
+      "guidance": "Revoke access immediately on termination, rights revocation or role change; retain disabled accounts when needed to preserve audit history.",
+      "evidence": [
+        "Offboarding/role-change records compared with timestamped disablement logs.",
+        "Revocation procedure and provider execution records where access is externally managed."
+      ],
+      "elements": [
+        {
+          "id": "6.2-c1",
+          "text": "An access-revocation process is established and followed.",
+          "conditional": false
+        },
+        {
+          "id": "6.2-c2",
+          "text": "Accounts are disabled immediately for termination, rights revocation or role change.",
+          "conditional": false
+        }
+      ]
+    },
+    "6.3": {
+      "title": "Require MFA for Externally-Exposed Applications",
+      "control": 6,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#63-require-mfa-for-externally-exposed-applications",
+      "guidance": "Enforce supported MFA for externally accessible applications.",
+      "evidence": [
+        "Application/sign-in inventory and MFA or conditional-access configuration.",
+        "Authentication results or provider records demonstrating enforced MFA on applicable routes."
+      ],
+      "elements": [
+        {
+          "id": "6.3-c2",
+          "text": "All externally exposed enterprise applications enforce MFA where supported.",
+          "conditional": true
+        },
+        {
+          "id": "6.3-c3",
+          "text": "All externally exposed third-party applications enforce MFA where supported.",
+          "conditional": true
+        }
+      ]
+    },
+    "6.4": {
+      "title": "Require MFA for Remote Network Access",
+      "control": 6,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#64-require-mfa-for-remote-network-access",
+      "guidance": "Protect remote network entry with MFA.",
+      "evidence": [
+        "Remote-access configurations and authentication policies.",
+        "Connection/authentication logs or a safe sign-in demonstration from the client or provider."
+      ],
+      "elements": [
+        {
+          "id": "6.4-c1",
+          "text": "Remote network connections require MFA.",
+          "conditional": false
+        }
+      ]
+    },
+    "6.5": {
+      "title": "Require MFA for Administrative Access",
+      "control": 6,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#65-require-mfa-for-administrative-access",
+      "guidance": "Apply supported MFA to privileged accounts.",
+      "evidence": [
+        "Administrative-account lists matched to effective MFA policies.",
+        "Admin sign-in results or scoped provider evidence confirming enforcement."
+      ],
+      "elements": [
+        {
+          "id": "6.5-c2",
+          "text": "All administrative access accounts enforce MFA where supported.",
+          "conditional": true
+        },
+        {
+          "id": "6.5-c4",
+          "text": "MFA covers administrative access on onsite enterprise assets where supported.",
+          "conditional": true
+        },
+        {
+          "id": "6.5-c5",
+          "text": "MFA covers administrative access on service-provider-managed enterprise assets where supported.",
+          "conditional": true
+        }
+      ]
+    },
+    "6.6": {
+      "title": "Establish and Maintain an Inventory of Authentication and Authorization Systems",
+      "control": 6,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#66-establish-and-maintain-an-inventory-of-authentication-and-authorization-systems",
+      "guidance": "Identify all authentication/authorization systems. Maintain system inventory.",
+      "evidence": [
+        "Identity-system register and reviewed changes. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "6.6-c5",
+          "text": "The maintained inventory identifies enterprise authentication systems.",
+          "conditional": false
+        },
+        {
+          "id": "6.6-c6",
+          "text": "The maintained inventory identifies enterprise authorization systems.",
+          "conditional": false
+        },
+        {
+          "id": "6.6-c7",
+          "text": "The system inventory includes onsite systems.",
+          "conditional": false
+        },
+        {
+          "id": "6.6-c8",
+          "text": "The system inventory includes systems at remote service providers.",
+          "conditional": false
+        },
+        {
+          "id": "6.6-c3",
+          "text": "Inventory is reviewed and updated at least annually.",
+          "conditional": false
+        }
+      ]
+    },
+    "6.7": {
+      "title": "Centralize Access Control",
+      "control": 6,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#67-centralize-access-control",
+      "guidance": "Consolidate supported access enforcement. Operate centralized access control.",
+      "evidence": [
+        "SSO coverage and access configuration samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "6.7-c1",
+          "text": "Access control for enterprise assets is centralized where supported.",
+          "conditional": true
+        },
+        {
+          "id": "6.7-c3",
+          "text": "Where supported, centralized access control for enterprise assets uses a directory service or SSO provider.",
+          "conditional": true
+        }
+      ]
+    },
+    "6.8": {
+      "title": "Define and Maintain Role-Based Access Control",
+      "control": 6,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls6/#68-define-and-maintain-role-based-access-control",
+      "guidance": "Document necessary rights by role; review asset privileges for authorization at least annually.",
+      "evidence": [
+        "Role-to-rights matrix, entitlement export, dated authorization review and resulting corrections.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "6.8-c4",
+          "text": "Role-based access control is defined and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "6.8-c5",
+          "text": "Necessary access rights for each role are determined and documented.",
+          "conditional": false
+        },
+        {
+          "id": "6.8-c6",
+          "text": "Reviews validate authorization of all enterprise-asset privileges at least annually.",
+          "conditional": false
+        }
+      ]
+    },
+    "7.1": {
+      "title": "Establish and Maintain a Vulnerability Management Process",
+      "control": 7,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#71-establish-and-maintain-a-vulnerability-management-process",
+      "guidance": "Document how vulnerabilities are identified and managed.",
+      "evidence": [
+        "Vulnerability-management procedures and their asset scope.",
+        "Dated reviews or revisions showing annual and significant-change maintenance."
+      ],
+      "elements": [
+        {
+          "id": "7.1-c3",
+          "text": "A documented vulnerability-management process is established and maintained for enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "7.1-c4",
+          "text": "Documentation is reviewed and updated annually, or when significant enterprise changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "7.2": {
+      "title": "Establish and Maintain a Remediation Process",
+      "control": 7,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#72-establish-and-maintain-a-remediation-process",
+      "guidance": "Review a documented risk-prioritized remediation process.",
+      "evidence": [
+        "Risk-based remediation procedure and prioritization criteria.",
+        "Dated monthly reviews supported by remediation queues, decisions or provider reports."
+      ],
+      "elements": [
+        {
+          "id": "7.2-c1",
+          "text": "A documented remediation process prioritizes work by risk.",
+          "conditional": false
+        },
+        {
+          "id": "7.2-c2",
+          "text": "The process is reviewed at least monthly.",
+          "conditional": false
+        }
+      ]
+    },
+    "7.3": {
+      "title": "Perform Automated Operating System Patch Management",
+      "control": 7,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#73-perform-automated-operating-system-patch-management",
+      "guidance": "Automate operating-system updates and manage failed deployments.",
+      "evidence": [
+        "Automated patch configuration and dated OS deployment results.",
+        "Asset-level update status or provider execution reports, including failed jobs and subsequent outcomes."
+      ],
+      "elements": [
+        {
+          "id": "7.3-c2",
+          "text": "Automated patch management applies operating-system updates to enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "7.3-c3",
+          "text": "Operating-system updates are performed at least monthly.",
+          "conditional": false
+        }
+      ]
+    },
+    "7.4": {
+      "title": "Perform Automated Application Patch Management",
+      "control": 7,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#74-perform-automated-application-patch-management",
+      "guidance": "Automate application updates and manage failed deployments.",
+      "evidence": [
+        "Application update configuration and dated deployment results.",
+        "Installed-version comparisons or responsible-provider reports demonstrating completed updates."
+      ],
+      "elements": [
+        {
+          "id": "7.4-c2",
+          "text": "Automated patch management applies application updates to enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "7.4-c3",
+          "text": "Application updates are performed at least monthly.",
+          "conditional": false
+        }
+      ]
+    },
+    "7.5": {
+      "title": "Perform Automated Vulnerability Scans of Internal Enterprise Assets",
+      "control": 7,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#75-perform-automated-vulnerability-scans-of-internal-enterprise-assets",
+      "guidance": "Find internal vulnerabilities with both scan perspectives. Run scans and route results.",
+      "evidence": [
+        "Dated scope/coverage and scan summaries. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "7.5-c4",
+          "text": "Automated vulnerability scans cover internal enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "7.5-c7",
+          "text": "Authenticated internal vulnerability scans are conducted.",
+          "conditional": false
+        },
+        {
+          "id": "7.5-c8",
+          "text": "Unauthenticated internal vulnerability scans are conducted.",
+          "conditional": false
+        },
+        {
+          "id": "7.5-c6",
+          "text": "Scans occur at least quarterly.",
+          "conditional": false
+        }
+      ]
+    },
+    "7.6": {
+      "title": "Perform Automated Vulnerability Scans of Externally-Exposed Enterprise Assets",
+      "control": 7,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#76-perform-automated-vulnerability-scans-of-externally-exposed-enterprise-assets",
+      "guidance": "Find weaknesses in externally exposed assets. Run external scans and route results.",
+      "evidence": [
+        "Dated external coverage and results. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "7.6-c4",
+          "text": "Automated vulnerability scans cover externally exposed enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "7.6-c5",
+          "text": "Externally exposed assets undergo vulnerability scanning.",
+          "conditional": false
+        },
+        {
+          "id": "7.6-c3",
+          "text": "Scans occur at least monthly.",
+          "conditional": false
+        }
+      ]
+    },
+    "7.7": {
+      "title": "Remediate Detected Vulnerabilities",
+      "control": 7,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/#77-remediate-detected-vulnerabilities",
+      "guidance": "Resolve detected software weaknesses systematically. Remediate and validate outcomes.",
+      "evidence": [
+        "Remediation tickets and closure checks. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "7.7-c4",
+          "text": "Detected software vulnerabilities are remediated using processes and tooling.",
+          "conditional": false
+        },
+        {
+          "id": "7.7-c5",
+          "text": "Remediation follows the enterprise remediation process.",
+          "conditional": false
+        },
+        {
+          "id": "7.7-c3",
+          "text": "Remediation occurs at least monthly.",
+          "conditional": false
+        }
+      ]
+    },
+    "8.1": {
+      "title": "Establish and Maintain an Audit Log Management Process",
+      "control": 8,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#81-establish-and-maintain-an-audit-log-management-process",
+      "guidance": "Document log collection, retention and review expectations.",
+      "evidence": [
+        "Audit-log management procedures covering collection, review and retention.",
+        "Dated annual reviews or revisions after relevant changes."
+      ],
+      "elements": [
+        {
+          "id": "8.1-c3",
+          "text": "A documented audit-log management process defines enterprise logging requirements.",
+          "conditional": false
+        },
+        {
+          "id": "8.1-c4",
+          "text": "The process addresses collection of enterprise-asset audit logs.",
+          "conditional": false
+        },
+        {
+          "id": "8.1-c7",
+          "text": "The process addresses review of audit logs.",
+          "conditional": false
+        },
+        {
+          "id": "8.1-c8",
+          "text": "The process addresses retention of audit logs.",
+          "conditional": false
+        },
+        {
+          "id": "8.1-c6",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "8.2": {
+      "title": "Collect Audit Logs",
+      "control": 8,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#82-collect-audit-logs",
+      "guidance": "Enable required audit events across assets.",
+      "evidence": [
+        "Logging settings together with recent audit records from the relevant assets.",
+        "Source-coverage reports or provider records demonstrating collection."
+      ],
+      "elements": [
+        {
+          "id": "8.2-c1",
+          "text": "Assets collect audit logs with logging enabled according to the documented process.",
+          "conditional": false
+        }
+      ]
+    },
+    "8.3": {
+      "title": "Ensure Adequate Audit Log Storage",
+      "control": 8,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#83-ensure-adequate-audit-log-storage",
+      "guidance": "Size and manage storage to meet documented logging needs.",
+      "evidence": [
+        "Storage configuration and utilization reports for logging destinations.",
+        "Retention/capacity observations or provider reports compared with the organization's logging requirements."
+      ],
+      "elements": [
+        {
+          "id": "8.3-c1",
+          "text": "Logging destinations have storage sufficient for the logging process.",
+          "conditional": false
+        }
+      ]
+    },
+    "8.4": {
+      "title": "Standardize Time Synchronization",
+      "control": 8,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#84-standardize-time-synchronization",
+      "guidance": "Make event times comparable. Operate time synchronization.",
+      "evidence": [
+        "Time configuration and drift observations. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "8.4-c3",
+          "text": "Time synchronization is standardized across enterprise assets where supported.",
+          "conditional": true
+        },
+        {
+          "id": "8.4-c4",
+          "text": "At least two synchronized time sources are configured where supported.",
+          "conditional": true
+        }
+      ]
+    },
+    "8.5": {
+      "title": "Collect Detailed Audit Logs",
+      "control": 8,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#85-collect-detailed-audit-logs",
+      "guidance": "Configure detailed audit logs on enterprise assets containing sensitive data, including the event source, date, username, timestamp, source and destination addresses, and other useful investigation details.",
+      "evidence": [
+        "Representative log events, sensitive-asset coverage and investigation-useful fields, with any missing-field limitations explained. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "8.5-c1",
+          "text": "Detailed audit logging is configured on enterprise assets containing sensitive data.",
+          "conditional": false
+        },
+        {
+          "id": "8.5-c10",
+          "text": "Logs include event source.",
+          "conditional": false
+        },
+        {
+          "id": "8.5-c11",
+          "text": "Logs include date.",
+          "conditional": false
+        },
+        {
+          "id": "8.5-c12",
+          "text": "Logs include username.",
+          "conditional": false
+        },
+        {
+          "id": "8.5-c13",
+          "text": "Logs include timestamp.",
+          "conditional": false
+        },
+        {
+          "id": "8.5-c14",
+          "text": "Logs include source addresses.",
+          "conditional": false
+        },
+        {
+          "id": "8.5-c15",
+          "text": "Logs include destination addresses.",
+          "conditional": false
+        },
+        {
+          "id": "8.5-c9",
+          "text": "Logs include other useful elements for forensic investigation.",
+          "conditional": false
+        }
+      ]
+    },
+    "8.6": {
+      "title": "Collect DNS Query Audit Logs",
+      "control": 8,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#86-collect-dns-query-audit-logs",
+      "guidance": "Preserve relevant DNS-query observations. Collect DNS query events.",
+      "evidence": [
+        "DNS event sample and source coverage. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "8.6-c3",
+          "text": "DNS query audit logs are collected on enterprise assets where appropriate and supported.",
+          "conditional": true
+        }
+      ]
+    },
+    "8.7": {
+      "title": "Collect URL Request Audit Logs",
+      "control": 8,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#87-collect-url-request-audit-logs",
+      "guidance": "Preserve relevant web-request observations. Collect URL request events.",
+      "evidence": [
+        "URL event sample and source coverage. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "8.7-c3",
+          "text": "URL request audit logs are collected on enterprise assets where appropriate and supported.",
+          "conditional": true
+        }
+      ]
+    },
+    "8.8": {
+      "title": "Collect Command-Line Audit Logs",
+      "control": 8,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#88-collect-command-line-audit-logs",
+      "guidance": "Make command execution traceable. Collect command-line events.",
+      "evidence": [
+        "Shell event samples and configuration. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "8.8-c3",
+          "text": "Command-line audit logs are collected.",
+          "conditional": false
+        }
+      ]
+    },
+    "8.9": {
+      "title": "Centralize Audit Logs",
+      "control": 8,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#89-centralize-audit-logs",
+      "guidance": "Make logs jointly accessible for investigation. Operate centralized collection/retention.",
+      "evidence": [
+        "Source inventory and ingestion health. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "8.9-c5",
+          "text": "Audit-log collection is centralized to the extent possible across enterprise assets.",
+          "conditional": true
+        },
+        {
+          "id": "8.9-c6",
+          "text": "Audit-log retention is centralized to the extent possible across enterprise assets.",
+          "conditional": true
+        },
+        {
+          "id": "8.9-c4",
+          "text": "Where centralization is possible, centralized audit-log collection and retention follow the documented audit-log management process.",
+          "conditional": true
+        }
+      ]
+    },
+    "8.10": {
+      "title": "Retain Audit Logs",
+      "control": 8,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#810-retain-audit-logs",
+      "guidance": "Keep adequate historical audit events. Retain events throughout the required window.",
+      "evidence": [
+        "Retention configuration and oldest retrievable sample. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "8.10-c6",
+          "text": "Audit logs are retained across enterprise assets for at least 90 days.",
+          "conditional": false
+        }
+      ]
+    },
+    "8.11": {
+      "title": "Conduct Audit Log Reviews",
+      "control": 8,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#811-conduct-audit-log-reviews",
+      "guidance": "Detect suspicious behavior through log examination. Review logs and investigate anomalies.",
+      "evidence": [
+        "Dated review outcomes and escalations. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "8.11-c4",
+          "text": "Audit logs are reviewed for anomalies or abnormal events indicating potential threats.",
+          "conditional": false
+        },
+        {
+          "id": "8.11-c5",
+          "text": "Review examines logs for potential threat indications.",
+          "conditional": false
+        },
+        {
+          "id": "8.11-c3",
+          "text": "Reviews occur at least weekly.",
+          "conditional": false
+        }
+      ]
+    },
+    "8.12": {
+      "title": "Collect Service Provider Logs",
+      "control": 8,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#812-collect-service-provider-logs",
+      "guidance": "Obtain service-provider logs wherever the provider supports them.",
+      "evidence": [
+        "Provider logging capability record, connector configuration, representative received logs.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "8.12-c1",
+          "text": "Service-provider logs are collected where supported.",
+          "conditional": true
+        }
+      ]
+    },
+    "9.1": {
+      "title": "Ensure Use of Only Fully Supported Browsers and Email Clients",
+      "control": 9,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#91-ensure-use-of-only-fully-supported-browsers-and-email-clients",
+      "guidance": "Restrict browser and email software to current supported releases.",
+      "evidence": [
+        "Browser/email-client version inventory compared with vendor release information.",
+        "Update/enforcement settings and observed installed versions or provider coverage reports."
+      ],
+      "elements": [
+        {
+          "id": "9.1-c4",
+          "text": "Only fully supported browsers are allowed to execute.",
+          "conditional": false
+        },
+        {
+          "id": "9.1-c5",
+          "text": "Only fully supported email clients are allowed to execute.",
+          "conditional": false
+        },
+        {
+          "id": "9.1-c6",
+          "text": "Browsers use the latest versions provided by their vendors.",
+          "conditional": false
+        },
+        {
+          "id": "9.1-c7",
+          "text": "Email clients use the latest versions provided by their vendors.",
+          "conditional": false
+        }
+      ]
+    },
+    "9.2": {
+      "title": "Use DNS Filtering Services",
+      "control": 9,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#92-use-dns-filtering-services",
+      "guidance": "Block known malicious domains for local and remote endpoints.",
+      "evidence": [
+        "DNS filtering configuration and endpoint coverage information.",
+        "Block events or a provider-approved safe test demonstrating filtering, including remote devices."
+      ],
+      "elements": [
+        {
+          "id": "9.2-c2",
+          "text": "DNS filtering blocks known malicious domains on all onsite end-user devices.",
+          "conditional": false
+        },
+        {
+          "id": "9.2-c3",
+          "text": "DNS filtering blocks known malicious domains on all remote end-user devices.",
+          "conditional": false
+        }
+      ]
+    },
+    "9.3": {
+      "title": "Maintain and Enforce Network-Based URL Filters",
+      "control": 9,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#93-maintain-and-enforce-network-based-url-filters",
+      "guidance": "Limit risky web destinations through network controls. Enforce and update URL filtering.",
+      "evidence": [
+        "Filtering policy, coverage and exceptions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "9.3-c3",
+          "text": "Network-based URL filters limit connections to potentially malicious or unapproved websites.",
+          "conditional": false
+        },
+        {
+          "id": "9.3-c4",
+          "text": "URL filters are enforced and updated for all enterprise assets.",
+          "conditional": false
+        }
+      ]
+    },
+    "9.4": {
+      "title": "Restrict Unnecessary or Unauthorized Browser and Email Client Extensions",
+      "control": 9,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#94-restrict-unnecessary-or-unauthorized-browser-and-email-client-extensions",
+      "guidance": "Uninstall or disable unauthorized or unnecessary browser and email-client plugins, extensions and add-on applications.",
+      "evidence": [
+        "Browser and email-client plugin, extension and add-on inventories, with settings or records showing uninstalling or disabling. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "9.4-c1",
+          "text": "Browser and email-client plugins, extensions and add-on applications are covered.",
+          "conditional": false
+        },
+        {
+          "id": "9.4-c3",
+          "text": "Unauthorized or unnecessary items are uninstalled or disabled.",
+          "conditional": false
+        }
+      ]
+    },
+    "9.5": {
+      "title": "Implement DMARC",
+      "control": 9,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#95-implement-dmarc",
+      "guidance": "Authenticate domain email to reduce spoofing. Operate domain authentication.",
+      "evidence": [
+        "DNS records, validation and mail-domain scope. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "9.5-c7",
+          "text": "DMARC policy is implemented.",
+          "conditional": false
+        },
+        {
+          "id": "9.5-c8",
+          "text": "DMARC verification is implemented.",
+          "conditional": false
+        },
+        {
+          "id": "9.5-c5",
+          "text": "SPF is implemented as part of the starting point.",
+          "conditional": false
+        },
+        {
+          "id": "9.5-c6",
+          "text": "DKIM is implemented as part of the starting point.",
+          "conditional": false
+        }
+      ]
+    },
+    "9.6": {
+      "title": "Block Unnecessary File Types",
+      "control": 9,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#96-block-unnecessary-file-types",
+      "guidance": "Prevent unwanted email attachment types entering. Enforce email file-type blocking.",
+      "evidence": [
+        "Gateway policy and representative blocking record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "9.6-c3",
+          "text": "Unnecessary file types are blocked at the enterprise email gateway.",
+          "conditional": false
+        }
+      ]
+    },
+    "9.7": {
+      "title": "Deploy and Maintain Email Server Anti-Malware Protections",
+      "control": 9,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls9/#97-deploy-and-maintain-email-server-anti-malware-protections",
+      "guidance": "Operate and maintain anti-malware protection for email servers.",
+      "evidence": [
+        "Email-service protection settings, provider service-scope record, recent protection event or safe test record.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "9.7-c1",
+          "text": "Anti-malware protection is deployed on email servers.",
+          "conditional": false
+        },
+        {
+          "id": "9.7-c4",
+          "text": "Email-server anti-malware protection is maintained.",
+          "conditional": false
+        }
+      ]
+    },
+    "10.1": {
+      "title": "Deploy and Maintain Anti-Malware Software",
+      "control": 10,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#101-deploy-and-maintain-anti-malware-software",
+      "guidance": "Maintain endpoint malware protection.",
+      "evidence": [
+        "Anti-malware deployment/health reports matched to the asset inventory.",
+        "Effective device settings or provider records confirming active protection."
+      ],
+      "elements": [
+        {
+          "id": "10.1-c2",
+          "text": "Anti-malware software is deployed on all enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "10.1-c3",
+          "text": "Anti-malware software is maintained on all enterprise assets.",
+          "conditional": false
+        }
+      ]
+    },
+    "10.2": {
+      "title": "Configure Automatic Anti-Malware Signature Updates",
+      "control": 10,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#102-configure-automatic-anti-malware-signature-updates",
+      "guidance": "Keep malware detection signatures automatically updated.",
+      "evidence": [
+        "Automatic-update settings alongside signature-version or update-status reports.",
+        "Dated endpoint or provider update results."
+      ],
+      "elements": [
+        {
+          "id": "10.2-c1",
+          "text": "Anti-malware signatures update automatically across enterprise assets.",
+          "conditional": false
+        }
+      ]
+    },
+    "10.3": {
+      "title": "Disable Autorun and Autoplay for Removable Media",
+      "control": 10,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#103-disable-autorun-and-autoplay-for-removable-media",
+      "guidance": "Assess removable-media autorun and autoplay auto-execute behavior, rather than requiring every media browsing or playback interface to be disabled.",
+      "evidence": [
+        "Effective autorun/autoplay settings or applied-policy reports.",
+        "A safe configuration observation from representative devices or their responsible provider."
+      ],
+      "elements": [
+        {
+          "id": "10.3-c2",
+          "text": "Removable-media autorun execution is disabled.",
+          "conditional": false
+        },
+        {
+          "id": "10.3-c3",
+          "text": "Removable-media autoplay execution is disabled.",
+          "conditional": false
+        }
+      ]
+    },
+    "10.4": {
+      "title": "Configure Automatic Anti-Malware Scanning of Removable Media",
+      "control": 10,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#104-configure-automatic-anti-malware-scanning-of-removable-media",
+      "guidance": "Inspect removable media automatically. Run automatic media malware scans.",
+      "evidence": [
+        "Policy and scan event samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "10.4-c7",
+          "text": "Anti-malware software automatically scans removable media.",
+          "conditional": false
+        }
+      ]
+    },
+    "10.5": {
+      "title": "Enable Anti-Exploitation Features",
+      "control": 10,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#105-enable-anti-exploitation-features",
+      "guidance": "Use available exploitation resistance. Maintain enabled anti-exploitation features.",
+      "evidence": [
+        "Configuration and coverage limitations. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "10.5-c3",
+          "text": "Anti-exploitation features are enabled on enterprise assets where possible.",
+          "conditional": true
+        },
+        {
+          "id": "10.5-c4",
+          "text": "Anti-exploitation features are enabled in enterprise software where possible.",
+          "conditional": true
+        }
+      ]
+    },
+    "10.6": {
+      "title": "Centrally Manage Anti-Malware Software",
+      "control": 10,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#106-centrally-manage-anti-malware-software",
+      "guidance": "Coordinate malware protection centrally. Maintain centralized policy and coverage.",
+      "evidence": [
+        "Management-console coverage summary. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "10.6-c3",
+          "text": "Anti-malware software is centrally managed.",
+          "conditional": false
+        }
+      ]
+    },
+    "10.7": {
+      "title": "Use Behavior-Based Anti-Malware Software",
+      "control": 10,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls10/#107-use-behavior-based-anti-malware-software",
+      "guidance": "Detect malware by behavior. Operate behavior-based malware protection.",
+      "evidence": [
+        "Capability configuration and detection samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "10.7-c3",
+          "text": "Behavior-based anti-malware software is used.",
+          "conditional": false
+        }
+      ]
+    },
+    "11.1": {
+      "title": "Establish and Maintain a Data Recovery Process",
+      "control": 11,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#111-establish-and-maintain-a-data-recovery-process",
+      "guidance": "Document the data recovery process, covering recovery scope, prioritization and backup-data security. Review and update it annually and after significant relevant changes.",
+      "evidence": [
+        "Recovery procedures identifying scope, priorities and backup protection.",
+        "Dated annual reviews and change-driven revisions."
+      ],
+      "elements": [
+        {
+          "id": "11.1-c3",
+          "text": "A documented data-recovery process is established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "11.1-c4",
+          "text": "The process addresses the scope of recovery activities.",
+          "conditional": false
+        },
+        {
+          "id": "11.1-c5",
+          "text": "The process addresses recovery prioritization.",
+          "conditional": false
+        },
+        {
+          "id": "11.1-c6",
+          "text": "The process addresses backup-data security.",
+          "conditional": false
+        },
+        {
+          "id": "11.1-c7",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        },
+        {
+          "id": "11.1-guided-backup-procedures",
+          "text": "The documented recovery process includes detailed backup procedures.",
+          "conditional": false
+        }
+      ]
+    },
+    "11.2": {
+      "title": "Perform Automated Backups",
+      "control": 11,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#112-perform-automated-backups",
+      "guidance": "Automate in-scope backups and investigate failures.",
+      "evidence": [
+        "Backup scope and schedule configuration together with dated job results.",
+        "Client or provider backup reports showing success, failure and subsequent resolution."
+      ],
+      "elements": [
+        {
+          "id": "11.2-c2",
+          "text": "In-scope enterprise assets are backed up automatically.",
+          "conditional": false
+        },
+        {
+          "id": "11.2-c3",
+          "text": "Backups run at least weekly, or more frequently based on data sensitivity.",
+          "conditional": false
+        }
+      ]
+    },
+    "11.3": {
+      "title": "Protect Recovery Data",
+      "control": 11,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#113-protect-recovery-data",
+      "guidance": "Protect backups consistently with original-data sensitivity.",
+      "evidence": [
+        "Backup access/encryption configurations compared with the original data's protection requirements.",
+        "Provider protection records or demonstrations covering the recovery copy."
+      ],
+      "elements": [
+        {
+          "id": "11.3-c1",
+          "text": "Recovery data has protection equivalent to original data, with encryption or separation as required.",
+          "conditional": false
+        }
+      ]
+    },
+    "11.4": {
+      "title": "Establish and Maintain an Isolated Instance of Recovery Data",
+      "control": 11,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#114-establish-and-maintain-an-isolated-instance-of-recovery-data",
+      "guidance": "Maintain a backup copy isolated from primary-system compromise.",
+      "evidence": [
+        "Backup destination/version configuration and records identifying the isolated copy.",
+        "Access or separation details from the client or provider showing how isolation is maintained."
+      ],
+      "elements": [
+        {
+          "id": "11.4-c1",
+          "text": "An isolated recovery-data copy is established and maintained.",
+          "conditional": false
+        }
+      ]
+    },
+    "11.5": {
+      "title": "Test Data Recovery",
+      "control": 11,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/#115-test-data-recovery",
+      "guidance": "Demonstrate sampled recovery actually works. Execute restore tests and resolve failures.",
+      "evidence": [
+        "Restore results, sample scope and follow-up Actions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "11.5-c4",
+          "text": "Backup recovery is tested.",
+          "conditional": false
+        },
+        {
+          "id": "11.5-c5",
+          "text": "Testing samples in-scope enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "11.5-c3",
+          "text": "Recovery tests occur at least quarterly.",
+          "conditional": false
+        }
+      ]
+    },
+    "12.1": {
+      "title": "Ensure Network Infrastructure is Up-to-Date",
+      "control": 12,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#121-ensure-network-infrastructure-is-up-to-date",
+      "guidance": "Verify network software support and maintain current infrastructure.",
+      "evidence": [
+        "Network version inventory and vendor lifecycle/release information.",
+        "Dated monthly support checks and upgrade or provider maintenance results."
+      ],
+      "elements": [
+        {
+          "id": "12.1-c1",
+          "text": "Network infrastructure remains current.",
+          "conditional": false
+        },
+        {
+          "id": "12.1-c2",
+          "text": "Software versions and support are checked at least monthly.",
+          "conditional": false
+        }
+      ]
+    },
+    "12.2": {
+      "title": "Establish and Maintain a Secure Network Architecture",
+      "control": 12,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#122-establish-and-maintain-a-secure-network-architecture",
+      "guidance": "Design and maintain secure network architecture addressing segmentation, least privilege and availability. Documentation supports the architecture but does not replace policy and design components.",
+      "evidence": [
+        "Design and deployed boundary evidence. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "12.2-c3",
+          "text": "Secure network architecture is designed and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "12.2-c5",
+          "text": "Architecture addresses segmentation.",
+          "conditional": false
+        },
+        {
+          "id": "12.2-c6",
+          "text": "Architecture addresses least privilege.",
+          "conditional": false
+        },
+        {
+          "id": "12.2-c7",
+          "text": "Architecture addresses availability.",
+          "conditional": false
+        }
+      ]
+    },
+    "12.3": {
+      "title": "Securely Manage Network Infrastructure",
+      "control": 12,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#123-securely-manage-network-infrastructure",
+      "guidance": "Protect network administration. Use secure infrastructure management.",
+      "evidence": [
+        "Administrative configuration samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "12.3-c3",
+          "text": "Network infrastructure is securely managed.",
+          "conditional": false
+        }
+      ]
+    },
+    "12.4": {
+      "title": "Establish and Maintain Architecture Diagram(s)",
+      "control": 12,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#124-establish-and-maintain-architecture-diagrams",
+      "guidance": "Keep network architecture understandable and current. Maintain documentation with network changes.",
+      "evidence": [
+        "Reviewed architecture record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "12.4-c4",
+          "text": "Architecture diagrams or other network system documentation are established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "12.4-c5",
+          "text": "Documentation describes the network architecture or systems.",
+          "conditional": false
+        },
+        {
+          "id": "12.4-c3",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "12.5": {
+      "title": "Centralize Network Authentication, Authorization, and Auditing (AAA)",
+      "control": 12,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#125-centralize-network-authentication-authorization-and-aucentralize-network-aaa",
+      "guidance": "Consolidate network identity, permissions and audit. Operate centralized network AAA.",
+      "evidence": [
+        "AAA configuration and covered devices. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "12.5-c5",
+          "text": "Network authentication is centralized.",
+          "conditional": false
+        },
+        {
+          "id": "12.5-c6",
+          "text": "Network authorization is centralized.",
+          "conditional": false
+        },
+        {
+          "id": "12.5-c7",
+          "text": "Network auditing is centralized.",
+          "conditional": false
+        }
+      ]
+    },
+    "12.6": {
+      "title": "Use of Secure Network Management and Communication Protocols",
+      "control": 12,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#126-use-of-secure-network-management-and-communication-protocols",
+      "guidance": "Protect network management and communications. Maintain secure protocol configurations.",
+      "evidence": [
+        "Protocol and wireless configuration samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "12.6-c3",
+          "text": "Secure network management protocols are used.",
+          "conditional": false
+        },
+        {
+          "id": "12.6-c4",
+          "text": "Secure network communication protocols are used.",
+          "conditional": false
+        }
+      ]
+    },
+    "12.7": {
+      "title": "Ensure Remote Devices Utilize a VPN and are Connecting to an Enterprise's AAA Infrastructure",
+      "control": 12,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#127-ensure-remote-devices-utilize-a-vpn-and-are-connecting-to-an-enterprises-aaa-infrastructure",
+      "guidance": "Require users to authenticate to enterprise-managed VPN and authentication services before accessing enterprise resources on end-user devices.",
+      "evidence": [
+        "End-user device access-path configuration and authentication samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "12.7-c6",
+          "text": "Users authenticate to enterprise-managed VPN services.",
+          "conditional": false
+        },
+        {
+          "id": "12.7-c7",
+          "text": "Users authenticate to enterprise-managed authentication services.",
+          "conditional": false
+        },
+        {
+          "id": "12.7-c5",
+          "text": "Authentication covers access to enterprise resources on end-user devices.",
+          "conditional": false
+        },
+        {
+          "id": "12.7-c3",
+          "text": "Authentication occurs before resource access.",
+          "conditional": false
+        }
+      ]
+    },
+    "12.8": {
+      "title": "Establish and Maintain Dedicated Computing Resources for All Administrative Work",
+      "control": 12,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/#128-establish-and-maintain-dedicated-computing-resources-for-all-administrative-work",
+      "guidance": "Use physically or logically dedicated administrative computing resources, segmented from the primary network and without internet access.",
+      "evidence": [
+        "Administrative-resource inventory, network/egress rules, existing connectivity test, operating procedure.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "12.8-c4",
+          "text": "Dedicated physically or logically separated computing resources cover all administrative tasks.",
+          "conditional": false
+        },
+        {
+          "id": "12.8-c5",
+          "text": "Administrative computing resources are segmented from the primary network.",
+          "conditional": false
+        },
+        {
+          "id": "12.8-c6",
+          "text": "Administrative computing resources are not allowed internet access.",
+          "conditional": false
+        }
+      ]
+    },
+    "13.1": {
+      "title": "Centralize Security Event Alerting",
+      "control": 13,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#131-centralize-security-event-alerting",
+      "guidance": "Correlate security events into actionable alerts. Operate correlated security alerting.",
+      "evidence": [
+        "Source coverage, correlation rules and alert cases. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "13.1-c3",
+          "text": "Security-event alerting is centralized across enterprise assets.",
+          "conditional": false
+        },
+        {
+          "id": "13.1-c4",
+          "text": "Centralized alerting supports log correlation and analysis.",
+          "conditional": false
+        },
+        {
+          "id": "13.1-guided-correlation-alerts",
+          "text": "The centralized security-event platform has security-relevant correlation alerts configured and operating.",
+          "conditional": false
+        }
+      ]
+    },
+    "13.2": {
+      "title": "Deploy a Host-Based Intrusion Detection Solution",
+      "control": 13,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#132-deploy-a-host-based-intrusion-detection-solution",
+      "guidance": "Detect intrusions on supported/appropriate hosts. Operate host intrusion detection.",
+      "evidence": [
+        "Sensor coverage and representative alert. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "13.2-c3",
+          "text": "Host-based intrusion detection is deployed on enterprise assets where appropriate and/or supported.",
+          "conditional": true
+        }
+      ]
+    },
+    "13.3": {
+      "title": "Deploy a Network Intrusion Detection Solution",
+      "control": 13,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#133-deploy-a-network-intrusion-detection-solution",
+      "guidance": "Detect network intrusions where appropriate. Operate network intrusion detection.",
+      "evidence": [
+        "Network intrusion detection coverage, sensor configuration and dated alert investigations. Use representative network segments and traffic paths.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "13.3-c3",
+          "text": "Network intrusion detection is deployed on enterprise assets where appropriate.",
+          "conditional": true
+        }
+      ]
+    },
+    "13.4": {
+      "title": "Perform Traffic Filtering Between Network Segments",
+      "control": 13,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#134-perform-traffic-filtering-between-network-segments",
+      "guidance": "Control traffic crossing network boundaries. Enforce boundary filtering.",
+      "evidence": [
+        "Rules and sampled flow validation. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "13.4-c3",
+          "text": "Traffic is filtered between network segments where appropriate.",
+          "conditional": true
+        }
+      ]
+    },
+    "13.5": {
+      "title": "Manage Access Control for Remote Assets",
+      "control": 13,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#135-manage-access-control-for-remote-assets",
+      "guidance": "Condition remote access on asset security posture. Apply posture-based access decisions.",
+      "evidence": [
+        "Posture policy and allow/deny examples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "13.5-c4",
+          "text": "Remote-asset access is controlled according to asset security posture.",
+          "conditional": false
+        },
+        {
+          "id": "13.5-c7",
+          "text": "Access considers whether installed anti-malware is up to date.",
+          "conditional": false
+        },
+        {
+          "id": "13.5-c8",
+          "text": "Access considers compliance with the enterprise secure-configuration process.",
+          "conditional": false
+        },
+        {
+          "id": "13.5-c10",
+          "text": "Access considers whether operating systems are up to date.",
+          "conditional": false
+        },
+        {
+          "id": "13.5-c11",
+          "text": "Access considers whether applications are up to date.",
+          "conditional": false
+        }
+      ]
+    },
+    "13.6": {
+      "title": "Collect Network Traffic Flow Logs",
+      "control": 13,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#136-collect-network-traffic-flow-logs",
+      "guidance": "Make network flows available for review/alerts. Collect network flow or traffic records.",
+      "evidence": [
+        "Collection coverage and flow samples. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "13.6-c3",
+          "text": "Network traffic flow logs or network traffic are collected from network devices.",
+          "conditional": false
+        },
+        {
+          "id": "13.6-c4",
+          "text": "Collected traffic information supports review and alerting.",
+          "conditional": false
+        }
+      ]
+    },
+    "13.7": {
+      "title": "Deploy a Host-Based Intrusion Prevention Solution",
+      "control": 13,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#137-deploy-a-host-based-intrusion-prevention-solution",
+      "guidance": "Provide host intrusion prevention where appropriate and/or supported.",
+      "evidence": [
+        "Endpoint capability/coverage export, prevention settings and representative block result.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "13.7-c4",
+          "text": "Host-based intrusion prevention is deployed on enterprise assets where appropriate and/or supported.",
+          "conditional": true
+        },
+        {
+          "id": "13.7-c6",
+          "text": "For enterprise assets where host-based intrusion prevention is appropriate and/or supported, the solution provides prevention rather than detection alone.",
+          "conditional": true
+        }
+      ]
+    },
+    "13.8": {
+      "title": "Deploy a Network Intrusion Prevention Solution",
+      "control": 13,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#138-deploy-a-network-intrusion-prevention-solutions",
+      "guidance": "Provide network intrusion prevention where appropriate.",
+      "evidence": [
+        "Boundary diagram, prevention policy, cloud-service configuration, representative blocking record.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "13.8-c4",
+          "text": "A network intrusion prevention solution is deployed where appropriate.",
+          "conditional": true
+        }
+      ]
+    },
+    "13.9": {
+      "title": "Deploy Port-Level Access Control",
+      "control": 13,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#139-deploy-port-level-access-control",
+      "guidance": "Enforce port-level network access using 802.1X or a similar authentication-based approach.",
+      "evidence": [
+        "Port/authenticator configuration, authentication records, existing allow/deny test results.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "13.9-c4",
+          "text": "Port-level access control is deployed.",
+          "conditional": false
+        },
+        {
+          "id": "13.9-c5",
+          "text": "Access control uses 802.1X or similar network access control protocols.",
+          "conditional": false
+        },
+        {
+          "id": "13.9-c6",
+          "text": "Network access is controlled at the port level.",
+          "conditional": false
+        }
+      ]
+    },
+    "13.10": {
+      "title": "Perform Application Layer Filtering",
+      "control": 13,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1310-perform-application-layer-filtering",
+      "guidance": "Filter network traffic at the application layer.",
+      "evidence": [
+        "Filtering policy, traffic-path diagram, application-aware allow/block records.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "13.10-c1",
+          "text": "Application-layer filtering is performed.",
+          "conditional": false
+        }
+      ]
+    },
+    "13.11": {
+      "title": "Tune Security Event Alerting Thresholds",
+      "control": 13,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls13/#1311-tune-security-event-alerting-thresholds",
+      "guidance": "Adjust security-event alert thresholds at least monthly.",
+      "evidence": [
+        "Tuning change records, threshold versions and before/after operational observations.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "13.11-c7",
+          "text": "Security-event alerting thresholds are tuned at least monthly.",
+          "conditional": false
+        }
+      ]
+    },
+    "14.1": {
+      "title": "Establish and Maintain a Security Awareness Program",
+      "control": 14,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#141-establish-and-maintain-a-security-awareness-program",
+      "guidance": "Maintain an awareness program and review content; track workforce participation.",
+      "evidence": [
+        "Training content and hire/annual completion records from internal or provider-led delivery.",
+        "Workforce reconciliation and dated content reviews/revisions."
+      ],
+      "elements": [
+        {
+          "id": "14.1-c1",
+          "text": "A maintained security-awareness program teaches secure use of enterprise assets and data.",
+          "conditional": false
+        },
+        {
+          "id": "14.1-c3",
+          "text": "Training occurs at hire and at least annually.",
+          "conditional": false
+        },
+        {
+          "id": "14.1-c4",
+          "text": "Content is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "14.2": {
+      "title": "Train Workforce Members to Recognize Social Engineering Attacks",
+      "control": 14,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#142-train-workforce-members-to-recognize-social-engineering-attacks",
+      "guidance": "Teach recognition of phishing and other social manipulation.",
+      "evidence": [
+        "Relevant lesson material and training/attendance records.",
+        "Discussion, exercise or knowledge-check results where used by the organization."
+      ],
+      "elements": [
+        {
+          "id": "14.2-c1",
+          "text": "Training teaches recognition of social-engineering attacks.",
+          "conditional": false
+        }
+      ]
+    },
+    "14.3": {
+      "title": "Train Workforce Members on Authentication Best Practices",
+      "control": 14,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#143-train-workforce-members-on-authentication-best-practices",
+      "guidance": "Teach secure authentication and credential handling.",
+      "evidence": [
+        "Authentication lesson material with attendance or completion records.",
+        "Workforce guidance or knowledge checks used to reinforce the lesson."
+      ],
+      "elements": [
+        {
+          "id": "14.3-c1",
+          "text": "Training covers authentication best practices.",
+          "conditional": false
+        }
+      ]
+    },
+    "14.4": {
+      "title": "Train Workforce on Data Handling Best Practices",
+      "control": 14,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#144-train-workforce-on-data-handling-best-practices",
+      "guidance": "Teach safe storage, sharing and disposal of sensitive information.",
+      "evidence": [
+        "Data-handling and clear-screen/desk lesson material.",
+        "Training delivery records or exercises relevant to the organization's data handling."
+      ],
+      "elements": [
+        {
+          "id": "14.4-c4",
+          "text": "Training covers identifying sensitive data.",
+          "conditional": false
+        },
+        {
+          "id": "14.4-c7",
+          "text": "Training covers proper sensitive-data storage.",
+          "conditional": false
+        },
+        {
+          "id": "14.4-c8",
+          "text": "Training covers proper sensitive-data transfer.",
+          "conditional": false
+        },
+        {
+          "id": "14.4-c9",
+          "text": "Training covers proper sensitive-data archiving.",
+          "conditional": false
+        },
+        {
+          "id": "14.4-c10",
+          "text": "Training covers proper sensitive-data destruction.",
+          "conditional": false
+        },
+        {
+          "id": "14.4-c11",
+          "text": "Training covers clear-screen best practices.",
+          "conditional": false
+        },
+        {
+          "id": "14.4-c12",
+          "text": "Training covers clear-desk best practices.",
+          "conditional": false
+        }
+      ]
+    },
+    "14.5": {
+      "title": "Train Workforce Members on Causes of Unintentional Data Exposure",
+      "control": 14,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#145-train-workforce-members-on-causes-of-unintentional-data-exposure",
+      "guidance": "Explain accidental disclosure and prevention.",
+      "evidence": [
+        "Lessons or communications explaining accidental-exposure scenarios.",
+        "Attendance, completion or scenario-discussion records."
+      ],
+      "elements": [
+        {
+          "id": "14.5-c1",
+          "text": "Training explains causes of accidental data exposure.",
+          "conditional": false
+        }
+      ]
+    },
+    "14.6": {
+      "title": "Train Workforce Members on Recognizing and Reporting Security Incidents",
+      "control": 14,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#146-train-workforce-members-on-recognizing-and-reporting-security-incidents",
+      "guidance": "Teach workers to identify and report potential incidents.",
+      "evidence": [
+        "Incident-recognition/reporting training and completion records.",
+        "Current reporting instructions or exercise/discussion results where used."
+      ],
+      "elements": [
+        {
+          "id": "14.6-c2",
+          "text": "Training teaches recognition of potential incidents.",
+          "conditional": false
+        },
+        {
+          "id": "14.6-c3",
+          "text": "Training teaches how to report potential incidents.",
+          "conditional": false
+        }
+      ]
+    },
+    "14.7": {
+      "title": "Train Workforce on How to Identify and Report if Their Enterprise Assets are Missing Security Updates",
+      "control": 14,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#147-train-workforce-on-how-to-identify-and-report-if-their-enterprise-assets-are-missing-security-updates",
+      "guidance": "Teach recognition and reporting of failed security updates.",
+      "evidence": [
+        "Lessons or job aids explaining update/failure indicators and how to notify IT.",
+        "Training records or practical demonstrations used by the organization."
+      ],
+      "elements": [
+        {
+          "id": "14.7-c2",
+          "text": "Training teaches how to verify and report out-of-date patches.",
+          "conditional": false
+        },
+        {
+          "id": "14.7-c3",
+          "text": "Training teaches how to verify and report automated-process and tool failures, including notifying IT.",
+          "conditional": false
+        }
+      ]
+    },
+    "14.8": {
+      "title": "Train Workforce on the Dangers of Connecting to and Transmitting Enterprise Data Over Insecure Networks",
+      "control": 14,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#148-train-workforce-on-the-dangers-of-connecting-to-and-transmitting-enterprise-data-over-insecure-networks",
+      "guidance": "Cover insecure connections and safe remote/home networking.",
+      "evidence": [
+        "Insecure-network and, where relevant, home-network training material.",
+        "Attendance/completion records or remote-worker guidance supporting delivery."
+      ],
+      "elements": [
+        {
+          "id": "14.8-c2",
+          "text": "Training covers insecure-network connection and transmission risks for enterprise activities.",
+          "conditional": false
+        },
+        {
+          "id": "14.8-c3",
+          "text": "Where remote workers exist, training teaches secure configuration of home network infrastructure.",
+          "conditional": true
+        }
+      ]
+    },
+    "14.9": {
+      "title": "Conduct Role-Specific Security Awareness and Skills Training",
+      "control": 14,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/#149-conduct-role-specific-security-awareness-and-skills-training",
+      "guidance": "Prepare people for their security-specific duties. Deliver role-specific awareness/skills training.",
+      "evidence": [
+        "Role-to-training mapping and participation. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "14.9-c4",
+          "text": "Role-specific security awareness training is conducted.",
+          "conditional": false
+        },
+        {
+          "id": "14.9-c5",
+          "text": "Role-specific security skills training is conducted.",
+          "conditional": false
+        }
+      ]
+    },
+    "15.1": {
+      "title": "Establish and Maintain an Inventory of Service Providers",
+      "control": 15,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#151-establish-and-maintain-an-inventory-of-service-providers",
+      "guidance": "Inventory providers, classifications and accountable contacts.",
+      "evidence": [
+        "Provider inventory with classifications and designated contacts.",
+        "Annual reconciliation or change records compared with contracts, purchasing or service records."
+      ],
+      "elements": [
+        {
+          "id": "15.1-c3",
+          "text": "An inventory covers all known service providers.",
+          "conditional": false
+        },
+        {
+          "id": "15.1-c4",
+          "text": "Records include classifications.",
+          "conditional": false
+        },
+        {
+          "id": "15.1-c5",
+          "text": "Each provider has a designated enterprise contact.",
+          "conditional": false
+        },
+        {
+          "id": "15.1-c6",
+          "text": "Inventory is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "15.2": {
+      "title": "Establish and Maintain a Service Provider Management Policy",
+      "control": 15,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#152-establish-and-maintain-a-service-provider-management-policy",
+      "guidance": "Govern the provider lifecycle consistently. Follow the approved provider policy.",
+      "evidence": [
+        "Controlled policy and lifecycle responsibilities. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "15.2-c5",
+          "text": "A service-provider management policy is established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "15.2-c11",
+          "text": "The policy addresses provider classification.",
+          "conditional": false
+        },
+        {
+          "id": "15.2-c12",
+          "text": "The policy addresses provider inventory.",
+          "conditional": false
+        },
+        {
+          "id": "15.2-c9",
+          "text": "The policy addresses provider assessment.",
+          "conditional": false
+        },
+        {
+          "id": "15.2-c13",
+          "text": "The policy addresses provider monitoring.",
+          "conditional": false
+        },
+        {
+          "id": "15.2-c14",
+          "text": "The policy addresses provider decommissioning.",
+          "conditional": false
+        },
+        {
+          "id": "15.2-c3",
+          "text": "The policy is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "15.3": {
+      "title": "Classify Service Providers",
+      "control": 15,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#153-classify-service-providers",
+      "guidance": "Prioritize providers by relevant exposure. Classify providers and update changes.",
+      "evidence": [
+        "Vendor classification rationale. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "15.3-c4",
+          "text": "Service providers are classified.",
+          "conditional": false
+        },
+        {
+          "id": "15.3-c5",
+          "text": "Classifications are updated and reviewed.",
+          "conditional": false
+        },
+        {
+          "id": "15.3-c3",
+          "text": "Review and updates occur annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "15.4": {
+      "title": "Ensure Service Provider Contracts Include Security Requirements",
+      "control": 15,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#154-ensure-service-provider-contracts-include-security-requirements",
+      "guidance": "Include security requirements in provider contracts consistent with the enterprise service provider management policy. Review contracts annually for missing requirements.",
+      "evidence": [
+        "Contract review, relevant clauses and Actions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "15.4-c4",
+          "text": "Service-provider contracts include security requirements.",
+          "conditional": false
+        },
+        {
+          "id": "15.4-c5",
+          "text": "Contract requirements are consistent with the service-provider management policy.",
+          "conditional": false
+        },
+        {
+          "id": "15.4-c3",
+          "text": "Contracts are reviewed annually for missing security requirements.",
+          "conditional": false
+        }
+      ]
+    },
+    "15.5": {
+      "title": "Assess Service Providers",
+      "control": 15,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#155-assess-service-providers",
+      "guidance": "Assess providers under the provider-management policy; reassess at least annually and address new or renewed contracts.",
+      "evidence": [
+        "Provider register/classification, dated assessment result, contract-event record, linked follow-up.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "15.5-c4",
+          "text": "Service providers are assessed consistently with the provider-management policy.",
+          "conditional": false
+        },
+        {
+          "id": "15.5-c6",
+          "text": "Providers are reassessed annually at minimum, or with new and renewed contracts.",
+          "conditional": false
+        }
+      ]
+    },
+    "15.6": {
+      "title": "Monitor Service Providers",
+      "control": 15,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#156-monitor-service-providers",
+      "guidance": "Monitor providers according to the enterprise provider-management policy.",
+      "evidence": [
+        "Monitoring plan, service/release/advisory review records, provider notices and follow-up.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "15.6-c6",
+          "text": "Service providers are monitored according to the enterprise provider-management policy.",
+          "conditional": false
+        }
+      ]
+    },
+    "15.7": {
+      "title": "Securely Decommission Service Providers",
+      "control": 15,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#157-securely-decommission-service-providers",
+      "guidance": "End provider relationships securely.",
+      "evidence": [
+        "Offboarding record, access revocation, data-transfer/disposal confirmation, closure approval as applicable.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "15.7-c6",
+          "text": "End provider relationships securely.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.1": {
+      "title": "Establish and Maintain a Secure Application Development Process",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#161-establish-and-maintain-a-secure-application-development-process",
+      "guidance": "Make secure development repeatable. Follow secure lifecycle procedures.",
+      "evidence": [
+        "Controlled development process and delivery sample. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.1-c5",
+          "text": "A secure application-development process is established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "16.1-c13",
+          "text": "The process addresses secure application design.",
+          "conditional": false
+        },
+        {
+          "id": "16.1-c14",
+          "text": "The process addresses secure coding practices.",
+          "conditional": false
+        },
+        {
+          "id": "16.1-c9",
+          "text": "The process addresses developer training.",
+          "conditional": false
+        },
+        {
+          "id": "16.1-c10",
+          "text": "The process addresses vulnerability management.",
+          "conditional": false
+        },
+        {
+          "id": "16.1-c11",
+          "text": "The process addresses third-party code security.",
+          "conditional": false
+        },
+        {
+          "id": "16.1-c12",
+          "text": "The process addresses application security testing.",
+          "conditional": false
+        },
+        {
+          "id": "16.1-c3",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.2": {
+      "title": "Establish and Maintain a Process to Accept and Address Software Vulnerabilities",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#162-establish-and-maintain-a-process-to-accept-and-address-software-vulnerabilities",
+      "guidance": "Handle reported software weaknesses through resolution. Receive, assign, remediate and retest reports.",
+      "evidence": [
+        "Reporting channel and vulnerability-tracker sample. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.2-c9",
+          "text": "A maintained process accepts and addresses software vulnerability reports.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c10",
+          "text": "External entities have a means to report vulnerabilities.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c16",
+          "text": "The handling policy identifies the reporting process.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c17",
+          "text": "The handling policy identifies responsible parties.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c18",
+          "text": "The vulnerability-handling process addresses intake.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c19",
+          "text": "The vulnerability-handling process addresses assignment.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c20",
+          "text": "The vulnerability-handling process addresses remediation.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c21",
+          "text": "The vulnerability-handling process addresses remediation testing.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c14",
+          "text": "A vulnerability-tracking system records severity ratings.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c22",
+          "text": "Tracking includes metrics for vulnerability identification timing.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c23",
+          "text": "Tracking includes metrics for vulnerability analysis timing.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c24",
+          "text": "Tracking includes metrics for vulnerability remediation timing.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-c7",
+          "text": "Documentation is reviewed and updated annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        },
+        {
+          "id": "16.2-guided-external-policy-consideration",
+          "text": "Where the enterprise develops applications for third parties, it considers an externally facing vulnerability-handling policy to set expectations for outside stakeholders.",
+          "conditional": true
+        }
+      ]
+    },
+    "16.3": {
+      "title": "Perform Root Cause Analysis on Security Vulnerabilities",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#163-perform-root-cause-analysis-on-security-vulnerabilities",
+      "guidance": "Address recurring causes of software vulnerabilities. Analyze causes and prevention actions.",
+      "evidence": [
+        "Root-cause analysis and follow-up. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.3-c4",
+          "text": "Security vulnerabilities undergo root-cause analysis.",
+          "conditional": false
+        },
+        {
+          "id": "16.3-c5",
+          "text": "Analysis evaluates underlying issues creating code vulnerabilities.",
+          "conditional": false
+        },
+        {
+          "id": "16.3-c6",
+          "text": "Root-cause analysis occurs when reviewing vulnerabilities.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.4": {
+      "title": "Establish and Manage an Inventory of Third-Party Software Components",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#164-establish-and-manage-an-inventory-of-third-party-software-components",
+      "guidance": "Know component dependencies and their risks. Check changes, updates and continued support.",
+      "evidence": [
+        "Component inventory and monthly evaluation. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.4-c8",
+          "text": "The updated inventory includes third-party components currently used in development.",
+          "conditional": false
+        },
+        {
+          "id": "16.4-c9",
+          "text": "The updated inventory includes third-party components planned for future use.",
+          "conditional": false
+        },
+        {
+          "id": "16.4-c6",
+          "text": "The inventory records risks posed by each component.",
+          "conditional": false
+        },
+        {
+          "id": "16.4-c3",
+          "text": "The component list is evaluated at least monthly.",
+          "conditional": false
+        },
+        {
+          "id": "16.4-c10",
+          "text": "Evaluation identifies third-party component changes or updates.",
+          "conditional": false
+        },
+        {
+          "id": "16.4-c11",
+          "text": "Evaluation validates continued component support.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.5": {
+      "title": "Use Up-to-Date and Trusted Third-Party Software Components",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#165-use-up-to-date-and-trusted-third-party-software-components",
+      "guidance": "Use trustworthy, maintained software dependencies. Obtain trusted, up-to-date components.",
+      "evidence": [
+        "Provenance, support and vulnerability evaluation. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.5-c8",
+          "text": "Third-party software components are up to date.",
+          "conditional": false
+        },
+        {
+          "id": "16.5-c9",
+          "text": "Third-party software components are trusted.",
+          "conditional": false
+        },
+        {
+          "id": "16.5-c6",
+          "text": "Established, proven frameworks and libraries providing adequate security are chosen when possible.",
+          "conditional": true
+        },
+        {
+          "id": "16.5-c7",
+          "text": "Components are acquired from trusted sources or evaluated for vulnerabilities before use.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.6": {
+      "title": "Establish and Maintain a Severity Rating System and Process for Application Vulnerabilities",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#166-establish-and-maintain-a-severity-rating-system-and-process-for-application-vulnerabilities",
+      "guidance": "Prioritize application weaknesses and control releases. Triage vulnerabilities and apply release criteria.",
+      "evidence": [
+        "Severity policy and release decision sample. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.6-c5",
+          "text": "An application-vulnerability severity-rating system and process are established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "16.6-c6",
+          "text": "Severity ratings facilitate prioritizing the order of vulnerability fixes.",
+          "conditional": false
+        },
+        {
+          "id": "16.6-c3",
+          "text": "The severity-rating system and process are reviewed and updated annually.",
+          "conditional": false
+        },
+        {
+          "id": "16.6-c7",
+          "text": "The process defines a minimum security-acceptability level for releasing code or applications.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.7": {
+      "title": "Use Standard Hardening Configuration Templates for Application Infrastructure",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#167-use-standard-hardening-configuration-templates-for-application-infrastructure",
+      "guidance": "Use industry-recommended hardening templates for application infrastructure: underlying servers, databases, web servers, cloud containers, Platform as a Service (PaaS) and Software as a Service (SaaS) components. In-house developed software must not weaken configuration hardening.",
+      "evidence": [
+        "Application infrastructure baselines, configuration samples and change records covering conventional and cloud components, including changes made for in-house software. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.7-c3",
+          "text": "Industry-recommended hardening templates cover servers, databases, web servers, cloud containers, PaaS and SaaS application infrastructure.",
+          "conditional": false
+        },
+        {
+          "id": "16.7-c4",
+          "text": "In-house developed software does not weaken configuration hardening.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.8": {
+      "title": "Separate Production and Non-Production Systems",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#168-separate-production-and-non-production-systems",
+      "guidance": "Separate live and non-live application environments. Maintain environment separation.",
+      "evidence": [
+        "Environment inventory and access/boundary evidence. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.8-c1",
+          "text": "Production and non-production environments are separate.",
+          "conditional": false
+        },
+        {
+          "id": "16.8-c3",
+          "text": "Environment separation is maintained.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.9": {
+      "title": "Train Developers in Application Security Concepts and Secure Coding",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#169-train-developers-in-application-security-concepts-and-secure-coding",
+      "guidance": "Train all software-development personnel at least annually for their development environments and responsibilities. Design training to promote security within the development team and build a culture of security among developers; example general-security topics are not a prescribed syllabus.",
+      "evidence": [
+        "Curriculum and participation records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.9-c4",
+          "text": "All software-development personnel receive secure-coding training.",
+          "conditional": false
+        },
+        {
+          "id": "16.9-c5",
+          "text": "Training addresses their specific development environments and responsibilities.",
+          "conditional": false
+        },
+        {
+          "id": "16.9-c3",
+          "text": "Training occurs at least annually and promotes security within the development team.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.10": {
+      "title": "Apply Secure Design Principles in Application Architectures",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1610-apply-secure-design-principles-in-application-architectures",
+      "guidance": "Build security into application architecture. Apply principles through design and change.",
+      "evidence": [
+        "Architecture decisions and design review. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.10-c5",
+          "text": "Application architectures apply secure-design principles.",
+          "conditional": false
+        },
+        {
+          "id": "16.10-c9",
+          "text": "Least privilege limits access.",
+          "conditional": false
+        },
+        {
+          "id": "16.10-c11",
+          "text": "Mediation validates every user operation.",
+          "conditional": false
+        },
+        {
+          "id": "16.10-c12",
+          "text": "Application architecture treats user input as untrusted.",
+          "conditional": false
+        },
+        {
+          "id": "16.10-c7",
+          "text": "Application design minimizes the infrastructure attack surface.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.11": {
+      "title": "Leverage Vetted Modules or Services for Application Security Components",
+      "control": 16,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1611-leverage-vetted-modules-or-services-for-application-security-components",
+      "guidance": "Use established security building blocks. Maintain use of proven identity, crypto and audit capabilities.",
+      "evidence": [
+        "Component decisions and platform security references. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "16.11-c5",
+          "text": "Application security components use vetted modules or services.",
+          "conditional": false
+        },
+        {
+          "id": "16.11-c6",
+          "text": "Vetted components cover relevant security functions such as identity, encryption and auditing/logging.",
+          "conditional": false
+        },
+        {
+          "id": "16.11-c9",
+          "text": "Encryption algorithms are standardized.",
+          "conditional": false
+        },
+        {
+          "id": "16.11-c10",
+          "text": "Encryption algorithms are currently accepted.",
+          "conditional": false
+        },
+        {
+          "id": "16.11-c8",
+          "text": "Encryption algorithms are extensively reviewed.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.12": {
+      "title": "Implement Code-Level Security Checks",
+      "control": 16,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1612-implement-code-level-security-checks",
+      "guidance": "Use both static and dynamic code-analysis tools during the application lifecycle to check secure coding.",
+      "evidence": [
+        "Static/dynamic analysis output, pipeline configuration, release record and linked issue disposition.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "16.12-c4",
+          "text": "Static analysis tools check secure-coding practices.",
+          "conditional": false
+        },
+        {
+          "id": "16.12-c5",
+          "text": "Dynamic analysis tools check secure-coding practices.",
+          "conditional": false
+        },
+        {
+          "id": "16.12-c6",
+          "text": "Both analysis types operate within the application lifecycle.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.13": {
+      "title": "Conduct Application Penetration Testing",
+      "control": 16,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1613-conduct-application-penetration-testing",
+      "guidance": "Perform application penetration testing, considering authenticated testing for critical applications and manual tester analysis.",
+      "evidence": [
+        "Application test scope/report, criticality inventory, authenticated/unauthenticated coverage and remediation links.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "16.13-c4",
+          "text": "Application penetration testing is conducted.",
+          "conditional": false
+        },
+        {
+          "id": "16.13-c5",
+          "text": "Testing involves skilled manual manipulation as authenticated and unauthenticated users.",
+          "conditional": false
+        }
+      ]
+    },
+    "16.14": {
+      "title": "Conduct Threat Modeling",
+      "control": 16,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls16/#1614-conduct-threat-modeling",
+      "guidance": "Have specially trained people model application threats and address design flaws before code is created.",
+      "evidence": [
+        "Dated design model, review participants, design decisions and resolved or tracked design issues.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "16.14-c4",
+          "text": "Threat modeling identifies and addresses application security design flaws before code is created.",
+          "conditional": false
+        },
+        {
+          "id": "16.14-c7",
+          "text": "Specially trained individuals evaluate design risks for each entry point.",
+          "conditional": false
+        },
+        {
+          "id": "16.14-c8",
+          "text": "Specially trained individuals evaluate design risks for each access level.",
+          "conditional": false
+        },
+        {
+          "id": "16.14-c6",
+          "text": "The application, architecture and infrastructure are mapped to understand weaknesses.",
+          "conditional": false
+        }
+      ]
+    },
+    "17.1": {
+      "title": "Designate Personnel to Manage Incident Handling",
+      "control": 17,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#171-designate-personnel-to-manage-incident-handling",
+      "guidance": "Identify incident leadership, backup coverage and internal oversight.",
+      "evidence": [
+        "Incident-handling role assignments, including lead, backup and any internal provider overseer.",
+        "Dated reviews, responsibility records or provider agreements supporting the assignments."
+      ],
+      "elements": [
+        {
+          "id": "17.1-c4",
+          "text": "A key incident-handling person is designated.",
+          "conditional": false
+        },
+        {
+          "id": "17.1-c5",
+          "text": "At least one backup is designated.",
+          "conditional": false
+        },
+        {
+          "id": "17.1-c6",
+          "text": "Incident management coordinates and documents response and recovery efforts.",
+          "conditional": false
+        },
+        {
+          "id": "17.1-c7",
+          "text": "Where a provider is used, an internal person oversees third-party work.",
+          "conditional": true
+        },
+        {
+          "id": "17.1-c8",
+          "text": "Designations are reviewed annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "17.2": {
+      "title": "Establish and Maintain Contact Information for Reporting Security Incidents",
+      "control": 17,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#172-establish-and-maintain-contact-information-for-reporting-security-incidents",
+      "guidance": "Verify incident notification contacts.",
+      "evidence": [
+        "Incident-notification contact list relevant to the organization.",
+        "Dated annual contact verification or provider confirmation records."
+      ],
+      "elements": [
+        {
+          "id": "17.2-c1",
+          "text": "Notification contacts are maintained for relevant parties.",
+          "conditional": false
+        },
+        {
+          "id": "17.2-c2",
+          "text": "Contact information is verified annually.",
+          "conditional": false
+        }
+      ]
+    },
+    "17.3": {
+      "title": "Establish and Maintain an Enterprise Process for Reporting Incidents",
+      "control": 17,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#173-establish-and-maintain-an-enterprise-process-for-reporting-incidents",
+      "guidance": "Document and communicate the workforce incident-reporting process.",
+      "evidence": [
+        "Reporting instructions showing all four required elements.",
+        "Workforce access/communication records and dated annual or change-driven reviews."
+      ],
+      "elements": [
+        {
+          "id": "17.3-c4",
+          "text": "A documented workforce incident-reporting process is established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "17.3-c5",
+          "text": "The process specifies reporting timeframes.",
+          "conditional": false
+        },
+        {
+          "id": "17.3-c10",
+          "text": "The process identifies incident-reporting recipients.",
+          "conditional": false
+        },
+        {
+          "id": "17.3-c11",
+          "text": "The process identifies incident-reporting mechanisms.",
+          "conditional": false
+        },
+        {
+          "id": "17.3-c7",
+          "text": "The process specifies minimum information to report.",
+          "conditional": false
+        },
+        {
+          "id": "17.3-c8",
+          "text": "The process is available to the whole workforce.",
+          "conditional": false
+        },
+        {
+          "id": "17.3-c9",
+          "text": "The process is reviewed annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "17.4": {
+      "title": "Establish and Maintain an Incident Response Process",
+      "control": 17,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#174-establish-and-maintain-an-incident-response-process",
+      "guidance": "Coordinate complete incident response. Execute response process during incidents.",
+      "evidence": [
+        "Response plan and incident records. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "17.4-c5",
+          "text": "A documented incident-response process is established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "17.4-c6",
+          "text": "The process addresses roles and responsibilities.",
+          "conditional": false
+        },
+        {
+          "id": "17.4-c8",
+          "text": "The process addresses compliance requirements.",
+          "conditional": false
+        },
+        {
+          "id": "17.4-c9",
+          "text": "The process includes a communication plan.",
+          "conditional": false
+        },
+        {
+          "id": "17.4-c3",
+          "text": "The process is reviewed annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "17.5": {
+      "title": "Assign Key Roles and Responsibilities",
+      "control": 17,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#175-assign-key-roles-and-responsibilities",
+      "guidance": "Record who fulfils each relevant incident-response function, including providers where applicable. One person or team may fulfil multiple functions; separate departments are not required.",
+      "evidence": [
+        "Role roster and contact/escalation record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "17.5-c5",
+          "text": "Key incident-response roles and responsibilities are assigned.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c8",
+          "text": "Incident roles cover legal personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c9",
+          "text": "Incident roles cover IT personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c10",
+          "text": "Incident roles cover information-security personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c11",
+          "text": "Incident roles cover facilities personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c12",
+          "text": "Incident roles cover public-relations personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c3",
+          "text": "Assignments are reviewed annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c13",
+          "text": "Incident roles cover HR personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c14",
+          "text": "Incident roles cover incident responders.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-c15",
+          "text": "Incident roles cover analysts.",
+          "conditional": false
+        },
+        {
+          "id": "17.5-guided-third-parties",
+          "text": "Incident-response responsibilities include relevant third parties.",
+          "conditional": false
+        }
+      ]
+    },
+    "17.6": {
+      "title": "Define Mechanisms for Communicating During Incident Response",
+      "control": 17,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#176-define-mechanisms-for-communicating-during-incident-response",
+      "guidance": "Keep incident communications usable during disruption. Use available incident communication channels.",
+      "evidence": [
+        "Communication plan and exercise observations. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "17.6-c5",
+          "text": "Primary mechanisms for incident communication and reporting are determined.",
+          "conditional": false
+        },
+        {
+          "id": "17.6-c6",
+          "text": "Secondary mechanisms for incident communication and reporting are determined.",
+          "conditional": false
+        },
+        {
+          "id": "17.6-c3",
+          "text": "Mechanisms are reviewed annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        },
+        {
+          "id": "17.6-c7",
+          "text": "Mechanism selection accounts for channels that may be affected during an incident.",
+          "conditional": false
+        }
+      ]
+    },
+    "17.7": {
+      "title": "Conduct Routine Incident Response Exercises",
+      "control": 17,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#177-conduct-routine-incident-response-exercises",
+      "guidance": "Exercise incident decisions and coordination. Run exercises covering channels, decisions and workflows.",
+      "evidence": [
+        "Exercise results and improvement Actions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "17.7-c5",
+          "text": "Routine incident-response exercises and scenarios are planned and conducted for key personnel.",
+          "conditional": false
+        },
+        {
+          "id": "17.7-c6",
+          "text": "Exercises test communication channels.",
+          "conditional": false
+        },
+        {
+          "id": "17.7-c8",
+          "text": "Exercises test decision making.",
+          "conditional": false
+        },
+        {
+          "id": "17.7-c9",
+          "text": "Exercises test response workflows.",
+          "conditional": false
+        },
+        {
+          "id": "17.7-c3",
+          "text": "Testing occurs at least annually.",
+          "conditional": false
+        }
+      ]
+    },
+    "17.8": {
+      "title": "Conduct Post-Incident Reviews",
+      "control": 17,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#178-conduct-post-incident-reviews",
+      "guidance": "Learn from actual incidents. Capture lessons and assign improvements.",
+      "evidence": [
+        "Post-incident review and tracked Actions. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "17.8-c7",
+          "text": "Post-incident reviews are conducted.",
+          "conditional": false
+        },
+        {
+          "id": "17.8-c5",
+          "text": "Reviews identify lessons learned.",
+          "conditional": false
+        },
+        {
+          "id": "17.8-c3",
+          "text": "Reviews occur following incidents.",
+          "conditional": false
+        },
+        {
+          "id": "17.8-c6",
+          "text": "Reviews identify follow-up action to prevent recurrence.",
+          "conditional": false
+        }
+      ]
+    },
+    "17.9": {
+      "title": "Establish and Maintain Security Incident Thresholds",
+      "control": 17,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/#179-establish-and-maintain-security-incident-thresholds",
+      "guidance": "Define and maintain incident thresholds distinguishing incidents from events; review annually and after relevant significant changes.",
+      "evidence": [
+        "Threshold document, dated review/change record, representative classification or exercise example.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "17.9-c4",
+          "text": "Security-incident thresholds are established and maintained.",
+          "conditional": false
+        },
+        {
+          "id": "17.9-c5",
+          "text": "Thresholds distinguish an incident from an event at minimum.",
+          "conditional": false
+        },
+        {
+          "id": "17.9-c3",
+          "text": "Thresholds are reviewed annually and when significant changes could affect the safeguard.",
+          "conditional": false
+        }
+      ]
+    },
+    "18.1": {
+      "title": "Establish and Maintain a Penetration Testing Program",
+      "control": 18,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#181-establish-and-maintain-a-penetration-testing-program",
+      "guidance": "Make penetration testing purposeful and controlled. Maintain the testing program.",
+      "evidence": [
+        "Authorized scope and program record. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "18.1-c5",
+          "text": "A maintained penetration-testing program fits enterprise size, complexity, industry and maturity.",
+          "conditional": false
+        },
+        {
+          "id": "18.1-c9",
+          "text": "The program defines testing scope.",
+          "conditional": false
+        },
+        {
+          "id": "18.1-c10",
+          "text": "The program defines testing frequency.",
+          "conditional": false
+        },
+        {
+          "id": "18.1-c11",
+          "text": "The program defines testing limitations.",
+          "conditional": false
+        },
+        {
+          "id": "18.1-c12",
+          "text": "The program defines contact information.",
+          "conditional": false
+        },
+        {
+          "id": "18.1-c13",
+          "text": "The program defines remediation routing.",
+          "conditional": false
+        },
+        {
+          "id": "18.1-c14",
+          "text": "The program defines retrospective requirements.",
+          "conditional": false
+        }
+      ]
+    },
+    "18.2": {
+      "title": "Perform Periodic External Penetration Tests",
+      "control": 18,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#182-perform-periodic-external-penetration-tests",
+      "guidance": "Have qualified testers probe external exposure. Execute external penetration tests.",
+      "evidence": [
+        "Scoped test report and qualifications. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "18.2-c5",
+          "text": "External penetration tests are performed according to program requirements.",
+          "conditional": false
+        },
+        {
+          "id": "18.2-c6",
+          "text": "Testing includes enterprise and environmental reconnaissance for exploitable information.",
+          "conditional": false
+        },
+        {
+          "id": "18.2-c3",
+          "text": "Tests occur at least annually.",
+          "conditional": false
+        },
+        {
+          "id": "18.2-c7",
+          "text": "A qualified party with specialized skills and experience conducts the testing.",
+          "conditional": false
+        }
+      ]
+    },
+    "18.3": {
+      "title": "Remediate Penetration Test Findings",
+      "control": 18,
+      "groups": [
+        2,
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#183-remediate-penetration-test-findings",
+      "guidance": "Resolve penetration-test weaknesses by risk. Remediate penetration-test findings.",
+      "evidence": [
+        "Finding-to-Action trace and remediation support. Use representative records covering the stated population.",
+        "Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+      ],
+      "elements": [
+        {
+          "id": "18.3-c5",
+          "text": "Penetration-test findings are remediated.",
+          "conditional": false
+        },
+        {
+          "id": "18.3-c6",
+          "text": "Remediation follows the documented vulnerability-remediation process.",
+          "conditional": false
+        },
+        {
+          "id": "18.3-c7",
+          "text": "Timelines are determined based on finding impact and prioritization.",
+          "conditional": false
+        },
+        {
+          "id": "18.3-c8",
+          "text": "Level of effort is determined based on finding impact and prioritization.",
+          "conditional": false
+        }
+      ]
+    },
+    "18.4": {
+      "title": "Validate Security Measures",
+      "control": 18,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#184-validate-security-measures",
+      "guidance": "Validate defenses after every penetration test; adjust detection rules or capabilities when needed.",
+      "evidence": [
+        "Test-to-validation log, detection comparison, ruleset change and retest records.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "18.4-c4",
+          "text": "Security measures are validated after each penetration test.",
+          "conditional": false
+        },
+        {
+          "id": "18.4-c5",
+          "text": "Rulesets and capabilities are modified to detect tested techniques if deemed necessary.",
+          "conditional": true
+        }
+      ]
+    },
+    "18.5": {
+      "title": "Perform Periodic Internal Penetration Tests",
+      "control": 18,
+      "groups": [
+        3
+      ],
+      "root": "practice",
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls18/#185-perform-periodic-internal-penetration-tests",
+      "guidance": "Perform internal penetration tests under the program at least annually.",
+      "evidence": [
+        "Internal test scope/report, test date, program reference, findings and defense-validation links.",
+        "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
+      ],
+      "elements": [
+        {
+          "id": "18.5-c4",
+          "text": "Internal penetration tests are performed.",
+          "conditional": false
+        },
+        {
+          "id": "18.5-c5",
+          "text": "Testing follows penetration-testing program requirements.",
+          "conditional": false
+        },
+        {
+          "id": "18.5-c3",
+          "text": "Internal tests occur at least annually.",
+          "conditional": false
+        }
+      ]
+    }
+  }
+}

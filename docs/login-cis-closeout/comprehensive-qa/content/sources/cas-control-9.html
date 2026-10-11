@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 9: Email and Web Browser Protections - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 9: Email and Web Browser Protections";
+        var mkdocs_page_input_path = "source/Controls9.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls9/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 9: Email and Web Browser Protections</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#91-ensure-use-of-only-fully-supported-browsers-and-email-clients">9.1: Ensure Use of Only Fully Supported Browsers and Email Clients</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#percentage-of-unsupported-web-browseremail-client-software-in-use">Percentage of Unsupported Web Browser/Email Client Software in Use</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#rate-of-false-positives">Rate of False Positives</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#rate-of-false-negatives">Rate of False Negatives</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#92-use-dns-filtering-services">9.2: Use DNS Filtering Services</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#dns-filtering-coverage">DNS Filtering Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#93-maintain-and-enforce-network-based-url-filters">9.3: Maintain and Enforce Network-Based URL Filters</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#94-restrict-unnecessary-or-unauthorized-browser-and-email-client-extensions">9.4: Restrict Unnecessary or Unauthorized Browser and Email Client Extensions</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#browser-plugin-enforcement-quality">Browser Plugin Enforcement Quality</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#email-client-plugin-enforcement-quality">Email Client Plugin Enforcement Quality</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#95-implement-dmarc">9.5: Implement DMARC</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#dmarc-usage">DMARC Usage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#96-block-unnecessary-file-types">9.6: Block Unnecessary File Types</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_1">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#97-deploy-and-maintain-email-server-anti-malware-protections">9.7: Deploy and Maintain Email Server Anti-Malware Protections</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_2">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 9: Email and Web Browser Protections</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls9.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-9-email-and-web-browser-protections">CIS Control 9: Email and Web Browser Protections</h1>
+<p>Improve protections and detections of threats from email and web
+vectors, as these are opportunities for attackers to manipulate human
+behavior through direct engagement.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>Web browsers and email clients are very common points of entry for
+attackers because of their direct interaction with users inside an
+enterprise. Content can be crafted to entice or spoof users into
+disclosing credentials, providing sensitive data, or providing an open
+channel to allow attackers to gain access, thus increasing the risk to the
+enterprise. Since email and the web are the main means that which users interact
+with external and untrusted users and environments, these are prime
+targets for both malicious code and social engineering. Additionally, as
+enterprises move to web-based email or mobile email access, users no
+longer use traditional full-featured email clients, which provide
+embedded security controls like connection encryption, strong
+authentication, and phishing reporting buttons.</p>
+<hr />
+<h2 id="91-ensure-use-of-only-fully-supported-browsers-and-email-clients">9.1: Ensure Use of Only Fully Supported Browsers and Email Clients</h2>
+<p>Ensure only fully supported browsers and email clients are allowed to
+execute in the enterprise, only using the latest version of browsers and
+email clients provided through the vendor.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li>Authoritative source of information indicating supported/unsupported
+    details by product</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate web browser and email client
+    software (M1)</p>
+</li>
+<li>
+<p>Compare each software identified in Operation 1 to Input 2</p>
+<ol>
+<li>Identify and enumerate software labeled as "supported" that is currently supported (M2)</li>
+<li>Identify and enumerate software labeled as "supported" that is currently unsupported (M3)</li>
+<li>Identify and enumerate software labeled as "unsupported" that is currently unsupported (M4)</li>
+<li>Identify and enumerate software labeled as "unsupported" that is currently supported (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Count of authorized web browser and email client software</li>
+<li>M2 = Count of software labeled as "supported" and currently
+    supported</li>
+<li>M3 = Count of software labeled as "supported" and currently
+    unsupported</li>
+<li>M4 = Count of software labeled as "supported" and currently
+    unsupported</li>
+<li>M5 = Count of software labeled as "supported" and currently
+    supported</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<h4 id="percentage-of-unsupported-web-browseremail-client-software-in-use">Percentage of Unsupported Web Browser/Email Client Software in Use</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of unsupported web browser and email client software in use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>(M3 + M4) / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="rate-of-false-positives">Rate of False Positives</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of authorized web browser and email client software labeled as "supported" but found to be unsupported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="rate-of-false-negatives">Rate of False Negatives</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of authorized web browser and email client software labeled as "unsupported" but found to be supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M5 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="92-use-dns-filtering-services">9.2: Use DNS Filtering Services</h2>
+<p>Use DNS filtering services on all end-user devices, including remote and on-premises assets, to block access to known malicious domains. </p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets that support DNS
+    filtering (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate authorized DNS filtering
+    services</p>
+</li>
+<li>
+<p>For each asset identified in Operation 1, check to see if it is configured properly <code>GV3</code> to support authorized DNS filtering services from Operation 2</p>
+<ol>
+<li>Identify and enumerate assets properly configured (M2)</li>
+<li>
+<ol>
+<li>Identify and enumerate assets not properly configured (M3)</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Count of enterprise assets capable of supporting DNS filtering</li>
+<li>M2 = Count of assets properly configured to support DNS filtering</li>
+<li>M3 = Count of assets not properly configured to support DNS
+    filtering</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<h4 id="dns-filtering-coverage">DNS Filtering Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets configured to use authorized DNS filtering services</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="93-maintain-and-enforce-network-based-url-filters">9.3: Maintain and Enforce Network-Based URL Filters</h2>
+<p>Enforce and update network-based URL filters to limit an enterprise
+asset from connecting to potentially malicious or unapproved websites.
+Example implementations include category-based filtering,
+reputation-based filtering, or through the use of block lists. Enforce
+filters for all enterprise assets.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration
+    Processs</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate enterprise assets capable of
+    supporting network-based URL filters (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify authorized web browsers/clients</p>
+</li>
+<li>
+<p>For each asset identified in Operation 1 check to see if it is configured properly <code>GV3</code> to support authorized web browsers/clients from Operation 2</p>
+<ol>
+<li>Identify and enumerate assets properly configured (M2)</li>
+<li>Identify and enumerate assets not properly configured (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of enterprise assets capable of supporting network-based
+    URL filters</li>
+<li>M2 = Count of assets properly configured to support network-based
+    URL filters</li>
+<li>M3 = Count of assets not properly configured to support
+    network-based URL filters</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets configured to use authorized network-based URL filters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="94-restrict-unnecessary-or-unauthorized-browser-and-email-client-extensions">9.4: Restrict Unnecessary or Unauthorized Browser and Email Client Extensions</h2>
+<p>Restrict, either through uninstalling or disabling, any unauthorized or
+unnecessary browser or email client plugins, extensions, and add-on
+applications.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets subject to browser/email
+    plugin restrictions (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify authorized browser and email plugins</p>
+</li>
+<li>
+<p>For each asset listed in Operation 1, collect the list of installed browser plugins and compare to the output of Operation 2</p>
+<ol>
+<li>Identify and enumerate assets with only authorized browser plugins installed or enabled (M2)</li>
+<li>Identify and enumerate assets with one or more unauthorized browser plugins installed or enabled (M3)</li>
+</ol>
+</li>
+<li>
+<p>For each asset listed in Operation 1, collect the list of installed email plugins and compare to the output of Operation 2</p>
+<ol>
+<li>Identify and enumerate assets with only authorized email plugins installed or enabled (M4)</li>
+<li>Identify and enumerate assets with one or more unauthorized browser plugins installed or enabled (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of assets subject to browser/email plugin restrictions</li>
+<li>M2 = Count of assets with only authorized browser plugins installed
+    or enabled</li>
+<li>M3 = Count of assets with unauthorized browser plugins installed or
+    enabled</li>
+<li>M4 = Count of assets with only authorized email plugins installed or
+    enabled</li>
+<li>M5 = Count of assets with unauthorized email plugins installed or
+    enabled</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<h4 id="browser-plugin-enforcement-quality">Browser Plugin Enforcement Quality</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets compliant with authorized browser plugins</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="email-client-plugin-enforcement-quality">Email Client Plugin Enforcement Quality</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets compliant with authorized email plugins</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="95-implement-dmarc">9.5: Implement DMARC</h2>
+<p>To lower the chance of spoofed or modified emails from valid domains,
+implement DMARC policy and verification, starting with implementing the
+Sender Policy Framework (SPF) and the DomainKeys Identified Mail (DKIM)
+standards.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li>DMARC Policy</li>
+<li>TXT record published in DNS</li>
+<li>The Mail Transfer Agent used by the enterprise</li>
+<li>The Mail User Agent used by the enterprise</li>
+</ol>
+<h3 id="assumptions">Assumptions</h3>
+<ol>
+<li>The DMARC configuration policy includes instructions to produce either Aggregate (rua) or Forensic (ruf) reports.</li>
+<li>The enterprise has access to these reports either daily (for Aggregate) or in real-time (for Forensic).</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Check if enterprise has a DMARC policy</p>
+<ol>
+<li>If the enterprise has a DMARC policy, M1 = 1</li>
+<li>If the enterprise does not have a DMARC policy, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Examine Input 2 for a value indicative of the use of DMARC</p>
+<ol>
+<li>If a value for DMARC is identified, M2 = 1</li>
+<li>If a value for DMARC is not identified, M2 = 0</li>
+</ol>
+</li>
+<li>
+<p>Examine Input 2 for a value indicative of the use of SPF</p>
+<ol>
+<li>If a value for SPF is identified, M3 = 1</li>
+<li>
+<ol>
+<li>If a value for SPF is not identified, M3 = 0</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>
+<p>Examine Input 2 for a value indicative of the use of DKIM</p>
+<ol>
+<li>If a value for DKIM is identified, M4 = 1</li>
+<li>If a value for DKIM is not identified, M4 = 0</li>
+</ol>
+</li>
+<li>
+<p>Check if enterprise uses a Mail Transfer Agent</p>
+<ol>
+<li>If the enterprise uses a Mail Transfer Agent, M5 = 1</li>
+<li>If the enterprise does not use a Mail Transfer Agent, M5 = 1</li>
+</ol>
+</li>
+<li>
+<p>Check if enterprise uses a Mail User Agent</p>
+<ol>
+<li>If the enterprise uses a Mail User Agent, M6 = 1</li>
+<li>If the enterprise does not use a Mail User Agent, M6 = 1</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Output of Operation 2</li>
+<li>M3 = Output of Operation 3</li>
+<li>M4 = Output of Operation 4</li>
+<li>M5 = Output of Operation 5</li>
+<li>M6 = Output of Operation 6</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<h4 id="dmarc-usage">DMARC Usage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>Usage and configuration of DMARC/SPF/DKIM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>(M1 + M2 + M3 + M4 + M5 + M6) / 6</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="96-block-unnecessary-file-types">9.6: Block Unnecessary File Types</h2>
+<p>Block unnecessary file types attempting to enter the enterprise's email
+gateway.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets configured as email  gateways (M1)</p>
+</li>
+<li>
+<p>Using <code>GV3</code> check the attachment blocking configuration for every asset identified in Operation-1</p>
+<ol>
+<li>Identify and enumerate email gateways properly configured to block unnecessary attachments (M2)</li>
+<li>Identify and enumerate email gateways not properly configured to block unnecessary attachments (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Count of email gateways</li>
+<li>M2 = Count of properly configured email gateways</li>
+<li>M3 = Count of improperly configured email gateways</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<h4 id="coverage_1">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of properly configured email gateways</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="97-deploy-and-maintain-email-server-anti-malware-protections">9.7: Deploy and Maintain Email Server Anti-Malware Protections</h2>
+<p>Deploy and maintain email server anti-malware protections, such as attachment scanning and/or sandboxing.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate all email servers within the
+    enterprise (M1)</p>
+</li>
+<li>
+<p>For each email server identified in Operation 1, use <code>GV3</code> to check if native or external anti-malware protections are configured</p>
+<ol>
+<li>Identify and enumerate email servers with configured anti-malware protection (M2)</li>
+<li>Identify and enumerate email servers without configured anti-malware protection (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Count of email servers</li>
+<li>M2 = Count of properly configured email servers</li>
+<li>M3 = Count of improperly configured email servers</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<h4 id="coverage_2">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of properly configured email servers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls8/" class="btn btn-neutral float-left" title="CIS Control 8: Audit Log Management"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls10/" class="btn btn-neutral float-right" title="CIS Control 10: Malware Defenses">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+?
+Omnibot guide · Safeguard 8.10
+
+Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.
+
+Review your assessment summary
+
+Safeguard 8.10 — Retain Audit Logs
+
+Proposed Implementation Status: Partially Implemented
+
+Current Implementation
+
+Saving updates the native implementation and status. Evidence verification remains separate.
+
+Back to questions
+Save assessment
+Save & close
+Review interview history

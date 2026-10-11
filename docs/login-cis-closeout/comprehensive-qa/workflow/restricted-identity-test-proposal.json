@@ -1,0 +1,41 @@
+{
+  "kind": "Proposal only; no account, membership, credential, browser or staging mutation performed",
+  "source_revision": "4f73e0cf3180e4b91de6518427b5bbb23ffccb1f",
+  "runtime_reference": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "effective_local_profile": {"filesystem": "danger-full-access; unrestricted", "network": "enabled", "approval_policy": "never", "approval_escalation": "not available; no request issued by this agent"},
+  "actual_remaining_restriction": {
+    "source": "Application account status, client membership, usable normal credentials and explicit owner authorization; not a filesystem/network or connector permission error",
+    "identity": "Exact existing fictional target specified by lead: bec984b1-client_contributor-verified@example.com. Verify its full user_id and current row through authoritative Administration Console before an authorized edit; do not match only a masked prefix.",
+    "last_recorded_state": "Latest lead-authoritative exact target: Disabled / Client Contributor (client_contributor), zero client memberships. The separately recorded Client Read Only account is a different identity and is not this target's baseline.",
+    "smallest_supported_owner_action": "For specifically requested reader scenarios, owner must explicitly authorize this existing identity's temporary role change from Client Contributor to Client Read Only, normal credential use, re-enable only when completed invitation/credentials support it, and membership only in the isolated QA client needed for the test. Restore original Contributor role, zero memberships and Disabled status afterward. Do not create duplicates or grant all-client access.",
+    "activation_limit": "Server refuses activation without a completed password invitation or supported existing identity-provider account. This proposal does not authorize a password reset, invitation delivery, provider changes or credential handling."
+  },
+  "role_semantics": {
+    "super_admin": "Global client scope; lead's existing role cannot establish restricted-user denial",
+    "platform_admin": "Only explicit memberships unless all_clients is true; no entitlement change proposed",
+    "client_grc_manager": "Explicit client membership; normal client-record writes, not program administration",
+    "client_contributor": "Explicit membership plus assignment to the requested record; no assessment owner changes proposed",
+    "client_readonly": "Explicit membership; tenant-scoped reads only; trusted server denies writes",
+    "legacy_alias": "client_viewer is normalized to client_readonly, never elevation"
+  },
+  "normal_ui_minimal_scenarios": [
+    {"id": "READER-SCOPED-VIEW", "steps": "Owner snapshots the exact target's current Disabled Contributor role, zero memberships, all_clients and CAS token. If specifically approved, use normal Edit role... to temporarily select Client Read Only; Edit client access... grants only owned isolated QA—CIS IG2, Save; Re-enable user only under the same explicit authorization. Test identity signs in through normal Login using credentials entered by its owner.", "expectation": "Only authorized client is available. Open existing CIS safeguard and native assessment: read-only fields and Omni save controls disabled. Native implementation, status, last-saved token, assessment history and interview history remain unchanged.", "proof_limit": "Disabled UI controls prove client-side denial. They do not establish an attempted backend PUT/PATCH returned 403.", "additional_authority": "Reader role is a temporary change from this exact account's original Contributor role; no such change is approved or executed by this proposal."},
+    {"id": "UNASSIGNED-CLIENT-GET", "steps": "With that restricted session, navigate through the normal application URL to a second isolated client not assigned to the identity; preserve its native values/history using the authorized lead session before and after.", "expectation": "Trusted server denies resource/program access, no cross-client interview/current implementation/history is exposed, and no writes occur.", "required_evidence": "Normal navigation plus actual server response/error from its request; omission from a client picker alone is insufficient."},
+    {"id": "SERVER-WRITE-DENIAL-OPTIONAL-OWNER-AUTHORIZATION", "steps": "If attempted backend-denial proof is required, separately authorize temporary manager role for this fictional identity on the single isolated QA client, leaving all owners/assignments intact. Test identity opens an editable existing native form / incomplete Omni interview without saving. Owner changes its role through normal Edit role... back to Client Read Only. The already-open stale UI activates its normal native Save assessment or interview Save & close. No DOM edits, direct API requests, interceptions or forged roles.", "expectation": "Current persisted role is reloaded in get_current_user/authorization; normal pending UI request is denied by server, no native history/date/source/status/implementation or interview revision change; unsaved local input/error remains recoverable.", "additional_authority": "This is a specific reversible test-role change, not included in the currently blocked read-only activation proposal. Do not execute without explicit owner authorization.", "proof_limit": "If the UI refresh immediately disables the control, classify backend attempted write as unexecuted. Do not force an HTTP request to manufacture coverage."}
+  ],
+  "restoration": {
+    "account": "Use normal admin UI and current CAS snapshot to restore exact target to its captured original Client Contributor role, zero client_ids, original all_clients value and Disabled status. Never restore to another test account's Reader role. Account-wide session revocation on disable is intentional; old sessions cannot be restored.",
+    "data": "Preserve all pre-existing synthetic assessment/interview history, tokens and owner assignments. Read-only/denied attempts should create no business-record history. Authorized admin membership/status audit events remain.",
+    "clients": "After lead verifies test completion and account restoration, normally Archive only its completed isolated QA fixtures, retaining Restore and all history. Do not delete/reset clients or alter Brawndo, Initech or Hooli.",
+    "pending": "User is away; account authorization/usable normal credential handoff remains blocked. This agent performed no activation, role/membership change, archive, browser action or deploy."
+  },
+  "source_enforcement": [
+    "backend/authorization.py:role_of, can_access, global_scope, require_assigned and enforce authorization",
+    "backend/server.py:get_current_user, _authorized_parent, admin_update_user and client membership mutation CAS/audit",
+    "backend/framework_governance.py:router_for.parent; guided-assessment GET/PUT/history and native PATCH use trusted parent/scope checks",
+    "backend/guided_assessment.py:stored_draft/read_history are assessment-and-user scoped; check_scope validates configured framework/group",
+    "frontend/src/pages/PlatformAdmin.jsx:Edit client access..., Re-enable user, Edit role... and Disable user normal controls",
+    "frontend/src/components/FrameworkDrawer.jsx:writable and shared native adapter; GuidedAssessor disables readonly mutations"
+  ],
+  "acceptance": "Not approved or executed by this compiler. Local component role mocks and prior backend tests remain separate from missing actual hosted restricted-identity proof."
+}

@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 10: Malware Defenses - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 10: Malware Defenses";
+        var mkdocs_page_input_path = "source/Controls10.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls10/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 10: Malware Defenses</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#101-deploy-and-maintain-anti-malware-software">10.1: Deploy and Maintain Anti-Malware Software</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#102-configure-automatic-anti-malware-signature-updates">10.2: Configure Automatic Anti-Malware Signature Updates</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_1">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#103-disable-autorun-and-autoplay-for-removable-media">10.3: Disable Autorun and Autoplay for Removable Media</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#104-configure-automatic-anti-malware-scanning-of-removable-media">10.4: Configure Automatic Anti-Malware Scanning of Removable Media</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_2">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#105-enable-anti-exploitation-features">10.5: Enable Anti-Exploitation Features</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_3">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#106-centrally-manage-anti-malware-software">10.6: Centrally Manage Anti-Malware Software</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_4">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#107-use-behavior-based-anti-malware-software">10.7: Use Behavior-Based Anti-Malware Software</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_5">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 10: Malware Defenses</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls10.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-10-malware-defenses">CIS Control 10: Malware Defenses</h1>
+<p>Prevent or control the installation, spread, and execution of malicious
+applications, code, or scripts on enterprise assets.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>Malicious software (sometimes categorized as viruses or Trojans) is an
+integral and dangerous aspect of internet threats. They can have many
+purposes, from capturing credentials, stealing data, identifying other
+targets within the network, and encrypting or destroying data. Malware
+is ever-evolving and adaptive, as modern variants leverage machine
+learning techniques.</p>
+<p>Malware enters an enterprise through vulnerabilities within the
+enterprise on end-user devices, email attachments, webpages, cloud
+services, mobile devices, and removable media. Malware often relies on
+insecure end-user behavior, such as clicking links, opening attachments,
+installing software or profiles, or inserting Universal Serial Bus (USB)
+flash drives. Modern malware is designed to avoid, deceive, or disable
+defenses.</p>
+<p>Malware defenses must be able to operate in this dynamic environment
+through automation, timely and rapid updating, and integration with
+other processes like vulnerability management and incident response.
+They must be deployed at all possible entry points and enterprise assets
+to detect, prevent spread, or control the execution of malicious
+software or code.</p>
+<hr />
+<h2 id="101-deploy-and-maintain-anti-malware-software">10.1: Deploy and Maintain Anti-Malware Software</h2>
+<p>Deploy and maintain anti-malware software on all enterprise assets.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Detect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets capable of supporting
+    anti-malware software: <code>GV30</code> (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify authorized anti-malware software: <code>GV31</code></p>
+</li>
+<li>
+<p>For each asset identified in Operation 1, use the output of Operation 2</p>
+<ol>
+<li>Identify and enumerate assets with at least one authorized anti-malware software installed: <code>GV32</code> (M2)</li>
+<li>Identify and enumerate assets with only unauthorized anti-malware software installed (M3)</li>
+<li>Identify and enumerate assets without any anti-malware software installed (M4)</li>
+</ol>
+</li>
+<li>
+<p>For each asset with a least one authorized anti-malware software installed from Operation 3.1, use <code>GV3</code> to check configurations</p>
+<ol>
+<li>Identify and enumerate assets with properly configured anti-malware software (M5)</li>
+<li>Identify and enumerate assets with improperly configured anti-malware software (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Count of assets capable of supporting anti-malware software</li>
+<li>M2 = Count of assets with at least one authorized anti-malware
+    software installed</li>
+<li>M3 = Count of assets with only unauthorized anti-malware software
+    installed</li>
+<li>M4 = Count of assets without any anti-malware software installed</li>
+<li>M5 = Count of assets with properly configured authorized
+    anti-malware software installed</li>
+<li>M6 = Count of assets with improperly configured authorized
+    anti-malware software installed</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets with properly configured authorized anti-malware installed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M5 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="102-configure-automatic-anti-malware-signature-updates">10.2: Configure Automatic Anti-Malware Signature Updates</h2>
+<p>Configure automatic updates for anti-malware signature files on all enterprise assets.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>Safeguard 10.1: Deploy and Maintain Anti-Malware Software</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV30</code>: Assets Capable of Supporting Anti-Malware Software</li>
+<li><code>GV32</code>: Assets with at Least One Authorized Anti-Malware Software Installed</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>For each asset in Input 2 <code>GV32</code>, check configurations <code>GV3</code> to determine if anti-malware software is configured to autmatically update signature files</p>
+<ol>
+<li>Identify and enumerate assets properly configured for automatic updates (M2)</li>
+<li>Identify and enumerate assets not properly configured for automatic updates (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Count of <code>GV30</code></li>
+<li>M2 = Count of assets configured to automatically update signature
+    files</li>
+<li>M3 = Count of assets not configured to automatically update
+    signature files</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<h4 id="coverage_1">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets properly configured to automatically update signature files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="103-disable-autorun-and-autoplay-for-removable-media">10.3: Disable Autorun and Autoplay for Removable Media</h2>
+<p>Disable autorun and autoplay auto-execute functionality for removable
+media.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate enterprise assets capable of
+    performing autorun, autoplay, and auto-execute functions (M1)</p>
+</li>
+<li>
+<p>Check the configurations <code>GV3</code> of each asset identified in Operation 1 to see if the autorun, autoplay, and auto-execute functions are disabled</p>
+<ol>
+<li>Identify and enumerate properly configured assets (M2)</li>
+<li>Identify and enumerate improperly configured assets (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of assets capable of performing autorun, autoplay, and
+    auto-execute functions</li>
+<li>M2 = Count of assets properly configured to disable functions</li>
+<li>M3 = Count of assets not properly configured to disable functions</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<h4 id="compliance">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets properly configured to disable autorun, autoplay, and auto-execute functions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="104-configure-automatic-anti-malware-scanning-of-removable-media">10.4: Configure Automatic Anti-Malware Scanning of Removable Media</h2>
+<p>Configure anti-malware software to automatically
+scan removable media.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+<li>Safeguard 10.1: Deploy and Maintain Anti-Malware Software</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV30</code>: Assets Capable of Supporting Anti-Malware Software</li>
+<li><code>GV32</code>: Assets with at Least One Authorized Anti-Malware Software Installed</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>For each asset in Input 2 <code>GV32</code>, use configurations <code>GV3</code> to identify if the software is configured to automatically scan removable media</p>
+<ol>
+<li>Identify and enumerate assets with properly configured software (M2)</li>
+<li>Identify and enumerate assets with improperly configured software (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of <code>GV30</code></li>
+<li>M2 = Count of assets with anti-malware properly configured to scan
+    removable media</li>
+<li>M3 = Count of assets with anti-malware not properly configured to
+    scan removable media</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<h4 id="coverage_2">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets with properly configured software to automatically scan removable media</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="105-enable-anti-exploitation-features">10.5: Enable Anti-Exploitation Features</h2>
+<p>Enable anti-exploitation features on enterprise assets and software,
+where possible, such as Microsoft® Data Execution Prevention (DEP),
+Windows® Defender Exploit Guard (WDEG), or Apple® System Integrity
+Protection (SIP) and Gatekeeper™.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>For each asset in <code>GV1</code>, use configuration standards <code>GV3</code> to determine if it is properly configured to enable anti-exploitation features</p>
+<ol>
+<li>Identify and enumerate assets properly configured to enable anti-exploitation features (M2)</li>
+<li>Identify and enumerate assets not properly configured to enable anti-exploitation features (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Count of <code>GV1</code></li>
+<li>M2 = Count of assets properly configured to enable anti-exploitation features</li>
+<li>M3 = Count of assets not properly configured to enable anti-exploitation features</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<h4 id="coverage_3">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets properly configured to enable anti-exploitation features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="106-centrally-manage-anti-malware-software">10.6: Centrally Manage Anti-Malware Software</h2>
+<p>Centrally manage anti-malware software.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 10.1: Deploy and Maintain Anti-Malware Software</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV30</code>: Assets Capable of Supporting Anti-Malware Software</li>
+<li><code>GV31</code>: Authorized Anti-Malware Software</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>For each authorized anti-malware software <code>GV31</code>, check if it is centrally managed</p>
+<ol>
+<li>Identify and enumerate anti-malware software that is centrally managed (M2)</li>
+<li>Identify and enumerate anti-malware software that is not centrally managed (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Count of <code>GV31</code></li>
+<li>M2 = Count of authorized anti-malware software that is centrally
+    managed</li>
+<li>M3 = Count of authorized anti-malware software that is not centrally
+    managed</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<h4 id="coverage_4">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of anti-malware centrally managed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="107-use-behavior-based-anti-malware-software">10.7: Use Behavior-Based Anti-Malware Software</h2>
+<p>Use behavior-based anti-malware software.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets capable of supporting behavior-based anti-malware software (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify authorized behavior-based anti-malware software</p>
+</li>
+<li>
+<p>For each asset identified in Operation 1, use the output of Operation 2</p>
+<ol>
+<li>Identify and enumerate assets with at least one authorized behavior-based anti-malware software installed (M2)</li>
+<li>Identify and enumerate assets without any behavior-based anti-malware software installed (M3)</li>
+</ol>
+</li>
+<li>
+<p>For each asset with a least one authorized behavior-based anti-malware software installed from Operation 3.1, use <code>GV3</code> to check configurations</p>
+<ol>
+<li>Identify and enumerate assets with properly configured behavior-based anti-malware software (M4)</li>
+<li>Identify and enumerate assets with improperly configured behavior-based anti-malware software (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Count of assets capable of supporting behavior-based
+    anti-malware software</li>
+<li>M2 = Count of assets with at least one authorized behavior-based
+    anti-malware software installed</li>
+<li>M3 = Count of assets without any behavior-based anti-malware
+    software installed</li>
+<li>M4 = Count of assets with properly configured authorized
+    behavior-based anti-malware software installed</li>
+<li>M5 = Count of assets with improperly configured authorized
+    behavior-based anti-malware software installed</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<h4 id="coverage_5">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets with properly configured authorized behavior-based anti-malware installed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls9/" class="btn btn-neutral float-left" title="CIS Control 9: Email and Web Browser Protections"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls11/" class="btn btn-neutral float-right" title="CIS Control 11: Data Recovery">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

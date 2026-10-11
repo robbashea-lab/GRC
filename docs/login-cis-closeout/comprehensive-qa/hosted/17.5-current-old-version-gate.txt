@@ -1,0 +1,56 @@
+Omnibot guide · Safeguard 17.5
+
+Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.
+
+The saved assessment changed after this interview began. Compare its current implementation before continuing; your saved answers and history are retained.
+
+OVERVIEW
+
+OmniBot QA — Closeout CIS IG3 reports the practice to assign key roles and responsibilities is in place.
+
+IMPLEMENTATION BREAKDOWN
+
+In place
+- Key incident-response roles and responsibilities are assigned. Reported as met.
+- Incident roles cover legal personnel. Reported as met.
+- Incident roles cover IT personnel. Reported as met.
+- Incident roles cover information-security personnel. Reported as met.
+- Incident roles cover facilities personnel. Reported as met.
+- Incident roles cover public-relations personnel. Reported as met.
+- Assignments are reviewed annually and when significant changes could affect the safeguard. Reported as met.
+- Incident roles cover HR personnel. Reported as met.
+- Incident roles cover incident responders. Reported as met.
+- Incident roles cover analysts. Reported as met.
+- Incident-response responsibilities include relevant third parties. Reported as met.
+
+Incomplete or missing
+- No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.
+
+ITEMS TO ADDRESS
+
+- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.
+
+SYNTHETIC QA ONLY — comprehensive workflow test; not client facts.
+- Preserve this exact reviewer line for 17.5.
+
+- Preserve this blank line.
+
+Compare & continue from saved assessment
+
+Updated assessment guidance is available. Your saved answers and narrative remain associated with their original question set. Continue saving interview progress here. Before saving a new native assessment, begin a current-source review and explicitly confirm which unchanged answers remain relevant.
+
+Begin a new review
+Review your assessment summary
+
+Safeguard 17.5 — Assign Key Roles and Responsibilities
+
+Proposed Implementation Status: Implemented
+
+Current Implementation
+
+Saving updates the native implementation and status. Evidence verification remains separate.
+
+Back to questions
+Update assessment
+Save & close
+Review interview history

@@ -1,0 +1,13 @@
+PASS src/lib/cis175SourceCondition.test.js
+  √ only 17.5 selects the additive corrected source version (14 ms)
+  √ relevance-backed third-party exclusion accepts complete internal response without invented remediation (5 ms)
+  √ unknown relevance or absent relevant assignments remains unresolved: Not sure
+  √ unknown relevance or absent relevant assignments remains unresolved: No
+  √ an exclusion without rationale never supplies a complete implementation result (1 ms)
+  √ old program3 answers remain readable and the changed condition is unanswered after explicit mapping (2 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        1.343 s
+Ran all test suites within paths "src/lib/cis175SourceCondition.test.js".

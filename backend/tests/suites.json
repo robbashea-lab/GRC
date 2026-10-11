@@ -1,5 +1,9 @@
 {
   "offline": [
+    "test_iso_guided_assessment.py",
+    "test_iso_guided_routes.py",
+    "test_soc_guided_assessment.py",
+    "test_soc_guided_routes.py",
     "test_guided_assessment.py",
     "test_generic_save_recovery.py",
     "test_remediation_tickets.py",
@@ -68,7 +72,9 @@
     "test_ten_year_operation.py",
     "test_vendor_governance.py",
     "test_workflow_integrity.py",
-    "test_workspace_work_context.py"
+    "test_workspace_work_context.py",
+    "test_recovery_retirement.py",
+    "test_bulk_outcomes.py"
   ],
   "environment": [
     "backend_test.py",

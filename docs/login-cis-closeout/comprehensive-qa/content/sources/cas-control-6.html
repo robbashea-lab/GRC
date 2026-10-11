@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 6: Access Control Management - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 6: Access Control Management";
+        var mkdocs_page_input_path = "source/Controls6.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls6/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 6: Access Control Management</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#61-establish-an-access-granting-process">6.1: Establish an Access Granting Process</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-process">Completeness of Process</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#62-establish-an-access-revoking-process">6.2: Establish an Access Revoking Process</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-process_1">Completeness of Process</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#63-require-mfa-for-externally-exposed-applications">6.3: Require MFA for Externally-Exposed Applications</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#64-require-mfa-for-remote-network-access">6.4: Require MFA for Remote Network Access</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_1">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#65-require-mfa-for-administrative-access">6.5: Require MFA for Administrative Access</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_2">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#66-establish-and-maintain-an-inventory-of-authentication-and-authorization-systems">6.6: Establish and Maintain an Inventory of Authentication and Authorization Systems</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#accuracy-score">Accuracy Score</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#67-centralize-access-control">6.7: Centralize Access Control</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_3">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#68-define-and-maintain-role-based-access-control">6.8: Define and Maintain Role-Based Access Control</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_7">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_7">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_7">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_7">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_4">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 6: Access Control Management</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls6.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-6-access-control-management">CIS Control 6: Access Control Management</h1>
+<p>Use processes and tools to create, assign, manage, and revoke access
+credentials and privileges for user, administrator, and service accounts
+for enterprise assets and software.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>Where CIS Control 5 deals specifically with account management, CIS
+Control 6 focuses on managing what access these accounts have, ensuring
+users only have access to the data or enterprise assets appropriate for
+their role, and ensuring that there is strong authentication for
+critical or sensitive enterprise data or functions. Accounts should only
+have the minimal authorization needed for the role. Developing
+consistent access rights for each role and assigning roles to users is a
+best practice. Developing a program for complete provision and
+de-provisioning access is also important. Centralizing this function is
+ideal.</p>
+<p>There are some user activities that pose a greater risk to an enterprise,
+either because they are accessed from untrusted networks or performing
+administrator functions that allow the ability to add, change, or remove
+other accounts, or make configuration changes to operating systems or
+applications to make them less secure. This also enforces the importance
+of using MFA and Privileged Access Management (PAM) tools.</p>
+<p>Some users have access to enterprise assets or data they do not need for
+their role; this might be due to an immature process that gives all
+users all access or lingering access as users change roles within the
+enterprise over time. Local administrator privileges to users' laptops
+are also an issue, as any malicious code installed or downloaded by the
+user can have a greater impact on the enterprise asset running as
+administrator. User, administrator, and service account access should be
+based on enterprise role and need.</p>
+<hr />
+<h2 id="61-establish-an-access-granting-process">6.1: Establish an Access Granting Process</h2>
+<p>Establish and follow a documented process, preferably automated, for granting access to enterprise assets upon new hire or role change of a user.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li>Enterprise process for granting access to enterprise assets</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Check to see if Input 1 exists:</p>
+<ol>
+<li>If the enterprise has an access granting process, M1 = 1</li>
+<li>If the enterprise does not have an access granting process, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Using Input 1, check to see if the process includes, at a minimum, a way to grant access upon new hire, rights grat, and role change of a user:</p>
+<ol>
+<li>For each element that is included, assign a value of 1. Sum the value of the elements included. (M2)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of elements included in the access granting process</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is 0, the Safeguard receives a failing score. The other metric don't apply.</li>
+</ul>
+<h4 id="completeness-of-process">Completeness of Process</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of elements included in the access granting process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="62-establish-an-access-revoking-process">6.2: Establish an Access Revoking Process</h2>
+<p>Establish and follow a process, preferably automated, for revoking access to enterprise assets, through disabling accounts immediately upon termination, rights revocation, or role change of a user. Disabling accounts, instead of deleting accounts, may be necessary to preserve audit trails.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li>Enterprise process for revoking access to enterprise assets</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Check to see if Input 1 exists:</p>
+<ol>
+<li>If the enterprise has an access revoking process, set M1 = 1.</li>
+<li>If the enterprise does not have an access revoking process, set M1 = 0.</li>
+</ol>
+</li>
+<li>
+<p>Using Input 1, check to see if the process includes, at a minimum, a way to revoke access upon termination, rights revocation, and role change of a user:</p>
+<ol>
+<li>For each element that is included, assign a value of 1. Sum the value of the elements included (M2).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of elements included in the access revoking process</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M1 is 0, the Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-process_1">Completeness of Process</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of elements included in the access granting process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="63-require-mfa-for-externally-exposed-applications">6.3: Require MFA for Externally-Exposed Applications</h2>
+<p>Require all externally-exposed enterprise or third-party applications to enforce MFA, where supported. Enforcing MFA through a directory service or SSO provider is a satisfactory implementation of this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+<li>Safeguard 5.1: Establish and Maintain an Inventory of Accounts</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV22</code>: Inventory of Accounts</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate externally exposed and third-party applications.</p>
+</li>
+<li>
+<p>Using the output of Operation 1 and <code>GV22</code>, identify and enumerate all user accounts associated with the applications (M1).</p>
+</li>
+<li>
+<p>For each account identified in Operation 2, use <code>GV3</code> to:</p>
+<ol>
+<li>Identify and enumerate accounts properly configured to require MFA (M2).</li>
+<li>Identify and enumerate accounts not properly configured to require MFA (M3).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of accounts associated with externally exposed and third-party applications</li>
+<li>M2 = Count of accounts properly configured to require MFA</li>
+<li>M3 = Count of accounts not properly configured to require MFA</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of externally exposed and third-party application accounts properly configured for MFA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="64-require-mfa-for-remote-network-access">6.4: Require MFA for Remote Network Access</h2>
+<p>Require MFA for remote network access.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Using <code>GV1</code> as a guide, identify and enumerate all authorized remote assets (M1).</p>
+</li>
+<li>
+<p>For each asset identified in Operation 1, check configurations <code>GV3</code>:</p>
+<ol>
+<li>Identify and enumerate assets properly configured to require MFA (M2).</li>
+<li>Identify and enumerate assets not properly configured to require MFA (M3).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of remote assets</li>
+<li>M2 = Count of remote assets properly configured to require MFA</li>
+<li>M3 = Count of remote assets not properly configured to require MFA</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<h4 id="coverage_1">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of remote assets properly configured to require MFA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="65-require-mfa-for-administrative-access">6.5: Require MFA for Administrative Access</h2>
+<p>Require MFA for all administrative access accounts, where supported, on all enterprise assets, whether managed on-site or through a service provider.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+<li>Safeguard 5.1: Establish and Maintain an Inventory of Accounts </li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV22</code>: Inventory of Accounts </li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Using <code>GV22</code>, identify and enumerate all administrative accounts (M1).</p>
+</li>
+<li>
+<p>For each administrative account identified in Operation 1, check configurations in <code>GV3</code>:</p>
+<ol>
+<li>Identify and enumerate administrative accounts properly configured to require MFA (M2).</li>
+<li>Identify and enumerate administrative accounts not properly configured to require MFA (M3).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Count of administrative accounts </li>
+<li>M2 = Count of administrative accounts properly configured to require MFA</li>
+<li>M3 = Count of administrative accounts not properly configured to require MFA</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<h4 id="coverage_2">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of administrative accounts properly configured to require MFA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="66-establish-and-maintain-an-inventory-of-authentication-and-authorization-systems">6.6: Establish and Maintain an Inventory of Authentication and Authorization Systems</h2>
+<p>Establish and maintain an inventory of the enterprise's authentication and authorization systems, including those hosted on-site or at a remote service provider. Review and update the inventory, at a minimum, annually, or more frequently.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Identify</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV23</code>: Inventory of Authentication and Authorization Systems</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li>Date of last update to the authentication and authorization system inventory</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Check if the enterprise maintains a <code>GV23</code> Authentication and Authorization System Inventory of all on-site and remote service providers:</p>
+<ol>
+<li>If the inventory exists, M1 = 1.</li>
+<li>If the inventory does not exist or is not provided, M1 = 0.</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate authorized authentication and authorization systems within the enterprise.</p>
+</li>
+<li>
+<p>Use the output of Operation 2 to compare to the existing inventory <code>GV23</code>:</p>
+<ol>
+<li>Identify and enumerate systems that are authorized and currently in the inventory (M2).</li>
+<li>Identify and enumerate systems that are authorized and not currently in the inventory (M3).</li>
+<li>Identify and enumerate systems that are not authorized but listed in the current inventory (M4).</li>
+</ol>
+</li>
+<li>
+<p>Compare the date of Input 3 to the current date and capture the timeframe in months (M6).</p>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of authorized and properly inventoried systems</li>
+<li>M3 = Count of authorized but not properly inventoried systems</li>
+<li>M4 = Count of unauthorized but inventoried systems</li>
+<li>M5 = Count of systems in the current inventory <code>GV23</code></li>
+<li>M6 = Timeframe since the last update of the inventory</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M6 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="accuracy-score">Accuracy Score</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>What percentage of the authorized authentication and authorization systems are accounted for in the current enterprise inventory?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M5</code></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>What percentage of unauthorized authentication and authorization systems are accounted for in the current enterprise inventory?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M5</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="67-centralize-access-control">6.7: Centralize Access Control</h2>
+<p>Centralize access control for all enterprise assets through a directory
+service or SSO provider, where supported.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify all directory and SSO services.</p>
+</li>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets that support directory and SSO services (M1).</p>
+</li>
+<li>
+<p>Check the output of Operations 1 and 2 to ensure each asset is covered by at least one directory or SSO service:</p>
+<ol>
+<li>Identify and enumerate assets that are covered by at least one directory or SSO service (M2).</li>
+<li>Identify and enumerate assets that are not covered by at least one directory or SSO service (M3).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Count of assets capable of supporting directory and/or SSO
+    services</li>
+<li>M2 = Count of assets covered by at least one directory or SSO
+    service</li>
+<li>M3 = Count of assets not covered by at least one directory or SSO
+    service</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<h4 id="coverage_3">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets that can support directory and SSO service covered by at least one directory or SSO service.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="68-define-and-maintain-role-based-access-control">6.8: Define and Maintain Role-Based Access Control</h2>
+<p>Define and maintain role-based access control by determining and documenting the access rights necessary for each role within the enterprise to successfully carry out its assigned duties. Perform access control reviews of enterprise assets to validate that all privileges are authorized, on a recurring schedule at a minimum annually, or more frequently.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Govern</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_7">Dependencies</h3>
+<ul>
+<li>Safeguard 5.1: Establish and Maintain an Inventory of Accounts</li>
+</ul>
+<h3 id="inputs_7">Inputs</h3>
+<ol>
+<li>Enterprise documented process for assigning role-based access control</li>
+<li><code>GV22</code>: Inventory of Accounts</li>
+<li>Date of last validation of role-based access control</li>
+</ol>
+<h3 id="operations_7">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise has a process for assigning role-based access control:</p>
+<ol>
+<li>If the process exists, M1 = 1</li>
+<li>If the process does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV22</code> and check if each account is assigned a role or group as outlined by the role-based access control process:</p>
+<ol>
+<li>Identify and enumerate accounts that are assigned a role or group (M3)</li>
+<li>Identify and enumerate accounts that are not assigned a role or group (M4)</li>
+</ol>
+</li>
+<li>
+<p>Compare the date in Input 3 to the current date and capture the timeframe in months (M5)</p>
+</li>
+</ol>
+<h3 id="measures_7">Measures</h3>
+<ul>
+<li>M1 = Does a role-based access control process exist as defined by the Output of Operation 1</li>
+<li>M2 = Count of <code>GV22</code>.</li>
+<li>M3 = Count of accounts found in the inventory with assigned roles or groups</li>
+<li>M4 = Count of accounts found in the inventory not assigned a role or group</li>
+<li>M5 = Timeframe in months of the last review of the role-based access control process</li>
+</ul>
+<h3 id="metrics_7">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M5 is greater than twelve months, this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="coverage_4">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of account inventory with a properly assigned role or group.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls5/" class="btn btn-neutral float-left" title="CIS Control 5: Account Management"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls7/" class="btn btn-neutral float-right" title="CIS Control 7: Continuous Vulnerability Management">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

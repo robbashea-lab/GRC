@@ -1,0 +1,52 @@
+[
+  {
+    "group": "Omnibot guide · Safeguard 17.5\n\nReview reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.\n\nRecorded answers do not support the saved Implemented status. Reassess through the native review and save workflow; no status has been changed.\n\nQuestion group 3 of 5\nSafeguard requirements · 2\n\nSafeguard requirements · 2\nHow fully are these safeguard requirements met?\n\nConfirm each statement against current operation. Yes means it is fully addressed, not merely planned.\n\nIncident roles cover public-relations personnel.\nChoose an answer\nYes\nPartially\nNo\nNot sure\nAssignments are reviewed annually and when significant changes could affect the safeguard.\nChoose an answer\nYes\nPartially\nNo\nNot sure\nIncident roles cover HR personnel.\nChoose an answer\nYes\nPartially\nNo\nNot sure\nIncident roles cover incident responders.\nChoose an answer\nYes\nPartially\nNo\nNot sure\nIncident roles cover analysts.\nChoose an answer\nYes\nPartially\nNo\nNot sure\nKnown gaps or uncertainties (optional)\n\nRecord anything missing, anything not yet confirmed, or who can help confirm it.\n\nBack\nSave & next\nSave & close\nReview interview history\n\nSaved interview snapshots for your account. Earlier records may lack lineage or structured output; no retention policy was changed.\n\nRevision 5 · cis-v8.1-program-3 · Completed interview · 2026-10-10T16:06:56.589795+00:00\n\nRecorded by Staging Administrator\n\nOVERVIEW OmniBot QA — Closeout CIS IG3 reports the practice to assign key roles and responsibilities is in place. IMPLEMENTATION BREAKDOWN In place - Key incident-response roles and responsibilities are assigned. Reported as met. - Incident roles cover legal personnel. Reported as met. - Incident roles cover IT personnel. Reported as met. - Incident roles cover information-security personnel. Reported as met. - Incident roles cover facilities personnel. Reported as met. - Incident roles cover public-relations personnel. Reported as met. - Assignments are reviewed annually and when significant changes could affect the safeguard. Reported as met. - Incident roles cover HR personnel. Reported as met. - Incident roles cover incident responders. Reported as met. - Incident roles cover analysts. Reported as met. - Incident-response responsibilities include relevant third parties. Reported as met. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n{\n  \"practice\": \"Yes\",\n  \"requirements_0\": {\n    \"Key incident-response roles and responsibilities are assigned.\": \"Yes\",\n    \"Incident roles cover legal personnel.\": \"Yes\",\n    \"Incident roles cover IT personnel.\": \"Yes\",\n    \"Incident roles cover information-security personnel.\": \"Yes\",\n    \"Incident roles cover facilities personnel.\": \"Yes\"\n  },\n  \"requirements_5\": {\n    \"Incident roles cover public-relations personnel.\": \"Yes\",\n    \"Assignments are reviewed annually and when significant changes could affect the safeguard.\": \"Yes\",\n    \"Incident roles cover HR personnel.\": \"Yes\",\n    \"Incident roles cover incident responders.\": \"Yes\",\n    \"Incident roles cover analysts.\": \"Yes\"\n  },\n  \"requirements_10\": {\n    \"Incident-response responsibilities include relevant third parties.\": \"Yes\"\n  }\n}\n\nRecorded recommendation: Implemented",
+    "values": [
+      {
+        "label": "Incident roles cover public-relations personnel.",
+        "value": "Yes"
+      },
+      {
+        "label": "Assignments are reviewed annually and when significant changes could affect the safeguard.",
+        "value": "Yes"
+      },
+      {
+        "label": "Incident roles cover HR personnel.",
+        "value": "Yes"
+      },
+      {
+        "label": "Incident roles cover incident responders.",
+        "value": "Yes"
+      },
+      {
+        "label": "Incident roles cover analysts.",
+        "value": "Yes"
+      }
+    ]
+  },
+  {
+    "group": "Omnibot guide · Safeguard 17.5\n\nReview reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.\n\nRecorded answers do not support the saved Implemented status. Reassess through the native review and save workflow; no status has been changed.\n\nQuestion group 2 of 5\nSafeguard requirements\n\nSafeguard requirements\nHow fully are these safeguard requirements met?\n\nConfirm each statement against current operation. Yes means it is fully addressed, not merely planned.\n\nKey incident-response roles and responsibilities are assigned.\nChoose an answer\nYes\nPartially\nNo\nNot sure\nIncident roles cover legal personnel.\nChoose an answer\nYes\nPartially\nNo\nNot sure\nIncident roles cover IT personnel.\nChoose an answer\nYes\nPartially\nNo\nNot sure\nIncident roles cover information-security personnel.\nChoose an answer\nYes\nPartially\nNo\nNot sure\nIncident roles cover facilities personnel.\nChoose an answer\nYes\nPartially\nNo\nNot sure\nKnown gaps or uncertainties (optional)\n\nRecord anything missing, anything not yet confirmed, or who can help confirm it.\n\nBack\nSave & next\nSave & close\nReview interview history\n\nSaved interview snapshots for your account. Earlier records may lack lineage or structured output; no retention policy was changed.\n\nRevision 5 · cis-v8.1-program-3 · Completed interview · 2026-10-10T16:06:56.589795+00:00\n\nRecorded by Staging Administrator\n\nOVERVIEW OmniBot QA — Closeout CIS IG3 reports the practice to assign key roles and responsibilities is in place. IMPLEMENTATION BREAKDOWN In place - Key incident-response roles and responsibilities are assigned. Reported as met. - Incident roles cover legal personnel. Reported as met. - Incident roles cover IT personnel. Reported as met. - Incident roles cover information-security personnel. Reported as met. - Incident roles cover facilities personnel. Reported as met. - Incident roles cover public-relations personnel. Reported as met. - Assignments are reviewed annually and when significant changes could affect the safeguard. Reported as met. - Incident roles cover HR personnel. Reported as met. - Incident roles cover incident responders. Reported as met. - Incident roles cover analysts. Reported as met. - Incident-response responsibilities include relevant third parties. Reported as met. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate.\n\n{\n  \"practice\": \"Yes\",\n  \"requirements_0\": {\n    \"Key incident-response roles and responsibilities are assigned.\": \"Yes\",\n    \"Incident roles cover legal personnel.\": \"Yes\",\n    \"Incident roles cover IT personnel.\": \"Yes\",\n    \"Incident roles cover information-security personnel.\": \"Yes\",\n    \"Incident roles cover facilities personnel.\": \"Yes\"\n  },\n  \"requirements_5\": {\n    \"Incident roles cover public-relations personnel.\": \"Yes\",\n    \"Assignments are reviewed annually and when significant changes could affect the safeguard.\": \"Yes\",\n    \"Incident roles cover HR personnel.\": \"Yes\",\n    \"Incident roles cover incident responders.\": \"Yes\",\n    \"Incident roles cover analysts.\": \"Yes\"\n  },\n  \"requirements_10\": {\n    \"Incident-response responsibilities include relevant third parties.\": \"Yes\"\n  }\n}\n\nRecorded recommendation: Implemented",
+    "values": [
+      {
+        "label": "Key incident-response roles and responsibilities are assigned.",
+        "value": "Yes"
+      },
+      {
+        "label": "Incident roles cover legal personnel.",
+        "value": "Yes"
+      },
+      {
+        "label": "Incident roles cover IT personnel.",
+        "value": "Yes"
+      },
+      {
+        "label": "Incident roles cover information-security personnel.",
+        "value": "Yes"
+      },
+      {
+        "label": "Incident roles cover facilities personnel.",
+        "value": "Yes"
+      }
+    ]
+  }
+]

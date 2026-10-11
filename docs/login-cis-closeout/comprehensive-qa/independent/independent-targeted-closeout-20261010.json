@@ -1,0 +1,56 @@
+{
+  "capturedAt": "2026-10-10T18:42:33.585Z",
+  "review": "Independent narrow read-only documentary review; no browser, test, source, account or deployment action.",
+  "documentationBaseHead": "a10114df486fea16fa1393f94fc4e5aacd60dbd0",
+  "reviewedSnapshot": "Manifested documentation working checkpoint relative to documentation base a101; the reviewed targeted updates were not yet committed in a101. The reviewedManifest hash identifies the exact reviewed snapshot.",
+  "runtime": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+  "deployment": "dep-db56e2d9fdbs73bpcq50",
+  "reviewedManifest": {
+    "capturedAt": "2026-10-10T18:40:33.195Z",
+    "sha256": "a4633692bcbc37cc25acca581419578355ffef7c3e4f3fa6346944ef11c1b1bf",
+    "files": 183,
+    "parsedJson": 35
+  },
+  "checks": [
+    {
+      "name": "Frozen documentary integrity: 183 artifacts, 35 JSON and 22,486,656 bytes",
+      "passed": true
+    },
+    {
+      "name": "Scope is documentary only; runtime and catalog/question contracts unchanged",
+      "passed": true
+    },
+    {
+      "name": "CI130 metadata exactly matches independent commit-filtered lookup; runtime remains 6a4",
+      "passed": true
+    },
+    {
+      "name": "17.5 current showcase snapshots establish initial context only, with native preservation and explicit later-group limits",
+      "passed": true
+    },
+    {
+      "name": "Brawndo reference snapshot preserves synthetic answers/reconciliation interlock and limits later questions",
+      "passed": true
+    },
+    {
+      "name": "Exact IG3 Archive persists with success audit and 39 retained events; Restore not claimed executed",
+      "passed": true
+    },
+    {
+      "name": "Recovery, read-only action limits and restricted-identity blockers are accurately bounded",
+      "passed": true
+    }
+  ],
+  "materialFindings": [],
+  "screenshotsVisuallyInspected": [
+    "initech-17.5-current-guide.png",
+    "hooli-17.5-current-guide.png",
+    "brawndo-1.1-current-guide.png",
+    "qa-ig3-archive-event.png"
+  ],
+  "interpretation": "Three current initial-guide/context/native-preservation checks are separately attributed to 6a4. Later17.5 questions and Brawndo reconciliation remain unexecuted. The exact prior Archive is now confirmed; Restore availability is not Restore execution. Baseline339 and prior writes are not relabeled.",
+  "independenceLimit": "Lead recorded the normal hosted UI observations; reviewer inspected raw snapshots, images and metadata without a second browser replay or reading credentials.",
+  "auditProvenance": "Initial audit diagnostics preserved. Reviewer corrected git status whitespace parsing and used the actual Framework Assessment Updated audit label; neither was a product defect or missing event.",
+  "remaining": "Actual restricted Reader/unauthorized-client server denials remain blocked; specific access approval and normal credential entry are pending, and Manager-to-Reader testing requires its own approval. QAIG2 remains active.",
+  "releaseApproval": false
+}

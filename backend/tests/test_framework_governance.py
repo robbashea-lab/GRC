@@ -89,7 +89,7 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         return (await self.client.get('/api/frameworks/cis-ig1', params={'client_id': (body or self.body())['client_id']})).json()
 
     async def test_ownership_preserves_assessment_and_rejects_stale_editors(self):
-        workspace=await self.configure()
+        workspace=await self.configure(self.body(programs=('cis-ig1','iso-27001')))
         source=workspace['assessments'][0]
         for framework in ('cis-ig1','iso-27001'):
             with self.subTest(framework=framework):

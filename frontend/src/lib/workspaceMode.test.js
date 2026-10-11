@@ -63,3 +63,45 @@ test('demo adapter cannot authenticate an email/password request',async()=>{
   await expect(api.post('/auth/login',{email:'test@example.test',password:'test-only-invalid'})).rejects.toMatchObject({response:{status:401}});
   expect(http).not.toHaveBeenCalled();
 });
+
+test('mode boundaries clear pending payloads, ordinary same-mode setup retains them',()=>{
+  const key='grc_pending_command_v1:synthetic-user:client:contact:update';
+  sessionStorage.setItem(key,'SYNTHETIC PRIOR ACTOR');
+  setWorkspaceMode('standard');
+  expect(sessionStorage.getItem(key)).toBe('SYNTHETIC PRIOR ACTOR');
+  setWorkspaceMode('demo');
+  expect(sessionStorage.getItem(key)).toBeNull();
+  sessionStorage.setItem(key,'SYNTHETIC DEMO');
+  setWorkspaceMode('standard');
+  expect(sessionStorage.getItem(key)).toBeNull();
+});
+
+test('a queued axios intent never dispatches using the next identity credentials',async()=>{
+  const {createIntent,clearPendingCommands}=require('./createIntent');
+  require('./api').setAccessToken('synthetic-prior-token');
+  const intent=createIntent(api.patch,'synthetic-a:client:contact:update');
+  const pending=intent('/contacts/contact',{notes:'SYNTHETIC A',expected_updated_at:'v1'});
+  await Promise.resolve();
+  clearPendingCommands();
+  require('./api').setAccessToken('synthetic-next-token');
+  await expect(pending).rejects.toThrow('ended workspace');
+  expect(http).not.toHaveBeenCalled();
+});
+
+test('late old transport rejection cannot run a form recovery callback in the next workspace',async()=>{
+  const {createIntent,clearPendingCommands}=require('./createIntent');
+  let reject;
+  api.defaults.adapter=jest.fn(config=>new Promise((_,fail)=>{reject=()=>fail({config,response:{headers:{'x-create-rejected':'true'}}});}));
+  let changedOldForm=false;
+  const intent=createIntent((...args)=>api.post(...args).catch(error=>{
+    if(error.response?.headers?.['x-create-rejected']==='true')changedOldForm=true;
+    throw error;
+  }),'synthetic-a:client:review:update');
+  const pending=intent('/reviews/review',{notes:'SYNTHETIC OLD'});
+  for(let step=0;step<4;step++)await Promise.resolve();
+  expect(api.defaults.adapter).toHaveBeenCalledTimes(1);
+  clearPendingCommands();
+  reject();
+  await expect(pending).rejects.toThrow('ended workspace');
+  expect(changedOldForm).toBe(false);
+});

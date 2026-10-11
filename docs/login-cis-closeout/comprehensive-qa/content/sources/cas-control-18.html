@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 18: Penetration Testing - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 18: Penetration Testing";
+        var mkdocs_page_input_path = "source/Controls18.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls18/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 18: Penetration Testing</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#181-establish-and-maintain-a-penetration-testing-program">18.1: Establish and Maintain a Penetration Testing Program</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#182-perform-periodic-external-penetration-tests">18.2: Perform Periodic External Penetration Tests</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#183-remediate-penetration-test-findings">18.3: Remediate Penetration Test Findings</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#184-validate-security-measures">18.4: Validate Security Measures</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance_1">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#185-perform-periodic-internal-penetration-tests">18.5: Perform Periodic Internal Penetration Tests</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 18: Penetration Testing</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls18.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-18-penetration-testing">CIS Control 18: Penetration Testing</h1>
+<p>Test the effectiveness and resiliency of enterprise assets through
+identifying and exploiting weaknesses in controls (people, processes,
+and technology), and simulating the objectives and actions of an
+attacker.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>A successful defensive posture requires a comprehensive program of
+effective policies and governance, strong technical defenses combined
+with appropriate action from people. However, it is rarely perfect. In
+a complex environment where technology is constantly evolving and new
+attacker tradecraft appears regularly; enterprises should periodically
+test their controls to identify gaps and assess their resiliency.
+This test may be from an external network, internal network, application,
+system, or device perspective. It may include social engineering of
+users or physical access control bypasses.</p>
+<p>Often, penetration tests are performed for specific purposes, like as a
+"dramatic" demonstration of an attack, usually to convince
+decision-makers of their enterprise's weaknesses and as a means to test
+the correct operation of enterprise defenses ("verification") • To test
+that the enterprise has built the right defenses in the first place
+("validation")</p>
+<p>Independent penetration testing can provide valuable and objective
+insights about the existence of vulnerabilities in enterprise assets and
+humans and the efficacy of defenses and mitigating controls to protect
+against adverse impacts to the enterprise. They are part of a
+comprehensive, ongoing program of security management and improvement.
+They can also reveal process weaknesses, such as incomplete or
+inconsistent configuration management or end-user training.</p>
+<p>Penetration testing differs from vulnerability testing, described in CIS
+Control 7. Vulnerability testing just checks for the presence of known,
+insecure enterprise assets and stops there. Penetration testing goes
+further to exploit those weaknesses to see how far an attacker could
+get and what business process or data might be impacted through
+the exploitation of that vulnerability. This is an important detail, and
+often penetration testing and vulnerability testing are incorrectly used
+interchangeably. Vulnerability testing is exclusively automated scanning
+with sometimes manual validation of false positives, whereas penetration
+testing requires more human involvement and analysis, sometimes
+supported through the use of custom tools or scripts. However,
+vulnerability testing is often a starting point for a penetration test.</p>
+<p>Another common term is "Red Team" exercises. These are similar to
+penetration tests in that vulnerabilities are exploited; however, the
+the difference is the focus. Red Teams simulate specific attacker TTPs to
+evaluate how an enterprise's environment would withstand an attack from
+a specific adversary or category of adversaries.</p>
+<hr />
+<h2 id="181-establish-and-maintain-a-penetration-testing-program">18.1: Establish and Maintain a Penetration Testing Program</h2>
+<p>Establish and maintain a penetration testing program appropriate to the size, complexity, industry, 
+and maturity of the enterprise. Penetration testing program characteristics include scope, such as network, 
+web application, Application Programming Interface (API), hosted services, and physical premise controls; frequency; 
+limitations, such as acceptable hours, and excluded attack types; point of contact information; remediation, such as 
+how findings will be routed internally; and retrospective requirements.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV53</code>: Penetration Testing Program Documentation</li>
+<li>Date of last update to the penetration testing program documentation</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Determine if <code>GV53</code> exists within the enterprise</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Check <code>GV53</code> for completeness. At a minimum, it should include the scope of the program, frequency, point of contact information, remediation, and retrospective requirements.</p>
+<ol>
+<li>For each component included in the documentation, assign a value of 1. Sum the values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date. Capture timeframe in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Sum of components included in the documentation</li>
+<li>M3 = Timeframe in months since the last update to the documentation</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of minimum components included in the program documentation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 5</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="182-perform-periodic-external-penetration-tests">18.2: Perform Periodic External Penetration Tests</h2>
+<p>Perform periodic external penetration tests based on program
+requirements, no less than annually. External penetration testing must
+include enterprise and environmental reconnaissance to detect
+exploitable information. Penetration testing requires specialized skills
+and experience and must be conducted through a qualified party. The
+testing may be in a clear box or an opaque box.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>Safeguard 18.1: Establish and Maintain a Penetration Testing Program</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV54</code>: Most Recent External Penetration Report</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>Check <code>GV54</code> for the date of the most recent external penetration
+    test. Compare the date to the current date and capture the timeframe in months (M1)</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Timeframe since the last external penetration test</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M1 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<hr />
+<h2 id="183-remediate-penetration-test-findings">18.3: Remediate Penetration Test Findings</h2>
+<p>Remediate penetration test findings based on the enterprise’s documented vulnerability remediation process. 
+This should include determining a timeline and level of effort based on the impact and prioritization of each identified finding.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 18.2: Perform Periodic External Penetration Tests</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV53</code>: Penetration Testing Program Documentation</li>
+<li><code>GV54</code>: Most Recent External Penetration Report</li>
+<li>External penetration report prior to most recent report</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Use the findings in Input 3 to identify and enumerate the
+    vulnerabilities outlined (M1)</p>
+</li>
+<li>
+<p>Use the findings in <code>GV54</code> to identify the vulnerabilities
+    outlined</p>
+</li>
+<li>
+<p>Compare the output of Operation 1 and Operation 1</p>
+<ol>
+<li>Identify and enumerate vulnerabilities found in Input 3 that continue to be in Input 2 (M2)</li>
+<li>Identify and enumerate vulnerabilities found in Input 3 that no longer appear in Input 2 (M3)</li>
+</ol>
+</li>
+<li>
+<p>Using the program documentation from <code>GV53</code>, determine whether the output of Operation 3.2 is still within scope based on enterprise's policy</p>
+<ol>
+<li>Identify and enumerate vulnerabilities within scope (M4)</li>
+<li>Identify and enumerate vulnerabilities out of scope (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of initial vulnerabilities identified by a penetration test</li>
+<li>M2 = Count of successfully remediated vulnerabilities</li>
+<li>M3 = Count of vulnerabilities that have not been remediated</li>
+<li>M4 = Count of unremediated vulnerabilities still in scope</li>
+<li>M5 = Count of unremediated vulnerabilities out of scope</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<h4 id="compliance">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percent of successfully remediated or still within scope vulnerabilities identified in the initial penetration test findings.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>(M3 + M4) / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="184-validate-security-measures">18.4: Validate Security Measures</h2>
+<p>Validate security measures after each penetration test. If deemed
+necessary, modify rulesets and capabilities to detect the techniques
+used during testing.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 18.1: Establish and Maintain a Penetration Testing Program</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV53</code>: Penetration Testing Program Documentation</li>
+<li><code>GV54</code>: Most Recent External Penetration Report</li>
+<li><code>GV55</code>: Most Recent Internal Penetration Report</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Check <code>GV53</code> to determine if it includes an enterprise process for validating security measures after a penetration test</p>
+<ol>
+<li>If the process exists, M1 = 1</li>
+<li>If the process does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Using the findings from both <code>GV54</code> and <code>GV55</code>, as
+    applicable, identify and enumerate security measures that are required modification (M2)</p>
+</li>
+<li>
+<p>For each security measure identified in Operation 2, check if modifications have been made</p>
+<ol>
+<li>Identify and enumerate security measures that have been modified per the enterprise's defined process (M3)</li>
+<li>Identify and enumerate security measures not yet modified per the enterprise's defined process (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of security measures requiring modification</li>
+<li>M3 = Count of security measures requiring modification that are
+    properly addressed</li>
+<li>M4 = Count of security measures requiring modification that are not
+    yet addressed</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="compliance_1">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of security measures requiring modification that have been properly addressed.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="185-perform-periodic-internal-penetration-tests">18.5: Perform Periodic Internal Penetration Tests</h2>
+<p>Perform periodic internal penetration tests based on program
+requirements, no less than annually. The testing may be a clear box or
+an opaque box.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Detect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 18.1: Establish and Maintain a Penetration Testing Program</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV55</code>: Most Recent Internal Penetration Report</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>Check <code>GV55</code> for the date of the most recent internal penetration
+    test. Compare the date to the current date and capture the timeframe in months
+    (M1)</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Timeframe since the last internal penetration test</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<ul>
+<li>If M1 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls17/" class="btn btn-neutral float-left" title="CIS Control 17: Incident Response Management"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

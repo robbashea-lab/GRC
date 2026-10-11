@@ -1,0 +1,538 @@
+- banner:
+  - button "Toggle client navigation":
+  - link "Omnisciente CLARITY FOR A STRONGER TOMORROW":
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button "Use light workspace theme":
+  - button "Your notifications":
+  - button "Staging Administrator super admin":
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - navigation "Platform":
+    - link "Portfolio":
+      - /url: /clients
+      - generic: Portfolio
+    - generic: Clients
+    - group "Client list scope":
+      - button "All" [pressed]
+      - button "Mine"
+    - textbox "Search clients":
+      - /placeholder: Search clients…
+    - button "Brawndo":
+      - generic: B
+      - generic: Brawndo
+    - button "Hooli":
+      - generic: H
+      - generic: Hooli
+    - button "Initech":
+      - generic: I
+      - generic: Initech
+    - button "OmniBot QA — CIS IG2":
+      - generic: O
+      - generic: OmniBot QA — CIS IG2
+    - button "Staging QA bec984b1 A":
+      - generic: S
+      - generic: Staging QA bec984b1 A
+    - button "Staging QA bec984b1 B":
+      - generic: S
+      - generic: Staging QA bec984b1 B
+    - button "Synthetic PR36 Assessment Release QA":
+      - generic: S
+      - generic: Synthetic PR36 Assessment Release QA
+    - button "SYNTHETIC PR52 DIRECT UPGRADE 20261007":
+      - generic: S
+      - generic: SYNTHETIC PR52 DIRECT UPGRADE 20261007
+    - button "SYNTHETIC PR52 TEMP Control1 20261007":
+      - generic: S
+      - generic: SYNTHETIC PR52 TEMP Control1 20261007
+    - button "SYNTHETIC PR57 PLATFORM THEME QA 20261007":
+      - generic: S
+      - generic: SYNTHETIC PR57 PLATFORM THEME QA 20261007
+    - button "SYNTHETIC RC55 DIRECT IG QA 20261007":
+      - generic: S
+      - generic: SYNTHETIC RC55 DIRECT IG QA 20261007
+    - button "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007":
+      - generic: S
+      - generic: SYNTHETIC RC55 SEQUENTIAL IG QA 20261007
+    - group "Administration":
+      - generic: Administration
+      - link "Client Management":
+        - /url: /admin/clients
+        - generic: Client Management
+      - link "Users & Access":
+        - /url: /admin/users
+        - generic: Users & Access
+      - link "Roles & Permissions":
+        - /url: /admin/roles
+        - generic: Roles & Permissions
+      - link "Security & Auth":
+        - /url: /admin/security
+        - generic: Security & Auth
+      - link "Audit Log":
+        - /url: /admin/audit
+        - generic: Audit Log
+- main:
+  - paragraph: 16 clients in view
+  - heading "Client Portfolio" [level=1]
+  - group "Portfolio totals":
+    - button "Past due 2 2 of 16 clients · most at SYNTHETIC PR57 PLATFORM THEME QA 20261007":
+      - generic: Past due
+      - generic: "2"
+      - generic: 2 of 16 clients · most at SYNTHETIC PR57 PLATFORM THEME QA 20261007
+    - button "Critical / High 1 1 of 16 clients · SYNTHETIC PR57 PLATFORM THEME QA 20261007":
+      - generic: Critical / High
+      - generic: "1"
+      - generic: 1 of 16 clients · SYNTHETIC PR57 PLATFORM THEME QA 20261007
+    - button "Significant risks 1 1 of 16 clients · Brawndo":
+      - generic: Significant risks
+      - generic: "1"
+      - generic: 1 of 16 clients · Brawndo
+    - button "Unassigned 249 15 of 16 clients · most at Synthetic PR36 Assessment Release QA":
+      - generic: Unassigned
+      - generic: "249"
+      - generic: 15 of 16 clients · most at Synthetic PR36 Assessment Release QA
+    - generic: Due ≤30 days
+    - generic: "2"
+    - generic: 1 of 16 clients · Synthetic PR36 Assessment Release QA
+  - textbox "Search clients":
+    - /placeholder: Search client, industry, lead…
+  - group "Portfolio views":
+    - button "All Clients" [pressed]
+    - button "Assigned to Me"
+    - button "Past Due"
+    - button "Critical / High"
+    - button "Significant Risks"
+    - button "Unassigned"
+  - 'button "GRC Lead: sort and filter"':
+    - text: GRC Lead
+  - 'button "Frameworks: sort and filter"':
+    - text: Frameworks
+  - checkbox "Include archived" [checked] [active]
+  - text: Include archived
+  - generic: 16 clients
+  - generic: Most urgent first
+  - region "Client portfolio, scroll horizontally for additional columns":
+    - table "Authorized client GRC priorities. Upcoming counts work due in 31 to 90 days. Critical / High counts open Findings and standalone high-priority Actions; Risks are counted separately. Last Activity is the latest lifecycle event; logins and generic edits are excluded.":
+      - caption: Authorized client GRC priorities. Upcoming counts work due in 31 to 90 days. Critical / High counts open Findings and standalone high-priority Actions; Risks are counted separately. Last Activity is the latest lifecycle event; logins and generic edits are excluded.
+      - rowgroup:
+        - 'row "Client: sort and filter GRC Lead: sort and filter Frameworks: sort and filter Past Due: sort and filter Due ≤30d: sort and filter Upcoming: sort and filter Critical / High: sort and filter Significant Risks: sort and filter Unassigned: sort and filter Last Activity: sort and filter Actions"':
+          - 'columnheader "Client: sort and filter"':
+            - 'button "Client: sort and filter"':
+              - text: Client
+          - 'columnheader "GRC Lead: sort and filter"':
+            - 'button "GRC Lead: sort and filter"':
+              - text: GRC Lead
+          - 'columnheader "Frameworks: sort and filter"':
+            - 'button "Frameworks: sort and filter"':
+              - text: Frameworks
+          - 'columnheader "Past Due: sort and filter"':
+            - 'button "Past Due: sort and filter"':
+              - text: Past Due
+          - 'columnheader "Due ≤30d: sort and filter"':
+            - 'button "Due ≤30d: sort and filter"':
+              - text: Due ≤30d
+          - 'columnheader "Upcoming: sort and filter"':
+            - 'button "Upcoming: sort and filter"':
+              - text: Upcoming
+          - 'columnheader "Critical / High: sort and filter"':
+            - 'button "Critical / High: sort and filter"':
+              - text: Critical / High
+          - 'columnheader "Significant Risks: sort and filter"':
+            - 'button "Significant Risks: sort and filter"':
+              - text: Significant Risks
+          - 'columnheader "Unassigned: sort and filter"':
+            - 'button "Unassigned: sort and filter"':
+              - text: Unassigned
+          - 'columnheader "Last Activity: sort and filter"':
+            - 'button "Last Activity: sort and filter"':
+              - text: Last Activity
+          - columnheader "Actions":
+            - generic: Actions
+      - rowgroup:
+        - 'row "SYNTHETIC PR57 PLATFORM THEME QA 20261007 Synthetic staging visual QA· onboarding Unassigned Open CIS IG3 for SYNTHETIC PR57 PLATFORM THEME QA 20261007 Open ISO 27001 for SYNTHETIC PR57 PLATFORM THEME QA 20261007 Open SOC 2 for SYNTHETIC PR57 PLATFORM THEME QA 20261007 SYNTHETIC PR57 PLATFORM THEME QA 20261007: Past Due, 1 items SYNTHETIC PR57 PLATFORM THEME QA 20261007: Due ≤30d, 0 items SYNTHETIC PR57 PLATFORM THEME QA 20261007: Upcoming (31–90d), 0 items SYNTHETIC PR57 PLATFORM THEME QA 20261007: Critical / High, 1 items SYNTHETIC PR57 PLATFORM THEME QA 20261007: Significant Risks, 0 items SYNTHETIC PR57 PLATFORM THEME QA 20261007: Unassigned, 28 items No activity recorded Actions for SYNTHETIC PR57 PLATFORM THEME QA 20261007"':
+          - cell "SYNTHETIC PR57 PLATFORM THEME QA 20261007 Synthetic staging visual QA· onboarding":
+            - button "SYNTHETIC PR57 PLATFORM THEME QA 20261007"
+            - text: Synthetic staging visual QA
+            - generic: · onboarding
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for SYNTHETIC PR57 PLATFORM THEME QA 20261007 Open ISO 27001 for SYNTHETIC PR57 PLATFORM THEME QA 20261007 Open SOC 2 for SYNTHETIC PR57 PLATFORM THEME QA 20261007":
+            - button "Open CIS IG3 for SYNTHETIC PR57 PLATFORM THEME QA 20261007": CIS IG3
+            - button "Open ISO 27001 for SYNTHETIC PR57 PLATFORM THEME QA 20261007": ISO 27001
+            - button "Open SOC 2 for SYNTHETIC PR57 PLATFORM THEME QA 20261007": SOC 2
+          - 'cell "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Past Due, 1 items"':
+            - 'button "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Past Due, 1 items"': "1"
+          - 'cell "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Due ≤30d, 0 items"':
+            - 'button "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Due ≤30d, 0 items"': "0"
+          - 'cell "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Upcoming (31–90d), 0 items"':
+            - 'button "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Critical / High, 1 items"':
+            - 'button "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Critical / High, 1 items"': "1"
+          - 'cell "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Significant Risks, 0 items"':
+            - 'button "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Significant Risks, 0 items"': "0"
+          - 'cell "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Unassigned, 28 items"':
+            - 'button "SYNTHETIC PR57 PLATFORM THEME QA 20261007: Unassigned, 28 items"': "28"
+          - cell "No activity recorded"
+          - cell "Actions for SYNTHETIC PR57 PLATFORM THEME QA 20261007":
+            - button "Actions for SYNTHETIC PR57 PLATFORM THEME QA 20261007":
+        - 'row "Synthetic PR36 Assessment Release QA —· onboarding Unassigned Open CIS IG3 for Synthetic PR36 Assessment Release QA Open ISO 27001 for Synthetic PR36 Assessment Release QA Open SOC 2 for Synthetic PR36 Assessment Release QA Synthetic PR36 Assessment Release QA: Past Due, 1 items Synthetic PR36 Assessment Release QA: Due ≤30d, 2 items Synthetic PR36 Assessment Release QA: Upcoming (31–90d), 1 items Synthetic PR36 Assessment Release QA: Critical / High, 0 items Synthetic PR36 Assessment Release QA: Significant Risks, 0 items Synthetic PR36 Assessment Release QA: Unassigned, 31 items Oct 6 · Risk closed Actions for Synthetic PR36 Assessment Release QA"':
+          - cell "Synthetic PR36 Assessment Release QA —· onboarding":
+            - button "Synthetic PR36 Assessment Release QA"
+            - text: —
+            - generic: · onboarding
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for Synthetic PR36 Assessment Release QA Open ISO 27001 for Synthetic PR36 Assessment Release QA Open SOC 2 for Synthetic PR36 Assessment Release QA":
+            - button "Open CIS IG3 for Synthetic PR36 Assessment Release QA": CIS IG3
+            - button "Open ISO 27001 for Synthetic PR36 Assessment Release QA": ISO 27001
+            - button "Open SOC 2 for Synthetic PR36 Assessment Release QA": SOC 2
+          - 'cell "Synthetic PR36 Assessment Release QA: Past Due, 1 items"':
+            - 'button "Synthetic PR36 Assessment Release QA: Past Due, 1 items"': "1"
+          - 'cell "Synthetic PR36 Assessment Release QA: Due ≤30d, 2 items"':
+            - 'button "Synthetic PR36 Assessment Release QA: Due ≤30d, 2 items"': "2"
+          - 'cell "Synthetic PR36 Assessment Release QA: Upcoming (31–90d), 1 items"':
+            - 'button "Synthetic PR36 Assessment Release QA: Upcoming (31–90d), 1 items"': "1"
+          - 'cell "Synthetic PR36 Assessment Release QA: Critical / High, 0 items"':
+            - 'button "Synthetic PR36 Assessment Release QA: Critical / High, 0 items"': "0"
+          - 'cell "Synthetic PR36 Assessment Release QA: Significant Risks, 0 items"':
+            - 'button "Synthetic PR36 Assessment Release QA: Significant Risks, 0 items"': "0"
+          - 'cell "Synthetic PR36 Assessment Release QA: Unassigned, 31 items"':
+            - 'button "Synthetic PR36 Assessment Release QA: Unassigned, 31 items"': "31"
+          - cell "Oct 6 · Risk closed":
+            - time:
+              - text: Oct 6
+              - generic: · Risk closed
+          - cell "Actions for Synthetic PR36 Assessment Release QA":
+            - button "Actions for Synthetic PR36 Assessment Release QA":
+        - 'row "Brawndo Synthetic workspace pilot· onboarding Unassigned Open CIS IG1 for Brawndo Brawndo: Past Due, 0 items Brawndo: Due ≤30d, 0 items Brawndo: Upcoming (31–90d), 0 items Brawndo: Critical / High, 0 items Brawndo: Significant Risks, 1 items Brawndo: Unassigned, 16 items Oct 8 · Finding raised Actions for Brawndo"':
+          - cell "Brawndo Synthetic workspace pilot· onboarding":
+            - button "Brawndo"
+            - text: Synthetic workspace pilot
+            - generic: · onboarding
+          - cell "Unassigned"
+          - cell "Open CIS IG1 for Brawndo":
+            - button "Open CIS IG1 for Brawndo": CIS IG1
+          - 'cell "Brawndo: Past Due, 0 items"':
+            - 'button "Brawndo: Past Due, 0 items"': "0"
+          - 'cell "Brawndo: Due ≤30d, 0 items"':
+            - 'button "Brawndo: Due ≤30d, 0 items"': "0"
+          - 'cell "Brawndo: Upcoming (31–90d), 0 items"':
+            - 'button "Brawndo: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "Brawndo: Critical / High, 0 items"':
+            - 'button "Brawndo: Critical / High, 0 items"': "0"
+          - 'cell "Brawndo: Significant Risks, 1 items"':
+            - 'button "Brawndo: Significant Risks, 1 items"': "1"
+          - 'cell "Brawndo: Unassigned, 16 items"':
+            - 'button "Brawndo: Unassigned, 16 items"': "16"
+          - cell "Oct 8 · Finding raised":
+            - time:
+              - text: Oct 8
+              - generic: · Finding raised
+          - cell "Actions for Brawndo":
+            - button "Actions for Brawndo":
+        - 'row "OmniBot QA — CIS IG3 —· archived Unassigned Open CIS IG3 for OmniBot QA — CIS IG3 Open ISO 27001 for OmniBot QA — CIS IG3 OmniBot QA — CIS IG3: Past Due, 0 items OmniBot QA — CIS IG3: Due ≤30d, 0 items OmniBot QA — CIS IG3: Upcoming (31–90d), 0 items OmniBot QA — CIS IG3: Critical / High, 0 items OmniBot QA — CIS IG3: Significant Risks, 0 items OmniBot QA — CIS IG3: Unassigned, 23 items No activity recorded Actions for OmniBot QA — CIS IG3"':
+          - cell "OmniBot QA — CIS IG3 —· archived":
+            - button "OmniBot QA — CIS IG3"
+            - text: —
+            - generic: · archived
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for OmniBot QA — CIS IG3 Open ISO 27001 for OmniBot QA — CIS IG3":
+            - button "Open CIS IG3 for OmniBot QA — CIS IG3": CIS IG3
+            - button "Open ISO 27001 for OmniBot QA — CIS IG3": ISO 27001
+          - 'cell "OmniBot QA — CIS IG3: Past Due, 0 items"':
+            - 'button "OmniBot QA — CIS IG3: Past Due, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG3: Due ≤30d, 0 items"':
+            - 'button "OmniBot QA — CIS IG3: Due ≤30d, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG3: Upcoming (31–90d), 0 items"':
+            - 'button "OmniBot QA — CIS IG3: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG3: Critical / High, 0 items"':
+            - 'button "OmniBot QA — CIS IG3: Critical / High, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG3: Significant Risks, 0 items"':
+            - 'button "OmniBot QA — CIS IG3: Significant Risks, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG3: Unassigned, 23 items"':
+            - 'button "OmniBot QA — CIS IG3: Unassigned, 23 items"': "23"
+          - cell "No activity recorded"
+          - cell "Actions for OmniBot QA — CIS IG3":
+            - button "Actions for OmniBot QA — CIS IG3":
+        - 'row "Hooli —· onboarding Unassigned Open CIS IG3 for Hooli Hooli: Past Due, 0 items Hooli: Due ≤30d, 0 items Hooli: Upcoming (31–90d), 0 items Hooli: Critical / High, 0 items Hooli: Significant Risks, 0 items Hooli: Unassigned, 15 items No activity recorded Actions for Hooli"':
+          - cell "Hooli —· onboarding":
+            - button "Hooli"
+            - text: —
+            - generic: · onboarding
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for Hooli":
+            - button "Open CIS IG3 for Hooli": CIS IG3
+          - 'cell "Hooli: Past Due, 0 items"':
+            - 'button "Hooli: Past Due, 0 items"': "0"
+          - 'cell "Hooli: Due ≤30d, 0 items"':
+            - 'button "Hooli: Due ≤30d, 0 items"': "0"
+          - 'cell "Hooli: Upcoming (31–90d), 0 items"':
+            - 'button "Hooli: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "Hooli: Critical / High, 0 items"':
+            - 'button "Hooli: Critical / High, 0 items"': "0"
+          - 'cell "Hooli: Significant Risks, 0 items"':
+            - 'button "Hooli: Significant Risks, 0 items"': "0"
+          - 'cell "Hooli: Unassigned, 15 items"':
+            - 'button "Hooli: Unassigned, 15 items"': "15"
+          - cell "No activity recorded"
+          - cell "Actions for Hooli":
+            - button "Actions for Hooli":
+        - 'row "Initech —· onboarding Unassigned Open CIS IG2 for Initech Initech: Past Due, 0 items Initech: Due ≤30d, 0 items Initech: Upcoming (31–90d), 0 items Initech: Critical / High, 0 items Initech: Significant Risks, 0 items Initech: Unassigned, 15 items No activity recorded Actions for Initech"':
+          - cell "Initech —· onboarding":
+            - button "Initech"
+            - text: —
+            - generic: · onboarding
+          - cell "Unassigned"
+          - cell "Open CIS IG2 for Initech":
+            - button "Open CIS IG2 for Initech": CIS IG2
+          - 'cell "Initech: Past Due, 0 items"':
+            - 'button "Initech: Past Due, 0 items"': "0"
+          - 'cell "Initech: Due ≤30d, 0 items"':
+            - 'button "Initech: Due ≤30d, 0 items"': "0"
+          - 'cell "Initech: Upcoming (31–90d), 0 items"':
+            - 'button "Initech: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "Initech: Critical / High, 0 items"':
+            - 'button "Initech: Critical / High, 0 items"': "0"
+          - 'cell "Initech: Significant Risks, 0 items"':
+            - 'button "Initech: Significant Risks, 0 items"': "0"
+          - 'cell "Initech: Unassigned, 15 items"':
+            - 'button "Initech: Unassigned, 15 items"': "15"
+          - cell "No activity recorded"
+          - cell "Actions for Initech":
+            - button "Actions for Initech":
+        - 'row "OmniBot QA — CIS IG1 —· archived Unassigned Open CIS IG3 for OmniBot QA — CIS IG1 OmniBot QA — CIS IG1: Past Due, 0 items OmniBot QA — CIS IG1: Due ≤30d, 0 items OmniBot QA — CIS IG1: Upcoming (31–90d), 0 items OmniBot QA — CIS IG1: Critical / High, 0 items OmniBot QA — CIS IG1: Significant Risks, 0 items OmniBot QA — CIS IG1: Unassigned, 15 items No activity recorded Actions for OmniBot QA — CIS IG1"':
+          - cell "OmniBot QA — CIS IG1 —· archived":
+            - button "OmniBot QA — CIS IG1"
+            - text: —
+            - generic: · archived
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for OmniBot QA — CIS IG1":
+            - button "Open CIS IG3 for OmniBot QA — CIS IG1": CIS IG3
+          - 'cell "OmniBot QA — CIS IG1: Past Due, 0 items"':
+            - 'button "OmniBot QA — CIS IG1: Past Due, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG1: Due ≤30d, 0 items"':
+            - 'button "OmniBot QA — CIS IG1: Due ≤30d, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG1: Upcoming (31–90d), 0 items"':
+            - 'button "OmniBot QA — CIS IG1: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG1: Critical / High, 0 items"':
+            - 'button "OmniBot QA — CIS IG1: Critical / High, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG1: Significant Risks, 0 items"':
+            - 'button "OmniBot QA — CIS IG1: Significant Risks, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG1: Unassigned, 15 items"':
+            - 'button "OmniBot QA — CIS IG1: Unassigned, 15 items"': "15"
+          - cell "No activity recorded"
+          - cell "Actions for OmniBot QA — CIS IG1":
+            - button "Actions for OmniBot QA — CIS IG1":
+        - 'row "OmniBot QA — CIS IG2 —· onboarding Unassigned Open CIS IG2 for OmniBot QA — CIS IG2 OmniBot QA — CIS IG2: Past Due, 0 items OmniBot QA — CIS IG2: Due ≤30d, 0 items OmniBot QA — CIS IG2: Upcoming (31–90d), 0 items OmniBot QA — CIS IG2: Critical / High, 0 items OmniBot QA — CIS IG2: Significant Risks, 0 items OmniBot QA — CIS IG2: Unassigned, 15 items No activity recorded Actions for OmniBot QA — CIS IG2"':
+          - cell "OmniBot QA — CIS IG2 —· onboarding":
+            - button "OmniBot QA — CIS IG2"
+            - text: —
+            - generic: · onboarding
+          - cell "Unassigned"
+          - cell "Open CIS IG2 for OmniBot QA — CIS IG2":
+            - button "Open CIS IG2 for OmniBot QA — CIS IG2": CIS IG2
+          - 'cell "OmniBot QA — CIS IG2: Past Due, 0 items"':
+            - 'button "OmniBot QA — CIS IG2: Past Due, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG2: Due ≤30d, 0 items"':
+            - 'button "OmniBot QA — CIS IG2: Due ≤30d, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG2: Upcoming (31–90d), 0 items"':
+            - 'button "OmniBot QA — CIS IG2: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG2: Critical / High, 0 items"':
+            - 'button "OmniBot QA — CIS IG2: Critical / High, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG2: Significant Risks, 0 items"':
+            - 'button "OmniBot QA — CIS IG2: Significant Risks, 0 items"': "0"
+          - 'cell "OmniBot QA — CIS IG2: Unassigned, 15 items"':
+            - 'button "OmniBot QA — CIS IG2: Unassigned, 15 items"': "15"
+          - cell "No activity recorded"
+          - cell "Actions for OmniBot QA — CIS IG2":
+            - button "Actions for OmniBot QA — CIS IG2":
+        - 'row "OmniBot QA — Closeout CIS IG1 Synthetic closeout verification· archived Unassigned Open CIS IG3 for OmniBot QA — Closeout CIS IG1 OmniBot QA — Closeout CIS IG1: Past Due, 0 items OmniBot QA — Closeout CIS IG1: Due ≤30d, 0 items OmniBot QA — Closeout CIS IG1: Upcoming (31–90d), 0 items OmniBot QA — Closeout CIS IG1: Critical / High, 0 items OmniBot QA — Closeout CIS IG1: Significant Risks, 0 items OmniBot QA — Closeout CIS IG1: Unassigned, 15 items No activity recorded Actions for OmniBot QA — Closeout CIS IG1"':
+          - cell "OmniBot QA — Closeout CIS IG1 Synthetic closeout verification· archived":
+            - button "OmniBot QA — Closeout CIS IG1"
+            - text: Synthetic closeout verification
+            - generic: · archived
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for OmniBot QA — Closeout CIS IG1":
+            - button "Open CIS IG3 for OmniBot QA — Closeout CIS IG1": CIS IG3
+          - 'cell "OmniBot QA — Closeout CIS IG1: Past Due, 0 items"':
+            - 'button "OmniBot QA — Closeout CIS IG1: Past Due, 0 items"': "0"
+          - 'cell "OmniBot QA — Closeout CIS IG1: Due ≤30d, 0 items"':
+            - 'button "OmniBot QA — Closeout CIS IG1: Due ≤30d, 0 items"': "0"
+          - 'cell "OmniBot QA — Closeout CIS IG1: Upcoming (31–90d), 0 items"':
+            - 'button "OmniBot QA — Closeout CIS IG1: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "OmniBot QA — Closeout CIS IG1: Critical / High, 0 items"':
+            - 'button "OmniBot QA — Closeout CIS IG1: Critical / High, 0 items"': "0"
+          - 'cell "OmniBot QA — Closeout CIS IG1: Significant Risks, 0 items"':
+            - 'button "OmniBot QA — Closeout CIS IG1: Significant Risks, 0 items"': "0"
+          - 'cell "OmniBot QA — Closeout CIS IG1: Unassigned, 15 items"':
+            - 'button "OmniBot QA — Closeout CIS IG1: Unassigned, 15 items"': "15"
+          - cell "No activity recorded"
+          - cell "Actions for OmniBot QA — Closeout CIS IG1":
+            - button "Actions for OmniBot QA — Closeout CIS IG1":
+        - 'row "OmniBot QA — Closeout CIS IG3 Synthetic closeout verification· archived Unassigned Open CIS IG3 for OmniBot QA — Closeout CIS IG3 OmniBot QA — Closeout CIS IG3: Past Due, 0 items OmniBot QA — Closeout CIS IG3: Due ≤30d, 0 items OmniBot QA — Closeout CIS IG3: Upcoming (31–90d), 0 items OmniBot QA — Closeout CIS IG3: Critical / High, 0 items OmniBot QA — Closeout CIS IG3: Significant Risks, 0 items OmniBot QA — Closeout CIS IG3: Unassigned, 15 items No activity recorded Actions for OmniBot QA — Closeout CIS IG3"':
+          - cell "OmniBot QA — Closeout CIS IG3 Synthetic closeout verification· archived":
+            - button "OmniBot QA — Closeout CIS IG3"
+            - text: Synthetic closeout verification
+            - generic: · archived
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for OmniBot QA — Closeout CIS IG3":
+            - button "Open CIS IG3 for OmniBot QA — Closeout CIS IG3": CIS IG3
+          - 'cell "OmniBot QA — Closeout CIS IG3: Past Due, 0 items"':
+            - 'button "OmniBot QA — Closeout CIS IG3: Past Due, 0 items"': "0"
+          - 'cell "OmniBot QA — Closeout CIS IG3: Due ≤30d, 0 items"':
+            - 'button "OmniBot QA — Closeout CIS IG3: Due ≤30d, 0 items"': "0"
+          - 'cell "OmniBot QA — Closeout CIS IG3: Upcoming (31–90d), 0 items"':
+            - 'button "OmniBot QA — Closeout CIS IG3: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "OmniBot QA — Closeout CIS IG3: Critical / High, 0 items"':
+            - 'button "OmniBot QA — Closeout CIS IG3: Critical / High, 0 items"': "0"
+          - 'cell "OmniBot QA — Closeout CIS IG3: Significant Risks, 0 items"':
+            - 'button "OmniBot QA — Closeout CIS IG3: Significant Risks, 0 items"': "0"
+          - 'cell "OmniBot QA — Closeout CIS IG3: Unassigned, 15 items"':
+            - 'button "OmniBot QA — Closeout CIS IG3: Unassigned, 15 items"': "15"
+          - cell "No activity recorded"
+          - cell "Actions for OmniBot QA — Closeout CIS IG3":
+            - button "Actions for OmniBot QA — Closeout CIS IG3":
+        - 'row "SYNTHETIC PR52 DIRECT UPGRADE 20261007 —· onboarding Unassigned Open CIS IG3 for SYNTHETIC PR52 DIRECT UPGRADE 20261007 SYNTHETIC PR52 DIRECT UPGRADE 20261007: Past Due, 0 items SYNTHETIC PR52 DIRECT UPGRADE 20261007: Due ≤30d, 0 items SYNTHETIC PR52 DIRECT UPGRADE 20261007: Upcoming (31–90d), 0 items SYNTHETIC PR52 DIRECT UPGRADE 20261007: Critical / High, 0 items SYNTHETIC PR52 DIRECT UPGRADE 20261007: Significant Risks, 0 items SYNTHETIC PR52 DIRECT UPGRADE 20261007: Unassigned, 15 items No activity recorded Actions for SYNTHETIC PR52 DIRECT UPGRADE 20261007"':
+          - cell "SYNTHETIC PR52 DIRECT UPGRADE 20261007 —· onboarding":
+            - button "SYNTHETIC PR52 DIRECT UPGRADE 20261007"
+            - text: —
+            - generic: · onboarding
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for SYNTHETIC PR52 DIRECT UPGRADE 20261007":
+            - button "Open CIS IG3 for SYNTHETIC PR52 DIRECT UPGRADE 20261007": CIS IG3
+          - 'cell "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Past Due, 0 items"':
+            - 'button "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Past Due, 0 items"': "0"
+          - 'cell "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Due ≤30d, 0 items"':
+            - 'button "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Due ≤30d, 0 items"': "0"
+          - 'cell "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Upcoming (31–90d), 0 items"':
+            - 'button "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Critical / High, 0 items"':
+            - 'button "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Critical / High, 0 items"': "0"
+          - 'cell "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Significant Risks, 0 items"':
+            - 'button "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Significant Risks, 0 items"': "0"
+          - 'cell "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Unassigned, 15 items"':
+            - 'button "SYNTHETIC PR52 DIRECT UPGRADE 20261007: Unassigned, 15 items"': "15"
+          - cell "No activity recorded"
+          - cell "Actions for SYNTHETIC PR52 DIRECT UPGRADE 20261007":
+            - button "Actions for SYNTHETIC PR52 DIRECT UPGRADE 20261007":
+        - 'row "SYNTHETIC PR52 TEMP Control1 20261007 —· onboarding Unassigned Open CIS IG3 for SYNTHETIC PR52 TEMP Control1 20261007 SYNTHETIC PR52 TEMP Control1 20261007: Past Due, 0 items SYNTHETIC PR52 TEMP Control1 20261007: Due ≤30d, 0 items SYNTHETIC PR52 TEMP Control1 20261007: Upcoming (31–90d), 0 items SYNTHETIC PR52 TEMP Control1 20261007: Critical / High, 0 items SYNTHETIC PR52 TEMP Control1 20261007: Significant Risks, 0 items SYNTHETIC PR52 TEMP Control1 20261007: Unassigned, 15 items No activity recorded Actions for SYNTHETIC PR52 TEMP Control1 20261007"':
+          - cell "SYNTHETIC PR52 TEMP Control1 20261007 —· onboarding":
+            - button "SYNTHETIC PR52 TEMP Control1 20261007"
+            - text: —
+            - generic: · onboarding
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for SYNTHETIC PR52 TEMP Control1 20261007":
+            - button "Open CIS IG3 for SYNTHETIC PR52 TEMP Control1 20261007": CIS IG3
+          - 'cell "SYNTHETIC PR52 TEMP Control1 20261007: Past Due, 0 items"':
+            - 'button "SYNTHETIC PR52 TEMP Control1 20261007: Past Due, 0 items"': "0"
+          - 'cell "SYNTHETIC PR52 TEMP Control1 20261007: Due ≤30d, 0 items"':
+            - 'button "SYNTHETIC PR52 TEMP Control1 20261007: Due ≤30d, 0 items"': "0"
+          - 'cell "SYNTHETIC PR52 TEMP Control1 20261007: Upcoming (31–90d), 0 items"':
+            - 'button "SYNTHETIC PR52 TEMP Control1 20261007: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "SYNTHETIC PR52 TEMP Control1 20261007: Critical / High, 0 items"':
+            - 'button "SYNTHETIC PR52 TEMP Control1 20261007: Critical / High, 0 items"': "0"
+          - 'cell "SYNTHETIC PR52 TEMP Control1 20261007: Significant Risks, 0 items"':
+            - 'button "SYNTHETIC PR52 TEMP Control1 20261007: Significant Risks, 0 items"': "0"
+          - 'cell "SYNTHETIC PR52 TEMP Control1 20261007: Unassigned, 15 items"':
+            - 'button "SYNTHETIC PR52 TEMP Control1 20261007: Unassigned, 15 items"': "15"
+          - cell "No activity recorded"
+          - cell "Actions for SYNTHETIC PR52 TEMP Control1 20261007":
+            - button "Actions for SYNTHETIC PR52 TEMP Control1 20261007":
+        - 'row "SYNTHETIC RC55 DIRECT IG QA 20261007 Release acceptance test· onboarding Unassigned Open CIS IG3 for SYNTHETIC RC55 DIRECT IG QA 20261007 SYNTHETIC RC55 DIRECT IG QA 20261007: Past Due, 0 items SYNTHETIC RC55 DIRECT IG QA 20261007: Due ≤30d, 0 items SYNTHETIC RC55 DIRECT IG QA 20261007: Upcoming (31–90d), 0 items SYNTHETIC RC55 DIRECT IG QA 20261007: Critical / High, 0 items SYNTHETIC RC55 DIRECT IG QA 20261007: Significant Risks, 0 items SYNTHETIC RC55 DIRECT IG QA 20261007: Unassigned, 15 items No activity recorded Actions for SYNTHETIC RC55 DIRECT IG QA 20261007"':
+          - cell "SYNTHETIC RC55 DIRECT IG QA 20261007 Release acceptance test· onboarding":
+            - button "SYNTHETIC RC55 DIRECT IG QA 20261007"
+            - text: Release acceptance test
+            - generic: · onboarding
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for SYNTHETIC RC55 DIRECT IG QA 20261007":
+            - button "Open CIS IG3 for SYNTHETIC RC55 DIRECT IG QA 20261007": CIS IG3
+          - 'cell "SYNTHETIC RC55 DIRECT IG QA 20261007: Past Due, 0 items"':
+            - 'button "SYNTHETIC RC55 DIRECT IG QA 20261007: Past Due, 0 items"': "0"
+          - 'cell "SYNTHETIC RC55 DIRECT IG QA 20261007: Due ≤30d, 0 items"':
+            - 'button "SYNTHETIC RC55 DIRECT IG QA 20261007: Due ≤30d, 0 items"': "0"
+          - 'cell "SYNTHETIC RC55 DIRECT IG QA 20261007: Upcoming (31–90d), 0 items"':
+            - 'button "SYNTHETIC RC55 DIRECT IG QA 20261007: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "SYNTHETIC RC55 DIRECT IG QA 20261007: Critical / High, 0 items"':
+            - 'button "SYNTHETIC RC55 DIRECT IG QA 20261007: Critical / High, 0 items"': "0"
+          - 'cell "SYNTHETIC RC55 DIRECT IG QA 20261007: Significant Risks, 0 items"':
+            - 'button "SYNTHETIC RC55 DIRECT IG QA 20261007: Significant Risks, 0 items"': "0"
+          - 'cell "SYNTHETIC RC55 DIRECT IG QA 20261007: Unassigned, 15 items"':
+            - 'button "SYNTHETIC RC55 DIRECT IG QA 20261007: Unassigned, 15 items"': "15"
+          - cell "No activity recorded"
+          - cell "Actions for SYNTHETIC RC55 DIRECT IG QA 20261007":
+            - button "Actions for SYNTHETIC RC55 DIRECT IG QA 20261007":
+        - 'row "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007 Release acceptance test· onboarding Unassigned Open CIS IG3 for SYNTHETIC RC55 SEQUENTIAL IG QA 20261007 SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Past Due, 0 items SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Due ≤30d, 0 items SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Upcoming (31–90d), 0 items SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Critical / High, 0 items SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Significant Risks, 0 items SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Unassigned, 15 items No activity recorded Actions for SYNTHETIC RC55 SEQUENTIAL IG QA 20261007"':
+          - cell "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007 Release acceptance test· onboarding":
+            - button "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007"
+            - text: Release acceptance test
+            - generic: · onboarding
+          - cell "Unassigned"
+          - cell "Open CIS IG3 for SYNTHETIC RC55 SEQUENTIAL IG QA 20261007":
+            - button "Open CIS IG3 for SYNTHETIC RC55 SEQUENTIAL IG QA 20261007": CIS IG3
+          - 'cell "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Past Due, 0 items"':
+            - 'button "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Past Due, 0 items"': "0"
+          - 'cell "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Due ≤30d, 0 items"':
+            - 'button "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Due ≤30d, 0 items"': "0"
+          - 'cell "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Upcoming (31–90d), 0 items"':
+            - 'button "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Critical / High, 0 items"':
+            - 'button "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Critical / High, 0 items"': "0"
+          - 'cell "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Significant Risks, 0 items"':
+            - 'button "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Significant Risks, 0 items"': "0"
+          - 'cell "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Unassigned, 15 items"':
+            - 'button "SYNTHETIC RC55 SEQUENTIAL IG QA 20261007: Unassigned, 15 items"': "15"
+          - cell "No activity recorded"
+          - cell "Actions for SYNTHETIC RC55 SEQUENTIAL IG QA 20261007":
+            - button "Actions for SYNTHETIC RC55 SEQUENTIAL IG QA 20261007":
+        - 'row "Staging QA bec984b1 A — Unassigned None selected Staging QA bec984b1 A: Past Due, 0 items Staging QA bec984b1 A: Due ≤30d, 0 items Staging QA bec984b1 A: Upcoming (31–90d), 0 items Staging QA bec984b1 A: Critical / High, 0 items Staging QA bec984b1 A: Significant Risks, 0 items Staging QA bec984b1 A: Unassigned, 1 items Oct 5 · Evidence added Actions for Staging QA bec984b1 A"':
+          - cell "Staging QA bec984b1 A —":
+            - button "Staging QA bec984b1 A"
+            - generic: —
+          - cell "Unassigned"
+          - cell "None selected":
+            - generic: None selected
+          - 'cell "Staging QA bec984b1 A: Past Due, 0 items"':
+            - 'button "Staging QA bec984b1 A: Past Due, 0 items"': "0"
+          - 'cell "Staging QA bec984b1 A: Due ≤30d, 0 items"':
+            - 'button "Staging QA bec984b1 A: Due ≤30d, 0 items"': "0"
+          - 'cell "Staging QA bec984b1 A: Upcoming (31–90d), 0 items"':
+            - 'button "Staging QA bec984b1 A: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "Staging QA bec984b1 A: Critical / High, 0 items"':
+            - 'button "Staging QA bec984b1 A: Critical / High, 0 items"': "0"
+          - 'cell "Staging QA bec984b1 A: Significant Risks, 0 items"':
+            - 'button "Staging QA bec984b1 A: Significant Risks, 0 items"': "0"
+          - 'cell "Staging QA bec984b1 A: Unassigned, 1 items"':
+            - 'button "Staging QA bec984b1 A: Unassigned, 1 items"': "1"
+          - cell "Oct 5 · Evidence added":
+            - time:
+              - text: Oct 5
+              - generic: · Evidence added
+          - cell "Actions for Staging QA bec984b1 A":
+            - button "Actions for Staging QA bec984b1 A":
+        - 'row "Staging QA bec984b1 B — Unassigned None selected Staging QA bec984b1 B: Past Due, 0 items Staging QA bec984b1 B: Due ≤30d, 0 items Staging QA bec984b1 B: Upcoming (31–90d), 0 items Staging QA bec984b1 B: Critical / High, 0 items Staging QA bec984b1 B: Significant Risks, 0 items Staging QA bec984b1 B: Unassigned, 0 items Oct 5 · Evidence added Actions for Staging QA bec984b1 B"':
+          - cell "Staging QA bec984b1 B —":
+            - button "Staging QA bec984b1 B"
+            - generic: —
+          - cell "Unassigned"
+          - cell "None selected":
+            - generic: None selected
+          - 'cell "Staging QA bec984b1 B: Past Due, 0 items"':
+            - 'button "Staging QA bec984b1 B: Past Due, 0 items"': "0"
+          - 'cell "Staging QA bec984b1 B: Due ≤30d, 0 items"':
+            - 'button "Staging QA bec984b1 B: Due ≤30d, 0 items"': "0"
+          - 'cell "Staging QA bec984b1 B: Upcoming (31–90d), 0 items"':
+            - 'button "Staging QA bec984b1 B: Upcoming (31–90d), 0 items"': "0"
+          - 'cell "Staging QA bec984b1 B: Critical / High, 0 items"':
+            - 'button "Staging QA bec984b1 B: Critical / High, 0 items"': "0"
+          - 'cell "Staging QA bec984b1 B: Significant Risks, 0 items"':
+            - 'button "Staging QA bec984b1 B: Significant Risks, 0 items"': "0"
+          - 'cell "Staging QA bec984b1 B: Unassigned, 0 items"':
+            - 'button "Staging QA bec984b1 B: Unassigned, 0 items"': "0"
+          - cell "Oct 5 · Evidence added":
+            - time:
+              - text: Oct 5
+              - generic: · Evidence added
+          - cell "Actions for Staging QA bec984b1 B":
+            - button "Actions for Staging QA bec984b1 B":
+- region "Notifications alt+T"

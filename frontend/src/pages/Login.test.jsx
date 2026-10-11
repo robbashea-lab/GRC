@@ -6,6 +6,7 @@ const mockLogin = jest.fn();
 const mockExploreDemo = jest.fn();
 const mockNavigate = jest.fn();
 const mockToastError = jest.fn();
+jest.mock('@/components/login/useLoginMotion', () => ({ useLoginMotion: jest.fn() }));
 jest.mock('sonner', () => ({ toast: { error: (...args) => mockToastError(...args) } }));
 jest.mock("@/context/AuthContext", () => ({ useAuth: () => ({ login: mockLogin, exploreDemo: mockExploreDemo }) }));
 jest.mock("@/lib/api", () => ({ DEMO_AVAILABLE: true, STANDARD_AUTH_ENABLED: false, STANDARD_AUTH_NOTICE: 'Standard sign-in is not enabled in this preview.', formatError: e => e.message }));

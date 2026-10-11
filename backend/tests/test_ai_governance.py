@@ -1,4 +1,5 @@
 import asyncio
+from unittest.mock import AsyncMock, patch
 from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 from ai_governance import CATALOG
 
@@ -118,3 +119,157 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         response=await self.client.post('/api/ai_systems/'+own['ai_system_id']+'/links',json={'kind':'risks','id':'foreign-risk'})
         self.assertEqual(response.status_code,403)
         self.assertEqual((await self.client.get('/api/related',params={'entity_type':'ai_systems','entity_id':foreign['ai_system_id']})).status_code,403)
+
+    async def test_links_reject_invalid_identifiers_before_target_lookup(self):
+        row=await self.create();aid=row['ai_system_id']
+        await server.db.risks.insert_one({'risk_id':'own-risk','client_id':'a','title':'Synthetic risk'})
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'platform_admin'}})
+        self.sign_in('member')
+        before=await server.db.ai_systems.find_one({'ai_system_id':aid})
+        audit_count=await server.db.audit_logs.count_documents({})
+        bodies=[{'kind':'risks','id':value} for value in (
+            {'$eq':'own-risk'}, ['own-risk'], None, True, False, 1, 1.0, '', ' \t ', 'r'*161)]
+        bodies.append({'kind':'risks'})
+        collection_type=type(server.db.risks);read=collection_type.find_one;lookup=AsyncMock()
+        async def observe_target(collection,*args,**kwargs):
+            if collection.name=='risks': await lookup(*args,**kwargs)
+            return await read(collection,*args,**kwargs)
+        for body in bodies:
+            with self.subTest(body=body), patch.object(collection_type,'find_one',new=observe_target):
+                response=await self.client.post('/api/ai_systems/'+aid+'/links',json=body)
+                self.assertEqual(response.status_code,422,response.text)
+                lookup.assert_not_awaited()
+                self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),before)
+                self.assertEqual(await server.db.audit_logs.count_documents({}),audit_count)
+                self.assertEqual((await self.client.get('/api/ai_systems?client_id=a')).status_code,200)
+        with patch.object(collection_type,'find_one',new=observe_target):
+            response=await self.client.post('/api/ai_systems/'+aid+'/links',json={'kind':'risks','id':'own-risk'})
+        self.assertEqual(response.status_code,200,response.text)
+        lookup.assert_awaited_once_with({'risk_id':'own-risk'},{'_id':0})
+
+    async def test_links_reject_unpermitted_fields_and_invalid_metadata_before_lookup(self):
+        row=await self.create();aid=row['ai_system_id']
+        await server.db.risks.insert_one({'risk_id':'own-risk','client_id':'a','title':'Synthetic risk'})
+        before=await server.db.ai_systems.find_one({'ai_system_id':aid})
+        audit_count=await server.db.audit_logs.count_documents({})
+        patches=[{'client_id':'b'}, {'kind':['risks']}, {'kind':'evidence'},
+            {'classification':'Not a classification'}, {'classification':True},
+            {'source':{}}, {'rationale':[]}, {'source':None}, {'rationale':2},
+            {'classification':'Explicit requirement','source':'  ','rationale':'Applies'},
+            {'classification':'Required activity — cadence not prescribed','source':'Source','rationale':'\n'}]
+        collection_type=type(server.db.risks);read=collection_type.find_one;lookup=AsyncMock()
+        async def observe_target(collection,*args,**kwargs):
+            if collection.name=='risks': await lookup(*args,**kwargs)
+            return await read(collection,*args,**kwargs)
+        for changes in patches:
+            with self.subTest(changes=changes), patch.object(collection_type,'find_one',new=observe_target):
+                response=await self.client.post('/api/ai_systems/'+aid+'/links',
+                    json={'kind':'risks','id':'own-risk',**changes})
+                self.assertEqual(response.status_code,422,response.text)
+                lookup.assert_not_awaited()
+                self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),before)
+                self.assertEqual(await server.db.audit_logs.count_documents({}),audit_count)
+
+    async def test_links_preserve_supported_kinds_exact_values_and_duplicate_behavior(self):
+        row=await self.create();aid=row['ai_system_id']
+        for kind in ('risks','findings','tasks','policies','requirements','vendors'):
+            identity='r'*160 if kind=='risks' else 'legacy '+kind+'.001'
+            await server.db[kind].insert_one({server.ID_FIELD_MAP[kind]:identity,'client_id':'a','title':'Synthetic target'})
+            body={'kind':kind,'id':identity}
+            if kind=='requirements':
+                body.update(classification='Explicit requirement',source='Synthetic authoritative source\nSection 1',
+                    rationale='Applies to this synthetic use case\nReviewed by test actor')
+            responses=await asyncio.gather(*[self.client.post('/api/ai_systems/'+aid+'/links',json=body) for _ in range(2)])
+            self.assertTrue(all(response.status_code==200 for response in responses),[r.text for r in responses])
+            stored=await server.db.ai_systems.find_one({'ai_system_id':aid})
+            self.assertEqual([link for link in stored['related_links'] if link['kind']==kind],
+                [{'classification':'Context','source':'','rationale':'',**body}])
+            events=await server.db.audit_logs.find({'action':'AI record linked','entity_id':aid}).to_list(None)
+            self.assertTrue(any(event.get('user_id')=='admin' and event['client_id']=='a' for event in events))
+            self.assertEqual((await self.client.get('/api/ai_systems?client_id=a')).status_code,200)
+
+    async def test_links_preserve_parent_tenant_and_lifecycle_denials(self):
+        row=await self.create();aid=row['ai_system_id'];base='/api/ai_systems/'+aid+'/links'
+        await server.db.risks.insert_many([
+            {'risk_id':'own-risk','client_id':'a','title':'Synthetic own risk'},
+            {'risk_id':'foreign-risk','client_id':'b','title':'Synthetic foreign risk'}])
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'platform_admin'}})
+        self.sign_in('member')
+        before=await server.db.ai_systems.find_one({'ai_system_id':aid})
+        for identity,status in [('foreign-risk',403),('missing-risk',404)]:
+            response=await self.client.post(base,json={'kind':'risks','id':identity})
+            self.assertEqual(response.status_code,status,response.text)
+            self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),before)
+        self.sign_in('admin')
+        self.assertEqual((await self.client.post(base,json={'kind':'risks','id':'foreign-risk'})).status_code,422)
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
+        self.sign_in('member')
+        self.assertEqual((await self.client.post(base,json={'kind':'risks','id':'own-risk'})).status_code,403)
+        self.sign_in('admin')
+        self.assertEqual((await self.client.post('/api/ai_systems/missing-ai/links',json={'kind':'risks','id':'own-risk'})).status_code,404)
+        await server.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{'status':'retired'}})
+        retired=await server.db.ai_systems.find_one({'ai_system_id':aid})
+        self.assertEqual((await self.client.post(base,json={'kind':'risks','id':'own-risk'})).status_code,409)
+        self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),retired)
+
+    async def test_links_do_not_write_after_ai_retirement_or_parent_deletion(self):
+        await server.db.risks.insert_one({'risk_id':'own-risk','client_id':'a','title':'Synthetic risk'})
+        for remove in (False,True):
+            with self.subTest(parent_deleted=remove):
+                row=await self.create();aid=row['ai_system_id']
+                collection_type=type(server.db.ai_systems);update=collection_type.update_one
+                async def change_parent(collection,query,changes):
+                    if collection.name=='ai_systems' and '$addToSet' in changes:
+                        if remove:
+                            await collection.delete_one({'ai_system_id':aid})
+                        else:
+                            await update(collection,{'ai_system_id':aid},{'$set':{'status':'retired'}})
+                    return await update(collection,query,changes)
+                with patch.object(collection_type,'update_one',new=change_parent):
+                    response=await self.client.post('/api/ai_systems/'+aid+'/links',json={'kind':'risks','id':'own-risk'})
+                self.assertEqual(response.status_code,409,response.text)
+                stored=await server.db.ai_systems.find_one({'ai_system_id':aid})
+                if remove: self.assertIsNone(stored)
+                else:
+                    self.assertEqual(stored['status'],'retired')
+                    self.assertEqual(stored['related_links'],[])
+                self.assertEqual(await server.db.audit_logs.count_documents({'action':'AI record linked','entity_id':aid}),0)
+
+    async def test_legacy_malformed_links_remain_stored_but_reader_projection_is_safe(self):
+        row=await self.create(screening={'consequential':True});aid=row['ai_system_id']
+        valid={'kind':'risks','id':'valid-risk','classification':'Context','source':'','rationale':''}
+        legacy=[{'kind':'risks','id':{'$eq':'valid-risk'},'classification':'Context','source':'','rationale':''},
+            {'kind':'requirements','id':'legacy-req','classification':'Context','source':{'unexpected':'object'},'rationale':''},
+            None,{'id':'missing-kind'}]
+        await server.db.risks.insert_one({'risk_id':'valid-risk','client_id':'a','title':'Synthetic risk',
+            'likelihood_score':3,'impact_score':3,'status':'open'})
+        await server.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{'related_links':[valid,*legacy]}})
+        before=await server.db.ai_systems.find_one({'ai_system_id':aid})
+        audit_count=await server.db.audit_logs.count_documents({})
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
+        self.sign_in('member')
+        current=(await self.client.get('/api/ai_systems?client_id=a')).json()[0]
+        self.assertEqual(current['related_links'],[valid])
+        self.assertTrue(current['relationship_integrity_warning'])
+        self.assertNotIn('risk',[alert['key'] for alert in current['alerts']])
+        self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),before)
+        self.assertEqual(await server.db.audit_logs.count_documents({}),audit_count)
+        self.assertEqual((await self.client.get('/api/ai_systems?client_id=b')).status_code,403)
+        for links in (legacy,{'kind':'risks','id':'valid-risk'},None):
+            await server.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{'related_links':links}})
+            stored=await server.db.ai_systems.find_one({'ai_system_id':aid})
+            current=(await self.client.get('/api/ai_systems?client_id=a')).json()[0]
+            self.assertEqual(current['related_links'],[])
+            self.assertTrue(current['relationship_integrity_warning'])
+            self.assertIn('risk',[alert['key'] for alert in current['alerts']])
+            self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),stored)
+
+    async def test_legacy_valid_links_keep_exact_values_without_an_integrity_warning(self):
+        row=await self.create();aid=row['ai_system_id']
+        valid={'kind':'requirements','id':'legacy-readable'}
+        await server.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{'related_links':[valid],'status':'retired'}})
+        before=await server.db.ai_systems.find_one({'ai_system_id':aid})
+        current=(await self.client.get('/api/ai_systems?client_id=a')).json()[0]
+        self.assertEqual(current['related_links'],[valid])
+        self.assertFalse(current['relationship_integrity_warning'])
+        self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),before)

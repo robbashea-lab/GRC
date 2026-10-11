@@ -1,5 +1,7 @@
 import {useEffect,useState} from 'react';
 import api,{formatError} from '@/lib/api';
+import IsoGuidedAssessor from './IsoGuidedAssessor';
+import IsoGuidedProgram from './IsoGuidedProgram';
 import {isoProgramMetrics,isoAssessmentConflicts,auditProgrammeMetrics,auditProgrammeYears} from '@/lib/isoProgramMetrics';
 
 const percent=(value,total)=>total?Math.round(value/total*100):0;
@@ -24,13 +26,14 @@ export function IsoSoaSummary({rows}){
   </section>;
 }
 
-export default function IsoProgramWorkspace({clientId,mode,rows,onSelect}){
+export default function IsoProgramWorkspace({clientId,mode,rows,onSelect,onRecommend,configuration,draftSummaries}){
   const [reviews,setReviews]=useState(null),[error,setError]=useState(''),[selectedYear,setSelectedYear]=useState('');
   useEffect(()=>{const c=new AbortController();setError('');setReviews(null);setSelectedYear('');api.get('/iso-audit',{params:{client_id:clientId},signal:c.signal}).then(({data})=>{if(!c.signal.aborted)setReviews(data.reviews||[]);}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[clientId]);
   const {soa,requirements,annex}=isoProgramMetrics(rows),years=auditProgrammeYears(reviews||[]);
   const now=String(new Date().getFullYear()),year=selectedYear||(years.includes(now)?now:years.at(-1)||now),audit=auditProgrammeMetrics(reviews||[],year);
   if(mode!=='overview')return null;
   return <section className="space-y-4" aria-label="ISMS Overview">
+    <IsoGuidedAssessor clientId={clientId} configuration={configuration} programContent={({close})=><IsoGuidedProgram rows={rows} reviews={error?null:reviews} drafts={draftSummaries} onSelect={item=>{close();onRecommend(item);}} onViewAll={()=>{close();onSelect('overview');}}/>}/>
     <p className="text-sm text-ink-secondary">Figures show assessment and program progress, not certification status or audit opinion.</p>
     {!!isoAssessmentConflicts(rows).length&&<p role="alert" className="text-sm text-semantic-critical">Legacy assessment conflicts require review: {isoAssessmentConflicts(rows).map(r=>r.definition_id).join(', ')}. A mandatory requirement or applicable control has a Not Applicable implementation status. Saved values are retained, not counted as implemented, and have not been migrated.</p>}
     <label className="block text-sm">Audit-program year <select aria-label="Audit-program year" value={year} onChange={e=>setSelectedYear(e.target.value)}>{(years.length?years:[now]).map(y=><option key={y}>{y}</option>)}</select></label>

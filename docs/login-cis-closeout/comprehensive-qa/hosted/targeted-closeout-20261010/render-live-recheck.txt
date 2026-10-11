@@ -1,0 +1,378 @@
+- alert:
+  - generic: Upcoming maintenance
+  - text: We will be upgrading critical infrastructure on October 13th, 9:00 pm EDT (October 14th, 1:00 am UTC). Follow our
+  - link "status page":
+    - /url: https://status.render.com/incidents/bwd9ycdxqps4
+  - text: for updates.
+  - button "Close notification":
+- banner:
+  - link "Render":
+    - /url: /
+    - img "Render"
+  - button "M My Workspace":
+    - generic: M
+    - generic "My Workspace"
+  - navigation "Breadcrumbs":
+    - list:
+      - link "Projects":
+        - /url: /
+        - generic: Projects
+      - link "My project":
+        - /url: /project/prj-db1s0cp42hec73e1oo60
+        - generic: My project
+      - button "Switch Project":
+      - link "Production":
+        - /url: /project/prj-db1s0cp42hec73e1oo60/environment/evm-db1s0cp42hec73e1oo6g
+        - generic: Production
+      - button "Switch Environment":
+      - link "omnisciente-staging":
+        - /url: /web/srv-db1s0cugekts73f72reg
+        - generic: omnisciente-staging
+      - button "Switch Service":
+      - link "Deploys":
+        - /url: /web/srv-db1s0cugekts73f72reg/deploys
+        - generic: Deploys
+      - button "Switch page":
+      - generic: dep-db56e2d9fdbs73bpcq50
+      - button "Switch Deploy":
+  - button "Search Ctrl + K":
+    - text: Search
+    - generic: Ctrl
+    - generic: +
+    - generic: K
+    - generic: K
+  - button "New":
+    - generic: New
+  - button "Upgrade":
+    - generic: Upgrade
+  - button "Help":
+    - img "Help"
+  - button "Account menu":
+    - generic: r
+- navigation:
+  - separator "Resize sidebar"
+  - link "Environment":
+    - /url: /project/prj-db1s0cp42hec73e1oo60/environment/evm-db1s0cp42hec73e1oo6g
+    - generic: Environment
+  - generic: omnisciente-staging
+  - list:
+    - link "Deploys":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys
+      - generic: Deploys
+    - link "Settings":
+      - /url: /web/srv-db1s0cugekts73f72reg/settings
+      - generic: Settings
+  - generic: Monitor
+  - list "Monitor":
+    - link "Events":
+      - /url: /web/srv-db1s0cugekts73f72reg/events
+      - generic: Events
+    - link "Logs":
+      - /url: /web/srv-db1s0cugekts73f72reg/logs
+      - generic: Logs
+    - link "Metrics":
+      - /url: /web/srv-db1s0cugekts73f72reg/metrics
+      - generic: Metrics
+  - generic: Manage
+  - list "Manage":
+    - link "Compute":
+      - /url: /web/srv-db1s0cugekts73f72reg/compute
+      - generic: Compute
+    - link "Environment":
+      - /url: /web/srv-db1s0cugekts73f72reg/env
+      - generic: Environment
+    - link "Shell":
+      - /url: /web/srv-db1s0cugekts73f72reg/shell
+      - generic: Shell
+      - status:
+    - link "Previews":
+      - /url: /web/srv-db1s0cugekts73f72reg/previews
+      - generic: Previews
+    - link "Disk":
+      - /url: /web/srv-db1s0cugekts73f72reg/disks
+      - generic: Disk
+      - status:
+    - link "One-Off Jobs":
+      - /url: /web/srv-db1s0cugekts73f72reg/jobs
+      - generic: One-Off Jobs
+      - status:
+  - alert:
+    - generic: Introducing Workflows
+    - generic: An orchestration and execution engine for long-running, distributed tasks.
+    - link "Learn more":
+      - /url: https://render.com/workflows
+      - text: Learn more
+    - button "Close notification":
+  - list "Footer navigation":
+    - link "Changelog":
+      - /url: https://render.com/changelog
+      - generic: Changelog
+  - link "Status":
+    - /url: https://status.render.com
+    - generic: Status
+  - button "Collapse":
+    - generic: Collapse
+- main:
+  - alert:
+    - generic: Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more.
+    - link "Upgrade now":
+      - /url: /web/srv-db1s0cugekts73f72reg/plan
+  - heading "Correct CIS third-party condition and required uncertainty guidance" [level=1]
+  - term: Status
+  - definition: Deploy succeeded|Live
+  - term: Duration
+  - definition:
+    - time: 1m19s
+  - term: Deployed
+  - definition:
+    - paragraph:
+      - generic: Oct 10, 2026
+      - generic: at
+      - generic: 12:25:46 PM
+      - generic: EDT
+  - term: Trigger
+  - definition: Manually deployed by you via Dashboard
+  - term: Source
+  - definition:
+    - link "6a4c0c7":
+      - /url: https://github.com/robbashea-lab/GRC/commit/6a4c0c7612195605c39d3285bf11c2560e15d74e
+  - list
+  - button "All logs":
+    - generic: All logs
+  - generic: Search
+  - searchbox "Search"
+  - button "Oct 10, 12:24 PM - 12:28 PM EDT":
+    - generic: Oct 10, 12:24 PM - 12:28 PM
+    - generic: EDT
+  - button "Maximize":
+    - img "Maximize"
+  - button "Options":
+    - img "Options"
+  - button "Return to Bottom":
+  - listbox:
+    - generic: Oct 10
+    - 'option "12:27:03 PM [xkqwt] INFO: 10.235.26.77:40344 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:03 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:40344 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:03 PM [xkqwt] INFO: 10.235.26.77:40346 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:03 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:40346 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - option "12:27:04 PM ==> Your service is live 🎉":
+      - time: 12:27:04 PM
+      - generic: ==> Your service is live 🎉
+    - option "12:27:04 PM ==>":
+      - time: 12:27:04 PM
+      - generic: ==>
+    - option "12:27:04 PM ==> ///////////////////////////////////////////////////////////":
+      - time: 12:27:04 PM
+      - generic: ==> ///////////////////////////////////////////////////////////
+    - option "12:27:04 PM ==>":
+      - time: 12:27:04 PM
+      - generic: ==>
+    - option "12:27:04 PM ==> Available at your primary URL https://omnisciente-staging.onrender.com":
+      - time: 12:27:04 PM
+      - text: ==>
+      - text: Available at your primary URL
+      - link "https://omnisciente-staging.onrender.com":
+        - /url: https://omnisciente-staging.onrender.com
+    - option "12:27:04 PM ==>":
+      - time: 12:27:04 PM
+      - generic: ==>
+    - option "12:27:04 PM ==> ///////////////////////////////////////////////////////////":
+      - time: 12:27:04 PM
+      - generic: ==> ///////////////////////////////////////////////////////////
+    - 'option "12:27:05 PM [xkqwt] INFO: 10.29.158.153:0 - \"GET / HTTP/1.1\" 200 OK"':
+      - time: 12:27:05 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.29.158.153:0 - \"GET / HTTP/1.1\" 200 OK"
+    - 'option "12:27:08 PM [xkqwt] INFO: 10.235.26.77:40348 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:08 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:40348 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:12 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/clients?include_archived=true HTTP/1.1\" 200 OK"':
+      - time: 12:27:12 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/clients?include_archived=true HTTP/1.1\" 200 OK"
+    - 'option "12:27:12 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/notifications HTTP/1.1\" 200 OK"':
+      - time: 12:27:12 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/notifications HTTP/1.1\" 200 OK"
+    - 'option "12:27:13 PM [xkqwt] INFO: 10.235.26.77:58660 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:13 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:58660 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:13 PM [xkqwt] INFO: 10.235.26.77:58666 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:13 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:58666 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:18 PM [xkqwt] INFO: 10.235.26.77:58668 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:18 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:58668 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:23 PM [xkqwt] INFO: 10.235.26.77:43738 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:23 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:43738 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:28 PM [xkqwt] INFO: 10.235.26.77:43740 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:28 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:43740 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:33 PM [xkqwt] INFO: 10.235.26.77:35386 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:33 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:35386 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:38 PM [xkqwt] INFO: 10.235.26.77:35394 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:38 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:35394 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:38 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /compliance/cis-ig1 HTTP/1.1\" 200 OK"':
+      - time: 12:27:38 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /compliance/cis-ig1 HTTP/1.1\" 200 OK"
+    - 'option "12:27:39 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /static/js/main.76d23b98.js HTTP/1.1\" 200 OK"':
+      - time: 12:27:39 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /static/js/main.76d23b98.js HTTP/1.1\" 200 OK"
+    - 'option "12:27:39 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /static/css/main.fe2057c8.css HTTP/1.1\" 200 OK"':
+      - time: 12:27:39 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /static/css/main.fe2057c8.css HTTP/1.1\" 200 OK"
+    - 'option "12:27:39 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/auth/me HTTP/1.1\" 200 OK"':
+      - time: 12:27:39 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/auth/me HTTP/1.1\" 200 OK"
+    - 'option "12:27:39 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/notifications HTTP/1.1\" 200 OK"':
+      - time: 12:27:39 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/notifications HTTP/1.1\" 200 OK"
+    - 'option "12:27:39 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/tasks?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"':
+      - time: 12:27:39 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/tasks?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"
+    - 'option "12:27:39 PM [xkqwt] INFO: 10.29.158.153:0 - \"GET /api/requirements?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 HTTP/1.1\" 200 OK"':
+      - time: 12:27:39 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.29.158.153:0 - \"GET /api/requirements?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 HTTP/1.1\" 200 OK"
+    - 'option "12:27:40 PM [xkqwt] INFO: 10.26.119.178:0 - \"GET /api/onboarding/baseline?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 HTTP/1.1\" 200 OK"':
+      - time: 12:27:40 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.26.119.178:0 - \"GET /api/onboarding/baseline?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 HTTP/1.1\" 200 OK"
+    - 'option "12:27:40 PM [xkqwt] INFO: 10.29.158.153:0 - \"GET /api/findings?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"':
+      - time: 12:27:40 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.29.158.153:0 - \"GET /api/findings?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"
+    - 'option "12:27:40 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/clients?include_archived=true HTTP/1.1\" 200 OK"':
+      - time: 12:27:40 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/clients?include_archived=true HTTP/1.1\" 200 OK"
+    - 'option "12:27:40 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/dashboard?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"':
+      - time: 12:27:40 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/dashboard?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"
+    - 'option "12:27:40 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/frameworks/cis-ig1?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 HTTP/1.1\" 200 OK"':
+      - time: 12:27:40 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/frameworks/cis-ig1?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 HTTP/1.1\" 200 OK"
+    - 'option "12:27:40 PM [xkqwt] INFO: 10.29.158.153:0 - \"GET /static/media/omni-approved-shell.93b4d1750e20d76a772e.png HTTP/1.1\" 200 OK"':
+      - time: 12:27:40 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.29.158.153:0 - \"GET /static/media/omni-approved-shell.93b4d1750e20d76a772e.png HTTP/1.1\" 200 OK"
+    - 'option "12:27:41 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/clients/cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7/members HTTP/1.1\" 200 OK"':
+      - time: 12:27:41 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/clients/cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7/members HTTP/1.1\" 200 OK"
+    - 'option "12:27:43 PM [xkqwt] INFO: 10.235.26.77:36166 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:43 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:36166 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:43 PM [xkqwt] INFO: 10.235.26.77:36172 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:43 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:36172 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:48 PM [xkqwt] INFO: 10.235.26.77:36182 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:48 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:36182 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:53 PM [xkqwt] INFO: 10.235.26.77:42188 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:53 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:42188 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:27:54 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/findings?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"':
+      - time: 12:27:54 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/findings?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"
+    - 'option "12:27:54 PM [xkqwt] INFO: 10.29.158.153:0 - \"GET /api/contacts?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 HTTP/1.1\" 200 OK"':
+      - time: 12:27:54 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.29.158.153:0 - \"GET /api/contacts?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 HTTP/1.1\" 200 OK"
+    - 'option "12:27:55 PM [xkqwt] INFO: 10.26.119.178:0 - \"GET /api/tasks?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"':
+      - time: 12:27:55 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.26.119.178:0 - \"GET /api/tasks?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"
+    - 'option "12:27:55 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/framework_assessments/fw_a563419bf3275395990e2a3a99a60eee/activity HTTP/1.1\" 200 OK"':
+      - time: 12:27:55 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/framework_assessments/fw_a563419bf3275395990e2a3a99a60eee/activity HTTP/1.1\" 200 OK"
+    - 'option "12:27:55 PM [xkqwt] INFO: 10.29.158.153:0 - \"GET /api/comments?entity_type=framework_assessments&entity_id=fw_a563419bf3275395990e2a3a99a60eee HTTP/1.1\" 200 OK"':
+      - time: 12:27:55 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.29.158.153:0 - \"GET /api/comments?entity_type=framework_assessments&entity_id=fw_a563419bf3275395990e2a3a99a60eee HTTP/1.1\" 200 OK"
+    - 'option "12:27:55 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/dashboard?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"':
+      - time: 12:27:55 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/dashboard?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7&scope=org HTTP/1.1\" 200 OK"
+    - 'option "12:27:55 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/frameworks/cis-ig1?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 HTTP/1.1\" 200 OK"':
+      - time: 12:27:55 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/frameworks/cis-ig1?client_id=cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7 HTTP/1.1\" 200 OK"
+    - 'option "12:27:55 PM [xkqwt] INFO: 10.26.119.178:0 - \"GET /api/framework_assessments/fw_a563419bf3275395990e2a3a99a60eee/related HTTP/1.1\" 200 OK"':
+      - time: 12:27:55 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.26.119.178:0 - \"GET /api/framework_assessments/fw_a563419bf3275395990e2a3a99a60eee/related HTTP/1.1\" 200 OK"
+    - 'option "12:27:55 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/clients/cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7/members HTTP/1.1\" 200 OK"':
+      - time: 12:27:55 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/clients/cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7/members HTTP/1.1\" 200 OK"
+    - 'option "12:27:56 PM [xkqwt] INFO: 10.25.202.240:0 - \"GET /api/framework_assessments/fw_a563419bf3275395990e2a3a99a60eee/guided-assessment HTTP/1.1\" 200 OK"':
+      - time: 12:27:56 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/framework_assessments/fw_a563419bf3275395990e2a3a99a60eee/guided-assessment HTTP/1.1\" 200 OK"
+    - 'option "12:27:58 PM [xkqwt] INFO: 10.235.26.77:42204 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:27:58 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:42204 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "12:28:03 PM [xkqwt] INFO: 10.235.26.77:56634 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 12:28:03 PM
+      - generic: "[xkqwt]"
+      - generic: "INFO: 10.235.26.77:56634 - \"GET /api/ HTTP/1.1\" 200 OK"
+  - paragraph:
+    - text: Need better ways to work with logs? Try the
+    - link "Render CLI":
+      - /url: https://render.com/docs/cli
+      - text: Render CLI
+    - text: ","
+    - link "Render MCP Server":
+      - /url: https://render.com/docs/mcp-server
+    - text: ", or set up a"
+    - link "log stream integration":
+      - /url: https://render.com/docs/log-streams
+      - text: log stream integration
+  - dialog:
+    - generic: /
+    - button:
+    - tablist:
+      - tab [selected]: Overview
+      - tab [disabled]: Build Logs
+      - tab [disabled]: Linked Services
+      - tab [disabled]: Commits
+    - tabpanel:
+      - generic: Build not found
+      - generic: This build may have been deleted, or the link may be incorrect.
+- generic: "0 services selected:"
+- button:
+  - generic: Move
+- separator
+- button:
+- iframe [id="intercom-frame"]

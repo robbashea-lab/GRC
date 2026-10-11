@@ -1,0 +1,257 @@
+- banner:
+  - button:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: O
+  - generic: Client
+  - generic: OmniBot QA — Closeout CIS IG3
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG3
+    - link:
+      - /url: /risks
+      - generic: Risks
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG3
+  - heading [level=1]: CIS IG3
+  - button: Continue with 1.1
+  - region:
+    - generic: 15.0%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 18 controls · 153 IG3 safeguards
+    - term: Implemented
+    - definition:
+      - text: "23"
+      - generic: of 153
+    - term: Assessed
+    - definition:
+      - text: "23"
+      - generic: of 153
+    - button:
+      - text: Implemented
+      - strong: "23"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "130"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG3
+        - text: ›
+        - button: Control 17
+        - listitem: ›Safeguard 17.5
+    - textbox:
+      - /placeholder: Search by number or title…
+    - text: Safeguard scope
+    - combobox
+    - generic: Display filter; full program totals unchanged
+    - paragraph: Incident Response Management
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "17.1"
+            - text: Designate Personnel to Manage Incident Handling
+            - generic: IG1 baseline
+          - cell:
+            - generic: Implemented
+        - link:
+          - cell:
+            - generic: "17.2"
+            - text: Establish and Maintain Contact Information for Reporting Security Incidents
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "17.3"
+            - text: Establish and Maintain an Enterprise Process for Reporting Incidents
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "17.4"
+            - text: Establish and Maintain an Incident Response Process
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "17.5"
+            - text: Assign Key Roles and Responsibilities
+            - generic: Added in IG2
+          - cell:
+            - generic: Implemented
+        - link:
+          - cell:
+            - generic: "17.6"
+            - text: Define Mechanisms for Communicating During Incident Response
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "17.7"
+            - text: Conduct Routine Incident Response Exercises
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "17.8"
+            - text: Conduct Post-Incident Reviews
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "17.9"
+            - text: Establish and Maintain Security Incident Thresholds
+            - generic: Added in IG3
+          - cell:
+            - generic: Not Assessed
+- region "Notifications alt+T"
+- dialog "Assign Key Roles and Responsibilities":
+  - banner:
+    - navigation "CIS IG3 location":
+      - list:
+        - button "CIS IG3"
+        - text: ›
+        - button "Control 17"
+        - listitem: ›Safeguard 17.5
+    - heading "Assign Key Roles and Responsibilities" [level=2]
+    - paragraph:
+      - generic: Safeguard assessment workspace
+    - generic "Saved implementation status":
+      - generic: Implemented
+    - generic "Saved verification": Not verified
+    - navigation "Assessment navigation":
+      - button "Previous"
+      - generic: 144 of 153
+      - button "Next"
+  - tablist "Assessment sections":
+    - tab "Requirement & implementation" [selected]
+    - tab "Findings"
+  - tabpanel "Requirement & implementation":
+    - generic "Requirement summary"
+    - heading "What CIS requires" [level=3]
+    - paragraph: Official requirement · CIS v8.1 · Safeguard 17.5
+    - paragraph: Assign key roles and responsibilities for incident response, including staff from legal, IT, information security, facilities, public relations, human resources, incident responders, and analysts. Review annually, or when significant enterprise changes occur that could impact this Safeguard.
+    - paragraph:
+      - strong: "Required operation / trigger:"
+      - text: Review annually, or when significant enterprise changes could affect this safeguard.
+    - link "Official CIS source":
+      - /url: https://cas.docs.cisecurity.org/en/latest/source/Controls17/#175-assign-key-roles-and-responsibilities
+    - region "Implementation status section":
+      - heading "Implementation status" [level=3]
+      - group "Implementation status":
+        - generic: Implementation status
+        - radio "Implemented" [checked]
+        - generic: Implemented
+        - radio "Partially Implemented"
+        - generic: Partially Implemented
+        - radio "Not Implemented"
+        - generic: Not Implemented
+        - radio "Not Assessed"
+        - generic: Not Assessed
+        - radio "Not Applicable"
+        - generic: Not Applicable
+    - region "Current implementation section":
+      - heading "Current implementation" [level=3]
+      - generic: Current implementation
+      - textbox "Current implementation": OVERVIEW OmniBot QA — Closeout CIS IG3 reports the practice to assign key roles and responsibilities is in place. IMPLEMENTATION BREAKDOWN In place - Key incident-response roles and responsibilities are assigned. Reported as met. - Incident roles cover legal personnel. Reported as met. - Incident roles cover IT personnel. Reported as met. - Incident roles cover information-security personnel. Reported as met. - Incident roles cover facilities personnel. Reported as met. - Incident roles cover public-relations personnel. Reported as met. - Assignments are reviewed annually and when significant changes could affect the safeguard. Reported as met. - Incident roles cover HR personnel. Reported as met. - Incident roles cover incident responders. Reported as met. - Incident roles cover analysts. Reported as met. - Incident-response responsibilities include relevant third parties. Reported as met. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. SYNTHETIC QA ONLY — comprehensive workflow test; not client facts. - Preserve this exact reviewer line for 17.5. - Preserve this blank line.
+    - generic "Assessment guidance & working checklist"
+  - button "Open Omnibot guide" [expanded]:
+  - generic: Interview complete
+  - dialog "Omnibot guide · Safeguard 17.5":
+    - button "Minimize Omnibot Guide":
+    - button "Expand Omnibot Guide":
+    - button "Close Omnibot Guide":
+    - heading "Omnibot guide · Safeguard 17.5" [level=2]
+    - paragraph: Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.
+    - heading "Review your assessment summary" [level=3]
+    - paragraph: Safeguard 17.5 — Assign Key Roles and Responsibilities
+    - paragraph:
+      - text: "Proposed Implementation Status:"
+      - strong: Implemented
+    - text: Current Implementation
+    - textbox "Omnibot implementation summary": OVERVIEW OmniBot QA — Closeout CIS IG3 reports the practice to assign key roles and responsibilities is in place. IMPLEMENTATION BREAKDOWN In place - Key incident-response roles and responsibilities are assigned. Reported as met. - Incident roles cover legal personnel. Reported as met. - Incident roles cover IT personnel. Reported as met. - Incident roles cover information-security personnel. Reported as met. - Incident roles cover facilities personnel. Reported as met. - Incident roles cover public-relations personnel. Reported as met. - Assignments are reviewed annually and when significant changes could affect the safeguard. Reported as met. - Incident roles cover HR personnel. Reported as met. - Incident roles cover incident responders. Reported as met. - Incident roles cover analysts. Reported as met. - Incident-response responsibilities include relevant third parties. Reported as met. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate. SYNTHETIC QA ONLY — comprehensive workflow test; not client facts. - Preserve this exact reviewer line for 17.5. - Preserve this blank line.
+    - paragraph: Saving updates the native implementation and status. Evidence verification remains separate.
+    - button "Back to questions"
+    - button "Update assessment"
+    - button "Save & close"
+    - button "Review interview history"
+    - paragraph: Saved interview snapshots for your account. Earlier records may lack lineage or structured output; no retention policy was changed.
+    - generic "Revision 5 · cis-v8.1-program-3 · Completed interview · 2026-10-10T16:06:56.589795+00:00" [active]
+    - paragraph: Recorded by Staging Administrator
+    - paragraph: OVERVIEW OmniBot QA — Closeout CIS IG3 reports the practice to assign key roles and responsibilities is in place. IMPLEMENTATION BREAKDOWN In place - Key incident-response roles and responsibilities are assigned. Reported as met. - Incident roles cover legal personnel. Reported as met. - Incident roles cover IT personnel. Reported as met. - Incident roles cover information-security personnel. Reported as met. - Incident roles cover facilities personnel. Reported as met. - Incident roles cover public-relations personnel. Reported as met. - Assignments are reviewed annually and when significant changes could affect the safeguard. Reported as met. - Incident roles cover HR personnel. Reported as met. - Incident roles cover incident responders. Reported as met. - Incident roles cover analysts. Reported as met. - Incident-response responsibilities include relevant third parties. Reported as met. Incomplete or missing - No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved. ITEMS TO ADDRESS - No outstanding next steps were identified from the reported answers. Evidence verification remains separate.
+    - generic: "{ \"practice\": \"Yes\", \"requirements_0\": { \"Key incident-response roles and responsibilities are assigned.\": \"Yes\", \"Incident roles cover legal personnel.\": \"Yes\", \"Incident roles cover IT personnel.\": \"Yes\", \"Incident roles cover information-security personnel.\": \"Yes\", \"Incident roles cover facilities personnel.\": \"Yes\" }, \"requirements_5\": { \"Incident roles cover public-relations personnel.\": \"Yes\", \"Assignments are reviewed annually and when significant changes could affect the safeguard.\": \"Yes\", \"Incident roles cover HR personnel.\": \"Yes\", \"Incident roles cover incident responders.\": \"Yes\", \"Incident roles cover analysts.\": \"Yes\" }, \"requirements_10\": { \"Incident-response responsibilities include relevant third parties.\": \"Yes\" } }"
+    - paragraph: "Recorded recommendation: Implemented"
+  - contentinfo:
+    - status: Changes remain in your draft until saved.
+    - button "Save assessment"
+    - button "Save & next"
+  - button "Close":
+    - generic: Close

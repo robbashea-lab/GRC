@@ -1,0 +1,41 @@
+{
+  "candidate": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "startedAt": "2026-10-10T14:44:55.141Z",
+  "workflow": "normal reversible Archive; no delete/reset/history deletion",
+  "before": "CLIENT\n\tINDUSTRY\n\tGRC LEAD\n\tPROGRAM STATUS\n\tCLIENT STATUS\n\tACTIONS\nStaging QA bec984b1 A\t—\t\nUnassigned\n\tNeeds Attention\tActive\t\nEdit\nArchive\n\nStaging QA bec984b1 B\t—\t\nUnassigned\n\tHealthy\tActive\t\nEdit\nArchive\n\nSynthetic PR36 Assessment Release QA\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nSYNTHETIC PR52 TEMP Control1 20261007\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nSYNTHETIC PR52 DIRECT UPGRADE 20261007\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nSYNTHETIC RC55 SEQUENTIAL IG QA 20261007\tRelease acceptance test\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nSYNTHETIC RC55 DIRECT IG QA 20261007\tRelease acceptance test\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nBrawndo\tSynthetic workspace pilot\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nSYNTHETIC PR57 PLATFORM THEME QA 20261007\tSynthetic staging visual QA\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nInitech\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nHooli\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nOmniBot QA — CIS IG1\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nOmniBot QA — CIS IG2\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nOmniBot QA — CIS IG3\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nOmniBot QA — Closeout CIS IG1\tSynthetic closeout verification\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nOmniBot QA — Closeout CIS IG3\tSynthetic closeout verification\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive",
+  "archived": [
+    {
+      "name": "OmniBot QA — CIS IG1",
+      "id": "cli_f5384b6f8ee3805b602ef5c5404ea44ae1fcc6fc2558f51e65d2936f472a1db0",
+      "actualGroup": 3,
+      "after": "OmniBot QA — CIS IG1\t—\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore"
+    },
+    {
+      "name": "OmniBot QA — CIS IG3",
+      "id": "cli_76cfe57656626255009c3fbda48cda38d639cc8b9446eb8e5eda32ad5b73b199",
+      "actualGroup": 3,
+      "mixedISO": true,
+      "after": "OmniBot QA — CIS IG3\t—\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore"
+    },
+    {
+      "name": "OmniBot QA — Closeout CIS IG1",
+      "id": "cli_03461153428aef4af525ac083a42098242b3009d4fa5c0c0ecdc192c3d2c7c03",
+      "actualGroup": 3,
+      "after": "OmniBot QA — Closeout CIS IG1\tSynthetic closeout verification\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore"
+    },
+    {
+      "name": "OmniBot QA — Closeout CIS IG3",
+      "id": "cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7",
+      "actualGroup": 3,
+      "after": "OmniBot QA — Closeout CIS IG3\tSynthetic closeout verification\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore"
+    }
+  ],
+  "retainedPending": "OmniBot QA — CIS IG2",
+  "after": "CLIENT\n\tINDUSTRY\n\tGRC LEAD\n\tPROGRAM STATUS\n\tCLIENT STATUS\n\tACTIONS\nStaging QA bec984b1 A\t—\t\nUnassigned\n\tNeeds Attention\tActive\t\nEdit\nArchive\n\nStaging QA bec984b1 B\t—\t\nUnassigned\n\tHealthy\tActive\t\nEdit\nArchive\n\nSynthetic PR36 Assessment Release QA\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nSYNTHETIC PR52 TEMP Control1 20261007\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nSYNTHETIC PR52 DIRECT UPGRADE 20261007\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nSYNTHETIC RC55 SEQUENTIAL IG QA 20261007\tRelease acceptance test\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nSYNTHETIC RC55 DIRECT IG QA 20261007\tRelease acceptance test\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nBrawndo\tSynthetic workspace pilot\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nSYNTHETIC PR57 PLATFORM THEME QA 20261007\tSynthetic staging visual QA\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nInitech\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nHooli\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nOmniBot QA — CIS IG1\t—\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore\n\nOmniBot QA — CIS IG2\t—\t\nUnassigned\n\tOnboarding\tOnboarding\t\nEdit\nArchive\n\nOmniBot QA — CIS IG3\t—\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore\n\nOmniBot QA — Closeout CIS IG1\tSynthetic closeout verification\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore\n\nOmniBot QA — Closeout CIS IG3\tSynthetic closeout verification\t\nUnassigned\n\tArchived\tArchived\t\nEdit\nRestore",
+  "completedAt": "2026-10-10T14:45:20.410Z",
+  "assertions": {
+    "fourRestoreControls": true,
+    "showcasesRetained": true,
+    "restrictedFixtureActive": true
+  }
+}

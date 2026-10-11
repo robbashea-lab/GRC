@@ -24,10 +24,15 @@ class IdentityLifecycleTests(unittest.IsolatedAsyncioTestCase):
 
     async def reset_token(self, user_id='member', days=1):
         token = secrets.token_urlsafe(32)
+        account = await server.db.users.find_one({'user_id': user_id})
+        generation = secrets.token_hex(16)
+        await server.db.users.update_one({'user_id': user_id}, {'$set': {'recovery_generation': generation}})
         await server.db.password_resets.insert_one({
             'user_id': user_id, 'token_hash': hashlib.sha256(token.encode()).hexdigest(),
             'expires_at': (datetime.now(timezone.utc) + timedelta(days=days)).isoformat(),
             'used': False,
+            'purpose': 'invitation' if (account or {}).get('status') == 'invited' else 'password_reset',
+            'credential_generation': generation,
         })
         return token
 

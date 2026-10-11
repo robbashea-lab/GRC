@@ -1,5 +1,6 @@
 import catalog from './aiGovernanceCatalog.json';
 export {catalog};
+export const AI_RELATIONSHIP_NOTICE='Some stored AI relationships could not be read. Linked context may be incomplete. Existing data has been preserved; an authorized review is required.';
 export const AI_DEFAULTS={name:'',description:'',owner_id:null,technical_owner_id:null,provider:'',vendor_id:null,product_model:'',status:'draft',purposes:[],data_types:[],access:[],roles:[],risk_topics:[],screening:{},human_review_required:null,human_approval_required:null,oversight_owner_id:null,oversight_notes:'',governance_notes:''};
 export const AI_KEYS=Object.keys(AI_DEFAULTS);
 export function aiScreening(row){

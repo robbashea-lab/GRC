@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 7: Continuous Vulnerability Management - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 7: Continuous Vulnerability Management";
+        var mkdocs_page_input_path = "source/Controls7.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls7/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 7: Continuous Vulnerability Management</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#71-establish-and-maintain-a-vulnerability-management-process">7.1: Establish and Maintain a Vulnerability Management Process</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#72-establish-and-maintain-a-remediation-process">7.2: Establish and Maintain a Remediation Process</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#73-perform-automated-operating-system-patch-management">7.3: Perform Automated Operating System Patch Management</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#update-effectiveness-per-asset">Update Effectiveness (Per Asset)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#update-effectiveness-organizational">Update Effectiveness (Organizational)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage-of-automation">Coverage of Automation</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#scan-compliance">Scan Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#74-perform-automated-application-patch-management">7.4: Perform Automated Application Patch Management</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#update-effectiveness-per-asset_1">Update Effectiveness (Per Asset)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#update-effectiveness-organizational_1">Update Effectiveness (Organizational)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage-of-automation_1">Coverage of Automation</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#scan-compliance_1">Scan Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#75-perform-automated-vulnerability-scans-of-internal-enterprise-assets">7.5: Perform Automated Vulnerability Scans of Internal Enterprise Assets</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage-of-vulnerability-scans">Coverage of Vulnerability Scans</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage-of-authenticated-scans">Coverage of Authenticated Scans</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance-with-vulnerability-scans">Compliance with Vulnerability Scans</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance-with-authenticated-scans">Compliance with Authenticated Scans</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#76-perform-automated-vulnerability-scans-of-externally-exposed-enterprise-assets">7.6: Perform Automated Vulnerability Scans of Externally-Exposed Enterprise Assets</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage-of-vulnerability-scans_1">Coverage of Vulnerability Scans</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance-with-vulnerability-scans_1">Compliance with Vulnerability Scans</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#77-remediate-detected-vulnerabilities">7.7: Remediate Detected Vulnerabilities</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#remediation">Remediation</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 7: Continuous Vulnerability Management</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls7.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-7-continuous-vulnerability-management">CIS Control 7: Continuous Vulnerability Management</h1>
+<p>Develop a plan to continuously assess and track vulnerabilities on all
+enterprise assets within the enterprise's infrastructure in order to
+remediate, and minimize the window of opportunity for attackers.
+Monitor public and private industry sources for new threats and
+vulnerability information.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>Cyber defenders are constantly being challenged by attackers who are
+looking for vulnerabilities within their infrastructure to exploit and
+gain access. Defenders must have timely threat information available to
+them about software updates, patches, security advisories, threat
+bulletins, etc., and they should regularly review their environment to
+identify these vulnerabilities before the attackers do. Understanding
+and managing vulnerabilities is a continuous activity, requiring focus
+of time, attention, and resources.</p>
+<p>Attackers have access to the same information and can often take
+advantage of vulnerabilities more quickly than an enterprise can
+remediate. While there is a gap in time from a vulnerability being known
+to when it is patched, defenders can prioritize which vulnerabilities
+are most impactful to the enterprise or likely to be exploited first
+due to ease of use. For example, when researchers or the community
+report new vulnerabilities, vendors have to develop and deploy patches,
+indicators of compromise (IOCs), and updates. Defenders need to assess
+the risk of the new vulnerability to the enterprise, regression-test
+patches, and install the patch.</p>
+<p>There is never perfection in this process. Attackers might be using an
+exploit to a vulnerability that is not known within the security
+community. They might have developed an exploit to this vulnerability,
+referred to as a "zero-day" exploit. Once the vulnerability is known in
+the community, the process mentioned above starts. Therefore, defenders
+must keep in mind that an exploit might already exist when the
+vulnerability is widely socialized. Sometimes vulnerabilities might be
+known within a closed community (e.g., vendor still developing a fix)
+for weeks, months, or years before it is disclosed publicly. Defenders
+have to be aware that there might always be vulnerabilities they cannot
+remediate and, therefore, need to use other controls to mitigate.</p>
+<p>Enterprises that do not assess their infrastructure for vulnerabilities
+and proactively address discovered flaws face a significant likelihood
+of having their enterprise assets compromised. Defenders face particular
+challenges in scaling remediation across an entire enterprise and
+prioritizing actions with conflicting priorities while not impacting
+the enterprise's business or mission.</p>
+<hr />
+<h2 id="71-establish-and-maintain-a-vulnerability-management-process">7.1: Establish and Maintain a Vulnerability Management Process</h2>
+<p>Establish and maintain a documented vulnerability management process for enterprise assets. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li>Enterprise Vulnerability Management Process</li>
+<li>Date of the last update to the Vulnerability Management Process</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise maintains a vulnerability management process:</p>
+<ol>
+<li>If the process exists, M1 = 1</li>
+<li>If the process does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Compare the date from Input 1 to the current date and enumerate the timeframe in months (M2)</p>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1.</li>
+<li>M2 = Timeframe since the last update to the vulnerability management process.</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M2 is greater than twelve, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<hr />
+<h2 id="72-establish-and-maintain-a-remediation-process">7.2: Establish and Maintain a Remediation Process</h2>
+<p>Establish and maintain a risk-based remediation strategy documented in a remediation process, with monthly, or more frequent, reviews.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li>Enterprise Remediation Strategy Process</li>
+<li>Date of the last review of the process</li>
+<li><code>GV18</code>: Enterprise Assets Storing, Processing, and Transmitting Sensitive Data</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise maintains a documented remediation process:</p>
+<ol>
+<li>If the process exists, M1 = 1</li>
+<li>If the process does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Check the documented remediation process to identify whether it includes a risk-based process based on the following elements: Sensitive assets <code>GV18</code> and criticality of vulnerability:</p>
+<ol>
+<li>Each element, if included, gets a value of 1. Sum all elements (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare the date from Input 2 and the current date. Enumerate the timeframe in terms of days (M3)</p>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1.</li>
+<li>M2 = Sum of elements included in the remediation process.</li>
+<li>M3 = Timeframe since the last review of the process in days.</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M1 is 0, the Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than thirty, the Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of elements included in the process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="73-perform-automated-operating-system-patch-management">7.3: Perform Automated Operating System Patch Management</h2>
+<p>Perform operating system updates on enterprise assets through automated patch management on a monthly, or more frequent, basis.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li>Authoritative source of information indicating version details by product</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify authorized operating systems within the enterprise.</p>
+</li>
+<li>
+<p>Use <code>GV1</code> and the output of Operation 1 to identify the operating system currently running on each asset (M1).</p>
+</li>
+<li>
+<p>For each asset, compare the version of the operating system to that listed in Input 4:</p>
+<ol>
+<li>Identify and enumerate operating systems that are up to date (M2).</li>
+<li>Identify and enumerate operating systems that are not up to date (M3).</li>
+</ol>
+</li>
+<li>
+<p>For each operating system identified in Operation 2.2, determine whether there is a documented exception:</p>
+<ol>
+<li>Identify and enumerate operating systems with a documented exception (M4).</li>
+<li>Identify and enumerate operating systems without a documented exception (M5).</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify authorized automated patch management software (M6).</p>
+</li>
+<li>
+<p>Compare the output of Operation 5 and Operation 1:</p>
+<ol>
+<li>Identify and enumerate operating systems covered by at least one automated patch management software (M7).</li>
+<li>Identify and enumerate operating systems not covered by at least one automated patch management software (M8).</li>
+</ol>
+</li>
+<li>
+<p>Check configurations of automated patch management software identified in Operation 5 using <code>GV3</code>:</p>
+<ol>
+<li>Identify and enumerate those configured to run every 30 days or less (M9).</li>
+<li>Identify and enumerate those not configured to run every 30 days or less (M10).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of the authorized operating systems installed on an asset.</li>
+<li>M2 = Count of up-to-date operating systems installed on an asset.</li>
+<li>M3 = Count of operating systems installed on an asset that is not up-to-date.</li>
+<li>M4 = Count of not up-to-date operating systems with a documented exception.</li>
+<li>M5 = Count of not up-to-date operating systems without a documented exception.</li>
+<li>M6 = Count of authorized automated patch management software.</li>
+<li>M7 = Count of operating systems covered by at least one automated patch management software.</li>
+<li>M8 = Count of operating systems not covered by at least one automated patch management software.</li>
+<li>M9 = Count of automated patch management software properly configured to run every 30 days or less.</li>
+<li>M10 = Count of automated patch management software not properly configured to run every 30 days.</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<h4 id="update-effectiveness-per-asset">Update Effectiveness (Per Asset)</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percent of operating systems on an asset that is up-to-date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td>(M2 + M4) / M1</td>
+</tr>
+</tbody>
+</table>
+<h4 id="update-effectiveness-organizational">Update Effectiveness (Organizational)</h4>
+<p>Calculate the organizational metric by averaging the asset scores.</p>
+<h4 id="coverage-of-automation">Coverage of Automation</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percent of operating systems covered by at least one automated patch management software</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td>M7 / M1</td>
+</tr>
+</tbody>
+</table>
+<h4 id="scan-compliance">Scan Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percent of automated patch management software configured to run every 30 days or less</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td>M9 / M6</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="74-perform-automated-application-patch-management">7.4: Perform Automated Application Patch Management</h2>
+<p>Perform application updates on enterprise assets through automated patch management on a monthly, or more frequent, basis.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li>Authoritative source of information indicating version details by product</li>
+<li><code>GV3</code>: Configuration Standard</li>
+<li><code>GV24</code>: Authorized Automated Patch Management Software</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify authorized applications within the enterprise.</p>
+</li>
+<li>
+<p>Use <code>GV1</code> and the output of Operation 1 to identify the applications currently running on each asset (M1).</p>
+</li>
+<li>
+<p>For each asset, compare the version of the application to that listed in <code>GV3</code>:</p>
+<ol>
+<li>Identify and enumerate applications that are up to date (M2).</li>
+<li>Identify and enumerate applications that are not up to date (M3).</li>
+</ol>
+</li>
+<li>
+<p>For each application identified in Operation 2.2, determine whether there is a documented exception:</p>
+<ol>
+<li>Identify and enumerate applications with a documented exception (M4).</li>
+<li>Identify and enumerate applications without a documented exception (M5).</li>
+</ol>
+</li>
+<li>
+<p>Compare <code>GV24</code> and Operation 1:</p>
+<ol>
+<li>Identify and enumerate applications covered by at least one automated patch management software (M7).</li>
+<li>Identify and enumerate applications not covered by at least one automated patch management software (M8).</li>
+</ol>
+</li>
+<li>
+<p>Check configurations of automated patch management software <code>GV24</code> using <code>GV3</code>:</p>
+<ol>
+<li>Identify and enumerate those configured to run every 30 days or less (M9).</li>
+<li>Identify and enumerate those not configured to run every 30 days or less (M10).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of authorized applications installed on an asset.</li>
+<li>M2 = Count of up-to-date applications installed on an asset.</li>
+<li>M3 = Count of applications installed on an asset that is not up to date.</li>
+<li>M4 = Count of not up to date applications with a documented exception.</li>
+<li>M5 = Count of not up to date applications without a documented exception.</li>
+<li>M6 = Count of <code>GV24</code> authorized automated patch management software.</li>
+<li>M7 = Count of applications covered by at least one automated patch management software.</li>
+<li>M8 = Count of applications not covered by at least one automated patch management software.</li>
+<li>M9 = Count of automated patch management software properly configured to run every 30 days or less.</li>
+<li>M10 = Count of automated patch management software not properly configured to run every 30 days.</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<h4 id="update-effectiveness-per-asset_1">Update Effectiveness (Per Asset)</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percent of applications on an asset that are up to date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>(M2 + M4) / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="update-effectiveness-organizational_1">Update Effectiveness (Organizational)</h4>
+<p>Calculate the organizational metric by averaging the asset scores.</p>
+<h4 id="coverage-of-automation_1">Coverage of Automation</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percent of operating systems covered by at least one automated patch management software.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M7 / M1</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="scan-compliance_1">Scan Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percent of automated patch management software configured to run every 30 days or less.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M9 / M6</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="75-perform-automated-vulnerability-scans-of-internal-enterprise-assets">7.5: Perform Automated Vulnerability Scans of Internal Enterprise Assets</h2>
+<p>Perform automated vulnerability scans of internal enterprise assets on a quarterly, or more frequent, basis. Conduct both authenticated and unauthenticated scans.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Identify</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Use the <code>GV5</code>authorized software inventory to:</p>
+<ol>
+<li>Identify and enumerate <code>GV25</code> vulnerability scanning software (M1)</li>
+<li>Identify and enumerate authenticated vulnerability scanning software (M2)</li>
+</ol>
+</li>
+<li>
+<p>Use the <code>GV1</code> enterprise asset inventory to identify and enumerate all internal assets (M3)</p>
+</li>
+<li>
+<p>Use the output of Operation 2 and Operation 1.1:</p>
+<ol>
+<li>Identify and enumerate internal assets covered by at least one vulnerability scanning software (M4)</li>
+<li>Identify and enumerate internal assets not covered by at least one vulnerability scanning software (M5)</li>
+</ol>
+</li>
+<li>
+<p>Use the output of Operation 2 and Operation 1.2:</p>
+<ol>
+<li>Identify and enumerate internal assets covered by at least one authenticated vulnerability scanner (M6)</li>
+<li>Identify and enumerate internal assets not covered by at least one authenticated vulnerability scanner (M7)</li>
+</ol>
+</li>
+<li>
+<p>Use the output of Operation 1.1 and <code>GV3</code>:</p>
+<ol>
+<li>Identify and enumerate vulnerability scanners properly configured to scan every 3 months or less (M8)</li>
+<li>Identify and enumerate vulnerability scanners not properly configured to scan every 3 months or less (M9)</li>
+</ol>
+</li>
+<li>
+<p>Use the output of Operation 1.2 and <code>GV3</code>:</p>
+<ol>
+<li>Identify and enumerate authenticated vulnerability scanners properly configured to scan every 3 months or less (M10)</li>
+<li>Identify and enumerate authenticated vulnerability scanners not properly configured to scan every 3 months or less (M11)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Count of authorized vulnerability scanning software.</li>
+<li>M2 = Count of authorized authenticated vulnerability scanning software.</li>
+<li>M3 = Count of internal enterprise assets.</li>
+<li>M4 = Count of internal assets covered by a vulnerability scanner.</li>
+<li>M5 = Count of internal assets not covered by a vulnerability scanner.</li>
+<li>M6 = Count of internal assets covered by an authenticated vulnerability scanner.</li>
+<li>M7 = Count of internal assets not covered by an authenticated vulnerability scanner.</li>
+<li>M8 = Count of vulnerability scanners properly configured to run every 3 months or less.</li>
+<li>M9 = Count of vulnerability scanners not properly configured to run every 3 months or less.</li>
+<li>M10 = Count of authenticated vulnerability scanners properly configured to run every 3 months or less.</li>
+<li>M11 = Count of authenticated vulnerability scanners not properly configured to run every 3 months or less.</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<h4 id="coverage-of-vulnerability-scans">Coverage of Vulnerability Scans</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of internal assets covered by a vulnerability scanner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="coverage-of-authenticated-scans">Coverage of Authenticated Scans</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of internal assets covered by an authenticated vulnerability scanner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M6 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="compliance-with-vulnerability-scans">Compliance with Vulnerability Scans</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of vulnerability scanners properly configured to scan every 3 months or less</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M8 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="compliance-with-authenticated-scans">Compliance with Authenticated Scans</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of authenticated vulnerability scanners properly configured to scan every 3 months or less</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M10 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="76-perform-automated-vulnerability-scans-of-externally-exposed-enterprise-assets">7.6: Perform Automated Vulnerability Scans of Externally-Exposed Enterprise Assets</h2>
+<p>Perform automated vulnerability scans of externally-exposed enterprise assets. Perform scans on a monthly, or more frequent, basis.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Identify</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV25</code>: Vulnerability Scanning Software</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Use the <code>GV1</code> enterprise asset inventory to identify and enumerate all external assets (M2)</p>
+</li>
+<li>
+<p>Use the output of Operation 1 and <code>GV25</code> to:</p>
+<ol>
+<li>Identify and enumerate external assets covered by at least one vulnerability scanning software (M3)</li>
+<li>Identify and enumerate external assets not covered by at least one vulnerability scanning software (M4)</li>
+</ol>
+</li>
+<li>
+<p>Use the <code>GV25</code> and <code>GV3</code> to:</p>
+<ol>
+<li>Identify and enumerate vulnerability scanners properly configured to scan every 30 days or less (M5)</li>
+<li>Identify and enumerate vulnerability scanners not properly configured to scan every 30 days or less (M6)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Count of authorized <code>GV25</code> vulnerability scanning software.</li>
+<li>M2 = Count of external enterprise assets.</li>
+<li>M3 = Count of external assets covered by a vulnerability scanner.</li>
+<li>M4 = Count of external assets not covered by a vulnerability scanner.</li>
+<li>M5 = Count of vulnerability scanners properly configured to run every 30 days or less.</li>
+<li>M6 = Count of vulnerability scanners not properly configured to run every 30 days or less.</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<h4 id="coverage-of-vulnerability-scans_1">Coverage of Vulnerability Scans</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of external assets covered by a vulnerability scanner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="compliance-with-vulnerability-scans_1">Compliance with Vulnerability Scans</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of vulnerability scanners properly configured to scan every 30 days or less</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M5 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="77-remediate-detected-vulnerabilities">7.7: Remediate Detected Vulnerabilities</h2>
+<p>Remediate detected vulnerabilities in software through processes and tooling on a monthly, or more frequent, basis, based on the remediation process.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Respond</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li>Current vulnerability scan</li>
+<li>Previous vulnerability scan</li>
+<li>Date of current vulnerability scan</li>
+<li>Date of the previous vulnerability scan</li>
+</ol>
+<h3 id="assumptions">Assumptions</h3>
+<ul>
+<li>Asset-vulnerability combinations not found in the most recent scan are indicative of remediation of that vulnerability on that asset.</li>
+</ul>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>For each asset in <code>GV1</code>, compare Inputs 2 and 3:</p>
+<ol>
+<li>Identify and enumerate assets listed with the same vulnerability on both scans (M2)</li>
+<li>Identify and enumerate assets previously found in Input 3 that are no longer listed in Input 2 with the same vulnerability (M3)</li>
+</ol>
+</li>
+<li>
+<p>Compare Inputs 4 and 5 and capture the timeframe between scans in days (M4)</p>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Count of vulnerabilities identified in Input 3</li>
+<li>M2 = Count of unremediated vulnerabilities</li>
+<li>M3 = Count of remediated vulnerabilities</li>
+<li>M4 = Timeframe in between scans</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<h4 id="remediation">Remediation</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of remediated vulnerabilities</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M1</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls6/" class="btn btn-neutral float-left" title="CIS Control 6: Access Control Management"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls8/" class="btn btn-neutral float-right" title="CIS Control 8: Audit Log Management">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 1: Inventory and Control of Enterprise Assets - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 1: Inventory and Control of Enterprise Assets";
+        var mkdocs_page_input_path = "source/Controls1.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls1/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#11-establish-and-maintain-detailed-enterprise-asset-inventory">1.1: Establish and Maintain Detailed Enterprise Asset Inventory</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#accuracy-score">Accuracy Score</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-score">Completeness Score</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#procedural-review">Procedural Review</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#12-address-unauthorized-assets">1.2: Address Unauthorized Assets</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions_1">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#13-utilize-an-active-discovery-tool">1.3: Utilize an Active Discovery Tool</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions_2">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#asset-discovery-coverage">Asset Discovery Coverage</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#tool-compliance-ratio">Tool Compliance Ratio</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#14-use-dynamic-host-configuration-protocol-dhcp-logging-to-update-enterprise-asset-inventory">1.4: Use Dynamic Host Configuration Protocol (DHCP) Logging to Update Enterprise Asset Inventory</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions_3">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#dhcp-logging-quality">DHCP Logging Quality</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cmdb-configuration-quality">CMDB Configuration Quality</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cmdb-updating-accuracy">CMDB Updating Accuracy</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#15-use-a-passive-asset-discovery-tool">1.5: Use a Passive Asset Discovery Tool</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_1">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 1: Inventory and Control of Enterprise Assets</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls1.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-1-inventory-and-control-of-enterprise-assets">CIS Control 1: Inventory and Control of Enterprise Assets</h1>
+<p>Actively manage (inventory, track, and correct) all enterprise assets
+(end-user devices, including portable and mobile; network devices;
+non-computing/Internet of Things (IoT) devices; and servers) connected
+to the infrastructure, physically, virtually, remotely, and those within
+cloud environments, to accurately know the totality of assets that need
+to be monitored and protected within the enterprise. This will also
+support identifying unauthorized and unmanaged assets to remove or
+remediate.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>Enterprises cannot defend what they do not know they have. Managed
+control of all enterprise assets also plays a critical role in security
+monitoring, incident response, system backup, and recovery. Enterprises
+should know what data is critical to them, and proper asset management
+will help identify those enterprise assets that hold or manage this
+critical data, so appropriate security controls can be applied.</p>
+<p>External attackers are continuously scanning the internet address space
+of target enterprises, premise-based or in the cloud, identifying
+possibly unprotected assets attached to enterprises' networks.
+Attackers can take advantage of new assets that are installed, yet not
+securely configured and patched. Internally, unidentified assets can
+also have weak security configurations that can make them vulnerable to
+web or email-based malware; and adversaries can leverage weak security
+configurations for traversing the network, once they are inside.</p>
+<p>Additional assets that connect to the enterprise's network (e.g.,
+demonstration systems, temporary test systems, guest networks, etc.)
+should be identified and/or isolated, in order to prevent adversarial
+access from affecting the security of enterprise operations.</p>
+<p>Large, complex, dynamic enterprises understandably struggle with the
+challenge of managing intricate, fast-changing environments. However,
+attackers have shown the ability, patience, and willingness to
+"inventory and control" our enterprise assets at very large scale in
+order to support their opportunities.</p>
+<p>Another challenge is that portable end-user devices will periodically
+join a network and then disappear, making the inventory of currently
+available assets very dynamic. Likewise, cloud environments and virtual
+machines can be difficult to track in asset inventories when they are
+shut down or paused. Another benefit of complete enterprise asset
+management is supporting incident response. Both when investigating the
+origination of network traffic from an asset on the network, and to be
+able to identify all potentially vulnerable, or impacted, assets of
+similar type or location during an incident.</p>
+<hr />
+<h2 id="11-establish-and-maintain-detailed-enterprise-asset-inventory">1.1: Establish and Maintain Detailed Enterprise Asset Inventory</h2>
+<p>Establish and maintain an accurate, detailed, and up-to-date inventory
+of all enterprise assets with the potential to store or process data, to
+include: end-user devices (including portable and mobile), network
+devices, non-computing/IoT devices, and servers. Ensure the inventory
+records the network address (if static), hardware address, machine name,
+enterprise asset owner, department for each asset, and whether the asset
+has been approved to connect to the network. For mobile end-user
+devices, MDM type tools can support this process, where appropriate.
+This inventory includes assets connected to the infrastructure
+physically, virtually, remotely, and those within cloud environments.
+Additionally, it includes assets that are regularly connected to the
+enterprise's network infrastructure, even if they are not under control
+of the enterprise. Review and update the inventory of all enterprise
+assets bi-annually, or more frequently.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Identify</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li>
+<p><code>GV1</code>: Enterprise Asset Inventory</p>
+<ol>
+<li>The enterprise's list of current approved inventory to include all assets as outlined in the Safeguard. This list is a mix of manual and tool-generated endpoints that includes information such as authorized, non-authorized, IP address, device type, and any other information as defined by the enterprise.</li>
+</ol>
+</li>
+<li>
+<p>Aggregate Enterprise Asset Inventory - The enterprise's list of all devices detected, manually or through automated scans, since the last update to <code>GV1</code>.</p>
+</li>
+<li>
+<p>Date of last update to the Enterprise Asset Inventory</p>
+</li>
+</ol>
+<h3 id="assumptions">Assumptions</h3>
+<ol>
+<li>Devices belonging to the organization, but not connected to the
+    organization's network, require manual discovery in order to be
+    included in the aggregate inventory.</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Calculate the intersection of <code>GV1</code> and Input 2</p>
+<ol>
+<li>Enumerate items in <code>GV1</code> that are not in Input 2 (M4)</li>
+<li>Enumerate items in Input 2 not in Input 1 (<code>GV2</code>: M5). These assets are considered unauthorized.</li>
+</ol>
+</li>
+<li>
+<p>Check items in Input 1 for complete or missing detailed information</p>
+<ol>
+<li>Enumerate items that have complete information (M6)</li>
+<li>Enumerate items that do not have complete information or missing information (M7).</li>
+</ol>
+</li>
+<li>
+<p>Calculate the time (in months) since the last update to Input 1 by using the current date and Input 3 (M8).</p>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = <code>GV1</code></li>
+<li>M2 = Count of items in Input 2</li>
+<li>M3 = Count of items in the intersection of <code>GV1</code> and Input 2</li>
+<li>M4 = Count of items in <code>GV1</code> not found in Input 2</li>
+<li>M5 = <code>GV2</code></li>
+<li>M6 = Count of items in <code>GV1</code> that contain all necessary detailed
+    information</li>
+<li>M7 = Count of items in <code>GV1</code> that do not contain detailed
+    information</li>
+<li>M8 = Months since the last update to <code>GV1</code></li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is not provided or available, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+<li>If M8 is greater than six months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="accuracy-score">Accuracy Score</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Metric</strong></th>
+<th>What percentage of the aggregate endpoint inventory is accounted for in the current enterprise asset inventory?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="completeness-score">Completeness Score</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Metric</strong></th>
+<th>What percentage of the current enterprise asset inventory contains necessary detailed information?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>Calculation</strong></td>
+<td><code>M8 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="procedural-review">Procedural Review</h3>
+<p>Manual review/rating of the inventory procedures, to include adding and
+removing assets, and the time allowable or expected, after the acquisition
+or disposal of assets.</p>
+<hr />
+<h2 id="12-address-unauthorized-assets">1.2: Address Unauthorized Assets</h2>
+<p>Ensure that a process exists to address unauthorized assets on a weekly
+basis. The enterprise may choose to remove the asset from the network,
+deny the asset from connecting remotely to the network, or quarantine
+the asset.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Respond</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV2</code>: Unauthorized Assets</li>
+<li>The enterprise-defined time frame for removing unauthorized assets
+    (weekly or more often).</li>
+</ol>
+<h3 id="assumptions_1">Assumptions</h3>
+<ol>
+<li>If the item is not reachable, it may be reasonable to assume it has
+    been removed from the network and, therefore, dealt with.</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<p>If the optional disposition list is provided, the checks would be
+tailored to those dispositions. For the following, assume no disposition
+list is available:</p>
+<ol>
+<li>
+<p>At the time frame specified by Input 3, for each unauthorized asset
+    in <code>GV2</code>, check to see if the asset is present in the updated asset
+    inventory from <code>GV1</code>.</p>
+</li>
+<li>
+<p>For those items in <code>GV2</code> that are not in <code>GV1</code>, scan the network to determine if the item is still reachable on the network.</p>
+<ol>
+<li>Enumerate the items from <code>GV2</code> that are unreachable (M4)</li>
+<li>Enumerate the items from <code>GV1</code> that are unreachable (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = <code>GV1</code></li>
+<li>M2 = Count of <code>GV2</code></li>
+<li>M3 = Timeframe in days for Input 3</li>
+<li>M4 = Count of items from <code>GV2</code> that are unreachable after scan</li>
+<li>M5 = Count of items from <code>GV1</code> that are unreachable after scan</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M3 is greater than seven days, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Metric</strong></th>
+<th style="text-align: left;">The ratio of unaccounted for, unauthorized assets, to the total assets in the asset inventory.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Calculation</strong></td>
+<td style="text-align: left;">If the value of M4 is 0, there are no unauthorized assets that remain unaccounted for. In this case, the value of the metric is 1. Otherwise, the value is <code>(M2 - M4) / M2</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="13-utilize-an-active-discovery-tool">1.3: Utilize an Active Discovery Tool</h2>
+<p>Utilize an active discovery tool to identify assets connected to the
+enterprise's network. Configure the active discovery tool to execute
+daily, or more frequently.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li>The list of active discovery tool(s) used by the enterprise</li>
+<li>List consisting of the union from scan results conducted using all
+    active asset discovery tool(s) within the enterprise (discovered
+    assets).</li>
+<li>Timeframe between two active asset discovery tool scans.</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="assumptions_2">Assumptions</h3>
+<ol>
+<li>The asset discovery tools on the provided list are active asset
+    discovery tools, as opposed to passive asset discovery tools
+    (verification of this is not performed during the following
+    operations).</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Identify enterprise assets not discovered by the active discovery
+    tools by comparing Input 1 and Input 3 (M2).</p>
+</li>
+<li>
+<p>Identify the configurations for active asset discovery tools that
+    interface with <code>GV1</code> by using <code>GV3</code></p>
+</li>
+<li>
+<p>Using the configuration information in <code>GV3</code>, check the approved configurations to verify that the tools are capable of interfacing with the asset inventory to make automatic updates.</p>
+<ol>
+<li>Enumerate those tools that are compliant (M3)</li>
+<li>Enumerate those that are not compliant (M4).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of all discovered assets from Input 3</li>
+<li>M2 = Count of undiscovered assets</li>
+<li>M3 = Count of properly configured tools</li>
+<li>M4 = Count of improperly configured tools</li>
+<li>M5 = Count of Input 2</li>
+<li>M6 = Count of <code>GV1</code></li>
+<li>M7 = Timeframe in hours for Input 4</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<ul>
+<li>If M7 is greater than 24 hours, then this Safeguard is measured at a
+    0 and receives a failing score. The other metrics don't apply.</li>
+<li>If M5 is 0, then this Safeguard is measured at a 0 and receives a
+    failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="asset-discovery-coverage">Asset Discovery Coverage</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: center;">Asset Discovery Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Calculation</td>
+<td style="text-align: center;"><code>M1 / M6</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="tool-compliance-ratio">Tool Compliance Ratio</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Metric</th>
+<th style="text-align: center;">Tool Compliance Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">Calculation</td>
+<td style="text-align: center;"><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="14-use-dynamic-host-configuration-protocol-dhcp-logging-to-update-enterprise-asset-inventory">1.4: Use Dynamic Host Configuration Protocol (DHCP) Logging to Update Enterprise Asset Inventory</h2>
+<p>Use DHCP logging on all DHCP servers or Internet Protocol (IP) address
+management tools to update the enterprise's asset inventory. Review and
+use logs to update the enterprise's asset inventory weekly, or more
+frequently.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Identify</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li>List of DHCP Servers</li>
+<li><code>GV41</code>: List of Configuration Management Database (CMDB) Servers</li>
+</ol>
+<h3 id="assumptions_3">Assumptions</h3>
+<ol>
+<li>CMDB servers are configured to pull from DHCP logs</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>For each DHCP server, enumerate those where DHCP logging is enabled (M2)</li>
+<li>For each CMDB server, enumerate those where DHCP logs are used to update IP addresses (M4)</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of Input 1</li>
+<li>M2 = Count of DHCP servers with logging enabled</li>
+<li>M3 = Count of Input 2 <code>GV41</code></li>
+<li>M4 = Count of CMDB servers configured to use DHCP logs to update IP
+    addresses</li>
+<li>M5 = Count of devices in the DHCP server logs that are not included
+    in the CMDB servers</li>
+<li>M6 = Count of devices in the DHCP server logs that are included in
+    the CMDB servers</li>
+<li>M7 = Count of unique devices in the DHCP server logs</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<ul>
+<li>M4 &gt; 0 indicates a non up-to-date asset inventory</li>
+</ul>
+<h4 id="dhcp-logging-quality">DHCP Logging Quality</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: left;">Ratio of appropriately configured DHCP logging enabled to known DHCP servers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Calculation</td>
+<td style="text-align: left;"><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="cmdb-configuration-quality">CMDB Configuration Quality</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Metric</th>
+<th style="text-align: left;">Ratio of appropriately configured CMDB servers using DHCP logging to update IP addresses</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">Calculation</td>
+<td style="text-align: left;"><code>M4 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="cmdb-updating-accuracy">CMDB Updating Accuracy</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Metric</th>
+<th style="text-align: left;">Ratio of DHCP-observed devices present in the CMDB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">Calculation</td>
+<td style="text-align: left;"><code>M6 / M7</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="15-use-a-passive-asset-discovery-tool">1.5: Use a Passive Asset Discovery Tool</h2>
+<p>Use a passive discovery tool to identify assets connected to the
+enterprise's network. Review and use scans to update the enterprise's
+asset inventory at least weekly, or more frequently.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devices</td>
+<td>Detect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 4.2: Establish and Maintain a Secure Configuration Process
+    for Network Infrastructure</li>
+<li>Safeguard 12.4: Establish and Maintain Architecture Diagram(s)</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV4</code>: Enterprise Network Architecture Documentation</li>
+<li>List of passive asset discovery tools in use by the organization.
+    For each, include the location of the tool's configuration
+    information and which networks it covers.</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Identify approved configurations for passive asset discovery tools
+    using <code>GV3</code></p>
+</li>
+<li>
+<p>For each passive asset discovery tool provided in Input 2, check the tool's configuration against the appropriate approved configuration from <code>GV3</code></p>
+<ol>
+<li>Enumerate those tools that are properly configured (M1)</li>
+<li>Enumerate those tools that are improperly configured (M2) noting the deviations from proper configuration</li>
+</ol>
+</li>
+<li>
+<p>Identify and enumerate the enterprise's networks (M5) using Input 1, check to see if at least one properly configured passive asset discovery tool from M1 covers that network.</p>
+<ol>
+<li>Create a list of the enterprise's networks that have coverage from at least one properly configured passive asset discovery tool (M3)</li>
+<li>Create a list of the enterprise's networks that do not have coverage from any properly configured passive asset discovery tools (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Count of properly configured passive asset discovery tools</li>
+<li>M2 = Count of improperly configured passive asset discovery tools</li>
+<li>M3 = Count of organization's networks that are covered by properly
+    configured passive discovery tools</li>
+<li>M4 = Count of organization's networks that are not covered by
+    properly configured passive discovery tools</li>
+<li>M5 = Count of enterprise's networks.</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<h4 id="coverage_1">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Metric</th>
+<th>The ratio of the organization's networks with coverage from at least one properly configured passive asset discovery tool to the total number of networks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">Calculation</td>
+<td><code>M3 / M5</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../contributing.rst/" class="btn btn-neutral float-left" title="Contributing"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls2/" class="btn btn-neutral float-right" title="CIS Control 2: Inventory and Control of Software Assets">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

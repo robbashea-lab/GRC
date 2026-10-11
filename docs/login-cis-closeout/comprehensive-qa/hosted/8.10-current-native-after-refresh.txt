@@ -1,0 +1,43 @@
+CIS IG3
+Control 8
+Safeguard 8.10
+Retain Audit Logs
+
+Safeguard assessment workspace
+
+Implemented
+Not verified
+Previous
+69 of 153
+Next
+Requirement & implementation
+Findings
+Requirement summary
+What CIS requires
+
+Official requirement · CIS v8.1 · Safeguard 8.10
+
+Retain audit logs across enterprise assets for a minimum of 90 days.
+
+Required operation / trigger: Retain enterprise-asset audit logs for at least 90 days.
+
+Official CIS source
+Implementation status
+Implementation status
+Implemented
+Partially Implemented
+Not Implemented
+Not Assessed
+Not Applicable
+Current implementation
+Current implementation
+Assessment guidance & working checklist
+
+Your implementation is saved. I can help you maintain Safeguard 8.10, update a recorded fact, or review outstanding verification.
+
+×
+Interview complete
+Changes remain in your draft until saved.
+Save assessment
+Save & next
+Close

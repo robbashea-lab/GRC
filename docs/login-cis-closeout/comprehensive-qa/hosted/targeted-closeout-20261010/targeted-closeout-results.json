@@ -1,0 +1,112 @@
+{
+  "capturedAt": "2026-10-10T18:36:55.543Z",
+  "kind": "Authenticated hosted targeted read-only closeout; no assessment/interview writes",
+  "runtime": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+  "deployment": "dep-db56e2d9fdbs73bpcq50",
+  "service": "srv-db1s0cugekts73f72reg",
+  "url": "https://omnisciente-staging.onrender.com",
+  "browser": "Codex In-app Browser / existing authorized Staging Administrator session",
+  "assets": {
+    "scripts": [
+      "/static/js/main.76d23b98.js"
+    ],
+    "styles": [
+      "/static/css/main.fe2057c8.css"
+    ]
+  },
+  "showcases": [
+    {
+      "client": "Initech",
+      "group": 2,
+      "safeguard": "17.5",
+      "guideContext": "passed: native title/124 of130, refined floating guide, relevant current-practice question/help, group1of5, no legacy or current-source review gate",
+      "history": "No available archived snapshots; no claim that no historical interview ever existed",
+      "native": {
+        "before": "",
+        "after": "",
+        "implementationUnchanged": true,
+        "status": "Not Assessed",
+        "verification": "Not verified",
+        "owner": "Unassigned",
+        "lastAssessed": "Never"
+      },
+      "depthLimit": "Later conditional group requires Save & next, which persists interview progress; not executed on read-only showcase. Existing isolated6a4 correction proof remains separate.",
+      "result": "read-only entry/context/initial-guide/preservation passed; deeper conditional display unexecuted"
+    },
+    {
+      "client": "Hooli",
+      "group": 3,
+      "safeguard": "17.5",
+      "guideContext": "passed: native title/144 of153, inherited IG2 clause in IG3, refined floating guide, relevant current-practice question/help, group1of5, no legacy or current-source review gate",
+      "history": "No available archived snapshots; no claim that no historical interview ever existed",
+      "native": {
+        "before": "",
+        "after": "",
+        "implementationUnchanged": true,
+        "status": "Not Assessed",
+        "verification": "Not verified",
+        "owner": "Unassigned",
+        "lastAssessed": "Never"
+      },
+      "depthLimit": "Later conditional group requires Save & next, which persists interview progress; not executed on read-only showcase. Existing isolated6a4 correction proof remains separate.",
+      "result": "read-only entry/context/initial-guide/preservation passed; deeper conditional display unexecuted"
+    },
+    {
+      "client": "Brawndo",
+      "group": 1,
+      "safeguard": "1.1",
+      "guideContext": "passed:56-group dashboard/native1of56, reference inventory group1of5, artwork/launcher/window/controls/greeting/native layout retained, saved Partially inventory and synthetic notes readable; no retired guide",
+      "history": "25 completed/checkpoint archived snapshots visible plus Load earlier interviews; compatible control1-3 history retained",
+      "native": {
+        "before": "",
+        "after": "",
+        "implementationUnchanged": true,
+        "status": "Not Assessed",
+        "verification": "Not verified",
+        "owner": "Unassigned",
+        "lastAssessed": "Never"
+      },
+      "depthLimit": "Existing saved-assessment reconciliation warning: Compare & continue may change interview state; not activated. No additional review, answer edits or saves. No new full visual/pointer/animation regression pass claimed.",
+      "result": "reference entry/visible guide/answer-history/native preservation passed; reconciliation and later groups unexecuted"
+    }
+  ],
+  "recovery": {
+    "result": "Normal supported control operation recovered; existing authorized session remained usable, no credential entry needed for this checkpoint.",
+    "observations": [
+      "Observed tab disappearance; one fresh tab in the same selected browser retained authorized access.",
+      "Responsive client navigation required normal Toggle/Close navigation controls.",
+      "One launcher semantic click reported shadow-root inspection failure; fresh DOM and screenshot showed accessible launcher; normal Enter activation succeeded once.",
+      "No repeated ineffective loop, forced input, direct API, credential extraction, auth/security change or compensating application edit."
+    ],
+    "remainingBrowserBlocker": null
+  },
+  "cleanup": {
+    "client": "OmniBot QA — Closeout CIS IG3",
+    "clientId": "cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7",
+    "group": 3,
+    "status": "archived confirmed after refresh",
+    "action": "Already archived when inspected; no new Archive or Restore issued this checkpoint. Prior unconfirmed archive is now verified by persisted row and success audit.",
+    "audit": {
+      "event": "Archive",
+      "outcome": "success",
+      "dateTimeDisplayed": "10/10/2026, 12:53:36 PM",
+      "previous": "active",
+      "next": "archived"
+    },
+    "proof": "Absent from refreshed active portfolio; exact data-client-id on archived row; Restore client available but not executed; retained audit39 events includes prior assessment history; actual archive event detail success.",
+    "restoreExecuted": false,
+    "historyDeletion": false,
+    "ig2RetainedActive": true,
+    "ig2ClientId": "cli_c65cd90ca6d92c2a86f5cffc8972a19f22bf1d791ec0cc9ec1684a811f0bd1b0"
+  },
+  "restrictions": {
+    "showcaseProgressSaves": 0,
+    "showcaseNativeSaves": 0,
+    "newReviews": 0,
+    "accountChanges": 0,
+    "deployments": 0,
+    "restrictedServerDenial": "blocked: specific Reader/membership/activation approval and normal credential entry pending; separate Manager-to-Reader transition not approved"
+  },
+  "baseline339": "Historical b90 evidence retained, not newly executed or relabeled.",
+  "releaseState": "Deployed for validation — final acceptance pending"
+}

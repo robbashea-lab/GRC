@@ -1,0 +1,295 @@
+- banner:
+  - link "Omnisciente CLARITY FOR A STRONGER TOMORROW":
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - searchbox "Search workspace pages and active work"
+  - generic: Ctrl K
+  - button "Initech Open authorized client directory":
+    - text: Initech
+    - generic: Open authorized client directory
+  - button "Use light workspace theme":
+  - button "Your notifications":
+  - button "Staging Administrator super admin":
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button "Return to portfolio":
+    - text: Portfolio
+  - generic: I
+  - generic: Client
+  - generic: Initech
+  - navigation "Client workspace":
+    - group "Work":
+      - generic: Work
+      - link "Dashboard":
+        - /url: /dashboard
+        - generic: Dashboard
+      - link "Calendar":
+        - /url: /calendar
+        - generic: Calendar
+      - link "Reviews":
+        - /url: /reviews
+        - generic: Reviews
+      - link "Action Items":
+        - /url: /action-items
+        - generic: Action Items
+    - group "Program":
+      - generic: Program
+      - link "CIS IG2":
+        - /url: /compliance/cis-ig1
+        - generic: CIS IG2
+      - link "Risks":
+        - /url: /risks
+        - generic: Risks
+      - link "Policies":
+        - /url: /policies
+        - generic: Policies
+      - link "Vendors":
+        - /url: /vendors
+        - generic: Vendors
+      - link "Evidence Library":
+        - /url: /evidence
+        - generic: Evidence Library
+    - group "Client":
+      - generic: Client
+      - link "Contacts":
+        - /url: /contacts
+        - generic: Contacts
+      - link "Systems & Scope":
+        - /url: /systems
+        - generic: Systems & Scope
+      - link "AI Governance":
+        - /url: /ai-governance
+        - generic: AI Governance
+      - link "Client Profile":
+        - /url: /client-profile
+        - generic: Client Profile
+- main:
+  - button "Open Omnibot guide":
+  - complementary "Omnibot invitation":
+    - paragraph: Hi, I’m Omnibot. I can help you choose your next safeguard and work through its assessment. Ready to get started?
+    - button "Close invitation": ×
+  - generic: Omnibot is available
+  - paragraph: CIS Controls v8.1 IG2
+  - heading "CIS IG2" [level=1]
+  - 'button "Continue assessment: 1.1 Establish and Maintain Detailed Enterprise Asset Inventory"': Continue with 1.1
+  - region "Assessment progress":
+    - 'group "CIS IG2: 0 Implemented (0.0%, 0 of 130), 0 Partially implemented (0.0%, 0 of 130), 0 Not implemented (0.0%, 0 of 130), 130 Not assessed (100.0%, 130 of 130)"':
+      - img "Not assessed · 100.0% · 130 of 130 safeguards"
+      - generic: 0.0%
+      - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading "Assessment progress" [level=2]
+    - paragraph: 18 controls · 130 IG2 safeguards
+    - term: Implemented
+    - definition:
+      - text: "0"
+      - generic: of 130
+    - term: Assessed
+    - definition:
+      - text: "0"
+      - generic: of 130
+    - group "Assessment progress by status":
+      - 'img "Not assessed: 130 of 130 safeguards, 100%"'
+    - group "Filter by assessment status":
+      - button "Implemented 0":
+        - text: Implemented
+        - strong: "0"
+      - button "Partial 0":
+        - text: Partial
+        - strong: "0"
+      - button "Not implemented 0":
+        - text: Not implemented
+        - strong: "0"
+      - button "Not assessed 130":
+        - text: Not assessed
+        - strong: "130"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region "Controls":
+    - heading "Controls" [level=2]
+    - paragraph: Explore your safeguards, implementation, and verification.
+    - generic: 18 controls
+    - group "Control filters":
+      - button "All controls 18" [pressed]
+      - button "Needs attention 18"
+      - button "Not assessed 18"
+    - textbox "Search controls":
+      - /placeholder: Search controls…
+    - checkbox "Added in IG2 only · display filter; full program totals unchanged"
+    - text: Added in IG2 only · display filter; full program totals unchanged
+    - table:
+      - rowgroup:
+        - row "Control IG2 safeguards Implementation Assessment Open control":
+          - columnheader "Control"
+          - columnheader "IG2 safeguards"
+          - columnheader "Implementation"
+          - columnheader "Assessment"
+          - columnheader "Open control":
+            - generic: Open control
+      - rowgroup:
+        - link "Open Control 1 — Inventory and Control of Enterprise Assets":
+          - cell "1 Inventory and Control of Enterprise Assets":
+            - generic: "1"
+            - text: Inventory and Control of Enterprise Assets
+          - cell "4"
+          - cell "4 Not assessed":
+            - generic: 4 Not assessed
+          - cell "0 of 4 assessed"
+          - cell:
+        - link "Open Control 2 — Inventory and Control of Software Assets":
+          - cell "2 Inventory and Control of Software Assets":
+            - generic: "2"
+            - text: Inventory and Control of Software Assets
+          - cell "6"
+          - cell "6 Not assessed":
+            - generic: 6 Not assessed
+          - cell "0 of 6 assessed"
+          - cell:
+        - link "Open Control 3 — Data Protection":
+          - cell "3 Data Protection":
+            - generic: "3"
+            - text: Data Protection
+          - cell "12"
+          - cell "12 Not assessed":
+            - generic: 12 Not assessed
+          - cell "0 of 12 assessed"
+          - cell:
+        - link "Open Control 4 — Secure Configuration of Enterprise Assets and Software":
+          - cell "4 Secure Configuration of Enterprise Assets and Software":
+            - generic: "4"
+            - text: Secure Configuration of Enterprise Assets and Software
+          - cell "11"
+          - cell "11 Not assessed":
+            - generic: 11 Not assessed
+          - cell "0 of 11 assessed"
+          - cell:
+        - link "Open Control 5 — Account Management":
+          - cell "5 Account Management":
+            - generic: "5"
+            - text: Account Management
+          - cell "6"
+          - cell "6 Not assessed":
+            - generic: 6 Not assessed
+          - cell "0 of 6 assessed"
+          - cell:
+        - link "Open Control 6 — Access Control Management":
+          - cell "6 Access Control Management":
+            - generic: "6"
+            - text: Access Control Management
+          - cell "7"
+          - cell "7 Not assessed":
+            - generic: 7 Not assessed
+          - cell "0 of 7 assessed"
+          - cell:
+        - link "Open Control 7 — Continuous Vulnerability Management":
+          - cell "7 Continuous Vulnerability Management":
+            - generic: "7"
+            - text: Continuous Vulnerability Management
+          - cell "7"
+          - cell "7 Not assessed":
+            - generic: 7 Not assessed
+          - cell "0 of 7 assessed"
+          - cell:
+        - link "Open Control 8 — Audit Log Management":
+          - cell "8 Audit Log Management":
+            - generic: "8"
+            - text: Audit Log Management
+          - cell "11"
+          - cell "11 Not assessed":
+            - generic: 11 Not assessed
+          - cell "0 of 11 assessed"
+          - cell:
+        - link "Open Control 9 — Email and Web Browser Protections":
+          - cell "9 Email and Web Browser Protections":
+            - generic: "9"
+            - text: Email and Web Browser Protections
+          - cell "6"
+          - cell "6 Not assessed":
+            - generic: 6 Not assessed
+          - cell "0 of 6 assessed"
+          - cell:
+        - link "Open Control 10 — Malware Defenses":
+          - cell "10 Malware Defenses":
+            - generic: "10"
+            - text: Malware Defenses
+          - cell "7"
+          - cell "7 Not assessed":
+            - generic: 7 Not assessed
+          - cell "0 of 7 assessed"
+          - cell:
+        - link "Open Control 11 — Data Recovery":
+          - cell "11 Data Recovery":
+            - generic: "11"
+            - text: Data Recovery
+          - cell "5"
+          - cell "5 Not assessed":
+            - generic: 5 Not assessed
+          - cell "0 of 5 assessed"
+          - cell:
+        - link "Open Control 12 — Network Infrastructure Management":
+          - cell "12 Network Infrastructure Management":
+            - generic: "12"
+            - text: Network Infrastructure Management
+          - cell "7"
+          - cell "7 Not assessed":
+            - generic: 7 Not assessed
+          - cell "0 of 7 assessed"
+          - cell:
+        - link "Open Control 13 — Network Monitoring and Defense":
+          - cell "13 Network Monitoring and Defense":
+            - generic: "13"
+            - text: Network Monitoring and Defense
+          - cell "6"
+          - cell "6 Not assessed":
+            - generic: 6 Not assessed
+          - cell "0 of 6 assessed"
+          - cell:
+        - link "Open Control 14 — Security Awareness and Skills Training":
+          - cell "14 Security Awareness and Skills Training":
+            - generic: "14"
+            - text: Security Awareness and Skills Training
+          - cell "9"
+          - cell "9 Not assessed":
+            - generic: 9 Not assessed
+          - cell "0 of 9 assessed"
+          - cell:
+        - link "Open Control 15 — Service Provider Management":
+          - cell "15 Service Provider Management":
+            - generic: "15"
+            - text: Service Provider Management
+          - cell "4"
+          - cell "4 Not assessed":
+            - generic: 4 Not assessed
+          - cell "0 of 4 assessed"
+          - cell:
+        - link "Open Control 16 — Application Software Security":
+          - cell "16 Application Software Security":
+            - generic: "16"
+            - text: Application Software Security
+          - cell "11"
+          - cell "11 Not assessed":
+            - generic: 11 Not assessed
+          - cell "0 of 11 assessed"
+          - cell:
+        - link "Open Control 17 — Incident Response Management":
+          - cell "17 Incident Response Management":
+            - generic: "17"
+            - text: Incident Response Management
+          - cell "8"
+          - cell "8 Not assessed":
+            - generic: 8 Not assessed
+          - cell "0 of 8 assessed"
+          - cell:
+        - link "Open Control 18 — Penetration Testing":
+          - cell "18 Penetration Testing":
+            - generic: "18"
+            - text: Penetration Testing
+          - cell "3"
+          - cell "3 Not assessed":
+            - generic: 3 Not assessed
+          - cell "0 of 3 assessed"
+          - cell:
+    - paragraph: All 18 IG2 controls · 130 safeguards.
+- region "Notifications alt+T"

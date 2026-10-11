@@ -1,0 +1,274 @@
+- banner:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - searchbox
+  - generic: Ctrl K
+  - button:
+    - text: Brawndo
+    - generic: Open authorized client directory
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: B
+  - generic: Client
+  - generic: Brawndo
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG1
+    - link:
+      - /url: /risks
+      - generic: Risks
+      - generic: "1"
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG1
+  - heading [level=1]: CIS IG1
+  - button: Continue with 1.1
+  - region:
+    - generic: 3.6%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 15 controls · 56 IG1 safeguards
+    - term: Implemented
+    - definition:
+      - text: "2"
+      - generic: of 56
+    - term: Assessed
+    - definition:
+      - text: "2"
+      - generic: of 56
+    - button:
+      - text: Implemented
+      - strong: "2"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "54"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG1
+        - listitem: ›Control 1
+    - textbox:
+      - /placeholder: Search by number or title…
+    - paragraph: Inventory and Control of Enterprise Assets
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+          - columnheader: Verification
+          - columnheader: Owner
+          - columnheader: Last assessed
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "1.1"
+            - generic: Establish and Maintain Detailed Enterprise Asset Inventory
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "1.2"
+            - generic: Address Unauthorized Assets
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+- region "Notifications alt+T"
+- dialog "1.2 · Address Unauthorized Assets":
+  - button "Close":
+    - generic: Close
+  - heading "1.2 · Address Unauthorized Assets" [level=2]
+  - paragraph: CIS Controls v8.1 · 1.2
+  - text: Assessment Owner
+  - button "Assessment Owner":
+    - generic: Unassigned
+  - paragraph: Only active platform users with access to this client can be assigned. Contacts alone are not eligible.
+  - link "Manage people in a new tab":
+    - /url: /contacts
+    - text: Manage people →
+  - button "Save owner" [disabled]
+  - generic "View History" [active]
+  - paragraph: Assessment history · 21
+  - list:
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: SYNTHETIC STAGING QA 2026-10-09 b96af6e — NOT BRAWNDO FACTS. Fictional test scenario reports no unauthorized-asset process. QA reviewer must confirm the scenario. This record exists only to verify authenticated saving, lineage and refresh persistence; evidence remains unverified.
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-2 · generated 2026-10-09T17:10:09.635951+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "SYNTHETIC FINAL 0739 NATIVE EDIT: later response-procedure note added outside Omni; do not overwrite from the older interview. Not a real assessment."
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "The organization reports a process for addressing unauthorized assets. Maintained using: SYNTHETIC FINAL 0739 AUTH RETURN: LegacySecurity alert reports identify assets for weekly handling.. Responsible team: SYNTHETIC FINAL 0739 AUTH TARGET: Service Desk investigates and client security approves dispositions. Confirmed weekly handling, inventory comparison, quarantine and reachability checks remain current.. Reported operating frequency: Weekly. Reported response actions: Quarantine or isolate. Reported authorized inventory available for comparison: Yes. Reported identification of unauthorized assets: Yes. Reported tracking of disposition decisions: Yes. Reported confirmation that assets are no longer reachable or otherwise addressed: Yes. Reported exception approval and tracking: No exceptions used. Reported reconciliation against authorized inventory: Yes. Reported assets unresolved beyond the required response interval: No. Reported unauthorized-asset handling: SYNTHETIC FINAL 0739 AUTH RETURN: documented handling exists. Reported supporting context: SYNTHETIC AUTH RETURN: inventory report is available for comparison; 1.1 native status is separate."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-2 · generated 2026-10-09T13:38:45.981185+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "The organization reports a process for addressing unauthorized assets. Maintained using: SYNTHETIC FINAL 0739 AUTH RETURN: LegacySecurity alert reports identify assets for weekly handling.. Responsible team: SYNTHETIC AUTH RETURN: IT operations investigates; client security approves disposition.. Reported operating frequency: Weekly. Reported response actions: Quarantine or isolate. Reported authorized inventory available for comparison: Yes. Reported identification of unauthorized assets: Yes. Reported tracking of disposition decisions: Yes. Reported confirmation that assets are no longer reachable or otherwise addressed: Yes. Reported exception approval and tracking: No exceptions used. Reported reconciliation against authorized inventory: Yes. Reported assets unresolved beyond the required response interval: No. Reported unauthorized-asset handling: SYNTHETIC FINAL 0739 AUTH RETURN: documented handling exists; this is a saved partial interview only. Reported supporting context: SYNTHETIC AUTH RETURN: inventory report is available for comparison; 1.1 native status is separate."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-2 · generated 2026-10-09T13:33:49.498227+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "The organization reports a process for addressing unauthorized assets. Maintained using: SYNTHETIC OMNIBOT LIFECYCLE 20261009: NinjaOne alert reports and IT discovery now identify unauthorized assets; the existing authorized-inventory comparison, weekly handling and documented dispositions remain current.. Responsible team: SYNTHETIC FINAL 0739: Service Desk now investigates unauthorized-asset alerts; client security approves dispositions. Weekly handling, inventory comparison and isolation confirmation remain reported current.. Reported operating frequency: Weekly. Reported response actions: Quarantine or isolate. Reported authorized inventory available for comparison: Yes. Reported identification of unauthorized assets: Yes. Reported tracking of disposition decisions: Yes. Reported confirmation that assets are no longer reachable or otherwise addressed: Yes. Reported exception approval and tracking: No exceptions used. Reported reconciliation against authorized inventory: Yes. Reported assets unresolved beyond the required response interval: No. Reported unauthorized-asset handling: SYNTHETIC OMNIBOT LIFECYCLE 20261009 1.2: documented handling exists. IT investigates alerts, records disposition and confirms isolation; the current operating cadence is reported separately. No real verification claim. Reported operating interval: SYNTHETIC FINAL 0739: weekly review and response is now reported restored; documented dispositions and confirmation remain current. No real evidence-verification claim. SYNTHETIC unrelated valid detail: the response procedure has a named backup analyst in the internal runbook."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-2 · generated 2026-10-09T13:05:54.542324+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "The organization reports a process for addressing unauthorized assets. Maintained using: SYNTHETIC OMNIBOT LIFECYCLE 20261009: NinjaOne alert reports and IT discovery now identify unauthorized assets; the existing authorized-inventory comparison, weekly handling and documented dispositions remain current.. Responsible team: SYNTHETIC IT operations investigates and client security approves dispositions.. Reported operating frequency: Weekly. Reported response actions: Quarantine or isolate. Reported authorized inventory available for comparison: Yes. Reported identification of unauthorized assets: Yes. Reported tracking of disposition decisions: Yes. Reported confirmation that assets are no longer reachable or otherwise addressed: Yes. Reported exception approval and tracking: No exceptions used. Reported reconciliation against authorized inventory: Yes. Reported assets unresolved beyond the required response interval: No. Reported unauthorized-asset handling: SYNTHETIC OMNIBOT LIFECYCLE 20261009 1.2: documented handling exists. IT investigates alerts, records disposition and confirms isolation; the current operating cadence is reported separately. No real verification claim. Reported operating interval: SYNTHETIC FINAL 0739: weekly review and response is now reported restored; documented dispositions and confirmation remain current. No real evidence-verification claim. SYNTHETIC unrelated valid detail: the response procedure has a named backup analyst in the internal runbook."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-2 · generated 2026-10-09T13:04:28.079125+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Partially Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "The organization reports a process for addressing unauthorized assets. Maintained using: SYNTHETIC OMNIBOT LIFECYCLE 20261009: NinjaOne alert reports and IT discovery now identify unauthorized assets; the existing authorized-inventory comparison, weekly handling and documented dispositions remain current.. Responsible team: SYNTHETIC IT operations investigates and client security approves dispositions.. Reported operating frequency: Weekly. Reported response actions: Quarantine or isolate. Reported authorized inventory available for comparison: Yes. Reported identification of unauthorized assets: Yes. Reported tracking of disposition decisions: Yes. Reported confirmation that assets are no longer reachable or otherwise addressed: Yes. Reported exception approval and tracking: No exceptions used. Reported reconciliation against authorized inventory: Yes. Reported assets unresolved beyond the required response interval: No. Reported unauthorized-asset handling: SYNTHETIC OMNIBOT LIFECYCLE 20261009 1.2: documented handling exists. IT investigates alerts, records disposition and confirms isolation; the current operating cadence is reported separately. No real verification claim. Reported operating interval: SYNTHETIC FINAL 0739: weekly review and response is now reported restored; documented dispositions and confirmation remain current. No real evidence-verification claim. SYNTHETIC unrelated valid detail: the response procedure has a named backup analyst in the internal runbook."
+    - paragraph: "Verification: Not verified"
+    - paragraph: Partially Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "The organization reports a process for addressing unauthorized assets. Maintained using: SYNTHETIC OMNIBOT LIFECYCLE 20261009: NinjaOne alert reports and IT discovery now identify unauthorized assets; the existing authorized-inventory comparison, documented dispositions remain current; the operating interval is reviewed separately.. Responsible team: SYNTHETIC IT operations investigates and client security approves dispositions.. Reported operating frequency: Monthly. Reported response actions: Quarantine or isolate. Material limitations remain; review the confirmed gaps and items requiring verification. Reported authorized inventory available for comparison: Yes. Reported identification of unauthorized assets: Yes. Reported tracking of disposition decisions: Yes. Reported confirmation that assets are no longer reachable or otherwise addressed: Yes. Reported exception approval and tracking: No exceptions used. Reported reconciliation against authorized inventory: Yes. Reported assets unresolved beyond the required response interval: No. Reported unauthorized-asset handling: SYNTHETIC OMNIBOT LIFECYCLE 20261009 1.2: documented handling exists. IT investigates alerts, records disposition and confirms isolation; the current operating cadence is reported separately. No real verification claim. Reported operating interval: SYNTHETIC NEW GAP: weekly handling stopped; the team addresses unauthorized assets only monthly. Reported gaps: Review/response frequency — Monthly; SYNTHETIC NEW GAP: weekly handling stopped; the team addresses unauthorized assets only monthly.. SYNTHETIC unrelated valid detail: the response procedure has a named backup analyst in the internal runbook."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-2 · generated 2026-10-09T12:26:09.841606+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "The organization reports a process for addressing unauthorized assets. Maintained using: SYNTHETIC OMNIBOT LIFECYCLE 20261009: NinjaOne alert reports and IT discovery now identify unauthorized assets; the existing authorized-inventory comparison, weekly handling and documented dispositions remain current.. Responsible team: SYNTHETIC IT operations investigates and client security approves dispositions.. Reported operating frequency: Weekly. Reported response actions: Quarantine or isolate. Reported authorized inventory available for comparison: Yes. Reported identification of unauthorized assets: Yes. Reported tracking of disposition decisions: Yes. Reported confirmation that assets are no longer reachable or otherwise addressed: Yes. Reported exception approval and tracking: No exceptions used. Reported reconciliation against authorized inventory: Yes. Reported assets unresolved beyond the required response interval: No. Reported unauthorized-asset handling: SYNTHETIC OMNIBOT LIFECYCLE 20261009 1.2: documented handling exists. IT investigates alerts, records disposition and confirms isolation; the current operating cadence is reported separately. No real verification claim. Reported operating interval: SYNTHETIC GAP RESOLVED: IT now reviews and addresses unauthorized assets every week; weekly dispositions are recorded and isolation is confirmed. SYNTHETIC unrelated valid detail: the response procedure has a named backup analyst in the internal runbook."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-2 · generated 2026-10-09T12:25:35.116355+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "The organization reports a process for addressing unauthorized assets. Maintained using: SYNTHETIC OMNIBOT LIFECYCLE 20261009: LegacySecurity platform alerts plus IT operations discovery reports.. Responsible team: SYNTHETIC IT operations investigates and client security approves dispositions.. Reported operating frequency: Weekly. Reported response actions: Quarantine or isolate. Reported authorized inventory available for comparison: Yes. Reported identification of unauthorized assets: Yes. Reported tracking of disposition decisions: Yes. Reported confirmation that assets are no longer reachable or otherwise addressed: Yes. Reported exception approval and tracking: No exceptions used. Reported reconciliation against authorized inventory: Yes. Reported assets unresolved beyond the required response interval: No. Reported unauthorized-asset handling: SYNTHETIC OMNIBOT LIFECYCLE 20261009 1.2: documented handling exists. IT investigates alerts, records disposition and confirms isolation; the current operating cadence is reported separately. No real verification claim. Reported operating interval: SYNTHETIC GAP RESOLVED: IT now reviews and addresses unauthorized assets every week; weekly dispositions are recorded and isolation is confirmed. SYNTHETIC unrelated valid detail: the response procedure has a named backup analyst in the internal runbook."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-2 · generated 2026-10-09T12:24:49.690963+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Partially Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "The organization reports a process for addressing unauthorized assets. Maintained using: SYNTHETIC OMNIBOT LIFECYCLE 20261009: LegacySecurity platform alerts plus IT operations discovery reports.. Responsible team: SYNTHETIC IT operations investigates and client security approves dispositions.. Reported operating frequency: Monthly. Reported response actions: Quarantine or isolate. Material limitations remain; review the confirmed gaps and items requiring verification. Reported authorized inventory available for comparison: Yes. Reported identification of unauthorized assets: Yes. Reported tracking of disposition decisions: Yes. Reported confirmation that assets are no longer reachable or otherwise addressed: Yes. Reported exception approval and tracking: No exceptions used. Reported reconciliation against authorized inventory: Yes. Reported assets unresolved beyond the required response interval: No. Reported unauthorized-asset handling: SYNTHETIC OMNIBOT LIFECYCLE 20261009 1.2: documented handling exists. IT investigates alerts, records disposition and confirms isolation; the current operating cadence is reported separately. No real verification claim. Reported gaps: Review/response frequency — Monthly. SYNTHETIC unrelated valid detail: the response procedure has a named backup analyst in the internal runbook."
+    - paragraph: "Verification: Not verified"
+    - paragraph: Partially Implemented · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "The organization reports a process for addressing unauthorized assets. Maintained using: SYNTHETIC OMNIBOT LIFECYCLE 20261009: LegacySecurity platform alerts plus IT operations discovery reports.. Responsible team: SYNTHETIC IT operations investigates and client security approves dispositions.. Reported operating frequency: Monthly. Reported response actions: Quarantine or isolate. Material limitations remain; review the confirmed gaps and items requiring verification. Reported unauthorized-asset handling: SYNTHETIC OMNIBOT LIFECYCLE 20261009 1.2: reported handling exists; this exercise intentionally leaves operating cadence below weekly. No real verification claim."
+    - paragraph: "Source: guided-assessment pilot · cis-v8.1-control1-2 · generated 2026-10-09T11:21:15.286204+00:00 · reviewer-approved draft"
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "Implementation has not yet been confirmed. Material limitations remain; review the confirmed gaps and items requiring verification. Reported unauthorized-asset handling: SYNTHETIC OMNIBOT LIFECYCLE 20261009 1.2: analyst cannot confirm weekly handling; security operations must validate operating records."
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "Implementation has not yet been confirmed. Material limitations remain; review the confirmed gaps and items requiring verification. Reported unauthorized-asset handling: STAGING INVITATION ACCEPTANCE 20261008-18ecd87-1.2: synthetic authenticated checkpoint/native-save refresh test only; no implementation claim or evidence verification."
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph
+    - paragraph: "Verification: Not verified"
+    - paragraph: Not Assessed · 2026-10-09
+    - paragraph: Staging Administrator
+    - paragraph: "Implementation has not yet been confirmed. Material limitations remain; review the confirmed gaps and items requiring verification. Reported unauthorized-asset handling: STAGING PILOT ACCEPTANCE 20261008-13b0e16-1.2: synthetic save/persistence test only; no implementation claim or evidence verification."
+    - paragraph: "Verification: Not verified"
+  - heading "Activity" [level=4]
+  - paragraph: Framework assessment updated · 2026-10-09T17:10:37.594351+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T17:10:17.296825+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T13:45:37.648786+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T13:45:15.947125+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T13:43:13.902207+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T13:38:55.020775+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T13:34:10.580368+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T13:25:31.515630+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T13:06:06.632496+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T13:04:39.832094+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T13:03:27.238446+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T12:26:26.587033+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T12:25:43.584355+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T12:24:59.525195+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T12:24:20.194130+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T11:21:26.544927+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T11:12:06.631416+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T03:21:00.775587+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T03:20:45.676835+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T02:32:34.519901+00:00 · Staging Administrator
+  - paragraph: Framework assessment updated · 2026-10-09T02:32:23.045367+00:00 · Staging Administrator
+  - link "Reviews":
+    - /url: /reviews?client_id=cli_60dee41ebbcd0e39b8bff87da17aee838ac50ecd799cb955f99d921eb6be4b20&framework_key=cis-ig1&framework_assessment=fw_086abb33d7dc5c1ebb55df6f2ffbbc13
+  - status
+  - button "Close"

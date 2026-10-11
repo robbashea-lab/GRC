@@ -1,4 +1,5 @@
 import revised from '@catalogs/guidedControl1V3.json';
+import handling from '@catalogs/guidedControl1V4.json';
 import original from '@catalogs/guidedControl1.json';
 import legacy from '@catalogs/guidedAssessmentPilot.json';
 import cis from '@catalogs/cisIG1.json';
@@ -13,16 +14,22 @@ const complete = version => Object.fromEntries(catalogForVersion(version).safegu
     : q.id === 'frequency' ? 'Every six months'
     : q.id === 'sources' ? 'One source' : 'Yes']));
 
-test('the narrow 1.1 correction preserves canonical scope and every unaffected Control 1 version', () => {
+test('current Control 1 defaults preserve approved 1.1, reviewed 1.2 and unaffected historical definitions', () => {
   expect(revised.version).toBe('cis-v8.1-control1-3');
   expect(Object.keys(revised.definitions)).toEqual(['1.1']);
   expect(Object.keys(revised.safeguards)).toEqual(['1.1']);
   expect(revised.definitions['1.1']).toEqual(original.definitions['1.1']);
-  expect(versionForSafeguard('1.1')).toBe(original.version);
+  expect(versionForSafeguard('1.1')).toBe(revised.version);
+  expect(versionForSafeguard('1.1', false)).toBe(original.version);
   expect(versionForSafeguard('1.1', true)).toBe(revised.version);
-  for (const id of ['1.2', '1.3', '1.4', '1.5']) {
+  expect(handling.version).toBe('cis-v8.1-control1-4');
+  expect(versionForSafeguard('1.2')).toBe(handling.version);
+  expect(versionForSafeguard('1.2', true)).toBe(handling.version);
+  expect(versionForSafeguard('1.2', false)).toBe(original.version);
+  for (const id of ['1.3', '1.4', '1.5']) {
     expect(versionForSafeguard(id)).toBe(original.version);
     expect(versionForSafeguard(id, true)).toBe(original.version);
+    expect(versionForSafeguard(id, false)).toBe(original.version);
   }
   expect(cis.requirements.find(r => r.id === '1.1').implementation_group).toBe(1);
 });

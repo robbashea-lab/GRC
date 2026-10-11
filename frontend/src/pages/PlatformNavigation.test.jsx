@@ -113,7 +113,7 @@ test("management reuses client form for add and edit; client role gets no contro
   expect(document.querySelector('[data-testid="new-client-name"]').value).toBe("");
   await change(document.querySelector('[data-testid="new-client-name"]'), "New organization");
   await click(document.querySelector('[data-testid="new-client-save"]'));
-  expect(api.post).toHaveBeenCalledWith("/clients", expect.objectContaining({ name: "New organization" }), {headers:{'Idempotency-Key':expect.any(String)}});
+  expect(api.post).toHaveBeenCalledWith("/clients", expect.objectContaining({ name: "New organization" }), {headers:{'Idempotency-Key':expect.any(String)},pendingCommandGeneration:expect.any(Number)});
   api.post.mockClear();
   await click([...container.querySelectorAll("button")].find(b => b.textContent === "Edit"));
   const c = mockFixtures.responses["/clients"][0];

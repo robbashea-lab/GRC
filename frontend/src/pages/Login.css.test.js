@@ -37,3 +37,18 @@ test('primary action white text contrasts with both gradient endpoints', () => {
   expect(colors).toHaveLength(2);
   for (const color of colors) expect(contrast(color, '#ffffff')).toBeGreaterThanOrEqual(4.5);
 });
+
+test('ambient motion cannot continually restart the character morph transition', () => {
+  expect(declaration('#omni-login #login-actor', 'transform')).not.toContain('--login-breathe');
+  expect(declaration('#omni-login #login-orbActor', 'transform')).not.toContain('--login-bob');
+  expect(declaration('#omni-login #login-standing-art', 'transform')).toContain('--login-breathe');
+  expect(declaration('#omni-login #login-nova-art', 'transform')).toContain('--login-bob');
+});
+
+test('selectors and animation names cannot leak into authenticated pages', () => {
+  stylesheet.walkRules(rule => {
+    if (rule.parent.type === 'atrule' && rule.parent.name === 'keyframes') return;
+    for (const selector of rule.selector.split(',')) expect(selector.trim()).toMatch(/^#omni-login(?:[\s.:#]|$)/);
+  });
+  stylesheet.walkAtRules('keyframes', rule => expect(rule.params).toMatch(/^login-/));
+});

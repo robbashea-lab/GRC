@@ -1,0 +1,437 @@
+{
+  "inventory": {
+    "assets": [
+      {
+        "id": "1a0ce48d013c819e",
+        "kind": "script",
+        "name": "main.f518447e.js",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "script"
+          },
+          {
+            "kind": "attribute",
+            "nodeId": 169699,
+            "property": "src"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/static/js/main.f518447e.js"
+      },
+      {
+        "id": "12592f09342ba076",
+        "kind": "stylesheet",
+        "name": "main.fe2057c8.css",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "link"
+          },
+          {
+            "kind": "attribute",
+            "nodeId": 169700,
+            "property": "href"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/static/css/main.fe2057c8.css"
+      },
+      {
+        "id": "f0b64697114abbb8",
+        "kind": "stylesheet",
+        "name": "css2",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "css"
+          }
+        ],
+        "url": "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap"
+      },
+      {
+        "id": "8c469cdac8a53f60",
+        "kind": "stylesheet",
+        "name": "css2",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "css"
+          }
+        ],
+        "url": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap"
+      },
+      {
+        "id": "6d5e7fb80500edbb",
+        "kind": "font",
+        "name": "zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "css"
+          }
+        ],
+        "url": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2"
+      },
+      {
+        "id": "98a0d4ac28a1eb32",
+        "kind": "font",
+        "name": "V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "css"
+          }
+        ],
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2"
+      },
+      {
+        "id": "6db8b9e8aac9cb2b",
+        "kind": "other",
+        "name": "me",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/auth/me"
+      },
+      {
+        "id": "6c12d6a0414545a4",
+        "kind": "other",
+        "name": "notifications",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/notifications"
+      },
+      {
+        "id": "44b7daf5900638d9",
+        "kind": "other",
+        "name": "dashboard",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/dashboard?client_id=cli_12ab2bebf7ab627587acb86ffb146b9d587438f0feef65f792d1ec02eb3990f9&scope=org"
+      },
+      {
+        "id": "55d556e29d35c4b7",
+        "kind": "other",
+        "name": "findings",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/findings?client_id=cli_12ab2bebf7ab627587acb86ffb146b9d587438f0feef65f792d1ec02eb3990f9&scope=org"
+      },
+      {
+        "id": "03c93dc73a682389",
+        "kind": "other",
+        "name": "tasks",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/tasks?client_id=cli_12ab2bebf7ab627587acb86ffb146b9d587438f0feef65f792d1ec02eb3990f9&scope=org"
+      },
+      {
+        "id": "862677ae53fffc3c",
+        "kind": "other",
+        "name": "baseline",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/onboarding/baseline?client_id=cli_12ab2bebf7ab627587acb86ffb146b9d587438f0feef65f792d1ec02eb3990f9"
+      },
+      {
+        "id": "e7ef8fb3dcd3964d",
+        "kind": "other",
+        "name": "requirements",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/requirements?client_id=cli_12ab2bebf7ab627587acb86ffb146b9d587438f0feef65f792d1ec02eb3990f9"
+      },
+      {
+        "id": "33f5a831059a3bbb",
+        "kind": "other",
+        "name": "clients",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/clients?include_archived=true"
+      },
+      {
+        "id": "218e3f22d0f40eeb",
+        "kind": "other",
+        "name": "iso-27001",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          },
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/frameworks/iso-27001?client_id=cli_12ab2bebf7ab627587acb86ffb146b9d587438f0feef65f792d1ec02eb3990f9"
+      },
+      {
+        "id": "760d0969e9eb0671",
+        "kind": "other",
+        "name": "related",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/framework_assessments/fw_8b4a95ddbb4c5241ad79d5995b23b119/related"
+      },
+      {
+        "id": "8df52fab1cc7a290",
+        "kind": "other",
+        "name": "members",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/clients/cli_12ab2bebf7ab627587acb86ffb146b9d587438f0feef65f792d1ec02eb3990f9/members"
+      },
+      {
+        "id": "e14fea291eb33965",
+        "kind": "other",
+        "name": "contacts",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/contacts?client_id=cli_12ab2bebf7ab627587acb86ffb146b9d587438f0feef65f792d1ec02eb3990f9"
+      },
+      {
+        "id": "3a01d1336b387f46",
+        "kind": "other",
+        "name": "comments",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/comments?entity_type=framework_assessments&entity_id=fw_8b4a95ddbb4c5241ad79d5995b23b119"
+      },
+      {
+        "id": "8e84c0b7099494cd",
+        "kind": "other",
+        "name": "activity",
+        "sources": [
+          {
+            "kind": "resource",
+            "property": "xmlhttprequest"
+          }
+        ],
+        "url": "https://omnisciente-staging.onrender.com/api/framework_assessments/fw_8b4a95ddbb4c5241ad79d5995b23b119/activity"
+      }
+    ],
+    "id": "c3032bc6-24ae-48ee-a368-26744a8dfe6f",
+    "inlineSvgs": [
+      {
+        "id": "ef64a73f3e7c6c7c",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-menu\" aria-hidden=\"true\"><path d=\"M4 12h16\"></path><path d=\"M4 18h16\"></path><path d=\"M4 6h16\"></path></svg>",
+        "name": "svg-1"
+      },
+      {
+        "id": "b8326226883e1903",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-search\" aria-hidden=\"true\"><path d=\"m21 21-4.34-4.34\"></path><circle cx=\"11\" cy=\"11\" r=\"8\"></circle></svg>",
+        "name": "svg-2"
+      },
+      {
+        "id": "4ee88c77f37c5d52",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-chevron-down\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"></path></svg>",
+        "name": "svg-3"
+      },
+      {
+        "id": "b7af8dbed20c46c9",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-sun\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 2v2\"></path><path d=\"M12 20v2\"></path><path d=\"m4.93 4.93 1.41 1.41\"></path><path d=\"m17.66 17.66 1.41 1.41\"></path><path d=\"M2 12h2\"></path><path d=\"M20 12h2\"></path><path d=\"m6.34 17.66-1.41 1.41\"></path><path d=\"m19.07 4.93-1.41 1.41\"></path></svg>",
+        "name": "svg-4"
+      },
+      {
+        "id": "9939b0f03fa1f76e",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-bell h-4 w-4\" aria-hidden=\"true\"><path d=\"M10.268 21a2 2 0 0 0 3.464 0\"></path><path d=\"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326\"></path></svg>",
+        "name": "svg-5"
+      },
+      {
+        "id": "629a86b88259cfbf",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-chevrons-up-down\" aria-hidden=\"true\"><path d=\"m7 15 5 5 5-5\"></path><path d=\"m7 9 5-5 5 5\"></path></svg>",
+        "name": "svg-6"
+      },
+      {
+        "id": "21b3ebd795461daf",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-arrow-left\" aria-hidden=\"true\"><path d=\"m12 19-7-7 7-7\"></path><path d=\"M19 12H5\"></path></svg>",
+        "name": "svg-7"
+      },
+      {
+        "id": "282675f9c7bf6f0c",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-layout-dashboard\" aria-hidden=\"true\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"></rect><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"></rect></svg>",
+        "name": "svg-8"
+      },
+      {
+        "id": "af79674875b22cd4",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-calendar-days\" aria-hidden=\"true\"><path d=\"M8 2v4\"></path><path d=\"M16 2v4\"></path><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"></rect><path d=\"M3 10h18\"></path><path d=\"M8 14h.01\"></path><path d=\"M12 14h.01\"></path><path d=\"M16 14h.01\"></path><path d=\"M8 18h.01\"></path><path d=\"M12 18h.01\"></path><path d=\"M16 18h.01\"></path></svg>",
+        "name": "svg-9"
+      },
+      {
+        "id": "28e0ecf1aca97773",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clipboard-check\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"></rect><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"></path><path d=\"m9 14 2 2 4-4\"></path></svg>",
+        "name": "svg-10"
+      },
+      {
+        "id": "99e63dde6142a0fc",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-list-checks\" aria-hidden=\"true\"><path d=\"m3 17 2 2 4-4\"></path><path d=\"m3 7 2 2 4-4\"></path><path d=\"M13 6h8\"></path><path d=\"M13 12h8\"></path><path d=\"M13 18h8\"></path></svg>",
+        "name": "svg-11"
+      },
+      {
+        "id": "cb00f6949586468d",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-shield-check\" aria-hidden=\"true\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"></path><path d=\"m9 12 2 2 4-4\"></path></svg>",
+        "name": "svg-12"
+      },
+      {
+        "id": "1532d54961f9d4c2",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-shield-check\" aria-hidden=\"true\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"></path><path d=\"m9 12 2 2 4-4\"></path></svg>",
+        "name": "svg-13"
+      },
+      {
+        "id": "5fd2f736a173823c",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-shield-check\" aria-hidden=\"true\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"></path><path d=\"m9 12 2 2 4-4\"></path></svg>",
+        "name": "svg-14"
+      },
+      {
+        "id": "77d95a0b5cf620bd",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-shield-alert\" aria-hidden=\"true\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"></path><path d=\"M12 8v4\"></path><path d=\"M12 16h.01\"></path></svg>",
+        "name": "svg-15"
+      },
+      {
+        "id": "3fa1e4c973bfac69",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-file-text\" aria-hidden=\"true\"><path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"></path><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"></path><path d=\"M10 9H8\"></path><path d=\"M16 13H8\"></path><path d=\"M16 17H8\"></path></svg>",
+        "name": "svg-16"
+      },
+      {
+        "id": "61c5548566d74159",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-building2 lucide-building-2\" aria-hidden=\"true\"><path d=\"M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z\"></path><path d=\"M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2\"></path><path d=\"M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2\"></path><path d=\"M10 6h4\"></path><path d=\"M10 10h4\"></path><path d=\"M10 14h4\"></path><path d=\"M10 18h4\"></path></svg>",
+        "name": "svg-17"
+      },
+      {
+        "id": "2f43a35342bd6876",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-folder-archive\" aria-hidden=\"true\"><circle cx=\"15\" cy=\"19\" r=\"2\"></circle><path d=\"M20.9 19.8A2 2 0 0 0 22 18V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h5.1\"></path><path d=\"M15 11v-1\"></path><path d=\"M15 17v-2\"></path></svg>",
+        "name": "svg-18"
+      },
+      {
+        "id": "9146cca5c67cba84",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-users\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"></path><path d=\"M16 3.128a4 4 0 0 1 0 7.744\"></path><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"></path><circle cx=\"9\" cy=\"7\" r=\"4\"></circle></svg>",
+        "name": "svg-19"
+      },
+      {
+        "id": "5dd8616fbecb1309",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-server\" aria-hidden=\"true\"><rect width=\"20\" height=\"8\" x=\"2\" y=\"2\" rx=\"2\" ry=\"2\"></rect><rect width=\"20\" height=\"8\" x=\"2\" y=\"14\" rx=\"2\" ry=\"2\"></rect><line x1=\"6\" x2=\"6.01\" y1=\"6\" y2=\"6\"></line><line x1=\"6\" x2=\"6.01\" y1=\"18\" y2=\"18\"></line></svg>",
+        "name": "svg-20"
+      },
+      {
+        "id": "32bab0a8f5050d23",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-sparkles\" aria-hidden=\"true\"><path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\"></path><path d=\"M20 3v4\"></path><path d=\"M22 5h-4\"></path><path d=\"M4 17v2\"></path><path d=\"M5 18H3\"></path></svg>",
+        "name": "svg-21"
+      },
+      {
+        "id": "ff626ef66bc26109",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-settings2 lucide-settings-2\" aria-hidden=\"true\"><path d=\"M14 17H5\"></path><path d=\"M19 7h-9\"></path><circle cx=\"17\" cy=\"17\" r=\"3\"></circle><circle cx=\"7\" cy=\"7\" r=\"3\"></circle></svg>",
+        "name": "svg-22"
+      },
+      {
+        "id": "51e96a447701760d",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-chevrons-up-down\" aria-hidden=\"true\"><path d=\"m7 15 5 5 5-5\"></path><path d=\"m7 9 5-5 5 5\"></path></svg>",
+        "name": "svg-23"
+      },
+      {
+        "id": "c8e5f51cc90d0c4a",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-sun\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 2v2\"></path><path d=\"M12 20v2\"></path><path d=\"m4.93 4.93 1.41 1.41\"></path><path d=\"m17.66 17.66 1.41 1.41\"></path><path d=\"M2 12h2\"></path><path d=\"M20 12h2\"></path><path d=\"m6.34 17.66-1.41 1.41\"></path><path d=\"m19.07 4.93-1.41 1.41\"></path></svg>",
+        "name": "svg-24"
+      },
+      {
+        "id": "cfecc8760622bebd",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-sun\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 2v2\"></path><path d=\"M12 20v2\"></path><path d=\"m4.93 4.93 1.41 1.41\"></path><path d=\"m17.66 17.66 1.41 1.41\"></path><path d=\"M2 12h2\"></path><path d=\"M20 12h2\"></path><path d=\"m6.34 17.66-1.41 1.41\"></path><path d=\"m19.07 4.93-1.41 1.41\"></path></svg>",
+        "name": "svg-25"
+      },
+      {
+        "id": "bf9a34b305c0f24b",
+        "markup": "<svg class=\"bd-donut\" viewBox=\"0 0 42 42\" role=\"group\" aria-label=\"ISO 27001: 0 Implemented (0.0%, 0 of 30), 0 Partially Implemented (0.0%, 0 of 30), 0 Not Implemented / Needs Validation (0.0%, 0 of 30), 30 Not Assessed (100.0%, 30 of 30)\"><circle cx=\"21\" cy=\"21\" r=\"15.9\" class=\"bd-donut-track\"></circle><circle cx=\"21\" cy=\"21\" r=\"15.9\" tabindex=\"0\" role=\"img\" aria-label=\"Not Assessed · 100.0% · 30 of 30 requirements\" class=\"bd-seg-not_assessed\" pathLength=\"100\" stroke-dasharray=\"99.1 0.9\" stroke-dashoffset=\"25\"></circle><text x=\"21\" y=\"21.5\" class=\"bd-donut-value\">0.0%</text><text x=\"21\" y=\"27\" class=\"bwp-donut-caption\">IMPLEMENTED</text></svg>",
+        "name": "ISO 27001: 0 Implemented (0.0%, 0 of 30), 0 Partially Implemented (0.0%, 0 of 30), 0 Not Implemented / Needs Validation (0.0%, 0 of 30), 30 Not Assessed (100.0%, 30 of 30)"
+      },
+      {
+        "id": "a78c24148eec62a8",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-search register-search-icon\" aria-hidden=\"true\"><path d=\"m21 21-4.34-4.34\"></path><circle cx=\"11\" cy=\"11\" r=\"8\"></circle></svg>",
+        "name": "svg-27"
+      },
+      {
+        "id": "2c8c46e248045f89",
+        "markup": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-x h-4 w-4\" aria-hidden=\"true\"><path d=\"M18 6 6 18\"></path><path d=\"m6 6 12 12\"></path></svg>",
+        "name": "svg-28"
+      }
+    ],
+    "pageUrl": "https://omnisciente-staging.onrender.com/compliance/iso-27001?iso_view=isms_clause&assessment=fw_8b4a95ddbb4c5241ad79d5995b23b119",
+    "summary": {
+      "byKind": {
+        "font": 2,
+        "image": 0,
+        "other": 14,
+        "script": 1,
+        "stylesheet": 3,
+        "video": 0
+      },
+      "inlineSvgCount": 28,
+      "totalCount": 20
+    }
+  },
+  "bundle": {
+    "assets": [
+      {
+        "contentType": "",
+        "id": "12592f09342ba076",
+        "kind": "stylesheet",
+        "name": "main.fe2057c8.css",
+        "path": "C:\\Users\\RobbA\\AppData\\Local\\Temp/browser-use/assets/ea36cd65-03cc-451a-9e92-3d26656b1df8/12592f09342ba076.css",
+        "url": "https://omnisciente-staging.onrender.com/static/css/main.fe2057c8.css"
+      }
+    ],
+    "directoryPath": "C:\\Users\\RobbA\\AppData\\Local\\Temp/browser-use/assets/ea36cd65-03cc-451a-9e92-3d26656b1df8",
+    "failures": [],
+    "manifestPath": "C:\\Users\\RobbA\\AppData\\Local\\Temp/browser-use/assets/ea36cd65-03cc-451a-9e92-3d26656b1df8/manifest.json",
+    "summary": {
+      "downloadedCount": 1,
+      "elapsedMs": 393.8535000002012,
+      "failedCount": 0,
+      "requestedCount": 1
+    }
+  }
+}

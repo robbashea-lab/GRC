@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional, Literal
 from fastapi import APIRouter, Depends, HTTPException, Header
-from pydantic import BaseModel, Field, ConfigDict, StrictBool
+from pydantic import BaseModel, Field, ConfigDict, StrictBool, ValidationError, model_validator
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 import review_occurrences
@@ -38,6 +38,32 @@ class AIInput(BaseModel):
     oversight_notes: str = ''
     governance_notes: str = ''
 
+class AILinkInput(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    kind: Literal['risks','findings','tasks','policies','requirements','vendors']
+    id: str = Field(min_length=1, max_length=160)
+    classification: str = 'Context'
+    source: str = ''
+    rationale: str = ''
+
+    @model_validator(mode='after')
+    def valid_relationship(self):
+        if not self.id.strip(): raise ValueError('A concrete record identifier is required')
+        if self.classification not in CATALOG['relationship_classes']: raise ValueError('Invalid relationship classification')
+        if self.classification.startswith(('Explicit','Required')) and not (self.source.strip() and self.rationale.strip()):
+            raise ValueError('Requirement claims need an authoritative source and applicability rationale')
+        return self
+
+def readable_links(row):
+    stored=row.get('related_links',[])
+    if not isinstance(stored,list): return []
+    links=[]
+    for link in stored:
+        try: AILinkInput.model_validate(link)
+        except ValidationError: continue
+        links.append(link)
+    return links
+
 def screening(row):
     answers = row.get('screening') or {}
     complete = all(type(answers.get(q['key'])) is bool for q in CATALOG['questions'])
@@ -53,6 +79,10 @@ def projection(row, reviews, risks, today=None):
     done += [r.get('completion_date') for r in linked if r.get('status') == 'completed']
     dates = [r['due_date'] for r in linked if r.get('status') not in ('completed','cancelled') and r.get('due_date')]
     result = {k:v for k,v in row.items() if not k.startswith('_')}
+    links=readable_links(row)
+    stored=row.get('related_links',[])
+    # Projection excludes unreadable context; stored relationships and history are never repaired here.
+    result.update(related_links=links,relationship_integrity_warning=not isinstance(stored,list) or len(links)!=len(stored))
     result.update(screening(row), last_review=max(filter(None,done),default=None), next_review=min(dates,default=None))
     periodic = next((r for r in linked if r.get('ai_review_purpose') == 'periodic' and r.get('status') not in ('completed','cancelled')), None)
     result['review_cadence'] = periodic.get('recurrence') if periodic else None
@@ -65,7 +95,7 @@ def projection(row, reviews, risks, today=None):
     alert('owner','AI Owner Missing',not row.get('owner_id'))
     alert('schedule','AI Review Not Scheduled',not result['next_review'])
     alert('overdue','AI Review Overdue',bool(result['next_review'] and result['next_review'][:10] < (today or datetime.now(timezone.utc).date().isoformat())))
-    ids = {x['id'] for x in row.get('related_links',[]) if x['kind']=='risks'}
+    ids = {x['id'] for x in links if x['kind']=='risks'}
     assessed = any(r['client_id']==row['client_id'] and r.get('risk_id') in ids and r.get('status') not in ('closed','retired') and type(r.get('likelihood_score')) is int and type(r.get('impact_score')) is int for r in risks)
     alert('risk','High-Risk AI Without Risk Assessment',result['risk_tier']=='high' and not assessed)
     alert('screening','AI Governance Assessment Missing',not result['screening_complete'])
@@ -213,17 +243,12 @@ def router_for(s):
             # The alert initiates reassessment through the existing Review; no automatic duplicate.
             return await view({**row,'material_change_at':at,'material_change_note':body['note'],'updated_at':at})
     @router.post('/ai_systems/{aid}/links')
-    async def link_ai(aid:str,body:dict,user=Depends(s.get_current_user)):
+    async def link_ai(aid:str,body:AILinkInput,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True)
         if row['status']=='retired': raise HTTPException(409,'Retired AI is historical')
-        kind=body.get('kind');key=s.ID_FIELD_MAP.get(kind)
-        if kind not in ('risks','findings','tasks','policies','requirements','vendors') or not key: raise HTTPException(422,'Unsupported relationship')
-        target=await s._authorized_parent(kind,body.get('id'),user)
+        target=await s._authorized_parent(body.kind,body.id,user)
         if target['client_id']!=row['client_id']: raise HTTPException(422,'Relationship must belong to the same client')
-        classification=body.get('classification','Context')
-        if classification not in CATALOG['relationship_classes']: raise HTTPException(422,'Invalid relationship classification')
-        if classification.startswith(('Explicit','Required')) and not (body.get('source','').strip() and body.get('rationale','').strip()): raise HTTPException(422,'Requirement claims need an authoritative source and applicability rationale')
-        link={'kind':kind,'id':body['id'],'classification':classification,'source':body.get('source',''),'rationale':body.get('rationale','')}
+        link=body.model_dump()
         changed=await s.db.ai_systems.update_one({'ai_system_id':aid,'status':{'$ne':'retired'}},{'$addToSet':{'related_links':link}})
         if not changed.matched_count: raise HTTPException(409,'Retired AI is historical')
         await s.audit(user,'AI record linked','ai_system',aid,row['client_id'],meta=link)

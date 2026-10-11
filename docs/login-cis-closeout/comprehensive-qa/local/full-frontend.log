@@ -1,0 +1,699 @@
+PASS src/preview/brawndoTenYear.test.js (777.463 s)
+PASS src/preview/frameworkFiveYear.test.js (125.88 s)
+  ● Console
+
+    console.info
+      Framework lifecycle {
+        framework: 'cis-ig1',
+        years: 5,
+        checkpoints: [
+          {
+            framework: 'cis-ig1',
+            at: '2027-12-31',
+            reviews: 16,
+            occurrences: 51,
+            calendar_review_entries: 5,
+            kpis: [Object],
+            events: []
+          },
+          {
+            framework: 'cis-ig1',
+            at: '2028-12-31',
+            reviews: 16,
+            occurrences: 107,
+            calendar_review_entries: 5,
+            kpis: [Object],
+            events: [Array]
+          },
+          {
+            framework: 'cis-ig1',
+            at: '2029-12-31',
+            reviews: 16,
+            occurrences: 154,
+            calendar_review_entries: 4,
+            kpis: [Object],
+            events: [Array]
+          },
+          {
+            framework: 'cis-ig1',
+            at: '2030-12-31',
+            reviews: 16,
+            occurrences: 201,
+            calendar_review_entries: 4,
+            kpis: [Object],
+            events: [Array]
+          },
+          {
+            framework: 'cis-ig1',
+            at: '2031-12-31',
+            reviews: 16,
+            occurrences: 248,
+            calendar_review_entries: 4,
+            kpis: [Object],
+            events: [Array]
+          }
+        ],
+        reviews: 16,
+        occurrences: 248,
+        evidence: 248,
+        storeCharacters: 3194333
+      }
+
+      at src/preview/frameworkFiveYear.test.js:341:11
+
+    console.info
+      Framework lifecycle {
+        framework: 'soc-2',
+        years: 5,
+        checkpoints: [
+          {
+            framework: 'soc-2',
+            at: '2027-12-31',
+            reviews: 12,
+            occurrences: 25,
+            calendar_review_entries: 2,
+            kpis: [Object],
+            events: []
+          },
+          {
+            framework: 'soc-2',
+            at: '2028-12-31',
+            reviews: 12,
+            occurrences: 51,
+            calendar_review_entries: 2,
+            kpis: [Object],
+            events: [Array]
+          },
+          {
+            framework: 'soc-2',
+            at: '2029-12-31',
+            reviews: 12,
+            occurrences: 68,
+            calendar_review_entries: 1,
+            kpis: [Object],
+            events: [Array]
+          },
+          {
+            framework: 'soc-2',
+            at: '2030-12-31',
+            reviews: 12,
+            occurrences: 85,
+            calendar_review_entries: 1,
+            kpis: [Object],
+            events: [Array]
+          },
+          {
+            framework: 'soc-2',
+            at: '2031-12-31',
+            reviews: 12,
+            occurrences: 102,
+            calendar_review_entries: 1,
+            kpis: [Object],
+            events: [Array]
+          }
+        ],
+        reviews: 12,
+        occurrences: 102,
+        evidence: 102,
+        storeCharacters: 2363206
+      }
+
+      at src/preview/frameworkFiveYear.test.js:341:11
+
+    console.info
+      Framework lifecycle {
+        framework: 'iso-27001',
+        years: 5,
+        checkpoints: [
+          {
+            framework: 'iso-27001',
+            at: '2027-12-31',
+            reviews: 18,
+            occurrences: 31,
+            calendar_review_entries: 3,
+            kpis: [Object],
+            events: []
+          },
+          {
+            framework: 'iso-27001',
+            at: '2028-12-31',
+            reviews: 18,
+            occurrences: 63,
+            calendar_review_entries: 3,
+            kpis: [Object],
+            events: [Array]
+          },
+          {
+            framework: 'iso-27001',
+            at: '2029-12-31',
+            reviews: 18,
+            occurrences: 86,
+            calendar_review_entries: 2,
+            kpis: [Object],
+            events: [Array]
+          },
+          {
+            framework: 'iso-27001',
+            at: '2030-12-31',
+            reviews: 18,
+            occurrences: 109,
+            calendar_review_entries: 2,
+            kpis: [Object],
+            events: [Array]
+          },
+          {
+            framework: 'iso-27001',
+            at: '2031-12-31',
+            reviews: 18,
+            occurrences: 132,
+            calendar_review_entries: 2,
+            kpis: [Object],
+            events: [Array]
+          }
+        ],
+        reviews: 18,
+        occurrences: 132,
+        evidence: 132,
+        storeCharacters: 3575863
+      }
+
+      at src/preview/frameworkFiveYear.test.js:341:11
+
+PASS src/preview/multiFrameworkLifecycle.test.js (49.643 s)
+  ● Console
+
+    console.info
+      Multi-framework five-year lifecycle {
+        reviews: 27,
+        executions: [ 51, 55, 55, 61, 63 ],
+        occurrences: 285,
+        assessments: 212,
+        policies: 17,
+        controls: 1,
+        evidence: 286,
+        storeCharacters: 3718226
+      }
+
+      at Object.<anonymous> (src/preview/multiFrameworkLifecycle.test.js:212:11)
+
+PASS src/preview/cisGreenfield24Month.test.js (23.628 s)
+  ● Console
+
+    console.info
+      CIS 24-month result {
+        client_id: 'clients_demo_muo69q80_aq40jtxf',
+        assessments: 56,
+        controls: 15,
+        verification: { not_recorded: 56 },
+        counts: {
+          reviews: 12,
+          policies: 17,
+          findings: 0,
+          tasks: 0,
+          risks: 0,
+          vendors: 0,
+          evidence: 0,
+          requirements: 6
+        },
+        calendar: 12
+      } {
+        status: {
+          addressed: 34,
+          not_applicable: 1,
+          in_progress: 10,
+          needs_attention: 6,
+          not_assessed: 5
+        },
+        verification: {
+          verified: 17,
+          needs_validation: 17,
+          not_verified: 16,
+          gap_identified: 6
+        }
+      } {
+        assessments: {
+          addressed: 33,
+          in_progress: 11,
+          not_applicable: 1,
+          needs_attention: 6,
+          not_assessed: 5
+        },
+        findings: { closed: 5, in_remediation: 4 },
+        tasks: { in_progress: 1, done: 6, open: 3 },
+        risks: { closed: 1, in_progress: 1, accepted: 1, assessed: 1 },
+        evidence: 98,
+        storeCharacters: 2406994
+      } { occurrences: 94, targetDatePreserved: true }
+
+      at Object.<anonymous> (src/preview/cisGreenfield24Month.test.js:161:10)
+
+PASS src/pages/BrawndoReviews.test.jsx (6.202 s)
+PASS src/preview/guidedAssessment.test.js (15.818 s)
+PASS src/pages/FrameworkWorkspace.test.jsx
+PASS src/preview/cisIG2OperatingCycles.test.js (11.895 s)
+PASS src/preview/remediationLifecycle.test.js (6.644 s)
+PASS src/components/OmniCisRolloutRendered.test.jsx (5.397 s)
+PASS src/preview/frameworks.test.js
+PASS src/components/BrawndoCisAssessment.test.jsx
+PASS src/preview/operatingModel.test.js
+PASS src/components/RemediationUX.test.jsx
+  ● Console
+
+    console.error
+      Unknown event handler property `onPointerDownOutside`. It will be ignored.
+
+      at validateProperty (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+    console.error
+      Unknown event handler property `onOpenAutoFocus`. It will be ignored.
+
+      at validateProperty (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+    console.error
+      Unknown event handler property `onCloseAutoFocus`. It will be ignored.
+
+      at validateProperty (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+PASS src/preview/demoStorage.test.js
+PASS src/preview/assessmentVerification.test.js
+PASS src/components/EvidenceContext.test.jsx
+  ● Console
+
+    console.error
+      Unknown event handler property `onOpenAutoFocus`. It will be ignored.
+
+      at validateProperty (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+    console.error
+      Unknown event handler property `onCloseAutoFocus`. It will be ignored.
+
+      at validateProperty (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+    console.error
+      Unknown event handler property `onPointerDownOutside`. It will be ignored.
+
+      at validateProperty (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+PASS src/components/RecordDrawerVendorNavigation.test.jsx
+PASS src/preview/adapter.test.js
+PASS src/components/RecordDrawerRiskReview.test.jsx
+PASS src/pages/PlatformAdmin.test.jsx
+PASS src/preview/socFramework.test.js
+PASS src/preview/isoAudit.test.js
+PASS src/components/PrestigeSocAssessment.test.jsx
+PASS src/lib/cisRolloutContentReview.test.js
+PASS src/pages/AIContract.test.jsx
+PASS src/pages/PlatformNavigation.test.jsx
+PASS src/preview/prestigeWorkflowIntegrity.test.js
+PASS src/components/OrganizationalControls.test.jsx
+PASS src/pages/RegisterGrammar.test.jsx
+PASS src/preview/cisIG2.test.js
+PASS src/components/IsoAuditWorkspace.test.jsx
+PASS src/preview/evidenceLibrary.test.js
+PASS src/preview/onboardingHandoff.test.js
+PASS src/preview/onboardingReplayContract.test.js
+PASS src/preview/cisIG3Scope.test.js
+PASS src/preview/consolidatedActions.test.js
+PASS src/preview/commandRequests.test.js
+PASS src/preview/baseline.test.js
+PASS src/preview/brawndoScheduleIntegrity.test.js
+PASS src/preview/phase6Visibility.test.js
+PASS src/components/ClientWorkDashboard.test.jsx
+PASS src/preview/hipaaFramework.test.js
+PASS src/components/GuidedAssessorFocusedLifecycle.test.jsx
+PASS src/preview/brawndoPolicies.test.js
+PASS src/preview/isoFramework.test.js
+PASS src/preview/aiGovernance.test.js
+PASS src/components/GuidedAssessor.test.jsx
+PASS src/preview/csfFramework.test.js
+PASS src/pages/BrawndoPolicies.test.jsx
+PASS src/pages/Dashboard.test.jsx
+PASS src/preview/frameworkCapabilityContract.test.js
+PASS src/pages/RegisterDrawers.test.jsx
+PASS src/preview/demoPortfolio.test.js
+PASS src/pages/BrawndoActionItems.test.jsx
+PASS src/preview/clientProfile.test.js
+PASS src/preview/reviewHistoryIntegrity.test.js
+PASS src/preview/brawndoActions.test.js
+PASS src/preview/organizationalControls.test.js
+PASS src/preview/brawndoPolicyReviews.test.js
+PASS src/preview/governanceLifecycleContract.test.js
+PASS src/pages/BrawndoVendors.test.jsx
+PASS src/pages/Onboarding.test.jsx
+PASS src/preview/brawndoAI.test.js
+PASS src/pages/VendorRegisterFilters.test.jsx
+PASS src/components/GuidedLifecycle.test.jsx
+PASS src/components/BrawndoProfileOverview.test.jsx
+PASS src/components/RiskRecordPanels.test.jsx
+PASS src/components/login/LoginWelcome.test.jsx
+PASS src/preview/cisOperations.test.js
+PASS src/preview/coreAudit.test.js
+PASS src/preview/brawndoRisks.test.js
+PASS src/preview/remediationSync.test.js
+PASS src/preview/policyProvenance.test.js
+PASS src/pages/Calendar.test.jsx
+PASS src/preview/risks.test.js
+PASS src/preview/policyApproval.test.js
+PASS src/preview/dashboardWorkQueue.test.js
+PASS src/preview/vendors.test.js
+PASS src/components/FrameworkContext.test.jsx
+PASS src/preview/brawndoVendors.test.js
+PASS src/preview/cisFindingLifecycle.test.js
+PASS src/components/GuidedLifecycleNative.test.jsx
+PASS src/lib/workspaceMode.test.js
+PASS src/pages/Contacts.test.jsx
+PASS src/preview/demoSeed.test.js
+PASS src/preview/governance.test.js
+PASS src/components/RecordDrawerActionGuards.test.jsx
+PASS src/lib/isoDashboardContract.test.js
+PASS src/preview/createReplay.test.js
+PASS src/preview/requirementBasis.test.js
+PASS src/preview/isoAssessmentSave.test.js
+PASS src/components/FrameworkOperator.test.jsx
+PASS src/pages/BrawndoRisks.test.jsx
+PASS src/components/DashboardAttention.test.jsx
+PASS src/components/CisReviewBrief.test.jsx
+PASS src/preview/brawndoAnchorHistory.test.js
+PASS src/lib/cisRequiredUncertainty.test.js
+PASS src/preview/actionItems.test.js
+PASS src/components/IsoAssessment.test.jsx
+PASS src/pages/OperationalDashboardLinks.test.jsx
+PASS src/components/FrameworkProgramCard.test.jsx
+PASS src/pages/ReviewsPresentation.test.jsx
+PASS src/pages/PrestigePresentation.test.jsx
+PASS src/pages/ComplianceWorkspace.test.jsx
+PASS src/lib/omniCisRollout.test.js
+PASS src/pages/FindingsRegister.test.jsx
+PASS src/components/RecordDrawerActionCreation.test.jsx
+PASS src/components/ProgramConfiguration.test.jsx
+PASS src/components/OmniInventoryContext.test.jsx
+PASS src/lib/guidedCisProgram.test.js
+PASS src/preview/portfolioOverview.test.js
+PASS src/components/FrameworkRecordAccess.test.jsx
+  ● Console
+
+    console.error
+      Unknown event handler property `onCloseAutoFocus`. It will be ignored.
+
+      at validateProperty (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+PASS src/components/FindingRemediationDrawer.test.jsx
+  ● Console
+
+    console.error
+      Unknown event handler property `onOpenAutoFocus`. It will be ignored.
+
+      at validateProperty (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+    console.error
+      Unknown event handler property `onCloseAutoFocus`. It will be ignored.
+
+      at validateProperty (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+    console.error
+      Unknown event handler property `onPointerDownOutside`. It will be ignored.
+
+      at validateProperty (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../files-pasted-by-the-user-omni/work/omni-cis-lifecycle/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+PASS src/pages/RegisterLabels.test.jsx
+PASS src/pages/AdminRoles.test.jsx
+PASS src/preview/newSocClient.test.js
+PASS src/preview/brawndoSeedIntegrity.test.js
+PASS src/lib/guidedAssessment.test.js
+PASS src/pages/RecordListDashboardLinks.test.jsx
+PASS src/preview/contactDirectory.test.js
+PASS src/pages/FrameworkAttentionNavigation.test.jsx
+PASS src/pages/BrawndoAI.test.jsx
+PASS src/preview/brawndoVendorCalendar.test.js
+PASS src/pages/PortfolioMetrics.test.jsx
+PASS src/preview/recordContracts.test.js
+PASS src/components/DashboardPrograms.test.jsx
+PASS src/preview/clientRelationships.test.js
+PASS src/preview/engineeringReliability.test.js
+PASS src/preview/retiredClients.test.js
+PASS src/pages/PlatformFrameworkPresentation.test.jsx
+PASS src/pages/RegisterCalendarDays.test.jsx
+PASS src/pages/Login.test.jsx
+PASS src/preview/programs/dunder.test.js
+PASS src/components/AssessmentLayout.test.jsx
+PASS src/pages/Login.css.test.js
+PASS src/lib/frameworkOperator.test.js
+PASS src/lib/cisRequirementGuide.test.js
+PASS src/components/ui/sheet.test.jsx
+PASS src/pages/CalendarFocus.test.jsx
+PASS src/lib/cisDashboardContract.test.js
+PASS src/lib/cisAssessmentCriteria.test.js
+PASS src/components/BrawndoSidebar.test.jsx
+PASS src/components/CisDashboardFreeze.test.jsx
+PASS src/lib/cisAssessmentGuidance.test.js
+PASS src/pages/EvidenceAccessibility.test.jsx
+PASS src/components/AssessmentShell.test.jsx
+PASS src/lib/guidedControl1Additional.test.js
+PASS src/components/AdminSurface.test.jsx
+PASS src/pages/MyAccount.test.jsx
+PASS src/lib/omniCisSummary.test.js
+PASS src/components/BrawndoPolicyDetails.test.jsx
+PASS src/lib/focusedOmni.test.js
+PASS src/components/CisProgramSettings.test.jsx
+PASS src/pages/BrawndoEvidence.test.jsx
+PASS src/components/EvidenceItemDrawer.test.jsx
+PASS src/lib/guidedLifecycle.test.js
+PASS src/components/BrawndoCisFindings.test.jsx
+PASS src/lib/focusRescue.test.jsx
+PASS src/preview/identityLifecycle.test.js
+PASS src/lib/reviewOccurrences.test.js
+PASS src/components/AssigneeSelect.test.jsx
+PASS src/lib/clientDashboard.test.js
+PASS src/context/AuthContext.logout.test.jsx
+PASS src/lib/cisAssessmentPresentation.test.js
+PASS src/lib/socPracticalGuidance.test.js
+PASS src/components/WorkspaceTabs.test.jsx
+PASS src/components/login/useLoginMotion.test.jsx
+PASS src/components/TableControls.test.jsx
+PASS src/preview/DemoNotice.test.jsx
+PASS src/lib/registerSignals.test.js
+PASS src/components/RequirementBasis.test.jsx
+PASS src/lib/managementMetrics.test.js
+PASS src/pages/ResetPassword.test.jsx
+PASS src/lib/approvedLightSystem.test.js
+PASS src/context/AuthContext.test.jsx
+PASS src/lib/publicShell.test.js
+PASS src/lib/cisOperations.test.js
+PASS src/lib/portfolioRecord.test.js
+PASS src/components/OmniWindow.test.jsx
+PASS src/lib/cisCoverageRegression.test.js
+PASS src/preview/authorization.test.js
+PASS src/lib/tableFilters.test.js
+PASS src/lib/frameworkMappings.test.js
+PASS src/components/SemanticPresentation.test.jsx
+PASS src/lib/evidenceFile.test.js
+PASS src/lib/socRequirementGuide.test.js
+PASS src/components/Register.test.jsx
+PASS src/components/BrawndoRiskMatrix.test.jsx
+PASS src/lib/dashboardPriorityFilters.test.js
+PASS src/components/RegisterCells.test.jsx
+PASS src/lib/cisCadenceProvenance.test.js
+PASS src/lib/guidedControl1V3.test.js
+PASS src/lib/brawndoPolicies.test.js
+PASS src/lib/dashboardPosture.test.js
+PASS src/lib/useSurfaceRef.test.jsx
+PASS src/lib/isoProgramMetrics.test.js
+PASS src/preview/programs/prestige.test.js
+PASS src/lib/loadClientDashboard.test.js
+PASS src/lib/brawndoActions.test.js
+PASS src/components/OmniDock.test.jsx
+PASS src/lib/contactAccess.test.js
+PASS src/components/ContactAccess.test.jsx
+PASS src/lib/socAssessmentPresentation.test.js
+PASS src/lib/brawndoReviews.test.js
+PASS src/lib/useActionRegisterData.test.jsx
+PASS src/preview/assignmentEligibility.test.js
+PASS src/lib/calendarView.test.js
+PASS src/pages/BrawndoCalendar.test.jsx
+PASS src/lib/requirementBasis.test.js
+PASS src/lib/actionItems.test.js
+PASS src/components/IsoManagementReviewGuide.test.jsx
+PASS src/lib/omniInventorySummary.test.js
+PASS src/lib/sharedReviewPlans.test.js
+PASS src/lib/registerDesign.test.js
+PASS src/lib/cisVerification.test.js
+PASS src/lib/cisIG3Content.test.js
+PASS src/lib/remediation.test.js
+PASS src/lib/refinedOmni.test.js
+PASS src/lib/brawndoVendors.test.js
+PASS src/components/PolicyPendingDecisions.test.jsx
+PASS src/lib/dashboardWorkQueue.test.js
+PASS src/lib/interactionModality.test.js
+PASS src/lib/portfolioOverview.test.js
+PASS src/lib/vendorCalendar.test.js
+PASS src/lib/socDashboardContract.test.js
+PASS src/lib/dashboardItemSummary.test.js
+PASS src/components/FrameworkMappings.test.jsx
+PASS src/lib/onboardingHandoff.test.js
+PASS src/lib/brawndoPortalTheme.test.jsx
+PASS src/lib/reference.test.js
+PASS src/lib/createIntent.test.js
+PASS src/lib/frameworkWorkspace.test.js
+PASS src/lib/cis175SourceCondition.test.js
+PASS src/lib/people.test.js
+PASS src/lib/brawndoRisks.test.js
+PASS src/components/StatusBadge.test.jsx
+PASS src/lib/cisScope.test.js
+PASS src/lib/brawndoPolicyTiles.test.js
+PASS src/context/OrgContext.test.jsx
+PASS src/lib/programProgress.test.js
+PASS src/components/ui/button.test.jsx
+PASS src/lib/designSystem.test.js
+PASS src/lib/riskRegister.test.js
+PASS src/lib/usePortfolioView.test.jsx
+PASS src/components/ProgramContext.test.js
+PASS src/lib/contactDirectory.test.js
+PASS src/lib/remediationTickets.test.js
+PASS src/lib/evidenceRepository.test.js
+PASS src/lib/reviewRemediation.test.js
+PASS src/lib/recordUuid.test.js
+PASS src/lib/portfolioTotals.test.js
+PASS src/lib/monthEndRecurrence.test.js
+PASS src/lib/brawndoWorkspacePilot.test.js
+PASS src/lib/reviewPresentation.test.js
+PASS src/lib/managementDates.test.js
+PASS src/lib/findingMetrics.test.js
+PASS src/lib/clientSelection.test.js
+PASS src/components/login/loginPlacement.test.js
+PASS src/lib/socAssessmentDates.test.js
+
+Test Suites: 260 passed, 260 total
+Tests:       7269 passed, 7269 total
+Snapshots:   1 passed, 1 total
+Time:        1186.58 s, estimated 1472 s
+Ran all test suites.

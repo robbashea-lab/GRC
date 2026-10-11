@@ -1,0 +1,198 @@
+{
+  "kind": "authenticated-hosted-lifecycle-evidence-checkpoint",
+  "environment": "https://omnisciente-staging.onrender.com",
+  "deployed_sha": "b0f87baabeb0726c6d6825051a78173a1a650bde",
+  "render_deployment": "dep-db4mgtvlk1mc73d5q2c0",
+  "correction_candidate": "79075e0f85bebdb9651d381762e945c01f79c108",
+  "correction_deployment": "dep-db4n4iflk1mc73d83cs0; Deploy succeeded / Live at exact79075 after successful CI124; new authenticated checks blocked on sign-in",
+  "correction_ci": {
+    "run_id": 38000107578,
+    "status": "completed",
+    "conclusion": "success",
+    "frontend_suites": 256,
+    "frontend_tests": 7246,
+    "snapshots": 1,
+    "seconds": 1324.094,
+    "both_builds": "passed",
+    "backend": "offline and disposable-Mongo persistence/recovery/authorization passed",
+    "release_gate": "passed"
+  },
+  "fresh_unauthenticated_bundle": "main.dcbef0bf.js matches CI124 authenticated build; not native persistence proof",
+  "raw_evidence": "outputs/omni-cis-rollout/hosted-layer-C-actual-b0f.jsonl",
+  "raw_evidence_sha256": "ef2519abdb4a9ad80a5fa34d4b475b6a7f52c74385615ea50ddb2ff8527c71b0",
+  "observation_count": 48,
+  "last_observation": "2026-10-09T22:38:34.307Z",
+  "operator": "Existing StagingAdministrator / SuperAdmin; staging-admin@example.com",
+  "boundary": "Writes only human-authorized isolated QA clients. This is actual authenticated backend evidence, not Demo storage. Administrator record separation does not prove restricted-role or membership denial.",
+  "test_clients": [
+    {
+      "name": "OmniBot QA — CIS IG1",
+      "client_id": "cli_f5384b6f8ee3805b602ef5c5404ea44ae1fcc6fc2558f51e65d2936f472a1db0",
+      "initial_group": 1,
+      "current_group": 3,
+      "safeguard": "1.1",
+      "final_status": "Implemented",
+      "native_characters": 1382,
+      "treatment": "Active pending required final checks; supported IG1→IG2→IG3 preserved same native identity/text/status and seven interview history entries"
+    },
+    {
+      "name": "OmniBot QA — CIS IG2",
+      "initial_group": 2,
+      "current_group": 2,
+      "safeguard": "15.4",
+      "final_status": "Not Assessed",
+      "native_characters": 988,
+      "treatment": "Active pending required final checks; client ID has not yet been captured from the authoritative audit link"
+    },
+    {
+      "name": "OmniBot QA — CIS IG3",
+      "client_id": "cli_76cfe57656626255009c3fbda48cda38d639cc8b9446eb8e5eda32ad5b73b199",
+      "initial_group": 3,
+      "current_group": 3,
+      "safeguard": "15.5",
+      "final_status": "Implemented",
+      "native_characters": 1049,
+      "treatment": "Active pending required final checks; initial ISO-only onboarding then supported addition of CIS IG3 preserved ISO native/main baseline"
+    }
+  ],
+  "exact_native_observations": [
+    {
+      "at": "2026-10-09T22:23:06.270Z",
+      "label": "IG1 first authenticated native save",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7682b639c2565159aea31369f6f41dcf",
+      "characters": 1363,
+      "reviewedEqualsNative": true,
+      "text_sha256": "14b69aa8db4220e6fa17c1bf2308977150a16d71b02dc558bd61abb35edfc804"
+    },
+    {
+      "at": "2026-10-09T22:23:08.811Z",
+      "label": "IG1 exact-text full reload",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7682b639c2565159aea31369f6f41dcf",
+      "characters": 1363,
+      "reviewedEqualsNative": true,
+      "text_sha256": "14b69aa8db4220e6fa17c1bf2308977150a16d71b02dc558bd61abb35edfc804"
+    },
+    {
+      "at": "2026-10-09T22:24:37.228Z",
+      "label": "IG1 confirmed Save-close success closes guide",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7682b639c2565159aea31369f6f41dcf",
+      "characters": 1258,
+      "reviewedEqualsNative": true,
+      "text_sha256": "d1e499ef5786f8858d2a0a32e2817f977a6b63a56d5d3c3bb24b83fb0db07764"
+    },
+    {
+      "at": "2026-10-09T22:24:38.835Z",
+      "label": "IG1 revised complete write-up exact reload",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7682b639c2565159aea31369f6f41dcf",
+      "characters": 1258,
+      "reviewedEqualsNative": true,
+      "text_sha256": "d1e499ef5786f8858d2a0a32e2817f977a6b63a56d5d3c3bb24b83fb0db07764"
+    },
+    {
+      "at": "2026-10-09T22:26:59.887Z",
+      "label": "IG2 summary Save-close native success",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_d53f1e355c8f50f08b1d447df7e97576",
+      "characters": 988,
+      "reviewedEqualsNative": true,
+      "text_sha256": "8097dff3a2811f769aca972c9702bde911b326cb5d13c3c8b6d6fcdc261f87b4"
+    },
+    {
+      "at": "2026-10-09T22:27:01.834Z",
+      "label": "IG2 full reload exact text and NotAssessed",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_d53f1e355c8f50f08b1d447df7e97576",
+      "characters": 988,
+      "reviewedEqualsNative": true,
+      "text_sha256": "8097dff3a2811f769aca972c9702bde911b326cb5d13c3c8b6d6fcdc261f87b4"
+    },
+    {
+      "at": "2026-10-09T22:30:09.626Z",
+      "label": "IG3 first native save",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_de4fed836aff5184b126379c57901ee3",
+      "characters": 906,
+      "reviewedEqualsNative": true,
+      "text_sha256": "b56bb326910f71d0a5e75004442c99e6d0536036fbccdb755915b87b17cb1ef6"
+    },
+    {
+      "at": "2026-10-09T22:30:11.679Z",
+      "label": "IG3 full reload exact native text and Implemented",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_de4fed836aff5184b126379c57901ee3",
+      "characters": 906,
+      "reviewedEqualsNative": true,
+      "text_sha256": "b56bb326910f71d0a5e75004442c99e6d0536036fbccdb755915b87b17cb1ef6"
+    },
+    {
+      "at": "2026-10-09T22:30:32.437Z",
+      "label": "IG3 native editor saved manual narrative",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_de4fed836aff5184b126379c57901ee3",
+      "characters": 987,
+      "reviewedEqualsNative": true,
+      "text_sha256": "57b05fd57d449da62765cfaabeaa9392c48fcb475e696c34e489d0d7e84fb49d"
+    },
+    {
+      "at": "2026-10-09T22:31:31.100Z",
+      "label": "IG3 post-rebase Save-close exact native edited text",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_de4fed836aff5184b126379c57901ee3",
+      "characters": 987,
+      "reviewedEqualsNative": true,
+      "text_sha256": "57b05fd57d449da62765cfaabeaa9392c48fcb475e696c34e489d0d7e84fb49d"
+    },
+    {
+      "at": "2026-10-09T22:32:05.029Z",
+      "label": "IG3 writer B saves newer native revision",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_de4fed836aff5184b126379c57901ee3",
+      "characters": 1049,
+      "reviewedEqualsNative": true,
+      "text_sha256": "51c28dc069126e9bd242632ed083715c1e0744dcba04fed212cb27d137459e20"
+    },
+    {
+      "at": "2026-10-09T22:35:31.050Z",
+      "label": "IG3 fresh authenticated document confirms concurrent winner",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_de4fed836aff5184b126379c57901ee3",
+      "characters": 1049,
+      "reviewedEqualsNative": true,
+      "text_sha256": "51c28dc069126e9bd242632ed083715c1e0744dcba04fed212cb27d137459e20"
+    },
+    {
+      "at": "2026-10-09T22:36:54.410Z",
+      "label": "IG1 complete-branch exact Save-close",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7682b639c2565159aea31369f6f41dcf",
+      "characters": 1382,
+      "reviewedEqualsNative": true,
+      "text_sha256": "7844dd40e06cd24e5d8c8c89490405a3ab483aa066eb3af1557e3b4be9a36ce5"
+    },
+    {
+      "at": "2026-10-09T22:37:02.897Z",
+      "label": "IG1 complete status and exact text reload",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_7682b639c2565159aea31369f6f41dcf",
+      "characters": 1382,
+      "reviewedEqualsNative": true,
+      "text_sha256": "7844dd40e06cd24e5d8c8c89490405a3ab483aa066eb3af1557e3b4be9a36ce5"
+    }
+  ],
+  "completed_representative_checks": [
+    "Configured group defaults on normal new IG1/IG2 clients and added CIS IG3 on an existing ISO client; no pilot flags",
+    "Question-stage partial saves persist interview progress only; refresh/resume restores answers without native assessment changes",
+    "Final applicable group opens complete editable summary directly; recorded native Save or summary Save & close paths with exact-text refresh across three groups. IG2 exercised summary Save & close, not ordinary Save or confirmed ordinary Update",
+    "Distinct meaningful Partial, all-unknown Not Assessed and complete Implemented outcomes; verification stays Not verified",
+    "IG1 revised answers, manual summary protection, explicit refresh/keep wording, Update cancel and Save-close cancel/success",
+    "IG3 native manual edit, explicit comparison/rebase, preserved answers/wording, Update cancel and Save-close success",
+    "IG3 real concurrent native writer: stale A rejected; accepted B text independently confirmed in fresh authenticated document",
+    "Observed IG1 native record unchanged by QA IG2/IG3 saves; this is record separation under an all-client administrator",
+    "IG1→IG2→IG3 inherited native identity/text/status and seven interview history entries unchanged",
+    "Mixed ISO4.1 empty native record and ISO main content unchanged after CIS program addition",
+    "Normal onboarding502 during deployment retained form and succeeded through supported Retry completion",
+    "Actual Sign out reached the normal staging login page; new login remains pending human password entry"
+  ],
+  "unexecuted_required_checks": [
+    "Actual login and resumed exact native records/interviews in the new authenticated session",
+    "Hosted corrected-label native persistence and final authenticated cross-group checks on the now-Live79075 candidate",
+    "Persistent staging showcase339 placement sweep; local339 is separate complete group/question/summary evidence",
+    "Restricted-role permission and client-membership denial with an active authorized identity: all existing restricted identities disabled",
+    "Complete per-group revised-answer, Update/cancel, manual/native-edit, failure/retry, duplicate-submit and interview-concurrency coverage",
+    "Final hosted visual/window/accessibility and every supported entry-path comparison against the frozen reference",
+    "Separate fresh CIS IG3 onboarding-form proof; current hosted IG3 fixture proves existing mixed-client CIS addition",
+    "Supported reversible Archive cleanup of the three temporary QA clients after remaining verification"
+  ],
+  "preserved_harness_correction": "The original stale-tab1043-character unsaved draft/reload observation and exception are retained. They are not server overwrite evidence; later fresh authenticated document loads accepted B1049 exactly.",
+  "release_accepted": false
+}

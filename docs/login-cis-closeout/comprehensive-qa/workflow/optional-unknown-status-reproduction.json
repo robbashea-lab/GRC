@@ -1,0 +1,140 @@
+{
+  "source": "4f73e0cf3180e4b91de6518427b5bbb23ffccb1f",
+  "runtime_reference": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "id": "8.10",
+  "title": "Retain Audit Logs",
+  "source_fixture": {
+    "id": "8.10:complete",
+    "expected_status": "Implemented",
+    "expected_native_state": "addressed",
+    "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/#810-retain-audit-logs",
+    "justification": "Each source-derived applicable substantive requirement is accepted.",
+    "document": "docs/omni-cis-rollout/ig2-status-cases.json"
+  },
+  "required_answers": {
+    "requirements_0": {
+      "Audit logs are retained across enterprise assets for at least 90 days.": "Yes"
+    },
+    "practice": "Yes"
+  },
+  "optional_only_change": {
+    "unknowns": "The optional log-owner name still needs confirmation."
+  },
+  "question": {
+    "id": "unknowns",
+    "prompt": "What still needs confirmation, and who can verify it?",
+    "type": "text",
+    "critical": false,
+    "choices": [],
+    "help": "Unknowns are not confirmed gaps.",
+    "element": "unknowns",
+    "safeguard_id": "8.10",
+    "question_id": "8.10:unknowns",
+    "question_set_version": "cis-v8.1-program-3",
+    "status_impact": "Context only; not a mandatory artifact",
+    "evidence_guidance": "Retention configuration and oldest retrievable sample. Use representative records covering the stated population. Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+  },
+  "before": {
+    "status": "addressed",
+    "narrative": "The organization reports implementation of “Retain Audit Logs”.",
+    "basis": [
+      "Audit logs are retained across enterprise assets for at least 90 days.: Yes"
+    ],
+    "gaps": [],
+    "unknowns": [],
+    "nextSteps": [],
+    "evidence": [
+      "Retention configuration and oldest retrievable sample. Use representative records covering the stated population. Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+    ],
+    "answers": [
+      {
+        "prompt": "Is the practice “Retain Audit Logs” in place and operating?",
+        "answer": "Yes"
+      },
+      {
+        "prompt": "How fully are these safeguard requirements met?",
+        "answer": "Audit logs are retained across enterprise assets for at least 90 days.: Yes"
+      },
+      {
+        "prompt": "Which systems or processes support this practice?",
+        "answer": "Not recorded"
+      },
+      {
+        "prompt": "Who operates this practice?",
+        "answer": "Not recorded"
+      },
+      {
+        "prompt": "How is this safeguard implemented in day-to-day work?",
+        "answer": "Not recorded"
+      },
+      {
+        "prompt": "What records could substantiate the reported implementation?",
+        "answer": "Not recorded"
+      },
+      {
+        "prompt": "Describe confirmed missing or incomplete requirement elements.",
+        "answer": "Not recorded"
+      },
+      {
+        "prompt": "What still needs confirmation, and who can verify it?",
+        "answer": "Not recorded"
+      }
+    ],
+    "version": "cis-v8.1-program-3",
+    "signals": []
+  },
+  "after": {
+    "status": "in_progress",
+    "narrative": "The organization reports partial or unresolved implementation of “Retain Audit Logs”.",
+    "basis": [
+      "Audit logs are retained across enterprise assets for at least 90 days.: Yes"
+    ],
+    "gaps": [],
+    "unknowns": [
+      "Reviewer-reported uncertainty: The optional log-owner name still needs confirmation."
+    ],
+    "nextSteps": [
+      "Confirm with the responsible team: Reviewer-reported uncertainty: The optional log-owner name still needs confirmation."
+    ],
+    "evidence": [
+      "Retention configuration and oldest retrievable sample. Use representative records covering the stated population. Existing Reviews, Findings and Actions can trace exceptions and validation; combined records may support multiple safeguards."
+    ],
+    "answers": [
+      {
+        "prompt": "Is the practice “Retain Audit Logs” in place and operating?",
+        "answer": "Yes"
+      },
+      {
+        "prompt": "How fully are these safeguard requirements met?",
+        "answer": "Audit logs are retained across enterprise assets for at least 90 days.: Yes"
+      },
+      {
+        "prompt": "Which systems or processes support this practice?",
+        "answer": "Not recorded"
+      },
+      {
+        "prompt": "Who operates this practice?",
+        "answer": "Not recorded"
+      },
+      {
+        "prompt": "How is this safeguard implemented in day-to-day work?",
+        "answer": "Not recorded"
+      },
+      {
+        "prompt": "What records could substantiate the reported implementation?",
+        "answer": "Not recorded"
+      },
+      {
+        "prompt": "Describe confirmed missing or incomplete requirement elements.",
+        "answer": "Not recorded"
+      },
+      {
+        "prompt": "What still needs confirmation, and who can verify it?",
+        "answer": "The optional log-owner name still needs confirmation."
+      }
+    ],
+    "version": "cis-v8.1-program-3",
+    "signals": []
+  },
+  "observed": "All substantive retention answers are satisfied; changing only optional broad context lowers proposed status from addressed to in_progress. Independent source adjudication requested; no product fix made."
+}

@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 17: Incident Response Management - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 17: Incident Response Management";
+        var mkdocs_page_input_path = "source/Controls17.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls17/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 17: Incident Response Management</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#171-designate-personnel-to-manage-incident-handling">17.1: Designate Personnel to Manage Incident Handling</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#172-establish-and-maintain-contact-information-for-reporting-security-incidents">17.2: Establish and Maintain Contact Information for Reporting Security Incidents</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#173-establish-and-maintain-an-enterprise-process-for-reporting-incidents">17.3: Establish and Maintain an Enterprise Process for Reporting Incidents</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness_1">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#174-establish-and-maintain-an-incident-response-process">17.4: Establish and Maintain an Incident Response Process</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness_2">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#175-assign-key-roles-and-responsibilities">17.5: Assign Key Roles and Responsibilities</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness_3">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#176-define-mechanisms-for-communicating-during-incident-response">17.6: Define Mechanisms for Communicating During Incident Response</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness_4">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#177-conduct-routine-incident-response-exercises">17.7: Conduct Routine Incident Response Exercises</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness_5">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#178-conduct-post-incident-reviews">17.8: Conduct Post-Incident Reviews</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_7">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_7">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_7">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_7">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness_6">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#179-establish-and-maintain-security-incident-thresholds">17.9: Establish and Maintain Security Incident Thresholds</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_8">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_8">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_8">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_8">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness_7">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 17: Incident Response Management</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls17.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-17-incident-response-management">CIS Control 17: Incident Response Management</h1>
+<p>Establish a program to develop and maintain an incident response
+capability (e.g., policies, plans, procedures, defined roles, training,
+and communications) to prepare, detect, and quickly respond to an
+attack.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>A comprehensive cybersecurity program includes protections, detections,
+response, and recovery capabilities. Often, the final two get overlooked
+in immature enterprises, or the response technique to compromised
+systems is just to re-image them to their original state and move on. The
+primary goal of incident response is to identify threats on the
+enterprise, respond to them before they can spread, and remediate them
+before they can cause harm. Without understanding the full scope of an
+incident, how it happened, and what can be done to prevent it from
+happening again, defenders will just be in a perpetual "whack-a-mole"
+pattern.</p>
+<p>We cannot expect our protections to be effective 100% of the time. When
+an incident occurs if an enterprise does not have a documented plan --
+even with good people -- it is almost impossible to know the right
+investigative procedures, reporting, data collection, management
+responsibility, legal protocols, and communications strategy that will
+allow the enterprise to successfully understand, manage, and recover.</p>
+<p>Along with detection, containment, and eradication, communication to
+stakeholders are key. If we are to reduce the probability of material
+impact due to a cyber event, the enterprise's leadership must know what
+potential impact there could be, so that they can help prioritize
+remediation or restoration decisions that best support the enterprise.
+These business decisions could be based on regulatory compliance,
+disclosure rules, service-level agreements with partners or customers,
+revenue, or mission impacts.</p>
+<p>Dwell time from when an attack happens to when it is identified can be
+days, weeks, or months. The longer the attackers are in the enterprise's
+infrastructure, the more embedded they become, and they will develop more
+ways to maintain persistent access for when they are eventually
+discovered. With the rise of ransomware, which is a stable moneymaker
+for attackers, this dwell time is critical, especially with modern
+tactics of stealing data before encrypting it for ransom.</p>
+<hr />
+<h2 id="171-designate-personnel-to-manage-incident-handling">17.1: Designate Personnel to Manage Incident Handling</h2>
+<p>Designate one key person, and at least one backup, who will manage the enterprises incident handling process. 
+Management personnel are responsible for the coordination and documentation of incident response and recovery efforts 
+and can consist of employees internal to the enterprise, service providers, or a hybrid approach. 
+If using a service provider, designate at least one person internal to the enterprise to oversee any third-party work. 
+Review annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Respond</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV51</code>: Enterprise Incident Response Documentation</li>
+<li>Date of last update or review of the documentation</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise documents designated personnel to manage incident handling by reviewing <code>GV51</code>. Input 1 can be an incident response plan or other documentation.</p>
+<ol>
+<li>If documentation designating personnel exists, M1 = 1</li>
+<li>If documentation designating personnel does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Determine whether the documentation, at a minimum, outlines the following components: primary personnel, backup personnel, roles and responsibilities of each</p>
+<ol>
+<li>For each component included, assign a value of 1. Sum the values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included for designated personnel
+    documentation</li>
+<li>M3 = Timeframe since the last update or review of documentation in
+    months</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the documentation for designated incident handling personnel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="172-establish-and-maintain-contact-information-for-reporting-security-incidents">17.2: Establish and Maintain Contact Information for Reporting Security Incidents</h2>
+<p>Establish and maintain contact information for parties that need to be informed of security incidents. 
+Contacts may include internal staff, service vendors, law enforcement, cyber insurance providers, 
+relevant government agencies, Information Sharing and Analysis Center (ISAC) partners, or other stakeholders. 
+Verify contacts annually to ensure that information is up-to-date.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV51</code>: Enterprise Incident Response Documentation</li>
+<li>Date of last update or review of the documentation</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise documents establish and maintain contact information for reporting security incidents by reviewing <code>GV51</code>. Input 1 can be an incident response plan or other documentation.</p>
+<ol>
+<li>If documentation outlining contact information exists, M1 = 1</li>
+<li>If documentation outlining contact information does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M2)</p>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Timeframe since the last update or review of documentation in
+    months</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply. </li>
+<li>If M2 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<hr />
+<h2 id="173-establish-and-maintain-an-enterprise-process-for-reporting-incidents">17.3: Establish and Maintain an Enterprise Process for Reporting Incidents</h2>
+<p>Establish and maintain an documented enterprise process for the workforce to report security incidents. 
+The process includes reporting timeframe, personnel to report to, mechanism for reporting, and the minimum 
+information to be reported. Ensure the process is publicly available to all of the workforce. 
+Review annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV51</code>: Enterprise Incident Response Documentation</li>
+<li>Date of last update or review of the documentation</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise documents process for reporting incidents by reviewing <code>GV51</code>. <code>GV51</code> can be an incident response plan or other documentation.</p>
+<ol>
+<li>If documentation for reporting incidents exists, M1 = 1</li>
+<li>If documentation for reporting incidents does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Determine whether the documentation, at a minimum, outlines the following components: reporting timeframe, personnel to report to, mechanism for reporting, and the minimum information to be reported</p>
+<ol>
+<li>For each component included, assign a value of 1. Sum the values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M3)</p>
+</li>
+<li>
+<p>Determine whether the process documentation is available to the whole workforce</p>
+<ol>
+<li>If it is available to all, M4 = 1</li>
+<li>If it is not available to all, M4 = 0</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included for reporting incidents process
+    documentation</li>
+<li>M3 = Timeframe since the last update or review of documentation in
+    months</li>
+<li>M4 = Output of Operation 4</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+<li>If M4 is 0, this Safeguard receives a failing score for this metric. Other metrics still apply.</li>
+</ul>
+<h4 id="completeness_1">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the documentation for designated incident handling personnel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 4</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="174-establish-and-maintain-an-incident-response-process">17.4: Establish and Maintain an Incident Response Process</h2>
+<p>Establish and maintain a documented incident response process that addresses roles and responsibilities, 
+compliance requirements, and a communication plan. Review annually, or when significant enterprise changes 
+occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV51</code>: Enterprise Incident Response Documentation</li>
+<li>Date of last update or review of the documentation</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise documents an incident response process, <code>GV52</code>, by reviewing <code>GV51</code>. <code>GV51</code> can be an incident response plan or other documentation.</p>
+<ol>
+<li>If the documentation for an incident response process exists, M1 = 1</li>
+<li>If the documentation for an incident response process does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Determine whether the documentation, at a minimum, outlines the following components: roles and responsibilities, compliance requirements, and a communication plan</p>
+<ol>
+<li>For each component included, assign a value of 1. Sum the values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included in the incident response process
+    documentation</li>
+<li>M3 = Timeframe since the last update or review of documentation in
+    months</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness_2">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the documentation for designated incident handling personnel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="175-assign-key-roles-and-responsibilities">17.5: Assign Key Roles and Responsibilities</h2>
+<p>Assign key roles and responsibilities for incident response, including staff from legal, IT, information security, facilities, public relations, human resources, incident responders, analysts, and relevant third parties. Review annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Respond</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 17.4: Establish and Maintain an Incident Response Process</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV52</code>: Incident Response Process</li>
+<li>Date of last update or review of the documentation</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise documents key roles and responsibilities by reviewing <code>GV52</code></p>
+<ol>
+<li>If documentation exists, M1 = 1</li>
+<li>If documentation does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Using the documentation in <code>GV52</code>, identify and enumerate the roles and responsibilities (M2)</p>
+</li>
+<li>
+<p>For each role and responsibility identified in Operation 2, determine whether an individual is mapped to that role and responsibility</p>
+<ol>
+<li>Identify and enumerate those that are mapped (M3)</li>
+<li>Identify and enumerate those that are not mapped (M4)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M5)</p>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of roles and responsibilities outlined in the process</li>
+<li>M3 = Count of roles and responsibilities that are mapped to an
+    individual</li>
+<li>M4 = Count of roles and responsibilities that are not mapped to an
+    individual</li>
+<li>M5 = Timeframe since the last update or review of documentation in
+    months</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M5 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness_3">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of roles and responsibilities that are mapped to an individual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="176-define-mechanisms-for-communicating-during-incident-response">17.6: Define Mechanisms for Communicating During Incident Response</h2>
+<p>Determine which primary and secondary mechanisms will be used to communicate and report during a security incident. 
+Mechanisms can include phone calls, emails, secure chat, or notification letters. Keep in mind that certain mechanisms, 
+such as emails, can be affected during a security incident. Review annually, or when significant enterprise changes occur 
+that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Respond</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 17.4: Establish and Maintain an Incident Response Process</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV52</code>: Incident Response Process</li>
+<li>Date of last update or review of the documentation</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise document mechanisms for communication by reviewing <code>GV52</code></p>
+<ol>
+<li>If the documentation for an incident response process exists, M1 = 1</li>
+<li>If the documentation for an incident response process does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Determine whether the documentation, at a minimum, outlines primary and secondary mechanisms for communication</p>
+<ol>
+<li>For each mechanism included, assign a value of 1. Sum the values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of mechanisms for communication included in the documentation</li>
+<li>M3 = Timeframe since the last update or review of documentation in
+    months</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness_4">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the documentation for designated incident handling personnel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="177-conduct-routine-incident-response-exercises">17.7: Conduct Routine Incident Response Exercises</h2>
+<p>Plan and conduct routine incident response exercises and scenarios for
+key personnel involved in the incident response process to prepare for
+responding to real-world incidents. Exercises need to test communication
+channels, decision-making, and workflows. Conduct testing on an annual
+basis, at a minimum.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Recover</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 17.4: Establish and Maintain an Incident Response Process</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li><code>GV52</code>: Incident Response Process</li>
+<li>Date of last exercise or test</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise's incident response process includes routine incident response exercises by reviewing <code>GV52</code></p>
+<ol>
+<li>If the documentation includes exercises, M1 = 1</li>
+<li>If the documentation does not include exercises, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Determine whether the documentation for exercises, at a minimum, outlines test communication channels, decision-making, and workflows</p>
+<ol>
+<li>For each mechanism included, assign a value of 1. Sum the values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included in the documentation</li>
+<li>M3 = Timeframe since the last exercise or test in months</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness_5">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the documentation for incident response exercises</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="178-conduct-post-incident-reviews">17.8: Conduct Post-Incident Reviews</h2>
+<p>Conduct post-incident reviews. Post-incident reviews help prevent
+incident recurrence through identifying lessons learned and follow-up
+action.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Recover</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_7">Dependencies</h3>
+<ul>
+<li>Safeguard 17.4: Establish and Maintain an Incident Response Process</li>
+</ul>
+<h3 id="inputs_7">Inputs</h3>
+<ol>
+<li><code>GV52</code>: Incident Response Process</li>
+<li>Last post-incident review</li>
+</ol>
+<h3 id="operations_7">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise's incident response process includes post-incident reviews by reviewing <code>GV52</code></p>
+<ol>
+<li>If the documentation includes post-indecent reviews, M1 = 1</li>
+<li>If the documentation does not include post-incident reviews, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Use Input 2 to determine if post-incident reviews include, at a minimum, the following components: lessons learned and follow-up actions</p>
+<ol>
+<li>For each component included, assign a value of 1. Sum the values. (M2)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_7">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included in the documentation</li>
+</ul>
+<h3 id="metrics_7">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness_6">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in post-incident reviews during Incident response exercises</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="179-establish-and-maintain-security-incident-thresholds">17.9: Establish and Maintain Security Incident Thresholds</h2>
+<p>Establish and maintain security incident thresholds, including, at a
+minimum, differentiating between an incident and an event. Examples can
+include abnormal activity, security vulnerability, security weakness,
+data breaches, privacy incidents, etc. Review annually, or when significant
+enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Recover</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_8">Dependencies</h3>
+<ul>
+<li>Safeguard 17.4: Establish and Maintain an Incident Response Process</li>
+</ul>
+<h3 id="inputs_8">Inputs</h3>
+<ol>
+<li><code>GV52</code>: Incident Response Process</li>
+<li>Date of last update or review of the documentation</li>
+</ol>
+<h3 id="operations_8">Operations</h3>
+<ol>
+<li>
+<p>Determine whether the enterprise documents security incident threshold by reviewing <code>GV52</code></p>
+<ol>
+<li>If the documentation for a security incident threshold exists, M1 = 1</li>
+<li>If the documentation for a security incident threshold does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Determine whether the documentation, at a minimum, outlines the following components: differentiates between incident and event, prioritization schema based on known or potential impact, procedure relying on this schema is used to determine status update frequency during incident handling, and procedure relying on this schema is used to determine escalation paths during incident handling</p>
+<ol>
+<li>For each mechanism included, assign a value of 1. Sum the values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures_8">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included in the documentation</li>
+<li>M3 = Timeframe since the last update or review of documentation in months</li>
+</ul>
+<h3 id="metrics_8">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness_7">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the documentation for security incident thresholds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 4</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls16/" class="btn btn-neutral float-left" title="CIS Control 16: Application Software Security"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls18/" class="btn btn-neutral float-right" title="CIS Control 18: Penetration Testing">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

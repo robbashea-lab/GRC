@@ -11,7 +11,7 @@ jest.mock('@/context/AuthContext', () => ({useAuth:() => ({user:{user_id:'owner'
 jest.mock('@/lib/api', () => ({__esModule:true, default:{get:jest.fn(),patch:jest.fn(),post:jest.fn()},formatError:e=>e.message,API:'/api'}));
 jest.mock('react-router-dom', () => ({useSearchParams:()=>[new URLSearchParams(),jest.fn()],Link:({children,to}) => <a href={to}>{children}</a>}), {virtual:true});
 let root, container;
-const requestOptions = {headers:{'Idempotency-Key':expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)}};
+const requestOptions = expect.objectContaining({headers:{'Idempotency-Key':expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)},pendingCommandGeneration:expect.any(Number)});
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   container=document.createElement('div'); document.body.appendChild(container); root=createRoot(container);

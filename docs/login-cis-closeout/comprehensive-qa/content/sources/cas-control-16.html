@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 16: Application Software Security - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 16: Application Software Security";
+        var mkdocs_page_input_path = "source/Controls16.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls16/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls8/">CIS Control 8: Audit Log Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 16: Application Software Security</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#161-establish-and-maintain-a-secure-application-development-process">16.1: Establish and Maintain a Secure Application Development Process</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#162-establish-and-maintain-a-process-to-accept-and-address-software-vulnerabilities">16.2: Establish and Maintain a Process to Accept and Address Software Vulnerabilities</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness_1">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#163-perform-root-cause-analysis-on-security-vulnerabilities">16.3: Perform Root Cause Analysis on Security Vulnerabilities</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-process">Completeness of Process</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#164-establish-and-manage-an-inventory-of-third-party-software-components">16.4: Establish and Manage an Inventory of Third-Party Software Components</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-inventory">Completeness of Inventory</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#165-use-up-to-date-and-trusted-third-party-software-components">16.5: Use Up-to-Date and Trusted Third-Party Software Components</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance_1">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#166-establish-and-maintain-a-severity-rating-system-and-process-for-application-vulnerabilities">16.6: Establish and Maintain a Severity Rating System and Process for Application Vulnerabilities</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness_2">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#167-use-standard-hardening-configuration-templates-for-application-infrastructure">16.7: Use Standard Hardening Configuration Templates for Application Infrastructure</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance_2">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#168-separate-production-and-non-production-systems">16.8: Separate Production and Non-Production Systems</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_7">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_7">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_7">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_7">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#169-train-developers-in-application-security-concepts-and-secure-coding">16.9: Train Developers in Application Security Concepts and Secure Coding</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_8">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_8">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_8">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_8">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance_3">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#1610-apply-secure-design-principles-in-application-architectures">16.10: Apply Secure Design Principles in Application Architectures</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_9">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_9">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_9">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_9">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_9">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance_4">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#1611-leverage-vetted-modules-or-services-for-application-security-components">16.11: Leverage Vetted Modules or Services for Application Security Components</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_10">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_10">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_10">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_10">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_10">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance_5">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#1612-implement-code-level-security-checks">16.12: Implement Code-Level Security Checks</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_11">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_11">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_11">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_11">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_11">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#static-analysis-tool-coverage">Static Analysis Tool Coverage</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#dynamic-analysis-tool-coverage">Dynamic Analysis Tool Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#1613-conduct-application-penetration-testing">16.13: Conduct Application Penetration Testing</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_12">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_12">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_12">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_12">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_12">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#unauthenticated-penetration-testing-coverage">Unauthenticated Penetration Testing Coverage</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#authenticated-penetration-testing-coverage">Authenticated Penetration Testing Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#1614-conduct-threat-modeling">16.14: Conduct Threat Modeling</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_13">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_13">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_13">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_13">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_13">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance_6">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 16: Application Software Security</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls16.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-16-application-software-security">CIS Control 16: Application Software Security</h1>
+<p>Manage the security life cycle of in-house developed, hosted, or
+acquired software to prevent, detect, and remediate security weaknesses
+before they can impact the enterprise.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>Applications provide a human-friendly interface to allow users to access
+and manage data in a way that is aligned with business functions. They
+also minimize the need for users to deal directly with complex (and
+potentially error-prone) system functions, like logging into a database
+to insert or modify files. Enterprises use applications to manage their
+most sensitive data and control access to system resources. Therefore,
+an attacker can use the application itself to compromise the data
+instead of an elaborate network and system hacking sequence that
+attempts to bypass network security controls and sensors. This is why
+protecting user credentials (specifically application credentials)
+defined in CIS Control 6 is so important. </p>
+<p>Lacking credentials and application flaws are the attack vectors of choice. However, today's
+applications are developed, operated, and maintained in a highly
+complex, diverse, and dynamic environment. Applications run on multiple
+platforms: web, mobile, cloud, etc., with application architectures that
+are more complex than legacy client-server or database-web server
+structures. Development life cycles have become shorter, transitioning
+from months or years in long waterfall methodologies to DevOps cycles
+with frequent code updates. Also, applications are rarely created from
+scratch and are often "assembled" from a complex mix of development
+frameworks, libraries, existing code, and new code. There are also
+modern and evolving data protection regulations dealing with user
+privacy. These may require compliance with regional or sector-specific
+data protection requirements. </p>
+<p>These factors make traditional approaches
+to security, like control (of processes, code sources, run-time
+environment, etc.), inspection, and testing are much more challenging.
+Also, the risk that an application vulnerability introduces might not be
+understood except in a specific operational setting or context.</p>
+<p>Application vulnerabilities can be present for many reasons: insecure
+design, insecure infrastructure, coding mistakes, weak authentication,
+and failure to test for unusual or unexpected conditions. Attackers can
+exploit specific vulnerabilities, including buffer overflows, exposure
+to Structured Query Language (SQL) injection, cross-site scripting,
+cross-site request forgery, and click-jacking of code to gain access to
+sensitive data or take control over vulnerable assets within the
+infrastructure as a launching point for further attacks. </p>
+<p>Applications and websites can also be used to harvest credentials data or attempt
+to install malware onto the users who access them. </p>
+<p>Finally, it is now more common to acquire Software as a Service (SaaS) platforms, where
+software is developed and managed entirely through a third party. These
+might be hosted anywhere in the world. This brings challenges to
+enterprises that need to know what risks they are accepting with using
+these platforms, and they often do not have visibility into the
+development and application security practices of these platforms. Some
+of these SaaS platforms allow for customizing of their interfaces and
+databases. Enterprises that extend these applications should follow this
+CIS Control, similar to if they were doing ground-up customer
+development.</p>
+<hr />
+<h2 id="161-establish-and-maintain-a-secure-application-development-process">16.1: Establish and Maintain a Secure Application Development Process</h2>
+<p>Establish and maintain a secure application development process. In the process,
+address such items as: secure application design standards, secure
+coding practices, developer training, vulnerability management, security
+of third-party code, and application security testing procedures. Review
+and update documentation annually, or when significant enterprise
+changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV49</code>: Secure Application Development Process</li>
+<li>Date of last update or review of the secure application development
+    process</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Determine whether <code>GV49</code> exists within the enterprise</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Review <code>GV49</code> and determine whether it includes, at a minimum, the following components: secure application design standards, secure coding practices, developer training, vulnerability management, security of third-party code, and application security testing procedures</p>
+<ol>
+<li>For each component included in the process, assign a value of 1. Sum all values (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included in the process</li>
+<li>M3 = Timeframe in months since last review or update</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the secure application development process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 6</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="162-establish-and-maintain-a-process-to-accept-and-address-software-vulnerabilities">16.2: Establish and Maintain a Process to Accept and Address Software Vulnerabilities</h2>
+<p>Establish and maintain a process to accept and address reports of software vulnerabilities, including providing a means for external entities to report. The process is to include such items as: a vulnerability handling policy that identifies reporting process, responsible party for handling vulnerability reports, and a process for intake, assignment, remediation, and remediation testing. As part of the process, use a vulnerability tracking system that includes severity ratings and metrics for measuring timing for identification, analysis, and remediation of vulnerabilities. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<p>Third-party application developers need to consider this an externally-facing policy that helps to set expectations for outside stakeholders.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV48</code>: Process to Accept and Address Software Vulnerabilities</li>
+<li>Date of last update or review of process</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Determine whether <code>GV48</code> exists within the enterprise</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Review <code>GV48</code> and determine whether it includes, at a minimum, the following components: a reporting process, a responsible party for handling vulnerability reports, a process for intake, assignment, remediation, remediation testing, and a vulnerability tracking system</p>
+<ol>
+<li>For each component included in the process, assign a value of 1. Sum all values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included in the process</li>
+<li>M3 = Timeframe in months since last review or update</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness_1">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the secure application development process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 7</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="163-perform-root-cause-analysis-on-security-vulnerabilities">16.3: Perform Root Cause Analysis on Security Vulnerabilities</h2>
+<p>Perform root cause analysis on security vulnerabilities. When reviewing
+vulnerabilities, root cause analysis is the task of evaluating
+underlying issues that create vulnerabilities in code, and allows
+development teams to move beyond just fixing individual vulnerabilities
+as they arise.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 16.2: Establish and Maintain a Process to Accept and
+    Address Software Vulnerabilities</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li>Root Cause Analysis Process</li>
+<li>Vulnerabilities addressed over the last twelve months</li>
+</ol>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>Determine whether Input 1 exists within the enterprise</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Review Input 1 and determine whether it includes, at a minimum, the following components: categorization of vulnerabilities, guidance for how lessons learned are incorporated into the development process</p>
+<ol>
+<li>For each component included in the process, assign a value of 1. Sum all values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>For each vulnerability addressed over the last twelve months, assess whether the root cause analysis process was followed</p>
+<ol>
+<li>Identify and enumerate vulnerabilities for which the process was followed (M4)</li>
+<li>Identify and enumerate vulnerabilities for which the process was not followed (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included in the process</li>
+<li>M3 = Count of Input 2</li>
+<li>M4 = Count of vulnerabilities for which root cause analysis was
+    conducted</li>
+<li>M5 = Count of vulnerabilities for which root cause analysis was not
+    conducted</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-process">Completeness of Process</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the secure application development process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 2</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="compliance">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of vulnerabilities for which root cause analysis was conducted</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="164-establish-and-manage-an-inventory-of-third-party-software-components">16.4: Establish and Manage an Inventory of Third-Party Software Components</h2>
+<p>Establish and manage an updated inventory of third-party components used
+in development, often referred to as a "bill of materials," as well as
+components slated for future use. This inventory is to include any risks
+that each third-party component could pose. Evaluate the list at least
+monthly to identify any changes or updates to these components, and
+validate that the component is still supported. </p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Identfy</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV47</code>: Inventory of Third-Party Software Components</li>
+<li>Date of last review or update of the inventory</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Determine whether <code>GV47</code> exists within the enterprise</p>
+<ol>
+<li>If Input 1 exists, M1 = 1</li>
+<li>If Input 1 does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV47</code> and determine whether each software component listed includes, at a minimum, the following information: risk associated with components, whether the component is supported</p>
+<ol>
+<li>Identify and enumerate software components with complete information (M3)</li>
+<li>Identify and enumerate software components with missing information (M4)</li>
+</ol>
+</li>
+<li>
+<p>Compare the date of Input 2 to the current date and capture the timeframe in days (M5)</p>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of <code>GV47</code></li>
+<li>M3 = Count of software components with complete information</li>
+<li>M4 = Count of software components with missing information</li>
+<li>M5 = Timeframe since the last review or update of the inventory</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M5 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness-of-inventory">Completeness of Inventory</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percent of components included in the secure application development process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="165-use-up-to-date-and-trusted-third-party-software-components">16.5: Use Up-to-Date and Trusted Third-Party Software Components</h2>
+<p>Use up-to-date and trusted third-party software components. When
+possible, choose established and proven frameworks and libraries that
+provide adequate security. Acquire these components from trusted sources
+or evaluate the software for vulnerabilities before use.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 16.4: Establish and Manage an Inventory of Third-Party
+    Software Components</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV47</code>: Inventory of Third-Party Software Components</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>For each software component in <code>GV47</code>, determine whether the latest component is being used</p>
+<ol>
+<li>Identify and enumerate software components that are up-to-date (M2)</li>
+<li>Identify and enumerate software components that are not up-to-date (M3)</li>
+</ol>
+</li>
+<li>
+<p>For each software component identified in Operation 1.1, determine whether they are explicitly trusted by the enterprise</p>
+<ol>
+<li>Identify and enumerate software components that are trusted by the enterprise (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Count of <code>GV47</code></li>
+<li>M2 = Count of software components that are up-to-date</li>
+<li>M3 = Count of software components that are not up-to-date</li>
+<li>M4 = Count of software components that are up-to-date and trusted</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<h4 id="compliance_1">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of up-to-date and trusted software components</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="166-establish-and-maintain-a-severity-rating-system-and-process-for-application-vulnerabilities">16.6: Establish and Maintain a Severity Rating System and Process for Application Vulnerabilities</h2>
+<p>Establish and maintain a severity rating system and process for application
+vulnerabilities that facilitates prioritizing the order in which
+discovered vulnerabilities are fixed. This process includes setting a
+minimum level of security acceptability for releasing code or
+applications. Severity ratings bring a systematic way of triaging
+vulnerabilities that improves risk management and helps ensure the most
+severe bugs are fixed first. Review and update the system and process
+annually.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 16.2: Establish and Maintain a Process to Accept and
+    Address Software Vulnerabilities</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV48</code>: Process to Accept and Address Software Vulnerabilities</li>
+<li>Date of last update or review of the severity rating system and
+    process</li>
+</ol>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Using <code>GV48</code> determine whether the enterprise has a severity rating system and process for application vulnerabilities</p>
+<ol>
+<li>If the system and process exist, M1 = 1</li>
+<li>If the system and process do not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Review <code>GV48</code> and determine whether it includes, at a minimum, the following components: guidance for prioritizing the order vulnerabilities are fixed, level of security acceptability for releasing code or applications</p>
+<ol>
+<li>For each component included in the process, assign a value of 1. Sum all values. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare Input 2 to the current date and capture the timeframe in months (M3)</p>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of components included in the process</li>
+<li>M3 = Timeframe in months since last review or update</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+<li>If M3 is greater than twelve months, then this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness_2">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of components included in the secure application development process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="167-use-standard-hardening-configuration-templates-for-application-infrastructure">16.7: Use Standard Hardening Configuration Templates for Application Infrastructure</h2>
+<p>Use standard, industry-recommended hardening configuration templates for
+application infrastructure components. This includes underlying servers,
+databases, and web servers, and applies to cloud containers, Platform as
+a Service (PaaS) components, and SaaS components. Do not allow in-house
+developed software to weaken configuration hardening.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+<li>Safeguard 4.2: Establish and Maintain a Secure Configuration Process
+    for Network Infrastructure</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV37</code>: Network Infrastructure Configuration Standards</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate application
+    infrastructure components <code>GV50</code> (M1)</p>
+</li>
+<li>
+<p>For each infrastructure component identified in Operation 1, check configurations using <code>GV37</code> and determine if they meet industry-recommended hardening configuration standards</p>
+<ol>
+<li>Identify and enumerate infrastructure components that meet industry standards (M2)</li>
+<li>Identify and enumerate infrastructure components that do not meet industry standards (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Count of application infrastructure components</li>
+<li>M2 = Count of components that meet industry standards</li>
+<li>M3 = Count of components that do not meet industry standards</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<h4 id="compliance_2">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of application infrastructure components that meet industry configuration standards</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="168-separate-production-and-non-production-systems">16.8: Separate Production and Non-Production Systems</h2>
+<p>Maintain separate environments for production and non-production
+systems.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_7">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_7">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+</ol>
+<h3 id="operations_7">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate production systems (M1)</p>
+</li>
+<li>
+<p>For each production system identified in Operation 1, use <code>GV1</code> to identify if at least one non-production system exists for the system</p>
+<ol>
+<li>Identify and enumerate production systems with at least one non-production system (M2)</li>
+<li>Identify and enumerate production systems without a non-production system (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_7">Measures</h3>
+<ul>
+<li>M1 = Count of production systems</li>
+<li>M2 = Count of production systems with a non-production system to
+    complement</li>
+<li>M3 = Count of production systems without a non-production system to
+    complement</li>
+</ul>
+<h3 id="metrics_7">Metrics</h3>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of non-production systems with an existing production system</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="169-train-developers-in-application-security-concepts-and-secure-coding">16.9: Train Developers in Application Security Concepts and Secure Coding</h2>
+<p>Ensure that all software development personnel receive training in writing secure code for their
+specific development environment and responsibilities. Training can
+include general security principles and application security standard
+practices. Conduct training at least annually and design in a way to
+promote security within the development team, and build a culture of
+security among the developers.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Users</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_8">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_8">Inputs</h3>
+<ol>
+<li>List of software developing personnel with assigned roles and
+    development environments</li>
+<li>List of required courses for each role and development environment</li>
+<li>Date of last training course</li>
+</ol>
+<h3 id="operations_8">Operations</h3>
+<ol>
+<li>
+<p>For each individual in Input 1, determine whether they have taken the applicable courses per role and environment</p>
+<ol>
+<li>Identify and enumerate personnel that have completed the appropriate courses (M2)</li>
+<li>Identify and enumerate personnel that have not completed the appropriate courses (M3)</li>
+</ol>
+</li>
+<li>
+<p>For each individual who has completed the appropriate courses, compare the date of the last training from Input 3 to the current date and capture the timeframe in months</p>
+<ol>
+<li>Identify and enumerate personnel that have completed all appropriate training within twelve months or less (M4)</li>
+<li>Identify and enumerate personnel that have not completed all appropriate training within twelve months or less (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_8">Measures</h3>
+<ul>
+<li>M1 = Count of software-developing personnel</li>
+<li>M2 = Count of software developing personnel with completed courses</li>
+<li>M3 = Count of software developing personnel without completed
+    courses</li>
+<li>M4 = Count of software developing personnel with training in scope</li>
+<li>M5 = Count of software developing personnel with training out of
+    scope</li>
+</ul>
+<h3 id="metrics_8">Metrics</h3>
+<h4 id="compliance_3">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of software development personnel with all appropriate training courses in scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1610-apply-secure-design-principles-in-application-architectures">16.10: Apply Secure Design Principles in Application Architectures</h2>
+<p>Apply secure design principles in application architectures. Secure design principles
+include the concept of least privilege and enforcing mediation to
+validate every operation that the user makes, promoting the concept of
+"never trusting user input." Examples include ensuring that explicit
+error checking is performed and documented for all input, including for
+size, data type, and acceptable ranges or formats. Secure design also
+means minimizing the application infrastructure attack surface, such as
+turning off unprotected ports and services, removing unnecessary
+programs and files, and renaming or removing default accounts.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_9">Dependencies</h3>
+<ul>
+<li>Safeguard 16.1: Establish and Maintain a Secure Application
+    Development Process</li>
+</ul>
+<h3 id="inputs_9">Inputs</h3>
+<ol>
+<li><code>GV49</code>: Secure Application Development Process</li>
+<li><code>GV50</code>: Application Infrastructure Components</li>
+</ol>
+<h3 id="operations_9">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV49</code> to determine whether the process outlines a secure software framework that includes secure design principles</p>
+<ol>
+<li>If the framework exists, M1 = 1</li>
+<li>If the framework does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>For each application infrastructure component in <code>GV50</code>, determine whether the secure design principles were applied per the framework</p>
+<ol>
+<li>Identify and enumerate application infrastructure components where design principles are applied (M3)</li>
+<li>Identify and enumerate application infrastructure components where design principles are not applied (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_9">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of <code>GV50</code></li>
+<li>M3 = Count of applications infrastructure components with design
+    principles applied</li>
+<li>M4 = Count of applications infrastructure components without design
+    principles applied</li>
+</ul>
+<h3 id="metrics_9">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="compliance_4">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of applications infrastructure components where design principles were applied</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1611-leverage-vetted-modules-or-services-for-application-security-components">16.11: Leverage Vetted Modules or Services for Application Security Components</h2>
+<p>Leverage vetted modules or services for application security components,
+such as identity management, encryption, auditing, and logging. Using
+platform features in critical security functions will reduce developers'
+workload and minimize the likelihood of design or implementation errors.
+Modern operating systems provide effective mechanisms for
+identification, authentication, and authorization and make those
+mechanisms available to applications. Use only standardized, currently
+accepted, and extensively reviewed encryption algorithms. Operating
+systems also provide mechanisms to create and maintain secure audit
+logs.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_10">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_10">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+</ol>
+<h3 id="operations_10">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate application security
+    components (M1)</p>
+</li>
+<li>
+<p>For each application security component identified in Operation 1, determine whether custom code exists. <em>Note</em>: If there’s no custom code, the control is effectively not applicable because the risk addressed by 16.11 (unvetted custom modules) doesn’t exist.</p>
+<ol>
+<li>Identify and enumerate components that contain custom code (M2)</li>
+<li>Identify and enumerate components that do not contain custom code (M3)</li>
+</ol>
+</li>
+<li>
+<p>For each application security component identified in Operation 2.1, determine whether vetted modules or services exist</p>
+<ol>
+<li>Identify and enumerate components for which vetted modules or services exist (M4)</li>
+<li>Identify and enumerate components for which vetted modules or services do not exist (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_10">Measures</h3>
+<ul>
+<li>M1 = Count of application security components</li>
+<li>M2 = Count of application security components containing custom code</li>
+<li>M3 = Count of application security components not containing custom
+    code</li>
+<li>M4 = Count of application security components containing custom code
+    and vetted modules or services do exist</li>
+<li>M5 = Count of application security components containing custom code
+    and vetted modules or services do not exist</li>
+</ul>
+<h3 id="metrics_10">Metrics</h3>
+<h4 id="compliance_5">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of application security components using vetted modules or services when available</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4/M2</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1612-implement-code-level-security-checks">16.12: Implement Code-Level Security Checks</h2>
+<p>Apply static and dynamic analysis tools within the application life
+cycle to verify that secure coding practices are being followed.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_11">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_11">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+</ol>
+<h3 id="operations_11">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate in-house developed software (M1)</p>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify static analysis tools</p>
+</li>
+<li>
+<p>For each software identified in Operation 1, determine if it is verified by a static tool identified in Operation 2</p>
+<ol>
+<li>Identify and enumerate software verified by a static tool (M2)</li>
+<li>Identify and enumerate software not verified by a static tool (M3)</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify dynamic analysis tools</p>
+</li>
+<li>
+<p>For each software identified in Operation 1, determine if it is verified by a dynamic tool identified in Operation 4</p>
+<ol>
+<li>Identify and enumerate software verified by a dynamic tool (M4)</li>
+<li>Identify and enumerate software not verified by a dynamic tool (M5)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_11">Measures</h3>
+<ul>
+<li>M1 = Count of in-house developed software</li>
+<li>M2 = Count of in-house developed software verified by a static
+    analysis tool</li>
+<li>M3 = Count of in-house developed software not verified by a static
+    analysis tool</li>
+<li>M4 = Count of in-house developed software verified by a dynamic
+    analysis tool</li>
+<li>M5 = Count of in-house developed software not verified by a dynamic
+    analysis tool</li>
+</ul>
+<h3 id="metrics_11">Metrics</h3>
+<h4 id="static-analysis-tool-coverage">Static Analysis Tool Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of in-house developed software verified by a static analysis tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="dynamic-analysis-tool-coverage">Dynamic Analysis Tool Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of in-house developed software verified by a dynamic analysis tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M4 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1613-conduct-application-penetration-testing">16.13: Conduct Application Penetration Testing</h2>
+<p>Conduct application penetration testing. For critical applications,
+authenticated penetration testing is better suited to finding business
+logic vulnerabilities than code scanning and automated security
+testing. Penetration testing relies on the skill of the tester to
+manually manipulate an application as an authenticated and
+unauthenticated user. </p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Detect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_12">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_12">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li>Application Penetration Testing Process for the enterprise</li>
+</ol>
+<h3 id="operations_12">Operations</h3>
+<ol>
+<li>
+<p>Determine whether Input 2 exists for the enterprise</p>
+<ol>
+<li>If the process exists, M1 = 1</li>
+<li>If the process does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate all applications within the enterprise (M2)</p>
+</li>
+<li>
+<p>For each application identified in Operation 2, determine whether an unauthenticated penetration test has been conducted per the process outlined in Input 2</p>
+<ol>
+<li>Identify and enumerate applications that have been tested (M3)</li>
+<li>Identify and enumerate applications that have not been tested (M4)</li>
+</ol>
+</li>
+<li>
+<p>Use the output of Operation 2 to identify and enumerate critical applications within the list of applications (M5)</p>
+</li>
+<li>
+<p>For each application identified in Operation 4, determine whether an authenticated penetration test has been conducted per the process outlined in Input 2</p>
+<ol>
+<li>Identify and enumerate applications that have been tested (M6)</li>
+<li>Identify and enumerate applications that have not been tested (M7)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_12">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of applications within the enterprise</li>
+<li>M3 = Count of applications that have undergone unauthenticated
+    penetration testing per enterprise's process</li>
+<li>M4 = Count of applications that have not undergone unauthenticated
+    penetration testing per enterprise's process</li>
+<li>M5 = Count of critical applications</li>
+<li>M6 = Count of critical applications that have undergone
+    authenticated penetration testing per enterprise's process</li>
+<li>M7 = Count of critical applications that have not undergone
+    authenticated penetration testing per enterprise's process</li>
+</ul>
+<h3 id="metrics_12">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="unauthenticated-penetration-testing-coverage">Unauthenticated Penetration Testing Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of applications that underwent unauthenticated penetration testing per enterprise's process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="authenticated-penetration-testing-coverage">Authenticated Penetration Testing Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of critical applications that underwent authenticated penetration testing per enterprise's process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M6 / M5</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1614-conduct-threat-modeling">16.14: Conduct Threat Modeling</h2>
+<p>Conduct threat modeling. Threat modeling is the process of identifying
+and addressing application security design flaws within a design, before
+code is created. It is conducted through specially trained individuals
+who evaluate the application design and gauge security risks for each
+entry point and access level. The goal is to map out the application,
+architecture, and infrastructure in a structured way to understand its
+weaknesses.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td>Protect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_13">Dependencies</h3>
+<ul>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_13">Inputs</h3>
+<ol>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+<li>Threat Modeling Process for the Enterprise</li>
+</ol>
+<h3 id="operations_13">Operations</h3>
+<ol>
+<li>
+<p>Determine whether Input 2 exists for the enterprise</p>
+<ol>
+<li>If the process exists, M1 = 1</li>
+<li>If the process does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Use <code>GV5</code> to identify and enumerate all in-house developed applications (M2)</p>
+</li>
+<li>
+<p>For each application identified in Operation 2, determine whether the threat modeling process was followed</p>
+<ol>
+<li>Identify and enumerate applications for which threat modeling was conducted (M3)</li>
+<li>Identify and enumerate applications for which threat modeling was not conducted (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_13">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of in-house developed applications</li>
+<li>M3 = Count of in-house developed applications that underwent threat
+    modeling</li>
+<li>M4 = Count of in-house developed applications that did not undergo
+    threat modeling</li>
+</ul>
+<h3 id="metrics_13">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="compliance_6">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of in-house developed applications that underwent threat modeling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M2</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls15/" class="btn btn-neutral float-left" title="CIS Control 15: Service Provider Management"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls17/" class="btn btn-neutral float-right" title="CIS Control 17: Incident Response Management">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

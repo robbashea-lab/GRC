@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CIS Control 8: Audit Log Management - CIS Controls Assessment Specification for Controls v8.1</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CIS Control 8: Audit Log Management";
+        var mkdocs_page_input_path = "source/Controls8.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="cisecurity-controls-assessment-specification" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/source/Controls8/" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> CIS Controls Assessment Specification for Controls v8.1
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GENERAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls/">About the CIS Controls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../About%20the%20CIS%20Controls%20Assessment%20Specification/">About the CIS Controls Assessment Specification</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../terms-of-use/">Terms of Use</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contributing.rst/">Contributing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CIS CONTROLS</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls1/">CIS Control 1: Inventory and Control of Enterprise Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls2/">CIS Control 2: Inventory and Control of Software Assets</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls3/">CIS Control 3: Data Protection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls4/">CIS Control 4: Secure Configuration of Enterprise Assets and Software</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls5/">CIS Control 5: Account Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls6/">CIS Control 6: Access Control Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls7/">CIS Control 7: Continuous Vulnerability Management</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CIS Control 8: Audit Log Management</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#81-establish-and-maintain-an-audit-log-management-process">8.1: Establish and Maintain an Audit Log Management Process</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness">Completeness</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#82-collect-audit-logs">8.2: Collect Audit Logs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_1">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_1">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_1">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_1">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#83-ensure-adequate-audit-log-storage">8.3: Ensure Adequate Audit Log Storage</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_2">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_2">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_2">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_2">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#logging-storage-coverage">Logging Storage Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#84-standardize-time-synchronization">8.4: Standardize Time Synchronization</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_3">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_3">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_3">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_3">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#ntp-compliance-coverage">NTP Compliance Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#85-collect-detailed-audit-logs">8.5: Collect Detailed Audit Logs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_4">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_4">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_4">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_4">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#completeness-of-process">Completeness of Process</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#logging-coverage">Logging Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#86-collect-dns-query-audit-logs">8.6: Collect DNS Query Audit Logs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_5">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions_1">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_5">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_5">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_5">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#dns-configuration-coverage">DNS Configuration Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#87-collect-url-request-audit-logs">8.7: Collect URL Request Audit Logs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_6">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_6">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_6">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_6">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#configuration-coverage">Configuration Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#88-collect-command-line-audit-logs">8.8: Collect Command-Line Audit Logs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_7">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_7">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_7">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_7">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#configuration-coverage_1">Configuration Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#89-centralize-audit-logs">8.9: Centralize Audit Logs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_8">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_8">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_8">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_8">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#log-aggregating">Log Aggregating</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#810-retain-audit-logs">8.10: Retain Audit Logs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_9">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_9">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_9">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_9">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_9">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#compliance">Compliance</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#811-conduct-audit-log-reviews">8.11: Conduct Audit Log Reviews</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_10">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_10">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions_2">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_10">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_10">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_10">Metrics</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#812-collect-service-provider-logs">8.12: Collect Service Provider Logs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependencies_11">Dependencies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_11">Inputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#operations_11">Operations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#measures_11">Measures</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics_11">Metrics</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coverage_1">Coverage</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls9/">CIS Control 9: Email and Web Browser Protections</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls10/">CIS Control 10: Malware Defenses</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls11/">CIS Control 11: Data Recovery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls12/">CIS Control 12: Network Infrastructure Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls13/">CIS Control 13: Network Monitoring and Defense</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls14/">CIS Control 14: Security Awareness and Skills Training</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls15/">CIS Control 15: Service Provider Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls16/">CIS Control 16: Application Software Security</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls17/">CIS Control 17: Incident Response Management</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Controls18/">CIS Control 18: Penetration Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">CIS Controls Assessment Specification for Controls v8.1</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">CIS CONTROLS</li>
+      <li class="breadcrumb-item active">CIS Control 8: Audit Log Management</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://bitbucket.org/cis-it-workspace/controls-assessment-specification/src/main/docs/source/src/default/docs/source/Controls8.md" class="icon icon-bitbucket"> Edit on Bitbucket</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cis-control-8-audit-log-management">CIS Control 8: Audit Log Management</h1>
+<p>Collect, alert, review, and retain audit logs of events that could help
+detect, understand, or recover from an attack.</p>
+<p><strong>Why is this CIS Control Critical?</strong></p>
+<p>Log collection and analysis is critical for an enterprise's ability to
+detect malicious activity quickly. Sometimes, audit records are the only
+evidence of a successful attack. Attackers know that many enterprises
+keep audit logs for compliance purposes but rarely analyze them.
+Attackers use this knowledge to hide their location, malicious software,
+and activities on victim machines. Due to poor or nonexistent log
+analysis processes, attackers sometimes control victim machines for
+months or years without anyone in the target enterprise knowing.</p>
+<p>There are two types of logs that are generally treated and often
+configured independently: system logs and audit logs. System logs
+typically provide system-level events that show various system process
+start/end times, crashes, etc. These are native to systems and take
+less configuration to turn on. Audit logs typically include user-level
+events -- when a user logs in, accesses a file, etc. -- and takes more
+planning and effort to set up.</p>
+<p>Logging records are also critical for incident response. After an attack
+has been detected, log analysis can help enterprises understand the
+extent of an attack. Complete logging records can show, for example,
+when and how the attack occurred, what information was accessed, and if
+data was exfiltrated. Retention of logs is also critical in case a
+follow-up investigation is required or if an attack remains undetected
+for a long period of time.</p>
+<hr />
+<h2 id="81-establish-and-maintain-an-audit-log-management-process">8.1: Establish and Maintain an Audit Log Management Process</h2>
+<p>Establish and maintain a documented audit log management process that defines the enterprise’s logging requirements. At a minimum, address the collection, review, and retention of audit logs for enterprise assets. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documentation</td>
+<td>Govern</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs">Inputs</h3>
+<ol>
+<li><code>GV26</code>: Enterprise's Audit Log Management Process</li>
+<li>Date of the last review of the Audit Log Management Process</li>
+</ol>
+<h3 id="operations">Operations</h3>
+<ol>
+<li>
+<p>Check if <code>GV26</code> the audit log management process exists:</p>
+<ol>
+<li>If it exists, M1 = 1</li>
+<li>If it does not exist, M1 = 0</li>
+</ol>
+</li>
+<li>
+<p>Review <code>GV26</code> for elements of the process and, at a minimum, address the collection, review, and retention of audit logs for enterprise assets:</p>
+<ol>
+<li>For each element that exists, assign a value of 1. Sum the values of existing elements. (M2)</li>
+</ol>
+</li>
+<li>
+<p>Compare the date from Input 2 and the current date. Capture the timeframe in terms of months. (M3)</p>
+</li>
+</ol>
+<h3 id="measures">Measures</h3>
+<ul>
+<li>M1 = Output of Operation 1</li>
+<li>M2 = Count of elements included in the audit log management process</li>
+<li>M3 = Timeframe since the last review of the audit log management process</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li>If M1 is 0, this Safeguard receives a failing score. The other metrics don't apply. </li>
+<li>If M3 is greater than twelve, this Safeguard is measured at a 0 and receives a failing score. The other metrics don't apply.</li>
+</ul>
+<h4 id="completeness">Completeness</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of elements included in the audit log</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="82-collect-audit-logs">8.2: Collect Audit Logs</h2>
+<p>Collect audit logs. Ensure that logging, per the enterprise’s audit log management process, has been enabled across enterprise assets.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Detect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_1">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+<li>Safeguard 8.1: Establish and Maintain an Audit Log Management Process</li>
+</ul>
+<h3 id="inputs_1">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+<li><code>GV26</code>: Enterprise's Audit Log Management Process</li>
+</ol>
+<h3 id="operations_1">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets capable of supporting logging <code>GV27</code> (M1):</p>
+</li>
+<li>
+<p>Use <code>GV26</code> and <code>GV3</code> as guides to determine, for each asset identified in Operation 1, if it is configured to log events as outlined by the enterprise's process</p>
+<ol>
+<li>Identify and enumerate assets properly configured to log events per the process (M2)</li>
+<li>Identify and enumerate assets not properly configured to log events per the process (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_1">Measures</h3>
+<ul>
+<li>M1 = Count of assets capable of supporting logging</li>
+<li>M2 = Count of properly configured assets to log events per the audit log management process</li>
+<li>M3 = Count of assets not properly configured to log events per the audit log management process</li>
+</ul>
+<h3 id="metrics_1">Metrics</h3>
+<h4 id="coverage">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The ratio of logging-capable assets properly configured per the audit log management process.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="83-ensure-adequate-audit-log-storage">8.3: Ensure Adequate Audit Log Storage</h2>
+<p>Ensure that logging destinations maintain adequate storage to comply with the enterprise’s audit log management process.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>1, 2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_2">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+</ul>
+<h3 id="inputs_2">Inputs</h3>
+<ol>
+<li><code>GV27</code>: Assets Capable of Supporting Logging</li>
+<li><code>GV26</code>: Enterprise's Audit Log Management Process</li>
+</ol>
+<h3 id="assumptions">Assumptions</h3>
+<ul>
+<li>It is assumed that if an asset is properly configured to meet the retention policy, that would include log rotation, maximum storage size, etc.</li>
+</ul>
+<h3 id="operations_2">Operations</h3>
+<ol>
+<li>
+<p>For each asset in <code>GV27</code>, collect the asset's logging configuration.</p>
+</li>
+<li>
+<p>Compare the output of Operation 1 and the retention portion of <code>G26</code>:</p>
+<ol>
+<li>
+<p>Identify and enumerate assets configured to comply with the retention portion of the process (M2).</p>
+</li>
+<li>
+<p>Identify and enumerate assets not configured to comply with the retention portion of the process (M3).</p>
+</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_2">Measures</h3>
+<ul>
+<li>M1 = Count of <code>GV27</code> assets capable of supporting logging</li>
+<li>M2 = Count of assets properly configured to meet retention requirements</li>
+<li>M3 = Count of assets not properly configured to meet retention requirements</li>
+</ul>
+<h3 id="metrics_2">Metrics</h3>
+<h4 id="logging-storage-coverage">Logging Storage Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets compliant with the organization's logging policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="84-standardize-time-synchronization">8.4: Standardize Time Synchronization</h2>
+<p>Standardize time synchronization. Configure at least two synchronized time sources across enterprise assets, where supported.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_3">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+</ul>
+<h3 id="inputs_3">Inputs</h3>
+<ol>
+<li><code>GV27</code>: Assets Capable of Supporting Logging</li>
+<li>List of approved network time sources/NTP servers</li>
+</ol>
+<h3 id="operations_3">Operations</h3>
+<ol>
+<li>
+<p>Using <code>GV27</code>, identify and enumerate assets capable of supporting time synchronization (M1):</p>
+</li>
+<li>
+<p>Check the configurations of the assets identified in Operation 1:</p>
+<ol>
+<li>Identify and enumerate the assets configured using at least two approved time sources from Input 2 (M2)</li>
+<li>Identify and enumerate the assets configured using time sources not on the approved list (M3)</li>
+<li>Identify and enumerate the assets not configured using time sources (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_3">Measures</h3>
+<ul>
+<li>M1 = Count of logging-capable assets that support time synchronization</li>
+<li>M2 = Count of properly configured assets using at least two approved time sources</li>
+<li>M3 = Count of assets configured using non-approved time sources</li>
+<li>M4 = Count of assets not configured to use time sources</li>
+</ul>
+<h3 id="metrics_3">Metrics</h3>
+<h4 id="ntp-compliance-coverage">NTP Compliance Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets properly configured with at least two approved synchronized time sources</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="85-collect-detailed-audit-logs">8.5: Collect Detailed Audit Logs</h2>
+<p>Configure detailed audit logging for enterprise assets containing sensitive data. Include event source, date, username, timestamp, source addresses, destination addresses, and other useful elements that could assist in a forensic investigation.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_4">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+</ul>
+<h3 id="inputs_4">Inputs</h3>
+<ol>
+<li><code>GV18</code>: Enterprise Assets Storing, Processing, and Transmitting Sensitive Data</li>
+<li><code>GV26</code>: Enterprise's Audit Log Management Process</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_4">Operations</h3>
+<ol>
+<li>
+<p>Review <code>GV26</code> for detailed logging requirements such as event source, date, username, timestamp, source addresses, and destination addresses.</p>
+<ol>
+<li>For each detailed logging requirement included, assign a value of 1. Sum all requirements included. (M2)</li>
+</ol>
+</li>
+<li>
+<p>For each asset in <code>GV18</code> check configuration using <code>GV3</code> as a guide</p>
+<ol>
+<li>Identify and enumerate assets properly configured to collect detailed logging requirements (M3)</li>
+<li>Identify and enumerate assets not properly configured to collect detailed logging requirements (M4)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_4">Measures</h3>
+<ul>
+<li>M1 = Count of assets capable of supporting logging <code>GV27</code></li>
+<li>M2 = Count of detailed logging requirements included in the log management process</li>
+<li>M3 = Count of assets properly configured to collect detailed logs</li>
+<li>M4 = Count of assets not properly configured to collect detailed logs</li>
+</ul>
+<h3 id="metrics_4">Metrics</h3>
+<h4 id="completeness-of-process">Completeness of Process</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of detailed logging requirements included in the logging management process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / 6</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="logging-coverage">Logging Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets properly configured to collect detailed logs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M3 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="86-collect-dns-query-audit-logs">8.6: Collect DNS Query Audit Logs</h2>
+<p>Collect DNS query audit logs on enterprise assets, where appropriate and
+supported.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_5">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_5">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="assumptions_1">Assumptions</h3>
+<p>The enterprise maintains its own internal DNS Servers.</p>
+<h3 id="operations_5">Operations</h3>
+<ol>
+<li>
+<p>Use Input 1 <code>GV1</code> to identify and enumerate internal DNS Servers (M1)</p>
+</li>
+<li>
+<p>Check the configurations <code>GV3</code> of each DNS Server identified in Operation 1</p>
+<ol>
+<li>Identify and enumerate DNS servers properly configured to collect logs (M2).</li>
+<li>Identify and enumerate DNS servers not properly configured to collect logs (M3).</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_5">Measures</h3>
+<ul>
+<li>M1 = Count of internal DNS servers</li>
+<li>M2 = Count of properly configured DNS servers</li>
+<li>M3 = Count of DNS servers not properly configured DNS servers</li>
+</ul>
+<h3 id="metrics_5">Metrics</h3>
+<h4 id="dns-configuration-coverage">DNS Configuration Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of properly configured DNS servers to meet logging requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="87-collect-url-request-audit-logs">8.7: Collect URL Request Audit Logs</h2>
+<p>Collect URL request audit logs on enterprise assets, where appropriate
+and supported.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_6">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_6">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_6">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets that support URL logging
+    (M1)</p>
+</li>
+<li>
+<p>For each asset identified in Operation 1, use <code>GV3</code> to check configurations for URL logging</p>
+<ol>
+<li>Identify and enumerate assets properly configured for logging (M2)</li>
+<li>Identify and enumerate assets not properly configured for logging (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_6">Measures</h3>
+<ul>
+<li>M1 = Count of assets capable of supporting URL logging</li>
+<li>M2 = Count of assets properly configured for URL logging</li>
+<li>M3 = Count of assets not properly configured for URL logging</li>
+</ul>
+<h3 id="metrics_6">Metrics</h3>
+<h4 id="configuration-coverage">Configuration Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets properly configured for URL logging</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="88-collect-command-line-audit-logs">8.8: Collect Command-Line Audit Logs</h2>
+<p>Collect command-line audit logs. Example implementations include collecting audit logs from PowerShell®, BASH™, and remote administrative terminals.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_7">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+</ul>
+<h3 id="inputs_7">Inputs</h3>
+<ol>
+<li><code>GV1</code>: Enterprise Asset Inventory</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_7">Operations</h3>
+<ol>
+<li>
+<p>Use <code>GV1</code> to identify and enumerate assets that support command-line auditing of command shells (M1)</p>
+</li>
+<li>
+<p>For each asset identified in Operation 1, use <code>GV3</code> to check configurations for command-line auditing of command shells</p>
+<ol>
+<li>Identify and enumerate assets properly configured (M2)</li>
+<li>Identify and enumerate assets not properly configured (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_7">Measures</h3>
+<ul>
+<li>M1 = Count of assets capable of supporting command-line auditing of command shells</li>
+<li>M2 = Count of assets properly configured for command-line auditing of command shells</li>
+<li>M3 = Count of assets not properly configured for command-line auditing of command shells</li>
+</ul>
+<h3 id="metrics_7">Metrics</h3>
+<h4 id="configuration-coverage_1">Configuration Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of assets properly configured for command-line auditing of command shells</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="89-centralize-audit-logs">8.9: Centralize Audit Logs</h2>
+<p>Centralize, to the extent possible, audit log collection and retention across enterprise assets in accordance with the documented audit log management process. Example implementations primarily include leveraging a SIEM tool to centralize multiple log sources.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_8">Dependencies</h3>
+<ul>
+<li>Safeguard 1.1: Establish and Maintain Detailed Enterprise Asset
+    Inventory</li>
+<li>Safeguard 2.1: Establish and Maintain a Software Inventory</li>
+</ul>
+<h3 id="inputs_8">Inputs</h3>
+<ol>
+<li><code>GV27</code>: Assets Capable of Supporting Logging</li>
+<li><code>GV5</code>: Authorized Software Inventory</li>
+</ol>
+<h3 id="operations_8">Operations</h3>
+<ol>
+<li>
+<p>Use the software inventory <code>GV5</code> to identify and enumerate log
+    aggregating software <code>GV28</code></p>
+</li>
+<li>
+<p>For each asset capable of supporting logging <code>GV27</code>, check if asset is covered by at least one log aggregating software</p>
+<ol>
+<li>Identify and enumerate assets covered by at least one aggregating software (M2)</li>
+<li>Identify and enumerate assets not covered by at least one aggregating software (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_8">Measures</h3>
+<ul>
+<li>M1 = Count of <code>GV27</code></li>
+<li>M2 = Count of assets covered by at least one aggregating software</li>
+<li>M3 = Count of assets not covered by at least one aggregating
+    software</li>
+</ul>
+<h3 id="metrics_8">Metrics</h3>
+<h4 id="log-aggregating">Log Aggregating</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of log-producing assets covered by aggregating software</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="810-retain-audit-logs">8.10: Retain Audit Logs</h2>
+<p>Retain audit logs across enterprise assets for a minimum of 90 days.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Protect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_9">Dependencies</h3>
+<ul>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+<li>Safeguard 8.9: Centralize Audit Logs</li>
+</ul>
+<h3 id="inputs_9">Inputs</h3>
+<ol>
+<li><code>GV28</code>: Log Aggregating Software</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_9">Operations</h3>
+<ol>
+<li>
+<p>For each log aggregating software <code>GV28</code> use <code>GV3</code> to check configuration standards</p>
+<ol>
+<li>Identify and enumerate aggregating software configured to retain logs for 90 days or more (M2)</li>
+<li>Identify and enumerate aggregating software configured to retain logs for less than 90 days (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_9">Measures</h3>
+<ul>
+<li>M1 = Count of log aggregating software <code>GV28</code></li>
+<li>M2 = Count of aggregating software properly configured to retain
+    logs for 90 days or more</li>
+<li>M3 = Count of aggregating software configured to retain logs for less
+    than 90 days</li>
+</ul>
+<h3 id="metrics_9">Metrics</h3>
+<h4 id="compliance">Compliance</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of aggregating software properly configured to retain logs for 90 days or more</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="811-conduct-audit-log-reviews">8.11: Conduct Audit Log Reviews</h2>
+<p>Conduct reviews of audit logs to detect anomalies or abnormal events
+that could indicate a potential threat. Conduct reviews on a weekly, or
+more frequent, basis.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Detect</td>
+<td>2, 3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_10">Dependencies</h3>
+<ul>
+<li>None</li>
+</ul>
+<h3 id="inputs_10">Inputs</h3>
+<ol>
+<li>Timestamp for two consecutive log reviews</li>
+</ol>
+<h3 id="assumptions_2">Assumptions</h3>
+<p>Log reviews are conducted at regular and consistent intervals</p>
+<h3 id="operations_10">Operations</h3>
+<ol>
+<li>Compare each timestamp to determine the timeframe between log reviews in days (M1)</li>
+</ol>
+<h3 id="measures_10">Measures</h3>
+<ul>
+<li>M1 = Timeframe between log reviews</li>
+</ul>
+<h3 id="metrics_10">Metrics</h3>
+<ul>
+<li>If M1 is greater than seven, this Safeguard is measured at a 0 and receives a failing score.</li>
+</ul>
+<hr />
+<h2 id="812-collect-service-provider-logs">8.12: Collect Service Provider Logs</h2>
+<p>Collect service provider logs, where supported. Example implementations
+include collecting authentication and authorization events, data
+creation and disposal events, and user management events.</p>
+<table>
+<thead>
+<tr>
+<th>Asset Class</th>
+<th>Security Function</th>
+<th>Implementation Groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data</td>
+<td>Detect</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependencies_11">Dependencies</h3>
+<ul>
+<li>Safeguard 4.1: Establish and Maintain a Secure Configuration Process</li>
+<li>Safeguard 15.1: Establish and Maintain an Inventory of Service
+    Providers</li>
+</ul>
+<h3 id="inputs_11">Inputs</h3>
+<ol>
+<li><code>GV29</code>: Inventory of Service Providers</li>
+<li><code>GV3</code>: Configuration Standard</li>
+</ol>
+<h3 id="operations_11">Operations</h3>
+<ol>
+<li>
+<p>For each service provided in <code>GV29</code> identify and enumerate service providers that support logging (M1)</p>
+</li>
+<li>
+<p>Use service provider identified in Operation 1, use <code>GV3</code> to check configurations</p>
+<ol>
+<li>Identify and enumerate service providers properly configured to collect logs (M2)</li>
+<li>Identify and enumerate service providers not properly configured to collect logs (M3)</li>
+</ol>
+</li>
+</ol>
+<h3 id="measures_11">Measures</h3>
+<ul>
+<li>M1 = Count of service providers that support logging</li>
+<li>M2 = Count of service providers configured to collect logs</li>
+<li>M3 = Count of service providers not configured to collect logs</li>
+</ul>
+<h3 id="metrics_11">Metrics</h3>
+<h4 id="coverage_1">Coverage</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th>The percentage of service providers properly configured to collect logs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calculation</strong></td>
+<td><code>M2 / M1</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../Controls7/" class="btn btn-neutral float-left" title="CIS Control 7: Continuous Vulnerability Management"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../Controls9/" class="btn btn-neutral float-right" title="CIS Control 9: Email and Web Browser Protections">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

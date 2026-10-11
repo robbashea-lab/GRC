@@ -1,0 +1,272 @@
+- banner:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - searchbox
+  - generic: Ctrl K
+  - button:
+    - text: Brawndo
+    - generic: Open authorized client directory
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: B
+  - generic: Client
+  - generic: Brawndo
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG1
+    - link:
+      - /url: /risks
+      - generic: Risks
+      - generic: "1"
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG1
+  - heading [level=1]: CIS IG1
+  - button: Continue with 1.1
+  - region:
+    - generic: 3.6%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 15 controls · 56 IG1 safeguards
+    - term: Implemented
+    - definition:
+      - text: "2"
+      - generic: of 56
+    - term: Assessed
+    - definition:
+      - text: "2"
+      - generic: of 56
+    - button:
+      - text: Implemented
+      - strong: "2"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "54"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG1
+        - text: ›
+        - button: Control 1
+        - listitem: ›Safeguard 1.1
+    - textbox:
+      - /placeholder: Search by number or title…
+    - paragraph: Inventory and Control of Enterprise Assets
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+          - columnheader: Verification
+          - columnheader: Owner
+          - columnheader: Last assessed
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "1.1"
+            - generic: Establish and Maintain Detailed Enterprise Asset Inventory
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "1.2"
+            - generic: Address Unauthorized Assets
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+- region "Notifications alt+T"
+- dialog "Establish and Maintain Detailed Enterprise Asset Inventory":
+  - banner:
+    - navigation "CIS IG1 location":
+      - list:
+        - button "CIS IG1"
+        - text: ›
+        - button "Control 1"
+        - listitem: ›Safeguard 1.1
+    - heading "Establish and Maintain Detailed Enterprise Asset Inventory" [level=2]
+    - paragraph:
+      - generic: Safeguard assessment workspace
+    - generic "Saved implementation status":
+      - generic: Not Assessed
+    - generic "Saved verification": Not verified
+    - navigation "Assessment navigation":
+      - button "Previous" [disabled]
+      - generic: 1 of 56
+      - button "Next"
+  - tablist "Assessment sections":
+    - tab "Requirement & implementation" [selected]
+    - tab "Findings"
+  - tabpanel "Requirement & implementation":
+    - generic "Requirement summary"
+    - heading "What CIS requires" [level=3]
+    - paragraph: Official requirement · CIS v8.1 · Safeguard 1.1
+    - paragraph: "Establish and maintain an accurate, detailed, and up-to-date inventory of all enterprise assets with the potential to store or process data, to include: end-user devices (including portable and mobile), network devices, non-computing/IoT devices, and servers. Ensure the inventory records the network address (if static), hardware address, machine name, enterprise asset owner, department for each asset, and whether the asset has been approved to connect to the network. For mobile end-user devices, MDM type tools can support this process, where appropriate. This inventory includes assets connected to the infrastructure physically, virtually, remotely, and those within cloud environments. Additionally, it includes assets that are regularly connected to the enterprise’s network infrastructure, even if they are not under control of the enterprise. Review and update the inventory of all enterprise assets bi-annually, or more frequently."
+    - paragraph:
+      - strong: "Required operation / trigger:"
+      - text: Review and update the inventory at least every six months.
+    - link "Official CIS source":
+      - /url: https://cas.docs.cisecurity.org/en/latest/source/Controls1/#11-establish-and-maintain-detailed-enterprise-asset-inventory
+    - region "Implementation status section":
+      - heading "Implementation status" [level=3]
+      - group "Implementation status":
+        - generic: Implementation status
+        - radio "Implemented"
+        - generic: Implemented
+        - radio "Partially Implemented"
+        - generic: Partially Implemented
+        - radio "Not Implemented"
+        - generic: Not Implemented
+        - radio "Not Assessed" [checked]
+        - generic: Not Assessed
+        - radio "Not Applicable"
+        - generic: Not Applicable
+    - region "Current implementation section":
+      - heading "Current implementation" [level=3]
+      - generic: Current implementation
+      - textbox "Current implementation"
+    - generic "Assessment guidance & working checklist"
+  - button "Open Omnibot guide" [expanded]:
+  - generic: Gap identified
+  - dialog "Omnibot guide · Safeguard 1.1":
+    - button "Minimize Omnibot Guide":
+    - button "Expand Omnibot Guide":
+    - button "Close Omnibot Guide":
+    - heading "Omnibot guide · Safeguard 1.1" [level=2]
+    - paragraph: Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.
+    - alert: The saved assessment changed after this interview began. Compare its current implementation before continuing; your saved answers and history are retained.
+    - paragraph: No implementation narrative recorded.
+    - button "Compare & continue from saved assessment"
+    - generic "Question group 1 of 5":
+      - paragraph:
+        - strong: Question group 1 of 5
+        - generic: Inventory
+    - group "Inventory":
+      - generic: Inventory
+      - heading "Does an enterprise asset inventory exist?" [level=3]
+      - paragraph: Answer from current practice. Choose Not sure when this has not been confirmed.
+      - group "Does an enterprise asset inventory exist?":
+        - button "Yes"
+        - button "✓ Partially" [pressed]
+        - button "No"
+        - button "Not sure"
+      - generic: Where do you maintain your inventory?
+      - paragraph: Answer from current practice. Choose Not sure when this has not been confirmed.
+      - textbox "Where do you maintain your inventory?": SYNTHETIC STAGING QA b96af6e — fictional endpoint and network lists, not Brawndo facts
+      - generic: Do you use one inventory or combine several sources?
+      - paragraph: Answer from current practice. Choose Not sure when this has not been confirmed.
+      - combobox "Do you use one inventory or combine several sources?":
+        - option "Choose an answer"
+        - option "One source"
+        - option "Multiple reconciled sources"
+        - option "Multiple unreconciled sources" [selected]
+        - option "Not sure"
+      - generic: Which sources do you combine?
+      - paragraph: List each source and what it covers. Record anything still unknown.
+      - textbox "Which sources do you combine?": "SYNTHETIC QA: endpoint list covers laptops; network list covers routers. Their overlap is unconfirmed."
+      - generic: Who keeps it up to date?
+      - paragraph: Answer from current practice. Choose Not sure when this has not been confirmed.
+      - textbox "Who keeps it up to date?": Synthetic QA reviewer
+      - generic: Known gaps or uncertainties (optional)
+      - paragraph: Record anything missing, anything not yet confirmed, or who can help confirm it.
+      - textbox "Known gaps or uncertainties": "SYNTHETIC QA ONLY: confirm overlap; no real client assessment."
+    - button "Back" [disabled]
+    - button "Save & next"
+    - button "Save & close"
+    - button "Review interview history"
+    - paragraph: Saved interview snapshots for your account. Earlier records may lack lineage or structured output; no retention policy was changed.
+    - generic "Revision 133 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T19:29:03.114266+00:00"
+    - generic "Revision 127 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T19:28:29.468296+00:00"
+    - generic "Revision 126 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T19:28:06.106620+00:00"
+    - generic "Revision 125 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T19:27:58.538607+00:00"
+    - generic "Revision 120 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T19:27:09.551849+00:00"
+    - generic "Revision 119 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T19:27:02.577198+00:00"
+    - generic "Revision 118 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T19:26:56.163190+00:00"
+    - generic "Revision 112 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T18:35:44.091026+00:00"
+    - generic "Revision 111 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T18:35:25.568020+00:00"
+    - generic "Revision 110 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T18:35:18.998664+00:00"
+    - generic "Revision 105 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T18:34:39.992242+00:00"
+    - generic "Revision 104 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T18:34:35.410248+00:00"
+    - generic "Revision 103 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T18:34:30.683002+00:00"
+    - generic "Revision 102 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T18:33:51.737368+00:00"
+    - generic "Revision 96 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T17:11:58.083315+00:00"
+    - generic "Revision 95 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T17:11:46.025288+00:00"
+    - generic "Revision 87 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T13:39:28.307816+00:00"
+    - generic "Revision 83 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T13:36:44.261019+00:00"
+    - generic "Revision 68 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T13:12:03.322583+00:00"
+    - generic "Revision 64 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T13:08:50.563591+00:00"
+    - generic "Revision 60 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T13:07:34.442777+00:00"
+    - generic "Revision 56 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T12:22:57.062095+00:00"
+    - generic "Revision 53 · cis-v8.1-control1-3 · Interview checkpoint · 2026-10-09T12:21:54.338014+00:00"
+    - generic "Revision 52 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T12:21:15.367682+00:00"
+    - generic "Revision 48 · cis-v8.1-control1-3 · Completed interview · 2026-10-09T12:19:33.374924+00:00"
+    - button "Load earlier interviews"
+  - contentinfo:
+    - status: Changes remain in your draft until saved.
+    - button "Save assessment"
+    - button "Save & next"
+  - button "Close":
+    - generic: Close

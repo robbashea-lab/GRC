@@ -1,0 +1,40 @@
+{
+  "capturedAt": "2026-10-10T16:51:44.841Z",
+  "pr": {
+    "url": "https://github.com/robbashea-lab/GRC/pull/65",
+    "number": 65,
+    "state": "open",
+    "draft": true,
+    "merged": false,
+    "head": "codex/login-cis-closeout",
+    "head_sha": "6a4c0c7612195605c39d3285bf11c2560e15d74e",
+    "base": "main",
+    "base_sha": "911706cebc7a70c0443f500fcd4bc19260c1db60",
+    "synthetic_merge_commit_sha": "3ce94d7b30e4a04bb8e5a0043e77151be15c9cb8"
+  },
+  "workflow_runs": [
+    {
+      "id": 38065883834,
+      "name": "Release verification",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 129,
+      "jobs_url": "https://api.github.com/repos/robbashea-lab/GRC/actions/runs/38065883834/jobs",
+      "logs_url": "https://api.github.com/repos/robbashea-lab/GRC/actions/runs/38065883834/logs",
+      "workflow_id": 375724489
+    }
+  ],
+  "coordination_latest": [
+    {
+      "id": 6099129742,
+      "url": "https://github.com/robbashea-lab/GRC/pull/57#issuecomment-6099129742",
+      "body": "Human-authorized comprehensive CIS QA extension continues on combined PR #65, head4f73e0cf3180e4b91de6518427b5bbb23ffccb1f, unchanged tested/deployed runtimeb90a327d1b3afd2f352d4fdb7933ab0133cd39e0. Renderdep-db53ifrrjlhs73ca0ht0 directly remains Live with fullb90source. Root retains sole staging/deployment/browser ownership; separate source/content, evaluator and workflow review agents use isolated checkouts with no shared-browser/deployment actions. Existing153 reviews/local339/hosted339/native54 observation evidence retained; additional meaningful missing paths and source-backed defects will be investigated. CI128 currently frontend-running/backend-success, not yet claimed passed. Login/approved visuals/excludedframeworks frozen. User away: no credentials requests or account/role/membership/owner changes; prepare existing verifiedContributor temporary-access proposal only and retain active QA—CISIG2 for pending denial tests. No redeployment solely for documentation, main merge, production/Sites/settings/security/reset authority. Disposition remains Deployed for validation — final acceptance pending."
+    },
+    {
+      "id": 6099542217,
+      "url": "https://github.com/robbashea-lab/GRC/pull/57#issuecomment-6099542217",
+      "body": "Comprehensive CIS QA correction candidate is frozen on PR #65 at 6a4c0c7612195605c39d3285bf11c2560e15d74e (tree c08a2390f75457c2147b430788658ec4679e69f9). Root remains the sole staging and authenticated-browser coordinator. Fresh Render inspection still shows b90a327d1b3afd2f352d4fdb7933ab0133cd39e0 Live / dep-db53ifrrjlhs73ca0ht0; no other owner's deployment is being replaced.\n\nCI128 completed successfully. Exact correction CI129/run38065883834 is running; backend offline/disposable-Mongo jobs passed, frontend and release gate remain pending. Both local build configurations passed. Independent frozen-diff/source review found no material code/content blocker; 4,280 focused tests and 18 independent correction/version checks passed. All153 fresh source/question reviews and 9,653 baseline decision scenarios are separately recorded. Original17.5 authored rejection cases remain explicitly program3 compatibility evidence; current program4 source condition has dedicated tests.\n\nOnly three runtime entries changed: selective additive17.5 catalog, versioned frontend catalog/mapping/required-uncertainty instructions, and matching backend catalog composition. No evaluator scoring policy, Login, appearance, authentication, excluded framework, settings or dependency change. Hosted isolated-design extension adds22 normal native-write/refresh representatives on b90, bringing the original25 designs to represented coverage with retained earlier1.1/15.3/15.5 evidence; corrected17.5 hosted upgrade remains pending deployment.\n\nActual restricted target was freshly rechecked: bec984b1-client_contributor-verified@example.com is Disabled / Client Contributor / zero memberships; all available restricted accounts are Disabled. User is away, so no account/access changes or credential requests. Keep QA—CIS IG2 active. Deployment will occur only after required correction gates pass, on existing staging service only. Release remains Deployed for validation — final acceptance pending."
+    }
+  ],
+  "interpretation": "Fresh pre-evidence-commit recheck. No competing deployment ownership change in PR57 latest coordination. This is not another hosted browser observation."
+}

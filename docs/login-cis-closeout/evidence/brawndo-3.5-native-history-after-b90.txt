@@ -1,0 +1,32 @@
+Browser tab: 62, Title: "Omnisciente | Prestige Worldwide", URL: "https://omnisciente-staging.onrender.com/compliance/cis-ig1".
+1 AXWebArea Omnisciente | Prestige Worldwide, URL: omnisciente-staging.onrender.com/compliance/cis-ig1
+	2 container
+		3 container Notifications alt+T
+		4 container 3.5 · Securely Dispose of Data, ID: radix-:rs:
+			5 button Close
+			6 heading 3.5 · Securely Dispose of Data, Value: 2, ID: radix-:rt:
+				7 text 3.5  ·  Securely Dispose of Data
+			8 container radix-:ru:
+				9 text CIS Controls v8.1  ·  3.5
+			12 container
+				13 text Assessment Owner
+				14 pop up button (collapsed) Description: Assessment Owner, Secondary Actions: Expand
+				15 text Only active platform users with access to this client can be assigned. Contacts alone are not eligible.
+				16 link Description: Manage people in a new tab, Value: omnisciente-staging.onrender.com/contacts
+				17 button (disabled) Save owner
+			18 container
+				19 button (expanded) View History, Secondary Actions: Collapse
+					20 text View History
+				21 text Assessment history ·  2
+				22 content list
+					23 container
+						24 text Implemented  ·  2026-10-08 Staging Administrator The organization reports implementation of “Securely Dispose of Data”. Reported operation: SYNTHETIC PR58 PILOT 20261008 REASSESSMENT: all material disposal elements are reported addressed for this isolated synthetic scenario; this is not verified real operation. Source: guided-assessment pilot ·  cis-v8.1-program-2  · generated  2026-10-08T16:16:54.261964+00:00  · reviewer-approved draft Verification:  Not verified
+					25 container
+						26 text Partially Implemented  ·  2026-10-08 Staging Administrator The organization reports partial implementation of securely dispose of data. Reported operation: SYNTHETIC PR58 PILOT 20261008: disposal process follows a synthetic documented method; sensitivity validation remains partial. No real operational claim. Maintained using: SYNTHETIC PR58 PILOT 20261008 isolated disposal process.. Material limitations remain; review the confirmed gaps and items requiring verification. Source: guided-assessment pilot ·  cis-v8.1-program-2  · generated  2026-10-08T16:12:53.406300+00:00  · reviewer-approved draft Verification:  Not verified
+				27 heading Activity, Value: 4
+					28 text Activity
+				29 text Framework assessment updated  ·  2026-10-08T16:17:26.083058+00:00  ·  Staging Administrator Finding raised  ·  2026-10-08T16:13:30.501276+00:00  ·  Staging Administrator Framework assessment updated  ·  2026-10-08T16:13:05.941018+00:00  ·  Staging Administrator
+			30 link Description: Reviews, Value: omnisciente-staging.onrender.com/reviews?client_id=cli_60dee41ebbcd0e39b8bff87da17aee838ac50ecd799cb955f99d921eb6be4b20&framework_key=cis-ig1&framework_assessment=fw_b4a32e7631ed5c1d9c67a415ebd226c2
+			11 button Close
+
+The focused UI element is 19 button (expanded) View History, Secondary Actions: Collapse

@@ -1,0 +1,69 @@
+{
+  "actualAuth": {
+    "time": "2026-10-10T14:29:18.492Z",
+    "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+    "actualLogout": true,
+    "normalReturnSignIn": true,
+    "url": "https://omnisciente-staging.onrender.com/clients",
+    "actor": "SA\nStaging Administrator\nSUPER ADMIN",
+    "credentialHandling": "Submitted normal form already filled by existing browser credentials; password/token not inspected, read or extracted",
+    "loginLayers": {
+      "character": 0,
+      "education": 0,
+      "root": 0,
+      "speech": 0
+    },
+    "mfa": "No challenge was presented; configured MFA preservation is source/test evidence, not hosted challenge proof"
+  },
+  "resumes": [
+    {
+      "group": 1,
+      "client": "OmniBot QA — Closeout CIS IG1",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_06ff0298befa59b59c2c197e42c1f4cb",
+      "summaryExact": true,
+      "reviewAnswers": {
+        "frequency": "Every six months",
+        "lastReview": "2026-10-10"
+      },
+      "rootAnswers": [
+        "Yes"
+      ]
+    },
+    {
+      "group": 2,
+      "client": "OmniBot QA — CIS IG2",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_75ac9de19b9f52be8b6799d129efbc5d",
+      "summaryExact": true,
+      "requiredAnswers": [
+        {
+          "label": "Service providers are classified.",
+          "value": "Yes"
+        },
+        {
+          "label": "Classifications are updated and reviewed.",
+          "value": "Yes"
+        },
+        {
+          "label": "Review and updates occur annually and when significant changes could affect the safeguard.",
+          "value": "Yes"
+        }
+      ]
+    },
+    {
+      "group": 3,
+      "client": "OmniBot QA — Closeout CIS IG3",
+      "url": "https://omnisciente-staging.onrender.com/compliance/cis-ig1?assessment=fw_54c3a69230de5e2ab266c0466dd1f99e",
+      "summaryExact": true,
+      "requiredAnswers": [
+        {
+          "label": "Service providers are assessed consistently with the provider-management policy.",
+          "value": "Yes"
+        },
+        {
+          "label": "Providers are reassessed annually at minimum, or with new and renewed contracts.",
+          "value": "Yes"
+        }
+      ]
+    }
+  ]
+}

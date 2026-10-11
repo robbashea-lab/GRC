@@ -1,0 +1,53 @@
+/* Only the trusted, focused pilot receives the approved Omni presentation. */
+.omni-refined { --omni-panel:#172b40; --omni-ink:#e9f1fb; --omni-muted:#adc1d6; --omni-line:#385269; }
+.omni-refined .omni-refined-window.guided-panel { background:var(--omni-panel); color:var(--omni-ink); border-color:#629ec8; border-radius:16px; overflow:hidden; font-family:Arial,'Segoe UI',sans-serif; }
+.omni-refined .omni-refined-window .omni-panel-header { min-height:88px; padding:14px 18px; gap:14px; background:linear-gradient(112deg,#1b3e58,#11273c 63%,#0c1d31); border-bottom:1px solid #28445b; }
+.omni-refined .omni-refined-window .omni-panel-header .omni-character { width:62px; height:58px; }
+.omni-refined .omni-refined-window .omni-panel-header>div { padding:0 110px 0 0; }
+.omni-refined .omni-refined-window .omni-panel-header h2 { font-size:17px; line-height:1.4; padding:0; }
+.omni-refined .omni-refined-window .guided-panel-body { padding:26px; font-size:13px; line-height:1.6; overscroll-behavior:contain; }
+.omni-refined .omni-refined-window>[id$='-description'] { position:absolute; padding:0; }
+.omni-refined .guided-context-prompt { width:306px; max-width:calc(100vw - 16px); padding:17px 38px 18px 18px; border:1px solid #648fae; border-radius:12px; background:linear-gradient(130deg,#1b354b,#13263a); color:#f1f6fd; font-size:13px; line-height:1.6; box-shadow:0 14px 42px #0005; }
+.omni-refined .omni-invitation-x { position:absolute; right:8px; top:8px; width:28px; height:28px; border-radius:5px; font-size:21px; display:grid; place-items:center; }
+.omni-refined .omni-invitation-x:hover { background:#ffffff10; }
+.omni-refined .omni-intro-label { color:#89cffb; text-transform:uppercase; letter-spacing:1.6px; font-size:10px; font-weight:700; }
+.omni-refined .guided-panel-body>h3 { font-size:23px; line-height:1.3; }
+.omni-refined .omni-recommendations { display:flex; flex-direction:column; gap:14px; margin-top:25px; }
+.omni-refined .omni-recommendation { padding:20px; border:1px solid #35506a; border-radius:11px; background:linear-gradient(125deg,#1c344c,#162b41); }
+.omni-refined .omni-recommendation h4 { font-size:16px; font-weight:600; line-height:1.4; }
+.omni-refined .omni-recommendation ul { margin:12px 0 19px; color:#bbcee0; padding-left:18px; }
+.omni-refined .omni-recommendation>button { width:100%; margin-top:10px; }
+.omni-refined .omni-safeguard-id { color:#84c8f5; font-size:12px; margin-bottom:6px; }
+.omni-refined .omni-status-badge { display:inline-flex; padding:4px 9px; margin-top:15px; border:1px solid #54758f55; border-radius:6px; background:#33465b66; color:#b4c8dc; font-size:11px; font-weight:600; }
+.omni-refined .omni-status-badge:is(.needs_attention,.in_progress) { color:#f5ce70; background:#5b421b6b; border-color:#9b72233f; }
+.omni-refined .omni-status-badge.addressed { color:#77e2b7; background:#155c484d; border-color:#3c936777; }
+.omni-refined .omni-group-progress>p { display:flex; justify-content:space-between; gap:12px; margin-bottom:11px; font-size:12px; }
+.omni-refined .omni-group-progress>p>span { color:#8ecfff; }
+.omni-refined .omni-group-progress>div { display:flex; gap:7px; margin-bottom:28px; }
+.omni-refined .omni-group-progress>div>span { height:4px; flex:1; border-radius:4px; background:#344b62; }
+.omni-refined .omni-group-progress .current { background:#54beff; }.omni-refined .omni-group-progress .done { background:#1d86ec; }
+.omni-refined .omni-refined-window .guided-panel-body .omni-question-group { border:0; padding:0; background:transparent; }
+.omni-refined .omni-question>h3 { font-size:24px; line-height:1.28; margin-bottom:12px; }
+.omni-refined .omni-question+.omni-question { margin-top:22px; }
+.omni-refined .omni-help { color:var(--omni-muted); font-size:12px; line-height:1.6; margin:8px 0 12px; }
+.omni-refined .omni-answer-choices { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:15px 0 22px; }
+.omni-refined .omni-answer-choices button { padding:11px 4px; border:1px solid #47617c; border-radius:7px; color:#cadbef; background:#12243a; min-height:43px; }
+.omni-refined .omni-answer-choices button[aria-pressed=true] { color:white; background:#076edc; border-color:#55b6ff; }
+.omni-refined .omni-answer-choices button[aria-pressed=true]::before { content:'✓ '; }
+.omni-refined .omni-refined-window.guided-panel .guided-panel-body :is(textarea,input[type=date],select) { width:100%; color:var(--omni-ink); background:#102237; border:1px solid #41607b; border-radius:7px; padding:11px 12px; font-size:13px; line-height:1.6; }
+.omni-refined .omni-refined-window textarea { min-height:90px; resize:vertical; }
+.omni-refined .omni-refined-window.guided-panel .guided-panel-body label { color:var(--omni-ink); font-weight:600; }.omni-refined .omni-refined-window label small { font-weight:400; color:var(--omni-muted); }
+.omni-refined .omni-matrix { border:1px solid #36516a; border-radius:9px; overflow:hidden; margin:18px 0; }
+.omni-refined .omni-matrix label { display:grid; grid-template-columns:minmax(0,1fr) 150px; align-items:center; gap:13px; padding:12px 13px; margin:0; border-bottom:1px solid #304b63; font-weight:400; }
+.omni-refined .omni-matrix label:last-child { border:0; }.omni-refined .omni-matrix select { padding:6px 8px; }
+.omni-refined .omni-source-detail,.omni-refined .omni-context-note { padding:14px; border:1px solid #47738d; border-radius:8px; margin:18px 0; background:#163249; }
+.omni-refined .omni-known-gaps { border-top:1px solid #314c63; margin-top:22px; padding-top:17px; }
+.omni-refined .omni-refined-window .guided-panel-body { padding-bottom:100px; }
+.omni-refined .omni-action-bar { position:absolute; bottom:0; left:0; right:0; display:flex; gap:9px; margin:0; padding:17px 24px; background:#13263a; border-top:1px solid #355169; }
+.omni-refined .omni-action-bar>button:first-child { margin-right:auto; }
+.omni-refined .omni-summary-status { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:11px 13px; border:1px solid #36526d; border-radius:8px; }
+.omni-refined .omni-summary-status .omni-status-badge { margin:0; }
+.omni-refined-close.ui-dialog[data-state][role=dialog] { background:#172b40; color:#e9f1fb; border-color:#648fae; }
+.omni-refined-close p { color:#adc1d6; }
+.omni-refined :is(button,input,textarea,select,[tabindex]):focus-visible { outline:2px solid #7ed8ff; outline-offset:3px; }
+@media(max-width:650px) { .omni-refined .omni-refined-window .guided-panel-body { padding:18px 18px 100px; }.omni-refined .omni-action-bar { bottom:0; margin:0; padding:14px 12px; }.omni-refined .omni-matrix label { grid-template-columns:minmax(0,1fr) 120px; }.omni-refined .omni-refined-window .omni-panel-header { padding:12px; }.omni-refined .omni-refined-window .omni-panel-header h2 { font-size:15px; }.omni-refined .omni-action-bar button { padding:0 9px; font-size:12px; } }

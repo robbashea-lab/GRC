@@ -1,0 +1,654 @@
+- banner:
+  - button:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - navigation:
+    - link:
+      - /url: /clients
+      - generic: Portfolio
+    - generic: Clients
+    - button [pressed]: All
+    - button: Mine
+    - textbox:
+      - /placeholder: Search clients…
+    - button:
+      - generic: B
+    - button:
+      - generic: H
+    - button:
+      - generic: I
+    - button:
+      - generic: O
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - button:
+      - generic: S
+    - generic: Administration
+    - link:
+      - /url: /admin/clients
+      - generic: Client Management
+    - link:
+      - /url: /admin/users
+      - generic: Users & Access
+    - link:
+      - /url: /admin/roles
+      - generic: Roles & Permissions
+    - link:
+      - /url: /admin/security
+      - generic: Security & Auth
+    - link:
+      - /url: /admin/audit
+      - generic: Audit Log
+- main:
+  - paragraph: Administration
+  - heading [level=1]: Audit Log
+  - paragraph: Application audit records are append-only through the Omnisciente interface.
+  - combobox:
+    - generic: OmniBot QA — Closeout CIS IG3
+  - combobox:
+    - generic: All users
+  - combobox:
+    - generic: All actions
+  - combobox:
+    - generic: All entities
+  - combobox:
+    - generic: Last 30 days
+  - textbox:
+    - /placeholder: Search action, entity, user, record…
+  - button:
+    - text: Export CSV
+  - button:
+    - text: Clear filters
+  - generic: "Filters:"
+  - button:
+    - text: "Date / Time: Last 30 days"
+  - button:
+    - text: "Client: OmniBot QA — Closeout CIS IG3"
+  - button: Clear all
+  - generic: 39 events · Page 1 of 1
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader:
+          - button:
+            - text: Date / Time
+        - columnheader:
+          - button:
+            - text: Client
+        - columnheader:
+          - button:
+            - text: User
+        - columnheader:
+          - button:
+            - text: Action
+        - columnheader:
+          - button:
+            - text: Entity
+        - columnheader: Record
+        - columnheader
+    - rowgroup:
+      - row:
+        - cell: 10/10/2026, 12:53:36 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Archive
+        - cell: Client
+        - cell:
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:53:36 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Updated
+        - cell: Client
+        - cell:
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:34:55 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_ccf6cabb168256a59b052bcf6765bada
+          - generic: fw_ccf6cabb168256a59b052bcf6765bada
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:32:01 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_a563419bf3275395990e2a3a99a60eee
+          - generic: fw_a563419bf3275395990e2a3a99a60eee
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:06:57 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_a563419bf3275395990e2a3a99a60eee
+          - generic: fw_a563419bf3275395990e2a3a99a60eee
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:06:43 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_77d236deb793581a9c76e71b31396db2
+          - generic: fw_77d236deb793581a9c76e71b31396db2
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:06:08 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_c19c7f8d120b5773a3e16b23979575fc
+          - generic: fw_c19c7f8d120b5773a3e16b23979575fc
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:05:55 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_a5e8ebfd63cf5f44b15b630f7e38a8c2
+          - generic: fw_a5e8ebfd63cf5f44b15b630f7e38a8c2
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:05:39 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_ea8471b1161f546db007610eb5e5e0dd
+          - generic: fw_ea8471b1161f546db007610eb5e5e0dd
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:04:29 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_6e721131a048572c8406f1960453c8c9
+          - generic: fw_6e721131a048572c8406f1960453c8c9
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:04:18 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_56300ded1088558f9f5f4a5fa94f7c87
+          - generic: fw_56300ded1088558f9f5f4a5fa94f7c87
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:03:17 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_21eda6f2c43655fa8d6bd54a12b66e15
+          - generic: fw_21eda6f2c43655fa8d6bd54a12b66e15
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:03:05 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_c39f1ce703105276ab7352d735dbff19
+          - generic: fw_c39f1ce703105276ab7352d735dbff19
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:01:56 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_252d43d6aabd562e8d93b4215de48c0f
+          - generic: fw_252d43d6aabd562e8d93b4215de48c0f
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:01:44 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_a7634bf60f58567492403d4ae6833bba
+          - generic: fw_a7634bf60f58567492403d4ae6833bba
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:01:30 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_895276b8347b55f7aabe59776af0bba4
+          - generic: fw_895276b8347b55f7aabe59776af0bba4
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 12:01:19 PM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_8d9eba1d5fdd5236a0a6e60f01d176e5
+          - generic: fw_8d9eba1d5fdd5236a0a6e60f01d176e5
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:58:10 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_915fafb6539d58e4a12ba7f3490c56a6
+          - generic: fw_915fafb6539d58e4a12ba7f3490c56a6
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:57:59 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_dbadb2b37de95a6b8289758cea3eb111
+          - generic: fw_dbadb2b37de95a6b8289758cea3eb111
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:57:06 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_1cc9030731b0582ab0c8cf2e49a0dc95
+          - generic: fw_1cc9030731b0582ab0c8cf2e49a0dc95
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:56:57 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_1d5f0e519a285253a9f69e4d4add6d8a
+          - generic: fw_1d5f0e519a285253a9f69e4d4add6d8a
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:56:01 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_e84c037beab653fbbb7257d33752e64a
+          - generic: fw_e84c037beab653fbbb7257d33752e64a
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:54:07 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_6f52e4efb56e57eeb03429314abc16fb
+          - generic: fw_6f52e4efb56e57eeb03429314abc16fb
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:53:06 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_cce5ced6b7245f5392b1c96f3c64f325
+          - generic: fw_cce5ced6b7245f5392b1c96f3c64f325
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:51:54 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_6c4a5670c9165f78aa4fb8232e1989bd
+          - generic: fw_6c4a5670c9165f78aa4fb8232e1989bd
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:39:36 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_c6532ed48f2359a7878f49554a0df5b5
+          - generic: fw_c6532ed48f2359a7878f49554a0df5b5
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:35:59 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Restore
+        - cell: Client
+        - cell:
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 11:35:59 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Updated
+        - cell: Client
+        - cell:
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 10:45:21 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Archive
+        - cell: Client
+        - cell:
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 10:45:21 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Updated
+        - cell: Client
+        - cell:
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 10:21:18 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 10:20:44 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 10:20:22 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 10:20:01 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 10:19:41 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 10:19:22 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 10:19:01 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Framework Assessment Updated
+        - cell: Framework Assessment
+        - cell:
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+          - generic: fw_54c3a69230de5e2ab266c0466dd1f99e
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 8:50:35 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Onboarding Completed
+        - cell: Client
+        - cell:
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell:
+          - button: View
+      - row:
+        - cell: 10/10/2026, 8:49:03 AM
+        - cell: OmniBot QA — Closeout CIS IG3
+        - cell:
+          - generic: Staging Administrator
+          - generic: staging-admin@example.com
+        - cell: Created
+        - cell: Client
+        - cell:
+          - generic: OmniBot QA — Closeout CIS IG3
+          - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+        - cell:
+          - button: View
+  - generic: Showing 1–39 of 39
+  - button [disabled]:
+    - text: Prev
+  - generic: 1 / 1
+  - button [disabled]:
+    - text: Next
+- region "Notifications alt+T"
+- dialog "Archive":
+  - button "Close" [active]:
+    - generic: Close
+  - heading "Archive" [level=2]
+  - paragraph: Detailed record of a single audit event, including tenant, actor, and change payload.
+  - generic: Event
+  - generic: Archive
+  - generic: Raw code
+  - generic: archive
+  - generic: Outcome
+  - generic: success
+  - generic: Date / Time
+  - generic: 10/10/2026, 12:53:36 PM
+  - generic: Client
+  - generic: OmniBot QA — Closeout CIS IG3
+  - generic: Client ID
+  - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+  - generic: Performed by
+  - text: Staging Administrator
+  - generic: staging-admin@example.com
+  - generic: Entity
+  - generic: Client
+  - generic: Entity ID
+  - generic: cli_9846e21d942436eca2be79c365f2c52d154a41b97608ba302b5fc65fa7cc9ca7
+  - generic: Entity name
+  - generic: OmniBot QA — Closeout CIS IG3
+  - generic: Previous value
+  - generic: "\"active\""
+  - generic: New value
+  - generic: "\"archived\""

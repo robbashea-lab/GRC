@@ -1,0 +1,19 @@
+{
+  "source": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "deployment": "dep-db53ifrrjlhs73ca0ht0",
+  "actor": "Staging Administrator",
+  "role": "super_admin",
+  "normalSignInSubmitted": true,
+  "credentialContentsRead": false,
+  "MFAChallengeObserved": false,
+  "entry": {
+    "character": 0,
+    "education": 0,
+    "headings": [
+      "Client Portfolio"
+    ],
+    "loginRoot": 0,
+    "loginSpeech": 0,
+    "url": "https://omnisciente-staging.onrender.com/clients"
+  }
+}

@@ -1,0 +1,200 @@
+- banner:
+  - button:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: O
+  - generic: Client
+  - generic: OmniBot QA — CIS IG2
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG2
+    - link:
+      - /url: /risks
+      - generic: Risks
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG2
+  - heading [level=1]: CIS IG2
+  - button: Continue with 15.1
+  - region:
+    - generic: 0.8%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 18 controls · 130 IG2 safeguards
+    - term: Implemented
+    - definition:
+      - text: "1"
+      - generic: of 130
+    - term: Assessed
+    - definition:
+      - text: "1"
+      - generic: of 130
+    - button:
+      - text: Implemented
+      - strong: "1"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "129"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG2
+        - text: ›
+        - button: Control 15
+        - listitem: ›Safeguard 15.1
+    - textbox:
+      - /placeholder: Search by number or title…
+    - checkbox
+    - text: Added in IG2 only · display filter; full program totals unchanged
+    - paragraph: Service Provider Management
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "15.1"
+            - text: Establish and Maintain an Inventory of Service Providers
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "15.2"
+            - text: Establish and Maintain a Service Provider Management Policy
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+        - link:
+          - cell:
+            - generic: "15.3"
+            - text: Classify Service Providers
+            - generic: Added in IG2
+          - cell:
+            - generic: Implemented
+        - link:
+          - cell:
+            - generic: "15.4"
+            - text: Ensure Service Provider Contracts Include Security Requirements
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+- region "Notifications alt+T"
+- dialog "Establish and Maintain an Inventory of Service Providers":
+  - banner:
+    - navigation "CIS IG2 location":
+      - list:
+        - button "CIS IG2"
+        - text: ›
+        - button "Control 15"
+        - listitem: ›Safeguard 15.1
+    - heading "Establish and Maintain an Inventory of Service Providers" [active] [level=2]
+    - paragraph:
+      - generic: Safeguard assessment workspace
+    - generic "Saved implementation status":
+      - generic: Not Assessed
+    - generic "Saved verification": Not verified
+    - navigation "Assessment navigation":
+      - button "Previous"
+      - generic: 105 of 130
+      - button "Next"
+  - tablist "Assessment sections":
+    - tab "Requirement & implementation" [selected]
+    - tab "Findings"
+  - tabpanel "Requirement & implementation":
+    - generic "Requirement summary"
+    - heading "What CIS requires" [level=3]
+    - paragraph: Official requirement · CIS v8.1 · Safeguard 15.1
+    - paragraph: Establish and maintain an inventory of service providers. The inventory is to list all known service providers, include classification(s), and designate an enterprise contact for each service provider. Review and update the inventory annually, or when significant enterprise changes occur that could impact this Safeguard.
+    - paragraph:
+      - strong: "Required operation / trigger:"
+      - text: Review and update the provider inventory annually, or when significant enterprise changes could affect this safeguard.
+    - link "Official CIS source":
+      - /url: https://cas.docs.cisecurity.org/en/latest/source/Controls15/#151-establish-and-maintain-an-inventory-of-service-providers
+    - region "Implementation status section":
+      - heading "Implementation status" [level=3]
+      - group "Implementation status":
+        - generic: Implementation status
+        - radio "Implemented"
+        - generic: Implemented
+        - radio "Partially Implemented"
+        - generic: Partially Implemented
+        - radio "Not Implemented"
+        - generic: Not Implemented
+        - radio "Not Assessed" [checked]
+        - generic: Not Assessed
+        - radio "Not Applicable"
+        - generic: Not Applicable
+    - region "Current implementation section":
+      - heading "Current implementation" [level=3]
+      - generic: Current implementation
+      - textbox "Current implementation"
+    - generic "Assessment guidance & working checklist"
+  - button "Open Omnibot guide":
+  - complementary "Omnibot invitation":
+    - paragraph: Let’s work through Safeguard 15.1 together. I’ll ask about your current practices and help you prepare an implementation summary for your review.
+    - button "Close invitation": ×
+  - generic: Omnibot is available
+  - contentinfo:
+    - status: Changes remain in your draft until saved.
+    - button "Save assessment"
+    - button "Save & next"
+  - button "Close":
+    - generic: Close

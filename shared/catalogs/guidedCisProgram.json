@@ -1,8 +1,8 @@
 {
-  "version": "cis-v8.1-program-2",
+  "version": "cis-v8.1-program-3",
   "framework_id": "cis-ig1",
   "framework_version": "8.1",
-  "reviewed_on": "2026-10-07",
+  "reviewed_on": "2026-10-09",
   "criteria_revision": "2026-10-05",
   "guidance_revision": "2026-10-04",
   "basis": "Authored safeguard assessment criteria; CIS v8.1 requirements, not CAS metrics. Evidence examples and optional context do not impose additional obligations.",
@@ -1875,8 +1875,8 @@
       "elements": [
         {
           "id": "8.4-c3",
-          "text": "Time synchronization is standardized across enterprise assets where supported.",
-          "conditional": true
+          "text": "Time synchronization is standardized.",
+          "conditional": false
         },
         {
           "id": "8.4-c4",
@@ -3607,7 +3607,7 @@
       ],
       "root": "practice",
       "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/#155-assess-service-providers",
-      "guidance": "Assess providers under the provider-management policy; reassess at least annually and address new or renewed contracts.",
+      "guidance": "Assess providers according to the provider-management policy; reassess annually, at a minimum, or with new and renewed contracts.",
       "evidence": [
         "Provider register/classification, dated assessment result, contract-event record, linked follow-up.",
         "Relevant existing records or equivalent support may be linked; these examples are not mandatory files."
@@ -4046,6 +4046,11 @@
         {
           "id": "16.9-c3",
           "text": "Training occurs at least annually and promotes security within the development team.",
+          "conditional": false
+        },
+        {
+          "id": "16.9-guided-security-culture",
+          "text": "Training is designed to build a security culture among developers.",
           "conditional": false
         }
       ]

@@ -1246,15 +1246,15 @@
     },
     "11.1": {
       "review": [
-        "Review the documented recovery process for recovery scope, prioritization and backup-data security. Detailed backup procedures can support this review but are not a separate requirement in this safeguard.",
+        "Review the documented recovery process for recovery scope, prioritization, detailed backup procedures and backup-data security.",
         "Confirm annual review/update and updates after significant changes affecting recovery. Keep this process requirement distinct from backup execution and recovery testing."
       ],
       "evidence": [
-        "Recovery procedures identifying scope, priorities and backup protection.",
+        "Recovery procedures identifying scope, priorities, detailed backup procedures and backup protection.",
         "Dated annual reviews and change-driven revisions."
       ],
       "outcome": [
-        "The documented data recovery process addresses recovery scope, prioritization and the security of backup data. Detailed backup procedures are optional supporting detail for this safeguard.",
+        "The documented data recovery process addresses recovery scope, prioritization, detailed backup procedures and the security of backup data.",
         "Documentation remains current through annual and significant-change review."
       ]
     },

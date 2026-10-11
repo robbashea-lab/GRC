@@ -1,0 +1,1384 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-10T15:09:03.8530308Z",
+  "testedAndDeployedRuntime": "b90a327d1b3afd2f352d4fdb7933ab0133cd39e0",
+  "runtimeTree": "6b4697296edb42d7ea4015282553f2cfcc99d42e",
+  "draftPr": 65,
+  "deployment": "dep-db53ifrrjlhs73ca0ht0",
+  "sourceDirectory": "outputs/login-cis-closeout",
+  "distinction": "Original/predeployment snapshots retain their historical state; final closeout handoff and ledger supersede only verified outcomes. Evidence commits are not a new runtime deployment.",
+  "textCopyNormalization": "Committed JSON/TXT copies use LF. Outer transcript line-end whitespace is trimmed in TXT copies only. JSON string values and original captures remain unchanged. localOriginals hashes refer to original bytes; committedEvidence hashes refer to portable copies.",
+  "localOriginals": [
+    {
+      "file": "actual-combined-login-entry-b90.json",
+      "bytes": 476,
+      "sha256": "a52f3d5ce549edf4be8759cc3ba4e1c0e16481b223c0020789034ca48914d612",
+      "committed": true
+    },
+    {
+      "file": "actual-combined-login-portfolio-b90.png",
+      "bytes": 89487,
+      "sha256": "bd32194c71d207a7cbf0136a4849a1a269683e7b91e6f577007dbdcb0527d049",
+      "committed": false
+    },
+    {
+      "file": "actual-logout-login-group-resumes-b90.json",
+      "bytes": 2275,
+      "sha256": "b41ada39918a76e5bd4038bae2d99936792da56a9742a229306c50536ca8438e",
+      "committed": true
+    },
+    {
+      "file": "actual-logout-login-handoff-b90.json",
+      "bytes": 316,
+      "sha256": "79c4b83d1144ded71bf9a4594ea9766fc10407154eefd812371d695fa0e66831",
+      "committed": false
+    },
+    {
+      "file": "actual-logout-login-handoff-b90.png",
+      "bytes": 129753,
+      "sha256": "4638df144d7ea5e78d9e377fc1cb624bae56a760b8fcd9897d554c84fa3c895c",
+      "committed": false
+    },
+    {
+      "file": "actual-logout-login-return-b90.json",
+      "bytes": 624,
+      "sha256": "af0619c2b031827f34d5ac86290665a3547efc6af87bb4d24aee3be62991d061",
+      "committed": true
+    },
+    {
+      "file": "actual-return-login-portfolio-b90.png",
+      "bytes": 27699,
+      "sha256": "c213d86cdba6ded951fb41a1f9a4d2a7dc118550835922b982cc3d492987bcdb",
+      "committed": false
+    },
+    {
+      "file": "brawndo-1.2-authorized-current-source-b90.png",
+      "bytes": 91317,
+      "sha256": "15a03c040c220dc88387562a489c1f6fb637982ebd1016190e5ddb2fa74b9fb1",
+      "committed": false
+    },
+    {
+      "file": "brawndo-1.2-authorized-exception-b90.json",
+      "bytes": 80601,
+      "sha256": "038c412a499610a2be60416e21adba3f8b6a95b47c858d2ad89b0bd806b34d4c",
+      "committed": true
+    },
+    {
+      "file": "brawndo-1.2-history-after-b90.txt",
+      "bytes": 10648,
+      "sha256": "78011e22b04ebde827f24aa35105fd7daadae5476d20e50260e55bb43f9557a8",
+      "committed": false
+    },
+    {
+      "file": "brawndo-1.2-history-before-b90.txt",
+      "bytes": 14862,
+      "sha256": "89ac3be1e42252dabece58b9eb77958a38c1e9e2f5eeb3858682e7a6f6dcf2a5",
+      "committed": false
+    },
+    {
+      "file": "brawndo-1.2-linked-findings-after-b90.txt",
+      "bytes": 2151,
+      "sha256": "8f89707cb9eee85b70288f23e2fcbfbf0c216e109e0dbdd584ffa2d451238628",
+      "committed": false
+    },
+    {
+      "file": "brawndo-1.2-native-before-b90.txt",
+      "bytes": 3995,
+      "sha256": "5eacd0c83073e6bc2a7dcda8d74dbc46967cb8c635ce02d959305f5710ff57e3",
+      "committed": false
+    },
+    {
+      "file": "brawndo-1.2-native-history-after-b90.txt",
+      "bytes": 25765,
+      "sha256": "6df708f0eb0f68e4c2cf204d38ec3936818e3a2197f6d724f1552cbf51633fea",
+      "committed": true
+    },
+    {
+      "file": "brawndo-1.2-native-history-before-b90.txt",
+      "bytes": 25765,
+      "sha256": "c87d6130ad6f54ab06f1783737fea792edd38bcc7d81e41c7404d941a54f34aa",
+      "committed": true
+    },
+    {
+      "file": "brawndo-1.2-preserved-historical-interview-b90.txt",
+      "bytes": 6715,
+      "sha256": "0e9112a104e11154c85f637ff22a115b239175c27633a000e09c0fd1696738a2",
+      "committed": false
+    },
+    {
+      "file": "brawndo-1.2-preserved-interview-before-b90.txt",
+      "bytes": 6715,
+      "sha256": "910ab438099cc01857559fbebc03b179547ad6894d97ba840f18bd6868cc3cf2",
+      "committed": false
+    },
+    {
+      "file": "brawndo-1.2-unanswered-current-source-b90.txt",
+      "bytes": 5427,
+      "sha256": "56e9135417c33c65777c8da70fa61a76088f4025cbb1e2662b4b851ad9790e11",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-authorized-after-refresh-b90.txt",
+      "bytes": 6660,
+      "sha256": "12cecc78d95dee099827c68348508f84d75a57b4aa1657817785bc36eb28e58d",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-authorized-before-b90.json",
+      "bytes": 3840,
+      "sha256": "f6ec46c19de65adb14b063d08f1bbcb9a90845adb07a7f8cf33ad7672fe78cba",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-authorized-exception-b90.json",
+      "bytes": 1420,
+      "sha256": "ec52be20396a44c6120aa8711817d26fae4647b0d9d7df9bf0607cdd11705492",
+      "committed": true
+    },
+    {
+      "file": "brawndo-3.5-authorized-new-review-b90.txt",
+      "bytes": 7476,
+      "sha256": "1af0cd075b864db04467b0ce168e092e2397d61eebac198db89b469d04e03f97",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-compatibility-interlock-b90.txt",
+      "bytes": 6283,
+      "sha256": "58f7458ac10a4bcfa2d5f023fc76735a34011b310f114de82a5b817806a36cb8",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-current-source-b90.png",
+      "bytes": 125980,
+      "sha256": "9697351e3ec9cbe01fa9cfb76b0e9943d82ddc3f492ebe456d0f07356cf14711",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-findings-before-b90.json",
+      "bytes": 350,
+      "sha256": "9db67d3dd33fdfccf1d887c4cbce94c32a56571140d1c97265bb3b0364aa8025",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-findings-before-b90.txt",
+      "bytes": 1844,
+      "sha256": "f9c2d1cff1cb45d942c6e98e96ff286371626db9157eb441d0196e37c86cabb4",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-guide-before-authorized-b90.txt",
+      "bytes": 6277,
+      "sha256": "7a380614240232a58d90830435b89ef293c21a877ea97dffdc5565526bf402a6",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-history-before-authorized-b90.txt",
+      "bytes": 6881,
+      "sha256": "d8c1360e08bc60c5e9e9547c90371f44b4fe7c208343638d2e3fc6aa360d0da9",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-history-expanded-before-b90.txt",
+      "bytes": 8151,
+      "sha256": "122464f7542d58817bff780ad757bc1146b339d43030d8c2599ec79afeaa3530",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-history-preserved-after-b90.txt",
+      "bytes": 8736,
+      "sha256": "dddad605164e7034b1a4d050b8dcda413aa5c5ecc4ec2f31d2072eaafe79e70b",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-native-before-b90.png",
+      "bytes": 111734,
+      "sha256": "212ab4e388ece3860fb90989db3ee5855749548251068dbb7be2647876de49bf",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-native-history-after-b90.txt",
+      "bytes": 2952,
+      "sha256": "bd9e20d69c27bf764d1c74c5e1bb96e5534941b7253b72ee0603cc5585e4bf77",
+      "committed": true
+    },
+    {
+      "file": "brawndo-3.5-native-history-before-b90.txt",
+      "bytes": 2952,
+      "sha256": "bd9e20d69c27bf764d1c74c5e1bb96e5534941b7253b72ee0603cc5585e4bf77",
+      "committed": true
+    },
+    {
+      "file": "brawndo-3.5-native-metadata-before-b90.txt",
+      "bytes": 620,
+      "sha256": "a9c7911a50631c92f25f8cb6a4f5d3b1f2e52f87d4a93490a3536631e51506be",
+      "committed": false
+    },
+    {
+      "file": "brawndo-3.5-readonly-historical-questions-b90.txt",
+      "bytes": 7577,
+      "sha256": "e44c7d50a59985fcffd4a36e9a483917064841beb7c4b836667033f2e77212e7",
+      "committed": false
+    },
+    {
+      "file": "brawndo-dashboard-loaded-b90.txt",
+      "bytes": 8858,
+      "sha256": "fceb0ea79b428d507e803812ea01eed8f200b30a7834892efa49a9f0df7a8b35",
+      "committed": false
+    },
+    {
+      "file": "brawndo-program-before-b90.txt",
+      "bytes": 9115,
+      "sha256": "f35a6a4f6c7115c705a8119ab802e5f4d9475bab3e1c1682d8c05e3dd87cd613",
+      "committed": false
+    },
+    {
+      "file": "brawndo-program-recommendations-b90.txt",
+      "bytes": 10405,
+      "sha256": "616a4c5884913ed610de39b6fd824d9d3bce927f1212834ad77647758d053f71",
+      "committed": false
+    },
+    {
+      "file": "build-preview-b90a327.log",
+      "bytes": 996,
+      "sha256": "3afaae8dbd3e9098a7a20c5729df2cea9aac270bd2acd3821e4a708e3bbb4e69",
+      "committed": false
+    },
+    {
+      "file": "build-staging-b90a327.log",
+      "bytes": 1026,
+      "sha256": "8323be309cdefdd783b75a0f222e4134cf6a92ce273894914f8ca52661b989ba",
+      "committed": false
+    },
+    {
+      "file": "ci127-frontend.log",
+      "bytes": 73112,
+      "sha256": "149ea70adfadb2baf1d5be97ccedc8de262607ccfaf41f60349c6aa47f62a698",
+      "committed": false
+    },
+    {
+      "file": "ci127-jobs.json",
+      "bytes": 4928,
+      "sha256": "abe3a7efca36570fa184092cb4cfea86522794af7303f89f13c2003274f76406",
+      "committed": true
+    },
+    {
+      "file": "closeout-qa-records-b90.json",
+      "bytes": 18716,
+      "sha256": "b5d7286071b5e309abbfa04d240a1a29be00fbcae329a2c5e5315d708aad523a",
+      "committed": true
+    },
+    {
+      "file": "direct-ig3-before-onboarding-79075.txt",
+      "bytes": 5826,
+      "sha256": "104c09de11ea3128393b19f1d762b3c96c62a1c813298ceb483835aa9253b029",
+      "committed": false
+    },
+    {
+      "file": "direct-ig3-default-153-79075.txt",
+      "bytes": 10297,
+      "sha256": "28ef28b2f0dc86acb01e202f76734b7a10d9890ecdef7b58665f4c31e076bb5b",
+      "committed": false
+    },
+    {
+      "file": "direct-ig3-onboarded-profile-79075.txt",
+      "bytes": 4849,
+      "sha256": "5ce059b4fe192429ae53d25eab87fbc9006d89f18527e65bb89d99d37016ccc1",
+      "committed": false
+    },
+    {
+      "file": "direct-ig3-provisioning-review-79075.txt",
+      "bytes": 7085,
+      "sha256": "c6ed06a66607222db6351e5ada38dbb762b462d9b50379c7967ed03cff6e7939",
+      "committed": false
+    },
+    {
+      "file": "fresh-state-expectations-b90.json",
+      "bytes": 1372495,
+      "sha256": "0929a77ece11159018dee8ce0c621965c27956a6860072ef6d44b2a8d585814c",
+      "committed": false
+    },
+    {
+      "file": "frontend-full-b90a327.log",
+      "bytes": 42579,
+      "sha256": "e131e7c70de98265e03bc7b7a49a53a6f8c5d72e7b476b778e10a00a6be3454b",
+      "committed": false
+    },
+    {
+      "file": "hooli-4.5-loading-delay-b90.txt",
+      "bytes": 4008,
+      "sha256": "108651b476a6d58f13007885aa3c6339698bf3fa2aed9a2486a672cab90a9a78",
+      "committed": false
+    },
+    {
+      "file": "hooli-dashboard-final-b90.txt",
+      "bytes": 8631,
+      "sha256": "3b754949c572a9b7cf3c23a1cd11301d117d0799f9e14df4386fe0d73e3cb685",
+      "committed": true
+    },
+    {
+      "file": "hooli-program-and-recommendations-b90.txt",
+      "bytes": 11520,
+      "sha256": "6a89a82861021b4befaf799598d4fd5b1f16929f57890c1cfc0dd9a48c45613a",
+      "committed": false
+    },
+    {
+      "file": "hooli-program-final-b90.txt",
+      "bytes": 10900,
+      "sha256": "25cd71aa6e455f19597758fc67c8064c275e73eafa2c4faa767a8b7af45247d5",
+      "committed": true
+    },
+    {
+      "file": "hosted-lifecycles-b90.json",
+      "bytes": 143484,
+      "sha256": "05e3e14dc15c74cdbe8d12a5ddae9ea0ba8a2ed3452042d3f70c3b2987f5b2bf",
+      "committed": true
+    },
+    {
+      "file": "hosted-placements-b90.json",
+      "bytes": 481779,
+      "sha256": "8f13fb8a152c70409047250f795e33ef86ee5d8bb43e702cbd60849a6f68c6c1",
+      "committed": true
+    },
+    {
+      "file": "hosted-server-interview-cas-b90.json",
+      "bytes": 2721,
+      "sha256": "86b6028be81918c0716019cba98902c1849e31752ff1601366c8e4331d8458a5",
+      "committed": true
+    },
+    {
+      "file": "independent-composite-focused-b90.log",
+      "bytes": 1392,
+      "sha256": "101c94895de7168bd3c4b10256e7a1c76f44faead03534c846500b2ccc09ee33",
+      "committed": false
+    },
+    {
+      "file": "independent-composite-review-b90.json",
+      "bytes": 5076,
+      "sha256": "cead0e6026d611045dbc415bac98e4991acb7586ed82d9c6a1ad5b4486653fd3",
+      "committed": false
+    },
+    {
+      "file": "initech-dashboard-b90.txt",
+      "bytes": 2483,
+      "sha256": "5376afd01eec08c4d348baef824b65d32490b4188888b15f088f4ce29cf27e90",
+      "committed": false
+    },
+    {
+      "file": "initech-dashboard-final-b90.txt",
+      "bytes": 8639,
+      "sha256": "f7c5122d4ca12253fd5cf98d2210baf5f1bf4591ad3d938912dbe7eddfeb7273",
+      "committed": true
+    },
+    {
+      "file": "initech-program-b90.txt",
+      "bytes": 2501,
+      "sha256": "18f70a143f6beb04dcca5b955f6adbc953abbe9acc3097b0e9c708fcd4b4cdcc",
+      "committed": false
+    },
+    {
+      "file": "initech-program-final-b90.txt",
+      "bytes": 10829,
+      "sha256": "7855a1a4a9e2140243d9b7b2593cc2974a9008eaa3bbf99ad33c234174d1fb10",
+      "committed": true
+    },
+    {
+      "file": "initech-recommendations-b90.txt",
+      "bytes": 11298,
+      "sha256": "b9a21720b990e54e23a26c0dbeda1ac4e40518f521eb0a9eef76497061332fd1",
+      "committed": false
+    },
+    {
+      "file": "initial-authenticated-portfolio-79075.png",
+      "bytes": 89526,
+      "sha256": "044ea8f21fd6ab242fb689873db2cef6603134bca48798cb303606befa7c7aa9",
+      "committed": false
+    },
+    {
+      "file": "initial-login-79075.json",
+      "bytes": 306,
+      "sha256": "dc875debd07aa0df2551078068f0ed82d61a635c785c9ea446f1888d7eb8a86e",
+      "committed": false
+    },
+    {
+      "file": "iso-native-after-b90.json",
+      "bytes": 524,
+      "sha256": "3c667370fd83c8d1d7957daf31eae2332ec02527b4dee22cec8e8d8b643fe3df",
+      "committed": true
+    },
+    {
+      "file": "iso-native-after-b90.png",
+      "bytes": 69535,
+      "sha256": "1a862b52ec3d4c21d17ac99a0efc85990835efc308e93e98930d5d863e6aac26",
+      "committed": false
+    },
+    {
+      "file": "iso-native-before-79075.json",
+      "bytes": 524,
+      "sha256": "3c667370fd83c8d1d7957daf31eae2332ec02527b4dee22cec8e8d8b643fe3df",
+      "committed": true
+    },
+    {
+      "file": "iso-native-before-79075.png",
+      "bytes": 68281,
+      "sha256": "05368f4b2d39335f712553cb8db3920707ae9c59a458233c75961efeaaa92eb1",
+      "committed": false
+    },
+    {
+      "file": "iso-native-before-79075.txt",
+      "bytes": 3486,
+      "sha256": "f16e1304428865c7589dc1e02e376930028340d768e05fb8e8640d11559c49cc",
+      "committed": false
+    },
+    {
+      "file": "iso-program-before-79075.png",
+      "bytes": 82036,
+      "sha256": "7e419f1dfbff3d08de2637af9b5a1dd993bf958bf5e3e604dbbf5b50aff324e9",
+      "committed": false
+    },
+    {
+      "file": "iso-program-before-79075.txt",
+      "bytes": 5323,
+      "sha256": "3942a1b053e78833315f75ecd8edf8b778154768b38e8a4ea68292f6efaa668f",
+      "committed": false
+    },
+    {
+      "file": "login-dark-b90.png",
+      "bytes": 127892,
+      "sha256": "5fea18a7463eae56e2b8c73b0cde96267120521d7efc9fe8f62abdc59164875d",
+      "committed": false
+    },
+    {
+      "file": "login-final-1024-b90.png",
+      "bytes": 121376,
+      "sha256": "66e0517fef4744812a57b6390aa355d8a69b312707a19e80c4e48bcc7899315a",
+      "committed": true
+    },
+    {
+      "file": "login-final-1440-b90.png",
+      "bytes": 161588,
+      "sha256": "74717d4abcbd0bf09be16f65480a782b9f5b1450a43af2b68b1ee2d296981b87",
+      "committed": true
+    },
+    {
+      "file": "login-final-320-b90.png",
+      "bytes": 77423,
+      "sha256": "f2436e7d2c9058493d4d360f04cff4a66e43c1d802ca8814130fbfe661483eb5",
+      "committed": true
+    },
+    {
+      "file": "login-final-390-b90.png",
+      "bytes": 87114,
+      "sha256": "8c5fa4c7d7cf07b6a7c7e8b05988a0c0c0cb8266d70df37210665d16e229e873",
+      "committed": true
+    },
+    {
+      "file": "login-final-768-b90.png",
+      "bytes": 103877,
+      "sha256": "cee20784b9df972331aa5eb236889f6ec00ec8cde8323edb52155340c6facc02",
+      "committed": true
+    },
+    {
+      "file": "login-final-controls-b90.json",
+      "bytes": 16802,
+      "sha256": "7fc4c25f6f3d3d9cae7e2793094017913829ffca815824341a88be4a091f0797",
+      "committed": true
+    },
+    {
+      "file": "login-final-current-b90.png",
+      "bytes": 103197,
+      "sha256": "b03730ab96e2de814af094b1b00dac9e4e350453ded3f022bc88c281d908d8f9",
+      "committed": false
+    },
+    {
+      "file": "login-light-final-b90.png",
+      "bytes": 98401,
+      "sha256": "2f5a2c8e14a5153a3fc874094cba84c229604447e25636d6b7373ac284ec3ab3",
+      "committed": true
+    },
+    {
+      "file": "login-public-controls-b90.json",
+      "bytes": 2283,
+      "sha256": "bcde7023556d637d69805892f3f4e6f06c83a2e700fdee0fcec4ba39b5e5bea2",
+      "committed": true
+    },
+    {
+      "file": "login-responsive-1024-b90.png",
+      "bytes": 129699,
+      "sha256": "fc1fe0ff0789fecaef993105e1f8a0e9e5794dfdeb70a980c1f8481b864b9e5e",
+      "committed": false
+    },
+    {
+      "file": "login-responsive-1440-b90.png",
+      "bytes": 129288,
+      "sha256": "20b7dc836f62bf4db1497c45c098cd7d99eca33d8350e61cc81df2554e0c7e14",
+      "committed": false
+    },
+    {
+      "file": "login-responsive-320-b90.png",
+      "bytes": 129043,
+      "sha256": "f4b7d9ab722c2679ebddd1913e43b38eae1e680b2f1c7d1eaee29de87397067e",
+      "committed": false
+    },
+    {
+      "file": "login-responsive-390-b90.png",
+      "bytes": 128937,
+      "sha256": "eab9ef49b434144391ff501d9f54d9bd5395cdbb62c23194d638d473ed70811b",
+      "committed": false
+    },
+    {
+      "file": "login-responsive-768-b90.png",
+      "bytes": 129591,
+      "sha256": "cddb2f81a5fab01541c863f07bf95f0ed2ac7b9b4dc52983b2e150dd0878233f",
+      "committed": false
+    },
+    {
+      "file": "login-responsive-attempt-b90.json",
+      "bytes": 2524,
+      "sha256": "53683ade05ad6d217e36a5d39198f872b248ed78f10d3fb798b05cb3abc95a96",
+      "committed": true
+    },
+    {
+      "file": "login-responsive-b90.json",
+      "bytes": 1772,
+      "sha256": "d1dd21b06c9f2a56ecc01082936c3cb4a02014c59c01175cf99a450fa3174e2e",
+      "committed": false
+    },
+    {
+      "file": "login-responsive-final-b90.json",
+      "bytes": 4852,
+      "sha256": "1463cfc2e8a4e1aea92d13e14287a83f2ad2216455939044bc9c8ed8ef87993c",
+      "committed": true
+    },
+    {
+      "file": "new-ig1-before-onboarding-completion-79075.txt",
+      "bytes": 6692,
+      "sha256": "95fc2a99739f8422174de8d56b69c25c3ac44ea84d2a79c8868800889cd1d674",
+      "committed": false
+    },
+    {
+      "file": "new-ig1-default-CIS-56-79075.txt",
+      "bytes": 9208,
+      "sha256": "a3d3c114b96e23e178c0deea8f2b52c3bca620f7cf8d7959e93f783702d1a859",
+      "committed": false
+    },
+    {
+      "file": "new-ig1-onboarded-profile-79075.json",
+      "bytes": 3394,
+      "sha256": "8004a0bad93c15d3d059f420da5621341b4bf757c2d58c18d8e27942762313b1",
+      "committed": false
+    },
+    {
+      "file": "new-ig1-source-defaults-79075.txt",
+      "bytes": 5795,
+      "sha256": "33b4d0d1fb91e1a4751585b2434ec65f982d96552ffec68454de8910c10cbe52",
+      "committed": false
+    },
+    {
+      "file": "new-ig3-15.5-pristine-native-79075.txt",
+      "bytes": 4310,
+      "sha256": "ecb394a0f37441f5c7d5945747cb04280b91e1098ba03c3a400f8bf1f9ae4bba",
+      "committed": false
+    },
+    {
+      "file": "omni-window-behavior-b90.json",
+      "bytes": 1503,
+      "sha256": "64f6d552051e70efb2be6faae4834a0a6a957fb1175f42f811dadd214ad03258",
+      "committed": true
+    },
+    {
+      "file": "omni-window-desktop-b90.png",
+      "bytes": 62742,
+      "sha256": "93d33eb51d0e487571d0f3a3e22bf98aff0633d3d76f8b93bfc629f94fb17cc7",
+      "committed": false
+    },
+    {
+      "file": "omni-window-final-ig3-b90.png",
+      "bytes": 34082,
+      "sha256": "efc118ba91eee60cd977192f0f57d13d7b8c481e6b3a2138a40e9cbda0c44174",
+      "committed": false
+    },
+    {
+      "file": "predeployment.json",
+      "bytes": 2677,
+      "sha256": "9443bc2834319b585ae162c8528ddd51b0973eb60d6d3dbf342f2a6a28b6c7e4",
+      "committed": true
+    },
+    {
+      "file": "qa-closeout-ig1-program-b90.txt",
+      "bytes": 10506,
+      "sha256": "98e492f13cbaf68d3d6299f545050871a096dde7b899c98d9715ce162b22b8ba",
+      "committed": false
+    },
+    {
+      "file": "qa-closeout-ig3-program-final-b90.txt",
+      "bytes": 10296,
+      "sha256": "e8072cba41eb74931170d5301b219efb7e85ac618eae9bebbaa116b8ab3fcf55",
+      "committed": false
+    },
+    {
+      "file": "qa-fresh-ig1-1.1-before-b90.txt",
+      "bytes": 6221,
+      "sha256": "ed0f502917b0522a1edd3c21d40e4495236878c27d4f752c5af011eb871739bc",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-1.2-boundary-b90.json",
+      "bytes": 2498,
+      "sha256": "42e2f1940a3cb7eadf697cbe00c2d55e12042cc28c7e8a7c7723d85448fa22e9",
+      "committed": true
+    },
+    {
+      "file": "qa-ig1-1.2-two-week-boundary-b90.txt",
+      "bytes": 5507,
+      "sha256": "84a5695755c5cf2ff07bdc15e6db89ef75c6c9e7c444b1884cd0e32640871d56",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-1.2-weekly-alternative-b90.txt",
+      "bytes": 5494,
+      "sha256": "0b0cc75c7cc64bee40f5d2cc9951d6b914c2945fb1f882f1c239cf89623f9b40",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-actual-login-answers-b90.txt",
+      "bytes": 9006,
+      "sha256": "0c1865817077a21c608d59ae23e54e8ff0c379483356c0d884ff5a25a3ddce3a",
+      "committed": true
+    },
+    {
+      "file": "qa-ig1-actual-login-resume-b90.txt",
+      "bytes": 8962,
+      "sha256": "8c38546a2790a12aa36cad8428e923077ba5f261b5e48bad68c38536a788e07d",
+      "committed": true
+    },
+    {
+      "file": "qa-ig1-changed-answer-manual-protection-b90.txt",
+      "bytes": 9067,
+      "sha256": "f84048f22ea10c4e4b21ababb3dbfa85c3b826e853bd58356400eee66fa2ce4c",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-final-group-to-summary-b90.txt",
+      "bytes": 6988,
+      "sha256": "2e5c47de9c88c42bbfb40151e0996038827c67cfb1d774cb17fdea86b5fdeb87",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-native-concurrent-winner-b90.txt",
+      "bytes": 6457,
+      "sha256": "ebd65f75da161240aa19e103dd972f8ac37f6a32e9943e5c5b436fa4fc85eb18",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-native-full-writeup-b90.png",
+      "bytes": 109167,
+      "sha256": "2e8883da045f3919a86ea20a64898a28672997de4ab160ea9a5e349d41db5e2f",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-native-history-after-duplicate-b90.txt",
+      "bytes": 9978,
+      "sha256": "4382445c9bece1e1f168e53b2d28f03cb894b6e75990c994a4b5373bacdfa5c5",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-native-history-after-upgrade-b90.txt",
+      "bytes": 18052,
+      "sha256": "77469afab7b677447c893931e7ad2ead63bf9f0dfbed77e11e99b3f28f9e73c2",
+      "committed": true
+    },
+    {
+      "file": "qa-ig1-native-history-before-duplicate-b90.txt",
+      "bytes": 8219,
+      "sha256": "786ce7488745da483d407d279eb396e76f4907592f5ef638ccf1fa21086e6968",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-native-history-before-upgrade-b90.txt",
+      "bytes": 16731,
+      "sha256": "025469691eb67d9394e81fd8563d5325e80478f34408e9e518187fee7c51276a",
+      "committed": true
+    },
+    {
+      "file": "qa-ig1-partial-progress-b90.txt",
+      "bytes": 9296,
+      "sha256": "1b576a29e439e16727a749e938753f0e2872741f70e331dc5dd352bfa8692038",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-partial-resume-b90.txt",
+      "bytes": 9283,
+      "sha256": "bc886464fda1da65d35be52f1a8add47f211fbc007b1bc42d0bda1e597d7b2d2",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-server-cas-winner-refresh-b90.txt",
+      "bytes": 6206,
+      "sha256": "43dce0588998b9967889831617f564c9e4852ff80df8113650f433ed47c14d7d",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-server-interview-conflict-b90.txt",
+      "bytes": 6113,
+      "sha256": "3ca9191ae4cede1ddd60266108064b629b5cd0057bdb635b1c47559e5c433664",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-stale-saveclose-b90.txt",
+      "bytes": 8934,
+      "sha256": "be90eee9bf2c73596f60d21f3b4c558afa30a7455beccf9441692316e831a991",
+      "committed": false
+    },
+    {
+      "file": "qa-ig1-targeted-unresolved-resume-b90.txt",
+      "bytes": 10349,
+      "sha256": "d94c7ad4906eec1672865e50ee0c6e6af4db50ed2c57dd9a063b8739ae8e6899",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-15.4-native-history-final-b90.txt",
+      "bytes": 10135,
+      "sha256": "09bb336301a777f25fd140166943b02dcae3b82662fbeecc7cf1f9c69bbce066",
+      "committed": true
+    },
+    {
+      "file": "qa-ig2-15.4-native-history-original-79075.txt",
+      "bytes": 2963,
+      "sha256": "b42fde175e418fae43e0aa703dc0365f60d695f997c6eebb87b27775cd079803",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-actual-login-answers-b90.txt",
+      "bytes": 8338,
+      "sha256": "3d44b6f32ef19c0af6ccc6a79bace528fa3862d26000e79c0f5dba685531af9a",
+      "committed": true
+    },
+    {
+      "file": "qa-ig2-actual-login-resume-b90.txt",
+      "bytes": 8521,
+      "sha256": "3201ddf1c8a3e4c3af8f6a577071db80450de536c421efe7fa6ed660c46eed99",
+      "committed": true
+    },
+    {
+      "file": "qa-ig2-affirmative-absence-b90.txt",
+      "bytes": 7667,
+      "sha256": "6525580523d26ba128cba78dcb6bf2cb760a530f1fcbe4092d04b1d9401cb183",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-all-unknown-b90.txt",
+      "bytes": 9365,
+      "sha256": "b64d1566ed5c206a3984a8f94c4b4527cd6313c77dcf9a2f1acfdff925b44b13",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-changed-answer-manual-protection-b90.txt",
+      "bytes": 8713,
+      "sha256": "a1c47e3930e335e7d98c9e2809e332548b4cd38addbc4ebb1db0df236f17abd4",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-control15-before-closeout-79075.txt",
+      "bytes": 6738,
+      "sha256": "912168b3f776869d788acee0932aae484210d69e312ec68e8116b1a647a74418",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-final-summary-b90.txt",
+      "bytes": 8262,
+      "sha256": "ebbb72f6996e063c6dbddd02cf3f97b541b35fdba1dcfe0dfe78231c5373ff70",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-native-history-after-duplicate-b90.txt",
+      "bytes": 14827,
+      "sha256": "0a924828968e21e14f4bc791dfbaba1028e4ea053ef40ac00db2d6820acae124",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-native-history-before-duplicate-b90.txt",
+      "bytes": 12873,
+      "sha256": "15b3a4e91dcb7504dffdc3bb455d6d28fb58c7eb0b89d2c83b976a83e07c2d5f",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-native-original-79075.json",
+      "bytes": 1233,
+      "sha256": "8afa8d7074f3a41445643186e6428b8563ab94f4d81ae17762b7fbdd4eee9436",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-partial-resume-b90.txt",
+      "bytes": 6525,
+      "sha256": "67107b37a2bf17cbf81d0138a4baa6379f70505079bef1aee01f2610db241888",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-resumed-interview-original-79075.txt",
+      "bytes": 7535,
+      "sha256": "bc37d3f6f5a922f9d60660ed5246e2c3eebbe34d302e6817a29d6360c6de824f",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-server-cas-winner-refresh-b90.txt",
+      "bytes": 6276,
+      "sha256": "1c153e4cc5a5bec636e7abc6227b29ec709a462941191818d4eff00b6cd7dbaf",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-server-interview-conflict-b90.txt",
+      "bytes": 6247,
+      "sha256": "1b75eed9b7537b26ecf02828fe70221347b5d974406a4efd5870fd15c3ba30ba",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-stale-saveclose-b90.txt",
+      "bytes": 8509,
+      "sha256": "8071be88a442f6ce78c60fbebf36a3a920e4a6ff4f549701701227c1e1cce27d",
+      "committed": false
+    },
+    {
+      "file": "qa-ig2-status-cases-b90.json",
+      "bytes": 5523,
+      "sha256": "725cccc2339208c7ab40715227892d20c85269a63de1fa7012b940c26f70afaa",
+      "committed": true
+    },
+    {
+      "file": "qa-ig3-actual-login-answers-b90.txt",
+      "bytes": 8148,
+      "sha256": "b99498763fccbcb472fe93288c297aaa023deb922a54a6b14c3353f3ef346fac",
+      "committed": true
+    },
+    {
+      "file": "qa-ig3-actual-login-resume-b90.txt",
+      "bytes": 8509,
+      "sha256": "883ea44ece2a03aab7551fa8ebf53b666b0231cc40fa59654dfdd32995076c15",
+      "committed": true
+    },
+    {
+      "file": "qa-ig3-changed-answer-manual-protection-b90.txt",
+      "bytes": 8707,
+      "sha256": "7811b4a9b8601a1ae6184acc704217d5dd4d1bdb9af48784d000333e2b2cec8a",
+      "committed": false
+    },
+    {
+      "file": "qa-ig3-final-summary-b90.txt",
+      "bytes": 8254,
+      "sha256": "f36beca6c2b8914eb4e4f5826af89dd5a2057cc2359ec522422c693278346462",
+      "committed": false
+    },
+    {
+      "file": "qa-ig3-native-history-after-duplicate-b90.txt",
+      "bytes": 15676,
+      "sha256": "92921322220c525b134e167a49f8f3828b74377cbcd1b3f2ef837719281e1ee7",
+      "committed": false
+    },
+    {
+      "file": "qa-ig3-native-history-before-duplicate-b90.txt",
+      "bytes": 13764,
+      "sha256": "cff7b410170a073d283dbb89b998cb0fd0f1ce179f944f81e1040957b2d5dc00",
+      "committed": false
+    },
+    {
+      "file": "qa-ig3-partial-resume-b90.txt",
+      "bytes": 6329,
+      "sha256": "e925d59f30f07f11b88df4bbb23f1c3e3bb32bbc7614f718611b1e0050640869",
+      "committed": false
+    },
+    {
+      "file": "qa-ig3-server-cas-winner-refresh-b90.txt",
+      "bytes": 5996,
+      "sha256": "434a75e95b05e158d39f4bb031e3caacc3a5552f2437a36849a120682ea04619",
+      "committed": false
+    },
+    {
+      "file": "qa-ig3-server-interview-conflict-b90.txt",
+      "bytes": 5922,
+      "sha256": "7905bfa3e820afbaee69264791800aaed7acb0ea1f1d87e9d75b133e98dee121",
+      "committed": false
+    },
+    {
+      "file": "qa-ig3-stale-saveclose-b90.txt",
+      "bytes": 8497,
+      "sha256": "e2cf833a21d0fa09e657dca63f10926ec5db666d27187b387c18848f0df5ede6",
+      "committed": false
+    },
+    {
+      "file": "qa-mixed-iso-native-final-b90.json",
+      "bytes": 922,
+      "sha256": "e8faf694f339015654256951a118b0831edb8e3882d15667111d7f80d92768bc",
+      "committed": true
+    },
+    {
+      "file": "qa-mixed-iso-native-final-b90.txt",
+      "bytes": 3496,
+      "sha256": "ed0273955551a8cff5f17e04b3bb0cde77cb8550d07f73c919ef27dd8836a1ad",
+      "committed": false
+    },
+    {
+      "file": "qa-mixed-iso-overview-after-b90.txt",
+      "bytes": 5143,
+      "sha256": "571082e808d0a9aea958893e3c48510f432d2041343281523b6a2ccfd6d57a3b",
+      "committed": false
+    },
+    {
+      "file": "qa-reversible-cleanup-b90.json",
+      "bytes": 4949,
+      "sha256": "077fae8343d0518af395de71cf8500275d151e481c00d1c829e4e5c3458af335",
+      "committed": true
+    },
+    {
+      "file": "qa-reversible-cleanup-b90.png",
+      "bytes": 146224,
+      "sha256": "54b2947a64006894ea980818240489f0e5a4b22d712dcc2fe1dff39eb70fc5bb",
+      "committed": true
+    },
+    {
+      "file": "qa-upgrade-ig2-interview-history-b90.txt",
+      "bytes": 14977,
+      "sha256": "dc9fbdb90fc05a53493382a55b9dd3e0f5cb6362525ff0525d261fde7c122344",
+      "committed": false
+    },
+    {
+      "file": "qa-upgrade-ig2-program-b90.txt",
+      "bytes": 8180,
+      "sha256": "7cc7b3eb502987f40da4b2e5e57637f385974fd1c69133f9ddf60de3b8b6ce8e",
+      "committed": false
+    },
+    {
+      "file": "qa-upgrade-ig3-interview-history-b90.txt",
+      "bytes": 15351,
+      "sha256": "8b46c75c31cf7477f8c481bae753d69931a64f323b02e67bbe373d14d398c80f",
+      "committed": false
+    },
+    {
+      "file": "qa-upgrade-ig3-program-b90.txt",
+      "bytes": 8182,
+      "sha256": "ec512caf9b92e99bd71ba77b0bb18913b8f69652fdff1f8e5c2824cf9fb8f42e",
+      "committed": false
+    },
+    {
+      "file": "readonly-original-memberships.txt",
+      "bytes": 2436,
+      "sha256": "12f6fd7c65222926c3790576d11c78f84881df3db4d93410dc857a8833b86c42",
+      "committed": false
+    },
+    {
+      "file": "registry-before-closeout-setup.txt",
+      "bytes": 8052,
+      "sha256": "8a8171c23db1b7b5dbd0034c5387904585d4c2d16368a6cae8a05c591ab7b1f4",
+      "committed": false
+    },
+    {
+      "file": "render-closeout-current-b90.json",
+      "bytes": 4347,
+      "sha256": "d2ab72b21c068f0c86232e51f1c8509e5155efed4ce8419a570736ace501359b",
+      "committed": true
+    },
+    {
+      "file": "render-closeout-current-b90.png",
+      "bytes": 96322,
+      "sha256": "e3a4deb7b890e5f85f0555261b8d79c10ea5ba40815873702a88cff42215270e",
+      "committed": true
+    },
+    {
+      "file": "render-closeout-current-b90.txt",
+      "bytes": 14208,
+      "sha256": "dc8d0200b2fcd673f4b977ab9a8fa043faeac2d941ccebadba84fe1d68157a0f",
+      "committed": true
+    },
+    {
+      "file": "render-emitted-assets-b90.txt",
+      "bytes": 7299,
+      "sha256": "358eba4f8e6d6adb59863e15e497580e244721dc1e3555ec9917e98d9810713f",
+      "committed": true
+    },
+    {
+      "file": "render-final-live-b90.png",
+      "bytes": 96322,
+      "sha256": "e3a4deb7b890e5f85f0555261b8d79c10ea5ba40815873702a88cff42215270e",
+      "committed": false
+    },
+    {
+      "file": "render-final-live-b90.txt",
+      "bytes": 14208,
+      "sha256": "dc8d0200b2fcd673f4b977ab9a8fa043faeac2d941ccebadba84fe1d68157a0f",
+      "committed": false
+    },
+    {
+      "file": "render-live-b90.png",
+      "bytes": 94028,
+      "sha256": "05d09c6c66a2ecaeb1922abaaf2d3b411c0e708d8a9a86c519e42c6afc80d121",
+      "committed": false
+    },
+    {
+      "file": "render-live-b90.txt",
+      "bytes": 21242,
+      "sha256": "52aef3327eadd39be5f3dc0637057f3b89b23cf2e759e6c6362ab3fc9f960422",
+      "committed": false
+    },
+    {
+      "file": "served-assets-b90.json",
+      "bytes": 24834,
+      "sha256": "be63c8644123abd2fd655120d02d92734ef06a07d478ebe9209a2e59a452ca1f",
+      "committed": true
+    },
+    {
+      "file": "served-main.fe2057c8.css",
+      "bytes": 306661,
+      "sha256": "9755fd6cd64f1ba7b16a1989fdd76f1e7401d5d00f8a6c47843b241eb0a8a307",
+      "committed": false
+    },
+    {
+      "file": "showcase-program-dashboard-final-b90.json",
+      "bytes": 256,
+      "sha256": "67c3326a966c8da37f55b0a5f0d46a23f2850bdab1465919546fec543fd435d3",
+      "committed": true
+    },
+    {
+      "file": "soc2-native-after-b90.json",
+      "bytes": 475,
+      "sha256": "044340eb5906944d674665eeab65f2b23da014c09a3bc1d05eb44361d236157c",
+      "committed": true
+    },
+    {
+      "file": "soc2-native-after-b90.png",
+      "bytes": 55823,
+      "sha256": "897e874c23a73b5ae0e760f2f5a00a9345499f3ee2631735c0bfa0e90b0d3968",
+      "committed": false
+    },
+    {
+      "file": "soc2-native-before-79075.json",
+      "bytes": 475,
+      "sha256": "044340eb5906944d674665eeab65f2b23da014c09a3bc1d05eb44361d236157c",
+      "committed": true
+    },
+    {
+      "file": "soc2-native-before-79075.png",
+      "bytes": 57354,
+      "sha256": "430ae53b6f4c493c155781cf95de0aea244f2c86f8c119e3b4fc893b4f3d0da5",
+      "committed": false
+    },
+    {
+      "file": "soc2-program-before-79075.png",
+      "bytes": 71002,
+      "sha256": "ee5fb439ca44d3ad4ae20dc5f147a3e112c2781d221b7e35548f2d4ff5a13201",
+      "committed": false
+    },
+    {
+      "file": "soc2-program-before-79075.txt",
+      "bytes": 5032,
+      "sha256": "9d2fc217b8a6f2925eafec06e79a83ec2c404e24a49530c42b04d34b4075ca66",
+      "committed": false
+    },
+    {
+      "file": "supported-ig-upgrades-b90.json",
+      "bytes": 68733,
+      "sha256": "ebb16d89f64330d1a36927ce5d2095fdb3b681cae393e7c40b273c669355ee9e",
+      "committed": true
+    },
+    {
+      "file": "users-current-before-any-change.txt",
+      "bytes": 5158,
+      "sha256": "c68e477354100d6855dfc796f92fdabd1f0d70f6ed0ff794ebc4f7338f5389e0",
+      "committed": false
+    }
+  ],
+  "committedEvidence": [
+    {
+      "file": "evidence/actual-combined-login-entry-b90.json",
+      "bytes": 476,
+      "sha256": "a52f3d5ce549edf4be8759cc3ba4e1c0e16481b223c0020789034ca48914d612"
+    },
+    {
+      "file": "evidence/actual-logout-login-group-resumes-b90.json",
+      "bytes": 2275,
+      "sha256": "b41ada39918a76e5bd4038bae2d99936792da56a9742a229306c50536ca8438e"
+    },
+    {
+      "file": "evidence/actual-logout-login-return-b90.json",
+      "bytes": 624,
+      "sha256": "af0619c2b031827f34d5ac86290665a3547efc6af87bb4d24aee3be62991d061"
+    },
+    {
+      "file": "evidence/brawndo-1.2-authorized-exception-b90.json",
+      "bytes": 80601,
+      "sha256": "038c412a499610a2be60416e21adba3f8b6a95b47c858d2ad89b0bd806b34d4c"
+    },
+    {
+      "file": "evidence/brawndo-1.2-native-history-after-b90.txt",
+      "bytes": 25765,
+      "sha256": "6df708f0eb0f68e4c2cf204d38ec3936818e3a2197f6d724f1552cbf51633fea"
+    },
+    {
+      "file": "evidence/brawndo-1.2-native-history-before-b90.txt",
+      "bytes": 25765,
+      "sha256": "c87d6130ad6f54ab06f1783737fea792edd38bcc7d81e41c7404d941a54f34aa"
+    },
+    {
+      "file": "evidence/brawndo-3.5-authorized-exception-b90.json",
+      "bytes": 1420,
+      "sha256": "ec52be20396a44c6120aa8711817d26fae4647b0d9d7df9bf0607cdd11705492"
+    },
+    {
+      "file": "evidence/brawndo-3.5-native-history-after-b90.txt",
+      "bytes": 2952,
+      "sha256": "bd9e20d69c27bf764d1c74c5e1bb96e5534941b7253b72ee0603cc5585e4bf77"
+    },
+    {
+      "file": "evidence/brawndo-3.5-native-history-before-b90.txt",
+      "bytes": 2952,
+      "sha256": "bd9e20d69c27bf764d1c74c5e1bb96e5534941b7253b72ee0603cc5585e4bf77"
+    },
+    {
+      "file": "evidence/ci127-jobs.json",
+      "bytes": 4928,
+      "sha256": "abe3a7efca36570fa184092cb4cfea86522794af7303f89f13c2003274f76406"
+    },
+    {
+      "file": "evidence/closeout-acceptance-ledger-b90.json",
+      "bytes": 184025,
+      "sha256": "023f0ee40bbdf767814d915faa9c51bebc754af6f3206d6bb5ca32109f01e960"
+    },
+    {
+      "file": "evidence/closeout-qa-records-b90.json",
+      "bytes": 18716,
+      "sha256": "b5d7286071b5e309abbfa04d240a1a29be00fbcae329a2c5e5315d708aad523a"
+    },
+    {
+      "file": "evidence/hooli-dashboard-final-b90.txt",
+      "bytes": 8631,
+      "sha256": "3b754949c572a9b7cf3c23a1cd11301d117d0799f9e14df4386fe0d73e3cb685"
+    },
+    {
+      "file": "evidence/hooli-program-final-b90.txt",
+      "bytes": 10900,
+      "sha256": "25cd71aa6e455f19597758fc67c8064c275e73eafa2c4faa767a8b7af45247d5"
+    },
+    {
+      "file": "evidence/hosted-lifecycles-b90.json",
+      "bytes": 143484,
+      "sha256": "05e3e14dc15c74cdbe8d12a5ddae9ea0ba8a2ed3452042d3f70c3b2987f5b2bf"
+    },
+    {
+      "file": "evidence/hosted-placement-safe-totals-b90.json",
+      "bytes": 9067,
+      "sha256": "05e5ab11bd2c78907e6443f7a3598565f683d903cc5ef5f38d64d46d3cc32932"
+    },
+    {
+      "file": "evidence/hosted-placements-b90.json",
+      "bytes": 481779,
+      "sha256": "8f13fb8a152c70409047250f795e33ef86ee5d8bb43e702cbd60849a6f68c6c1"
+    },
+    {
+      "file": "evidence/hosted-server-interview-cas-b90.json",
+      "bytes": 2721,
+      "sha256": "86b6028be81918c0716019cba98902c1849e31752ff1601366c8e4331d8458a5"
+    },
+    {
+      "file": "evidence/independent-composite-review-b90.json",
+      "bytes": 5076,
+      "sha256": "cead0e6026d611045dbc415bac98e4991acb7586ed82d9c6a1ad5b4486653fd3"
+    },
+    {
+      "file": "evidence/independent-final-review-b90.json",
+      "bytes": 57058,
+      "sha256": "79dcd43d433a5d1839919f517b146efece681634da72ff3c0199378c1aa5e950"
+    },
+    {
+      "file": "evidence/initech-dashboard-final-b90.txt",
+      "bytes": 8639,
+      "sha256": "f7c5122d4ca12253fd5cf98d2210baf5f1bf4591ad3d938912dbe7eddfeb7273"
+    },
+    {
+      "file": "evidence/initech-program-final-b90.txt",
+      "bytes": 10829,
+      "sha256": "7855a1a4a9e2140243d9b7b2593cc2974a9008eaa3bbf99ad33c234174d1fb10"
+    },
+    {
+      "file": "evidence/iso-native-after-b90.json",
+      "bytes": 524,
+      "sha256": "3c667370fd83c8d1d7957daf31eae2332ec02527b4dee22cec8e8d8b643fe3df"
+    },
+    {
+      "file": "evidence/iso-native-before-79075.json",
+      "bytes": 524,
+      "sha256": "3c667370fd83c8d1d7957daf31eae2332ec02527b4dee22cec8e8d8b643fe3df"
+    },
+    {
+      "file": "evidence/login-final-1024-b90.png",
+      "bytes": 121376,
+      "sha256": "66e0517fef4744812a57b6390aa355d8a69b312707a19e80c4e48bcc7899315a"
+    },
+    {
+      "file": "evidence/login-final-1440-b90.png",
+      "bytes": 161588,
+      "sha256": "74717d4abcbd0bf09be16f65480a782b9f5b1450a43af2b68b1ee2d296981b87"
+    },
+    {
+      "file": "evidence/login-final-320-b90.png",
+      "bytes": 77423,
+      "sha256": "f2436e7d2c9058493d4d360f04cff4a66e43c1d802ca8814130fbfe661483eb5"
+    },
+    {
+      "file": "evidence/login-final-390-b90.png",
+      "bytes": 87114,
+      "sha256": "8c5fa4c7d7cf07b6a7c7e8b05988a0c0c0cb8266d70df37210665d16e229e873"
+    },
+    {
+      "file": "evidence/login-final-768-b90.png",
+      "bytes": 103877,
+      "sha256": "cee20784b9df972331aa5eb236889f6ec00ec8cde8323edb52155340c6facc02"
+    },
+    {
+      "file": "evidence/login-final-controls-b90.json",
+      "bytes": 16802,
+      "sha256": "7fc4c25f6f3d3d9cae7e2793094017913829ffca815824341a88be4a091f0797"
+    },
+    {
+      "file": "evidence/login-light-final-b90.png",
+      "bytes": 98401,
+      "sha256": "2f5a2c8e14a5153a3fc874094cba84c229604447e25636d6b7373ac284ec3ab3"
+    },
+    {
+      "file": "evidence/login-public-controls-b90.json",
+      "bytes": 2283,
+      "sha256": "bcde7023556d637d69805892f3f4e6f06c83a2e700fdee0fcec4ba39b5e5bea2"
+    },
+    {
+      "file": "evidence/login-responsive-attempt-b90.json",
+      "bytes": 2524,
+      "sha256": "53683ade05ad6d217e36a5d39198f872b248ed78f10d3fb798b05cb3abc95a96"
+    },
+    {
+      "file": "evidence/login-responsive-final-b90.json",
+      "bytes": 4852,
+      "sha256": "1463cfc2e8a4e1aea92d13e14287a83f2ad2216455939044bc9c8ed8ef87993c"
+    },
+    {
+      "file": "evidence/omni-window-behavior-b90.json",
+      "bytes": 1503,
+      "sha256": "64f6d552051e70efb2be6faae4834a0a6a957fb1175f42f811dadd214ad03258"
+    },
+    {
+      "file": "evidence/predeployment.json",
+      "bytes": 2677,
+      "sha256": "9443bc2834319b585ae162c8528ddd51b0973eb60d6d3dbf342f2a6a28b6c7e4"
+    },
+    {
+      "file": "evidence/qa-ig1-1.2-boundary-b90.json",
+      "bytes": 2498,
+      "sha256": "42e2f1940a3cb7eadf697cbe00c2d55e12042cc28c7e8a7c7723d85448fa22e9"
+    },
+    {
+      "file": "evidence/qa-ig1-actual-login-answers-b90.txt",
+      "bytes": 9006,
+      "sha256": "0c1865817077a21c608d59ae23e54e8ff0c379483356c0d884ff5a25a3ddce3a"
+    },
+    {
+      "file": "evidence/qa-ig1-actual-login-resume-b90.txt",
+      "bytes": 8961,
+      "sha256": "e0b683963809be95058123ce0829839b7cae27abaed330b79562c586a58a4d36"
+    },
+    {
+      "file": "evidence/qa-ig1-native-history-after-upgrade-b90.txt",
+      "bytes": 18052,
+      "sha256": "77469afab7b677447c893931e7ad2ead63bf9f0dfbed77e11e99b3f28f9e73c2"
+    },
+    {
+      "file": "evidence/qa-ig1-native-history-before-upgrade-b90.txt",
+      "bytes": 16731,
+      "sha256": "025469691eb67d9394e81fd8563d5325e80478f34408e9e518187fee7c51276a"
+    },
+    {
+      "file": "evidence/qa-ig2-15.4-native-history-final-b90.txt",
+      "bytes": 10135,
+      "sha256": "09bb336301a777f25fd140166943b02dcae3b82662fbeecc7cf1f9c69bbce066"
+    },
+    {
+      "file": "evidence/qa-ig2-actual-login-answers-b90.txt",
+      "bytes": 8338,
+      "sha256": "3d44b6f32ef19c0af6ccc6a79bace528fa3862d26000e79c0f5dba685531af9a"
+    },
+    {
+      "file": "evidence/qa-ig2-actual-login-resume-b90.txt",
+      "bytes": 8520,
+      "sha256": "baa376bd5e9e029e53e1142f0869d9d07f51265b9dd4ea03ed7b7104d6bad534"
+    },
+    {
+      "file": "evidence/qa-ig2-status-cases-b90.json",
+      "bytes": 5523,
+      "sha256": "725cccc2339208c7ab40715227892d20c85269a63de1fa7012b940c26f70afaa"
+    },
+    {
+      "file": "evidence/qa-ig3-actual-login-answers-b90.txt",
+      "bytes": 8148,
+      "sha256": "b99498763fccbcb472fe93288c297aaa023deb922a54a6b14c3353f3ef346fac"
+    },
+    {
+      "file": "evidence/qa-ig3-actual-login-resume-b90.txt",
+      "bytes": 8508,
+      "sha256": "61bf67313e776d1230f81f0f27d0c9a2d13290e81fa699995fe7ae7f41cac178"
+    },
+    {
+      "file": "evidence/qa-mixed-iso-native-final-b90.json",
+      "bytes": 922,
+      "sha256": "e8faf694f339015654256951a118b0831edb8e3882d15667111d7f80d92768bc"
+    },
+    {
+      "file": "evidence/qa-reversible-cleanup-b90.json",
+      "bytes": 4949,
+      "sha256": "077fae8343d0518af395de71cf8500275d151e481c00d1c829e4e5c3458af335"
+    },
+    {
+      "file": "evidence/qa-reversible-cleanup-b90.png",
+      "bytes": 146224,
+      "sha256": "54b2947a64006894ea980818240489f0e5a4b22d712dcc2fe1dff39eb70fc5bb"
+    },
+    {
+      "file": "evidence/render-closeout-current-b90.json",
+      "bytes": 4347,
+      "sha256": "d2ab72b21c068f0c86232e51f1c8509e5155efed4ce8419a570736ace501359b"
+    },
+    {
+      "file": "evidence/render-closeout-current-b90.png",
+      "bytes": 96322,
+      "sha256": "e3a4deb7b890e5f85f0555261b8d79c10ea5ba40815873702a88cff42215270e"
+    },
+    {
+      "file": "evidence/render-closeout-current-b90.txt",
+      "bytes": 14208,
+      "sha256": "dc8d0200b2fcd673f4b977ab9a8fa043faeac2d941ccebadba84fe1d68157a0f"
+    },
+    {
+      "file": "evidence/render-emitted-assets-b90.txt",
+      "bytes": 7299,
+      "sha256": "358eba4f8e6d6adb59863e15e497580e244721dc1e3555ec9917e98d9810713f"
+    },
+    {
+      "file": "evidence/served-assets-b90.json",
+      "bytes": 24834,
+      "sha256": "be63c8644123abd2fd655120d02d92734ef06a07d478ebe9209a2e59a452ca1f"
+    },
+    {
+      "file": "evidence/showcase-program-dashboard-final-b90.json",
+      "bytes": 256,
+      "sha256": "67c3326a966c8da37f55b0a5f0d46a23f2850bdab1465919546fec543fd435d3"
+    },
+    {
+      "file": "evidence/soc2-native-after-b90.json",
+      "bytes": 475,
+      "sha256": "044340eb5906944d674665eeab65f2b23da014c09a3bc1d05eb44361d236157c"
+    },
+    {
+      "file": "evidence/soc2-native-before-79075.json",
+      "bytes": 475,
+      "sha256": "044340eb5906944d674665eeab65f2b23da014c09a3bc1d05eb44361d236157c"
+    },
+    {
+      "file": "evidence/supported-ig-upgrades-b90.json",
+      "bytes": 68733,
+      "sha256": "ebb16d89f64330d1a36927ce5d2095fdb3b681cae393e7c40b273c669355ee9e"
+    }
+  ]
+}

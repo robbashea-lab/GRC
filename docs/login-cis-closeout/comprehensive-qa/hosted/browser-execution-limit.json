@@ -1,0 +1,23 @@
+{
+  "layer": "browser automation execution limitation",
+  "afterCompletedCorrections": true,
+  "originalCoordinatorTab": "72",
+  "replacementSameBrowserTab": "77",
+  "browser": "2 Codex In-app Browser",
+  "actualErrors": [
+    "Archive menu input: Input.dispatchMouseEvent timeout",
+    "Original tab observation/reload/close: Emulation.setFocusEmulationEnabled failure"
+  ],
+  "replacement": "Normal reload and authoritative DOM reads work; semantic button/menu input leaves portfolio unchanged",
+  "dialogs": "getJsDialog on both tabs returned undefined",
+  "archiveConfirmed": false,
+  "currentFixtureState": "OmniBot QA — Closeout CIS IG3 remains visible active in fresh portfolio",
+  "applicationDefectEstablished": false,
+  "permissionDenial": false,
+  "retries": "A fresh same-browser tab and one supported reload recovery were attempted; no browser/OS security change, direct authenticated API workaround or alternative archive mechanism used",
+  "pending": [
+    "Current Initech/Hooli17.5 and Brawndo1.1 selective placement spotchecks",
+    "Reversible QAIG3 Archive/Restore verification"
+  ],
+  "retainedQaIg2": "Active, explicitly preserved for pending restricted tests"
+}

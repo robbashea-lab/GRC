@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DEMO_AVAILABLE, STANDARD_AUTH_ENABLED, STANDARD_AUTH_NOTICE, formatError } from "@/lib/api";
 import { useBrawndoTheme } from "@/lib/brawndoTheme";
-import { Eye, EyeOff, LockKeyhole } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import "./Login.css";
 
 // Sign-in page. Carries no client or program information: nothing here depends on who signs in.
@@ -42,22 +42,25 @@ export default function Login() {
 
   const notice = !STANDARD_AUTH_ENABLED ? "standard-auth-notice" : undefined;
   return <LoginWelcome theme={theme} setTheme={setTheme}>
-    <main className="login">
-      <div className="ring" aria-hidden="true"/>
-      <h2 data-testid="env-identifier">Sign in to your workspace</h2>
+    <main className="login" id="login-login-card">
+      <div className="login-brand"><span className="ring" aria-hidden="true"/><span className="wordmark">Omni<span>sciente</span></span></div>
+      <h2 tabIndex="-1" data-testid="env-identifier">Sign in to your workspace</h2>
       <p className="sub">Use your work email to continue.</p>
       <form onSubmit={submit}>
         <div className="field">
           <Label htmlFor="email">Work email</Label>
-          <Input id="email" data-testid="email-input" type="email" disabled={!STANDARD_AUTH_ENABLED} aria-describedby={notice}
-            value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"/>
+          <div className="control"><Mail className="lead" aria-hidden="true"/>
+            <Input id="email" data-testid="email-input" type="email" disabled={!STANDARD_AUTH_ENABLED} aria-describedby={notice}
+              value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"/>
+          </div>
         </div>
         <div className="field">
           <div className="labelrow">
             <Label htmlFor="password">Password</Label>
             {STANDARD_AUTH_ENABLED && <Link className="link" to="/forgot-password" data-testid="forgot-password-link">Forgot password?</Link>}
           </div>
-          <div className="password">
+          <div className="control password">
+            <LockKeyhole className="lead" aria-hidden="true"/>
             <Input id="password" data-testid="password-input" type={showPwd ? "text" : "password"} disabled={!STANDARD_AUTH_ENABLED} aria-describedby={notice}
               value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password"/>
             <button className="eye" type="button" disabled={!STANDARD_AUTH_ENABLED} onClick={() => setShowPwd(value => !value)} aria-label={showPwd ? "Hide password" : "Show password"} data-testid="toggle-password">

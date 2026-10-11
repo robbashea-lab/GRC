@@ -1,0 +1,511 @@
+{
+  "version": "cis-v8.1-control1-4",
+  "framework_id": "cis-ig1",
+  "framework_version": "8.1",
+  "reviewed_on": "2026-10-09",
+  "basis": "Source-bounded current 1.2 correction only. Control1-2 and all historical answers remain immutable; approved 1.1 control1-3 is not replaced.",
+  "definitions": {
+    "1.2": {
+      "title": "Address Unauthorized Assets",
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "root": "process",
+      "related": [
+        "1.1"
+      ],
+      "prerequisites": [
+        "1.1"
+      ],
+      "requirement_elements": [
+        "process",
+        "frequency",
+        "actions"
+      ],
+      "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/#12-address-unauthorized-assets",
+      "guidance": "Address unauthorized assets through the current process at least weekly. Removal, denial of remote connection, or quarantine are alternatives; no prescribed product, separate inventory certification, or uploaded evidence is required.",
+      "context_prerequisites": [
+        "1.1"
+      ],
+      "prerequisite_policy": "Read-only neighboring context; does not score this safeguard"
+    }
+  },
+  "safeguards": {
+    "1.2": [
+      {
+        "id": "process",
+        "prompt": "Is a process in place to address unauthorized assets?",
+        "help": "Report the current process. Formal documentation or a named product is not a separate requirement of Safeguard 1.2.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "process",
+        "status_impact": "Reported source requirement; unknown or incomplete answers prevent an unqualified implementation recommendation",
+        "narrative_template": "process: {recorded_answer}",
+        "gap_template": "Confirm or address: Does a documented or consistently followed process address unauthorized assets?",
+        "evidence_guidance": "Evidence should demonstrate process; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:process",
+        "unknown_template": "Confirm: Does a documented or consistently followed process address unauthorized assets?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "existing",
+        "prompt": "What happens today when an unauthorized asset is discovered, and who can verify it?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "existing",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "existing: {recorded_answer}",
+        "gap_template": "Confirm or address: What happens today when an unauthorized asset is discovered, and who can verify it?",
+        "evidence_guidance": "Evidence should demonstrate existing; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "process": [
+            "No",
+            "Not sure"
+          ]
+        },
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:existing",
+        "unknown_template": "Confirm: What happens today when an unauthorized asset is discovered, and who can verify it?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "inventory_dependency",
+        "prompt": "Is a usable authorized asset inventory available for comparison?",
+        "help": "Optional context from Safeguard 1.1. This interview never answers or writes 1.1, and missing inventory context is not a new mandatory 1.2 requirement.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": false,
+        "element": "inventory_dependency",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "inventory dependency: {recorded_answer}",
+        "gap_template": "Confirm or address: Is a usable authorized asset inventory available for comparison?",
+        "evidence_guidance": "Evidence should demonstrate inventory dependency; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "process": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:inventory_dependency",
+        "unknown_template": "Confirm: Is a usable authorized asset inventory available for comparison?",
+        "next_step_template": "This relates to Safeguard 1.1. This interview never changes the assessment of 1.1."
+      },
+      {
+        "id": "detection",
+        "prompt": "Are unauthorized assets consistently identified using relevant systems and reports?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": false,
+        "element": "detection",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "detection: {recorded_answer}",
+        "gap_template": "Confirm or address: Are unauthorized assets consistently identified using relevant systems and reports?",
+        "evidence_guidance": "Evidence should demonstrate detection; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "process": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:detection",
+        "unknown_template": "Confirm: Are unauthorized assets consistently identified using relevant systems and reports?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "system",
+        "prompt": "Which detection systems, alerts, or teams identify unauthorized assets?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "system",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "system: {recorded_answer}",
+        "gap_template": "Confirm or address: Which detection systems, alerts, or teams identify unauthorized assets?",
+        "evidence_guidance": "Evidence should demonstrate system; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "process": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:system",
+        "unknown_template": "Confirm: Which detection systems, alerts, or teams identify unauthorized assets?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "owner",
+        "prompt": "Who investigates and responds? Include client and provider responsibilities.",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "owner",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "owner: {recorded_answer}",
+        "gap_template": "Confirm or address: Who investigates and responds? Include client and provider responsibilities.",
+        "evidence_guidance": "Evidence should demonstrate owner; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "process": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:owner",
+        "unknown_template": "Confirm: Who investigates and responds? Include client and provider responsibilities.",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "frequency",
+        "prompt": "How frequently does the process address unauthorized assets?",
+        "help": "The source requires weekly addressing, or more frequently. Ad hoc operation or intervals longer than a week do not satisfy this requirement.",
+        "type": "select",
+        "choices": [
+          "Daily or more frequently",
+          "Weekly",
+          "Every two weeks",
+          "Monthly",
+          "Ad hoc",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "frequency",
+        "status_impact": "Reported source requirement; unknown or incomplete answers prevent an unqualified implementation recommendation",
+        "narrative_template": "frequency: {recorded_answer}",
+        "gap_template": "Confirm or address: How frequently are unauthorized assets reviewed and addressed?",
+        "evidence_guidance": "Evidence should demonstrate frequency; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:frequency",
+        "unknown_template": "Confirm: How frequently are unauthorized assets reviewed and addressed?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "deficient_values": [
+          "Every two weeks",
+          "Monthly",
+          "Ad hoc"
+        ]
+      },
+      {
+        "id": "actions",
+        "prompt": "Which permitted response actions are consistently used?",
+        "help": "Choose the response actually used: remove the asset from the network, deny its remote connection, or quarantine/isolate it. One effective alternative is sufficient. None and Not sure are exclusive choices.",
+        "type": "multi",
+        "choices": [
+          "Remove from network",
+          "Deny remote connection",
+          "Quarantine or isolate",
+          "None",
+          "Not sure"
+        ],
+        "critical": true,
+        "element": "actions",
+        "status_impact": "Reported source requirement; unknown or incomplete answers prevent an unqualified implementation recommendation",
+        "narrative_template": "actions: {recorded_answer}",
+        "gap_template": "Confirm or address: Which permitted response actions are consistently used?",
+        "evidence_guidance": "Evidence should demonstrate actions; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:actions",
+        "unknown_template": "Confirm: Which permitted response actions are consistently used?",
+        "next_step_template": "One effective permitted response may be sufficient; all three are not required."
+      },
+      {
+        "id": "disposition",
+        "prompt": "Are disposition decisions consistently tracked?",
+        "help": "Operational decision support, not a prescribed document format.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": false,
+        "element": "disposition",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "disposition: {recorded_answer}",
+        "gap_template": "Confirm or address: Are disposition decisions consistently tracked?",
+        "evidence_guidance": "Evidence should demonstrate disposition; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "process": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:disposition",
+        "unknown_template": "Confirm: Are disposition decisions consistently tracked?",
+        "next_step_template": "Operational decision support, not a prescribed document format."
+      },
+      {
+        "id": "confirmation",
+        "prompt": "Is it confirmed that the asset is no longer reachable or has otherwise been addressed?",
+        "help": "Optional reported follow-up. This is not evidence verification, and lack of this optional answer does not lower status.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": false,
+        "element": "confirmation",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "confirmation: {recorded_answer}",
+        "gap_template": "Confirm or address: Is it confirmed that the asset is no longer reachable or has otherwise been addressed?",
+        "evidence_guidance": "Evidence should demonstrate confirmation; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "process": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:confirmation",
+        "unknown_template": "Confirm: Is it confirmed that the asset is no longer reachable or has otherwise been addressed?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "exceptions",
+        "prompt": "Are exceptions approved and tracked when used?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure",
+          "No exceptions used"
+        ],
+        "critical": false,
+        "element": "exceptions",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "exceptions: {recorded_answer}",
+        "gap_template": "Confirm or address: Are exceptions approved and tracked when used?",
+        "evidence_guidance": "Evidence should demonstrate exceptions; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "process": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:exceptions",
+        "unknown_template": "Confirm: Are exceptions approved and tracked when used?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "reconciled",
+        "prompt": "Are unauthorized assets reconciled against the authorized inventory?",
+        "help": "Answer from current practice. Choose Not sure when this has not been confirmed.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": false,
+        "element": "reconciled",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "reconciled: {recorded_answer}",
+        "gap_template": "Confirm or address: Are unauthorized assets reconciled against the authorized inventory?",
+        "evidence_guidance": "Evidence should demonstrate reconciled; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "process": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:reconciled",
+        "unknown_template": "Confirm: Are unauthorized assets reconciled against the authorized inventory?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "unresolved",
+        "prompt": "Do unauthorized assets remain unresolved beyond the required response interval?",
+        "help": "Optional current observation. Describe any known weekly response failure as a confirmed gap. An unanswered backlog question is not a confirmed failure.",
+        "type": "select",
+        "choices": [
+          "Yes",
+          "Partially",
+          "No",
+          "Not sure"
+        ],
+        "critical": false,
+        "element": "unresolved",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "unresolved: {recorded_answer}",
+        "gap_template": "Confirm or address: Do unauthorized assets remain unresolved beyond the required response interval?",
+        "evidence_guidance": "Evidence should demonstrate unresolved; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "when": {
+          "process": [
+            "Yes",
+            "Partially"
+          ]
+        },
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:unresolved",
+        "unknown_template": "Confirm: Do unauthorized assets remain unresolved beyond the required response interval?",
+        "next_step_template": "Answer from current practice. Choose Not sure when this has not been confirmed."
+      },
+      {
+        "id": "evidence",
+        "prompt": "What evidence is retained and what does it demonstrate?",
+        "help": "Optional records that may substantiate the reported process or response, such as operational tickets or response configuration. Uploading evidence is not required to record implementation, and verification remains separate.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "evidence",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "evidence: {recorded_answer}",
+        "gap_template": "Confirm or address: What evidence is retained and what does it demonstrate?",
+        "evidence_guidance": "Examples: detection records, investigation tickets, quarantine configuration/logs, disposition approvals, reachability checks, inventory reconciliation. Evidence remains unverified.",
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:evidence",
+        "unknown_template": "Confirm: What evidence is retained and what does it demonstrate?",
+        "next_step_template": "Examples: detection records, investigation tickets, quarantine configuration/logs, disposition approvals, reachability checks, inventory reconciliation. Evidence remains unverified."
+      },
+      {
+        "id": "gaps",
+        "prompt": "Describe confirmed missing or incomplete requirement elements.",
+        "help": "Confirmed gaps only. Record uncertainty separately. Optional supporting artifacts are not mandatory process requirements.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "gaps",
+        "status_impact": "Optional operating context; missing context does not change implementation status",
+        "narrative_template": "gaps: {recorded_answer}",
+        "gap_template": "Confirm or address: Describe missing, inconsistent, or unknown process steps and who can resolve them.",
+        "evidence_guidance": "Evidence should demonstrate gaps; configurations, exports, operational tickets or dated review records may be suitable alternatives.",
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "conditional_follow_up": "Partially / No / Not sure: record what is missing or who can verify it.",
+        "question_id": "1.2:gaps",
+        "unknown_template": "Confirm: Describe missing, inconsistent, or unknown process steps and who can resolve them.",
+        "next_step_template": "Leave blank when there are no additional confirmed gaps. Record only actual missing elements or unresolved questions."
+      },
+      {
+        "id": "unknowns",
+        "prompt": "Which requirement elements still need confirmation, and who can verify them?",
+        "help": "Uncertainty is not a confirmed gap.",
+        "type": "text",
+        "choices": [],
+        "critical": false,
+        "element": "unknowns",
+        "status_impact": "Reported requirement uncertainty prevents an unqualified recommendation",
+        "safeguard_id": "1.2",
+        "question_set_version": "cis-v8.1-control1-4",
+        "question_id": "1.2:unknowns",
+        "narrative_template": "",
+        "gap_template": "",
+        "unknown_template": "Reviewer-reported uncertainty",
+        "next_step_template": "Confirm the reported requirement uncertainty with the responsible team",
+        "evidence_guidance": "Use relevant records and responsible-owner confirmation."
+      }
+    ]
+  },
+  "groups": {
+    "1.2": [
+      {
+        "name": "Current process",
+        "ids": [
+          "process",
+          "existing",
+          "system",
+          "owner"
+        ],
+        "note": "process"
+      },
+      {
+        "name": "Identification context",
+        "ids": [
+          "inventory_dependency",
+          "detection"
+        ],
+        "note": "detection"
+      },
+      {
+        "name": "Weekly response",
+        "ids": [
+          "frequency",
+          "actions",
+          "disposition",
+          "confirmation"
+        ],
+        "note": "actions"
+      },
+      {
+        "name": "Reported follow-up",
+        "ids": [
+          "exceptions",
+          "reconciled",
+          "unresolved"
+        ],
+        "note": "exceptions"
+      },
+      {
+        "name": "Review and confirmation",
+        "ids": [
+          "evidence",
+          "gaps",
+          "unknowns"
+        ],
+        "note": "evidence"
+      }
+    ]
+  }
+}

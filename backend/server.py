@@ -320,6 +320,31 @@ async def _get_user_from_token(token: str) -> Optional[Dict]:
         return None
 
 
+def _opaque_session_is_current(session: Dict, user: Dict) -> bool:
+    # Account fences remain authoritative even if deleting session rows fails.
+    for field in ("password_changed_at", "sessions_revoked_at"):
+        fence = user.get(field)
+        if fence is None:
+            continue
+        created = session.get("created_at")
+        try:
+            if isinstance(fence, str):
+                fence = datetime.fromisoformat(fence)
+            if isinstance(created, str):
+                created = datetime.fromisoformat(created)
+            if not isinstance(fence, datetime) or not isinstance(created, datetime):
+                return False
+            if fence.tzinfo is None:
+                fence = fence.replace(tzinfo=timezone.utc)
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            if created <= fence:
+                return False
+        except (ValueError, TypeError, OverflowError):
+            return False
+    return True
+
+
 async def _get_user_from_session(token: str) -> Optional[Dict]:
     sess = await db.sessions.find_one({"session_token": token}, {"_id": 0})
     if not sess:
@@ -339,7 +364,8 @@ async def _get_user_from_session(token: str) -> Optional[Dict]:
     if exp < datetime.now(timezone.utc):
         return None
     user = await db.users.find_one({"user_id": sess["user_id"]}, {"_id": 0, "password_hash": 0})
-    return user if user and user.get("status") == "active" else None
+    return user if (user and user.get("status") == "active"
+                    and _opaque_session_is_current(sess, user)) else None
 
 
 async def get_current_user(request: Request) -> Dict:
@@ -835,27 +861,53 @@ async def login(body: LoginIn, response: Response):
 
 
 # ---------------- Password reset ----------------
+def _recovery_snapshot(account):
+    # The account CAS is the retirement boundary, including late token inserts.
+    # Missing generation is accepted only for issuing a NEW credential.
+    return {"user_id": account["user_id"], "status": account.get("status"),
+            "email": account.get("email"), "password_hash": account.get("password_hash"),
+            "recovery_generation": account.get("recovery_generation")}
+
+
+async def _retire_recovery_generation(account):
+    # Match only the observed generation: delayed cleanup must not consume a
+    # newer concurrent issuance. Older generations are already unusable by CAS.
+    await db.password_resets.update_many(
+        {"user_id": account["user_id"], "used": False,
+         "credential_generation": account.get("recovery_generation")},
+        {"$set": {"used": True, "used_at": _now(), "superseded": True}})
+
+
+async def _issue_recovery_credential(account, purpose, lifetime):
+    required_status = {"password_reset": "active", "invitation": "invited"}.get(purpose)
+    if required_status is None or account.get("status") != required_status:
+        return None
+    generation = uuid.uuid4().hex
+    changed = await db.users.update_one(_recovery_snapshot(account),
+        {"$set": {"recovery_generation": generation}})
+    if changed.matched_count != 1:
+        return None
+    await _retire_recovery_generation(account)
+    raw = secrets.token_urlsafe(32)
+    await db.password_resets.insert_one({
+        "user_id": account["user_id"], "token_hash": hashlib.sha256(raw.encode()).hexdigest(),
+        "expires_at": (datetime.now(timezone.utc) + lifetime).isoformat(),
+        "purpose": purpose, "credential_generation": generation,
+        "used": False, "created_at": _now()})
+    return raw, generation
+
+
 @api.post("/auth/forgot-password")
 async def forgot_password(body: ForgotIn):
     email = body.email.lower()
     u = await db.users.find_one({"email": email}, {"_id": 0})
     # Always return ok to avoid user-enumeration.
-    if not u or not u.get("password_hash") or u.get("status", "active") != "active":
+    if not u or not u.get("password_hash") or u.get("status") != "active":
         return {"ok": True}
-    raw = secrets.token_urlsafe(32)
-    token_hash = hashlib.sha256(raw.encode()).hexdigest()
-    # Invalidate any prior unused tokens for this user so a leaked older link becomes unusable.
-    await db.password_resets.update_many(
-        {"user_id": u["user_id"], "used": False},
-        {"$set": {"used": True, "used_at": _now(), "superseded": True}},
-    )
-    await db.password_resets.insert_one({
-        "user_id": u["user_id"],
-        "token_hash": token_hash,
-        "expires_at": (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat(),
-        "used": False,
-        "created_at": _now(),
-    })
+    issued = await _issue_recovery_credential(u, "password_reset", timedelta(hours=2))
+    if not issued:
+        return {"ok": True}
+    raw, _generation = issued
     base = (os.environ.get("APP_BASE_URL") or "").rstrip("/")
     if not base:
         return {"ok": True}
@@ -894,29 +946,36 @@ async def reset_password_endpoint(body: ResetIn):
     if exp < datetime.now(timezone.utc):
         raise HTTPException(400, "Invalid or expired reset link")
     account = await db.users.find_one({"user_id": rec["user_id"]})
-    if not account or account.get("status", "active") not in ("active", "invited"):
+    required_status = {"password_reset": "active", "invitation": "invited"}.get(rec.get("purpose"))
+    generation = rec.get("credential_generation")
+    # Unverifiable pre-change links require normal fresh issuance/resend. No
+    # recovery credential can resolve an unknown administrative account state.
+    if (not account or required_status is None or account.get("status") != required_status
+            or not isinstance(generation, str) or not generation
+            or account.get("recovery_generation") != generation):
         raise HTTPException(400, "Invalid or expired reset link")
     password_hash = hash_password(body.new_password)
     if exp <= datetime.now(timezone.utc):
         raise HTTPException(400, "Invalid or expired reset link")
     # Atomic claim: concurrent submissions cannot both use this credential.
     claimed = await db.password_resets.update_one(
-        {"token_hash": token_hash, "used": False},
+        {"token_hash": token_hash, "used": False, "credential_generation": generation},
         {"$set": {"used": True, "used_at": _now()}},
     )
     if claimed.modified_count != 1:
         raise HTTPException(400, "Invalid or expired reset link")
     # Recheck account state in the write itself so a concurrent disable wins.
     changed = await db.users.update_one(
-        {"user_id": rec["user_id"], "status": account.get("status"),
-         "password_changed_at": account.get("password_changed_at")},
+        _recovery_snapshot(account),
         {"$set": {"password_hash": password_hash, "password_changed_at": _now(),
+                  "recovery_generation": uuid.uuid4().hex,
                   "status": "active", "password_change_required": False}},
     )
     if changed.matched_count != 1:
-        raise HTTPException(400, "Account state changed. Request a new link.")
-    # Kill all existing OAuth sessions for this user so any stolen cookie stops working.
+        raise HTTPException(400, "Invalid or expired reset link")
+    # Required revocation must precede ancillary recovery-row cleanup.
     sessions_del = await db.sessions.delete_many({"user_id": rec["user_id"]})
+    await _retire_recovery_generation(account)
     await audit(account, "password_reset", "user", rec["user_id"])
     return {"ok": True, "sessions_revoked": sessions_del.deleted_count}
 
@@ -967,17 +1026,20 @@ async def update_me_password(body: MePasswordIn, user: Dict = Depends(get_curren
     if user.get("auth_provider") == "google" and not user.get("password_hash"):
         raise HTTPException(400, "Authentication is managed by your identity provider")
     full = await db.users.find_one({"user_id": user["user_id"]})
-    if not full or not full.get("password_hash"):
+    if not full or not full.get("password_hash") or full.get("status") != "active":
         raise HTTPException(400, "No local password to change")
     if not verify_password(body.current_password, full["password_hash"]):
         raise HTTPException(400, "Current password is incorrect")
     changed = await db.users.update_one(
-        {"user_id": user["user_id"], "password_hash": full["password_hash"]},
-        {"$set": {"password_hash": hash_password(body.new_password), "password_changed_at": _now(), "password_change_required": False}},
+        _recovery_snapshot(full),
+        {"$set": {"password_hash": hash_password(body.new_password), "password_changed_at": _now(),
+                  "recovery_generation": uuid.uuid4().hex, "password_change_required": False}},
     )
     if changed.matched_count != 1:
         raise HTTPException(409, "Password changed during this request; sign in again before retrying")
+    # Required revocation must precede ancillary recovery-row cleanup.
     revoked = await db.sessions.delete_many({"user_id": user["user_id"]})
+    await _retire_recovery_generation(full)
     await audit(user, "password_change", "user", user["user_id"], meta={"self": True})
     return {"ok": True, "sessions_revoked": revoked.deleted_count}
 
@@ -1219,17 +1281,11 @@ async def contact_invite(contact_id: str, body: ContactInviteIn, user: Dict = De
 
 async def _issue_invitation(account, actor):
     """Use the existing mail transport; never return bearer credentials to administrators."""
-    raw = secrets.token_urlsafe(32)
     timestamp = _now()
-    await db.password_resets.update_many(
-        {"user_id": account["user_id"], "used": False},
-        {"$set": {"used": True, "used_at": timestamp, "superseded": True}},
-    )
-    await db.password_resets.insert_one({
-        "user_id": account["user_id"], "token_hash": hashlib.sha256(raw.encode()).hexdigest(),
-        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
-        "purpose": "invitation", "used": False, "created_at": timestamp,
-    })
+    issued = await _issue_recovery_credential(account, "invitation", timedelta(days=7))
+    if not issued:
+        raise HTTPException(409, "Account state changed; reload before resending the invitation")
+    raw, generation = issued
     base = (os.environ.get("APP_BASE_URL") or "").rstrip("/")
     delivery = "unavailable"
     if urlparse(base).scheme == "https" and urlparse(base).netloc:
@@ -1244,7 +1300,7 @@ async def _issue_invitation(account, actor):
         except ValueError:
             # Mail validation errors can contain the secret URL. Never log their payload.
             logging.warning("Invitation email rejected by configured mail safety checks")
-    await db.users.update_one({"user_id": account["user_id"]}, {"$set": {
+    await db.users.update_one({"user_id": account["user_id"], "recovery_generation": generation}, {"$set": {
         "invitation_delivery": delivery, "invitation_requested_at": timestamp,
     }})
     return delivery
@@ -1370,21 +1426,23 @@ async def admin_update_user(user_id: str, body: UserPatchIn, user: Dict = Depend
             raise HTTPException(409, 'The final active Super Admin must be retained')
     if not updates:
         return _account_summary(target, user)
+    security_change = any(field in updates and updates[field] != target.get(field)
+        for field in ("email", "status", "role", "client_ids", "all_clients", "password_change_required"))
+    if security_change:
+        updates["recovery_generation"] = uuid.uuid4().hex
+    if updates.get("status") == "disabled":
+        updates["password_changed_at"] = _now()
     updates["updated_at"] = _next_write_time(target.get("updated_at"))
     changed = await db.users.update_one({"user_id": user_id, "updated_at":target.get("updated_at"), "role": target.get("role"),
-        "status": target.get("status"), "client_ids": target.get("client_ids")}, {"$set": updates})
+        "status": target.get("status"), "client_ids": target.get("client_ids"),
+        "recovery_generation": target.get("recovery_generation")}, {"$set": updates})
     if changed.matched_count != 1:
         raise HTTPException(409, "Account state changed; reload before retrying")
     # Disabling or requiring a password change revokes every active session.
     if updates.get("status") == "disabled" or updates.get("password_change_required"):
         await db.sessions.delete_many({"user_id": user_id})
-    if updates.get("status") == "disabled":
-        await db.sessions.delete_many({"user_id": user_id})
-        await db.users.update_one({"user_id": user_id}, {"$set": {"password_changed_at": _now()}})
-        await db.password_resets.update_many(
-            {"user_id": user_id, "used": False},
-            {"$set": {"used": True, "used_at": _now()}},
-        )
+    if security_change:
+        await _retire_recovery_generation(target)
     await audit(user, "update", "user", user_id, meta={"fields": list(updates.keys()), "previous": {k: target.get(k) for k in updates if k != "updated_at"}, "new": {k: v for k, v in updates.items() if k != "updated_at"}})
     for field, action in {'role': 'role_change', 'all_clients': 'all-client-entitlement', 'password_change_required': 'password-reset-required'}.items():
         if field in updates and target.get(field) != updates[field]:
@@ -1450,10 +1508,15 @@ async def update_client_memberships(user_id: str, body: ClientMembershipIn, user
     if target.get("role") == "platform_admin" and not desired and user.get("role") != "super_admin":
         raise HTTPException(403, "Removing the last membership would grant global internal scope")
     at=_next_write_time(target.get('updated_at'))
-    changed = await db.users.update_one({"user_id": user_id, "updated_at":target.get("updated_at"), "role": target.get("role"), "client_ids": target.get("client_ids")},
-        {"$set": {"client_ids": sorted(desired), "updated_at": at}})
+    updates = {"client_ids": sorted(desired), "updated_at": at}
+    if desired != previous:
+        updates["recovery_generation"] = uuid.uuid4().hex
+    changed = await db.users.update_one({"user_id": user_id, "updated_at":target.get("updated_at"), "role": target.get("role"),
+        "client_ids": target.get("client_ids"), "recovery_generation": target.get("recovery_generation")}, {"$set": updates})
     if changed.matched_count != 1:
         raise HTTPException(409, "Membership changed; reload before retrying")
+    if desired != previous:
+        await _retire_recovery_generation(target)
     for cid in previous ^ desired:
         await audit(user, "membership-granted" if cid in desired else "membership-removed", "user", user_id, cid)
     return _account_summary({**target, "client_ids": sorted(desired), "updated_at":at}, user)
@@ -2806,7 +2869,11 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
             raise HTTPException(409, 'An earlier save needs recovery; retry that request first', headers={'X-Create-Rejected':'true'})
         if key:
             async def execute(command):
-                return await _update_entity(kind, item_id, body, user, command)
+                saved = await _update_entity(kind, item_id, body, user, command)
+                if request.scope.get('bulk_action'):
+                    await audit(user, 'bulk-' + request.scope['bulk_action'], ENTITY_MAP[kind][0], item_id,
+                                existing['client_id'], meta=body)
+                return saved
             return await create_requests.run(db, key, user['user_id'], existing['client_id'], route, body, execute)
     if kind == 'tasks':
         existing = await _authorized_parent(kind, item_id, user, write=True)
@@ -2818,7 +2885,11 @@ async def update_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
             raise HTTPException(409, 'An earlier ticket save needs recovery; retry that request first')
         if key:
             async def execute(command):
-                return await _update_entity(kind, item_id, body, user, command)
+                saved = await _update_entity(kind, item_id, body, user, command)
+                if request.scope.get('bulk_action'):
+                    await audit(user, 'bulk-' + request.scope['bulk_action'], ENTITY_MAP[kind][0], item_id,
+                                existing['client_id'], meta=body)
+                return saved
             return await create_requests.run(db, key, user['user_id'], existing['client_id'], route, body, execute)
     return await _update_entity(kind, item_id, body, user)
 
@@ -3934,7 +4005,7 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
         if source.get(key):
             relations.append({key: source[key]})
         if entity_type == 'ai_systems':
-            mapped = [x['id'] for x in source.get('related_links',[]) if x['kind']==target]
+            mapped = [x['id'] for x in ai_governance.readable_links(source) if x['kind']==target]
             if mapped: relations.append({key:{'$in':mapped}})
             if target in ('findings','tasks','risks') and ai_reviews: relations.append({'review_id':{'$in':[r['review_id'] for r in ai_reviews]}})
         if target == 'ai_systems':
@@ -4493,10 +4564,81 @@ class BulkIn(BaseModel):
     action: str  # close | set-status | set-owner | assign | update | delete
     payload: Optional[Dict[str, Any]] = None
     expected_versions: Dict[str, Optional[str]] = Field(default_factory=dict)
+    expected_occurrences: Dict[str, Optional[str]] = Field(default_factory=dict)
+
+
+def _bulk_record_key(operation_key, item_id):
+    return create_requests.digest([operation_key, item_id])
+
+
+async def _bulk_apply_records(body, docs, user, operation_key, parent_command, updates=None):
+    """Sequential, explicit outcomes. This is not a multi-document transaction."""
+    from asyncio import CancelledError
+    id_field = ENTITY_MAP[body.kind][2]
+    indexed = {doc[id_field]: doc for doc in docs}
+    results, stopped = [], False
+    for item_id in dict.fromkeys(body.ids):
+        if stopped:
+            results.append({'id': item_id, 'outcome': 'not_attempted',
+                            'detail': 'An earlier record needs recovery or reconciliation'})
+            continue
+        existing = indexed.get(item_id)
+        if not existing:
+            results.append({'id': item_id, 'outcome': 'rejected', 'status': 404, 'detail': 'Record not found'})
+            continue
+        key = _bulk_record_key(operation_key, item_id)
+        command = create_requests.digest([user['user_id'], existing['client_id'],
+                                         body.kind + '/' + item_id + '/update', key])
+        try:
+            # Once a child may write, the batch can no longer be declared a
+            # fresh no-effect rejection. Keep its original recovery identity.
+            await db.create_requests.update_one({'_id': parent_command}, {'$set': {'primary_started': True}})
+            if body.action == 'delete':
+                await delete_entity(body.kind, item_id, user, {'expected_updated_at': body.expected_versions[item_id]})
+                await audit(user, 'bulk-delete', ENTITY_MAP[body.kind][0], item_id, existing['client_id'],
+                            meta={'name': existing.get('name') or existing.get('title')})
+                saved = None
+            else:
+                patch_body = {**updates, 'expected_updated_at': body.expected_versions[item_id]}
+                if body.kind == 'reviews':
+                    patch_body['expected_occurrence_id'] = body.expected_occurrences.get(item_id, review_occurrences.occurrence_id(existing))
+                internal_request = Request({'type': 'http', 'headers': [(b'idempotency-key', key.encode())],
+                                            'bulk_action': body.action})
+                saved = await update_entity(body.kind, item_id, patch_body, user, internal_request)
+            results.append({'id': item_id, 'outcome': 'applied', 'status': 200,
+                            'updated_at': saved.get('updated_at') if saved else None})
+        except HTTPException as exc:
+            receipt = await db.create_requests.find_one({'_id': command}) if body.action != 'delete' else None
+            rejected = exc.status_code in (400, 403, 404, 409, 422, 428) and (
+                body.action == 'delete' or (exc.headers or {}).get('X-Create-Rejected') == 'true'
+                or receipt is None)
+            outcome = 'rejected' if rejected else 'uncertain'
+            results.append({'id': item_id, 'outcome': outcome, 'status': exc.status_code,
+                            'detail': exc.detail if rejected else 'Required save effects are unconfirmed; retry the original save'})
+            stopped = not rejected
+        except CancelledError:
+            # Preserve known earlier outcomes when the parent deadline cancels
+            # an in-flight child; that child's result is still unconfirmed.
+            results.append({'id': item_id, 'outcome': 'uncertain', 'status': 503,
+                            'detail': 'Save timed out; retry the original save to recover its outcome'})
+            stopped = True
+        except Exception as exc:
+            logging.error('Bulk %s needs reconciliation (%s)', body.kind, type(exc).__name__)
+            results.append({'id': item_id, 'outcome': 'uncertain', 'status': 503,
+                            'detail': 'Outcome is unconfirmed; inspect the record and history before another action'})
+            stopped = True
+    count = sum(row['outcome'] == 'applied' for row in results)
+    receipt = {'ok': count == len(results), 'count': count, 'results': results,
+               'operation_key': operation_key, 'retry_supported': body.action != 'delete'}
+    if any(row['outcome'] == 'uncertain' for row in results):
+        # The parent must remain pending so retry reaches child recovery,
+        # rather than caching an uncertain outcome as a completed operation.
+        raise HTTPException(503, {'message': 'Bulk save needs recovery or reconciliation', 'bulk_receipt': receipt})
+    return receipt
 
 
 @app.post("/api/bulk")
-async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
+async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user), request: Request = None):
     if body.kind not in ENTITY_MAP:
         raise HTTPException(404, "Unknown entity")
     if not body.ids:
@@ -4504,11 +4646,37 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
     entity_type, _M, id_field, _p = ENTITY_MAP[body.kind]
     coll = db[body.kind]
     docs = await coll.find({id_field: {"$in": body.ids}}, {"_id": 0}).to_list(len(body.ids) + 1)
-    if not docs:
-        raise HTTPException(404, "No records found")
     for d in docs:
         if not _can_access_client(user, d["client_id"]):
             raise HTTPException(403, "Forbidden for one or more records")
+    operation_key = request.headers.get('Idempotency-Key') if request else None
+    operation_key = operation_key or uuid.uuid4().hex
+    if not re.fullmatch(r'[A-Za-z0-9_-]{16,128}', operation_key):
+        raise HTTPException(422, 'Invalid Idempotency-Key')
+    if body.action == 'delete':
+        if user.get('role') not in ('super_admin', 'platform_admin'):
+            raise HTTPException(403, 'Destructive action restricted')
+    elif not _writable(user):
+        raise HTTPException(403, 'Read-only role')
+
+    async def execute(parent_command):
+        try:
+            return await _execute_bulk(body, docs, user, operation_key, parent_command)
+        except HTTPException as exc:
+            parent = await db.create_requests.find_one({'_id': parent_command})
+            if exc.status_code in (400, 403, 404, 409, 422, 428) and not parent.get('primary_started'):
+                exc.headers = {**(exc.headers or {}), 'X-Create-Rejected': 'true'}
+            raise
+    # Actor-owned parent identity serializes preflight and binds the entire
+    # selection/body. Current record permissions above still precede replay.
+    return await create_requests.run(db, operation_key, user['user_id'], 'bulk',
+                                     'bulk/' + body.kind, body.model_dump(), execute)
+
+
+async def _execute_bulk(body, docs, user, operation_key, parent_command):
+    id_field = ENTITY_MAP[body.kind][2]
+    if not docs:
+        raise HTTPException(404, 'No records found')
 
     if body.action == "delete":
         if await db.create_requests.find_one({'_id':{'$in':[d['_save_command'] for d in docs if d.get('_save_command')]},'state':'pending'}):
@@ -4535,11 +4703,7 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
             if d[id_field] not in body.expected_versions:
                 raise HTTPException(428, "Reload selected records before deleting; edit versions are required")
             _require_snapshot({'expected_updated_at':body.expected_versions[d[id_field]]},d)
-        for d in docs:
-            await delete_entity(body.kind, d[id_field], user, {'expected_updated_at':body.expected_versions[d[id_field]]})
-        for d in docs:
-            await audit(user, "bulk-delete", entity_type, d[id_field], d["client_id"], meta={"name": d.get("name") or d.get("title")})
-        return {"ok": True, "count": len(docs)}
+        return await _bulk_apply_records(body, docs, user, operation_key, parent_command)
 
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
@@ -4548,7 +4712,6 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
     for d in docs:
         if d[id_field] not in body.expected_versions:
             raise HTTPException(428, "Reload selected records before saving; edit versions are required")
-        _require_snapshot({'expected_updated_at':body.expected_versions[d[id_field]]},d)
     if body.action == "close":
         updates = {"status": CLOSE_STATUS.get(body.kind, "closed")}
     elif body.action == "set-status":
@@ -4574,16 +4737,28 @@ async def bulk_action(body: BulkIn, user: Dict = Depends(get_current_user)):
 
     if not updates:
         raise HTTPException(400, "No fields to update")
+    retained = {}
     for d in docs:
-        checked = _editable_patch(body.kind, dict(updates), d, user=user)
-        await assignment_eligibility.validate(db, body.kind, {**d, **checked}, _can_access_client, d)
-        if body.kind == "tasks":
-            await action_items.prepare(db, {**d, **checked}, _can_access_client, d)
-    for d in docs:
-        await update_entity(body.kind, d[id_field], {**updates, "expected_updated_at":d.get("updated_at"), **({"expected_occurrence_id": review_occurrences.occurrence_id(d)} if body.kind == "reviews" else {})}, user)
-    for d in docs:
-        await audit(user, f"bulk-{body.action}", entity_type, d[id_field], d["client_id"], meta=updates)
-    return {"ok": True, "count": len(docs), "updates": updates}
+        key = _bulk_record_key(operation_key, d[id_field])
+        retained[d[id_field]] = await db.create_requests.find_one({'_id': create_requests.digest([
+            user['user_id'], d['client_id'], body.kind + '/' + d[id_field] + '/update', key])})
+    if any(retained.values()):
+        # Older writers have child receipts without a parent; do not describe
+        # their recovery as a fresh rejection with no possible prior effects.
+        await db.create_requests.update_one({'_id': parent_command}, {'$set': {'primary_started': True}})
+    else:
+        # Preserve the existing fresh-selection preflight. A later conflict
+        # still needs per-record outcomes; this is not batch atomicity.
+        for d in docs:
+            _require_snapshot({'expected_updated_at': body.expected_versions[d[id_field]]}, d)
+        for d in docs:
+            checked = _editable_patch(body.kind, dict(updates), d, user=user)
+            await assignment_eligibility.validate(db, body.kind, {**d, **checked}, _can_access_client, d)
+            if body.kind == "tasks":
+                await action_items.prepare(db, {**d, **checked}, _can_access_client, d)
+    # Once children exist, each native writer repairs its retained intent or
+    # rejects that unstarted record without blocking other required recovery.
+    return await _bulk_apply_records(body, docs, user, operation_key, parent_command, updates)
 
 
 # ---------------- Calendar ----------------
