@@ -70,7 +70,9 @@ test('native rejection does not claim successful assessment saving',async()=>{
 });
 
 test.each(['1.2','2.1'])('native save adapter uses the same authoritative path for newly authorized CIS safeguard %s',async id=>{
-  const other={...saved,definition_id:id,framework_assessment_id:'native-'+id};api.patch.mockImplementation(async(_path,body)=>({data:{...other,...body}}));await act(async()=>root.render(<FrameworkDrawer open record={other} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
+  const other={...saved,definition_id:id,framework_assessment_id:'native-'+id},read=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...options)=>path.startsWith('/frameworks/')?{data:{configuration:{implementation_group:1},assessments:[saved,other],work:{[saved.framework_assessment_id]:{context_complete:true},[other.framework_assessment_id]:{context_complete:true}}}}:read(path,...options));
+  api.patch.mockImplementation(async(_path,body)=>({data:{...other,...body}}));await act(async()=>root.render(<FrameworkDrawer open record={other} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
   await click('Save Omni native assessment');expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-'+id,expect.objectContaining({verification:'verified',guided_assessment_source:expect.objectContaining({version:require('@/lib/guidedAssessment').versionForSafeguard(id)})}));
 });
 

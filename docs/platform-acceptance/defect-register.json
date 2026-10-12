@@ -1,6 +1,6 @@
 {
   "baseline": "28b806716024ec149af2ec5da621a5a618c669d5",
-  "status": "CIS corrections locally verified; independent/composite/hosted acceptance pending",
+  "status": "CIS follow-up corrections locally verified; independent/composite/hosted acceptance pending",
   "new_confirmed_defects": [
     {
       "id": "PFA-001",
@@ -13,7 +13,7 @@
       "module": "GuidedAssessor first revision0 progress save",
       "reproduction": "Ordinary native Save assessment, keep mounted workspace, open or continue unsaved first guide, Save group progress: actual409 Assessment or scope changed before this review started; reload before starting. Native and local answers remain. Fresh reload succeeds.",
       "expected": "Current first-review base can follow a confirmed native save, without forcing restart or losing typed input; competing edits must still reject.",
-      "root_cause": "revision0 cached current_assessment_token retained old native snapshot while parent confirmed a new token.",
+      "root_cause": "Earlier guard fixed cached draft versus refreshed parent, but ordinary native receipt did not synchronously update parent current; delayed joined refresh retained old context, and failure unmounted unsaved guide.",
       "impact": "Operator workaround/reload; no observed native loss or unauthorized write.",
       "author_commit": "afe78ad2127bf00107002a318850e7fb345d1a83",
       "integrated_fix_commit": "9494c8f1c352e300e5a3d44bf450d14a7faeace9",
@@ -22,8 +22,15 @@
       "regression": "PlatformCisNativeGuideRefresh.test.jsx13cases; author7suites1070PASS; independent13PASS20.265s.",
       "independent_review": "cis-native-guide-refresh-independent-review.md",
       "compatibility": "No interview version/IDs/payload/history/backend/evaluator/security change. Saved-revision Compare and concurrent/scope/unmount guards retained.",
-      "hosted_retest": "Pending exact combined CI/builds and controlled deployment; baseline failure receipt retained.",
-      "residual": "Local/backend modeled tests are not hosted permission, login or fault proof."
+      "hosted_retest": "Exact b128 root-reported IG2 primed/closed path PASS; typed/minimized IG3 path FAIL with old-token409. No hosted follow-up pass yet.",
+      "residual": "Local/backend modeled tests are not hosted permission, login or fault proof.",
+      "initial_root_cause": "revision0 cached current_assessment_token retained old native snapshot while parent confirmed a new token.",
+      "follow_up_correction": "CIS-only immediate native receipt publisher; identity-matched guide configuration keeps input mounted but disabled through null ctx/error/Retry; current fallback identity-matches confirmed savedForm. No fake loaded context or other-framework callback change.",
+      "follow_up_regression": "Independent unchanged-b128 diagnostic4cases1PASS3FAIL16.707s; final imported7cases and6 affected suites963PASS68.916s. Initial2 unrelated-identity positive fixtures corrected without weakening native assertions.",
+      "follow_up_evidence": "cis-native-receipt-followup.md",
+      "follow_up_runtime_sha256": "49ae9fddfbbf5b2edf4e48a4420778bc67ef181151f75a30bece1150e6a44c73",
+      "follow_up_safeguard_sha256": "22eaf6998d3a0b8ded9cd00f13f6250396da7f09ec620322249aca72828cf4a4",
+      "status": "follow_up_locally_corrected_independent_and_hosted_pending"
     },
     {
       "id": "PFA-002",
@@ -111,5 +118,5 @@
     }
   ],
   "prior_register": "independent-inventory.json reconciles original SEC01–05/G01–08 and32 retained future-work rows. None waived; safety-blocked13-method campaign remains0/no retry or alternate runner.",
-  "acceptance": "Prior Live28b deployed for validation — final acceptance pending; new correction exact CI/deployment/affected hosted retest pending at this cutoff."
+  "acceptance": "Deployed b128 for validation — final acceptance pending. Hosted PFA001 minimized path failed; new correction requires independent review, combined CI/builds and exact affected hosted retest. Original access/tooling gaps remain unwaived."
 }

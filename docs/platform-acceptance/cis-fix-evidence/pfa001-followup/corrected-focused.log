@@ -1,0 +1,63 @@
+PASS src/components/PlatformCisMinimizedNativeGuide.test.jsx
+PASS src/components/PlatformCisNativeGuideRefresh.test.jsx
+PASS src/components/BrawndoCisAssessment.test.jsx (5.543 s)
+  ● Console
+
+    console.error
+      Unknown event handler property `onEscapeKeyDown`. It will be ignored.
+
+      at validateProperty (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+FAIL src/components/GuidedLifecycleNative.test.jsx
+  ● native save adapter uses the same authoritative path for newly authorized CIS safeguard 1.2
+
+    expect(received).toBeTruthy()
+
+    Received: undefined
+
+      35 | afterEach(async () => {await act(async () => root.unmount()); container.remove(); jest.restoreAllMocks(); jest.clearAllMocks();});
+      36 | async function render() {await act(async () => root.render(<FrameworkDrawer open record={saved} clientId="demo_brawndo" onOpenChange={() => {}}/>));}
+    > 37 | async function click(name) {const target = [...container.querySelectorAll('button')].find(button => button.textContent === name); expect(target).toBeTruthy(); await act(async () => target.click());}
+         |                                                                                                                                                  ^
+      38 |
+      39 | test('Omni evidence navigation reuses the real parent download handler exactly once', async () => {
+      40 |   await render(); await click('Open Omni native evidence');
+
+      at click (src/components/GuidedLifecycleNative.test.jsx:37:146)
+      at src/components/GuidedLifecycleNative.test.jsx:74:9
+
+  ● native save adapter uses the same authoritative path for newly authorized CIS safeguard 2.1
+
+    expect(received).toBeTruthy()
+
+    Received: undefined
+
+      35 | afterEach(async () => {await act(async () => root.unmount()); container.remove(); jest.restoreAllMocks(); jest.clearAllMocks();});
+      36 | async function render() {await act(async () => root.render(<FrameworkDrawer open record={saved} clientId="demo_brawndo" onOpenChange={() => {}}/>));}
+    > 37 | async function click(name) {const target = [...container.querySelectorAll('button')].find(button => button.textContent === name); expect(target).toBeTruthy(); await act(async () => target.click());}
+         |                                                                                                                                                  ^
+      38 |
+      39 | test('Omni evidence navigation reuses the real parent download handler exactly once', async () => {
+      40 |   await render(); await click('Open Omni native evidence');
+
+      at click (src/components/GuidedLifecycleNative.test.jsx:37:146)
+      at src/components/GuidedLifecycleNative.test.jsx:74:9
+
+Test Suites: 1 failed, 3 passed, 4 total
+Tests:       2 failed, 217 passed, 219 total
+Snapshots:   0 total
+Time:        11.277 s
+Ran all test suites within paths "src/components/PlatformCisMinimizedNativeGuide.test.jsx", "src/components/PlatformCisNativeGuideRefresh.test.jsx", "src/components/BrawndoCisAssessment.test.jsx", "src/components/GuidedLifecycleNative.test.jsx".
