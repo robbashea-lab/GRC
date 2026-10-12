@@ -132,7 +132,7 @@ test('in-flight summary progress response cannot initiate native PATCH after con
   // A rejected ordinary save supplies the existing Retry control without changing
   // the persisted native record/token. Reverting its draft restores a clean form.
   api.patch.mockRejectedValueOnce(new Error('Synthetic preparatory native save rejected'));
-  await value('[aria-label="Current implementation"]','SYNTHETIC rejected native draft.');await click('Save assessment',container);expect(container.textContent).toContain('Synthetic preparatory native save rejected');await value('[aria-label="Current implementation"]','');
+  await value('[aria-label="Current implementation"]','SYNTHETIC rejected native draft.');const nativeSaveButton=[...container.querySelectorAll('button')].find(button=>button.textContent.trim()==='Save assessment'&&!button.closest('.omni-workspace-window'));expect(nativeSaveButton).toBeTruthy();expect(nativeSaveButton.disabled).toBe(false);await act(async()=>nativeSaveButton.click());expect(container.textContent).toContain('Synthetic preparatory native save rejected');await value('[aria-label="Current implementation"]','');
   const savedNative=copy(native);holdRefresh=true;await click('Retry',container);expect(pending).toHaveLength(1);expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(manual);
   const write=api.put.getMockImplementation();let finishProgress;
   api.put.mockImplementationOnce((...args)=>new Promise(resolve=>{finishProgress=async()=>resolve(await write(...args));}));
