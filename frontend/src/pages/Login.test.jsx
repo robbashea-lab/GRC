@@ -6,7 +6,6 @@ const mockLogin = jest.fn();
 const mockExploreDemo = jest.fn();
 const mockNavigate = jest.fn();
 const mockToastError = jest.fn();
-jest.mock('@/components/login/useLoginMotion', () => ({ useLoginMotion: jest.fn() }));
 jest.mock('sonner', () => ({ toast: { error: (...args) => mockToastError(...args) } }));
 jest.mock("@/context/AuthContext", () => ({ useAuth: () => ({ login: mockLogin, exploreDemo: mockExploreDemo }) }));
 jest.mock("@/lib/api", () => ({ DEMO_AVAILABLE: true, STANDARD_AUTH_ENABLED: false, STANDARD_AUTH_NOTICE: 'Standard sign-in is not enabled in this preview.', formatError: e => e.message }));
@@ -22,16 +21,19 @@ test("blank standard sign-in and credentialless demo are separate paths", async 
     await act(async () => root.render(<Login />));
     expect(container.querySelector('#email').value).toBe('');
     expect(container.querySelector('#password').value).toBe('');
-    expect(container.querySelector('#email').hasAttribute('placeholder')).toBe(false);
-    expect(container.querySelector('#password').hasAttribute('placeholder')).toBe(false);
+    expect(container.querySelector('#email').placeholder).toBe('name@company.com');
+    expect(container.querySelector('#password').placeholder).toBe('Enter your password');
     expect(container.querySelector('#email').disabled).toBe(true);
     expect(container.querySelector('#password').disabled).toBe(true);
     expect(container.querySelector('[data-testid="submit-auth"]').disabled).toBe(true);
     expect(container.textContent).toContain('Standard sign-in is not enabled in this preview.');
-    expect(container.textContent).toContain('Clarity across your security program.');
-    expect(container.textContent).toContain('Use your work email to continue.');
+    expect(container.querySelector('h1').textContent).toBe('Clarity acrossyour securityprogram.');
+    expect(container.querySelector('#signin').textContent).toBe('Sign in to yourworkspace.');
+    expect(container.querySelector('#login-actor')).toBeNull();
+    expect(container.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
+    expect(container.textContent).not.toContain('Interactive design preview');
     // The sign-in page carries no client or program information.
-    expect(container.textContent).not.toMatch(/fictional client|Brawndo|Dunder|Initech|past due|finding/i);
+    expect(container.querySelector('.main').textContent).not.toMatch(/fictional client|Brawndo|Dunder|Initech|past due|finding/i);
     const demo=container.querySelector('[data-testid="demo-entry"]'),form=container.querySelector('form');
     expect(form.compareDocumentPosition(demo)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // approved layout keeps Demo visibly separate from standard authentication
     await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})));
@@ -44,6 +46,57 @@ test("blank standard sign-in and credentialless demo are separate paths", async 
   } finally {
     await act(async () => root.unmount());
     container.remove();
+  }
+});
+
+test('password visibility, pending sign-in and failed Demo entry retain the real flow', async () => {
+  require('@/lib/api').STANDARD_AUTH_ENABLED = true;
+  mockNavigate.mockClear(); mockToastError.mockClear();
+  let resolve;
+  mockLogin.mockReturnValueOnce(new Promise(done => { resolve = done; }));
+  const container = document.createElement('div'); document.body.appendChild(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => root.render(<Login />));
+    await act(async () => container.querySelector('[data-testid="toggle-password"]').click());
+    expect(container.querySelector('#password').type).toBe('text');
+    expect(container.querySelector('[data-testid="toggle-password"]').textContent).toBe('Hide');
+    await act(async () => container.querySelector('[data-testid="toggle-password"]').click());
+    expect(container.querySelector('#password').type).toBe('password');
+    await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})));
+    expect(container.querySelector('[data-testid="submit-auth"]').disabled).toBe(true);
+    expect(container.querySelector('[data-testid="explore-demo"]').disabled).toBe(true);
+    expect(container.querySelector('form').getAttribute('aria-busy')).toBe('true');
+    await act(async () => resolve({role:'super_admin'}));
+    expect(mockNavigate).toHaveBeenCalledWith('/');
+    mockNavigate.mockClear();
+    mockExploreDemo.mockRejectedValueOnce(new Error('Demo storage unavailable.'));
+    await act(async () => container.querySelector('[data-testid="explore-demo"]').click());
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockToastError).toHaveBeenCalledWith('Demo storage unavailable.');
+    expect(container.querySelector('[data-testid="explore-demo"]').disabled).toBe(false);
+  } finally {
+    await act(async () => root.unmount()); container.remove();
+    require('@/lib/api').STANDARD_AUTH_ENABLED = false;
+  }
+});
+
+test('motion controls are Login-local and explicit Demo entry respects environment availability', async () => {
+  require('@/lib/api').DEMO_AVAILABLE = false;
+  const container = document.createElement('div'); document.body.appendChild(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => root.render(<Login />));
+    expect(container.querySelector('[data-testid="explore-demo"]')).toBeNull();
+    await act(async () => container.querySelector('#motion').click());
+    expect(container.querySelector('#login-prism').classList.contains('paused')).toBe(true);
+    expect(document.body.classList.contains('paused')).toBe(false);
+    expect(container.querySelector('#motion').textContent).toBe('Resume motion');
+    await act(async () => container.querySelector('#motion').click());
+    expect(container.querySelector('#motion').getAttribute('aria-pressed')).toBe('false');
+  } finally {
+    await act(async () => root.unmount()); container.remove();
+    require('@/lib/api').DEMO_AVAILABLE = true;
   }
 });
 
