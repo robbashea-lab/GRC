@@ -1,0 +1,10 @@
+{
+  "classification": "QA fixture guard diagnostic, not an application defect or observed credential leak",
+  "source": "test_platform_scale_reliability.py",
+  "old_git_blob_source_sha256": "b7c10dfa9baa4f8348a8f96f69edc4eab9cb96fc785768e62009b827c07b781a",
+  "new_source_lf_sha256": "33846757cf7caeaf0b9d4fdfe2c39707d8c4ebd94a06fb090a9145eadacafb87",
+  "method": "AST extract and execute only URI equality guard; no module import, env change, auth, DB, process, browser or request",
+  "original_synthetic_echo_reproduced": true,
+  "invalid_inputs_rejected_without_value_echo": 3,
+  "exact_owned_origin_accepted": true
+}

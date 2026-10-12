@@ -1,0 +1,94 @@
+{
+  "baseline": "28b806716024ec149af2ec5da621a5a618c669d5",
+  "status": "Implemented and independently verified correction; exact combined release/hosted retest pending",
+  "new_confirmed_defects": [
+    {
+      "id": "PFA-001",
+      "severity": "medium",
+      "frameworks": [
+        "CIS IG1",
+        "CIS IG2",
+        "CIS IG3"
+      ],
+      "module": "GuidedAssessor first revision0 progress save",
+      "reproduction": "Ordinary native Save assessment, keep mounted workspace, open or continue unsaved first guide, Save group progress: actual409 Assessment or scope changed before this review started; reload before starting. Native and local answers remain. Fresh reload succeeds.",
+      "expected": "Current first-review base can follow a confirmed native save, without forcing restart or losing typed input; competing edits must still reject.",
+      "root_cause": "revision0 cached current_assessment_token retained old native snapshot while parent confirmed a new token.",
+      "impact": "Operator workaround/reload; no observed native loss or unauthorized write.",
+      "author_commit": "afe78ad2127bf00107002a318850e7fb345d1a83",
+      "integrated_fix_commit": "9494c8f1c352e300e5a3d44bf450d14a7faeace9",
+      "runtime_sha256": "d78b8337ba14428501d177e76d23627cb6c846fd95a1c4622ed0f50347501df8",
+      "correction": "Use existing guarded new-review base read only for first revision0 whose cached token differs from confirmed parent; preserve local answers/narrative/step and saved-review lineage.",
+      "regression": "PlatformCisNativeGuideRefresh.test.jsx13cases; author7suites1070PASS; independent13PASS20.265s.",
+      "independent_review": "cis-native-guide-refresh-independent-review.md",
+      "compatibility": "No interview version/IDs/payload/history/backend/evaluator/security change. Saved-revision Compare and concurrent/scope/unmount guards retained.",
+      "hosted_retest": "Pending exact combined CI/builds and controlled deployment; baseline failure receipt retained.",
+      "residual": "Local/backend modeled tests are not hosted permission, login or fault proof."
+    }
+  ],
+  "qa_harness_corrections": [
+    {
+      "id": "QA-DATE-001",
+      "classification": "verified pre-existing test fixture error, not product evaluator defect",
+      "actual": "10/404 unchanged-baseline focused tests fail after UTC midnight but before America/New_York midnight. UTC toISOString today manufactured tomorrow for intentional local-calendar evaluator.",
+      "correction": "Two existing tests reuse existing localCalendarDate; no product date/status rule changed. Original baseline logs retained."
+    },
+    {
+      "id": "QA-ISO-422",
+      "classification": "new harness payload exceeded ISO contract",
+      "correction": "Remove unsupported verification field only for ISO; preserve original failed batch and separately executed targeted ISO/SOC success."
+    },
+    {
+      "id": "QA-ROOT-URI",
+      "classification": "independent wrapper missing required owned database path",
+      "correction": "Only two previously unexecuted Calendar/oracle rerun with required owned prefix; five already successful cases not repeated."
+    },
+    {
+      "id": "QA-DIAGNOSTIC-001",
+      "classification": "QA-only rejected URI diagnostic risk; no observed real credential disclosure or application defect",
+      "independent_finding": "Security Review source review identified unittest.assertEqual echoing a supplied MongoURI on refusal.",
+      "correction": "Same strict assigned-origin whitelist, explicit if/constant ValueError; no URI value echoed.",
+      "verification": "AST-only guard reproduction with synthetic noncredential marker;3invalid inputs safely rejected, exact owned origin accepted. No import/auth/DB/request."
+    }
+  ],
+  "report_only_concerns": [
+    {
+      "id": "RP-SOURCE-ISO",
+      "disposition": "111 full normative ISO comparisons unavailable; no rewritten questions or compliance approval."
+    },
+    {
+      "id": "RP-ROLE",
+      "disposition": "Real client-role/user-denial and actual multi-user evidence unavailable; admin and modeled JWT remain distinct."
+    },
+    {
+      "id": "RP-LOGIN",
+      "disposition": "Human not ready for actual logout/login; administrator session preserved."
+    },
+    {
+      "id": "RP-TOOL",
+      "disposition": "Original tab5 unlink confirmation stalled; user unavailable leaves outcome pending. Download receipt capability timeout is tooling gap, not reproduced application defect."
+    },
+    {
+      "id": "RP-APPROVAL",
+      "disposition": "No configured Policy approval authority or independent auditor/validator identity in fresh fixtures; no fabricated independence."
+    },
+    {
+      "id": "RP-CAPABILITY",
+      "disposition": "Native Backlog, continuous/event recurrence and in-place Evidence version families unsupported; no new modules or retention rules."
+    },
+    {
+      "id": "RP-REPORT",
+      "disposition": "Existing Board PDF service passed locally; no adopted UI entry located. Not unaided hosted report proof."
+    },
+    {
+      "id": "RP-DATE",
+      "disposition": "Local friendly due-date labels versus UTC operational due-state at midnight need an approved date-policy decision; no speculative rule change."
+    },
+    {
+      "id": "RP-WORDING",
+      "disposition": "Static app title mentions Prestige across other tenants; generic vendor follow-up/helper terminology and Risk Assessed→Open list mapping are report-only existing wording/meaning."
+    }
+  ],
+  "prior_register": "independent-inventory.json reconciles original SEC01–05/G01–08 and32 retained future-work rows. None waived; safety-blocked13-method campaign remains0/no retry or alternate runner.",
+  "acceptance": "Prior Live28b deployed for validation — final acceptance pending; new correction exact CI/deployment/affected hosted retest pending at this cutoff."
+}
