@@ -1,29 +1,24 @@
-import LoginWelcome from "@/components/login/LoginWelcome";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DEMO_AVAILABLE, STANDARD_AUTH_ENABLED, STANDARD_AUTH_NOTICE, formatError } from "@/lib/api";
-import { useBrawndoTheme } from "@/lib/brawndoTheme";
-import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
-import "./Login.css";
+import PrismEducation from "@/components/login/PrismEducation";
+import "./LoginPrism.css";
 
-// Sign-in page. Carries no client or program information: nothing here depends on who signs in.
+// Public entry only. Authentication and Demo isolation remain owned by AuthContext.
 export default function Login() {
   const { login, exploreDemo } = useAuth();
   const nav = useNavigate();
-  const [theme, setTheme] = useBrawndoTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
-    if (!STANDARD_AUTH_ENABLED) return;
+    if (!STANDARD_AUTH_ENABLED || loading) return;
     setLoading(true);
     try {
       await login(email, password);
@@ -34,6 +29,7 @@ export default function Login() {
   }
 
   async function enterDemo() {
+    if (loading) return;
     setLoading(true);
     try { await exploreDemo(); nav("/clients"); }
     catch (err) { toast.error(formatError(err)); }
@@ -41,45 +37,53 @@ export default function Login() {
   }
 
   const notice = !STANDARD_AUTH_ENABLED ? "standard-auth-notice" : undefined;
-  return <LoginWelcome theme={theme} setTheme={setTheme}>
-    <main className="login" id="login-login-card">
-      <div className="login-brand"><span className="ring" aria-hidden="true"/><span className="wordmark">Omni<span>sciente</span></span></div>
-      <h2 tabIndex="-1" data-testid="env-identifier">Sign in to your workspace</h2>
-      <p className="sub">Use your work email to continue.</p>
-      <form onSubmit={submit}>
-        <div className="field">
-          <Label htmlFor="email">Work email</Label>
-          <div className="control"><Mail className="lead" aria-hidden="true"/>
-            <Input id="email" data-testid="email-input" type="email" disabled={!STANDARD_AUTH_ENABLED} aria-describedby={notice}
-              value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"/>
+  return <div id="login-prism" className={paused ? "paused" : undefined}>
+    <main className="page">
+      <div className="main">
+        <section className="scene" aria-label="Omnisciente security oversight">
+          <div className="brand"><span className="ring" aria-hidden="true" />
+            <div>Omnisciente<small>SEE FURTHER. BE STRONGER.</small></div>
           </div>
-        </div>
-        <div className="field">
-          <div className="labelrow">
-            <Label htmlFor="password">Password</Label>
-            {STANDARD_AUTH_ENABLED && <Link className="link" to="/forgot-password" data-testid="forgot-password-link">Forgot password?</Link>}
+          <div className="hero-copy">
+            <h1>Clarity across<br /><em>your security</em><br />program.</h1>
+            <p className="tagline">Governance. Risk. Compliance.<br />Aligned for a stronger tomorrow.</p>
           </div>
-          <div className="control password">
-            <LockKeyhole className="lead" aria-hidden="true"/>
-            <Input id="password" data-testid="password-input" type={showPwd ? "text" : "password"} disabled={!STANDARD_AUTH_ENABLED} aria-describedby={notice}
-              value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password"/>
-            <button className="eye" type="button" disabled={!STANDARD_AUTH_ENABLED} onClick={() => setShowPwd(value => !value)} aria-label={showPwd ? "Hide password" : "Show password"} data-testid="toggle-password">
-              {showPwd ? <EyeOff aria-hidden="true"/> : <Eye aria-hidden="true"/>}
+        </section>
+        <section className="login" aria-labelledby="signin">
+          <h2 id="signin" data-testid="env-identifier">Sign in to your<br />workspace.</h2>
+          <form id="loginForm" onSubmit={submit} aria-busy={loading}>
+            <label className="label" htmlFor="email">Work email</label>
+            <input id="email" data-testid="email-input" type="email" placeholder="name@company.com"
+              value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"
+              disabled={!STANDARD_AUTH_ENABLED} aria-describedby={notice} />
+            <label className="label" htmlFor="password">Password</label>
+            <div className="password">
+              <input id="password" data-testid="password-input" type={showPwd ? "text" : "password"} placeholder="Enter your password"
+                value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password"
+                disabled={!STANDARD_AUTH_ENABLED} aria-describedby={notice} />
+              <button type="button" className="show" id="show" data-testid="toggle-password" disabled={!STANDARD_AUTH_ENABLED}
+                onClick={() => setShowPwd(value => !value)} aria-label={showPwd ? "Hide password" : "Show password"}>
+                {showPwd ? "Hide" : "Show"}
+              </button>
+            </div>
+            {STANDARD_AUTH_ENABLED && <Link className="textbtn forgot" id="forgot" to="/forgot-password" data-testid="forgot-password-link">Forgot password?</Link>}
+            <button className="primary" type="submit" data-testid="submit-auth" disabled={loading || !STANDARD_AUTH_ENABLED} aria-describedby={notice}>
+              {loading && STANDARD_AUTH_ENABLED ? "Signing in…" : "Sign in"}<span aria-hidden="true">→</span>
             </button>
-          </div>
-        </div>
-        <Button data-testid="submit-auth" type="submit" disabled={loading || !STANDARD_AUTH_ENABLED} aria-describedby={notice} variant="ghost" className="primary">
-          {loading && STANDARD_AUTH_ENABLED ? "Signing in…" : "Sign in →"}
-        </Button>
-      </form>
-      {!STANDARD_AUTH_ENABLED && <p id="standard-auth-notice" role="status" className="notice">{STANDARD_AUTH_NOTICE}</p>}
-      {DEMO_AVAILABLE && <div data-testid="demo-entry">
-        <div className="divider">Preview environment</div>
-        <Button type="button" data-testid="explore-demo" onClick={enterDemo} disabled={loading} variant="ghost" className="secondary">{loading ? "Opening…" : "Explore the demo"}</Button>
-        <p className="fine">Sample data only. Demo changes stay in this browser.</p>
-      </div>}
-      <p className="secure" data-testid="security-cue"><LockKeyhole aria-hidden="true"/>Access is limited to authorized users.</p>
+          </form>
+          {!STANDARD_AUTH_ENABLED && <p id="standard-auth-notice" role="status" className="auth-notice">{STANDARD_AUTH_NOTICE}</p>}
+          {DEMO_AVAILABLE && <div data-testid="demo-entry">
+            <button className="secondary" id="demo" type="button" data-testid="explore-demo" disabled={loading} onClick={enterDemo}>
+              {loading ? "Opening…" : "Explore the demo"}<span aria-hidden="true">→</span>
+            </button>
+          </div>}
+        </section>
+      </div>
+      <PrismEducation />
+      <footer className="footer">
+        <span>Omnisciente · Governance, risk &amp; compliance</span>
+        <button id="motion" type="button" aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? "Resume motion" : "Pause motion"}</button>
+      </footer>
     </main>
-    <p className="help">Need access? Contact your account team.</p>
-  </LoginWelcome>;
+  </div>;
 }
