@@ -35,7 +35,7 @@ export default function BrawndoCisControls({workspacePilot=false,implementationG
   const crumbs=[{label:`CIS IG${implementationGroup}`,onClick:()=>{onClear();onControl('');}}];
   if(filtered)crumbs.push({label:filterLabel});
   else if(control)crumbs.push({label:`Control ${controlParts(control.label).num??''}`.trim(),onClick:()=>onControl(control.key)});
-  if(selected)crumbs.push({label:`Safeguard ${selected.definition_id}`});
+  if(selected&&(!control||control.rows.some(row=>row.framework_assessment_id===selected.framework_assessment_id)))crumbs.push({label:`Safeguard ${selected.definition_id}`});
   const list=filtered?visible:control?control.rows:null;
   const controlOverview=workspacePilot&&!list;
   const matchingGroups=groups.filter(g=>(controlFilter==='all'||(controlFilter==='attention'?sectionSummary(g.rows).attention>0:cisSummary(g.rows).notAssessed>0))&&g.label.toLowerCase().includes(controlSearch.trim().toLowerCase()));

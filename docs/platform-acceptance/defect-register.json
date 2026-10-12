@@ -1,6 +1,6 @@
 {
   "baseline": "28b806716024ec149af2ec5da621a5a618c669d5",
-  "status": "Implemented and independently verified correction; exact combined release/hosted retest pending",
+  "status": "CIS corrections locally verified; independent/composite/hosted acceptance pending",
   "new_confirmed_defects": [
     {
       "id": "PFA-001",
@@ -24,6 +24,27 @@
       "compatibility": "No interview version/IDs/payload/history/backend/evaluator/security change. Saved-revision Compare and concurrent/scope/unmount guards retained.",
       "hosted_retest": "Pending exact combined CI/builds and controlled deployment; baseline failure receipt retained.",
       "residual": "Local/backend modeled tests are not hosted permission, login or fault proof."
+    },
+    {
+      "id": "PFA-002",
+      "severity": "low",
+      "frameworks": [
+        "CIS IG1",
+        "CIS IG2",
+        "CIS IG3"
+      ],
+      "module": "BrawndoCisControls background breadcrumb",
+      "reproduction": "Global Continue opens native1.1 from remembered Control3; background incorrectly renders Control3 > Safeguard1.1 while native modal correctly uses Control1.",
+      "expected": "Preserve the background control/table and native modal path; do not append a foreign safeguard under that background control.",
+      "root_cause": "Selected safeguard terminal unconditionally appended after a separately remembered control.",
+      "impact": "False displayed ancestry; no native misbinding or assessment write observed.",
+      "correction": "Append selected safeguard only when the displayed unfiltered control contains its assessment identity; filtered paths remain unchanged.",
+      "regression": "New5-case local reproduction3FAIL/2PASS on b128; corrected new+existing page suites29PASS4.592s.",
+      "independent_review": "Pending frozen-candidate non-author review and retest.",
+      "compatibility": "One derived breadcrumb condition only. No background table/preferences/modal/navigation, catalog, persisted field/history, style or static copy changes.",
+      "hosted_retest": "Pending root-controlled combined candidate and specific hosted retest.",
+      "evidence": "cis-breadcrumb-context.md",
+      "status": "locally_corrected_independent_and_hosted_pending"
     }
   ],
   "qa_harness_corrections": [
