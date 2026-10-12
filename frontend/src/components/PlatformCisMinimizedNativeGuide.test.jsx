@@ -97,3 +97,13 @@ test('a successful context refresh omitting the selected assessment cannot react
   await act(async()=>pending.splice(0).forEach(read=>read.resolve({data:{...read.data,assessments:[]}})));
   expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();expect(workspace()).toBeNull();expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);expect(api.put).not.toHaveBeenCalled();expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
+
+test('in-flight first progress rechecks unavailable context before PUT and resumes only after retry',async()=>{
+  await render();await typeAndMinimize();holdRefresh=true;await nativeSave();expect(pending).toHaveLength(1);const savedNative=copy(native);await open();const read=api.get.getMockImplementation();let finishMetadata;
+  api.get.mockImplementationOnce((...args)=>new Promise(resolve=>{expect(args[0]).toMatch(/\/guided-assessment$/);finishMetadata=async()=>resolve(await read(...args));}));
+  await click('Save & close',workspace());expect(finishMetadata).toBeDefined();expect(api.put).not.toHaveBeenCalled();
+  await act(async()=>pending.splice(0).forEach(response=>response.reject(new Error('Synthetic context failed while progress awaits'))));
+  expect(container.textContent).toContain('Synthetic context failed while progress awaits');const saveClose=[...workspace().querySelectorAll('button')].find(button=>button.textContent.trim()==='Save & close');expect(saveClose.disabled).toBe(true);expect(native).toEqual(savedNative);
+  await act(async()=>finishMetadata());expect(api.put).not.toHaveBeenCalled();expect(interview.revision).toBe(0);expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);expect(container.textContent).toContain('Synthetic context failed while progress awaits');expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+  holdRefresh=false;await click('Retry',container);expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);await click('Save & close',workspace());expect(interview.revision).toBe(1);expect(interview.base_assessment_token).toBe(tokenB);expect(interview.answers.inventory_detail).toBe(detail);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);
+});
