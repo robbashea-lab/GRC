@@ -49,6 +49,10 @@ CI149 (`38309718327`) targeted b44 and was canceled after GN-QA-05 required one 
 
 Independent compiled Demo QA at b44 covered Portfolio responsive/theme states, Brawndo operational pages, five administration landing routes, CIS IG1/IG2, Dunder ISO sections/native guide, Prestige SOC program/native guide, account and empty/populated surfaces. GN-QA-01/02/03 rebuilt checks passed. This does not establish real hosted writes, restricted roles, IG3 Demo coverage, whole-app accessibility, zoom, or reduced-motion emulation.
 
+At 1c, independent compiled GN-QA-05 retest passed (canonical Reviews/Vendor boundary3.7232:1); root finite local samples covered mobile exposed-backdrop closure, notification/profile menus, Review select and native date-picker AX reachability/Escape with empty value, ISO Internal Audit, reset missing-token display/recovery navigation, and existing redirects. Settled matched Dunder audit headings/text/controls are equal to b852; paint/font intentionally change. Setup-required Onboarding context was not manufactured; hosted Hooli sample remains pending. Thirty-one source patterns and thirty review families are separate measures, not all-role/all-state coverage.
+
+CI150 (`38312186770`) at exact `1c0da2d819e36a153c2d69e84a43bdd10b7343fb` FAILED: backend offline/Mongo passed; frontend291 passed/2 failed suites,8762 passed/1 failed tests,one failed snapshot; both CI builds skipped and aggregate gate failed. GN-TEST-01/02 correct only a stale approved-introduction snapshot and the new Layout test's isolated router mock. Application source remains identical to 1c. Corrected cold-cache focused campaign3 suites/28 tests/1 snapshot PASS; independent delta review PASS. Do not deploy until the corrected exact revision passes its full gate.
+
 ## Evidence boundaries
 
 Before artifacts were copied read-only from the frozen Agent 2 b852 builds: authenticated build and explicitly isolated Demo build. The Demo build resides in repository-root `build`, as defined by `frontend/scripts/preview.cjs`; the previously reported `frontend/build` path was absent. No baseline rebuild or Agent 2 worktree mutation occurred.

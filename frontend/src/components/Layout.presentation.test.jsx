@@ -12,7 +12,8 @@ jest.mock('./BrawndoWorkspace',()=>({children})=><div>{children}</div>);
 jest.mock('./ClientSurface',()=>({children})=><div>{children}</div>);
 jest.mock('./AdminSurface',()=>({children})=><div>{children}</div>);
 jest.mock('./BrawndoSidebar',()=>({__esModule:true,default:()=> <aside/>,BrawndoPlatformSidebar:()=> <aside/>}));
-jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:mockPath}),useNavigate:()=>jest.fn(),Outlet:()=> <div>Existing page</div>,NavLink:({children})=> <div>{children}</div>}));
+// Routing is a fixture here; follow the repository's virtual mocks rather than loading Router's runtime exports.
+jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:mockPath}),useNavigate:()=>jest.fn(),Outlet:()=> <div>Existing page</div>,NavLink:({children})=> <div>{children}</div>}),{virtual:true});
 
 test('portfolio scenery is removed immediately on client, account, administration and nested-directory navigation',async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;
