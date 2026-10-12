@@ -60,3 +60,60 @@ test('scenic artwork is confined to the portfolio variant and operational font c
   expect(read('design-system.css')).toContain('--control-height: 32px');
   expect(read('design-system.css')).toContain('--page-title-size: 22px');
 });
+
+test('client and framework surfaces cannot reverse canonical roles into private palette aliases',()=>{
+  // A reverse --color-critical -> --bp-critical alias invalidated both properties
+  // on the same dark client surface. Local aliases may consume canonical roles
+  // but must not redefine them through those aliases.
+  for(const file of ['components/ClientSurface.css','components/BrawndoPage.css',
+    'components/BrawndoCisOverview.css','components/BrawndoReviews.css','components/BrawndoProfile.css']){
+    postcss.parse(read(file)).walkDecls(decl=>{
+      if(decl.prop.startsWith('--color-'))
+        expect(decl.value).not.toMatch(/var\(\s*--(?:bp|cs|rv|pf)-/);
+    });
+  }
+});
+
+test.each(['light','dark'])('%s changed action and guide-header selectors retain readable actual foreground roles',theme=>{
+  const palette=theme==='light'?light:{...light,...dark};
+  const workspace=postcss.parse(read('components/BrawndoWorkspace.css'));
+  const declarations=selector=>values(workspace.nodes.find(rule=>rule.type==='rule'&&rule.selectors.includes(selector)));
+  const resolve=value=>{
+    if(value==='white')return '#FFFFFF';
+    if(/^#[\da-f]{3}$/i.test(value))return '#'+[...value.slice(1)].map(char=>char+char).join('');
+    const variable=value.match(/^var\((--[\w-]+)\)$/);
+    return variable?palette[variable[1]]:value;
+  };
+  for(const selector of ['.brawndo-workspace-pilot .bpage-chip[aria-pressed=true]',
+    '.brawndo-workspace-pilot .bprof-tabs button[aria-current=page]']){
+    const rule=declarations(selector);
+    expect(contrast(resolve(rule.color),resolve(rule.background))).toBeGreaterThanOrEqual(4.5);
+    expect(rule.color).toBe('var(--color-brand-on-accent)');
+  }
+  for(const selector of ['.omni-workspace-window .omni-panel-header','.omni-window-controls',
+    '.omni-workspace-window .omni-state-text']){
+    const rule=declarations(selector);
+    // Refined headers can layer these three canonical surfaces in their existing gradient.
+    for(const surface of ['bg-subtle','bg-surface','bg-app'])
+      expect(contrast(resolve(rule.color),palette['--color-'+surface])).toBeGreaterThanOrEqual(4.5);
+  }
+  expect(declarations('.omni-workspace-window .omni-panel-header').background).toBe('var(--color-bg-subtle)');
+  expect(declarations('.omni-window-controls>button').border).toBe('1px solid var(--color-input-border)');
+  expect(declarations('.omni-window-controls button:hover').background).toBe('var(--color-bg-row-hover)');
+});
+
+test('closed mobile navigation cannot paint or expose its controls while the existing open drawer remains unchanged',()=>{
+  const workspace=postcss.parse(read('components/BrawndoWorkspace.css'));
+  const mobile=workspace.nodes.find(node=>node.type==='atrule'&&node.params==='(max-width:650px)'&&
+    node.nodes.some(rule=>rule.selector==='.brawndo-workspace-pilot[data-navigation=open] .app-sidebar'));
+  const closed=mobile.nodes.find(rule=>rule.selector==='.brawndo-workspace-pilot[data-navigation=closed] .app-sidebar');
+  expect(closed).toBeDefined();
+  expect(values(closed)).toEqual({display:'none'});
+  expect(Boolean(closed.nodes[0].important)).toBe(false);
+  const open=mobile.nodes.find(rule=>rule.selector==='.brawndo-workspace-pilot[data-navigation=open] .app-sidebar');
+  expect(values(open)).toEqual({position:'fixed','z-index':'45',display:'flex',width:'228px',left:'0'});
+  const desktop=[];workspace.walkRules(rule=>{
+    if(rule.selector==='.brawndo-workspace-pilot[data-navigation=closed] .app-sidebar')desktop.push(rule.parent);
+  });
+  expect(desktop).toEqual([mobile]);
+});

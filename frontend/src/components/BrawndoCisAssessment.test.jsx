@@ -33,6 +33,17 @@ beforeEach(()=>{
 afterEach(async()=>{mockOfficial=null;await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 async function render(clientId='demo_brawndo'){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={close} onNext={next} position="2 of 56 in framework order"/>));}
 
+test('CIS Not Implemented uses the failing tone without changing its saved value or narrative',async()=>{
+ record={...record,status:'needs_attention'};
+ await render();
+ expect(container.querySelector('[aria-label="Saved implementation status"] .cis-pill').className).toContain('cis-tone-critical');
+ const radio=container.querySelector('input[value="needs_attention"]');
+ expect(radio.checked).toBe(true);
+ expect(radio.closest('label').className).toContain('cis-tone-critical');
+ expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Current process');
+ expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
 test('normal saves do not reapply historical guided provenance after an interview changes',async()=>{
  record={...record,guided_assessment_source:{version:'brawndo-cis-pilot-1',revision:1,generated_at:'2026-10-07',origin:'guided-assessment-pilot',answers:{inventory:'No'}}};
  await render();await act(async()=>button('Save assessment').click());

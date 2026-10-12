@@ -21,6 +21,7 @@
 .omni-refined .omni-status-badge { display:inline-flex; padding:4px 9px; margin-top:15px; border:1px solid var(--color-neutral-border); border-radius:6px; background:var(--color-neutral-bg); color:var(--color-neutral); font-size:11px; font-weight:600; }
 .omni-refined .omni-status-badge:is(.needs_attention,.in_progress) { color:var(--color-moderate-text); background:var(--color-moderate-bg); border-color:var(--color-moderate-border); }
 .omni-refined .omni-status-badge.addressed { color:var(--color-success); background:var(--color-success-bg); border-color:var(--color-success-border); }
+[data-testid="guided-pilot"].omni-refined .omni-status-badge.needs_attention { color:var(--color-critical); background:var(--color-critical-bg); border-color:var(--color-critical-border); }
 .omni-refined .omni-group-progress>p { display:flex; justify-content:space-between; gap:12px; margin-bottom:11px; font-size:12px; }
 .omni-refined .omni-group-progress>p>span { color:var(--color-link); }
 .omni-refined .omni-group-progress>div { display:flex; gap:7px; margin-bottom:28px; }

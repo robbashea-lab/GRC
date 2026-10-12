@@ -10,7 +10,7 @@ import guidanceData from '@catalogs/operatorGuidance/cisAssessmentGuidance.json'
 
 import {sourcePresentation} from '@/lib/frameworkWorkspace';
 
-import {CIS_TONE,CisStatusPill} from './CisStatus';
+import {implementationTone,CisStatusPill} from './CisStatus';
 import {VERIFICATION_LABELS,verificationOf,CisBreadcrumb} from './BrawndoCisControls';
 import BrawndoCisFindings from './BrawndoCisFindings';
 import './BrawndoCisAssessment.css';
@@ -56,7 +56,7 @@ export default function BrawndoCisSafeguard({state,actions}){
     <div className="assessment-implementation">
     <Step title="Implementation status">
       <fieldset disabled={disabled}><legend className="sr-only">Implementation status</legend>
-        <div className="brawndo-status-options">{STATUS_OPTIONS.map(([status,label])=><label key={status} className={`cis-tone-${CIS_TONE[status]} ${form.status===status?'is-selected':''}`}>
+        <div className="brawndo-status-options">{STATUS_OPTIONS.map(([status,label])=><label key={status} className={`cis-tone-${implementationTone(status,record.framework_key)} ${form.status===status?'is-selected':''}`}>
           <input type="radio" name="bcsg-status" value={status} checked={form.status===status} onChange={()=>put('status',status)}/><span className="cis-dot" aria-hidden="true"/><span>{label}</span>
         </label>)}</div>
       </fieldset>

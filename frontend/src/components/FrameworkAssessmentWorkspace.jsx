@@ -14,7 +14,7 @@ import {operatorGuidance,operatorStatuses,operatorProgram,operatorVocabulary} fr
 import {sourcePresentation} from '@/lib/frameworkWorkspace';
 
 import {useOrg} from '@/context/OrgContext';
-import {CIS_TONE,CisStatusPill} from './CisStatus';
+import {implementationTone,CisStatusPill} from './CisStatus';
 import {verificationLadder,stackCapability} from '@/lib/cisVerification';
 import './BrawndoCisAssessment.css';
 import './BrawndoCisWorkspace.css';
@@ -52,7 +52,7 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
             <Step title="Implementation status">
               {isIso&&current.status==='not_applicable'&&(definition.specification==='isms_clause'||current.soa_applicability==='included')&&<p role="alert" className="brawndo-caution">Legacy conflict: this mandatory requirement or applicable control has a Not Applicable implementation status. Review the decision explicitly; the saved value and history have not been changed.</p>}
               <fieldset disabled={disabled}><legend className="sr-only">Assessment status</legend>
-                <div className="brawndo-status-options">{['addressed','in_progress','needs_attention','not_applicable','not_assessed'].filter(status=>status!=='not_applicable'||definition.specification!=='isms_clause').map(status=><label key={status} className={`cis-tone-${CIS_TONE[status]} ${form.status===status?'is-selected':''}`}>
+                <div className="brawndo-status-options">{['addressed','in_progress','needs_attention','not_applicable','not_assessed'].filter(status=>status!=='not_applicable'||definition.specification!=='isms_clause').map(status=><label key={status} className={`cis-tone-${implementationTone(status,framework)} ${form.status===status?'is-selected':''}`}>
                   <input type="radio" name="brawndo-assessment-status" value={status} checked={form.status===status} onChange={()=>put('status',status)}/><span className="cis-dot" aria-hidden="true"/><span>{statuses[status]}</span>
                 </label>)}</div>
               </fieldset>
