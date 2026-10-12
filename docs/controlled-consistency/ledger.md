@@ -113,3 +113,33 @@ approved isolated hosted fixture/session; local checks do not satisfy them.
 Relevant references: installed Radix Dialog 1.1.11 / DismissableLayer capture
 implementation and [WAI-ARIA APG Dialog Keyboard and Focus](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/).
 No whole-application accessibility or security conformance claim is made.
+
+## Final integration corrections
+
+- `f164a377c7aaa5c3ceb9bb5a2f9615d0817f47dd`: R02 also routes Escape from
+  native controls to the open contained guide before native dismissal. A failing
+  regression exposed that remaining case; after correction, 188 tests in six
+  affected suites passed. The event listener is on that guide element, not a
+  global keyboard listener; its existing dirty/busy guard remains authoritative.
+- R04 responsive regression: the full Needs Remediation / Validation label in
+  a near-right tooltip increased page width to 787 at a 768 viewport and 1031
+  at 1024. The existing SOC stylesheet aligns that near-right tooltip to its
+  segment's right edge. No wording, first/last tooltip, Brawndo CSS or color change.
+  Actual browser after correction at 768: page width 758 (inside viewport),
+  focused tooltip right edge 691.094, full label/count retained and visible.
+- The initial viewport capability remained bound to an older tab; filenames
+  alone are not acceptance evidence. `*-fresh-capability` / `*-final` captures
+  record actual verified viewport dimensions after acquiring the current tab's
+  supported capability. Transient/misnamed captures are retained but excluded
+  from responsive acceptance. Screenshot raster height can be shorter than DOM
+  viewport height; that is not by itself evidence of clipped application content.
+- An implementation-time full local suite completed 108 suites before output
+  stopped advancing; three observed failures were obsolete SOC label expectations,
+  corrected and included in the final focused 188-test / one-snapshot pass.
+  That pre-freeze run was stopped through normal session Ctrl+C and is NOT final
+  full-suite acceptance. It was not relabeled a pre-existing test failure or pass.
+  Only the run-owned process ancestry was inspected; no unrelated process was killed.
+
+Independent and exact composite CI/build/deployment evidence is recorded in the
+final report. Separately owned approved Login source may be integrated without
+editing or taking ownership of that design; record its provenance explicitly.
