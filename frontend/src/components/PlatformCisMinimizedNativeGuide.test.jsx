@@ -91,3 +91,9 @@ test('failed-context retry retains persisted manual wording and still requires e
   await open();expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);const saveClose=[...workspace().querySelectorAll('button')].find(button=>button.textContent.trim()==='Save & close');expect(saveClose.disabled).toBe(true);expect(api.put).not.toHaveBeenCalled();
   holdRefresh=false;await click('Retry',container);await click('Save & close',workspace());expect(document.querySelector('[aria-label="Compare saved assessment"]')).toBeTruthy();expect(api.put).not.toHaveBeenCalled();expect(interview).toEqual(original);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);
 });
+
+test('a successful context refresh omitting the selected assessment cannot reactivate earlier cached guide eligibility',async()=>{
+  await render();await typeAndMinimize();holdRefresh=true;await nativeSave();expect(pending).toHaveLength(1);const savedNative=copy(native);
+  await act(async()=>pending.splice(0).forEach(read=>read.resolve({data:{...read.data,assessments:[]}})));
+  expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();expect(workspace()).toBeNull();expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);expect(api.put).not.toHaveBeenCalled();expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+});
