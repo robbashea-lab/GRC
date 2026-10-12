@@ -1,7 +1,9 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
-import {versionForSafeguard} from '@/lib/guidedAssessment';
+import {versionForSafeguard,visibleQuestions} from '@/lib/guidedAssessment';
+import {focusedResult} from '@/lib/focusedOmni';
+import {localCalendarDate} from '@/lib/calendarView';
 import api from '@/lib/api';
 
 // Real parent/guide rendering with controlled read timing and modeled CAS.
@@ -106,4 +108,48 @@ test('in-flight first progress rechecks unavailable context before PUT and resum
   expect(container.textContent).toContain('Synthetic context failed while progress awaits');const saveClose=[...workspace().querySelectorAll('button')].find(button=>button.textContent.trim()==='Save & close');expect(saveClose.disabled).toBe(true);expect(native).toEqual(savedNative);
   await act(async()=>finishMetadata());expect(api.put).not.toHaveBeenCalled();expect(interview.revision).toBe(0);expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);expect(container.textContent).toContain('Synthetic context failed while progress awaits');expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
   holdRefresh=false;await click('Retry',container);expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);await click('Save & close',workspace());expect(interview.revision).toBe(1);expect(interview.base_assessment_token).toBe(tokenB);expect(interview.answers.inventory_detail).toBe(detail);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);
+});
+
+test('in-flight deliberate comparison rechecks unavailable context before rebase PUT',async()=>{
+  interview={...interview,revision:1,answers:{inventory:'No',inventory_detail:'Previously saved note'},narrative:'Previously reviewed manual wording.\nExact retained second line.'};const original=copy(interview);
+  await render();await typeAndMinimize();holdRefresh=true;await nativeSave();const savedNative=copy(native);await open();await click('Save & close',workspace());
+  const comparison=document.querySelector('[aria-label="Compare saved assessment"]');expect(comparison).toBeTruthy();await act(async()=>comparison.querySelector('input').click());
+  const read=api.get.getMockImplementation();let finishMetadata;
+  api.get.mockImplementationOnce((...args)=>new Promise(resolve=>{expect(args[0]).toMatch(/\/guided-assessment$/);finishMetadata=async()=>resolve(await read(...args));}));
+  await click('Retain answers & continue',comparison);expect(finishMetadata).toBeDefined();expect(api.put).not.toHaveBeenCalled();
+  await act(async()=>pending.splice(0).forEach(response=>response.reject(new Error('Synthetic context failed while comparison awaits'))));
+  expect(container.textContent).toContain('Synthetic context failed while comparison awaits');expect([...workspace().querySelectorAll('button')].find(button=>button.textContent.trim()==='Retain answers & continue').disabled).toBe(true);expect(native).toEqual(savedNative);
+  await act(async()=>finishMetadata());expect(api.put).not.toHaveBeenCalled();expect(interview).toEqual(original);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);expect(container.textContent).toContain('Synthetic context failed while comparison awaits');expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+});
+
+test('in-flight summary progress response cannot initiate native PATCH after context failure',async()=>{
+  // This supported completed fixture isolates save ordering, not status-rule proof.
+  const answers=Object.fromEntries(visibleQuestions('1.1',{inventory:'Yes'},interview.version).map(question=>[question.id,question.type==='matrix'?Object.fromEntries(question.rows.map(row=>[row,'Yes'])):question.type==='text'?'':question.type==='date'?localCalendarDate(new Date()):question.type==='multi'?['Quarantine or isolate']:question.id==='frequency'?'Every six months':question.id==='sources'?'One source':question.id==='unresolved'?'No':'Yes']));
+  const result=focusedResult('1.1',answers,interview.version);expect(result.status).toBe('addressed');
+  interview={...interview,revision:2,answers,completed:true,result,narrative:result.narrative,generated_at:'2026-10-11T12:00:30Z'};
+  await render();await open();const manual='OVERVIEW\nSynthetic reviewer wording.\n\nIMPLEMENTATION BREAKDOWN\n- Retain this exact bullet.\n\nITEMS TO ADDRESS\n- Confirm synthetic notes.';
+  await value('[aria-label="Omnibot implementation summary"]',manual);
+  // A rejected ordinary save supplies the existing Retry control without changing
+  // the persisted native record/token. Reverting its draft restores a clean form.
+  api.patch.mockRejectedValueOnce(new Error('Synthetic preparatory native save rejected'));
+  await value('[aria-label="Current implementation"]','SYNTHETIC rejected native draft.');await click('Save assessment',container);expect(container.textContent).toContain('Synthetic preparatory native save rejected');await value('[aria-label="Current implementation"]','');
+  const savedNative=copy(native);holdRefresh=true;await click('Retry',container);expect(pending).toHaveLength(1);expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(manual);
+  const write=api.put.getMockImplementation();let finishProgress;
+  api.put.mockImplementationOnce((...args)=>new Promise(resolve=>{finishProgress=async()=>resolve(await write(...args));}));
+  await click('Save assessment',workspace());expect(finishProgress).toBeDefined();expect(api.put).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledTimes(1);
+  await act(async()=>pending.splice(0).forEach(response=>response.reject(new Error('Synthetic context failed while summary awaits'))));
+  expect(container.textContent).toContain('Synthetic context failed while summary awaits');expect([...workspace().querySelectorAll('button')].find(button=>button.textContent.trim()==='Save assessment').disabled).toBe(true);expect(native).toEqual(savedNative);
+  await act(async()=>finishProgress());expect(api.patch).toHaveBeenCalledTimes(1);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(0);expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(manual);expect(container.textContent).toContain('Synthetic context failed while summary awaits');expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+});
+
+test('queued older joined context response cannot supersede the later confirmed native receipt',async()=>{
+  const tokenC='2026-10-11T12:02:00Z';
+  await render();await typeAndMinimize();holdRefresh=true;await nativeSave();expect(pending).toHaveLength(1);const older=pending.shift();
+  let finishNative;
+  api.patch.mockImplementationOnce((_path,body)=>new Promise(resolve=>{
+    expect(body.expected_last_assessed).toBe(tokenB);
+    finishNative=()=>{const {expected_last_assessed,...fields}=body;nativeHistory.push(copy(native));native={...native,...copy(fields),last_saved:tokenC,assessment_history:copy(nativeHistory)};resolve({data:copy(native)});queueMicrotask(()=>older.resolve({data:older.data}));};
+  }));
+  await value('[aria-label="Current implementation"]','SYNTHETIC native receipt C.');await click('Save assessment',container);expect(finishNative).toBeDefined();await act(async()=>finishNative());expect(native.last_saved).toBe(tokenC);expect(pending).toHaveLength(1);const savedNative=copy(native);
+  await open();expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);await click('Save & close',workspace());expect(interview.revision).toBe(1);expect(interview.base_assessment_token).toBe(tokenC);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(2);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
