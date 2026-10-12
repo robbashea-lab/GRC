@@ -45,7 +45,7 @@ test.each(['client','platform'])('%s sidebar identifies product attribution sepa
   api.get.mockImplementation(async path=>({data:path==='/dashboard'?{client_id:'client-independent',kpis:{}}:[]}));
   await act(async()=>root.render(context==='client'?<BrawndoSidebar isInternal/>:<BrawndoPlatformSidebar/>));
   expect(container.querySelector('.bsb-sub').textContent).toBe('By Prestige Worldwide');
-  expect(container.querySelector('.bsb-brand').getAttribute('aria-label')).toBe('Omnisciente by Prestige Worldwide');
+  expect(container.querySelector('.bsb-brand').getAttribute('aria-label')).toBe('GoverNara by Prestige Worldwide');
   const selected=container.querySelector('[data-testid="context-header-client"]');
   if(context==='client'){
     expect(selected.textContent).toContain('Independent lifecycle client');

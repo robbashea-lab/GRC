@@ -5,23 +5,23 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrg } from '@/context/OrgContext';
 import { grcLead } from '@/lib/clientRelationships';
 import { tableColumns } from '@/lib/tableColumns';
-import { portfolioTotals, PORTFOLIO_TILES as TILES, portfolioOrder, inactiveDays, isStale, STALE_AFTER_DAYS } from '@/lib/portfolioOverview';
+import { portfolioOrder, inactiveDays, isStale, STALE_AFTER_DAYS } from '@/lib/portfolioOverview';
 import { usePortfolioView } from '@/lib/usePortfolioView';
 import { loadPortfolioRecord } from '@/lib/portfolioRecord';
 import { useTableControls, ColumnControl, TableFilterChips } from '@/components/TableControls';
-import PageHeader from '@/components/PageHeader';
 import RecordDrawer from '@/components/RecordDrawer';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Search, MoreVertical, Archive, ExternalLink, ScrollText, AlertTriangle } from 'lucide-react';
+import { Search, MoreVertical, Archive, ExternalLink, ScrollText, AlertTriangle, SlidersHorizontal, Building2, Layers3, ListTodo, History, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBrawndoTheme, useBrawndoPortalTheme } from '@/lib/brawndoTheme';
-import { isReferencePortfolio } from '@/lib/reference';
 import { Moon, Sun } from 'lucide-react';
+import portfolioScene from '@/assets/portfolio-nara-scene.webp';
 import './Portfolio.css';
-import './BrawndoPortfolio.css';
+import './GoverNaraPortfolio.css';
 // Quick views narrow the table to clients carrying that kind of work (one at a time); the column
 // menus still combine filters. "My Team" needs a manager-to-team relationship the data model does not
 // have yet (docs/portfolio-command-center.md); scope options are a list so it can be added here without new logic.
@@ -29,7 +29,6 @@ const QUICK = [['past_due', 'Past Due'], ['critical_high_issues', 'Critical / Hi
 const SCOPES = [[false, 'All Clients', 'all'], [true, 'Assigned to Me', 'assigned_to_me']];
 const METRICS = [['past_due', 'Past Due'], ['due_30d', 'Due ≤30d'], ['due_31_90d', 'Upcoming (31–90d)'], ['critical_high_issues', 'Critical / High'], ['significant_risks', 'Significant Risks'], ['unassigned', 'Unassigned']];
 // Red only where the number means genuine urgency; other non-zero counts stay neutral and zeros recede.
-const URGENT = ['past_due', 'critical_high_issues'];
 // Reference portfolio: counts carry a severity tone; zero always recedes.
 const TONE = { past_due: 'critical', critical_high_issues: 'attention', significant_risks: 'attention', unassigned: 'neutral' };
 const fmtDate = value => value ? new Date(String(value).slice(0, 10) + 'T12:00:00').toLocaleDateString(undefined, {
@@ -69,8 +68,8 @@ function Portfolio({
     recordRequest = useRef(0);
   const globalScope = user.role === 'super_admin' || (user.role === 'platform_admin' && !user.client_ids?.length);
   const canManage = ['super_admin', 'platform_admin'].includes(user.role);
-  const reference = isReferencePortfolio(user), [theme, setTheme] = useBrawndoTheme();
-  useBrawndoPortalTheme(reference, theme);
+  const [theme, setTheme] = useBrawndoTheme();
+  useBrawndoPortalTheme(true, theme);
   const load = useCallback(async () => {
     const request = ++generation.current;
     setLoading(true);
@@ -169,18 +168,31 @@ function Portfolio({
       if (request === recordRequest.current) toast.error(formatError(e));
     }
   };
-  const totals = reference ? portfolioTotals(rows) : null;
-  return <div className={`portfolio-overview${reference ? ' bport' : ''}`} data-theme={reference ? theme : undefined}>
-    {reference ? <header className="bp-head">
-      <div><p className="bp-eyebrow">{loading ? 'Portfolio' : `${rows.length} ${rows.length === 1 ? 'client' : 'clients'} in view`}</p><h1>Client Portfolio</h1></div>
+  // Counts use active authorized directory rows; table filters do not redefine these populations.
+  const active = rows.filter(r => !['archived', 'inactive'].includes(r.client_status));
+  const frameworkCount = active.every(r => Array.isArray(r.frameworks)) ? new Set(active.flatMap(r => r.frameworks.map(f => f.key === 'cis-ig1' ? `${f.key}:${f.label}` : f.key))).size : null;
+  const available = !loading && !error;
+  const sort = table.state.sort ? `${table.state.sort.key}:${table.state.sort.dir}` : '';
+  return <div className="portfolio-overview governara-portfolio" data-theme={theme}>
+    <header className="gp-head">
+      <h1>Client Portfolio</h1>
       <button type="button" className="bp-theme" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-pressed={theme === 'dark'} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>{theme === 'dark' ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}<span>{theme === 'dark' ? 'Light' : 'Dark'}</span></button>
-    </header> : <PageHeader title="Client Portfolio" />}
-    {reference && !loading && !error && <div className="bp-tiles" role="group" aria-label="Portfolio totals" data-testid="portfolio-tiles">{TILES.map(([key, label, tone]) => {
-      const t = totals[key], signal = QUICK.some(([q]) => q === key), cls = `bp-tile is-${t.total ? TONE[key] || tone : 'clear'}`;
-      const body = <><span className="bp-tile-label">{label}</span><span className="bp-tile-value">{t.total}</span><span className="bp-tile-context">{t.total ? `${t.clients} of ${rows.length} clients${t.top && t.clients > 1 ? ` · most at ${t.top}` : t.top ? ` · ${t.top}` : ''}` : 'None across the portfolio'}</span></>;
-      return signal ? <button key={key} type="button" className={cls} aria-pressed={activeSignal === key} onClick={() => pickSignal(key)} data-testid={`portfolio-tile-${key}`}>{body}</button> : <div key={key} className={cls} data-testid={`portfolio-tile-${key}`}>{body}</div>;
-    })}</div>}
-    <div className="register-toolbar flex-wrap" data-testid="client-directory-filters">
+    </header>
+    <section className="gp-hero" aria-labelledby="portfolio-overview-heading">
+      <img src={portfolioScene} alt="" aria-hidden="true" className="gp-hero-art" />
+      <div className="gp-hero-content"><p className="gp-eyebrow">Portfolio overview</p>
+        <h2 id="portfolio-overview-heading">Your clients. <span>A clearer tomorrow.</span></h2>
+        <p className="gp-description">A high-level view of all client programs. Select a client to open its portal.</p>
+        <div className="gp-metrics" role="group" aria-label="Portfolio totals">
+          {[[Building2, 'Total clients', available ? active.length : null, 'Active authorized clients; table filters do not change this total.'],
+            [Layers3, 'Active frameworks', available ? frameworkCount : null, 'Distinct configured framework identities across active authorized clients, preserving CIS implementation groups.'],
+            [ListTodo, 'Open work items', null, 'Unavailable: the existing directory exposes due-bounded work counts, not a complete open-work population.'],
+            [History, 'Recent changes', null, 'Unavailable: the existing directory exposes latest activity, not seven-day event counts.']].map(([Icon, label, value, detail]) => <div key={label} className="gp-metric" title={detail}><span className="gp-metric-icon" aria-hidden="true"><Icon size={24}/></span><div><strong className="gp-metric-value">{value ?? '—'}{value == null && <span className="sr-only"> unavailable</span>}</strong><span className="gp-metric-label">{label}{label === 'Recent changes' && <small>in last 7 days</small>}</span></div></div>)}
+        </div>
+      </div>
+    </section>
+    <section className="gp-register" aria-label="Client portfolio register">
+    <div className="register-toolbar gp-toolbar" data-testid="client-directory-filters">
       <div className="register-search relative">
         <Search aria-hidden="true" className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
         <Input aria-label="Search clients" data-testid="client-directory-search" placeholder="Search client, industry, lead…" value={view.search} onChange={e => update({
@@ -194,19 +206,20 @@ function Portfolio({
           const pressed = mine ? view.mine : !view.mine && !activeSignal;
           return <button key={id} type="button" data-testid={`client-filter-${id}`} aria-pressed={pressed} onClick={() => update(mine ? { mine, scroll: 0 } : { mine, scroll: 0, table: { ...view.table, filters: withoutViews(view.table.filters) } })} className={`portfolio-view ${pressed ? 'is-active bg-primary text-primary-foreground' : ''}`}>{label}</button>;
         })}
-        <span className="portfolio-view-divider" aria-hidden="true" />
-        {QUICK.map(([key, label]) => <button key={key} type="button" data-testid={`client-filter-${key}`} aria-pressed={activeSignal === key} onClick={() => pickSignal(key)} className={`portfolio-view ${activeSignal === key ? 'is-active bg-primary text-primary-foreground' : ''}`}>{label}</button>)}
       </div>
-      <div className="flex items-center gap-3 text-xs">
-        <ColumnControl table={table} columnKey="grc_lead_id" menuClassName="portfolio-column-menu" />
-        <ColumnControl table={table} columnKey="frameworks" menuClassName="portfolio-column-menu" />
-        <label className="inline-flex items-center gap-2 whitespace-nowrap text-ink-secondary"><input type="checkbox" checked={view.includeArchived} onChange={e => update({
+      <label className="gp-sort">Sort by <select aria-label="Sort clients" value={sort} onChange={e => { const [key, dir] = e.target.value.split(':'); table.setSort(key || null, dir); }}><option value="">Most urgent first</option>{columns.filter(c => c.sortable !== false).flatMap(c => ['asc', 'desc'].map(dir => <option key={`${c.key}:${dir}`} value={`${c.key}:${dir}`}>{`${c.label} · ${c.numeric ? dir === 'asc' ? 'Lowest First' : 'Highest First' : c.dateKind ? dir === 'asc' ? 'Oldest' : 'Most Recent' : dir === 'asc' ? 'A → Z' : 'Z → A'}`}</option>))}</select></label>
+      <Popover><PopoverTrigger asChild><button type="button" className="gp-filter-button" aria-label="Portfolio filters"><SlidersHorizontal size={15} aria-hidden="true"/>Filters</button></PopoverTrigger>
+        <PopoverContent align="end" className="gp-filter-menu" aria-label="Portfolio filters">
+          <div className="gp-work-views" role="group" aria-label="Portfolio work views">{QUICK.map(([key, label]) => <button key={key} type="button" data-testid={`client-filter-${key}`} aria-pressed={activeSignal === key} onClick={() => pickSignal(key)} className={`portfolio-view ${activeSignal === key ? 'is-active' : ''}`}>{label}</button>)}</div>
+          <div className="gp-column-filters">{columns.map(c => <ColumnControl key={c.key} table={table} column={c} menuClassName="portfolio-column-menu"/>)}</div>
+          <label className="inline-flex items-center gap-2 whitespace-nowrap text-ink-secondary"><input type="checkbox" checked={view.includeArchived} onChange={e => update({
             includeArchived: e.target.checked,
             scroll: 0
           })} data-testid="include-archived" />Include archived</label>
-      </div>
+        </PopoverContent>
+      </Popover>
     </div>
-    <div className="page-gutter pb-5">
+    <div className="gp-register-body">
       <TableFilterChips table={table} />
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-secondary py-2">
         <span>{loading ? 'Loading clients…' : `${filtered.length} ${filtered.length === 1 ? 'client' : 'clients'}${hasFilters ? ` · ${rows.length} available` : ''}${globalScope ? '' : ' · your authorized clients'}`}</span>
@@ -214,28 +227,30 @@ function Portfolio({
       </div>
       {error ? <div role="alert" className="border border-line rounded-lg p-5 text-sm">{error}<Button variant="outline" size="sm" onClick={load} className="ml-3">Retry</Button></div> : <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="client-portfolio-table" tabIndex={0} role="region" aria-label="Client portfolio, scroll horizontally for additional columns">
         <table className="portfolio-table w-full text-sm">
-          <caption className="sr-only">Authorized client GRC priorities. Upcoming counts work due in 31 to 90 days. Critical / High counts open Findings and standalone high-priority Actions; Risks are counted separately. Last Activity is the latest lifecycle event; logins and generic edits are excluded.</caption>
-          <thead><tr>{columns.map(c => <th key={c.key} scope="col" aria-sort={table.state.sort?.key === c.key ? table.state.sort.dir === 'asc' ? 'ascending' : 'descending' : undefined} className={`tbl-cell font-medium ${c.numeric ? 'text-right' : 'text-left'}`}><ColumnControl table={table} column={c} menuClassName="portfolio-column-menu" /></th>)}<th scope="col" className="tbl-cell"><span className="sr-only">Actions</span></th></tr></thead>
+          <caption className="sr-only">Authorized client overview. Open Work is unavailable. Priority Risks uses the existing Significant Risks population. Detailed work counts are available in each row's action menu. Last Activity is the latest lifecycle event; logins and generic edits are excluded.</caption>
+          <thead><tr>{['name', 'grc_lead_id', 'frameworks'].map(key => <th key={key} scope="col" aria-sort={table.state.sort?.key === key ? table.state.sort.dir === 'asc' ? 'ascending' : 'descending' : undefined} className="tbl-cell text-left"><ColumnControl table={table} columnKey={key} menuClassName="portfolio-column-menu"/></th>)}<th scope="col" className="tbl-cell">Open Work</th><th scope="col" className="tbl-cell">Priority Risks</th><th scope="col" className="tbl-cell"><ColumnControl table={table} columnKey="last_activity" menuClassName="portfolio-column-menu"/></th><th scope="col" className="tbl-cell">Actions</th></tr></thead>
           <tbody className="divide-y divide-line">
-            {loading ? <tr><td colSpan={11} className="tbl-cell py-8 text-center text-ink-secondary">Loading directory…</td></tr> : filtered.length === 0 ? <tr><td colSpan={11} className="tbl-cell py-8 text-center text-ink-secondary">
+            {loading ? <tr><td colSpan={7} className="tbl-cell py-8 text-center text-ink-secondary">Loading directory…</td></tr> : filtered.length === 0 ? <tr><td colSpan={7} className="tbl-cell py-8 text-center text-ink-secondary">
               <p>{view.mine ? 'No clients are currently assigned to you.' : rows.length ? 'No clients match the current filters.' : 'No clients are currently available to you.'}</p>
               {hasFilters && <button onClick={clear} className="mt-2 underline underline-offset-2">Clear filters</button>}
               {canManage && <button onClick={() => nav('/admin/clients')} className="ml-3 mt-2 underline underline-offset-2">Client Management →</button>}
             </td></tr> : filtered.map((r, i) => {
               const lead = grcLead(r);
               return <tr key={r.client_id} className="row-hover" data-testid={`client-row-${i}`} data-client-id={r.client_id}>
-              <td className="tbl-cell"><button onClick={() => enter(r)} data-testid={`client-open-${r.client_id}`} className="text-left hover:underline underline-offset-2 font-medium text-ink-primary">{r.name}</button><div className="text-xs text-ink-secondary">{r.industry || '—'}{['archived', 'inactive', 'onboarding'].includes(r.client_status) && <span className="ml-1 capitalize">· {r.client_status}</span>}</div></td>
+              <td className="tbl-cell"><div className="gp-client"><span className="gp-client-initial" aria-hidden="true">{r.name?.trim().charAt(0) || '—'}</span><div><button onClick={() => enter(r)} data-testid={`client-open-${r.client_id}`} className="text-left hover:underline underline-offset-2 font-medium text-ink-primary">{r.name}</button><div className="text-xs text-ink-secondary">{r.industry || '—'}{['archived', 'inactive', 'onboarding'].includes(r.client_status) && <span className="ml-1 capitalize">· {r.client_status}</span>}</div></div></div></td>
               <td className="tbl-cell"><span className="font-medium text-ink-primary">{lead.name}</span>{lead.notice && <span title={lead.notice} className="inline-flex ml-1"><AlertTriangle className="h-3 w-3 text-ink-secondary" aria-hidden="true" /><span className="sr-only">{lead.notice}</span></span>}</td>
               <td className="tbl-cell"><div className="flex flex-wrap gap-1">{r.frameworks?.length ? r.frameworks.map(f => <button key={f.key} onClick={() => enter(r, f.to)} className="portfolio-framework rounded border border-line bg-surface-subtle text-ink-secondary px-1.5 py-0.5 text-xs hover:bg-surface-hover" aria-label={`Open ${f.label} for ${r.name}`} title={`${f.label} applies. Open the framework workspace for recorded assessments and linked work.`}>{f.label}</button>) : <span className="text-xs text-ink-help">None selected</span>}</div></td>
-              {METRICS.map(([key, label]) => <td key={key} className="tbl-cell text-right"><button type="button" data-metric={key} aria-label={`${r.name}: ${label}, ${r[key] ?? 'unavailable'} items`} className={`portfolio-metric ${reference ? `bp-count is-${r[key] > 0 ? TONE[key] || 'neutral' : 'zero'}` : ''} font-mono tabular-nums underline-offset-2 hover:underline ${r[key] > 0 ? URGENT.includes(key) ? 'text-semantic-critical font-semibold' : 'text-ink-primary font-medium' : 'text-ink-help'}`} onClick={() => key === 'significant_risks' ? enter(r, '/risks?portfolio=significant') : openDrill(key, r)}>{r[key] ?? '—'}</button></td>)}
+              <td className="tbl-cell text-ink-help" title="The existing directory does not provide a complete open-work population.">—<span className="sr-only"> unavailable</span></td>
+              <td className="tbl-cell"><button type="button" data-metric="significant_risks" className={`portfolio-metric gp-risk is-${r.significant_risks > 0 ? 'attention' : 'zero'}`} aria-label={`${r.name}: Significant Risks, ${r.significant_risks ?? 'unavailable'} items`} onClick={() => enter(r, '/risks?portfolio=significant')}>{r.significant_risks ?? '—'}</button></td>
               <td className="tbl-cell text-xs"><LastActivity activity={r.last_activity} /></td>
-              <td className="tbl-cell"><ClientRowMenu row={r} index={i} onOpen={() => enter(r)} onArchived={() => { load(); refreshClients(); }} canEdit={canManage} /></td>
+              <td className="tbl-cell"><div className="gp-row-actions"><button type="button" className="gp-open-portal" onClick={() => enter(r)} aria-label={`Open Portal for ${r.name}`}>Open Portal<ArrowRight size={14} aria-hidden="true"/></button><ClientRowMenu row={r} index={i} onOpen={() => enter(r)} onMetric={key => key === 'significant_risks' ? enter(r, '/risks?portfolio=significant') : openDrill(key, r)} onArchived={() => { load(); refreshClients(); }} canEdit={canManage} /></div></td>
             </tr>;
             })}
           </tbody>
         </table>
       </div>}
     </div>
+    </section>
     <Sheet open={!!drill} onOpenChange={open => {
       if (!open) closeDrill();
     }}><SheetContent className="w-full sm:max-w-4xl overflow-y-auto" data-testid="drill-dialog">
@@ -274,6 +289,7 @@ function ClientRowMenu({
   row,
   index,
   onOpen,
+  onMetric,
   onArchived,
   canEdit
 }) {
@@ -295,6 +311,8 @@ function ClientRowMenu({
     <DropdownMenuContent align="end" className="w-52">
       <DropdownMenuItem onClick={onOpen}><ExternalLink className="h-3.5 w-3.5 mr-2" />Open client workspace</DropdownMenuItem>
       <DropdownMenuItem onClick={() => nav(`/admin/audit?client=${encodeURIComponent(row.client_id)}`)}><ScrollText className="h-3.5 w-3.5 mr-2" />View activity</DropdownMenuItem>
+      <DropdownMenuSeparator />
+      {METRICS.map(([key, label]) => <DropdownMenuItem key={key} data-metric={key} data-client-id={row.client_id} onClick={() => onMetric(key)} className={`gp-work-count is-${row[key] > 0 ? TONE[key] || 'neutral' : 'zero'}`}><span>{label}</span><span>{row[key] ?? '—'}</span></DropdownMenuItem>)}
       {canEdit && <><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setArchived(row.client_status !== 'archived')}><Archive className="h-3.5 w-3.5 mr-2" />{row.client_status === 'archived' ? 'Restore client' : 'Archive client'}</DropdownMenuItem></>}
     </DropdownMenuContent>
   </DropdownMenu>;

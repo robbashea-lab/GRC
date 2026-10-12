@@ -1,63 +1,63 @@
-/* Approved light workspace / charcoal navigation system. Shared root tokens include native controls and portalled UI; no route-specific theme. */
+/* GoverNara operational theme. Canonical root tokens cover pages and portalled UI; density and structure stay unchanged. */
 :root {
   color-scheme: light;
   --register-gutter: 20px;
   --register-row: 46px;
-  --background: 200 23% 97%;
-  --foreground: 214 16% 19%;
+  --background: 212 57% 95%;
+  --foreground: 214 59% 18%;
   --card: 0 0% 100%;
   --card-foreground: var(--foreground);
   --popover: 0 0% 100%;
   --popover-foreground: var(--foreground);
-  --primary: 214 16% 19%;
+  --primary: 218 71% 44%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 216 22% 95%;
+  --secondary: 213 60% 97%;
   --secondary-foreground: var(--foreground);
-  --muted: 216 22% 95%;
-  --muted-foreground: 210 6% 43%;
-  --accent: 216 22% 95%;
+  --muted: 213 60% 97%;
+  --muted-foreground: 212 23% 42%;
+  --accent: 214 62% 95%;
   --accent-foreground: var(--foreground);
-  --border: 213 20% 91%;
-  --input: 213 8% 58%;
-  --ring: 224 89% 61%;
+  --border: 212 36% 84%;
+  --input: 213 19% 47%;
+  --ring: 218 71% 44%;
   --destructive: 4 76% 40%;
   --destructive-foreground: 0 0% 100%;
-  --color-bg-app: #F7F9FA;
+  --color-bg-app: #EDF3FA;
   --color-bg-surface: #FFFFFF;
-  --color-bg-subtle: #F1F3F6;
-  --color-bg-tablehead: #F1F3F6;
-  --color-bg-row-hover: #F7F9FA;
-  --color-border: #E4E8ED;
-  --color-border-strong: #D5DAE1;
-  --color-input-border: #8C949E;
-  --color-control-active-border: #8C949E;
-  --color-text-primary: #293039;
-  --color-text-secondary: #4A545E;
-  --color-text-muted: #666D74;
-  --color-text-help: #666D74;
-  --color-text-disabled: #A8ABB3;
-  --color-text-on-dark: #FFFFFF;
-  --color-text-on-dark-2: #C3C9D0;
-  --color-text-on-dark-muted: #98A1AB;
-  --color-brand-charcoal: #293039;
-  --color-brand-charcoal-hover: #1F252C;
-  --color-brand-charcoal-active: #161A20;
-  --color-brand-metallic: #3E4852;
-  --color-brand-metallic-2: #333C46;
-  --color-brand-metallic-3: #454F5B;
-  --color-brand-lime: #A3DB33;
-  --color-sidebar-bg: #293039;
-  --color-sidebar-text: #C3C9D0;
-  --color-sidebar-icon: #98A1AB;
-  --color-sidebar-hover-bg: #333C46;
-  --color-sidebar-hover-text: #E4E8ED;
-  --color-sidebar-active-bg: #3E4852;
+  --color-bg-subtle: #F3F7FC;
+  --color-bg-tablehead: #F3F7FC;
+  --color-bg-row-hover: #EAF1FA;
+  --color-border: #C6D4E4;
+  --color-border-strong: #B6C6DB;
+  --color-input-border: #60758E;
+  --color-control-active-border: #215BC1;
+  --color-text-primary: #132A49;
+  --color-text-secondary: #4A617B;
+  --color-text-muted: #536A84;
+  --color-text-help: #536A84;
+  --color-text-disabled: #8A9BB1;
+  --color-text-on-dark: #EDF3FF;
+  --color-text-on-dark-2: #C9D6EB;
+  --color-text-on-dark-muted: #A8BAD5;
+  --color-brand-charcoal: #071321;
+  --color-brand-charcoal-hover: #13223A;
+  --color-brand-charcoal-active: #050E19;
+  --color-brand-metallic: #13223A;
+  --color-brand-metallic-2: #102338;
+  --color-brand-metallic-3: #263C58;
+  --color-brand-lime: #85D4FF;
+  --color-sidebar-bg: #071321;
+  --color-sidebar-text: #C9D6EB;
+  --color-sidebar-icon: #A8BAD5;
+  --color-sidebar-hover-bg: #13223A;
+  --color-sidebar-hover-text: #EDF3FF;
+  --color-sidebar-active-bg: #25416A;
   --color-sidebar-active-text: #FFFFFF;
-  --color-link: #2A55C8;
-  --color-link-hover: #1F4AC4;
-  --color-focus-ring: #4172F4;
-  --color-selected-bg: #EFF4FF;
-  --color-selected-rail: #2A55C8;
+  --color-link: #215BC1;
+  --color-link-hover: #164AAB;
+  --color-focus-ring: #215BC1;
+  --color-selected-bg: #E4EEFC;
+  --color-selected-rail: #215BC1;
   --color-critical: #B42318;
   --color-critical-bg: #FEF3F2;
   --color-critical-border: #FECDCA;
@@ -86,8 +86,86 @@
   --color-accepted-border: #D5DAE1;
   --shadow-floating: 0 0 0 1px rgb(0 0 0 / .06), 0 4px 12px -4px rgb(0 0 0 / .16);
   --shadow-dialog: -8px 0 32px -16px rgb(0 0 0 / .24);
+  --color-brand-accent: #215BC1;
+  --color-brand-accent-hover: #164AAB;
+  --color-brand-accent-active: #103E91;
+  --color-brand-on-accent: #FFFFFF;
+  --color-header-bg: #081426;
+  --color-sidebar-border: #263C58;
+  --color-status-neutral-fill: #A2AEC4;
 }
 .light { color-scheme: light; }
+.dark:not([data-brawndo-workspace="light"]),
+html[data-brawndo-workspace="dark"],
+html[data-brawndo-portal="dark"]:not([data-brawndo-workspace]) {
+  color-scheme: dark;
+  --color-bg-app: #071321;
+  --color-bg-surface: #0C1B30;
+  --color-bg-subtle: #11243A;
+  --color-bg-tablehead: #112238;
+  --color-bg-row-hover: #172B45;
+  --color-border: #263C58;
+  --color-border-strong: #3D5778;
+  --color-input-border: #57779C;
+  --color-control-active-border: #85D4FF;
+  --color-text-primary: #EDF3FF;
+  --color-text-secondary: #A8BAD5;
+  --color-text-muted: #A2AEC4;
+  --color-text-help: #A2AEC4;
+  --color-text-disabled: #6D819C;
+  --color-link: #85D4FF;
+  --color-link-hover: #A6C7FF;
+  --color-focus-ring: #85D4FF;
+  --color-selected-bg: #25416A;
+  --color-selected-rail: #85D4FF;
+  --color-critical: #FA7B85;
+  --color-critical-bg: #321C2B;
+  --color-critical-border: #713448;
+  --color-high: #F5BC4F;
+  --color-high-bg: #332715;
+  --color-high-border: #785A2C;
+  --color-moderate: #F5BC4F;
+  --color-moderate-text: #F5BC4F;
+  --color-moderate-bg: #332B1B;
+  --color-moderate-border: #785A2C;
+  --color-duesoon: #F5BC4F;
+  --color-duesoon-text: #F5BC4F;
+  --color-duesoon-bg: #332B1B;
+  --color-duesoon-border: #785A2C;
+  --color-success: #39C7A5;
+  --color-success-bg: #0E312E;
+  --color-success-border: #28635A;
+  --color-info: #85D4FF;
+  --color-info-bg: #16344F;
+  --color-info-border: #3D648F;
+  --color-neutral: #A2AEC4;
+  --color-neutral-bg: #17263B;
+  --color-neutral-border: #3D5778;
+  --color-accepted: #A2AEC4;
+  --color-accepted-bg: #17263B;
+  --color-accepted-border: #3D5778;
+  --color-brand-accent: #85D4FF;
+  --color-brand-accent-hover: #A6C7FF;
+  --color-brand-accent-active: #72BBEF;
+  --color-brand-on-accent: #071321;
+  --shadow-floating: 0 0 0 1px rgb(38 60 88 / .8), 0 6px 18px -4px rgb(0 0 0 / .45);
+  --shadow-dialog: -8px 0 32px -16px rgb(0 0 0 / .55);
+  --background: 212 65% 8%;
+  --foreground: 220 100% 96%;
+  --card: 215 60% 12%;
+  --popover: 215 60% 12%;
+  --primary: 201 100% 76%;
+  --primary-foreground: 212 65% 8%;
+  --secondary: 212 55% 15%;
+  --muted: 212 55% 15%;
+  --muted-foreground: 219 22% 70%;
+  --accent: 214 50% 18%;
+  --border: 214 40% 25%;
+  --input: 212 28% 48%;
+  --ring: 201 100% 76%;
+  --destructive: 355 93% 73%;
+  --destructive-foreground: 212 65% 8%;
+}
 :root {
   --radius: .375rem;
   --radius-control: 5px;
@@ -566,7 +644,7 @@ td:last-child > button[aria-label="Row actions"] {
 :root .table-filter-chips button:last-child { background: transparent; }
 :root .column-control[data-active="true"] { background: var(--color-bg-subtle); box-shadow: 0 0 0 3px var(--color-bg-subtle); }
 :root :is(.app-workspace, [role="dialog"]) .ui-control { background: var(--color-bg-surface); }
-:root .ui-button.bg-primary { background: var(--color-brand-charcoal); color: #FFFFFF; }
+:root .ui-button.bg-primary { background: var(--color-brand-accent); color: var(--color-brand-on-accent); }
 :root .ui-button.border { background: var(--color-bg-surface); border-color: var(--color-input-border); color: var(--color-text-primary); }
 :root .ui-button:disabled { background: var(--color-bg-subtle); color: var(--color-text-disabled); opacity: 1; }
 :root .pill[data-status="upcoming"] { color: var(--color-text-secondary); }
@@ -577,8 +655,8 @@ td:last-child > button[aria-label="Row actions"] {
 @media (hover: hover) and (pointer: fine) {
   :root .quick-filters button:not([aria-pressed="true"]):hover { background: var(--color-bg-subtle); border-color: var(--color-border-strong); }
   :root .quick-filters button:not([aria-pressed="true"]):active { background: var(--color-border); border-color: var(--color-input-border); }
-  :root .ui-button.bg-primary:not(:disabled):hover { background: var(--color-brand-charcoal-hover); }
-  :root .ui-button.bg-primary:not(:disabled):active { background: var(--color-brand-charcoal-active); }
+  :root .ui-button.bg-primary:not(:disabled):hover { background: var(--color-brand-accent-hover); }
+  :root .ui-button.bg-primary:not(:disabled):active { background: var(--color-brand-accent-active); }
   :root .ui-button.border:not(:disabled):hover { background: var(--color-bg-subtle); }
 }
 @media (max-width: 700px) {

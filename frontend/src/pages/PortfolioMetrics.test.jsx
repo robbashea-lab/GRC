@@ -16,17 +16,21 @@ test('client-row drills retain full populations beyond the old queue cap, includ
     metric_items:metrics,attention_queue:overdue.slice(0,15),clients:[{client_id:'a',name:'Alpha',program_status:'action_required',past_due:25,due_30d:1,critical_high_open:0,critical_high_issues:0,significant_risks:0,unassigned:0,metric_items:metrics},{client_id:'b',name:'Beta',program_status:'needs_attention'},{client_id:'c',name:'Gamma',program_status:'healthy'}]}}));
   const container=document.createElement('div');document.body.appendChild(container);const root=createRoot(container);
   const click=async selector=>act(async()=>document.querySelector(selector).click());
+  const metric=async key=>{
+    await act(async()=>document.querySelector('[data-testid="client-row-menu-0"]').dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0,ctrlKey:false})));
+    await click(`[role="menuitem"][data-client-id="a"][data-metric="${key}"]`);
+  };
   const close=async()=>act(async()=>document.querySelector('[data-testid="drill-dialog"] button').click());
   try {
     await act(async()=>root.render(<ClientDirectory/>));
-    await click('[data-client-id="a"] [data-metric="due_30d"]');
+    await metric('due_30d');
     expect(document.querySelector('[data-testid="drill-dialog"]').textContent).toContain('Action 30');
     expect(document.querySelectorAll('[data-testid^="drill-row-"]')).toHaveLength(1);await close();
-    await click('[data-client-id="a"] [data-metric="past_due"]');
+    await metric('past_due');
     expect(document.querySelectorAll('[data-testid^="drill-row-"]')).toHaveLength(25);
     expect(document.querySelector('[data-testid="drill-dialog"]').textContent).toContain('Past Due — Alpha');
     expect([...document.querySelectorAll('[data-record-key]')].map(r=>r.dataset.recordKey).sort()).toEqual(overdue.map(r=>r.key).sort());await close();
-    await click('[data-client-id="a"] [data-metric="unassigned"]');
+    await metric('unassigned');
     expect(document.querySelector('[data-testid="drill-dialog"]').textContent).toContain('No items contribute to this metric.');await close();
     expect(container.textContent).not.toContain('Needs Attention Across Clients');
     expect(container.querySelector('[data-testid="portfolio-cards"]')).toBeNull();

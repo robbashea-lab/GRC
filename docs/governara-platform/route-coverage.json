@@ -1,0 +1,301 @@
+{
+  "baseline": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+  "scope": "Presentation route/renderer inventory; not business-lifecycle, authentication or security certification",
+  "framework_variants": [
+    "CIS IG1 program/control/native/interview/summary",
+    "CIS IG2 inherited and additions",
+    "CIS IG3 inherited and additions",
+    "SOC configured categories/program/native/interview/summary",
+    "ISO ISMS/SoA/Annex A/internal audit/native/interview/summary"
+  ],
+  "overlays": [
+    "Native record drawer",
+    "Assessment dialog",
+    "Omni window and invitation",
+    "Dropdown/popover/select",
+    "Date picker and calendar details",
+    "Notification/profile/global search",
+    "Administration dialogs"
+  ],
+  "routes": [
+    {
+      "route": "/login",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "/forgot-password",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "/reset-password",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "/",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "clients",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "admin/clients",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "admin/users",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "admin/roles",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "admin/security",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "admin/audit",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "account",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "client-settings",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "client-profile",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "dashboard",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "calendar",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "reviews",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "findings",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "systems",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "risks",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "policies",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "requirements",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "exceptions",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "contacts",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "vendors",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "ai-governance",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "tasks",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "action-items",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "evidence",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "compliance/:requirementKey",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "onboarding",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    },
+    {
+      "route": "*",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": "pending-or-not-applicable",
+      "after_application": "pending",
+      "hosted": "pending",
+      "limitation": null
+    }
+  ]
+}

@@ -36,8 +36,10 @@ test('Risks cannot repaint shared High or Accepted pills in sibling modules',()=
 });
 
 test('Portfolio counts use tabular neutral surfaces and restrained rails, never alarm bubbles',()=>{
-  const css=read('pages/BrawndoPortfolio.css');expect(css).not.toMatch(/\.bp-count[^{}]*\{[^}]*background:\s*var\(--bp-(critical|attention)-bg\)/);
-  expect(css).toContain('border-inline-start: 2px solid transparent');expect(css).toContain('font-variant-numeric: tabular-nums');
-  expect(css).toContain('var(--metric-number-size)');expect(css).toContain('var(--page-title-size)');
-  const source=read('pages/ClientDirectory.jsx');expect(source).toContain("critical_high_issues: 'attention'");expect(source).toContain("unassigned: 'neutral'");
+  const css=read('pages/GoverNaraPortfolio.css');expect(css).not.toMatch(/\.gp-(risk|work-count)[^{}]*\{[^}]*background:\s*var\(--color-(critical|moderate)-bg\)/);
+  expect(css).toContain('border-left:3px solid transparent');expect(css).toContain('font-variant-numeric:tabular-nums');
+  expect(css).toContain('.gp-risk.is-attention { border-color:var(--color-moderate)');
+  expect(css).toContain('.gp-risk.is-zero { color:var(--color-text-muted)');
+  const source=read('pages/ClientDirectory.jsx');expect(source).toContain("import './GoverNaraPortfolio.css'");expect(source).not.toContain("import './BrawndoPortfolio.css'");
+  expect(source).toContain("critical_high_issues: 'attention'");expect(source).toContain("unassigned: 'neutral'");
 });

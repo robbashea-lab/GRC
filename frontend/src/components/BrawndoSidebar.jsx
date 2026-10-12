@@ -8,6 +8,7 @@ import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import NotificationBell from './NotificationBell';
+import {BrandMark} from './Brand';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator} from './ui/dropdown-menu';
 import './BrawndoSidebar.css';
 
@@ -45,7 +46,7 @@ export function ProfileMenu({compact=false}){
       </DropdownMenu>
     </div>;
 }
-const Brand=()=><div className="bsb-brand" aria-label="Omnisciente by Prestige Worldwide"><span className="bsb-mark" aria-hidden="true">O</span><span><span className="bsb-name">Omnisciente</span><span className="bsb-sub">By Prestige Worldwide</span></span></div>;
+const Brand=()=><div className="bsb-brand" aria-label="GoverNara by Prestige Worldwide"><BrandMark className="bsb-mark"/><span><span className="bsb-name">GoverNara</span><span className="bsb-sub">By Prestige Worldwide</span></span></div>;
 
 // Portfolio (platform) context in the reference theme: Portfolio, the client navigator, Administration.
 export function BrawndoPlatformSidebar({adminItems=[]}){
