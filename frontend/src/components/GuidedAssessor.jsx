@@ -49,7 +49,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   const [stagedImplementation,setStagedImplementation]=useState(null),[changeTopic,setChangeTopic]=useState(''),[compareTarget,setCompareTarget]=useState(null);
   const focusedStarted=useRef(false);
   const nativeUpdate=useRef(onUpdateImplementation);nativeUpdate.current=onUpdateImplementation;
-  const nativeApplication=useRef({onApply,onSaveAssessment,form,assessmentDirty,current});nativeApplication.current={onApply,onSaveAssessment,form,assessmentDirty,current};
+  const nativeApplication=useRef({onApply,onSaveAssessment,form,assessmentDirty,current,disabled});nativeApplication.current={onApply,onSaveAssessment,form,assessmentDirty,current,disabled};
   const [mode,setMode]=useState(record&&new URLSearchParams(window.location.search).get('guided')==='pilot'?'expanded':focused?'collapsed':initial.mode||'collapsed'),[greeting,setGreeting]=useState(false),[draft,setDraft]=useState(null),[answers,setAnswers]=useState({}),[step,setStep]=useState(0),[result,setResult]=useState(null),[narrative,setNarrative]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[restart,setRestart]=useState(false),[replace,setReplace]=useState(false);
   const launcher=useRef(null),heading=useRef(null),saved=useRef('{}');
   const identity=clientId+':'+record?.framework_assessment_id+':'+user?.user_id,activeIdentity=useRef(identity);activeIdentity.current=identity;
@@ -170,6 +170,8 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
       const payload={version:workspacePilot&&!fresh?reviewDraft.version:currentVersion,answers:newAnswers,narrative:generatedNarrative,step:nextStep,completed,expected_revision:reviewDraft.revision};
       if(workspacePilot)Object.assign(payload,{result:output?.missingRecorded?null:output,...(fresh?{restart:true}:{}),...(fresh||reviewDraft.revision===0?{base_assessment_token:startBase.current_assessment_token,base_scope_fingerprint:startBase.current_scope_fingerprint}:{})});
+      // The joined context can become unavailable while the base read is pending.
+      if(activeIdentity.current!==savingIdentity||nativeApplication.current.disabled)return false;
       const {data}=await api.put(base,payload);if(activeIdentity.current!==savingIdentity)return false;setDraft(data);setAnswers(data.answers);saved.current=JSON.stringify(data.answers);setStep(nextStep);return data;}
     catch(e){if(activeIdentity.current===savingIdentity)setError(formatError(e));return false;}finally{if(activeIdentity.current===savingIdentity)setBusy(false);}
   }

@@ -1,0 +1,9 @@
+PASS src/components/GuidedLifecycleNative.test.jsx
+PASS src/components/PlatformCisNativeGuideRefresh.test.jsx
+PASS src/components/PlatformCisMinimizedNativeGuide.test.jsx
+
+Test Suites: 3 passed, 3 total
+Tests:       34 passed, 34 total
+Snapshots:   0 total
+Time:        5.557 s
+Ran all test suites within paths "src/components/PlatformCisMinimizedNativeGuide.test.jsx", "src/components/PlatformCisNativeGuideRefresh.test.jsx", "src/components/GuidedLifecycleNative.test.jsx".

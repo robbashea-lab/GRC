@@ -32,7 +32,10 @@
       "follow_up_safeguard_sha256": "071a02fda27eae926d49f707bbf403db9ce4ad6b8ebbe2b9e73ff4a74dc443f5",
       "status": "follow_up_locally_corrected_independent_and_hosted_pending",
       "cache_boundary": "Cache contains identity and configuration only; fallback only raw ctx null, cleared by fresh missing/mismatched current; no users/work/current/history cached. Previous missing-row retained guide was already disabled, not an established unauthorized write.",
-      "final_cache_regression": "Independent eighth omitted-record fixture plus prior guards and native adapters:3suites33PASS5.343s. Older963PASS is prior source, not a new full rerun."
+      "final_cache_regression": "Independent eighth omitted-record fixture plus prior guards and native adapters:3suites33PASS5.343s. Older963PASS is prior source, not a new full rerun.",
+      "inflight_context": "Independent unchanged-f673 first-write schedule1FAIL1.819s: joined context fails while metadata read pending; disabled controls and error visible but old closure dispatches modeled progress PUT after read resolves. No server authorization bypass/native loss/hosted race claimed.",
+      "inflight_correction": "Existing latest-props ref includes disabled; immediately before progress PUT require active identity and latest enabled context. Return false retains input/error/Retry. First-write correction3suites34PASS5.557s; independent/connected Compare and summary/release gates pending.",
+      "inflight_evidence": "cis-native-inflight-context.md"
     },
     {
       "id": "PFA-002",
