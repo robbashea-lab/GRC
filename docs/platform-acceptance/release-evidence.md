@@ -1,6 +1,6 @@
 # Coordinator release and hosted evidence
 
-The [readiness report](readiness-report.md) is the consolidated product verdict. Its evidence cutoff was root8c31535; this supplement records later work. Final CI/provider receipts belong in this PR discussion and shared PR57, without a documentation-only redeployment. Status: **Deployed for validation — final acceptance pending.**
+The [readiness report](readiness-report.md) is the consolidated product verdict. Its evidence cutoff was root8c31535; this supplement records later work. Final CI/provider receipts belong in this PR discussion and shared PR57, without a documentation-only redeployment. Prior baseline28b remains **Deployed for validation — final acceptance pending**. The new correction's exact CI/deployment/affected-hosted gates are pending at this document's cutoff and must be established by later receipts.
 
 ## Source and verification
 
@@ -39,3 +39,5 @@ Actual administrator logout/login remainsblocked: user notready, signed-in sessi
 Current IAB lacks supported authenticated request editing/capture; realserver-denial/tampering/fault/multiworker cases remainopen. Local modeled actor/realMotor evidence cannot be relabeled hosted proof. The previously safety-blocked13-methodauth/recovery campaign remains0 and is not retried/rerouted. Normal established release CI is distinct. ISO111normative-source comparisons, eligible independent auditors/Policy approvers, unaided realclient usability and report-only absentcapabilities remainunwaived.
 
 Recovery: preserve current compatible CIS/SOC/ISO readers/writers/history. Prefer an independently tested forwardfix. Never reset data or deploy older main/standalone branches that discard already integrated work. No mainmerge/production/Sites/providerconfiguration changes.
+
+Final independent source review identified conflicting release tense and a QA-only assertion diagnostic that could echo a refused credential-bearing URI. Status is now pinned to priorLive28b; new gates remainpending until actual PR receipts. The diagnostic uses the same exact-origin whitelist with a constant ValueError; three synthetic invalid inputs rejected without echo and the allowed origin accepted via AST-only execution. No DB/module import/auth/request was performed. Original scale source/receipts remain attributed to the earlier frozen test; no broad real-Mongo rerun was needed for this guard-only change. See fixture-guard-diagnostic.json.

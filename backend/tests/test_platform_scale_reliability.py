@@ -72,7 +72,8 @@ class PlatformScaleReliabilityTests(unittest.IsolatedAsyncioTestCase):
         self.real_mongo = None
         mongo_url = os.environ.get('PLATFORM_ACCEPTANCE_SCALE_MONGO')
         if mongo_url:
-            self.assertEqual(mongo_url, 'mongodb://127.0.0.1:58749', 'Only the assigned run-owned loopback Mongo is allowed')
+            if mongo_url != 'mongodb://127.0.0.1:58749':
+                raise ValueError('Only the assigned run-owned loopback Mongo is allowed')
             from motor.motor_asyncio import AsyncIOMotorClient
             self.real_mongo = AsyncIOMotorClient(mongo_url, serverSelectionTimeoutMS=5000, connectTimeoutMS=5000)
             self.addCleanup(self.real_mongo.close)

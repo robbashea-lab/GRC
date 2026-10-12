@@ -10,8 +10,8 @@ Starting product/visual baseline main28b806716024ec149af2ec5da621a5a618c669d5; L
 | Scale/fault | Four real-Mongo cases and independent root selected reruns; seeded load/complete exports/CAS/caps/interrupted audit retry. |Seeded history differs from transitions; local timings are not capacity certification. |
 | Hosted | Six Omni records/seven native summary writes, SoA inclusion, Finding/Action validation/reopen, anchored Vendor Review, Risk acceptance, Policy version, System stale writer and Contact without access. Derivative preserves CIS across upgrades, adds SOC/ISO, reactivates SOC. |Administrator only; restricted roles, human login, unavailable facilities and original tab5 Evidence unlink remain pending. |
 | PFA-001 | Actual hosted stale-base failure reproduced; authorafe78ad1070PASS, independent13PASS, root integrated9494c8f. |Only guarded first-write refresh; saved lineage/backend guards remain. Two UTC-future QA helpers corrected, no product date rule. |
-| Combined release | Local both builds, source freeze/review, exact CI and controlled staging retest recorded in release discussion. |No main/prod/Sites/provider/account changes or docs-only redeploy. |
+| Combined release | Both local builds passed. Exact combined CI, deployment and affected hosted retest are pending; later actual receipts belong in the release discussion. |No main/prod/Sites/provider/account changes or docs-only redeploy. |
 
 See readiness-report.md, defect-register.json, hosted-workflow-ledger.json, cis-native-guide-refresh-independent-review.md and evidence-manifest.json. Release discussion holds post-commit CI/deployment receipts. Documentation successors never imply a newer runtime.
 
-No previous security limit waived. **Deployed for validation — final acceptance pending.**
+No previous security limit waived. The existing baseline28b is **Deployed for validation — final acceptance pending**. This new correction is not yet deployed at this document's cutoff; subsequent exact provider/hosted results are recorded separately.

@@ -42,6 +42,13 @@
       "id": "QA-ROOT-URI",
       "classification": "independent wrapper missing required owned database path",
       "correction": "Only two previously unexecuted Calendar/oracle rerun with required owned prefix; five already successful cases not repeated."
+    },
+    {
+      "id": "QA-DIAGNOSTIC-001",
+      "classification": "QA-only rejected URI diagnostic risk; no observed real credential disclosure or application defect",
+      "independent_finding": "Security Review source review identified unittest.assertEqual echoing a supplied MongoURI on refusal.",
+      "correction": "Same strict assigned-origin whitelist, explicit if/constant ValueError; no URI value echoed.",
+      "verification": "AST-only guard reproduction with synthetic noncredential marker;3invalid inputs safely rejected, exact owned origin accepted. No import/auth/DB/request."
     }
   ],
   "report_only_concerns": [
@@ -83,5 +90,5 @@
     }
   ],
   "prior_register": "independent-inventory.json reconciles original SEC01–05/G01–08 and32 retained future-work rows. None waived; safety-blocked13-method campaign remains0/no retry or alternate runner.",
-  "acceptance": "Deployed for validation — final acceptance pending"
+  "acceptance": "Prior Live28b deployed for validation — final acceptance pending; new correction exact CI/deployment/affected hosted retest pending at this cutoff."
 }
