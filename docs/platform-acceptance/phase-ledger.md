@@ -1,17 +1,18 @@
 # Full-platform acceptance execution ledger
 
-Starting product/visual baseline main28b806716024ec149af2ec5da621a5a618c669d5; Live Render dep-db5v96navr4c73a6tmv0. Root is sole integration, staging and authenticated-browser owner. Specialist isolated worktrees preserve old work, account state and all protected history.
+Starting product/visual baseline main28b806716024ec149af2ec5da621a5a618c669d5; original Live dep-db5v96navr4c73a6tmv0. Root is sole integration/staging/authenticated-browser owner. Worktrees preserve old source, protected records and account state.
 
 | Phase | Executed result | Boundary |
 | --- | --- | --- |
-| Baseline and onboarding | Five primary hosted clients CIS56/130/153, ISO30+93, SOC38; authoritative IDs in baseline.json. | No people, users, verification or operating results invented. |
-| Inventory/service QA | CIS/SOC214unique/438localplacements plus ISO123. 561 service placements including all61 SOC derivative. |500primaryconfigured placements/314primaryunique/337catalogunique. Not561hosted guides/saves. |
-| Ten-year | All five real-Mongo campaigns,50annual expected/actual ledgers independently audited; original ISO422 and two frozen QA variants retained. |Not a single invented seven-test rerun, full schema orphan proof or hosted decade. |
-| Scale/fault | Four real-Mongo cases and independent root selected reruns; seeded load/complete exports/CAS/caps/interrupted audit retry. |Seeded history differs from transitions; local timings are not capacity certification. |
-| Hosted | Six Omni records/seven native summary writes, SoA inclusion, Finding/Action validation/reopen, anchored Vendor Review, Risk acceptance, Policy version, System stale writer and Contact without access. Derivative preserves CIS across upgrades, adds SOC/ISO, reactivates SOC. |Administrator only; restricted roles, human login, unavailable facilities and original tab5 Evidence unlink remain pending. |
-| PFA-001 | Actual hosted stale-base failure reproduced; authorafe78ad1070PASS, independent13PASS, root integrated9494c8f. |Only guarded first-write refresh; saved lineage/backend guards remain. Two UTC-future QA helpers corrected, no product date rule. |
-| Combined release | Both local builds passed. Exact combined CI, deployment and affected hosted retest are pending; later actual receipts belong in the release discussion. |No main/prod/Sites/provider/account changes or docs-only redeploy. |
+| Onboarding | Five primary hosted clients CIS56/130/153, ISO30+93, SOC38; IDs in baseline.json | No people/accounts/verification/operating results invented |
+| Inventory/service | 561 local placements including all61SOC derivative;337catalogunique |500primaryconfigured/314primaryunique; not561hosted guides/saves |
+| Ten-year | Five actual-Mongo campaigns,50 annual receipts independently audited; original ISO422/twoQAvariants retained |Not hosted decade, independentcampaignrerun or complete schema orphan proof |
+| Scale/fault | Four real-Mongo cases, bounded independent selected reruns; exports/CAS/caps/interrupted audit retry |Seededhistory differs from transitions; not hosted SLA/fencing/security proof |
+| Original hosted28b | Six Omni records/seven summary saves plusSoA; connected Finding/Action/Review/Risk/Policy/Vendor/System/Contact and mixed derivative upgrades |Adminonly; logout/roles/facilities/originaltab5unlink pending |
+| Initial PFA001 | Original13/author1070 then CI144SUCCESSb128/Live dep-db63fah42hec73ap0jog;IG2followupPASS/typedIG3FAIL |Partial original fix; old results retained, no whole-hosted campaign rerun |
+| Final corrections778 | Receipt/cache/connected async guards plusPFA002breadcrumb; author256PASS, independent43PASS, bounded sourcePASS, both optimized buildsPASS |No staticappearance/copy/catalog/evaluator/version/backend/auth/provider change; queuedresponse concern didnotreproduce |
+| Final release gates | Exact combined CI and staging affected-hosted gates pending at this cutoff; actual later receipts inPR70/57 |No documentation-only redeploy/main/prod/Sites/account change |
 
-See readiness-report.md, defect-register.json, hosted-workflow-ledger.json, cis-native-guide-refresh-independent-review.md and evidence-manifest.json. Release discussion holds post-commit CI/deployment receipts. Documentation successors never imply a newer runtime.
+[Readiness report](readiness-report.md), [defects](defect-register.json), [final review](cis-native-followup-independent-review.md) and [release evidence](release-evidence.md) retain original source/test boundaries. Documentation successors never imply a newer runtime or new hosted execution.
 
-No previous security limit waived. The existing baseline28b is **Deployed for validation — final acceptance pending**. This new correction is not yet deployed at this document's cutoff; subsequent exact provider/hosted results are recorded separately.
+**Deployed for validation — final acceptance pending.** CurrentLiveb128; corrected778product separately frozen, no final security/access gate waived. User unavailable explicitly keeps stalledtab5pending and administrator session signedin. Pending fixtures/history remain.

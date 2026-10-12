@@ -109,6 +109,10 @@ Final source hashes (raw / LF normalized):
 | `f673-parent-adapter-original-red.log` | `6c058198d6c9af4a5bbc1a5425ec44a325eee86410b5d21480d6487d25d8865d` |
 | `connected-boundaries-corrected-focused.log` | `b3e5557887bf63e70d69743dc341e1af3e2776af36fdcf74a0a41b77eb4828c9` |
 
-Final non-author source review/retest, root's composite exact-candidate CI/builds
-and controlled hosted retest remain required. Authentication, restricted-user,
-actual provider fault and deployment evidence are separate and unwaived.
+Subsequent non-author source review passed on exact 7788775. The independent
+four-suite retest passed 43/43 cases in 38.692s with the original assertions;
+see [the independent receipt](cis-native-followup-independent-review.md).
+Root's two optimized builds also passed on that runtime. Exact composite CI
+and controlled hosted retest remain required at this document's cutoff.
+Authentication, restricted-user, actual provider fault and deployment evidence
+are separate and unwaived.

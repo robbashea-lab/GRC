@@ -4,8 +4,10 @@ Baseline: exact deployed `b128eb2b178ab8507b42aaa8ec010fd004d1a9ea`.
 The earlier 13 local first-write cases and independent passes remain valid
 for their immediate-response model; they did not cover this hosted sequence:
 type a fresh 1.1 draft, minimize, save a native marker, restore, save progress.
-The coordinator's IG3 observation still returned the old-token 409 and retained
-the draft/native marker. No new hosted pass is asserted by this author.
+The coordinator's IG3 observation still showed the stale-base error and retained
+the draft/native marker. The raw hosted HTTP status was not captured; the server
+contract and diagnostic model reject stale bases. No new hosted pass is asserted
+by this author.
 
 Independent diagnostic commit `0678727a0a858ce09dc35c79f42c0320e0e14647`
 reproduced three failures in four tests on unchanged b128 (1 pass, 3 failures,
@@ -89,3 +91,19 @@ assertions. `interim-path-error.log` is retained, SHA256
 Independent final correction review/retest, combined CI/builds and the exclusive
 coordinator's exact hosted retest remain required. No account, fixture, browser,
 database, deployment, merge-main or publication action was taken by this author.
+
+Coordinator integration fast-forwarded to frozen `f673453ea82ed23e7e5d86854edd7f6d127c63d9`.
+Author FrameworkDrawer/Safeguard files use LF; Git's Windows integration checkout
+uses CRLF, so raw integration hashes differ (`bda410f1...` / `3b284cef...`). Their
+normalized-LF hashes match the author's final values above and immutable Git source
+is identical. No byte-identical cross-platform checkout claim is made.
+Both local optimized builds passed on this intermediate product: authenticated
+`main.13407597.js` / `main.4c1f739f.css`, Demo `main.7fc8efe8.js` /
+`main.974fe30a.css`. Original build logs are retained separately from earlier builds.
+These are local build results, not exact release CI, deployment or hosted passes.
+
+The later independently reproduced in-flight continuation cases required the
+connected guards frozen at `7788775ff18899a64ba6f70b1b3c67ac742ef71f`.
+The f673 builds above are not attributed to that later source. See
+[the final independent receipt](cis-native-followup-independent-review.md)
+and [the release supplement](release-evidence.md) for its separate gates.

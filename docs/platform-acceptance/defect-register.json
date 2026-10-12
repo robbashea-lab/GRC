@@ -1,6 +1,6 @@
 {
   "baseline": "28b806716024ec149af2ec5da621a5a618c669d5",
-  "status": "CIS follow-up corrections locally verified; independent/composite/hosted acceptance pending",
+  "status": "Final CIS follow-up source and independent43-case retest PASS at7788775; both local builds PASS; exact combined CI/deployment/affected hosted checks pending",
   "new_confirmed_defects": [
     {
       "id": "PFA-001",
@@ -11,7 +11,7 @@
         "CIS IG3"
       ],
       "module": "GuidedAssessor first revision0 progress save",
-      "reproduction": "Ordinary native Save assessment, keep mounted workspace, open or continue unsaved first guide, Save group progress: actual409 Assessment or scope changed before this review started; reload before starting. Native and local answers remain. Fresh reload succeeds.",
+      "reproduction": "Original28b first-guide/native-save path showed stale-base conflict; b128 IG2 primed/closed guide passed, separately typed/minimized IG3 path showed visible stale-base error. No raw hosted HTTP code captured for that later case.",
       "expected": "Current first-review base can follow a confirmed native save, without forcing restart or losing typed input; competing edits must still reject.",
       "root_cause": "Earlier guard fixed cached draft versus refreshed parent, but ordinary native receipt did not synchronously update parent current; delayed joined refresh retained old context, and failure unmounted unsaved guide.",
       "impact": "Operator workaround/reload; no observed native loss or unauthorized write.",
@@ -22,7 +22,7 @@
       "regression": "PlatformCisNativeGuideRefresh.test.jsx13cases; author7suites1070PASS; independent13PASS20.265s.",
       "independent_review": "cis-native-guide-refresh-independent-review.md",
       "compatibility": "No interview version/IDs/payload/history/backend/evaluator/security change. Saved-revision Compare and concurrent/scope/unmount guards retained.",
-      "hosted_retest": "Exact b128 root-reported IG2 primed/closed path PASS; typed/minimized IG3 path FAIL with old-token409. No hosted follow-up pass yet.",
+      "hosted_retest": "Exact b128 IG2 primed/closed path PASS; separately typed/minimized IG3 path FAIL with visible stale-base error. Final778 follow-up not yet deployed/retested at this cutoff.",
       "residual": "Local/backend modeled tests are not hosted permission, login or fault proof.",
       "initial_root_cause": "revision0 cached current_assessment_token retained old native snapshot while parent confirmed a new token.",
       "follow_up_correction": "CIS-only immediate native receipt publisher; identity-matched guide configuration keeps input mounted but disabled through null ctx/error/Retry; current fallback identity-matches confirmed savedForm. No fake loaded context or other-framework callback change.",
@@ -30,17 +30,21 @@
       "follow_up_evidence": "cis-native-receipt-followup.md",
       "follow_up_runtime_sha256": "f77a20ece23ae790dfd8195103b51a8663a66a637216d25f8c426c8c0405c530",
       "follow_up_safeguard_sha256": "071a02fda27eae926d49f707bbf403db9ce4ad6b8ebbe2b9e73ff4a74dc443f5",
-      "status": "follow_up_locally_corrected_independent_and_hosted_pending",
+      "status": "final_source_independent_and_local_builds_pass_release_hosted_pending",
       "cache_boundary": "Cache contains identity and configuration only; fallback only raw ctx null, cleared by fresh missing/mismatched current; no users/work/current/history cached. Previous missing-row retained guide was already disabled, not an established unauthorized write.",
       "final_cache_regression": "Independent eighth omitted-record fixture plus prior guards and native adapters:3suites33PASS5.343s. Older963PASS is prior source, not a new full rerun.",
       "inflight_context": "Independent unchanged-f673 first-write schedule1FAIL1.819s: joined context fails while metadata read pending; disabled controls and error visible but old closure dispatches modeled progress PUT after read resolves. No server authorization bypass/native loss/hosted race claimed.",
-      "inflight_correction": "Existing latest-props ref includes disabled; immediately before progress PUT require active identity and latest enabled context. Return false retains input/error/Retry. First-write correction3suites34PASS5.557s; independent/connected Compare and summary/release gates pending.",
+      "inflight_correction": "Existing latest-props ref includes disabled; immediately before progress PUT require active identity and latest enabled context. Return false retains input/error/Retry. First-write correction3suites34PASS5.557s; First-write result is intermediate; final connected correction separately tested below.",
       "inflight_evidence": "cis-native-inflight-context.md",
       "connected_inflight": "Independent f673 Compare schedule sends rebase+retained progress after context failure; separate valid summary progress-response schedule then dispatches native PATCH. Local modeled UI/API boundaries only; preparatory fixture errors preserved and excluded. Queued older-response negative PASS, no response-fencing change.",
       "connected_inflight_correction": "Latest disabled/identity pre-rebase-PUT; latest disabled after acknowledged progress before native callback; existing parent snapshot requires identity-valid live CIS context. Preserve acknowledged interview receipt/manual summary/native/history/error/Retry; ISO/SOC conditions unchanged.",
-      "final_inflight_regression": "Seven focused suites256PASS18.217s:12 immutable independent timing cases,13 first-base guards,13 native adapter cases incl isolated parent gate, ISO/SOC guides and parent assessments. Author parent-gate baseline exact f673 drawer1FAIL1.748s; no old assertion weakening. Independent/release/hosted pending.",
+      "final_inflight_regression": "Seven focused suites256PASS18.217s:12 immutable independent timing cases,13 first-base guards,13 native adapter cases incl isolated parent gate, ISO/SOC guides and parent assessments. Author parent-gate baseline exact f673 drawer1FAIL1.748s; no old assertion weakening. Independent/release/hosted pending. Subsequent non-author43/43PASS38.692s; exact source review PASS. Release/hosted gates still separate.",
       "final_inflight_guided_lf_sha256": "cb6f03b47484e4d8c396bc0a8bd5c9fa6b0bc3678d420ee9735eb5e9e9393737",
-      "final_inflight_parent_lf_sha256": "0fa9b345942aa5e2b2d35333aad47817e3dc3ebb9895ddf58a3012ae1061121f"
+      "final_inflight_parent_lf_sha256": "0fa9b345942aa5e2b2d35333aad47817e3dc3ebb9895ddf58a3012ae1061121f",
+      "final_runtime_commit": "7788775ff18899a64ba6f70b1b3c67ac742ef71f",
+      "final_independent_retest": "4suites43/43PASS38.692s; immutable12-case independent timing tests plus13 base/13 adapter/5 breadcrumb. Component/API models, not hosted auth.",
+      "final_independent_source": "Security Review bounded exact778 source PASS; no test/live execution by that source reviewer.",
+      "final_review_artifact": "cis-native-followup-independent-review.md"
     },
     {
       "id": "PFA-002",
@@ -57,11 +61,12 @@
       "impact": "False displayed ancestry; no native misbinding or assessment write observed.",
       "correction": "Append selected safeguard only when the displayed unfiltered control contains its assessment identity; filtered paths remain unchanged.",
       "regression": "New5-case local reproduction3FAIL/2PASS on b128; corrected new+existing page suites29PASS4.592s.",
-      "independent_review": "Pending frozen-candidate non-author review and retest.",
+      "independent_review": "5/5 breadcrumb cases in independent43PASS; final source review PASS at778. No assertion changes.",
       "compatibility": "One derived breadcrumb condition only. No background table/preferences/modal/navigation, catalog, persisted field/history, style or static copy changes.",
       "hosted_retest": "Pending root-controlled combined candidate and specific hosted retest.",
       "evidence": "cis-breadcrumb-context.md",
-      "status": "locally_corrected_independent_and_hosted_pending"
+      "status": "final_source_independent_and_local_builds_pass_release_hosted_pending",
+      "author_commit": "ce6111e343328af907a2d83e204a9533369e4222"
     }
   ],
   "qa_harness_corrections": [
@@ -134,5 +139,5 @@
     }
   ],
   "prior_register": "independent-inventory.json reconciles original SEC01–05/G01–08 and32 retained future-work rows. None waived; safety-blocked13-method campaign remains0/no retry or alternate runner.",
-  "acceptance": "Deployed b128 for validation — final acceptance pending. Hosted PFA001 minimized path failed; new correction requires independent review, combined CI/builds and exact affected hosted retest. Original access/tooling gaps remain unwaived."
+  "acceptance": "Live b128 deployed for validation — final acceptance pending. Corrected778 product passes author256, independent43, bounded source review and both local builds. Exact combined CI/deployment and affected hosted retests remain required. Original access/tooling/source/independence gaps stay open."
 }
