@@ -12,7 +12,7 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'timing-qa',role:'super_admin'}})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClient:{client_id:'timing-client',name:'Synthetic timing QA'},clients:[{client_id:'timing-client',name:'Synthetic timing QA'}]})}));
 jest.mock('./AssigneeSelect',()=>()=>null);
-jest.mock('./RecordDrawer',()=>()=>null);
+jest.mock('./RecordDrawer',()=>({onOpenChange})=><button onClick={()=>onOpenChange(false)}>Close synthetic linked record</button>);
 jest.mock('./ui/dialog',()=>{
   const R=require('react');
   return {Dialog:({open,children})=>open?<div>{children}</div>:null,DialogContent:({children})=><div>{children}</div>,DialogTitle:R.forwardRef(({children},ref)=><h2 ref={ref}>{children}</h2>),DialogDescription:({children})=><p>{children}</p>};
@@ -127,19 +127,19 @@ test('in-flight summary progress response cannot initiate native PATCH after con
   const answers=Object.fromEntries(visibleQuestions('1.1',{inventory:'Yes'},interview.version).map(question=>[question.id,question.type==='matrix'?Object.fromEntries(question.rows.map(row=>[row,'Yes'])):question.type==='text'?'':question.type==='date'?localCalendarDate(new Date()):question.type==='multi'?['Quarantine or isolate']:question.id==='frequency'?'Every six months':question.id==='sources'?'One source':question.id==='unresolved'?'No':'Yes']));
   const result=focusedResult('1.1',answers,interview.version);expect(result.status).toBe('addressed');
   interview={...interview,revision:2,answers,completed:true,result,narrative:result.narrative,generated_at:'2026-10-11T12:00:30Z'};
+  const read=api.get.getMockImplementation(),finding={finding_id:'timing-linked-finding',client_id:native.client_id,framework_assessment_id:native.framework_assessment_id,title:'Synthetic linked Finding',status:'open',severity:'low'};
+  api.get.mockImplementation(async(...args)=>args[0].endsWith('/related')?{data:{reviews:[],evidence:[],findings:[finding],tasks:[],risks:[],policies:[]}}:read(...args));
   await render();await open();const manual='OVERVIEW\nSynthetic reviewer wording.\n\nIMPLEMENTATION BREAKDOWN\n- Retain this exact bullet.\n\nITEMS TO ADDRESS\n- Confirm synthetic notes.';
   await value('[aria-label="Omnibot implementation summary"]',manual);
-  // A rejected ordinary save supplies the existing Retry control without changing
-  // the persisted native record/token. Reverting its draft restores a clean form.
-  api.patch.mockRejectedValueOnce(new Error('Synthetic preparatory native save rejected'));
-  await value('[aria-label="Current implementation"]','SYNTHETIC rejected native draft.');const nativeSaveButton=[...container.querySelectorAll('button')].find(button=>button.textContent.trim()==='Save assessment'&&!button.closest('.omni-workspace-window'));expect(nativeSaveButton).toBeTruthy();expect(nativeSaveButton.disabled).toBe(false);await act(async()=>nativeSaveButton.click());expect(container.textContent).toContain('Synthetic preparatory native save rejected');await value('[aria-label="Current implementation"]','');
-  const savedNative=copy(native);holdRefresh=true;await click('Retry',container);expect(pending).toHaveLength(1);expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(manual);
+  // Closing an existing linked drawer uses the real parent's normal refresh
+  // callback without changing the native record, interview or linked record.
+  await click('Synthetic linked Finding',container);const savedNative=copy(native);holdRefresh=true;await click('Close synthetic linked record',container);expect(pending).toHaveLength(1);expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(manual);
   const write=api.put.getMockImplementation();let finishProgress;
   api.put.mockImplementationOnce((...args)=>new Promise(resolve=>{finishProgress=async()=>resolve(await write(...args));}));
-  await click('Save assessment',workspace());expect(finishProgress).toBeDefined();expect(api.put).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledTimes(1);
+  await click('Save assessment',workspace());expect(finishProgress).toBeDefined();expect(api.put).toHaveBeenCalledTimes(1);expect(api.patch).not.toHaveBeenCalled();
   await act(async()=>pending.splice(0).forEach(response=>response.reject(new Error('Synthetic context failed while summary awaits'))));
   expect(container.textContent).toContain('Synthetic context failed while summary awaits');expect([...workspace().querySelectorAll('button')].find(button=>button.textContent.trim()==='Save assessment').disabled).toBe(true);expect(native).toEqual(savedNative);
-  await act(async()=>finishProgress());expect(api.patch).toHaveBeenCalledTimes(1);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(0);expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(manual);expect(container.textContent).toContain('Synthetic context failed while summary awaits');expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+  await act(async()=>finishProgress());expect(api.patch).not.toHaveBeenCalled();expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(0);expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(manual);expect(container.textContent).toContain('Synthetic context failed while summary awaits');expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
 test('queued older joined context response cannot supersede the later confirmed native receipt',async()=>{
