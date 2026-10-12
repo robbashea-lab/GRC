@@ -76,7 +76,7 @@ test('complete state restores persisted summary, status and source without a wri
 });
 test('Omni SVG is local, decorative and motion and responsive styles are defined',()=>{
   const fs=require('node:fs'),path=require('node:path'),asset=fs.readFileSync(path.join(__dirname,'OmniCharacter.jsx'),'utf8'),css=fs.readFileSync(path.join(__dirname,'GuidedAssessor.css'),'utf8');
-  expect(asset).toContain('aria-hidden="true"');expect(asset).not.toMatch(/https?:|paperclip|clippy|microsoft/i);expect(asset).toContain("import approvedShell from '@/assets/omni-approved-shell.png'");expect(asset).toContain('<image href={approvedShell}');
+  expect(asset).toContain('aria-hidden="true"');expect(asset).not.toMatch(/https?:|paperclip|clippy|microsoft/i);expect(asset).toContain("import naraOwl from '@/assets/nara-owl.webp'");expect(asset).toContain("import naraAvatar from '@/assets/nara-avatar.webp'");expect(asset).toContain('href={naraOwl}');expect(asset).toContain('href={naraAvatar}');expect(asset).not.toContain('omni-approved-shell.png');
   expect(css).toContain('prefers-reduced-motion:reduce');expect(css).toContain('animation:none');expect(css).toContain('max-width:800px');expect(css).toContain('width:48px; height:48px');
 });
 test.each(['2.1','7.3','11.2','14.1','17.2','18.5'])('%s reuses approved save failure, replacement protection and resume behavior',async id=>{
