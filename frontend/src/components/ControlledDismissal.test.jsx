@@ -38,6 +38,13 @@ test('dirty guide Escape opens its existing guard without dismissing native or d
   await escape(document.activeElement);expect(document.querySelector('#guide')).not.toBeNull();expect(close).not.toHaveBeenCalled();
 });
 
+test('Escape from native controls still dismisses the open guide first',async()=>{
+  const close=jest.fn();await act(async()=>root.render(<Fixture onNativeClose={close}/>));
+  document.querySelector('[data-testid="opener"]').focus();await escape(document.activeElement);
+  expect(close).not.toHaveBeenCalled();expect(document.querySelector('#guide')).toBeNull();
+  expect(document.querySelector('[data-assessment-shell]')).not.toBeNull();
+});
+
 test('topmost confirmation handles one Escape before the guide; busy guide remains protected',async()=>{
   const close=jest.fn();await act(async()=>root.render(<Fixture busy onNativeClose={close}/>));
   await act(async()=>[...document.querySelectorAll('#guide button')].find(button=>button.textContent==='Confirm change').click());

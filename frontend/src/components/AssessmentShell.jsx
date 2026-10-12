@@ -2,6 +2,7 @@ import {useRef} from 'react';
 import {focusFallback,pageHeading} from '@/lib/focusRescue';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
+import {OMNI_ESCAPE_EVENT} from './OmniWindow';
 import './BrawndoCisAssessment.css';
 
 /** Presentation only. Callers own persistence, native conclusions and leave guards. */
@@ -14,9 +15,9 @@ export default function AssessmentShell({open=true,title,description,status,posi
     <DialogContent ref={surface} className="brawndo-cis-assessment bg-surface-card" data-testid={testId} aria-modal={ariaModal?'true':undefined}
       onEscapeKeyDown={event=>{
         onEscapeKeyDown?.(event);
-        // Radix listens during capture; the focused guide handles its own draft guard during bubbling.
-        const guide=document.activeElement?.closest('.omni-workspace-window');
-        if(guide&&surface.current?.contains(guide))event.preventDefault();
+        // Radix invokes only its highest layer; route one Escape to this native window's open guide.
+        const guide=surface.current?.querySelector('.omni-workspace-window');
+        if(guide&&!event.defaultPrevented){event.preventDefault();event.stopPropagation();guide.dispatchEvent(new Event(OMNI_ESCAPE_EVENT));}
       }}
       onOpenAutoFocus={e=>{e.preventDefault();heading.current?.focus();}}
       onCloseAutoFocus={e=>{e.preventDefault();requestAnimationFrame(()=>{

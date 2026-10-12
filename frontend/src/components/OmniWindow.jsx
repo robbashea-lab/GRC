@@ -14,11 +14,18 @@ export function besideOmniRect(anchor,width=window.innerWidth,height=window.inne
   return fitOmniRect({...size,x:right>=size.w||right>=left?anchor.right+gap:anchor.left-gap-size.w,y:anchor.top},width,height);
 }
 const EDGES=['n','ne','e','se','s','sw','w','nw'];
+export const OMNI_ESCAPE_EVENT='omni-guide-escape';
 
 // Presentation only: interview answers, saves and replacement protection stay in GuidedAssessor.
 export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus,onMinimize,onClose,anchor,name='Omni',refined=false,program=false}){
   const [rect,setRect]=useState(()=>anchor?besideOmniRect(anchor(),undefined,undefined,refined?{w:620,h:program?520:755}:undefined):defaultRect()),[maximized,setMaximized]=useState(false);
   const rectRef=useRef(rect),restore=useRef(null),drag=useRef(null),focusHandlers=useRef({onOpenAutoFocus,onCloseAutoFocus});rectRef.current=rect;
+  const surface=useRef(null),closeHandler=useRef(onClose);closeHandler.current=onClose;
+  useEffect(()=>{
+    const node=surface.current,close=()=>closeHandler.current?.();
+    node.addEventListener(OMNI_ESCAPE_EVENT,close);
+    return()=>node.removeEventListener(OMNI_ESCAPE_EVENT,close);
+  },[]);
   // Measure after the launcher has expanded from its minimized size, before paint.
   useLayoutEffect(()=>{if(anchor)setRect(besideOmniRect(anchor(),undefined,undefined,refined?{w:620,h:program?520:755}:undefined));},[]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{const handlers=focusHandlers.current;handlers.onOpenAutoFocus?.({preventDefault(){}});return()=>handlers.onCloseAutoFocus?.({preventDefault(){}});},[]);
@@ -42,7 +49,7 @@ export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus
     event.preventDefault();const step=event.shiftKey?30:10,dx=event.key==='ArrowRight'?step:event.key==='ArrowLeft'?-step:0,dy=event.key==='ArrowDown'?step:event.key==='ArrowUp'?-step:0;
     setRect(r=>fitOmniRect(resize?{...r,w:r.w+dx,h:r.h+dy}:{...r,x:r.x+dx,y:r.y+dy}));
   }
-  return <section id={id} role="dialog" aria-modal="false" aria-labelledby={id+'-title'} aria-describedby={id+'-description'} className={'guided-panel omni-workspace-window'+(refined?' omni-refined-window':'')} style={{left:rect.x,top:rect.y,width:rect.w,height:rect.h}}
+  return <section ref={surface} id={id} role="dialog" aria-modal="false" aria-labelledby={id+'-title'} aria-describedby={id+'-description'} className={'guided-panel omni-workspace-window'+(refined?' omni-refined-window':'')} style={{left:rect.x,top:rect.y,width:rect.w,height:rect.h}}
     onPointerDown={e=>start(e)} onDoubleClick={e=>{if(e.target.closest('.omni-panel-header')&&!e.target.closest('button,details,input,select,textarea,a'))expand();}} onPointerMove={move} onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();onClose();}else if(refined&&e.target.closest('.omni-panel-header')&&!e.target.closest('button'))nudge(e,e.altKey);}}>
     <div className="omni-window-controls">{!refined&&<details><summary aria-label={name+" window position and size"}><MoreHorizontal size={18}/></summary><div className="omni-window-menu">
       <button type="button" onKeyDown={e=>nudge(e)}>Position: use arrow keys</button><button type="button" onKeyDown={e=>nudge(e,true)}>Size: use arrow keys</button>
