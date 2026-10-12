@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import GuidedAssessor from './GuidedAssessor';
 import * as guided from '@/lib/guidedAssessment';
 import {omniCisSummary} from '@/lib/omniCisSummary';
+import {localCalendarDate} from '@/lib/calendarView';
 import api from '@/lib/api';
 
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:error=>error.message}));
@@ -14,7 +15,7 @@ const copy=value=>JSON.parse(JSON.stringify(value));
 const record=extra=>({client_id:'demo_brawndo',framework_key:'cis-ig1',framework_assessment_id:'lifecycle-1.1',definition_id:'1.1',title:'Establish and Maintain Detailed Enterprise Asset Inventory',status:'addressed',verification:'verified',implementation:'Previously saved native position.',last_saved:token,last_assessed:token,assessment_history:[],work:{context_complete:true,finding_ids:[],review_ids:[],task_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,priority_records:[]},...extra});
 const interview=extra=>({client_id:'demo_brawndo',assessment_id:'lifecycle-1.1',user_id:'actor-a',version:guided.versionForSafeguard('1.1'),revision:0,answers:{},step:0,completed:false,narrative:'',result:null,base_assessment_token:token,base_scope_fingerprint:fingerprint,current_assessment_token:token,current_scope_fingerprint:fingerprint,lineage_known:true,lineage_stale:false,...extra});
 function complete(version=guided.versionForSafeguard('1.1')){
-  return Object.fromEntries(guided.catalogForVersion(version).safeguards['1.1'].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?(q.critical?'Synthetic recorded support':''):q.type==='date'?new Date().toISOString().slice(0,10):q.type==='multi'?[q.choices[0]]:q.id==='frequency'?'Every six months':q.id==='sources'?'One source':q.id==='unresolved'?'No':q.choices.includes('Yes')?'Yes':q.choices[0]]));
+  return Object.fromEntries(guided.catalogForVersion(version).safeguards['1.1'].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?(q.critical?'Synthetic recorded support':''):q.type==='date'?localCalendarDate(new Date()):q.type==='multi'?[q.choices[0]]:q.id==='frequency'?'Every six months':q.id==='sources'?'One source':q.id==='unresolved'?'No':q.choices.includes('Yes')?'Yes':q.choices[0]]));
 }
 function completed(extra={}){
   const version=extra.version||guided.versionForSafeguard('1.1'),answers=complete(version),result=omniCisSummary('1.1',answers,version,'The organization').result;

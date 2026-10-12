@@ -1,0 +1,8 @@
+PASS src/components/PlatformCisBreadcrumbContext.test.jsx
+PASS src/pages/FrameworkWorkspace.test.jsx
+
+Test Suites: 2 passed, 2 total
+Tests:       29 passed, 29 total
+Snapshots:   0 total
+Time:        4.592 s, estimated 39 s
+Ran all test suites within paths "src/components/PlatformCisBreadcrumbContext.test.jsx", "src/pages/FrameworkWorkspace.test.jsx".

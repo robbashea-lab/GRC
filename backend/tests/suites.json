@@ -1,5 +1,7 @@
 {
   "offline": [
+    "test_platform_ten_year_lifecycle.py",
+    "test_platform_cis_soc_inventory.py",
     "test_iso_guided_assessment.py",
     "test_iso_guided_routes.py",
     "test_soc_guided_assessment.py",
@@ -30,6 +32,7 @@
     "test_record_contracts.py",
     "test_record_integrity.py",
     "test_engineering_reliability.py",
+    "test_platform_scale_reliability.py",
     "test_evidence_context.py",
     "test_evidence_library.py",
     "test_framework_capability_contract.py",
@@ -77,6 +80,7 @@
     "test_bulk_outcomes.py"
   ],
   "environment": [
+    "test_platform_iso_inventory.py",
     "backend_test.py",
     "test_audit_logs.py",
     "test_iteration10.py",

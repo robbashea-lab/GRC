@@ -1,0 +1,824 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-11",
+  "stage": "initial_inventory_only",
+  "readiness_verdict": "not_determined",
+  "baseline": {
+    "repository": "robbashea-lab/GRC",
+    "worktree": "C:/Users/RobbA/Documents/Codex/2026-10-11/platform-acceptance/independent",
+    "branch": "codex/acceptance-independent-20261011",
+    "commit": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "tree": "8ad5bb83d0c4c227ae8f9c4e9974377ba9c255eb",
+    "starting_worktree": "clean",
+    "source_candidate": "71159a14062e50ebd773af6ca6593cfa30f5c922",
+    "candidate_tree_equal": true,
+    "git_verification": "read-only rev-parse/status and empty candidate-to-main source diff"
+  },
+  "receipt": {
+    "provenance": "retained coordinator publication artifact; not independently refreshed live",
+    "path": "C:/Users/RobbA/Documents/Codex/2026-10-11/security-remediation-evidence/final-publication/consolidated-closeout.md",
+    "sha256": "e92f51ba59d8f128a5dca7b2ee788d13e847cbd856269ac61b676c19df5980a3",
+    "deployment": "dep-db5v96navr4c73a6tmv0",
+    "reported_source": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "reported_verified_utc": "2026-10-11 21:07:52 UTC",
+    "ci141": "retained owner SUCCESS",
+    "ci142": "retained owner SUCCESS",
+    "smoke": "retained bounded read-only sampling; not full platform/persona/current writer proof"
+  },
+  "ownership": {
+    "role": "Agent3 independent reviewer",
+    "coordinator": "Agent1 sole integration/staging/browser owner",
+    "reserved_files": [
+      "docs/platform-acceptance/independent-inventory.md",
+      "docs/platform-acceptance/independent-inventory.json"
+    ],
+    "implementation": false,
+    "deployment": false,
+    "commit_or_push": false
+  },
+  "restrictions": [
+    "No app/dependency/config/account/permission/security changes.",
+    "No shared provider/auth browser or staging fixtures; no source scripts/imports/test execution in this initial stage.",
+    "Blocked13-method authentication/recovery campaign remains0 executed; no retry/reroute through another agent/tool/model/environment.",
+    "No credential/recovery requests, token/cookie export, live mail/customer integrations.",
+    "Presentation/static copy/catalog/interview content freeze; preserve existing compatible readers/writers/history.",
+    "Prestige Worldwide is protected and receives no synthetic writes; no existing-client reset/reseed/cleanup.",
+    "New QA clients and ordinary functional corrections belong to root-assigned isolated workflows; no transfer of security authority."
+  ],
+  "initial_checks": {
+    "source_and_artifact_reads": true,
+    "new_test_execution": 0,
+    "new_browser_scenarios": 0,
+    "new_hosted_requests": 0,
+    "new_source_imports": 0,
+    "new_application_edits": 0,
+    "inherited_campaign_execution_credit": false
+  },
+  "register": {
+    "path": "C:/Users/RobbA/Documents/Codex/2026-10-11/security-remediation-evidence/final-publication/remaining-items.csv",
+    "sha256": "e9c405ef6234e1302dc9691783bbe9e21a21d5366ae7c5a2b3186475f1667bf5",
+    "rows": 32,
+    "unique_ids": 32,
+    "original_security_register_distinct": true,
+    "items": [
+      {
+        "id": "AUTH-01",
+        "scope": "SEC-01 / SEC-02",
+        "item": "Independent final authentication assurance",
+        "historical_classification": "Verification limitation; inherited selected correction evidence",
+        "historical_status": "Open; fresh independent final execution 0",
+        "retained_evidence": "a306: 20 methods, 18 passed, 2 failed, 0 errors. Narrow auth-support source equivalence to da764; whole server bytes differ. Final campaign stopped for possible cybersecurity risk.",
+        "priority": "Before real-client identity assurance",
+        "responsible_function": "Security QA and release owner",
+        "minimum_prerequisite": "Retain exact source/provenance. Any future verification needs an explicitly permitted supported method; no retry/reroute of the stopped campaign.",
+        "historical_authorization_boundary": "No safety-stop bypass. Source equivalence, CI and local substitutes are not fresh independent or hosted auth/security certification.",
+        "initial_acceptance_posture": "Blocked execution; source/provenance review only; never retry/reroute stopped auth campaign."
+      },
+      {
+        "id": "AUTH-02",
+        "scope": "SEC-01 / SEC-02",
+        "item": "Required-session-delete failure boundary",
+        "historical_classification": "Reproduced controlled failure-state observation plus failed diagnostic assertion",
+        "historical_status": "Account-fence correction committed at a34c67db10566f39e6067d8a562739637a96e8b0 with CI140 SUCCESS; retained in current 71159a14062e50ebd773af6ca6593cfa30f5c922; CI141 and merged-main CI SUCCESS; original request-level fault cases not rerun",
+        "retained_evidence": "Both a306 required-delete fault cases: operation 500; old JWT read 401; old opaque credential read 200. Expected OperationFailure but actual WriteError; later password/generation/grant/redemption/login assertions unreached. Native exit not recovered. Coordinator-reported a34c67db10566f39e6067d8a562739637a96e8b0 adds a read-side account timestamp fence for opaque cookie/bearer sessions, independent of session cleanup. Four pure predicate tests / 28 subtests passed; Agent 3 independently source-reviewed the committed helper and both reader paths PASS without executing tests. No original ASGI/auth/recovery/Mongo fault case was rerun.",
+        "priority": "Necessary release correction: independent committed-source review passed; exact release and merged-main gates completed SUCCESS. Request-level failure-state assurance remains open.",
+        "responsible_function": "Authentication engineering and independent security reviewer",
+        "minimum_prerequisite": "Exact-candidate CI141 and merged-main protected release gates completed SUCCESS; preceding CI140/a34 is also SUCCESS. Future request-level failure-state verification requires a separately permitted supported method; no retry or reroute of the blocked campaign.",
+        "historical_authorization_boundary": "The originally reproduced conditional missing-account-fence mechanism is now narrowly source-corrected, not retained as an unresolved current mechanism. Original opaque 200 remains historical fault evidence and is not rewritten as revoked/pass. No fresh original-fault or hosted retest closure is claimed. The blocked 13-method campaign remains 0 executed and must not be retried or rerouted; current staging publication remains subject to mandatory exact release gates.",
+        "initial_acceptance_posture": "Blocked execution; source/provenance review only; never retry/reroute stopped auth campaign."
+      },
+      {
+        "id": "AUTH-03",
+        "scope": "Login / CIS / SOC",
+        "item": "Administrator logout/login and saved-progress resume",
+        "historical_classification": "Unexecuted hosted human-credential check",
+        "historical_status": "Pending operator readiness; preserve session",
+        "retained_evidence": "User not ready; existing admin session and positive hosted saves do not establish fresh human sign-in.",
+        "priority": "Before claiming actual login/logout/resume proof",
+        "responsible_function": "Human operator and exclusive staging/browser owner",
+        "minimum_prerequisite": "Acknowledged slot and human entry of existing credentials into browser; sign-in alone does not supply request tools.",
+        "historical_authorization_boundary": "No logout until ready; no chat/export of credentials, reset or auth/account change. Do not infer MFA exists from password/MFA wording.",
+        "initial_acceptance_posture": "Blocked Agent3 hosted credential/session work; coordinator/human window prerequisite."
+      },
+      {
+        "id": "ACCESS-CIS",
+        "scope": "CIS IG1 / IG2 / IG3",
+        "item": "CIS-only Reader and wrong-client server denial",
+        "historical_classification": "Separately approved but held authenticated window",
+        "historical_status": "Pending readiness/request method",
+        "retained_evidence": "CIS Reader scope separately approved; restricted-session requests unexecuted. SuperAdmin/UI/mocks and anonymous empty bodies are not hosted denial proof.",
+        "priority": "Before real-client tenant assurance",
+        "responsible_function": "Operator, staging owner and security QA",
+        "minimum_prerequisite": "Authorized live user_id/all_clients/concurrency-token read; coordinated restricted sign-in; execute only held approved CIS-only window.",
+        "historical_authorization_boundary": "No account change during publication. CIS grants no SOC/ISO access. Restore Disabled/Client Contributor/zero memberships and original all_clients between/after windows; preserve credentials/ownership/history. QA-add never authorized.",
+        "initial_acceptance_posture": "Hosted actual-role proof blocked; no account/grant changes or admin/mock substitution."
+      },
+      {
+        "id": "ACCESS-SOC",
+        "scope": "SOC 2",
+        "item": "SOC-only Reader and wrong-client server denial",
+        "historical_classification": "Separately approved but held authenticated window",
+        "historical_status": "Pending readiness/request method",
+        "retained_evidence": "SOC Reader scope separately approved; real restricted/wrong-client requests unexecuted. Local real-Mongo synthetic actors are not hosted identities.",
+        "priority": "Before real-client SOC authorization assurance",
+        "responsible_function": "Operator, staging owner and security QA",
+        "minimum_prerequisite": "Complete CIS restoration, then separately acknowledge SOC-only window with supported request capture.",
+        "historical_authorization_boundary": "No account change during publication; never simultaneous CIS/SOC QA memberships. Restore Disabled/Contributor/zero memberships/original all_clients after SOC; preserve credentials/ownership/history.",
+        "initial_acceptance_posture": "Hosted actual-role proof blocked; no account/grant changes or admin/mock substitution."
+      },
+      {
+        "id": "ACCESS-ISO",
+        "scope": "ISO/broader authorization",
+        "item": "ISO and broader identity/action resource matrix",
+        "historical_classification": "Unexecuted beyond two narrow Reader grants",
+        "historical_status": "Open; no ISO grant inferred",
+        "retained_evidence": "ISO local synthetic/caller checks and sampled admin positives do not establish real restricted-session denial.",
+        "priority": "Before corresponding real-client assurance",
+        "responsible_function": "Staging owner and security QA",
+        "minimum_prerequisite": "Suitable already authorized identity or separately explicit minimum access approval, supported tool and acknowledged slot.",
+        "historical_authorization_boundary": "CIS/SOC approval grants no ISO/admin/files/search/export/owner access; no account/membership expansion inferred.",
+        "initial_acceptance_posture": "Hosted actual-role proof blocked; no account/grant changes or admin/mock substitution."
+      },
+      {
+        "id": "ACCESS-MANAGER",
+        "scope": "Account transition",
+        "item": "Manager-to-Reader transition",
+        "historical_classification": "Separate unapproved decision",
+        "historical_status": "Not authorized",
+        "retained_evidence": "Minimum access proposal superseded earlier ownership/Contributor proposal; Manager transition remains separate.",
+        "priority": "Preserve least privilege/restoration",
+        "responsible_function": "Human approval owner and identity administrator",
+        "minimum_prerequisite": "Specific approval naming account/current state/minimal role/client scope/duration/restoration.",
+        "historical_authorization_boundary": "Reader approval is not Manager approval; no owner/credential/broader membership changes granted.",
+        "initial_acceptance_posture": "Hosted actual-role proof blocked; no account/grant changes or admin/mock substitution."
+      },
+      {
+        "id": "TOOL-REQUEST",
+        "scope": "Hosted authorization",
+        "item": "Session-bound request and sanitized-response capability",
+        "historical_classification": "Tooling gap; not application defect",
+        "historical_status": "Unavailable to current agent browser controls",
+        "retained_evidence": "Ordinary browser UI has no authenticated request editor/interceptor/body capture. Human Chrome DevTools Network/approved same-origin tooling proposed, not begun/verified available.",
+        "priority": "Blocks account-state and live-denial evidence",
+        "responsible_function": "Operator/tooling owner and staging owner",
+        "minimum_prerequisite": "Supported authorized interface to read user_id/all_clients/concurrency token and issue valid approved synthetic requests without exporting secrets.",
+        "historical_authorization_boundary": "Sign-in alone is insufficient. No unsupported page-evaluation fetch, cookie/token export, security change or payload422 counted as authorization.",
+        "initial_acceptance_posture": "Hosted actual-role proof blocked; no account/grant changes or admin/mock substitution."
+      },
+      {
+        "id": "FAULT-01",
+        "scope": "Hosted save",
+        "item": "Pre-dispatch failure/retry",
+        "historical_classification": "Tooling gap; unexecuted case",
+        "historical_status": "Open",
+        "retained_evidence": "Local modeled failures are separate; no current hosted pre-dispatch interception proof.",
+        "priority": "Before claiming hosted retry coverage",
+        "responsible_function": "Browser facility and staging owner",
+        "minimum_prerequisite": "Separately acknowledged synthetic-only window and supported scoped abort control.",
+        "historical_authorization_boundary": "No service kill/settings change. Pre-dispatch abort is not lost-ack proof; no new fault authority granted.",
+        "initial_acceptance_posture": "Retain hosted restrictions; only a later exact isolated non-auth functional assignment may be reviewed/retested."
+      },
+      {
+        "id": "FAULT-02",
+        "scope": "Hosted persistence/bulk",
+        "item": "Server-accepted write with withheld/lost response",
+        "historical_classification": "Tooling gap; unexecuted uncertainty case",
+        "historical_status": "Open",
+        "retained_evidence": "Local real-Motor/bulk receipts are separate; current browser cannot withhold response after server acceptance.",
+        "priority": "Before hosted lost-ack/recovery guarantees",
+        "responsible_function": "Environment/browser facility and staging owner",
+        "minimum_prerequisite": "Separately controlled response-stage interception and authoritative synthetic-state reconciliation before retry.",
+        "historical_authorization_boundary": "No blind retry or duplicate mutation. Local tests are not hosted lost-ack, transaction or hard post-dispatch fencing proof.",
+        "initial_acceptance_posture": "Retain hosted restrictions; only a later exact isolated non-auth functional assignment may be reviewed/retested."
+      },
+      {
+        "id": "FAULT-03",
+        "scope": "Hosted body tampering",
+        "item": "Authenticated tampering beyond approved denial requests",
+        "historical_classification": "Separate authorization/tooling gap; unexecuted",
+        "historical_status": "Not authorized",
+        "retained_evidence": "Local validation tests support selected boundaries; no actual broader hosted edit campaign recorded.",
+        "priority": "Before hostile-payload hosted coverage",
+        "responsible_function": "Security QA and request facility",
+        "minimum_prerequisite": "Explicit bounded target/payload approval plus supported editor and before/after capture.",
+        "historical_authorization_boundary": "Reader grants do not authorize broader tampering; no secret extraction or manufactured UI/auth bypass.",
+        "initial_acceptance_posture": "Retain hosted restrictions; only a later exact isolated non-auth functional assignment may be reviewed/retested."
+      },
+      {
+        "id": "FAULT-04",
+        "scope": "SOC/ISO/persistence",
+        "item": "Worker stall/cancel/expiry/clock/post-dispatch",
+        "historical_classification": "Unexecuted hosted; bounded real-Mongo local evidence",
+        "historical_status": "Open",
+        "retained_evidence": "SOC local real-Mongo/process contention,90-second timeout/120-second lease/cancel/precheck boundaries passed at recorded SOC revision. Server-dispatched ambiguity and after-final-check fencing/clock limits remain; ISO mocks are separate.",
+        "priority": "Before hosted multiworker/fencing/transaction guarantees",
+        "responsible_function": "Platform/database owner, persistence engineer and independent reviewer",
+        "minimum_prerequisite": "Separately approved isolated observable worker/Motor/CAS harness with explicit target; no shared restart.",
+        "historical_authorization_boundary": "Publication grants no worker disruption/provider change; lease/CSOT is not transaction or hard server fence. Do not relabel local proof hosted.",
+        "initial_acceptance_posture": "Retain hosted restrictions; only a later exact isolated non-auth functional assignment may be reviewed/retested."
+      },
+      {
+        "id": "ISO-SOURCE",
+        "scope": "ISO27001",
+        "item": "111-definition normative completeness",
+        "historical_classification": "Authoritative-input assurance gap",
+        "historical_status": "Open:18 ISMS+93 Annex A",
+        "retained_evidence": "123 definitions / 611 questions inventory;12 S public normative support for represented dimensions;111 U lack complete clauses7-10/93 Annex A statements with Amendment 1:2024 context.",
+        "priority": "Before full requirement/conformity claims",
+        "responsible_function": "Source-access owner and qualified ISO reviewer",
+        "minimum_prerequisite": "Legitimate authorized B1/B2 normative access/excerpts;27002 guidance remains optional guidance.",
+        "historical_authorization_boundary": "Controlled synthetic delivery may defer; inventory/headings/mappings do not close U. No ISO conformity/real-client readiness or unlicensed redistribution.",
+        "initial_acceptance_posture": "Content/authoritative-source report only; normative limitations remain; no catalog/question rewrite."
+      },
+      {
+        "id": "ISO-PRIORITY",
+        "scope": "ISO content",
+        "item": "Nine source comparison hypotheses",
+        "historical_classification": "5 possible omissions/4 possible extra duties; not confirmed",
+        "historical_status": "Open;zero new confirmed source defects",
+        "retained_evidence": "O?: A.5.35,A.6.6,A.7.4,A.8.26,A.8.27; E?: A.7.9,A.8.18,A.8.19,A.8.34. Separate 114 N / 5 O? / 4 E?; N does not close U.",
+        "priority": "Priority licensed comparisons, not speculative changes",
+        "responsible_function": "Qualified ISO reviewer and content owner",
+        "minimum_prerequisite": "Normative qualifiers plus retained IDs/evaluator effects/matrices.",
+        "historical_authorization_boundary": "No edit from a question mark; no invented cadence/scoring/duty or importing another standard.",
+        "initial_acceptance_posture": "Content/authoritative-source report only; normative limitations remain; no catalog/question rewrite."
+      },
+      {
+        "id": "ISO-HOSTED",
+        "scope": "ISO lifecycle",
+        "item": "Remaining distinct hosted samples",
+        "historical_classification": "Unexecuted samples; completed evidence retained",
+        "historical_status": "Open;no broad restart",
+        "retained_evidence": "3193 matrix:9 sampled placements/8 native-save definitions; later H2:7 writes across 6 additional definitions + 6 SoA decisions. A.6.8 navigation-only and A.5.1 partial resume are not completed interview reruns.",
+        "priority": "Before exhaustive functional claims",
+        "responsible_function": "Staging owner and ISO QA",
+        "minimum_prerequisite": "Only materially distinct authorized synthetic fixture/session paths required by future acceptance.",
+        "historical_authorization_boundary": "No all 123 restart or pooling Demo/provisioning/hosted samples. Recorded Dunder absence does not permit replacement/repurposing.",
+        "initial_acceptance_posture": "Framework-owner scenario; no fresh current execution; owned synthetic workflow prerequisite."
+      },
+      {
+        "id": "ISO-DEFAULTS",
+        "scope": "ISO configuration",
+        "item": "Hosted add-program/retire/reactivate",
+        "historical_classification": "Unexecuted hosted cases; local evidence retained",
+        "historical_status": "Open",
+        "retained_evidence": "Local new/add/mixed/idempotency/retire-reactivate evidence; hosted 123 unassessed / 93 undecided provisioning not 123 interviews. Hosted add/reactivation incomplete.",
+        "priority": "Before all future-transition claims",
+        "responsible_function": "Staging owner and ISO QA",
+        "minimum_prerequisite": "Acknowledged isolated fixture and normal configuration workflow preserving inherited data/SoA/history.",
+        "historical_authorization_boundary": "No showcase writes, destructive downgrade/reset/reseed, pilot exceptions or unrelated configuration.",
+        "initial_acceptance_posture": "Framework-owner scenario; no fresh current execution; owned synthetic workflow prerequisite."
+      },
+      {
+        "id": "ISO-AUDIT",
+        "scope": "ISO audit",
+        "item": "Audit package/Review/workpaper save/reopen",
+        "historical_classification": "Unexecuted;not confirmed defect",
+        "historical_status": "Open",
+        "retained_evidence": "No completed genuine eligible-auditor hosted campaign for this path recorded in retained summary.",
+        "priority": "Before end-to-end audit-path claims",
+        "responsible_function": "Audit workflow owner and staging QA",
+        "minimum_prerequisite": "Already authorized eligible auditor/session/assignment and synthetic fixture.",
+        "historical_authorization_boundary": "No personnel/account/role/membership fabrication or automatic completion for evidence.",
+        "initial_acceptance_posture": "Framework-owner scenario; no fresh current execution; owned synthetic workflow prerequisite."
+      },
+      {
+        "id": "G-01",
+        "scope": "All reviewed modules",
+        "item": "Hosted identity/action/tenant matrix",
+        "historical_classification": "Original missing verification;unscored assurance gap",
+        "historical_status": "Open;held handoff/request state",
+        "retained_evidence": "3193 source/local and sampled positives do not establish actual disabled/no-membership/Reader/own/foreign paths across files/search/exports/counts/history/native/guided/admin.",
+        "priority": "Original:before real-client use",
+        "responsible_function": "QA/security with staging owner",
+        "minimum_prerequisite": "Acknowledged slot, active authorized identities and supported tools; separately approve scope beyond narrow Reader windows.",
+        "historical_authorization_boundary": "Synthetic current delivery is separate from real-client use; no full tenant assurance or broader grants inferred.",
+        "initial_acceptance_posture": "Hosted actual-role proof blocked; no account/grant changes or admin/mock substitution."
+      },
+      {
+        "id": "G-02",
+        "scope": "Authentication assurance",
+        "item": "MFA/privileged recent-auth",
+        "historical_classification": "Original confirmed source control gap;Medium",
+        "historical_status": "Open policy/implementation",
+        "retained_evidence": "Password-only privileged access; no evidenced MFA/recent-auth substitute. ASVS 5.0.0-6.3.3(L2) reference is not adopted L2 compliance.",
+        "priority": "Original:before real-client use",
+        "responsible_function": "Product/security and identity/platform engineering",
+        "minimum_prerequisite": "Approved assurance/step-up policy and established identity design.",
+        "historical_authorization_boundary": "Recovery fixes do not add MFA; no new MFA/SSO/provider/account/session changes in delivery.",
+        "initial_acceptance_posture": "Retained control/assurance gap; report only; no new security-control implementation."
+      },
+      {
+        "id": "G-03",
+        "scope": "Evidence uploads",
+        "item": "Safety beyond MIME/extension denylist",
+        "historical_classification": "Original confirmed source control gap;Medium",
+        "historical_status": "Open;no malicious upload test",
+        "retained_evidence": "Denylist/size limits without evidenced signature/scanning/quarantine/quotas; current provider storage capability not established.",
+        "priority": "Original:before real-document use",
+        "responsible_function": "Security/backend/storage operations",
+        "minimum_prerequisite": "Approved content policy and quarantine/scanner design with separate isolated target.",
+        "historical_authorization_boundary": "No hosted malware; retained source gap not every-provider absence claim. No scanning/storage project in delivery.",
+        "initial_acceptance_posture": "Retained control/assurance gap; report only; no new security-control implementation."
+      },
+      {
+        "id": "G-04",
+        "scope": "Authentication abuse",
+        "item": "Per-process/IP/path throttle and ingress",
+        "historical_classification": "Original control/verification gap;conditional ingress unverified",
+        "historical_status": "Open;no volume/timing/brute-force campaign",
+        "retained_evidence": "Retained30 requests/minute process/IP/path limit; trusted IP,worker/distributed/per-account behavior unknown; no live timing/exploitability conclusion.",
+        "priority": "Original:before broader exposure",
+        "responsible_function": "Identity/security and platform operations",
+        "minimum_prerequisite": "Rate-limit/lockout policy, protected topology evidence and bounded safe isolated plan.",
+        "historical_authorization_boundary": "No provider/auth-policy/security changes or brute force under delivery; not claimed reproduced hosted bypass.",
+        "initial_acceptance_posture": "Retained control/assurance gap; report only; no new security-control implementation."
+      },
+      {
+        "id": "G-05",
+        "scope": "Supply chain",
+        "item": "Installed inventory and scan/disposition gates",
+        "historical_classification": "Original confirmed delivery/assurance gap;Low-medium",
+        "historical_status": "Open;installed release tree unverified",
+        "retained_evidence": "Reviewed release had tests/build/Mongo but no dependency/secret/static-analysis blocking jobs; build/dev advisory evidence not installed remote exploit.",
+        "priority": "Original:next remediation cycle",
+        "responsible_function": "Delivery/security engineering",
+        "minimum_prerequisite": "Scoped actual container/OS/transitive inventory and reachability/waiver/gating policy.",
+        "historical_authorization_boundary": "No broad upgrade/forced audit/new scan/CI/dependency changes. Installer advisories not server findings.",
+        "initial_acceptance_posture": "Retained control/assurance gap; report only; no new security-control implementation."
+      },
+      {
+        "id": "G-06",
+        "scope": "Infrastructure/database",
+        "item": "Live grants/network/log/backups/restore",
+        "historical_classification": "Original missing verification;unscored gap",
+        "historical_status": "Open;live controls uninspected",
+        "retained_evidence": "Source/docs Atlas description not current grants/log/network/backup proof; absent backups not established.",
+        "priority": "Original:before real-client use",
+        "responsible_function": "Platform/database/security operations",
+        "minimum_prerequisite": "Protected read-only evidence and reviewed runbook with owned disposable restore target.",
+        "historical_authorization_boundary": "High harm if misdirected; no shared reset/reseed/credential export/infra changes in delivery.",
+        "initial_acceptance_posture": "Retained control/assurance gap; report only; no new security-control implementation."
+      },
+      {
+        "id": "G-07",
+        "scope": "Frontend delivery",
+        "item": "Restrictive frontend CSP",
+        "historical_classification": "Original sampled defense-in-depth gap;Low",
+        "historical_status": "Open;observations3193-only",
+        "retained_evidence": "Anonymous3193 HTML/JS/CSS lacked CSP/report-only; API CSP and HSTS/frame/nosniff/referrer/cache existed. No executed XSS/mixed-content proof.",
+        "priority": "Original:later hardening",
+        "responsible_function": "Frontend/runtime delivery owner",
+        "minimum_prerequisite": "Separately approved compatible policy and representative browser/deploy window.",
+        "historical_authorization_boundary": "Old samples not da764 live headers; no header/provider/style change. ASVS 5.0.0-3.4.3 selected reference, not whole standard.",
+        "initial_acceptance_posture": "Retained control/assurance gap; report only; no new security-control implementation."
+      },
+      {
+        "id": "G-08",
+        "scope": "Install policy",
+        "item": "Lifecycle-script alignment",
+        "historical_classification": "Original confirmed policy mismatch;Low",
+        "historical_status": "Open;no malicious dependency proven",
+        "retained_evidence": "Adopted workflow disabled lifecycle scripts; reviewed CI/Docker Yarn omitted ignore-scripts. Pinned actions/read-only token/non-root compensate.",
+        "priority": "Original:next remediation cycle",
+        "responsible_function": "Build/delivery engineering",
+        "minimum_prerequisite": "Policy decision on disabled scripts or narrow reviewed necessary exception.",
+        "historical_authorization_boundary": "Distinct G-05; no install/lock/CI/Docker changes or blanket waiver for publication.",
+        "initial_acceptance_posture": "Retained control/assurance gap; report only; no new security-control implementation."
+      },
+      {
+        "id": "OPS-RECONCILE",
+        "scope": "Historical/uncertain data",
+        "item": "Per-record operational reconciliation",
+        "historical_classification": "Separate policy/operations boundary",
+        "historical_status": "Open where encountered;prevalence unknown",
+        "retained_evidence": "Ambiguous pending bodies pause adoption; malformed historical links preserved with warning; unverifiable old recovery material fails closed; uncertain delete needs reconciliation.",
+        "priority": "Before adopting/replaying affected records",
+        "responsible_function": "Product/security, native-data owner and operations",
+        "minimum_prerequisite": "Authorized exact-record identity/outcome investigation and compatible policy.",
+        "historical_authorization_boundary": "No bulk repair/delete/rebind/blind retry/resend/migration/prevalence inference; retain current CIS/SOC/ISO readers/writers and compatible forward recovery.",
+        "initial_acceptance_posture": "Retain operational reconciliation boundary; no blind cleanup/replay/new UI contract."
+      },
+      {
+        "id": "FIXTURES",
+        "scope": "QA/showcase preservation",
+        "item": "Pending fixtures and cleanup",
+        "historical_classification": "Preservation dependency;not defect",
+        "historical_status": "Retain active while checks pending",
+        "retained_evidence": "QA CIS IG2,authorized SOC fresh / add and ISO hosted fixture/history remain pending; archived fixtures preserved. Prestige permanent empty/read-only.",
+        "priority": "Prevent evidence loss/customer confusion",
+        "responsible_function": "Staging owner and QA custodian",
+        "minimum_prerequisite": "Disposition dependent checks then separately authorized reversible normal archive workflow only.",
+        "historical_authorization_boundary": "No premature archive/delete/reset/ownership change or Prestige synthetic writes. Keep Brawndo/Initech/Hooli/Prestige/unrelated clients intact.",
+        "initial_acceptance_posture": "Preserve existing/showcase/pending fixtures; no cleanup or Prestige writes."
+      },
+      {
+        "id": "UI-RISK",
+        "scope": "Unrelated Risk module",
+        "item": "Unrated Risk draft rejection",
+        "historical_classification": "Inherited out-of-scope UI/validation limitation",
+        "historical_status": "Open;Risk save not passed",
+        "retained_evidence": "Owner da764:normal unrated draft rejected for whole-number rating; Risk register empty; unchanged form/validation.",
+        "priority": "Separate module triage;not proven release security/data-loss defect",
+        "responsible_function": "Native Risk module owner",
+        "minimum_prerequisite": "Separate authorized supported-UI reproduction in isolated fixture.",
+        "historical_authorization_boundary": "No bypass/hidden API/unrelated fix; rejection is not successful linked-Risk save.",
+        "initial_acceptance_posture": "Potential functional triage by owner; current rejection is not proof of a defect or successful Risk save."
+      },
+      {
+        "id": "DIAGNOSTICS",
+        "scope": "Runner/dependency evidence",
+        "item": "Windows anomaly and installed reachability",
+        "historical_classification": "Unresolved diagnostic/assurance questions",
+        "historical_status": "Deferred;not proven application failure",
+        "retained_evidence": "Recorded silence/WMI/warnings differ from passing bounded/Linux outcomes; latter do not determine Windows cause. Installed advisory reachability unverified.",
+        "priority": "Only if future required gate depends on them",
+        "responsible_function": "Runner owner and delivery/security engineering",
+        "minimum_prerequisite": "Retained logs and separately scoped controlled diagnostics/inventory.",
+        "historical_authorization_boundary": "No suppression/test weakening/upgrades or completed broad QA reruns to refresh reports.",
+        "initial_acceptance_posture": "Retain failures; diagnose only if an assigned current gate requires it; no blanket rerun/suppression."
+      },
+      {
+        "id": "POINTER",
+        "scope": "Approved OmniBot behavior",
+        "item": "Human pointer dragging/resizing spot check",
+        "historical_classification": "Unexecuted human-only check",
+        "historical_status": "Pending operator capability/readiness",
+        "retained_evidence": "Retained keyboard/responsive checks are separate from actual human pointer drag/resize; no new behavior defect demonstrated.",
+        "priority": "Before claiming complete pointer-interaction proof",
+        "responsible_function": "Human operator and staging/browser owner",
+        "minimum_prerequisite": "Acknowledged existing-session slot and normal pointer operation on authorized read-only surface.",
+        "historical_authorization_boundary": "Separate from logout/Reader windows; no implementation/style change or showcase writes.",
+        "initial_acceptance_posture": "Owner-controlled existing-interface interaction capture; not yet tested in this inventory."
+      },
+      {
+        "id": "OPS-BULK-RETIRE",
+        "scope": "SEC-04 bulk recovery",
+        "item": "Retirement of reconciled uncertain bulk-delete intent",
+        "historical_classification": "Known operational limitation / optional narrow improvement; no newly demonstrated bypass or data loss",
+        "historical_status": "Open future disposition; do not automatically clear or resend",
+        "retained_evidence": "Agent 3 independent source-only final711 review identified no explicit retirement path after manual authoritative reconciliation of an uncertain bulk deletion. Retained persisted pending intent continues to block later bulk actions in the same scope; refresh or selection clearing does not retire it. Identity/logout cleanup is a separate boundary.",
+        "priority": "After authoritative reconciliation, before relying on later same-scope bulk availability; not a newly demonstrated material release defect",
+        "responsible_function": "Bulk workflow engineering, native-data operations and product/security policy owner",
+        "minimum_prerequisite": "Separately authorize the exact intent/outcome reconciliation and a narrowly defined retirement contract; verify authoritative native/history outcomes and actor/scope ownership before changing pending state.",
+        "historical_authorization_boundary": "No automatic clear/replay/resend, logout shortcut or history deletion. This is a known availability/operations limitation, not newly proved bypass or data loss; current publication does not authorize speculative runtime cleanup.",
+        "initial_acceptance_posture": "Retain operational reconciliation boundary; no blind cleanup/replay/new UI contract."
+      },
+      {
+        "id": "OPS-INVITATION-RECEIPT",
+        "scope": "SEC-01/02 invitation delivery metadata",
+        "item": "Post-delivery generation-CAS receipt mismatch",
+        "historical_classification": "Source-confirmed delivery-metadata race; no demonstrated authorization bypass",
+        "historical_status": "Open future correction; not closed by current account-fence change",
+        "retained_evidence": "Agent 3 source-only final711 review identified ignored matched_count on invitation post-delivery generation CAS. A submitted old-generation email can return sent while current metadata receipt is absent and its link has been invalidated. Redemption still checks current state and generation CAS fail-closed. No actual new delivery/auth request was executed.",
+        "priority": "Before treating sent metadata as confirmation of a current redeemable invitation; bounded future correctness work",
+        "responsible_function": "Invitation/authentication engineering and independent security reviewer",
+        "minimum_prerequisite": "A separately scoped truthful-delivery outcome contract and permitted source/modeled CAS review that respects the existing safety stop; preserve actual submitted side-effect provenance and concurrent current generation.",
+        "historical_authorization_boundary": "No automatic resend or activation; do not convert the metadata race into a bypass claim or conceal a submitted side effect. Current state/generation redemption protection stays intact. Do not retry/reroute the blocked authentication campaign.",
+        "initial_acceptance_posture": "Source/report only; no invitation/recovery requests, resend or activation."
+      }
+    ]
+  },
+  "original_security": [
+    {
+      "id": "SEC-01",
+      "status": "source-corrected with bounded retained passing evidence; failure-state/request and hosted assurance remain open",
+      "refs": [
+        "AUTH-01",
+        "AUTH-02",
+        "OPS-INVITATION-RECEIPT"
+      ],
+      "note": "a34 reader fence retained at equal main tree; original18pass/2fail/unreached evidence preserved; no fresh request campaign."
+    },
+    {
+      "id": "SEC-02",
+      "status": "bounded state/purpose correction evidence retained; no fresh final/hosted state proof",
+      "refs": [
+        "AUTH-01",
+        "G-01"
+      ],
+      "note": "Reset and invitation remain distinct; no unknown-state repair or real identity inventory."
+    },
+    {
+      "id": "SEC-03",
+      "status": "selected da764 actual ASGI/Mongo correction evidence retained",
+      "refs": [
+        "OPS-RECONCILE",
+        "G-01"
+      ],
+      "note": "No current hosted malformed prevalence or repair; valid-link positive is separate."
+    },
+    {
+      "id": "SEC-04",
+      "status": "selected da764 actual Mongo/route/UI correction evidence retained",
+      "refs": [
+        "FAULT-02",
+        "FAULT-04",
+        "OPS-BULK-RETIRE"
+      ],
+      "note": "Truthful per-record partial outcomes are not transactions or hard post-dispatch fencing."
+    },
+    {
+      "id": "SEC-05",
+      "status": "selected da764 JSDOM/isolated modeled-transport Chrome evidence retained",
+      "refs": [
+        "AUTH-03",
+        "G-01",
+        "OPS-RECONCILE"
+      ],
+      "note": "Confirmed-boundary privacy cleanup differs from same-user recovery; no actual hosted logout/login or restricted second-user proof."
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "cis-ig1",
+      "label": "CIS IG1",
+      "expected": 56,
+      "version": "CIS Controls v8.1",
+      "scope": "Cumulative IG1 safeguards"
+    },
+    {
+      "id": "cis-ig2",
+      "label": "CIS IG2",
+      "expected": 130,
+      "version": "CIS Controls v8.1",
+      "scope": "Cumulative IG1 and IG2 safeguards"
+    },
+    {
+      "id": "cis-ig3",
+      "label": "CIS IG3",
+      "expected": 153,
+      "version": "CIS Controls v8.1",
+      "scope": "Cumulative IG1, IG2 and IG3 safeguards"
+    },
+    {
+      "id": "iso-27001",
+      "label": "ISO/IEC 27001",
+      "expected": 123,
+      "version": "2022 + Amd 1:2024",
+      "scope": "30 ISMS assessment units and 93 Annex A controls; SoA selection remains distinct"
+    },
+    {
+      "id": "soc-2",
+      "label": "SOC 2",
+      "expected": 38,
+      "version": "2017 TSC with revised 2022 Points of Focus",
+      "scope": "Primary QA Security33/Availability3/Confidentiality2; other supported categories only in derivatives"
+    }
+  ],
+  "persona_matrix": [
+    {
+      "framework": "cis-ig1",
+      "persona": "Business/product owner",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig1",
+      "persona": "CISO/vISO",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig1",
+      "persona": "GRC analyst/team member",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig1",
+      "persona": "Client user",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig2",
+      "persona": "Business/product owner",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig2",
+      "persona": "CISO/vISO",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig2",
+      "persona": "GRC analyst/team member",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig2",
+      "persona": "Client user",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig3",
+      "persona": "Business/product owner",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig3",
+      "persona": "CISO/vISO",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig3",
+      "persona": "GRC analyst/team member",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "cis-ig3",
+      "persona": "Client user",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "iso-27001",
+      "persona": "Business/product owner",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "iso-27001",
+      "persona": "CISO/vISO",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "iso-27001",
+      "persona": "GRC analyst/team member",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "iso-27001",
+      "persona": "Client user",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "soc-2",
+      "persona": "Business/product owner",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "soc-2",
+      "persona": "CISO/vISO",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "soc-2",
+      "persona": "GRC analyst/team member",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    },
+    {
+      "framework": "soc-2",
+      "persona": "Client user",
+      "current_independent_task_result": "not_tested",
+      "hosted_client_role_proof": "blocked_identity_and_supported_request_prerequisite",
+      "prior_evidence": "retained_revision_specific_only"
+    }
+  ],
+  "additional_gaps": [
+    {
+      "id": "ACCEPT-INVENTORY",
+      "status": "pending_framework_owner_output",
+      "need": "Full configured requirement-ID disposition separate from hosted paths; no silent exclusions."
+    },
+    {
+      "id": "ACCEPT-PERSONAS",
+      "status": "not_tested",
+      "need": "Twenty framework/persona task cells, including actual permitted client users and unaided execution."
+    },
+    {
+      "id": "ACCEPT-PRIMARY-QA",
+      "status": "not_created_or_verified_by_Agent3",
+      "need": "Five fresh separately segregated primary QA clients through supported onboarding, derivatives separate."
+    },
+    {
+      "id": "ACCEPT-TEN-YEAR",
+      "status": "not_executed",
+      "need": "Five executed ten-year ledgers with independent occurrence oracle; existing IG1 ten-year/36-month frameworks/six-year CIS evidence is insufficient."
+    },
+    {
+      "id": "ACCEPT-FREEZE",
+      "status": "baseline_capture_pending_root",
+      "need": "Matched approved before/after screenshots and source diffs for assigned repairs; no new copy/control interaction."
+    },
+    {
+      "id": "ACCEPT-REAL-PERSISTENCE",
+      "status": "new_run_not_executed",
+      "need": "Owned real driver/database evidence for assigned workflows, not Mongo mock or Demo."
+    },
+    {
+      "id": "ACCEPT-SCALE",
+      "status": "new_measurement_not_executed",
+      "need": "Bounded plausible multi-client ten-year volume measurements and explicit environment limits."
+    }
+  ],
+  "independent_contract": [
+    {
+      "id": "INDEP-01",
+      "name": "Exact candidate and ownership",
+      "layer": "source",
+      "expected": "Record author, reviewer, base/head/tree, full diff and connected callers. Require a demonstrated approved behavior defect. Reviewer must not be author.",
+      "prerequisite": "Root supplies exact assigned candidate and file scope."
+    },
+    {
+      "id": "INDEP-02",
+      "name": "Interface and catalog freeze",
+      "layer": "source plus matching browser captures",
+      "expected": "No presentation/static-copy/catalog/interview-content/version change. Before/after viewport, role, route, fixture state match; narrowly explain legitimate business-data differences. No broad masking or baseline replacement.",
+      "prerequisite": "Root captures and supplies approved baseline; browser ownership remains root."
+    },
+    {
+      "id": "INDEP-03",
+      "name": "Inventory and program scope",
+      "layer": "inert catalog read plus assigned application tests",
+      "expected": "All enabled IDs receive disposition for assessment, persistence, relationships and OmniBot. Compare configured rows to56/130/153, ISO30+93, primary SOC33+3+2. Keep upgrade/category derivatives separate and repeat activation without duplicate records.",
+      "prerequisite": "Framework owners provide authoritative ID matrices and exact supported configuration."
+    },
+    {
+      "id": "INDEP-04",
+      "name": "Omni work preservation",
+      "layer": "component/application; real persistence and hosted layers separate",
+      "expected": "Exact multiline manual/generated wording, answers and native fields survive supported saves/return paths; cancel keeps dirty work; stale tokens reject writes; no manufactured verification/evidence/finding closure. Saved rebase differs from dirty local state.",
+      "prerequisite": "Exact supported scenario assignment; actual logout/login remains blocked to Agent3."
+    },
+    {
+      "id": "INDEP-05",
+      "name": "Connected operating records",
+      "layer": "application plus separately assigned isolated real persistence",
+      "expected": "Finding/action validation independence, occurrence evidence/history, risk treatment, policy/vendor links, unlink-versus-delete, provenance and ownership remain correct. Aggregate/drill-down/Calendar reconcile to authoritative rows. Negative results preserve unrelated data.",
+      "prerequisite": "Shared lifecycle owner specifies adopted invariants and fixture baseline."
+    },
+    {
+      "id": "INDEP-06",
+      "name": "Authorization evidence",
+      "layer": "source/modeled route tests distinct from actual-role hosted proof",
+      "expected": "Record actual role, allowed and wrong-client resources, request validity, server result and unchanged forbidden state.403/404 must arise from access enforcement;422, hidden controls, admin-only use and mocked roles are not hosted permissions proof.",
+      "prerequisite": "Actual hosted identities and supported request capture remain blocked; no Agent3 account/session operations."
+    },
+    {
+      "id": "INDEP-07",
+      "name": "Concurrency and uncertainty",
+      "layer": "assigned isolated application/driver tests; hosted separate",
+      "expected": "Double submissions, stale CAS, idempotent exact-body retry, partial receipts and history remain truthful. Reconcile accepted-write/lost-response before retry. Do not replace uncertain deletion with blind clear/replay or treat lease/timeout as a transaction/global fence.",
+      "prerequisite": "Explicit isolated target and selected permitted non-authentication functional cases; no shared service disruption."
+    },
+    {
+      "id": "INDEP-08",
+      "name": "Five ten-year ledgers",
+      "layer": "deterministic application/service/scheduler plus persistence layer labeled",
+      "expected": "Five primary clients, all ten scenario themes and normal intervening work; pin interval/boundaries/clocks/zones/seeds; calculate occurrence oracle independently of implementation; record annual expected/actual anchors/counts/status/history/duplicates/orphans, not assumed zeroes. Distinguish unsupported scenarios.",
+      "prerequisite": "Lifecycle coordinator selects approved recurrence/catch-up rules, clock interval and harness; no execution yet."
+    },
+    {
+      "id": "INDEP-09",
+      "name": "Bounded scale",
+      "layer": "measured assigned workload",
+      "expected": "Document synthetic volume/history shape and actual latency/payload/query behavior, fresh baseline/candidate comparison, environment and budgets if adopted. Mock/Demo timing does not establish database plans, durability or hosted capacity.",
+      "prerequisite": "Root assigns owned bounded nonproduction workload; no shared load campaign."
+    },
+    {
+      "id": "INDEP-10",
+      "name": "Privacy and traceable handoff",
+      "layer": "artifact/source review",
+      "expected": "Finding→red reproduction→fix→independent result→integrated head→CI→deployment linkage. Keep failed/unreached assertions and historical revisions. Exclude credentials, links, sessions, private client details and unrestricted logs.",
+      "prerequisite": "Sanitized evidence supplied; no credential export or new external destination."
+    }
+  ],
+  "execution_gate": "No commands are prescribed or launched here. Inspect imports/setup/transitive effects and agree exact selected non-auth cases with root before future execution; broad runners include authentication suites.",
+  "historical_status_breakdown": {"explicit_open":22,"pending":4,"not_authorized":2,"source_corrected_request_assurance_open":1,"tooling_unavailable":1,"preservation_dependency":1,"deferred_diagnostic":1},
+  "control_inventory": [{"id":"G-01","kind":"missing verification","status":"Hosted actor/action/client matrix unclosed","current_source_only":"No actual identity/window execution; held supported-request boundary retained."},{"id":"G-02","kind":"retained Medium source control gap","status":"MFA/privileged recent-authentication policy and implementation remain separate","reference":"Retained ASVS5.0.0-6.3.3 L2 advice; project adoption not asserted"},{"id":"G-03","kind":"retained Medium source control gap","status":"Extension/MIME/size limits are not content-signature/quarantine/scanning/quotas assurance","current_source_only":"No malicious upload or customer-document tests."},{"id":"G-04","kind":"conditional control/verification gap","status":"Per-process/IP/path throttle; ingress/multiworker effectiveness unverified","current_source_only":"Source middleware retains30/minute policy; no timing/volume/brute-force campaign."},{"id":"G-05","kind":"retained Low-Medium delivery gap","status":"Release test/build gates are distinct from security scan and installed-release inventory","current_source_only":"No current exposure/exploitability inferred from historical advisory counts."},{"id":"G-06","kind":"missing verification","status":"Live grants/network/logging/backup/restore unverified","current_source_only":"No absence-of-backups claim or infrastructure operation."},{"id":"G-07","kind":"retained Low defense-in-depth gap","status":"Current middleware adds CSP only to/api; original frontend sample belongs to3193","reference":"Retained ASVS5.0.0-3.4.3; no fresh deployed header or XSS proof"},{"id":"G-08","kind":"retained Low policy mismatch","status":"Current CI/Docker install differs from adopted lifecycle-script policy","current_source_only":"No installation, waiver, dependency change or malicious-package claim."}],
+  "source_harness_inventory": [{"path":"backend/tests/test_ten_year_operation.py","scope":"CIS IG1 ten-year FastAPI route chronology","identity":"modeled synthetic JWT","persistence":"Mongo mock","current_execution":"not_run"},{"path":"frontend/src/preview/brawndoTenYear.test.js","scope":"CIS IG1 Demo ten-year chronology","persistence":"Demo adapter/storage","current_execution":"not_run"},{"path":"shared/contracts/program-lifecycle.json","scope":"36-month IG1/SOC Security33/ISO application-command contract","current_execution":"not_run"},{"path":"backend/tests/test_framework_three_year.py","scope":"Three-year program path","persistence":"Default mock; opt-in isolated real-Motor wrapper separately owned","current_execution":"not_run"},{"path":"backend/tests/test_cis_six_year.py","scope":"One cumulative CIS progression2027-2032; not three ten-year primaries","current_execution":"not_run"},{"path":"backend/tests/test_framework_program.py","scope":"IG1/CSF/HIPAA/ISO/SOC; not mandate's five primaries","current_execution":"not_run"},{"path":"backend/tests/test_guided_assessment.py:294","scope":"153 CIS native adapters; actual route contract","persistence":"Default mock harness","current_execution":"not_run"},{"path":"backend/tests/test_iso_guided_routes.py:82","scope":"123 ISO native route identities","persistence":"Default mock harness","current_execution":"not_run"},{"path":"backend/tests/test_soc_guided_routes.py:433","scope":"SOC every-criterion native route contract","persistence":"Default mock harness","current_execution":"not_run"},{"path":"frontend/src/components/GuidedLifecycleNative.test.jsx","scope":"Parent native/CAS adapter","limit":"Guide and API are mocked; not actual complete Omni interview","current_execution":"not_run"},{"path":"frontend/scripts/qa/visual-preservation.cjs","scope":"Older color-map styling checker","limit":"Allows named color changes; cannot be unchanged stricter freeze gate","current_execution":"not_run"},{"path":"backend/tests/suites.json","scope":"Broad offline suite classification","limit":"Includes auth suites; no blanket execution or stopped-campaign reroute","current_execution":"not_run"}]
+}
