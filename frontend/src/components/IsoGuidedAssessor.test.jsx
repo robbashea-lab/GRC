@@ -293,7 +293,8 @@ test('unconfirmed native save retains exact wording and does not claim rejection
 });
 test.each(['native','interview'])('new %s failure clears the prior success notice without closing or retrying',async stage=>{
   await render();await open();await complete();await click('Save assessment');
-  expect(document.body.textContent).toContain('Assessment saved.');
+  expect(document.querySelector('.omni-workspace-window')).toBeNull();
+  await open();expect(document.body.textContent).toContain('Assessment saved.');
   const wording=document.querySelector('[aria-label="Omnibot implementation summary"]').value;
   if(stage==='native')props.onSaveAssessment.mockResolvedValueOnce(false);else failWrite=true;
   await click('Save & close');

@@ -25,7 +25,7 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 const render=async(clientId='demo_prestige')=>act(async()=>root.render(<FrameworkDrawer open record={{...record,client_id:clientId}} clientId={clientId} onOpenChange={close} position="33 of 38 in framework order" breadcrumb={[{label:'SOC 2',onClick:jest.fn()},{label:'Security',onClick:jest.fn()},{label:'CC9',onClick:jest.fn()},{label:'CC9.2'}]}/>));
-const criteriaTab=async()=>act(async()=>[...container.querySelectorAll('[role=tab]')].find(t=>t.textContent==='Assessment criteria').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));
+const criteriaDisclosure=async()=>act(async()=>{const disclosure=container.querySelector('.assessment-inline-criteria');expect(disclosure).not.toBeNull();if(!disclosure.open)disclosure.querySelector('summary').click();expect(disclosure.open).toBe(true);});
 
 test('removed linked-work footer leaves stored control descriptions and mappings unchanged',async()=>{
  record.management_controls=[{control_id:'legacy',name:'Saved vendor monitoring',description:'Quarterly provider assurance',frequency:'quarterly',design:'adequate',operating:'effective'}];
@@ -53,7 +53,7 @@ test('first narrative save does not claim an assessment when absent metadata bec
 test('Prestige SOC criterion workspace is focused, source-qualified and ordered',async()=>{
  await render();
  expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();
- expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria','Findings']);
+ expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Findings']);
  expect(container.querySelector('[role=tabpanel][data-state=active]').textContent).toContain('What SOC 2 requires');
  expect(container.querySelector('h2').textContent).toBe('Third-party risk oversight');
  expect(container.querySelector('.assessment-summary').open).toBe(false);
@@ -72,7 +72,7 @@ test('Prestige SOC criterion workspace is focused, source-qualified and ordered'
 
 test('checklist selections save and reopen while preserving legacy responses and hidden conclusions',async()=>{
  record.owner_id='david';record.soc_assessment_checks=['CC9.2-v1-r1','CC9.2-v1-o1'];
- await render();await criteriaTab();
+ await render();await criteriaDisclosure();
  const previous=container.querySelector('.assessment-criteria-columns details');
  expect(previous.open).toBe(false);
  expect([...previous.querySelectorAll('li')].map(el=>el.textContent)).toEqual(record.soc_assessment_checks.map(id=>`${id} · ${socGuidance.criteria['CC9.2'].items.find(item=>item.id===id).text}`));
@@ -84,7 +84,7 @@ test('checklist selections save and reopen while preserving legacy responses and
  await act(async()=>button('Save assessment').click());
  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({soc_assessment_checks:['CC9.2-v1-r1','CC9.2-v1-o1',check],owner_id:'david',status:'in_progress',verification:'needs_validation',implementation:'Existing vendor monitoring process.'}));
  expect(record.assessment_history[0].soc_assessment_checks).toEqual(record.soc_assessment_checks);
- await act(async()=>root.unmount());root=createRoot(container);await render();await criteriaTab();
+ await act(async()=>root.unmount());root=createRoot(container);await render();await criteriaDisclosure();
  expect(container.querySelector('.assessment-check input').checked).toBe(true);
  expect(record.owner_id).toBe('david');expect(record.verification).toBe('needs_validation');
 
@@ -92,20 +92,20 @@ test('checklist selections save and reopen while preserving legacy responses and
 
 test('removed enhanced guidance does not hide historical checklist responses',async()=>{
  const [id,entry]=Object.entries(socGuidance.criteria).find(([,entry])=>!entry.practical.enhanced.length&&entry.items.some(i=>i.id.includes('-v1-')));
- record={...record,definition_id:id,soc_assessment_checks:[entry.items[0].id]};await render();await criteriaTab();
+ record={...record,definition_id:id,soc_assessment_checks:[entry.items[0].id]};await render();await criteriaDisclosure();
  expect(container.textContent).not.toContain('Enhanced Assurance');
  expect(container.querySelector('.assessment-criteria-columns details').textContent).toContain(entry.items[0].id);
 
 });
 
 test('unrecognized historical IDs remain visible instead of being dropped or relabeled',async()=>{
- record.soc_assessment_checks=['CC9.2-retired-response'];await render();await criteriaTab();
+ record.soc_assessment_checks=['CC9.2-retired-response'];await render();await criteriaDisclosure();
  expect(container.querySelector('.assessment-criteria-columns details li').textContent).toBe('CC9.2-retired-response');
  expect(record.soc_assessment_checks).toEqual(['CC9.2-retired-response']);expect(api.patch).not.toHaveBeenCalled();
 
 });
 test('shared context distinguishes selected controls, evidence alternatives and Type 2 operation',async()=>{
- await render();await criteriaTab();
+ await render();await criteriaDisclosure();
  const columns=container.querySelector('.assessment-criteria-columns');
  expect([...columns.children].map(section=>section.querySelector('h3').textContent)).toEqual(['CC9.2 checklist','Review guidance','Expected outcome']);
  expect([...columns.children[1].querySelectorAll('p')].map(el=>el.textContent)).toEqual(socGuidance.criteria['CC9.2'].practical.review);
@@ -132,7 +132,7 @@ test('all in-scope criteria have stable, classified guidance and no forced empty
 });
 
 test('read-only reviewers can read practical guidance and cannot edit the assessment',async()=>{
- mockUser={...mockUser,role:'client_viewer'};await render();await criteriaTab();
+ mockUser={...mockUser,role:'client_viewer'};await render();await criteriaDisclosure();
  expect(container.querySelector('.assessment-criteria-columns').children).toHaveLength(3);
  expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
  expect([...container.querySelectorAll('.assessment-check input')].every(input=>input.matches(':disabled'))).toBe(true);
@@ -141,7 +141,7 @@ test('read-only reviewers can read practical guidance and cannot edit the assess
 });
 
 test.each(Object.keys(socGuidance.criteria))('%s renders its requirement-only checklist, review guidance and expected outcome',async id=>{
- record={...record,definition_id:id};await render();await criteriaTab();
+ record={...record,definition_id:id};await render();await criteriaDisclosure();
  const entry=socGuidance.criteria[id],columns=container.querySelector('.assessment-criteria-columns');
  expect([...columns.children[0].querySelectorAll('.assessment-check span')].map(el=>el.textContent)).toEqual(entry.assessment_criteria.map(item=>item.text));
  expect([...columns.children[1].querySelectorAll('p')].map(el=>el.textContent)).toEqual(entry.practical.review);
@@ -191,27 +191,27 @@ test('status, verification, owner and current implementation persist with the co
 
 test('implementation values and N/A rationale remain available with guarded breadcrumbs',async()=>{
  await render();expect(container.querySelector('[aria-label="Current implementation"]')).toBeTruthy();
- expect([...container.querySelectorAll('input[name="psoc-status"]')].map(i=>i.parentElement.textContent)).toEqual(['Implemented','Partially Implemented','Not Implemented','Not Assessed','Not Applicable']);
+ expect([...container.querySelectorAll('input[name="psoc-status"]')].map(i=>i.parentElement.textContent)).toEqual(['Addressed (Readiness)','Partially Addressed','Needs Remediation / Validation','Not Assessed','Not Applicable']);
  await act(async()=>container.querySelector('input[value="not_applicable"]').click());expect(container.querySelector('[aria-label="N/A Rationale"]')).toBeTruthy();
  await setValue('Current implementation','Unsaved');await act(async()=>button('CC9').click());expect(document.body.textContent).toContain('Leave unsaved changes?');
 
 });
 
 test.each(['new-soc-client','existing-client-enabling-soc'])('%s receives the same framework-specific practical guidance',async clientId=>{
- await render(clientId);await criteriaTab();expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();
+ await render(clientId);await criteriaDisclosure();expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();
  expect(container.querySelector('.assessment-criteria-columns').children).toHaveLength(3);
  expect(container.querySelector('.assessment-criteria-columns').children[1].textContent).toContain(socGuidance.criteria['CC9.2'].practical.review[0]);
 
 });
 
 test('the standard workspace receives SOC guidance through framework configuration',async()=>{
- mockUser={...mockUser,workspace_mode:'standard'};await render();await criteriaTab();
+ mockUser={...mockUser,workspace_mode:'standard'};await render();await criteriaDisclosure();
  expect(container.querySelector('[data-testid="prestige-soc-assessment"]')).toBeTruthy();expect(container.querySelector('.assessment-criteria-columns').children).toHaveLength(3);
 
 });
 
 test.each(['PI1.1','P1.1'])('%s retains its existing reference and assessment with source-checked category-specific guidance',async id=>{
- record={...record,definition_id:id};await render('other-category-client');await criteriaTab();
+ record={...record,definition_id:id};await render('other-category-client');await criteriaDisclosure();
  expect(container.querySelector('h2').textContent).toBe(socCatalog.requirements.find(row=>row.id===id).title);
  expect(container.querySelector('.assessment-criteria-intro').textContent).toContain('Criterion '+id);
  expect(container.querySelector('[data-source-kind="authored"]').textContent).toBe(socGuidance.criteria[id].practical.summary);
@@ -249,7 +249,7 @@ test('static guide is collapsed, read-only, and above the criterion; desktop reg
 
 });
 test('guide expansion and selected answer reset when navigating between criteria',async()=>{
- await render();await act(async()=>container.querySelector('.assessment-summary summary').click());await criteriaTab();
+ await render();await act(async()=>container.querySelector('.assessment-summary summary').click());await criteriaDisclosure();
  record={...record,framework_assessment_id:'soc-b',definition_id:'A1.3'};await render();
  expect(container.querySelector('.assessment-summary').open).toBe(false);
  expect(container.querySelector('[role=tab][data-state=active]').textContent).toBe('Requirement & implementation');

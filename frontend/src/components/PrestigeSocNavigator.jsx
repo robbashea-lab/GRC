@@ -6,9 +6,9 @@ import {CIS_TONE} from './CisStatus';
 import {CisBreadcrumb,VERIFICATION_LABELS,verificationOf} from './BrawndoCisControls';
 import {groupRequirements,needsAttention,sectionSummary} from '@/lib/frameworkWorkspace';
 import {socAssessmentDate} from '@/lib/socAssessmentDates';
+import {operatorStatuses} from '@/lib/frameworkOperator';
 
-// The SOC 2 reference workspace's conclusion labels (also used by its dashboard programme card).
-export const SOC_STATUS_LABELS={addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Not Implemented',not_assessed:'Not Assessed',not_applicable:'Not Applicable'};
+export const SOC_STATUS_LABELS=operatorStatuses('soc-2');
 const VERIFICATION_TONE={not_verified:'neutral',needs_validation:'moderate',gap_identified:'critical',verified:'success'};
 const CATEGORY_LABELS={security:'Security — Common Criteria',availability:'Availability',confidentiality:'Confidentiality',processing_integrity:'Processing Integrity',privacy:'Privacy'};
 const CATEGORY_CRUMBS={security:'Security',availability:'Availability',confidentiality:'Confidentiality',processing_integrity:'Processing Integrity',privacy:'Privacy'};

@@ -288,7 +288,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
   }
 
-  function requestAssessmentSave(closeAfter=false){
+  function requestAssessmentSave(closeAfter=true){
     setCloseAfterAssessment(closeAfter);
     if(current?.implementation?.trim()||current?.status&&current.status!=='not_assessed')setConfirmUpdate(true);
     else commitSummary(closeAfter);

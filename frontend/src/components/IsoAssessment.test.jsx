@@ -13,6 +13,7 @@ jest.mock('./AssigneeSelect',()=>({label,value,disabled,onChange})=><select aria
 jest.mock('./ui/dialog',()=>{const R=require('react'),Close=R.createContext(null);return {Dialog:({children,onOpenChange})=><Close.Provider value={onOpenChange}><div>{children}</div></Close.Provider>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}<Close.Consumer>{close=><button onClick={()=>close(false)}>Close</button>}</Close.Consumer></div>,DialogTitle:R.forwardRef(({children,...props},ref)=><h2 {...props} ref={ref}>{children}</h2>),DialogDescription:({children})=><p>{children}</p>};});
 const button=name=>[...container.querySelectorAll('button')].find(b=>b.textContent===name);
 const tick=async el=>act(async()=>el.click());
+async function guidance(){const disclosure=container.querySelector('.assessment-inline-criteria');expect(disclosure).not.toBeNull();if(!disclosure.open)await tick(disclosure.querySelector('summary'));expect(disclosure.open).toBe(true);}
 async function input(value){const el=container.querySelector('[aria-label="Current implementation"]');await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}));});}
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={record.client_id} onOpenChange={jest.fn()} onNext={next}/>));}
 beforeEach(()=>{
@@ -26,9 +27,9 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.resetAllMocks();});
 
-test('ISO three-tab layout preserves stored ownership and mandatory status while omitting supplemental footers',async()=>{
+test('ISO inline-guidance layout preserves stored ownership and mandatory status while omitting supplemental footers',async()=>{
  await render();expect(record.owner_id).toBe('u');expect(container.querySelector('[aria-label="Assessment Owner"]')).toBeNull();
- expect([...container.querySelectorAll('[role="tab"]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Assessment criteria','Findings']);
+ expect([...container.querySelectorAll('[role="tab"]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Findings']);
  expect(container.querySelectorAll('.assessment-summary')).toHaveLength(1);
  expect(container.querySelector('input[value="in_progress"]').checked).toBe(true);
  expect(container.querySelector('input[value="not_applicable"]')).toBeNull();
@@ -45,8 +46,8 @@ test('legacy mandatory-clause N/A is reported without rewriting its saved value'
  expect(record.status).toBe('not_applicable');expect(api.patch).not.toHaveBeenCalled();
 });
 
-test('criteria tab preserves draft without writes and resets across requirements and clients',async()=>{
- await render();await input('Retain my draft');await tick(button('Assessment criteria'));
+test('inline guidance preserves draft without writes and resets across requirements and clients',async()=>{
+ await render();await input('Retain my draft');await guidance();
  expect(container.textContent).toContain('Review guidance');expect(container.textContent).toContain('Expected outcome');
  expect(container.textContent).toContain(guide.entries['4.1'].review[0]);
  expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Retain my draft');
@@ -55,7 +56,7 @@ test('criteria tab preserves draft without writes and resets across requirements
  record={...record,framework_assessment_id:'iso-b',definition_id:'A.5.1'};await render();
  expect(button('Requirement & implementation').getAttribute('aria-selected')).toBe('true');
  expect(container.querySelector('.assessment-summary p').textContent).toBe(guide.entries['A.5.1'].plain);
- await tick(button('Assessment criteria'));record={...record,framework_assessment_id:'iso-c',client_id:'new-iso'};await render();
+ await guidance();record={...record,framework_assessment_id:'iso-c',client_id:'new-iso'};await render();
  expect(button('Requirement & implementation').getAttribute('aria-selected')).toBe('true');
 });
 
@@ -72,11 +73,11 @@ test('read-only ISO assessment retains criteria and linked findings without writ
  expect(container.textContent).toContain('Context gap');expect(button('Raise Finding')).toBeUndefined();expect(button('Save assessment')).toBeUndefined();
  expect(container.querySelector('[aria-label="Assessment Owner"]')).toBeNull();
  expect(container.querySelector('[aria-label="Current implementation"]').closest('fieldset').disabled).toBe(true);
- await tick(button('Assessment criteria'));expect(container.querySelector('.assessment-check input').closest('fieldset').disabled).toBe(true);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+ await guidance();expect(container.querySelector('.assessment-check input').closest('fieldset').disabled).toBe(true);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
 test('ISO check save preserves status and previously saved unknown selections',async()=>{
- record.iso_assessment_checks=['retired:context'];await render();await tick(button('Assessment criteria'));
+ record.iso_assessment_checks=['retired:context'];await render();await guidance();
  expect(container.textContent).toContain('Previous checklist responses');expect(container.textContent).toContain('retired:context');
  await tick(container.querySelector('.assessment-check input'));
  expect(api.patch).not.toHaveBeenCalled();expect(container.querySelector('input[value="in_progress"]').checked).toBe(true);
@@ -89,7 +90,7 @@ test('SoA decision, status and retained notes remain independent editable fields
  expect(container.querySelector('[aria-label="SoA applicability"]').value).toBe('included');
  expect(container.querySelector('[aria-label="SoA justification"]').value).toBe('Risk treatment');
  expect(container.querySelector('[aria-label="Previously recorded notes"]').value).toBe('Prior record');
- await tick(button('Assessment criteria'));expect(container.querySelectorAll('.assessment-check input')).toHaveLength(0);
+ await guidance();expect(container.querySelectorAll('.assessment-check input')).toHaveLength(0);
  await tick(button('Save assessment'));expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/iso-a',expect.objectContaining({status:'in_progress',soa_applicability:'included',soa_justification:'Risk treatment',notes:'Prior record'}));
 });
 

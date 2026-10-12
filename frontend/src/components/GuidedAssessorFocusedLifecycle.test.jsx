@@ -176,7 +176,7 @@ test('first-time summary save calls the native save once with durable interview 
   readySummary();await render();await open();await click('Save assessment');
   expect(props.onApply).not.toHaveBeenCalled();expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);
   expect(props.onSaveAssessment).toHaveBeenCalledWith({implementation:stored.narrative,status:'addressed',guided_assessment_source:{version:stored.version,revision:stored.revision,generated_at:generated}},JSON.stringify(props.form));
-  expect(document.body.textContent).toContain('Assessment saved.');expect(props.current.verification).toBe('not_verified');
+  expect(document.querySelector('.omni-workspace-window')).toBeNull();expect(props.current.verification).toBe('not_verified');
 });
 
 test('one complete editable write-up and actual title are saved byte-for-byte',async()=>{
@@ -210,13 +210,14 @@ test('native failure retains the reviewed summary and safely retries without suc
   readySummary();props.onSaveAssessment.mockResolvedValueOnce(false);await render();await open();await click('Save assessment');
   expect(document.body.textContent).toContain('The assessment was not saved.');expect(document.body.textContent).not.toContain('Assessment saved.');
   expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Reviewed Brawndo inventory narrative');
-  await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(2);expect(document.body.textContent).toContain('Assessment saved.');
+  await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(2);expect(document.querySelector('.omni-workspace-window')).toBeNull();
 });
 
 test('duplicate clicks cannot submit two authoritative writes',async()=>{
   readySummary();let finish;props.onSaveAssessment.mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));await render();await open();
   const target=button('Save assessment');await act(async()=>{target.click();target.click();});expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);
-  await act(async()=>finish(true));expect(document.body.textContent).toContain('Assessment saved.');
+  expect(document.querySelector('.omni-workspace-window')).toBeTruthy();
+  await act(async()=>finish(true));expect(document.querySelector('.omni-workspace-window')).toBeNull();
 });
 
 test('read-only and unsaved native edits disable summary saving',async()=>{
