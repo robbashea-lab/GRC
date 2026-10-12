@@ -159,9 +159,9 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     const savingIdentity=identity;
     setBusy(true);setError('');
     try{let startBase=reviewDraft;
-      if(workspacePilot&&fresh){
-        // A deliberate empty restart may follow native Save. Refresh only its
-        // new base; an existing proposal always retains its original lineage.
+      if(workspacePilot&&(fresh||reviewDraft.revision===0&&reviewDraft.current_assessment_token!==(current?.last_saved||current?.last_assessed||null))){
+        // A first write or deliberate empty restart may follow native Save.
+        // Refresh only its base; an existing proposal retains its lineage.
         const data=await readNewReviewBase();if(activeIdentity.current!==savingIdentity)return false;
         startBase=data;
       }
