@@ -74,6 +74,13 @@ test('client and framework surfaces cannot reverse canonical roles into private 
   }
 });
 
+test('Reviews retain the canonical input boundary role rather than the weaker panel border',()=>{
+  postcss.parse(read('components/ClientSurface.css')).walkDecls(decl=>{
+    expect(decl.prop).not.toBe('--color-input-border');
+  });
+  expect(contrast(dark['--color-input-border'],dark['--color-bg-surface'])).toBeGreaterThanOrEqual(3);
+});
+
 test.each(['light','dark'])('%s changed action and guide-header selectors retain readable actual foreground roles',theme=>{
   const palette=theme==='light'?light:{...light,...dark};
   const workspace=postcss.parse(read('components/BrawndoWorkspace.css'));

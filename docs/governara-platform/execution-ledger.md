@@ -34,15 +34,20 @@ Agent 2 explicitly transferred integration/staging custody after the baseline de
 | --- | --- | --- |
 | Exact compatible base and staging ownership | Complete | b852 / CI148 / explicit Agent 2 handoff |
 | Reference package provenance and live browser inspection | Complete | External extraction receipt, three normal reference pages |
-| Canonical theme/shell implementation | In progress | Owned shared package |
-| Portfolio and dashboard implementation | In progress | Owned local presentation package |
-| Operational/framework overrides | Implemented, review pending | CSS aliases; no runtime/data changes |
+| Canonical theme/shell implementation | Implemented | Shared package, preserved theme preference behavior |
+| Portfolio and dashboard implementation | Implemented | Real directory/dashboard data; unavailable values remain unavailable |
+| Operational/framework overrides | Implemented, source review PASS | CSS aliases; protected logic and native geometry unchanged |
 | Route/renderer inventory and matched before/after checks | In progress | Separate application evidence; prototype checks excluded |
-| Independent integrated review | Pending | Stable composite required |
+| Independent integrated review | b44 PASS; final delta pending | Exact tree and protected-source comparisons retained |
 | Final exact-source tests, both builds and CI | Pending | Final composite required |
 | Controlled new-phase staging deployment | Pending | Passing gates and frozen composite required |
 | Real account/MFA/logout-return and recovery delivery | Unverified | Existing authorized human readiness/access; no secrets requested |
 | Existing restricted-user and fault acceptance gates | Retained pending | Presentation publication does not waive them |
+| Retained assistant/native footer obstruction GN-QA-04 | Confirmed, separate correction authority required | b852/b44 identical ISO pointer obstruction, no save; frozen placement preserved |
+
+CI149 (`38309718327`) targeted b44 and was canceled after GN-QA-05 required one further source correction. Provider status is Cancelled; frontend/backend canceled and aggregate gate failed due to cancellation. It is not final-candidate verification. Final CI must target the new frozen revision.
+
+Independent compiled Demo QA at b44 covered Portfolio responsive/theme states, Brawndo operational pages, five administration landing routes, CIS IG1/IG2, Dunder ISO sections/native guide, Prestige SOC program/native guide, account and empty/populated surfaces. GN-QA-01/02/03 rebuilt checks passed. This does not establish real hosted writes, restricted roles, IG3 Demo coverage, whole-app accessibility, zoom, or reduced-motion emulation.
 
 ## Evidence boundaries
 
