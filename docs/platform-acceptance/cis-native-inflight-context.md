@@ -43,3 +43,72 @@ copies are in `cis-fix-evidence/pfa001-inflight/`. Git may normalize line ending
 Independent correction review/retest, connected Compare/summary schedules,
 combined release gates and coordinator-hosted retest remain pending. No browser,
 account, Mongo, deployment or publication operation was taken by this author.
+
+## Connected write boundaries
+
+The independent author then executed the existing Compare/reuse path with its
+metadata read held across the same joined-context failure on unchanged f673.
+Releasing the read dispatched a rebase PUT and a retained-answer progress PUT.
+The original combined log contains one valid Compare failure and one unrelated
+summary-fixture error, plus the older joined-response negative passing; it is
+not counted as two demonstrated application failures.
+
+A separate valid summary schedule used an existing linked Finding's normal
+open/close callback to start refresh while native fields and token stayed
+unchanged. Summary progress PUT was held; joined context failed and disabled
+the guide; releasing that already-dispatched PUT then initiated a native PATCH.
+This independently reproduced **one failure, 1.908s** on f673. Preparatory
+duplicate-label and absent-Retry fixture errors are preserved and excluded from
+application-defect evidence. Final immutable test-only source is
+`2ab833f155e45d819e0224fb017ed5f26e91f127`; all twelve timing assertions are
+imported unchanged (normalized LF SHA256
+`6f79deaa43eccc96ca3de9ac54599edc3c3094a2f63b3ebc8ed0c26b6d44a2c3`).
+
+The correction checks latest disabled/identity before the rebase PUT, and latest
+disabled after acknowledged interview save before calling native assessment save.
+An already-acknowledged interview write is preserved: this check does not claim
+to undo or cancel it. The exact manual summary, old native value, history,
+existing error/Retry and close-only-after-assessment-success remain intact.
+
+The existing nativeSnapshot also records whether identity-valid live CIS context
+is available. Its CIS callback refuses a write without that context. This does
+not alter permissions or implementation-group rules: undefined configuration
+previously defaulted to group1 and was not itself an availability refusal.
+ISO/SOC callback conditions remain unchanged. No new ref, epoch, date sorting,
+response fencing, API field, static text, layout or history version was added.
+The queued older joined-response negative passed; no fix was justified for it.
+
+An additional native adapter test deliberately uses its existing Guide stub
+that ignores disabled, exercising the real parent's callback without child
+masking. Against the exact f673 FrameworkDrawer Git blob
+`ddc7cf6f37299e0de1232207071128b21c542c44`, that one selected test failed
+(1.748s, one PATCH attempt). Twelve other tests were unselected in that focused
+baseline probe; none were disabled or altered. The corrected source was restored
+in a finally block before the full focused run. This is author-executed parent
+API-boundary evidence, not an independently authored or hosted test.
+
+Final connected correction: **seven suites / 256 tests passed, 18.217s**,
+covering all twelve immutable timing cases, thirteen prior first-base guards,
+thirteen native adapter cases, ISO/SOC guide suites and actual parent native
+assessment suites. All old PATCH/CAS/verification/exclusion/duplicate assertions
+remain. Existing mocked-DOM onEscapeKeyDown warnings remain visible, with no
+suppression or zero-console-error claim. No broad catalog campaign was rerun.
+
+Final source hashes (raw / LF normalized):
+
+- GuidedAssessor: `3e05c812addcb828f90d6562b17de9d00c4a597df382b27df96e6610e971ef68`
+  / `cb6f03b47484e4d8c396bc0a8bd5c9fa6b0bc3678d420ee9735eb5e9e9393737`.
+- FrameworkDrawer: `0fa9b345942aa5e2b2d35333aad47817e3dc3ebb9895ddf58a3012ae1061121f`
+  (raw and LF identical).
+
+| Connected receipt | SHA256 |
+| --- | --- |
+| `f673-connected-original.log` | `f6353b0fc6311e311d81d923b0b328f2e23fbabaab2c440f44e7f28ad90a3e86` |
+| `f673-summary-selector-corrected.log` (fixture error) | `beba2ee0d441e02d304a9bdc1a7b0445dae0eca654834d177384fcea7a17e181` |
+| `f673-summary-linked-close-original-red.log` | `b7a821d09ae4f5d841c728e676221b4b89ee0f0a85b2993fe751a0691e8fd0ec` |
+| `f673-parent-adapter-original-red.log` | `6c058198d6c9af4a5bbc1a5425ec44a325eee86410b5d21480d6487d25d8865d` |
+| `connected-boundaries-corrected-focused.log` | `b3e5557887bf63e70d69743dc341e1af3e2776af36fdcf74a0a41b77eb4828c9` |
+
+Final non-author source review/retest, root's composite exact-candidate CI/builds
+and controlled hosted retest remain required. Authentication, restricted-user,
+actual provider fault and deployment evidence are separate and unwaived.

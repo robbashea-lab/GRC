@@ -85,3 +85,16 @@ test('native adapter guards duplicate pending submissions',async()=>{
   const target=[...container.querySelectorAll('button')].find(button=>button.textContent==='Save Omni native assessment');await act(async()=>{target.click();target.click();});
   expect(api.patch).toHaveBeenCalledTimes(1);await act(async()=>finish());
 });
+
+test('native adapter itself refuses CIS summary writes when joined context is unavailable',async()=>{
+  const original=JSON.stringify(saved);await render();await click('Open Omni native Finding');
+  const read=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...options)=>{if(path.startsWith('/frameworks/'))throw new Error('Synthetic native adapter context failure');return read(path,...options);});
+  await act(async()=>mockNested.mock.calls.at(-1)[0].onOpenChange(false));
+  expect(container.textContent).toContain('Synthetic native adapter context failure');
+  // This existing guide stub deliberately ignores disabled, isolating the
+  // real parent's callback boundary instead of masking it with the child guard.
+  await click('Save Omni native assessment');
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+  expect(JSON.stringify(saved)).toBe(original);expect(container.textContent).toContain('Synthetic native adapter context failure');expect(container.textContent).not.toContain('Assessment saved.');
+});

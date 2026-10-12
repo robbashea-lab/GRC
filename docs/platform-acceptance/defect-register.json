@@ -35,7 +35,12 @@
       "final_cache_regression": "Independent eighth omitted-record fixture plus prior guards and native adapters:3suites33PASS5.343s. Older963PASS is prior source, not a new full rerun.",
       "inflight_context": "Independent unchanged-f673 first-write schedule1FAIL1.819s: joined context fails while metadata read pending; disabled controls and error visible but old closure dispatches modeled progress PUT after read resolves. No server authorization bypass/native loss/hosted race claimed.",
       "inflight_correction": "Existing latest-props ref includes disabled; immediately before progress PUT require active identity and latest enabled context. Return false retains input/error/Retry. First-write correction3suites34PASS5.557s; independent/connected Compare and summary/release gates pending.",
-      "inflight_evidence": "cis-native-inflight-context.md"
+      "inflight_evidence": "cis-native-inflight-context.md",
+      "connected_inflight": "Independent f673 Compare schedule sends rebase+retained progress after context failure; separate valid summary progress-response schedule then dispatches native PATCH. Local modeled UI/API boundaries only; preparatory fixture errors preserved and excluded. Queued older-response negative PASS, no response-fencing change.",
+      "connected_inflight_correction": "Latest disabled/identity pre-rebase-PUT; latest disabled after acknowledged progress before native callback; existing parent snapshot requires identity-valid live CIS context. Preserve acknowledged interview receipt/manual summary/native/history/error/Retry; ISO/SOC conditions unchanged.",
+      "final_inflight_regression": "Seven focused suites256PASS18.217s:12 immutable independent timing cases,13 first-base guards,13 native adapter cases incl isolated parent gate, ISO/SOC guides and parent assessments. Author parent-gate baseline exact f673 drawer1FAIL1.748s; no old assertion weakening. Independent/release/hosted pending.",
+      "final_inflight_guided_lf_sha256": "cb6f03b47484e4d8c396bc0a8bd5c9fa6b0bc3678d420ee9735eb5e9e9393737",
+      "final_inflight_parent_lf_sha256": "0fa9b345942aa5e2b2d35333aad47817e3dc3ebb9895ddf58a3012ae1061121f"
     },
     {
       "id": "PFA-002",

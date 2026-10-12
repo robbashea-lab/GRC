@@ -91,12 +91,12 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     setFeedback('Omni answer is saved to the interview. Current implementation remains a draft until Save assessment. Status and verification are unchanged.');return true;
   };
   const guidedSavePending=useRef(false);
-  const nativeSnapshot=useRef(null);nativeSnapshot.current={form,savedForm,busy,writable,relatedDraft:reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft};
+  const nativeSnapshot=useRef(null);nativeSnapshot.current={form,savedForm,busy,writable,cisContextAvailable:!!liveCisContext,relatedDraft:reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft};
   async function saveGuidedAssessment(values,expected){
     const latest=nativeSnapshot.current;
     const socEnabled=isSoc&&socGuidedEnabled(clientId,user,record.framework_key,ctx?.configuration,record.definition_id);
     const isoEnabled=isoGuidedEnabled(clientId,user,record.framework_key,ctx?.configuration,record.definition_id);
-    if((!isoEnabled&&!socEnabled&&!inventorySummaryEnabled(clientId,user,record.framework_key,ctx?.configuration,record))||!latest.writable||latest.busy||guidedSavePending.current)return false;
+    if((!isoEnabled&&!socEnabled&&!inventorySummaryEnabled(clientId,user,record.framework_key,ctx?.configuration,record))||brawndoCis&&!latest.cisContextAvailable||!latest.writable||latest.busy||guidedSavePending.current)return false;
     if((isoEnabled||socEnabled)&&latest.relatedDraft){setError('Finish or discard the related-record draft before saving this summary.');return false;}
     if(JSON.stringify(latest.form)!==expected||JSON.stringify(latest.form)!==JSON.stringify(latest.savedForm)){
       setError('The native assessment has unsaved or changed content. Review it before saving this summary.');return false;

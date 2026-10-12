@@ -208,6 +208,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     const savingIdentity=identity;setBusy(true);setError('');
     try{
       const latest=await readNewReviewBase();
+      if(activeIdentity.current!==savingIdentity||nativeApplication.current.disabled)return false;
       const {data}=await api.put(base,{version:draft.version,answers:latest.answers,step:latest.step,completed:false,narrative:latest.narrative||'',expected_revision:latest.revision,rebase:true,base_assessment_token:latest.current_assessment_token,base_scope_fingerprint:latest.current_scope_fingerprint});
       if(activeIdentity.current!==savingIdentity)return false;
       setDraft(data);setAnswers(data.answers);saved.current=JSON.stringify(data.answers);return data;
@@ -300,6 +301,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
       const generated=omniCisSummary(id,answers,version,clientName).result;
       const data=await save(step,true,answers,false,draft,{...generated,narrative});if(!data)return;
       const latest=nativeApplication.current;
+      if(latest.disabled)return;
       if(latest.assessmentDirty||JSON.stringify(latest.form)!==expected||latest.current?.last_saved!==savedToken)throw new Error('The native assessment changed while saving this summary. Review it before retrying.');
       const success=await latest.onSaveAssessment({implementation:data.narrative,status:data.result.status,guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,data[k]]))},expected);
       if(!success)throw new Error('The assessment was not saved. Your interview and summary are retained. Review the native error and retry.');
