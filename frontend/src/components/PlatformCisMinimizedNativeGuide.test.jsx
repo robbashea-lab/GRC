@@ -50,7 +50,7 @@ beforeEach(()=>{
     const {expected_revision,...fields}=body;interview={...interview,...copy(fields),revision:interview.revision+1};return {data:readInterview()};
   });
 });
-afterEach(async()=>{holdRefresh=false;await act(async()=>{pending.splice(0).forEach(read=>read.resolve({data:read.data}));});await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+afterEach(async()=>{holdRefresh=false;await act(async()=>root.unmount());container.remove();await act(async()=>{pending.splice(0).forEach(read=>read.resolve({data:read.data}));});jest.clearAllMocks();});
 
 test('immediate context refresh retains minimized fresh input and saves progress against native receipt B',async()=>{
   await render();await typeAndMinimize();await nativeSave();const savedNative=copy(native);await open();expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);
@@ -73,5 +73,21 @@ test('failed context refresh after confirmed native save reports its error and r
   await render();await typeAndMinimize();holdRefresh=true;await nativeSave();expect(pending).toHaveLength(1);const savedNative=copy(native);
   await act(async()=>pending.splice(0).forEach(read=>read.reject(new Error('Synthetic joined context refresh failed'))));
   expect(container.textContent).toContain('Synthetic joined context refresh failed');expect(native).toEqual(savedNative);expect(api.put).not.toHaveBeenCalled();await open();expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);
+  const saveClose=[...workspace().querySelectorAll('button')].find(button=>button.textContent.trim()==='Save & close');expect(saveClose.disabled).toBe(true);await act(async()=>saveClose.click());expect(api.put).not.toHaveBeenCalled();expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
   holdRefresh=false;await click('Retry',container);expect(native).toEqual(savedNative);expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);
+  await click('Save & close',workspace());expect(interview.revision).toBe(1);expect(interview.base_assessment_token).toBe(tokenB);expect(interview.answers.inventory_detail).toBe(detail);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);
+});
+
+test.each(['client','assessment'])('unavailable context never reuses cached guide eligibility after a %s identity switch',async kind=>{
+  await render();await typeAndMinimize();holdRefresh=true;await nativeSave();await act(async()=>pending.splice(0).forEach(read=>read.reject(new Error('Synthetic joined context refresh failed'))));
+  const nextRecord={...record,framework_assessment_id:'timing-next',...(kind==='client'?{client_id:'timing-other-client'}:{})};
+  await act(async()=>root.render(<FrameworkDrawer open record={nextRecord} clientId={nextRecord.client_id} onOpenChange={()=>{}}/>));
+  expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();expect(workspace()).toBeNull();expect(api.put).not.toHaveBeenCalled();expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+});
+
+test('failed-context retry retains persisted manual wording and still requires explicit comparison',async()=>{
+  interview={...interview,revision:1,answers:{inventory:'No',inventory_detail:'Previously saved note'},narrative:'Previously reviewed manual wording.\nExact retained second line.'};const original=copy(interview);
+  await render();await typeAndMinimize();holdRefresh=true;await nativeSave();const savedNative=copy(native);await act(async()=>pending.splice(0).forEach(read=>read.reject(new Error('Synthetic joined context refresh failed'))));
+  await open();expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);const saveClose=[...workspace().querySelectorAll('button')].find(button=>button.textContent.trim()==='Save & close');expect(saveClose.disabled).toBe(true);expect(api.put).not.toHaveBeenCalled();
+  holdRefresh=false;await click('Retry',container);await click('Save & close',workspace());expect(document.querySelector('[aria-label="Compare saved assessment"]')).toBeTruthy();expect(api.put).not.toHaveBeenCalled();expect(interview).toEqual(original);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);
 });
