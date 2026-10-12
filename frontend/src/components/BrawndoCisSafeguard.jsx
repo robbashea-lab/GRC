@@ -32,7 +32,7 @@ export const GUIDANCE_NOTE='Omnisciente guidance for assessing this safeguard, n
 export default function BrawndoCisSafeguard({state,actions}){
   const {user}=useAuth();
   const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,breadcrumb,related,finding,otherDraft}=state;
-  const guideCtx=ctx||state.guidedContext;
+  const guideConfiguration=ctx?ctx.configuration:state.guidedConfiguration;
   const {put,save,saveAndNext,close,previous,next,retry,run,setFinding,setNested,setFeedback}=actions;
   const clientId=record.client_id,id=definition.id,disabled=!writable||busy||!ctx;
   const source=sourcePresentation(definition),criteria=criteriaData.requirements[id];
@@ -69,6 +69,6 @@ export default function BrawndoCisSafeguard({state,actions}){
 </div></div>
     {form.notes&&<details className="brawndo-disclosure"><summary>Previously recorded notes</summary><Textarea aria-label="Previously recorded notes" disabled={disabled} value={form.notes} onChange={e=>put('notes',e.target.value)}/></details>}
     </AssessmentLayout>
-    {guideCtx&&<GuidedAssessor clientId={clientId} framework={record.framework_key} configuration={guideCtx.configuration} record={{...record,title:definition.title}} current={current} related={related} people={guideCtx.users} inventoryContext={inventoryContext} contextComplete={!!ctx&&current.work?.context_complete===true} assessmentDirty={dirty&&!state.focusedImplementationOnly} onOpenNative={(kind,record)=>kind==='evidence'?actions.download?.(record):setNested({kind,record})} form={form} disabled={disabled} onApply={actions.applyGuided} onSaveAssessment={actions.saveGuidedAssessment} onDraftChange={actions.setGuidedDraft} onUpdateImplementation={disabled?undefined:actions.stageGuidedImplementation}/>}
+    {guideConfiguration&&<GuidedAssessor clientId={clientId} framework={record.framework_key} configuration={guideConfiguration} record={{...record,title:definition.title}} current={current} related={related} people={ctx?.users} inventoryContext={inventoryContext} contextComplete={!!ctx&&current.work?.context_complete===true} assessmentDirty={dirty&&!state.focusedImplementationOnly} onOpenNative={(kind,record)=>kind==='evidence'?actions.download?.(record):setNested({kind,record})} form={form} disabled={disabled} onApply={actions.applyGuided} onSaveAssessment={actions.saveGuidedAssessment} onDraftChange={actions.setGuidedDraft} onUpdateImplementation={disabled?undefined:actions.stageGuidedImplementation}/>}
   </AssessmentShell>;
 }

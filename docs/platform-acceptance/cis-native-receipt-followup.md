@@ -55,11 +55,36 @@ Repository copies: `cis-fix-evidence/pfa001-followup/`.
 | `final-focused.log` | `385a900dfd66fb5ffa56f95f8355f05b2b52cca5823960fb42763c7c27c3b360` |
 
 The passing native test output retains its mock-DOM `onEscapeKeyDown` warning;
-no suppression or zero-console-error claim is made. Final author raw source hashes:
+no suppression or zero-console-error claim is made. Initial receipt-patch raw source hashes:
 FrameworkDrawer `49ae9fddfbbf5b2edf4e48a4420778bc67ef181151f75a30bece1150e6a44c73`;
 BrawndoCisSafeguard `22eaf6998d3a0b8ded9cd00f13f6250396da7f09ec620322249aca72828cf4a4`.
 Diagnostic normalized LF SHA256 is
 `e8c04feee856e794d0879359e778ef2ef5d9e243dd091fdf7333d4ff34af5b7f`.
+
+The final independent cache-boundary review added an eighth negative in
+`4312aac23e8442a9d4d09abc18a127f1b349e96a`: an authoritative non-null response
+omitting the selected record cannot reuse old visible eligibility. The earlier
+caller already disabled that retained guide; this was not an established
+unauthorized-write result. The final cache stores identity and configuration
+only, is used only while raw ctx is null, and is cleared by a fresh missing or
+mismatched row. No users, work, related data, current record or history are cached.
+Final focused guards: **3 suites / 33 tests passed, 5.343s**; prior 963-case and
+PFA-002 29-case results remain source-attributed rather than relabeled reruns.
+
+Final raw FrameworkDrawer SHA256:
+`f77a20ece23ae790dfd8195103b51a8663a66a637216d25f8c426c8c0405c530`;
+BrawndoCisSafeguard:
+`071a02fda27eae926d49f707bbf403db9ce4ad6b8ebbe2b9e73ff4a74dc443f5`.
+Final diagnostic LF SHA256:
+`b74757d131c02c770e3b53b1061f2739fa1e9de1d40ccac76ecf965129880850`.
+`final-cache-guards.log` SHA256:
+`d4ee936a59b7085c58f9d98b70b3312a444d6f5b503748ee906e564c6f5bc50e`.
+
+An interim editing command used the wrong working directory, interrupting a
+variable rename before completion; its local run caught ReferenceError failures
+(30 failed, 3 passed). It was corrected before commit/deployment, without changing
+assertions. `interim-path-error.log` is retained, SHA256
+`f521399d1609327f5d52a97ccfd595e75b340d8d08b08b7cdd3f7ea07ad2a65a`.
 
 Independent final correction review/retest, combined CI/builds and the exclusive
 coordinator's exact hosted retest remain required. No account, fixture, browser,
