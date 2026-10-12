@@ -2,6 +2,7 @@ import {useRef} from 'react';
 import {focusFallback,pageHeading} from '@/lib/focusRescue';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
+import {OMNI_ESCAPE_EVENT} from './OmniWindow';
 import './BrawndoCisAssessment.css';
 
 /** Presentation only. Callers own persistence, native conclusions and leave guards. */
@@ -9,10 +10,15 @@ export default function AssessmentShell({open=true,title,description,status,posi
   previous,next,close,busy,children,context,footer,crumbs,ariaModal,testId='framework-assessment-workspace',returnSelector,onEscapeKeyDown}) {
   // Next / Save & next can remount while focus is still inside the old drawer.
   // Only a page control, not that drawer's disappearing content, is an opener.
-  const heading=useRef(null),opener=useRef(document.activeElement?.closest?.('[data-assessment-shell]')?null:document.activeElement);
+  const heading=useRef(null),surface=useRef(null),opener=useRef(document.activeElement?.closest?.('[data-assessment-shell]')?null:document.activeElement);
   return <Dialog open={open} onOpenChange={value=>{if(!value)close();}}>
-    <DialogContent className="brawndo-cis-assessment bg-surface-card" data-testid={testId} aria-modal={ariaModal?'true':undefined}
-      onEscapeKeyDown={onEscapeKeyDown}
+    <DialogContent ref={surface} className="brawndo-cis-assessment bg-surface-card" data-testid={testId} aria-modal={ariaModal?'true':undefined}
+      onEscapeKeyDown={event=>{
+        onEscapeKeyDown?.(event);
+        // Radix invokes only its highest layer; route one Escape to this native window's open guide.
+        const guide=surface.current?.querySelector('.omni-workspace-window');
+        if(guide&&!event.defaultPrevented){event.preventDefault();event.stopPropagation();guide.dispatchEvent(new Event(OMNI_ESCAPE_EVENT));}
+      }}
       onOpenAutoFocus={e=>{e.preventDefault();heading.current?.focus();}}
       onCloseAutoFocus={e=>{e.preventDefault();requestAnimationFrame(()=>{
         if(document.querySelector('[data-assessment-shell]'))return;

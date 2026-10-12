@@ -98,7 +98,7 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
     if(view==='summary'){requestSave(true);return;}
     if(await persist(index,false)){setConfirmClose(false);changeMode('collapsed');}
   }
-  function requestSave(close=false){setCloseAfter(close);if(current?.implementation?.trim()||current?.status!=='not_assessed')setConfirmUpdate(true);else commit(close);}
+  function requestSave(close=true){setCloseAfter(close);if(current?.implementation?.trim()||current?.status!=='not_assessed')setConfirmUpdate(true);else commit(close);}
   async function commit(close=false){
     if(blocked||relatedDraft||pending.current||!onSaveAssessment||!narrative.trim()||edited&&basis!==JSON.stringify(answers))return;
     setNotice('');

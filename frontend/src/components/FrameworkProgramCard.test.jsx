@@ -34,7 +34,7 @@ test('pilot distribution uses the same applicable counts without changing assess
 });
 test.each(['soc-2','hipaa','nist-csf-2'])('%s shared ring preserves its actual conclusion vocabulary',async key=>{
   await act(async()=>root.render(<ClientWorkDashboard workspacePilot queue={queue} programs={[{key,label:key}]} programRows={{[key]:cisRows}} filter="all" onFilter={()=>{}} onOpen={()=>{}}/>));
-  const expected=key==='soc-2'?'IMPLEMENTED':operatorStatuses(key).addressed.split(/[\s(]/)[0].toUpperCase();
+  const expected=operatorStatuses(key).addressed.split(/[\s(]/)[0].toUpperCase();
   expect(container.querySelector('.bwp-donut-caption').textContent).toBe(expected);
   expect(container.querySelector('.bd-donut-value').textContent).toBe('33.3%');
   if(key==='soc-2')expect(container.querySelector('.bd-program-note').textContent).toBe('Internal readiness, not an auditor opinion.');
@@ -56,10 +56,10 @@ test('SOC 2 uses the same card shell with SOC 2 vocabulary and workspace links',
   expect(container.querySelector('.bd-eyebrow').textContent).toBe('SOC 2 program');
   expect(card.querySelector('h2').textContent).toBe('SOC 2');
   expect(card.querySelector('.bd-donut')).not.toBeNull();
-  expect(card.textContent).toContain('Partially Implemented');
-  expect(card.textContent).toContain('Implemented33%2 of 6');
+  expect(card.textContent).toContain('Partially Addressed');
+  expect(card.textContent).toContain('Addressed33%2 of 6');
   expect(card.querySelector('.bd-program-note').textContent).toBe('Internal readiness, not an auditor opinion.');
-  expect(card.querySelector('.bd-gaps a[href="/compliance/soc-2?view=needs_attention"]').textContent).toContain('Not Implemented');
+  expect(card.querySelector('.bd-gaps a[href="/compliance/soc-2?view=needs_attention"]').textContent).toContain('Needs Remediation / Validation');
   // Same structure as the approved CIS card: class list of every element is identical.
   const shape=el=>[...el.querySelectorAll('*')].map(e=>e.tagName+'.'+(e.className.baseVal??e.className));
   const soc=shape(card);

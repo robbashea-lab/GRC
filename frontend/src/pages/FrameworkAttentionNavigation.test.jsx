@@ -53,9 +53,9 @@ test.each(['demo_prestige','new-soc-client'])('SOC attention links open exactly 
   const dashboard=await loadClientDashboard(api,{clientId,user:mockUser,scope:{kind:'org'},workQueue:true});
   const cases=[
     ['unremediated','Gaps without a Finding',['CC1.1','CC1.3'],'critical'],
-    ['needs_attention','Not Implemented',['CC1.1','CC1.2'],'critical'],
+    ['needs_attention','Needs Remediation / Validation',['CC1.1','CC1.2'],'critical'],
     ['stale','Validation older than 12 months',['CC1.3','CC1.4'],'attention'],
-    ['unevidenced','Implemented without evidence',['CC1.4'],'attention'],
+    ['unevidenced','Addressed (Readiness) without evidence',['CC1.4'],'attention'],
   ];
   for(const [view,label,ids,tone] of cases){
     await act(async()=>root.render(<FrameworkProgramCard program={dashboard.programs[0]} rows={dashboard.programRows['soc-2']}/>));
