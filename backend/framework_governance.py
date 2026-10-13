@@ -17,6 +17,7 @@ import create_requests
 import authorization
 import shared_review_plans
 import guided_assessment
+import assessment_items
 import soc_guided_lease
 import soc_guided_assessment
 import iso_guided_assessment
@@ -285,6 +286,7 @@ class FindingInput(BaseModel):
     description:str=Field(default='',max_length=20000)
     severity:Literal['low','medium','high','critical']='medium'
     request_id:str=Field(min_length=1,max_length=128)
+    item_id:Optional[str]=Field(default=None,max_length=100)
     # Optional at creation; omitted, the Finding inherits the safeguard owner and has no target date.
     owner_id:Optional[str]=Field(default=None,max_length=200)
     due_date:Optional[str]=Field(default=None,max_length=40)
@@ -352,6 +354,13 @@ def router_for(s):
         client=await scoped(row['client_id'],user)
         await guided_scope(row,client)
         return await guided_assessment.save_draft(s,row,user,body,client,upgraded=guided_assessment.upgraded_pilot(row,user))
+    @router.patch('/framework_assessments/{aid}/items/{item_id}')
+    async def update_item(aid:str,item_id:str,body:assessment_items.ItemPatch,user=Depends(s.get_current_user)):
+        row=await parent(aid,user,True)
+        if row['framework_key'] not in ('cis-ig1','soc-2','iso-27001'):
+            raise HTTPException(404,'Assessment items are not available for this framework')
+        await assessment_items.update(s,row,item_id,body,user)
+        return await parent(aid,user)
     async def target_record(kind,record_id,user):
         if kind!='evidence':return await s._authorized_parent(kind,record_id,user)
         # Evidence has separate routes, not the operational parent-record registry.
@@ -655,6 +664,11 @@ def router_for(s):
             raise HTTPException(422,'Addressability fields apply only to addressable specifications')
         await assignment_eligibility.validate(s.db, 'framework_assessments', data, s._can_access_client, old)
         if data.get('process_owner_id') and not await s.db.contacts.find_one({'contact_id':data['process_owner_id'],'client_id':old['client_id']}):raise HTTPException(422,'Process owner must be a client Contact')
+        if changes.get('guided_assessment_source'):
+            items=assessment_items.reconcile(old,draft,user['user_id'],s._now())
+            if items!=old.get('items_to_address',[]):
+                changes.update(items_to_address=items,items_revision=old.get('items_revision',0)+1)
+                data.update(changes)
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed or record_assessment:
             if changes.get('guided_assessment_source') and guided_assessment.upgraded_pilot(old,user):
@@ -681,9 +695,12 @@ def router_for(s):
                                assessment_recorded_by=user['user_id'] if judgment else old.get('assessment_recorded_by'))
                 data.update(changes)
             snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','guided_assessment_source') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            if changes.get('guided_assessment_source'):
+                snapshot.update(items_to_address=data.get('items_to_address',[]),items_revision=data.get('items_revision',0))
             if old['framework_key']=='soc-2':
                 snapshot.update({k:data.get(k) for k in ('last_saved','assessment_recorded_at','assessment_recorded_by')})
             predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed'),'last_saved':old.get('last_saved')}
+            if changes.get('guided_assessment_source'):predicate['items_revision']=old.get('items_revision')
             if 'management_controls' in changed: predicate['controls_migrated']={'$ne':True}
             write={'$set':{**changes,'last_saved':at}}
             if not ownership_only:
@@ -724,12 +741,19 @@ def router_for(s):
     @router.post('/framework_assessments/{aid}/findings')
     async def finding(aid:str,body:FindingInput,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True)
+        item=next((item for item in row.get('items_to_address',[]) if item['item_id']==body.item_id),None) if body.item_id else None
+        if body.item_id and item is None:raise HTTPException(404,'Item not found for this assessment')
         async def execute(identity):
+            origin=item
+            primary_identity=create_requests.digest(['assessment-item',row['client_id'],aid,body.item_id]) if item else identity
             legacy=stable(row['client_id'],'finding',aid+':'+body.request_id)
-            saved=await s.db.findings.find_one({'_id':'create:'+identity},{'_id':0})
+            saved=await s.db.findings.find_one({'_id':'create:'+primary_identity},{'_id':0})
             if not saved:
-                saved=await s.db.findings.find_one({'finding_id':legacy,'client_id':row['client_id'],'created_by':user['user_id']},{'_id':0})
+                saved=await s.db.findings.find_one({'finding_id':legacy,'client_id':row['client_id'],'created_by':user['user_id']},{'_id':0}) if not item else None
             if not saved:
+                if item:
+                    current=await parent(aid,user,True)
+                    origin=assessment_items.current_item(current,body.item_id)
                 if not body.title.strip() or not body.remediation_title.strip():raise HTTPException(422,'Finding and Action titles are required')
                 owner=row.get('owner_id')
                 if owner and not await assignment_eligibility.eligible(s.db,owner,row['client_id'],s._can_access_client):owner=None
@@ -741,16 +765,24 @@ def router_for(s):
                 if body.due_date:
                     try:due=date.fromisoformat(body.due_date[:10]).isoformat()
                     except ValueError:raise HTTPException(422,'Enter a valid target date')
-                fid=stable(row['client_id'],'finding',identity)
+                fid=stable(row['client_id'],'finding',primary_identity)
                 doc={'finding_id':fid,'client_id':row['client_id'],'title':body.title.strip(),'description':body.description,'severity':body.severity,
                      'status':'open','framework_assessment_id':aid,'source':assessment_title(row),'owner_id':owner,'due_date':due,
                      'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'remediation_title':body.remediation_title.strip()}
                 await assignment_eligibility.validate(s.db, 'findings', doc, s._can_access_client)
                 await authorization.require_creation_assignee(s.db,user,row['client_id'],owner)
-                saved=await create_requests.insert_primary(s.db,'findings',doc,identity)
+                if item:
+                    doc.update(assessment_item_id=body.item_id,assessment_item_text=origin['text'],framework_key=row['framework_key'])
+                    await s.db.create_requests.update_one({'_id':identity},{'$set':{'primary_started':True}})
+                    await s.db.findings.update_one({'_id':'create:'+primary_identity},{'$setOnInsert':doc},upsert=True)
+                    saved=await s.db.findings.find_one({'_id':'create:'+primary_identity},{'_id':0})
+                else:
+                    saved=await create_requests.insert_primary(s.db,'findings',doc,identity)
             fid=saved['finding_id']
             await s.finding_create_task(fid,{'title':saved['remediation_title']},user)
-            await s.audit(user,'Finding raised','framework_assessment',aid,row['client_id'],meta={'finding_id':fid})
+            if item:
+                await assessment_items.link_finding(s,row,body.item_id,fid,user)
+            await s.audit(user,'Finding raised','framework_assessment',aid,row['client_id'],meta={'finding_id':fid,**({'item_id':body.item_id} if item else {})})
             await s.audit(user,'create','finding',fid,row['client_id'],meta={'framework_assessment_id':aid})
             return await s.db.findings.find_one({'finding_id':fid},{'_id':0})
         return await create_requests.run(s.db,create_requests.digest(body.request_id),user['user_id'],row['client_id'],

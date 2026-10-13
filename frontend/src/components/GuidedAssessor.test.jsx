@@ -16,6 +16,14 @@ const button=name=>[...document.querySelectorAll('button')].find(el=>el.textCont
 async function render(p={}){props={...props,...p};await act(async()=>root.render(<GuidedAssessor {...props}/>));}
 async function click(name){expect(button(name)).toBeTruthy();expect(button(name).disabled).toBe(false);await act(async()=>button(name).click());}
 async function open(){await act(async()=>document.querySelector('[aria-label="Open Omnibot guide"]').click());}
+function reviewClock(today){
+  const RealDate=Date;
+  global.Date=class extends RealDate{
+    constructor(...args){super(...(args.length?args:[today.getTime()]));}
+    static now(){return today.getTime();}
+  };
+  return()=>{global.Date=RealDate;};
+}
 function complete(id){return Object.fromEntries(guidedCatalog.safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':q.type==='date'?new Date().toISOString().slice(0,10):q.type==='multi'?['Quarantine or isolate']:q.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):q.id==='sources'?'One source':q.id==='unresolved'?'No':q.choices.includes('Yes')?'Yes':q.choices[0]]));}
 function savedComplete(id){const answers=complete(id),result=omniCisSummary(id,answers,versionForSafeguard(id),'The organization').result;draft={...interview(id),answers,result,narrative:result.narrative,completed:true,revision:2,generated_at:'2026-10-09T12:00:00Z'};}
 beforeEach(()=>{
@@ -73,6 +81,48 @@ test('complete state restores persisted summary, status and source without a wri
   const current=record('1.2');props={...props,record:current,current,form:{...current}};savedComplete('1.2');const original=JSON.stringify(draft);
   await render();await open();expect(document.body.textContent).toContain('Implemented');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(draft.narrative);
   expect(JSON.stringify(draft)).toBe(original);expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('review clock keeps the displayed and committed CIS status across midnight without refreshing manual wording',async()=>{
+  const today=new Date(2026,9,15,0,1);
+  const restoreClock=reviewClock(today);
+  try{
+    expect(new Date().getTime()).toBe(today.getTime());
+    const answers={...complete('1.1'),last_review:'2026-04-12'},result=omniCisSummary('1.1',answers,versionForSafeguard('1.1'),'The organization',new Date(2026,9,12,23,59)).result;
+    result.narrative='Reviewer wording retained across midnight.\n\nControls in place\n• Recorded inventory practices.';
+    draft={...draft,answers,result,narrative:result.narrative,completed:true,revision:2,generated_at:'2026-10-12T23:59:00Z'};
+    await render({inline:true,inlineOpen:true});
+    expect(document.body.textContent).toContain('Proposed Implementation Status: Implemented');
+    expect(document.body.textContent).not.toContain('prior completion recommendation is not supported');
+    expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(result.narrative);
+    expect(api.put).not.toHaveBeenCalled();
+    await click('Save assessment');
+    expect(api.put.mock.calls.at(-1)[1].result).toEqual(result);
+    expect(props.onSaveAssessment).toHaveBeenCalledWith(expect.objectContaining({status:'addressed',implementation:result.narrative}),JSON.stringify(props.form));
+    expect(document.body.textContent).toContain('Proposed Implementation Status: Implemented');
+  }finally{restoreClock();}
+});
+
+test('review clock survives own applied native rebase before an unchanged old-date save',async()=>{
+  const today=new Date(2026,9,15,0,1);
+  const restoreClock=reviewClock(today);
+  try{
+    expect(new Date().getTime()).toBe(today.getTime());
+    const answers={...complete('1.1'),last_review:'2026-04-12'},result=omniCisSummary('1.1',answers,versionForSafeguard('1.1'),'The organization',new Date(2026,9,12,23,59)).result;
+    const generated_at='2026-10-12T23:59:00Z',last_saved='2026-10-13T00:00:00Z';
+    const current={...record(),status:'addressed',implementation:result.narrative,last_saved,guided_assessment_source:{version:versionForSafeguard('1.1'),revision:2,generated_at,answers,by:'pilot-test',origin:'guided-assessment-pilot'}};
+    props={...props,record:current,current,form:{...current}};
+    draft={...interview('1.1'),answers,result,narrative:result.narrative,completed:true,revision:2,generated_at,current_assessment_token:last_saved,lineage_stale:true};
+    api.put.mockImplementation(async(_path,body)=>({data:draft={...draft,...body,revision:draft.revision+1,result:body.completed?body.result:null,generated_at:body.completed?generated_at:null}}));
+    await render({inline:true,inlineOpen:true});
+    expect(document.body.textContent).toContain('Proposed Implementation Status: Implemented');
+    expect(document.body.textContent).not.toContain('Recorded answers do not support');
+    await click('Update assessment');await click('Yes, update assessment');
+    expect(api.put.mock.calls.map(([,body])=>body.completed)).toEqual([false,true]);
+    expect(api.put.mock.calls[0][1].rebase).toBe(true);
+    expect(api.put.mock.calls[1][1].result).toEqual(result);
+    expect(props.onSaveAssessment).toHaveBeenCalledWith(expect.objectContaining({status:'addressed',implementation:result.narrative}),JSON.stringify(props.form));
+  }finally{restoreClock();}
 });
 test('Omni SVG is local, decorative and motion and responsive styles are defined',()=>{
   const fs=require('node:fs'),path=require('node:path'),asset=fs.readFileSync(path.join(__dirname,'OmniCharacter.jsx'),'utf8'),css=fs.readFileSync(path.join(__dirname,'GuidedAssessor.css'),'utf8');

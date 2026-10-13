@@ -1,7 +1,8 @@
 """Client-scoped versioned CIS interviews; assessment writes remain separate."""
 import json
+from datetime import date, datetime, timezone
 from typing import Annotated, Literal
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from fastapi import HTTPException
 from framework_catalog import ROOT, client_configuration
 import soc_guided_assessment
@@ -86,6 +87,14 @@ class ResultSnapshot(BaseModel):
     evidence: list[Annotated[str, Field(max_length=4000)]] = Field(max_length=153)
     answers: list[ResultAnswer] = Field(max_length=300)
     signals: list[ResultSignal] | None = Field(default=None, max_length=300)
+    evaluation_date: str | None = Field(default=None, max_length=10)
+
+    @field_validator('evaluation_date')
+    @classmethod
+    def valid_evaluation_date(cls, value):
+        if value is not None and date.fromisoformat(value).isoformat() != value:
+            raise ValueError('Evaluation date must be a calendar date in YYYY-MM-DD format')
+        return value
 
 class SocSummaryReview(BaseModel):
     """Bounded answer basis reviewed with SOC/ISO wording; not evidence assurance."""
@@ -228,6 +237,54 @@ async def save_draft(s, row, user, body, client=None, upgraded=False):
         return await soc_guided_lease.run(s, row, locked)
     return await _save_draft(s, row, user, body, client, upgraded)
 
+async def _recorded_result_clock(s, row, user, old, body, at):
+    """Retain a known CIS result clock; new snapshots use a bounded local day."""
+    if not body.completed or body.result is None:
+        return None, at
+    proposed = body.result.evaluation_date
+    if row['framework_key'] != 'cis-ig1':
+        if proposed is not None:
+            raise HTTPException(422, 'Evaluation date applies only to CIS interviews')
+        return None, at
+    same_answers = old.get('version') == body.version and old.get('answers') == body.answers
+    dated = any(question['type'] == 'date' and (not question.get('when') or all(
+        body.answers.get(key) in values for key, values in question['when'].items()))
+        for question in VERSIONS[body.version]['safeguards'][row['definition_id']])
+    if not dated:
+        if proposed is not None:
+            raise HTTPException(422, 'Evaluation date applies only to active CIS date questions')
+        return None, at
+    snapshot = old if same_answers and old.get('completed') and old.get('result') is not None else None
+    completion_day = datetime.fromisoformat(at).astimezone(timezone.utc).date()
+    within_window = proposed is not None and abs((date.fromisoformat(proposed) - completion_day).days) <= 1
+    # The established own-application compare clears the current result. Only
+    # its immediately preceding, natively applied snapshot can restore the day.
+    if (dated and same_answers and snapshot is None and not old.get('completed')
+            and old.get('result') is None and old.get('revision', 0) > 1):
+        prior = await s.db.guided_assessment_history.find_one({
+            '_id': row['framework_assessment_id'] + ':' + user['user_id'] + ':' + str(old['revision'] - 1),
+            'client_id': row['client_id'], 'assessment_id': row['framework_assessment_id'], 'user_id': user['user_id']})
+        source = row.get('guided_assessment_source') or {}
+        if (prior and prior.get('completed') and prior.get('version') == body.version
+                and prior.get('answers') == body.answers and source.get('by') == user['user_id']
+                and all(source.get(key) == prior.get(key) for key in ('version', 'answers', 'revision', 'generated_at'))):
+            snapshot = prior
+    known = (snapshot.get('result') or {}).get('evaluation_date') if snapshot else None
+    if known is not None and proposed in (None, known):
+        proposed = known
+    elif proposed is not None and not within_window:
+        raise HTTPException(422, 'Evaluation date must be within one day of this completed interview')
+    result = body.result.model_dump(exclude_none=True)
+    if proposed is not None:
+        result['evaluation_date'] = proposed
+    # Re-saving the same evaluator basis or editing its wording is not a new run;
+    # retain the only known clock basis for pre-metadata snapshots too.
+    replay = (dated and snapshot and snapshot.get('generated_at') and {
+        key: value for key, value in (snapshot.get('result') or {}).items() if key != 'narrative'} == {
+        key: value for key, value in result.items() if key != 'narrative'})
+    return proposed, snapshot['generated_at'] if replay else at
+
+
 async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=None):
     if row['framework_key'] not in ('soc-2', 'iso-27001') and 'summary_review' in body.model_fields_set:
         raise HTTPException(422, 'Summary review metadata applies only to SOC 2')
@@ -293,6 +350,7 @@ async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=Non
             if any(key in body.model_fields_set and getattr(body, key) != old.get(key) for key in base):
                 raise HTTPException(409, 'The saved interview base cannot be replaced; explicitly restart for a new review')
     at = s._now()
+    evaluation_date, generated_at = await _recorded_result_clock(s, row, user, old, body, at)
     # Archive a saved state before replacement. A losing CAS may leave this valid
     # prior-state snapshot; it is not evidence that a restart/edit succeeded.
     archive = old['revision'] and ((old['completed'] or body.restart or body.rebase) if upgraded else (
@@ -305,9 +363,11 @@ async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=Non
             {'$setOnInsert': {**old, 'client_id': row['client_id'], 'assessment_id': row['framework_assessment_id'], 'user_id': user['user_id']}}, upsert=True)
     data = {**body.model_dump(exclude={'expected_revision', 'base_assessment_token', 'base_scope_fingerprint', 'restart', 'rebase', 'result', 'summary_review'}), **base, 'client_id': row['client_id'],
             'assessment_id': row['framework_assessment_id'], 'user_id': user['user_id'],
-            'revision': old['revision'] + 1, 'updated_at': at, 'generated_at': at if body.completed else None}
+            'revision': old['revision'] + 1, 'updated_at': at, 'generated_at': generated_at if body.completed else None}
     if upgraded:
         data['result'] = body.result.model_dump(exclude_none=True) if body.result is not None else None
+        if evaluation_date is not None:
+            data['result']['evaluation_date'] = evaluation_date
     if row['framework_key'] == 'soc-2':
         data['summary_review'] = body.summary_review.model_dump() if body.summary_review else None if body.restart or 'summary_review' in body.model_fields_set else old.get('summary_review')
     if row['framework_key'] == 'iso-27001':

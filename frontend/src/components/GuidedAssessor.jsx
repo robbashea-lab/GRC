@@ -16,7 +16,7 @@ import {omniCisSummary} from '@/lib/omniCisSummary';
 
 import {omniGroups,refinedSummary,recordedOmniReasons,multipleOmniSources} from '@/lib/refinedOmni';
 
-import {focusedOmniEnabled,focusedRecommendations,nextFocusedQuestion,correctFocusedAnswer,focusedNarrative,focusedResult} from '@/lib/focusedOmni';
+import {focusedOmniEnabled,focusedRecommendations,nextFocusedQuestion,correctFocusedAnswer,focusedNarrative,focusedResult,focusedEvaluationDate} from '@/lib/focusedOmni';
 import {describeGuidedContext,prioritizeGuidedLifecycle,recordedDate} from '@/lib/guidedLifecycle';
 import changeQuestions from '@catalogs/guidedCisChanges.json';
 import {personLabel} from '@/lib/people';
@@ -33,7 +33,7 @@ export default function GuidedAssessor(props){
   if(props.record?.client_id&&props.record.client_id!==props.clientId||!pilotEnabled(props.clientId,props.framework,props.configuration,props.record?.definition_id))return null;
   return <Pilot key={user?.user_id+':'+props.clientId+':'+props.record?.framework_assessment_id+(focusedOmniEnabled(props.clientId,user,props.framework,props.configuration,props.record?.definition_id)?':'+(props.invitationContext||'program'):'')} {...props}/>;
 }
-function Pilot({clientId,framework,configuration,invitationContext,inventoryContext,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onSaveAssessment,onDraftChange,onUpdateImplementation,disabled=false,current=record,related={},contextComplete=false,assessmentDirty=false,onOpenNative,people=EMPTY_ROWS}){
+function Pilot({clientId,framework,configuration,invitationContext,inventoryContext,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onSaveAssessment,onDraftChange,onUpdateImplementation,disabled=false,current=record,related={},contextComplete=false,assessmentDirty=false,onOpenNative,people=EMPTY_ROWS,inline=false,inlineOpen=false,onInlineClose}){
   const {user}=useAuth(),org=useOrg(),key='guided-pilot-ui:'+user?.user_id+':'+clientId,initial=readPreference(key);
   const focused=focusedOmniEnabled(clientId,user,framework,configuration,record?.definition_id);
   const workspacePilot=focused,GuideContent=workspacePilot?OmniWindow:DialogContent;
@@ -77,13 +77,13 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   const context=workspacePilot&&record?describeGuidedContext({record:current,draft,draftLoaded:loaded&&!!draft,workLoaded:contextComplete,historyComplete:Array.isArray(current?.assessment_history),expectedIdentity:{client_id:clientId,assessment_id:record.framework_assessment_id,user_id:user?.user_id},supportedVersions:draft&&catalogForVersion(draft.version)?[draft.version]:[],readOnly:disabled}):null;
   const overview=workspacePilot&&!record?prioritizeGuidedLifecycle(rows,{drafts:draftSummaries,contextComplete}):null;
   const currentRecommendation=context?.applicationState==='current'&&draft?.base_scope_fingerprint===draft?.current_scope_fingerprint;
-  const summaryModel=directAssessment?omniCisSummary(id,answers,version,clientName):null;
+  const reviewedDate=focusedEvaluationDate(result?.evaluation_date);
   const needsComparison=!!draft?.revision&&context?.lineageStale!==false&&!currentRecommendation;
   const stagedNotice=stagedImplementation!==null?(current?.implementation===stagedImplementation&&form?.implementation===stagedImplementation?(assessmentDirty?'Interview answers and Current implementation are saved. Other native assessment changes remain unsaved; use Save assessment to persist them.':'Interview answers and Current implementation are saved. Implementation status and verification remain as recorded.'):form?.implementation===stagedImplementation?'Answer saved to the interview. Current implementation is an unsaved native draft. Use Save assessment to persist it; implementation and verification statuses are unchanged.':'Interview answers are saved. The staged narrative is no longer the native draft; compare the current implementation before updating it.') : '';
   useEffect(()=>{
     if(!focused||!record||!draft||!loaded||focusedStarted.current)return;
     focusedStarted.current=true;
-    const supported=draft.completed&&draft.result?.status==='addressed'&&focusedResult(id,draft.answers,draft.version).status==='addressed';
+    const supported=draft.completed&&draft.result?.status==='addressed'&&focusedResult(id,draft.answers,draft.version,focusedEvaluationDate(draft.result.evaluation_date)).status==='addressed';
     if(!directAssessment&&current?.status==='addressed'&&(!draft.revision||supported))setView('changes');
     else if(supported)setView('result');
     else{setResult(null);setStep(nextFocusedQuestion(id,draft.answers,draft.version));setView('interview');}
@@ -115,7 +115,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     }).catch(e=>{if(!controller.signal.aborted){setError(formatError(e));setLoaded(true);}});}
     return()=>controller.abort();
   },[base,id,clientId,user?.user_id]);// eslint-disable-line react-hooks/exhaustive-deps
-  const changeMode=value=>{setMode(value);setGreeting(false);setContextPrompt(false);try{if(!focused)sessionStorage.setItem(workspacePilot?promptKey:key+':'+id+':prompt','1');localStorage.setItem(key,JSON.stringify({...readPreference(key),mode:value==='expanded'?'collapsed':value,...(!workspacePilot?{dismissGreeting:true}:{})}));}catch{/* Cosmetic preferences are optional. */}};
+  const changeMode=value=>{setMode(value);setGreeting(false);setContextPrompt(false);if(inline){if(value==='collapsed')onInlineClose?.();return;}try{if(!focused)sessionStorage.setItem(workspacePilot?promptKey:key+':'+id+':prompt','1');localStorage.setItem(key,JSON.stringify({...readPreference(key),mode:value==='expanded'?'collapsed':value,...(!workspacePilot?{dismissGreeting:true}:{})}));}catch{/* Cosmetic preferences are optional. */}};
 
   const savedAnswers=loaded&&draft?.revision>0&&Object.keys(draft.answers||{}).length>0;
 
@@ -217,7 +217,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   async function reviewFocusedProposal(){
     if(requireFocusedComparison())return;
 
-    const generated=directAssessment?omniCisSummary(id,answers,version,clientName).result:refined?refinedSummary(id,answers,version):focusedResult(id,answers,version);
+    const generated=directAssessment?omniCisSummary(id,answers,version,clientName,inline?new Date():null).result:refined?refinedSummary(id,answers,version):focusedResult(id,answers,version);
 
     const output=summaryEdited?{...generated,narrative}:generated,expected=form?.implementation||'';
 
@@ -298,7 +298,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     assessmentSavePending.current=true;setAssessmentSaving(true);setAssessmentSaved(false);setConfirmUpdate(false);
     const expected=JSON.stringify(form),savedToken=current?.last_saved;
     try{
-      const generated=omniCisSummary(id,answers,version,clientName).result;
+      const generated=result&&!result.missingRecorded?result:omniCisSummary(id,answers,version,clientName,inline?new Date():null).result;
       const data=await save(step,true,answers,false,draft,{...generated,narrative});if(!data)return;
       const latest=nativeApplication.current;
       if(latest.disabled)return;
@@ -359,28 +359,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   };
   const action=name=>{if(name==='start'||name==='reassess')startReview();else if(name==='resume')setView('interview');else if(name==='findings')setView('linked');else if(name==='changes')setView('changes');else if(name==='result')setView('result');else setView('position');heading.current?.focus();};
 
-  return <div className={'guided-pilot '+(workspacePilot?'guided-lifecycle ':'')+(refined?'omni-refined ':'')+(record?'guided-in-assessment':'')} data-testid="guided-pilot">
-
-    <OmniDock preferenceKey={key} inAssessment={!!record} freePosition={workspacePilot} name={botName} focused={focused}>
-      {greeting&&<div className="guided-greeting omni-entrance"><p>Hi, I’m Omni. How can I help you today?</p><p>I can help you review safeguards, identify missing requirements, and prepare your implementation summary.</p><button onClick={()=>changeMode('collapsed')} aria-label="Dismiss Omni greeting">Dismiss</button></div>}
-      {mode==='dismissed'?<Button ref={launcher} size="sm" variant="outline" onClick={()=>changeMode('collapsed')}>Show {botName}</Button>:<>
-      <button ref={launcher} className={'omni-launch-button '+(greeting?'omni-entrance ':'')+(mode==='minimized'?'is-minimized':'')} onClick={()=>changeMode('expanded')} aria-label={focused?"Open Omnibot guide":"Open Omni guided assessment"} aria-expanded={mode==='expanded'} aria-controls={mode==='expanded'?panelId:undefined} aria-describedby={stateId}><OmniCharacter state={characterState} approved={workspacePilot}/></button>
-      {focused?<>
-
-        {contextPrompt&&(mode==='collapsed'||mode==='minimized')&&<div className="guided-context-prompt" role="complementary" aria-label="Omnibot invitation"><p>{invitation}</p><button type="button" aria-label="Close invitation" className="omni-invitation-x" onClick={()=>{changeMode('collapsed');launcher.current?.focus({preventScroll:true});}}>×</button></div>}
-
-      </>:contextPrompt&&(mode==='collapsed'||focused&&mode==='minimized')&&(workspacePilot||record)&&<div className="guided-context-prompt"><p>{workspacePilot?(record?context.summary:'Review the recorded CIS program position and choose the next safeguard.'):(draft?.completed?result?.unknowns.length?`${result.unknowns.length} items still need verification`:'Your recommendation is ready':draft?.revision?'Resume your review':'Ready to review this safeguard?')}</p>{!workspacePilot&&<p>I’ll walk you through each required element, identify anything missing or uncertain, and prepare your implementation summary.</p>}<button onClick={()=>changeMode('expanded')}>Review with Omni</button><button onClick={()=>changeMode('collapsed')}>Not now</button>{workspacePilot&&<><button onClick={()=>{try{sessionStorage.setItem(key+':quiet','1');}catch{}changeMode('collapsed');}}>Quiet for this session</button><button onClick={()=>{try{localStorage.setItem(key,JSON.stringify({...readPreference(key),invitationsDisabled:true}));}catch{}changeMode('collapsed');}}>Turn off invitations</button></>}</div>}
-      </>}
-      <span id={stateId} className="sr-only">{stateText}</span>
-    </OmniDock>
-    <Dialog modal={!workspacePilot} open={mode==='expanded'} onOpenChange={open=>{if(!open)close();}}>
-
-      {mode==='expanded'&&<GuideContent id={panelId} className="guided-panel bg-surface-card" onOpenAutoFocus={e=>{e.preventDefault();heading.current?.focus({preventScroll:true});}} onCloseAutoFocus={e=>{e.preventDefault();launcher.current?.focus({preventScroll:true});}} onPointerDownOutside={e=>e.preventDefault()} {...(workspacePilot?{onMinimize:()=>changeMode('minimized'),onClose:close,name:botName,refined,program:!record,...(focused?{anchor:()=>launcher.current?.getBoundingClientRect()}:{} )}:{})}>
-
-        <div className="omni-panel-header"><OmniCharacter state={characterState} approved={workspacePilot}/><div><DialogTitle {...(workspacePilot?{id:panelId+'-title'}:{})} ref={heading} tabIndex={refined?0:-1}>{record?(refined?'Omnibot guide':botName+' Guide')+' · Safeguard '+id:focused?'Guided assessment with Omnibot':'Guided Assessment with Omni'}</DialogTitle>{!refined&&<p className="omni-state-text" role="status">{stateText}</p>}</div></div>
-
-        <DialogDescription className={refined?'sr-only':undefined} {...(workspacePilot?{id:panelId+'-description'}:{})}>{refined?'Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.':<>{record?record.title:`CIS IG${configuration?.implementation_group||1} · CIS Controls v8.1`} · Deterministic guidance, not an independent assessment or evidence review.</>}</DialogDescription>
-
+  const panelBody=(
         <div className="guided-panel-body">
           {error&&<p role="alert">{error}</p>}
           {focused&&saveNotice&&<p role="status">{saveNotice}</p>}
@@ -388,11 +367,11 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
           {focused&&stagedNotice&&<p role="status">{stagedNotice}</p>}
           {focused&&record&&draft?.revision>0&&context.lineageStale!==false&&(!directAssessment||!currentRecommendation)&&<section>{needsComparison?<p role="alert">The saved assessment changed after this interview began. Compare its current implementation before continuing; your saved answers and history are retained.</p>:<p>This interview is the saved assessment source. To update its answers, confirm them against the current saved assessment; the recorded position remains unchanged.</p>}<p className="whitespace-pre-wrap">{current?.implementation||'No implementation narrative recorded.'}</p><Button variant="outline" disabled={disabled||busy||assessmentDirty} onClick={()=>{setCompareTarget('resume');setReuseAnswers(false);}}>Compare & continue from saved assessment</Button>{assessmentDirty&&<p>Save or discard the native assessment draft before comparing the saved record.</p>}</section>}
           {focused&&compareTarget!==null&&<section role="group" aria-label="Compare saved assessment"><h3>Continue from the current saved assessment</h3><p>Saved status: {STATUSES[current?.status]||'Not recorded'}. Verification: {current?.verification?.replaceAll('_',' ')||'Not recorded'}.</p><p className="whitespace-pre-wrap">{current?.implementation||'No implementation narrative recorded.'}</p><p>A new review will preserve the prior interview in history and retain only the answers you confirm are still relevant. No native assessment or verification will be changed.</p><label><input type="checkbox" disabled={disabled||busy} checked={reuseAnswers} onChange={e=>setReuseAnswers(e.target.checked)}/> I compared the current saved assessment and confirmed these answers remain relevant; I will update any changed facts.</label><Button disabled={disabled||busy||assessmentDirty||!reuseAnswers} onClick={compareAndContinue}>Retain answers & continue</Button><Button variant="outline" disabled={busy} onClick={()=>{setCompareTarget(null);setReuseAnswers(false);}}>Cancel comparison</Button></section>}
-          {focused&&record&&draft?.result?.status==='addressed'&&Object.keys(answers).length>0&&focusedResult(id,answers,version).status!=='addressed'&&<p role="alert">The prior completion recommendation is not supported by the current reported answers. Review the unresolved criteria before proposing Implemented.</p>}
+          {focused&&record&&draft?.result?.status==='addressed'&&Object.keys(answers).length>0&&focusedResult(id,answers,version,reviewedDate).status!=='addressed'&&<p role="alert">The prior completion recommendation is not supported by the current reported answers. Review the unresolved criteria before proposing Implemented.</p>}
 
           {focused&&record&&draft&&!refined&&<div className="guided-actions"><Button variant="outline" disabled={busy||!!incremental} onClick={()=>{setResult(null);setStep(nextFocusedQuestion(id,answers,version));setView('interview');}}>Review or correct answers</Button><Button variant="outline" disabled={busy||!!incremental} onClick={()=>setView('changes')}>Review changes</Button><Button variant="outline" disabled={busy||!!incremental} onClick={()=>setView('linked')}>Review linked records</Button></div>}
 
-          {focused&&current?.status==='addressed'&&Object.keys(answers).length>0&&focusedResult(id,answers,version).status!=='addressed'&&<p role="alert">Recorded answers do not support the saved Implemented status. Reassess through the native review and save workflow; no status has been changed.</p>}
+          {focused&&current?.status==='addressed'&&Object.keys(answers).length>0&&focusedResult(id,answers,version,reviewedDate).status!=='addressed'&&<p role="alert">Recorded answers do not support the saved Implemented status. Reassess through the native review and save workflow; no status has been changed.</p>}
           {focused&&current?.status==='addressed'&&current.verification==='gap_identified'&&<p role="alert">Saved verification identifies a gap. Review the linked records and current operation; implementation status is unchanged.</p>}
           {focused&&record&&draft&&view==='changes'&&<section><p>Saved assessment: {STATUSES[current?.status]||'Not recorded'}. A changed tool or team does not establish implementation; review any effect on the existing requirements.</p><label>Fact or requirement to update<select aria-label="Fact or requirement to update" disabled={disabled||busy||updated||!!incremental||compareTarget!==null} value={changeTopic} onChange={e=>setChangeTopic(e.target.value)}><option value="">Choose the changed fact</option>{questions.map(q=><option key={q.id} value={q.id}>{q.prompt}</option>)}</select></label><Button disabled={disabled||busy||updated||!changeTopic||assessmentDirty||compareTarget!==null} onClick={()=>editFocusedFact(changeTopic)}>Update this fact</Button><p>Other answers remain available. Review the updated proposal before explicitly applying any status or narrative changes and using Save assessment.</p></section>}
 
@@ -405,8 +384,8 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
           {!record?focused?<FocusedProgram rows={rows} drafts={draftSummaries} contextComplete={contextComplete} onSelect={row=>{changeMode('minimized');onSelect?.(row);}}/>:workspacePilot?<ProgramPosition overview={overview} rows={rows} onSelect={row=>{close();onSelect?.(row);}} onViewAll={()=>{close();onViewAll?.();}}/>:<><p>Omni helps you see the full picture.</p>{prioritizeGuidedRows(rows.filter(r=>pilotEnabled(clientId,'cis-ig1',configuration,r.definition_id)),draftSummaries).map((r,i)=><section key={r.definition_id}><h3>{i===0?'Recommended next step':'Also needs attention'} · {r.definition_id} · {r.title}</h3><p>{draftSummaries[r.definition_id]?.completed?'Recommendation ready':draftSummaries[r.definition_id]?.revision?'Resume assessment':r.work?.overdue_reviews?'Overdue scheduled review':r.status==='not_assessed'?'Not Assessed':r.status==='addressed'?'Verification required':'Unresolved gap'}</p><Button onClick={()=>{close();onSelect(r);}}>{draftSummaries[r.definition_id]?.revision?'Resume':'Start'} safeguard {r.definition_id}</Button></section>)}<Button variant="outline" onClick={()=>{close();onViewAll?.();}}>View all safeguards</Button></>:refined&&draft&&view==='interview'?<RefinedOmniInterview id={id} answers={answers} version={version} step={question?.id} setStep={questionId=>{setStep(questions.findIndex(q=>q.id===questionId));heading.current?.focus({preventScroll:true});}} put={putRefined} detail={putRefinedDetail} blocked={disabled||busy||!!incremental||compareTarget!==null||restart} busy={busy} onNext={nextRefinedGroup} onSaveClose={saveAndClose} inventoryContext={inventoryContext}/> :directAssessment&&draft&&view==='result'&&result?<>
             <h3>Review your assessment summary</h3>
             <p>Safeguard {id} — {record.title}</p>
-            <p>Proposed Implementation Status: <strong>{STATUSES[summaryModel.result.status]}</strong></p>
-            {summaryEdited&&summaryBasis!==JSON.stringify(answers)&&<section role="status"><p>Your answers changed after you edited this summary. Your wording is preserved. Review the changed answers before saving or refresh the complete write-up.</p><Button variant="outline" disabled={disabled||busy||assessmentSaving} onClick={async()=>{if(await saveFocusedProposal(omniCisSummary(id,answers,version,clientName).result)){setSummaryEdited(false);setSummaryBasis(JSON.stringify(answers));}}}>Refresh from answers</Button><Button variant="outline" disabled={disabled||busy||assessmentSaving} onClick={()=>setSummaryBasis(JSON.stringify(answers))}>Keep my wording after review</Button></section>}
+            <p>Proposed Implementation Status: <strong>{STATUSES[result.status]}</strong></p>
+            {summaryEdited&&summaryBasis!==JSON.stringify(answers)&&<section role="status"><p>Your answers changed after you edited this summary. Your wording is preserved. Review the changed answers before saving or refresh the complete write-up.</p><Button variant="outline" disabled={disabled||busy||assessmentSaving} onClick={async()=>{if(await saveFocusedProposal(omniCisSummary(id,answers,version,clientName,inline?new Date():null).result)){setSummaryEdited(false);setSummaryBasis(JSON.stringify(answers));}}}>Refresh from answers</Button><Button variant="outline" disabled={disabled||busy||assessmentSaving} onClick={()=>setSummaryBasis(JSON.stringify(answers))}>Keep my wording after review</Button></section>}
             <label>Current Implementation<Textarea aria-label="Omnibot implementation summary" rows={14} maxLength={20000} disabled={disabled||busy||assessmentSaving} value={narrative} onChange={e=>{setNarrative(e.target.value);setSummaryEdited(true);setSummaryBasis(JSON.stringify(answers));setAssessmentSaved(false);}}/></label>
             <p>Saving updates the native implementation and status. Evidence verification remains separate.</p>
             {assessmentSaved&&<p role="status">Assessment saved.</p>}
@@ -439,7 +418,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
             <details><summary>Answers driving the recommendation</summary>{result.answers.map((a,i)=><p key={i}>{a.prompt} — {a.answer}</p>)}</details>
             <p>Apply changes only Current Implementation and Implementation Status in the unsaved assessment draft. Verification, evidence, findings, actions, and Last Assessed remain unchanged until normal Save.</p>
             {!!form?.implementation&&<label className="guided-replacement"><input type="checkbox" disabled={disabled||busy} checked={replace} onChange={e=>setReplace(e.target.checked)}/> I understand the existing Current Implementation narrative will be replaced.</label>}
-            <Button disabled={disabled||busy||workspacePilot&&(result.missingRecorded||dirty||assessmentDirty||context.lineageStale!==false||context.applicationState==='previous')||focused&&result.status==='addressed'&&focusedResult(id,answers,version).status!=='addressed'||!narrative.trim()||narrative.length>20000||!!form?.implementation&&!replace} onClick={()=>{onApply({implementation:narrative,status:result.status,guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,draft[k]]))});setApplied(true);close();}}>Apply to Assessment</Button>
+            <Button disabled={disabled||busy||workspacePilot&&(result.missingRecorded||dirty||assessmentDirty||context.lineageStale!==false||context.applicationState==='previous')||focused&&result.status==='addressed'&&focusedResult(id,answers,version,reviewedDate).status!=='addressed'||!narrative.trim()||narrative.length>20000||!!form?.implementation&&!replace} onClick={()=>{onApply({implementation:narrative,status:result.status,guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,draft[k]]))});setApplied(true);close();}}>Apply to Assessment</Button>
             {workspacePilot&&<p>Save edited interview text before applying. A recommendation with an unknown or changed assessment base requires a fresh review.</p>}
             <Button variant="outline" disabled={disabled||busy} onClick={()=>{setResult(null);setStep(0);setView('interview');}}>Review answers</Button>
           </>:question?<>
@@ -467,6 +446,32 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
           {refined&&<Dialog open={confirmClose} onOpenChange={setConfirmClose}><DialogContent className="omni-refined-close" onEscapeKeyDown={e=>e.stopPropagation()}><DialogTitle>Save your progress?</DialogTitle><DialogDescription>{directAssessment&&view==='result'&&result?'Save & close saves the reviewed assessment and closes only after success. Replacing a saved assessment requires confirmation.':'Your interview edits have not been saved. The native assessment is unchanged by these actions.'}</DialogDescription><div className="guided-actions"><Button variant="outline" onClick={()=>setConfirmClose(false)}>Keep editing</Button><Button variant="outline" disabled={busy} onClick={discardAndClose}>Discard changes</Button><Button disabled={disabled||busy||directAssessment&&view==='result'&&(assessmentSaving||assessmentDirty||summaryEdited&&summaryBasis!==JSON.stringify(answers))} onClick={saveAndClose}>Save &amp; close</Button></div></DialogContent></Dialog>}
 
         </div>
+  );
+  if(inline&&record)return <div className="guided-pilot guided-lifecycle omni-refined assessment-interview" data-testid="guided-pilot"><section aria-label="CIS assessment interview" hidden={!inlineOpen}><h3 ref={heading} tabIndex={-1} className="sr-only">Assessment interview</h3>{panelBody}</section></div>;
+
+  return <div className={'guided-pilot '+(workspacePilot?'guided-lifecycle ':'')+(refined?'omni-refined ':'')+(record?'guided-in-assessment':'')} data-testid="guided-pilot">
+
+    <OmniDock preferenceKey={key} inAssessment={!!record} freePosition={workspacePilot} name={botName} focused={focused}>
+      {greeting&&<div className="guided-greeting omni-entrance"><p>Hi, I’m Omni. How can I help you today?</p><p>I can help you review safeguards, identify missing requirements, and prepare your implementation summary.</p><button onClick={()=>changeMode('collapsed')} aria-label="Dismiss Omni greeting">Dismiss</button></div>}
+      {mode==='dismissed'?<Button ref={launcher} size="sm" variant="outline" onClick={()=>changeMode('collapsed')}>Show {botName}</Button>:<>
+      <button ref={launcher} className={'omni-launch-button '+(greeting?'omni-entrance ':'')+(mode==='minimized'?'is-minimized':'')} onClick={()=>changeMode('expanded')} aria-label={focused?"Open Omnibot guide":"Open Omni guided assessment"} aria-expanded={mode==='expanded'} aria-controls={mode==='expanded'?panelId:undefined} aria-describedby={stateId}><OmniCharacter state={characterState} approved={workspacePilot}/></button>
+      {focused?<>
+
+        {contextPrompt&&(mode==='collapsed'||mode==='minimized')&&<div className="guided-context-prompt" role="complementary" aria-label="Omnibot invitation"><p>{invitation}</p><button type="button" aria-label="Close invitation" className="omni-invitation-x" onClick={()=>{changeMode('collapsed');launcher.current?.focus({preventScroll:true});}}>×</button></div>}
+
+      </>:contextPrompt&&(mode==='collapsed'||focused&&mode==='minimized')&&(workspacePilot||record)&&<div className="guided-context-prompt"><p>{workspacePilot?(record?context.summary:'Review the recorded CIS program position and choose the next safeguard.'):(draft?.completed?result?.unknowns.length?`${result.unknowns.length} items still need verification`:'Your recommendation is ready':draft?.revision?'Resume your review':'Ready to review this safeguard?')}</p>{!workspacePilot&&<p>I’ll walk you through each required element, identify anything missing or uncertain, and prepare your implementation summary.</p>}<button onClick={()=>changeMode('expanded')}>Review with Omni</button><button onClick={()=>changeMode('collapsed')}>Not now</button>{workspacePilot&&<><button onClick={()=>{try{sessionStorage.setItem(key+':quiet','1');}catch{}changeMode('collapsed');}}>Quiet for this session</button><button onClick={()=>{try{localStorage.setItem(key,JSON.stringify({...readPreference(key),invitationsDisabled:true}));}catch{}changeMode('collapsed');}}>Turn off invitations</button></>}</div>}
+      </>}
+      <span id={stateId} className="sr-only">{stateText}</span>
+    </OmniDock>
+    <Dialog modal={!workspacePilot} open={mode==='expanded'} onOpenChange={open=>{if(!open)close();}}>
+
+      {mode==='expanded'&&<GuideContent id={panelId} className="guided-panel bg-surface-card" onOpenAutoFocus={e=>{e.preventDefault();heading.current?.focus({preventScroll:true});}} onCloseAutoFocus={e=>{e.preventDefault();launcher.current?.focus({preventScroll:true});}} onPointerDownOutside={e=>e.preventDefault()} {...(workspacePilot?{onMinimize:()=>changeMode('minimized'),onClose:close,name:botName,refined,program:!record,...(focused?{anchor:()=>launcher.current?.getBoundingClientRect()}:{} )}:{})}>
+
+        <div className="omni-panel-header"><OmniCharacter state={characterState} approved={workspacePilot}/><div><DialogTitle {...(workspacePilot?{id:panelId+'-title'}:{})} ref={heading} tabIndex={refined?0:-1}>{record?(refined?'Omnibot guide':botName+' Guide')+' · Safeguard '+id:focused?'Guided assessment with Omnibot':'Guided Assessment with Omni'}</DialogTitle>{!refined&&<p className="omni-state-text" role="status">{stateText}</p>}</div></div>
+
+        <DialogDescription className={refined?'sr-only':undefined} {...(workspacePilot?{id:panelId+'-description'}:{})}>{refined?'Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.':<>{record?record.title:`CIS IG${configuration?.implementation_group||1} · CIS Controls v8.1`} · Deterministic guidance, not an independent assessment or evidence review.</>}</DialogDescription>
+
+        {panelBody}
         {!workspacePilot&&<div className="guided-actions"><Button variant="outline" onClick={()=>changeMode('minimized')}>Minimize</Button><Button variant="ghost" onClick={()=>changeMode('dismissed')}>Dismiss assistant</Button></div>}
       </GuideContent>}
     </Dialog>

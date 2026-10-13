@@ -1,6 +1,9 @@
 """Real ISO HTTP/auth flows on isolated Mongo mocks, not hosted/Motor assurance."""
 import asyncio
 import copy
+import json
+from pathlib import Path
+import subprocess
 from datetime import datetime, timedelta, timezone
 import unittest
 from unittest.mock import patch
@@ -78,6 +81,70 @@ class IsoGuidedRoutes(unittest.IsolatedAsyncioTestCase):
     async def expire(self, row):
         await server.db.iso_guided_locks.update_one({'_id': row['framework_assessment_id']},
             {'$set': {'until': (datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat()}})
+
+    async def test_browser_inline_payload_matches_reviewed_text_and_native_save(self):
+        workspace = await self.setup_iso()
+        ids = ('4.1', 'A.5.1', 'A.8.13')
+        cases = [{'id': id, 'answers': complete(id)} for id in ids]
+        script = r"""
+import fs from 'node:fs';
+const root = process.argv[1];
+let source = fs.readFileSync(root + '/frontend/src/lib/isoGuidedAssessment.js', 'utf8');
+const inline = fs.readFileSync(root + '/frontend/src/lib/inlineAssessment.js', 'utf8');
+source = source.replace("from './inlineAssessment'", 'from ' + JSON.stringify('data:text/javascript;base64,' + Buffer.from(inline).toString('base64')));
+for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology']]) {
+  source = source.replace(`import ${name} from '@catalogs/${file}.json';`, 'const ' + name + ' = ' + fs.readFileSync(root + '/shared/catalogs/' + file + '.json', 'utf8') + ';');
+}
+const frontend = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+const cases = JSON.parse(fs.readFileSync(0, 'utf8'));
+process.stdout.write(JSON.stringify(cases.map(({id, answers}) => ({
+  canonical: frontend.isoGuidedResult(id, answers, frontend.isoGuidedCatalog.version, 'SYNTHETIC ISO contract'),
+  narrative: frontend.isoInlineNarrative(id, answers, frontend.isoGuidedCatalog.version, 'SYNTHETIC ISO contract'),
+}))));
+"""
+        node = subprocess.run(['node', '--input-type=module', '-e', script, str(Path(__file__).resolve().parents[2])],
+            input=json.dumps(cases), text=True, encoding='utf-8', capture_output=True, timeout=30)
+        self.assertEqual(node.returncode, 0, node.stderr)
+        reports = json.loads(node.stdout)
+        for case, report in zip(cases, reports):
+            with self.subTest(id=case['id']):
+                row = next(row for row in workspace['assessments'] if row['definition_id'] == case['id'])
+                if case['id'].startswith('A.'):
+                    row = await self.decision(row)
+                path = self.path(row)
+                draft = (await self.client.get(path + '/guided-assessment')).json()
+                self.assertNotEqual(report['canonical']['narrative'], report['narrative'])
+                self.assertIn('\n\nControls in place\n', report['narrative'])
+                payload = {'version': engine.VERSION, 'answers': case['answers'], 'step': 0, 'completed': True,
+                    'expected_revision': draft['revision'], 'narrative': report['narrative'], 'result': report['canonical'],
+                    'summary_review': {'version': engine.VERSION, 'answers': case['answers']},
+                    **{key: draft[key] for key in ('base_assessment_token', 'base_scope_fingerprint')}}
+                # The former inline UI sent two different texts; the real route rejects it.
+                rejected = await self.client.put(path + '/guided-assessment', json=payload)
+                self.assertEqual(rejected.status_code, 422, rejected.text)
+                self.assertEqual((await self.client.get(path)).json(), row)
+                payload['result'] = {**report['canonical'], 'narrative': report['narrative']}
+                response = await self.client.put(path + '/guided-assessment', json=payload)
+                self.assertEqual(response.status_code, 200, response.text)
+                proposal = response.json()
+                self.assertEqual(proposal['result']['narrative'], proposal['narrative'])
+                self.assertEqual((await self.client.get(path)).json(), row)
+                reviewed = proposal['narrative'] + '\nExact reviewed wording remains editable.\n'
+                payload.update(expected_revision=proposal['revision'], narrative=reviewed,
+                    result={**proposal['result'], 'narrative': reviewed})
+                response = await self.client.put(path + '/guided-assessment', json=payload)
+                self.assertEqual(response.status_code, 200, response.text)
+                proposal = response.json()
+                saved = await self.client.patch(path, json=self.native(row, proposal))
+                self.assertEqual(saved.status_code, 200, saved.text)
+                saved = saved.json()
+                self.assertEqual(saved['implementation'], reviewed)
+                self.assertEqual(saved['status'], report['canonical']['status'])
+                for key in ('verification', 'soa_applicability', 'soa_justification', 'iso_assessment_checks',
+                        'owner_id', 'process_owner_id', 'notes', 'technology', 'related_links'):
+                    self.assertEqual(saved.get(key), row.get(key), key)
+                self.assertEqual(saved['assessment_history'][-1]['implementation'], reviewed)
+        self.assertEqual(await server.db.findings.count_documents({'client_id': 'a'}), 0)
 
     async def test_all_123_resume_exact_native_save_and_shared_soa_annex_record(self):
         workspace = await self.setup_iso()

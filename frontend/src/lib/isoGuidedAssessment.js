@@ -1,6 +1,7 @@
 import isms from '@catalogs/guidedIsoIsms.json';
 import organizational from '@catalogs/guidedIsoOrganizationalPeople.json';
 import technology from '@catalogs/guidedIsoPhysicalTechnology.json';
+import {formatInlineSummary} from './inlineAssessment';
 const catalog = {version: 'iso27001-omni-1', framework_id: 'iso-27001',
   definitions: {...isms.definitions, ...organizational.definitions, ...technology.definitions}};
 
@@ -79,7 +80,7 @@ export function validateIsoCompletion(id, answers, version = catalog.version) {
   }
 }
 
-export function isoGuidedResult(id, answers, version = catalog.version, clientName = 'The organization') {
+export function isoGuidedResult(id, answers, version = catalog.version, clientName = 'The organization', inlineNarrative = false) {
   validateIsoAnswers(id, answers, version);
   const definition = definitionFor(id, version), active = activeQuestions(id, answers, version);
   const basis = [], gaps = [], unknowns = [], nextSteps = [], signals = [], breakdown = [];
@@ -122,9 +123,17 @@ export function isoGuidedResult(id, answers, version = catalog.version, clientNa
   const position = {addressed: 'practices addressing', in_progress: 'partial or unresolved practices for', needs_attention: 'confirmed deficiencies affecting', not_assessed: 'an unconfirmed implementation position for'}[status];
   const overview = `${clientName} reports ${position} ${id} — ${definition.title} within the ISMS scope. This is reported implementation, not independent verification or certification.`;
   const actions = [...new Set(nextSteps)];
-  const narrative = `OVERVIEW\n${overview}\n\nIMPLEMENTATION BREAKDOWN\n${breakdown.join('\n\n') || 'No practices have been reported.'}\n\nITEMS TO ADDRESS\n${actions.length ? actions.map(action => `- ${concise(action)}`).join('\n') : 'No confirmation or remediation actions were derived from the selected substantive answers.'}${additionalContext.length?'\nReview the optional reported context above separately; it does not change the proposed status.':''}`;
+  const narrative = inlineNarrative ? formatInlineSummary({
+    paragraph: [overview, ...additionalContext.map(context => `Additional reported context: ${concise(context)}`)].join(' '),
+    controls: basis,
+    limitations: gaps.length && unknowns.length ? 'The interview reports incomplete practices and facts that need confirmation.' : gaps.length ? 'The interview reports practices that are incomplete or not in place.' : unknowns.length ? 'The implementation position includes facts that need confirmation.' : 'The reported practices remain subject to separate evidence verification.',
+  }) : `OVERVIEW\n${overview}\n\nIMPLEMENTATION BREAKDOWN\n${breakdown.join('\n\n') || 'No practices have been reported.'}\n\nITEMS TO ADDRESS\n${actions.length ? actions.map(action => `- ${concise(action)}`).join('\n') : 'No confirmation or remediation actions were derived from the selected substantive answers.'}${additionalContext.length?'\nReview the optional reported context above separately; it does not change the proposed status.':''}`;
   if (narrative.length > 20000) throw new Error('The generated write-up exceeds 20,000 characters. Shorten the interview details before reviewing it.');
   return {version, status, narrative, basis, gaps, unknowns, nextSteps: actions, evidence: text(answers.evidence) ? [text(answers.evidence)] : [],
     answers: [...active, ...extraQuestions].filter(question => text(answers[question.id])).map(question => ({prompt: question.prompt,
       answer: answers[question.id] + (text(answers[question.id + '_detail']) ? `\nReported supporting detail: ${text(answers[question.id + '_detail'])}` : '')})), signals};
+}
+
+export function isoInlineNarrative(id, answers, version = catalog.version, clientName = 'The organization') {
+  return isoGuidedResult(id, answers, version, clientName, true).narrative;
 }

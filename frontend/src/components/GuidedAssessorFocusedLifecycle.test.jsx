@@ -233,3 +233,27 @@ test('changed answers refresh derived conclusions while explicitly preserving re
   await click('Refresh from answers');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toContain('not currently in place');expect(button('Save assessment').disabled).toBe(false);
   expect(stored.answers.system).toBe('OriginalTool');expect(stored.result.narrative).not.toContain('OriginalTool');expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
+
+test('inline completion saves the reviewed multiline report without mounting an Omni window',async()=>{
+  stored={...interview('1.1'),revision:1,answers:completeAnswers('1.1')};
+  const onInlineClose=jest.fn();await render({inline:true,inlineOpen:true,onInlineClose});
+  expect(document.querySelector('.omni-launch-button')).toBeNull();expect(document.querySelector('.omni-workspace-window')).toBeNull();
+  for(let count=0;button('Save & next')&&count<12;count++)await click('Save & next');
+  expect(document.body.textContent).toContain('Review your assessment summary');
+  const summary=document.querySelector('[aria-label="Omnibot implementation summary"]');
+  expect(summary.value).toContain('\n\nControls in place\n• ');expect(summary.value).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();await click('Save & close');
+  expect(props.onSaveAssessment).toHaveBeenCalledWith(expect.objectContaining({implementation:summary.value,status:'addressed'}),expect.any(String));expect(onInlineClose).toHaveBeenCalledTimes(1);
+});
+
+test('inline reload retains reviewed wording, and changed-answer refresh keeps the approved format',async()=>{
+  readySummary();await render({inline:true,inlineOpen:true});
+  const section=document.querySelector('[aria-label="CIS assessment interview"]');
+  await render({inlineOpen:false});expect(document.querySelector('[aria-label="CIS assessment interview"]')).toBe(section);expect(section.hidden).toBe(true);
+  await render({inlineOpen:true});expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Reviewed Brawndo inventory narrative');
+  await click('Back to questions');for(let i=0;i<4;i++)await click('Back');await click('No');
+  for(let count=0;button('Save & next')&&count<12;count++)await click('Save & next');
+  expect(button('Save assessment').disabled).toBe(true);await click('Refresh from answers');
+  const text=document.querySelector('[aria-label="Omnibot implementation summary"]').value;
+  expect(text).toContain('\n\nControls in place');expect(text).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
