@@ -2,7 +2,7 @@ import {useEffect,useId,useRef,useState} from 'react';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import api,{formatError} from '@/lib/api';
-import {guidedCatalog,catalogForPilot,versionForSafeguard,catalogForVersion,pilotEnabled,prioritizeGuidedRows,visibleQuestions,generateResult,validateAnswers,compatibleInterviewAnswers} from '@/lib/guidedAssessment';
+import {guidedCatalog,catalogForPilot,versionForSafeguard,catalogForVersion,pilotEnabled,prioritizeGuidedRows,visibleQuestions,generateResult,validateAnswers,validateGuidedCompletion,compatibleInterviewAnswers} from '@/lib/guidedAssessment';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
@@ -216,6 +216,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   }
   async function reviewFocusedProposal(){
     if(requireFocusedComparison())return;
+    try{validateGuidedCompletion(id,answers,version);}catch(e){setError(formatError(e));return;}
 
     const generated=directAssessment?omniCisSummary(id,answers,version,clientName,inline?new Date():null).result:refined?refinedSummary(id,answers,version):focusedResult(id,answers,version);
 
@@ -255,6 +256,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   function putRefinedDetail(key,value){setAnswers(previous=>({...previous,[key]:value}));setResult(null);setReplace(false);setSaveNotice('');}
 
   async function nextRefinedGroup(index,groups){
+    try{validateGuidedCompletion(id,answers,version);}catch(e){setError(formatError(e));return;}
 
     if(requireFocusedComparison())return;
 

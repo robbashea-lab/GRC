@@ -102,12 +102,13 @@ def _origins(row, draft, questions):
         return origins
     catalog = guided_assessment.VERSIONS[draft['version']]
     definition = catalog['definitions'][row['definition_id']]
-    current = draft['version'] in (guided_assessment.PROGRAM['version'], guided_assessment.PROGRAM_V4['version'], guided_assessment.CONTROL1_V4['version'])
+    corrected = draft['version'] in (guided_assessment.PROGRAM_V5['version'], guided_assessment.CONTROL1_V5['version'])
+    current = draft['version'] in (guided_assessment.PROGRAM['version'], guided_assessment.PROGRAM_V4['version'], guided_assessment.PROGRAM_V5['version'], guided_assessment.CONTROL1_V4['version']) or corrected and row['definition_id'] not in ('1.1','1.2')
     root, states = definition.get('root'), []
     for question in questions.values():
         key = question['id']
         critical = question.get('critical', question['type'] == 'matrix' or key == root)
-        if not critical or current and root == 'practice' and key == root:
+        if not critical or current and (root == 'practice' or corrected) and key == root:
             continue
         value = answers.get(key)
         values = list((value or {}).get(name) for name in question['rows']) if question['type'] == 'matrix' else value if question['type'] == 'multi' else [value]
@@ -136,6 +137,8 @@ def _origins(row, draft, questions):
                 text = question.get('gap_template' if kind == 'gap' else 'unknown_template') or ('Address: ' if kind == 'gap' else 'Confirm: ') + prompt
                 origins[(key, kind)] = text
     if current:
+        if corrected and answers.get(root) == 'No' and not any(kind == 'gap' for _, kind in origins):
+            origins[(root, 'gap')] = 'The requirement practice is reported not in place.'
         applicable = [state for state in states if state != 'excluded']
         if states and not applicable:
             origins[('scope_reason', 'verification')] = 'Applicability requires native assessment decision; excluded scope is not proof of implementation.'
@@ -170,6 +173,11 @@ def generated(row, draft):
                 text += ' — ' + _text(answers,question_id + '_detail')
             origins[(question_id, kind)] = text
     for question_id, kind in (('gaps', 'gap'), ('unknowns', 'verification')):
+        if row['framework_key']=='cis-ig1' and draft['version'] in (guided_assessment.PROGRAM_V5['version'],guided_assessment.CONTROL1_V5['version']) and answers.get('additional_gap' if kind=='gap' else 'additional_confirmation')!='Yes':
+            continue
+        engine = soc_guided_assessment if row['framework_key'] == 'soc-2' else iso_guided_assessment if row['framework_key'] == 'iso-27001' else None
+        if engine and draft['version'] != engine.LEGACY['version'] and answers.get('additional_gap' if kind == 'gap' else 'additional_confirmation') != 'Yes':
+            continue
         if isinstance(answers.get(question_id), str) and _text(answers,question_id):
             origins[(question_id, kind)] = _text(answers,question_id)
     return [{

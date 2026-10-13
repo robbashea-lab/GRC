@@ -1,8 +1,9 @@
 import catalog from '@catalogs/guidedSoc2.json';
+import legacyCatalog from '@catalogs/guidedSoc2V1.json';
 import {formatInlineSummary} from './inlineAssessment';
 
 export const socGuidedCatalog = catalog;
-const versions = {[catalog.version]: catalog};
+const versions = {[catalog.version]: catalog,[legacyCatalog.version]:legacyCatalog};
 const positions = {addressed: 'practices addressing', in_progress: 'partial or unresolved practices for', needs_attention: 'confirmed deficiencies affecting', not_assessed: 'an unconfirmed implementation position for'};
 const choices = ['Yes', 'Partially', 'No', 'Not sure'];
 const contextChoices = ['Relevant', 'Outside the selected system', 'Not sure'];
@@ -13,6 +14,11 @@ const extraQuestions = [
 ];
 const text = value => value?.trim() || '';
 const concise = value => value.length > 500 ? `${value.slice(0, 500)}… (full response retained in the interview)` : value;
+
+export function socExtraQuestions(answers={},version=catalog.version,all=false){
+  const questions=versions[version]?.extra_questions||extraQuestions;
+  return questions.filter(question=>all||!question.condition||answers[question.condition.id]===question.condition.equals);
+}
 
 function definitionFor(id, version) {
   const source = versions[version || catalog.version];
@@ -50,7 +56,7 @@ export function socGuidedEnabled(clientId, user, frameworkKey, configuration = {
 }
 
 export function socQuestions(id, answers = {}, version = catalog.version) {
-  return [...activeQuestions(id, answers, version), ...extraQuestions];
+  return [...activeQuestions(id, answers, version), ...socExtraQuestions(answers,version)];
 }
 
 export function socGroups(id, answers = {}, version = catalog.version) {
@@ -59,7 +65,7 @@ export function socGroups(id, answers = {}, version = catalog.version) {
 }
 
 export function validateSocAnswers(id, answers, version = catalog.version) {
-  const questions = new Map([...normalizedGroups(id, version).flatMap(group => group.questions), ...extraQuestions].map(question => [question.id, question]));
+  const questions = new Map([...normalizedGroups(id, version).flatMap(group => group.questions), ...socExtraQuestions(answers,version,true)].map(question => [question.id, question]));
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) throw new Error('Invalid SOC interview answers.');
   for (const [key, value] of Object.entries(answers)) {
     const detail = key.endsWith('_detail');
@@ -72,6 +78,7 @@ export function validateSocAnswers(id, answers, version = catalog.version) {
 
 export function validateSocCompletion(id, answers, version = catalog.version) {
   validateSocAnswers(id, answers, version);
+  for(const question of socExtraQuestions(answers,version))if(question.condition&&!text(answers[question.id]))throw new Error('Describe the additional reported work before reviewing the summary.');
   for (const question of activeQuestions(id, answers, version)) {
     if (question.type === 'text') continue;
     if (!answers[question.id]) throw new Error('Answer each applicable SOC question before reviewing the summary.');
@@ -118,16 +125,19 @@ export function socGuidedResult(id, answers, version = catalog.version, clientNa
     unknowns.push('No substantive practice is established by the applicable answers; confirm the criterion assessment in the selected system.');
     nextSteps.push('Confirm the applicable practices before making a native readiness or applicability decision.');
   }
-  const additionalContext = ['gaps', 'unknowns'].map(key => text(answers[key])).filter(Boolean);
+  const additionalContext = socExtraQuestions(answers,version).filter(question=>['gaps','unknowns'].includes(question.id)).map(question => text(answers[question.id])).filter(Boolean);
   if (additionalContext.length) breakdown.push(`Additional reported context\n${additionalContext.map(context => `- ${concise(context)}`).join('\n')}`);
-  const status = confirmedNo ? 'needs_attention' : !meaningful ? 'not_assessed' : gaps.length || unknowns.length ? 'in_progress' : 'addressed';
+  const status = confirmedNo ? 'needs_attention' : !meaningful || version!==legacyCatalog.version&&unknowns.length&&!gaps.length ? 'not_assessed' : gaps.length||unknowns.length ? 'in_progress' : 'addressed';
+  if(version!==legacyCatalog.version)for(const [key,kind] of [['gaps','gap'],['unknowns','verification']])if(answers[key==='gaps'?'additional_gap':'additional_confirmation']==='Yes'&&text(answers[key])){
+    const message=text(answers[key]);signals.push({questionId:key,kind,text:message});(kind==='gap'?gaps:unknowns).push(message);nextSteps.push((kind==='gap'?'Address the reported gap: ':'Confirm the reported information: ')+message);
+  }
   const position = positions[status];
   const overview = `${clientName} reports ${position} ${id} — ${definition.title} within the selected system. This is reported readiness, not evidence verification or an auditor opinion.`;
   const actions = [...new Set(nextSteps)];
   const narrative = `OVERVIEW\n${overview}\n\nIMPLEMENTATION BREAKDOWN\n${breakdown.join('\n\n') || 'No practices have been reported.'}\n\nITEMS TO ADDRESS\n${actions.length ? actions.map(action => `- ${concise(action)}`).join('\n') : 'No confirmation or remediation items were reported in this interview.'}`;
   if (narrative.length > 20000) throw new Error('The generated write-up exceeds 20,000 characters. Shorten the interview details before reviewing it.');
   return {version, status, narrative, basis, gaps, unknowns, nextSteps: actions, evidence: text(answers.evidence) ? [text(answers.evidence)] : [],
-    answers: [...active, ...extraQuestions].filter(question => text(answers[question.id])).map(question => ({prompt: question.prompt,
+    answers: [...active, ...socExtraQuestions(answers,version)].filter(question => text(answers[question.id])).map(question => ({prompt: question.prompt,
       answer: answers[question.id] + (text(answers[question.id + '_detail']) ? `\nReported supporting detail: ${text(answers[question.id + '_detail'])}` : '')})), signals};
 }
 
@@ -138,7 +148,7 @@ export function socInlineSummary(id, answers, version = catalog.version, clientN
   return formatInlineSummary({
     paragraph: `${clientName} reports ${positions[result.status]} ${id} — ${definition.title} within the selected system. This is reported readiness, not evidence verification or an auditor opinion.`,
     controls: result.basis.map(concise),
-    limitations: result.gaps.length || result.unknowns.length ? 'Incomplete practices or unresolved confirmation items affect the reported readiness conclusion.' : '',
+    limitations: [...result.gaps.map(gap=>'Reported gap: '+concise(gap)),...result.unknowns.map(unknown=>'Requires confirmation: '+concise(unknown))].join(' '),
     date,
   });
 }

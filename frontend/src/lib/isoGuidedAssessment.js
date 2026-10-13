@@ -1,12 +1,14 @@
 import isms from '@catalogs/guidedIsoIsms.json';
 import organizational from '@catalogs/guidedIsoOrganizationalPeople.json';
 import technology from '@catalogs/guidedIsoPhysicalTechnology.json';
+import currentCatalog from '@catalogs/guidedIsoV2.json';
 import {formatInlineSummary} from './inlineAssessment';
-const catalog = {version: 'iso27001-omni-1', framework_id: 'iso-27001',
+const legacyCatalog = {version: 'iso27001-omni-1', framework_id: 'iso-27001',
   definitions: {...isms.definitions, ...organizational.definitions, ...technology.definitions}};
+const catalog=currentCatalog;
 
 export const isoGuidedCatalog = catalog;
-const versions = {[catalog.version]: catalog};
+const versions = {[catalog.version]: catalog,[legacyCatalog.version]:legacyCatalog};
 const choices = ['Yes', 'Partially', 'No', 'Not sure'];
 const contextChoices = ['Relevant', 'Not relevant here', 'Not sure'];
 const extraQuestions = [
@@ -16,6 +18,11 @@ const extraQuestions = [
 ];
 const text = value => value?.trim() || '';
 const concise = value => value.length > 500 ? `${value.slice(0, 500)}… (full response retained in the interview)` : value;
+
+export function isoExtraQuestions(answers={},version=catalog.version,all=false){
+  const questions=versions[version]?.extra_questions||extraQuestions;
+  return questions.filter(question=>all||!question.condition||answers[question.condition.id]===question.condition.equals);
+}
 
 function definitionFor(id, version) {
   const source = versions[version || catalog.version];
@@ -49,7 +56,7 @@ export function isoGuidedEnabled(clientId, user, frameworkKey, configuration = {
 }
 
 export function isoQuestions(id, answers = {}, version = catalog.version) {
-  return [...activeQuestions(id, answers, version), ...extraQuestions];
+  return [...activeQuestions(id, answers, version), ...isoExtraQuestions(answers,version)];
 }
 
 export function isoGroups(id, answers = {}, version = catalog.version) {
@@ -58,7 +65,7 @@ export function isoGroups(id, answers = {}, version = catalog.version) {
 }
 
 export function validateIsoAnswers(id, answers, version = catalog.version) {
-  const questions = new Map([...normalizedGroups(id, version).flatMap(group => group.questions), ...extraQuestions].map(question => [question.id, question]));
+  const questions = new Map([...normalizedGroups(id, version).flatMap(group => group.questions), ...isoExtraQuestions(answers,version,true)].map(question => [question.id, question]));
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) throw new Error('Invalid ISO interview answers.');
   for (const [key, value] of Object.entries(answers)) {
     const detail = key.endsWith('_detail');
@@ -71,6 +78,7 @@ export function validateIsoAnswers(id, answers, version = catalog.version) {
 
 export function validateIsoCompletion(id, answers, version = catalog.version) {
   validateIsoAnswers(id, answers, version);
+  for(const question of isoExtraQuestions(answers,version))if(question.condition&&!text(answers[question.id]))throw new Error('Describe the additional reported work before reviewing the summary.');
   for (const question of activeQuestions(id, answers, version)) {
     if (question.type === 'text') continue;
     if (!answers[question.id]) throw new Error('Answer each applicable ISO question before reviewing the summary.');
@@ -117,20 +125,23 @@ export function isoGuidedResult(id, answers, version = catalog.version, clientNa
     unknowns.push('No substantive practice is established by the applicable answers; confirm the implementation assessment in the ISMS scope.');
     nextSteps.push('Confirm the applicable practices before making a native implementation decision.');
   }
-  const additionalContext = ['gaps', 'unknowns'].map(key => text(answers[key])).filter(Boolean);
+  const additionalContext = isoExtraQuestions(answers,version).filter(question=>['gaps','unknowns'].includes(question.id)).map(question => text(answers[question.id])).filter(Boolean);
   if (additionalContext.length) breakdown.push(`Additional reported context (optional notes; separate from the selected-answer outcome)\n${additionalContext.map(context => `- ${concise(context)}`).join('\n')}`);
-  const status = confirmedNo ? 'needs_attention' : !meaningful ? 'not_assessed' : gaps.length || unknowns.length ? 'in_progress' : 'addressed';
+  const status = confirmedNo ? 'needs_attention' : !meaningful || version!==legacyCatalog.version&&unknowns.length&&!gaps.length ? 'not_assessed' : gaps.length||unknowns.length ? 'in_progress' : 'addressed';
+  if(version!==legacyCatalog.version)for(const [key,kind] of [['gaps','gap'],['unknowns','verification']])if(answers[key==='gaps'?'additional_gap':'additional_confirmation']==='Yes'&&text(answers[key])){
+    const message=text(answers[key]);signals.push({questionId:key,kind,text:message});(kind==='gap'?gaps:unknowns).push(message);nextSteps.push((kind==='gap'?'Address the reported gap: ':'Confirm the reported information: ')+message);
+  }
   const position = {addressed: 'practices addressing', in_progress: 'partial or unresolved practices for', needs_attention: 'confirmed deficiencies affecting', not_assessed: 'an unconfirmed implementation position for'}[status];
   const overview = `${clientName} reports ${position} ${id} — ${definition.title} within the ISMS scope. This is reported implementation, not independent verification or certification.`;
   const actions = [...new Set(nextSteps)];
   const narrative = inlineNarrative ? formatInlineSummary({
     paragraph: [overview, ...additionalContext.map(context => `Additional reported context: ${concise(context)}`)].join(' '),
     controls: basis,
-    limitations: gaps.length && unknowns.length ? 'The interview reports incomplete practices and facts that need confirmation.' : gaps.length ? 'The interview reports practices that are incomplete or not in place.' : unknowns.length ? 'The implementation position includes facts that need confirmation.' : 'The reported practices remain subject to separate evidence verification.',
+    limitations: [...gaps.map(gap=>'Reported gap: '+concise(gap)),...unknowns.map(unknown=>'Requires confirmation: '+concise(unknown))].join(' ')||'The reported practices remain subject to separate evidence verification.',
   }) : `OVERVIEW\n${overview}\n\nIMPLEMENTATION BREAKDOWN\n${breakdown.join('\n\n') || 'No practices have been reported.'}\n\nITEMS TO ADDRESS\n${actions.length ? actions.map(action => `- ${concise(action)}`).join('\n') : 'No confirmation or remediation actions were derived from the selected substantive answers.'}${additionalContext.length?'\nReview the optional reported context above separately; it does not change the proposed status.':''}`;
   if (narrative.length > 20000) throw new Error('The generated write-up exceeds 20,000 characters. Shorten the interview details before reviewing it.');
   return {version, status, narrative, basis, gaps, unknowns, nextSteps: actions, evidence: text(answers.evidence) ? [text(answers.evidence)] : [],
-    answers: [...active, ...extraQuestions].filter(question => text(answers[question.id])).map(question => ({prompt: question.prompt,
+    answers: [...active, ...isoExtraQuestions(answers,version)].filter(question => text(answers[question.id])).map(question => ({prompt: question.prompt,
       answer: answers[question.id] + (text(answers[question.id + '_detail']) ? `\nReported supporting detail: ${text(answers[question.id + '_detail'])}` : '')})), signals};
 }
 

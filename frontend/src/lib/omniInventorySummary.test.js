@@ -9,6 +9,16 @@ test('matching identity, configured CIS group and applicable safeguard gate',()=
   for(const group of [1,2,3])expect(inventorySummaryEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:group},record)).toBe(true);
   expect(inventorySummaryEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:1},{...record,definition_id:'1.2'})).toBe(true);
 });
+
+test('unknown inventory details do not establish partial implementation and stale hidden exclusions are ignored',()=>{
+  const unknown={inventory:'Yes'};
+  for(const q of visibleQuestions('1.1',unknown,version).filter(q=>q.critical&&q.id!=='inventory'))unknown[q.id]=q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Not sure'])):q.type==='date'?'':'Not sure';
+  expect(inventorySummary(unknown,version,'Synthetic QA','2026-10-13').result.status).toBe('not_assessed');
+  const hidden={inventory:'No',coverage:{'Cloud-hosted assets':'Not applicable'},scope_reason:'STORED OLD SCOPE'};
+  expect(visibleQuestions('1.1',hidden,version).some(q=>q.id==='scope_reason')).toBe(false);
+  expect(inventorySummary(hidden,version,'Synthetic QA','2026-10-13').result.narrative).not.toContain('STORED OLD SCOPE');
+  expect(hidden.scope_reason).toBe('STORED OLD SCOPE');
+});
 test.each(['No','Not sure','Partially'])('summary keeps %s evaluator status and distinguishes uncertainty',inventory=>{
   const answers={inventory},summary=inventorySummary(answers,version);
   expect(summary.result.status).toBe(focusedResult('1.1',answers,version).status);

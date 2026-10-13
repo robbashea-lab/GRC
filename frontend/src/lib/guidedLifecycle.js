@@ -1,5 +1,6 @@
 // Only the upgraded Omni consumer uses these helpers. Inputs are saved, authorized
 // records; draft form values and inferred CIS cadences are not program facts.
+import {rankProgramRows} from './programTriage';
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value || {}, key);
 const count = value => Number.isInteger(value) && value >= 0 ? value : null;
 const ids = value => Array.isArray(value) ? [...new Set(value.filter(id => typeof id === 'string' && id))] : null;
@@ -151,6 +152,7 @@ export function prioritizeGuidedLifecycle(rows = [], {drafts = {}, contextComple
   const unique = new Map();
   for (const row of rows) if (row?.definition_id && row.in_active_scope !== false && !unique.has(row.definition_id)) unique.set(row.definition_id, row);
   const scoped = [...unique.values()], resume = [], recommendations = [], overdue = [];
+  const ranked=rankProgramRows(scoped,{limit:scoped.length}),positions=new Map(ranked.map((row,index)=>[row.definition_id,index]));
   let complete = contextComplete;
   for (const row of scoped) {
     const signals = workSignals(row, contextComplete);
@@ -160,15 +162,15 @@ export function prioritizeGuidedLifecycle(rows = [], {drafts = {}, contextComple
     let rank, reasonCode, reason, action = 'current';
     if (row.status === 'not_assessed') {rank = 0; reasonCode = 'not_assessed'; reason = 'The saved position is Not Assessed.'; action = 'start';}
     else if (row.status === 'needs_attention') {rank = 1; reasonCode = 'not_implemented'; reason = 'The saved position is Not Implemented; an open Finding is not required to establish this gap.';}
-    else if (row.status === 'in_progress' || signals.openFindings > 0 || signals.hasOpenGapAction === true || row.verification === 'gap_identified') {rank = 2; reasonCode = 'partial_or_unresolved'; reason = 'Partial implementation or an explicitly recorded unresolved gap needs attention.'; action = signals.openFindings > 0 || signals.hasOpenGapAction === true ? 'findings' : 'current';}
-    else if ((row.status === 'addressed' && row.verification !== 'verified') || signals.nextReview || signals.overdueReviews > 0 || signals.openActions > 0) {
+    else if (ranked[positions.get(row.definition_id)]?.triage.bucket===1) {rank = 2; reasonCode = 'partial_or_unresolved'; reason = 'Partial implementation or an explicitly recorded unresolved gap needs attention.'; action = signals.openFindings > 0 || signals.hasOpenGapAction === true ? 'findings' : 'current';}
+    else if ((row.status === 'addressed' && row.verification !== 'verified') || signals.nextReview || signals.overdueReviews > 0 || signals.openActions > 0 || signals.openFindings>0) {
       rank = 3; reasonCode = 'verification_or_review';
       reason = signals.nextReview || signals.overdueReviews > 0 ? 'An authoritative scheduled Review is due or recorded.' : row.status === 'addressed' && row.verification !== 'verified' ? 'The saved implementation position still needs verification.' : 'Linked native Action Item remains open.';
-      if (signals.openActions > 0) action = 'findings';
+      if (signals.openActions > 0 || signals.openFindings>0) action = 'findings';
     }
-    if (rank != null) recommendations.push({...row, rank, reasonCode, reason, action, signals});
+    if (rank != null&&positions.has(row.definition_id)) recommendations.push({...row, rank, reasonCode, reason, action, signals});
   }
-  recommendations.sort((a, b) => a.rank - b.rank || compareIds(a, b));
+  recommendations.sort((a, b) => positions.get(a.definition_id)-positions.get(b.definition_id));
   resume.sort(compareIds); overdue.sort(compareIds);
   const categoryCount = code => recommendations.filter(item => item.reasonCode === code).length;
   const allIds = key => {
