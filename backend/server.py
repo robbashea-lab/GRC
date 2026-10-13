@@ -3879,7 +3879,7 @@ async def review_history(review_id: str, user: Dict = Depends(get_current_user))
                 "completed_by": snap.get("by"), "legacy": True})
         parent = cursor.get("parent_review_id")
         cursor = await db.reviews.find_one({"review_id": parent, "client_id": review["client_id"]}, {"_id": 0}) if parent else None
-    return sorted(history, key=lambda o: o.get("completed_at") or o.get("completion_date") or "", reverse=True)
+    return portfolio_activity.public_source(sorted(history, key=lambda o: o.get("completed_at") or o.get("completion_date") or "", reverse=True))
 
 
 @api.get("/reviews/{review_id}/activity")
