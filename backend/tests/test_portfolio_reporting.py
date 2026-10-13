@@ -1,15 +1,57 @@
 """Real routes/writers and automatic collection against a disposable database."""
 import asyncio
 import copy
+import json
 from unittest.mock import AsyncMock, patch
 from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 import portfolio_reporting as reports
 import portfolio_activity
 import portfolio_deletions
-from framework_catalog import active_definitions
+from framework_catalog import active_definitions, FRAMEWORKS
+import portfolio_progress
 
 
 class PortfolioReportingTests(ClientDashboardSourcesTests):
+    def test_compact_historical_projection_retains_counts_identity_and_continuity_without_catalog_payload(self):
+        client = {'client_id': 'large', 'name': 'Isolated large contract fixture', 'status': 'active',
+            'onboarding_baseline': {'completed': True}, 'framework_settings': {'cis-ig1': {'implementation_group': 3}}}
+        rows = [{'client_id': 'large', 'framework_key': 'cis-ig1', 'framework_assessment_id': 'large-' + definition['id'],
+            'definition_id': definition['id'], 'framework_version': '8.1', 'status': 'not_assessed',
+            'created_at': '2026-07-01T00:00:00+00:00'} for definition in active_definitions('cis-ig1', {'implementation_group': 3})]
+        position = portfolio_progress.current_position(client, next(framework for framework in FRAMEWORKS if framework['key'] == 'cis-ig1'), [], rows,
+            '2026-10-13T18:00:00+00:00')
+        document = {**position, 'snapshot_id': 'actual-observation', 'captured_at': position['current']['captured_at'],
+            'effective_at': '2026-10-12T18:00:00+00:00', 'observation_kind': 'committed_event', 'source_event': 'native-event',
+            'source_revision': position['current']['source_revision'], 'observation_sequence': 3}
+        document['current'].update(continuity_proven=True, effective_until='2026-10-14T18:00:00+00:00', continuity_source_event='next-native-event')
+        before = copy.deepcopy(document)
+        point = reports.observation(document)
+        for field in ('counts', 'included_counts', 'denominator', 'implemented', 'scope_signature', 'status_signature', 'measure_version'):
+            self.assertEqual(point[field], document['current'][field])
+        self.assertEqual(point['effective_at'], document['effective_at'])
+        self.assertEqual(point['source_revision'], document['source_revision'])
+        self.assertTrue(point['continuity_proven'])
+        self.assertNotIn('scope', point)
+        self.assertNotIn('components', point)
+        self.assertNotIn('source_references', point['provenance'])
+        self.assertLess(len(json.dumps(point)), 2200)
+        self.assertLess(len(json.dumps([point] * (20 * 90))), 5 * 1024 * 1024)
+        self.assertEqual(document, before)
+        self.assertEqual(len(document['current']['scope']['definition_ids']), 153)
+        self.assertEqual(len(document['current']['provenance']['source_references']), 153)
+
+    async def test_profile_configuration_and_audit_metadata_do_not_capture_posture_observations(self):
+        await self.seed_program()
+        client = await server.db.clients.find_one({'client_id': 'a'})
+        for field, value in [('industry', 'Isolated metadata'), ('iso_audit_program', {'active': True}),
+                             ('framework_settings', {**client['framework_settings'], 'soc-2': {'categories': ['security'], 'system_description': 'Reviewed system wording'}})]:
+            changed = {**client, field: value}
+            event = portfolio_activity.project_committed_change('clients', 'a', 'a', {'user_id': 'admin'}, client, changed, reports.now())
+            if event:
+                self.assertFalse(event['implementation_scope_changed'])
+                self.assertEqual(await reports.capture_committed(server.db, event), 0)
+        self.assertEqual(await server.db.portfolio_snapshots.count_documents({}), 0)
+
     async def seed_program(self):
         await server.db.clients.update_one({'client_id': 'a'}, {'$set': {
             'onboarding_baseline': {'completed': True}, 'framework_settings': {'cis-ig1': {'implementation_group': 1}}}})

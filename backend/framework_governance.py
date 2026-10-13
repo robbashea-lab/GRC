@@ -378,6 +378,7 @@ def router_for(s):
         return await framework_summary.read(s,client,(program,detail) if detail else None,offset,limit)
     @router.get('/frameworks/{key}')
     async def workspace(key:str,client_id:str,user=Depends(s.get_current_user)):
+        import portfolio_progress
         client=await scoped(client_id,user)
         framework=next((f for f in FRAMEWORKS if f['key']==key),None)
         if not framework:raise HTTPException(404,'Framework not found')
@@ -414,6 +415,7 @@ def router_for(s):
                 {'_id':1,'revision':1,'completed':1,'version':1,'generated_at':1,'user_id':1}).to_list(123)
             guided_drafts={identities[d['_id']]:{field:d.get(field) for field in ('revision','completed','version','generated_at','user_id')} for d in drafts}
         return portfolio_activity.public_source({'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
+                'implementation_position':portfolio_progress.current_position(client,framework,[program] if program else [],rows,s._now())['current'] if program else None,
                 'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
                 'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows,upgraded=upgraded),'guided_assessment_drafts':guided_drafts,
                 'active_definition_ids':[d['id'] for d in active_definitions(key,config)]})

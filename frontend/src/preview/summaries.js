@@ -23,7 +23,7 @@ const emptyMetrics=()=>Object.fromEntries(rules.metrics.map(k=>[k,[]]));
 export function portfolio(db,includeArchived,today=new Date()) {
   if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Client directory is restricted to internal admins');
   const day=managementDay(today), allMetrics=emptyMetrics(), attention=[];
-  const latest=latestPortfolioActivity(db.logs,today);
+  const latest=latestPortfolioActivity(db.logs,today,db.portfolio_reporting?.activity_proofs);
   const rows=db.clients.filter(c=>evidenceAccess(db.user,c.client_id)&&(includeArchived||c.status!=='archived')).map(c=>{
     const m=model(db,c.client_id,today), active=!['archived','inactive'].includes(c.status);
     const metric_items=Object.fromEntries(rules.metrics.map(k=>[k,m.metrics[k].map(r=>portfolioItem(r,c,today))]));

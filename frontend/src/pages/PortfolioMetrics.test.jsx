@@ -1,38 +1,39 @@
-import React,{act} from 'react';
+import React, {act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ClientDirectory from './ClientDirectory';
 import api from '@/lib/api';
-jest.mock('react-router-dom',()=>({useNavigate:()=>jest.fn(),Link:({children})=>children}),{virtual:true});
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({switchClient:jest.fn()})}));
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'u',role:'super_admin'}})}));
-jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:e=>e.message}));
+jest.mock('react-router-dom', () => ({useNavigate: () => jest.fn()}), {virtual: true});
+jest.mock('@/context/OrgContext', () => ({useOrg: () => ({switchClient: jest.fn()})}));
+const mockUser = {user_id: 'u', role: 'super_admin'};
+jest.mock('@/context/AuthContext', () => ({useAuth: () => ({user: mockUser})}));
+jest.mock('@/lib/api', () => ({__esModule: true, default: {get: jest.fn()}, formatError: error => error.message}));
 
-test('client-row drills retain full populations beyond the old queue cap, including empty results',async()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;window.scrollTo=jest.fn();
-  const item=(i,c='a')=>({key:'tasks:'+i+':due',entity_type:'task',entity_id:String(i),client_id:c,client_name:c,title:'Action '+i,type:'Action Item',due_date:'2026-11-01',status:'open',priority:'due_soon'});
-  const overdue=Array.from({length:25},(_,i)=>({...item(i),due_date:'2026-09-01'})),future=[item(30)];
-  const metrics={past_due:overdue,due_30d:future,due_31_90d:[],critical_high_open:[],critical_high_issues:[],significant_risks:[],unassigned:[]};
-  api.get.mockImplementation(async path=>({data:path==='/users'?[]:{portfolio:{past_due:25,due_30d:0,due_31_90d:1,critical_high_open:0,unassigned:0,clients_requiring_attention:2,total_clients:3},
-    metric_items:metrics,attention_queue:overdue.slice(0,15),clients:[{client_id:'a',name:'Alpha',program_status:'action_required',past_due:25,due_30d:1,critical_high_open:0,critical_high_issues:0,significant_risks:0,unassigned:0,metric_items:metrics},{client_id:'b',name:'Beta',program_status:'needs_attention'},{client_id:'c',name:'Gamma',program_status:'healthy'}]}}));
-  const container=document.createElement('div');document.body.appendChild(container);const root=createRoot(container);
-  const click=async selector=>act(async()=>document.querySelector(selector).click());
-  const metric=async key=>{
-    await act(async()=>document.querySelector('[data-testid="client-row-menu-0"]').dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0,ctrlKey:false})));
-    await click(`[role="menuitem"][data-client-id="a"][data-metric="${key}"]`);
-  };
-  const close=async()=>act(async()=>document.querySelector('[data-testid="drill-dialog"] button').click());
+test('native counts distinguish an assessed zero, not-started lifecycle, no applicable scope, invalid source and independent verification', async () => {
+  global.IS_REACT_ACT_ENVIRONMENT = true; sessionStorage.clear(); window.scrollTo = jest.fn();
+  const counts = values => ['addressed', 'in_progress', 'needs_attention', 'not_assessed'].map((key, index) => ({key, label: key, count: values[index]}));
+  const current = (values, extra = {}) => ({availability: 'available', implemented: values[0], denominator: values.reduce((sum, value) => sum + value, 0), counts: counts(values), ...extra});
+  const programs = [
+    ['assessed-zero', current([0, 2, 3, 5])], ['new', current([0, 0, 0, 10], {not_started: true})],
+    ['reset', current([0, 0, 0, 10])], ['empty-scope', current([0, 0, 0, 0])],
+    ['invalid', current([0, 0, 0, 10], {denominator: 12, reason: 'Native counts do not reconcile'})],
+    ['missing-native-source', current([0, 0, 0, 0], {availability: 'partial', assessed: 0, reason: 'Expected native records are missing'})],
+    ['unverified-implemented', current([10, 0, 0, 0], {verification: 'not_verified'})],
+  ].map(([program_key, value]) => ({client_id: 'isolated', program_key, program_label: program_key, framework_key: 'cis-ig1', current: value, snapshots_90d: [], comparison_90d: {}}));
+  api.get.mockResolvedValue({data: {as_of: '2026-10-13T12:00:00Z', clients: [{client_id: 'isolated', name: 'Isolated', status: 'active'}], programs}});
+  const container = document.createElement('div'); document.body.appendChild(container); const root = createRoot(container);
   try {
-    await act(async()=>root.render(<ClientDirectory/>));
-    await metric('due_30d');
-    expect(document.querySelector('[data-testid="drill-dialog"]').textContent).toContain('Action 30');
-    expect(document.querySelectorAll('[data-testid^="drill-row-"]')).toHaveLength(1);await close();
-    await metric('past_due');
-    expect(document.querySelectorAll('[data-testid^="drill-row-"]')).toHaveLength(25);
-    expect(document.querySelector('[data-testid="drill-dialog"]').textContent).toContain('Past Due — Alpha');
-    expect([...document.querySelectorAll('[data-record-key]')].map(r=>r.dataset.recordKey).sort()).toEqual(overdue.map(r=>r.key).sort());await close();
-    await metric('unassigned');
-    expect(document.querySelector('[data-testid="drill-dialog"]').textContent).toContain('No items contribute to this metric.');await close();
-    expect(container.textContent).not.toContain('Needs Attention Across Clients');
-    expect(container.querySelector('[data-testid="portfolio-cards"]')).toBeNull();
-  } finally {await act(async()=>root.unmount());container.remove();jest.clearAllMocks();}
+    await act(async () => root.render(<ClientDirectory />));
+    const row = key => container.querySelector(`[data-program-id='${JSON.stringify(['isolated', key])}']`);
+    expect(row('assessed-zero').textContent).toContain('0.0%'); expect(row('assessed-zero').textContent).toContain('Assessed 5 of 10');
+    expect(row('new').textContent).toContain('Not started'); expect(row('reset').textContent).not.toContain('Not started');
+    expect(row('reset').textContent).toContain('0.0%'); expect(row('empty-scope').textContent).toContain('No applicable scope');
+    expect(row('invalid').textContent).toContain('Unavailable'); expect(row('invalid').textContent).not.toContain('0.0%');
+    expect(row('missing-native-source').textContent).toContain('Scope unavailable');
+    expect(row('missing-native-source').textContent).toContain('Assessed count unavailable');
+    expect(row('missing-native-source').textContent).not.toContain('0 safeguards');
+    expect(row('missing-native-source').textContent).not.toContain('Assessed 0 of 0');
+    expect(row('missing-native-source').querySelector('.gp-progress').getAttribute('aria-label')).not.toContain('0 of 0 assessed');
+    expect(row('unverified-implemented').textContent).toContain('100.0%');
+    expect(container.querySelectorAll('.gp-progress')).toHaveLength(7); expect(container.querySelector('[data-testid="drill-dialog"]')).toBeNull();
+  } finally { await act(async () => root.unmount()); container.remove(); }
 });

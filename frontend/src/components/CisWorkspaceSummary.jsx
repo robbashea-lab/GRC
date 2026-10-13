@@ -29,10 +29,10 @@ export default function CisWorkspaceSummary({summary:s,filter,onFilter,resume,on
     <div className="cis-summary-grid">
       <div className="cis-summary-measures">
         <AssessmentMetrics summary={s} implementedLabel={v.statuses.addressed}/>
-        <CisStatusBar counts={Object.fromEntries(CIS_ORDER.map(k=>[k,s[FIELD[k]]]))} className="h-2.5" framework={framework}/>
+        {s.available!==false?<CisStatusBar counts={Object.fromEntries(CIS_ORDER.map(k=>[k,s[FIELD[k]]]))} className="h-2.5" framework={framework}/>:<p role="status">{s.reason||'Implementation counts are unavailable.'}</p>}
         <div className="cis-legend" role="group" aria-label="Filter by assessment status">
           {CIS_ORDER.map(status=>{const n=s[FIELD[status]];
-            return <button key={status} type="button" aria-pressed={filter===status} onClick={()=>pick(status)} className={`cis-legend-item cis-tone-${implementationTone(status,framework)}`}><span className="cis-dot" aria-hidden="true"/>{v.statuses[status]}<strong>{n}</strong></button>;})}
+            return <button key={status} type="button" aria-pressed={filter===status} onClick={()=>pick(status)} className={`cis-legend-item cis-tone-${implementationTone(status,framework)}`}><span className="cis-dot" aria-hidden="true"/>{v.statuses[status]}<strong>{s.available===false?'—':n}</strong></button>;})}
         </div>
         <p className="cis-footnote">{scopeLabel ? `Coverage is limited to the ${scopeLabel} view, not the whole program.` : `Coverage shows how much of ${v.scope} has been evaluated.`} Neither measure is a compliance percentage, certification or audit opinion.</p>
         {children}

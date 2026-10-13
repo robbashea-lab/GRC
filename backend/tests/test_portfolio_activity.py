@@ -5,11 +5,12 @@ from contextlib import suppress
 import json
 import unittest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from fastapi import HTTPException
 from mongomock_motor import AsyncMongoMockClient
 import portfolio_activity as activity
+import portfolio_reporting as reporting
 import test_onboarding_recovery as onboarding_scenarios
 import portfolio_deletions as deletions
 from create_requests import digest
@@ -17,6 +18,37 @@ from pymongo.results import DeleteResult
 
 
 class PortfolioActivityTests(unittest.IsolatedAsyncioTestCase):
+    async def test_delayed_committed_position_capture_keeps_receipt_and_native_success_for_recovery(self):
+        event = activity.project_committed_change('framework_assessments', 'capture-recovery', 'a', self.user,
+            {'framework_key': 'cis-ig1', 'status': 'not_assessed'}, {'framework_key': 'cis-ig1', 'status': 'addressed'}, self.as_of)
+        await self.db.framework_assessments.insert_one({'framework_assessment_id': 'capture-recovery', 'client_id': 'a',
+            'framework_key': 'cis-ig1', 'status': 'addressed', '_portfolio_activity_pending': {event['event_id']: event},
+            '_portfolio_activity_last_event_id': event['event_id']})
+        with patch.object(reporting, 'capture_committed', AsyncMock(side_effect=RuntimeError('Isolated derived capture interruption'))):
+            self.assertTrue(await activity.acknowledge_committed(self.db, 'framework_assessments', 'capture-recovery', 'a', event['event_id']))
+            self.assertFalse(await activity.acknowledge_committed(self.db, 'framework_assessments', 'capture-recovery', 'a', event['event_id']))
+        retained = await self.db.framework_assessments.find_one({'framework_assessment_id': 'capture-recovery'})
+        self.assertEqual(retained['status'], 'addressed')
+        self.assertEqual(retained['_portfolio_activity_pending'], {event['event_id']: event})
+        self.assertEqual(await self.db.portfolio_events.count_documents({}), 1)
+        await activity.reconcile_pending(self.db)
+        await activity.reconcile_pending(self.db)
+        self.assertNotIn('_portfolio_activity_pending', await self.db.framework_assessments.find_one({'framework_assessment_id': 'capture-recovery'}))
+        self.assertEqual(await self.db.portfolio_events.count_documents({}), 1)
+
+    def test_implementation_scope_events_distinguish_lifecycle_membership_from_profile_metadata(self):
+        before = {'client_id': 'a', 'status': 'active', 'onboarding_baseline': {'completed': True},
+            'framework_settings': {'cis-ig1': {'implementation_group': 3}, 'soc-2': {'categories': ['security']}}}
+        for after in ({**before, 'status': 'inactive'}, {**before, 'archived_at': '2026-10-13T18:00:00+00:00'},
+                      {**before, 'framework_settings': {**before['framework_settings'], 'cis-ig1': {'implementation_group': 2}}}):
+            event = activity.project_committed_change('clients', 'a', 'a', {'user_id': 'admin'}, before, after, '2026-10-13T18:00:00+00:00')
+            self.assertTrue(event['implementation_scope_changed'])
+        old = {'client_id': 'a', 'baseline_key': 'cis-ig3', 'baseline_response': 'applies', 'status': 'active'}
+        event = activity.project_committed_change('requirements', 'requirement', 'a', {'user_id': 'admin'}, old,
+            {**old, 'baseline_key': 'soc-2'}, '2026-10-13T18:00:00+00:00')
+        self.assertEqual(event['program_keys'], ['cis-ig3', 'soc-2'])
+        self.assertTrue(event['implementation_scope_changed'])
+
     async def asyncSetUp(self):
         self.db = AsyncMongoMockClient()['portfolio_activity_isolated']
         self.user = {'user_id': 'operator', 'name': 'Original operator', 'role': 'platform_admin', 'client_ids': ['a']}

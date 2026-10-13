@@ -38,8 +38,8 @@ test.each(['existing-iso','new-multi-framework-client'])('ISO dashboard links pr
   const data={configured:true,selected:true,definitions,assessments:[...rows,{...rows[0],client_id:'foreign',framework_assessment_id:'foreign',status:'needs_attention'}],
     work:Object.fromEntries(rows.map(r=>[r.framework_assessment_id,r.work])),organizational_controls:[],configuration:{}};
   const before=JSON.stringify(data);
-  const cases=[['addressed',['4.1','A.5.1']],['in_progress',['4.2','A.5.5']],['needs_attention',['4.3','A.5.2']],
-    ['not_assessed',['4.4','A.5.4']],['not_applicable',['A.5.3']],['unremediated',['4.2','A.5.2','A.5.5']],['stale',['4.1','A.5.3']],['unevidenced',['4.1','A.5.3']]];
+  const cases=[['addressed',['4.1','A.5.1']],['in_progress',['4.2']],['needs_attention',['4.3','A.5.2']],
+    ['not_assessed',['4.4']],['not_applicable',['A.5.3']],['unremediated',['4.2','A.5.2','A.5.5']],['stale',['4.1','A.5.3']],['unevidenced',['4.1','A.5.3']]];
   for(const [view,ids] of cases){
     await act(async()=>root.render(<FrameworkProgramCard program={{key:'iso-27001',to:'/compliance/iso-27001'}} rows={rows}/>));
     const link=[...container.querySelectorAll('a')].find(a=>new URL(a.href).searchParams.get('view')===view);

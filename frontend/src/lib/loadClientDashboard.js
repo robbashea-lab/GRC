@@ -27,6 +27,7 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
     const frameworkSummary=programs.some(program=>program.trackingAvailable)
       ? (await api.get('/frameworks/summary',{params:{client_id:clientId},signal})).data : undefined;
     let queue, programRows;
+    const positions = new Map();
     if(workQueue) {
       const response=await api.get('/dashboard',{params:{...params,work_queue:true},signal});
       queue=response.data;
@@ -36,6 +37,7 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
       for(const program of programs.filter(p=>p.trackingAvailable)) {
         const {data}=await api.get(`/frameworks/${program.key}`,{params:{client_id:clientId},signal});
         if(data.assessments.some(a=>a.client_id!==clientId))throw new Error('Assessment belongs to another client.');
+        if(data.implementation_position)positions.set(program.key,data.implementation_position);
         const byId=new Map(data.assessments.map(a=>[a.definition_id,a]));
         // Linked-work projection lets the dashboard derive gap tracking, evidence and freshness.
         programRows[program.key]=data.definitions.filter(d=>byId.has(d.id)&&workspaceScope(program.key,data,d)).map(d=>({...d,...byId.get(d.id),work:data.work?.[byId.get(d.id).framework_assessment_id]}));
@@ -43,7 +45,8 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
     }
     return {...summary.data,members,queue,programRows,cisRows:programRows?.['cis-ig1'],onboardingCompleted:!!baselineResponse.data?.state?.completed,
       posture:Object.fromEntries(Object.entries(summary.data.posture).map(([key,value])=>[key,Array.isArray(value)?labelDashboardRows(value,members):value])),
-      programs:complianceProgress(clientId,baselineResponse.data?.state,requirements,frameworkSummary)};
+      programs:complianceProgress(clientId,baselineResponse.data?.state,requirements,frameworkSummary)
+        .map(program=>({...program,implementation_position:positions.get(program.key)}))};
   }
   if(workQueue)throw new Error('This dashboard requires the current work-queue contract.');
   const completeSnapshot=summary.data.management?.records;

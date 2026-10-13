@@ -16,6 +16,7 @@ import {record,write,audit,now,ids} from './store';
 import {stable as canonicalSnapshot} from './commandRequests';
 import {action} from './workflows';
 import {reconcileItems,currentItem,updateItem,linkItemFinding} from './assessmentItems';
+import {demoCurrentPositions} from './portfolioReporting';
 import {assessmentWork,findingApplies} from '../lib/frameworkWorkspace';
 import {existingFrameworkReview,sharedFrameworkPlans,reviewDriver,reviewDrivers} from '../lib/frameworks';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
@@ -249,6 +250,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       return new Blob([[fields.join(','),...lines].join('\r\n')],{type:'text/csv;charset=utf-8'});
     }
     return {framework,selected:db.requirements.some(r=>r.client_id===params.client_id&&r.baseline_key===id&&r.baseline_response==='applies'),configured:!!assessments.length,
+      implementation_position:demoCurrentPositions(db,[record(db,'clients',params.client_id)]).find(position=>position.framework_key===id)?.current||null,
       definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,
       guided_assessment_drafts:Object.fromEntries(assessments.filter(a=>guidedEnabled(db,a)).flatMap(a=>{const draft=db.guided_assessment_pilot?.[a.framework_assessment_id+':'+db.user.user_id];return draft?[[a.definition_id,{revision:draft.revision,completed:draft.completed,...(upgraded?{version:draft.version??null,generated_at:draft.generated_at??null,user_id:draft.user_id??null}:{})}]]:[];})),
       organizational_controls:id==='soc-2'?(db.organizational_controls||[]).filter(c=>c.client_id===params.client_id).map(c=>({control_id:c.control_id,legacy_id:c.legacy_id,assessment_ids:c.assessment_ids,design:c.design,conflicts:c.conflicts,observations:c.observations.map(o=>({operating:o.operating,expected_instances:o.expected_instances,collected_instances:o.collected_instances}))})):[],
