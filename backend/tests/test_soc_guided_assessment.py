@@ -26,6 +26,14 @@ def first_practice(id):
 
 
 class SocGuidedTests(unittest.TestCase):
+    def test_explicit_v1_retains_historical_uncertainty_semantics(self):
+        self.assertEqual(engine.LEGACY['version'], 'soc2-omni-1')
+        for id in engine.LEGACY['definitions']:
+            with self.subTest(criterion=id):
+                answers = {**complete(id), first_practice(id)['id']: 'Not sure', 'gaps': 'Historical context'}
+                engine.validate_completion(id, answers, engine.LEGACY['version'])
+                self.assertEqual(engine.result_status(id, answers, engine.LEGACY['version']), 'in_progress')
+
     def assert_rejected(self, operation, status):
         with self.assertRaises(HTTPException) as error:
             operation()
@@ -33,13 +41,13 @@ class SocGuidedTests(unittest.TestCase):
         self.assertLess(len(error.exception.detail), 200)
 
     def test_catalog_exact_coverage_and_version_is_separate_from_cis(self):
-        self.assertEqual(engine.CATALOG['version'], 'soc2-omni-1')
+        self.assertEqual(engine.CATALOG['version'], 'soc2-omni-2')
         self.assertEqual(engine.CATALOG['framework_id'], 'soc-2')
         self.assertEqual(set(engine.CATALOG['definitions']), {row['id'] for row in SOC['requirements']})
         self.assertEqual(len(engine.CATALOG['definitions']), 61)
         counts = {}
         for id, definition in engine.CATALOG['definitions'].items():
-            self.assertEqual(engine.current_version(id), 'soc2-omni-1')
+            self.assertEqual(engine.current_version(id), 'soc2-omni-2')
             self.assertEqual(definition['category'], next(row['category'] for row in SOC['requirements'] if row['id'] == id))
             counts[definition['category']] = counts.get(definition['category'], 0) + 1
             self.assertLessEqual(len(definition['groups']), 30)
@@ -61,7 +69,7 @@ class SocGuidedTests(unittest.TestCase):
                 self.assertEqual(engine.result_status(id, answers), 'addressed')
                 self.assertEqual(engine.result_status(id, json.loads(json.dumps(answers))), 'addressed')
                 key = first_practice(id)['id']
-                for value, expected in [('No', 'needs_attention'), ('Partially', 'in_progress'), ('Not sure', 'in_progress')]:
+                for value, expected in [('No', 'needs_attention'), ('Partially', 'in_progress'), ('Not sure', 'not_assessed')]:
                     revised = {**answers, key: value}
                     self.assertEqual(engine.result_status(id, revised), expected)
                     engine.validate_completion(id, revised)
@@ -144,7 +152,7 @@ class SocGuidedTests(unittest.TestCase):
         client = {'client_id': row['client_id'], 'soc_configuration_updated_at': '2026-10-09T10:00:00Z',
                   'framework_settings': {'soc-2': {'categories': ['security', 'privacy']}}}
         scope = {key: row[key] for key in ['client_id', 'framework_key', 'framework_version', 'definition_id', 'owner_id', 'process_owner_id']}
-        scope.update(assessment_id=row['framework_assessment_id'], question_version='soc2-omni-1',
+        scope.update(assessment_id=row['framework_assessment_id'], question_version='soc2-omni-2',
                      categories=['privacy', 'security'], system_description='', period_start='', period_end='',
                      configuration_token=client['soc_configuration_updated_at'])
         expected = hashlib.sha256(json.dumps(scope, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
@@ -206,6 +214,7 @@ const inline = fs.readFileSync(root + '/frontend/src/lib/inlineAssessment.js', '
 const inlineUrl = 'data:text/javascript;base64,' + Buffer.from(inline).toString('base64');
 const source = fs.readFileSync(root + '/frontend/src/lib/socGuidedAssessment.js', 'utf8')
   .replace("import catalog from '@catalogs/guidedSoc2.json';", 'const catalog = ' + catalog + ';')
+  .replace("import legacyCatalog from '@catalogs/guidedSoc2V1.json';", 'const legacyCatalog = ' + fs.readFileSync(root + '/shared/catalogs/guidedSoc2V1.json', 'utf8') + ';')
   .replace(/from ['"]\\.\\/inlineAssessment['"]/g, 'from ' + JSON.stringify(inlineUrl));
 const engine = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 const fixtures = JSON.parse(fs.readFileSync(0, 'utf8'));

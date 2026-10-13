@@ -42,13 +42,15 @@ class IsoGuidedRoutes(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 200, response.text)
         return response.json()
 
-    async def finish(self, row, answers=None):
+    async def finish(self, row, answers=None, narrative=None):
         path = self.path(row) + '/guided-assessment'
         response = await self.client.get(path)
         self.assertEqual(response.status_code, 200, response.text)
         draft = response.json()
         answers = complete(row['definition_id']) if answers is None else answers
         text = 'OVERVIEW\nSynthetic reported practices for ' + row['definition_id'] + '\n\nIMPLEMENTATION BREAKDOWN\n- User reviewed wording.\n\nITEMS TO ADDRESS\n- Confirm reported limits.\n'
+        if narrative is not None:
+            text = narrative
         status = engine.result_status(row['definition_id'], answers)
         result = {'version': engine.VERSION, 'status': status, 'narrative': text, 'basis': [], 'gaps': [],
                   'unknowns': [], 'nextSteps': [], 'evidence': [], 'answers': [], 'signals': []}
@@ -92,7 +94,7 @@ const root = process.argv[1];
 let source = fs.readFileSync(root + '/frontend/src/lib/isoGuidedAssessment.js', 'utf8');
 const inline = fs.readFileSync(root + '/frontend/src/lib/inlineAssessment.js', 'utf8');
 source = source.replace("from './inlineAssessment'", 'from ' + JSON.stringify('data:text/javascript;base64,' + Buffer.from(inline).toString('base64')));
-for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology']]) {
+for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology'], ['currentCatalog', 'guidedIsoV2']]) {
   source = source.replace(`import ${name} from '@catalogs/${file}.json';`, 'const ' + name + ' = ' + fs.readFileSync(root + '/shared/catalogs/' + file + '.json', 'utf8') + ';');
 }
 const frontend = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
@@ -301,7 +303,7 @@ process.stdout.write(JSON.stringify(cases.map(({id, answers}) => ({
         collection = server.db.guided_assessment_pilot
         identity = row['framework_assessment_id'] + ':admin'
         await collection.update_one({'_id': identity}, {'$unset': {'base_assessment_token': '', 'base_scope_fingerprint': ''}})
-        draft, payload = await self.finish(row)
+        draft, payload = await self.finish(row, narrative='A genuinely changed reviewed summary after legacy lineage metadata was removed.')
         self.assertFalse(draft['lineage_known'])
         self.assertEqual((await self.client.patch(path, json=self.native(row, draft))).status_code, 409)
         restart = {'version': engine.VERSION, 'answers': {}, 'step': 0, 'restart': True, 'expected_revision': draft['revision'],
@@ -527,7 +529,10 @@ process.stdout.write(JSON.stringify(cases.map(({id, answers}) => ({
             await locks.update_one({'_id': row['framework_assessment_id']}, {'$set': {'token': 'successor', 'until': future}})
             return result
         with patch.object(server.db, 'guided_assessment_history', history), patch.object(history, 'update_one', side_effect=takeover):
-            response = await self.client.put(path + '/guided-assessment', json={**payload, 'expected_revision': draft['revision']})
+            changed = copy.deepcopy(payload)
+            changed['narrative'] += '\nA genuine reviewed-wording change exercises archive-time lease takeover.'
+            changed['result']['narrative'] = changed['narrative']
+            response = await self.client.put(path + '/guided-assessment', json={**changed, 'expected_revision': draft['revision']})
         self.assertEqual(response.status_code, 409, response.text)
         self.assertEqual((await locks.find_one({'_id': row['framework_assessment_id']}))['token'], 'successor')
         self.assertEqual((await self.client.get(path + '/guided-assessment')).json()['revision'], draft['revision'])

@@ -19,13 +19,23 @@ def complete(id):
 
 
 class IsoGuidedTests(unittest.TestCase):
+    def test_explicit_v1_retains_historical_uncertainty_semantics(self):
+        self.assertEqual(engine.LEGACY['version'], 'iso27001-omni-1')
+        for id in engine.LEGACY['definitions']:
+            with self.subTest(definition=id):
+                answers = complete(id)
+                key = next(q['id'] for q in engine._active_questions(id, answers) if q['type'] == 'select')
+                answers.update({key: 'Not sure', 'gaps': 'Historical context'})
+                engine.validate_completion(id, answers, engine.LEGACY['version'])
+                self.assertEqual(engine.result_status(id, answers, engine.LEGACY['version']), 'in_progress')
+
     def assert_rejected(self, operation, status):
         with self.assertRaises(HTTPException) as error:
             operation()
         self.assertEqual(error.exception.status_code, status)
 
     def test_three_part_catalog_exact_123_ids_and_separate_version(self):
-        self.assertEqual(engine.VERSION, 'iso27001-omni-1')
+        self.assertEqual(engine.VERSION, 'iso27001-omni-2')
         self.assertEqual(engine.CATALOG['framework_id'], 'iso-27001')
         self.assertEqual(set(engine.CATALOG['definitions']), {d['id'] for d in ISO['requirements']})
         self.assertEqual(len(engine.CATALOG['definitions']), 123)
@@ -112,7 +122,7 @@ class IsoGuidedTests(unittest.TestCase):
             answers = {'core': 'Yes', 'context': 'Not relevant here', 'context_detail': 'Reason', 'child': 'Relevant', 'nested': 'No'}
             engine.validate_completion('4.1', answers)
             self.assertEqual(engine.result_status('4.1', answers), 'addressed')
-            self.assertEqual(engine.result_status('4.1', {**answers, 'context': 'Not sure'}), 'in_progress')
+            self.assertEqual(engine.result_status('4.1', {**answers, 'context': 'Not sure'}), 'not_assessed')
             self.assertEqual(engine.result_status('4.1', {**answers, 'context': 'Relevant'}), 'needs_attention')
             self.assertEqual(engine.result_status('4.1', {**answers, 'core': 'Not sure'}), 'not_assessed')
             definition['groups'][1]['questions'][0]['condition'] = {'id': 'nested', 'equals': 'Yes'}
@@ -177,7 +187,7 @@ let source = fs.readFileSync(root + '/frontend/src/lib/isoGuidedAssessment.js', 
 const inline = fs.readFileSync(root + '/frontend/src/lib/inlineAssessment.js', 'utf8');
 const inlineUrl = 'data:text/javascript;base64,' + Buffer.from(inline).toString('base64');
 source = source.replace(/from ['"]\\.\\/inlineAssessment['"]/g, 'from ' + JSON.stringify(inlineUrl));
-for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology']]) {
+for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology'], ['currentCatalog', 'guidedIsoV2']]) {
   source = source.replace(`import ${name} from '@catalogs/${file}.json';`, 'const ' + name + ' = ' + fs.readFileSync(root + '/shared/catalogs/' + file + '.json', 'utf8') + ';');
 }
 const engine = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
