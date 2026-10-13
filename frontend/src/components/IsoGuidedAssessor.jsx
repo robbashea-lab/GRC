@@ -88,7 +88,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
         if(latest.lineage_stale)base=(await api.put(route,{version:latest.version,answers:latest.answers,step:latest.step,completed:false,narrative:latest.narrative||'',expected_revision:latest.revision,rebase:true,base_assessment_token:latest.current_assessment_token,base_scope_fingerprint:latest.current_scope_fingerprint})).data;
       }
       const output=completed?isoGuidedResult(id,answers,version,clientName):null;
-      const body={version,answers,step:nextStep,completed,narrative,summary_review:basis?{version,answers:JSON.parse(basis)}:null,expected_revision:base.revision,...(base.revision===0?{base_assessment_token:base.current_assessment_token,base_scope_fingerprint:base.current_scope_fingerprint}:{}),result:output?(inline?output:{...output,narrative:override.narrative??narrative}):null,...override};
+      const body={version,answers,step:nextStep,completed,narrative,summary_review:basis?{version,answers:JSON.parse(basis)}:null,expected_revision:base.revision,...(base.revision===0?{base_assessment_token:base.current_assessment_token,base_scope_fingerprint:base.current_scope_fingerprint}:{}),result:output?{...output,narrative:override.narrative??narrative}:null,...override};
       const {data}=await api.put(route,body);if(!active.current)return null;adopt(data);return data;
     }catch(e){if(active.current)setError(formatError(e));return null;}finally{pending.current=false;if(active.current)setBusy(false);}
   }

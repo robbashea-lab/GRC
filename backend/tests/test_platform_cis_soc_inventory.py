@@ -5,6 +5,7 @@ campaign. Actual-engine summaries establish serialization, not independent
 source/prose correctness. No login, recovery, invitation or SMTP route runs.
 """
 import copy
+from datetime import datetime, timedelta
 import hashlib
 import json
 import os
@@ -47,6 +48,13 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         await harness.FrameworkTests.asyncSetUp(self)
+        # Browser vectors use this fixed evaluator instant. Keep completion in
+        # that same day while giving every native write a distinct CAS token.
+        self.assessment_time = datetime.fromisoformat(self.contract['assessment_date'] + 'T12:00:00+00:00')
+        self.assessment_clock_ticks = 0
+        assessment_clock = patch.object(server, '_now', side_effect=self.next_assessment_timestamp)
+        assessment_clock.start()
+        self.addCleanup(assessment_clock.stop)
         self.storage_kind = 'isolated mongomock; not durable Mongo'
         mongo_url = os.environ.get('PLATFORM_ACCEPTANCE_MONGO_URL')
         if mongo_url:
@@ -69,6 +77,7 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
             self.storage_kind = 'actual Motor/Mongo loopback storage; modeled ASGI identities'
         self.sign_in('admin')
         self.ledger = {'source_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+                       'assessment_date': self.contract['assessment_date'],
                        'qa_working_file_sha256': {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                                                   for name in ('test_platform_cis_soc_inventory.py', 'platform_cis_soc_vectors.cjs')},
                        'storage': self.storage_kind, 'unique_definitions': 0, 'cis_read_placements': 0,
@@ -76,6 +85,11 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
                        'nonempty_cross_client_comparisons': 0, 'foreign_records_compared': 0,
                        'explicit_rebases': 0,
                        'case_results': [], 'boundary': 'Isolated service/storage execution; not hosted browser/login/role or independent source review'}
+
+    def next_assessment_timestamp(self):
+        value = self.assessment_time + timedelta(microseconds=self.assessment_clock_ticks)
+        self.assessment_clock_ticks += 1
+        return value.isoformat()
 
     async def remove_owned_database(self):
         # Only this test's new UUID database; the coordinator owns the Mongo process.

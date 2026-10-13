@@ -4,6 +4,9 @@ import IsoGuidedAssessor from './IsoGuidedAssessor';
 import AssessmentShell from './AssessmentShell';
 import {isoGuidedCatalog,isoGroups,isoGuidedResult,isoInlineNarrative} from '@/lib/isoGuidedAssessment';
 import api from '@/lib/api';
+import axios from 'axios';
+import {previewAdapter} from '@/preview/commandTestAdapter';
+import {ids,saveStore} from '@/preview/store';
 
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'iso-actor',role:'super_admin'}})}));
@@ -417,11 +420,46 @@ test.each(['4.1','A.5.1','A.8.13'])('%s inline interview preserves progress with
   await render({inlineOpen:true});await complete();
   const summary=document.querySelector('[aria-label="Omnibot implementation summary"]');
   expect(summary.value).toContain('\n\nControls in place\n• ');expect(summary.value).not.toContain('IMPLEMENTATION BREAKDOWN');expect(summary.value).not.toContain('\n\nITEMS TO ADDRESS');
-  expect(stored.result.narrative).toBe(isoGuidedResult(id,stored.answers,stored.version,'Agent 2 ISO fixture').narrative);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(stored.result).toEqual({...isoGuidedResult(id,stored.answers,stored.version,'Agent 2 ISO fixture'),narrative:summary.value});expect(props.onSaveAssessment).not.toHaveBeenCalled();
   const reviewed=summary.value+'\nExact operator wording.\n';await changeInput(summary,reviewed);
   await render({inlineOpen:false});await render({inlineOpen:true});expect(document.querySelector('.assessment-inline-interview')).toBe(panel);expect(summary.value).toBe(reviewed);
   await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(props.onSaveAssessment.mock.calls[0][0]).toMatchObject({implementation:reviewed,status:'addressed'});expect(onInlineClose).toHaveBeenCalledTimes(1);
   expect(props.current.verification).toBe('not_verified');expect(stored.narrative).toBe(reviewed);
+});
+
+test.each(['4.1','A.5.1','A.8.13'])('%s inline component binds reviewed text through the actual preview completion and native-save routes',async id=>{
+  setup(id);sessionStorage.clear();const previewApi=axios.create({adapter:previewAdapter});
+  const db=Object.fromEntries(Object.keys(ids).map(kind=>[kind,[]])),row={...props.current,technology:'',notes:'',na_rationale:'',owner_id:null,process_owner_id:null,iso_assessment_checks:[],assessment_history:[]};
+  db.user={user_id:'iso-actor',name:'SYNTHETIC ISO reviewer',role:'super_admin',status:'active',client_ids:['iso-fixture']};db.logs=[];
+  db.users.push(db.user);db.clients.push({client_id:'iso-fixture',name:'SYNTHETIC ISO contract',status:'active'});
+  db.framework_assessments.push(row);db.requirements.push({client_id:'iso-fixture',baseline_key:'iso-27001',baseline_response:'applies'});
+  saveStore(db);await previewApi.post('/demo/enter');props={...props,current:row,record:row,form:copy(row)};
+  const path='/framework_assessments/'+row.framework_assessment_id;
+  const requests=new Set(),track=request=>{requests.add(request);request.then(()=>requests.delete(request),()=>requests.delete(request));return request;};
+  const settle=()=>act(async()=>{while(requests.size)await Promise.all([...requests]);});
+  api.get.mockImplementation(url=>track(previewApi.get(url)));
+  api.put.mockImplementation((url,body)=>track(previewApi.put(url,body).then(response=>{stored=copy(response.data);return response;})));
+  props.onSaveAssessment.mockImplementation(async(values,expected)=>{
+    expect(expected).toBe(JSON.stringify(props.form));
+    const saved=(await track(previewApi.patch(path,{...values,expected_last_assessed:props.current.last_saved??props.current.last_assessed??null}))).data;
+    props={...props,current:saved,form:copy(saved)};return true;
+  });
+  const onInlineClose=jest.fn();await render({inline:true,inlineOpen:true,onInlineClose});await settle();await click('Start');
+  for(let guard=0;guard<12&&!document.body.textContent.includes('Review your assessment summary');guard++){
+    await act(async()=>document.querySelectorAll('.omni-answer-choices').forEach(group=>[...group.querySelectorAll('button')].find(item=>['Yes','Relevant'].includes(item.textContent))?.click()));
+    await click('Save & next');await settle();
+  }
+  expect(document.body.textContent).toContain('Review your assessment summary');
+  const summary=document.querySelector('[aria-label="Omnibot implementation summary"]'),reported=summary.value;
+  expect(reported).toContain('\n\nControls in place\n• ');
+  expect(stored.result.narrative).toBe(stored.narrative);expect(stored.narrative).toBe(reported);
+  expect((await previewApi.get(path)).data).toEqual(row);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  const reviewed=reported+'\nExact separately reviewed wording.\n';await changeInput(summary,reviewed);await click('Save assessment');await settle();
+  expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(onInlineClose).toHaveBeenCalledTimes(1);
+  const saved=(await previewApi.get(path)).data,interview=(await previewApi.get(path+'/guided-assessment')).data;
+  expect(interview.narrative).toBe(reviewed);expect(interview.result.narrative).toBe(reviewed);
+  expect(saved.implementation).toBe(reviewed);expect(saved.status).toBe('addressed');expect(saved.assessment_history.at(-1).implementation).toBe(reviewed);
+  for(const key of ['verification','soa_applicability','soa_justification','owner_id','process_owner_id','iso_assessment_checks','technology','notes'])expect(saved[key]).toEqual(row[key]);
 });
 
 test('inline saved early progress survives remount and uses the persisted group',async()=>{

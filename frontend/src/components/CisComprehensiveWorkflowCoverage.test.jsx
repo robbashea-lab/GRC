@@ -105,6 +105,27 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();jest.useRealTimers();});
 
+test('item finding prefill preserves an emoji at the 200-code-point title boundary and the full description',async()=>{
+  setup('2.1',1);
+  const prefix='x'.repeat(199),text=prefix+'🙂 additional reported context',title=prefix+'🙂';
+  native.items_revision=1;native.items_to_address=[{item_id:'unicode-boundary-item',question_id:'practice',kind:'gap',state:'open',text,resolution:'',finding_id:null}];
+  const before=copy(native);
+  await render();
+  const itemsTab=[...container.querySelectorAll('[role="tab"]')].find(tab=>tab.textContent.trim()==='Items to address');
+  expect(itemsTab).toBeTruthy();
+  await act(async()=>{itemsTab.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));itemsTab.click();});
+  const items=container.querySelector('[aria-label="Items to address"]');expect(items).toBeTruthy();
+  const create=[...items.querySelectorAll('button')].find(button=>button.textContent.trim()==='Create finding');
+  expect(create).toBeTruthy();expect(create.disabled).toBe(false);
+  await act(async()=>create.click());
+  const findingTitle=container.querySelector('[aria-label="Finding title"]'),actionTitle=container.querySelector('[aria-label="Corrective action"]');
+  expect(findingTitle).toBeTruthy();expect(actionTitle).toBeTruthy();
+  expect(findingTitle.value).toBe(title);expect(actionTitle.value).toBe(title);
+  expect(Array.from(findingTitle.value)).toHaveLength(200);expect(Array.from(actionTitle.value)).toHaveLength(200);
+  expect(container.querySelector('[aria-label="Finding description"]').value).toBe(text);
+  expect(native).toEqual(before);expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
 test.each(cis.requirements.map(row=>[row.id,row.implementation_group]))('fresh %s current interview visits every applicable group and requires explicit native save (IG%s)',async(id,minimumGroup)=>{
   setup(id,minimumGroup);const expected=completeAnswers(id);await render();await open();
   const visited=[];

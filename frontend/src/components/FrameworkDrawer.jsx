@@ -137,7 +137,9 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   }
   function createItemFinding(item){
     if(!writable||busy||!liveGuideContext||finding||item.finding_id)return;
-    setFinding({request_id:recordUuid(),item_id:item.item_id,title:item.text.slice(0,200),description:item.text+(item.resolution?'\n\nRecorded resolution: '+item.resolution:''),severity:'medium',owner_id:current.owner_id||'',due_date:'',remediation_title:item.text.slice(0,200)});
+    // Match the API's code-point limit without splitting surrogate pairs.
+    const title=Array.from(item.text).slice(0,200).join('');
+    setFinding({request_id:recordUuid(),item_id:item.item_id,title,description:item.text+(item.resolution?'\n\nRecorded resolution: '+item.resolution:''),severity:'medium',owner_id:current.owner_id||'',due_date:'',remediation_title:title});
   }
   async function saveOwner(){return run(async()=>{const {data}=await api.patch(`/framework_assessments/${aid}`,{owner_id:form.owner_id||null,...(record.framework_key==='iso-27001'?{process_owner_id:form.process_owner_id||null}:{}),expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null});setForm(data);setSavedForm(data);setFeedback('Changes saved.');});}
   const overlays=<><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved assessment is unchanged. Continue editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</>;
