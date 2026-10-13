@@ -84,6 +84,22 @@ test('Demo projects a closed exact connector and active accepted Risk without in
   expect(rankProgramRows([{...record,work}],{mapping})[0].triage.priority).toBe(4);
 });
 
+test('equal exact-linked Risk priorities use native review or active acceptance expiry dates from the shared normalization',()=>{
+  const rows=[row('1.1'),row('1.2')];
+  for(const record of rows)record.items_to_address[0].finding_id='f:'+record.definition_id;
+  const db={user:{user_id:'analyst',role:'platform_admin',client_ids:['a'],workspace_mode:'demo'},clients:[{client_id:'a',framework_settings:{'cis-ig1':{implementation_group:1}}}],framework_assessments:rows,
+    requirements:[{client_id:'a',baseline_key:'cis-ig1',baseline_response:'applies'}],reviews:[],tasks:[],evidence:[],policies:[],vendors:[],
+    findings:rows.map(record=>({finding_id:'f:'+record.definition_id,status:'closed',severity:'low',client_id:'a',framework_assessment_id:record.framework_assessment_id,assessment_item_id:record.items_to_address[0].item_id,risk_id:'r:'+record.definition_id})),
+    risks:[{risk_id:'r:1.1',status:'assessed',client_id:'a',likelihood_score:5,impact_score:5,next_review:'2026-12-01'},
+      {risk_id:'r:1.2',status:'accepted',client_id:'a',likelihood_score:5,impact_score:5,next_review:'2026-12-25',acceptance_expires_at:'2026-11-01'}]};
+  const positions=()=>{const workspace=frameworkRequest(db,'/frameworks/cis-ig1','get',{client_id:'a'},{});return rankProgramRows(rows.map(record=>({...record,work:workspace.work[record.framework_assessment_id]})),{mapping});};
+  expect(positions().map(record=>record.definition_id)).toEqual(['1.2','1.1']);
+  db.risks[1].status='assessed';expect(positions().map(record=>record.definition_id)).toEqual(['1.1','1.2']);
+  delete db.risks[1].next_review;
+  const undated=frameworkRequest(db,'/frameworks/cis-ig1','get',{client_id:'a'},{}).work['a:1.2'].priority_records.find(record=>record.kind==='risks');
+  expect(undated.due_date).toBeNull(); // An inactive acceptance expiry does not create a deadline.
+});
+
 test('the existing inventory foundation rationale remains on inventory without changing discovery-first order',()=>{
   const absent=row('1.1'),discovery=row('1.2','not_assessed');
   const result=focusedRecommendations([absent,discovery],{},true);

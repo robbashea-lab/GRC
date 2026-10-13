@@ -126,7 +126,8 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         response=await self.client.post(base+'/findings',json={'title':'Isolated closed connector','remediation_title':'Correct the specific gap',
             'severity':'low','request_id':'closed-ranking-origin','item_id':item['item_id']})
         self.assertEqual(response.status_code,200,response.text);finding=response.json()
-        await server.db.risks.insert_one({'risk_id':'accepted-ranking-risk','client_id':'a','status':'accepted','likelihood_score':5,'impact_score':5})
+        await server.db.risks.insert_one({'risk_id':'accepted-ranking-risk','client_id':'a','status':'accepted','likelihood_score':5,'impact_score':5,
+            'next_review':'2026-12-01','acceptance_expires_at':'2026-11-01'})
         await server.db.findings.update_one({'finding_id':finding['finding_id']},{'$set':{'risk_id':'accepted-ranking-risk'}})
         tasks=await server.db.tasks.find({'finding_id':finding['finding_id'],'client_id':'a'}).to_list(None)
         self.assertEqual(len(tasks),1)
@@ -144,6 +145,11 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(connector['open_gap'])
         risk=next(record for record in work['priority_records'] if record['kind']=='risks')
         self.assertEqual((risk['id'],risk['status'],risk['risk_level']),('accepted-ranking-risk','accepted','critical'))
+        self.assertEqual(risk['due_date'],'2026-11-01')
+        await server.db.risks.update_one({'risk_id':'accepted-ranking-risk'},{'$set':{'status':'assessed'}})
+        next_workspace=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json()
+        next_risk=next(record for record in next_workspace['work'][row['framework_assessment_id']]['priority_records'] if record['kind']=='risks')
+        self.assertEqual(next_risk['due_date'],'2026-12-01')
         persisted=await server.db.framework_assessments.find_one({'framework_assessment_id':row['framework_assessment_id']})
         self.assertEqual((persisted['status'],persisted['last_saved']),(row['status'],row['last_saved']))
 

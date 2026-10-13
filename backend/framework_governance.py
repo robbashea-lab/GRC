@@ -236,7 +236,7 @@ async def workspace_work(s,cid,rows,*,upgraded=False):
     reviews=await read(s.db.reviews.find({'client_id':cid},projection),'workspace reviews')
     findings=await read(s.db.findings.find({'client_id':cid},projection),'workspace findings')
     risks=await read(s.db.risks.find({'client_id':cid,'risk_id':{'$in':list({finding['risk_id'] for finding in findings if finding.get('risk_id')})}},
-        {'_id':0,'client_id':1,'risk_id':1,'status':1,'likelihood_score':1,'impact_score':1,'due_date':1}),'workspace linked risks') if upgraded else []
+        {'_id':0,'client_id':1,'risk_id':1,'status':1,'likelihood_score':1,'impact_score':1,'next_review':1,'acceptance_expires_at':1}),'workspace linked risks') if upgraded else []
     if upgraded:
         scope_rows=await read(s.db.framework_assessments.find({'client_id':cid},{'_id':0,'framework_assessment_id':1,'related_links':1}),'workspace finding scopes')
         scopes={}
@@ -275,7 +275,8 @@ async def workspace_work(s,cid,rows,*,upgraded=False):
         if upgraded:
             def priority_record(kind,record,id_field,fields,open_gap=False):
                 return {'kind':kind,'id':record[id_field],id_field:record[id_field],'client_id':cid,
-                    **{field:record.get(field) for field in ('title','status','due_date',*fields)},'open_gap':open_gap}
+                    **{field:record.get(field) for field in ('title','status',*fields)},
+                    'due_date':grc_rules.risk_due(record) if kind=='risks' else record.get('due_date'),'open_gap':open_gap}
             gap_items={(item.get('item_id'),item.get('finding_id')) for item in row.get('items_to_address',[]) if item.get('kind')=='gap' and item.get('state')=='open'}
             gap_fids={f['finding_id'] for f in findings if f.get('framework_assessment_id')==aid and (f.get('assessment_item_id'),f['finding_id']) in gap_items}
             connectors=[f for f in findings if f['finding_id'] in gap_fids and f['finding_id'] not in fids and f.get('risk_id')]

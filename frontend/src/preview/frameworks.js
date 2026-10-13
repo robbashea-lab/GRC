@@ -17,7 +17,7 @@ import {stable as canonicalSnapshot} from './commandRequests';
 import {action} from './workflows';
 import {reconcileItems,currentItem,updateItem,linkItemFinding} from './assessmentItems';
 import {assessmentWork,findingApplies} from '../lib/frameworkWorkspace';
-import {assessedRisk} from '../lib/grcWork';
+import {assessedRisk,riskDue} from '../lib/grcWork';
 import {existingFrameworkReview,sharedFrameworkPlans,reviewDriver,reviewDrivers} from '../lib/frameworks';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
 const assessmentTitle=a=>`${frameworkCatalog(a.framework_key)?.label||(a.framework_key==='cis-ig1'?'CIS':a.framework_key.toUpperCase())} ${a.definition_id} · ${frameworkDefinition(a.framework_key,a.definition_id)?.title||a.definition_id}`;
@@ -94,7 +94,7 @@ function pilotWork(db,row){
   const tasks=related.tasks.filter(t=>!['done','cancelled'].includes(t.status)&&(linkedTask(t.task_id)||t.framework_assessment_id===row.framework_assessment_id||(t.finding_id?relevant.has(t.finding_id):!t.framework_assessment_id&&rids.has(t.review_id))));
   const scalar=(kind,item,id)=>Object.fromEntries(Object.entries({kind,id,[kind==='reviews'?'review_id':kind==='findings'?'finding_id':kind==='risks'?'risk_id':'task_id']:id,
     client_id:row.client_id,framework_assessment_id:item.framework_assessment_id,assessment_item_id:item.assessment_item_id,finding_id:item.finding_id,risk_id:item.risk_id,risk_level:kind==='risks'?assessedRisk(item).risk_level:undefined,
-    title:item.title??null,status:item.status??null,due_date:item.due_date??null,severity:item.severity,priority:item.priority,
+    title:item.title??null,status:item.status??null,due_date:kind==='risks'?riskDue(item):item.due_date??null,severity:item.severity,priority:item.priority,
     owner_id:item.owner_id,assignee_id:item.assignee_id,reviewer_id:item.reviewer_id,
     open_gap:kind==='findings'?work.finding_ids.includes(item.finding_id)&&gapFids.has(item.finding_id):kind==='tasks'&&gapFids.has(item.finding_id)}).filter(([,value])=>value!==undefined));
   const gapFinding=finding=>finding.framework_assessment_id===row.framework_assessment_id&&row.items_to_address?.some(item=>item.item_id===finding.assessment_item_id&&item.finding_id===finding.finding_id&&item.kind==='gap'&&item.state==='open');
