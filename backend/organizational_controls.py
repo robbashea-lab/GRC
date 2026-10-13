@@ -165,7 +165,12 @@ def router_for(s):
 
     async def save(old, user, updates, observation=None):
         at = s._next_write_time(old['updated_at'])
-        change = {'$set':{**updates, 'updated_at':at}, '$push':{'history':{
+        after = {**old, **updates, 'updated_at':at}
+        if observation:
+            after['observations'] = [*old.get('observations', []), observation]
+        portfolio_patch, portfolio_event = s._portfolio_event_patch(
+            'organizational_controls', old['control_id'], old['client_id'], user, old, after, at)
+        change = {'$set':{**updates, 'updated_at':at, **portfolio_patch}, '$push':{'history':{
             **snapshot(old), 'at':old['updated_at'], 'superseded_at':at, 'changed_by':user['user_id'],
             'conflicts':old.get('conflicts', []), 'reconciliation_note':old.get('reconciliation_note', '')}}}
         if observation:
@@ -175,7 +180,9 @@ def router_for(s):
         if not result.matched_count:
             raise HTTPException(409, 'Control changed during save; reload before saving')
         await s.audit(user, 'Control observation recorded' if observation else 'Control updated',
-                      'organizational_controls', old['control_id'], old['client_id'])
+                      'organizational_controls', old['control_id'], old['client_id'], meta={
+                          '_portfolio_activity_event_id': portfolio_event['event_id'] if portfolio_event else None,
+                          '_portfolio_activity_noop': portfolio_event is None})
         return await record(old['control_id'], user)
 
     @router.get('')
@@ -245,9 +252,16 @@ def router_for(s):
             return existing
         row = {**data, 'control_id':ident, 'created_at':at, 'created_by':user['user_id'], 'updated_at':at,
                'history':[], 'observations':[], 'legacy_sources':[], 'conflicts':[], 'reconciliation_note':''}
+        _, portfolio_event = s._portfolio_event_patch(
+            'organizational_controls', ident, body.client_id, user, None, row, at, 'create')
+        if portfolio_event:
+            row['_portfolio_activity_pending'] = {portfolio_event['event_id']: portfolio_event}
+            row['_portfolio_activity_last_event_id'] = portfolio_event['event_id']
         result = await s.db.organizational_controls.update_one({'_id':ident},{'$setOnInsert':row},upsert=True)
         if result.upserted_id:
-            await s.audit(user,'Control created','organizational_controls',ident,body.client_id)
+            await s.audit(user,'Control created','organizational_controls',ident,body.client_id, meta={
+                '_portfolio_activity_event_id': portfolio_event['event_id'] if portfolio_event else None,
+                '_portfolio_activity_noop': portfolio_event is None})
         saved = await record(ident,user)
         if any(saved.get(k) != v for k,v in data.items()):
             raise HTTPException(409,'This create request already produced a different Control')

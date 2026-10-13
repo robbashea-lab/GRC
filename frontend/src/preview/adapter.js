@@ -6,6 +6,7 @@ import {clientProfileRequest} from './clientProfile';
 import {policyApprovalRequest} from './policyApproval';
 import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
 import {frameworkSummary} from './frameworkSummary';
+import {portfolioReportingRequest} from './portfolioReporting';
 import {calendarBuckets,vendorCalendarItems} from '../lib/calendarView';
 import {handoffSnapshot, adjustProgram} from './onboardingHandoff';
 import { identityRequest } from './identityLifecycle';
@@ -96,6 +97,7 @@ export async function previewAdapter(config) {
     }
     // Role limits mirror the server so persona QA in the Demo sees the same refusals.
     try { authorizeDemo(db, method, parts, body, config.headers?.['Idempotency-Key']); } catch (error) { return fail(error.status||403, error.message); }
+    if(method==='get' && path.startsWith('/portfolio/reporting/')) return respond(portfolioReportingRequest(db,path,params));
     if(kind==='evidence'){
       const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
       if(cid&&!evidenceAccess(db.user,cid))return fail(403,'Forbidden for this client');

@@ -1,5 +1,5 @@
 """Prospective audit packages use normal authorization, Evidence and Review history."""
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import test_iso_framework
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
 import unittest
@@ -91,6 +91,77 @@ class IsoAuditTests(unittest.IsolatedAsyncioTestCase):
         self.sign_in('member')
         current=(await self.client.get('/api/reviews/'+review['review_id'])).json()
         self.assertEqual((await self.item(current,key,notes='Assigned auditor update')).status_code,200)
+
+    async def test_audit_work_activity_survives_audit_failure_and_noop_or_stale_retry(self):
+        from unittest.mock import patch
+        data, _ = await self.activate()
+        review = data['reviews'][0]
+        key = iso_audit.PACKAGES[review['iso_audit']['package_key']]['items'][0]['key']
+        before = await server.db.reviews.find_one({'review_id': review['review_id']}, {'_id': 0})
+        original_ids = set(before.get('_portfolio_activity_pending', {}))
+        with patch.object(server, 'audit', side_effect=RuntimeError('isolated audit interruption')):
+            with self.assertRaises(RuntimeError):
+                await self.item(review, key, notes='Committed audit work despite receipt failure')
+        stored = await server.db.reviews.find_one({'review_id': review['review_id']}, {'_id': 0})
+        pending = stored.get('_portfolio_activity_pending', {})
+        added = set(pending) - original_ids
+        self.assertEqual(len(added), 1)
+        event = pending[added.pop()]
+        self.assertEqual(event['type'], 'Assessments')
+        self.assertEqual(event['actor']['id'], 'admin')
+        self.assertIn('iso_audit', event['changed_fields'])
+        self.assertEqual(datetime.fromisoformat(event['at']), datetime.fromisoformat(stored['updated_at']))
+        repeated = await self.item(stored, key, notes='Committed audit work despite receipt failure')
+        self.assertEqual(repeated.status_code, 200, repeated.text)
+        self.assertEqual((await self.item(review, key, notes='Stale attempt')).status_code, 409)
+        latest = await server.db.reviews.find_one({'review_id': review['review_id']}, {'_id': 0})
+        self.assertEqual(set(latest.get('_portfolio_activity_pending', {})), set(pending))
+
+    async def test_policy_schedule_projection_retains_completion_actor_time_and_replay_identity(self):
+        import policy_reviews
+        at = '2026-10-13T12:00:00+00:00'
+        policy = {'policy_id': 'isolated-policy-projection', 'client_id': 'a', 'next_review_date': '2026-10-01'}
+        review = {'review_id': 'isolated-policy-review', 'policy_id': policy['policy_id'], 'client_id': 'a',
+                  'status': 'upcoming', 'due_date': '2027-10-01', 'updated_at': at,
+                  'occurrences': [{'occurrence_id': 'original-occurrence', 'completed_at': at,
+                                   'completed_by': 'historical-reviewer', 'completed_by_name': 'Historical Reviewer'}]}
+        await server.db.policies.insert_one(policy)
+        await server.db.reviews.insert_one(review)
+        await policy_reviews.sync(server.db, review, {'user_id': 'retry-operator', 'name': 'Retry Operator'})
+        stored = await server.db.policies.find_one({'policy_id': policy['policy_id']}, {'_id': 0})
+        self.assertEqual(stored['next_review_date'], review['due_date'])
+        pending = stored['_portfolio_activity_pending']
+        self.assertEqual(len(pending), 1)
+        event = next(iter(pending.values()))
+        self.assertEqual(event['actor'], {'id': 'historical-reviewer', 'name': 'Historical Reviewer'})
+        self.assertEqual(datetime.fromisoformat(event['at']), datetime.fromisoformat(at))
+        self.assertEqual(event['changed_fields'], ['next_review_date'])
+        await policy_reviews.sync(server.db, review, {'user_id': 'new-operator', 'name': 'New Operator'})
+        repeated = await server.db.policies.find_one({'policy_id': policy['policy_id']}, {'_id': 0})
+        self.assertEqual(repeated['_portfolio_activity_pending'], pending)
+        await server.db.policies.update_one({'policy_id': policy['policy_id']},
+            {'$set': {'next_review_date': review['due_date'] + 'T00:00:00Z'}})
+        await policy_reviews.sync(server.db, review)
+        normalized = await server.db.policies.find_one({'policy_id': policy['policy_id']}, {'_id': 0})
+        self.assertEqual(normalized['_portfolio_activity_pending'], pending)
+
+    async def test_policy_schedule_projection_reports_a_lost_preimage_guard_without_activity(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from fastapi import HTTPException
+        import policy_reviews
+        policy = {'policy_id': 'guarded-policy', 'client_id': 'a', 'next_review_date': '2026-10-01'}
+        review = {'review_id': 'guarded-review', 'policy_id': policy['policy_id'], 'client_id': 'a',
+                  'status': 'upcoming', 'due_date': '2027-10-01', 'updated_at': '2026-10-13T12:00:00+00:00'}
+        await server.db.policies.insert_one(policy)
+        await server.db.reviews.insert_one(review)
+        with patch.object(server.db.policies, 'update_one', return_value=SimpleNamespace(matched_count=0)):
+            with self.assertRaises(HTTPException) as denied:
+                await policy_reviews.sync(server.db, review, {'user_id': 'admin', 'name': 'Recorded operator'})
+        self.assertEqual(denied.exception.status_code, 409)
+        stored = await server.db.policies.find_one({'policy_id': policy['policy_id']}, {'_id': 0})
+        self.assertEqual(stored['next_review_date'], policy['next_review_date'])
+        self.assertNotIn('_portfolio_activity_pending', stored)
 
     async def test_ticket_creation_durably_links_only_exact_item_and_recovers_audit(self):
         from unittest.mock import patch

@@ -114,6 +114,63 @@ class OrganizationalControlTests(unittest.IsolatedAsyncioTestCase):
             pages.extend(data['items'])
         self.assertEqual(len(pages),30);self.assertEqual(len({r['review_id'] for r in pages}),30)
 
+    async def test_committed_control_changes_capture_once_without_native_noop_or_replay_events(self):
+        await self.seed()
+        body={'client_id':'a','request_id':'portfolio-control','name':'Scoped Control','assessment_ids':['a1'],
+              'design':'adequate','frequency':'Quarterly','description':'Private implementation description'}
+        created=await self.client.post(BASE,json=body);self.assertEqual(created.status_code,200,created.text)
+        cid=created.json()['control_id'];endpoint=BASE+'/'+cid
+        async def events():
+            row=await server.db.organizational_controls.find_one({'control_id':cid})
+            return row,list(row.get('_portfolio_activity_pending',{}).values())
+        row,captured=await events();self.assertEqual(len(captured),1)
+        self.assertEqual(captured[0]['type'],'Assessments');self.assertEqual(captured[0]['actor']['id'],'admin')
+        self.assertNotIn('Private implementation description',str(captured))
+        replay=await self.client.post(BASE,json=body);self.assertEqual(replay.status_code,200,replay.text)
+        self.assertEqual(len((await events())[1]),1)
+        fields={k:row[k] for k in ('name','description','frequency','design','owner_id','assessment_ids','related_links')}
+        unchanged=await self.client.patch(endpoint,json={**fields,'expected_updated_at':row['updated_at']})
+        self.assertEqual(unchanged.status_code,200,unchanged.text)
+        row,captured=await events();self.assertEqual(len(captured),1)
+        audit=await server.db.audit_logs.find_one({'entity_id':cid,'action':'Control updated'},sort=[('at',-1)])
+        self.assertTrue(audit['meta']['_portfolio_activity_noop'])
+        updated=await self.client.patch(endpoint,json={**fields,'frequency':'Monthly','expected_updated_at':row['updated_at']})
+        self.assertEqual(updated.status_code,200,updated.text)
+        row,captured=await events();self.assertEqual(len(captured),2)
+        self.assertIn('frequency',captured[-1]['changed_fields'])
+        observation={'request_id':'portfolio-observation','expected_updated_at':row['updated_at'],
+                     'period_start':'2026-01-01','period_end':'2026-03-31','operating':'effective',
+                     'expected_instances':1,'collected_instances':1,'notes':'Private retained operation note'}
+        recorded=await self.client.post(endpoint+'/observations',json=observation)
+        self.assertEqual(recorded.status_code,200,recorded.text)
+        row,captured=await events();self.assertEqual(len(captured),3)
+        self.assertIn('observations',captured[-1]['changed_fields'])
+        self.assertNotIn('Private retained operation note',str(captured))
+        replay=await self.client.post(endpoint+'/observations',json=observation)
+        self.assertEqual(replay.status_code,200,replay.text);self.assertEqual(len((await events())[1]),3)
+        stale=await self.client.patch(endpoint,json={**fields,'name':'Must not commit','expected_updated_at':created.json()['updated_at']})
+        self.assertEqual(stale.status_code,409,stale.text);self.assertEqual(len((await events())[1]),3)
+        for entry in await server.db.audit_logs.find({'entity_id':cid,'action':{'$in':['Control created','Control observation recorded']}}).to_list(None):
+            self.assertTrue(entry['meta']['_portfolio_activity_event_id'])
+
+    async def test_control_capture_marker_does_not_survive_a_failed_source_compare_and_swap(self):
+        await self.seed()
+        created=await self.client.post(BASE,json={'client_id':'a','request_id':'portfolio-cas','name':'Original design'})
+        self.assertEqual(created.status_code,200,created.text);row=created.json();cid=row['control_id']
+        before=await server.db.organizational_controls.find_one({'control_id':cid})
+        collection_type=type(server.db.organizational_controls);original=collection_type.update_one
+        async def concurrent(collection,query,updates,*args,**kwargs):
+            if query.get('control_id')==cid and 'updated_at' in query and '$push' in updates:
+                await original(collection,{'control_id':cid},{'$set':{'updated_at':'2030-01-01T00:00:00+00:00'}})
+            return await original(collection,query,updates,*args,**kwargs)
+        fields={k:row[k] for k in ('name','description','frequency','design','owner_id','assessment_ids','related_links')}
+        with patch.object(collection_type,'update_one',concurrent):
+            response=await self.client.patch(BASE+'/'+cid,json={**fields,'design':'gap','expected_updated_at':row['updated_at']})
+        self.assertEqual(response.status_code,409,response.text)
+        saved=await server.db.organizational_controls.find_one({'control_id':cid})
+        self.assertEqual(saved['design'],before['design']);self.assertEqual(saved['history'],before['history'])
+        self.assertEqual(saved['_portfolio_activity_pending'],before['_portfolio_activity_pending'])
+
     def test_missing_identifiers_never_merge_across_criteria(self):
         rows=[{'client_id':'a','framework_key':'soc-2','framework_assessment_id':aid,'definition_id':aid,'management_controls':[{'name':'Same name'}]} for aid in ('one','two')]
         self.assertEqual(len(migration_plan(rows,'a','now','actor')),2)

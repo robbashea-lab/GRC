@@ -1,5 +1,8 @@
 {
   "offline": [
+    "test_portfolio_progress.py",
+    "test_portfolio_activity.py",
+    "test_portfolio_reporting.py",
     "test_platform_ten_year_lifecycle.py",
     "test_platform_cis_soc_inventory.py",
     "test_iso_guided_assessment.py",

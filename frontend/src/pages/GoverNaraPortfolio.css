@@ -1,4 +1,4 @@
-/* Scenic composition belongs to the Portfolio route; operational overlays use shared tokens. */
+/* Compact internal portfolio, scoped to the existing route. */
 .governara-portfolio {
   color: var(--color-text-primary);
   background: var(--color-bg-app);
@@ -9,24 +9,19 @@
 .gp-head { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
 .gp-head h1 { margin:0; font:650 30px/1.2 var(--font-heading); letter-spacing:-.75px; }
 .governara-portfolio .bp-theme { display:inline-flex; align-items:center; gap:6px; min-height:34px; padding:0 12px; border:1px solid var(--color-border); border-radius:7px; color:var(--color-text-secondary); background:var(--color-bg-surface); font-size:12px; }
-.gp-hero { position:relative; isolation:isolate; overflow:hidden; padding:35px 28px 23px; min-height:268px; border:1px solid var(--color-border-strong); border-radius:13px; background:linear-gradient(110deg,var(--color-bg-subtle),var(--color-bg-surface)); box-shadow:inset 0 0 3px var(--color-border),0 3px 18px #05102612; }
-.gp-hero-art { position:absolute; inset:1px 1px 1px auto; width:284px; height:calc(100% - 2px); object-fit:cover; object-position:center; pointer-events:none; z-index:-1; mask-image:linear-gradient(90deg,transparent,#000 22%); }
-.gp-hero-content { position:relative; width:calc(100% - 234px); }
-.gp-eyebrow { margin:0 0 9px; font-size:12px; font-weight:600; letter-spacing:4px; text-transform:uppercase; color:var(--color-text-secondary); }
-.gp-hero h2 { margin:0; font:500 32px/1.25 var(--font-heading); letter-spacing:-1.2px; }
-.gp-hero h2 span { color:var(--color-link); }
-.gp-description { margin:4px 0 0; font-size:14px; line-height:1.5; color:var(--color-text-secondary); }
-.gp-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:22px 0 0; }
-.gp-metric { display:flex; align-items:center; gap:9px; min-height:80px; padding:12px 9px; border:1px solid var(--color-border); border-radius:9px; background:var(--color-bg-surface); }
-.gp-metric-icon { display:grid; place-items:center; flex-shrink:0; width:37px; height:44px; border-radius:10px; color:var(--color-link); background:var(--color-bg-subtle); }
-.gp-metric-value { display:block; margin:0; font-size:19px; font-weight:600; line-height:1.2; font-variant-numeric:tabular-nums; }
-.gp-metric-label { display:block; margin-top:4px; font-size:11px; color:var(--color-text-secondary); }
-.gp-metric-label small { display:block; font-size:10px; }
-.governara-portfolio[data-theme=dark] .gp-hero { border-color:#829bd0; background:linear-gradient(110deg,#16305acb 0%,#0b1a33e6 63%,#102342); box-shadow:inset 0 0 3px 2px #95a0ff70,inset 3px 0 18px #7186f95e,0 0 18px #6984f82a; }
-.governara-portfolio[data-theme=dark] .gp-eyebrow { color:#bad1ff; }
-.governara-portfolio[data-theme=dark] .gp-hero h2 span { background:linear-gradient(95deg,#95ddfc,#a4baff 60%,#c2a8fa); background-clip:text; -webkit-background-clip:text; color:transparent; }
-.governara-portfolio[data-theme=dark] .gp-metric { border-color:#385882; background:linear-gradient(110deg,#142a4de0,#11213cbe); }
-.gp-register { margin-top:23px; padding:14px; border:1px solid var(--color-border); border-radius:14px; background:var(--color-bg-surface); }
+.gp-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:0 0 22px; }
+.gp-metric { display:flex; align-items:center; gap:15px; position:relative; min-height:115px; min-width:0; padding:18px; border:1px solid var(--color-border); border-radius:9px; background:var(--color-bg-surface); text-align:left; color:var(--color-text-primary); }
+.gp-metric-icon { display:grid; place-items:center; flex-shrink:0; width:42px; height:44px; border-radius:8px; color:var(--color-link); background:var(--color-bg-subtle); }
+.gp-metric-content { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.gp-metric-value { display:block; font-size:26px; font-weight:600; line-height:1.2; letter-spacing:-.7px; font-variant-numeric:tabular-nums; }
+.gp-metric-label { display:block; font-size:12px; color:var(--color-text-secondary); }
+.gp-metric-sub { display:block; font-size:10px; color:var(--color-text-muted); }
+.gp-metric-link-title { font-size:17px; font-weight:600; letter-spacing:-.3px; }
+.gp-metric-arrow { position:absolute; right:13px; top:13px; color:var(--color-text-muted); }
+.gp-metric.is-interactive:hover { background:var(--color-bg-row-hover); border-color:var(--color-link); }
+.gp-metric:disabled { cursor:default; opacity:.7; }
+.gp-metric.is-progress .gp-metric-icon { color:var(--color-link); }
+.gp-register { margin-top:0; padding:14px; border:1px solid var(--color-border); border-radius:14px; background:var(--color-bg-surface); }
 .governara-portfolio .gp-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:0; border:0; background:none; }
 .governara-portfolio .register-search { flex:1; min-width:180px; max-width:380px; }
 .governara-portfolio .register-search input { width:100%; background:var(--color-bg-subtle); color:var(--color-text-primary); border-color:var(--color-input-border); }
@@ -67,8 +62,8 @@
 .gp-work-count.is-attention { color:var(--color-moderate-text); }
 .gp-work-count.is-zero { color:var(--color-text-muted); }
 .governara-portfolio :is(button,a,input,select,[tabindex]):focus-visible { outline:2px solid var(--color-focus-ring); outline-offset:3px; }
-@media(min-width:1600px) { .gp-hero { padding:45px 36px 23px; min-height:279px; }.gp-hero-art { width:350px; }.gp-hero-content { width:calc(100% - 331px); }.gp-hero h2 { font-size:37px; }.gp-description { font-size:17px; }.gp-metric { gap:12px; }.gp-metric-icon { width:44px; height:49px; }.gp-metric-label { font-size:13px; } }
-@media(max-width:1180px) { .gp-hero-content { width:100%; }.gp-hero-art { width:260px; opacity:.75; }.gp-hero h2,.gp-description { max-width:calc(100% - 160px); }.gp-metrics { width:calc(100% - 130px); }.gp-metric-icon { width:28px; background:none; }.gp-metric { gap:6px; } }
-@media(max-width:900px) { .gp-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); max-width:550px; }.gp-hero-art { width:235px; }.gp-sort { margin-left:0; }.gp-sort select { max-width:100%; } }
-@media(max-width:600px) { .governara-portfolio { padding:18px 12px 24px; }.gp-head h1 { font-size:25px; }.gp-hero { padding:24px 18px 18px; }.gp-hero h2 { font-size:27px; max-width:100%; }.gp-description { max-width:100%; }.gp-hero-art { opacity:.3; width:210px; }.gp-metrics { width:100%; }.gp-register { padding:10px; }.governara-portfolio .register-search { max-width:none; flex-basis:100%; }.gp-eyebrow { font-size:10px; letter-spacing:2.5px; } }
+@media(max-width:1000px) { .gp-metric { gap:10px; padding:15px; }.gp-metric-icon { width:34px; height:38px; }.gp-metric-link-title { font-size:15px; }.gp-sort { margin-left:0; }.gp-sort select { max-width:100%; } }
+@media(max-width:800px) { .gp-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.gp-metric { min-height:100px; } }
+@media(max-width:600px) { .governara-portfolio { padding:18px 12px 24px; }.gp-head h1 { font-size:25px; }.gp-metrics { gap:8px; }.gp-metric { gap:9px; padding:13px 10px; }.gp-metric-icon { width:28px; background:none; }.gp-metric-link-title { font-size:14px; }.gp-metric-label { font-size:11px; }.gp-register { padding:10px; }.governara-portfolio .register-search { max-width:none; flex-basis:100%; } }
+@media(max-width:360px) { .gp-metrics { grid-template-columns:1fr; }.gp-metric { min-height:90px; } }
 @media(prefers-reduced-motion:reduce) { .governara-portfolio * { scroll-behavior:auto; } }
