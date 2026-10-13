@@ -2,14 +2,14 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import BrawndoSidebar,{BrawndoPlatformSidebar,sidebarCounts} from './BrawndoSidebar';
 import api from '@/lib/api';
-let mockOrg;
+let mockOrg,mockUser;
 jest.mock('react-router-dom',()=>({NavLink:({to,children,className,end,...rest})=><a href={to} className={typeof className==='function'?className({isActive:to==='/dashboard'}):className} {...rest}>{children}</a>,useLocation:()=>({key:'test'}),useNavigate:()=>jest.fn()}),{virtual:true});
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()}}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{name:'Demo',role:'super_admin'},logout:jest.fn()})}));
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,logout:jest.fn()})}));
 jest.mock('./NotificationBell',()=>()=>null);
 let root,container;
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockOrg={currentClient:{name:'Brawndo'},currentClientId:'demo_brawndo'};localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockUser={name:'Demo',role:'super_admin'};mockOrg={currentClient:{name:'Brawndo'},currentClientId:'demo_brawndo'};localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 test('badge counts come from the dashboard summary and zero counts show no badge',()=>{
   expect(sidebarCounts({kpis:{overdue_reviews:1,overdue_actions:2,significant_risks:0},posture:{vendorHealth:[{key:'assurance',total:3}]}})).toEqual({reviews:[1,'critical'],actions:[2,'critical'],risks:[0,'critical'],vendors:[3,'attention']});
@@ -51,4 +51,18 @@ test.each(['client','platform'])('%s sidebar identifies product attribution sepa
     expect(selected.textContent).toContain('Independent lifecycle client');
     expect(selected.textContent).not.toContain('Prestige Worldwide');
   }else expect(selected).toBeNull();
+});
+
+test.each(['super_admin','platform_admin','client_grc_manager','client_contributor','client_readonly','client_viewer','unknown'])('Reports navigation mirrors recognized %s role for existing and newly created clients',async role=>{
+  mockUser={name:'Report viewer',role};
+  api.get.mockImplementation(async path=>({data:path==='/dashboard'?{client_id:mockOrg.currentClientId,kpis:{}}:[]}));
+  for(const client of [{client_id:'demo_brawndo',name:'Brawndo'},{client_id:'new-client',name:'Newly created client'}]){
+    mockOrg={currentClient:client,currentClientId:client.client_id};
+    await act(async()=>root.render(<BrawndoSidebar complianceItems={[{key:'cis-ig1',label:'CIS IG2',to:'/compliance/cis-ig1'}]}/>));
+    expect([...container.querySelectorAll('.bsb-group > .bsb-group-label')].map(e=>e.textContent)).toEqual(['Work','Program','Client']);
+    const reports=container.querySelectorAll('a[href="/reports"]');expect(reports).toHaveLength(role==='unknown'?0:1);
+    const program=container.querySelector('[aria-labelledby="bsb-Program"]');
+    expect([...program.querySelectorAll('a')].map(a=>a.getAttribute('href'))).toEqual(['/compliance/cis-ig1','/risks','/policies','/vendors',...(role==='unknown'?[]:['/reports']),'/evidence']);
+    if(reports.length){expect(reports[0].nextElementSibling.getAttribute('href')).toBe('/evidence');expect(reports[0].getAttribute('aria-label')).toBe('Reports');}
+  }
 });

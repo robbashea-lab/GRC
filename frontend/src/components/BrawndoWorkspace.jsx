@@ -4,6 +4,7 @@ import {Menu,Moon,Sun,Search,ChevronDown} from 'lucide-react';
 import api,{formatError} from '@/lib/api';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
+import {canExportReports} from '@/lib/permissions';
 import {useCompliance} from '@/context/ComplianceContext';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import {dashboardRecordHref} from '@/lib/dashboardItemSummary';
@@ -12,12 +13,13 @@ import NotificationBell from './NotificationBell';
 import {BrandMark} from './Brand';
 import './BrawndoWorkspace.css';
 
-const PAGES=[['Dashboard','/dashboard'],['Calendar','/calendar'],['Reviews','/reviews'],['Action Items','/action-items'],['Risks','/risks'],['Policies','/policies'],['Vendors','/vendors'],['Evidence Library','/evidence'],['Contacts','/contacts'],['Systems & Scope','/systems'],['AI Governance','/ai-governance'],['Client Profile','/client-profile']];
+const PAGES=[['Dashboard','/dashboard'],['Calendar','/calendar'],['Reviews','/reviews'],['Action Items','/action-items'],['Risks','/risks'],['Policies','/policies'],['Vendors','/vendors'],['Reports','/reports'],['Evidence Library','/evidence'],['Contacts','/contacts'],['Systems & Scope','/systems'],['AI Governance','/ai-governance'],['Client Profile','/client-profile']];
 
 function WorkspaceSearch({clientId}){
   const [query,setQuery]=useState(''),[result,setResult]=useState(null),[open,setOpen]=useState(false);
+  const {user}=useAuth();
   const input=useRef(null),{items:frameworks}=useCompliance();
-  const pages=(clientId?[...PAGES,...frameworks.map(f=>[f.label,f.to])]:[['Portfolio','/clients'],['My Account','/account']]).filter(([label])=>label.toLowerCase().includes(query.trim().toLowerCase()));
+  const pages=(clientId?[...PAGES.filter(([,to])=>to!=='/reports'||canExportReports(user)),...frameworks.map(f=>[f.label,f.to])]:[['Portfolio','/clients'],['My Account','/account']]).filter(([label])=>label.toLowerCase().includes(query.trim().toLowerCase()));
   useEffect(()=>{
     const shortcut=e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'&&!document.querySelector('[role="dialog"][data-state="open"]')){e.preventDefault();input.current?.focus();}};
     window.addEventListener('keydown',shortcut);return()=>window.removeEventListener('keydown',shortcut);
