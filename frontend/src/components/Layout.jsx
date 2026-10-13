@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
+import {canExportReports} from '@/lib/permissions';
 import { Input } from "@/components/ui/input";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
@@ -39,6 +40,7 @@ const CLIENT_NAV = [
   { to: '/ai-governance', label: 'AI Governance', icon: Sparkles, testid: 'nav-ai-governance' },
   { to: "/contacts", label: "Contacts", icon: Users, testid: "nav-contacts" },
   { to: "/systems", label: "Systems & Scope", icon: Server, testid: "nav-systems" },
+  { to: "/reports", label: "Reports", icon: FileText, testid: "nav-reports" },
   { to: "/evidence", label: "Evidence Library", icon: FolderArchive, testid: "nav-evidence" },
   { to: "/client-profile", label: "Client Profile", icon: Settings2, testid: "nav-client-profile" },
 ];
@@ -217,7 +219,7 @@ function Sidebar() {
   // Client Workspace context covers everything else (dashboard, calendar, reviews, etc.).
   const atPlatform = ["/clients", "/admin", "/platform"].some((p) => location.pathname.startsWith(p));
   const { items: complianceItems } = useCompliance();
-  const items = atPlatform && isInternal ? PLATFORM_NAV : [...CLIENT_NAV.filter(item=>item.to!=='/findings'||!isReferenceRegister(currentClientId,user)), ...complianceItems.map(item => ({
+  const items = atPlatform && isInternal ? PLATFORM_NAV : [...CLIENT_NAV.filter(item=>(item.to!=='/findings'||!isReferenceRegister(currentClientId,user))&&(item.to!=='/reports'||canExportReports(user))), ...complianceItems.map(item => ({
     ...item, icon: ShieldCheck, testid: `nav-compliance-${item.key}`,
   }))];
 

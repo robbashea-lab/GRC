@@ -6,6 +6,7 @@ import {LayoutDashboard,CalendarDays,ClipboardCheck,ListChecks,ShieldAlert,FileT
 import api from '@/lib/api';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
+import {canExportReports} from '@/lib/permissions';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import NotificationBell from './NotificationBell';
 import {BrandMark} from './Brand';
@@ -16,7 +17,7 @@ import './BrawndoSidebar.css';
 // and counts that show where attention is needed from anywhere in the client.
 const GROUPS=[
   ['Work',[['/dashboard','Dashboard',LayoutDashboard,'nav-dashboard'],['/calendar','Calendar',CalendarDays,'nav-calendar'],['/reviews','Reviews',ClipboardCheck,'nav-reviews','reviews'],['/action-items','Action Items',ListChecks,'nav-action-items','actions']]],
-  ['Program',[['COMPLIANCE'],['/risks','Risks',ShieldAlert,'nav-risks','risks'],['/policies','Policies',FileText,'nav-policies'],['/vendors','Vendors',Building2,'nav-vendors','vendors'],['/evidence','Evidence Library',FolderArchive,'nav-evidence']]],
+  ['Program',[['COMPLIANCE'],['/risks','Risks',ShieldAlert,'nav-risks','risks'],['/policies','Policies',FileText,'nav-policies'],['/vendors','Vendors',Building2,'nav-vendors','vendors'],['/reports','Reports',FileText,'nav-reports'],['/evidence','Evidence Library',FolderArchive,'nav-evidence']]],
   ['Client',[['/contacts','Contacts',Users,'nav-contacts'],['/systems','Systems & Scope',Server,'nav-systems'],['/ai-governance','AI Governance',Sparkles,'nav-ai-governance'],['/client-profile','Client Profile',Settings2,'nav-client-profile']]],
 ];
 const BADGE_LABEL={reviews:'overdue reviews',actions:'overdue action items',risks:'significant risks',vendors:'vendors with assurance needing attention'};
@@ -82,6 +83,7 @@ export function BrawndoPlatformSidebar({adminItems=[]}){
 
 export default function BrawndoSidebar({complianceItems=[],isInternal,showFindings=false}){
   const {currentClient,currentClientId}=useOrg(),nav=useNavigate();
+  const {user}=useAuth();
   const location=useLocation();
   const [theme]=useBrawndoTheme(),[counts,setCounts]=useState({});
   useEffect(()=>{
@@ -106,7 +108,7 @@ export default function BrawndoSidebar({complianceItems=[],isInternal,showFindin
     <nav className="bsb-nav" data-testid="sidebar-client" aria-label="Client workspace">
       {GROUPS.map(([group,items])=><div key={group} className="bsb-group" role="group" aria-labelledby={`bsb-${group}`}>
         <div id={`bsb-${group}`} className="bsb-group-label">{group}</div>
-        {items.flatMap(item=>item[0]==='COMPLIANCE'?complianceItems.map(c=>link([c.to,c.label,ShieldCheck,`nav-compliance-${c.key}`])):[link(item)])}
+        {items.filter(item=>item[0]!=='/reports'||canExportReports(user)).flatMap(item=>item[0]==='COMPLIANCE'?complianceItems.map(c=>link([c.to,c.label,ShieldCheck,`nav-compliance-${c.key}`])):[link(item)])}
         {group==='Work'&&showFindings&&link(['/findings','Findings',ShieldAlert,'nav-findings'])}
       </div>)}
     </nav>

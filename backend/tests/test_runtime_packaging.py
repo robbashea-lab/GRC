@@ -60,6 +60,12 @@ class RuntimePackagingTests(unittest.TestCase):
             backend=image/"backend";backend.mkdir()
             for source in (root/"backend").glob("*.py"):
                 shutil.copy2(source,backend/source.name)
+            for docker_path in ('backend/Dockerfile', 'deploy/RenderStaging.Dockerfile'):
+                self.assertIn('COPY backend/fonts ./fonts', (root/docker_path).read_text())
+                context=(root/(docker_path+'.dockerignore')).read_text().splitlines()
+                self.assertIn('!backend/fonts', context)
+                self.assertIn('!backend/fonts/**', context)
+            shutil.copytree(root/'backend/fonts', backend/'fonts')
             self.assertIn('COPY backend/common_passwords.txt ./', (root/'backend/Dockerfile').read_text())
             self.assertIn('!backend/common_passwords.txt', (root/'backend/Dockerfile.dockerignore').read_text())
             shutil.copy2(root/'backend/common_passwords.txt', backend/'common_passwords.txt')
@@ -73,11 +79,23 @@ class RuntimePackagingTests(unittest.TestCase):
                     destination=image/parts[2].removeprefix("/app/")
                     destination.parent.mkdir(parents=True,exist_ok=True)
                     shutil.copy2(root/parts[1],destination)
-            result=subprocess.run([sys.executable,"-c",
-                "import server, framework_catalog, framework_governance, iso_audit; "
-                "from routes.onboarding import BASELINE_CATALOG; "
-                "assert BASELINE_CATALOG['policies']; "
-                "assert framework_governance.SOC_GUIDANCE; "
-                "assert len(framework_catalog.active_definitions('cis-ig1')) == 56; assert len(framework_catalog.CIS['requirements']) == 153"],
+            script = """
+import server, framework_catalog, framework_governance, iso_audit, framework_report_pdf, framework_reports
+from datetime import datetime, timezone
+from routes.onboarding import BASELINE_CATALOG
+assert BASELINE_CATALOG['policies']
+assert framework_governance.SOC_GUIDANCE
+assert len(framework_catalog.active_definitions('cis-ig1')) == 56
+assert len(framework_catalog.CIS['requirements']) == 153
+client = {'client_id': 'packaged', 'name': 'Packaged font test', 'framework_settings': {}}
+rows = [{'framework_assessment_id': 'packaged:' + d['id'], 'client_id': 'packaged',
+         'framework_key': 'cis-ig1', 'framework_version': framework_catalog.CIS['version'],
+         'definition_id': d['id'], 'status': 'not_assessed'}
+        for d in framework_catalog.active_definitions('cis-ig1')]
+snapshot = framework_reports.build_snapshot(client, 'cis-ig1', rows, [], [],
+    datetime.now(timezone.utc), '6m', ('packaged read start', 'packaged read end'), 'packaged read position')
+assert framework_report_pdf.render_framework_report(snapshot, 'executive').startswith(b'%PDF')
+"""
+            result=subprocess.run([sys.executable,"-c", script],
                 cwd=backend,env={**os.environ,"PYTHONPATH":str(backend),"MONGO_URL":"mongodb://127.0.0.1:1","DB_NAME":"runtime_import_smoke"},capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stderr)
