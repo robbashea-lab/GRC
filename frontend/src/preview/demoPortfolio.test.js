@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { previewAdapter } from './adapter';
-import { seedStore, ids, saveStore, readStore } from './store';
+import { seedStore, ids, saveStore, readStore, STORE_KEY } from './store';
 import { demoOrganizations, demoDates } from './demoPortfolio';
 import { frameworkDefinition } from '../lib/frameworks';
 import { validateProfile } from '../lib/clientProfile';
@@ -13,9 +13,11 @@ const api = axios.create({
   adapter: previewAdapter
 });
 beforeEach(() => {
+  jest.useFakeTimers().setSystemTime(new Date('2026-10-13T17:00:00.000Z'));
   sessionStorage.clear();
   localStorage.clear();
 });
+afterEach(()=>jest.useRealTimers());
 test('same day produces byte-identical seed and dates advance with the clock', () => {
   const a = seedStore(new Date('2028-02-29T12:00:00Z')),
     b = seedStore(new Date('2028-02-29T18:00:00Z'));
@@ -110,9 +112,20 @@ test('reset recovers creations edits deletions completions and baseline without 
   const modified = readStore();
   modified.assets = modified.assets.filter(a => a.client_id !== cid);
   saveStore(modified);
+  const beforeReset=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  expect(Object.values(beforeReset.portfolio_reporting.activity_proofs).some(proof=>proof.eligible)).toBe(true);
+  const resetAt='2026-10-13T18:00:00.000Z';jest.setSystemTime(new Date(resetAt));
   await api.post('/demo/reset');
   const restored = readStore();
-  expect(lightweightStore(restored)).toEqual(JSON.parse(JSON.stringify(lightweightStore(seedStore()))));
+  // Canonical source records remain exact; prospective reports begin at the new reset commit.
+  const {portfolio_reporting:reporting,...restoredSources}=JSON.parse(JSON.stringify(lightweightStore(restored)));
+  expect(restoredSources).toEqual(JSON.parse(JSON.stringify(lightweightStore(seedStore()))));
+  expect(reporting).toMatchObject({started_at:resetAt,last_captured_at:resetAt,activity_proofs:{}});
+  expect(reporting.activity_proofs).toEqual({});
+  expect(reporting.snapshots).toHaveLength(original.portfolio_reporting.snapshots.length);
+  expect(reporting.snapshots.every(snapshot=>snapshot.captured_at===resetAt&&snapshot.current.captured_at===resetAt)).toBe(true);
+  const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
+  expect(reporting.snapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
   expect(restored.tasks.some(t => t.task_id === created.task_id)).toBe(false);
   expect(localStorage.getItem('standard-sentinel')).toBe('unchanged');
   const metrics = portfolio(restored, false);
