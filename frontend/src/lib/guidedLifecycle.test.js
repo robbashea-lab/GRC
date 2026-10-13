@@ -88,8 +88,8 @@ test('verification and actual scheduled Reviews qualify; cadence and narrative d
     row('1.3', {cadence: 'annual', implementation: 'Annual review should be in December.'}),
     row('1.4')
   ], {contextComplete: true});
-  expect(result.recommendations.map(r => r.definition_id)).toEqual(['1.1', '1.2']);
-  expect(result.recommendations[1].signals.nextReview).toBe('2030-04-01');
+  expect(result.recommendations.map(r => r.definition_id)).toEqual(['1.2', '1.1']);
+  expect(result.recommendations[0].signals.nextReview).toBe('2030-04-01');
 });
 
 test('an unresolved Finding remains visible alongside a verified implementation position', () => {

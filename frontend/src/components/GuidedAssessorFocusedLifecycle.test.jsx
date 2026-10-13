@@ -255,5 +255,6 @@ test('inline reload retains reviewed wording, and changed-answer refresh keeps t
   for(let count=0;button('Save & next')&&count<12;count++)await click('Save & next');
   expect(button('Save assessment').disabled).toBe(true);await click('Refresh from answers');
   const text=document.querySelector('[aria-label="Omnibot implementation summary"]').value;
-  expect(text).toContain('\n\nControls in place');expect(text).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(text).toContain('not currently in place');expect(text).toContain('Establish or complete the enterprise asset inventory.');
+  expect(text).not.toContain('Controls in place');expect(text).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
