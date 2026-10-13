@@ -16,13 +16,13 @@
       "actual": "Item resolution/reopen/Finding link did not generate truthful durable Portfolio activity; same-clock repeated transitions could collapse.",
       "expected": "Independent Items CAS plus atomic semantic capture; exact audit acknowledgement; no history/clock/revision-only activity.",
       "correction": "assessment_items + portfolio_activity + three-file Demo parity",
-      "source_review": "backend independent PASS; owner non-author Demo reviews PASS; root final edge source rereview pending",
+      "source_review": "backend independent PASS; owner non-author Demo reviews PASS; root final edge source rereview PASS at14fc",
       "local": "owner53tests/5551subtests PASS; root actual corrected real-Mongo111tests PASS134.408s including Items/reconnect/collector/recovery; valid Demo before11FAIL/17PASS; justified SOC N/A case before1FAIL/28PASS; corrected final29/29PASS7.604s, progress calculations unchanged",
       "hosted": "pending composite deployment"
     },
     {
       "id": "RC1",
-      "actual": "Report implementation denominator included undetermined ISO Annex A controls and invalid N/A.",
+      "actual": "Report implementation denominator included undetermined ISO Annex A controls and excluded invalid non-Annex N/A, contrary to the existing native-v1 applicability calculation.",
       "expected": "Existing native-v1 included/applicable calculation; raw native status distributions separately.",
       "correction": "reuse portfolio_progress current_position; no source writes",
       "source_review": "independent PASS",

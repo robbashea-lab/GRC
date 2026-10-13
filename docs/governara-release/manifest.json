@@ -155,5 +155,13 @@
     "frontend/src/preview/portfolioReporting.test.js": "17a9660067f1cd1a76b37bec84ccc621b45b5c4ce670a9ce9029fe6d5b0e7b23"
   },
   "cutoff_at": "2026-10-13T17:37:18.874Z",
-  "cutoff_state": "All source owners explicitly froze and released files. Combined commit/tree and subsequent gates are recorded in PR57/integration PR. No late edits without a new tested cutoff."
+  "cutoff_state": "All source owners explicitly froze and released files. Combined commit/tree and subsequent gates are recorded in PR57/integration PR. No late edits without a new tested cutoff.",
+  "verification_scheduling": {
+    "application_source": "14fc37114bef6891fde31eb0d5897c3ce01c80c5",
+    "failed_run": 38440568467,
+    "reason": "Single backend job exhausted30m after offline success; Mongo cancelled",
+    "correction": "Separate required offline and disposable-Mongo jobs; both30m, commands/pins/fixed workers preserved; frontend and both backend jobs required by aggregate gate",
+    "selfcheck": "evidence/ci-phase-split-selfcheck.json",
+    "independent_review": "ActualAgent2 independent source PASS; frozen workflowSHA256e0a5e4b7efe77576e95dcd8efe9e463faaa54e342fa19fd0cb2fba693a310966; exact-head CI still required"
+  }
 }
