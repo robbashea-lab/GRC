@@ -5008,6 +5008,8 @@ app.include_router(api)
 import sys
 app.include_router(ai_governance.router_for(sys.modules[__name__]))
 app.include_router(framework_governance.router_for(sys.modules[__name__]))
+import framework_reports
+app.include_router(framework_reports.router_for(sys.modules[__name__]))
 import iso_audit
 app.include_router(iso_audit.router_for(sys.modules[__name__]))
 import organizational_controls
