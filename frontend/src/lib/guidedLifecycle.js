@@ -1,6 +1,6 @@
 // Only the upgraded Omni consumer uses these helpers. Inputs are saved, authorized
 // records; draft form values and inferred CIS cadences are not program facts.
-import {rankProgramRows} from './programTriage';
+import {rankProgramRows,scopedProgramRows} from './programTriage';
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value || {}, key);
 const count = value => Number.isInteger(value) && value >= 0 ? value : null;
 const ids = value => Array.isArray(value) ? [...new Set(value.filter(id => typeof id === 'string' && id))] : null;
@@ -149,9 +149,7 @@ function compareIds(a, b) {
 
 /** Rank the complete authorized active scope; unfinished interviews stay separate. */
 export function prioritizeGuidedLifecycle(rows = [], {drafts = {}, contextComplete = false, limit = 3} = {}) {
-  const unique = new Map();
-  for (const row of rows) if (row?.definition_id && row.in_active_scope !== false && !unique.has(row.definition_id)) unique.set(row.definition_id, row);
-  const scoped = [...unique.values()], resume = [], recommendations = [], overdue = [];
+  const scoped = scopedProgramRows(rows), resume = [], recommendations = [], overdue = [];
   const ranked=rankProgramRows(scoped,{limit:scoped.length}),positions=new Map(ranked.map((row,index)=>[row.definition_id,index]));
   let complete = contextComplete;
   for (const row of scoped) {

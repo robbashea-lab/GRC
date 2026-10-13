@@ -101,7 +101,7 @@ def _origins(row, draft, questions):
             origins[('summary_confirmation', 'verification')] = 'No substantive practice is established by the applicable answers; confirm the '+label+' in the ' + scope + '.'
         return origins
     catalog = guided_assessment.VERSIONS[draft['version']]
-    definition = catalog['definitions'][row['definition_id']]
+    definition = catalog.get('definitions', {}).get(row['definition_id']) or guided_assessment.CONTROL1['definitions'][row['definition_id']]
     corrected = draft['version'] in (guided_assessment.PROGRAM_V5['version'], guided_assessment.CONTROL1_V5['version'])
     current = draft['version'] in (guided_assessment.PROGRAM['version'], guided_assessment.PROGRAM_V4['version'], guided_assessment.PROGRAM_V5['version'], guided_assessment.CONTROL1_V4['version']) or corrected and row['definition_id'] not in ('1.1','1.2')
     root, states = definition.get('root'), []
@@ -140,6 +140,9 @@ def _origins(row, draft, questions):
         if corrected and answers.get(root) == 'No' and not any(kind == 'gap' for _, kind in origins):
             origins[(root, 'gap')] = 'The requirement practice is reported not in place.'
         applicable = [state for state in states if state != 'excluded']
+        if draft['version'] == guided_assessment.CONTROL1_V5['version'] and answers.get(root) == 'Partially' and applicable and not any(kind == 'gap' for _, kind in origins):
+            question=questions[root]
+            origins[(root, 'gap')] = question.get('gap_template') or 'Address: '+question['prompt']
         if states and not applicable:
             origins[('scope_reason', 'verification')] = 'Applicability requires native assessment decision; excluded scope is not proof of implementation.'
         elif (answers.get(root) == 'No' and any(state in ('met', 'partial') for state in applicable)
@@ -173,6 +176,8 @@ def generated(row, draft):
                 text += ' — ' + _text(answers,question_id + '_detail')
             origins[(question_id, kind)] = text
     for question_id, kind in (('gaps', 'gap'), ('unknowns', 'verification')):
+        if row['framework_key']=='cis-ig1' and draft['version']==guided_assessment.LEGACY['version'] and question_id=='gaps':
+            kind='verification'  # The original prompt combines deficiencies, exclusions and uncertainty.
         if row['framework_key']=='cis-ig1' and draft['version'] in (guided_assessment.PROGRAM_V5['version'],guided_assessment.CONTROL1_V5['version']) and answers.get('additional_gap' if kind=='gap' else 'additional_confirmation')!='Yes':
             continue
         engine = soc_guided_assessment if row['framework_key'] == 'soc-2' else iso_guided_assessment if row['framework_key'] == 'iso-27001' else None

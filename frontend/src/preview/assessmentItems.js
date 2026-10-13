@@ -56,7 +56,10 @@ export function generatedItems(row,draft){
     }
     origins.set(signal.questionId+':'+signal.kind,{question_id:signal.questionId,kind:signal.kind,text});
   }
-  for(const [question_id,kind] of [['gaps','gap'],['unknowns','verification']])if((!['cis-v8.1-program-5','cis-v8.1-control1-5','soc2-omni-2','iso27001-omni-2'].includes(version)||answers[kind==='gap'?'additional_gap':'additional_confirmation']==='Yes')&&typeof answers[question_id]==='string'&&answers[question_id].trim())origins.set(question_id+':'+kind,{question_id,kind,text:answers[question_id].trim()});
+  for(const [question_id,reportedKind] of [['gaps','gap'],['unknowns','verification']]){
+    const kind=version==='brawndo-cis-pilot-1'&&question_id==='gaps'?'verification':reportedKind;
+    if((!['cis-v8.1-program-5','cis-v8.1-control1-5','soc2-omni-2','iso27001-omni-2'].includes(version)||answers[kind==='gap'?'additional_gap':'additional_confirmation']==='Yes')&&typeof answers[question_id]==='string'&&answers[question_id].trim())origins.set(question_id+':'+kind,{question_id,kind,text:answers[question_id].trim()});
+  }
   const summary=result.unknowns?.filter(text=>text.startsWith('No substantive practice is established')||text.startsWith('The overall practice answer conflicts with the reported absence'))||[];
   if(summary.length)origins.set('summary_confirmation:verification',{question_id:'summary_confirmation',kind:'verification',text:summary.join('\n')});
   return [...origins.values()].map(source=>({...source,item_id:'item_'+encodeURIComponent(row.framework_assessment_id)+':'+encodeURIComponent(source.question_id)+':'+source.kind,

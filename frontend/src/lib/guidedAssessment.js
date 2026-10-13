@@ -139,7 +139,7 @@ function generateLegacyResult(id,answers,today=new Date(),version=guidedCatalog.
   }
   if(answers.gaps?.trim())gaps.push(`Reviewer-reported follow-up: ${answers.gaps.trim()}`);
   const substantiveGaps=signals.some(signal=>signal.questionId!==root&&signal.kind==='gap');
-  const status=answers[root]==='No'?'needs_attention':!answers[root]||answers[root]==='Not sure'||version===control1V5.version&&unknowns.length&&!substantiveGaps?'not_assessed':gaps.length||unknowns.length?'in_progress':'addressed';
+  const status=answers[root]==='No'?'needs_attention':!answers[root]||answers[root]==='Not sure'||version===control1V5.version&&answers[root]!=='Partially'&&unknowns.length&&!substantiveGaps?'not_assessed':gaps.length||unknowns.length?'in_progress':'addressed';
   const intro=id==='1.1'?`Brawndo reports ${answers.inventory==='No'?'no enterprise asset inventory':answers.inventory==='Yes'?'an enterprise asset inventory':answers.inventory==='Partially'?'a partial enterprise asset inventory':'that enterprise asset inventory existence is not confirmed'}.`:`Brawndo reports ${answers.process==='No'?'no process for addressing unauthorized assets':answers.process==='Yes'?'a process for addressing unauthorized assets':answers.process==='Partially'?'a partial process for addressing unauthorized assets':'that the unauthorized-asset process is not confirmed'}.`;
   const matrixNarrative=(key,subject)=>{
     const rows=answers[key];if(!rows)return '';
@@ -244,6 +244,10 @@ function generateCurrentCisResult(id,answers,version){
     status='in_progress';unknowns.push('The overall practice answer conflicts with the reported requirement details; confirm the actual implementation.');signals.push({questionId:definition.root,kind:'verification'});
   }
   if(['Yes','Partially'].includes(root)&&status==='needs_attention')unknowns.push('The overall practice answer conflicts with the reported absence of every substantive requirement; confirm the overall answer.');
+  if(version===control1V5.version&&root==='Partially'&&!allExcluded){
+    if(status==='not_assessed')status='in_progress';
+    if(!gaps.length){gaps.push('The requirement practice is reported partly in place.');signals.push({questionId:definition.root,kind:'gap'});}
+  }
   if(active.gaps?.trim())gaps.push(`Reviewer-reported gap: ${active.gaps.trim()}`);
   if(active.unknowns?.trim())unknowns.push(`Reviewer-reported uncertainty: ${active.unknowns.trim()}`);
   if(allExcluded){status='not_assessed';basis.length=0;unknowns.push('Applicability requires native assessment decision; excluded scope is not proof of implementation.');signals.push({questionId:'scope_reason',kind:'verification'});}

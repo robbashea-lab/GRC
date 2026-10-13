@@ -120,6 +120,33 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.json()['last_saved'],saved['last_saved'])
         self.assertEqual(response.json()['assessment_history'],saved['assessment_history'])
 
+    async def test_closed_finding_retains_exact_active_risk_projection_without_open_count(self):
+        base,row=await self.initial()
+        item=next(item for item in row['items_to_address'] if item['kind']=='gap')
+        response=await self.client.post(base+'/findings',json={'title':'Isolated closed connector','remediation_title':'Correct the specific gap',
+            'severity':'low','request_id':'closed-ranking-origin','item_id':item['item_id']})
+        self.assertEqual(response.status_code,200,response.text);finding=response.json()
+        await server.db.risks.insert_one({'risk_id':'accepted-ranking-risk','client_id':'a','status':'accepted','likelihood_score':5,'impact_score':5})
+        await server.db.findings.update_one({'finding_id':finding['finding_id']},{'$set':{'risk_id':'accepted-ranking-risk'}})
+        tasks=await server.db.tasks.find({'finding_id':finding['finding_id'],'client_id':'a'}).to_list(None)
+        self.assertEqual(len(tasks),1)
+        response=await self.client.patch('/api/tasks/'+tasks[0]['task_id'],json={'status':'done','expected_updated_at':tasks[0]['updated_at']})
+        self.assertEqual(response.status_code,200,response.text)
+        pending=await server.db.findings.find_one({'finding_id':finding['finding_id']})
+        response=await self.client.post('/api/findings/'+finding['finding_id']+'/validate',json={
+            'request_id':'close-ranking-connector','rationale':'Controlled validation of completed work','expected_updated_at':pending['updated_at']})
+        self.assertEqual(response.status_code,200,response.text)
+        workspace=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json();work=workspace['work'][row['framework_assessment_id']]
+        self.assertEqual(work['open_findings'],0);self.assertEqual(work['finding_ids'],[])
+        connector=next((record for record in work['priority_records'] if record['kind']=='findings'),None)
+        self.assertIsNotNone(connector)
+        self.assertEqual((connector['id'],connector['status'],connector['assessment_item_id']),(finding['finding_id'],'closed',item['item_id']))
+        self.assertFalse(connector['open_gap'])
+        risk=next(record for record in work['priority_records'] if record['kind']=='risks')
+        self.assertEqual((risk['id'],risk['status'],risk['risk_level']),('accepted-ranking-risk','accepted','critical'))
+        persisted=await server.db.framework_assessments.find_one({'framework_assessment_id':row['framework_assessment_id']})
+        self.assertEqual((persisted['status'],persisted['last_saved']),(row['status'],row['last_saved']))
+
     async def test_items_response_filters_capture_fields_on_update_and_noop(self):
         base, row = await self.initial()
         item = row['items_to_address'][0]
@@ -574,10 +601,11 @@ class AssessmentItemsReconciliationTests(unittest.TestCase):
         self.assertEqual({(case['framework'],case['id']) for case in cases},records)
         script=r"""
 const fs=require('node:fs'),path=require('node:path'),root=process.argv[1],cache=new Map();
-const allowed=new Set(['guidedAssessment','socGuidedAssessment','isoGuidedAssessment','inlineAssessment','programTriage','managementDates']);
+const allowed=new Set(['guidedAssessment','socGuidedAssessment','isoGuidedAssessment','inlineAssessment','programTriage','managementDates','grcWork','grcRules.json']);
 function load(name){
   if(!allowed.has(name))throw new Error('Unreviewed evaluator import '+name);
   if(cache.has(name))return cache.get(name);
+  if(name==='grcRules.json')return JSON.parse(fs.readFileSync(path.join(root,'frontend/src/lib',name),'utf8'));
   let source=fs.readFileSync(path.join(root,'frontend/src/lib',name+'.js'),'utf8');const params=[],inputs=[];
   source=source.replace(/^import (.+?) from ['"](.+?)['"];\r?\n/gm,(_,binding,reference)=>{
     params.push(binding);inputs.push(reference.startsWith('@catalogs/')?JSON.parse(fs.readFileSync(path.join(root,'shared/catalogs',reference.slice(10)),'utf8')):load(reference.slice(2)));return '';

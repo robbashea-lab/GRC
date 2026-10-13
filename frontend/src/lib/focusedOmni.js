@@ -11,6 +11,8 @@ export function focusedRecommendations(rows,drafts,contextComplete){
   const resumable=new Set(overview.resume.map(row=>row.definition_id));
   const reasons={not_assessed:'The safeguard has no saved assessment position.',not_implemented:'The saved implementation identifies work still to address.',partial_or_unresolved:'Partial implementation or linked unresolved work is recorded.',verification_or_review:'The saved implementation needs verification or an existing scheduled review.',unfinished_interview:'Your saved interview has unresolved work to resume.'};
   const items=new Map([...overview.recommendations,...overview.resume.filter(row=>!overview.recommendations.some(item=>item.definition_id===row.definition_id))].map(row=>[row.definition_id,{...row,reason:reasons[row.reasonCode],...(resumable.has(row.definition_id)?{action:'resume'}:{})}]));
+  const inventory=items.get('1.1');
+  if(inventory&&items.has('1.2')&&inventory.status==='needs_attention'&&!resumable.has('1.2'))inventory.reason+=' This inventory foundation supports unauthorized-asset comparison in 1.2.';
   return [...items.values()].slice(0,5);
 }
 

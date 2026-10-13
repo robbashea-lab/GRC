@@ -1,7 +1,41 @@
 import {socGuidedCatalog,socQuestions,socGuidedResult,validateSocCompletion} from './socGuidedAssessment';
-import {isoGuidedCatalog,isoQuestions,isoGuidedResult,validateIsoCompletion} from './isoGuidedAssessment';
+import {isoGuidedCatalog,isoQuestions,isoExtraQuestions,isoGuidedResult,validateIsoCompletion} from './isoGuidedAssessment';
 import {generatedItems} from '../preview/assessmentItems';
-import {catalogForVersion,compatibleInterviewAnswers,visibleQuestions} from './guidedAssessment';
+import {catalogForVersion,compatibleInterviewAnswers,visibleQuestions,generateResult} from './guidedAssessment';
+
+test('required current ISO conditional details use accurate labels while the original optional context labels remain available',()=>{
+  const answers={additional_gap:'Yes',additional_confirmation:'Yes'};
+  expect(isoExtraQuestions(answers).filter(q=>['gaps','unknowns'].includes(q.id)).map(q=>q.prompt)).toEqual(['Additional gap context','Additional confirmation context']);
+  expect(isoExtraQuestions(answers,'iso27001-omni-1').filter(q=>['gaps','unknowns'].includes(q.id)).map(q=>q.prompt)).toEqual(['Additional gap context (optional; not a status decision)','Additional confirmation context (optional; not a status decision)']);
+});
+
+test('original CIS pilot follow-up remains readable and produces confirmation work without guessing its mixed intent',()=>{
+  const version='brawndo-cis-pilot-1';
+  for(const [id,root] of [['1.1','inventory'],['1.2','process']]){
+    const answers={[root]:'Not sure',gaps:'A recorded scope exclusion and an unresolved owner confirmation.'};
+    const original={...answers},row={framework_key:'cis-ig1',framework_assessment_id:'isolated:'+id,definition_id:id};
+    expect(generateResult(id,answers,new Date(2026,9,13),version).status).toBe('not_assessed');
+    const items=generatedItems(row,{answers,version});
+    expect(items).toContainEqual(expect.objectContaining({question_id:'gaps',kind:'verification',text:answers.gaps}));
+    expect(items.some(item=>item.kind==='gap')).toBe(false);expect(answers).toEqual(original);
+  }
+});
+
+test('each current Control 1 practice preserves its explicit partial implementation beside unknown cadence and native Items agree',()=>{
+  const version='cis-v8.1-control1-5',catalog=catalogForVersion(version);
+  for(const id of Object.keys(catalog.definitions)){
+    const answers={};
+    for(let pass=0;pass<5;pass++)for(const q of visibleQuestions(id,answers,version))if(!(q.id in answers))answers[q.id]=q.id.startsWith('additional_')?'No':q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='multi'?[q.choices.find(choice=>!['None','Not sure'].includes(choice))]:q.type==='date'?'2026-10-13':q.type==='text'?'':q.choices.includes('Yes')?'Yes':q.choices.find(choice=>!(q.deficient_values||[]).includes(choice)&&!['No','Partially','Not sure','None'].includes(choice));
+    const root=catalog.definitions[id].root,row={framework_key:'cis-ig1',definition_id:id,framework_assessment_id:'isolated:'+id};
+    answers[root]='Partially';answers.frequency='Not sure';
+    const output=generateResult(id,answers,new Date(2026,9,13),version);
+    expect({id,status:output.status}).toEqual({id,status:'in_progress'});
+    expect(output.signals).toEqual(expect.arrayContaining([{questionId:root,kind:'gap'},{questionId:'frequency',kind:'verification'}]));
+    const items=generatedItems(row,{answers,version,result:output});
+    expect(items).toEqual(expect.arrayContaining([expect.objectContaining({question_id:root,kind:'gap'}),expect.objectContaining({question_id:'frequency',kind:'verification'})]));
+    expect(generateResult(id,{...answers,[root]:'Yes'},new Date(2026,9,13),version).status).toBe('not_assessed');
+  }
+});
 
 test.each([
   ['soc-2',socGuidedCatalog,socQuestions,socGuidedResult],

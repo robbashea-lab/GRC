@@ -96,12 +96,14 @@ function pilotWork(db,row){
     client_id:row.client_id,framework_assessment_id:item.framework_assessment_id,assessment_item_id:item.assessment_item_id,finding_id:item.finding_id,risk_id:item.risk_id,risk_level:kind==='risks'?assessedRisk(item).risk_level:undefined,
     title:item.title??null,status:item.status??null,due_date:item.due_date??null,severity:item.severity,priority:item.priority,
     owner_id:item.owner_id,assignee_id:item.assignee_id,reviewer_id:item.reviewer_id,
-    open_gap:kind==='findings'?gapFids.has(item.finding_id):kind==='tasks'&&gapFids.has(item.finding_id)}).filter(([,value])=>value!==undefined));
+    open_gap:kind==='findings'?work.finding_ids.includes(item.finding_id)&&gapFids.has(item.finding_id):kind==='tasks'&&gapFids.has(item.finding_id)}).filter(([,value])=>value!==undefined));
   const gapFinding=finding=>finding.framework_assessment_id===row.framework_assessment_id&&row.items_to_address?.some(item=>item.item_id===finding.assessment_item_id&&item.finding_id===finding.finding_id&&item.kind==='gap'&&item.state==='open');
-  const gapFids=new Set(findings.filter(gapFinding).map(f=>f.finding_id)),riskIds=new Set(findings.map(f=>f.risk_id));
+  const gapFids=new Set(related.findings.filter(gapFinding).map(f=>f.finding_id));
+  const connectors=related.findings.filter(f=>gapFids.has(f.finding_id)&&!work.finding_ids.includes(f.finding_id)&&f.risk_id);
+  const riskIds=new Set([...findings,...connectors].map(f=>f.risk_id));
   const risks=(db.risks||[]).filter(risk=>risk.client_id===row.client_id&&riskIds.has(risk.risk_id));
   return {...work,task_ids:[...new Set(tasks.map(t=>t.task_id))].sort(),context_complete:true,
-    priority_records:[...reviews.map(r=>scalar('reviews',r,r.review_id)),...findings.map(f=>scalar('findings',f,f.finding_id)),...risks.map(r=>scalar('risks',r,r.risk_id)),...tasks.map(t=>scalar('tasks',t,t.task_id))]};
+    priority_records:[...reviews.map(r=>scalar('reviews',r,r.review_id)),...[...findings,...connectors].map(f=>scalar('findings',f,f.finding_id)),...risks.map(r=>scalar('risks',r,r.risk_id)),...tasks.map(t=>scalar('tasks',t,t.task_id))]};
 }
 // Shape and safeguard prefix only; the UI checks ids against operator guidance.
 const validateVerificationChecklist=(value,definitionId)=>{

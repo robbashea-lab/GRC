@@ -1,4 +1,6 @@
 import {rankProgramRows,normalizedPriority} from './programTriage';
+import {frameworkRequest} from '../preview/frameworks';
+import {focusedRecommendations} from './focusedOmni';
 const row=(id,status='needs_attention',extra={})=>({client_id:'a',framework_key:'cis-ig1',framework_assessment_id:'a:'+id,definition_id:id,status,verification:'verified',items_to_address:[{item_id:'i:'+id,question_id:'requirements_0',kind:'gap',state:'open',source_version:'test'}],...extra});
 const map=(tier,extra={})=>({discovery:{dependency:1,importance:tier,rationale:'Reviewed fixture'},gaps:{requirements_0:{tier,rationale:'Reviewed precise gap'}},...extra});
 const mapping={'cis-ig1':{'1.1':map(2),'1.2':map(2),'6.5':map(3),'10.1':map(1)}};
@@ -45,4 +47,58 @@ test('only actually unresolved matrix rows contribute priority, and deadlines br
   expect(rankProgramRows([a],{mapping:local})[0].triage.priority).toBe(1);
   for(const record of [a,b]){const fid='f:'+record.definition_id;record.items_to_address[0].finding_id=fid;record.work={priority_records:[{kind:'findings',id:fid,client_id:'a',framework_assessment_id:record.framework_assessment_id,assessment_item_id:record.items_to_address[0].item_id,severity:'low',due_date:record===a?'2026-12-01':'2026-11-01'}]};}
   expect(rankProgramRows([a,b],{mapping:local}).map(record=>record.definition_id)).toEqual(['1.2','1.1']);
+});
+
+test.each(['assessed','accepted'])('an exact %s Risk remains relevant through a closed Finding without reviving its severity',status=>{
+  const record=row('1.1');record.items_to_address[0].finding_id='f';
+  record.work={priority_records:[{kind:'findings',id:'f',status:'closed',severity:'critical',client_id:'a',framework_assessment_id:'a:1.1',assessment_item_id:'i:1.1',risk_id:'r'},
+    {kind:'risks',id:'r',status,client_id:'a',risk_level:'high'}]};
+  expect(rankProgramRows([record],{mapping})[0].triage).toMatchObject({priority:3,basis:'linked_native_severity'});
+  record.work.priority_records[1].status='closed';expect(rankProgramRows([record],{mapping})[0].triage.priority).toBe(2);
+  record.work.priority_records[1].status='accepted';record.work.priority_records[0].assessment_item_id='evidence-only';
+  expect(rankProgramRows([record],{mapping})[0].triage.priority).toBe(2);
+  record.work.priority_records[0].assessment_item_id='i:1.1';record.work.priority_records[1].client_id='other';
+  expect(rankProgramRows([record],{mapping})[0].triage.priority).toBe(2);
+});
+
+test('scheduled follow-up uses actual deadlines within its final bucket and never displaces discovery or remediation',()=>{
+  const later=row('1.1','addressed',{items_to_address:[],work:{next_review_due:'2026-12-01'}}),earlier=row('1.2','addressed',{items_to_address:[],work:{next_review_due:'2026-11-01'}});
+  expect(rankProgramRows([later,earlier,row('18.5','not_assessed'),row('10.1')],{mapping}).map(record=>record.definition_id)).toEqual(['18.5','10.1','1.2','1.1']);
+});
+
+test('native absent positions without structured gap Items use only their actual linked same-client deadlines',()=>{
+  const later=row('1.1','needs_attention',{items_to_address:[],work:{task_ids:['late'],priority_records:[{kind:'tasks',id:'late',client_id:'a',status:'todo',due_date:'2026-12-01'},{kind:'tasks',id:'unrelated',client_id:'a',status:'todo',due_date:'2026-01-01'}]}});
+  const earlier=row('1.2','needs_attention',{items_to_address:[],work:{task_ids:['early'],priority_records:[{kind:'tasks',id:'early',client_id:'a',status:'todo',due_date:'2026-11-01'},{kind:'tasks',id:'early',client_id:'foreign',status:'todo',due_date:'2026-01-01'}]}});
+  expect(rankProgramRows([later,earlier],{mapping}).map(record=>record.definition_id)).toEqual(['1.2','1.1']);
+});
+
+test('Demo projects a closed exact connector and active accepted Risk without increasing open Finding counts',()=>{
+  const record=row('1.1');record.items_to_address[0].finding_id='f';
+  const db={user:{user_id:'analyst',role:'platform_admin',client_ids:['a'],workspace_mode:'demo'},clients:[{client_id:'a',framework_settings:{'cis-ig1':{implementation_group:1}}}],framework_assessments:[record],
+    requirements:[{client_id:'a',baseline_key:'cis-ig1',baseline_response:'applies'}],reviews:[],tasks:[],evidence:[],policies:[],vendors:[],
+    findings:[{finding_id:'f',status:'closed',severity:'low',client_id:'a',framework_assessment_id:'a:1.1',assessment_item_id:'i:1.1',risk_id:'r'}],
+    risks:[{risk_id:'r',status:'accepted',client_id:'a',likelihood_score:5,impact_score:5}]};
+  const workspace=frameworkRequest(db,'/frameworks/cis-ig1','get',{client_id:'a'},{}),work=workspace.work['a:1.1'];
+  expect(work.open_findings).toBe(0);expect(work.finding_ids).toEqual([]);
+  expect(work.priority_records.find(record=>record.kind==='findings')).toMatchObject({id:'f',status:'closed',open_gap:false});
+  expect(rankProgramRows([{...record,work}],{mapping})[0].triage.priority).toBe(4);
+});
+
+test('the existing inventory foundation rationale remains on inventory without changing discovery-first order',()=>{
+  const absent=row('1.1'),discovery=row('1.2','not_assessed');
+  const result=focusedRecommendations([absent,discovery],{},true);
+  expect(result[0].definition_id).toBe('1.2');
+  expect(result.find(record=>record.definition_id==='1.1').reason).toContain('This inventory foundation supports unauthorized-asset comparison in 1.2.');
+});
+
+test('unsupported saved interviews cannot bypass the program scope through resume, while valid clean interviews remain resumable',()=>{
+  const invalid=row('99.1','not_assessed'),valid=row('1.1','addressed',{items_to_address:[],work:{}});
+  const draft={revision:1,completed:false};
+  expect(focusedRecommendations([invalid],{'99.1':draft},true)).toEqual([]);
+  expect(focusedRecommendations([valid],{'1.1':draft},true)).toMatchObject([{definition_id:'1.1',action:'resume'}]);
+});
+
+test('ambiguous original pilot follow-up cannot manufacture an implemented-with-gap priority',()=>{
+  const record=row('1.1','addressed',{items_to_address:[{item_id:'historical-note',question_id:'gaps',kind:'gap',state:'open',source_version:'brawndo-cis-pilot-1'}]});
+  expect(rankProgramRows([record],{mapping})).toEqual([]);
 });

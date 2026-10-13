@@ -277,12 +277,14 @@ async def workspace_work(s,cid,rows,*,upgraded=False):
                 return {'kind':kind,'id':record[id_field],id_field:record[id_field],'client_id':cid,
                     **{field:record.get(field) for field in ('title','status','due_date',*fields)},'open_gap':open_gap}
             gap_items={(item.get('item_id'),item.get('finding_id')) for item in row.get('items_to_address',[]) if item.get('kind')=='gap' and item.get('state')=='open'}
-            gap_fids={f['finding_id'] for f in fs if f.get('framework_assessment_id')==aid and (f.get('assessment_item_id'),f['finding_id']) in gap_items}
-            risk_ids={f.get('risk_id') for f in fs}
+            gap_fids={f['finding_id'] for f in findings if f.get('framework_assessment_id')==aid and (f.get('assessment_item_id'),f['finding_id']) in gap_items}
+            connectors=[f for f in findings if f['finding_id'] in gap_fids and f['finding_id'] not in fids and f.get('risk_id')]
+            risk_ids={f.get('risk_id') for f in [*fs,*connectors]}
             result[aid].update({'task_ids':sorted({t['task_id'] for t in ts}),'context_complete':True,
                 'priority_records':[
                     *[priority_record('reviews',r,'review_id',('owner_id','reviewer_id')) for r in rs if r.get('status') not in ('completed','cancelled')],
                     *[priority_record('findings',f,'finding_id',('severity','owner_id','framework_assessment_id','assessment_item_id','risk_id'),f['finding_id'] in gap_fids) for f in fs],
+                    *[priority_record('findings',f,'finding_id',('severity','owner_id','framework_assessment_id','assessment_item_id','risk_id')) for f in connectors],
                     *[priority_record('risks',grc_rules.assessed_risk(r),'risk_id',('risk_level',)) for r in risks if r['risk_id'] in risk_ids],
                     *[priority_record('tasks',t,'task_id',('priority','assignee_id','owner_id','finding_id'),t.get('finding_id') in gap_fids) for t in ts]]})
     return result

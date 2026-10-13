@@ -1,8 +1,34 @@
 import {inventorySummary,inventorySummaryEnabled} from './omniInventorySummary';
 import {versionForSafeguard,visibleQuestions} from './guidedAssessment';
 import {focusedResult} from './focusedOmni';
+import {formatInlineSummary} from './inlineAssessment';
+import {omniCisSummary} from './omniCisSummary';
 const version=versionForSafeguard('1.1',true),user={workspace_mode:'demo'};
 const record={client_id:'demo_brawndo',framework_key:'cis-ig1',definition_id:'1.1'};
+test('inline unknown inventory describes its genuine confirmation work without an empty controls section or hidden context',()=>{
+  const answers={inventory:'Not sure',additional_gap:'No',additional_confirmation:'No',gaps:'HIDDEN GAP',unknowns:'HIDDEN CONFIRMATION'};
+  const {result}=inventorySummary(answers,version,'Synthetic QA','2026-10-13');
+  expect(result.status).toBe('not_assessed');expect(result.narrative).toContain('Confirm the current enterprise asset inventory position.');
+  expect(result.narrative).not.toMatch(/Controls in place|HIDDEN|An enterprise asset inventory is maintained/);
+  expect(result.narrative).toContain('independent verification remains separate');
+  const absent=inventorySummary({...answers,inventory:'No'},version,'Synthetic QA','2026-10-13').result;
+  expect(absent.status).toBe('needs_attention');expect(absent.narrative).toContain('Establish or complete the enterprise asset inventory.');
+  expect(absent.narrative).not.toContain('Controls in place');
+});
+test('inline controls include only reported practices and keep the existing heading and deduplication when supported',()=>{
+  const input={paragraph:'Reported position.',date:'2026-10-13'};
+  expect(formatInlineSummary({...input,controls:['','  ']})).not.toContain('Controls in place');
+  expect(formatInlineSummary({...input,controls:['Reported practice.',' Reported practice. ']})).toContain('\n\nControls in place\n• Reported practice.');
+});
+test('current program professional output excludes intent selectors and states operating context once while preserving source controls',()=>{
+  const id='18.5',version='cis-v8.1-program-5',operation='Synthetic annual exercise workflow',answers={practice:'Yes',operation,additional_gap:'No',additional_confirmation:'No'};
+  for(const q of visibleQuestions(id,answers,version))if(q.type==='matrix')answers[q.id]=Object.fromEntries(q.rows.map(row=>[row,'Yes']));
+  const output=omniCisSummary(id,answers,version,'Synthetic QA','2026-10-13').result;
+  expect(output.status).toBe('addressed');expect(output.narrative.split(operation)).toHaveLength(2);
+  expect(output.narrative).not.toMatch(/additional gap|additional confirmation|Day-to-day operation/);
+  for(const q of visibleQuestions(id,answers,version).filter(q=>q.type==='matrix'))for(const row of q.rows)expect(output.narrative).toContain(row);
+  expect(output.narrative).toContain('\n\nControls in place\n• ');
+});
 test('matching identity, configured CIS group and applicable safeguard gate',()=>{
   expect(inventorySummaryEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:1},record)).toBe(true);
   for(const other of [{...record,client_id:'other'},{...record,framework_key:'iso-27001'}])expect(inventorySummaryEnabled('demo_brawndo',user,'cis-ig1',{implementation_group:1},other)).toBe(false);
