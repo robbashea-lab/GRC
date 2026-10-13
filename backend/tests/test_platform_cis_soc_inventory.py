@@ -42,7 +42,9 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
         if not node:
             raise unittest.SkipTest('Node is unavailable; current frontend-engine vectors were not executed')
         completed = subprocess.run([node, str(Path(__file__).with_name('platform_cis_soc_vectors.cjs'))],
-                                   cwd=ROOT, capture_output=True, text=True, encoding='utf-8', check=True, timeout=60)
+                                   cwd=ROOT, capture_output=True, text=True, encoding='utf-8', check=False, timeout=60)
+        if completed.returncode:
+            raise AssertionError(f'Current frontend vector generation failed (exit {completed.returncode}):\n' + completed.stderr.strip())
         cls.contract = json.loads(completed.stdout)
         cls.vectors = cls.contract['vectors']
 
@@ -256,7 +258,8 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
         self.ledger['unique_definitions'] = len(visited)
         self.assertEqual(len(visited), 214)
         self.assertEqual(self.ledger['native_writes'], 428)
-        self.assertEqual(self.ledger['interview_progress_writes'], 1277)
+        # V5 removes the 11.1 and 17.5 supplement groups in both source scenarios.
+        self.assertEqual(self.ledger['interview_progress_writes'], 1273)
         self.assertEqual(self.ledger['explicit_rebases'], 214)
         for alias, cid in clients.items():
             workspace = await self.request('GET', '/api/frameworks/' + FRAMEWORK[alias], params={'client_id': cid})
