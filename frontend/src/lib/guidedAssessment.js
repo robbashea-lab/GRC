@@ -80,7 +80,7 @@ export function validateGuidedCompletion(id,answers,version=versionForSafeguard(
 export function compatibleInterviewAnswers(id,answers,fromVersion,toVersion){
   const oldQuestions=visibleQuestions(id,answers,fromVersion),newQuestions=catalogForVersion(toVersion)?.safeguards[id]||[],mapped={};
   const stable12=new Set(['process','existing','inventory_dependency','detection','system','owner','frequency','actions','disposition','confirmation','exceptions','reconciled','unresolved','evidence',...(fromVersion==='cis-v8.1-control1-2'?['gaps','unknowns']:[])]);
-  const programVersions=new Set([programV1.version,programV2.version,program.version,programV4.version]);
+  const programVersions=new Set([programV1.version,programV2.version,program.version,programV4.version,programV5.version]);
   const uncertaintyPrompts=new Set(['What still needs confirmation, and who can verify it?','Which substantive safeguard requirements still need confirmation, and who can verify them?']);
   for(const next of newQuestions){
     const old=oldQuestions.find(q=>q.id===next.id&&q.type===next.type);
@@ -96,12 +96,14 @@ export function compatibleInterviewAnswers(id,answers,fromVersion,toVersion){
         if(value&&(next.row_choices?.[text]||next.choices).includes(value))rows[text]=value;
       });
       if(Object.keys(rows).length)mapped[next.id]=rows;
-    }else if(old&&(fromVersion===toVersion||stableProgramUncertainty||id==='1.2'&&toVersion===control1V4.version&&stable12.has(next.id)||old.prompt===next.prompt&&(old.critical===next.critical||contextOnly.has(next.id)&&next.critical===false))&&answers[old.id]!==undefined){
+    }else if(old&&(fromVersion===toVersion||stableProgramUncertainty||[programV5.version,control1V5.version].includes(toVersion)&&['gaps','unknowns'].includes(next.id)||id==='1.2'&&[control1V4.version,control1V5.version].includes(toVersion)&&stable12.has(next.id)||old.prompt===next.prompt&&(old.critical===next.critical||contextOnly.has(next.id)&&next.critical===false))&&answers[old.id]!==undefined){
       const value=answers[old.id];
-      if(['text','date'].includes(next.type)||next.type==='multi'&&value.every(item=>next.choices.includes(item))&&!(toVersion===control1V4.version&&value.length>1&&value.some(item=>['None','Not sure'].includes(item)))||next.choices.includes(value))mapped[next.id]=value;
+      if(['text','date'].includes(next.type)||next.type==='multi'&&value.every(item=>next.choices.includes(item))&&!([control1V4.version,control1V5.version].includes(toVersion)&&value.length>1&&value.some(item=>['None','Not sure'].includes(item)))||next.choices.includes(value))mapped[next.id]=value;
       if(mapped[next.id]!==undefined&&answers[old.id+'_detail']!==undefined)mapped[next.id+'_detail']=answers[old.id+'_detail'];
     }
   }
+  // Retained prose is prefill; only a valid existing affirmative intent is reusable.
+  if([programV5.version,control1V5.version].includes(toVersion))for(const [parent,detail] of [['additional_gap','gaps'],['additional_confirmation','unknowns']])if(mapped[parent]==='Yes'&&!mapped[detail]?.trim())delete mapped[parent];
   validateAnswers(id,mapped,toVersion);
   return mapped;
 }

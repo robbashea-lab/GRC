@@ -3,8 +3,8 @@ const row=(id,status='needs_attention',extra={})=>({client_id:'a',framework_key:
 const map=(tier,extra={})=>({discovery:{dependency:1,importance:tier,rationale:'Reviewed fixture'},gaps:{requirements_0:{tier,rationale:'Reviewed precise gap'}},...extra});
 const mapping={'cis-ig1':{'1.1':map(2),'1.2':map(2),'6.5':map(3),'10.1':map(1)}};
 test('discovery always precedes gaps; material partial precedes routine absent and equivalent status ties are deterministic',()=>{
-  const input=[row('10.1'),row('6.5','in_progress'),row('1.2','in_progress'),row('1.1'),row('99.1','not_assessed')],before=JSON.stringify(input);
-  expect(rankProgramRows(input,{mapping}).map(r=>r.definition_id)).toEqual(['99.1','6.5','1.1','1.2','10.1']);
+  const input=[row('10.1'),row('6.5','in_progress'),row('1.2','in_progress'),row('1.1'),row('18.5','not_assessed')],before=JSON.stringify(input);
+  expect(rankProgramRows(input,{mapping}).map(r=>r.definition_id)).toEqual(['18.5','6.5','1.1','1.2','10.1']);
   expect(JSON.stringify(input)).toBe(before);
 });
 test('highest exact linked severity wins; unrelated evidence findings and task priority do not manufacture an implementation gap',()=>{
@@ -32,9 +32,9 @@ test('implemented with real gap joins remediation, while verification alone and 
   expect(rankProgramRows([oldNote],{frameworkKey:'soc-2',mapping})).toEqual([]);
 });
 test('scope, applicability, duplicate identities, neutral fallbacks and approved native scale normalization',()=>{
-  const input=[row('1.1'),row('1.1'),row('1.2','not_applicable'),row('3.1','not_assessed',{client_id:'b'}),row('CC1.1','not_assessed',{framework_key:'soc-2'}),row('4.1','not_assessed',{in_active_scope:false}),row('99.1')];
+  const input=[row('1.1'),row('1.1'),row('1.2','not_applicable'),row('3.1','not_assessed',{client_id:'b'}),row('CC1.1','not_assessed',{framework_key:'soc-2'}),row('4.1','not_assessed',{in_active_scope:false}),row('99.1'),row('18.5')];
   const output=rankProgramRows(input,{clientId:'a',frameworkKey:'cis-ig3',mapping});
-  expect(output.map(r=>r.definition_id)).toEqual(['1.1','99.1']);
+  expect(output.map(r=>r.definition_id)).toEqual(['1.1','18.5']);
   expect(output[1].triage).toMatchObject({priority:2,unmapped:true});
   expect(['critical','Immediate','HIGH','moderate','medium','low','unsupported'].map(normalizedPriority)).toEqual([4,4,3,2,2,1,null]);
 });

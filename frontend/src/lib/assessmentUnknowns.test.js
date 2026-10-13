@@ -1,6 +1,7 @@
 import {socGuidedCatalog,socQuestions,socGuidedResult,validateSocCompletion} from './socGuidedAssessment';
 import {isoGuidedCatalog,isoQuestions,isoGuidedResult,validateIsoCompletion} from './isoGuidedAssessment';
 import {generatedItems} from '../preview/assessmentItems';
+import {catalogForVersion,compatibleInterviewAnswers,visibleQuestions} from './guidedAssessment';
 
 test.each([
   ['soc-2',socGuidedCatalog,socQuestions,socGuidedResult],
@@ -18,6 +19,23 @@ test.each([
     expect(result(id,{...mixed,[known.id]:'Partially'}).status).toBe('in_progress');
     expect(result(id,{...mixed,[known.id]:'No'}).status).toBe('needs_attention');
   }
+});
+
+test('CIS v5 explicit reuse retains supported practice and inactive context without importing contradictory choices or inferring intent',()=>{
+  const migrated=compatibleInterviewAnswers('1.2',{process:'Yes',actions:['None','Quarantine or isolate'],gaps:'No gaps',unknowns:'None'},'cis-v8.1-control1-2','cis-v8.1-control1-5');
+  expect(migrated.process).toBe('Yes');expect(migrated.actions).toBeUndefined();
+  expect(migrated.gaps).toBe('No gaps');expect(migrated.unknowns).toBe('None');
+  expect(migrated.additional_gap).toBeUndefined();expect(migrated.additional_confirmation).toBeUndefined();
+  expect(visibleQuestions('1.2',migrated,'cis-v8.1-control1-5').map(q=>q.id)).not.toEqual(expect.arrayContaining(['gaps','unknowns']));
+  const old={};for(const q of catalogForVersion('cis-v8.1-program-3').safeguards['2.1'])old[q.id]=q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':'Yes';
+  old.unknowns='Review a substantive coverage uncertainty with the team.';
+  const current=compatibleInterviewAnswers('2.1',old,'cis-v8.1-program-3','cis-v8.1-program-5');
+  expect(current.unknowns).toBe(old.unknowns);expect(current.additional_confirmation).toBeUndefined();
+  const row={framework_key:'cis-ig1',definition_id:'2.1',framework_assessment_id:'isolated:2.1'};
+  expect(generatedItems(row,{answers:current,version:'cis-v8.1-program-5'})).toEqual([]);
+  expect(generatedItems(row,{answers:{...current,additional_confirmation:'Yes'},version:'cis-v8.1-program-5'}).some(item=>item.question_id==='unknowns'&&item.kind==='verification')).toBe(true);
+  expect(compatibleInterviewAnswers('2.1',{...current,additional_confirmation:'Yes'},'cis-v8.1-program-5','cis-v8.1-program-5').additional_confirmation).toBe('Yes');
+  expect(compatibleInterviewAnswers('2.1',{...current,additional_confirmation:'Yes',unknowns:''},'cis-v8.1-program-5','cis-v8.1-program-5').additional_confirmation).toBeUndefined();
 });
 
 test.each([

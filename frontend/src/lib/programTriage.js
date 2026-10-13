@@ -1,5 +1,8 @@
 import policy from '@catalogs/programTriage.json';
 import cisCurrent from '@catalogs/guidedCisProgramV5.json';
+import cisControl1 from '@catalogs/guidedControl1V5.json';
+import socCurrent from '@catalogs/guidedSoc2.json';
+import isoCurrent from '@catalogs/guidedIsoV2.json';
 import {calendarDay} from './managementDates';
 
 // Internal application triage, not a customer risk rating or framework score.
@@ -8,6 +11,7 @@ const tier=value=>Number.isInteger(value)&&value>=1&&value<=4?value:2;
 const family=key=>/^cis-ig[123]$/.test(key||'')?'cis-ig1':key;
 const closed=record=>record.kind==='tasks'?['done','cancelled'].includes(record.status):['closed','accepted','retired'].includes(record.status);
 const compareIds=(a,b)=>a.definition_id.localeCompare(b.definition_id,undefined,{numeric:true});
+const supported={'cis-ig1':{...cisCurrent.definitions,...cisControl1.definitions},'soc-2':socCurrent.definitions,'iso-27001':isoCurrent.definitions};
 
 function sourceFor(row,item){
   if(row.guided_assessment_source?.version===item.source_version)return row.guided_assessment_source;
@@ -40,7 +44,7 @@ export function rankProgramRows(rows=[],{frameworkKey,clientId,mapping=policy.fr
   const selectedClient=clientId||rows.find(row=>row.client_id&&(!row.framework_key||family(row.framework_key)===selectedFamily))?.client_id;
   const unique=new Map();
   for(const row of rows){
-    if(!row?.definition_id||row.in_active_scope===false||row.status==='not_applicable'||
+    if(!row?.definition_id||!supported[selectedFamily]?.[row.definition_id]||row.in_active_scope===false||row.status==='not_applicable'||
        row.framework_key&&family(row.framework_key)!==selectedFamily||selectedClient&&row.client_id!==selectedClient||
        row.specification==='annex_control'&&(row.soa_applicability!=='included'||!row.soa_justification?.trim()))continue;
     if(!unique.has(row.definition_id))unique.set(row.definition_id,row);
