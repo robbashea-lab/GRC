@@ -6,10 +6,41 @@ const copy=value=>JSON.parse(JSON.stringify(value));
 const fail=(message,status=422)=>{throw Object.assign(new Error(message),{status});};
 const canonical=value=>JSON.stringify(value===undefined?null:Array.isArray(value)?value:value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,JSON.parse(canonical(value[key]))])):value);
 
+function cisItemResult(row,draft,questions){
+  const localDay=value=>{const [year,month,day]=value.split('-').map(Number);return new Date(year,month-1,day);};
+  const day=draft.result?.evaluation_date;
+  if(day)return generateResult(row.definition_id,draft.answers,localDay(day),draft.version);
+  const dated=Object.values(questions).filter(question=>question.type==='date'&&question.critical!==false);
+  if(!dated.length)return generateResult(row.definition_id,draft.answers,new Date(),draft.version);
+  const stamp=new Date(draft.generated_at);
+  const parts=typeof draft.generated_at==='string'&&/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,6})?(?:Z|[+-](\d{2}):(\d{2}))$/.exec(draft.generated_at);
+  const calendarDay=parts&&new Date(parts[1]+'T00:00:00Z');
+  const knownStamp=parts&&Number.isFinite(stamp.getTime())&&Number.isFinite(calendarDay.getTime())&&calendarDay.toISOString().slice(0,10)===parts[1]
+    &&Number(parts[2])<24&&Number(parts[3])<60&&Number(parts[4])<60&&Number(parts[5]||0)<24&&Number(parts[6]||0)<60;
+  const dates=knownStamp?[-1,0,1].map(offset=>{
+    const utc=new Date(Date.UTC(stamp.getUTCFullYear(),stamp.getUTCMonth(),stamp.getUTCDate()+offset));
+    return new Date(utc.getUTCFullYear(),utc.getUTCMonth(),utc.getUTCDate());
+  }):[];
+  const results=dates.map(today=>generateResult(row.definition_id,draft.answers,today,draft.version));
+  const result=results[1]||generateResult(row.definition_id,draft.answers,new Date(),draft.version);
+  // Pre-metadata snapshots cannot establish the browser's local day. Preserve
+  // conclusions shared by all plausible days and confirm only ambiguous dates.
+  const signals=(result.signals||[]).filter(signal=>!dated.some(question=>question.id===signal.questionId));
+  for(const question of dated){
+    const kinds=new Set(results.map(candidate=>(candidate.signals||[]).find(signal=>signal.questionId===question.id)?.kind||null));
+    const fallback=(result.signals||[]).find(signal=>signal.questionId===question.id)?.kind;
+    const value=draft.answers[question.id],parsed=typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)?new Date(value+'T00:00:00Z'):null;
+    const invalid=value&&(!parsed||!Number.isFinite(parsed.getTime())||parsed.toISOString().slice(0,10)!==value);
+    const kind=results.length?(kinds.size===1?[...kinds][0]:'verification'):invalid?'gap':fallback==='verification'?fallback:'verification';
+    if(kind)signals.push({questionId:question.id,kind});
+  }
+  return {...result,signals};
+}
+
 export function generatedItems(row,draft){
   const {answers,version}=draft;
-  const result=row.framework_key==='soc-2'?socGuidedResult(row.definition_id,answers,version):row.framework_key==='iso-27001'?isoGuidedResult(row.definition_id,answers,version):generateResult(row.definition_id,answers,new Date(),version);
   const questions=Object.fromEntries((row.framework_key==='soc-2'?socQuestions(row.definition_id,answers,version):row.framework_key==='iso-27001'?isoQuestions(row.definition_id,answers,version):visibleQuestions(row.definition_id,answers,version)).map(question=>[question.id,question]));
+  const result=row.framework_key==='soc-2'?socGuidedResult(row.definition_id,answers,version):row.framework_key==='iso-27001'?isoGuidedResult(row.definition_id,answers,version):cisItemResult(row,draft,questions);
   const origins=new Map();
   for(const signal of result.signals||[]){
     const question=questions[signal.questionId];if(!question)fail('Follow-up origin must belong to this interview');

@@ -1,5 +1,5 @@
 import {validateCsfProfile} from '../lib/csfProfile';
-import {pilotEnabled,versionForSafeguard,validateAnswers} from '../lib/guidedAssessment';
+import {pilotEnabled,versionForSafeguard,validateAnswers,visibleQuestions} from '../lib/guidedAssessment';
 import {focusedOmniEnabled} from '../lib/focusedOmni';
 import {socGuidedEnabled,socGuidedCatalog,validateSocAnswers,validateSocCompletion,socGuidedResult} from '../lib/socGuidedAssessment';
 import {isoGuidedEnabled,isoGuidedCatalog,validateIsoAnswers,validateIsoCompletion,isoGuidedResult} from '../lib/isoGuidedAssessment';
@@ -13,6 +13,7 @@ import {cisConfiguration,validateCisSettings,validateCisConfiguration} from '../
 import {activePlans} from '../lib/frameworks';
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
 import {record,write,audit,now,ids} from './store';
+import {stable as canonicalSnapshot} from './commandRequests';
 import {action} from './workflows';
 import {reconcileItems,currentItem,updateItem,linkItemFinding} from './assessmentItems';
 import {assessmentWork,findingApplies} from '../lib/frameworkWorkspace';
@@ -69,16 +70,17 @@ function validateReportedResult(result,version){
   const object=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
   const text=(value,max)=>typeof value==='string'&&value.length<=max;
   const list=(value,max,valid)=>Array.isArray(value)&&value.length<=max&&value.every(valid);
-  const keys=['version','status','narrative','basis','gaps','unknowns','nextSteps','evidence','answers','signals'];
+  const keys=['version','status','narrative','basis','gaps','unknowns','nextSteps','evidence','answers','signals','evaluation_date'];
   if(!object(result)||Object.keys(result).some(key=>!keys.includes(key))||
     !['not_assessed','needs_attention','in_progress','addressed'].includes(result.status)||!text(result.narrative,20000)||
     result.version!=null&&(!text(result.version,100)||result.version!==version)||
+    result.evaluation_date!=null&&(typeof result.evaluation_date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(result.evaluation_date)||calendarDay(result.evaluation_date)===null)||
     ['basis','gaps','unknowns','nextSteps','evidence'].some(key=>!list(result[key],153,value=>text(value,4000)))||
     !list(result.answers,300,value=>object(value)&&Object.keys(value).every(key=>['prompt','answer'].includes(key))&&text(value.prompt,4000)&&text(value.answer,12000))||
     result.signals!=null&&!list(result.signals,300,value=>object(value)&&Object.keys(value).every(key=>['kind','questionId','text'].includes(key))&&['gap','verification'].includes(value.kind)&&text(value.questionId,100)&&(value.text==null||text(value.text,4000))))
     fail('Invalid recorded interview result');
   const recorded=copy(result);
-  for(const key of ['version','signals'])if(recorded[key]===null)delete recorded[key];
+  for(const key of ['version','signals','evaluation_date'])if(recorded[key]===null)delete recorded[key];
   for(const signal of recorded.signals||[])if(signal.text===null)delete signal.text;
   return recorded;
 }
@@ -315,11 +317,28 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       }
       if(body.completed){validateIsoCompletion(row.definition_id,body.answers,body.version);if(!result||result.status!==isoGuidedResult(row.definition_id,body.answers,body.version).status||result.narrative!==body.narrative)fail('ISO summary status and reviewed text must match this completed interview');}
     }else validateAnswers(row.definition_id,body.answers,body.version);
+    const at=now();let generatedAt=body.completed?at:null;
+    const dateAssessment=row.framework_key==='cis-ig1'&&visibleQuestions(row.definition_id,body.answers,body.version).some(question=>question.type==='date');
+    if(result?.evaluation_date&&!dateAssessment)fail('Evaluation date belongs only to a CIS date-question result');
+    if(dateAssessment&&body.completed&&result){
+      const sameBasis=snapshot=>snapshot?.version===body.version&&canonicalSnapshot(snapshot.answers)===canonicalSnapshot(body.answers);
+      let prior=old.completed&&sameBasis(old)?old:null;
+      if(!prior&&sameBasis(old)&&old.completed===false&&!old.result&&old.revision>1){
+        const archived=db.guided_assessment_history?.[draftKey+':'+(old.revision-1)],source=row.guided_assessment_source;
+        if(archived?.completed&&sameBasis(archived)&&archived.client_id===row.client_id&&archived.assessment_id===id&&archived.user_id===db.user.user_id&&
+          source?.by===db.user.user_id&&source.version===archived.version&&source.revision===archived.revision&&source.generated_at===archived.generated_at&&canonicalSnapshot(source.answers)===canonicalSnapshot(archived.answers))prior=archived;
+      }
+      const knownDate=prior?.result?.evaluation_date;
+      if(!result.evaluation_date&&knownDate)result.evaluation_date=knownDate;
+      if(result.evaluation_date&&result.evaluation_date!==knownDate&&Math.abs(calendarDay(result.evaluation_date)-calendarDay(at))>1)fail('Evaluation date must be within one day of completion');
+      const evaluatorFields=snapshot=>Object.fromEntries(Object.entries(snapshot||{}).filter(([key])=>key!=='narrative'));
+      if(prior&&canonicalSnapshot(evaluatorFields(result))===canonicalSnapshot(evaluatorFields(prior.result)))generatedAt=prior.generated_at||at;
+    }
     if(old.revision&&(upgraded?(old.completed||body.restart||body.rebase):(old.version!==body.version||old.completed&&!body.completed&&!Object.keys(body.answers).length))){
       const key=draftKey+':'+old.revision;
       if(!Object.hasOwn(db.guided_assessment_history||{},key))(db.guided_assessment_history||={})[key]={...copy(old),...(upgraded?{client_id:row.client_id,assessment_id:id,user_id:db.user.user_id}:{})};
     }
-    const at=now(),data={version:body.version,answers:copy(body.answers),narrative:body.narrative||'',step:body.step,completed:body.completed,revision:old.revision+1,updated_at:at,generated_at:body.completed?at:null,
+    const data={version:body.version,answers:copy(body.answers),narrative:body.narrative||'',step:body.step,completed:body.completed,revision:old.revision+1,updated_at:at,generated_at:generatedAt,
       ...(upgraded?{...base,client_id:row.client_id,assessment_id:id,user_id:db.user.user_id,result}:{})};
     if(['soc-2','iso-27001'].includes(row.framework_key))data.summary_review=Object.hasOwn(body,'summary_review')?copy(body.summary_review??null):body.restart?null:copy(old.summary_review??null);
     (db.guided_assessment_pilot||={})[draftKey]=data;return upgraded?contextualDraft(data,trustedBase(db,row,context)):data;

@@ -1,7 +1,7 @@
 """Assessment-local reported follow-up; completion never changes assessment judgment."""
 from copy import deepcopy
 import calendar
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 import uuid
 
@@ -40,6 +40,35 @@ def _questions(row, draft):
         questions = [q for q in questions if not q.get('when') or all(
             draft['answers'].get(key) in values for key, values in q['when'].items())]
     return {q['id']: q for q in questions}
+
+
+def _date_origin(draft, value):
+    """Match the existing local-day cutoff without inventing legacy clock data."""
+    try:
+        last = date.fromisoformat(value)
+        if last.isoformat() != value:
+            return 'gap'
+    except ValueError:
+        return 'gap'
+    evaluation_date = (draft.get('result') or {}).get('evaluation_date')
+    if evaluation_date:
+        days = [date.fromisoformat(evaluation_date)]
+    else:
+        try:
+            stamp = datetime.fromisoformat(draft['generated_at'])
+            if stamp.tzinfo is None:
+                return 'verification'
+        except (KeyError, ValueError, TypeError):
+            return 'verification'
+        utc_day = stamp.astimezone(timezone.utc).date()
+        days = [utc_day + timedelta(days=offset) for offset in (-1, 0, 1)]
+    valid = []
+    for today in days:
+        month = today.year * 12 + today.month - 1 - 6
+        cutoff = date(month // 12, month % 12 + 1,
+            min(today.day, calendar.monthrange(month // 12, month % 12 + 1)[1]))
+        valid.append(cutoff <= last <= today)
+    return None if all(valid) else 'gap' if not any(valid) else 'verification'
 
 
 def _origins(row, draft, questions):
@@ -95,15 +124,9 @@ def _origins(row, draft, questions):
                 late = ('Annually','Ad hoc') if row['definition_id']=='1.1' else ('Every two weeks','Monthly','Ad hoc')
                 missing = [value] if value in late else []
             elif question['type'] == 'date' and value:
-                today = datetime.fromisoformat(draft['generated_at']).astimezone().date() if draft.get('generated_at') else date.today()
-                month = today.year*12+today.month-1-6
-                cutoff = date(month//12,month%12+1,min(today.day,calendar.monthrange(month//12,month%12+1)[1]))
-                try:
-                    last = date.fromisoformat(value)
-                    valid = len(value)==10 and cutoff<=last<=today
-                except ValueError:
-                    valid = False
-                missing = [] if valid else [value]
+                conclusion = _date_origin(draft, value)
+                missing = [value] if conclusion == 'gap' else []
+                unknown = [value] if conclusion == 'verification' else []
         for v in values:
             excluded = question['type'] == 'matrix' and v == 'Not applicable' and bool(_text(answers,'scope_reason'))
             states.append('excluded' if excluded else 'unknown' if v in unknown else 'absent' if v in ('No', 'None', 'Never') and v in deficient else 'partial' if v in deficient else 'met')

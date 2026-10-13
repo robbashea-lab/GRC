@@ -39,8 +39,14 @@ export function correctFocusedAnswer(id,answers,question,value,version){
   return {...answers,[question.id]:value};
 }
 
-export function focusedNarrative(id,answers,version){
-  const output=generateResult(id,answers,new Date(),version),questions=visibleQuestions(id,answers,version);
+// A recorded calendar day is local to the evaluator, not a UTC midnight instant.
+export function focusedEvaluationDate(value){
+  if(value instanceof Date)return value;
+  return value?new Date(/^\d{4}-\d{2}-\d{2}$/.test(value)?value+'T12:00:00':value):new Date();
+}
+
+export function focusedNarrative(id,answers,version,today=new Date()){
+  const output=generateResult(id,answers,today,version),questions=visibleQuestions(id,answers,version);
   const labels={inventory:'Inventory scope and method',coverage:'Asset coverage',attributes:'Inventory fields',maintenance:'Inventory maintenance',frequency:'Operating interval',last_review:'Inventory review',process:'Unauthorized-asset handling',detection:'Identification',actions:'Response',unresolved:'Remaining unauthorized assets'};
   const handlingLabels={inventory_dependency:'authorized inventory available for comparison',detection:'identification of unauthorized assets',disposition:'tracking of disposition decisions',confirmation:'confirmation that assets are no longer reachable or otherwise addressed',exceptions:'exception approval and tracking',reconciled:'reconciliation against authorized inventory',unresolved:'assets unresolved beyond the required response interval'};
   const handling=id==='1.2'?questions.filter(q=>handlingLabels[q.id]&&answers[q.id]).map(q=>`Reported ${handlingLabels[q.id]}: ${answers[q.id]==='Partially'?'Partly':answers[q.id]}.`):[];
@@ -48,13 +54,13 @@ export function focusedNarrative(id,answers,version){
   return [output.narrative,...handling,...explanations,output.gaps.length&&`Reported gaps: ${output.gaps.join('; ')}.`,output.unknowns.length&&`Items still requiring confirmation: ${output.unknowns.join('; ')}.`,comparisonConflict(id,answers,version)?'The comparison basis remains unresolved: consistent identification is reported without a usable authorized inventory.':''].filter(Boolean).join(' ');
 }
 
-export function focusedResult(id,answers,version){
-  const output=generateResult(id,answers,new Date(),version),questions=visibleQuestions(id,answers,version);
+export function focusedResult(id,answers,version,today=new Date()){
+  const output=generateResult(id,answers,today,version),questions=visibleQuestions(id,answers,version);
   if(comparisonConflict(id,answers,version)){
     output.unknowns.push('Consistent unauthorized-asset identification is reported, but no usable authorized inventory is reported. Clarify the comparison basis before proposing Implemented.');
     output.signals.push({questionId:'inventory_dependency',kind:'verification'});
     if(output.status==='addressed')output.status='in_progress';
     output.nextSteps.push('Clarify how authorized and unauthorized assets are distinguished, using the current recorded process.');
   }
-  return {...output,narrative:focusedNarrative(id,answers,version),answers:output.answers.map((answer,index)=>({...answer,answer:answer.answer+(answers[questions[index].id+'_detail']?.trim()?`; Client-reported supporting explanation: ${answers[questions[index].id+'_detail'].trim()}`:'')}))};
+  return {...output,...(id==='1.1'&&questions.some(question=>question.type==='date')?{evaluation_date:[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-')}:{}),narrative:focusedNarrative(id,answers,version,today),answers:output.answers.map((answer,index)=>({...answer,answer:answer.answer+(answers[questions[index].id+'_detail']?.trim()?`; Client-reported supporting explanation: ${answers[questions[index].id+'_detail'].trim()}`:'')}))};
 }

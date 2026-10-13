@@ -1,5 +1,5 @@
 import {guidedCatalog,catalogForVersion,visibleQuestions} from './guidedAssessment';
-import {focusedResult} from './focusedOmni';
+import {focusedResult,focusedEvaluationDate} from './focusedOmni';
 import {inventorySummary} from './omniInventorySummary';
 import {omniGroups} from './refinedOmni';
 import {formatInlineSummary} from './inlineAssessment';
@@ -11,7 +11,7 @@ const contextLabels={existing:'Current practice',system:'Systems or processes',o
 
 export function omniCisSummary(id,answers,version,clientName='The organization',inlineDate=null){
   if(id==='1.1')return inventorySummary(answers,version,clientName,inlineDate);
-  const definition=catalogForVersion(version)?.definitions?.[id]||guidedCatalog.definitions[id],questions=visibleQuestions(id,answers,version),result=focusedResult(id,answers,version);
+  const definition=catalogForVersion(version)?.definitions?.[id]||guidedCatalog.definitions[id],questions=visibleQuestions(id,answers,version),result=focusedResult(id,answers,version,focusedEvaluationDate(inlineDate));
   const active=Object.fromEntries(Object.entries(answers).filter(([key])=>questions.some(q=>key===q.id||key===q.id+'_detail')));
   const subject=definition.title.toLowerCase();
   const overview=[result.status==='addressed'?`${clientName} reports the practice to ${subject} is in place.`:result.status==='in_progress'?`${clientName} reports partial implementation of the practice to ${subject}.`:result.status==='needs_attention'?`${clientName} reports the practice to ${subject} is not currently in place.`:`${clientName}’s implementation of the practice to ${subject} needs confirmation.`];

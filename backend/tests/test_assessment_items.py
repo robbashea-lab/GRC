@@ -61,6 +61,118 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         base, draft = await self.completed(row)
         return base, await self.apply(base, draft, row)
 
+    async def date_snapshot(self, date_metadata=True):
+        workspace = await self.configure()
+        row = next(row for row in workspace['assessments'] if row['definition_id'] == '1.1')
+        base = '/api/framework_assessments/' + row['framework_assessment_id']
+        draft = (await self.client.get(base + '/guided-assessment')).json()
+        questions = guided_assessment.VERSIONS[draft['version']]['safeguards']['1.1']
+        answers = {question['id']: ({name: 'Yes' for name in question['rows']} if question['type'] == 'matrix'
+            else [question['choices'][0]] if question['type'] == 'multi' else '2026-04-12' if question['type'] == 'date'
+            else '' if question['type'] == 'text' else 'Yes' if 'Yes' in question['choices'] else question['choices'][0])
+            for question in questions}
+        result = {'version': draft['version'], 'status': 'addressed', 'narrative': 'Reviewed inventory summary.',
+            'basis': [], 'gaps': [], 'unknowns': [], 'nextSteps': [], 'evidence': [], 'answers': [], 'signals': []}
+        if date_metadata:
+            result['evaluation_date'] = '2026-10-12'
+        payload = {'version': draft['version'], 'expected_revision': draft['revision'], 'answers': answers,
+            'step': 0, 'completed': True, 'narrative': result['narrative'], 'result': result,
+            **{key: draft[key] for key in ('base_assessment_token', 'base_scope_fingerprint')}}
+        return base, row, payload
+
+    async def test_evaluation_date_validation_retention_and_bound_native_rebase(self):
+        base, row, payload = await self.date_snapshot()
+        with patch.object(server, '_now', return_value='2026-10-13T00:30:00+00:00'):
+            for invalid in ('2026-02-30', '20261013', '', 20261013, '2026-10-11', '2026-10-15'):
+                response = await self.client.put(base + '/guided-assessment', json={**payload,
+                    'result': {**payload['result'], 'evaluation_date': invalid}})
+                self.assertEqual(response.status_code, 422, response.text)
+            inactive = await self.client.put(base + '/guided-assessment', json={**payload,
+                'answers': {**payload['answers'], 'inventory': 'No'},
+                'result': {**payload['result'], 'evaluation_date': '2026-10-13'}})
+            self.assertEqual(inactive.status_code, 422, inactive.text)
+            for valid in ('2026-10-12', '2026-10-13', '2026-10-14', '2026-10-12'):
+                payload['result']['evaluation_date'] = valid
+                response = await self.client.put(base + '/guided-assessment', json=payload)
+                self.assertEqual(response.status_code, 200, response.text)
+                draft = response.json()
+                payload['expected_revision'] = draft['revision']
+        with patch.object(server, '_now', return_value='2026-10-20T00:30:00+00:00'):
+            omitted = deepcopy(payload)
+            omitted['result'].pop('evaluation_date')
+            response = await self.client.put(base + '/guided-assessment', json=omitted)
+            self.assertEqual(response.status_code, 200, response.text)
+            retained = response.json()
+            self.assertEqual(retained['result']['evaluation_date'], '2026-10-12')
+            self.assertEqual(retained['generated_at'], draft['generated_at'])
+            self.assertEqual(retained['updated_at'], '2026-10-20T00:30:00+00:00')
+            row = await self.apply(base, retained, row)
+        with patch.object(server, '_now', return_value='2026-10-25T00:30:00+00:00'):
+            current = (await self.client.get(base + '/guided-assessment')).json()
+            rebased = await self.client.put(base + '/guided-assessment', json={
+                **payload, 'expected_revision': current['revision'], 'completed': False, 'result': None, 'rebase': True,
+                'base_assessment_token': current['current_assessment_token'],
+                'base_scope_fingerprint': current['current_scope_fingerprint']})
+            self.assertEqual(rebased.status_code, 200, rebased.text)
+            replay = {**payload, 'expected_revision': rebased.json()['revision'],
+                **{key: rebased.json()[key] for key in ('base_assessment_token', 'base_scope_fingerprint')}}
+            source = deepcopy(row['guided_assessment_source'])
+            await server.db.framework_assessments.update_one({'framework_assessment_id': row['framework_assessment_id']},
+                {'$set': {'guided_assessment_source.by': 'other-actor'}})
+            mismatch = await self.client.put(base + '/guided-assessment', json=replay)
+            self.assertEqual(mismatch.status_code, 422, mismatch.text)
+            await server.db.framework_assessments.update_one({'framework_assessment_id': row['framework_assessment_id']},
+                {'$set': {'guided_assessment_source': source}})
+            for altered in ({**replay, 'answers': {**replay['answers'], 'last_review': '2026-04-11'}},
+                    {**replay, 'result': {**replay['result'], 'evaluation_date': '2026-10-11'}}):
+                rejected = await self.client.put(base + '/guided-assessment', json=altered)
+                self.assertEqual(rejected.status_code, 422, rejected.text)
+            response = await self.client.put(base + '/guided-assessment', json=replay)
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.json()['generated_at'], draft['generated_at'])
+            self.assertEqual(response.json()['result'], draft['result'])
+
+    async def test_legacy_unchanged_result_retains_clock_and_resolved_date_item(self):
+        base, row, payload = await self.date_snapshot(date_metadata=False)
+        with patch.object(server, '_now', return_value='2026-10-13T00:30:00+00:00'):
+            response = await self.client.put(base + '/guided-assessment', json=payload)
+            self.assertEqual(response.status_code, 200, response.text)
+            draft = response.json()
+            row = await self.apply(base, draft, row)
+            item = next(item for item in row['items_to_address'] if item['question_id'] == 'last_review')
+            self.assertEqual(item['kind'], 'verification')
+            resolved = await self.client.patch(base + '/items/' + item['item_id'], json={
+                'expected_revision': row['items_revision'], 'state': 'resolved', 'resolution': 'Original date basis retained.'})
+            self.assertEqual(resolved.status_code, 200, resolved.text)
+            row = resolved.json()
+        with patch.object(server, '_now', return_value='2026-10-20T00:30:00+00:00'):
+            current = (await self.client.get(base + '/guided-assessment')).json()
+            rebased = await self.client.put(base + '/guided-assessment', json={
+                **payload, 'expected_revision': draft['revision'], 'completed': False, 'result': None, 'rebase': True,
+                'base_assessment_token': current['current_assessment_token'],
+                'base_scope_fingerprint': current['current_scope_fingerprint']})
+            self.assertEqual(rebased.status_code, 200, rebased.text)
+            replay_body = {**payload, 'expected_revision': rebased.json()['revision'],
+                **{key: rebased.json()[key] for key in ('base_assessment_token', 'base_scope_fingerprint')}}
+            response = await self.client.put(base + '/guided-assessment', json=replay_body)
+            self.assertEqual(response.status_code, 200, response.text)
+            replay = response.json()
+            self.assertEqual(replay['generated_at'], draft['generated_at'])
+            self.assertNotIn('evaluation_date', replay['result'])
+            saved = await self.apply(base, replay, row)
+            self.assertEqual(saved['items_to_address'], row['items_to_address'])
+            fresh = deepcopy(replay_body)
+            fresh.update(expected_revision=replay['revision'], narrative='Newly reviewed inventory wording.')
+            fresh['result']['narrative'] = fresh['narrative']
+            wording = await self.client.put(base + '/guided-assessment', json=fresh)
+            self.assertEqual(wording.status_code, 200, wording.text)
+            self.assertEqual(wording.json()['generated_at'], draft['generated_at'])
+            self.assertEqual(assessment_items.generated(row, wording.json()), assessment_items.generated(row, draft))
+            fresh.update(expected_revision=wording.json()['revision'], answers={**fresh['answers'], 'last_review': '2026-04-11'})
+            changed = await self.client.put(base + '/guided-assessment', json=fresh)
+            self.assertEqual(changed.status_code, 200, changed.text)
+            self.assertEqual(changed.json()['generated_at'], '2026-10-20T00:30:00+00:00')
+
     async def test_atomic_apply_resolution_reload_and_independent_judgment(self):
         base, row = await self.initial()
         count=sum(question['type']=='matrix' for question in guided_assessment.CATALOG['safeguards']['2.1'])+1
@@ -252,11 +364,12 @@ function load(name){
 const cis=load('guidedAssessment'),soc=load('socGuidedAssessment'),iso=load('isoGuidedAssessment');
 const cases=JSON.parse(fs.readFileSync(0,'utf8'));
 process.stdout.write(JSON.stringify(cases.map(({framework,id,version,answers})=>{
-  const result=framework==='cis-ig1'?cis.generateResult(id,answers,new Date('2026-10-13T12:00:00Z'),version):framework==='soc-2'?soc.socGuidedResult(id,answers,version):iso.isoGuidedResult(id,answers,version);
+  const today=new Date('2026-10-13T12:00:00Z');
+  const result=framework==='cis-ig1'?cis.generateResult(id,answers,today,version):framework==='soc-2'?soc.socGuidedResult(id,answers,version):iso.isoGuidedResult(id,answers,version);
   const origins=(result.signals||[]).map(signal=>signal.questionId+':'+signal.kind);
   for(const [key,kind] of [['gaps','gap'],['unknowns','verification']])if(answers[key]?.trim())origins.push(key+':'+kind);
   if(result.unknowns.some(text=>text.startsWith('No substantive practice is established')||text.startsWith('The overall practice answer conflicts with the reported absence')))origins.push('summary_confirmation:verification');
-  return [...new Set(origins)].sort();
+  return {origins:[...new Set(origins)].sort(),evaluation_date:framework==='cis-ig1'?[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-'):null};
 })));
 """
         result=subprocess.run(['node','-e',script,str(Path(__file__).resolve().parents[2])],input=json.dumps(cases),
@@ -264,13 +377,48 @@ process.stdout.write(JSON.stringify(cases.map(({framework,id,version,answers})=>
         self.assertEqual(result.returncode,0,result.stderr)
         expected=json.loads(result.stdout)
         self.assertEqual(len(expected),len(cases))
-        for case,origins in zip(cases,expected):
+        for case,snapshot in zip(cases,expected):
             with self.subTest(framework=case['framework'],definition=case['id'],answers=case['answers']):
                 row={'framework_assessment_id':'synthetic','framework_key':case['framework'],'definition_id':case['id']}
                 draft={'version':case['version'],'answers':case['answers'],'generated_at':'2026-10-13T12:00:00+00:00',
-                    'result':{'signals':[{'questionId':'forged','kind':'gap','text':'Ignored client metadata'}]}}
+                    'result':{'evaluation_date':snapshot['evaluation_date'],
+                        'signals':[{'questionId':'forged','kind':'gap','text':'Ignored client metadata'}]}}
                 actual=sorted(item['question_id']+':'+item['kind'] for item in assessment_items.generated(row,draft))
-                self.assertEqual(actual,origins)
+                self.assertEqual(actual,snapshot['origins'])
+
+    def test_cis_date_uses_recorded_local_day_and_legacy_boundary_confirmation(self):
+        row = {'framework_assessment_id': 'date-vector', 'framework_key': 'cis-ig1', 'definition_id': '1.1'}
+        version = guided_assessment.current_version('1.1')
+        question = next(question for question in guided_assessment.VERSIONS[version]['safeguards']['1.1']
+            if question['id'] == 'last_review')
+        for answer, local_day, expected in (('2026-04-12', '2026-10-12', None),
+                ('2026-04-12', '2026-10-13', 'gap'), ('2026-10-13', '2026-10-12', 'gap'),
+                ('2026-10-13', '2026-10-13', None)):
+            draft = {'version': version, 'answers': {'inventory': 'Yes', 'last_review': answer},
+                'generated_at': '2026-10-13T00:30:00+00:00', 'result': {'evaluation_date': local_day}}
+            origins = {item['kind']: item for item in assessment_items.generated(row, draft) if item['question_id'] == 'last_review'}
+            self.assertEqual(set(origins), {expected} if expected else set())
+            draft['result'] = {'signals': [{'questionId': 'last_review', 'kind': 'gap', 'text': 'Forged'}]}
+            legacy = [item for item in assessment_items.generated(row, draft) if item['question_id'] == 'last_review']
+            self.assertEqual([(item['kind'], item['text']) for item in legacy], [('verification', question['unknown_template'])])
+        for answer, expected in (('2026-04-10', 'gap'), ('2026-04-15', None), ('invalid', 'gap')):
+            draft = {'version': version, 'answers': {'inventory': 'Yes', 'last_review': answer}, 'generated_at': '2026-10-13T00:30:00+00:00'}
+            origins = [item['kind'] for item in assessment_items.generated(row, draft) if item['question_id'] == 'last_review']
+            self.assertEqual(origins, [expected] if expected else [])
+        for generated_at in ('invalid', '2026-02-30T00:30:00Z', '2026-10-13T24:00:00Z', '2026-10-13T00:30:00'):
+            draft = {'version': version, 'answers': {'inventory': 'Yes', 'last_review': '2026-04-10'}, 'generated_at': generated_at}
+            items = assessment_items.generated(row, draft)
+            self.assertEqual([(item['kind'], item['text']) for item in items if item['question_id'] == 'last_review'],
+                [('verification', question['unknown_template'])])
+            self.assertTrue(any(item['question_id'] == 'attributes' and item['kind'] == 'verification' for item in items))
+        draft = {'version': version, 'answers': {'inventory': 'Yes', 'last_review': '2026-04-10'},
+            'generated_at': '2026-10-13T00:30:00+00:00', 'result': {'evaluation_date': '2026-10-12'}}
+        items = assessment_items.reconcile(row, draft, 'reviewer', 'initial')
+        for item in items:
+            item.update(state='resolved', resolution='Keep original note')
+        row['items_to_address'] = items
+        draft['result']['evaluation_date'] = '2026-10-13'
+        self.assertEqual(assessment_items.reconcile(row, draft, 'reviewer', 'later'), items)
 
     def test_matrix_signal_aggregates_all_current_deficient_and_unconfirmed_rows(self):
         row={'framework_assessment_id':'cis-matrix','framework_key':'cis-ig1','definition_id':'2.1'}

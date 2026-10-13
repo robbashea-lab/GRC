@@ -66,3 +66,26 @@ test('matrix origins aggregate every affected row, retain notes/links, and reope
   const forged=generatedItems(row,{...draft,result:{signals:[],gaps:[],unknowns:[]}});
   expect(forged).toEqual(generated);
 });
+
+test('date origins use the recorded evaluator day and confirm only ambiguous legacy dates',()=>{
+  const record={framework_assessment_id:'dated-record',framework_key:'cis-ig1',definition_id:'1.1'},version=versionForSafeguard('1.1');
+  const question=visibleQuestions('1.1',{inventory:'Yes'},version).find(question=>question.id==='last_review');
+  const dateItems=draft=>generatedItems(record,draft).filter(item=>item.question_id==='last_review');
+  for(const [answer,day,expected] of [['2026-04-12','2026-10-12',null],['2026-04-12','2026-10-13','gap'],
+    ['2026-10-13','2026-10-12','gap'],['2026-10-13','2026-10-13',null]]){
+    const draft={version,answers:{inventory:'Yes',last_review:answer},generated_at:'2026-10-13T00:30:00+00:00',result:{evaluation_date:day}};
+    expect(dateItems(draft).map(item=>item.kind)).toEqual(expected?[expected]:[]);
+    expect(dateItems({...draft,result:{signals:[{questionId:'last_review',kind:'gap',text:'Forged'}]}})).toMatchObject([{kind:'verification',text:question.unknown_template}]);
+  }
+  for(const [answer,expected] of [['2026-04-10','gap'],['2026-04-15',null],['invalid','gap']]){
+    expect(dateItems({version,answers:{inventory:'Yes',last_review:answer},generated_at:'2026-10-13T00:30:00+00:00'}).map(item=>item.kind)).toEqual(expected?[expected]:[]);
+  }
+  for(const generated_at of ['invalid','2026-02-30T00:30:00Z','2026-10-13T24:00:00Z','2026-10-13T00:30:00']){
+    const draft={version,answers:{inventory:'Yes',last_review:'2026-04-10'},generated_at};
+    expect(dateItems(draft)).toMatchObject([{kind:'verification',text:question.unknown_template}]);
+    expect(generatedItems(record,draft).some(item=>item.question_id==='attributes'&&item.kind==='verification')).toBe(true);
+  }
+  const draft={version,answers:{inventory:'Yes',last_review:'2026-04-10'},generated_at:'2026-10-13T00:30:00+00:00',result:{evaluation_date:'2026-10-12'}};
+  const items=reconcileItems(record,draft,'reviewer','initial');items.forEach(item=>Object.assign(item,{state:'resolved',resolution:'Keep original note'}));
+  expect(reconcileItems({...record,items_to_address:items},{...draft,result:{evaluation_date:'2026-10-13'}},'reviewer','later')).toEqual(items);
+});
