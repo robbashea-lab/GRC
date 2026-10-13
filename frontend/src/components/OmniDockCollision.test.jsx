@@ -45,7 +45,7 @@ beforeEach(()=>{
     }
     if(this.matches('.omni-position-controls > div,.guided-context-prompt')){
       const invitation=this.matches('.guided-context-prompt');
-      return rect(parseFloat(this.style.left)||0,parseFloat(this.style.top)||0,invitation?245:180,invitation?156:148);
+      return rect(parseFloat(this.style.left)||0,parseFloat(this.style.top)||0,Number(this.dataset.popupWidth)||(invitation?245:180),Number(this.dataset.popupHeight)||(invitation?156:148));
     }
     return rect(0,0,0,0);
   });
@@ -233,4 +233,45 @@ test('program launchers retain normal preferences flow and cleanup placement obs
   expect(container.querySelector('.omni-position-controls').style.position).toBe('');
   expect(container.querySelector('.omni-free-dock').getBoundingClientRect().height).toBe(197);
   await act(async()=>root.render(null));expect(observer.disconnect).toHaveBeenCalledTimes(1);
+});
+test('SOC narrow open preferences leave the invitation and its Close control unobstructed',async()=>{
+  // GN-QA-06: independently captured 390x844 SOC controls, exact popup sizes and button offsets.
+  window.innerWidth=390;window.innerHeight=844;
+  localStorage.setItem(positionKey,JSON.stringify({x:200,y:584}));
+  rectangles={
+    requirement:rect(48.83333587646485,300.3958435058594,282.3333435058594,19.5),
+    save:rect(147.08334350585938,729.4583740234375,111.34375,35.333335876464844),
+    saveNext:rect(266.4270935058594,729.4583740234375,87.40625,35.333335876464844),
+    ...Object.fromEntries([530.2083740234375,568.5416870117188,606.875,645.2083740234375,683.5416870117188].map((top,index)=>['label'+index,rect(36.16666793823242,top,307.66668701171875,33.333335876464844)])),
+    closeOffset:rect(208.3333435058594,8.66665649414068,28,28),
+    hideOffset:rect(6.6666717529297,6.66668701171875,166.6666717529297,44),
+    invitationsOffset:rect(6.6666717529297,50.66668701171875,166.6666717529297,44),
+  };
+  const measure=rectSpy.getMockImplementation();
+  rectSpy.mockImplementation(function(){
+    if(this.dataset.popupOffset){const offset=rectangles[this.dataset.popupOffset],popup=this.closest('[data-popup-width]').getBoundingClientRect();return rect(popup.left+offset.left,popup.top+offset.top,offset.width,offset.height);}
+    return measure.call(this);
+  });
+  const close=jest.fn(),hide=jest.fn(),save=jest.fn();
+  await act(async()=>root.render(<div data-assessment-shell>
+    <details><summary data-rect="requirement">Requirement summary</summary></details>
+    {Array.from({length:5},(_,index)=><label key={index} data-rect={'label'+index}><input type="checkbox"/>Native status option {index+1}</label>)}
+    <div className="brawndo-assessment-footer"><button data-rect="save" onClick={save}>Save assessment</button><button data-rect="saveNext">Save &amp; next</button></div>
+    <OmniDock preferenceKey="collision" freePosition focused inAssessment>
+      <button className="omni-launch-button">Open OmniBot</button>
+      <div className="guided-context-prompt" data-popup-width="245" data-popup-height="77.91667175292969">Review this SOC 2 criterion with Omnibot.<button aria-label="Close invitation" data-popup-offset="closeOffset" onClick={close}>×</button></div>
+      <details className="omni-position-controls"><summary>Omnibot preferences</summary><div data-popup-width="180" data-popup-height="101.33333587646484"><button data-popup-offset="hideOffset" onClick={hide}>Hide Omnibot</button><button data-popup-offset="invitationsOffset">Turn off invitations</button></div></details>
+    </OmniDock>
+  </div>));
+  const settings=container.querySelector('.omni-position-controls');
+  await act(async()=>{settings.open=true;settings.dispatchEvent(new Event('toggle'));});
+  const invitation=container.querySelector('.guided-context-prompt'),menu=settings.querySelector('div'),closeButton=invitation.querySelector('button'),closeRect=closeButton.getBoundingClientRect(),center={x:closeRect.left+closeRect.width/2,y:closeRect.top+closeRect.height/2};
+  expect(clearOf(invitation.getBoundingClientRect(),menu.getBoundingClientRect())).toBe(true);
+  for(const button of menu.querySelectorAll('button')){
+    const area=button.getBoundingClientRect();
+    expect(center.x>=area.left&&center.x<=area.right&&center.y>=area.top&&center.y<=area.bottom).toBe(false);
+  }
+  await act(async()=>closeButton.click());
+  expect(close).toHaveBeenCalledTimes(1);expect(hide).not.toHaveBeenCalled();expect(save).not.toHaveBeenCalled();
+  expect(JSON.parse(localStorage.getItem(positionKey))).toEqual({x:200,y:584});
 });
