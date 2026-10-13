@@ -146,6 +146,20 @@ class NativeProgressTests(unittest.TestCase):
         rows[0].update(status='not_applicable', na_rationale='Isolated reason')
         self.assertNotEqual(position('cis-ig1', rows)['scope_signature'], original['scope_signature'])
 
+    def test_duplicate_native_definition_with_null_legacy_and_current_version_is_partial(self):
+        rows = source('cis-ig1')
+        legacy = {**copy.deepcopy(rows[0]), 'framework_assessment_id': 'retained-legacy-record',
+                  'framework_version': None, 'status': 'addressed'}
+        before = copy.deepcopy([*rows, legacy])
+        current = position('cis-ig1', [*rows, legacy])
+        self.assertEqual(current['availability'], 'partial')
+        self.assertEqual(current['duplicate_records'], 1)
+        self.assertIsNone(current['percentage'])
+        references = [r for r in current['provenance']['source_references']
+                      if r.get('definition_id') == legacy['definition_id']]
+        self.assertEqual({r['framework_version'] for r in references}, {None, CATALOGS['cis-ig1']['version']})
+        self.assertEqual([*rows, legacy], before)
+
     def test_cutoff_race_is_partial_instead_of_backdated_current_success(self):
         rows = source('cis-ig1')
         rows[0].update(status='addressed', last_saved='2026-10-13T18:00:01+00:00')
