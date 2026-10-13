@@ -6,6 +6,7 @@ import { ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Building2, ChartNo
 import './PortfolioReports.css';
 
 const RANGES = [['30d', '30 days'], ['6m', '6 months'], ['12m', '12 months']];
+const EMPTY_PROGRAMS = [];
 const TYPES = ['Assessments', 'Findings', 'Risks', 'Policies', 'Evidence', 'Scope'];
 const EVENT_ICONS = { Assessments: ChartNoAxesCombined, Findings: AlertTriangle, Risks: Shield, Policies: FileText, Evidence: FileText, Scope: Layers3 };
 const date = value => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unavailable';
@@ -199,7 +200,7 @@ export default function PortfolioReports({ rows, loading, error, includeArchived
   const [range, setRange] = useState('30d'), [selected, setSelected] = useState('');
   const cohort = rows.map(row => row.client_id).sort().join(',');
   const overview = useReport('/portfolio/reporting/overview', { client_ids: cohort, include_archived: includeArchived, range }, !loading && !error);
-  const programs = overview.data?.programs || [];
+  const programs = overview.data?.programs || EMPTY_PROGRAMS;
   const opener = useRef(null);
   const selection = selected && programs.find(program => programId(program) === selected);
   const panelClientInView = !panel?.client_id || rows.some(row => row.client_id === panel.client_id);
