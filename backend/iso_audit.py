@@ -201,8 +201,15 @@ def router_for(s):
             draft['current_occurrence_id'] = review_occurrences.occurrence_id(draft)
             await s.db.reviews.update_one({'_id': rid}, {'$setOnInsert': draft}, upsert=True)
         if program['status'] != 'active':
-            await s.db.clients.update_one({'client_id': body.client_id}, {'$set': {'iso_audit_program.status': 'active'}})
-            await s.audit(user, 'ISO audit program activated', 'client', body.client_id, body.client_id)
+            before = await client_for(body.client_id, user)
+            at = s._now()
+            after = {**before, 'iso_audit_program': {**before['iso_audit_program'], 'status': 'active'}}
+            capture, event = s._portfolio_event_patch('client', body.client_id, body.client_id, user,
+                before, after, at, 'iso_program_activation')
+            await s.db.clients.update_one({'client_id': body.client_id},
+                {'$set': {'iso_audit_program.status': 'active', **capture}})
+            await s.audit(user, 'ISO audit program activated', 'client', body.client_id, body.client_id,
+                meta={'_portfolio_activity_event_id': (event or {}).get('event_id'), '_portfolio_activity_noop': event is None})
         return await get_program(body.client_id, user)
 
     async def current_review(review_id, body, user):
@@ -216,11 +223,14 @@ def router_for(s):
     async def save_state(review, state, user):
         at = s._next_write_time(review.get('updated_at'))
         changes = {'iso_audit': state, 'updated_at': at}
+        capture, event = s._portfolio_event_patch('reviews', review['review_id'], review['client_id'], user,
+            review, {**review, **changes}, at)
         result = await s.db.reviews.update_one({'review_id': review['review_id'], 'client_id': review['client_id'],
-            'updated_at': review.get('updated_at')}, {'$set': changes})
+            'updated_at': review.get('updated_at')}, {'$set': {**changes, **capture}})
         if not result.matched_count:
             raise HTTPException(409, 'Audit package changed; reload before saving')
-        await s._review_event(user, review, 'Audit work updated', review_occurrences.occurrence_id(review))
+        await s._review_event(user, review, 'Audit work updated', review_occurrences.occurrence_id(review),
+            _portfolio_activity_event_id=(event or {}).get('event_id'), _portfolio_activity_noop=event is None)
         return review_occurrences.view({**review, **changes})
 
     @router.patch('/reviews/{review_id}/iso-audit/{item_key}')

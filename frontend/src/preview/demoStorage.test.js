@@ -4,7 +4,9 @@ import {STORE_KEY,readStore,saveStore} from './store';
 import {clearFileCache,lightweightStore,rememberFiles,restoreFiles,storageDiagnostics} from './evidenceStorage';
 const api=axios.create({adapter:previewAdapter});
 const persisted=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
-beforeEach(async()=>{sessionStorage.clear();localStorage.clear();clearFileCache();await api.post('/demo/enter');});
+const OPENED_AT='2026-10-13T17:00:00.000Z',RESET_AT='2026-10-13T18:00:00.000Z';
+beforeEach(async()=>{jest.useFakeTimers().setSystemTime(new Date(OPENED_AT));sessionStorage.clear();localStorage.clear();clearFileCache();await api.post('/demo/enter');});
+afterEach(()=>jest.useRealTimers());
 const upload=async(bytes,name='sample.txt')=>(await api.post('/evidence',{client_id:persisted().clients[0].client_id,filename:name,mime_type:'text/plain',content_base64:btoa('x'.repeat(bytes))})).data;
 
 test('small files persist; large files retain metadata but no payload after reload',async()=>{
@@ -73,10 +75,21 @@ test('legacy large payloads migrate without dropping evidence IDs or relationshi
  expect(persisted().users).toEqual(db.users);
 });
 test('full reset recovers corrupted data and restores canonical roles and frameworks',async()=>{
- const canonical=persisted();await upload(20000);sessionStorage.setItem(STORE_KEY,'{broken');
+ const canonical=persisted();await upload(20000);const beforeReset=persisted();
+ expect(Object.values(beforeReset.portfolio_reporting.activity_proofs).some(proof=>proof.eligible)).toBe(true);
+ sessionStorage.setItem(STORE_KEY,'{broken');
  await expect(api.get('/clients')).rejects.toMatchObject({response:{data:{storage_code:'UNKNOWN_STORAGE_ERROR'}}});
- await api.post('/demo/reset');expect(persisted()).toEqual(canonical);
- expect(new Set(persisted().users.map(u=>u.role))).toEqual(new Set(canonical.users.map(u=>u.role)));
+ jest.setSystemTime(new Date(RESET_AT));await api.post('/demo/reset');const restored=persisted();
+ const {portfolio_reporting:originalReporting,...originalSources}=canonical;
+ const {portfolio_reporting:reporting,...restoredSources}=restored;
+ expect(restoredSources).toEqual(originalSources);
+ expect(reporting).toMatchObject({started_at:RESET_AT,last_captured_at:RESET_AT,activity_proofs:{}});
+ expect(reporting.activity_proofs).toEqual({});
+ expect(reporting.snapshots).toHaveLength(originalReporting.snapshots.length);
+ expect(reporting.snapshots.every(snapshot=>snapshot.captured_at===RESET_AT&&snapshot.current.captured_at===RESET_AT)).toBe(true);
+ const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
+ expect(reporting.snapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
+ expect(new Set(restored.users.map(u=>u.role))).toEqual(new Set(canonical.users.map(u=>u.role)));
  expect((await api.get('/demo/storage')).data.memory_file_count).toBe(0);
 });
 test.each([['QuotaExceededError','QUOTA_EXCEEDED'],['SecurityError','STORAGE_UNAVAILABLE'],['Error','WRITE_FAILED']])('%s classifies writes and retains the prior snapshot',async(name,code)=>{

@@ -54,5 +54,3 @@
 /* Dark shell only behind themed pages; unconverted pages keep the light shell rather than a light block on dark. */
 .app-shell:has(> .bsb[data-theme="dark"]):has(main [data-theme="dark"]) { background: var(--color-bg-app); }
 @media (prefers-reduced-motion: reduce) { .bsb, .bsb-link { transition: none; } }
-/* The approved scenic sidebar is confined to the portfolio route. */
-.app-shell.governara-portfolio-shell .app-sidebar { background:linear-gradient(#071425f5 0%,#08162bfc 53%,#0c203565 77%,#04101eea 100%),url('../assets/portfolio-city.webp') center bottom/auto 420px no-repeat; }

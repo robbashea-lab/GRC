@@ -24,7 +24,17 @@ beforeEach(() => {
   window.scrollTo=jest.fn();
   mockUser = {...mockFixtures.responses["/auth/me"]};
   mockClients = mockFixtures.responses["/clients"];
-  api.get.mockImplementation(async path => ({ data: path==='/clients/directory'?portfolio(seedStore(),false):mockFixtures.responses[path] }));
+  let directory;
+  api.get.mockImplementation(async (path, options) => {
+    if(path==='/clients/directory') {
+      if(!directory) directory=portfolio(seedStore(),false);
+      return {data:directory};
+    }
+    return {data:path.startsWith('/portfolio/reporting/')?{
+      total_clients:new Set((options?.params?.client_ids||'').split(',').filter(Boolean)).size,
+      frameworks:[],programs:[],recent_changes_count:0,
+    }:mockFixtures.responses[path]};
+  });
   api.post.mockResolvedValue({ data: { client_id: "new", name: "Sample" } });
   api.patch.mockResolvedValue({ data: { ...mockFixtures.responses["/clients"][0] } });
   mockNavigate.mockClear(); mockSwitch.mockClear(); api.post.mockClear(); api.patch.mockClear();
@@ -40,17 +50,20 @@ const change = async (node, value) => {
 };
 const click = async node => { expect(node).toBeTruthy(); await act(async () => node.click()); };
 
-test("approved portfolio keeps native scope, work filters, drill-downs and direct client routing", async () => {
+test("approved portfolio cards preserve native All and Assigned to Me scope", async () => {
   await render(<ClientDirectory />);
   expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
   expect(container.querySelector("h1").textContent).toBe("Client Portfolio");
-  // The approved combined overview replaces the old standalone five-card strip.
+  // The approved compact reporting cards preserve the existing operational register.
   expect(container.textContent).not.toMatch(/Platform|Where each client program needs attention/);
   expect(container.querySelector(".register-signal, [data-testid=\"portfolio-cards\"]")).toBeNull();
   const filters = container.querySelector('[data-testid="client-directory-filters"]');
   expect([...filters.querySelectorAll(".portfolio-view")].map(b => b.textContent)).toEqual(["All Clients", "Assigned to Me"]);
-  expect(container.querySelector('.gp-hero')).toBeTruthy();
-  expect(container.querySelector('[data-testid="portfolio-tiles"]')).toBeNull();
+  expect(container.querySelector('.gp-hero, .gp-hero-art')).toBeNull();
+  const cards=container.querySelector('[data-testid="portfolio-summary-cards"]');
+  expect(cards).toBeTruthy();
+  expect([...cards.querySelectorAll('.gp-metric-label, .gp-metric-link-title')].map(node=>node.textContent)).toEqual(['Total clients','Active frameworks','Framework progress','Recent changes']);
+  expect(cards.querySelectorAll('.gp-metric')).toHaveLength(4);
   await click(container.querySelector('button[aria-label="Portfolio filters"]'));
   expect([...document.querySelectorAll('.gp-work-views .portfolio-view')].map(b=>b.textContent)).toEqual(["Past Due", "Critical / High", "Significant Risks", "Unassigned"]);
   const rows = portfolio(seedStore(),false).clients;
@@ -66,21 +79,34 @@ test("approved portfolio keeps native scope, work filters, drill-downs and direc
   expect(shown()).toBe(mine.filter(r=>r.past_due>0).length);
   await click(container.querySelector('[data-testid="client-filter-all"]'));
   expect(shown()).toBe(rows.length);
-  for(const key of ['past_due','critical_high_issues','significant_risks','unassigned']){
-    await click(document.querySelector(`[data-testid="client-filter-${key}"]`));
-    expect(document.querySelector(`[data-testid="client-filter-${key}"]`).getAttribute('aria-pressed')).toBe('true');
-    expect(shown()).toBe(rows.filter(r=>r[key]>0).length);
-    await click(document.querySelector(`[data-testid="client-filter-${key}"]`));
-  }
+});
+
+test.each(['past_due','critical_high_issues','significant_risks','unassigned'])('%s native work view filters the register and clears back to all clients',async key=>{
+  await render(<ClientDirectory />);
+  const rows=portfolio(seedStore(),false).clients;
+  const shown=()=>container.querySelectorAll('[data-testid^="client-open-"]').length;
+  await click(container.querySelector('button[aria-label="Portfolio filters"]'));
+  await click(document.querySelector(`[data-testid="client-filter-${key}"]`));
+  expect(document.querySelector(`[data-testid="client-filter-${key}"]`).getAttribute('aria-pressed')).toBe('true');
+  expect(shown()).toBe(rows.filter(r=>r[key]>0).length);
+  await click(document.querySelector(`[data-testid="client-filter-${key}"]`));
+  expect(document.querySelector(`[data-testid="client-filter-${key}"]`).getAttribute('aria-pressed')).toBe('false');
+  expect(shown()).toBe(rows.length);
+});
+
+test('portfolio native contributing-item drills, risk links, client portal and search remain connected',async()=>{
+  await render(<ClientDirectory />);
+  const rows=portfolio(seedStore(),false).clients;
+  const shown=()=>container.querySelectorAll('[data-testid^="client-open-"]').length;
   // Numbers open the exact contributing records; Significant Risks opens the filtered Risk register.
   const first = rows[0];
-  await click(container.querySelector('button[aria-label="Portfolio filters"]'));
   await act(async()=>container.querySelector('[data-testid="client-row-menu-0"]').dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0,ctrlKey:false})));
   const metric = key => document.querySelector(`[data-client-id="${first.client_id}"][data-metric="${key}"]`) || container.querySelector(`[data-client-id="${first.client_id}"] [data-metric="${key}"]`);
   expect(metric('due_31_90d').lastElementChild.textContent).toBe(String(first.due_31_90d));
   await click(metric('due_31_90d'));
   expect(document.querySelector('[data-testid="drill-dialog"]').textContent).toContain(`${first.due_31_90d} contributing items`);
   expect(document.querySelectorAll('[data-testid^="drill-row-"]').length).toBe(first.due_31_90d);
+  await click([...document.querySelector('[data-testid="drill-dialog"]').querySelectorAll('button')].find(button=>button.textContent.trim()==='Close'));
   await click(metric('significant_risks'));
   expect(mockSwitch).toHaveBeenCalledWith(first.client_id);
   expect(mockNavigate).toHaveBeenCalledWith("/risks?portfolio=significant");

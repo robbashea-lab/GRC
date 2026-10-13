@@ -106,7 +106,11 @@ class ClientDashboardSourcesTests(unittest.IsolatedAsyncioTestCase):
                 request.stream=httpx.ByteStream(request._content)
                 request.headers['Content-Length']=str(len(request._content))
                 request.headers['Content-Type']='application/json'
-        self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app), base_url="https://isolated.example.test", event_hooks={"request": [identify_create]})
+        # Isolate the peer just like the database; auth attempts still share one
+        # real rate-limit bucket within this test, never a previous test's bucket.
+        peer_id = uuid.uuid4().hex[:24]
+        peer = '2001:db8:' + ':'.join(peer_id[i:i + 4] for i in range(0, 24, 4))
+        self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app, client=(peer, 123)), base_url="https://isolated.example.test", event_hooks={"request": [identify_create]})
         self.addAsyncCleanup(self.client.aclose)
 
     def sign_in(self, uid):

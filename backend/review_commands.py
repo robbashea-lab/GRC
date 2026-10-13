@@ -65,6 +65,10 @@ async def create_finding(s, review_id, body, user):
             doc.update(s._editable_patch('findings', checked, user=user))
             await authorization.require_creation_assignee(s.db, user, doc['client_id'], doc.get('owner_id'))
             await assignment_eligibility.validate(s.db, "findings", doc, s._can_access_client)
+            capture, _event = s._portfolio_event_patch('findings', fid, review['client_id'], user, None, doc, doc['created_at'])
+            doc.update(capture)
+            if _event:
+                doc['_portfolio_activity_creation_event_id'] = _event['event_id']
             doc = await create_requests.insert_primary(s.db, "findings", doc, identity)
         if doc.get('audit_item_key'):
             # Only the source relationship is saved, never unrelated workpaper drafts.
@@ -80,7 +84,8 @@ async def create_finding(s, review_id, body, user):
                     {'$addToSet':{path:fid}, '$set':{'updated_at':s._next_write_time(current.get('updated_at'))}})
             await s._review_event(user, review, 'Audit item Finding linked', body['occurrence_id'],
                 finding_id=fid, audit_item_key=doc['audit_item_key'])
-        await s.audit(user, "create", "finding", fid, review["client_id"], meta={"from_review": review_id})
+        await s.audit(user, "create", "finding", fid, review["client_id"], meta={"from_review": review_id,
+            '_portfolio_activity_event_id': doc.get('_portfolio_activity_creation_event_id')})
         await s.finding_create_task(fid, {"title": doc.get("remediation_title") or doc["title"]}, user)
         await s._review_event(user, review, "Finding raised", body["occurrence_id"], finding_id=fid, title=doc["title"])
         if doc.get("owner_id") and doc["owner_id"] != user["user_id"]:
