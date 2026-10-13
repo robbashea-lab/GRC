@@ -90,9 +90,9 @@
   },
   "runtime_prerequisites": {
     "order": "Matching backend and frontend in one existing Docker deployment; additive startup indexes before collector task.",
-    "collector": "Startup immediate sweep, then 300-second after-completion cadence; bounded leased capture, source consistency checks, derived stores only. First actual hosted capture remains to be observed.",
-    "reports": "Existing configured MongoDB must support snapshot transactions and the current unsharded distinct query. No inconsistent-read fallback; unsupported snapshots fail closed with 503.",
-    "provider_shell": "Free staging compute has no Shell/SSH. No upgrade/settings changes. Ordinary hosted report generation is required feature evidence.",
+    "collector": "Startup immediate sweep, then300-second after-completion cadence; bounded leased capture/source consistency/derived stores only. Hosted first actual position2026-10-13T19:03:52Z, changed native position automatically captured19:13:55Z and later activity capture19:54:07Z observed. Sparse retained coverage, no earlier program baseline invented.",
+    "reports": "Configured snapshot transaction capability exercised by6 actual hosted Full/Executive downloads acrossCIS/SOC/ISO on exactbf59. No inconsistent fallback; unsupported snapshots remain503. Restricted export/access/fault tests still held.",
+    "provider_shell": "Free staging has noShell/SSH; no upgrade/settings changes. Normal authenticated report UI downloads supply hosted feature evidence.",
     "local_replica": "New owned loopback MongoDB8.0.28 process/db/log, publisher checksum verified; distinct from hosted support."
   },
   "superseded_or_not_included": [
@@ -162,6 +162,21 @@
     "reason": "Single backend job exhausted30m after offline success; Mongo cancelled",
     "correction": "Separate required offline and disposable-Mongo jobs; both30m, commands/pins/fixed workers preserved; frontend and both backend jobs required by aggregate gate",
     "selfcheck": "evidence/ci-phase-split-selfcheck.json",
-    "independent_review": "ActualAgent2 independent source PASS; frozen workflowSHA256e0a5e4b7efe77576e95dcd8efe9e463faaa54e342fa19fd0cb2fba693a310966; exact-head CI still required"
+    "independent_review": "ActualAgent2 independent frozen workflow source PASS atSHA256e0a5e4b7efe77576e95dcd8efe9e463faaa54e342fa19fd0cb2fba693a310966. ExactCI165 all4jobs SUCCESS atbf59."
+  },
+  "final_release": {
+    "tested_deployed_sha": "bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+    "tested_tree": "2aeb723a3df5fd6755660c85972a6331184915c5",
+    "application_source": "14fc37114bef6891fde31eb0d5897c3ce01c80c5",
+    "pr": 78,
+    "ci": 165,
+    "run": 38446917191,
+    "deployment": "dep-db780cij9qps73bcu1sg",
+    "status": "Coordinated staging delivery complete. Deployed for validation — final acceptance pending.",
+    "evidence": "evidence/hosted-verification.json",
+    "ci_result": "SUCCESS; frontend/backend/backend-mongo/Release gate all terminal success",
+    "url": "https://omnisciente-staging.onrender.com",
+    "handoff": "handoff.md",
+    "documentation_only_head": "Final receipt commit is recorded separately in PR78/PR57; never substituted for tested/deployed bf59."
   }
 }
