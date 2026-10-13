@@ -3,27 +3,37 @@ import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import AssessmentHistory from './AssessmentHistory';
 import api from '@/lib/api';
+import {versionForSafeguard} from '@/lib/guidedAssessment';
 
 let mockRole='super_admin';
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'u',role:mockRole}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:e=>e.message}));
 jest.mock('./RecordDrawer',()=>()=>null);
 jest.mock('./AssigneeSelect',()=>()=>null);
-jest.mock('./ui/dialog',()=>{const R=require('react');return {Dialog:({children})=><div>{children}</div>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,...props})=><div {...props}>{children}</div>,DialogTitle:R.forwardRef((props,ref)=><h2 {...props} ref={ref}/>),DialogDescription:({children})=><p>{children}</p>};});
+jest.mock('./ui/dialog',()=>{const R=require('react');return {Dialog:({children})=><div>{children}</div>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,onEscapeKeyDown,...props})=><div {...props}>{children}</div>,DialogTitle:R.forwardRef((props,ref)=><h2 {...props} ref={ref}/>),DialogDescription:({children})=><p>{children}</p>};});
 jest.mock('./ui/sheet',()=>({Sheet:({children})=><div>{children}</div>,SheetContent:({children,...props})=><section {...props}>{children}</section>,SheetHeader:({children})=><header>{children}</header>,SheetTitle:({children})=><h2>{children}</h2>,SheetDescription:({children})=><p>{children}</p>}));
 let root,container,record;
 beforeEach(()=>{
   mockRole='super_admin';
   global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   record={framework_assessment_id:'a',framework_key:'cis-ig1',definition_id:'1.1',client_id:'client',status:'not_assessed',implementation:'',notes:'Legacy narrative retained',assessment_history:[]};
-  api.get.mockImplementation(async path=>({data:path.endsWith('/related')?{reviews:[],evidence:[]}:path==='/frameworks/cis-ig1'?{assessments:[record]}:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:[]}));
+  api.get.mockImplementation(async path=>({data:path.endsWith('/guided-assessment')?{
+    client_id:record.client_id,assessment_id:record.framework_assessment_id,user_id:'u',version:versionForSafeguard(record.definition_id),
+    answers:{},revision:0,step:0,completed:false,narrative:'',lineage_known:true,lineage_stale:false,
+    base_assessment_token:record.last_saved??record.last_assessed??null,current_assessment_token:record.last_saved??record.last_assessed??null,
+    base_scope_fingerprint:'a'.repeat(64),current_scope_fingerprint:'a'.repeat(64),
+  }:path.endsWith('/related')?{reviews:[],evidence:[]}:path==='/frameworks/cis-ig1'?{assessments:[record],configuration:{implementation_group:1}}:path==='/organizational-controls'?{items:[],has_more:false,migration_pending:0}:[]}));
   api.patch.mockImplementation(async(path,body)=>{record={...record,...body,last_assessed:'2026-09-22',assessment_history:[{...body,at:'2026-09-22',by:'u'}]};return {data:record};});
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 const button=name=>[...container.querySelectorAll('button')].find(b=>b.textContent===name);
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="client" onOpenChange={()=>{}}/>));}
-test('default assessment combines source context, narrative and status with progressive guidance',async()=>{
-  await render();expect(container.textContent).toContain('What CIS requires');expect(container.textContent).toContain('CIS assessment criteria');
+test('default assessment combines source context, narrative, status, inline interview and Items',async()=>{
+  await render();expect(container.textContent).toContain('What CIS requires');
+  expect([...container.querySelectorAll('[role="tab"]')].map(tab=>tab.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
+  expect(container.querySelector('.assessment-inline-criteria')).toBeNull();
+  expect(container.querySelector('[data-testid="guided-pilot"]').closest('.assessment-summary')).toBeTruthy();
+  expect(container.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
   expect(container.querySelector('[role="tab"][aria-selected="true"]').textContent).toBe('Requirement & implementation');
   expect(container.querySelector('[aria-label="Current implementation"]')).toBeTruthy();expect(container.querySelector('input[value="in_progress"]')).toBeTruthy();
   expect(container.querySelector('[aria-label="Saved implementation status"]').textContent).toContain('Not Assessed');
@@ -67,12 +77,16 @@ test('unavailable historical actors remain distinct from missing attribution',as
 });
 test('a failed context load is visible and does not enable a successful-looking save',async()=>{
   api.get.mockRejectedValue(new Error('Unable to load related records'));await render();
-  expect(container.querySelector('[role="alert"]').textContent).toContain('Unable to load related records');
+  expect(container.querySelector('.brawndo-assessment-footer [role="alert"]').textContent).toContain('Unable to load related records');
   expect(button('Save assessment').disabled).toBe(true);expect(api.patch).not.toHaveBeenCalled();
 });
 test('a failed save preserves the draft and reports failure without a success message',async()=>{
-  await render();api.patch.mockRejectedValue(new Error('Assessment update denied'));
+  await render();const field=container.querySelector('[aria-label="Current implementation"]');
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(field,'Retain this native draft.');field.dispatchEvent(new Event('input',{bubbles:true}));});
+  api.patch.mockRejectedValue(new Error('Assessment update denied'));
   await act(async()=>button('Save assessment').click());
-  expect(container.querySelector('[role="alert"]').textContent).toBe('Assessment update denied');
+  expect(container.querySelector('.brawndo-assessment-footer [role="alert"]').textContent).toBe('Assessment update denied');
+  expect(field.value).toBe('Retain this native draft.');
+  expect(container.querySelector('[aria-label="Saved implementation status"]').textContent).toContain('Not Assessed');
   expect(container.textContent).not.toContain('Assessment saved.');
 });

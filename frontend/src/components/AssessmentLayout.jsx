@@ -5,9 +5,9 @@ import './AssessmentLayout.css';
 // Tabs only control presentation. Drafts and saved conclusions belong to the caller.
 export default function AssessmentLayout({summary,requirement,children,findings,checklist,review,outcome,criteriaTitle,reference,criteriaSummary,inlineCriteria=false,inlineWorkflow=false,interview,itemsToAddress,findingDraft=false}) {
   const [section,setSection]=useState('implementation'),[summaryOpen,setSummaryOpen]=useState(false);
-  const summaryControl=useRef(null);
+  const summaryControl=useRef(null),findingsControl=useRef(null);
   const closeInterview=()=>{setSummaryOpen(false);summaryControl.current?.focus();};
-  useEffect(()=>{if(findingDraft)setSection('findings');},[findingDraft]);
+  useEffect(()=>{if(findingDraft){setSection('findings');if(inlineWorkflow)findingsControl.current?.focus();}},[findingDraft,inlineWorkflow]);
   const criteria=<>
     {criteriaTitle&&<div className="assessment-criteria-intro"><h3>{criteriaTitle}</h3>{criteriaSummary&&<p>{criteriaSummary}</p>}{reference&&<p>{reference}</p>}</div>}
     <div className="assessment-criteria-columns">
@@ -20,7 +20,7 @@ export default function AssessmentLayout({summary,requirement,children,findings,
     <TabsList aria-label="Assessment sections">
       <TabsTrigger value="implementation">Requirement &amp; implementation</TabsTrigger>
       {inlineWorkflow?<TabsTrigger value="items">Items to address</TabsTrigger>:!inlineCriteria&&<TabsTrigger value="criteria">Assessment criteria</TabsTrigger>}
-      <TabsTrigger value="findings">Findings</TabsTrigger>
+      <TabsTrigger value="findings" ref={findingsControl}>Findings</TabsTrigger>
     </TabsList>
     <TabsContent value="implementation" forceMount>
       <details className="assessment-summary" open={summaryOpen} onToggle={event=>setSummaryOpen(event.currentTarget.open)}><summary ref={summaryControl}>Requirement summary</summary><p>{summary}</p>{interview?.({open:summaryOpen,close:closeInterview})}</details>

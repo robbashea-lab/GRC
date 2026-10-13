@@ -60,3 +60,22 @@ test('inline interview stays mounted across disclosure and tabs, with close rest
   await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Save & close interview').click());expect(details.open).toBe(false);expect(document.activeElement).toBe(details.querySelector('summary'));
   expect(container.textContent).not.toContain('Assessment guidance & working checklist');
 });
+
+test('explicit item finding creation moves focus into the selected Findings section',()=>{
+  function ItemFinding(){
+    const [finding,setFinding]=useState(false);
+    return <AssessmentLayout inlineWorkflow summary="Requirement explanation" findingDraft={finding}
+      itemsToAddress={<button onClick={()=>setFinding(true)}>Create finding</button>}
+      findings={<input aria-label="Finding title"/>}/>;
+  }
+  act(()=>root.render(<ItemFinding/>));
+  const items=[...container.querySelectorAll('[role=tab]')].find(button=>button.textContent==='Items to address');
+  act(()=>items.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));
+  const create=[...container.querySelectorAll('button')].find(button=>button.textContent==='Create finding');
+  act(()=>create.focus());expect(document.activeElement).toBe(create);
+  act(()=>create.click());
+  const findings=[...container.querySelectorAll('[role=tab]')].find(button=>button.textContent==='Findings');
+  expect(findings.getAttribute('data-state')).toBe('active');
+  expect(create.closest('[role=tabpanel]').getAttribute('data-state')).toBe('inactive');
+  expect(document.activeElement).toBe(findings);
+});

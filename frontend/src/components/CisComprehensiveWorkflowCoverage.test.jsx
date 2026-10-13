@@ -51,7 +51,7 @@ function completeAnswers(id){
 }
 
 let root,container,native,stored,group,interviewHistory,nativeHistory,opened,configurationExtra;
-const workspace=()=>document.querySelector('.omni-workspace-window');
+const workspace=()=>{const interview=document.querySelector('section[aria-label="CIS assessment interview"]');return interview&&!interview.hidden?interview:null;};
 const guideButton=name=>[...(workspace()?.querySelectorAll('button')||[])].find(button=>button.textContent.trim()===name);
 const readInterview=()=>({...copy(stored),current_assessment_token:native.last_saved,current_scope_fingerprint:fingerprint,lineage_known:true,lineage_stale:stored.base_assessment_token!==native.last_saved});
 function setup(id,implementationGroup,{completed=false,nativeText=''}={}){
@@ -63,7 +63,7 @@ function setup(id,implementationGroup,{completed=false,nativeText=''}={}){
 }
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={copy(native)} clientId={mockClient} onOpenChange={opened}/>));}
 async function remount(){await act(async()=>root.unmount());root=createRoot(container);await render();}
-async function open(){const launcher=document.querySelector('[aria-label="Open Omnibot guide"]');expect(launcher).toBeTruthy();await act(async()=>launcher.click());}
+async function open(){const disclosure=container.querySelector('.assessment-summary');expect(disclosure).toBeTruthy();await act(async()=>{disclosure.open=true;disclosure.dispatchEvent(new Event('toggle'));});expect(document.querySelector('.omni-character,.omni-launch-button,.omni-workspace-window')).toBeNull();}
 async function click(name){const element=guideButton(name);expect(element).toBeTruthy();expect(element.disabled).toBe(false);await act(async()=>element.click());}
 async function setValue(element,value){
   expect(element).toBeTruthy();const prototype=element.tagName==='SELECT'?HTMLSelectElement.prototype:element.tagName==='INPUT'?HTMLInputElement.prototype:HTMLTextAreaElement.prototype;
@@ -119,7 +119,7 @@ test.each(cis.requirements.map(row=>[row.id,row.implementation_group]))('fresh %
   const summary=workspace().querySelector('[aria-label="Omnibot implementation summary"]');expect(summary).toBeTruthy();
   const expectedGroups=omniGroups(id,expected,stored.version).map((g,index)=>g.questions.length?'Question group '+(index+1)+' of '+omniGroups(id,expected,stored.version).length:null).filter(Boolean);
   expect(visited).toEqual(expectedGroups);expect(stored.completed).toBe(true);expect(stored.result.status).toBe('addressed');
-  expect(summary.value).toContain('OVERVIEW\n\n');expect(summary.value).toContain('\n\nIMPLEMENTATION BREAKDOWN\n\n');expect(summary.value).toContain('\n\nITEMS TO ADDRESS\n\n');
+  expect(summary.value).toContain(mockName);expect(summary.value).toContain('\n\nControls in place\n');expect(summary.value).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);
   for(const [key,value]of Object.entries(expected))expect(stored.answers[key]).toEqual(value);
   expect(api.put.mock.calls.every(([path,body])=>path.endsWith('/guided-assessment')&&!('implementation'in body))).toBe(true);
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
@@ -233,7 +233,11 @@ test.each(['scope-disabled','group-inapplicable','foreign-client','soc-2','iso-2
   const baseline=copy(native);await render();
   if(kind==='soc-2'){
     expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();expect(document.querySelector('[data-testid="soc-guided-assessment"]')).toBeTruthy();
-    await open();expect(document.body.textContent).toContain('Omnibot guide · Criterion CC1.1');expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
-  }else expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
+    await open();const interview=document.querySelector('section[aria-label="SOC 2 interview"]');expect(interview).toBeTruthy();expect(interview.hidden).toBe(false);expect(interview.closest('.assessment-summary')).toBeTruthy();expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
+  }else{
+    expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
+    expect(document.querySelector('section[aria-label="CIS assessment interview"]')).toBeNull();
+    expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
+  }
   expect(native).toEqual(baseline);expect(api.put).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });

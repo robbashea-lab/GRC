@@ -38,6 +38,7 @@ def main():
     from test_onboarding_recovery import OnboardingRecoveryTests
     from test_record_integrity import RecordIntegrityTests
     from test_dashboard_work_queue import DashboardWorkQueueTests
+    from test_assessment_items import AssessmentItemsTests
     import routes.onboarding as onboarding
     from initialization import ensure_indexes
 
@@ -81,11 +82,41 @@ def main():
                 self.assertEqual(replay.json(), first.json())
                 self.assertEqual(await harness.server.db.tasks.count_documents({}), 1)
 
+    class ReconnectAssessmentItemTests(MongoStorage, AssessmentItemsTests):
+        async def test_items_and_finding_receipt_survive_a_new_database_connection(self):
+            base,row=await self.initial()
+            item=row['items_to_address'][0]
+            resolved=await self.client.patch(base+'/items/'+item['item_id'],json={
+                'expected_revision':row['items_revision'],'state':'resolved',
+                'resolution':'Synthetic completed work retained across connection restart.'})
+            self.assertEqual(resolved.status_code,200,resolved.text)
+            body={'item_id':item['item_id'],'title':'Explicit durable assessment follow-up',
+                'description':item['text'],'remediation_title':'Complete formal corrective work',
+                'request_id':'assessment-item-reconnect'}
+            first=await self.client.post(base+'/findings',json=body)
+            self.assertEqual(first.status_code,200,first.text)
+            saved=(await self.client.get(base)).json()
+            database_name=harness.server.db.name
+            self.mongo.close()
+            fresh=AsyncIOMotorClient(args.mongo_url,serverSelectionTimeoutMS=3000)
+            self.mongo=fresh
+            with patch.object(harness.server,'db',fresh[database_name]),patch.object(onboarding,'db',fresh[database_name]):
+                current=(await self.client.get(base)).json()
+                for field in ('items_to_address','items_revision','implementation','status','verification','assessment_history'):
+                    self.assertEqual(current.get(field),saved.get(field))
+                replay=await self.client.post(base+'/findings',json=body)
+                self.assertEqual(replay.status_code,200,replay.text)
+                self.assertEqual(replay.json(),first.json())
+                self.assertEqual(await harness.server.db.findings.count_documents({'framework_assessment_id':row['framework_assessment_id']}),1)
+                self.assertEqual(await harness.server.db.tasks.count_documents({'finding_id':first.json()['finding_id']}),1)
+                self.assertEqual((await self.client.get(base)).json()['items_to_address'],saved['items_to_address'])
+
     suite = unittest.TestSuite()
-    for base in (CreateRequestTests, ReviewRecoveryTests, ReviewAuditRecoveryTests, OnboardingRecoveryTests, RecordIntegrityTests, DashboardWorkQueueTests):
+    for base in (CreateRequestTests, ReviewRecoveryTests, ReviewAuditRecoveryTests, OnboardingRecoveryTests, RecordIntegrityTests, DashboardWorkQueueTests, AssessmentItemsTests):
         concrete = type('Mongo' + base.__name__, (MongoStorage, base), {})
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     suite.addTest(ReconnectReceiptTests('test_receipt_survives_a_new_database_connection'))
+    suite.addTest(ReconnectAssessmentItemTests('test_items_and_finding_receipt_survive_a_new_database_connection'))
     if args.include_generic_saves:
         from test_generic_save_recovery import GenericSaveRecoveryTests
         concrete = type('MongoGenericSaveRecoveryTests', (MongoStorage, GenericSaveRecoveryTests), {})
