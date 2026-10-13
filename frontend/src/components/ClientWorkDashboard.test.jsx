@@ -31,6 +31,9 @@ test('compact preview, selected filters, paging, authoritative row open and CIS 
   expect(container.querySelectorAll('tbody tr')).toHaveLength(9);
   expect(container.querySelector('.quick-filters button[aria-pressed=true]').textContent).toContain('All');
   expect(container.querySelector('.bd-tiles')).toBeNull();
+  expect(container.querySelector('.bd-program-intro').textContent).toContain('A clearer view. A stronger program.');
+  expect(container.querySelector('.bd-aside').compareDocumentPosition(container.querySelector('.bd-queue')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(container.querySelector('.bd-donut')).toBeTruthy();
   expect(container.textContent).toContain('1 of 2');expect(container.textContent).toContain('50%');
   expect(container.textContent).not.toContain('Program health');
   const click=async text=>act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());

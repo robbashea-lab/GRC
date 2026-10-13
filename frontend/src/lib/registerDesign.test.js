@@ -36,9 +36,9 @@ test('four text levels are ordered and active boundaries remain distinguishable'
 test('approved light canvas and charcoal navigation are the single shared palette', () => {
   const palette = postcss.parse(css).nodes.find(n => n.selector === ':root');
   expect(palette.nodes.find(n => n.prop === 'color-scheme').value).toBe('light');
-  expect(token('bg-app')).toBe('#F7F9FA');
+  expect(token('bg-app')).toBe('#EDF3FA');
   expect(token('bg-surface')).toBe('#FFFFFF');
-  expect(token('bg-tablehead')).toBe('#F1F3F6');
-  expect(token('sidebar-bg')).toBe('#293039');
+  expect(token('bg-tablehead')).toBe('#F3F7FC');
+  expect(token('sidebar-bg')).toBe('#071321');
   expect(css).not.toContain(':root:not(.light)');
 });

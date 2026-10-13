@@ -15,10 +15,10 @@ test('approved palette is shared across routes and floating UI, not a second pil
   expect(css).not.toMatch(/@keyframes|backdrop-filter|will-change|transition:\s*all/);
 });
 test('authoritative neutral, brand and semantic values stay separate',()=>{
-  expect(color('bg-app')).toBe('#F7F9FA');expect(color('bg-surface')).toBe('#FFFFFF');
-  expect(color('sidebar-bg')).toBe('#293039');expect(color('brand-lime')).toBe('#A3DB33');
+  expect(color('bg-app')).toBe('#EDF3FA');expect(color('bg-surface')).toBe('#FFFFFF');
+  expect(color('sidebar-bg')).toBe('#071321');expect(color('brand-lime')).toBe('#85D4FF');
   expect(color('success')).toBe('#05603A');expect(color('critical')).toBe('#B42318');
-  expect(color('link')).toBe('#2A55C8');expect(color('focus-ring')).toBe('#4172F4');
+  expect(color('link')).toBe('#215BC1');expect(color('focus-ring')).toBe('#215BC1');
 });
 test('approved density stays shared without hiding columns or changing selected All',()=>{
   // Client-section system: 46px rows (readable, still data-dense; docs/client-section-design-system.md).

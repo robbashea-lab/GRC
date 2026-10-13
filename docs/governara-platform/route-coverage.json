@@ -1,0 +1,1707 @@
+{
+  "baseline": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+  "scope": "Presentation route/renderer inventory; not business-lifecycle, authentication or security certification",
+  "framework_variants": [
+    "CIS IG1 program/control/native/interview/summary",
+    "CIS IG2 inherited and additions",
+    "CIS IG3 inherited and additions",
+    "SOC configured categories/program/native/interview/summary",
+    "ISO ISMS/SoA/Annex A/internal audit/native/interview/summary"
+  ],
+  "overlays": [
+    "Native record drawer",
+    "Assessment dialog",
+    "Omni window and invitation",
+    "Dropdown/popover/select",
+    "Date picker and calendar details",
+    "Notification/profile/global search",
+    "Administration dialogs"
+  ],
+  "routes": [
+    {
+      "route": "/login",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "BASELINE SAMPLED / REPORTED",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Prior local compiled Login1280 plus root-recorded baseline hosted public Login",
+        "evidence": [
+          "Agent2 coverage-matrix GN-01 login-b852 screenshots",
+          "docs/governara-platform/execution-ledger.md Evidence boundaries"
+        ],
+        "detail": "Prior Login/topic visual samples and root-recorded public topic/Escape/focus checks. Not new hosted candidate or real auth."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "normal4250 public Login1440x700/390x844: approved scene/form, no LoginBot, Governance→Risk→Compliance, ShiftTabinside dialog, Escape restores opener; desktop screenshot may be partial.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-01"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "SAMPLED PUBLIC / EXPLICIT DEMO; AUTHENTICATED READ-ONLY SAMPLE SEPARATE",
+        "revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+        "deployment": "dep-db6m4hbrjlhs73fda1ug",
+        "observations": [
+          {
+            "executor": "Root coordinator",
+            "environment": "Fresh public staging pages and explicit browser-storage Demo",
+            "detail": "Fresh public Login desktop1280x720/mobile390x844; Governance/Risk/Compliance; ShiftTab containment and Escape focus return. Empty-field capture; no sign-in/MFA submission or logout.",
+            "evidence": "governara-platform-evidence/hosted-browser/root-finite-results.json"
+          }
+        ]
+      },
+      "limitation": "Sampled layout/topics/dialog keyboard/focus; no real sign-in/MFA/logout or recovery delivery.",
+      "familyIds": [
+        "GN-01"
+      ]
+    },
+    {
+      "route": "/forgot-password",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "BASELINE NAVIGATION REPORTED",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Prior hosted public b852 per existing root ledger",
+        "evidence": [
+          "docs/governara-platform/execution-ledger.md Evidence boundaries"
+        ],
+        "detail": "Recovery link navigation; no delivery or authentication proof."
+      },
+      "after_application": {
+        "state": "OBSERVED LOCAL NAVIGATION ONLY",
+        "description": "b44 normal public navigation observed; delivery/auth not exercised",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+          "1c0da2d819e36a153c2d69e84a43bdd10b7343fb"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "Recovery link navigates/forgot-password on normal4250; no email/auth/MFA/recovery-delivery verification.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-02"
+          },
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "PASS NAVIGATION ONLY",
+            "detail": "Normal4250 reset-password withouttoken shows missingtoken message; link opens forgotpassword; no credentials or emailrequest",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-02"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "SAMPLED PUBLIC / EXPLICIT DEMO; AUTHENTICATED READ-ONLY SAMPLE SEPARATE",
+        "revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+        "deployment": "dep-db6m4hbrjlhs73fda1ug",
+        "observations": [
+          {
+            "executor": "Root coordinator",
+            "environment": "Fresh public staging pages and explicit browser-storage Demo",
+            "detail": "Normal recovery-link navigation only. No email request, reset token or credential action.",
+            "evidence": "governara-platform-evidence/hosted-browser/root-finite-results.json"
+          }
+        ]
+      },
+      "limitation": "Recovery navigation only; no email request/delivery or credential operation.",
+      "familyIds": [
+        "GN-02"
+      ]
+    },
+    {
+      "route": "/reset-password",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "OBSERVED LOCAL NO-TOKEN STATE",
+        "description": "1c normal public missing-token rendered message/recovery link inspected; no valid-token reset or email/auth execution",
+        "observedRevisions": [
+          "1c0da2d819e36a153c2d69e84a43bdd10b7343fb"
+        ],
+        "observations": [
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "PASS NAVIGATION ONLY",
+            "detail": "Normal4250 reset-password withouttoken shows missingtoken message; link opens forgotpassword; no credentials or emailrequest",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-02"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Missing-token display/recovery navigation only; no valid-token reset.",
+      "familyIds": [
+        "GN-02"
+      ]
+    },
+    {
+      "route": "/",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "OBSERVED LOCAL REDIRECT / ALIAS ONLY",
+        "description": "1c coordinator local Demo root redirects to existing Portfolio context; no restricted landing proof",
+        "observedRevisions": [
+          "1c0da2d819e36a153c2d69e84a43bdd10b7343fb"
+        ],
+        "observations": [
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "PASS",
+            "detail": "client-settings→client-profile?tab=people; onboarding→client-profile; /→clients; wildcard/governara-route-check→clients inexistingDemo context",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-04"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Existing local Demo administrator Portfolio landing only; restricted/no-access landing branches not exercised.",
+      "familyIds": [
+        "GN-04"
+      ]
+    },
+    {
+      "route": "clients",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+          "1c0da2d819e36a153c2d69e84a43bdd10b7343fb"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo4249",
+            "detail": "Portfolio light/dark, wide/narrow, search/native filters/empty state/direct Open Portal",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-03"
+          },
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "Closed mobile390 aside displaynone,width0,nav absentAX; opened228width retained. Initialwide/light/dark6ad evidence retained; GNQA03 corrected.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-03"
+          },
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "PASS",
+            "detail": "390x844 hamburger opens existing228px drawer; actual exposed backdrop pointer at300,400 closes; AXnavigationabsent afterclose",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-03"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "FINITE AUTHENTICATED READ-ONLY PRESENTATION SAMPLE; NO BUSINESS/SAVE ACCEPTANCE",
+        "revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+        "deployment": "dep-db6m4hbrjlhs73fda1ug",
+        "observations": [
+          {
+            "executor": "Root coordinator",
+            "environment": "Fresh public staging pages and explicit browser-storage Demo",
+            "detail": "Actual Explore a demo enters browser-storage Demo Portfolio; native filters, six row metric actions and direct Open Portal available. Not authenticated Mongo/client-state proof.",
+            "evidence": "governara-platform-evidence/hosted-browser/root-finite-results.json"
+          },
+          {
+            "executor": "Independent Agent2",
+            "environment": "Existing authorized Staging Administrator session; no Demo mode",
+            "detail": "Authenticated Portfolio dark1440x900:22 authorized clients,5 configured identities; unavailable work/change populations clearly marked. Native layout/data sampled read-only.",
+            "evidence": "governara-independent-qa/hosted-4c1c4df captures/manifest/report",
+            "source_attribution": "Rendered states and fresh bundle independently executed; provider deployment/CI verified by coordinator"
+          }
+        ]
+      },
+      "limitation": "Sampled hero/table/light-dark/responsive/filter/search/empty/portal and backdrop; not every menu/role/large-volume state.",
+      "familyIds": [
+        "GN-03"
+      ]
+    },
+    {
+      "route": "admin/clients",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "LocalDemo ClientManagement light1440,existing4clienttable/controls. No create/archive.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-22"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Landing directory only; no creation/archive/grant changes.",
+      "familyIds": [
+        "GN-22"
+      ]
+    },
+    {
+      "route": "admin/users",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "LocalDemo UsersAccess light1440,populatedsyntheticusers. No accounts/grants/emails/reset.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-23"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Landing users/access presentation only; no account/grant/invitation/reset changes or denial proof.",
+      "familyIds": [
+        "GN-23"
+      ]
+    },
+    {
+      "route": "admin/roles",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "RolesPermissions light1440,rolecards/matrix/continuationtext. Read-onlypresentation,notpermissionsecurityproof.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-24"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "FINITE AUTHENTICATED READ-ONLY PRESENTATION SAMPLE; NO BUSINESS/SAVE ACCEPTANCE",
+        "revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+        "deployment": "dep-db6m4hbrjlhs73fda1ug",
+        "observations": [
+          {
+            "executor": "Independent Agent2",
+            "environment": "Existing authorized Staging Administrator session; no Demo mode",
+            "detail": "Authenticated Roles administration dark1440x900 presentation/readability only; no permission or account changes.",
+            "evidence": "governara-independent-qa/hosted-4c1c4df captures/manifest/report",
+            "source_attribution": "Rendered states and fresh bundle independently executed; provider deployment/CI verified by coordinator"
+          }
+        ]
+      },
+      "limitation": "Landing role cards/matrix only; not server-enforced RBAC proof.",
+      "familyIds": [
+        "GN-24"
+      ]
+    },
+    {
+      "route": "admin/security",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "SecurityAuth light1440,currentsettingspresentation. No policywrites/authproof.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-25"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Landing settings presentation only; no authentication or policy changes/proof.",
+      "familyIds": [
+        "GN-25"
+      ]
+    },
+    {
+      "route": "admin/audit",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "AuditLog light1440,filters/populatedsynthetichistory. No deletion/export/historywrites.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-26"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Landing filters/synthetic history only; no export/delete or comprehensive audit proof.",
+      "familyIds": [
+        "GN-26"
+      ]
+    },
+    {
+      "route": "account",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "Requirements populated,Exceptions/Tasks empty,accountprofile read-onlydark1440 observed; no accountchanges orunconfiguredframework activation.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-29"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Local read-only account profile only; no account update, authentication/MFA/recovery flow.",
+      "familyIds": [
+        "GN-29"
+      ]
+    },
+    {
+      "route": "client-settings",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "OBSERVED LOCAL REDIRECT / ALIAS ONLY",
+        "description": "1c local Demo redirect -> /client-profile?tab=people observed",
+        "observedRevisions": [
+          "1c0da2d819e36a153c2d69e84a43bdd10b7343fb"
+        ],
+        "observations": [
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "CONTEXT UNAVAILABLE",
+            "detail": "Configured Dunder onboarding path redirects profile. No incomplete client created/changed; actualsetup-required renderer notproved",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-21"
+          },
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "PASS",
+            "detail": "client-settings→client-profile?tab=people; onboarding→client-profile; /→clients; wildcard/governara-route-check→clients inexistingDemo context",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-21"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Observed legacy redirect to People & Ownership only; not all compatibility query values.",
+      "familyIds": [
+        "GN-21"
+      ]
+    },
+    {
+      "route": "client-profile",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+          "1c0da2d819e36a153c2d69e84a43bdd10b7343fb"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Client Profile dark landing; no documented setup-required Onboarding renderer",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-21"
+          },
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "CONTEXT UNAVAILABLE",
+            "detail": "Configured Dunder onboarding path redirects profile. No incomplete client created/changed; actualsetup-required renderer notproved",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-21"
+          },
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "PASS",
+            "detail": "client-settings→client-profile?tab=people; onboarding→client-profile; /→clients; wildcard/governara-route-check→clients inexistingDemo context",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-21"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Landing/read-only profile and existing redirects; actual setup-required Onboarding renderer context unavailable.",
+      "familyIds": [
+        "GN-21"
+      ]
+    },
+    {
+      "route": "dashboard",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Brawndo dashboard landing, donut/queue; queue summary -> native Action Item -> Escape chain",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-05"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "FINITE AUTHENTICATED READ-ONLY PRESENTATION SAMPLE; NO BUSINESS/SAVE ACCEPTANCE",
+        "revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+        "deployment": "dep-db6m4hbrjlhs73fda1ug",
+        "observations": [
+          {
+            "executor": "Root coordinator",
+            "environment": "Fresh public staging pages and explicit browser-storage Demo",
+            "detail": "Demo Brawndo native chart/status/priority queue and approved introduction sampled; cinematic imagery absent. No task or assessment changes.",
+            "evidence": "governara-platform-evidence/hosted-browser/root-finite-results.json"
+          },
+          {
+            "executor": "Independent Agent2",
+            "environment": "Existing authorized Staging Administrator session; no Demo mode",
+            "detail": "Authenticated Brawndo dark1440x900:2/56 implemented (3.6%),15 queue items. Summary to native action ticket and close chain returns dashboard/opener without edits. This samples a native renderer through Dashboard, not an Action Items landing route.",
+            "evidence": "governara-independent-qa/hosted-4c1c4df captures/manifest/report",
+            "source_attribution": "Rendered states and fresh bundle independently executed; provider deployment/CI verified by coordinator"
+          }
+        ]
+      },
+      "limitation": "6ad sampled Brawndo program/donut/queue/detail/Escape; not all clients/programs/queue states.",
+      "familyIds": [
+        "GN-05"
+      ]
+    },
+    {
+      "route": "calendar",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Calendar dark landing only; no documented event detail/datepicker/week/list interactions",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-06"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Dark Calendar landing only; native date-picker sample came from Review creation, not all Calendar views/events.",
+      "familyIds": [
+        "GN-06"
+      ]
+    },
+    {
+      "route": "reviews",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+          "1c0da2d819e36a153c2d69e84a43bdd10b7343fb"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Reviews dark landing only",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-07"
+          },
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "environment": "Local compiled Demo4249",
+            "detail": "Dark Reviews search-border computed at b44: legacy61,87,120 on12,27,48; GN-QA-05, not complete Review lifecycle",
+            "source": "review-handoff.txt",
+            "family": "GN-07"
+          },
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "PASS AT SAMPLED STATES",
+            "detail": "Darknotifications/profile portalledmenus andEscape; lightNewReview typeSelect/Escape; native datepickerAXreachable/Escape, duevalueempty/CreateDisabled; untoucheddraftclosed; popupnotfullycaptured bywebview screenshot",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-07"
+          },
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Final compiled local candidate",
+            "executor": "Independent Agent 2",
+            "result": "PASS as coordinator-relayed",
+            "detail": "Reviews final compiled canonical border contrast 3.7232:1; independent focused run 2 suites/18 tests PASS",
+            "source": "Root coordination message; underlying new Agent2 artifacts not opened during this bounded task",
+            "reviewerAction": "Reported evidence preserved separately from independently inspected source and coordinator browser artifacts",
+            "family": "GN-07"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "FINITE AUTHENTICATED READ-ONLY PRESENTATION SAMPLE; NO BUSINESS/SAVE ACCEPTANCE",
+        "revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+        "deployment": "dep-db6m4hbrjlhs73fda1ug",
+        "observations": [
+          {
+            "executor": "Independent Agent2",
+            "environment": "Existing authorized Staging Administrator session; no Demo mode",
+            "detail": "Authenticated Brawndo Reviews search dark boundary RGB87,119,156 on RGB12,27,48; existing landing/control styling read-only.",
+            "evidence": "governara-independent-qa/hosted-4c1c4df captures/manifest/report",
+            "source_attribution": "Rendered states and fresh bundle independently executed; provider deployment/CI verified by coordinator"
+          }
+        ]
+      },
+      "limitation": "Landing + final canonical boundary + new Review select/native picker reachability; no Review create/complete/link/history-write campaign. Picker popup screenshot not captured.",
+      "familyIds": [
+        "GN-07"
+      ]
+    },
+    {
+      "route": "findings",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "OBSERVED LOCAL REDIRECT / ALIAS ONLY",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo4249",
+            "detail": "Brawndo populated Action Item reached from dashboard summary; Escape return chain",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-08"
+          },
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "Initech empty ActionItems and Findings deep-link redirect observed on b44; earlierBrawndo populated/detail chain6ad separate.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-08"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Observed alias/deep-link to Action Items; not all preserved Finding detail workflows.",
+      "familyIds": [
+        "GN-08"
+      ]
+    },
+    {
+      "route": "systems",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Systems & Scope dark landing",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-19"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Dark Systems & Scope landing only; no asset save/scope changes.",
+      "familyIds": [
+        "GN-19"
+      ]
+    },
+    {
+      "route": "risks",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Risks dark landing/matrix",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-14"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Dark landing/matrix only; deeper risk acceptance/reassessment writes not exercised.",
+      "familyIds": [
+        "GN-14"
+      ]
+    },
+    {
+      "route": "policies",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Policies dark landing",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-15"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Dark landing only; policy approval/version/persistence not exercised.",
+      "familyIds": [
+        "GN-15"
+      ]
+    },
+    {
+      "route": "requirements",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "Requirements populated,Exceptions/Tasks empty,accountprofile read-onlydark1440 observed; no accountchanges orunconfiguredframework activation.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-29"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Populated local landing only; no requirement state writes.",
+      "familyIds": [
+        "GN-29"
+      ]
+    },
+    {
+      "route": "exceptions",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "Requirements populated,Exceptions/Tasks empty,accountprofile read-onlydark1440 observed; no accountchanges orunconfiguredframework activation.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-29"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Empty local landing only; no lifecycle or approval writes.",
+      "familyIds": [
+        "GN-29"
+      ]
+    },
+    {
+      "route": "contacts",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Contacts dark landing",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-18"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Dark landing only; no personnel/account/relationship changes.",
+      "familyIds": [
+        "GN-18"
+      ]
+    },
+    {
+      "route": "vendors",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Vendors dark landing only",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-16"
+          },
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "environment": "Local compiled Demo4249",
+            "detail": "Vendor search canonical boundary87,119,156 on12,27,48 compared with Reviews GN-QA-05; not complete Vendor lifecycle",
+            "source": "review-handoff.txt",
+            "family": "GN-16"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Dark landing plus canonical search boundary comparison; no Assurance or vendor write lifecycle rerun.",
+      "familyIds": [
+        "GN-16"
+      ]
+    },
+    {
+      "route": "ai-governance",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "AI Governance dark empty state",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-20"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Empty local landing only; no intake/data/configuration changes.",
+      "familyIds": [
+        "GN-20"
+      ]
+    },
+    {
+      "route": "tasks",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "Requirements populated,Exceptions/Tasks empty,accountprofile read-onlydark1440 observed; no accountchanges orunconfiguredframework activation.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-29"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Empty local landing only; separate populated native Action Item chain has its own evidence.",
+      "familyIds": [
+        "GN-29"
+      ]
+    },
+    {
+      "route": "action-items",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo4249",
+            "detail": "Brawndo populated Action Item reached from dashboard summary; Escape return chain",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-08"
+          },
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "Initech empty ActionItems and Findings deep-link redirect observed on b44; earlierBrawndo populated/detail chain6ad separate.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-08"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "6ad populated Brawndo summary/native Action Item Escape chain; b44 Initech empty state; no authoritative writes.",
+      "familyIds": [
+        "GN-08"
+      ]
+    },
+    {
+      "route": "evidence",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL PRESENTATION",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Evidence Library dark landing",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-17"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Dark library landing only; no upload/link/unlink/history mutation.",
+      "familyIds": [
+        "GN-17"
+      ]
+    },
+    {
+      "route": "compliance/:requirementKey",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "MATCHED BASELINE AT TWO ISO STATES ONLY",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Local immutable b852 Demo",
+        "evidence": [
+          "final-browser/iso-audit-settled-comparison.json",
+          "before-browser/gn-qa-04-b852-native-overlap.json"
+        ],
+        "detail": "Matched settled Dunder2026 Internal Audit text/headings/controls versus1c, and retained A.5.9 native button obstruction versusb44. Not full CIS/SOC/ISO before-state coverage."
+      },
+      "after_application": {
+        "state": "SAMPLED LOCAL; RETAINED BLOCKER / LOCAL IG3 UNAVAILABLE; NEW HOSTED SAMPLE SEPARATE BELOW",
+        "description": "Route/renderer sampled in finite local batch; see family-specific revision/state",
+        "observedRevisions": [
+          "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+          "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+          "1c0da2d819e36a153c2d69e84a43bdd10b7343fb"
+        ],
+        "observations": [
+          {
+            "revision": "6ad54d3c691c4dcb72b70ce6772e137ba18cdc32",
+            "environment": "Local explicit Demo 4249, initial finite batch",
+            "detail": "Brawndo CIS IG1 program/native 1.1 and guide; native value/status controls observed read-only",
+            "source": "batch-6ad54d3-result.txt",
+            "family": "GN-09"
+          },
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "environment": "Local compiled Demo4249",
+            "detail": "GN-QA-01 native CIS pill/radio and GN-QA-02 light guide/header/minimize/restore/Escape independently retested; no answers/saves",
+            "source": "batch-b44fc5b-result.txt; row retains older FAIL",
+            "family": "GN-09"
+          },
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "PASS AT REVISION",
+            "detail": "Existing Initech IG2 program18Controls/130Safeguards/unassessed, scopefilterpresent dark1440. No scope activation/provisioning.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-10"
+          },
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "BLOCKED",
+            "detail": "No already-authorized IG3 localDemo client in current directory. No newclient/frameworkenable for visual coverage; hostednewcandidate notyetavailable.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-11"
+          },
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "FAIL",
+            "detail": "Prestige Demo SOCconfigured38criteria/category program/nativeCC1.4/guide observed dark1440; nativeSave&next footer overlaps preferences (GNQA04). No protected stagingPrestige touched.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-12"
+          },
+          {
+            "revision": "b44fc5bf3b26422091cb3a956d6577d4831e9653",
+            "status": "FAIL",
+            "detail": "Dunder Demo ISOOverview light,SoA/ISMS/AnnexA dark/nativeA5.9+guide observed; nativeSave&next center intercepted by preferences (GNQA04). Audit-detail/other clause variants not exhausted.",
+            "environment": "Local compiled b44 Demo4249; GN-01/02 normal public4250",
+            "source": "coverage-matrix.json observation",
+            "family": "GN-13"
+          },
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "PASS AT STATE",
+            "detail": "Dunder ISO InternalAudit2026 dark/light read-only panel; settled dark b852→1c headings/text/controls same; expectedpaint/font differ",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-13"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "FINITE AUTHENTICATED READ-ONLY PRESENTATION SAMPLE; NO BUSINESS/SAVE ACCEPTANCE",
+        "revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+        "deployment": "dep-db6m4hbrjlhs73fda1ug",
+        "observations": [
+          {
+            "executor": "Root coordinator",
+            "environment": "Fresh public staging pages and explicit browser-storage Demo",
+            "detail": "Demo Brawndo CIS IG1 program Nara recommendations plus native1.1 values and first Inventory group viewed. Closed without answers/progress/summary/native saves. Not complete interview or hosted save coverage.",
+            "evidence": "governara-platform-evidence/hosted-browser/root-finite-results.json"
+          },
+          {
+            "executor": "Independent Agent2",
+            "environment": "Existing authorized Staging Administrator session; no Demo mode",
+            "detail": "Authenticated dark1440x900: Hooli CIS IG3 program153/native1.1/first Inventory question; Initech CIS IG2 program130; Prestige SOC configured38/nativeCC1.1/Current saved position guide. No Start/Begin new review/answers/progress/assessment saves. Dunder ISO/Internal Audit unavailable from authorized directory; no substitute created.",
+            "evidence": "governara-independent-qa/hosted-4c1c4df captures/manifest/report",
+            "source_attribution": "Rendered states and fresh bundle independently executed; provider deployment/CI verified by coordinator"
+          }
+        ]
+      },
+      "limitation": "CIS IG1/IG2, SOC38 and ISO local samples retain executed revisions. New authenticated Hooli IG3 program153/native1.1/first group is recorded separately; not153 placements or complete interviews. Dunder ISO new hosted context unavailable. GN-QA-04 retained ISO pointer obstruction and SOC observed overlap remain open. No answers/native writes.",
+      "familyIds": [
+        "GN-09",
+        "GN-10",
+        "GN-11",
+        "GN-12",
+        "GN-13"
+      ]
+    },
+    {
+      "route": "onboarding",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "OBSERVED LOCAL REDIRECT / ALIAS ONLY",
+        "description": "1c local Demo redirect -> /client-profile observed; actual setup-required conditional renderer unavailable",
+        "observedRevisions": [
+          "1c0da2d819e36a153c2d69e84a43bdd10b7343fb"
+        ],
+        "observations": [
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "CONTEXT UNAVAILABLE",
+            "detail": "Configured Dunder onboarding path redirects profile. No incomplete client created/changed; actualsetup-required renderer notproved",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-21"
+          },
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "PASS",
+            "detail": "client-settings→client-profile?tab=people; onboarding→client-profile; /→clients; wildcard/governara-route-check→clients inexistingDemo context",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-21"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "Configured-client redirect only; actual setup-required conditional Onboarding under ClientProfile not proved or manufactured.",
+      "familyIds": [
+        "GN-21"
+      ]
+    },
+    {
+      "route": "*",
+      "source": "frontend/src/App.js",
+      "source_inventory": "complete",
+      "before_application": {
+        "state": "SOURCE BASELINE; BROWSER BEFORE NOT RECONCILED FOR THIS PATTERN",
+        "revision": "b852a0cc3fb01cfa12d1f64467d3a78a17faf2d8",
+        "environment": "Immutable compatible source; no broad browser-before claim from these inputs",
+        "evidence": [],
+        "detail": "Existing before artifacts are retained; current source inventory is not a browser pass."
+      },
+      "after_application": {
+        "state": "OBSERVED LOCAL REDIRECT / ALIAS ONLY",
+        "description": "1c local Demo wildcard test -> Portfolio destination observed",
+        "observedRevisions": [
+          "1c0da2d819e36a153c2d69e84a43bdd10b7343fb"
+        ],
+        "observations": [
+          {
+            "revision": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+            "environment": "Coordinator-executed local compiled Demo4249/normal auth-enabled public4250; not hosted",
+            "executor": "Root coordinator",
+            "result": "PASS",
+            "detail": "client-settings→client-profile?tab=people; onboarding→client-profile; /→clients; wildcard/governara-route-check→clients inexistingDemo context",
+            "source": "C:/Users/RobbA/Documents/Codex/2026-10-12/governara-platform-evidence/final-browser/finite-check-results.json",
+            "reviewerAction": "Existing artifact read only; not independently executed",
+            "family": "GN-04"
+          }
+        ],
+        "candidateRelationship": "Current4c application source equals1c; historical observations retain their executed revision. No fresh4c browser claim."
+      },
+      "hosted": {
+        "state": "NOT EXECUTED ON NEW HOSTED REVISION IN CURRENT FINITE SAMPLES",
+        "revision": null,
+        "deployment": null,
+        "detail": "No current hosted sample for this pattern; local evidence and limitations remain above."
+      },
+      "limitation": "One unknown-route redirect to existing local Portfolio only; not every URL/role/error state.",
+      "familyIds": [
+        "GN-04"
+      ]
+    }
+  ],
+  "tested_revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+  "tested_tree": "3c855ddeeaadb3587f1d63d5b65702f54949711e",
+  "local_product_reference": "1c0da2d819e36a153c2d69e84a43bdd10b7343fb",
+  "source_relationship": "1c to 4c changes two test fixtures and two documentation files only. Local observations remain attributed to their executed 6ad/b44/1c source; exact CI151 and new hosted observations use 4c.",
+  "counts": {
+    "sourcePatterns": 31,
+    "reviewFamilies": 30,
+    "locallySampledReviewFamilies": 29,
+    "sourcePatternsWithLocalLandingOrRedirectObservation": 31,
+    "additionalHostedFamilySamples": 1,
+    "familySamplesAcrossLocalAndHosted": 30
+  },
+  "count_meaning": "31 source patterns have some local landing/redirect observation, across29 locally sampled families. A new authenticated hosted Hooli IG3 representative adds the30th family. This is not all renderer states/roles/workflows,153 interview or339 placement/write coverage. Actual setup-required renderer is unavailable; new hosted Dunder ISO context unavailable.",
+  "deployed_revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+  "deployment_id": "dep-db6m4hbrjlhs73fda1ug",
+  "environment": "https://omnisciente-staging.onrender.com",
+  "current_hosted_root_evidence": "Coordinator: fresh public Login, three topics, dialog keyboard, mobile layout, recovery navigation; explicit browser-storage Demo Portfolio, Dashboard, CIS program/native1.1 guide. No sign-in, MFA, email delivery or assessment writes.",
+  "limitations": [
+    "Actual setup-required Onboarding context unavailable; configured-client redirect sampled only",
+    "Inherited GN-QA-04 ISO native footer obstruction retained; separate placement authority required",
+    "Real sign-in/MFA/logout-return, recovery delivery and restricted-user/fault acceptance not executed or waived",
+    "Zoom/reduced-motion emulation unavailable in advertised browser controls",
+    "Not whole-application accessibility or all-role/all-state lifecycle proof",
+    "Native legacy document title remains; no metadata/title change contracted",
+    "New hosted Dunder ISO/Internal Audit sample unavailable because Dunder absent from authorized directory; prior local ISO evidence remains local"
+  ],
+  "new_hosted_scope": "Finite public, explicit Demo and authorized authenticated read-only presentation samples; not all31 routes/roles/states, all153 interviews or339 placements/writes. IG3 family now has a hosted representative; local29-family evidence retains original revisions.",
+  "independent_slot": {
+    "writes": "No interview starts/answers/progress/native-assessment or account changes initiated",
+    "held_tab5": "Untouched",
+    "theme": "Original dark preserved",
+    "viewport": "Override reset1280x720 readback",
+    "state": "Explicitly acknowledged, completed and RELEASED",
+    "session": "Existing administrator session preserved"
+  },
+  "historical_metadata_revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+  "historical_metadata_boundary": "Existing top-level inventory rows/counts/tested/deployed fields and no-write/no-authority limitations describe the historical presentation release at4c and named earlier revisions. Current targeted runtime, two authorized synthetic actions and new open finding are in targeted_closeout; old rows are not retagged.",
+  "targeted_closeout": {
+    "date": "2026-10-13",
+    "status": "Deployed for validation — final acceptance pending.",
+    "branch": "codex/governara-platform-alignment",
+    "pr": 74,
+    "tested_and_deployed_revision": "69b383234945250b60b34c1b4307a90ac5a54359",
+    "tested_tree": "b161717798b329a8256b0c1818ac57a451dcbddd",
+    "runtime_sha256": "74D8E7AEA0C94820DD5FB36BD82B037FA57C042BA819BE1A90E1D6FEF851CC7B",
+    "ci": {
+      "number": 158,
+      "run": 38400207720,
+      "status": "success",
+      "frontend_suites": 294,
+      "frontend_tests": 8780,
+      "snapshots": 1,
+      "both_builds": "success",
+      "backend_offline": "success",
+      "backend_disposable_mongo": "success",
+      "backend_counts": null,
+      "release_gate": "success",
+      "windows_failures_not_waived": true
+    },
+    "deployment": {
+      "service": "srv-db1s0cugekts73f72reg",
+      "id": "dep-db73j39srm7s73btensg",
+      "status": "Live",
+      "source_proof": "Coordinator direct full provider commit link",
+      "assets": [
+        "main.0d0779f5.js",
+        "main.86adc853.css"
+      ],
+      "fresh_hosted_browser_proof": "Independent Agent2 actual authenticated browser assets",
+      "public_login_health_assets": "200"
+    },
+    "correction_scope": "Only OmniDock runtime above4c, native-assessment obstacle fitting; automatic clamping including program clamping transient. No native handlers, layout/CSS/art, catalog, writer/history/auth/permissions/provider changes.",
+    "local": {
+      "compiled_state_samples": 26,
+      "one_iso_native_action_addendum": true,
+      "evidence_kind": "Local browser-storage Demo, not hosted persistence",
+      "cis_ig1_ig2": "Bounded native1.1/first-group shared-wrapper read-only samples",
+      "local_ig3": "Unavailable; no fixture created"
+    },
+    "hosted": {
+      "geometry_state_samples": 22,
+      "samples_not_route_or_interview_counts": true,
+      "identity": "Existing Staging Administrator / super_admin, not fresh-login/restricted-user proof",
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "iso": {
+        "client": "cli_6623c0df3d49caed4d80c3c4fa73665a0d05e2fee418072c30ebdb2f8425d2ee",
+        "label": "Platform Acceptance QA 20261011 — ISO 27001",
+        "assessment": "fw_629e158508995714959689856cee92f0",
+        "requirement": "A.5.9",
+        "next_assessment": "fw_07e51ddb0e26563386de18f2f79c9c9e",
+        "action": "ONE unchanged blank native Save & next, Previous, fresh reload",
+        "result": "Blank implementation/rationale, Undetermined SoA and Not Assessed retained; normal Last Assessed Not assessed to2026-10-13 persists",
+        "position_desktop": [
+          381,
+          324
+        ],
+        "position_narrow": [
+          266,
+          324
+        ]
+      },
+      "soc": {
+        "client": "cli_7a5e4c04356a9e1e6b537ded5738fff5cb46a75c4272bc5245181b63fa5bf474",
+        "label": "Platform Acceptance QA 20261011 — SOC 2",
+        "assessment": "fw_5be5723109f751d882c639a925888f1a",
+        "criterion": "CC1.4",
+        "next_assessment": "fw_6ecb6d03b6f95635997e02f0f1b4a924",
+        "action": "ONE unchanged blank native Save & next, Previous, fresh reload",
+        "result": "Blank implementation/Not Assessed and visible Not verified/Unassigned/Not assessed labels retained; hidden last_saved/history unavailable",
+        "position_desktop": [
+          1090,
+          460
+        ],
+        "position_narrow": [
+          266,
+          460
+        ]
+      },
+      "hooli_ig3": {
+        "native_assessment": "fw_ebc463fe4afc5aa0b96cbc5412cc1b83",
+        "program_count": 153,
+        "first_inventory_group": "Read-only observed",
+        "protected_native_saves": 0,
+        "interview_starts_answers_saves": 0,
+        "native_fields": "Retained"
+      },
+      "gn_qa_04": "Scoped native-footer and named preferences/menu/minimized/keyboard states pass; not all-state/no-fit/history proof",
+      "gn_qa_06": "Actual narrow invitation Close pass at current266,460; local200,584 retains local provenance",
+      "gn_qa_07": "Desktop guide458,82/620x630 and owl1090,460; prefs1090,325.906 all five direct; actual open/menu/keyboard pass",
+      "gn_qa_08": {
+        "status": "OPEN hosted functional obstruction/control gap",
+        "actual": "Hooli program Return pointer opens guide; all five probes hit launcher SVG",
+        "owl": {
+          "left": 8,
+          "top": 82,
+          "width": 168,
+          "height": 154
+        },
+        "return_button": {
+          "left": 13,
+          "top": 92,
+          "width": 74.646,
+          "height": 22
+        },
+        "workaround": "Intended Return keyboard Enter returns /clients; not resolution",
+        "attribution": "Source supports same overlap on4c given valid point; no executed matched-before/point origin, introduced/inherited unknown",
+        "authorization": "Program navigation outside native-assessment exception; no correction in this closeout"
+      },
+      "native_save_total": 2,
+      "interview_saves": 0,
+      "protected_native_saves": 0,
+      "artifact_reconciliation": "78 hosted-named captures same SHA256 copies/originals retained; manifest helper lookup failure is bookkeeping, distinct from confirmed GN-QA-08",
+      "release": {
+        "explicitRelease": true,
+        "tab29Closed": true,
+        "viewportOverrideReset": true,
+        "originalRoute": "/clients",
+        "search": "",
+        "theme": "dark unchanged",
+        "session": "not logged out",
+        "sharedTabsAndTab5": "not operated",
+        "postReleaseCuaProviderActions": 0
+      }
+    },
+    "windows": {
+      "original": "FAIL:5/9 suites,62/225 unchanged5000ms timeouts;163 pass,1114.103s; no assertion mismatch",
+      "bounded_replays": 6,
+      "results": "CIS timeout both69/c6; nested ISO clean Escape pass both; SOC current timeout/control pass inconclusive under checkout/resource confounding",
+      "boundary": "Not full attribution of all62; Linux CI pass distinct"
+    },
+    "limitations": [
+      "Only unchanged blank native records were saved; not populated-narrative/history/relationship durability coverage.",
+      "ISO/SOC native history/activity not exposed; snapshot counts, audit and hidden last_saved not inspected. ISO owner/relationships not fully exposed. SOC visible owner label compared only.",
+      "Expanded/no-fit guide still covers underlying controls/preferences in narrow layouts; minimized/closed passes not universal collision freedom.",
+      "Dunder hosted ISO/onboarding unavailable; no substitutes counted as Dunder pass.",
+      "No fresh login/logout/MFA/recovery/restricted-role/cross-tenant/fault/zoom/reduced-motion/physical-device campaign.",
+      "Finite console query after ISO/SOC returned []; a planned final query after Hooli was not executed because manifest generation failed before that step.",
+      "Generic capture filter omits closed DETAILS; companion preferences JSON is authoritative closed-summary evidence.",
+      "Program GN-QA-08 remains functional/blocking broader acceptance, no downgrade to enhancement",
+      "No universal native access behind unchanged expanded/full-window guide; minimize/Escape restores",
+      "Earlier31-pattern/30-family and153/339 evidence retained at original revisions, not rerun"
+    ],
+    "custody": "Agent2 acknowledged/released finite slots; coordinator sole shared staging/browser owner, separate PR75/PR76 not integrated/deployed; held original Tab5 and existing session preserved",
+    "repository_handoff": "docs/governara-platform/release-handoff.md"
+  }
+}

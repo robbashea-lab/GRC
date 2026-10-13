@@ -40,15 +40,19 @@ const change = async (node, value) => {
 };
 const click = async node => { expect(node).toBeTruthy(); await act(async () => node.click()); };
 
-test("portfolio is a compact triage index: one heading, one view bar, the table, and drill-downs", async () => {
+test("approved portfolio keeps native scope, work filters, drill-downs and direct client routing", async () => {
   await render(<ClientDirectory />);
   expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
   expect(container.querySelector("h1").textContent).toBe("Client Portfolio");
-  // No eyebrow, explanatory subtitle or summary cards above the table.
+  // The approved combined overview replaces the old standalone five-card strip.
   expect(container.textContent).not.toMatch(/Platform|Where each client program needs attention/);
   expect(container.querySelector(".register-signal, [data-testid=\"portfolio-cards\"]")).toBeNull();
   const filters = container.querySelector('[data-testid="client-directory-filters"]');
-  expect([...filters.querySelectorAll(".portfolio-view")].map(b => b.textContent)).toEqual(["All Clients", "Assigned to Me", "Past Due", "Critical / High", "Significant Risks", "Unassigned"]);
+  expect([...filters.querySelectorAll(".portfolio-view")].map(b => b.textContent)).toEqual(["All Clients", "Assigned to Me"]);
+  expect(container.querySelector('.gp-hero')).toBeTruthy();
+  expect(container.querySelector('[data-testid="portfolio-tiles"]')).toBeNull();
+  await click(container.querySelector('button[aria-label="Portfolio filters"]'));
+  expect([...document.querySelectorAll('.gp-work-views .portfolio-view')].map(b=>b.textContent)).toEqual(["Past Due", "Critical / High", "Significant Risks", "Unassigned"]);
   const rows = portfolio(seedStore(),false).clients;
   // The Client column identifies the client; status text is not repeated there.
   expect(container.querySelector('[data-testid^="client-status-"]')).toBeNull();
@@ -58,20 +62,22 @@ test("portfolio is a compact triage index: one heading, one view bar, the table,
   const mine = rows.filter(r=>r.grc_lead_id===mockUser.user_id);
   expect(shown()).toBe(mine.length);
   // Assigned to Me combines with a work view; All Clients clears both.
-  await click(container.querySelector('[data-testid="client-filter-past_due"]'));
+  await click(document.querySelector('[data-testid="client-filter-past_due"]'));
   expect(shown()).toBe(mine.filter(r=>r.past_due>0).length);
   await click(container.querySelector('[data-testid="client-filter-all"]'));
   expect(shown()).toBe(rows.length);
   for(const key of ['past_due','critical_high_issues','significant_risks','unassigned']){
-    await click(container.querySelector(`[data-testid="client-filter-${key}"]`));
-    expect(container.querySelector(`[data-testid="client-filter-${key}"]`).getAttribute('aria-pressed')).toBe('true');
+    await click(document.querySelector(`[data-testid="client-filter-${key}"]`));
+    expect(document.querySelector(`[data-testid="client-filter-${key}"]`).getAttribute('aria-pressed')).toBe('true');
     expect(shown()).toBe(rows.filter(r=>r[key]>0).length);
-    await click(container.querySelector(`[data-testid="client-filter-${key}"]`));
+    await click(document.querySelector(`[data-testid="client-filter-${key}"]`));
   }
   // Numbers open the exact contributing records; Significant Risks opens the filtered Risk register.
   const first = rows[0];
-  const metric = key => container.querySelector(`[data-client-id="${first.client_id}"] [data-metric="${key}"]`);
-  expect(metric('due_31_90d').textContent).toBe(String(first.due_31_90d));
+  await click(container.querySelector('button[aria-label="Portfolio filters"]'));
+  await act(async()=>container.querySelector('[data-testid="client-row-menu-0"]').dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0,ctrlKey:false})));
+  const metric = key => document.querySelector(`[data-client-id="${first.client_id}"][data-metric="${key}"]`) || container.querySelector(`[data-client-id="${first.client_id}"] [data-metric="${key}"]`);
+  expect(metric('due_31_90d').lastElementChild.textContent).toBe(String(first.due_31_90d));
   await click(metric('due_31_90d'));
   expect(document.querySelector('[data-testid="drill-dialog"]').textContent).toContain(`${first.due_31_90d} contributing items`);
   expect(document.querySelectorAll('[data-testid^="drill-row-"]').length).toBe(first.due_31_90d);

@@ -298,7 +298,7 @@ export default function Layout() {
   const {user}=useAuth();
   const {pathname}=useLocation();
   const pilot=!!user;
-  const content=<div className="app-shell min-h-screen flex bg-surface-app">
+  const content=<div className={'app-shell min-h-screen flex bg-surface-app '+(pathname==='/clients'?'governara-portfolio-shell':'governara-operational-shell')}>
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
         {!(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
