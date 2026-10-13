@@ -8,6 +8,7 @@ import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
+import {captureDemoReporting} from './portfolioReporting';
 import {finishDunder} from './programs/dunder';
 import {addInitech,finishInitech} from './programs/initech';
 import {removeRetiredDemoClients} from './retiredClients';
@@ -109,6 +110,7 @@ export function saveStore(db,{resetFiles=false}={}) {
   try {
     const previous=resetFiles?null:JSON.parse(sessionStorage.getItem(STORE_KEY)||'null');
     const persisted=lightweightStore(db,previous?.evidence||[]);
+    captureDemoReporting(persisted, previous, new Date().toISOString());
     sessionStorage.setItem(STORE_KEY, JSON.stringify(persisted));
     rememberFiles(db,persisted);
   } catch (error) {

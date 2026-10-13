@@ -48,12 +48,11 @@ test('one canonical palette reaches portal and class-based themes without privat
   postcss.parse(read('components/BrawndoPortalTheme.css')).walkDecls(decl=>expect(Boolean(decl.important)).toBe(false));
 });
 
-test('scenic artwork is confined to the portfolio variant and operational font changes preserve density',()=>{
+test('the compact internal portfolio excludes scenic artwork and operational fonts preserve density',()=>{
   const sidebar=postcss.parse(read('components/BrawndoSidebar.css'));
   const scenic=[];sidebar.walkDecls(decl=>{if(/url\(/.test(decl.value))scenic.push(decl);});
-  expect(scenic).toHaveLength(1);
-  expect(scenic[0].parent.selector).toBe('.app-shell.governara-portfolio-shell .app-sidebar');
-  expect(scenic[0].value).toContain("../assets/portfolio-city.webp");
+  expect(scenic).toHaveLength(0);
+  expect(read('pages/GoverNaraPortfolio.css')).not.toMatch(/url\(|\.gp-hero/);
   expect(read('components/BrawndoWorkspace.css')).not.toContain('url(');
   expect(read('index.css')).toContain("--font-body: 'Segoe UI', Inter, Arial, sans-serif;");
   expect(light['--register-row']).toBe('46px');expect(light['--register-gutter']).toBe('20px');

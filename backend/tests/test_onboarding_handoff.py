@@ -1,5 +1,7 @@
 import unittest
+from unittest.mock import patch
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
+from routes import onboarding
 from routes.onboarding import BASELINE_CATALOG as catalog
 
 
@@ -118,6 +120,15 @@ class OnboardingHandoffTests(unittest.IsolatedAsyncioTestCase):
         for key,value in [('soc-2','applies'),('cis-ig1','does_not_apply'),('cis-ig1','applies')]:
             response = await self.client.patch('/api/onboarding/programs/'+key,json={'client_id':'a','applicability':value})
             self.assertEqual(response.status_code,200,response.text)
+            requirement=await server.db.requirements.find_one({'client_id':'a','baseline_key':key})
+            event=await server.db.audit_logs.find_one({'client_id':'a','action':'program-applicability-updated',
+                'meta.program':key,'meta.applicability':value},sort=[('at',-1)])
+            self.assertEqual(event['meta']['_portfolio_activity_source_type'],'requirements')
+            self.assertEqual(event['meta']['_portfolio_activity_source_id'],requirement['requirement_id'])
+            identity=event['meta']['_portfolio_activity_event_id']
+            captured=await server.db.portfolio_events.find_one({'event_id':identity})
+            self.assertEqual((captured['source_kind'],captured['source_id']),('requirements',requirement['requirement_id']))
+            self.assertNotIn(identity,requirement.get('_portfolio_activity_pending',{}))
         after = await self.snapshot()
         self.assertEqual(after['records']['policies'],before['records']['policies'])
         self.assertEqual(len(after['records']['reviews']),len(before['records']['reviews'])+4)
@@ -131,6 +142,24 @@ class OnboardingHandoffTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(next(r for r in after['records']['requirements'] if r['baseline_key']=='soc-2')['baseline_response'],'applies')
         self.assertEqual((await self.client.get('/api/onboarding/baseline?client_id=a')).json()['state'],baseline)
         self.assertEqual(await server.db.tasks.count_documents({}),0)
+
+    async def test_state_omits_capture_fields_without_mutating_native_source_or_audit(self):
+        await self.complete()
+        source={'contact_id':'capture-contact','client_id':'a','name':'Native contact',
+                '_portfolio_activity_last_event_id':'retained-identity',
+                '_portfolio_activity_pending':{'retained-identity':{'private':'pending envelope'}},
+                '_portfolio_custom':'unrelated existing field'}
+        await server.db.contacts.insert_one(source)
+        before=await server.db.contacts.find_one({'contact_id':'capture-contact'})
+        logs=await server.db.audit_logs.find({'client_id':'a'}).to_list(None)
+        with patch.object(onboarding,'db',server.db):
+            response=await self.client.get('/api/onboarding/state',params={'client_id':'a'})
+        self.assertEqual(response.status_code,200,response.text)
+        data=response.json();contact=next(row for row in data['contacts'] if row['contact_id']=='capture-contact')
+        self.assertEqual(contact['_portfolio_custom'],'unrelated existing field')
+        self.assertNotIn('_portfolio_activity',str(data))
+        self.assertEqual(await server.db.contacts.find_one({'contact_id':'capture-contact'}),before)
+        self.assertEqual(await server.db.audit_logs.find({'client_id':'a'}).to_list(None),logs)
 
     async def test_program_write_restrictions_and_invalid_payload(self):
         self.sign_in('admin')
