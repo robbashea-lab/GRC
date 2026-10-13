@@ -20,7 +20,7 @@ const copy=value=>JSON.parse(JSON.stringify(value));
 const tokenA='2026-10-11T12:00:00Z',tokenB='2026-10-11T12:01:00Z',tokenC='2026-10-11T12:02:00Z',fingerprint='e'.repeat(64);
 const conflict='Assessment or scope changed before this review started; reload before starting';
 let root,container,native,record,interview,nativeHistory,interviewHistory,liveFingerprint,implementationGroup;
-const workspace=()=>document.querySelector('.omni-workspace-window');
+const workspace=()=>document.querySelector('[aria-label="CIS assessment interview"]:not([hidden])');
 const readInterview=()=>({...copy(interview),current_assessment_token:native.last_saved,current_scope_fingerprint:liveFingerprint,lineage_known:true,lineage_stale:interview.base_assessment_token!==native.last_saved});
 async function click(name,scope=document){
   const target=[...scope.querySelectorAll('button')].find(button=>button.textContent.trim()===name);
@@ -31,7 +31,11 @@ async function value(selector,next){
   await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(target,next);target.dispatchEvent(new Event('input',{bubbles:true}));});
 }
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={record.client_id} onOpenChange={()=>{}}/>));}
-async function open(){await act(async()=>document.querySelector('[aria-label="Open Omnibot guide"]').click());}
+async function open(){
+  const summary=document.querySelector('details.assessment-summary');expect(summary).toBeTruthy();
+  await act(async()=>{summary.open=true;summary.dispatchEvent(new Event('toggle'));});
+  expect(workspace()).toBeTruthy();
+}
 async function answer(){await click('Not sure',workspace());await value('[aria-label="Known gaps or uncertainties"]','Synthetic uncertainty retained through native save.');}
 async function nativeSave(){await value('[aria-label="Current implementation"]','SYNTHETIC QA native preservation marker.');await click('Save assessment',container);expect(container.textContent).toContain('Assessment saved.');expect(native.last_saved).toBe(tokenB);}
 

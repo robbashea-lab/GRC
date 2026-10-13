@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '../..');
 const json = relative => JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8'));
-const pureModules = new Set(['guidedAssessment', 'guidedLifecycle', 'focusedOmni', 'refinedOmni', 'omniInventorySummary', 'omniCisSummary', 'socGuidedAssessment']);
+const pureModules = new Set(['guidedAssessment', 'guidedLifecycle', 'focusedOmni', 'refinedOmni', 'omniInventorySummary', 'omniCisSummary', 'socGuidedAssessment', 'inlineAssessment']);
 const modules = new Map();
 class AssessmentDate extends Date {
   constructor(...args) { super(...(args.length ? args : ['2026-10-09T12:00:00Z'])); }

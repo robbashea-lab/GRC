@@ -1,5 +1,5 @@
 import native from '@catalogs/iso27001.json';
-import {isoGuidedCatalog,isoGuidedEnabled,isoQuestions,isoGroups,isoGuidedResult,validateIsoAnswers,validateIsoCompletion} from './isoGuidedAssessment';
+import {isoGuidedCatalog,isoGuidedEnabled,isoQuestions,isoGroups,isoGuidedResult,isoInlineNarrative,validateIsoAnswers,validateIsoCompletion} from './isoGuidedAssessment';
 const answersFor=id=>{
   const answers={};
   for(let pass=0;pass<30;pass++){
@@ -72,4 +72,26 @@ test('conditional context exclusion needs its own reason and cannot erase a mand
       expect(isoGuidedResult(id,answers).status).not.toBe('not_applicable');
     }
   }
+});
+
+test('all 30 clauses and 93 controls have inline summaries built only from supported practices without changing canonical results',()=>{
+  for(const row of native.requirements){
+    const answers=answersFor(row.id),before=isoGuidedResult(row.id,answers),inline=isoInlineNarrative(row.id,answers,isoGuidedCatalog.version,'Synthetic scoped organization');
+    expect(inline).toContain(row.id);expect(inline).toContain('\n\nControls in place\n• ');expect(inline).not.toContain('IMPLEMENTATION BREAKDOWN');expect(inline).not.toContain('\n\nITEMS TO ADDRESS');
+    expect(inline).toMatch(/reported on \d{4}-\d{2}-\d{2}/);expect(inline).toContain('not independent verification or certification');
+    expect(inline.split('\n\nControls in place\n')[1].split('\n').map(line=>line.slice(2))).toEqual(before.basis);
+    expect(isoGuidedResult(row.id,answers)).toEqual(before);
+    const noAnswers={...answers};for(const q of isoQuestions(row.id,answers).filter(q=>q.type==='select'))noAnswers[q.id]='No';
+    const deficient=isoInlineNarrative(row.id,noAnswers);expect(deficient).toContain('Controls in place');expect(deficient).not.toContain('\n• ');expect(deficient).toContain('incomplete or not in place');
+    const uncertain={...answers};for(const q of isoQuestions(row.id,answers).filter(q=>q.type==='select'))uncertain[q.id]='Not sure';
+    expect(isoInlineNarrative(row.id,uncertain)).not.toContain('\n• ');expect(isoInlineNarrative(row.id,uncertain)).toContain('facts that need confirmation');
+  }
+});
+
+test('inline partial practice is a limitation rather than a control in place and explicit detail is retained',()=>{
+  const answers=answersFor('A.8.13'),questions=isoQuestions('A.8.13',answers).filter(q=>q.type==='select'),[partial,supported]=questions;
+  answers[partial.id]='Partially';answers[partial.id+'_detail']='Backup coverage is incomplete for the finance database.';answers[supported.id+'_detail']='Approved scoped procedure and operator responsibilities.';
+  const narrative=isoInlineNarrative('A.8.13',answers,isoGuidedCatalog.version,'Synthetic ISO organization');
+  expect(narrative.split('\n\nControls in place')[1]).not.toContain(partial.topic);expect(narrative).toContain('Approved scoped procedure and operator responsibilities.');expect(narrative).toContain('incomplete or not in place');
+  expect(isoGuidedResult('A.8.13',answers).gaps.join(' ')).toContain('finance database');
 });

@@ -1,5 +1,5 @@
 import nativeCatalog from '@catalogs/soc2.json';
-import {socGuidedCatalog, socGuidedEnabled, socQuestions, socGroups, validateSocAnswers, validateSocCompletion, socGuidedResult} from './socGuidedAssessment';
+import {socGuidedCatalog, socGuidedEnabled, socQuestions, socGroups, validateSocAnswers, validateSocCompletion, socGuidedResult, socInlineSummary} from './socGuidedAssessment';
 
 const ids = Object.keys(socGuidedCatalog.definitions);
 const version = 'soc2-omni-1';
@@ -192,4 +192,43 @@ test.each(['Outside the selected system', 'Not sure'])('P6.1 skips empty consent
   expect(JSON.stringify(answers)).toBe(before);
   expect(socGroups('P6.1', {...answers, 'P6.1-disclosure-context': 'Relevant'}).some(group => group.id === 'consent')).toBe(true);
   expect(socGuidedResult('P6.1', {...answers, 'P6.1-disclosure-context': 'Relevant'}).status).toBe('needs_attention');
+});
+
+
+test.each(ids)('%s inline wording retains only confirmed controls and the canonical conclusion', id => {
+  const answers=complete(id),question=firstPractice(id);answers[question.id]='No';
+  const before=JSON.stringify(answers),result=socGuidedResult(id,answers,version,'Synthetic SOC client');
+  const narrative=socInlineSummary(id,answers,version,'Synthetic SOC client','2026-10-13');
+  expect(narrative).toContain('Synthetic SOC client reports confirmed deficiencies affecting '+id);
+  expect(narrative).toContain('\n\nControls in place\n');
+  expect(narrative).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);
+  expect(narrative).not.toContain(question.topic+': reported not in place');
+  for(const control of result.basis)expect(narrative).toContain(control);
+  expect(narrative).toContain('2026-10-13');expect(JSON.stringify(answers)).toBe(before);
+  expect(socGuidedResult(id,answers,version,'Synthetic SOC client')).toEqual(result);
+});
+
+
+test.each(['Partially','No','Not sure'])('%s practices are excluded from controls in place without changing their evaluator result', value => {
+  const id='CC1.1',answers=complete(id),question=firstPractice(id);answers[question.id]=value;
+  const result=socGuidedResult(id,answers),narrative=socInlineSummary(id,answers,version,'Synthetic client','2026-10-13');
+  const controls=narrative.split('\n\nControls in place')[1];
+  expect(controls).not.toContain(question.topic+':');
+  for(const gap of [...result.gaps,...result.unknowns])expect(controls).not.toContain(gap);
+  expect(narrative).toContain('Incomplete practices or unresolved confirmation items');
+  expect(result.status).toBe(value==='No'?'needs_attention':'in_progress');
+});
+
+test('unconfirmed inline reports do not invent any controls in place',()=>{
+  const narrative=socInlineSummary('CC1.1',{},version,'Synthetic client','2026-10-13');
+  expect(narrative.endsWith('\n\nControls in place')).toBe(true);
+  expect(narrative).not.toContain('•');expect(narrative).toContain('unconfirmed implementation position');
+});
+
+
+test('inline supported-control summaries stay bounded while full answers remain retained',()=>{
+  const id='CC1.1',answers=complete(id);for(const question of allQuestions(id))answers[question.id+'_detail']='A'.repeat(2000);
+  const text=socInlineSummary(id,answers,version,'Synthetic client','2026-10-13');
+  expect(text.length).toBeLessThanOrEqual(20000);expect(text).toContain('full response retained in the interview');
+  for(const question of allQuestions(id))expect(answers[question.id+'_detail']).toHaveLength(2000);
 });
