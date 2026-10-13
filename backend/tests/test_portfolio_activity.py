@@ -1,6 +1,7 @@
 """Activity facts, access and recovery against isolated in-memory Mongo fixtures."""
 import copy
 import asyncio
+from contextlib import suppress
 import json
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -388,6 +389,20 @@ class PortfolioDeletionReceiptTests(unittest.IsolatedAsyncioTestCase):
         return await deletions.delete(self.db, 'findings', 'finding_id', self.source,
                                      self.predicate, actor or self.actor, self.now)
 
+    async def await_rendezvous(self, worker, signal):
+        entered = asyncio.create_task(signal.wait())
+        try:
+            done, _pending = await asyncio.wait({worker, entered}, timeout=30,
+                                                return_when=asyncio.FIRST_COMPLETED)
+            if worker in done:
+                await worker
+                self.fail('Deletion worker finished before reaching the expected persistence boundary')
+            self.assertIn(entered, done, 'Deletion worker did not reach the persistence boundary within 30 seconds')
+        finally:
+            entered.cancel()
+            with suppress(asyncio.CancelledError):
+                await entered
+
     async def prior(self, actor, state='prepared', lease=True, predecessors=None):
         identity = self.identity(actor)
         event = activity.project_committed_change('findings', self.source['finding_id'], 'a', actor,
@@ -412,22 +427,27 @@ class PortfolioDeletionReceiptTests(unittest.IsolatedAsyncioTestCase):
         async def held(database, event):
             if event['event_id'] == pending['event_id']:
                 reached.set()
-                await release.wait()
+                await asyncio.wait_for(release.wait(), timeout=30)
             return await original(database, event)
 
         with patch.object(activity, 'persist_event', held):
             first = asyncio.create_task(self.remove())
             try:
-                await reached.wait()
+                await self.await_rendezvous(first, reached)
                 receipt = await self.db.portfolio_deletions.find_one({})
                 self.assertEqual(activity._time(receipt['lease']['until']) - self.clock, timedelta(seconds=120))
                 with self.assertRaises(HTTPException) as busy:
                     await self.remove()
                 self.assertEqual(busy.exception.status_code, 409)
                 self.assertEqual(await self.db.findings.count_documents({}), 1)
+                release.set()
+                result, event = await asyncio.wait_for(first, timeout=30)
             finally:
                 release.set()
-            result, event = await first
+                if not first.done():
+                    first.cancel()
+                with suppress(asyncio.CancelledError):
+                    await asyncio.wait_for(first, timeout=30)
         self.assertEqual(result.deleted_count, 1)
         self.assertEqual(event['actor']['name'], 'Original operator')
         self.assertEqual(await self.db.portfolio_events.count_documents({}), 2)
@@ -545,15 +565,22 @@ class PortfolioDeletionReceiptTests(unittest.IsolatedAsyncioTestCase):
 
         async def held(database, event):
             entered.set()
-            await release.wait()
+            await asyncio.wait_for(release.wait(), timeout=30)
             return await original(database, event)
 
         with patch.object(activity, 'persist_event', held):
             interrupted = asyncio.create_task(self.remove())
-            await entered.wait()
-            interrupted.cancel()
-            with self.assertRaises(asyncio.CancelledError):
-                await interrupted
+            try:
+                await self.await_rendezvous(interrupted, entered)
+                interrupted.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await asyncio.wait_for(interrupted, timeout=30)
+            finally:
+                release.set()
+                if not interrupted.done():
+                    interrupted.cancel()
+                with suppress(asyncio.CancelledError):
+                    await asyncio.wait_for(interrupted, timeout=30)
         receipt = await self.db.portfolio_deletions.find_one({})
         self.assertEqual(receipt['state'], 'prepared')
         self.assertNotIn('lease', receipt)
