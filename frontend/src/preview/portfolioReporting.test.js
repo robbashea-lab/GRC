@@ -101,7 +101,11 @@ test('tied activity pagination is stable and cannot cross filter or identity sco
 
 test('native approval, committed assessment, evidence, and scope metadata supply their own business categories',()=>{
   const db=fixture();db.policies=[{policy_id:'p1',client_id:'isolated',status:'approved'}];db.evidence=[{evidence_id:'e1',client_id:'isolated'}];
-  db.logs=[['policies','p1','approved',{}],['framework_assessments',db.framework_assessments[0].framework_assessment_id,'Framework assessment updated',{changed_fields:['implementation']}],['evidence','e1','upload',{}],['clients','isolated','CIS scope updated',{before:1,after:2}],['clients','isolated','CIS scope updated',{before:2,after:2}]].map(([entity_type,entity_id,action,meta],i)=>({audit_id:'native-'+i,entity_type,entity_id,client_id:'isolated',action,meta,at:AS_OF}));
+  db.logs=[['policies','p1','approved',{}],['evidence','e1','upload',{}],['clients','isolated','CIS scope updated',{before:1,after:2}],['clients','isolated','CIS scope updated',{before:2,after:2}]].map(([entity_type,entity_id,action,meta],i)=>({audit_id:'native-'+i,entity_type,entity_id,client_id:'isolated',action,meta,at:AS_OF}));
+  captureDemoReporting(db,null,AS_OF);const previous=copy(db);
+  db.framework_assessments[0].implementation='A committed local implementation change';
+  db.logs.unshift({audit_id:'actual-assessment',entity_type:'framework_assessments',entity_id:db.framework_assessments[0].framework_assessment_id,client_id:'isolated',action:'Framework assessment updated',meta:{changed_fields:['implementation']},at:AS_OF});
+  captureDemoReporting(db,previous,AS_OF);
   const result=request(db,'activity');expect(result.total).toBe(4);expect(new Set(result.events.map(e=>e.type))).toEqual(new Set(['Policies','Assessments','Evidence','Scope']));
   expect(request(db,'activity',{type:'Policies'}).total).toBe(1);
 });
@@ -186,6 +190,22 @@ test('retained receipts exclude explicit failures, technical changes and unprove
     {audit_id:'denied',entity_type:'reviews',entity_id:'r1',action:'Review started',meta:{outcome:'denied'}},
     {audit_id:'technical',entity_type:'framework_assessments',entity_id:db.framework_assessments[0].framework_assessment_id,action:'Framework assessment updated',meta:{changed_fields:['last_saved']}},
     {audit_id:'unproved',entity_type:'evidence',entity_id:'e1',action:'Evidence metadata changed'},
+    {audit_id:'field-list-only',entity_type:'framework_assessments',entity_id:db.framework_assessments[0].framework_assessment_id,action:'Framework assessment updated',meta:{changed_fields:['implementation']}},
+    {audit_id:'evidence-field-list-only',entity_type:'evidence',entity_id:'e1',action:'Evidence metadata changed',meta:{changed_fields:['display_name']}},
+    {audit_id:'control-field-list-only',entity_type:'organizational_controls',entity_id:'c1',action:'Control updated',meta:{changed_fields:['design']}},
   ].map(log=>({...log,at:AS_OF,client_id:'isolated'}));
   expect(request(db,'activity').total).toBe(0);
+});
+
+test('ISO record stamps and repeated archive stamps are technical changes while audit business values remain eligible',()=>{
+  const db=fixture();db.reviews=[{review_id:'r1',client_id:'isolated',status:'upcoming',iso_audit:{package_key:'governance-risk',items:{'4-1':{status:'reviewed',result:'conforming',notes:'Same saved note',updated_at:'2026-10-12T12:00:00Z',updated_by:'original-actor'}}}}];
+  db.evidence=[{evidence_id:'e1',client_id:'isolated',filename:'Recorded file',archived_at:'2026-10-12T12:00:00Z'}];
+  captureDemoReporting(db,null,AS_OF);let previous=copy(db);
+  Object.assign(db.reviews[0].iso_audit.items['4-1'],{updated_at:AS_OF,updated_by:'retry-actor'});
+  db.evidence[0].archived_at=AS_OF;
+  db.logs=[{audit_id:'stamp',entity_type:'reviews',entity_id:'r1',action:'Audit work updated'},{audit_id:'archive-stamp',entity_type:'evidence',entity_id:'e1',action:'archive'}].map(log=>({...log,client_id:'isolated',at:AS_OF}));
+  captureDemoReporting(db,previous,AS_OF);expect(request(db,'activity').total).toBe(0);expect(request(db,'overview').recent_changes_count).toBe(0);
+  previous=copy(db);db.reviews[0].iso_audit.items['4-1'].notes='A substantive saved audit note';
+  db.logs.unshift({audit_id:'business',entity_type:'reviews',entity_id:'r1',action:'Audit work updated',client_id:'isolated',at:AS_OF});
+  captureDemoReporting(db,previous,AS_OF);expect(request(db,'activity').total).toBe(1);expect(request(db,'activity').events[0].event_id).toBe('demo:business');
 });

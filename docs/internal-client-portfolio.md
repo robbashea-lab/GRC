@@ -82,12 +82,15 @@ leased takeover, source-token checks and abandoned-intent retirement prevent gho
 
 Retained successful business audits are reconciled in bounded batches from the
 last 91 days. That source is explicitly partial: missing before/after facts are
-never inferred. Receipt acknowledgement makes retries and late repair idempotent.
+never inferred. Metadata saves need recorded changed values; submitted field names
+alone do not prove a business change. Same-value scope receipts are excluded.
+Receipt acknowledgement makes retries and late repair idempotent.
 Security and access audits keep their existing ownership and are not exposed raw.
 
 Deploy the compatible tested application revision through the existing staging
 owner. Initialization is a repeatable additive migration: new reporting collections,
-indexes and schema/collector state only; no source rewrite, timestamp repair, seed,
+indexes and schema/collector state, reusing native source identity indexes or adding
+nonunique identity lookup indexes where absent; no source rewrite, timestamp repair, seed,
 retention deletion, destructive rollback or provider setting is required. Failures
 leave facts available for a later sweep/restart. Preserve derived collections if
 application code must be reverted. Monitor existing database capacity and the

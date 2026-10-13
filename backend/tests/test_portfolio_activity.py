@@ -57,12 +57,21 @@ class PortfolioActivityTests(unittest.IsolatedAsyncioTestCase):
                  'meta': {'changed_fields': ['updated_at']}}
         self.assertIsNone(activity.project_audit(audit))
         audit['meta']['changed_fields'] = ['status']
+        self.assertIsNone(activity.project_audit(audit))
+        audit['meta']['changes'] = {'status': {'before': 'identified', 'after': 'assessed'}}
         self.assertIsNotNone(activity.project_audit(audit))
         for outcome in ('failed', 'requested', 'cancelled'):
             self.assertIsNone(activity.project_audit({**audit, 'outcome': outcome}))
         for action in ('login', 'view', 'delete-requested', 'CIS assessment export'):
             self.assertIsNone(activity.project_audit({**audit, 'action': action}))
         self.assertIsNone(activity.project_audit({**audit, 'meta': {'_portfolio_activity_event_id': 'atomic-id'}}))
+        self.assertIsNone(activity.project_committed_change('evidence', 'archive', 'a', self.user,
+            {'archived_at': '2026-10-12T12:00:00Z'}, {'archived_at': self.as_of}, self.as_of))
+        scope = {**audit, 'entity_type': 'client', 'action': 'CIS scope updated'}
+        self.assertIsNone(activity.project_audit({**scope, 'meta': {'before': 2, 'after': 2}}))
+        self.assertIsNotNone(activity.project_audit({**scope, 'meta': {'before': 1, 'after': 2}}))
+        self.assertIsNone(activity.project_audit({**scope, 'action': 'SOC 2 readiness scope updated',
+            'meta': {'categories': ['security', 'availability']}}))
 
     async def test_distinct_same_timestamp_changes_keep_separate_safe_events(self):
         first = activity.project_committed_change('risks', 'same-time', 'a', self.user,
@@ -116,7 +125,8 @@ class PortfolioActivityTests(unittest.IsolatedAsyncioTestCase):
         await self.db.framework_assessments.insert_one(row)
         event = activity.project_audit({'log_id': 'legacy-assessment-log', 'entity_type': 'framework_assessment',
             'entity_id': 'legacy', 'client_id': 'a', 'at': self.as_of,
-            'action': 'Framework assessment updated', 'meta': {'changed_fields': ['status'], 'status': 'addressed'}})
+            'action': 'Framework assessment updated', 'meta': {'changed_fields': ['status'], 'status': 'addressed',
+                'changes': {'status': {'before': 'not_assessed', 'after': 'addressed'}}}})
         await activity.persist_event(self.db, event)
         clients = [{**self.clients[0], 'framework_settings': {'cis-ig1': {'implementation_group': 3}}}]
         result = await activity.read_activity(self.db, self.user, clients, self.as_of)
@@ -128,6 +138,8 @@ class PortfolioActivityTests(unittest.IsolatedAsyncioTestCase):
             'at': self.as_of, 'action': 'Review configuration changed', 'meta': {'fields': ['owner_id']}}
         self.assertIsNone(activity.project_audit(document))
         document['meta']['changed_fields'] = ['owner_id']
+        self.assertIsNone(activity.project_audit(document))
+        document['meta']['changes'] = {'owner_id': {'before': 'original', 'after': 'new'}}
         self.assertIsNotNone(activity.project_audit(document))
         document['meta']['_portfolio_activity_event_id'] = 'atomic-review-event'
         self.assertIsNone(activity.project_audit(document))

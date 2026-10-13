@@ -100,7 +100,7 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
       const reference=group[0],kind=sourceKinds[reference.entity_type];
       const before=sourceRecord(previous,kind,reference),after=sourceRecord(db,kind,reference);
       if(!before&&!after)continue;
-      const changed=businessFields[kind].filter(field=>stable(before?.[field]??null)!==stable(after?.[field]??null));
+      const changed=businessFields[kind].filter(field=>stable(businessValue(field,before?.[field]))!==stable(businessValue(field,after?.[field])));
       if(before&&after&&!changed.length)continue;
       // Native helpers may emit both a write receipt and a domain receipt for one commit.
       const chosen=[...group].sort((a,b)=>receiptPriority(b)-receiptPriority(a))[0];
@@ -151,21 +151,27 @@ function sourceRecord(db,kind,log){
   const row=(db[kind]||[]).find(value=>value[sourceIds[kind]]===log.entity_id&&value.client_id===log.client_id);
   return kind==='clients'&&row?{...row,onboarding_baseline:row.onboarding_baseline||db.baselines?.[row.client_id]}:row;
 }
+function businessValue(field,value){
+  if(field==='archived_at')return !!value;
+  if(field!=='iso_audit')return value??null;
+  const clean=item=>Array.isArray(item)?item.map(clean):item&&typeof item==='object'
+    ?Object.fromEntries(Object.entries(item).filter(([key])=>!['updated_at','updated_by'].includes(key)).map(([key,entry])=>[key,clean(entry)])):item;
+  return clean(value??null);
+}
 
 function logType(log,kind,proven=false){
   const action=log.action||'';
   if(!successful(log))return null;
   if(proven&&['create','update','archive','delete'].includes(action))return {framework_assessments:'Assessments',organizational_controls:'Assessments',reviews:'Assessments',findings:'Findings',risks:'Risks',policies:'Policies',evidence:'Evidence',clients:'Scope',requirements:'Scope'}[kind];
   if(kind==='reviews'&&(['Review started','Review completed'].includes(action)||(proven&&['Audit work updated','Review configuration changed','amend'].includes(action))))return 'Assessments';
-  if(kind==='organizational_controls'&&(['Control created','Control observation recorded'].includes(action)||action==='Control updated'&&(proven||log.meta?.changed_fields?.some(field=>businessFields[kind].includes(field)))))return 'Assessments';
+  if(kind==='organizational_controls'&&(['Control created','Control observation recorded'].includes(action)||action==='Control updated'&&proven))return 'Assessments';
   if(proven&&kind==='framework_assessments'&&['Framework assessment updated','Framework record linked','Framework Evidence unlinked','Framework Review linked'].includes(action))return 'Assessments';
-  if(kind==='framework_assessments'&&action==='Framework assessment updated'&&log.meta?.changed_fields?.some(field=>businessFields[kind].includes(field)))return 'Assessments';
   if(kind==='findings'&&(['create','Finding validated and closed','Finding moved to In Remediation','Finding moved to Pending Validation','validate','accept','reopen','close','archive','delete'].includes(action)))return 'Findings';
   if(kind==='risks'&&['create','Risk created','Risk reassessed','Risk accepted','Risk closed','Risk owner assigned','Treatment updated','Next Risk Review scheduled','archive','delete'].includes(action))return 'Risks';
   if(kind==='policies'&&(['create','approved','rejected','submitted','submission_withdrawn','archive','delete','retire'].includes(action)||/^Policy (approved|rejected|submitted|retired|returned|Review scheduled)$/.test(action)))return 'Policies';
   if(proven&&kind==='policies'&&['Policy metadata changed','Policy Review completed','verify','approve','reject','submit-review','withdraw-submission'].includes(action))return 'Policies';
   if(kind==='evidence'&&['upload','create','archive','delete'].includes(action))return 'Evidence';
-  if(kind==='evidence'&&['Evidence metadata changed','Evidence relationship added','Evidence relationship removed'].includes(action)&&(proven||log.meta?.changed_fields?.some(field=>businessFields[kind].includes(field))))return 'Evidence';
+  if(kind==='evidence'&&['Evidence metadata changed','Evidence relationship added','Evidence relationship removed'].includes(action)&&proven)return 'Evidence';
   if(proven&&kind==='risks'&&['Risk updated','Action Item linked','Assessment Updated','Treatment Updated','Risk Accepted'].includes(action))return 'Risks';
   if(proven&&kind==='clients'&&['SOC 2 readiness scope updated','ISO audit program activated','onboarding-complete','program-applicability-updated','CIS scope updated'].includes(action))return 'Scope';
   if(proven&&kind==='requirements'&&action==='program-applicability-updated')return 'Scope';

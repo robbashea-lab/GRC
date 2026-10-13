@@ -183,7 +183,8 @@ async def history_positions(db, position, range_key, as_of):
         # inferred for that time. Untagged legacy scope receipts are conservative.
         keys = ['cis-ig1', 'cis-ig2', 'cis-ig3'] if position['framework_key'] == 'cis-ig1' else [position['framework_key']]
         events = await db.portfolio_events.find({'client_id': position['client_id'],
-            'at': {'$gt': comparison['baseline']['captured_at'], '$lte': as_of},
+            'at': {'$gt': date_time(comparison['baseline']['captured_at']).isoformat(timespec='microseconds'),
+                   '$lte': date_time(as_of).isoformat(timespec='microseconds')},
             '$and': [{'$or': [{'type': 'Scope'}, {'scope_changed': True}]},
                      {'$or': [{'program_keys': {'$in': keys}}, {'program_keys': {'$exists': False}}, {'program_keys': []}]}]},
             {'_id': 0, 'at': 1}).sort('at', 1).to_list(10001)

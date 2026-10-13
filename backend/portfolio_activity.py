@@ -55,6 +55,7 @@ BUSINESS_FIELDS = {
         'accepted_at', 'closed_at', 'acceptance_reason', 'acceptance_rationale', 'acceptance_expires_at',
         'compensating_controls', 'closure_reason', 'closure_note', 'governance_context', 'related_task_ids'},
     'policies': {'title', 'description', 'status', 'owner_id', 'version', 'presence', 'notes', 'content',
+        'approval_source', 'approval_account_id', 'approver_contact_id',
         'approval_history', 'decision_history', 'approval_request', 'approval_subject', 'approval_authority',
         'approval_basis', 'approved_at', 'verified_at', 'review_id', 'next_review_date', 'governance_context'},
     'evidence': {'filename', 'display_name', 'evidence_type', 'evidence_date', 'effective_date', 'expiration_date',
@@ -103,6 +104,20 @@ AUDIT_ACTIONS = {
 
 def _digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'), default=str).encode()).hexdigest()
+
+
+def _business_value(field, value):
+    if field == 'archived_at':
+        return bool(value)
+    if field != 'iso_audit':
+        return value
+    def semantic(item):
+        if isinstance(item, dict):
+            return {key: semantic(child) for key, child in item.items() if key not in {'updated_at', 'updated_by'}}
+        if isinstance(item, list):
+            return [semantic(child) for child in item]
+        return item
+    return semantic(value)
 
 
 def _time(value):
@@ -181,7 +196,8 @@ def project_committed_change(entity_type, entity_id, client_id, user, before, af
     before, after = before or {}, after or {}
     if any(row.get('client_id') not in (None, client_id) for row in (before, after)):
         raise ValueError('Activity source must belong to the committed client')
-    changed = sorted(field for field in BUSINESS_FIELDS[kind] if before.get(field) != after.get(field))
+    changed = sorted(field for field in BUSINESS_FIELDS[kind]
+        if _business_value(field, before.get(field)) != _business_value(field, after.get(field)))
     if kind == 'clients' and _scope(before) == _scope(after):
         changed = []
     if before and after and not changed and action != 'record_assessment':
@@ -195,7 +211,8 @@ def project_committed_change(entity_type, entity_id, client_id, user, before, af
                  'amend_review': 'Review amended'}.get(action, title)
     # A timestamp is not a revision: distinct changes can share its resolution.
     # Hash the authoritative business values without persisting free-text data.
-    fingerprint = _digest({field: [before.get(field), after.get(field)] for field in BUSINESS_FIELDS[kind]})
+    fingerprint = _digest({field: [_business_value(field, before.get(field)), _business_value(field, after.get(field))]
+                          for field in BUSINESS_FIELDS[kind]})
     identity = _digest(['source', kind, entity_id, client_id, _iso(at), action, changed, fingerprint])
     event = _base(kind, entity_id, client_id, user, at, title, identity)
     event['changed_fields'] = changed
@@ -260,11 +277,34 @@ def project_audit(document):
         return None
     if kind == 'framework_assessments' and action in {'Framework record linked', 'Framework Evidence unlinked'} and meta.get('kind') == 'evidence':
         return None
-    # This mirror historically logged incoming fields even on same-value saves.
-    # Its fields alone cannot prove a committed change; atomic events can.
-    if action == 'Review configuration changed' and not meta.get('changed_fields'):
+    # Historical field lists often describe submitted fields, including same-value
+    # saves. Admit uncertain metadata updates only with recorded changed values.
+    unproved = {'update', 'Risk updated', 'Risk owner assigned', 'Treatment updated',
+        'Next Risk Review scheduled', 'Review configuration changed', 'Control updated',
+        'Audit work updated', 'Framework assessment updated', 'Framework record linked',
+        'Framework Evidence unlinked', 'Evidence metadata changed', 'Evidence relationship added',
+        'Evidence relationship removed', 'policy-basis', 'policy-authority'}
+    changes = meta.get('changes')
+    proof = isinstance(changes, dict) and any(field in BUSINESS_FIELDS[kind]
+        and isinstance(value, dict) and 'before' in value and 'after' in value
+        and _business_value(field, value['before']) != _business_value(field, value['after'])
+        for field, value in changes.items())
+    if action in unproved and not proof:
         return None
-    fields = meta.get('changed_fields', meta.get('fields'))
+    if action == 'CIS scope updated' and not (type(meta.get('before')) is int and type(meta.get('after')) is int
+            and meta['before'] in (1, 2, 3) and meta['after'] in (1, 2, 3) and meta['before'] != meta['after']):
+        return None
+    if action == 'SOC 2 readiness scope updated':
+        old, new = meta.get('before'), meta.get('after')
+        if not (isinstance(old, dict) and isinstance(new, dict) and old.get('categories') != new.get('categories')
+                and 'categories' in _values(old) and 'categories' in _values(new)):
+            return None
+    if kind == 'evidence' and action in {'delete', 'archive'} and not proof:
+        return None
+    fields = (sorted(field for field, value in changes.items() if field in BUSINESS_FIELDS[kind]
+        and isinstance(value, dict) and 'before' in value and 'after' in value
+        and _business_value(field, value['before']) != _business_value(field, value['after']))
+        if proof else meta.get('changed_fields', meta.get('fields')))
     if fields is not None and (not isinstance(fields, list) or not any(
             isinstance(field, str) and field in BUSINESS_FIELDS[kind] for field in fields)):
         return None
@@ -292,15 +332,17 @@ def project_audit(document):
     if fields:
         event['changed_fields'] = sorted({field for field in fields if field in BUSINESS_FIELDS[kind]})
     # These historical before/after facts were recorded with the committed audit.
+    previous = _values({field: value['before'] for field, value in changes.items() if field in fields}) if proof else {}
+    current = _values({field: value['after'] for field, value in changes.items() if field in fields}) if proof else {}
     if kind == 'risks':
-        previous = _values({'risk_score': meta.get('previous_score')}) if 'previous_score' in meta else {}
-        current = _values({'risk_score': meta.get('score')}) if 'score' in meta else {}
+        previous.update(_values({'risk_score': meta.get('previous_score')}) if 'previous_score' in meta else {})
+        current.update(_values({'risk_score': meta.get('score')}) if 'score' in meta else {})
     elif action == 'CIS scope updated':
         previous, current = _values({'implementation_group': meta.get('before')}), _values({'implementation_group': meta.get('after')})
     elif action == 'program-applicability-updated':
         previous, current = _values({'baseline_response': meta.get('previous_status')}), _values({'baseline_response': meta.get('applicability')})
-    else:
-        previous, current = {}, {}
+    elif action == 'SOC 2 readiness scope updated':
+        previous, current = _values(meta['before']), _values(meta['after'])
     if previous:
         event['before'] = previous
     if current:
@@ -427,7 +469,7 @@ def _pipeline(kind, identifiers, cutoff, days, change_type, cursor=None):
         }}}]}}},
         {'$project': {'event_id': 1, 'client_id': 1, 'source_kind': 1, 'source_id': 1,
             'at': 1, 'type': 1, 'title': 1, 'description': 1, 'actor': 1,
-            'provenance': 1, 'before': 1, 'after': 1, 'program_key': 1, 'program_label': 1,
+            'provenance': 1, 'before': 1, 'after': 1, 'program_key': 1, 'program_label': 1, 'program_keys': 1,
             '_source.client_id': 1, '_source.archived_at': 1, '_source.archived': 1,
             '_source.status': 1, '_source.framework_key': 1}},
     ]
@@ -456,6 +498,11 @@ def _public(event, clients):
     if event.get('program_key'):
         result['program_key'] = event['program_key']
     program_label = event.get('program_label') or _generic_program_label(event.get('program_key'))
+    if event.get('program_keys'):
+        result['program_keys'] = event['program_keys']
+        if not program_label:
+            labels = list(dict.fromkeys(label for key in event['program_keys'] if (label := _generic_program_label(key))))
+            program_label = ', '.join(labels) or None
     if not program_label and source and event['source_kind'] == 'framework_assessments':
         program_label = _generic_program_label(source.get('framework_key'))
     if program_label:

@@ -147,7 +147,7 @@ class IsoAuditTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_policy_schedule_projection_reports_a_lost_preimage_guard_without_activity(self):
         from types import SimpleNamespace
-        from unittest.mock import patch
+        from unittest.mock import AsyncMock, patch
         from fastapi import HTTPException
         import policy_reviews
         policy = {'policy_id': 'guarded-policy', 'client_id': 'a', 'next_review_date': '2026-10-01'}
@@ -155,9 +155,16 @@ class IsoAuditTests(unittest.IsolatedAsyncioTestCase):
                   'status': 'upcoming', 'due_date': '2027-10-01', 'updated_at': '2026-10-13T12:00:00+00:00'}
         await server.db.policies.insert_one(policy)
         await server.db.reviews.insert_one(review)
-        with patch.object(server.db.policies, 'update_one', return_value=SimpleNamespace(matched_count=0)):
+        # mongomock_motor creates a fresh collection wrapper on each attribute access.
+        policies = server.db.policies
+        guarded_db = SimpleNamespace(policies=policies, reviews=server.db.reviews)
+        with patch.object(policies, 'update_one', new_callable=AsyncMock,
+                          return_value=SimpleNamespace(matched_count=0)) as denied_write:
             with self.assertRaises(HTTPException) as denied:
-                await policy_reviews.sync(server.db, review, {'user_id': 'admin', 'name': 'Recorded operator'})
+                await policy_reviews.sync(guarded_db, review, {'user_id': 'admin', 'name': 'Recorded operator'})
+            denied_write.assert_awaited_once()
+            self.assertEqual(denied_write.call_args.args[0],
+                             {'policy_id': policy['policy_id'], 'client_id': 'a', 'next_review_date': policy['next_review_date']})
         self.assertEqual(denied.exception.status_code, 409)
         stored = await server.db.policies.find_one({'policy_id': policy['policy_id']}, {'_id': 0})
         self.assertEqual(stored['next_review_date'], policy['next_review_date'])
