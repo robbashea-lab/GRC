@@ -103,7 +103,7 @@ process.stdout.write(JSON.stringify(cases.map(({id, answers}) => ({
 }))));
 """
         node = subprocess.run(['node', '--input-type=module', '-e', script, str(Path(__file__).resolve().parents[2])],
-            input=json.dumps(cases), text=True, capture_output=True, timeout=30)
+            input=json.dumps(cases), text=True, encoding='utf-8', capture_output=True, timeout=30)
         self.assertEqual(node.returncode, 0, node.stderr)
         reports = json.loads(node.stdout)
         for case, report in zip(cases, reports):
