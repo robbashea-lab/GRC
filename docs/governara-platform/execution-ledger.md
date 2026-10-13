@@ -28,7 +28,9 @@ Agent 2 explicitly transferred integration/staging custody after the baseline de
 - Preserve all existing portfolio search/sort/assignment/archive/default/filter/pagination capabilities, including prototype omissions, through native compact controls. Open Portal uses existing client context and route directly.
 - Preserve native assessment writers/readers, versions, manual narratives, final-save/Escape corrections, histories, verification and linked records. No business-state writes are necessary to theme a page.
 
-## Work and acceptance register
+## Historical work and acceptance register — 12 October 2026
+
+These rows record the presentation checkpoint at4c. The13 October targeted subsection below gives the current69 deployment, limited correction authority and open GN-QA-08 disposition; prior rows are not retagged.
 
 | Item | State | Evidence or dependency |
 | --- | --- | --- |
@@ -72,3 +74,17 @@ Before artifacts were copied read-only from the frozen Agent 2 b852 builds: auth
 Fresh hosted b852 public Login checks: served `main.6e12afaa.js` / `main.84930724.css`; Governance → Risk → Compliance content, Escape closure/focus return and `/forgot-password` navigation verified. Navigation is not authentication or recovery-email proof. Actual explicit Demo entry is recorded separately as browser-storage Demo evidence when its destination is confirmed.
 
 No main merge, production/Sites publication, hosting/settings changes, new accounts/grants, data reset or protected assessment writes are authorized in this phase. Final acceptance of the wider platform/security assignment remains open.
+
+## 13 October targeted native-assessment closeout
+
+The new user exception authorizes only GN-QA-04 assistant positioning/hit areas for native assessment actions. Root separately reproduced ISO A.5.9 and SOC CC1.4 actual pointer interception on the preserved application-equivalent1c/4c Demo at1280×720. Original1440 evidence and position-provenance limits are retained.
+
+60/CI152 and c6/CI153 passed their exact gates but were held, never deployed, after Agent2 independently found introduced GN-QA-06/07. Narrow menu-first and guide-rectangle fitting in OmniDock corrected those failures. Sixteen controlled-layout tests and independent complete-source review passed69. The Windows9-suite run failed62 unchanged5000ms timeouts; six bounded unchanged-budget A/B replays and their confounders are preserved. No assertion weakening, dependencies/settings changes or claim that all62 causes were established.
+
+Exact69b383234945250b60b34c1b4307a90ac5a54359/treeb161717798b329a8256b0c1818ac57a451dcbddd passed CI158/run38400207720:294 suites/8780 tests/one snapshot, both builds, backend offline/disposable Mongo and Release gate. Agent2 completed/released26 finite compiled local samples and a separately acknowledged ISO one-action addendum. Supported browser recovery succeeded without security/provider settings changes. Coordinator verified no competing deployment, manually deployed the full69 commit ONCE to existing srv-db1s0cugekts73f72reg, and independently read Live dep-db73j39srm7s73btensg/full source. Fresh public health/Login/assets200 match main.0d0779f5.js/main.86adc853.css. Visible finite deployment logs show startup/Live/health without observed release errors.
+
+Agent2 explicitly acknowledged/released the exclusive fresh authenticated slot.22 geometry/state samples at1280×720/390×844, ONE normal unchanged native Save & next per confirmed active existing ISO/SOC QA client, Previous/reload retention and named preferences/menu/minimize/keyboard states passed. ISO normal Last Assessed metadata changed; blank cases do not establish filled prose/full history/relations. Hooli IG3/native1.1 first group was read-only. No interview/protected native writes.
+
+GN-QA-08 newly confirmed Hooli program Return pointer obstruction remains OPEN; keyboard Enter restored navigation, not a defect pass. Source supports old-source overlap at that same valid point but actual old execution/point origin are unknown. Program navigation lies outside the native-assessment exception; no further correction or broad review is performed. Expanded no-fit geometry/Dunder/Onboarding/auth/security/fault/zoom limits are preserved.
+
+Own QA tab29 closed; original Dark/clients/blank-search/dialog-free administrator state and viewport restored, no logout, held Tab5 untouched. Root retains staging/session custody. Separate PR75/PR76 candidates/evidence remain isolated and unmerged/undeployed here. Final repository documentation and PR57/PR74 checkpoint are evidence-only, with no repeated build/deployment. **Deployed for validation — final acceptance pending.** Targeted assignment ends with the open functional/control gaps explicit.

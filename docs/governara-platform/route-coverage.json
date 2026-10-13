@@ -1550,5 +1550,158 @@
     "viewport": "Override reset1280x720 readback",
     "state": "Explicitly acknowledged, completed and RELEASED",
     "session": "Existing administrator session preserved"
+  },
+  "historical_metadata_revision": "4c1c4df64de08d8548dbba8ecfc2011c387b66d5",
+  "historical_metadata_boundary": "Existing top-level inventory rows/counts/tested/deployed fields and no-write/no-authority limitations describe the historical presentation release at4c and named earlier revisions. Current targeted runtime, two authorized synthetic actions and new open finding are in targeted_closeout; old rows are not retagged.",
+  "targeted_closeout": {
+    "date": "2026-10-13",
+    "status": "Deployed for validation — final acceptance pending.",
+    "branch": "codex/governara-platform-alignment",
+    "pr": 74,
+    "tested_and_deployed_revision": "69b383234945250b60b34c1b4307a90ac5a54359",
+    "tested_tree": "b161717798b329a8256b0c1818ac57a451dcbddd",
+    "runtime_sha256": "74D8E7AEA0C94820DD5FB36BD82B037FA57C042BA819BE1A90E1D6FEF851CC7B",
+    "ci": {
+      "number": 158,
+      "run": 38400207720,
+      "status": "success",
+      "frontend_suites": 294,
+      "frontend_tests": 8780,
+      "snapshots": 1,
+      "both_builds": "success",
+      "backend_offline": "success",
+      "backend_disposable_mongo": "success",
+      "backend_counts": null,
+      "release_gate": "success",
+      "windows_failures_not_waived": true
+    },
+    "deployment": {
+      "service": "srv-db1s0cugekts73f72reg",
+      "id": "dep-db73j39srm7s73btensg",
+      "status": "Live",
+      "source_proof": "Coordinator direct full provider commit link",
+      "assets": [
+        "main.0d0779f5.js",
+        "main.86adc853.css"
+      ],
+      "fresh_hosted_browser_proof": "Independent Agent2 actual authenticated browser assets",
+      "public_login_health_assets": "200"
+    },
+    "correction_scope": "Only OmniDock runtime above4c, native-assessment obstacle fitting; automatic clamping including program clamping transient. No native handlers, layout/CSS/art, catalog, writer/history/auth/permissions/provider changes.",
+    "local": {
+      "compiled_state_samples": 26,
+      "one_iso_native_action_addendum": true,
+      "evidence_kind": "Local browser-storage Demo, not hosted persistence",
+      "cis_ig1_ig2": "Bounded native1.1/first-group shared-wrapper read-only samples",
+      "local_ig3": "Unavailable; no fixture created"
+    },
+    "hosted": {
+      "geometry_state_samples": 22,
+      "samples_not_route_or_interview_counts": true,
+      "identity": "Existing Staging Administrator / super_admin, not fresh-login/restricted-user proof",
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "iso": {
+        "client": "cli_6623c0df3d49caed4d80c3c4fa73665a0d05e2fee418072c30ebdb2f8425d2ee",
+        "label": "Platform Acceptance QA 20261011 — ISO 27001",
+        "assessment": "fw_629e158508995714959689856cee92f0",
+        "requirement": "A.5.9",
+        "next_assessment": "fw_07e51ddb0e26563386de18f2f79c9c9e",
+        "action": "ONE unchanged blank native Save & next, Previous, fresh reload",
+        "result": "Blank implementation/rationale, Undetermined SoA and Not Assessed retained; normal Last Assessed Not assessed to2026-10-13 persists",
+        "position_desktop": [
+          381,
+          324
+        ],
+        "position_narrow": [
+          266,
+          324
+        ]
+      },
+      "soc": {
+        "client": "cli_7a5e4c04356a9e1e6b537ded5738fff5cb46a75c4272bc5245181b63fa5bf474",
+        "label": "Platform Acceptance QA 20261011 — SOC 2",
+        "assessment": "fw_5be5723109f751d882c639a925888f1a",
+        "criterion": "CC1.4",
+        "next_assessment": "fw_6ecb6d03b6f95635997e02f0f1b4a924",
+        "action": "ONE unchanged blank native Save & next, Previous, fresh reload",
+        "result": "Blank implementation/Not Assessed and visible Not verified/Unassigned/Not assessed labels retained; hidden last_saved/history unavailable",
+        "position_desktop": [
+          1090,
+          460
+        ],
+        "position_narrow": [
+          266,
+          460
+        ]
+      },
+      "hooli_ig3": {
+        "native_assessment": "fw_ebc463fe4afc5aa0b96cbc5412cc1b83",
+        "program_count": 153,
+        "first_inventory_group": "Read-only observed",
+        "protected_native_saves": 0,
+        "interview_starts_answers_saves": 0,
+        "native_fields": "Retained"
+      },
+      "gn_qa_04": "Scoped native-footer and named preferences/menu/minimized/keyboard states pass; not all-state/no-fit/history proof",
+      "gn_qa_06": "Actual narrow invitation Close pass at current266,460; local200,584 retains local provenance",
+      "gn_qa_07": "Desktop guide458,82/620x630 and owl1090,460; prefs1090,325.906 all five direct; actual open/menu/keyboard pass",
+      "gn_qa_08": {
+        "status": "OPEN hosted functional obstruction/control gap",
+        "actual": "Hooli program Return pointer opens guide; all five probes hit launcher SVG",
+        "owl": {
+          "left": 8,
+          "top": 82,
+          "width": 168,
+          "height": 154
+        },
+        "return_button": {
+          "left": 13,
+          "top": 92,
+          "width": 74.646,
+          "height": 22
+        },
+        "workaround": "Intended Return keyboard Enter returns /clients; not resolution",
+        "attribution": "Source supports same overlap on4c given valid point; no executed matched-before/point origin, introduced/inherited unknown",
+        "authorization": "Program navigation outside native-assessment exception; no correction in this closeout"
+      },
+      "native_save_total": 2,
+      "interview_saves": 0,
+      "protected_native_saves": 0,
+      "artifact_reconciliation": "78 hosted-named captures same SHA256 copies/originals retained; manifest helper lookup failure is bookkeeping, distinct from confirmed GN-QA-08",
+      "release": {
+        "explicitRelease": true,
+        "tab29Closed": true,
+        "viewportOverrideReset": true,
+        "originalRoute": "/clients",
+        "search": "",
+        "theme": "dark unchanged",
+        "session": "not logged out",
+        "sharedTabsAndTab5": "not operated",
+        "postReleaseCuaProviderActions": 0
+      }
+    },
+    "windows": {
+      "original": "FAIL:5/9 suites,62/225 unchanged5000ms timeouts;163 pass,1114.103s; no assertion mismatch",
+      "bounded_replays": 6,
+      "results": "CIS timeout both69/c6; nested ISO clean Escape pass both; SOC current timeout/control pass inconclusive under checkout/resource confounding",
+      "boundary": "Not full attribution of all62; Linux CI pass distinct"
+    },
+    "limitations": [
+      "Only unchanged blank native records were saved; not populated-narrative/history/relationship durability coverage.",
+      "ISO/SOC native history/activity not exposed; snapshot counts, audit and hidden last_saved not inspected. ISO owner/relationships not fully exposed. SOC visible owner label compared only.",
+      "Expanded/no-fit guide still covers underlying controls/preferences in narrow layouts; minimized/closed passes not universal collision freedom.",
+      "Dunder hosted ISO/onboarding unavailable; no substitutes counted as Dunder pass.",
+      "No fresh login/logout/MFA/recovery/restricted-role/cross-tenant/fault/zoom/reduced-motion/physical-device campaign.",
+      "Finite console query after ISO/SOC returned []; a planned final query after Hooli was not executed because manifest generation failed before that step.",
+      "Generic capture filter omits closed DETAILS; companion preferences JSON is authoritative closed-summary evidence.",
+      "Program GN-QA-08 remains functional/blocking broader acceptance, no downgrade to enhancement",
+      "No universal native access behind unchanged expanded/full-window guide; minimize/Escape restores",
+      "Earlier31-pattern/30-family and153/339 evidence retained at original revisions, not rerun"
+    ],
+    "custody": "Agent2 acknowledged/released finite slots; coordinator sole shared staging/browser owner, separate PR75/PR76 not integrated/deployed; held original Tab5 and existing session preserved",
+    "repository_handoff": "docs/governara-platform/release-handoff.md"
   }
 }
