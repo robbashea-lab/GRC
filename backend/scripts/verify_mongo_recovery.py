@@ -89,8 +89,10 @@ def main():
     suite.addTest(ReconnectReceiptTests('test_receipt_survives_a_new_database_connection'))
     if args.include_portfolio_reporting:
         from test_portfolio_reporting import PortfolioReportingTests
-        concrete = type('MongoPortfolioReportingTests', (MongoStorage, PortfolioReportingTests), {})
-        suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
+        from test_portfolio_activity import PortfolioActivityTests, PortfolioDeletionReceiptTests
+        for base in (PortfolioReportingTests, PortfolioActivityTests, PortfolioDeletionReceiptTests):
+            concrete = type('Mongo' + base.__name__, (MongoStorage, base), {})
+            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     if args.include_generic_saves:
         from test_generic_save_recovery import GenericSaveRecoveryTests
         concrete = type('MongoGenericSaveRecoveryTests', (MongoStorage, GenericSaveRecoveryTests), {})

@@ -43,6 +43,12 @@ async def initialize(db):
     await db.portfolio_events.create_index([('client_id', 1), ('type', 1), ('at', -1), ('event_id', -1)])
     await db.portfolio_events.create_index([('client_id', 1), ('source_kind', 1), ('at', -1), ('event_id', -1)])
     await db.portfolio_deletions.create_index([('state', 1)])
+    # Event authorization joins by native source identity. Reuse an existing
+    # identity-prefix index; add a nonunique lookup index only where absent.
+    for kind, (key, _category, _label) in portfolio_activity.SOURCES.items():
+        indexes = await db[kind].index_information()
+        if not any(index.get('key') and tuple(index['key'][0]) == (key, 1) for index in indexes.values()):
+            await db[kind].create_index([(key, 1), ('client_id', 1)], name='portfolio_source_lookup_v1')
     await db.portfolio_reporting_state.update_one({'_id': 'schema'}, {'$setOnInsert': {
         'version': VERSION, 'started_at': now(), 'description': 'Prospective sampled positions and committed activity'}}, upsert=True)
 
