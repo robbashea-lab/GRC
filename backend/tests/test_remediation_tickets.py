@@ -282,6 +282,123 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.patch(path,json={**body,'resolution':'Different'},headers=headers)).status_code,409)
         self.assertEqual(await server.db.audit_logs.count_documents({'action':'Action Item completed','entity_id':t['task_id']}),1)
 
+    async def test_remediation_capture_survives_business_audit_failure_and_replay_without_duplicates(self):
+        _,_,_,finding,task=await self.pair(request_id='portfolio-remediation')
+        scope={'finding_id':finding['finding_id'],'client_id':'a'}
+        before=await server.db.findings.find_one(scope)
+        prior=set(before.get('_portfolio_activity_pending',{}))
+        payload={'status':'done','resolution':'Actual isolated correction','expected_updated_at':task['updated_at']}
+        headers={'Idempotency-Key':'portfolio-remediation-retry'}
+        original=server.audit
+        async def interrupted(user,action,*args,**kwargs):
+            if action=='Finding moved to Pending Validation':
+                raise RuntimeError('Injected isolated Finding business-audit interruption')
+            return await original(user,action,*args,**kwargs)
+        with patch.object(server,'audit',interrupted):
+            failed=await self.client.patch('/api/tasks/'+task['task_id'],json=payload,headers=headers)
+        self.assertEqual(failed.status_code,503,failed.text)
+        applied=await server.db.findings.find_one(scope)
+        self.assertEqual(applied['status'],'remediated')
+        additions=set(applied.get('_portfolio_activity_pending',{}))-prior;self.assertEqual(len(additions),1)
+        identity=additions.pop();event=applied['_portfolio_activity_pending'][identity]
+        self.assertEqual(event['before']['status'],'in_remediation');self.assertEqual(event['after']['status'],'remediated')
+        self.assertEqual(event['actor']['id'],'admin');self.assertEqual(event['source_id'],finding['finding_id'])
+        self.assertIsNone(await server.db.portfolio_events.find_one({'event_id':identity}))
+        self.assertIn(identity,applied['_pending_remediation_activity_event_ids'].values())
+        self.assertTrue(all(isinstance(action,str) for action in applied['_pending_remediation_audits'].values()))
+        recovered=await self.client.patch('/api/tasks/'+task['task_id'],json=payload,headers=headers)
+        self.assertEqual(recovered.status_code,200,recovered.text)
+        self.assertEqual((await self.client.patch('/api/tasks/'+task['task_id'],json=payload,headers=headers)).status_code,200)
+        row=await server.db.findings.find_one(scope)
+        self.assertFalse(row.get('_portfolio_activity_pending'))
+        captured=await server.db.portfolio_events.find_one({'event_id':identity})
+        self.assertEqual({k:captured[k] for k in event},event)
+        self.assertEqual(await server.db.portfolio_events.count_documents({'event_id':identity}),1)
+        self.assertNotIn('_pending_remediation_activity_event_ids',row);self.assertNotIn('_pending_remediation_audits',row)
+        audit=await server.db.audit_logs.find_one({'entity_id':finding['finding_id'],'action':'Finding moved to Pending Validation'})
+        self.assertEqual(audit['meta']['_portfolio_activity_event_id'],identity)
+        self.assertEqual(await server.db.audit_logs.count_documents({'entity_id':finding['finding_id'],'action':'Finding moved to Pending Validation'}),1)
+        self.assertEqual(row.get('decision_history',[]),before.get('decision_history',[]))
+
+    async def test_remediation_compare_and_swap_failure_has_no_proposed_business_event(self):
+        import remediation
+        from fastapi import HTTPException
+        _,_,_,finding,task=await self.pair(request_id='portfolio-remediation-cas')
+        scope={'finding_id':finding['finding_id'],'client_id':'a'}
+        before=await server.db.findings.find_one(scope)
+        await server.db.tasks.update_one({'task_id':task['task_id']},{'$set':{'status':'done'}})
+        collection_type=type(server.db.findings);original=collection_type.update_one
+        async def concurrent(collection,query,updates,*args,**kwargs):
+            if query.get('finding_id')==finding['finding_id'] and 'updated_at' in query and updates.get('$set',{}).get('status')=='remediated':
+                await original(collection,scope,{'$set':{'updated_at':'2030-01-01T00:00:00+00:00'}})
+            return await original(collection,query,updates,*args,**kwargs)
+        actor=await server.db.users.find_one({'user_id':'admin'})
+        with patch.object(collection_type,'update_one',concurrent):
+            with self.assertRaises(HTTPException) as conflict:
+                await remediation.synchronize(server.db,task,actor,server._now,server.audit)
+        self.assertEqual(conflict.exception.status_code,409)
+        row=await server.db.findings.find_one(scope)
+        self.assertEqual(row['status'],before['status'])
+        self.assertEqual(row.get('_portfolio_activity_pending'),before.get('_portfolio_activity_pending'))
+        self.assertEqual(await server.db.audit_logs.count_documents({'entity_id':finding['finding_id'],'action':'Finding moved to Pending Validation'}),0)
+
+    async def test_last_remediation_task_removal_captures_open_transition_once(self):
+        import remediation
+        _,_,_,finding,task=await self.pair(request_id='portfolio-remediation-delete')
+        scope={'finding_id':finding['finding_id'],'client_id':'a'}
+        before=await server.db.findings.find_one(scope)
+        prior={event['event_id'] for event in await server.db.portfolio_events.find({'source_kind':'findings','source_id':finding['finding_id']}).to_list(None)}
+        actor=await server.db.users.find_one({'user_id':'admin'})
+        # Owned isolated fixtures model the post-delete callback, not hosted
+        # deletion permissions or an account's right to perform that operation.
+        await server.db.tasks.delete_one({'task_id':task['task_id'],'client_id':'a'})
+        await remediation.after_delete(server.db,task,actor,server._now,server.audit)
+        row=await server.db.findings.find_one(scope);self.assertEqual(row['status'],'open')
+        additions=[event for event in await server.db.portfolio_events.find({'source_kind':'findings','source_id':finding['finding_id']}).to_list(None)
+                   if event['event_id'] not in prior]
+        self.assertEqual(len(additions),1);event=additions[0];identity=event['event_id']
+        self.assertFalse(row.get('_portfolio_activity_pending'))
+        self.assertEqual(event['before']['status'],'in_remediation');self.assertEqual(event['after']['status'],'open')
+        await remediation.after_delete(server.db,task,actor,server._now,server.audit)
+        self.assertFalse((await server.db.findings.find_one(scope)).get('_portfolio_activity_pending'))
+        self.assertEqual(await server.db.portfolio_events.count_documents({'event_id':identity}),1)
+        audit=await server.db.audit_logs.find_one({'entity_id':finding['finding_id'],'action':'Finding returned to Open; its remediation Action Item was deleted'})
+        self.assertEqual(audit['meta']['_portfolio_activity_event_id'],identity)
+
+    async def test_explicit_finding_decisions_pin_capture_to_each_native_receipt_and_replay(self):
+        _,_,_,finding,task=await self.pair(request_id='portfolio-decision-source')
+        fid=finding['finding_id'];scope={'finding_id':fid,'client_id':'a'}
+        async def decision(action,request_id):
+            row=await server.db.findings.find_one(scope)
+            body={'request_id':request_id,'expected_updated_at':row['updated_at']}
+            if action!='reopen':body['rationale']='Private isolated decision rationale'
+            path='/api/findings/'+fid+'/'+action
+            first=await self.client.post(path,json=body);self.assertEqual(first.status_code,200,first.text)
+            saved=await server.db.findings.find_one(scope)
+            entry=saved['decision_history'][-1]
+            event_id=saved['_portfolio_activity_decision_event_ids'][entry['request_id']]
+            event=await server.db.portfolio_events.find_one({'event_id':event_id})
+            self.assertFalse(saved.get('_portfolio_activity_pending'))
+            self.assertNotIn('_portfolio_activity',str(first.json()))
+            self.assertEqual(event['type'],'Findings');self.assertEqual(event['program_keys'],['cis-ig1'])
+            self.assertNotIn('Private isolated decision rationale',str(event))
+            audit=await server.db.audit_logs.find_one({'entity_id':fid,'action':'Remediation reopened' if action=='reopen' else action},sort=[('at',-1)])
+            self.assertEqual(audit['meta']['_portfolio_activity_event_id'],event_id)
+            replay=await self.client.post(path,json=body);self.assertEqual(replay.status_code,200,replay.text)
+            current=await server.db.findings.find_one(scope)
+            self.assertEqual(current['decision_history'],saved['decision_history'])
+            self.assertEqual(current['_portfolio_activity_decision_event_ids'],saved['_portfolio_activity_decision_event_ids'])
+            self.assertFalse(current.get('_portfolio_activity_pending'))
+            self.assertEqual(await server.db.portfolio_events.count_documents({'event_id':event_id}),1)
+            return current
+        accepted=await decision('accept','portfolio-explicit-accept');self.assertEqual(accepted['status'],'accepted')
+        reopened=await decision('reopen','portfolio-explicit-reopen');self.assertEqual(reopened['status'],'in_remediation')
+        completed=await self.client.patch('/api/tasks/'+task['task_id'],json={'status':'done'})
+        self.assertEqual(completed.status_code,200,completed.text)
+        validated=await decision('validate','portfolio-explicit-validate');self.assertEqual(validated['status'],'closed')
+        self.assertEqual(len(validated['decision_history']),3)
+        self.assertEqual(len(validated['_portfolio_activity_decision_event_ids']),3)
+
     async def test_reopen_preserves_completed_action_and_recovers_once(self):
         _,_,_,f,t=await self.pair()
         await self.client.patch('/api/tasks/'+t['task_id'],json={'status':'done','resolution':'Original correction'})

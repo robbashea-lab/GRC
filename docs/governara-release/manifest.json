@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "assignment": "GoverNara coordinated staging release",
+  "integration_branch": "codex/governara-release-20261013",
+  "base": {
+    "pr": 74,
+    "head": "baba5ab6c8831fbcf0c71e8e1d89a52f078fcf66",
+    "runtime": "69b383234945250b60b34c1b4307a90ac5a54359",
+    "deployment": "dep-db73j39srm7s73btensg"
+  },
+  "workstreams": [
+    {
+      "agent": "Agent 1",
+      "role": "integration and sole staging/browser owner",
+      "pr": 74,
+      "source": "baba5ab6c8831fbcf0c71e8e1d89a52f078fcf66",
+      "included": "approved GoverNara login, branding, Nara artwork and operational presentation",
+      "prior_ci": {
+        "run": 38400207720,
+        "number": 158,
+        "result": "success",
+        "revision": "69b383234945250b60b34c1b4307a90ac5a54359"
+      }
+    },
+    {
+      "agent": "Agent 2",
+      "role": "PR75 author; independent reviewer of other owners and integration",
+      "pr": 75,
+      "source": "1aa269cf306987f129040b0b07a5cad5f5f7be5c",
+      "application_source": "a587022ffecdacb0da30d45c289f07cff31b4568",
+      "included": "embedded interview, authoritative native save, stable Items, resolution/reopen/explicit Finding link",
+      "prior_ci": {
+        "run": 38412254407,
+        "number": 161,
+        "result": "success"
+      },
+      "author_work_reviewed_independently_by": "Agent 5"
+    },
+    {
+      "agent": "Agent 3",
+      "role": "Portfolio author",
+      "pr": 76,
+      "source": "531fca3c73fa22469ad252168cf2dcc8c40801f3",
+      "application_source": "a31a28d0ede1b0e171ee175ee2ceeb87517f33ab",
+      "included": "compact internal Portfolio, native progress, prospective capture, committed activity",
+      "prior_ci": {
+        "run": 38423053755,
+        "number": 163,
+        "result": "success"
+      }
+    },
+    {
+      "agent": "Agent 4",
+      "role": "framework reports author",
+      "pr": 77,
+      "source": "3bec9b0a948c348f9ff455395a3397b187bfcea3",
+      "included": "private Full/Executive snapshot PDFs, native text/Items/evidence references, post-render access recheck",
+      "prior_ci": {
+        "run": 38396698157,
+        "number": 156,
+        "result": "success"
+      }
+    },
+    {
+      "agent": "Agent 5",
+      "role": "independent PR75 and GN08 source/interaction reviewer",
+      "included": "existing independent evidence and bounded corrected-source review",
+      "application_changes": "none"
+    }
+  ],
+  "integration_merges": [
+    "d6b4f28",
+    "6c916e6",
+    "ea8b4d9706248dd865cda2edafa90bb091d497fa"
+  ],
+  "conflict_resolution": [
+    "Finding creation retains item idempotency/CAS and pins Portfolio creation event before insertion; public DTO stays sanitized.",
+    "Mongo recovery runner includes stable Item reconnect and Portfolio persistence suites.",
+    "Backend suite registry is a union, with no dropped tests or duplicate suite names."
+  ],
+  "cutoff_policy": "All source owners freeze before the correction commit. Exact tested commit/tree, combined CI and deployment are recorded in the integration PR and PR57. Individual branch passes are provenance only.",
+  "preservation": {
+    "main": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "source_worktrees": "preserved",
+    "provider_configuration": "unchanged",
+    "held_tab5": "untouched",
+    "permanent_prestige": "no synthetic writes or archive",
+    "accounts_and_grants": "unchanged",
+    "native_versions_and_history": "compatible additive reader/writer and Items contracts retained"
+  },
+  "runtime_prerequisites": {
+    "order": "Matching backend and frontend in one existing Docker deployment; additive startup indexes before collector task.",
+    "collector": "Startup immediate sweep, then300-second after-completion cadence; bounded leased capture/source consistency/derived stores only. Hosted first actual position2026-10-13T19:03:52Z, changed native position automatically captured19:13:55Z and later activity capture19:54:07Z observed. Sparse retained coverage, no earlier program baseline invented.",
+    "reports": "Configured snapshot transaction capability exercised by6 actual hosted Full/Executive downloads acrossCIS/SOC/ISO on exactbf59. No inconsistent fallback; unsupported snapshots remain503. Restricted export/access/fault tests still held.",
+    "provider_shell": "Free staging has noShell/SSH; no upgrade/settings changes. Normal authenticated report UI downloads supply hosted feature evidence.",
+    "local_replica": "New owned loopback MongoDB8.0.28 process/db/log, publisher checksum verified; distinct from hosted support."
+  },
+  "superseded_or_not_included": [
+    "Scenic Portfolio is superseded by the approved compact internal Portfolio. Cinematic Login remains.",
+    "Native assessment floating launcher is superseded by approved embedded interviews; program-level Nara remains.",
+    "Historical audits and closed PFA findings are retained as evidence, not restarted.",
+    "Held authentication, restricted-account, fault/tampering and worker-disruption acceptance campaigns are not resumed.",
+    "No main merge, production/Sites publication, new hosting or account changes."
+  ],
+  "evidence_boundary": "Source review, mocked API/components, local real Mongo, Demo, authenticated hosted observations and CI are recorded separately. Broad client-service/security acceptance is not inferred from staging publication.",
+  "prior_dependencies_verified_in_ancestry": [
+    {
+      "branch": "codex/governara-login",
+      "head": "3d3221e64ffe7f5a174c445276424bd4c9a1f9fd",
+      "disposition": "already included"
+    },
+    {
+      "branch": "codex/login-grc-prism",
+      "head": "ce98ea63a7b6dac5847a33f095ab5b90a657edd4",
+      "disposition": "already included; visual replacement superseded by GoverNara Login"
+    },
+    {
+      "branch": "codex/security-remediation-closeout",
+      "head": "71159a14062e50ebd773af6ca6593cfa30f5c922",
+      "disposition": "already included; security acceptance limitations retained"
+    },
+    {
+      "branch": "codex/platform-acceptance-20261011",
+      "head": "09e5d9855146790eb235fc887e37caedc96cb9fd",
+      "disposition": "already included; closed review is not restarted"
+    },
+    {
+      "branch": "codex/soc2-omnibot-rollout",
+      "head": "d5c9f1511b729eaf81ee9455676d4a8ec6a4f3e6",
+      "disposition": "already included; compatible SOC writer/lease retained"
+    },
+    {
+      "branch": "codex/iso27001-omnibot-rollout",
+      "head": "4d0113142f51031c04168ce556f799dcb1c7e365",
+      "disposition": "already included; ISO clause/Annex semantics retained"
+    },
+    {
+      "branch": "codex/login-cis-closeout",
+      "head": "a527d4e79bfab36629b0a0b71eb10c6c018d00bb",
+      "disposition": "already included; CIS current/historical interview readers retained"
+    }
+  ],
+  "correction_source_hashes_sha256": {
+    "backend/assessment_items.py": "6e88d0c064b3dee94043324698a9188b65ecc86d79dc025668640f55a37e5fba",
+    "backend/portfolio_activity.py": "be594fff9e250a36d33ea631599ece3b0f8b6490487e0eea1f7583b5b9306221",
+    "backend/framework_governance.py": "9f089abcc53170faf6c5b779e18d55e2bc530a8f1f8fd91b9e0f11f7579f94ae",
+    "backend/framework_reports.py": "2dbb6b18c4b2cc9423e286006bfa89136b4932e13c4c480b7938023414889642",
+    "backend/framework_report_pdf.py": "a5741fd0ba7fbe2256a3ac9ab37a4b28add23325c9e6805dae49a36c063023e8",
+    "backend/tests/test_framework_reports.py": "b79332ad17d9cc1993b39dd4a069d74f63094cf47f1c8303ce507c5b562b9627",
+    "backend/tests/test_portfolio_activity.py": "c483bb7cd178f478479496db5393c2c5f0bcf007214187d540ec4dc37c71e6c5",
+    "frontend/src/components/OmniDock.jsx": "b2e56143feb14ee05208323a051f348e4521f6fea52cd3e3981a9425b0c92c21",
+    "frontend/src/components/OmniDockCollision.test.jsx": "1b9eb71f1ff9d9f98711a26263f5a5a56442593a54b9dc085610ad5a2e213616",
+    "frontend/src/preview/frameworks.js": "72f9009255a89cfd032eb06eaaff32ae9112a299fb37ec79d3f7018192e0f843",
+    "frontend/src/preview/portfolioReporting.js": "b39c7bad0a869ac53cf8c4063aa50a5c41f4ec494bba7974592d7b7a54cc68a6",
+    "frontend/src/preview/portfolioReporting.test.js": "17a9660067f1cd1a76b37bec84ccc621b45b5c4ce670a9ce9029fe6d5b0e7b23"
+  },
+  "cutoff_at": "2026-10-13T17:37:18.874Z",
+  "cutoff_state": "All source owners explicitly froze and released files. Combined commit/tree and subsequent gates are recorded in PR57/integration PR. No late edits without a new tested cutoff.",
+  "verification_scheduling": {
+    "application_source": "14fc37114bef6891fde31eb0d5897c3ce01c80c5",
+    "failed_run": 38440568467,
+    "reason": "Single backend job exhausted30m after offline success; Mongo cancelled",
+    "correction": "Separate required offline and disposable-Mongo jobs; both30m, commands/pins/fixed workers preserved; frontend and both backend jobs required by aggregate gate",
+    "selfcheck": "evidence/ci-phase-split-selfcheck.json",
+    "independent_review": "ActualAgent2 independent frozen workflow source PASS atSHA256e0a5e4b7efe77576e95dcd8efe9e463faaa54e342fa19fd0cb2fba693a310966. ExactCI165 all4jobs SUCCESS atbf59."
+  },
+  "final_release": {
+    "tested_deployed_sha": "bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+    "tested_tree": "2aeb723a3df5fd6755660c85972a6331184915c5",
+    "application_source": "14fc37114bef6891fde31eb0d5897c3ce01c80c5",
+    "pr": 78,
+    "ci": 165,
+    "run": 38446917191,
+    "deployment": "dep-db780cij9qps73bcu1sg",
+    "status": "Coordinated staging delivery complete. Deployed for validation — final acceptance pending.",
+    "evidence": "evidence/hosted-verification.json",
+    "ci_result": "SUCCESS; frontend/backend/backend-mongo/Release gate all terminal success",
+    "url": "https://omnisciente-staging.onrender.com",
+    "handoff": "handoff.md",
+    "documentation_only_head": "Final receipt commit is recorded separately in PR78/PR57; never substituted for tested/deployed bf59."
+  }
+}

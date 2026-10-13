@@ -47,6 +47,16 @@
 .ui-dialog.brawndo-cis-assessment[data-state] .assessment-layout textarea { font-weight:400; background:var(--color-bg-subtle); }
 .assessment-layout > [role=tablist] > [role=tab] { height:auto; line-height:20px; }
 .assessment-implementation .brawndo-step { border-bottom:0; }
+.assessment-summary .assessment-interview { margin-top:16px; position:static; width:100%; min-width:0; }
+.assessment-interview .guided-panel-body { padding:0; max-height:none; overflow:visible; }
+.assessment-interview .omni-action-bar { position:static; display:flex; flex-wrap:wrap; padding:12px 0; background:transparent; }
+.assessment-interview :is(fieldset,section) { min-width:0; }
+.assessment-interview .omni-question-group { border:0; padding:0; }
+.assessment-interview .omni-answer-choices { flex-wrap:wrap; }
+.assessment-items { display:grid; gap:16px; padding-top:16px; }
+.assessment-item { padding-bottom:16px; border-bottom:1px solid var(--color-input-border); }
+.assessment-item > label { display:block; margin-block:8px; }
+.assessment-item-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
 .ui-dialog.brawndo-cis-assessment .brawndo-assessment-footer .ui-button.bg-primary { background:var(--color-brand-accent); color:var(--color-brand-on-accent); }
 
 .assessment-check-caption { font-size:12px; color:var(--color-text-secondary); margin:8px 0 14px !important; }

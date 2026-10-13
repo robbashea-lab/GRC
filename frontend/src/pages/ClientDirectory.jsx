@@ -10,16 +10,18 @@ import { usePortfolioView } from '@/lib/usePortfolioView';
 import { loadPortfolioRecord } from '@/lib/portfolioRecord';
 import { useTableControls, ColumnControl, TableFilterChips } from '@/components/TableControls';
 import RecordDrawer from '@/components/RecordDrawer';
+import EvidenceItemDrawer from '@/components/EvidenceItemDrawer';
+import { OrganizationalControlDrawer } from '@/components/OrganizationalControls';
+import PortfolioReports from '@/components/PortfolioReports';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Search, MoreVertical, Archive, ExternalLink, ScrollText, AlertTriangle, SlidersHorizontal, Building2, Layers3, ListTodo, History, ArrowRight } from 'lucide-react';
+import { Search, MoreVertical, Archive, ExternalLink, ScrollText, AlertTriangle, SlidersHorizontal, ChartNoAxesCombined, History, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBrawndoTheme, useBrawndoPortalTheme } from '@/lib/brawndoTheme';
 import { Moon, Sun } from 'lucide-react';
-import portfolioScene from '@/assets/portfolio-nara-scene.webp';
 import './Portfolio.css';
 import './GoverNaraPortfolio.css';
 // Quick views narrow the table to clients carrying that kind of work (one at a time); the column
@@ -43,11 +45,13 @@ const actionLabel = item => ({
   vendor: 'View Vendor',
   policy: 'View Policy'
 })[item.entity_type] || 'Open record';
+// CIS programs share a workspace route, while the portfolio keeps their configured IG identities distinct.
+const frameworkIdentity = framework => framework.program_key || (/^cis-/i.test(framework.key) && /\bIG[123]\b/i.test(framework.label) ? `cis-${framework.label.match(/\bIG[123]\b/i)[0].toLowerCase()}` : framework.key);
 export default function ClientDirectory() {
   const {
     user
   } = useAuth();
-  return user ? <Portfolio user={user} key={user.user_id + ':' + user.role + ':' + (user.client_ids || []).join(',')} /> : null;
+  return user ? <Portfolio user={user} key={user.user_id + ':' + user.role + ':' + !!user.all_clients + ':' + (user.client_ids || []).join(',')} /> : null;
 }
 function Portfolio({
   user
@@ -63,10 +67,13 @@ function Portfolio({
     [error, setError] = useState('');
   const [drill, setDrill] = useState(null),
     [selected, setSelected] = useState(null),
-    [members, setMembers] = useState([]);
+    [members, setMembers] = useState([]),
+    [reportPanel, setReportPanel] = useState(null);
+  const [selectedEvidence, setSelectedEvidence] = useState(null);
+  const [selectedControl, setSelectedControl] = useState(null);
   const generation = useRef(0),
     recordRequest = useRef(0);
-  const globalScope = user.role === 'super_admin' || (user.role === 'platform_admin' && !user.client_ids?.length);
+  const globalScope = user.role === 'super_admin' || (user.role === 'platform_admin' && user.all_clients === true);
   const canManage = ['super_admin', 'platform_admin'].includes(user.role);
   const [theme, setTheme] = useBrawndoTheme();
   useBrawndoPortalTheme(true, theme);
@@ -106,7 +113,10 @@ function Portfolio({
   });
   const columns = tableColumns('portfolio', {
     rows
-  });
+  }).map(column => column.key === 'frameworks' ? { ...column,
+    value: row => (row.frameworks || []).map(frameworkIdentity),
+    options: [...new Map(rows.flatMap(row => (row.frameworks || []).map(framework => [frameworkIdentity(framework), { value: frameworkIdentity(framework), label: framework.label }]))).values()],
+  } : column);
   const table = useTableControls({
     columns,
     rows,
@@ -168,29 +178,53 @@ function Portfolio({
       if (request === recordRequest.current) toast.error(formatError(e));
     }
   };
-  // Counts use active authorized directory rows; table filters do not redefine these populations.
-  const active = rows.filter(r => !['archived', 'inactive'].includes(r.client_status));
-  const frameworkCount = active.every(r => Array.isArray(r.frameworks)) ? new Set(active.flatMap(r => r.frameworks.map(f => f.key === 'cis-ig1' ? `${f.key}:${f.label}` : f.key))).size : null;
-  const available = !loading && !error;
+  const openReportSource = async event => {
+    const row = filtered.find(value => value.client_id === event.client_id);
+    const source = event.source;
+    if (!row || !source?.available) {
+      toast.error('This source record is unavailable in the current portfolio view.');
+      return;
+    }
+    const entityType = { reviews: 'review', findings: 'finding', risks: 'risk', policies: 'policy', tasks: 'task', vendors: 'vendor', exceptions: 'exception', requirements: 'requirement' }[source.entity_type];
+    if (entityType) {
+      await openItem({ entity_type: entityType, entity_id: source.entity_id, client_id: row.client_id });
+      return;
+    }
+    if (source.entity_type === 'evidence') {
+      const request = ++recordRequest.current;
+      try {
+        const { data } = await api.get(`/evidence-library/items/${encodeURIComponent(source.entity_id)}`);
+        if (request !== recordRequest.current) return;
+        if (data.client_id !== row.client_id) throw new Error('The source record is unavailable for this client.');
+        setSelectedEvidence({ id: source.entity_id, client_id: row.client_id });
+      } catch (e) {
+        if (request === recordRequest.current) toast.error(formatError(e));
+      }
+      return;
+    }
+    if (source.entity_type === 'organizational_controls') {
+      const request = ++recordRequest.current;
+      try {
+        const { data } = await api.get(`/organizational-controls/${encodeURIComponent(source.entity_id)}`);
+        if (request !== recordRequest.current) return;
+        if (data.client_id !== row.client_id) throw new Error('The source record is unavailable for this client.');
+        setSelectedControl(data);
+      } catch (e) {
+        if (request === recordRequest.current) toast.error(formatError(e));
+      }
+      return;
+    }
+    const to = source.to;
+    if (typeof to === 'string' && to.startsWith('/') && !to.startsWith('//')) enter(row, to);
+    else toast.error('The source record cannot be opened from this report.');
+  };
   const sort = table.state.sort ? `${table.state.sort.key}:${table.state.sort.dir}` : '';
   return <div className="portfolio-overview governara-portfolio" data-theme={theme}>
     <header className="gp-head">
       <h1>Client Portfolio</h1>
       <button type="button" className="bp-theme" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-pressed={theme === 'dark'} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>{theme === 'dark' ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}<span>{theme === 'dark' ? 'Light' : 'Dark'}</span></button>
     </header>
-    <section className="gp-hero" aria-labelledby="portfolio-overview-heading">
-      <img src={portfolioScene} alt="" aria-hidden="true" className="gp-hero-art" />
-      <div className="gp-hero-content"><p className="gp-eyebrow">Portfolio overview</p>
-        <h2 id="portfolio-overview-heading">Your clients. <span>A clearer tomorrow.</span></h2>
-        <p className="gp-description">A high-level view of all client programs. Select a client to open its portal.</p>
-        <div className="gp-metrics" role="group" aria-label="Portfolio totals">
-          {[[Building2, 'Total clients', available ? active.length : null, 'Active authorized clients; table filters do not change this total.'],
-            [Layers3, 'Active frameworks', available ? frameworkCount : null, 'Distinct configured framework identities across active authorized clients, preserving CIS implementation groups.'],
-            [ListTodo, 'Open work items', null, 'Unavailable: the existing directory exposes due-bounded work counts, not a complete open-work population.'],
-            [History, 'Recent changes', null, 'Unavailable: the existing directory exposes latest activity, not seven-day event counts.']].map(([Icon, label, value, detail]) => <div key={label} className="gp-metric" title={detail}><span className="gp-metric-icon" aria-hidden="true"><Icon size={24}/></span><div><strong className="gp-metric-value">{value ?? '—'}{value == null && <span className="sr-only"> unavailable</span>}</strong><span className="gp-metric-label">{label}{label === 'Recent changes' && <small>in last 7 days</small>}</span></div></div>)}
-        </div>
-      </div>
-    </section>
+    <PortfolioReports rows={filtered} loading={loading} error={error} includeArchived={view.includeArchived} panel={reportPanel} setPanel={setReportPanel} onFramework={key => table.setFilter('frameworks', [key])} onSource={openReportSource} />
     <section className="gp-register" aria-label="Client portfolio register">
     <div className="register-toolbar gp-toolbar" data-testid="client-directory-filters">
       <div className="register-search relative">
@@ -243,7 +277,7 @@ function Portfolio({
               <td className="tbl-cell text-ink-help" title="The existing directory does not provide a complete open-work population.">—<span className="sr-only"> unavailable</span></td>
               <td className="tbl-cell"><button type="button" data-metric="significant_risks" className={`portfolio-metric gp-risk is-${r.significant_risks > 0 ? 'attention' : 'zero'}`} aria-label={`${r.name}: Significant Risks, ${r.significant_risks ?? 'unavailable'} items`} onClick={() => enter(r, '/risks?portfolio=significant')}>{r.significant_risks ?? '—'}</button></td>
               <td className="tbl-cell text-xs"><LastActivity activity={r.last_activity} /></td>
-              <td className="tbl-cell"><div className="gp-row-actions"><button type="button" className="gp-open-portal" onClick={() => enter(r)} aria-label={`Open Portal for ${r.name}`}>Open Portal<ArrowRight size={14} aria-hidden="true"/></button><ClientRowMenu row={r} index={i} onOpen={() => enter(r)} onMetric={key => key === 'significant_risks' ? enter(r, '/risks?portfolio=significant') : openDrill(key, r)} onArchived={() => { load(); refreshClients(); }} canEdit={canManage} /></div></td>
+              <td className="tbl-cell"><div className="gp-row-actions"><button type="button" className="gp-open-portal" onClick={() => enter(r)} aria-label={`Open Portal for ${r.name}`}>Open Portal<ArrowRight size={14} aria-hidden="true"/></button><ClientRowMenu row={r} index={i} onOpen={() => enter(r)} onMetric={key => key === 'significant_risks' ? enter(r, '/risks?portfolio=significant') : openDrill(key, r)} onProgress={() => setReportPanel({ type: 'progress', client_id: r.client_id })} onRecent={() => setReportPanel({ type: 'activity', client_id: r.client_id })} onArchived={() => { load(); refreshClients(); }} canEdit={canManage} /></div></td>
             </tr>;
             })}
           </tbody>
@@ -266,6 +300,8 @@ function Portfolio({
         </tr>)}
       </tbody></table></div>
     </SheetContent></Sheet>
+    {selectedEvidence && <EvidenceItemDrawer id={selectedEvidence.id} onClose={() => { recordRequest.current++; setSelectedEvidence(null); }} onChanged={load} onOpen={ref => openReportSource({ client_id: selectedEvidence.client_id, source: { entity_type: ref.kind, entity_id: ref.id, available: ref.available, to: ref.to } })} />}
+    {selectedControl && <OrganizationalControlDrawer open record={selectedControl} clientId={selectedControl.client_id} onSaved={load} onOpenChange={open => { if (!open) { recordRequest.current++; setSelectedControl(null); } }} />}
     {selected && <RecordDrawer open kind={selected.kind} record={selected.record} clientId={selected.record.client_id} users={members} onSaved={load} onOpenChange={open => {
       if (!open) {
         recordRequest.current++;
@@ -290,6 +326,8 @@ function ClientRowMenu({
   index,
   onOpen,
   onMetric,
+  onProgress,
+  onRecent,
   onArchived,
   canEdit
 }) {
@@ -311,6 +349,8 @@ function ClientRowMenu({
     <DropdownMenuContent align="end" className="w-52">
       <DropdownMenuItem onClick={onOpen}><ExternalLink className="h-3.5 w-3.5 mr-2" />Open client workspace</DropdownMenuItem>
       <DropdownMenuItem onClick={() => nav(`/admin/audit?client=${encodeURIComponent(row.client_id)}`)}><ScrollText className="h-3.5 w-3.5 mr-2" />View activity</DropdownMenuItem>
+      <DropdownMenuItem onClick={onProgress}><ChartNoAxesCombined className="h-3.5 w-3.5 mr-2" />Framework progress</DropdownMenuItem>
+      <DropdownMenuItem onClick={onRecent}><History className="h-3.5 w-3.5 mr-2" />Recent changes</DropdownMenuItem>
       <DropdownMenuSeparator />
       {METRICS.map(([key, label]) => <DropdownMenuItem key={key} data-metric={key} data-client-id={row.client_id} onClick={() => onMetric(key)} className={`gp-work-count is-${row[key] > 0 ? TONE[key] || 'neutral' : 'zero'}`}><span>{label}</span><span>{row[key] ?? '—'}</span></DropdownMenuItem>)}
       {canEdit && <><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setArchived(row.client_status !== 'archived')}><Archive className="h-3.5 w-3.5 mr-2" />{row.client_status === 'archived' ? 'Restore client' : 'Archive client'}</DropdownMenuItem></>}

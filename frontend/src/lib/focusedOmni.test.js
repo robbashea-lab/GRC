@@ -1,4 +1,5 @@
-import {focusedOmniEnabled,focusedRecommendations,nextFocusedQuestion,correctFocusedAnswer,focusedNarrative,focusedResult} from './focusedOmni';
+import {focusedOmniEnabled,focusedRecommendations,nextFocusedQuestion,correctFocusedAnswer,focusedNarrative,focusedResult,focusedEvaluationDate} from './focusedOmni';
+import {omniCisSummary} from './omniCisSummary';
 import {versionForSafeguard as runtimeVersion,visibleQuestions,generateResult,catalogForVersion} from './guidedAssessment';
 const versionForSafeguard=id=>id==='1.2'?runtimeVersion(id,false):runtimeVersion(id,true);
 const version=versionForSafeguard('1.1',true);
@@ -109,4 +110,23 @@ test('a lost 1.2 prerequisite does not carry hidden affirmative process details 
   expect(result.narrative).not.toContain('Obsolete detector');
   expect(result.narrative).not.toContain('Reported identification of unauthorized assets: Yes');
   expect(result.narrative).not.toContain('Reported authorized inventory available for comparison: Yes');
+});
+
+test('CIS review clock captures the New York calendar day at UTC midnight and replays its threshold',()=>{
+  const instant=new Date('2026-10-13T00:30:00Z');
+  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(instant).map(part=>[part.type,part.value]));
+  const day=`${parts.year}-${parts.month}-${parts.day}`,today=focusedEvaluationDate(day),v=versionForSafeguard('1.1');
+  expect(day).toBe('2026-10-12');expect(instant.toISOString().slice(0,10)).toBe('2026-10-13');
+  expect(focusedEvaluationDate(today)).toBe(today);
+  const answers={...complete('1.1'),last_review:'2026-04-12'},output=focusedResult('1.1',answers,v,today);
+  expect(output).toMatchObject({status:'addressed',evaluation_date:day});
+  expect(focusedResult('1.1',answers,v,focusedEvaluationDate('2026-10-13')).status).toBe('in_progress');
+  expect(focusedResult('1.1',{...answers,last_review:'2026-04-11'},v,today).status).toBe('in_progress');
+  expect(focusedResult('1.1',{...answers,last_review:'2026-10-13'},v,today).status).not.toBe('addressed');
+  const inline=omniCisSummary('1.1',answers,v,'Synthetic client',today).result;
+  expect(inline).toMatchObject({status:output.status,evaluation_date:day});
+  expect(inline.narrative).toContain('reported on 2026-10-12');
+  expect(omniCisSummary('1.1',answers,v,'Synthetic client',day).result).toEqual(inline);
+  expect(focusedResult('1.1',answers,v,focusedEvaluationDate(JSON.parse(JSON.stringify(output)).evaluation_date)).status).toBe(output.status);
+  expect(focusedResult('1.2',complete('1.2'),versionForSafeguard('1.2'),today)).not.toHaveProperty('evaluation_date');
 });

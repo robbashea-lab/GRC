@@ -314,3 +314,78 @@ test('expanded SOC guide leaves preferences and their menu reachable through min
     expect(container.querySelector('textarea').value).toBe('Preserved manual wording');expect(Object.keys(localStorage)).toEqual([positionKey]);
   }finally{write.mockRestore();global.MutationObserver=originalMutation;}
 });
+test('program launcher preserves Return to portfolio at a colliding saved point without overwriting preferences',async()=>{
+  // GN-QA-08: independent hosted Hooli Return rect and the retained programme point that intercepted it.
+  const saved={x:8,y:82},preferences=JSON.stringify({mode:'collapsed',invitations:true}),launch=jest.fn(),navigate=jest.fn();
+  rectangles.programReturn=rect(13,92,74.64583587646484,22);
+  localStorage.setItem(positionKey,JSON.stringify(saved));localStorage.setItem('collision',preferences);
+  const write=jest.spyOn(Storage.prototype,'setItem');
+  const program=({minimized=false,withPreferences=false}={})=><div className="app-shell">
+    <aside className="app-sidebar"><button data-testid="return-to-portfolio" data-rect="programReturn" aria-label="Return to portfolio" onClick={navigate}>Portfolio</button></aside>
+    <main><OmniDock preferenceKey="collision" freePosition focused>
+      <button className={'omni-launch-button'+(minimized?' is-minimized':'')} onClick={launch}>Open Omnibot guide</button>
+      <div className="guided-context-prompt">Review the programme with Omnibot.</div>
+      {withPreferences&&<details className="omni-position-controls"><summary>Omnibot preferences</summary><div><button>Hide Omnibot</button><button>Turn off invitations</button></div></details>}
+    </OmniDock></main>
+  </div>;
+  try{
+    await act(async()=>root.render(program()));
+    const dock=container.querySelector('.omni-free-dock'),launcher=container.querySelector('.omni-launch-button'),back=container.querySelector('[data-testid="return-to-portfolio"]');
+    expectSafe(launcher.getBoundingClientRect(),[rectangles.programReturn]);
+    const fitted=visiblePosition(dock);expect(fitted).not.toEqual(saved);expect(launcher.getBoundingClientRect().height).toBe(154);
+    const center={x:13+74.64583587646484/2,y:103},area=launcher.getBoundingClientRect();
+    expect(center.x>=area.left&&center.x<=area.right&&center.y>=area.top&&center.y<=area.bottom).toBe(false);
+    expect(write).not.toHaveBeenCalled();expect(JSON.parse(localStorage.getItem(positionKey))).toEqual(saved);
+    await act(async()=>back.click());expect(navigate).toHaveBeenCalledTimes(1);expect(launch).not.toHaveBeenCalled();
+    await act(async()=>launcher.click());expect(launch).toHaveBeenCalledTimes(1);
+    expect(observer.observe.mock.calls.some(([target])=>target===back)).toBe(true);
+    rectangles.programReturn=rect(0,0,0,0);
+    await act(async()=>observer.callback());expect(visiblePosition(dock)).toEqual(saved);expect(write).not.toHaveBeenCalled();
+    rectangles.programReturn=rect(13,92,74.64583587646484,22);
+    await act(async()=>window.dispatchEvent(new Event('resize')));
+    expectSafe(launcher.getBoundingClientRect(),[rectangles.programReturn]);expect(visiblePosition(dock)).toEqual(fitted);
+    await act(async()=>root.render(program({minimized:true,withPreferences:true})));
+    expect(container.querySelector('.omni-launch-button').getBoundingClientRect().height).toBe(80);
+    expectSafe(dock.getBoundingClientRect(),[rectangles.programReturn]);expect(write).not.toHaveBeenCalled();
+    const settings=container.querySelector('.omni-position-controls');
+    await act(async()=>{settings.open=true;settings.dispatchEvent(new Event('toggle'));});
+    for(const popup of container.querySelectorAll('.guided-context-prompt,.omni-position-controls[open]>div'))expectSafe(popup.getBoundingClientRect(),[rectangles.programReturn]);
+    const beforeKey=visiblePosition(dock),explicitMove={x:beforeKey.x,y:beforeKey.y+10};
+    await act(async()=>container.querySelector('.omni-launch-button').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true})));
+    expect(JSON.parse(localStorage.getItem(positionKey))).toEqual(explicitMove);expect(write).toHaveBeenCalledTimes(1);
+    await act(async()=>window.dispatchEvent(new Event('resize')));expect(visiblePosition(dock)).toEqual(explicitMove);expect(write).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem('collision')).toBe(preferences);expect(Object.keys(localStorage).sort()).toEqual(['collision',positionKey]);
+  }finally{write.mockRestore();}
+});
+test('Return correction leaves connected programme navigation and native controls unobstructed',async()=>{
+  // Actual old-69 Hooli navigation capture: Calendar was clear at 8,82 before the unsafe Return-only refit.
+  const rows=[['Dashboard',219.33334350585935],['Calendar',256.3333435058594],['Reviews',293.3333435058594],['Action Items',330.3333435058594],['CIS IG3',402.3333435058594],['Risks',439.3333435058594],['Policies',476.3333435058594],['Vendors',513.3333740234375],['Evidence Library',550.3333740234375],['Contacts',622.3333740234375],['Systems & Scope',659.3333740234375],['AI Governance',696.3333740234375],['Client Profile',733.3333740234375]];
+  const saved={x:8,y:82};rectangles.programReturn=rect(13,92,74.64583587646484,22);
+  rows.forEach(([,top],index)=>{rectangles['nav'+index]=rect(13,top,191.33334350585935,36);});
+  expect(clearOf(rect(saved.x,saved.y,168,154),rectangles.nav1)).toBe(true);
+  localStorage.setItem(positionKey,JSON.stringify(saved));const write=jest.spyOn(Storage.prototype,'setItem');
+  const program=withPreferences=><div className="app-shell">
+    <aside className="app-sidebar bsb"><button data-testid="return-to-portfolio" data-rect="programReturn">Portfolio</button><nav className="bsb-nav">{rows.map(([name],index)=><a key={name} href={'#'+index} data-rect={'nav'+index}>{name}</a>)}</nav></aside>
+    <main><OmniDock preferenceKey="collision" freePosition focused>
+      <button className="omni-launch-button">Open Omnibot guide</button><div className="guided-context-prompt">Review the programme with Omnibot.</div>
+      {withPreferences&&<details className="omni-position-controls"><summary>Omnibot preferences</summary><div><button>Hide Omnibot</button><button>Turn off invitations</button></div></details>}
+    </OmniDock></main>
+  </div>;
+  const obstacles=()=>[rectangles.programReturn,...rows.map((_,index)=>rectangles['nav'+index])];
+  try{
+    await act(async()=>root.render(program(false)));
+    const dock=container.querySelector('.omni-free-dock');
+    expectSafe(dock.querySelector('.omni-launch-button').getBoundingClientRect(),[rectangles.nav1]);
+    expectSafe(dock.getBoundingClientRect(),obstacles());expect(write).not.toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem(positionKey))).toEqual(saved);
+    const safe=visiblePosition(dock);
+    await act(async()=>root.render(program(true)));const settings=container.querySelector('.omni-position-controls');
+    await act(async()=>{settings.open=true;settings.dispatchEvent(new Event('toggle'));});
+    expectSafe(dock.getBoundingClientRect(),obstacles());
+    for(const popup of container.querySelectorAll('.guided-context-prompt,.omni-position-controls[open]>div'))expectSafe(popup.getBoundingClientRect(),obstacles());
+    expect(observer.observe.mock.calls.some(([target])=>target===container.querySelector('[data-rect="nav1"]'))).toBe(true);expect(write).not.toHaveBeenCalled();
+    await act(async()=>root.render(null));localStorage.setItem(positionKey,JSON.stringify(safe));write.mockClear();
+    await act(async()=>root.render(program(false)));
+    expect(visiblePosition(container.querySelector('.omni-free-dock'))).toEqual(safe);expect(write).not.toHaveBeenCalled();
+  }finally{write.mockRestore();}
+});

@@ -1,5 +1,8 @@
 import {removeRetiredDemoClients} from './retiredClients';
-import {seedStore,saveStore,readStore} from './store';
+import {seedStore,saveStore,readStore,STORE_KEY} from './store';
+
+beforeEach(()=>jest.useFakeTimers().setSystemTime(new Date('2026-10-13T17:00:00.000Z')));
+afterEach(()=>jest.useRealTimers());
 
 test('removing a provider client does not change Brawndo internal-owner rotation',()=>{
   const db=seedStore();
@@ -41,7 +44,15 @@ test('stale Dunder is replaced by the canonical ISO client without resetting sur
   expect(migrated.ai_counters).toEqual({});
   expect(migrated.logs.some(r=>r.entity_id==='demo_dunder_user_0')).toBe(false);
   expect(removeRetiredDemoClients(migrated)).toBe(false);
-  expect(readStore()).toEqual(migrated);
+  const persisted=sessionStorage.getItem(STORE_KEY),reread=readStore();
+  const {portfolio_reporting:previousReporting,...previousSources}=JSON.parse(JSON.stringify(migrated));
+  const {portfolio_reporting:reporting,...rereadSources}=JSON.parse(JSON.stringify(reread));
+  expect(rereadSources).toEqual(previousSources);
+  expect(reporting.snapshots.filter(snapshot=>['demo_dunder','demo_initech'].includes(snapshot.client_id)).every(snapshot=>snapshot.captured_at==='2026-10-13T17:00:00.000Z')).toBe(true);
+  expect(reporting.snapshots.some(snapshot=>snapshot.client_id==='demo_dunder')).toBe(true);
+  expect(reporting.snapshots.some(snapshot=>snapshot.client_id==='demo_initech')).toBe(true);
+  expect(previousReporting.started_at).toBe(reporting.started_at);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(persisted);
 });
 
 test('a retired simulated identity returns to the existing explorer; missing explorer fails closed',()=>{

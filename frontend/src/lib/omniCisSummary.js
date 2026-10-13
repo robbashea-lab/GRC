@@ -1,16 +1,17 @@
 import {guidedCatalog,catalogForVersion,visibleQuestions} from './guidedAssessment';
-import {focusedResult} from './focusedOmni';
+import {focusedResult,focusedEvaluationDate} from './focusedOmni';
 import {inventorySummary} from './omniInventorySummary';
 import {omniGroups} from './refinedOmni';
+import {formatInlineSummary} from './inlineAssessment';
 
 const unique=items=>[...new Set(items.map(item=>item.trim()).filter(Boolean))];
 const bullets=items=>unique(items).map(item=>'- '+item).join('\n');
 const labels={process:'Unauthorized-asset process',tool:'Discovery capability',coverage:'Coverage',frequency:'Operating frequency',inventory_update:'Inventory updates',detection:'Unauthorized-asset identification',actions:'Response actions',unresolved:'Unresolved unauthorized assets',inventory_dependency:'Inventory comparison context',disposition:'Disposition tracking',confirmation:'Response confirmation',exceptions:'Approved exception context',reconciled:'Reconciliation context',practice:'Reported practice'};
 const contextLabels={existing:'Current practice',system:'Systems or processes',owner:'Responsibility',operation:'Day-to-day operation',context:'Reported context',scope_reason:'Scope explanation',evidence:'Reported supporting records'};
 
-export function omniCisSummary(id,answers,version,clientName='The organization'){
-  if(id==='1.1')return inventorySummary(answers,version,clientName);
-  const definition=catalogForVersion(version)?.definitions?.[id]||guidedCatalog.definitions[id],questions=visibleQuestions(id,answers,version),result=focusedResult(id,answers,version);
+export function omniCisSummary(id,answers,version,clientName='The organization',inlineDate=null){
+  if(id==='1.1')return inventorySummary(answers,version,clientName,inlineDate);
+  const definition=catalogForVersion(version)?.definitions?.[id]||guidedCatalog.definitions[id],questions=visibleQuestions(id,answers,version),result=focusedResult(id,answers,version,focusedEvaluationDate(inlineDate));
   const active=Object.fromEntries(Object.entries(answers).filter(([key])=>questions.some(q=>key===q.id||key===q.id+'_detail')));
   const subject=definition.title.toLowerCase();
   const overview=[result.status==='addressed'?`${clientName} reports the practice to ${subject} is in place.`:result.status==='in_progress'?`${clientName} reports partial implementation of the practice to ${subject}.`:result.status==='needs_attention'?`${clientName} reports the practice to ${subject} is not currently in place.`:`${clientName}’s implementation of the practice to ${subject} needs confirmation.`];
@@ -53,6 +54,6 @@ export function omniCisSummary(id,answers,version,clientName='The organization')
   const grouped=Object.entries(sections).filter(([name,items])=>items.length||name==='Incomplete or missing').map(([name,items])=>name+'\n'+bullets(items.length?items:['No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.']));
   if(context.length)grouped.push('Reported operating context\n'+bullets(context));
   const next=[actions.confirmation.length&&'Confirmation work\n'+bullets(actions.confirmation),actions.remediation.length&&'Remediation\n'+bullets(actions.remediation)].filter(Boolean);
-  const narrative=['OVERVIEW',overview.join(' '),'IMPLEMENTATION BREAKDOWN',grouped.join('\n\n'),'ITEMS TO ADDRESS',next.length?next.join('\n\n'):'- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.'].join('\n\n');
+  const narrative=inlineDate?formatInlineSummary({paragraph:[...overview,...context].join(' '),controls:sections['In place'],limitations:[result.gaps.length&&'Reported missing or incomplete practices limit this implementation.',result.unknowns.length&&'Some reported practices remain unconfirmed.'].filter(Boolean).join(' '),date:inlineDate}):['OVERVIEW',overview.join(' '),'IMPLEMENTATION BREAKDOWN',grouped.join('\n\n'),'ITEMS TO ADDRESS',next.length?next.join('\n\n'):'- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.'].join('\n\n');
   return {result:{...result,narrative},breakdown,deficiencies:unique(result.gaps),confirmations:unique(result.unknowns)};
 }

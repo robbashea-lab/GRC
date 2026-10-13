@@ -1,0 +1,57 @@
+{
+  "source": "bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+  "deployment": "dep-db780cij9qps73bcu1sg",
+  "method": "Actual normal authenticated administrator Report UI/download events; copies of downloadedbytes, no local PDFgeneration",
+  "exports": [
+    {
+      "framework": "soc",
+      "detail": "full",
+      "path": "C:/Users/RobbA/Documents/Codex/2026-10-13/gn-release-evidence/hosted-soc-full.pdf",
+      "bytes": 95201,
+      "sha256": "76a9a558e26931217381f70355386b35b8c56228a15a9f03de490189d77b1f15",
+      "pdf_header": "%PDF-1.4"
+    },
+    {
+      "framework": "soc",
+      "detail": "executive",
+      "path": "C:/Users/RobbA/Documents/Codex/2026-10-13/gn-release-evidence/hosted-soc-executive.pdf",
+      "bytes": 61126,
+      "sha256": "cc9058af2b34c6a6e023c97170cb7b21bb41ff7ecca13d041b70e93d4c5f1c68",
+      "pdf_header": "%PDF-1.4"
+    },
+    {
+      "framework": "cis",
+      "detail": "full",
+      "path": "C:/Users/RobbA/Documents/Codex/2026-10-13/gn-release-evidence/hosted-cis-full.pdf",
+      "bytes": 102016,
+      "sha256": "3490971123fe8392650cf1e3d55d13a61da90338830893503f54f30eb8487127",
+      "pdf_header": "%PDF-1.4"
+    },
+    {
+      "framework": "cis",
+      "detail": "executive",
+      "path": "C:/Users/RobbA/Documents/Codex/2026-10-13/gn-release-evidence/hosted-cis-executive.pdf",
+      "bytes": 60796,
+      "sha256": "aa77b9998824cd578412c15eed43dfb211272b4b5c98e9ca9202667c2329e807",
+      "pdf_header": "%PDF-1.4"
+    },
+    {
+      "framework": "iso",
+      "detail": "full",
+      "path": "C:/Users/RobbA/Documents/Codex/2026-10-13/gn-release-evidence/hosted-iso-full.pdf",
+      "bytes": 151266,
+      "sha256": "ebbc34a0f5d3223c15939b005adcee8473180c4efaae624f7de5beeae8a988a9",
+      "pdf_header": "%PDF-1.4"
+    },
+    {
+      "framework": "iso",
+      "detail": "executive",
+      "path": "C:/Users/RobbA/Documents/Codex/2026-10-13/gn-release-evidence/hosted-iso-executive.pdf",
+      "bytes": 61191,
+      "sha256": "d670e5389f29baa016c181463b0b39ec0a6b86561ab581ed7a83534d04a417d5",
+      "pdf_header": "%PDF-1.4"
+    }
+  ],
+  "independent_artifact_review": "Completed bounded PASS by actual Agent2: all148pages text-extracted and21representative pages visually inspected; evidence/Hosted-PDF-independent-review.txt and Hosted-PDF-independent-verification.json. Not independent browser/provider proof or all-pages visual certification.",
+  "security_boundary": "Actual hosted restricted-role/export-denial/fault scenarios still held; successful admin downloads do not prove them"
+}

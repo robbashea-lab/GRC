@@ -6,9 +6,6 @@ import FrameworkProgramCard from './FrameworkProgramCard';
 import {AssessmentOverview} from './BrawndoCisOverview';
 import {frameworkDefinition} from '@/lib/frameworks';
 import {cisSummary} from '@/lib/cisVerification';
-import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
-import isoGuide from '@catalogs/operatorGuidance/isoRequirementGuide.json';
-import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
 
 jest.mock('react-router-dom',()=>({Link:({to,children,...props})=><a href={to} {...props}>{children}</a>}),{virtual:true});
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClient:null})}));
@@ -45,18 +42,15 @@ function Native({record,context=true,retainedConfiguration,writable=true}){
   return framework==='soc-2'?<PrestigeSocAssessment state={state} actions={actions}/>:<FrameworkAssessmentWorkspace state={state} actions={actions}/>;
 }
 
-test.each([['iso-27001','4.1'],['iso-27001','A.8.11'],['soc-2','CC1.1']])('%s %s starts with native content and retains inline guidance, checklist history and drafts',async(framework,id)=>{
+test.each([['iso-27001','4.1'],['iso-27001','A.8.11'],['soc-2','CC1.1']])('%s %s starts with native content and embeds the guide in summary, adds Items and retains native data and drafts',async(framework,id)=>{
   const record=recordFor(framework,id),saved=JSON.stringify(record);await render(<Native record={record}/>);
   const main=document.querySelector('.brawndo-assessment-main'),layout=main.querySelector('.assessment-layout'),guide=main.querySelector('[data-testid="guide-boundary"]');
-  expect(main.firstElementChild).toBe(layout);expect(layout.compareDocumentPosition(guide)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect([...document.querySelectorAll('[role=tab]')].map(el=>el.textContent)).toEqual(['Requirement & implementation','Findings']);
-  const disclosure=document.querySelector('.assessment-inline-criteria');expect(disclosure.open).toBe(false);
-  await act(async()=>disclosure.querySelector('summary').click());expect(disclosure.open).toBe(true);
-  const review=framework==='soc-2'?socGuidance.criteria[id].practical.review:isoGuide.entries[id].review;
-  for(const text of review)expect(disclosure.textContent).toContain(text);
-  const checks=framework==='soc-2'?socGuidance.criteria[id].assessment_criteria:isoCriteria.requirements[id].coverage==='verified'?isoCriteria.requirements[id].criteria:[];
-  expect([...disclosure.querySelectorAll('.assessment-check span')].map(el=>el.textContent)).toEqual(checks.map(item=>item.text));
-  expect(disclosure.textContent).toContain(framework==='soc-2'?'retained-soc-id':'retained-iso-id');
+  expect(main.firstElementChild).toBe(layout);expect(guide.closest('.assessment-summary')).toBeTruthy();
+  expect([...document.querySelectorAll('[role=tab]')].map(el=>el.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
+  const disclosure=document.querySelector('.assessment-summary');expect(disclosure.open).toBe(false);
+  await act(async()=>{disclosure.open=true;disclosure.dispatchEvent(new Event('toggle'));});expect(disclosure.open).toBe(true);
+  expect(document.querySelector('.assessment-inline-criteria')).toBeNull();
+  expect(record[framework==='soc-2'?'soc_assessment_checks':'iso_assessment_checks']).toEqual([framework==='soc-2'?'retained-soc-id':'retained-iso-id']);
   await fill('Current implementation','Unsaved native wording\nkept through guidance and Findings');
   await tab('Findings');await fill('Finding draft','Unsaved Finding text');await tab('Requirement & implementation');
   expect(document.querySelector('[aria-label="Current implementation"]').value).toBe('Unsaved native wording\nkept through guidance and Findings');
@@ -64,7 +58,7 @@ test.each([['iso-27001','4.1'],['iso-27001','A.8.11'],['soc-2','CC1.1']])('%s %s
   expect(callbacks.save).not.toHaveBeenCalled();expect(JSON.stringify(record)).toBe(saved);
   if(id==='A.8.11'){
     expect(document.querySelector('[aria-label="SoA applicability"]').value).toBe('included');
-    expect(document.querySelector('[aria-label="SoA justification"]').value).toBe(record.soa_justification);expect(checks).toEqual([]);
+    expect(document.querySelector('[aria-label="SoA justification"]').value).toBe(record.soa_justification);
   }
   if(framework==='iso-27001')expect(document.querySelector('[aria-label="Saved verification"]')).toBeNull();
 });
@@ -91,7 +85,7 @@ test.each([['iso-27001','A.8.11'],['soc-2','CC1.1']])('%s retained configuration
 
 test.each([['iso-27001','4.1'],['soc-2','CC1.1']])('%s read-only native guidance remains available without write controls',async(framework,id)=>{
   await render(<Native record={recordFor(framework,id)} writable={false}/>);
-  await act(async()=>document.querySelector('.assessment-inline-criteria summary').click());
+  await act(async()=>{const summary=document.querySelector('.assessment-summary');summary.open=true;summary.dispatchEvent(new Event('toggle'));});
   expect(button('Save assessment')).toBeUndefined();expect([...document.querySelectorAll('.assessment-check input')].every(el=>el.matches(':disabled'))).toBe(true);
   expect(document.querySelector('[aria-label="Current implementation"]').matches(':disabled')).toBe(true);expect(callbacks.put).not.toHaveBeenCalled();
 });
