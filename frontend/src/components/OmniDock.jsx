@@ -59,12 +59,14 @@ function FreeDock({preferenceKey,inAssessment,children,name='Omni',focused=false
       if(fitted){preferences.style.left=fitted.x+'px';preferences.style.top=fitted.y+'px';}
     }
     if(!focused)return;
-    for(const popover of dock.querySelectorAll('.guided-context-prompt,.omni-position-controls[open] > div')){
+    const placed=[];
+    // Keep the open settings usable, then fit the invitation clear of their actual hit area.
+    for(const popover of [...dock.querySelectorAll('.omni-position-controls[open] > div'),...dock.querySelectorAll('.guided-context-prompt')]){
       // Keep invitations clear of the settings and position controls below the artwork.
       const anchor=(popover.classList.contains('guided-context-prompt')?dock:popover.parentElement.querySelector('summary'))?.getBoundingClientRect();
       const size=popover.getBoundingClientRect();if(!anchor||!size.width||!size.height)continue;
       const position=fitOmniPopover(anchor,size);popover.style.left=position.left+'px';popover.style.top=position.top+'px';
-      if(inAssessment){const fitted=fitOmniControl({x:position.left,y:position.top},size,[...controls,dock.getBoundingClientRect(),...(preferences?[preferences.querySelector('summary').getBoundingClientRect()]:[])],window.innerWidth,window.innerHeight,top);if(fitted){popover.style.left=fitted.x+'px';popover.style.top=fitted.y+'px';}}
+      if(inAssessment){const fitted=fitOmniControl({x:position.left,y:position.top},size,[...controls,dock.getBoundingClientRect(),...(preferences?[preferences.querySelector('summary').getBoundingClientRect()]:[]),...placed],window.innerWidth,window.innerHeight,top);if(fitted){popover.style.left=fitted.x+'px';popover.style.top=fitted.y+'px';}placed.push(popover.getBoundingClientRect());}
     }
   };
   // Automatic fitting is transient; only a user's drag, arrow key or reset writes their preference.
