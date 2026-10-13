@@ -33,6 +33,16 @@ function assessmentObstacles(dock){
   const guide=shell.querySelector('.omni-workspace-window')?.getBoundingClientRect();
   return [...controls,...(guide?.width&&guide?.height?[guide]:[])];
 }
+function programControls(dock){
+  return [...(dock.closest('.app-shell')?.querySelectorAll('button,input,textarea,select,a[href],summary,[role="button"],[role="tab"]')||[])].filter(el=>!el.closest('.guided-pilot,.omni-workspace-window,.omni-free-dock'));
+}
+function programObstacles(dock){
+  return programControls(dock).map(el=>{
+    const style=window.getComputedStyle(el);if(style.display==='none'||['hidden','collapse'].includes(style.visibility))return null;
+    const rect=(el.closest('label')||el).getBoundingClientRect(),scroll=el.closest('.bsb-nav,.brawndo-assessment-scroll')?.getBoundingClientRect(),clip=scroll?.width>0&&scroll?.height>0?scroll:null;
+    return {left:Math.max(0,rect.left,clip?.left??0),right:Math.min(window.innerWidth,rect.right,clip?.right??window.innerWidth),top:Math.max(0,rect.top,clip?.top??0),bottom:Math.min(window.innerHeight,rect.bottom,clip?.bottom??window.innerHeight),returnToPortfolio:el.matches('[data-testid="return-to-portfolio"]')};
+  }).filter(r=>r&&r.right>r.left&&r.bottom>r.top);
+}
 export default function OmniDock(props){return props.freePosition?<FreeDock {...props}/>:<ClassicDock {...props}/>;}
 function FreeDock({preferenceKey,inAssessment,children,name='Omni',focused=false}){
   const root=useRef(null),drag=useRef(null),moved=useRef(false),key=preferenceKey+':free-position';
@@ -48,8 +58,9 @@ function FreeDock({preferenceKey,inAssessment,children,name='Omni',focused=false
     const size=dock.getBoundingClientRect(),top=focused&&window.innerHeight<(size.height||190)+90?8:82;
     let position={x:Math.max(8,Math.min(window.innerWidth-(size.width||168)-8,pointRef.current.x)),y:Math.max(top,Math.min(window.innerHeight-(size.height||190)-8,pointRef.current.y))};
     dock.style.left=position.x+'px';dock.style.top=position.y+'px';
-    const controls=inAssessment?assessmentObstacles(dock):[],footer=dock.closest('[data-assessment-shell]')?.querySelector('.brawndo-assessment-footer');
-    if(inAssessment&&footer&&[...footer.querySelectorAll('button')].some(el=>overlaps(dock.getBoundingClientRect(),el.getBoundingClientRect()))){
+    const controls=inAssessment?assessmentObstacles(dock):programObstacles(dock),footer=dock.closest('[data-assessment-shell]')?.querySelector('.brawndo-assessment-footer');
+    // Return triggers a programme refit; neighbouring controls constrain the safe replacement.
+    if(inAssessment?footer&&[...footer.querySelectorAll('button')].some(el=>overlaps(dock.getBoundingClientRect(),el.getBoundingClientRect())):controls.some(r=>r.returnToPortfolio&&overlaps(dock.getBoundingClientRect(),r))){
       position=fitOmniControl(position,size,controls,window.innerWidth,window.innerHeight,top)||position;
       dock.style.left=position.x+'px';dock.style.top=position.y+'px';
     }
@@ -68,16 +79,17 @@ function FreeDock({preferenceKey,inAssessment,children,name='Omni',focused=false
       const anchor=(popover.classList.contains('guided-context-prompt')?dock:popover.parentElement.querySelector('summary'))?.getBoundingClientRect();
       const size=popover.getBoundingClientRect();if(!anchor||!size.width||!size.height)continue;
       const position=fitOmniPopover(anchor,size);popover.style.left=position.left+'px';popover.style.top=position.top+'px';
-      if(inAssessment){const fitted=fitOmniControl({x:position.left,y:position.top},size,[...controls,dock.getBoundingClientRect(),...(preferences?[preferences.querySelector('summary').getBoundingClientRect()]:[]),...placed],window.innerWidth,window.innerHeight,top);if(fitted){popover.style.left=fitted.x+'px';popover.style.top=fitted.y+'px';}placed.push(popover.getBoundingClientRect());}
+      if(inAssessment||controls.length){const fitted=fitOmniControl({x:position.left,y:position.top},size,[...controls,dock.getBoundingClientRect(),...(preferences?[preferences.querySelector('summary').getBoundingClientRect()]:[]),...placed],window.innerWidth,window.innerHeight,top);if(fitted){popover.style.left=fitted.x+'px';popover.style.top=fitted.y+'px';}placed.push(popover.getBoundingClientRect());}
     }
   };
   // Automatic fitting is transient; only a user's drag, arrow key or reset writes their preference.
   useLayoutEffect(place);
   useLayoutEffect(()=>{
-    const dock=root.current,shell=dock.closest('[data-assessment-shell]'),target=shell||dock;
+    const dock=root.current,shell=dock.closest('[data-assessment-shell]'),target=shell||dock.closest('.app-shell')||dock;
     target.addEventListener('toggle',place,true);target.addEventListener('scroll',place,true);window.addEventListener('resize',place);
     const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(place);observer?.observe(dock);
     if(shell){observer?.observe(shell);for(const el of shell.querySelectorAll('.brawndo-assessment-columns,.brawndo-assessment-footer,input,textarea,select,summary'))if(!el.closest('.guided-pilot,.omni-workspace-window,.omni-free-dock'))observer?.observe(el.closest('label')||el);}
+    if(!inAssessment)for(const el of programControls(dock))observer?.observe(el.closest('label')||el);
     const guide=inAssessment&&shell?.querySelector('.omni-workspace-window');if(guide)observer?.observe(guide);
     // Position-only window moves do not trigger ResizeObserver.
     const guideChanges=guide&&typeof MutationObserver!=='undefined'?new MutationObserver(place):null;

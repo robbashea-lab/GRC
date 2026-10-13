@@ -223,14 +223,19 @@ def current_item(row, identity):
     return item
 
 
-async def save_items(s, row, items):
+async def save_items(s, row, items, user, at):
     revision = row.get('items_revision', 0)
+    # Items have an independent CAS; do not claim a concurrently changing judgment.
+    before = {key: row.get(key) for key in ('client_id', 'framework_key', 'items_to_address', 'items_revision')}
+    patch, event = s._portfolio_event_patch('framework_assessment', row['framework_assessment_id'],
+        row['client_id'], user, before, {**before, 'items_to_address': items, 'items_revision': revision + 1}, at)
     result = await s.db.framework_assessments.update_one({
         'framework_assessment_id': row['framework_assessment_id'], 'client_id': row['client_id'],
         'items_revision': row.get('items_revision')},
-        {'$set': {'items_to_address': items, 'items_revision': revision + 1}})
+        {'$set': {'items_to_address': items, 'items_revision': revision + 1, **patch}})
     if not result.matched_count:
         raise HTTPException(409, 'Items changed in another window; refresh before saving')
+    return event
 
 
 async def update(s, row, identity, body, user):
@@ -244,9 +249,11 @@ async def update(s, row, identity, body, user):
     item.update(state=body.state, resolution=body.resolution, updated_at=at)
     item['history'].append({'at': at, 'by': user['user_id'], 'event': 'resolved' if body.state == 'resolved' else 'reopened',
         'state': body.state, 'resolution': body.resolution})
-    await save_items(s, row, items)
+    event = await save_items(s, row, items, user, at)
     await s.audit(user, 'Assessment item updated', 'framework_assessment', row['framework_assessment_id'],
-        row['client_id'], meta={'item_id': identity, 'state': body.state})
+        row['client_id'], meta={'item_id': identity, 'state': body.state,
+            '_portfolio_activity_event_id': event['event_id'] if event else None,
+            '_portfolio_activity_noop': event is None})
 
 
 async def link_finding(s, row, identity, finding_id, user):
@@ -266,9 +273,14 @@ async def link_finding(s, row, identity, finding_id, user):
         item['history'].append({'at': at, 'by': user['user_id'], 'event': 'finding_linked',
             'state': item['state'], 'resolution': item['resolution'], 'finding_id': finding_id})
         try:
-            await save_items(s, current, items)
-            return
+            event = await save_items(s, current, items, user, at)
         except HTTPException as error:
             if error.status_code != 409:
                 raise
+            continue
+        await s.audit(user, 'Assessment item updated', 'framework_assessment', row['framework_assessment_id'],
+            row['client_id'], meta={'item_id': identity, 'state': item['state'], 'finding_id': finding_id,
+                '_portfolio_activity_event_id': event['event_id'] if event else None,
+                '_portfolio_activity_noop': event is None})
+        return
     raise HTTPException(409, 'Items changed while linking the Finding; retry the original request')

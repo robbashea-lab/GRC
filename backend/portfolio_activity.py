@@ -51,7 +51,7 @@ BUSINESS_FIELDS = {
     'framework_assessments': {'status', 'implementation', 'technology', 'notes', 'owner_id', 'process_owner_id',
         'verification', 'verification_checklist', 'cis_assessment_criteria', 'soc_assessment_checks',
         'iso_assessment_checks', 'na_rationale', 'soa_applicability', 'soa_justification',
-        'addressable_decision', 'addressable_rationale', 'management_controls', 'related_links'},
+        'addressable_decision', 'addressable_rationale', 'management_controls', 'related_links', 'items_to_address'},
     'organizational_controls': {'name', 'title', 'description', 'status', 'owner_id', 'assessment_ids',
         'related_links', 'observations', 'design', 'implementation', 'conflicts', 'frequency', 'reconciliation_note'},
     'reviews': {'status', 'notes', 'outcome', 'iso_audit', 'due_date', 'owner_id', 'reviewer_id', 'recurrence',
@@ -72,7 +72,7 @@ BUSINESS_FIELDS = {
     'requirements': {'baseline_response', 'baseline_key', 'applicability', 'status', 'effective_date'},
 }
 SAFE_ENUMS = {
-    'status': {'not_assessed', 'not_addressed', 'in_progress', 'addressed', 'not_applicable', 'open', 'closed',
+    'status': {'not_assessed', 'not_addressed', 'needs_attention', 'in_progress', 'addressed', 'not_applicable', 'open', 'closed',
         'identified', 'assessed', 'accepted', 'retired', 'active', 'inactive', 'draft', 'approved', 'in_review',
         'rejected', 'completed', 'cancelled', 'upcoming', 'scheduled', 'overdue', 'in_remediation',
         'remediated', 'pending_validation', 'validated', 'done', 'needs_verification',
@@ -92,7 +92,8 @@ NUMERIC = {'likelihood_score': (1, 5), 'impact_score': (1, 5), 'risk_score': (1,
            'implementation_group': (1, 3)}
 CATEGORIES = {'security', 'availability', 'processing_integrity', 'confidentiality', 'privacy'}
 AUDIT_ACTIONS = {
-    'framework_assessments': {'Framework assessment updated', 'Framework record linked', 'Framework Evidence unlinked'},
+    'framework_assessments': {'Framework assessment updated', 'Framework record linked', 'Framework Evidence unlinked',
+        'Assessment item updated'},
     'organizational_controls': {'Control created', 'Control updated', 'Control observation recorded'},
     'reviews': {'Review started', 'Review completed', 'Review configuration changed', 'Audit work updated'},
     'findings': {'create', 'delete', 'validate', 'accept', 'Finding raised', 'Finding accepted',
@@ -117,6 +118,14 @@ def _digest(value):
 def _business_value(field, value):
     if field == 'archived_at':
         return bool(value)
+    if field == 'items_to_address':
+        if value is None:
+            return []
+        if isinstance(value, list):
+            # Reconciliation clocks/history do not change current checklist facts.
+            fields = ('item_id', 'question_id', 'kind', 'text', 'state', 'resolution', 'notes', 'finding_id')
+            facts = [{key: item.get(key) for key in fields} if isinstance(item, dict) else item for item in value]
+            return sorted(facts, key=_digest)
     if field != 'iso_audit':
         return value
     def semantic(item):
@@ -221,7 +230,11 @@ def project_committed_change(entity_type, entity_id, client_id, user, before, af
     # Hash the authoritative business values without persisting free-text data.
     fingerprint = _digest({field: [_business_value(field, before.get(field)), _business_value(field, after.get(field))]
                           for field in BUSINESS_FIELDS[kind]})
-    identity = _digest(['source', kind, entity_id, client_id, _iso(at), action, changed, fingerprint])
+    identity_fields = ['source', kind, entity_id, client_id, _iso(at), action, changed, fingerprint]
+    if kind == 'framework_assessments' and 'items_to_address' in changed and type(after.get('items_revision')) is int:
+        # A repeated real transition can share a clock value but not its committed Items revision.
+        identity_fields.append(['items_revision', after['items_revision']])
+    identity = _digest(identity_fields)
     event = _base(kind, entity_id, client_id, user, at, title, identity)
     event['changed_fields'] = changed
     event['description'] = f'{SOURCES[kind][2]} {operation}.'
@@ -289,7 +302,7 @@ def project_audit(document):
     # saves. Admit uncertain metadata updates only with recorded changed values.
     unproved = {'update', 'Risk updated', 'Risk owner assigned', 'Treatment updated',
         'Next Risk Review scheduled', 'Review configuration changed', 'Control updated',
-        'Audit work updated', 'Framework assessment updated', 'Framework record linked',
+        'Audit work updated', 'Framework assessment updated', 'Assessment item updated', 'Framework record linked',
         'Framework Evidence unlinked', 'Evidence metadata changed', 'Evidence relationship added',
         'Evidence relationship removed', 'policy-basis', 'policy-authority'}
     changes = meta.get('changes')

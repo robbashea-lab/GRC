@@ -333,6 +333,7 @@ def _render_framework_report(snapshot, report_type):
     title('Program progress', 'Progress over time', period_caption)
     add(trend.get('message') or 'Historical assessment snapshots are unavailable.')
     observations = trend.get('observations') or []
+    assessment_events = trend.get('provenance') == 'current_catalog_assessment_events'
     if observations:
         if (trend.get('state') == 'available' and trend.get('comparable', True)
                 and not trend.get('scope_changes') and len(observations) <= 12):
@@ -340,28 +341,34 @@ def _render_framework_report(snapshot, report_type):
         keys = _statuses({key: 0 for observation in observations for key in observation['status_counts']})
         col_widths = [104] + [(width - 104) / (len(keys) + 1)] * (len(keys) + 1)
         data = [[paragraph('Observation', 'cellhead')] + [paragraph(labels.get(key, key.replace('_', ' ')), 'cellhead') for key in keys]
-                + [paragraph('Total', 'cellhead')]]
+                + [paragraph('Saved states' if assessment_events else 'Total', 'cellhead')]]
         for observation in observations:
             observation_type = ('Comparison baseline' if observation.get('comparison_baseline') else
                                 'Current source snapshot' if observation.get('current_snapshot') else 'Recorded observation')
+            if assessment_events and not observation.get('current_snapshot'):
+                observation_type = 'Saved assessment states'
+            saved_count = observation.get('known_count', observation['total']) if assessment_events else observation['total']
             data.append([paragraph(f"{_date(observation['date'], tz)}\n{observation_type}", 'cell')] +
                         [paragraph(str(observation['status_counts'].get(key, 0)), 'cell') for key in keys] +
-                        [paragraph(str(observation['total']), 'cell')])
+                        [paragraph(str(saved_count), 'cell')])
         table = Table(data, colWidths=col_widths, repeatRows=1, hAlign='LEFT', splitInRow=1)
         table.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'), ('LINEBELOW', (0, 0), (-1, 0), 0.8, RULE),
                                   ('LINEBELOW', (0, 1), (-1, -1), 0.4, RULE), ('TOPPADDING', (0, 0), (-1, -1), 9),
                                   ('BOTTOMPADDING', (0, 0), (-1, -1), 9), ('LEFTPADDING', (0, 0), (-1, -1), 3)]))
         story.append(table)
-        add('Only recorded observations are shown. Missing dates are not interpolated.', 'mini')
+        add('Saved assessment states use the current catalog population; past program scope is unproven. Missing dates are not interpolated.'
+            if assessment_events else 'Only recorded observations are shown. Missing dates are not interpolated.', 'mini')
     for change in trend.get('scope_changes') or []:
         add(f'Scope change: {_text(change)}', 'mini')
     if observations:
-        add('Recorded scope', 'heading')
+        add('Population and history limits' if assessment_events else 'Recorded scope', 'heading')
         for observation in observations:
             metadata = f"{_date(observation['date'], tz)}: {observation.get('scope') or 'Not recorded'}"
-            if observation.get('known_count') is not None:
+            if assessment_events and not observation.get('current_snapshot'):
+                metadata += f" | {observation.get('known_count', 0)} known saved states of {observation['total']} current catalog records."
+            elif observation.get('known_count') is not None:
                 metadata += f" | {observation['known_count']} of {observation['total']} records known; coverage: {observation.get('coverage', 'Not recorded')}%."
-            if observation.get('applicable_total') is not None:
+            if observation.get('applicable_total') is not None and (not assessment_events or observation.get('current_snapshot')):
                 metadata += f" Applicable denominator: {observation['applicable_total']}."
             add(metadata, 'mini')
 

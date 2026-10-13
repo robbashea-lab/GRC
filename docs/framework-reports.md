@@ -45,16 +45,19 @@ references and finding identifiers in one MongoDB transaction with
 `ReadConcern('snapshot')`. This requires a replica set or compatible sharded
 deployment. If consistent snapshots are unavailable, the endpoint returns 503;
 it does not fall back to separate inconsistent reads. The PDF records source hash,
-capture time, read window and logical read position. Later edits do not alter its
+capture time, read window and session operation time. The latter is session
+provenance, not a claim to expose the transaction's exact snapshot timestamp.
+Later edits do not alter its
 bytes. Generation is synchronous, in memory, with no public files, export jobs or
 stored report artifacts. Its audit record contains export metadata only.
 
-History comes from recorded status events. Known observations retain their actual
-timestamps, including a valid pre-period baseline. Missing events remain unknown.
-Scope fingerprints and incomplete historical ISO applicability prevent misleading
-comparisons. Charts never interpolate or substitute today's applicability into
-old events. Missing/partial history is disclosed while current reporting remains
-available. Recorded client IANA timezones are used; an absent timezone is explicitly
+History comes from recorded assessment status events under the current catalog.
+Known observations retain their actual timestamps. Those events do not establish
+past program activation, catalog population or applicability. Historical program
+percentages and period comparisons remain unavailable; current native counts and
+applicable denominators are reported separately. Missing/partial history is
+disclosed while current reporting remains available. Recorded client IANA timezones
+are used; an absent timezone is explicitly
 reported as UTC. Runtime `tzdata` supplies the standard-library fallback on Windows.
 
 Server access follows the existing authenticated report/document read roles and

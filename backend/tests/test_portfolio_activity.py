@@ -96,6 +96,112 @@ class PortfolioActivityTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(activity.project_audit({**scope, 'action': 'SOC 2 readiness scope updated',
             'meta': {'categories': ['security', 'availability']}}))
 
+    def assessment_item(self, **changes):
+        return {'item_id': 'item_' + '1' * 32, 'question_id': 'practice', 'kind': 'gap',
+            'text': 'PRIVATE ITEM TEXT', 'state': 'open', 'resolution': 'PRIVATE RETAINED RESOLUTION',
+            'notes': 'PRIVATE LEGACY ITEM NOTES',
+            'finding_id': None, 'source_version': 'fixture-version', 'source_fingerprint': 'fixture-fingerprint',
+            'created_at': self.as_of, 'updated_at': self.as_of, 'history': [], **changes}
+
+    async def test_assessment_item_business_changes_project_generic_minimal_events(self):
+        item = self.assessment_item()
+        before = {'framework_key': 'cis-ig1', 'status': 'addressed', 'items_to_address': [item], 'items_revision': 1}
+        for index, (field, value) in enumerate((('state', 'resolved'), ('resolution', 'PRIVATE CHANGED RESOLUTION'),
+                             ('finding_id', 'fnd_private_item_link'), ('text', 'PRIVATE CHANGED ITEM TEXT'),
+                             ('notes', 'PRIVATE CHANGED LEGACY ITEM NOTES'))):
+            with self.subTest(field=field):
+                source_before = {**before, 'definition_id': '1.' + str(index + 1), 'framework_version': '8.1'}
+                after = copy.deepcopy(source_before)
+                after['items_to_address'][0][field] = value
+                after['items_revision'] += 1
+                identity = 'assessment-items-' + field
+                event = await self.event(identity, kind='framework_assessments', before=source_before, after=after)
+                self.assertIsNotNone(event)
+                self.assertEqual((event['type'], event['title'], event['changed_fields']),
+                                 ('Assessments', 'Assessment updated', ['items_to_address']))
+                result = await activity.read_activity(self.db, self.user, self.clients, self.as_of)
+                public = next(row for row in result['events'] if row['event_id'] == event['event_id'])
+                self.assertEqual(public['source']['entity_id'], identity)
+                payload = json.dumps({'event': event, 'public': public})
+                for private in (item['item_id'], item['text'], item['resolution'],
+                                after['items_to_address'][0]['text'], after['items_to_address'][0]['resolution'],
+                                item['notes'], after['items_to_address'][0]['notes'],
+                                'fnd_private_item_link'):
+                    self.assertNotIn(private, payload)
+                for position in (event.get('before', {}), event.get('after', {}),
+                                 public.get('before', {}), public.get('after', {})):
+                    self.assertNotIn('items_to_address', position)
+                if field == 'text':
+                    alternative = copy.deepcopy(after)
+                    alternative['items_to_address'][0]['text'] = 'PRIVATE ALTERNATIVE ITEM TEXT'
+                    distinct = activity.project_committed_change('framework_assessments', identity, 'a',
+                        self.user, source_before, alternative, self.as_of)
+                    self.assertIsNotNone(distinct)
+                    self.assertNotEqual(event['event_id'], distinct['event_id'])
+                    self.assertNotIn('PRIVATE ALTERNATIVE ITEM TEXT', json.dumps(distinct))
+
+    def test_assessment_item_bookkeeping_and_reorder_are_not_business_changes(self):
+        before = {'framework_key': 'cis-ig1', 'status': 'addressed', 'items_revision': 2,
+            'last_saved': self.as_of, 'last_assessed': self.as_of, 'assessment_history': [],
+            'items_to_address': [self.assessment_item(), self.assessment_item(
+                item_id='item_' + '2' * 32, question_id='verification', kind='verification')]}
+        later = (self.now + timedelta(seconds=1)).isoformat()
+        variants = {}
+        variants['item clocks and history'] = copy.deepcopy(before)
+        variants['item clocks and history']['items_to_address'][0].update(created_at=later, updated_at=later,
+            history=[{'at': later, 'by': 'operator', 'event': 'reconciled', 'text': 'PRIVATE HISTORICAL TEXT'}])
+        variants['source reconciliation'] = copy.deepcopy(before)
+        variants['source reconciliation']['items_to_address'][0].update(
+            source_version='new-fixture-version', source_fingerprint='new-fixture-fingerprint', previous_state='resolved')
+        variants['assessment clocks and revision'] = copy.deepcopy(before)
+        variants['assessment clocks and revision'].update(items_revision=3, last_saved=later,
+            last_assessed=later, updated_at=later, assessment_history=[{'at': later, 'status': 'addressed'}])
+        variants['list order'] = copy.deepcopy(before)
+        variants['list order']['items_to_address'].reverse()
+        for name, after in variants.items():
+            with self.subTest(change=name):
+                self.assertIsNone(activity.project_committed_change('framework_assessments', 'items-noise',
+                    'a', self.user, before, after, self.as_of))
+
+    async def test_assessment_needs_attention_status_is_retained_in_safe_positions(self):
+        for index, (before_status, after_status) in enumerate((('needs_attention', 'addressed'), ('addressed', 'needs_attention'))):
+            with self.subTest(before=before_status, after=after_status):
+                native_identity = {'framework_key': 'cis-ig1', 'definition_id': '2.' + str(index + 1), 'framework_version': '8.1'}
+                event = await self.event('native-status-' + before_status, kind='framework_assessments',
+                    before={**native_identity, 'status': before_status},
+                    after={**native_identity, 'status': after_status})
+                self.assertEqual(event.get('before'), {'status': before_status})
+                self.assertEqual(event.get('after'), {'status': after_status})
+                result = await activity.read_activity(self.db, self.user, self.clients, self.as_of)
+                public = next(row for row in result['events'] if row['event_id'] == event['event_id'])
+                self.assertEqual(public['before'], {'status': before_status})
+                self.assertEqual(public['after'], {'status': after_status})
+
+    def test_retained_assessment_item_audit_requires_business_transition_proof(self):
+        item = self.assessment_item()
+        after = {**item, 'state': 'resolved', 'resolution': 'PRIVATE CHANGED RESOLUTION'}
+        audit = {'log_id': 'retained-items', 'entity_type': 'framework_assessment', 'entity_id': 'assessment-items',
+            'client_id': 'a', 'at': self.as_of, 'action': 'Assessment item updated', 'outcome': 'success',
+            'meta': {'item_id': item['item_id'], 'state': 'resolved'}}
+        self.assertIsNone(activity.project_audit(audit))
+        named_only = {**audit['meta'], 'changed_fields': ['items_to_address']}
+        self.assertIsNone(activity.project_audit({**audit, 'meta': named_only}))
+        proved = {**named_only, 'changes': {'items_to_address': {'before': [item], 'after': [after]}}}
+        event = activity.project_audit({**audit, 'meta': proved})
+        self.assertIsNotNone(event)
+        self.assertEqual((event['type'], event['changed_fields']), ('Assessments', ['items_to_address']))
+        self.assertEqual(event['provenance'], 'retained_audit_partial')
+        for private in (item['item_id'], item['text'], item['resolution'], item['notes'], after['resolution']):
+            self.assertNotIn(private, json.dumps(event))
+        for previous, current in (([item], [copy.deepcopy(item)]),
+                                  ([item], [{**item, 'updated_at': 'later', 'history': [{'event': 'reconciled'}]}]),
+                                  ([item, self.assessment_item(item_id='item_' + '2' * 32)],
+                                   [self.assessment_item(item_id='item_' + '2' * 32), item])):
+            self.assertIsNone(activity.project_audit({**audit, 'meta': {**named_only,
+                'changes': {'items_to_address': {'before': previous, 'after': current}}}}))
+        for marker in ({'_portfolio_activity_event_id': 'a' * 64}, {'_portfolio_activity_noop': True}):
+            self.assertIsNone(activity.project_audit({**audit, 'meta': {**proved, **marker}}))
+
     async def test_distinct_same_timestamp_changes_keep_separate_safe_events(self):
         first = activity.project_committed_change('risks', 'same-time', 'a', self.user,
             {'status': 'identified'}, {'status': 'assessed'}, self.as_of)

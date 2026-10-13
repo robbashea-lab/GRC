@@ -495,7 +495,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
         Object.assign(row,{last_assessed:at,assessed_by:db.user.user_id});
         (row.assessment_history||=[]).push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at,by:row.assessed_by});
       }
-      audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});
+      audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status,record_assessment:recordAssessment});
     }
     return row;
   }
@@ -524,7 +524,12 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     if(body.due_date&&due===null)throw new Error('Enter a valid target date');
     if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:assessmentTitle(row),owner_id:owner,due_date:due===null?null:new Date(due*86400000).toISOString().slice(0,10),remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};validateAssignment(db, 'findings', f);db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
     action(db,'findings',fid,'create-task',{title:f.remediation_title});
-    if(item){if(!f.assessment_item_id)Object.assign(f,{assessment_item_id:body.item_id,assessment_item_text:item.text,framework_key:row.framework_key});linkItemFinding(row,body.item_id,fid,db.user.user_id,now());}
+    if(item){
+      if(!f.assessment_item_id)Object.assign(f,{assessment_item_id:body.item_id,assessment_item_text:item.text,framework_key:row.framework_key});
+      const previouslyLinked=item.finding_id;
+      linkItemFinding(row,body.item_id,fid,db.user.user_id,now());
+      if(previouslyLinked!==fid)audit(db,'Assessment item updated','framework_assessments',row,{item_id:body.item_id,state:item.state,finding_id:fid});
+    }
     return f;
   }
   throw new Error('Unsupported framework operation; assessment history is retained');

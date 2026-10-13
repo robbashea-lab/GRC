@@ -16,9 +16,10 @@ from pymongo.read_concern import ReadConcern
 from starlette.concurrency import run_in_threadpool
 
 import authorization
-from framework_catalog import CATALOGS, active_definitions, client_configuration
+from framework_catalog import CATALOGS, FRAMEWORKS, active_definitions, client_configuration
 from framework_governance import STATUSES
 from framework_summary import progress
+from portfolio_progress import current_position
 
 LOG = logging.getLogger(__name__)
 REPORT_KEYS = ('cis-ig1', 'soc-2', 'iso-27001')
@@ -26,7 +27,8 @@ ASSESSMENT_FIELDS = ('framework_assessment_id', 'client_id', 'framework_key', 'd
     'framework_version', 'status', 'implementation', 'verification', 'last_assessed', 'last_saved',
     'assessment_recorded_at', 'assessment_recorded_by', 'verified_at', 'verification_notes',
     'guided_assessment_source',
-    'created_at', 'assessment_history.at', 'assessment_history.status', 'assessment_history.soa_applicability',
+    'created_at', 'archived', 'archived_at', 'assessment_history.at', 'assessment_history.status',
+    'assessment_history.soa_applicability', 'assessment_history.soa_justification', 'assessment_history.na_rationale',
     'related_links', 'unlinked_evidence_ids', 'na_rationale',
     'soa_applicability', 'soa_justification', 'items_to_address', 'items_revision', 'notes')
 CLIENT_FIELDS = ('client_id', 'name', 'status', 'onboarding_baseline', 'framework_settings',
@@ -128,19 +130,19 @@ def distribution(rows):
     return {status: counts[status] for status in STATUSES}
 
 
-def applicable(row):
-    return row.get('soa_applicability') != 'excluded' if row.get('specification') == 'annex_control' else row.get('status') != 'not_applicable'
-
-
-def metrics(rows):
-    included = [row for row in rows if applicable(row)]
+def metrics(rows, client, key, now):
+    framework = next(framework for framework in FRAMEWORKS if framework['key'] == key)
+    position = current_position(client, framework, [], rows, now)['current']
+    applicability = position.get('scope', {}).get('applicability', {})
+    included = [row for row in rows if applicability.get(row['definition_id']) in ('included', 'invalid_not_applicable')]
     count = distribution(included)
-    assessed = len(included) - count['not_assessed']
-    return {'total': len(rows), 'applicable_total': len(included), 'assessed': assessed,
-            'not_assessed': count['not_assessed'], 'not_applicable': len(rows) - len(included),
-            'status_counts': distribution(rows), 'applicable_status_counts': count, 'implementation_percent':
-                int(count['addressed'] / len(included) * 100 + .5) if included else 0,
-            'coverage_percent': int(assessed / len(included) * 100 + .5) if included else 0,
+    assessed = sum(count[status] for status in ('addressed', 'in_progress', 'needs_attention'))
+    return {'total': len(rows), 'applicable_total': position['denominator'], 'assessed': assessed,
+            'not_assessed': count['not_assessed'], 'not_applicable': position['excluded'],
+            'scope_undetermined': position.get('scope_undetermined', 0), 'implementation_position': position,
+            'status_counts': distribution(rows), 'applicable_status_counts': count,
+            'implementation_percent': position['percentage'],
+            'coverage_percent': assessed / len(included) * 100 if included and position['availability'] == 'available' else None,
             'verification_counts': dict(Counter(row.get('verification') or 'not_verified' for row in rows))}
 
 
@@ -159,7 +161,7 @@ def native_metrics(rows, key):
 
 
 def history_trend(rows, client, key, now, period, zone):
-    """Only aggregate dates for which every active record has an explicit saved state."""
+    """Saved states for today's catalog population cannot prove past program scope."""
     start = period_start(now.astimezone(zone), period).astimezone(timezone.utc)
     histories = []
     observations = {}
@@ -182,18 +184,17 @@ def history_trend(rows, client, key, now, period, zone):
                 elif at < start:
                     baseline_at = max(at, baseline_at or at)
         events.sort(key=lambda value: value[0])
-        # A missing/latest mismatched status is incomplete history, never today's state backdated.
+        # Matching history is disclosed separately; genuine older events stay visible.
         if events and events[-1][1]['status'] == row['status']:
-            histories.append((row, events))
             usable += 1
-        else:
-            histories.append((row, []))
+        histories.append((row, events))
     scope_changes = []
     change = client.get('cis_scope_change') if key == 'cis-ig1' else None
     change_at = parse_time((change or {}).get('updated_at'))
     if change and change_at and start <= change_at <= now:
         scope_changes.append(f"CIS scope changed from IG{change['before']} to IG{change['after']} at {change_at.astimezone(zone).isoformat()}; earlier totals are not compared.")
-    config_at = parse_time(client.get('soc_configuration_updated_at') if key == 'soc-2' else client.get('cis_configuration_updated_at'))
+    configuration_field = {'cis-ig1': 'cis_configuration_updated_at', 'soc-2': 'soc_configuration_updated_at'}.get(key)
+    config_at = parse_time(client.get(configuration_field)) if configuration_field else None
     if key == 'soc-2' and config_at and start <= config_at <= now:
         scope_changes.append(f'SOC 2 configuration changed at {config_at.astimezone(zone).isoformat()}; prior category/system scope is not fully recorded for comparison.')
     candidates = sorted(set(observations.values()) | ({baseline_at} if baseline_at else set()))
@@ -205,45 +206,46 @@ def history_trend(rows, client, key, now, period, zone):
         for row, events in histories:
             event = next((raw for when, raw in reversed(events) if when <= at), None)
             if event is None:
-                break
-            if key == 'iso-27001' and row['specification'] == 'annex_control' and 'soa_applicability' not in event:
-                break
+                continue
             selected.append({**event, 'definition_id': row['definition_id'], 'specification': row.get('specification')})
-        if len(selected) == len(rows) and selected:
-            values = metrics(selected)
+        if selected:
+            values = metrics(selected, client, key, at)
             points.append({'date': at.astimezone(zone).isoformat(), 'total': len(rows),
-                'known_count': len(rows), 'coverage': 100, 'status_counts': values['status_counts'],
-                'applicable_total': values['applicable_total'], 'implementation_percent': values['implementation_percent'],
-                'scope': framework_option(key, client)['scope'], 'comparison_baseline': at < start,
-                'scope_fingerprint': hashlib.sha256(json.dumps(sorted(r['definition_id'] for r in selected if applicable(r))).encode()).hexdigest()})
+                'known_count': len(selected), 'status_counts': values['status_counts'],
+                'applicable_total': values['applicable_total'], 'implementation_percent': None,
+                'scope': 'Current catalog population; historical program scope is unproven.',
+                'comparison_baseline': False, 'prior_period_observation': at < start,
+                'scope_fingerprint': hashlib.sha256(json.dumps(
+                    values['implementation_position'].get('scope', {}).get('applicability', {}), sort_keys=True).encode()).hexdigest()})
     if points:
-        values = metrics(rows)
+        values = metrics(rows, client, key, now)
         points.append({'date': now.astimezone(zone).isoformat(), 'total': len(rows), 'known_count': len(rows),
             'coverage': 100, 'status_counts': values['status_counts'], 'applicable_total': values['applicable_total'],
             'implementation_percent': values['implementation_percent'], 'scope': framework_option(key, client)['scope'],
             'comparison_baseline': False, 'current_snapshot': True,
-            'scope_fingerprint': hashlib.sha256(json.dumps(sorted(r['definition_id'] for r in rows if applicable(r))).encode()).hexdigest()})
+            'scope_fingerprint': hashlib.sha256(json.dumps(
+                values['implementation_position'].get('scope', {}).get('applicability', {}), sort_keys=True).encode()).hexdigest()})
     denominators = {point['applicable_total'] for point in points}
     scope_fingerprints = {point['scope_fingerprint'] for point in points}
     if len(denominators) > 1:
-        scope_changes.append('Recorded applicability changed the implementation denominator between observations; percentages are not a like-for-like comparison.')
+        scope_changes.append('Available saved applicability states give different denominators within the current catalog population; past program scope is not proven.')
     elif len(scope_fingerprints) > 1:
-        scope_changes.append('Recorded applicability changed which assessment units were included, despite an unchanged denominator; observations are not a like-for-like comparison.')
+        scope_changes.append('Available saved applicability states concern different assessment units, despite an unchanged denominator; past program scope is not proven.')
     if incomplete_applicability:
         scope_changes.append('Some historical Annex A applicability decisions were not recorded; complete like-for-like history is unavailable.')
-    state = 'available' if points and parse_time(points[0]['date']) <= start and not incomplete_applicability else 'partial' if points or recorded_dates else 'unavailable'
+    state = 'partial' if recorded_dates else 'unavailable'
     message = ('No saved assessment history is available; current assessments are reported below.' if not recorded_dates else
-        f'{usable} of {len(rows)} current assessment records have matching saved history. Only complete known program observations are shown; missing periods are not interpolated.')
+        f'{usable} of {len(rows)} current assessment records have matching saved history. '
+        'Observations use the last explicit saved states at or before each shown date for the current catalog population; unknown states are omitted. '
+        'Individual events do not prove past program activation, configuration or catalog lineage. Historical implementation percentages and whole-program comparisons are unavailable; missing dates are not interpolated.')
     if recorded_dates:
         message += f" Recorded events span {min(recorded_dates).astimezone(zone).isoformat()} to {max(recorded_dates).astimezone(zone).isoformat()}."
-        message += ' The latest recorded date per calendar ' + ('day' if period == '30d' else 'month') + ' is evaluated; only complete known program observations are shown.'
-        if points and points[0].get('comparison_baseline'):
-            message += ' The comparison baseline retains its actual recorded date before the selected period.'
-    if scope_changes:
-        message += ' Scope/configuration changes limit comparisons.'
+        message += ' The latest recorded date per calendar ' + ('day' if period == '30d' else 'month') + ' is selected.'
+        if points and points[0].get('prior_period_observation'):
+            message += ' Saved states before the selected period retain their actual event dates; they are not a whole-program comparison baseline.'
     return {'period': period, 'start': start.astimezone(zone).isoformat(), 'end': now.astimezone(zone).isoformat(),
             'state': state, 'message': message, 'observations': points, 'scope_changes': scope_changes,
-            'comparable': bool(points) and len(scope_fingerprints) == 1 and not incomplete_applicability}
+            'provenance': 'current_catalog_assessment_events', 'comparable': False}
 
 
 def build_snapshot(client, key, saved, evidence, findings, now, period, read_window, logical_position, reviews=()):
@@ -307,16 +309,22 @@ def build_snapshot(client, key, saved, evidence, findings, now, period, read_win
             'soa_applicability': row.get('soa_applicability'), 'soa_justification': row.get('soa_justification'),
             'na_rationale': row.get('na_rationale'), 'evidence': refs, 'items_to_address': items,
             'items_revision': row.get('items_revision', 0)})
-    summary = metrics(rows)
+    summary = metrics(rows, client, key, now)
     summary['status_labels'] = status_labels
     summary['native_metrics'] = native_metrics(rows, key)
-    summary['denominator_note'] = 'Implementation and assessed coverage use applicable saved assessment units; Not Applicable / excluded units are shown separately. Mixed statuses are not a control-level score.'
+    position = summary['implementation_position']
+    summary['denominator_note'] = (f"Implementation uses {position['measure_version']}, the same native measure as Portfolio. "
+        'Only applicable implementation units enter the donut; valid exclusions and undetermined SoA controls are separate. '
+        'Assessed coverage counts valid saved implementation statuses other than Not Assessed; invalid N/A earns no credit. '
+        f"Saved position availability: {position['availability']}. " + (position.get('reason') or ''))
     validity = summary['native_metrics']['assessment_progress']
     summary['denominator_note'] += (f" Native assessment resolution records {validity['valid_na']} valid and {validity['invalid_na']} invalid Not Applicable states; invalid exclusions receive no resolution credit. "
-        'Saved-state distributions retain all native statuses, including statuses on excluded ISO controls.')
+        'Saved-state distributions retain all native statuses, including statuses on excluded or undetermined ISO controls. '
+        'An unavailable percentage is shown as N/A, not zero or completion.')
     summary['management_summary'] = (f"{summary['applicable_status_counts']['addressed']} of {summary['applicable_total']} applicable {framework_option(key, client)['unit_name']} are saved as {status_labels['addressed']}. "
-        f"{summary['assessed']} applicable units have a recorded status other than Not Assessed; {summary['not_assessed']} remain Not Assessed. "
-        f"{summary['not_applicable']} units are Not Applicable or excluded. Saved implementation and separate verification states do not establish independent effectiveness, certification, or an assurance opinion.")
+        f"{summary['assessed']} included units have a saved implementation status; {summary['not_assessed']} remain Not Assessed. "
+        f"{summary['not_applicable']} units are validly excluded or Not Applicable; {summary['scope_undetermined']} have undetermined applicability. "
+        'Saved implementation and separate verification states do not establish independent effectiveness, certification, or an assurance opinion.')
     if key == 'iso-27001':
         native = summary['native_metrics']
         summary['management_summary'] += (f"\n\nISMS clauses: {native['clauses']['total']} requirements, {native['clauses']['status_counts']['addressed']} Implemented. "
@@ -334,7 +342,7 @@ def build_snapshot(client, key, saved, evidence, findings, now, period, read_win
         'latest_record_saved_at': max(save_dates, key=parse_time, default=None),
         'timezone_note': '' if client.get('timezone') or client.get('time_zone') else 'Client timezone not recorded; UTC is used.',
         'source_hash': source_hash,
-        'source_cutoff': f"Consistent MongoDB read snapshot; read window {read_window[0]} to {read_window[1]}; logical read position {logical_position}",
+        'source_cutoff': f"Consistent MongoDB read snapshot; read window {read_window[0]} to {read_window[1]}; session operation time {logical_position}",
         'summary': summary, 'groups': [{'id': g['id'], 'title': g['title'], 'total': len(g['rows']),
             'status_counts': distribution(g['rows'])} for g in groups.values()], 'assessments': details,
         'trend': history_trend(rows, client, key, now, period, zone)}

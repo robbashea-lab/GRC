@@ -361,7 +361,7 @@ def router_for(s):
         if row['framework_key'] not in ('cis-ig1','soc-2','iso-27001'):
             raise HTTPException(404,'Assessment items are not available for this framework')
         await assessment_items.update(s,row,item_id,body,user)
-        return await parent(aid,user)
+        return portfolio_activity.public_source(await parent(aid,user))
     async def target_record(kind,record_id,user):
         if kind!='evidence':return await s._authorized_parent(kind,record_id,user)
         # Evidence has separate routes, not the operational parent-record registry.

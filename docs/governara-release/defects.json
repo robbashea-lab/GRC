@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "scope": "bounded integration defects; no new broad audit",
+  "items": [
+    {
+      "id": "IC1",
+      "actual": "Raw Item PATCH response exposed internal Portfolio capture envelope.",
+      "expected": "Changed and no-op responses use existing public_source DTO.",
+      "correction": "framework_governance Item reply sanitation",
+      "source_review": "independent PASS",
+      "local": "route regression PASS; real Mongo route PASS",
+      "hosted": "pending composite deployment"
+    },
+    {
+      "id": "IC2",
+      "actual": "Item resolution/reopen/Finding link did not generate truthful durable Portfolio activity; same-clock repeated transitions could collapse.",
+      "expected": "Independent Items CAS plus atomic semantic capture; exact audit acknowledgement; no history/clock/revision-only activity.",
+      "correction": "assessment_items + portfolio_activity + three-file Demo parity",
+      "source_review": "backend independent PASS; owner non-author Demo reviews PASS; root final edge source rereview pending",
+      "local": "owner53tests/5551subtests PASS; root actual corrected real-Mongo111tests PASS134.408s including Items/reconnect/collector/recovery; valid Demo before11FAIL/17PASS; justified SOC N/A case before1FAIL/28PASS; corrected final29/29PASS7.604s, progress calculations unchanged",
+      "hosted": "pending composite deployment"
+    },
+    {
+      "id": "RC1",
+      "actual": "Report implementation denominator included undetermined ISO Annex A controls and invalid N/A.",
+      "expected": "Existing native-v1 included/applicable calculation; raw native status distributions separately.",
+      "correction": "reuse portfolio_progress current_position; no source writes",
+      "source_review": "independent PASS",
+      "local": "independent corrected36tests PASS; real snapshot3tests PASS",
+      "hosted": "pending actual private PDF downloads"
+    },
+    {
+      "id": "RC2",
+      "actual": "Assessment status events incorrectly implied complete historical program populations; ISO history used unrelated CIS configuration fence.",
+      "expected": "Actual current-catalog event history disclosed partial/noncomparable; no invented historical percentages; framework-specific fences only.",
+      "correction": "bounded history/provenance and PDF captions",
+      "source_review": "independent PASS",
+      "local": "independent36PASS; owner offline PDF visual checks PASS",
+      "hosted": "pending actual private PDF downloads"
+    },
+    {
+      "id": "RC3",
+      "actual": "Existing needs_attention status omitted from safe activity positions.",
+      "expected": "Preserve canonical saved status without scoring migration.",
+      "correction": "existing safe-enum admission",
+      "source_review": "independent PASS",
+      "local": "modeled regression PASS; corrected real-Mongo111tests PASS, with distinct native fixture identities",
+      "hosted": "pending composite deployment"
+    },
+    {
+      "id": "GN-QA-08",
+      "actual": "Program Nara covered Return to portfolio; first correction newly covered Calendar.",
+      "expected": "Narrow transient Return-triggered refit protects visible native neighbors and preserves user preferences/artwork.",
+      "correction": "OmniDock program control obstacles/observation; no native assessment floating launcher restored",
+      "source_review": "Agent5 revised source PASS, first rejection preserved",
+      "local": "same neighbor case failed before; corrected18/18PASS",
+      "hosted": "physical action check pending"
+    }
+  ],
+  "non_application_failure": {
+    "id": "QA-fixture-identities",
+    "actual": "Five real-Mongo subcases violated the existing compound native assessment identity index because multiple synthetic rows omitted definition/version.",
+    "action": "Corrected only two new projector methods with distinct real CIS v8.1 definition/version identities. Indexes/assertions unchanged; modeled2tests/7subtests PASS and actual corrected real-Mongo111tests PASS134.408s. Original five-error142.196-second run retained.",
+    "status": "resolved in test fixtures; original failure preserved"
+  },
+  "held_acceptance": "Restricted-role, actual logout/login, unavailable fault/tampering and worker-disruption campaigns remain held; not replaced by SuperAdmin/local mocks/CI."
+}

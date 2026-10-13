@@ -1,0 +1,54 @@
+{
+  "review_base": "ea8b4d9706248dd865cda2edafa90bb091d497fa",
+  "files": [
+    {
+      "path": "backend/framework_reports.py",
+      "sha256": "2dbb6b18c4b2cc9423e286006bfa89136b4932e13c4c480b7938023414889642"
+    },
+    {
+      "path": "backend/framework_report_pdf.py",
+      "sha256": "a5741fd0ba7fbe2256a3ac9ab37a4b28add23325c9e6805dae49a36c063023e8"
+    },
+    {
+      "path": "backend/tests/test_framework_reports.py",
+      "sha256": "b79332ad17d9cc1993b39dd4a069d74f63094cf47f1c8303ce507c5b562b9627"
+    }
+  ],
+  "classes": [
+    "test_framework_reports.FrameworkReportUnitTests",
+    "test_framework_reports.FrameworkReportRouteTests",
+    "test_framework_report_pdf.FrameworkReportPdfTests"
+  ],
+  "command": "python -m unittest -v test_framework_reports.FrameworkReportUnitTests test_framework_reports.FrameworkReportRouteTests test_framework_report_pdf.FrameworkReportPdfTests",
+  "runtime": {
+    "python": "3.12.14",
+    "reportlab": "4.4.9",
+    "fastapi": "0.141.1",
+    "motor": "3.7.1",
+    "pymongo": "4.18.2",
+    "tzdata": "2026.4",
+    "iana": "2026d"
+  },
+  "timezone_path": "C:/Users/RobbA/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/Lib/site-packages/tzdata/zoneinfo",
+  "initial": {
+    "tests": 36,
+    "errors": 10,
+    "seconds": 4.057,
+    "exit_code": 1,
+    "cause": "Missing IANA timezone data in isolated Windows venv; America/New_York unavailable."
+  },
+  "retest": {
+    "tests": 36,
+    "seconds": 6.774,
+    "exit_code": 0,
+    "started_at": "2026-10-13T17:06:34.781Z",
+    "completed_at": "2026-10-13T17:06:50.180Z",
+    "pre_post_hashes_matched": true
+  },
+  "limitations": [
+    "No real Mongo snapshot run here",
+    "No visual PDF/browser or hosted download verification",
+    "No combined exact-source CI/build or deployment operation",
+    "No whole-release or independent PR75 certification"
+  ]
+}

@@ -12,7 +12,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
 import framework_reports as reports
-from framework_catalog import CATALOGS, active_definitions, client_configuration
+import portfolio_progress as native_progress
+from framework_catalog import CATALOGS, FRAMEWORKS, active_definitions, client_configuration
 
 NOW = datetime(2026, 10, 13, 15, 0, tzinfo=timezone.utc)
 
@@ -35,7 +36,174 @@ def snapshot(client, key, rows, evidence=(), findings=(), period='6m', reviews=(
         ('read-start', 'read-end'), 'test position', list(reviews))
 
 
+def native_position(client, key, rows):
+    framework = next(row for row in FRAMEWORKS if row['key'] == key)
+    return native_progress.current_position(client, framework, [], rows, NOW)['current']
+
+
 class FrameworkReportUnitTests(unittest.TestCase):
+    def test_native_position_iso_undetermined_annex_never_supplies_implementation_credit(self):
+        client, rows = fixture('iso-27001')
+        for row in rows:
+            if row['definition_id'].startswith('A.'):
+                row['status'] = 'addressed'
+        before = copy.deepcopy(rows)
+        value = snapshot(client, 'iso-27001', rows)
+        summary = value['summary']
+        expected = native_position(client, 'iso-27001', rows)
+        self.assertEqual(summary['applicable_total'], 30)
+        self.assertEqual(summary['implementation_percent'], 0.0)
+        self.assertEqual(summary['scope_undetermined'], 93)
+        self.assertEqual(summary['not_applicable'], 0)
+        self.assertEqual(summary['implementation_position'], expected)
+        self.assertEqual(summary['status_counts']['addressed'], 93)
+        self.assertEqual(summary['status_counts']['not_assessed'], 30)
+        self.assertEqual(summary['native_metrics']['assessment_progress']['resolved'], 93)
+        self.assertEqual(summary['native_metrics']['soa']['undetermined'], 93)
+        self.assertEqual(len(value['assessments']), 123)
+        self.assertEqual(sum(row['status'] == 'addressed' for row in value['assessments']), 93)
+        self.assertEqual(rows, before)
+
+    def test_native_position_invalid_na_and_zero_scope_never_look_complete(self):
+        for key in ('cis-ig1', 'soc-2'):
+            with self.subTest(framework=key):
+                client, rows = fixture(key)
+                rows[0]['status'] = 'addressed'
+                rows[1].update(status='not_applicable', na_rationale='   ')
+                invalid = snapshot(client, key, rows)['summary']
+                self.assertEqual(invalid['applicable_total'], len(rows))
+                self.assertIsNone(invalid['implementation_percent'])
+                self.assertEqual(invalid['not_applicable'], 0)
+                self.assertEqual(invalid['implementation_position'], native_position(client, key, rows))
+                self.assertEqual(invalid['implementation_position']['availability'], 'partial')
+                self.assertEqual(invalid['status_counts']['not_applicable'], 1)
+                self.assertEqual(invalid['native_metrics']['assessment_progress']['invalid_na'], 1)
+                rows[1]['na_rationale'] = 'Valid saved native scope exclusion'
+                valid = snapshot(client, key, rows)['summary']
+                self.assertEqual(valid['applicable_total'], len(rows) - 1)
+                self.assertEqual(valid['implementation_percent'], native_position(client, key, rows)['percentage'])
+                self.assertEqual(valid['implementation_position'], native_position(client, key, rows))
+                self.assertEqual(valid['native_metrics']['assessment_progress']['valid_na'], 1)
+                for row in rows:
+                    row.update(status='not_applicable', na_rationale='Valid saved native scope exclusion')
+                excluded = snapshot(client, key, rows)['summary']
+                self.assertEqual(excluded['applicable_total'], 0)
+                self.assertEqual(excluded['not_applicable'], len(rows))
+                self.assertIsNone(excluded['implementation_percent'])
+                self.assertEqual(excluded['implementation_position'], native_position(client, key, rows))
+                self.assertEqual(excluded['native_metrics']['assessment_progress']['valid_na'], len(rows))
+
+    def test_iso_history_retains_recorded_events_when_cis_configuration_changes(self):
+        client, rows = fixture('iso-27001')
+        client['cis_configuration_updated_at'] = '2026-10-05T00:00:00Z'
+        for row in rows:
+            row.update(status='addressed', assessment_history=[
+                {'at': '2026-03-01T00:00:00Z', 'status': 'in_progress'},
+                {'at': '2026-10-01T00:00:00Z', 'status': 'addressed'}])
+            if row['definition_id'].startswith('A.'):
+                row.update(soa_applicability='included', soa_justification='Recorded inclusion')
+                for event in row['assessment_history']:
+                    event.update(soa_applicability='included', soa_justification='Recorded inclusion')
+        value = snapshot(client, 'iso-27001', rows)
+        points = value['trend']['observations']
+        self.assertEqual([point['date'][:10] for point in points], ['2026-03-01', '2026-10-01', '2026-10-13'])
+        self.assertEqual(points[0]['status_counts']['in_progress'], 123)
+        self.assertEqual(points[1]['status_counts']['addressed'], 123)
+        self.assertTrue(points[-1]['current_snapshot'])
+        self.assertEqual(points[-1]['implementation_percent'], native_position(client, 'iso-27001', rows)['percentage'])
+
+    def test_assessment_events_do_not_establish_past_program_scope_or_catalog_lineage(self):
+        for key, group in (('cis-ig1', 1), ('cis-ig1', 2), ('cis-ig1', 3), ('soc-2', 1), ('iso-27001', 1)):
+            with self.subTest(framework=key, group=group):
+                client, rows = fixture(key, group)
+                for row in rows:
+                    row.update(status='addressed', assessment_history=[
+                        {'at': '2026-03-01T00:00:00Z', 'status': 'in_progress', 'framework_version': CATALOGS[key]['version']},
+                        {'at': '2026-10-01T00:00:00Z', 'status': 'addressed', 'framework_version': CATALOGS[key]['version']}])
+                    if key == 'iso-27001' and row['definition_id'].startswith('A.'):
+                        row.update(soa_applicability='included', soa_justification='Recorded inclusion')
+                        for event in row['assessment_history']:
+                            event.update(soa_applicability='included', soa_justification='Recorded inclusion')
+                value = snapshot(client, key, rows)
+                trend = value['trend']
+                self.assertEqual(trend['state'], 'partial')
+                self.assertFalse(trend['comparable'])
+                points = trend['observations']
+                self.assertEqual([point['date'][:10] for point in points], ['2026-03-01', '2026-10-01', '2026-10-13'])
+                for point in points[:-1]:
+                    self.assertIsNone(point['implementation_percent'])
+                    self.assertFalse(point['comparison_baseline'])
+                self.assertEqual(points[0]['status_counts']['in_progress'], len(rows))
+                self.assertEqual(points[1]['status_counts']['addressed'], len(rows))
+                self.assertEqual(points[-1]['implementation_percent'], native_position(client, key, rows)['percentage'])
+
+    def test_historical_missing_rationale_never_borrows_current_applicability(self):
+        for key in ('cis-ig1', 'iso-27001'):
+            with self.subTest(framework=key):
+                client, rows = fixture(key)
+                for row in rows:
+                    row.update(status='addressed', assessment_history=[
+                        {'at': '2026-03-01T00:00:00Z', 'status': 'addressed'},
+                        {'at': '2026-10-01T00:00:00Z', 'status': 'addressed'}])
+                    if key == 'iso-27001' and row['definition_id'].startswith('A.'):
+                        row.update(soa_applicability='excluded', soa_justification='Current exclusion rationale only')
+                        for event in row['assessment_history']:
+                            event['soa_applicability'] = 'excluded'
+                if key == 'cis-ig1':
+                    rows[0].update(status='not_applicable', na_rationale='Current exclusion rationale only')
+                    for event in rows[0]['assessment_history']:
+                        event['status'] = 'not_applicable'
+                value = snapshot(client, key, rows)
+                trend = value['trend']
+                self.assertEqual(len(trend['observations']), 3)
+                for point in trend['observations'][:-1]:
+                    self.assertIsNone(point['implementation_percent'])
+                    self.assertFalse(point['comparison_baseline'])
+                self.assertFalse(trend['comparable'])
+                self.assertEqual(trend['state'], 'partial')
+                self.assertEqual(trend['observations'][-1]['implementation_percent'], native_position(client, key, rows)['percentage'])
+
+    def test_actual_pdf_labels_recorded_states_without_claiming_past_program_scope(self):
+        from framework_report_pdf import render_framework_report
+        from test_framework_report_pdf import pdf_streams
+        client, rows = fixture('iso-27001')
+        for row in rows:
+            if row['definition_id'].startswith('A.'):
+                row['status'] = 'addressed'
+            row['assessment_history'] = [
+                {'at': '2026-03-01T00:00:00Z', 'status': row['status']},
+                {'at': '2026-10-01T00:00:00Z', 'status': row['status']}]
+        value = snapshot(client, 'iso-27001', rows)
+        with patch('framework_report_pdf._TrendChart', side_effect=AssertionError('Unproven history must not draw a percentage trend')):
+            content = pdf_streams(render_framework_report(value, 'executive'))
+        progress = content.split(b'PROGRAM PROGRESS', 1)[1].split(b'CONTROL / DOMAIN SUMMARY', 1)[0]
+        self.assertIn(b'Saved assessment states', progress)
+        self.assertIn(b'Population and history limits', progress)
+        self.assertIn(b'current catalog population', progress)
+        self.assertNotIn(b'Comparison baseline', progress)
+        current_metadata_date = b'October 13, 2026, 15:00 UTC:'
+        history_metadata = progress.split(b'Population and history limits', 1)[1].split(current_metadata_date, 1)[0]
+        self.assertIn(b'March 01, 2026, 00:00 UTC:', history_metadata)
+        self.assertIn(b'October 01, 2026, 00:00 UTC:', history_metadata)
+        self.assertNotIn(b'Applicable denominator:', history_metadata)
+        self.assertNotIn(b'coverage: 100%', history_metadata)
+        self.assertIn(current_metadata_date, progress)
+        self.assertIn(b'Applicable denominator: 30', progress)
+        self.assertIn(b'0 of 30 applicable requirements and controls', content)
+        self.assertIn(b'Saved implementation statuses (all units)', content)
+        self.assertEqual(value['summary']['status_counts']['addressed'], 93)
+        self.assertEqual(len(value['assessments']), 123)
+        self.assertIn(b'native-implementation-v1', content)
+        self.assertIn(b'session operation time test position', content)
+        self.assertNotIn(b'logical read position', content)
+        client, rows = fixture()
+        rows[0].update(status='not_applicable', na_rationale=' ')
+        partial = snapshot(client, 'cis-ig1', rows)
+        self.assertIsNone(partial['summary']['implementation_percent'])
+        partial_content = pdf_streams(render_framework_report(partial, 'executive'))
+        self.assertIn(b'N/A', partial_content)
+        self.assertIn(b'Saved position availability: partial', partial_content)
+
     def test_five_experiences_native_totals_inheritance_once_and_disabled_categories(self):
         for group, count in ((1, 56), (2, 130), (3, 153)):
             client, rows = fixture(group=group)
@@ -77,7 +245,7 @@ class FrameworkReportUnitTests(unittest.TestCase):
         self.assertEqual(summary['assessed'], 2)
         self.assertEqual(summary['not_assessed'], 53)
         self.assertEqual(summary['not_applicable'], 1)
-        self.assertEqual(summary['implementation_percent'], 2)
+        self.assertEqual(summary['implementation_percent'], native_position(client, 'cis-ig1', rows)['percentage'])
         self.assertEqual(summary['native_metrics']['assessment_progress']['resolved'], 2)
         self.assertEqual(result['assessments'][0]['status'], 'not_assessed')
         self.assertEqual(result['assessments'][1]['current_implementation'], '')
@@ -89,7 +257,7 @@ class FrameworkReportUnitTests(unittest.TestCase):
         client, rows = fixture('iso-27001')
         by_id = {row['definition_id']: row for row in rows}
         by_id['4.1'].update(status='not_applicable', na_rationale='Invalid clause exclusion')
-        by_id['A.5.1'].update(status='addressed', soa_applicability='included')
+        by_id['A.5.1'].update(status='addressed', soa_applicability='included', soa_justification='Within recorded ISMS scope')
         by_id['A.5.2'].update(status='not_applicable', soa_applicability='excluded', soa_justification='Outside recorded scope')
         by_id['A.5.3'].update(status='addressed', soa_applicability='')
         result = snapshot(client, 'iso-27001', rows)
@@ -97,11 +265,13 @@ class FrameworkReportUnitTests(unittest.TestCase):
         self.assertEqual(native['soa'], {'total': 93, 'included': 1, 'excluded': 1, 'undetermined': 91})
         self.assertEqual(native['included_annex']['status_counts']['addressed'], 1)
         self.assertEqual(native['assessment_progress']['invalid_na'], 1)
-        self.assertEqual(result['summary']['not_applicable'], 2)
+        self.assertEqual(result['summary']['not_applicable'], 1)
+        self.assertEqual(result['summary']['assessed'], 1)
+        self.assertIsNone(result['summary']['implementation_percent'])
         self.assertEqual(len(result['assessments']), 123)
-        by_id['A.5.4'].update(status='not_applicable', soa_applicability='included')
+        by_id['A.5.4'].update(status='not_applicable', soa_applicability='included', soa_justification='Within recorded ISMS scope')
         legacy = snapshot(client, 'iso-27001', rows)
-        self.assertEqual(legacy['summary']['assessed'], 3)
+        self.assertEqual(legacy['summary']['assessed'], 1)
         self.assertEqual(legacy['summary']['native_metrics']['assessment_progress']['invalid_na'], 2)
 
     def test_evidence_is_authorized_redacted_and_inherited_and_items_use_current_native_state(self):
@@ -186,13 +356,13 @@ class FrameworkReportUnitTests(unittest.TestCase):
                 {'at': '2026-09-01T00:00:00Z', 'status': 'in_progress'},
                 {'at': '2026-10-01T00:00:00Z', 'status': 'addressed'}])
         result = snapshot(client, 'cis-ig1', rows)
-        self.assertEqual([o['implementation_percent'] for o in result['trend']['observations'] if not o.get('current_snapshot')], [0, 100])
+        self.assertEqual([o['implementation_percent'] for o in result['trend']['observations'] if not o.get('current_snapshot')], [None, None])
         self.assertEqual(result['trend']['state'], 'partial')
         rows[-1]['assessment_history'] = []
         incomplete = snapshot(client, 'cis-ig1', rows)
-        self.assertEqual(incomplete['trend']['observations'], [])
+        self.assertEqual([point['known_count'] for point in incomplete['trend']['observations']], [55, 55, 56])
         self.assertEqual(incomplete['trend']['state'], 'partial')
-        self.assertIn('55 of 56', incomplete['trend']['message'])
+        self.assertFalse(incomplete['trend']['comparable'])
         client['cis_configuration_updated_at'] = '2026-09-15T00:00:00Z'
         client['cis_scope_change'] = {'before': 2, 'after': 1, 'updated_at': '2026-09-15T00:00:00Z'}
         rows[-1]['assessment_history'] = copy.deepcopy(rows[0]['assessment_history'])
@@ -222,15 +392,17 @@ class FrameworkReportUnitTests(unittest.TestCase):
             if definitions[row['definition_id']]['specification'] == 'annex_control':
                 row.update(soa_applicability='excluded', soa_justification='Current decision only')
         result = snapshot(client, 'iso-27001', rows)
-        self.assertEqual(result['trend']['observations'], [])
+        self.assertEqual([point['status_counts']['addressed'] for point in result['trend']['observations']], [123, 123, 123])
+        self.assertEqual([point['implementation_percent'] for point in result['trend']['observations']], [None, None, 100.0])
         self.assertEqual(result['trend']['state'], 'partial')
         for row in rows:
             if definitions[row['definition_id']]['specification'] == 'annex_control':
                 for event in row['assessment_history']:
                     event['soa_applicability'] = 'included'
+                    event['soa_justification'] = 'Historical recorded inclusion'
         known = snapshot(client, 'iso-27001', rows)
         self.assertEqual([p['applicable_total'] for p in known['trend']['observations']], [123, 123, 30])
-        self.assertEqual([p['implementation_percent'] for p in known['trend']['observations']], [100, 100, 100])
+        self.assertEqual([p['implementation_percent'] for p in known['trend']['observations']], [None, None, 100.0])
         self.assertFalse(known['trend']['comparable'])
         self.assertEqual(known['summary']['applicable_total'], 30)
 
@@ -245,25 +417,27 @@ class FrameworkReportUnitTests(unittest.TestCase):
         daily = snapshot(client, 'cis-ig1', rows, period='30d')
         self.assertEqual(len(daily['trend']['observations']), 20)
 
-    def test_complete_history_has_genuine_baseline_and_scope_swaps_are_not_like_for_like(self):
+    def test_event_history_retains_prior_dates_without_claiming_program_baseline_or_scope_comparison(self):
         client, rows = fixture()
         for row in rows:
             row.update(status='addressed', assessment_history=[
                 {'at': '2026-03-01T00:00:00Z', 'status': 'in_progress'},
                 {'at': '2026-10-01T00:00:00Z', 'status': 'addressed'}])
         value = snapshot(client, 'cis-ig1', rows)
-        self.assertEqual(value['trend']['state'], 'available')
+        self.assertEqual(value['trend']['state'], 'partial')
         self.assertEqual(value['trend']['observations'][0]['date'][:10], '2026-03-01')
-        self.assertTrue(value['trend']['observations'][0]['comparison_baseline'])
-        self.assertEqual([p['implementation_percent'] for p in value['trend']['observations']], [0, 100, 100])
-        rows[0]['assessment_history'][0]['status'] = 'not_applicable'
+        self.assertFalse(value['trend']['observations'][0]['comparison_baseline'])
+        self.assertTrue(value['trend']['observations'][0]['prior_period_observation'])
+        self.assertFalse(value['trend']['comparable'])
+        self.assertEqual([p['implementation_percent'] for p in value['trend']['observations']], [None, None, 100.0])
+        rows[0]['assessment_history'][0].update(status='not_applicable', na_rationale='Historical recorded exclusion')
         rows[1]['status'] = 'not_applicable'
         rows[1]['na_rationale'] = 'Current decision'
-        rows[1]['assessment_history'][1]['status'] = 'not_applicable'
+        rows[1]['assessment_history'][1].update(status='not_applicable', na_rationale='Current decision')
         swapped = snapshot(client, 'cis-ig1', rows)
         self.assertEqual({p['applicable_total'] for p in swapped['trend']['observations']}, {55})
         self.assertFalse(swapped['trend']['comparable'])
-        self.assertIn('unchanged denominator', ' '.join(swapped['trend']['scope_changes']))
+        self.assertEqual([point['status_counts']['not_applicable'] for point in swapped['trend']['observations']], [1, 1, 1])
 
     def test_unknown_intermediate_iso_applicability_does_not_imply_complete_history(self):
         client, rows = fixture('iso-27001')
@@ -272,12 +446,15 @@ class FrameworkReportUnitTests(unittest.TestCase):
             row.update(status='addressed', assessment_history=[{'at': '2026-03-01T00:00:00Z', 'status': 'addressed'}])
             if definitions[row['definition_id']]['specification'] == 'annex_control':
                 row['soa_applicability'] = 'included'
+                row['soa_justification'] = 'Current recorded inclusion'
                 row['assessment_history'][0]['soa_applicability'] = 'included'
+                row['assessment_history'][0]['soa_justification'] = 'Historical recorded inclusion'
         rows[-1]['assessment_history'].append({'at': '2026-10-01T00:00:00Z', 'status': 'addressed'})
         value = snapshot(client, 'iso-27001', rows)
         self.assertEqual(value['trend']['state'], 'partial')
         self.assertFalse(value['trend']['comparable'])
-        self.assertTrue(value['trend']['observations'][0]['comparison_baseline'])
+        self.assertFalse(value['trend']['observations'][0]['comparison_baseline'])
+        self.assertTrue(value['trend']['observations'][0]['prior_period_observation'])
         self.assertIn('not recorded', ' '.join(value['trend']['scope_changes']))
 
 

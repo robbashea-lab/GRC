@@ -101,7 +101,16 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
       const before=sourceRecord(previous,kind,reference),after=sourceRecord(db,kind,reference);
       if(!before&&!after)continue;
       const changed=businessFields[kind].filter(field=>stable(businessValue(field,before?.[field]))!==stable(businessValue(field,after?.[field])));
-      if(before&&after&&!changed.length)continue;
+      const oldHistory=before?.assessment_history||[],history=after?.assessment_history||[],recordedAt=Date.parse(after?.assessment_recorded_at);
+      // Explicit SOC reaffirmations need the actual appended native judgment, not history noise.
+      const recorded=kind==='framework_assessments'&&after?.framework_key==='soc-2'
+        &&(STATUS.includes(after.status)&&after.status!=='not_assessed'||after.status==='not_applicable'&&typeof after.na_rationale==='string'&&!!after.na_rationale.trim())
+        &&Number.isFinite(recordedAt)&&recordedAt>(before?.assessment_recorded_at==null?-Infinity:Date.parse(before.assessment_recorded_at))
+        &&Array.isArray(oldHistory)&&Array.isArray(history)&&history.length>oldHistory.length&&stable(history.slice(0,oldHistory.length))===stable(oldHistory)
+        &&group.some(log=>log.action==='Framework assessment updated'&&log.meta?.record_assessment===true&&log.user_id===after.assessment_recorded_by)
+        &&history.slice(oldHistory.length).some(entry=>entry.at===after.assessment_recorded_at&&entry.assessment_recorded_at===after.assessment_recorded_at
+          &&entry.by===after.assessment_recorded_by&&entry.assessment_recorded_by===after.assessment_recorded_by&&entry.status===after.status);
+      if(before&&after&&!changed.length&&!recorded)continue;
       // Native helpers may emit both a write receipt and a domain receipt for one commit.
       const chosen=[...group].sort((a,b)=>receiptPriority(b)-receiptPriority(a))[0];
       activity_proofs[chosen.audit_id||chosen.log_id]={eligible:true,type:logType(chosen,kind,true),changed_fields:changed};
@@ -135,7 +144,7 @@ const coverage=(db,snapshots)=>({partial:true,started_at:snapshots[0]?.captured_
 const sourceKinds={framework_assessment:'framework_assessments',framework_assessments:'framework_assessments',organizational_control:'organizational_controls',organizational_controls:'organizational_controls',review:'reviews',reviews:'reviews',finding:'findings',findings:'findings',risk:'risks',risks:'risks',policy:'policies',policies:'policies',evidence:'evidence',client:'clients',clients:'clients',requirement:'requirements',requirements:'requirements'};
 const sourceIds={framework_assessments:'framework_assessment_id',organizational_controls:'control_id',reviews:'review_id',findings:'finding_id',risks:'risk_id',policies:'policy_id',evidence:'evidence_id',clients:'client_id',requirements:'requirement_id'};
 const businessFields={
-  framework_assessments:['status','implementation','technology','notes','owner_id','process_owner_id','verification','verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','na_rationale','soa_applicability','soa_justification','addressable_decision','addressable_rationale','management_controls','related_links','unlinked_evidence_ids','assessment_history'],
+  framework_assessments:['status','implementation','technology','notes','owner_id','process_owner_id','verification','verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','na_rationale','soa_applicability','soa_justification','addressable_decision','addressable_rationale','management_controls','related_links','unlinked_evidence_ids','items_to_address'],
   organizational_controls:['name','title','description','status','owner_id','assessment_ids','related_links','observations','design','implementation','conflicts','frequency','reconciliation_note'],
   reviews:['title','status','notes','outcome','iso_audit','due_date','owner_id','reviewer_id','recurrence','custom_recurrence_days','evidence_ids','occurrences','scope','amendments'],
   findings:['title','description','status','severity','owner_id','due_date','notes','decision_history','governance_context'],
@@ -153,6 +162,13 @@ function sourceRecord(db,kind,log){
 }
 function businessValue(field,value){
   if(field==='archived_at')return !!value;
+  if(field==='items_to_address'){
+    if(value==null)return [];
+    if(Array.isArray(value)){
+      const fields=['item_id','question_id','kind','text','state','resolution','notes','finding_id'];
+      return value.map(item=>stable(item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(fields.map(key=>[key,item[key]??null])):item)).sort();
+    }
+  }
   if(field!=='iso_audit')return value??null;
   const clean=item=>Array.isArray(item)?item.map(clean):item&&typeof item==='object'
     ?Object.fromEntries(Object.entries(item).filter(([key])=>!['updated_at','updated_by'].includes(key)).map(([key,entry])=>[key,clean(entry)])):item;
@@ -165,7 +181,7 @@ function logType(log,kind,proven=false){
   if(proven&&['create','update','archive','delete'].includes(action))return {framework_assessments:'Assessments',organizational_controls:'Assessments',reviews:'Assessments',findings:'Findings',risks:'Risks',policies:'Policies',evidence:'Evidence',clients:'Scope',requirements:'Scope'}[kind];
   if(kind==='reviews'&&(['Review started','Review completed'].includes(action)||(proven&&['Audit work updated','Review configuration changed','amend'].includes(action))))return 'Assessments';
   if(kind==='organizational_controls'&&(['Control created','Control observation recorded'].includes(action)||action==='Control updated'&&proven))return 'Assessments';
-  if(proven&&kind==='framework_assessments'&&['Framework assessment updated','Framework record linked','Framework Evidence unlinked','Framework Review linked'].includes(action))return 'Assessments';
+  if(proven&&kind==='framework_assessments'&&['Framework assessment updated','Assessment item updated','Framework record linked','Framework Evidence unlinked','Framework Review linked'].includes(action))return 'Assessments';
   if(kind==='findings'&&(['create','Finding validated and closed','Finding moved to In Remediation','Finding moved to Pending Validation','validate','accept','reopen','close','archive','delete'].includes(action)))return 'Findings';
   if(kind==='risks'&&['create','Risk created','Risk reassessed','Risk accepted','Risk closed','Risk owner assigned','Treatment updated','Next Risk Review scheduled','archive','delete'].includes(action))return 'Risks';
   if(kind==='policies'&&(['create','approved','rejected','submitted','submission_withdrawn','archive','delete','retire'].includes(action)||/^Policy (approved|rejected|submitted|retired|returned|Review scheduled)$/.test(action)))return 'Policies';
