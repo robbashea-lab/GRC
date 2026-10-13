@@ -15359,7 +15359,7 @@
     {
       "id": "gaps",
       "type": "text",
-      "prompt": "Additional gap context (optional; not a status decision)",
+      "prompt": "Additional gap context",
       "condition": {
         "id": "additional_gap",
         "equals": "Yes"
@@ -15379,7 +15379,7 @@
     {
       "id": "unknowns",
       "type": "text",
-      "prompt": "Additional confirmation context (optional; not a status decision)",
+      "prompt": "Additional confirmation context",
       "condition": {
         "id": "additional_confirmation",
         "equals": "Yes"
