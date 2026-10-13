@@ -14,6 +14,7 @@ import {activePlans} from '../lib/frameworks';
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
 import {record,write,audit,now,ids} from './store';
 import {action} from './workflows';
+import {reconcileItems,currentItem,updateItem,linkItemFinding} from './assessmentItems';
 import {assessmentWork,findingApplies} from '../lib/frameworkWorkspace';
 import {existingFrameworkReview,sharedFrameworkPlans,reviewDriver,reviewDrivers} from '../lib/frameworks';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
@@ -349,6 +350,11 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   if(method==='get'&&!operation)return row;
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);
+  if(method==='patch'&&operation==='items'&&detail){
+    if(!['cis-ig1','soc-2','iso-27001'].includes(row.framework_key))fail('Assessment items are not available for this framework',404);
+    if(updateItem(row,decodeURIComponent(detail),body,db.user.user_id,now()))audit(db,'Assessment item updated','framework_assessments',row,{item_id:decodeURIComponent(detail),state:body.state});
+    return row;
+  }
   if(method==='patch'&&!operation){
     if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_saved??row.last_assessed??null))fail('Assessment changed since it was opened; reload before saving',409);
     body={...body};delete body.expected_last_assessed;
@@ -452,6 +458,11 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     }else if(body.addressable_decision||body.addressable_rationale)throw new Error('Addressability fields apply only to addressable specifications');
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
+    if(body.guided_assessment_source){
+      const items=reconcileItems(row,readDraft(),db.user.user_id,now());
+      if(JSON.stringify(items)!==JSON.stringify(row.items_to_address||[]))Object.assign(body,{items_to_address:items,items_revision:(row.items_revision||0)+1});
+      historyFields.push('items_to_address','items_revision');
+    }
     const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
     if(changed.length||recordAssessment){
       const at=new Date(Math.max(Date.now(),(Date.parse(row.last_saved??row.last_assessed)||0)+1)).toISOString();
@@ -484,7 +495,8 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   }
   if(method==='post'&&operation==='findings'){
     if(!body.title?.trim()||!body.remediation_title?.trim()||!body.request_id||!['low','medium','high','critical'].includes(body.severity||'medium'))throw new Error('Finding and Action titles, valid severity and request ID are required');
-    const fid=stable(row.client_id,'finding',id+':'+body.request_id);let f=db.findings.find(f=>f.finding_id===fid);
+    const item=body.item_id?currentItem(row,body.item_id):null;
+    const fid=stable(row.client_id,'finding',id+':'+(item?'item:'+body.item_id:body.request_id));let f=db.findings.find(f=>f.finding_id===fid);
     // A departed or out-of-scope safeguard owner is never copied onto new work; the Finding starts unassigned.
     let owner=row.owner_id&&eligible(db.users.find(u=>u.user_id===row.owner_id),row.client_id)?row.owner_id:null;
     // Optional at creation, as in the backend: an explicit owner must be eligible; a target date must be valid.
@@ -492,7 +504,9 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     const due=body.due_date?calendarDay(body.due_date):null;
     if(body.due_date&&due===null)throw new Error('Enter a valid target date');
     if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:assessmentTitle(row),owner_id:owner,due_date:due===null?null:new Date(due*86400000).toISOString().slice(0,10),remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};validateAssignment(db, 'findings', f);db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
-    action(db,'findings',fid,'create-task',{title:f.remediation_title});return f;
+    action(db,'findings',fid,'create-task',{title:f.remediation_title});
+    if(item){if(!f.assessment_item_id)Object.assign(f,{assessment_item_id:body.item_id,assessment_item_text:item.text,framework_key:row.framework_key});linkItemFinding(row,body.item_id,fid,db.user.user_id,now());}
+    return f;
   }
   throw new Error('Unsupported framework operation; assessment history is retained');
 }

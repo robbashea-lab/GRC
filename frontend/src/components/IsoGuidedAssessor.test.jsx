@@ -2,7 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import IsoGuidedAssessor from './IsoGuidedAssessor';
 import AssessmentShell from './AssessmentShell';
-import {isoGuidedCatalog,isoGroups,isoGuidedResult} from '@/lib/isoGuidedAssessment';
+import {isoGuidedCatalog,isoGroups,isoGuidedResult,isoInlineNarrative} from '@/lib/isoGuidedAssessment';
 import api from '@/lib/api';
 
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
@@ -408,4 +408,51 @@ test.each(['compare','restart'])('%s requires explicit discard of unsaved answer
   expect(api.put.mock.calls.at(-1)[1]).toMatchObject(action==='compare'?{rebase:true,answers:savedInterview.answers,narrative:savedInterview.narrative}:{restart:true,answers:{},narrative:'',summary_review:null});
   expect(api.put.mock.calls.at(-1)[1].expected_revision).toBe(savedInterview.revision);
   expect(props.current).toEqual(nativeBefore);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(document.querySelector('.omni-refined-close')).toBeNull();
+});
+
+test.each(['4.1','A.5.1','A.8.13'])('%s inline interview preserves progress without floating Omni and applies only after reviewed native save',async id=>{
+  setup(id);const onInlineClose=jest.fn();await render({inline:true,inlineOpen:false,onInlineClose});
+  const panel=document.querySelector('.assessment-inline-interview');expect(panel.hidden).toBe(true);
+  expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();expect(document.querySelector('.omni-workspace-window')).toBeNull();
+  await render({inlineOpen:true});await complete();
+  const summary=document.querySelector('[aria-label="Omnibot implementation summary"]');
+  expect(summary.value).toContain('\n\nControls in place\n• ');expect(summary.value).not.toContain('IMPLEMENTATION BREAKDOWN');expect(summary.value).not.toContain('\n\nITEMS TO ADDRESS');
+  expect(stored.result.narrative).toBe(isoGuidedResult(id,stored.answers,stored.version,'Agent 2 ISO fixture').narrative);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  const reviewed=summary.value+'\nExact operator wording.\n';await changeInput(summary,reviewed);
+  await render({inlineOpen:false});await render({inlineOpen:true});expect(document.querySelector('.assessment-inline-interview')).toBe(panel);expect(summary.value).toBe(reviewed);
+  await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(props.onSaveAssessment.mock.calls[0][0]).toMatchObject({implementation:reviewed,status:'addressed'});expect(onInlineClose).toHaveBeenCalledTimes(1);
+  expect(props.current.verification).toBe('not_verified');expect(stored.narrative).toBe(reviewed);
+});
+
+test('inline saved early progress survives remount and uses the persisted group',async()=>{
+  const onInlineClose=jest.fn();await render({inline:true,inlineOpen:true,onInlineClose});await click('Start');
+  await act(async()=>document.querySelectorAll('.omni-answer-choices').forEach(group=>[...group.querySelectorAll('button')].find(item=>item.textContent==='Yes')?.click()));
+  await click('Save & next');const step=stored.step,answers=copy(stored.answers);expect(step).toBe(1);await click('Save & close');
+  expect(onInlineClose).toHaveBeenCalledTimes(1);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await act(async()=>root.unmount());root=createRoot(container);await render({inlineOpen:true});await click('Resume your review');
+  expect(document.querySelector('.omni-group-progress').getAttribute('aria-label')).toContain('Question group '+(step+1));expect(stored.answers).toEqual(answers);
+});
+
+test('inline summary conflict and concurrent native draft preserve wording without stale native write',async()=>{
+  await render({inline:true,inlineOpen:true,onInlineClose:jest.fn()});await complete();const summary=document.querySelector('[aria-label="Omnibot implementation summary"]'),text=summary.value;
+  failWrite=true;await click('Save assessment');expect(summary.value).toBe(text);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onInlineClose).not.toHaveBeenCalled();
+  failWrite=false;const original=api.put.getMockImplementation();let finish;api.put.mockImplementationOnce((path,body)=>new Promise(resolve=>{finish=async()=>resolve(await original(path,body));}));
+  await click('Save assessment');await render({assessmentDirty:true,form:{...props.form,implementation:'Concurrent native draft'}});await act(async()=>finish());
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onInlineClose).not.toHaveBeenCalled();expect(summary.value).toBe(text);
+});
+
+test('inline restored legacy manual summary remains exact until explicit refresh from revised answers',async()=>{
+  const answers=Object.fromEntries(isoGuidedCatalog.definitions['4.1'].groups.flatMap(group=>group.questions).map(q=>[q.id,q.type==='text'?'':q.type==='context'?'Relevant':'Yes']));
+  stored={...stored,answers,completed:true,revision:2,narrative:'Legacy manual wording\n\nIMPLEMENTATION BREAKDOWN\nRetain this exact text.\n',summary_review:{version:stored.version,answers},result:isoGuidedResult('4.1',answers)};
+  await render({inline:true,inlineOpen:true});await click('Resume your review');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(stored.narrative);
+  await click('Back to questions');await act(async()=>[...document.querySelector('.omni-answer-choices').querySelectorAll('button')].find(item=>item.textContent==='No').click());await click('Save & next');
+  expect(button('Refresh from answers')).toBeTruthy();await click('Refresh from answers');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(isoInlineNarrative('4.1',stored.answers,stored.version,'Agent 2 ISO fixture'));
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('inline excluded control and read-only session retain mandatory SoA and permission guards',async()=>{
+  setup('A.5.1');props.current={...props.current,soa_applicability:'excluded',soa_justification:'Outside reviewed scope'};props.form=copy(props.current);
+  await render({inline:true,inlineOpen:true});await complete();expect(button('Save assessment').disabled).toBe(true);
+  await render({disabled:true});expect(button('Save assessment').disabled).toBe(true);await click('Back to questions');expect(button('Save & next').disabled).toBe(true);
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });

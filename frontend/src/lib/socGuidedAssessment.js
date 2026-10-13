@@ -1,7 +1,9 @@
 import catalog from '@catalogs/guidedSoc2.json';
+import {formatInlineSummary} from './inlineAssessment';
 
 export const socGuidedCatalog = catalog;
 const versions = {[catalog.version]: catalog};
+const positions = {addressed: 'practices addressing', in_progress: 'partial or unresolved practices for', needs_attention: 'confirmed deficiencies affecting', not_assessed: 'an unconfirmed implementation position for'};
 const choices = ['Yes', 'Partially', 'No', 'Not sure'];
 const contextChoices = ['Relevant', 'Outside the selected system', 'Not sure'];
 const extraQuestions = [
@@ -119,7 +121,7 @@ export function socGuidedResult(id, answers, version = catalog.version, clientNa
   const additionalContext = ['gaps', 'unknowns'].map(key => text(answers[key])).filter(Boolean);
   if (additionalContext.length) breakdown.push(`Additional reported context\n${additionalContext.map(context => `- ${concise(context)}`).join('\n')}`);
   const status = confirmedNo ? 'needs_attention' : !meaningful ? 'not_assessed' : gaps.length || unknowns.length ? 'in_progress' : 'addressed';
-  const position = {addressed: 'practices addressing', in_progress: 'partial or unresolved practices for', needs_attention: 'confirmed deficiencies affecting', not_assessed: 'an unconfirmed implementation position for'}[status];
+  const position = positions[status];
   const overview = `${clientName} reports ${position} ${id} — ${definition.title} within the selected system. This is reported readiness, not evidence verification or an auditor opinion.`;
   const actions = [...new Set(nextSteps)];
   const narrative = `OVERVIEW\n${overview}\n\nIMPLEMENTATION BREAKDOWN\n${breakdown.join('\n\n') || 'No practices have been reported.'}\n\nITEMS TO ADDRESS\n${actions.length ? actions.map(action => `- ${concise(action)}`).join('\n') : 'No confirmation or remediation items were reported in this interview.'}`;
@@ -127,4 +129,16 @@ export function socGuidedResult(id, answers, version = catalog.version, clientNa
   return {version, status, narrative, basis, gaps, unknowns, nextSteps: actions, evidence: text(answers.evidence) ? [text(answers.evidence)] : [],
     answers: [...active, ...extraQuestions].filter(question => text(answers[question.id])).map(question => ({prompt: question.prompt,
       answer: answers[question.id] + (text(answers[question.id + '_detail']) ? `\nReported supporting detail: ${text(answers[question.id + '_detail'])}` : '')})), signals};
+}
+
+
+// The inline wording is presentation; the existing evaluator remains authoritative.
+export function socInlineSummary(id, answers, version = catalog.version, clientName = 'The organization', date) {
+  const result = socGuidedResult(id, answers, version, clientName), definition = definitionFor(id, version);
+  return formatInlineSummary({
+    paragraph: `${clientName} reports ${positions[result.status]} ${id} — ${definition.title} within the selected system. This is reported readiness, not evidence verification or an auditor opinion.`,
+    controls: result.basis.map(concise),
+    limitations: result.gaps.length || result.unknowns.length ? 'Incomplete practices or unresolved confirmation items affect the reported readiness conclusion.' : '',
+    date,
+  });
 }

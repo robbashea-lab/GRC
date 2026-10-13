@@ -1,11 +1,12 @@
 import {visibleQuestions} from './guidedAssessment';
 import {focusedOmniEnabled,focusedResult} from './focusedOmni';
+import {formatInlineSummary} from './inlineAssessment';
 
 export const inventorySummaryEnabled=(clientId,user,framework,configuration,record)=>
   record?.client_id===clientId&&record?.framework_key===framework&&
   focusedOmniEnabled(clientId,user,framework,configuration,record?.definition_id);
 
-export function inventorySummary(answers,version,clientName='Brawndo'){
+export function inventorySummary(answers,version,clientName='Brawndo',inlineDate=null){
   const questions=visibleQuestions('1.1',answers,version),result=focusedResult('1.1',answers,version);
   const active=Object.fromEntries(Object.entries(answers).filter(([key])=>questions.some(q=>key===q.id||key===q.id+'_detail')));
   const overview=[active.inventory==='Yes'?`${clientName} reports maintaining an enterprise asset inventory.`:active.inventory==='Partially'?`${clientName} reports a partially established enterprise asset inventory.`:active.inventory==='No'?`${clientName} reports that an enterprise asset inventory is not currently in place.`:`${clientName}’s enterprise asset inventory position needs confirmation.`];
@@ -64,6 +65,6 @@ export function inventorySummary(answers,version,clientName='Brawndo'){
   const grouped=Object.entries(sections).filter(([name,items])=>items.length||name==='Incomplete or missing').map(([name,items])=>name+'\n'+bullets(items.length?items:['No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.']));
   if(context.length)grouped.push('Reported operating context\n'+bullets(context));
   const next=[actions.confirmation.length&&'Confirmation work\n'+bullets(actions.confirmation),actions.remediation.length&&'Remediation\n'+bullets(actions.remediation)].filter(Boolean);
-  const narrative=['OVERVIEW',overview.join(' '),'IMPLEMENTATION BREAKDOWN',grouped.join('\n\n'),'ITEMS TO ADDRESS',next.length?next.join('\n\n'):'- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.'].join('\n\n');
+  const narrative=inlineDate?formatInlineSummary({paragraph:[...overview,...context].join(' '),controls:sections['In place'],limitations:[deficiencies.length&&'Reported missing or incomplete practices limit the inventory implementation.',confirmations.length&&'Some reported inventory practices remain unconfirmed.'].filter(Boolean).join(' '),date:inlineDate}):['OVERVIEW',overview.join(' '),'IMPLEMENTATION BREAKDOWN',grouped.join('\n\n'),'ITEMS TO ADDRESS',next.length?next.join('\n\n'):'- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.'].join('\n\n');
   return {result:{...result,narrative},breakdown,deficiencies,confirmations};
 }

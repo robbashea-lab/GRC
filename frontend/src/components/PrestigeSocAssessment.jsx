@@ -1,12 +1,13 @@
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
 import BrawndoCisFindings from './BrawndoCisFindings';
 
-import AssessmentLayout,{AssessmentChecklist,AssessmentRequirement} from './AssessmentLayout';
+import AssessmentLayout,{AssessmentRequirement} from './AssessmentLayout';
 import summaryData from '@catalogs/operatorGuidance/socRequirementGuide.json';
 import presentationData from '@catalogs/operatorGuidance/socAssessmentPresentation.json';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import SocGuidedAssessor from './SocGuidedAssessor';
+import AssessmentItems from './AssessmentItems';
 
 
 
@@ -31,7 +32,7 @@ export const PrestigeSocHeader=props=><FrameworkHeader eyebrow="SOC 2 readiness"
 
 export default function PrestigeSocAssessment({state,actions}){
   const {open,record,definition,form,current,ctx,error,busy,dirty,relatedDraft,otherDraft,feedback,writable,position,related,finding,breadcrumb}=state;
-  const {put,save,saveAndNext,saveGuidedAssessment,setGuidedDraft,close,previous,next,retry,run,setFinding,setNested,setFeedback}=actions;
+  const {put,save,saveAndNext,saveGuidedAssessment,setGuidedDraft,close,previous,next,retry,run,setFinding,setNested,setFeedback,itemsSaved,createItemFinding,setItemsDraft}=actions;
   const disabled=!writable||busy||!ctx,source=sourcePresentation(definition),presentation=presentationData.criteria[definition.id];
   const entry=socGuidance.criteria[definition.id],practical=entry?.practical;
   const saved=verificationOf(current),context=definition.category==='security'?'Security · Common Criteria':socCategoryCrumb(definition.category);
@@ -40,9 +41,10 @@ export default function PrestigeSocAssessment({state,actions}){
     {...{position,previous,next,close,busy}} testId="prestige-soc-assessment" ariaModal crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb} label="SOC 2 location"/>:null} returnSelector={`[data-testid="requirement-${definition.id}"]`}
     footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes remain in your draft until saved.')}</span></div><div className="flex flex-wrap gap-2">{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||!!otherDraft||!!finding} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
     {!ctx&&!error&&<p role="status" className="py-3 text-sm">Loading assessment…</p>}
-    <AssessmentLayout inlineCriteria criteriaSummary="Omnisciente guidance for assessing this criterion. These are not additional SOC 2 requirements." criteriaTitle="SOC 2 assessment criteria" reference={`SOC 2 · Criterion ${definition.id}`} key={record.client_id+':'+definition.id} summary={summaryData.requirements[definition.id]?.plain}
+    <AssessmentLayout inlineWorkflow criteriaSummary="Omnisciente guidance for assessing this criterion. These are not additional SOC 2 requirements." criteriaTitle="SOC 2 assessment criteria" reference={`SOC 2 · Criterion ${definition.id}`} key={record.client_id+':'+definition.id} summary={summaryData.requirements[definition.id]?.plain}
       requirement={<AssessmentRequirement heading="What SOC 2 requires" text={source.text||practical?.summary} official={!!source.text} trigger={presentation?.trigger} source={presentation?.source||source.url} label="Official AICPA source"/>}
-      checklist={<AssessmentChecklist title={`${definition.id} checklist`} items={entry?.assessment_criteria} historicalItems={entry?.items} value={form.soc_assessment_checks||[]} disabled={disabled} onChange={value=>put('soc_assessment_checks',value)}/>}
+      interview={({open,close})=>(ctx?.configuration||state.guidedConfiguration)?<SocGuidedAssessor inline inlineOpen={open} onInlineClose={close} clientId={record.client_id} configuration={ctx?.configuration||state.guidedConfiguration} record={record} current={current} form={form} assessmentDirty={dirty} relatedDraft={relatedDraft} contextComplete disabled={disabled} onDraftChange={setGuidedDraft} onSaveAssessment={saveGuidedAssessment}/>:null}
+      itemsToAddress={<AssessmentItems record={current} ctx={ctx} disabled={disabled} onSaved={itemsSaved} onCreateFinding={createItemFinding} onDraftChange={setItemsDraft}/>} findingDraft={!!finding}
       findings={<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>}
       review={practical?.review} outcome={practical?.outcome}>
     <div className="assessment-implementation">
@@ -52,6 +54,5 @@ export default function PrestigeSocAssessment({state,actions}){
 
     {writable&&<Button size="sm" variant="ghost" disabled={disabled||form.status==='not_assessed'} onClick={()=>save({recordAssessment:true})}>Record assessment</Button>}
     </AssessmentLayout>
-    {(ctx?.configuration||state.guidedConfiguration)&&<SocGuidedAssessor clientId={record.client_id} configuration={ctx?.configuration||state.guidedConfiguration} record={record} current={current} form={form} assessmentDirty={dirty} relatedDraft={relatedDraft} contextComplete disabled={disabled} onDraftChange={setGuidedDraft} onSaveAssessment={saveGuidedAssessment}/>}
   </AssessmentShell>;
 }

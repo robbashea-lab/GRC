@@ -49,3 +49,14 @@ test('absent explicit timing produces no trigger line and source link has no app
   await act(async()=>root.render(<AssessmentRequirement heading="What CIS requires" text="Requirement" trigger="Review and update at least every six months."/>));
   expect(container.textContent).toContain('Required operation / trigger: Review and update at least every six months.');
 });
+
+test('inline interview stays mounted across disclosure and tabs, with close restoring summary focus',async()=>{
+  await act(async()=>root.render(<AssessmentLayout inlineWorkflow summary="Canonical explanation" itemsToAddress={<p>Recorded items</p>} findings={<p>Native Findings</p>} interview={({open,close})=><div hidden={!open}><input aria-label="Interview answer" defaultValue="Saved answer"/><button onClick={close}>Save & close interview</button></div>}/>));
+  expect([...container.querySelectorAll('[role=tab]')].map(element=>element.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
+  const details=container.querySelector('.assessment-summary'),answer=container.querySelector('[aria-label="Interview answer"]');
+  await act(async()=>{details.open=true;details.dispatchEvent(new Event('toggle'));});
+  await fill('Interview answer','Unsaved answer');await tab('Items to address');await tab('Requirement & implementation');
+  expect(container.querySelector('[aria-label="Interview answer"]')).toBe(answer);expect(answer.value).toBe('Unsaved answer');
+  await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Save & close interview').click());expect(details.open).toBe(false);expect(document.activeElement).toBe(details.querySelector('summary'));
+  expect(container.textContent).not.toContain('Assessment guidance & working checklist');
+});

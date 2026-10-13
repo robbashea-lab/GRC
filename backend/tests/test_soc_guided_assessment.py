@@ -202,8 +202,11 @@ class SocGuidedTests(unittest.TestCase):
 import fs from 'node:fs';
 const root = process.argv[1];
 const catalog = fs.readFileSync(root + '/shared/catalogs/guidedSoc2.json', 'utf8');
+const inline = fs.readFileSync(root + '/frontend/src/lib/inlineAssessment.js', 'utf8');
+const inlineUrl = 'data:text/javascript;base64,' + Buffer.from(inline).toString('base64');
 const source = fs.readFileSync(root + '/frontend/src/lib/socGuidedAssessment.js', 'utf8')
-  .replace("import catalog from '@catalogs/guidedSoc2.json';", 'const catalog = ' + catalog + ';');
+  .replace("import catalog from '@catalogs/guidedSoc2.json';", 'const catalog = ' + catalog + ';')
+  .replace(/from ['"]\\.\\/inlineAssessment['"]/g, 'from ' + JSON.stringify(inlineUrl));
 const engine = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 const fixtures = JSON.parse(fs.readFileSync(0, 'utf8'));
 const results = fixtures.map(({id, answers}) => {
