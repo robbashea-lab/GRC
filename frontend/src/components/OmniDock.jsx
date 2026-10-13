@@ -24,12 +24,14 @@ export function fitOmniControl(point,size,obstacles,width=window.innerWidth,heig
   }
   return best;
 }
-function nativeControls(dock){
+function assessmentObstacles(dock){
   const shell=dock.closest('[data-assessment-shell]');if(!shell)return [];
-  return [...shell.querySelectorAll('button,input,textarea,select,a,summary,[role="button"],[role="tab"]')].filter(el=>!el.closest('.guided-pilot,.omni-workspace-window,.omni-free-dock')).map(el=>{
+  const controls=[...shell.querySelectorAll('button,input,textarea,select,a,summary,[role="button"],[role="tab"]')].filter(el=>!el.closest('.guided-pilot,.omni-workspace-window,.omni-free-dock')).map(el=>{
     const rect=(el.closest('label')||el).getBoundingClientRect(),clip=el.closest('.brawndo-assessment-scroll')?.getBoundingClientRect();
     return {left:rect.left,right:rect.right,top:Math.max(rect.top,clip?.top??0),bottom:Math.min(rect.bottom,clip?.bottom??window.innerHeight)};
   }).filter(r=>r.right>r.left&&r.bottom>r.top);
+  const guide=shell.querySelector('.omni-workspace-window')?.getBoundingClientRect();
+  return [...controls,...(guide?.width&&guide?.height?[guide]:[])];
 }
 export default function OmniDock(props){return props.freePosition?<FreeDock {...props}/>:<ClassicDock {...props}/>;}
 function FreeDock({preferenceKey,inAssessment,children,name='Omni',focused=false}){
@@ -46,7 +48,7 @@ function FreeDock({preferenceKey,inAssessment,children,name='Omni',focused=false
     const size=dock.getBoundingClientRect(),top=focused&&window.innerHeight<(size.height||190)+90?8:82;
     let position={x:Math.max(8,Math.min(window.innerWidth-(size.width||168)-8,pointRef.current.x)),y:Math.max(top,Math.min(window.innerHeight-(size.height||190)-8,pointRef.current.y))};
     dock.style.left=position.x+'px';dock.style.top=position.y+'px';
-    const controls=inAssessment?nativeControls(dock):[],footer=dock.closest('[data-assessment-shell]')?.querySelector('.brawndo-assessment-footer');
+    const controls=inAssessment?assessmentObstacles(dock):[],footer=dock.closest('[data-assessment-shell]')?.querySelector('.brawndo-assessment-footer');
     if(inAssessment&&footer&&[...footer.querySelectorAll('button')].some(el=>overlaps(dock.getBoundingClientRect(),el.getBoundingClientRect()))){
       position=fitOmniControl(position,size,controls,window.innerWidth,window.innerHeight,top)||position;
       dock.style.left=position.x+'px';dock.style.top=position.y+'px';
@@ -76,7 +78,11 @@ function FreeDock({preferenceKey,inAssessment,children,name='Omni',focused=false
     target.addEventListener('toggle',place,true);target.addEventListener('scroll',place,true);window.addEventListener('resize',place);
     const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(place);observer?.observe(dock);
     if(shell){observer?.observe(shell);for(const el of shell.querySelectorAll('.brawndo-assessment-columns,.brawndo-assessment-footer,input,textarea,select,summary'))if(!el.closest('.guided-pilot,.omni-workspace-window,.omni-free-dock'))observer?.observe(el.closest('label')||el);}
-    return()=>{target.removeEventListener('toggle',place,true);target.removeEventListener('scroll',place,true);window.removeEventListener('resize',place);observer?.disconnect();};
+    const guide=inAssessment&&shell?.querySelector('.omni-workspace-window');if(guide)observer?.observe(guide);
+    // Position-only window moves do not trigger ResizeObserver.
+    const guideChanges=guide&&typeof MutationObserver!=='undefined'?new MutationObserver(place):null;
+    guideChanges?.observe(guide,{attributes:true,attributeFilter:['style']});
+    return()=>{target.removeEventListener('toggle',place,true);target.removeEventListener('scroll',place,true);window.removeEventListener('resize',place);observer?.disconnect();guideChanges?.disconnect();};
   });
   return <div ref={root} className="guided-launcher omni-free-dock" data-focused-omni={focused||undefined} style={{left:point.x,top:point.y}}
     onPointerDown={e=>{if(e.button!==0||!e.target.closest('.omni-launch-button'))return;drag.current={id:e.pointerId,x:e.clientX,y:e.clientY,point:{x:parseFloat(root.current.style.left),y:parseFloat(root.current.style.top)}};moved.current=false;}}

@@ -55,7 +55,7 @@ afterEach(async()=>{
   [window.innerWidth,window.innerHeight]=originalViewport;global.ResizeObserver=originalObserver;
 });
 
-function Fixture({minimized=false,invitation=false,wrappedLabel=false,fieldKey='original',inAssessment=true,onLaunch=()=>{},onSave=()=>{}}){
+function Fixture({minimized=false,invitation=false,wrappedLabel=false,expandedGuide=false,fieldKey='original',inAssessment=true,onLaunch=()=>{},onSave=()=>{}}){
   return <div data-assessment-shell>
     <button data-rect="next">Next requirement</button>
     <div className="brawndo-assessment-scroll" data-rect="scroll"><div className="brawndo-assessment-columns">
@@ -72,6 +72,7 @@ function Fixture({minimized=false,invitation=false,wrappedLabel=false,fieldKey='
       {invitation&&<div className="guided-context-prompt">Resume your assessment</div>}
       <details className="omni-position-controls"><summary>OmniBot preferences</summary><div><button>Hide OmniBot</button><button>Turn off invitations</button></div></details>
     </OmniDock>
+    {expandedGuide&&<section className="omni-workspace-window" data-rect="guide" role="dialog" aria-label="SOC OmniBot guide" style={{left:rectangles.guide.left,top:rectangles.guide.top,width:rectangles.guide.width,height:rectangles.guide.height}}>Expanded SOC guide</section>}
   </div>;
 }
 const renderFixture=async props=>act(async()=>root.render(<Fixture {...props}/>));
@@ -274,4 +275,42 @@ test('SOC narrow open preferences leave the invitation and its Close control uno
   await act(async()=>closeButton.click());
   expect(close).toHaveBeenCalledTimes(1);expect(hide).not.toHaveBeenCalled();expect(save).not.toHaveBeenCalled();
   expect(JSON.parse(localStorage.getItem(positionKey))).toEqual({x:200,y:584});
+});
+test('expanded SOC guide leaves preferences and their menu reachable through minimize, resize and movement',async()=>{
+  // GN-QA-07: observed 1280x720 guide at 458,82,620x630; owl remains at its existing 1090,460 point.
+  rectangles.guide=rect(458,82,620,630);const saved={x:1090,y:460};localStorage.setItem(positionKey,JSON.stringify(saved));
+  const write=jest.spyOn(Storage.prototype,'setItem'),originalMutation=global.MutationObserver;let styleObserver;
+  global.MutationObserver=class{constructor(callback){styleObserver=this;this.callback=callback;this.observe=jest.fn();this.disconnect=jest.fn();}};
+  try{
+    expect(fitOmniControl({x:8,y:8},{width:168,height:43},[rect(8,8,304,224)],320,240,8)).toBeUndefined();
+    await renderFixture({expandedGuide:true});
+    const dock=container.querySelector('.omni-free-dock'),settings=container.querySelector('.omni-position-controls'),summary=settings.querySelector('summary');
+    expect(visiblePosition(dock)).toEqual(saved);expect(write).not.toHaveBeenCalled();
+    expectSafe(summary.getBoundingClientRect(),[...measuredControls(),rectangles.guide,dock.getBoundingClientRect()]);
+    await act(async()=>{settings.open=true;settings.dispatchEvent(new Event('toggle'));});
+    const menu=settings.querySelector('div');
+    expectSafe(menu.getBoundingClientRect(),[...measuredControls(),rectangles.guide,dock.getBoundingClientRect(),summary.getBoundingClientRect()]);
+    await renderFixture({minimized:true});
+    expect(container.querySelector('.omni-workspace-window')).toBeNull();expect(visiblePosition(dock)).toEqual(saved);
+    expectSafe(summary.getBoundingClientRect(),[...measuredControls(),dock.getBoundingClientRect()]);expect(write).not.toHaveBeenCalled();
+    await renderFixture({expandedGuide:true});const guide=container.querySelector('.omni-workspace-window');
+    expect(observer.observe.mock.calls.some(([target])=>target===guide)).toBe(true);
+    rectangles.guide=rect(458,82,500,630);
+    await act(async()=>observer.callback());
+    expectSafe(summary.getBoundingClientRect(),[...measuredControls(),rectangles.guide,dock.getBoundingClientRect()]);
+    expectSafe(menu.getBoundingClientRect(),[...measuredControls(),rectangles.guide,dock.getBoundingClientRect(),summary.getBoundingClientRect()]);
+    const before=summary.getBoundingClientRect();
+    expect(styleObserver.observe.mock.calls.some(([target,options])=>target===guide&&options.attributes&&options.attributeFilter.includes('style'))).toBe(true);
+    rectangles.guide=rect(650,82,500,630);
+    await act(async()=>{guide.style.left='650px';styleObserver.callback([{type:'attributes',attributeName:'style',target:guide}]);});
+    expect(summary.getBoundingClientRect()).not.toEqual(before);
+    expectSafe(summary.getBoundingClientRect(),[...measuredControls(),rectangles.guide,dock.getBoundingClientRect()]);
+    expectSafe(menu.getBoundingClientRect(),[...measuredControls(),rectangles.guide,dock.getBoundingClientRect(),summary.getBoundingClientRect()]);
+    expect(visiblePosition(dock)).toEqual(saved);expect(write).not.toHaveBeenCalled();
+    await act(async()=>container.querySelector('.omni-launch-button').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true})));
+    expect(JSON.parse(localStorage.getItem(positionKey))).toEqual({x:1080,y:460});expect(write).toHaveBeenCalledTimes(1);
+    expectSafe(summary.getBoundingClientRect(),[...measuredControls(),rectangles.guide,dock.getBoundingClientRect()]);
+    expectSafe(menu.getBoundingClientRect(),[...measuredControls(),rectangles.guide,dock.getBoundingClientRect(),summary.getBoundingClientRect()]);
+    expect(container.querySelector('textarea').value).toBe('Preserved manual wording');expect(Object.keys(localStorage)).toEqual([positionKey]);
+  }finally{write.mockRestore();global.MutationObserver=originalMutation;}
 });
