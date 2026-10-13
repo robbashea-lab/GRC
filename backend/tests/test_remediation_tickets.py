@@ -303,13 +303,17 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
         identity=additions.pop();event=applied['_portfolio_activity_pending'][identity]
         self.assertEqual(event['before']['status'],'in_remediation');self.assertEqual(event['after']['status'],'remediated')
         self.assertEqual(event['actor']['id'],'admin');self.assertEqual(event['source_id'],finding['finding_id'])
+        self.assertIsNone(await server.db.portfolio_events.find_one({'event_id':identity}))
         self.assertIn(identity,applied['_pending_remediation_activity_event_ids'].values())
         self.assertTrue(all(isinstance(action,str) for action in applied['_pending_remediation_audits'].values()))
         recovered=await self.client.patch('/api/tasks/'+task['task_id'],json=payload,headers=headers)
         self.assertEqual(recovered.status_code,200,recovered.text)
         self.assertEqual((await self.client.patch('/api/tasks/'+task['task_id'],json=payload,headers=headers)).status_code,200)
         row=await server.db.findings.find_one(scope)
-        self.assertEqual(set(row.get('_portfolio_activity_pending',{})),set(applied['_portfolio_activity_pending']))
+        self.assertFalse(row.get('_portfolio_activity_pending'))
+        captured=await server.db.portfolio_events.find_one({'event_id':identity})
+        self.assertEqual({k:captured[k] for k in event},event)
+        self.assertEqual(await server.db.portfolio_events.count_documents({'event_id':identity}),1)
         self.assertNotIn('_pending_remediation_activity_event_ids',row);self.assertNotIn('_pending_remediation_audits',row)
         audit=await server.db.audit_logs.find_one({'entity_id':finding['finding_id'],'action':'Finding moved to Pending Validation'})
         self.assertEqual(audit['meta']['_portfolio_activity_event_id'],identity)
@@ -343,17 +347,21 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
         _,_,_,finding,task=await self.pair(request_id='portfolio-remediation-delete')
         scope={'finding_id':finding['finding_id'],'client_id':'a'}
         before=await server.db.findings.find_one(scope)
+        prior={event['event_id'] for event in await server.db.portfolio_events.find({'source_kind':'findings','source_id':finding['finding_id']}).to_list(None)}
         actor=await server.db.users.find_one({'user_id':'admin'})
         # Owned isolated fixtures model the post-delete callback, not hosted
         # deletion permissions or an account's right to perform that operation.
         await server.db.tasks.delete_one({'task_id':task['task_id'],'client_id':'a'})
         await remediation.after_delete(server.db,task,actor,server._now,server.audit)
         row=await server.db.findings.find_one(scope);self.assertEqual(row['status'],'open')
-        additions=set(row.get('_portfolio_activity_pending',{}))-set(before.get('_portfolio_activity_pending',{}))
-        self.assertEqual(len(additions),1);identity=additions.pop();event=row['_portfolio_activity_pending'][identity]
+        additions=[event for event in await server.db.portfolio_events.find({'source_kind':'findings','source_id':finding['finding_id']}).to_list(None)
+                   if event['event_id'] not in prior]
+        self.assertEqual(len(additions),1);event=additions[0];identity=event['event_id']
+        self.assertFalse(row.get('_portfolio_activity_pending'))
         self.assertEqual(event['before']['status'],'in_remediation');self.assertEqual(event['after']['status'],'open')
         await remediation.after_delete(server.db,task,actor,server._now,server.audit)
-        self.assertEqual((await server.db.findings.find_one(scope)).get('_portfolio_activity_pending'),row['_portfolio_activity_pending'])
+        self.assertFalse((await server.db.findings.find_one(scope)).get('_portfolio_activity_pending'))
+        self.assertEqual(await server.db.portfolio_events.count_documents({'event_id':identity}),1)
         audit=await server.db.audit_logs.find_one({'entity_id':finding['finding_id'],'action':'Finding returned to Open; its remediation Action Item was deleted'})
         self.assertEqual(audit['meta']['_portfolio_activity_event_id'],identity)
 
@@ -369,7 +377,9 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
             saved=await server.db.findings.find_one(scope)
             entry=saved['decision_history'][-1]
             event_id=saved['_portfolio_activity_decision_event_ids'][entry['request_id']]
-            event=saved['_portfolio_activity_pending'][event_id]
+            event=await server.db.portfolio_events.find_one({'event_id':event_id})
+            self.assertFalse(saved.get('_portfolio_activity_pending'))
+            self.assertNotIn('_portfolio_activity',str(first.json()))
             self.assertEqual(event['type'],'Findings');self.assertEqual(event['program_keys'],['cis-ig1'])
             self.assertNotIn('Private isolated decision rationale',str(event))
             audit=await server.db.audit_logs.find_one({'entity_id':fid,'action':'Remediation reopened' if action=='reopen' else action},sort=[('at',-1)])
@@ -378,6 +388,8 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
             current=await server.db.findings.find_one(scope)
             self.assertEqual(current['decision_history'],saved['decision_history'])
             self.assertEqual(current['_portfolio_activity_decision_event_ids'],saved['_portfolio_activity_decision_event_ids'])
+            self.assertFalse(current.get('_portfolio_activity_pending'))
+            self.assertEqual(await server.db.portfolio_events.count_documents({'event_id':event_id}),1)
             return current
         accepted=await decision('accept','portfolio-explicit-accept');self.assertEqual(accepted['status'],'accepted')
         reopened=await decision('reopen','portfolio-explicit-reopen');self.assertEqual(reopened['status'],'in_remediation')

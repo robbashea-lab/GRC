@@ -21,6 +21,7 @@ import soc_guided_lease
 import soc_guided_assessment
 import iso_guided_assessment
 import iso_guided_lease
+import portfolio_activity
 from framework_catalog import CATALOGS, CIS, FRAMEWORKS, ROOT as CATALOG_ROOT, capabilities, definition_for, assessment_title, active_definitions
 from csf_profile import CsfProfile
 from soc_readiness import SocConfiguration, ManagementControl, configuration as soc_configuration
@@ -403,10 +404,10 @@ def router_for(s):
             drafts=await s.db.guided_assessment_pilot.find({'client_id':client_id,'_id':{'$in':list(identities)}},
                 {'_id':1,'revision':1,'completed':1,'version':1,'generated_at':1,'user_id':1}).to_list(123)
             guided_drafts={identities[d['_id']]:{field:d.get(field) for field in ('revision','completed','version','generated_at','user_id')} for d in drafts}
-        return {'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
+        return portfolio_activity.public_source({'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
                 'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
                 'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows,upgraded=upgraded),'guided_assessment_drafts':guided_drafts,
-                'active_definition_ids':[d['id'] for d in active_definitions(key,config)]}
+                'active_definition_ids':[d['id'] for d in active_definitions(key,config)]})
     @router.patch('/frameworks/cis-ig1/configuration')
     @s.configuration_mutation
     async def configure_cis(body:CisConfiguration,user=Depends(s.get_current_user),idempotency_key:Optional[str]=Header(default=None,alias='Idempotency-Key')):
@@ -540,11 +541,14 @@ def router_for(s):
                 'related_links':assessment.get('related_links'), 'last_saved':assessment.get('last_saved'),
                 'last_assessed':assessment.get('last_assessed')},update)
             if not linked.matched_count:raise HTTPException(409,'Assessment relationships changed; retry the Review setup')
-            if linked.modified_count:linked_events.append(portfolio_event['event_id'] if portfolio_event else None)
+            if linked.modified_count:linked_events.append((portfolio_event['event_id'] if portfolio_event else None,
+                                                         assessment['framework_assessment_id']))
+        acknowledged=next(((event_id,source_id) for event_id,source_id in linked_events if event_id),(None,None))
         if linked_events:await s.audit(user,'Framework Review linked','framework_assessments',aid,cid,meta={
-            'review_id':rid,'_portfolio_activity_event_id':next((event for event in linked_events if event),None),
-            '_portfolio_activity_noop':not any(linked_events)})
-        return await s.db.reviews.find_one({'review_id':rid,'client_id':cid},{'_id':0})
+            'review_id':rid,'_portfolio_activity_event_id':acknowledged[0],
+            '_portfolio_activity_source_type':'framework_assessments','_portfolio_activity_source_id':acknowledged[1],
+            '_portfolio_activity_noop':acknowledged[0] is None})
+        return portfolio_activity.public_source(await s.db.reviews.find_one({'review_id':rid,'client_id':cid},{'_id':0}))
 
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
@@ -733,13 +737,13 @@ def router_for(s):
             result=await s.db.framework_assessments.update_one(predicate,write)
             if not result.matched_count:raise HTTPException(409,'Assessment changed since it was opened; reload before saving')
             await s.audit(user,'Framework assessment updated','framework_assessment',aid,old['client_id'],meta={'changed_fields':changed,'status':data['status'],'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None})
-        return await parent(aid,user)
+        return portfolio_activity.public_source(await parent(aid,user))
     @router.get('/framework_assessments/{aid}')
     async def get_assessment(aid:str,user=Depends(s.get_current_user)):
-        return await parent(aid,user)
+        return portfolio_activity.public_source(await parent(aid,user))
     @router.get('/framework_assessments/{aid}/related')
     async def get_related(aid:str,user=Depends(s.get_current_user)):
-        return await related(s,await parent(aid,user))
+        return portfolio_activity.public_source(await related(s,await parent(aid,user)))
     @router.post('/framework_assessments/{aid}/links')
     async def link(aid:str,body:LinkInput,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True);target=await target_record(body.kind,body.id,user)
@@ -815,10 +819,10 @@ def router_for(s):
             await s.audit(user,'create','finding',fid,row['client_id'],meta={
                 'framework_assessment_id':aid,'_portfolio_activity_event_id':saved.get('_portfolio_activity_creation_event_id')})
             return await s.db.findings.find_one({'finding_id':fid},{'_id':0})
-        return await create_requests.run(s.db,create_requests.digest(body.request_id),user['user_id'],row['client_id'],
-            'framework_assessments/'+aid+'/findings',body.model_dump(exclude_unset=True),execute)
+        return portfolio_activity.public_source(await create_requests.run(s.db,create_requests.digest(body.request_id),user['user_id'],row['client_id'],
+            'framework_assessments/'+aid+'/findings',body.model_dump(exclude_unset=True),execute))
     @router.get('/framework_assessments/{aid}/activity')
     async def activity(aid:str,user=Depends(s.get_current_user)):
         row=await parent(aid,user)
-        return await s.db.audit_logs.find({'client_id':row['client_id'],'entity_id':aid},{'_id':0}).sort('at',-1).to_list(500)
+        return portfolio_activity.public_source(await s.db.audit_logs.find({'client_id':row['client_id'],'entity_id':aid},{'_id':0}).sort('at',-1).to_list(500))
     return router

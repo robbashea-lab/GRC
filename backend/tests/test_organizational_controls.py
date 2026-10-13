@@ -122,7 +122,9 @@ class OrganizationalControlTests(unittest.IsolatedAsyncioTestCase):
         cid=created.json()['control_id'];endpoint=BASE+'/'+cid
         async def events():
             row=await server.db.organizational_controls.find_one({'control_id':cid})
-            return row,list(row.get('_portfolio_activity_pending',{}).values())
+            self.assertFalse(row.get('_portfolio_activity_pending'))
+            captured=await server.db.portfolio_events.find({'client_id':'a','source_kind':'organizational_controls','source_id':cid}).sort('at',1).to_list(None)
+            return row,captured
         row,captured=await events();self.assertEqual(len(captured),1)
         self.assertEqual(captured[0]['type'],'Assessments');self.assertEqual(captured[0]['actor']['id'],'admin')
         self.assertNotIn('Private implementation description',str(captured))
@@ -169,7 +171,29 @@ class OrganizationalControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code,409,response.text)
         saved=await server.db.organizational_controls.find_one({'control_id':cid})
         self.assertEqual(saved['design'],before['design']);self.assertEqual(saved['history'],before['history'])
-        self.assertEqual(saved['_portfolio_activity_pending'],before['_portfolio_activity_pending'])
+        self.assertEqual(saved.get('_portfolio_activity_pending'),before.get('_portfolio_activity_pending'))
+
+    async def test_native_control_responses_hide_capture_fields_and_preserve_internal_replay_state(self):
+        await self.seed()
+        body={'client_id':'a','request_id':'private-marker','name':'Native Control','assessment_ids':['a1'],
+              'related_links':[{'kind':'reviews','id':'r1'}]}
+        created=await self.client.post(BASE,json=body)
+        self.assertEqual(created.status_code,200,created.text)
+        self.assertNotIn('_portfolio_activity',str(created.json()))
+        cid=created.json()['control_id']
+        marker={'_portfolio_activity_pending':{'retained':{'private':'pending envelope'}},
+                '_portfolio_activity_last_event_id':'retained'}
+        await server.db.organizational_controls.update_one({'control_id':cid},{'$set':marker})
+        await server.db.reviews.update_one({'review_id':'r1'},{'$set':marker})
+        before=await server.db.organizational_controls.find_one({'control_id':cid})
+        review=await server.db.reviews.find_one({'review_id':'r1'})
+        responses=[await self.client.get(BASE,params={'client_id':'a'}),
+                   await self.client.get(BASE+'/'+cid),await self.client.post(BASE,json=body)]
+        for response in responses:
+            self.assertEqual(response.status_code,200,response.text)
+            self.assertNotIn('_portfolio_activity',str(response.json()))
+        self.assertEqual(await server.db.organizational_controls.find_one({'control_id':cid}),before)
+        self.assertEqual(await server.db.reviews.find_one({'review_id':'r1'}),review)
 
     def test_missing_identifiers_never_merge_across_criteria(self):
         rows=[{'client_id':'a','framework_key':'soc-2','framework_assessment_id':aid,'definition_id':aid,'management_controls':[{'name':'Same name'}]} for aid in ('one','two')]

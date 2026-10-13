@@ -34,6 +34,14 @@ ALIASES.update({kind[:-1]: kind for kind in SOURCES if kind != 'evidence'})
 ALIASES.update({'policy': 'policies', 'framework_assessment': 'framework_assessments',
                 'organizational_control': 'organizational_controls'})
 TYPES = frozenset(value[1] for value in SOURCES.values())
+SOURCE_INTERNAL_FIELDS = frozenset({
+    '_portfolio_activity_pending', '_portfolio_activity_last_event_id',
+    '_portfolio_activity_creation_event_id', '_portfolio_activity_decision_event_ids',
+    '_portfolio_delete_receipt', '_portfolio_delete_token',
+    '_portfolio_program_key', '_portfolio_program_label',
+    '_portfolio_activity_event_id', '_portfolio_activity_noop',
+    '_portfolio_activity_source_type', '_portfolio_activity_source_id',
+})
 TECHNICAL = {'updated_at', 'last_saved', 'last_assessed', 'assessed_by',
              'assessment_recorded_at', 'assessment_recorded_by', 'created_at', 'created_by',
              'expected_updated_at', 'expected_last_assessed', 'last_activity', 'history',
@@ -350,11 +358,67 @@ def project_audit(document):
     return event
 
 
+def public_source(value):
+    """Copy a source response without this feature's exact internal fields."""
+    if isinstance(value, dict):
+        return {key: public_source(item) for key, item in value.items() if key not in SOURCE_INTERNAL_FIELDS}
+    if isinstance(value, list):
+        return [public_source(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(public_source(item) for item in value)
+    return value
+
+
 async def persist_event(db, event):
     if event is None:
         return False
     result = await db.portfolio_events.update_one({'_id': event['event_id']}, {'$setOnInsert': event}, upsert=True)
     return result.upserted_id is not None
+
+
+def _validate_pending(kind, row, identity, event):
+    key = SOURCES[kind][0]
+    if (not isinstance(identity, str) or not re.fullmatch(r'[a-f0-9]{64}', identity)
+            or not isinstance(event, dict) or event.get('event_id') != identity
+            or event.get('client_id') != row.get('client_id') or event.get('source_kind') != kind
+            or event.get('source_id') != row.get(key)):
+        raise ValueError('Invalid activity source marker')
+
+
+async def _acknowledge_pending(db, kind, row, identity, event):
+    _validate_pending(kind, row, identity, event)
+    key = SOURCES[kind][0]
+    inserted = await persist_event(db, event)
+    # Remove only this exact durable envelope. A concurrent write may already
+    # have added a newer envelope, and the durable last-event identity stays.
+    await db[kind].update_one({key: row[key], 'client_id': row['client_id'],
+        '_portfolio_activity_pending.' + identity: event},
+        {'$unset': {'_portfolio_activity_pending.' + identity: ''}})
+    await db[kind].update_one({key: row[key], 'client_id': row['client_id'], '_portfolio_activity_pending': {}},
+                             {'$unset': {'_portfolio_activity_pending': ''}})
+    return inserted
+
+
+async def acknowledge_committed(db, entity_type, entity_id, client_id, event_id):
+    """Drain one committed source envelope after its durable audit succeeds.
+
+    Interrupted persistence/acknowledgement leaves the source marker available
+    to the ordinary collector. Missing or already acknowledged markers are a
+    harmless replay; source timestamps and business fields are never changed.
+    """
+    kind = ALIASES.get(entity_type)
+    if not kind or not event_id or not client_id or not entity_id:
+        return False
+    if not isinstance(event_id, str) or not re.fullmatch(r'[a-f0-9]{64}', event_id):
+        raise ValueError('Invalid activity event identity')
+    key = SOURCES[kind][0]
+    field = '_portfolio_activity_pending.' + event_id
+    row = await db[kind].find_one({key: entity_id, 'client_id': client_id, field: {'$exists': True}},
+                                 {'_id': 0, key: 1, 'client_id': 1, field: 1})
+    if row is None:
+        return False
+    event = row.get('_portfolio_activity_pending', {}).get(event_id)
+    return await _acknowledge_pending(db, kind, row, event_id, event)
 
 
 async def reconcile_pending(db, limit=500):
@@ -371,16 +435,7 @@ async def reconcile_pending(db, limit=500):
             for identity, event in pending.items():
                 if processed >= limit:
                     break
-                if (not re.fullmatch(r'[a-f0-9]{64}', identity) or event.get('event_id') != identity
-                        or event.get('client_id') != row.get('client_id') or event.get('source_kind') != kind
-                        or event.get('source_id') != row.get(key)):
-                    raise ValueError('Invalid activity source marker')
-                inserted += await persist_event(db, event)
-                await db[kind].update_one({key: row[key], 'client_id': row['client_id'],
-                    '_portfolio_activity_pending.' + identity: event},
-                    {'$unset': {'_portfolio_activity_pending.' + identity: ''}})
-                await db[kind].update_one({key: row[key], 'client_id': row['client_id'], '_portfolio_activity_pending': {}},
-                                         {'$unset': {'_portfolio_activity_pending': ''}})
+                inserted += await _acknowledge_pending(db, kind, row, identity, event)
                 processed += 1
     return {'processed': processed, 'inserted': inserted}
 

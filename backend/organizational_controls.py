@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 import authorization
 import assignment_eligibility
+import portfolio_activity
 from soc_readiness import validate_period
 
 DESIGN_FIELDS = ('name', 'description', 'frequency', 'design')
@@ -196,8 +197,8 @@ def router_for(s):
         legacy = await s.db.framework_assessments.find({'client_id':client_id,'framework_key':'soc-2'}, {'_id':0}).to_list(None)
         planned = migration_plan(legacy, client_id, '', '')
         existing = {r['control_id'] for r in await s.db.organizational_controls.find({'client_id':client_id},{'_id':0,'control_id':1}).to_list(None)}
-        return {'items':items[:limit], 'has_more':len(items)>limit,
-                'migration_pending':sum(r['control_id'] not in existing for r in planned)}
+        return portfolio_activity.public_source({'items':items[:limit], 'has_more':len(items)>limit,
+                'migration_pending':sum(r['control_id'] not in existing for r in planned)})
 
     @router.post('/migrate')
     async def migrate(body:ClientInput, user=Depends(s.get_current_user)):
@@ -249,7 +250,7 @@ def router_for(s):
         if existing:
             if any(existing.get(k) != v for k,v in data.items()):
                 raise HTTPException(409, 'This create request already produced a different Control')
-            return existing
+            return portfolio_activity.public_source(existing)
         row = {**data, 'control_id':ident, 'created_at':at, 'created_by':user['user_id'], 'updated_at':at,
                'history':[], 'observations':[], 'legacy_sources':[], 'conflicts':[], 'reconciliation_note':''}
         _, portfolio_event = s._portfolio_event_patch(
@@ -265,7 +266,7 @@ def router_for(s):
         saved = await record(ident,user)
         if any(saved.get(k) != v for k,v in data.items()):
             raise HTTPException(409,'This create request already produced a different Control')
-        return saved
+        return portfolio_activity.public_source(saved)
 
     @router.get('/{control_id}')
     async def detail(control_id:str,user=Depends(s.get_current_user)):
@@ -276,7 +277,7 @@ def router_for(s):
             ids = list({l['id'] for version in versions for l in version.get('related_links',[]) if l['kind']==kind})
             linked[kind] = await s.db[kind].find({'client_id':row['client_id'],key:{'$in':ids}},
                 {'_id':0,'content_base64':0}).to_list(len(ids)) if ids else []
-        return {**row,'linked_records':linked}
+        return portfolio_activity.public_source({**row,'linked_records':linked})
 
     @router.patch('/{control_id}')
     async def edit(control_id:str,body:Edit,user=Depends(s.get_current_user)):
@@ -289,7 +290,7 @@ def router_for(s):
             if not body.reconciliation_note:
                 raise HTTPException(422,'Document the reconciliation decision before resolving conflicts')
             data.update(conflicts=[],reconciliation_note=body.reconciliation_note)
-        return await save(old,user,data)
+        return portfolio_activity.public_source(await save(old,user,data))
 
     @router.post('/{control_id}/observations')
     async def observe(control_id:str,body:Observation,user=Depends(s.get_current_user)):
@@ -299,13 +300,13 @@ def router_for(s):
         if prior:
             if any(prior.get(k)!=v for k,v in values.items()):
                 raise HTTPException(409,'Observation request already used with different content')
-            return old
+            return portfolio_activity.public_source(old)
         if body.expected_updated_at != old['updated_at']:
             raise HTTPException(409,'Control changed since it was opened; reload before recording operation')
         if old.get('conflicts'):
             raise HTTPException(409,'Reconcile the Control design before recording shared operation')
         observation = {**values, 'at':s._now(), 'by':user['user_id'],
                        'control_revision':old['updated_at'], 'design_snapshot':snapshot(old)}
-        return await save(old,user,{},observation)
+        return portfolio_activity.public_source(await save(old,user,{},observation))
 
     return router

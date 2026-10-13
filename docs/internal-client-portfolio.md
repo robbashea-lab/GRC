@@ -73,8 +73,11 @@ state fingerprint; sequence preserves same-day A-to-B-to-A reversions. Acknowled
 or uncertain repeats cannot create duplicate unchanged observations.
 
 Ordinary native writers atomically store a minimized event envelope with their
-source change. Reconciliation upserts by stable event identity, then acknowledges
-only that marker. Identity includes actual business values through a hash, without
+source change. After the native audit is durable, the writer idempotently projects
+and acknowledges only that exact envelope; concurrent pending facts and the last
+event identity remain intact. Failed projection or acknowledgement stays available
+to reconciliation. Native responses omit the introduced technical fields while
+internal concurrency/replay reads retain them. Identity includes actual business values through a hash, without
 storing free text. Failed/no-op writes, technical retries and Evidence link mirrors
 do not produce extra business events. Historical actor names and event times are
 frozen. Deletion receipts retain pending facts through committed physical removal;

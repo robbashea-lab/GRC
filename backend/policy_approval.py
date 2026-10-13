@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, ConfigDict
 from copy import deepcopy
 import policy_provenance
+import portfolio_activity
 
 INTERNAL = {"super_admin", "platform_admin"}
 PROTECTED = {"approval_account_id", "approver_contact_id", "approval_request_id"} | policy_provenance.PROTECTED
@@ -100,13 +101,13 @@ def router_for(s):
         patch = {"approval_source": body.model_dump(exclude={'expected_updated_at'}), "version": body.version}
         await policy_provenance.snapshot(s, {**p, **patch})
         if patch["approval_source"] == p.get("approval_source") and patch["version"] == p.get("version"):
-            return p
+            return portfolio_activity.public_source(p)
         entry = {"at": s._now(), "action": "approval_basis_updated", "by": user["user_id"],
                  "by_name": user.get("name"), "by_email": user.get("email")}
         patch.update({"status": "draft", "approved_at": None, "approval_subject": None, "updated_at": entry["at"]})
         result, portfolio_event = await change(p, patch, entry)
         await s.audit(user, "policy-basis", "policy", policy_id, p["client_id"], meta={"_portfolio_activity_event_id": (portfolio_event or {}).get("event_id"), "_portfolio_activity_noop": portfolio_event is None})
-        return result
+        return portfolio_activity.public_source(result)
 
     @router.post("/policies/{policy_id}/approval-authority")
     async def authority(policy_id: str, body: AuthorityIn, user=Depends(s.get_current_user)):
@@ -156,7 +157,7 @@ def router_for(s):
         if p.get("approval_account_id"):
             await s.create_notification(user_id=p["approval_account_id"], title=f"Policy submitted for your approval: {p['title']}",
                                         kind="policy_review", entity_type="policies", entity_id=policy_id, client_id=p["client_id"])
-        return result
+        return portfolio_activity.public_source(result)
 
     @router.post("/policies/{policy_id}/approve")
     async def approve(policy_id: str, body: DecisionIn, user=Depends(s.get_current_user)):
@@ -177,7 +178,7 @@ def router_for(s):
                  "by_name": user.get("name"), "by_email": user.get("email"), "subject": p.get("approval_subject")}
         result, portfolio_event = await change(p, {"status": "draft", "updated_at": entry["at"]}, entry)
         await s.audit(user, "withdraw-submission", "policy", policy_id, p["client_id"], meta={"_portfolio_activity_event_id": (portfolio_event or {}).get("event_id"), "_portfolio_activity_noop": portfolio_event is None})
-        return result
+        return portfolio_activity.public_source(result)
 
     async def decide(policy_id, body, user, decision):
         p = await s._authorized_parent("policies", policy_id, user)
@@ -200,6 +201,6 @@ def router_for(s):
         if p.get("owner_id"):
             await s.create_notification(user_id=p["owner_id"], title=f"Policy {decision}: {p['title']}",
                                         kind="policy_decision", entity_type="policies", entity_id=policy_id, client_id=p["client_id"])
-        return result
+        return portfolio_activity.public_source(result)
 
     return router

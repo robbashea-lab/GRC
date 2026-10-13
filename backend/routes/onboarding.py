@@ -19,6 +19,7 @@ from pydantic import BaseModel
 import onboarding_recovery
 import review_occurrences
 import assignment_eligibility
+import portfolio_activity
 
 # Late-binding imports from the main server module. Safe because server.py
 # imports this module at the bottom, after all these names are defined.
@@ -185,7 +186,7 @@ async def onboarding_state(
         {"_id": 0, "action": 1, "entity_type": 1, "entity_id": 1, "at": 1,
          "user_email": 1, "user_name": 1, "meta": 1}
     ).sort("at", -1).to_list(200)
-    return {"contacts": contacts, "assessments": assessments, "onboarding_history": history}
+    return portfolio_activity.public_source({"contacts": contacts, "assessments": assessments, "onboarding_history": history})
 
 
 @router.post("/onboarding/finalize")
@@ -768,9 +769,9 @@ async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_us
         server.db.users.count_documents({'client_ids': client_id, 'status': 'active', 'role': {'$nin': ['super_admin', 'platform_admin']}}),
         assignment_eligibility.candidates(server.db, client_id, limit=1),
     )
-    return {'client': projected, 'completed': completed,
+    return portfolio_activity.public_source({'client': projected, 'completed': completed,
             'records': dict(zip(fields, values)),
-            'people': {'contacts': contacts, 'active_client_users': client_users, 'eligible_assignees_available': bool(candidates['items'])}}
+            'people': {'contacts': contacts, 'active_client_users': client_users, 'eligible_assignees_available': bool(candidates['items'])}})
 
 
 class ProgramApplicabilityChange(BaseModel):
@@ -845,5 +846,10 @@ async def adjust_program(key: str, body: ProgramApplicabilityChange, user: Dict 
     if old and not changed.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
     if key in framework_governance.CATALOGS:
         await framework_governance.reconcile(server, cid, {**baseline, 'requirements': {key: body.applicability}}, user)
-    await audit(user, 'program-applicability-updated', 'client', cid, cid, meta={'program': key, 'previous_status':(old or {}).get('baseline_response'), 'applicability': body.applicability,'reason':body.reason,'effective_date':body.effective_date,'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None})
+    await audit(user, 'program-applicability-updated', 'client', cid, cid, meta={
+        'program': key, 'previous_status':(old or {}).get('baseline_response'), 'applicability': body.applicability,
+        'reason':body.reason,'effective_date':body.effective_date,
+        '_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None,
+        '_portfolio_activity_source_type':'requirements',
+        '_portfolio_activity_source_id':(old or {}).get('requirement_id',stable_id)})
     return {'ok': True}

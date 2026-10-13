@@ -34,6 +34,28 @@ class PortfolioActivityTests(unittest.IsolatedAsyncioTestCase):
         await activity.persist_event(self.db, event)
         return event
 
+    def test_public_source_removes_only_exact_nested_internal_fields_without_mutation(self):
+        internal = {key: 'internal-value' for key in activity.SOURCE_INTERNAL_FIELDS}
+        source = {**internal, '_id': 'source-id', 'client_id': 'a', 'event_id': 'public-event-id',
+            '_portfolio_business_note': 'Retained business value',
+            'history': [{**internal, 'occurrence_id': 'retained', 'status': 'completed',
+                'metadata': {'_portfolio_activity_event_id_note': 'Retained annotation',
+                             '_portfolio_activity_event_id': 'internal-id'}}],
+            'related': ({**internal, 'framework_key': 'cis-ig1'}, {'entity_id': 'record-id'})}
+        original = copy.deepcopy(source)
+        expected = {'_id': 'source-id', 'client_id': 'a', 'event_id': 'public-event-id',
+            '_portfolio_business_note': 'Retained business value',
+            'history': [{'occurrence_id': 'retained', 'status': 'completed',
+                         'metadata': {'_portfolio_activity_event_id_note': 'Retained annotation'}}],
+            'related': ({'framework_key': 'cis-ig1'}, {'entity_id': 'record-id'})}
+        public = activity.public_source(source)
+        self.assertEqual(public, expected)
+        self.assertEqual(source, original)
+        self.assertIsInstance(public['related'], tuple)
+        public['history'][0]['status'] = 'changed response copy'
+        public['related'][0]['framework_key'] = 'changed response copy'
+        self.assertEqual(source, original)
+
     async def test_actual_business_values_and_historical_actor_are_minimized(self):
         before = {'client_id': 'a', 'status': 'identified', 'risk_score': None, 'notes': 'SECRET OLD'}
         after = {'client_id': 'a', 'status': 'assessed', 'risk_score': 16, 'likelihood_score': 4,
@@ -179,6 +201,85 @@ class PortfolioActivityTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue((await self.db.evidence.find_one({}))['_portfolio_activity_pending'])
         self.assertEqual((await activity.reconcile_pending(self.db))['inserted'], 1)
 
+    async def test_successful_committed_acknowledgements_bound_outbox_without_startup(self):
+        source = {'review_id': 'retained-review', 'client_id': 'a', 'status': 'upcoming', 'notes': '0',
+                  'created_at': self.as_of, 'occurrences': [{'occurrence_id': 'prior', 'status': 'completed'}]}
+        await self.db.reviews.insert_one(copy.deepcopy(source))
+        for index in range(1, 41):
+            after = {**source, 'notes': str(index), 'updated_at': (self.now + timedelta(microseconds=index)).isoformat()}
+            event = activity.project_committed_change('review', 'retained-review', 'a', self.user,
+                                                      source, after, after['updated_at'])
+            await self.db.reviews.update_one({'review_id': 'retained-review'}, {'$set': {
+                'notes': after['notes'], 'updated_at': after['updated_at'],
+                '_portfolio_activity_pending.' + event['event_id']: event,
+                '_portfolio_activity_last_event_id': event['event_id']}})
+            self.assertTrue(await activity.acknowledge_committed(self.db, 'review', 'retained-review', 'a', event['event_id']))
+            saved = await self.db.reviews.find_one({'review_id': 'retained-review'}, {'_id': 0})
+            self.assertNotIn('_portfolio_activity_pending', saved)
+            self.assertEqual(saved, {**after, '_portfolio_activity_last_event_id': event['event_id']})
+            source = after
+        self.assertEqual(await self.db.portfolio_events.count_documents({}), 40)
+
+    async def test_exact_acknowledgement_preserves_concurrent_business_write_and_envelope(self):
+        first = activity.project_committed_change('risk', 'concurrent', 'a', self.user,
+            {'status': 'identified'}, {'status': 'assessed'}, self.as_of)
+        later_at = (self.now + timedelta(seconds=1)).isoformat()
+        later = activity.project_committed_change('risk', 'concurrent', 'a', self.user,
+            {'status': 'assessed'}, {'status': 'closed'}, later_at)
+        await self.db.risks.insert_one({'risk_id': 'concurrent', 'client_id': 'a', 'status': 'assessed',
+            'updated_at': self.as_of, '_portfolio_activity_pending': {first['event_id']: first},
+            '_portfolio_activity_last_event_id': first['event_id']})
+        original = activity.persist_event
+
+        async def persist_then_write(db, event):
+            inserted = await original(db, event)
+            await db.risks.update_one({'risk_id': 'concurrent'}, {'$set': {'status': 'closed', 'updated_at': later_at,
+                '_portfolio_activity_pending.' + later['event_id']: later,
+                '_portfolio_activity_last_event_id': later['event_id']}})
+            return inserted
+
+        with patch.object(activity, 'persist_event', persist_then_write):
+            self.assertTrue(await activity.acknowledge_committed(self.db, 'risk', 'concurrent', 'a', first['event_id']))
+        saved = await self.db.risks.find_one({'risk_id': 'concurrent'})
+        self.assertEqual(saved['_portfolio_activity_pending'], {later['event_id']: later})
+        self.assertEqual(saved['_portfolio_activity_last_event_id'], later['event_id'])
+        self.assertEqual((saved['status'], saved['updated_at']), ('closed', later_at))
+        self.assertEqual(await self.db.portfolio_events.count_documents({}), 1)
+        self.assertTrue(await activity.acknowledge_committed(self.db, 'risks', 'concurrent', 'a', later['event_id']))
+        self.assertEqual(await self.db.portfolio_events.count_documents({}), 2)
+
+    async def test_committed_acknowledgement_failure_replay_and_tenant_linkage(self):
+        event = activity.project_committed_change('finding', 'interrupted', 'a', self.user,
+            {'status': 'open'}, {'status': 'validated'}, self.as_of)
+        await self.db.findings.insert_one({'finding_id': 'interrupted', 'client_id': 'a', 'status': 'validated',
+            'updated_at': self.as_of, '_portfolio_activity_pending': {event['event_id']: event},
+            '_portfolio_activity_last_event_id': event['event_id']})
+        self.assertFalse(await activity.acknowledge_committed(self.db, 'finding', 'interrupted', 'other', event['event_id']))
+        with patch.object(activity, 'persist_event', side_effect=RuntimeError('projection outage')):
+            with self.assertRaisesRegex(RuntimeError, 'projection outage'):
+                await activity.acknowledge_committed(self.db, 'finding', 'interrupted', 'a', event['event_id'])
+        self.assertEqual(await self.db.portfolio_events.count_documents({}), 0)
+        original = type(self.db.findings).update_one
+
+        async def interrupted(collection, *args, **kwargs):
+            if collection.name == 'findings':
+                raise RuntimeError('source acknowledgement outage')
+            return await original(collection, *args, **kwargs)
+
+        with patch.object(type(self.db.findings), 'update_one', interrupted):
+            with self.assertRaisesRegex(RuntimeError, 'acknowledgement outage'):
+                await activity.acknowledge_committed(self.db, 'finding', 'interrupted', 'a', event['event_id'])
+        self.assertEqual(await self.db.portfolio_events.count_documents({}), 1)
+        saved = await self.db.findings.find_one({'finding_id': 'interrupted'})
+        self.assertEqual(saved['_portfolio_activity_pending'], {event['event_id']: event})
+        self.assertFalse(await activity.acknowledge_committed(self.db, 'finding', 'interrupted', 'a', event['event_id']))
+        self.assertFalse(await activity.acknowledge_committed(self.db, 'finding', 'interrupted', 'a', event['event_id']))
+        saved = await self.db.findings.find_one({'finding_id': 'interrupted'})
+        self.assertNotIn('_portfolio_activity_pending', saved)
+        self.assertEqual((saved['status'], saved['updated_at'], saved['_portfolio_activity_last_event_id']),
+                         ('validated', self.as_of, event['event_id']))
+        self.assertEqual(await self.db.portfolio_events.count_documents({}), 1)
+
     async def test_explicit_assessment_judgment_is_captured_without_draft_or_noop_noise(self):
         before = {'status': 'addressed', 'implementation': 'Existing implementation', 'last_assessed': 'old'}
         after = {**before, 'last_assessed': self.as_of}
@@ -320,6 +421,51 @@ class PortfolioScopeCaptureTests(unittest.IsolatedAsyncioTestCase):
         await activity.reconcile(server.db)
         self.assertEqual(await server.db.portfolio_events.count_documents({}), before_count + 1)
 
+    async def test_native_review_successful_writes_acknowledge_without_report_or_startup(self):
+        server = onboarding_scenarios.server
+        created = await self.client.post('/api/reviews', json={'client_id': 'a', 'title': 'Isolated bounded source',
+            'review_type': 'access', 'owner_id': 'admin', 'due_date': '2026-12-01', 'recurrence': 'annual'})
+        self.assertEqual(created.status_code, 200, created.text)
+        identity = created.json()['review_id']
+        source = await server.db.reviews.find_one({'review_id': identity})
+        self.assertNotIn('_portfolio_activity_pending', source)
+        retained_created_at = source['created_at']
+        retained_history = copy.deepcopy(source.get('occurrences', []))
+        for index in range(16):
+            changed = await self.client.patch('/api/reviews/' + identity, json={'notes': 'Isolated revision ' + str(index)})
+            self.assertEqual(changed.status_code, 200, changed.text)
+            source = await server.db.reviews.find_one({'review_id': identity})
+            self.assertNotIn('_portfolio_activity_pending', source)
+            self.assertEqual(source['notes'], 'Isolated revision ' + str(index))
+            self.assertEqual(source['created_at'], retained_created_at)
+            self.assertEqual(source.get('occurrences', []), retained_history)
+        self.assertEqual(await server.db.portfolio_events.count_documents({'source_kind': 'reviews', 'source_id': identity}), 17)
+
+    async def test_native_review_responses_hide_capture_fields_without_mutating_recovery(self):
+        server = onboarding_scenarios.server
+        created = await self.client.post('/api/reviews', json={'client_id': 'a', 'title': 'Isolated response boundary',
+            'review_type': 'access', 'owner_id': 'admin', 'due_date': '2026-12-01', 'recurrence': 'annual'})
+        self.assertEqual(created.status_code, 200, created.text)
+        identity = created.json()['review_id']
+        self.assertTrue(activity.SOURCE_INTERNAL_FIELDS.isdisjoint(created.json()))
+        source = await server.db.reviews.find_one({'review_id': identity})
+        self.assertIn('_portfolio_activity_last_event_id', source)
+        event = await server.db.portfolio_events.find_one({'source_kind': 'reviews', 'source_id': identity}, {'_id': 0})
+        pending = {event['event_id']: event}
+        await server.db.reviews.update_one({'review_id': identity}, {'$set': {
+            '_portfolio_activity_pending': pending, '_portfolio_activity_pending_note': 'Business field retained'}})
+        before_read = await server.db.reviews.find_one({'review_id': identity})
+        detail = await self.client.get('/api/reviews/' + identity)
+        listing = await self.client.get('/api/reviews', params={'client_id': 'a'})
+        self.assertEqual(detail.status_code, 200, detail.text)
+        self.assertEqual(listing.status_code, 200, listing.text)
+        listed = next(row for row in listing.json() if row['review_id'] == identity)
+        for public in (detail.json(), listed):
+            self.assertTrue(activity.SOURCE_INTERNAL_FIELDS.isdisjoint(public))
+            self.assertEqual(public['_portfolio_activity_pending_note'], 'Business field retained')
+            self.assertEqual(public['created_at'], before_read['created_at'])
+        self.assertEqual(await server.db.reviews.find_one({'review_id': identity}), before_read)
+
     async def test_native_finalization_captures_once_without_report_and_drafts_do_not(self):
         server = onboarding_scenarios.server
         body = await self.baseline_body()
@@ -356,7 +502,8 @@ class PortfolioScopeCaptureTests(unittest.IsolatedAsyncioTestCase):
         changed = await self.raw.patch(url, json=body)
         self.assertEqual(changed.status_code, 200, changed.text)
         saved = await server.db.requirements.find_one({'requirement_id': row['requirement_id']})
-        self.assertTrue(saved['_portfolio_activity_pending'])
+        self.assertNotIn('_portfolio_activity_pending', saved)
+        self.assertEqual(await server.db.portfolio_events.count_documents({}), before_count + 1)
         await activity.reconcile(server.db)
         self.assertEqual(await server.db.portfolio_events.count_documents({}), before_count + 1)
         event = await server.db.portfolio_events.find_one({'source_kind': 'requirements'})
