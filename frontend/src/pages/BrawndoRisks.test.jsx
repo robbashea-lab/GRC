@@ -14,12 +14,14 @@ let root,container,rows;
 const button=text=>[...document.querySelectorAll('button')].find(b=>b.textContent===text||b.textContent.startsWith(text));
 const click=async node=>act(async()=>node.click());
 beforeEach(()=>{
+ // Keep the existing UTC management day fixed, including an evening in western time zones.
+ jest.useFakeTimers({now:new Date('2026-10-14T00:30:00Z'),doNotFake:['setTimeout','clearTimeout','setInterval','clearInterval','setImmediate','clearImmediate','nextTick','queueMicrotask','performance']});
  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';mockSearch='';mockUser.workspace_mode='demo';localStorage.clear();
  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
  rows=[{risk_id:'late',client_id:mockClient,title:'Late risk',status:'open',next_review:'2020-01-01',likelihood_score:3,impact_score:4},{risk_id:'undated',client_id:mockClient,title:'Undated risk',status:'open'},{risk_id:'closed',client_id:mockClient,title:'Closed risk',status:'closed'}];
  api.get.mockImplementation(async path=>({data:path==='/risks'?rows:[]}));
 });
-afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();jest.useRealTimers();});
 
 test('retained significant-risk deep link visibly explains its scope and can be cleared',async()=>{
  mockSearch='?view=significant';mockUser.workspace_mode='authenticated';
@@ -59,10 +61,11 @@ test('new risk has annual/undecided defaults and protects an unfinished draft',a
 });
 
 test('review filters partition authoritative dates for normal and Demo clients',async()=>{
- const now=new Date();const day=n=>{const d=new Date(now);d.setDate(d.getDate()+n);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
+ // Relative to UTC 2026-10-14: overdue, today, tomorrow, day 30, then day 31.
+ const days={'-1':'2026-10-13','0':'2026-10-14','1':'2026-10-15','30':'2026-11-13','31':'2026-11-14'};
  for(const mode of ['demo','authenticated']){
   mockUser.workspace_mode=mode;
-  rows=[-1,0,1,30,31].map(n=>({risk_id:String(n),client_id:mockClient,title:'Review '+n,status:'identified',next_review:day(n)}));
+  rows=[-1,0,1,30,31].map(n=>({risk_id:String(n),client_id:mockClient,title:'Review '+n,status:'identified',next_review:days[n]}));
   await act(async()=>root.render(<RiskRegister key={mode}/>));
   await click(container.querySelector('[data-testid="risk-view-review_due"]'));
   expect([...container.querySelectorAll('tbody .register-record-link')].map(b=>b.textContent)).toEqual(['Review -1','Review 0']);
