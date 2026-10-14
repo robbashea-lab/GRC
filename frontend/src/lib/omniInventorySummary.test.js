@@ -5,7 +5,7 @@ import {formatInlineSummary} from './inlineAssessment';
 import {omniCisSummary} from './omniCisSummary';
 const version=versionForSafeguard('1.1',true),user={workspace_mode:'demo'};
 const record={client_id:'demo_brawndo',framework_key:'cis-ig1',definition_id:'1.1'};
-beforeEach(()=>jest.useFakeTimers({now:new Date(2026,9,13,20,30)}));
+beforeEach(()=>{jest.useFakeTimers();jest.setSystemTime(new Date(2026,9,13,20,30));});
 afterEach(()=>jest.useRealTimers());
 test('inline unknown inventory describes its genuine confirmation work without an empty controls section or hidden context',()=>{
   const answers={inventory:'Not sure',additional_gap:'No',additional_confirmation:'No',gaps:'HIDDEN GAP',unknowns:'HIDDEN CONFIRMATION'};

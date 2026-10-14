@@ -15,7 +15,7 @@ const button=text=>[...document.querySelectorAll('button')].find(b=>b.textConten
 const click=async node=>act(async()=>node.click());
 beforeEach(()=>{
  // Keep the existing UTC management day fixed, including an evening in western time zones.
- jest.useFakeTimers({now:new Date('2026-10-14T00:30:00Z'),doNotFake:['setTimeout','clearTimeout','setInterval','clearInterval','setImmediate','clearImmediate','nextTick','queueMicrotask','performance']});
+ jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-14T00:30:00Z'));
  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';mockSearch='';mockUser.workspace_mode='demo';localStorage.clear();
  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
  rows=[{risk_id:'late',client_id:mockClient,title:'Late risk',status:'open',next_review:'2020-01-01',likelihood_score:3,impact_score:4},{risk_id:'undated',client_id:mockClient,title:'Undated risk',status:'open'},{risk_id:'closed',client_id:mockClient,title:'Closed risk',status:'closed'}];

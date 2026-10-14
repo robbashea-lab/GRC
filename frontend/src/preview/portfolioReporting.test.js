@@ -153,7 +153,7 @@ test('changing native Annex scopes and guided saves retain all positions within 
       jest.advanceTimersByTime(1000);
       row=(await api.patch(path,{soa_applicability:'included',soa_justification:'Synthetic risk treatment scope decision',expected_last_assessed:row.last_saved||row.last_assessed||null})).data;
       const draft=(await api.get(path+'/guided-assessment')).data,answers={};
-      for(let pass=0;pass<30;pass++){const missing=isoQuestions(row.definition_id,answers).filter(question=>!(question.id in answers));if(!missing.length)break;for(const question of missing)answers[question.id]=question.type==='text'?'':question.type==='context'?'Relevant':'Yes';}
+      for(let pass=0;pass<30;pass++){const missing=isoQuestions(row.definition_id,answers).filter(question=>!(question.id in answers));if(!missing.length)break;for(const question of missing)answers[question.id]=question.type==='text'?'':question.type==='context'?'Relevant':question.optional?'No':'Yes';}
       const result=isoGuidedResult(row.definition_id,answers,draft.version,'Synthetic storage regression');
       const reviewed=(await api.put(path+'/guided-assessment',{version:draft.version,answers,summary_review:{version:draft.version,answers},step:0,completed:true,narrative:result.narrative,result,expected_revision:draft.revision,base_assessment_token:draft.current_assessment_token,base_scope_fingerprint:draft.current_scope_fingerprint})).data;
       jest.advanceTimersByTime(1000);

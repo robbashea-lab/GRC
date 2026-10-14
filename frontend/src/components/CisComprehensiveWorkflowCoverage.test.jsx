@@ -104,6 +104,7 @@ async function fillQuestion(q,value){
 beforeEach(()=>{
   // Source-authored dated answers use a controlled clock; real UI timers keep their budgets.
   jest.useFakeTimers({now:new Date('2026-10-10T12:00:00Z'),doNotFake:['setTimeout','clearTimeout','setInterval','clearInterval','setImmediate','clearImmediate','nextTick','queueMicrotask','performance']});
+  jest.setSystemTime(new Date('2026-10-10T12:00:00Z'));
   global.IS_REACT_ACT_ENVIRONMENT=true;mockRole='super_admin';localStorage.clear();sessionStorage.clear();window.history.replaceState({},'','/');
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);opened=jest.fn();
   api.get.mockImplementation(async path=>({data:path.endsWith('/guided-assessment/history')?{items:copy(interviewHistory),next_before_revision:null}:path.endsWith('/guided-assessment')?readInterview():path.endsWith('/related')?{reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]}:path.startsWith('/frameworks/')?{configuration:{implementation_group:group,...configurationExtra},assessments:[copy(native)],work:{[native.framework_assessment_id]:{context_complete:true,open_findings:0,open_actions:0,overdue_reviews:0,priority_records:[]}}}:[]}));
