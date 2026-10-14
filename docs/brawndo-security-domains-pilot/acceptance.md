@@ -1,0 +1,101 @@
+# Brawndo CIS IG1 Security Domains pilot acceptance
+
+Status: **candidate verification in progress; release blocked by mandatory hosted write-fixture custody**. Exact candidate commit, PR, required CI, browser evidence, and deployment receipts will be recorded in the final receipt. Robb's acceptance is pending and is separate from deployment completion. Nothing in this record authorizes production, a main merge, or activation for other clients/programs.
+
+## Intake and baseline evidence
+
+- The seven-file package was read from Robb's explicit local ZIP input. The original archive was preserved; its 45,724 bytes and SHA-256 `3a3dc88c25882a25d875ccbd1682b96e4f8f946206d38cf26aebca1bab535889` match the working copy. All six original manifest entries match, and all seven file hashes are recorded in [package-manifest.json](package-manifest.json). The package mapping matches the native CIS v8.1 IG1 catalog: 11 domains, 15 controls, 56 unique safeguards.
+- **Actual mockup visual inspection: WAIVED BY USER, NOT PASSED.** In message `Sentinel_8cd55e6f471c8191abc68b20ac533ebd`, Robb said: “Yeah, let's not worry about that. Um, you know, as long as they have everything they need, then just have them continue with the work to implement this.” This waives only the blocked concept-HTML visual intake. Native application/browser QA, preservation, isolation, persistence, CI, and hosted verification remain required.
+- Agent 2 freshly verified Render at **2026-10-14 20:38:29.932 UTC**: existing staging service `srv-db1s0cugekts73f72reg`, successful/live deployment `dep-db7rhs1srm7s7391n1dg`, source **`863e391280da6606e7e2972bfe1367d877dd757b`**. The service is configured for `main`, with Auto Deploy disabled and releases made by specific commit. Staging URL: <https://omnisciente-staging.onrender.com>.
+- [Release verification #173](https://github.com/robbashea-lab/GRC/actions/runs/38598158538) is green for `863e391280da6606e7e2972bfe1367d877dd757b`. This is **baseline CI, not candidate CI**. The candidate branch is `codex/brawndo-cis-ig1-security-domains-20261014`, starting at docs-only `b12e50718048d47704e944ab7e0d11b761c5b40d` over that runtime. PR #81 and its older description are not pilot release proof.
+- Agent 2's read-only native baseline at 20:20–20:23 UTC showed Brawndo client `cli_60dee41ebbcd0e39b8bff87da17aee838ac50ecd799cb955f99d921eb6be4b20`, route `cis-ig1`, catalog CIS Controls v8.1 IG1, 15 controls / 56 safeguards, 2 Implemented / 0 Partial / 0 Not implemented / 54 Not assessed, and 3.6% implemented. Controls were ordered 1–12, 14, 15, 17. Native 1.1 record `fw_90bb296ec0c659c39a4fcf492db88f34` was Not Assessed, Not verified, with empty Current implementation and an existing interview draft. That draft, its warning, and history were left untouched. Loaded assets were `main.710be7a7.js` / `main.24a244a6.css`.
+
+Intake and baseline summaries above come from the owner's `pilot-intake-evidence.json`, `pilot-visual-baseline-evidence.json`, and fresh Agent 2 Render receipt. The owner has updated `pilot-acceptance-ledger.json` to the current phase and A1 baseline PASS. Earlier mockup-blocker reasons are historical and superseded by the explicit waiver; the current release blocker is hosted write-fixture custody. Baseline or intake receipts are not candidate runtime acceptance proof.
+
+## Candidate and custody
+
+The sole integration/deployment owner is task-2. Implementation/review workers have bounded file ownership; no worker has an independent deployment slot. Agent 1's old assignment is closed and it started no duplicate implementation. Agent 2 owns bounded native/browser QA. Final agent completion receipts remain pending.
+
+The current source addition uses `shared/catalogs/brawndoSecurityDomainsPilot.json` with `enabled: true` only for the canonical client above, `cis-ig1`, version `8.1`, and implementation group `1`; it also checks the existing native program key and loaded record context. This presentation gate is not authorization. Domain rows retain the native row references and pass them to the existing `openRecord` handler; native server, drawer/editor, save/invalidation, and Omnibot paths remain the required sources of truth.
+
+Completed local receipts reported by the owner, still to be bound to the final candidate SHA:
+
+- Independent `baseline_review` source review: **PASS**; both identified UI issues were closed. This is source/diff review, not rendered-browser acceptance.
+- Isolated `native_qa.py` backend self-check outside the repository: **PASS**. It exercised real native onboarding with 56 IG1 / 130 IG2 safeguards, normal native authentication, read-only PATCH denial (403), other-client denial (403), unauthenticated denial (401), native draft PUT, and native compare-and-swap behavior. These are isolated ASGI/router checks, not an actual browser or hosted persistence campaign.
+- Focused regression run: **10 suites / 332 tests PASS**, exit 0, 162.832 seconds; owner log `pilot-focused-tests-workspace-cache.log`. Native component journeys: **1 suite / 18 tests PASS**, exit 0, 51.984 seconds. Combined: **11 suites / 350 tests PASS**. The latter exercises all 56 real native editor/route entry paths plus 1.1/1.2/12.1 saves, reopen/reload, drafts, cancel, CAS, roles, gate, focus, and Omnibot from both contexts. Its API/authentication are mocked: it proves component wiring and simulated journeys, not an actual browser, hosted authorization, or hosted persistence.
+- Test history is retained: the initial default Temp Jest cache failed with EPERM before running any tests; reruns used owned workspace caches with unchanged assertions. The first native component run had 17 PASS / 1 harness assertion failure; the corrected expectation preserves native substring search, where `1.2` also matches `11.2`. No product search semantics were changed to satisfy the harness.
+- Local tooling: Node **24.19.0**, Yarn **1.22.22**, frozen lock unchanged. Required CI uses Node **22** and remains pending; local success is not substitute CI evidence.
+- Authenticated staging build (`node scripts/staging.cjs`): **PASS**, exit 0, producing `main.3865addd.js` / `main.dc39a04d.css`. The existing bundle-size warning remains recorded. These are local build assets, not hosted deployment proof. The isolated Demo build (`yarn build:preview`) also passed, exit 0 (55.53 seconds). Actual browser verification is pending.
+
+Source inspection records intended wiring only. The local proof layers above do not establish actual browser or hosted behavior. Isolated local canonical 56-safeguard fixtures are permitted and have been exercised. Hosted writes require separate explicit fixture custody; protected Brawndo records, existing drafts, held sessions/tabs/accounts, history, evidence, findings, and unrelated approved work must remain intact. No resets, seeds, imports, record-value migrations, or account/grant changes are part of this pilot.
+
+**Actual release blocker:** Agent 2's custody reply (thread `01a134aa-6911-72a1-8ea1-c1adf0f26ad2`, turn `01a13c2d-a52f-72d1-b3c2-63d419d598f8`) and Agent 2/3's subsequent confirmation establish protected existing Brawndo answers/drafts/history and no safe approved exact hosted fixture for the mandatory 1.1/1.2 native and Omnibot save/reopen journeys. Restoring visible fields after a test would not undo lineage/audit changes. The owned disposable client `cli_3fe2af6a91e54ffffd5ac2415fd10de31397ed73dfa477d4f541743afb6fa10f` is recoverably archived and has IG3/ISO/SOC programs, so it cannot prove this exact canonical IG1 pilot's hosted writes. No protected-record mutation, gate broadening, or program reconfiguration is authorized to manufacture that proof.
+
+The owner has requested an explicit decision between accepting isolated full native write validation plus hosted read-only route/editor/Omnibot-resume/isolation checks as a changed release gate, or naming exact writable canonical records with permission for retained test history/draft changes. **Neither choice has been recorded.** Only concept visual inspection is waived. Local implementation/tests and permitted isolated browser QA can continue; deployment must wait for the unchanged mandatory gate or an explicit acceptance-gate adjustment.
+
+| Release receipt | Current result |
+| --- | --- |
+| Full tested candidate commit | Verification in progress; exact SHA in final receipt |
+| Pilot draft PR | Pending |
+| Focused local regressions | PASS: 10 suites / 332 tests |
+| Native component journeys | PASS: 1 suite / 18 tests; mocked API/authentication |
+| Authenticated staging build | PASS; local assets above |
+| Isolated Demo build | PASS: `yarn build:preview`, exit 0; isolated artifact |
+| Required exact-commit candidate CI | Pending; Node 22 CI not replaced by Node 24 local runs |
+| Actual isolated native browser QA | Pending; local fixture custody is permitted |
+| Mandatory hosted write journeys | NOT TESTED; blocked by the custody gap above |
+| Independent source review | PASS on current diff (`baseline_review`); final SHA binding pending |
+| Isolated native backend self-check | PASS (`native_qa.py`); ASGI only, not browser/hosted proof |
+| All agent completion / final release review | Pending |
+| Candidate Render deployment ID / provider source | Not deployed; release blocked |
+| Fresh hosted native/Omnibot/isolation checks | NOT TESTED; mandatory hosted writes blocked |
+| Disable/rollback procedure | [Recorded](rollback.md); execution NOT TESTED |
+
+## Required 40-row checklist
+
+PASS means the stated evidence exists. FAIL means a check was executed and failed. NOT TESTED is not PASS. Static package/baseline/documentation receipts are distinguished below from candidate runtime checks. Reconfirm applicable evidence against the one exact final candidate. Any material preservation, isolation, persistence, or permission gap blocks release.
+
+| ID | Required check | Result | Evidence / remaining proof |
+| --- | --- | --- | --- |
+| A1 | Record current deployed source, release target, and native baseline. | PASS | Fresh Render receipt and read-only native baseline above; retain the runtime/docs-only-head distinction. |
+| A2 | Verify canonical Brawndo identity and CIS IG1 context; gate only this program. | NOT TESTED | Canonical source gate and local gate/component tests PASS; actual candidate browser context confirmation pending. |
+| A3 | Other clients, Brawndo's other programs, IG2/IG3, other frameworks, and new-client defaults do not receive the section. | NOT TESTED | Local gate/role tests and native IG1/IG2 onboarding PASS; actual browser and hosted isolation still required. |
+| A4 | Preserve colors, fonts, existing wording/layout, branding, and navigation; add space only inside expanded Program Snapshot. | NOT TESTED | Native baseline captured; actual candidate desktop/mobile/theme comparison required. |
+| B1 | All 11 domains match the mapping; each of 56 IG1 safeguards appears once across controls 1–12, 14, 15, 17, with no extras. | PASS | Intake mapping-to-native-catalog check passed; approved mapping is copied unchanged to `shared/catalogs/brawndoSecurityDomains.json`. Reconfirm its hash in the final candidate. |
+| B2 | Counts use current native client/program records, with no mockup data or fixed totals. | NOT TESTED | Native-row model/source and focused local tests PASS; actual loaded-record browser comparison pending. |
+| B3 | Counts reconcile with native statuses and the unchanged overall calculation. | NOT TESTED | Native implementation-position/summary checks and focused local tests PASS; actual browser reconciliation pending. |
+| B4 | Partial gets no invented credit; Not assessed remains unknown. | NOT TESTED | Native `cisSummary` and focused local tests PASS; actual browser states pending. |
+| B5 | Fully unassessed domains say so; missing/loading/error data does not imply healthy implementation. | NOT TESTED | Fail-closed model/UI local tests PASS; actual browser/error-state proof pending. |
+| B6 | Counts/denominators and coverage are readable; goals follow native applicable scope; verification/applicability unchanged. | NOT TESTED | Native summary reuse observed in source; browser readability and applicability cases pending. |
+| B7 | No risk, maturity, certification score, or broader coverage claim is introduced. | PASS | Current source/copy uses presentation grouping and approved bounded mapping notes; independent source review PASS. Final candidate must retain that source. |
+| C1 | Expand/collapse every domain; safeguard IDs, native titles, and statuses are correct. | NOT TESTED | All 11 rendered domains and 56 entries require candidate browser verification. |
+| C2 | Pointer/keyboard links work and accessible names are clear. | NOT TESTED | Component interaction/focus tests PASS; actual browser pointer/keyboard checks pending. |
+| C3 | View mapped controls uses native filtering/navigation; clearing removes only the domain selection and preserves native status/search meanings. | NOT TESTED | Local component filter/clear tests PASS; combined-filter proof in an actual browser pending. |
+| C4 | Controls IDs/order, counts, implementation/assessment columns, filters/search/clicks, and regular paths stay unchanged. | NOT TESTED | Controls remain native; compare identical records and both entry paths in the candidate. |
+| C5 | Existing progress chart, legend, metrics, denominator, tooltips, and click actions match the baseline for identical records. | NOT TESTED | No replacement calculation is intended; candidate baseline comparison pending. |
+| C6 | Supported desktop/mobile layouts, themes, and focus work in an actual browser. | NOT TESTED | Native browser QA remains mandatory despite the concept-inspection waiver. |
+| D1 | All 56 domain and Controls paths resolve to the same canonical record, opener/route, and editor. | NOT TESTED | All-56 real native component editor/route equality PASS in local tests; API/auth mocked, so actual browser/native API confirmation remains pending. |
+| D2 | Both paths show identical native guide, implementation, status, verification, items, findings, evidence, ownership, and history. | NOT TESTED | Real native drawer component comparisons PASS locally with mocked API; actual browser and protected hosted read-only comparison pending. |
+| D3 | No duplicate record, alternate write endpoint, local copy, mockup editor/guide/demo field replaces native data. | PASS | Independent source review PASS; addition reuses existing native opener/editor/write paths. All-56 component equality corroborates reuse; no parallel backend/write/editor added. |
+| D4 | Domain -> Asset & Software Management -> 1.1 -> native save -> Control 1 -> 1.1 -> reload retains exact fields/state. | NOT TESTED | Local component save/reopen/reload PASS with mocked API; real isolated browser journey pending. Hosted counterpart BLOCKED by protected-record custody. |
+| D5 | Save through Control 1 -> 1.1, then reopen from its domain and confirm. | NOT TESTED | Reverse local component journey PASS with mocked API; actual isolated browser pending. Hosted counterpart BLOCKED by custody. |
+| D6 | Exercise 1.2 and a multi-control domain in the correct client/program. | NOT TESTED | Local native-component 1.2 and 12.1/multi-control journeys PASS; actual isolated browser pending. Hosted 1.2 writes lack approved custody. |
+| D7 | Draft/final, cancel, manual text, reconciliation, items/findings/evidence, and stale-write protections remain correct. | NOT TESTED | Local native component/Omnibot journeys and ASGI draft PUT/CAS PASS; actual browser campaign pending and required hosted writes blocked. |
+| D8 | Native save refreshes derived domains through existing invalidation and original progress through existing logic. | NOT TESTED | Local mocked-API save/reload/refresh tests PASS; actual isolated browser proof pending. Hosted write proof blocked. |
+| D9 | Close/cancel retains origin context; rows removed by active filters return focus to an available native control. | NOT TESTED | Local component context/focus tests PASS; actual browser close/cancel/filter-removal keyboard journeys pending. |
+| E1 | Omnibot group saving, Save & next, resume, final summary, reconciliation, prioritization, cancel, and manual-wording protection work from both contexts. | NOT TESTED | Local native-component Omnibot journeys from both paths PASS; actual browser campaign pending. Mandatory hosted save/reopen BLOCKED by custody. |
+| E2 | Save/reload and required logout/login persistence pass. | NOT TESTED | Local component reload PASS (API/auth mocked); ASGI native auth PASS separately. Actual isolated browser persistence pending. Hosted writes BLOCKED; preserve held sessions. |
+| E3 | Read-only/restricted roles retain native edit restrictions through domain links. | NOT TESTED | Local component role checks and ASGI read-only PATCH 403 PASS; actual browser and hosted restriction proof pending. |
+| E4 | Cross-client/program access is denied through existing authorization; UI gate is not authorization. | NOT TESTED | Isolated ASGI other-client 403 / unauthenticated 401 PASS; candidate browser/hosted isolation still required. No credential/grant expansion authorized. |
+| E5 | Scheduling, auth, history/audit, and automation stay unchanged; real records preserved; only test-created activity cleaned through native procedures. | NOT TESTED | Permitted isolated local fixtures exercised; protected hosted records untouched. Final browser preservation/cleanup proof pending; hosted custody gap blocks release. |
+| F1 | Required tests, CI, and both applicable builds pass for the candidate. | NOT TESTED | Local 11 suites / 350 tests and authenticated build PASS. Both local builds PASS; exact-commit Node 22 CI frontend/backend/backend-mongo/Release gate pending. Baseline #173 is not candidate CI. |
+| F2 | Independent reviewer confirms scope/preservation and every assigned agent finishes. | NOT TESTED | `baseline_review` current-source review PASS, both UI issues closed; final SHA review and every agent's completion remain pending. |
+| F3 | One integration/deployment owner releases one tested candidate to staging. | NOT TESTED | Ownership is assigned; candidate freeze/CI proceeds under one owner, but release is blocked by mandatory hosted write-fixture custody. |
+| F4 | Prior release and executable pilot disable/rollback instructions are recorded. | PASS | Fresh prior source/deployment receipt above; scoped executable procedure in [rollback.md](rollback.md). Rollback execution is not claimed. |
+| F5 | Full tested commit equals provider-reported deployed source and deployment succeeds. | NOT TESTED | Exact candidate commit, successful deployment ID/status, and provider SHA comparison pending. |
+| F6 | Hosted Brawndo domain/native safeguard/Omnibot save-and-reopen journeys pass. | NOT TESTED | BLOCKED: an approved exact-pilot writable record/context is required; existing archived non-pilot fixture is insufficient. |
+| F7 | Hosted comparison proves another client/program keeps its original experience. | NOT TESTED | Fresh post-deploy isolation comparison required. |
+| F8 | Final report includes URL, full SHA, branch/PR, deployment ID, CI/hosted evidence, isolation, remaining work, and rollback. | NOT TESTED | Receipt fields above are intentionally pending; owner must complete the final report. |
+| F9 | Deployment completion and Robb acceptance are separate; no broad rollout or production promotion is claimed. | NOT TESTED | Separation is explicit in this draft; final closeout remains pending. |
+
+Current checklist: **5 PASS / 0 FAIL / 35 NOT TESTED**. Local test/build passes are recorded at their actual proof layer; incomplete actual-browser/hosted/CI rows remain NOT TESTED. This is an evidence ledger, not release approval or a Live claim.

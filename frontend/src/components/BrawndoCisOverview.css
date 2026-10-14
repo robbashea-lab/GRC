@@ -115,3 +115,6 @@
   .bcis-safeguards th:first-child { width: auto; }
   .bcis-safeguards th:nth-child(2) { width: 116px; }
 }
+/* Only the opted-in pilot adds a full-width row below the unchanged snapshot. */
+.brawndo-workspace-pilot .bcis-summary.bcis-summary-domains { flex-wrap: wrap; }
+.bcis-summary-domains > .bcis-domains { flex-basis: 100%; }

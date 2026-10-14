@@ -22,10 +22,10 @@ export function FrameworkHeader({eyebrow,title,subtitle,resume,onContinue}){
 export const BrawndoCisHeader=({implementationGroup=1,...props})=><FrameworkHeader eyebrow={`CIS Controls v8.1 IG${implementationGroup}`} title={`CIS IG${implementationGroup}`} {...props}/>;
 // Share of applicable safeguards for a segment; assessment progress only, never a compliance score.
 export function segmentShare(n,applicable){return applicable?Math.round(n/applicable*100):0;}
-export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='safeguards',continueNoun='safeguard',testIdPrefix='bcis',segmentLabels={},showNext=true,workspacePilot=false,controlCount,implementationGroup=1,programName=`CIS IG${implementationGroup}`,scopeLabel,implementedLabel='Implemented'}){
+export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='safeguards',continueNoun='safeguard',testIdPrefix='bcis',segmentLabels={},showNext=true,workspacePilot=false,controlCount,implementationGroup=1,programName=`CIS IG${implementationGroup}`,scopeLabel,implementedLabel='Implemented',securityDomains}){
   const pick=key=>onFilter(filter===key?'all':key);
   const counts={addressed:s.addressed,in_progress:s.partial,needs_attention:s.gap,not_assessed:s.notAssessed};
-  return <section className={`bcis-card bcis-summary${workspacePilot?' bwp-cis-snapshot':''}`} aria-labelledby="bcis-summary-heading">
+  return <section className={`bcis-card bcis-summary${workspacePilot?' bwp-cis-snapshot':''}${securityDomains?' bcis-summary-domains':''}`} aria-labelledby="bcis-summary-heading">
       {workspacePilot&&<Donut counts={counts} summary={s} name={programName} itemNoun={itemNoun} labels={{addressed:implementedLabel,in_progress:segmentLabels.partial||'Partially implemented',needs_attention:segmentLabels.gap||'Not implemented',not_assessed:segmentLabels.notAssessed||'Not assessed'}} caption={implementedLabel}/>}
       <div className={workspacePilot?'bwp-program-content':undefined}>
       {workspacePilot?<div className="bwp-program-heading"><div><p className="bcis-eyebrow">Program snapshot</p><h2 id="bcis-summary-heading">Assessment progress</h2><p className="bcis-note">{s.available===false?'Implementation source unavailable':scopeLabel||`${controlCount} controls · ${s.total} IG${implementationGroup} safeguards`}</p></div><dl className="bwp-program-counts"><div><dt>{implementedLabel}</dt><dd>{s.available===false?'Unavailable':<>{s.addressed} <span>of {s.applicable}</span></>}</dd></div><div><dt>Assessed</dt><dd>{s.available===false?'Unavailable':<>{s.assessed} <span>of {s.applicable}</span></>}</dd></div></dl></div>:<><h2 id="bcis-summary-heading" className="sr-only">Program condition</h2><AssessmentMetrics summary={s} implementedLabel={implementedLabel}/></>}
@@ -40,6 +40,7 @@ export function AssessmentOverview({summary:s,filter,onFilter,resume,itemNoun='s
       </div>
       <p className="bcis-note">These figures show assessment progress, not a compliance percentage, certification or audit opinion.</p>
       </div>
+      {securityDomains}
     </section>;
 }
 export default function BrawndoCisOverview(props){return <AssessmentOverview {...props} showNext={false}/>;}
