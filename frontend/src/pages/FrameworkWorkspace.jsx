@@ -126,7 +126,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     return (data?.definitions||[]).filter(d=>byId.has(d.id)).map(d=>({...d,...byId.get(d.id),work:data.work?.[byId.get(d.id).framework_assessment_id]}));
   },[data,clientId]);
   const domainsEnabled=securityDomainsEnabled(clientId,frameworkKey,data,user);
-  const domains=useMemo(()=>domainsEnabled?securityDomainModel(data,rows):[],[domainsEnabled,data,rows]);
+  const domains=useMemo(()=>domainsEnabled?securityDomainModel(data,rows,clientId):[],[domainsEnabled,data,rows,clientId]);
   const selectedDomain=domains.find(domain=>domain.id===domainId&&domain.available);
   useEffect(()=>{setDomainId(null);},[preferenceKey]);
   useEffect(()=>{if(!domainsEnabled)setDomainId(null);},[domainsEnabled]);
