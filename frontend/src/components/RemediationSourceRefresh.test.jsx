@@ -3,7 +3,8 @@ import {createRoot} from 'react-dom/client';
 import RecordDrawer from './RecordDrawer';
 import api from '@/lib/api';
 
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'demo_admin',role:'super_admin'}})}));
+let mockUser={user_id:'demo_admin',role:'super_admin'};
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/commandTestAdapter').previewAdapter}),formatError:error=>error.message,API:'/api'}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
 jest.mock('./ui/dialog',()=>{
@@ -31,6 +32,7 @@ const text=async(surface,label,value)=>act(async()=>{
 
 beforeAll(()=>Object.defineProperty(globalThis,'crypto',{value:require('crypto').webcrypto,configurable:true}));
 beforeEach(async()=>{
+  mockUser={user_id:'demo_admin',role:'super_admin'};
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
   await api.post('/demo/enter');
   task=(await api.get('/tasks',{params:{client_id:'demo_brawndo'}})).data.find(row=>row.task_id==='demo_brawndo_cis_action_1.1');
@@ -81,3 +83,90 @@ test.each([false,true])('returning from the same source ticket reopen refreshes 
   expect((await api.get('/evidence',{params:{client_id:task.client_id}})).data).toEqual(evidence);
   expect(currentTasks.find(row=>row.task_id===task.task_id).description).toBe(savedPlan);
 },30000); // Includes the native Source drawer's related-record and return refreshes.
+
+test.each([
+  [false,null],
+  [true,null],
+  [true,'Synthetic source-side planned action.'],
+])('same-child Source completion keeps the parent draft, refreshes native lifecycle, and handles actual field conflicts (validated=%s, sourcePlan=%s)',async(validated,sourcePlan)=>{
+  await api.post('/findings/'+finding.finding_id+'/reopen',{request_id:'same-child-round-trip',expected_updated_at:finding.updated_at});
+  const reopened=(await api.get('/findings/'+finding.finding_id)).data;
+  const editing=(await api.get('/tasks/'+reopened.primary_task_id)).data;
+  const localPlan='Synthetic QA unsaved parent plan must survive nested source ticket saves.';
+  await act(async()=>root.render(<RecordDrawer open kind="tasks" record={editing} clientId={editing.client_id} onOpenChange={()=>{}}/>));
+  const original=container.querySelector('[data-testid="remediation-ticket-drawer"]');
+  await text(original.querySelector('[data-ticket-task="'+editing.task_id+'"]'),'Planned action',localPlan);
+  await click(original,'CIS Controls v8.1 Assessment → Safeguard 1.1');
+  const source=container.querySelector('[data-testid="brawndo-cis-assessment"]');
+  await click(source,'Findings');
+  await act(async()=>source.querySelector('[data-ticket-id="finding:'+finding.finding_id+'"] button').click());
+  const nested=[...container.querySelectorAll('[data-testid="remediation-ticket-drawer"]')].at(-1),innerWork=nested.querySelector('[data-ticket-task="'+editing.task_id+'"]');
+  if(sourcePlan)await text(innerWork,'Planned action',sourcePlan);
+  await text(innerWork,'Actual resolution','Synthetic source-side completed work.');
+  await click(innerWork,'Complete work');
+  if(validated){await text(nested,'Validation rationale','Synthetic source-side validation.');await click(nested,'Validate and complete');}
+  await close(nested);await close(source);
+  const returned=container.querySelector('[data-testid="remediation-ticket-drawer"]'),work=returned.querySelector('[data-ticket-task="'+editing.task_id+'"]');
+  expect(returned.textContent).toContain(validated?'Completed':'Pending validation');
+  expect(returned.querySelectorAll('[data-ticket-task]')).toHaveLength(2);
+  expect(work.querySelector('[aria-label="Planned action"]').value).toBe(localPlan);
+  expect(work.querySelector('[aria-label="Work status"]').value).toBe('done');
+  expect(work.querySelector('[aria-label="Work status"]').disabled).toBe(true);
+  expect(work.querySelector('[aria-label="Actual resolution"]').value).toBe('Synthetic source-side completed work.');
+  expect(button(work,'Save changes').disabled).toBe(false);
+  const leaving=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leaving);expect(leaving.defaultPrevented).toBe(true);
+  const current=(await api.get('/tasks/'+editing.task_id)).data,beforeFinding=(await api.get('/findings/'+finding.finding_id)).data;
+  expect(current.description??'').toBe(sourcePlan??editing.description??'');
+  const saved=jest.spyOn(api,'patch');
+  try{
+    await click(work,'Save changes');
+    expect(saved).toHaveBeenLastCalledWith('/tasks/'+editing.task_id,{description:localPlan,expected_updated_at:sourcePlan?editing.updated_at:current.updated_at},expect.anything());
+    const after=(await api.get('/tasks/'+editing.task_id)).data;
+    expect(after.status).toBe('done');expect(after.resolution).toBe('Synthetic source-side completed work.');
+    if(sourcePlan){expect(after.description).toBe(sourcePlan);expect(work.querySelector('[aria-label="Planned action"]').value).toBe(localPlan);expect(work.querySelector('[role="alert"]').textContent).toMatch(/changed|conflict/i);}
+    else {expect(after.description).toBe(localPlan);expect(button(work,'Save changes').disabled).toBe(true);}
+  }finally{saved.mockRestore();}
+  const afterFinding=(await api.get('/findings/'+finding.finding_id)).data;
+  for(const field of ['status','validated_at','decision_history'])expect(afterFinding[field]).toEqual(beforeFinding[field]);
+  const retained=(await api.get('/tasks/'+task.task_id)).data;
+  expect(retained.status).toBe('done');expect(retained.resolution).toBe(task.resolution);
+  const afterAssessment=(await api.get('/framework_assessments/'+finding.framework_assessment_id)).data;
+  for(const field of ['status','implementation','verification','last_saved','assessment_history'])expect(afterAssessment[field]).toEqual(assessment[field]);
+  expect((await api.get('/evidence',{params:{client_id:editing.client_id}})).data).toEqual(evidence);
+},30000);
+
+test('unconfirmed Action recovery retains a newer local plan and uses only its new delta after acknowledging the original request',async()=>{
+  await act(async()=>root.render(<RecordDrawer open kind="tasks" record={task} clientId={task.client_id} onOpenChange={()=>{}}/>));
+  const work=container.querySelector('[data-ticket-task="'+task.task_id+'"]'),originalPatch=api.patch.bind(api);
+  const transport=jest.spyOn(api,'patch').mockImplementationOnce(async(...args)=>{await originalPatch(...args);throw new Error('Synthetic lost response after commit.');});
+  try{
+    await text(work,'Planned action','Synthetic first planned action.');await click(work,'Save changes');
+    expect(button(work,'Retry unconfirmed save')).toBeTruthy();
+    const request=transport.mock.calls[0];
+    await text(work,'Planned action','Synthetic newer retained planned action.');
+    await click(work,'Retry unconfirmed save');
+    expect(transport.mock.calls[1][0]).toBe(request[0]);expect(transport.mock.calls[1][1]).toEqual(request[1]);
+    expect(transport.mock.calls[1][2].headers['Idempotency-Key']).toBe(request[2].headers['Idempotency-Key']);
+    expect(work.querySelector('[aria-label="Planned action"]').value).toBe('Synthetic newer retained planned action.');
+    const acknowledged=(await api.get('/tasks/'+task.task_id)).data;
+    expect(acknowledged.description).toBe('Synthetic first planned action.');
+    expect(button(work,'Retry unconfirmed save')).toBeUndefined();
+    await click(work,'Save changes');
+    expect(transport).toHaveBeenLastCalledWith('/tasks/'+task.task_id,{description:'Synthetic newer retained planned action.',expected_updated_at:acknowledged.updated_at},expect.anything());
+    expect((await api.get('/tasks/'+task.task_id)).data).toMatchObject({status:'done',description:'Synthetic newer retained planned action.',resolution:task.resolution});
+    const after=(await api.get('/findings/'+finding.finding_id)).data;
+    for(const field of ['status','validated_at','decision_history'])expect(after[field]).toEqual(finding[field]);
+  }finally{transport.mockRestore();}
+},30000);
+
+test('refreshed Work keeps the existing read-only field and command restrictions',async()=>{
+  mockUser={user_id:'demo_admin',role:'client_readonly'};
+  const writes=jest.spyOn(api,'patch');
+  try{
+    await act(async()=>root.render(<RecordDrawer open kind="tasks" record={task} clientId={task.client_id} onOpenChange={()=>{}}/>));
+    const work=container.querySelector('[data-ticket-task="'+task.task_id+'"]');
+    for(const label of ['Action title','Due date','Priority','Work status','Planned action','Actual resolution'])expect(work.querySelector('[aria-label="'+label+'"]').disabled).toBe(true);
+    expect(button(work,'Save changes')).toBeUndefined();expect(button(work,'Complete work')).toBeUndefined();
+    expect(writes).not.toHaveBeenCalled();
+  }finally{writes.mockRestore();}
+},30000);
