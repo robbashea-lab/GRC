@@ -646,12 +646,23 @@ class AssessmentItemsReconciliationTests(unittest.TestCase):
                         variants.extend({**answers,key:value} for value in ('','invalid','2026-01-01','2026-10-14','2026-04-13','2026-04-12'))
                     elif question['type']!='text':
                         variants.extend({**answers,key:choice} for choice in question['choices'])
+                    if framework != 'cis-ig1' and question['type'] != 'text':
+                        for choice in (('Not sure',) if question['type'] == 'context' else ('No','Partially','Not sure')):
+                            variants.append({**answers,key:choice,key+'_detail':'Synthetic literal detail.'})
                 for variant in variants:
                     try:
                         guided_assessment.validate_answers(definition,variant,version)
                     except HTTPException:
                         continue  # Row-specific choices remain part of the unchanged answer boundary.
                     cases.append({'framework':framework,'id':definition,'version':version,'answers':variant})
+        for framework,engine,definition,key in [('soc-2',guided_assessment.soc_guided_assessment,'CC1.1','CC1.1-expectations'),
+                ('iso-27001',guided_assessment.iso_guided_assessment,'4.2','ISO-4.2-parties')]:
+            for version in (engine.CATALOG['version'],engine.LEGACY['version']):
+                for choice in ('No','Partially','Not sure'):
+                    for ending in ('.','!','?','...',''):
+                        answers={q['id']:affirmative(q) for q in engine._questions(definition,version)}
+                        answers.update({key:choice,key+'_detail':'Synthetic literal detail'+ending})
+                        cases.append({'framework':framework,'id':definition,'version':version,'answers':answers})
         self.assertEqual({(case['framework'],case['id']) for case in cases},records)
         script=r"""
 const fs=require('node:fs'),path=require('node:path'),root=process.argv[1],cache=new Map();
@@ -675,11 +686,12 @@ process.stdout.write(JSON.stringify(cases.map(({framework,id,version,answers})=>
   const origins=(result.signals||[]).map(signal=>signal.questionId+':'+signal.kind);
   for(const [key,kind] of [['gaps','gap'],['unknowns','verification']])if(answers[key==='gaps'?'additional_gap':'additional_confirmation']==='Yes'&&answers[key]?.trim())origins.push(key+':'+kind);
   if(result.unknowns.some(text=>text.startsWith('No substantive practice is established')||text.startsWith('The overall practice answer conflicts with the reported absence')))origins.push('summary_confirmation:verification');
-  return {origins:[...new Set(origins)].sort(),evaluation_date:framework==='cis-ig1'?[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-'):null};
+  const texts=Object.fromEntries((result.signals||[]).filter(signal=>signal.text).map(signal=>[signal.questionId+':'+signal.kind,signal.text]));
+  return {origins:[...new Set(origins)].sort(),texts,evaluation_date:framework==='cis-ig1'?[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-'):null};
 })));
 """
         result=subprocess.run(['node','-e',script,str(Path(__file__).resolve().parents[2])],input=json.dumps(cases),
-            capture_output=True,text=True,timeout=60)
+            capture_output=True,text=True,encoding='utf-8',timeout=60)
         self.assertEqual(result.returncode,0,result.stderr)
         expected=json.loads(result.stdout)
         self.assertEqual(len(expected),len(cases))
@@ -689,8 +701,12 @@ process.stdout.write(JSON.stringify(cases.map(({framework,id,version,answers})=>
                 draft={'version':case['version'],'answers':case['answers'],'generated_at':'2026-10-13T12:00:00+00:00',
                     'result':{'evaluation_date':snapshot['evaluation_date'],
                         'signals':[{'questionId':'forged','kind':'gap','text':'Ignored client metadata'}]}}
-                actual=sorted(item['question_id']+':'+item['kind'] for item in assessment_items.generated(row,draft))
+                native=assessment_items.generated(row,draft)
+                actual=sorted(item['question_id']+':'+item['kind'] for item in native)
                 self.assertEqual(actual,snapshot['origins'])
+                labels={item['question_id']+':'+item['kind']:item['text'] for item in native}
+                for key,text in snapshot['texts'].items():
+                    self.assertEqual(labels[key],text)
 
     def test_cis_date_uses_recorded_local_day_and_legacy_boundary_confirmation(self):
         row = {'framework_assessment_id': 'date-vector', 'framework_key': 'cis-ig1', 'definition_id': '1.1'}

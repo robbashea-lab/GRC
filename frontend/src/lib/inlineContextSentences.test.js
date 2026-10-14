@@ -2,9 +2,21 @@ import {inventorySummary} from './omniInventorySummary';
 import {omniCisSummary} from './omniCisSummary';
 import {visibleQuestions} from './guidedAssessment';
 import {socGuidedCatalog,socQuestions,socGuidedResult,socInlineSummary} from './socGuidedAssessment';
-import {isoGuidedCatalog,isoQuestions,isoInlineNarrative} from './isoGuidedAssessment';
+import {isoGuidedCatalog,isoQuestions,isoGuidedResult,isoInlineNarrative} from './isoGuidedAssessment';
 
 const date='2026-10-13';
+
+test('current ISO absent supporting detail retains literal punctuation and legacy output remains exact',()=>{
+  const detail='Synthetic QA has not identified all relevant interested parties.';
+  const answers={'ISO-4.2-parties':'No','ISO-4.2-parties_detail':detail,'ISO-4.2-requirements':'No','ISO-4.2-response':'No'},original={...answers};
+  const output=isoGuidedResult('4.2',answers,'iso27001-omni-2'),narrative=isoInlineNarrative('4.2',answers,'iso27001-omni-2','Synthetic QA');
+  expect(output.status).toBe('needs_attention');expect(output.gaps).toHaveLength(3);expect(output.unknowns).toEqual([]);
+  expect(output.gaps[0]).toBe('Stakeholder obligations: parties: reported not in place — '+detail);
+  expect(output.narrative).toContain(detail+'\n\nRelevant requirements');
+  expect(narrative).toContain(detail+' Reported gap: Stakeholder obligations: requirements:');
+  expect(narrative).not.toContain(detail+'.');expect(answers).toEqual(original);
+  expect(isoInlineNarrative('4.2',answers,'iso27001-omni-1','Synthetic QA')).toContain(detail+'. Reported gap: Stakeholder obligations: requirements:');
+});
 
 test('current SOC partial supporting detail retains its terminal period while the legacy writer remains unchanged',()=>{
   const detail='Synthetic QA ethical expectations reach employees, while contractor communication remains incomplete.';

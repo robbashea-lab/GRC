@@ -76,6 +76,9 @@ def _origins(row, draft, questions):
     answers, framework = draft['answers'], row['framework_key']
     origins = {}
     if framework in ('soc-2', 'iso-27001'):
+        engine = soc_guided_assessment if framework == 'soc-2' else iso_guided_assessment
+        def sentence(fragment):
+            return fragment if draft['version'] == engine.CATALOG['version'] and fragment.endswith(('.', '!', '?')) else fragment + '.'
         substantive = 0
         outside = 'Outside the selected system' if framework == 'soc-2' else 'Not relevant here'
         for question in questions.values():
@@ -88,13 +91,13 @@ def _origins(row, draft, questions):
             if question['type'] == 'context':
                 if value != 'Relevant' and not (value == outside and detail):
                     relevance = 'system relevance' if framework=='soc-2' else 'conditional relevance'
-                    origins[(key, 'verification')] = topic + ': '+relevance+' needs confirmation' + suffix + '.'
+                    origins[(key, 'verification')] = sentence(topic + ': '+relevance+' needs confirmation' + suffix)
                 continue
             substantive += 1
             if value in ('No', 'Partially'):
-                origins[(key, 'gap')] = topic + (': reported not in place' if value == 'No' else ': reported partially in place') + suffix + '.'
+                origins[(key, 'gap')] = sentence(topic + (': reported not in place' if value == 'No' else ': reported partially in place') + suffix)
             elif value != 'Yes':
-                origins[(key, 'verification')] = topic + ': needs confirmation' + suffix + '.'
+                origins[(key, 'verification')] = sentence(topic + ': needs confirmation' + suffix)
         if not substantive:
             scope = 'selected system' if framework == 'soc-2' else 'ISMS scope'
             label='criterion assessment' if framework=='soc-2' else 'implementation assessment'

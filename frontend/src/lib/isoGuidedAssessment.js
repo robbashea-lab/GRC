@@ -91,6 +91,7 @@ export function validateIsoCompletion(id, answers, version = catalog.version) {
 export function isoGuidedResult(id, answers, version = catalog.version, clientName = 'The organization', inlineNarrative = false) {
   validateIsoAnswers(id, answers, version);
   const definition = definitionFor(id, version), active = activeQuestions(id, answers, version);
+  const sentence=fragment=>version===catalog.version?inlineSentence(fragment):fragment+'.';
   const basis = [], gaps = [], unknowns = [], nextSteps = [], signals = [], breakdown = [];
   let meaningful = false, confirmedNo = false, substantive = 0;
   const addSignal = (kind, question, message) => {
@@ -108,16 +109,16 @@ export function isoGuidedResult(id, answers, version = catalog.version, clientNa
         continue;
       }
       if (question.type === 'context') {
-        if (value === 'Relevant') facts.push(`${topic}: conditional context reported relevant${summarySuffix}.`);
-        else if (value === 'Not relevant here' && detail) facts.push(`${topic}: conditional context reported not relevant here — ${concise(detail)}.`);
-        else { addSignal('verification', question, `${topic}: conditional relevance needs confirmation${suffix}.`); facts.push(`${topic}: conditional relevance needs confirmation${summarySuffix}.`); }
+        if (value === 'Relevant') facts.push(sentence(`${topic}: conditional context reported relevant${summarySuffix}`));
+        else if (value === 'Not relevant here' && detail) facts.push(sentence(`${topic}: conditional context reported not relevant here — ${concise(detail)}`));
+        else { addSignal('verification', question, sentence(`${topic}: conditional relevance needs confirmation${suffix}`)); facts.push(sentence(`${topic}: conditional relevance needs confirmation${summarySuffix}`)); }
         continue;
       }
       substantive += 1;
-      if (value === 'Yes') { meaningful = true; basis.push(`${topic}: reported in place${suffix}.`); facts.push(`${topic}: reported in place${summarySuffix}.`); }
-      else if (value === 'Partially') { meaningful = true; addSignal('gap', question, `${topic}: reported partially in place${suffix}.`); facts.push(`${topic}: reported partially in place${summarySuffix}.`); }
-      else if (value === 'No') { confirmedNo = true; addSignal('gap', question, `${topic}: reported not in place${suffix}.`); facts.push(`${topic}: reported not in place${summarySuffix}.`); }
-      else { addSignal('verification', question, `${topic}: needs confirmation${suffix}.`); facts.push(`${topic}: needs confirmation${summarySuffix}.`); }
+      if (value === 'Yes') { meaningful = true; basis.push(sentence(`${topic}: reported in place${suffix}`)); facts.push(sentence(`${topic}: reported in place${summarySuffix}`)); }
+      else if (value === 'Partially') { meaningful = true; addSignal('gap', question, sentence(`${topic}: reported partially in place${suffix}`)); facts.push(sentence(`${topic}: reported partially in place${summarySuffix}`)); }
+      else if (value === 'No') { confirmedNo = true; addSignal('gap', question, sentence(`${topic}: reported not in place${suffix}`)); facts.push(sentence(`${topic}: reported not in place${summarySuffix}`)); }
+      else { addSignal('verification', question, sentence(`${topic}: needs confirmation${suffix}`)); facts.push(sentence(`${topic}: needs confirmation${summarySuffix}`)); }
     }
     if (facts.length) breakdown.push(`${group.title}\n${facts.map(fact => `- ${fact}`).join('\n')}`);
   }
