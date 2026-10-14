@@ -15,7 +15,13 @@ function fixture() {
   return {data, rows};
 }
 const user = {user_id: 'native-actor', role: 'super_admin'};
-const enabled = (data, clientId = pilot.clientId, framework = 'cis-ig1', actor = user) => securityDomainsEnabled(clientId, framework, data, actor);
+// Exercise feature behavior independently of whether the rollout is currently disabled.
+const enabled = (data, clientId = pilot.clientId, framework = 'cis-ig1', actor = user) => securityDomainsEnabled(clientId, framework, data, actor, {...pilot, enabled: true});
+
+test('the default gate honors the committed rollout flag', () => {
+  const {data} = fixture();
+  expect(securityDomainsEnabled(pilot.clientId, 'cis-ig1', data, user)).toBe(pilot.enabled === true);
+});
 
 test('approved mapping is a disjoint complete native IG1 partition and remains presentation taxonomy', () => {
   const ids = mapping.domains.flatMap(domain => domain.safeguardIds);

@@ -1,6 +1,12 @@
 # Brawndo Security Domains pilot disable and rollback
 
-This is an **application rollback, not a database rollback**. It must preserve all assessment records, answers, drafts, history, evidence, findings, authentication, permissions, Omnibot behavior, and unrelated approved work. The sole integration/deployment owner executes it. The procedure is recorded; execution is **NOT TESTED**.
+This is an **application rollback, not a database rollback**. It must preserve all assessment records, answers, drafts, history, evidence, findings, authentication, permissions, Omnibot behavior, and unrelated approved work. The sole integration/deployment owner executes it. The scoped gate-disable behavior is **locally qualified PASS** below; a complete build/CI/deploy/hosted rollback execution remains **NOT TESTED**.
+
+## Completed local disable qualification
+
+The owner completed a durable qualification run with the actual `shared/catalogs/brawndoSecurityDomainsPilot.json` flag set to `false`: **11 suites / 352 tests PASS**, exit 0, 190.822 seconds. Receipt `pilot-disable-durable-receipt.json` records start `2026-10-14T21:37:00.143030+00:00` and completion `2026-10-14T21:40:16.871206+00:00`. The test process exited successfully and the original JSON bytes were restored exactly, with matching before/after SHA-256 **`43df4c005bb46af4cf06bbf0ff10eafdca23bc08f905ca429498f5ce89668d24`**. The enabled pilot configuration is restored; this qualification did not disable staging.
+
+The earlier exec-session attempt was interrupted after partial output from three suites and is **not PASS**. Application source remains unchanged by qualification; the two test fixes separate enabled-feature behavior from the rollout configuration. The local server was restored ready at 21:42 UTC. These results qualify the local gate-off behavior and restoration, not a disable commit's required Node 22 CI, staging deployment, provider-source equality, hosted record preservation, or a full hosted rollback. Those steps below remain required when executing a release rollback.
 
 ## Prior working staging release
 

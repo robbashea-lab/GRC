@@ -10,10 +10,12 @@ import mapping from '@catalogs/brawndoSecurityDomains.json';
 import pilot from '@catalogs/brawndoSecurityDomainsPilot.json';
 
 // Real routing, dialogs, native editor, items, findings and Omnibot are retained.
-// Only the authenticated actor and network/persistence boundary are synthetic.
+// The actor, network/persistence boundary and rollout flag are synthetic. Canonical
+// targeting metadata remains real so a gate-only rollback can still run this suite.
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),put:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:error=>error.message}));
+jest.mock('@catalogs/brawndoSecurityDomainsPilot.json',()=>({...jest.requireActual('@catalogs/brawndoSecurityDomainsPilot.json'),enabled:true}));
 
 const CLIENT=pilot.clientId,TOKEN='2026-10-14T12:00:00Z',FINGERPRINT='a'.repeat(64);
 const definitions=cis.requirements.filter(definition=>definition.implementation_group===1);
@@ -79,7 +81,7 @@ async function openOmni(){
 }
 
 beforeEach(()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();group=1;deniedContext=false;saveRevision=0;
+  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();group=1;deniedContext=false;saveRevision=0;pilot.enabled=true;
   mockUser={user_id:'native-actor',role:'super_admin'};
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   records=definitions.map(definition=>({client_id:CLIENT,framework_key:'cis-ig1',framework_version:'8.1',framework_assessment_id:'native-'+definition.id,definition_id:definition.id,status:'not_assessed',verification:'needs_validation',owner_id:'native-owner',implementation:'Original native '+definition.id,technology:'Recorded native platform',notes:'Preserved original notes '+definition.id,last_saved:TOKEN,last_assessed:null,items_to_address:[],items_revision:0,assessment_history:[],related_links:[]}));
@@ -213,6 +215,15 @@ test.each(['client_readonly','client_contributor'])('%s retains native edit rest
   expect(native().querySelector('fieldset').disabled).toBe(true);
   await tab('Items to address');expect(button('Raise Finding',native())).toBeUndefined();
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('disabling the pilot removes domains while native Controls and the original safeguard remain safe',async()=>{
+  pilot.enabled=false;const before=clone(records);await mount();
+  expect(query('.bcis-domains')).toBeNull();expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
+  await openControl('1.1');expect(new URLSearchParams(route().search).get('assessment')).toBe('native-1.1');
+  expect(editorSnapshot()).toEqual(expect.objectContaining({title:definitions.find(definition=>definition.id==='1.1').title,official:definitions.find(definition=>definition.id==='1.1').official_text,implementation:'Original native 1.1',status:'not_assessed',verification:'Needs validation'}));
+  await closeNative();expect(records).toEqual(before);expect(pilot.enabled).toBe(false);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
 test('another client cannot receive pilot shortcuts or resolve a foreign assessment deep link',async()=>{
