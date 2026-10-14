@@ -1,10 +1,22 @@
 import {inventorySummary} from './omniInventorySummary';
 import {omniCisSummary} from './omniCisSummary';
 import {visibleQuestions} from './guidedAssessment';
-import {socGuidedCatalog,socQuestions,socInlineSummary} from './socGuidedAssessment';
+import {socGuidedCatalog,socQuestions,socGuidedResult,socInlineSummary} from './socGuidedAssessment';
 import {isoGuidedCatalog,isoQuestions,isoInlineNarrative} from './isoGuidedAssessment';
 
 const date='2026-10-13';
+
+test('current SOC partial supporting detail retains its terminal period while the legacy writer remains unchanged',()=>{
+  const detail='Synthetic QA ethical expectations reach employees, while contractor communication remains incomplete.';
+  const answers={'CC1.1-expectations':'Partially','CC1.1-expectations_detail':detail,'CC1.1-leadership':'Not sure','CC1.1-adherence':'Yes','CC1.1-departures':'Yes'},original={...answers};
+  const output=socGuidedResult('CC1.1',answers,'soc2-omni-2'),narrative=socInlineSummary('CC1.1',answers,'soc2-omni-2','Synthetic QA',date);
+  expect(output.status).toBe('in_progress');expect(output.gaps).toHaveLength(1);expect(output.unknowns).toHaveLength(1);
+  expect(output.gaps[0]).toBe('Conduct expectations and communication: reported partially in place — '+detail);
+  expect(narrative).toContain(detail+' Requires confirmation: Leadership conduct: needs confirmation.');
+  expect(output.narrative).toContain(detail+'\n\nLeadership in practice');
+  expect(narrative).not.toContain(detail+'.');expect(answers).toEqual(original);
+  expect(socInlineSummary('CC1.1',answers,'soc2-omni-1','Synthetic QA',date)).toContain(detail+'. Requires confirmation: Leadership conduct: needs confirmation.');
+});
 
 test('current inventory context separates reported fields into sentences without altering the supplied answers or existing punctuation',()=>{
   const answers={inventory:'Yes',sources:'One source',owner:'Synthetic QA asset operations team',maintenance_detail:'Synthetic QA reconciles additions, changes and retirements.',evidence:'Synthetic QA export?'};
