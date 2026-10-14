@@ -168,6 +168,41 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.json()['last_saved'],saved['last_saved'])
         self.assertEqual(response.json()['assessment_history'],saved['assessment_history'])
 
+    async def test_full_native_cis_footer_acknowledges_same_guided_source(self):
+        workspace=await self.configure()
+        row=next(row for row in workspace['assessments'] if row['definition_id']=='2.1')
+        base,draft=await self.completed(row)
+        source={key:draft[key] for key in ('version','revision','generated_at')}
+        footer={key:row.get(key) or '' for key in ('technology','notes','na_rationale',
+            'addressable_decision','addressable_rationale')}
+        footer.update(implementation=draft['narrative'],status=draft['result']['status'],
+            owner_id=row.get('owner_id'),process_owner_id=row.get('process_owner_id'),
+            verification=row.get('verification') or 'not_verified',
+            cis_assessment_criteria=row.get('cis_assessment_criteria') or [],
+            guided_assessment_source=source,expected_last_assessed=row.get('last_saved') or row.get('last_assessed'))
+        if row.get('cis_operation') is not None:
+            footer['cis_operation']={**row['cis_operation'],'confirmed':False}
+        response=await self.client.patch(base,json=footer)
+        self.assertEqual(response.status_code,200,response.text)
+        saved=response.json()
+        for key in ('addressable_decision','addressable_rationale'):
+            self.assertNotIn(key,saved)
+        self.assertIn('cis_assessment_criteria',saved)
+        audits=await server.db.audit_logs.count_documents({'entity_id':row['framework_assessment_id']})
+        acknowledged={**footer,'expected_last_assessed':saved['last_saved']}
+        for attempt in range(2):
+            with self.subTest(attempt=attempt):
+                replay=await self.client.patch(base,json=acknowledged)
+                self.assertEqual(replay.status_code,200,replay.text)
+                self.assertEqual(replay.json(),saved)
+                self.assertEqual(await server.db.audit_logs.count_documents(
+                    {'entity_id':row['framework_assessment_id']}),audits)
+        for altered in ({**acknowledged,'technology':'Unreviewed product change'},
+                {**acknowledged,'guided_assessment_source':{**source,'revision':source['revision']+1}},
+                {**acknowledged,'expected_last_assessed':footer['expected_last_assessed']}):
+            self.assertEqual((await self.client.patch(base,json=altered)).status_code,409)
+        self.assertEqual((await self.client.get(base)).json(),saved)
+
     async def test_closed_finding_retains_exact_active_risk_projection_without_open_count(self):
         base,row=await self.initial()
         item=next(item for item in row['items_to_address'] if item['kind']=='gap')
