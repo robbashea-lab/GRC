@@ -2,7 +2,7 @@ import isms from '@catalogs/guidedIsoIsms.json';
 import organizational from '@catalogs/guidedIsoOrganizationalPeople.json';
 import technology from '@catalogs/guidedIsoPhysicalTechnology.json';
 import currentCatalog from '@catalogs/guidedIsoV2.json';
-import {formatInlineSummary} from './inlineAssessment';
+import {formatInlineSummary,inlineSentence} from './inlineAssessment';
 const legacyCatalog = {version: 'iso27001-omni-1', framework_id: 'iso-27001',
   definitions: {...isms.definitions, ...organizational.definitions, ...technology.definitions}};
 const catalog=currentCatalog;
@@ -135,9 +135,9 @@ export function isoGuidedResult(id, answers, version = catalog.version, clientNa
   const overview = `${clientName} reports ${position} ${id} — ${definition.title} within the ISMS scope. This is reported implementation, not independent verification or certification.`;
   const actions = [...new Set(nextSteps)];
   const narrative = inlineNarrative ? formatInlineSummary({
-    paragraph: [overview, ...additionalContext.map(context => `Additional reported context: ${concise(context)}`)].join(' '),
+    paragraph: [overview, ...additionalContext.map(context => `Additional reported context: ${concise(context)}`)].map(fragment=>version===catalog.version?inlineSentence(fragment):fragment).join(' '),
     controls: basis,
-    limitations: [...gaps.map(gap=>'Reported gap: '+concise(gap)),...unknowns.map(unknown=>'Requires confirmation: '+concise(unknown))].join(' ')||'The reported practices remain subject to separate evidence verification.',
+    limitations: [...gaps.map(gap=>'Reported gap: '+concise(gap)),...unknowns.map(unknown=>'Requires confirmation: '+concise(unknown))].map(fragment=>version===catalog.version?inlineSentence(fragment):fragment).join(' ')||'The reported practices remain subject to separate evidence verification.',
   }) : `OVERVIEW\n${overview}\n\nIMPLEMENTATION BREAKDOWN\n${breakdown.join('\n\n') || 'No practices have been reported.'}\n\nITEMS TO ADDRESS\n${actions.length ? actions.map(action => `- ${concise(action)}`).join('\n') : 'No confirmation or remediation actions were derived from the selected substantive answers.'}${additionalContext.length?'\nReview the optional reported context above separately; it does not change the proposed status.':''}`;
   if (narrative.length > 20000) throw new Error('The generated write-up exceeds 20,000 characters. Shorten the interview details before reviewing it.');
   return {version, status, narrative, basis, gaps, unknowns, nextSteps: actions, evidence: text(answers.evidence) ? [text(answers.evidence)] : [],

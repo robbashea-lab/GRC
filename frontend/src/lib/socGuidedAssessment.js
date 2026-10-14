@@ -1,6 +1,6 @@
 import catalog from '@catalogs/guidedSoc2.json';
 import legacyCatalog from '@catalogs/guidedSoc2V1.json';
-import {formatInlineSummary} from './inlineAssessment';
+import {formatInlineSummary,inlineSentence} from './inlineAssessment';
 
 export const socGuidedCatalog = catalog;
 const versions = {[catalog.version]: catalog,[legacyCatalog.version]:legacyCatalog};
@@ -148,7 +148,7 @@ export function socInlineSummary(id, answers, version = catalog.version, clientN
   return formatInlineSummary({
     paragraph: `${clientName} reports ${positions[result.status]} ${id} — ${definition.title} within the selected system. This is reported readiness, not evidence verification or an auditor opinion.`,
     controls: result.basis.map(concise),
-    limitations: [...result.gaps.map(gap=>'Reported gap: '+concise(gap)),...result.unknowns.map(unknown=>'Requires confirmation: '+concise(unknown))].join(' '),
+    limitations: [...result.gaps.map(gap=>'Reported gap: '+concise(gap)),...result.unknowns.map(unknown=>'Requires confirmation: '+concise(unknown))].map(fragment=>version===catalog.version?inlineSentence(fragment):fragment).join(' '),
     date,
   });
 }

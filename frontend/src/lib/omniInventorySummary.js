@@ -1,6 +1,6 @@
 import {visibleQuestions} from './guidedAssessment';
 import {focusedOmniEnabled,focusedResult,focusedEvaluationDate} from './focusedOmni';
-import {formatInlineSummary} from './inlineAssessment';
+import {formatInlineSummary,inlineSentence} from './inlineAssessment';
 
 export const inventorySummaryEnabled=(clientId,user,framework,configuration,record)=>
   record?.client_id===clientId&&record?.framework_key===framework&&
@@ -65,6 +65,7 @@ export function inventorySummary(answers,version,clientName='Brawndo',inlineDate
   const grouped=Object.entries(sections).filter(([name,items])=>items.length||name==='Incomplete or missing').map(([name,items])=>name+'\n'+bullets(items.length?items:['No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.']));
   if(context.length)grouped.push('Reported operating context\n'+bullets(context));
   const next=[actions.confirmation.length&&'Confirmation work\n'+bullets(actions.confirmation),actions.remediation.length&&'Remediation\n'+bullets(actions.remediation)].filter(Boolean);
-  const narrative=inlineDate?formatInlineSummary({paragraph:[...overview,...context].join(' '),controls:sections['In place'],limitations:unique([...actions.remediation,...actions.confirmation]).join(' '),date:result.evaluation_date||inlineDate}):['OVERVIEW',overview.join(' '),'IMPLEMENTATION BREAKDOWN',grouped.join('\n\n'),'ITEMS TO ADDRESS',next.length?next.join('\n\n'):'- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.'].join('\n\n');
+  const current=version==='cis-v8.1-control1-5',sentence=fragment=>current?inlineSentence(fragment):fragment;
+  const narrative=inlineDate?formatInlineSummary({paragraph:[...overview,...context].map(sentence).join(' '),controls:sections['In place'],limitations:unique([...actions.remediation,...actions.confirmation]).map(sentence).join(' '),date:result.evaluation_date||inlineDate}):['OVERVIEW',overview.join(' '),'IMPLEMENTATION BREAKDOWN',grouped.join('\n\n'),'ITEMS TO ADDRESS',next.length?next.join('\n\n'):'- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.'].join('\n\n');
   return {result:{...result,narrative},breakdown,deficiencies,confirmations};
 }

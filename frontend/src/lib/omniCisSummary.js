@@ -2,7 +2,7 @@ import {guidedCatalog,catalogForVersion,visibleQuestions} from './guidedAssessme
 import {focusedResult,focusedEvaluationDate} from './focusedOmni';
 import {inventorySummary} from './omniInventorySummary';
 import {omniGroups} from './refinedOmni';
-import {formatInlineSummary} from './inlineAssessment';
+import {formatInlineSummary,inlineSentence} from './inlineAssessment';
 
 const unique=items=>[...new Set(items.map(item=>item.trim()).filter(Boolean))];
 const bullets=items=>unique(items).map(item=>'- '+item).join('\n');
@@ -55,6 +55,6 @@ export function omniCisSummary(id,answers,version,clientName='The organization',
   const grouped=Object.entries(sections).filter(([name,items])=>items.length||name==='Incomplete or missing').map(([name,items])=>name+'\n'+bullets(items.length?items:['No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.']));
   if(context.length)grouped.push('Reported operating context\n'+bullets(context));
   const next=[actions.confirmation.length&&'Confirmation work\n'+bullets(actions.confirmation),actions.remediation.length&&'Remediation\n'+bullets(actions.remediation)].filter(Boolean);
-  const narrative=inlineDate?formatInlineSummary({paragraph:[...overview,...context].join(' '),controls:sections['In place'],limitations:[result.gaps.length&&'Reported missing or incomplete practices limit this implementation.',result.unknowns.length&&'Some reported practices remain unconfirmed.'].filter(Boolean).join(' '),date:inlineDate}):['OVERVIEW',overview.join(' '),'IMPLEMENTATION BREAKDOWN',grouped.join('\n\n'),'ITEMS TO ADDRESS',next.length?next.join('\n\n'):'- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.'].join('\n\n');
+  const narrative=inlineDate?formatInlineSummary({paragraph:[...overview,...context].map(fragment=>current?inlineSentence(fragment):fragment).join(' '),controls:sections['In place'],limitations:[result.gaps.length&&'Reported missing or incomplete practices limit this implementation.',result.unknowns.length&&'Some reported practices remain unconfirmed.'].filter(Boolean).join(' '),date:inlineDate}):['OVERVIEW',overview.join(' '),'IMPLEMENTATION BREAKDOWN',grouped.join('\n\n'),'ITEMS TO ADDRESS',next.length?next.join('\n\n'):'- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.'].join('\n\n');
   return {result:{...result,narrative},breakdown,deficiencies:unique(result.gaps),confirmations:unique(result.unknowns)};
 }
