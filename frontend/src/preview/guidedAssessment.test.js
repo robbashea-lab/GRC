@@ -49,13 +49,38 @@ test('Apply uses normal save and preserves verification and history attribution'
   expect(edited.guided_assessment_source).toBeNull();
   expect(edited.assessment_history.at(-2).guided_assessment_source).toEqual(result.guided_assessment_source);
 });
+test('full native CIS footer acknowledges the same guided source without duplicate writes',async()=>{
+  const result=generateResult('1.1',pilotBody.answers,new Date('2026-10-14T04:00:00Z'),pilotBody.version);
+  const draft=(await api.put(path,{...pilotBody,completed:true,result,narrative:result.narrative})).data;
+  const nativePath='/framework_assessments/'+row.framework_assessment_id;
+  const footer=Object.fromEntries(['technology','notes','na_rationale','addressable_decision','addressable_rationale'].map(key=>[key,row[key]??'']));
+  Object.assign(footer,{implementation:draft.narrative,status:result.status,owner_id:row.owner_id??null,
+    process_owner_id:row.process_owner_id??null,verification:row.verification??'not_verified',
+    cis_assessment_criteria:row.cis_assessment_criteria??[],guided_assessment_source:source(draft),
+    expected_last_assessed:row.last_saved||row.last_assessed||null});
+  if(row.cis_operation)footer.cis_operation={...row.cis_operation,confirmed:false};
+  const saved=(await api.patch(nativePath,footer)).data;
+  expect(saved).not.toHaveProperty('addressable_decision');
+  expect(saved).not.toHaveProperty('addressable_rationale');
+  expect(saved).toHaveProperty('cis_assessment_criteria');
+  const acknowledged={...footer,expected_last_assessed:saved.last_saved},before=readStore();
+  for(let attempt=0;attempt<2;attempt++){
+    expect((await api.patch(nativePath,acknowledged)).data).toEqual(saved);
+    expect(readStore()).toEqual(before);
+  }
+  for(const altered of [{...acknowledged,technology:'Unreviewed product change'},
+    {...acknowledged,guided_assessment_source:{...source(draft),revision:draft.revision+1}},
+    {...acknowledged,expected_last_assessed:footer.expected_last_assessed}])
+    await expect(api.patch(nativePath,altered)).rejects.toMatchObject({response:{status:409}});
+  expect((await api.get(nativePath)).data).toEqual(saved);
+});
 test('applicable CIS clients start clean, ISO uses its own version, and inactive ISO rejects access',async()=>{
   const cis=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data;
   const interview=(await api.get('/framework_assessments/'+cis.assessments.find(a=>a.definition_id==='1.1').framework_assessment_id+'/guided-assessment')).data;
   expect(interview.answers).toEqual({});expect(interview.revision).toBe(0);
   const iso=(await api.get('/frameworks/iso-27001',{params:{client_id:'demo_dunder'}})).data;
   const route='/framework_assessments/'+iso.assessments[0].framework_assessment_id+'/guided-assessment';
-  expect((await api.get(route)).data.version).toBe('iso27001-omni-1');
+  expect((await api.get(route)).data.version).toBe('iso27001-omni-2');
   await api.patch('/onboarding/programs/iso-27001',{client_id:'demo_dunder',applicability:'does_not_apply'});
   await expect(api.get(route)).rejects.toMatchObject({response:{status:404}});
 });

@@ -34,6 +34,10 @@ async def latest_activity(db, client_ids, now):
                 'action': {'$in': r['actions']}} for r in RULES['activity']]
     logs = await db.audit_logs.aggregate([
         {'$match': {'client_id': {'$in': client_ids}, '$or': clauses,
+                    'success': {'$ne': False}, 'committed': {'$ne': False},
+                    'outcome': {'$in': [None, 'success']},
+                    'meta.outcome': {'$nin': ['denied', 'failed', 'error', 'cancelled', 'requested']},
+                    'meta._portfolio_activity_noop': {'$ne': True},
                     'at': {'$type': 'string', '$lte': now}}},
         {'$sort': {'at': -1}},
         {'$group': {'_id': '$client_id', 'at': {'$first': '$at'},

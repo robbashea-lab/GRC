@@ -1,9 +1,11 @@
 {
   "offline": [
     "test_assessment_items.py",
+    "test_assessment_unknowns.py",
     "test_portfolio_progress.py",
     "test_portfolio_activity.py",
     "test_portfolio_reporting.py",
+    "test_client_portfolio_dashboard.py",
     "test_framework_reports.py",
     "test_framework_report_pdf.py",
     "test_platform_ten_year_lifecycle.py",

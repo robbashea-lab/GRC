@@ -35,11 +35,13 @@ test('Risks cannot repaint shared High or Accepted pills in sibling modules',()=
   expect(shared).toContain('.pill-accepted { color: var(--color-neutral)');
 });
 
-test('Portfolio counts use tabular neutral surfaces and restrained rails, never alarm bubbles',()=>{
-  const css=read('pages/GoverNaraPortfolio.css');expect(css).not.toMatch(/\.gp-(risk|work-count)[^{}]*\{[^}]*background:\s*var\(--color-(critical|moderate)-bg\)/);
-  expect(css).toContain('border-left:3px solid transparent');expect(css).toContain('font-variant-numeric:tabular-nums');
-  expect(css).toContain('.gp-risk.is-attention { border-color:var(--color-moderate)');
-  expect(css).toContain('.gp-risk.is-zero { color:var(--color-text-muted)');
+test('Portfolio grouped table keeps tabular neutral metrics and distinct native status colors',()=>{
+  const css=read('pages/GoverNaraPortfolio.css');
+  expect(css).toMatch(/\.gp-table-frame\s*\{[^}]*overflow-x:\s*auto/);
+  expect(css).toMatch(/\.governara-portfolio \.gp-table\s*\{[^}]*table-layout:\s*fixed/);
+  expect(css).toContain('font-variant-numeric:tabular-nums');
+  expect(css).not.toMatch(/\.gp-(percent|progress-count)[^{}]*\{[^}]*background:\s*var\(--color-(critical|moderate)-bg\)/);
+  for(const [status,color] of [['implemented','success'],['partial','moderate-text'],['not','critical'],['unassessed','text-muted']])
+    expect(css).toContain(`.gp-statusbar .is-${status} { background:var(--color-${color}); }`);
   const source=read('pages/ClientDirectory.jsx');expect(source).toContain("import './GoverNaraPortfolio.css'");expect(source).not.toContain("import './BrawndoPortfolio.css'");
-  expect(source).toContain("critical_high_issues: 'attention'");expect(source).toContain("unassigned: 'neutral'");
 });

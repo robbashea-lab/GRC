@@ -31,6 +31,26 @@ def position(key, rows, configuration=None):
 
 
 class NativeProgressTests(unittest.TestCase):
+    def test_program_metadata_uses_native_registry_and_cumulative_group(self):
+        for key, unit in [('cis-ig1', 'safeguards'), ('nist-csf-2', 'subcategories'),
+                          ('soc-2', 'criteria'), ('iso-27001', 'requirements and controls')]:
+            result = progress.current_position(client(), framework(key), [], source(key), AS_OF)
+            self.assertEqual(result['unit_label'], unit)
+            self.assertEqual(result['framework_version'], CATALOGS[key]['version'])
+            self.assertIn(CATALOGS[key]['version'], result['program_title'])
+            self.assertEqual(result['program_id'], 'owned:' + key)
+        result = progress.current_position(client(group=3), framework('cis-ig1'), [],
+                                           source('cis-ig1', {'implementation_group': 3}), AS_OF)
+        self.assertIn('Implementation Group 3', result['program_title'])
+
+    def test_saved_scope_without_new_enrollment_metadata_retains_native_implementation_identity(self):
+        assignment = {'requirement_id': 'existing-program', 'baseline_key': 'cis-ig1'}
+        result = progress.current_position(client(), framework('cis-ig1'), [assignment], source('cis-ig1'), AS_OF)['current']
+        legacy_scope = copy.deepcopy(result['scope'])
+        del legacy_scope['enrollment_ids']
+        self.assertEqual(result['scope_signature'], progress._fingerprint(legacy_scope))
+        self.assertEqual(result['scope']['enrollment_ids'], ['existing-program'])
+
     def test_cis_scopes_reconcile_native_cumulative_inventory_and_exclude_retained_groups(self):
         rows = source('cis-ig1', {'implementation_group': 3})
         baseline_ids = {d['id'] for d in active_definitions('cis-ig1', {'implementation_group': 1})}
@@ -192,6 +212,10 @@ class SampledHistoryTests(unittest.TestCase):
                 'measure_version': progress.MEASURE_VERSION, 'implemented': percentage, 'denominator': 100, 'counts': []}
 
     def test_calendar_ranges_month_end_and_leap_day(self):
+        self.assertEqual(progress.range_start('2024-03-31T12:00:00Z', '1m'), '2024-02-29T12:00:00+00:00')
+        self.assertEqual(progress.range_start('2024-05-31T12:00:00Z', '3m'), '2024-02-29T12:00:00+00:00')
+        self.assertEqual(progress.range_start('2024-02-29T12:00:00Z', '36m'), '2021-02-28T12:00:00+00:00')
+        self.assertEqual(progress.range_start('2026-10-13T18:00:00Z', '90d'), '2026-07-15T18:00:00+00:00')
         self.assertEqual(progress.range_start('2024-08-31T12:00:00Z', '6m'), '2024-02-29T12:00:00+00:00')
         self.assertEqual(progress.range_start('2024-02-29T12:00:00Z', '12m'), '2023-02-28T12:00:00+00:00')
         self.assertEqual(progress.range_start('2026-10-13T00:00:00-04:00', '30d'), '2026-09-13T04:00:00+00:00')
@@ -213,10 +237,15 @@ class SampledHistoryTests(unittest.TestCase):
         result = progress.compare_positions([baseline, self.point('2026-10-01T00:00:00Z', 50)], current, '2026-09-13T18:00:00Z')
         self.assertEqual(result['baseline']['captured_at'], baseline['captured_at'])
         self.assertTrue(result['baseline_before_requested_start'])
-        self.assertAlmostEqual(result['change_pp'], 100 / 3)
-        self.assertTrue(result['comparable'])
+        self.assertIsNone(result['change_pp'])
+        self.assertFalse(result['comparable'])
+        self.assertFalse(result['baseline_effective_at_start'])
         self.assertFalse(result['continuous_history'])
-        self.assertIn('not reconstructed', result['reason'])
+        self.assertIn('period boundary', result['reason'])
+        baseline.update(continuity_proven=True, effective_until='2026-10-01T00:00:00Z')
+        proven = progress.compare_positions([baseline], current, '2026-09-13T18:00:00Z')
+        self.assertTrue(proven['baseline_effective_at_start'])
+        self.assertAlmostEqual(proven['change_pp'], 100 / 3)
 
     def test_scope_changes_and_scope_reversion_never_show_an_improvement_delta(self):
         baseline = self.point('2026-09-01T00:00:00Z', 10)
@@ -229,6 +258,7 @@ class SampledHistoryTests(unittest.TestCase):
 
     def test_out_of_order_invalid_future_and_wrapper_snapshots_preserve_cutoff(self):
         baseline = self.point('2026-09-10T00:00:00Z', 10)
+        baseline.update(continuity_proven=True, effective_until=AS_OF)
         snapshots = [{'current': self.point('2027-01-01T00:00:00Z', 100, 'future-scope')},
                      {'current': baseline}, {'current': {'captured_at': 'malformed'}},
                      {'current': self.point('2026-09-01T00:00:00Z', 0)}]
@@ -250,6 +280,7 @@ class SampledHistoryTests(unittest.TestCase):
     def test_duplicate_baseline_delivery_is_idempotent_but_conflicting_ties_are_unavailable(self):
         baseline = self.point('2026-09-01T00:00:00Z', 10)
         current = self.point(AS_OF, 50)
+        baseline.update(continuity_proven=True, effective_until=AS_OF)
         result = progress.compare_positions([baseline, copy.deepcopy(baseline)], current, '2026-09-13T18:00:00Z')
         self.assertEqual(result['change_pp'], 40)
         conflicting = {**baseline, 'percentage': 30}

@@ -177,6 +177,6 @@ test('explicit frequencies, thresholds, alternatives and additional source detai
   expect(text('2.2')).toMatch(/mitigating controls.*residual-risk acceptance/);
   expect(text('5.2')).not.toMatch(/8.character|14.character/); // source labels these best practice, not a minimum obligation
 });
-test('Safeguard numbering orders 13.9 before 13.10 instead of decimal sorting',()=>{
-  expect(prioritizeGuidedRows(['13.11','13.10','13.9'].map(definition_id=>({definition_id,status:'not_assessed'}))).map(r=>r.definition_id)).toEqual(['13.9','13.10','13.11']);
+test('equal neutral manual positions order 13.9 before 13.10 instead of decimal sorting',()=>{
+  expect(prioritizeGuidedRows(['13.11','13.10','13.9'].map(definition_id=>({definition_id,status:'needs_attention'}))).map(r=>r.definition_id)).toEqual(['13.9','13.10','13.11']);
 });

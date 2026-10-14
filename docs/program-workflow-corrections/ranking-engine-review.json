@@ -1,0 +1,560 @@
+{
+  "reviewer": "/root/cis_ig1_review; independent source/ranking reviewer; authorized test-only editor",
+  "review_baseline": "4453cf2a8229c6f03e0a57f204518ce29edc8ad3",
+  "latest_reviewed_source": "a46a3500583338917eb96949458cb75c6373546a",
+  "scope": "All 337 supported mapping identities, deterministic ranking and connected callers, CIS current and historical test contracts",
+  "source_counts": {
+    "unique_definition_count": 337,
+    "by_framework": {
+      "cis-ig1": 153,
+      "soc-2": 61,
+      "iso-27001": 123
+    },
+    "supported_mapping_omissions": [],
+    "browser_checks": 0,
+    "all_question_entries": 3580,
+    "exact_eligible_question_mappings": 3396,
+    "intentionally_ineligible_evidence_fields": 184,
+    "matrix_criterion_mappings": 462
+  },
+  "metadata_review": "triage-review.json independently reviewed all exact SOC/ISO rationales and CIS V5 content preservation; no current supported metadata omissions.",
+  "internal_scale": "4 urgent, 3 high, 2 neutral, 1 routine; discovery dependency lower first; internal application defaults, not official standard criticality or measured client risk.",
+  "approved_client_priority_model": "Unavailable in the actual current native contract; no invented client-priority field. Exact linked Finding/Risk severity precedes reviewed defaults.",
+  "connected_callers": [
+    {
+      "path": "frontend/src/lib/guidedAssessment.js",
+      "review": "prioritizeGuidedRows filters authored CIS definition IDs then invokes rankProgramRows."
+    },
+    {
+      "path": "frontend/src/lib/guidedLifecycle.js",
+      "review": "Lifecycle uses shared scopedProgramRows for both recommendations and saved-interview resume; valid clean implemented resume retained and unsupported/other-client/excluded identities omitted."
+    },
+    {
+      "path": "frontend/src/lib/focusedOmni.js",
+      "review": "Uses shared lifecycle top-five; preserves valid interview resume and existing inventory foundation wording without overriding Not Assessed-first policy."
+    },
+    {
+      "path": "frontend/src/components/FrameworkWorkspace.jsx",
+      "review": "Actual workspace rows originate in registered server definitions and active authorized native scope; no hosted unsupported-ID leak claimed."
+    },
+    {
+      "path": "frontend/src/components/SocGuidedAssessor.jsx",
+      "review": "Direct shared helper applied to active workspace rows."
+    },
+    {
+      "path": "frontend/src/lib/isoGuidedProgram.js",
+      "review": "Shared helper used after SoA context; exclusion, unresolved applicability and actual audit scheduling remain distinct."
+    },
+    {
+      "path": "backend/framework_governance.py",
+      "review": "Authorized same-client bounded native workspace projection retains closed exact-gap Finding as connector metadata, active linked Risk, existing Risk deadline normalization, and unchanged open counts/native assessment position."
+    },
+    {
+      "path": "frontend/src/preview/frameworks.js",
+      "review": "Demo projection follows corresponding exact-gap connector and existing riskDue rules; no Demo state changed by reviewer."
+    }
+  ],
+  "reproduced_findings": [
+    {
+      "id": "R1",
+      "path": "frontend/src/lib/programTriage.js",
+      "problem": "Unsupported raw definition ID entered top-five as neutral missing mapping.",
+      "status": "Corrected and independently verified at a46a3500583338917eb96949458cb75c6373546a"
+    },
+    {
+      "id": "R2",
+      "path": "frontend/src/lib/programTriage.js; backend/framework_governance.py; frontend/src/lib/frameworks.js",
+      "problem": "Active same-client exact-gap Risk severity lost behind closed Finding connector.",
+      "expected": "Closed Finding severity excluded; independent active exact-linked Risk retained.",
+      "reproduction": "ranking-current-reproductions-eb7d6ab.json",
+      "status": "Corrected and independently verified at a46a3500583338917eb96949458cb75c6373546a"
+    },
+    {
+      "id": "R3",
+      "path": "frontend/src/lib/programTriage.js; frontend/src/lib/grcRules.json",
+      "problem": "Accepted Risk treated as closed although authoritative native closed statuses are closed/retired.",
+      "expected": "Accepted active Risk severity retained; closed/retired and cross-client Risk excluded.",
+      "reproduction": "ranking-current-reproductions-eb7d6ab.json",
+      "status": "Corrected and independently verified at a46a3500583338917eb96949458cb75c6373546a"
+    },
+    {
+      "id": "R4",
+      "path": "frontend/src/lib/programTriage.js",
+      "problem": "Real next_review_due discarded into Infinity, losing equivalent final-bucket deadline order.",
+      "expected": "Earlier actual scheduled Review date before later date; preserve status/importance ordering first.",
+      "regression": "guidedAssessment.test.js and guidedLifecycle.test.js",
+      "status": "Corrected and independently verified at a46a3500583338917eb96949458cb75c6373546a"
+    },
+    {
+      "id": "R5",
+      "path": "frontend/src/lib/focusedOmni.js",
+      "problem": "Inventory foundation rationale removed during recommendation ordering correction.",
+      "expected": "Retain existing foundation wording attached to 1.1 without forcing it ahead of Not Assessed work.",
+      "regression": "focusedOmni.test.js",
+      "status": "Corrected and independently verified at a46a3500583338917eb96949458cb75c6373546a"
+    },
+    {
+      "id": "R6",
+      "path": "frontend/src/lib/guidedLifecycle.js; frontend/src/lib/focusedOmni.js",
+      "problem": "Unsupported identity re-enters top-five through separate saved-interview resume.",
+      "expected": "Use authored supported scope for resume while preserving valid clean implemented interview resume.",
+      "regression": "focusedOmni.test.js",
+      "status": "Corrected and independently verified at a46a3500583338917eb96949458cb75c6373546a"
+    },
+    {
+      "id": "R7",
+      "path": "frontend/src/lib/guidedAssessment.js",
+      "problem": "Explicit current Control1 root Partially plus mandatory cadence unknown returns Not Assessed in all five definitions.",
+      "expected": "Known Partial retained; mandatory unknown-only Not Assessed; known absence and partial component remain determinate.",
+      "regression": "guidedControl1V3.test.js all-five current/legacy vectors",
+      "status": "Corrected and independently verified at a46a3500583338917eb96949458cb75c6373546a"
+    },
+    {
+      "id": "R8",
+      "path": "backend/assessment_items.py",
+      "problem": "Original question-only brawndo-cis-pilot-1 schema causes KeyError definitions in derived Item generation.",
+      "expected": "Supported original guide remains applicable; its mixed gap/unknown follow-up is retained as confirmation, without a fabricated confirmed gap.",
+      "reproduction": "legacy-ambiguous-item-reproduction.json",
+      "regression": "backend/tests/test_guided_assessment.py",
+      "status": "Corrected and independently verified at a46a3500583338917eb96949458cb75c6373546a"
+    },
+    {
+      "id": "R9",
+      "path": "backend/framework_governance.py; frontend/src/preview/frameworks.js",
+      "problem": "Native Risk review/acceptance-expiry dates were omitted because the projection read nonexistent Risk due_date.",
+      "expected": "Reuse existing risk_due/riskDue normalization; retain native next_review and acceptance_expires_at in bounded same-client Risk query.",
+      "status": "Corrected 473d4b7 integrated at a46a3500583338917eb96949458cb75c6373546a",
+      "verification": "Three independent exact-gap date fixtures plus two existing isolated API/projection tests passed; accepted expiry affects an equal-priority tie, inactive expiry is ignored, no date is invented."
+    }
+  ],
+  "source_binding_uncertainty": {
+    "case": "current source version matches retained Item version but fingerprint/revision differs",
+    "observed": "Controlled malformed input can select current answer severity instead of historical matching snapshot.",
+    "disposition": "No reachable canonical saved state demonstrated: native reconciliation updates/supersedes Item source metadata atomically. Do not claim material exploit or request speculative machinery."
+  },
+  "tests": {
+    "before_libraries": {
+      "revision": "4453cf2",
+      "suites_failed": 7,
+      "suites_passed": 2,
+      "failed": 131,
+      "passed": 619,
+      "log": "cis-before-4453-tests.log"
+    },
+    "after_fixture_libraries": {
+      "revision": "eb7d6ab",
+      "suites_failed": 4,
+      "suites_passed": 5,
+      "failed": 11,
+      "passed": 747,
+      "log": "cis-after-reuse-tests.log",
+      "meaning": "Remaining source regression assertions retained, not weakened."
+    },
+    "before_components": {
+      "revision": "4453cf2",
+      "suites_failed": 1,
+      "suites_passed": 4,
+      "failed": 5,
+      "passed": 422,
+      "log": "cis-components-before-4453-tests.log"
+    },
+    "affected_component_after": {
+      "passed": 30,
+      "failed": 0,
+      "log": "cis-component-after-fixtures.log"
+    },
+    "before_backend": {
+      "failed": 2,
+      "passed": 24,
+      "subtests_passed": 157,
+      "log": "cis-backend-before-4453-tests.log"
+    },
+    "after_backend_fixtures": {
+      "failed": 0,
+      "passed": 26,
+      "subtests_passed": 157,
+      "warnings": 4,
+      "log": "cis-backend-after-fixtures.log",
+      "note": "Before newly added original question-only Item regression; that failure is separately reproduced."
+    },
+    "legacy_before_source_fix": {
+      "deselected": 26,
+      "observed": "KeyError definitions in original question-only catalog Item adapter",
+      "failed": 1,
+      "log": "cis-legacy-before-sourcefix.log"
+    },
+    "final_frontend": {
+      "frozen_revision": "a46a3500583338917eb96949458cb75c6373546a",
+      "suites_passed": 14,
+      "tests_passed": 1185,
+      "failed": 0,
+      "duration_seconds": 97.89,
+      "log": "cis-final-a46a350-frontend.log",
+      "command": "CI=true node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand --runTestsByPath [nine assigned CIS libraries and five assigned CIS components]"
+    },
+    "final_owned_backend": {
+      "frozen_revision": "a46a3500583338917eb96949458cb75c6373546a",
+      "tests_passed": 27,
+      "subtests_passed": 157,
+      "failed": 0,
+      "duration_seconds": 56.9,
+      "warnings": 4,
+      "log": "cis-final-a46a350-backend.log",
+      "command": "python -m pytest -c backend/pytest.ini -n0 -q backend/tests/test_guided_assessment.py"
+    },
+    "final_native_risk_projection": {
+      "frozen_revision": "a46a3500583338917eb96949458cb75c6373546a",
+      "tests_passed": 2,
+      "deselected": 19,
+      "failed": 0,
+      "duration_seconds": 4.0,
+      "warnings": 4,
+      "log": "native-risk-projection-final-a46a350.log",
+      "command": "python -m pytest -c backend/pytest.ini -n0 -q backend/tests/test_assessment_items.py -k 'ranking_metadata_proves_same_item or closed_finding_retains_exact_active_risk'",
+      "evidence": "Existing real route/authentication code exercised with isolated in-memory authorization harness; no hosted or durable-Mongo claim."
+    },
+    "preliminary_mixed_revision_run": {
+      "log": "cis-final-9daa-tests.log",
+      "frontend_passed": 1183,
+      "frontend_failed": 2,
+      "total": 1185,
+      "disposition": "Final owner source arrived during this preliminary run. Excluded from frozen acceptance; both legitimately outdated assertions corrected and final stable full scope rerun passed."
+    }
+  },
+  "source_edits_by_reviewer": 0,
+  "hosted_browser_provider_session_writes": 0,
+  "final_source_runtime_receipt": "PASS for the bounded assigned source, ranking, mapping, isolated API and component scope at a46a3500583338917eb96949458cb75c6373546a",
+  "runtime_mapping_receipt": {
+    "base": "a46a3500583338917eb96949458cb75c6373546a",
+    "evidence": "Actual frontend composed CIS current catalog plus actual SOC/ISO current authored questions and all versioned extra questions; no browser evidence",
+    "counts": {
+      "cis-ig1": {
+        "definitions": 153,
+        "allQuestionEntries": 1875,
+        "matrixCriteria": 462
+      },
+      "soc-2": {
+        "definitions": 61,
+        "allQuestionEntries": 479,
+        "matrixCriteria": 0
+      },
+      "iso-27001": {
+        "definitions": 123,
+        "allQuestionEntries": 1226,
+        "matrixCriteria": 0
+      }
+    },
+    "uniqueDefinitions": 337,
+    "questionEntries": 3580,
+    "checkedQuestionMappings": 3396,
+    "explicitlyIneligibleEvidenceQuestions": [
+      "soc-2:CC1.1:evidence",
+      "soc-2:CC1.2:evidence",
+      "soc-2:CC1.3:evidence",
+      "soc-2:CC1.4:evidence",
+      "soc-2:CC1.5:evidence",
+      "soc-2:CC2.1:evidence",
+      "soc-2:CC2.2:evidence",
+      "soc-2:CC2.3:evidence",
+      "soc-2:CC3.1:evidence",
+      "soc-2:CC3.2:evidence",
+      "soc-2:CC3.3:evidence",
+      "soc-2:CC3.4:evidence",
+      "soc-2:CC4.1:evidence",
+      "soc-2:CC4.2:evidence",
+      "soc-2:CC5.1:evidence",
+      "soc-2:CC5.2:evidence",
+      "soc-2:CC5.3:evidence",
+      "soc-2:CC6.1:evidence",
+      "soc-2:CC6.2:evidence",
+      "soc-2:CC6.3:evidence",
+      "soc-2:CC6.4:evidence",
+      "soc-2:CC6.5:evidence",
+      "soc-2:CC6.6:evidence",
+      "soc-2:CC6.7:evidence",
+      "soc-2:CC6.8:evidence",
+      "soc-2:CC7.1:evidence",
+      "soc-2:CC7.2:evidence",
+      "soc-2:CC7.3:evidence",
+      "soc-2:CC7.4:evidence",
+      "soc-2:CC7.5:evidence",
+      "soc-2:CC8.1:evidence",
+      "soc-2:CC9.1:evidence",
+      "soc-2:CC9.2:evidence",
+      "soc-2:A1.1:evidence",
+      "soc-2:A1.2:evidence",
+      "soc-2:A1.3:evidence",
+      "soc-2:C1.1:evidence",
+      "soc-2:C1.2:evidence",
+      "soc-2:PI1.1:evidence",
+      "soc-2:PI1.2:evidence",
+      "soc-2:PI1.3:evidence",
+      "soc-2:PI1.4:evidence",
+      "soc-2:PI1.5:evidence",
+      "soc-2:P1.1:evidence",
+      "soc-2:P2.1:evidence",
+      "soc-2:P3.1:evidence",
+      "soc-2:P3.2:evidence",
+      "soc-2:P4.1:evidence",
+      "soc-2:P4.2:evidence",
+      "soc-2:P4.3:evidence",
+      "soc-2:P5.1:evidence",
+      "soc-2:P5.2:evidence",
+      "soc-2:P6.1:evidence",
+      "soc-2:P6.2:evidence",
+      "soc-2:P6.3:evidence",
+      "soc-2:P6.4:evidence",
+      "soc-2:P6.5:evidence",
+      "soc-2:P6.6:evidence",
+      "soc-2:P6.7:evidence",
+      "soc-2:P7.1:evidence",
+      "soc-2:P8.1:evidence",
+      "iso-27001:4.1:evidence",
+      "iso-27001:4.2:evidence",
+      "iso-27001:4.3:evidence",
+      "iso-27001:4.4:evidence",
+      "iso-27001:5.1:evidence",
+      "iso-27001:5.2:evidence",
+      "iso-27001:5.3:evidence",
+      "iso-27001:6.1.1:evidence",
+      "iso-27001:6.1.2:evidence",
+      "iso-27001:6.1.3:evidence",
+      "iso-27001:6.2:evidence",
+      "iso-27001:6.3:evidence",
+      "iso-27001:7.1:evidence",
+      "iso-27001:7.2:evidence",
+      "iso-27001:7.3:evidence",
+      "iso-27001:7.4:evidence",
+      "iso-27001:7.5.1:evidence",
+      "iso-27001:7.5.2:evidence",
+      "iso-27001:7.5.3:evidence",
+      "iso-27001:8.1:evidence",
+      "iso-27001:8.2:evidence",
+      "iso-27001:8.3:evidence",
+      "iso-27001:9.1:evidence",
+      "iso-27001:9.2.1:evidence",
+      "iso-27001:9.2.2:evidence",
+      "iso-27001:9.3.1:evidence",
+      "iso-27001:9.3.2:evidence",
+      "iso-27001:9.3.3:evidence",
+      "iso-27001:10.1:evidence",
+      "iso-27001:10.2:evidence",
+      "iso-27001:A.5.1:evidence",
+      "iso-27001:A.5.2:evidence",
+      "iso-27001:A.5.3:evidence",
+      "iso-27001:A.5.4:evidence",
+      "iso-27001:A.5.5:evidence",
+      "iso-27001:A.5.6:evidence",
+      "iso-27001:A.5.7:evidence",
+      "iso-27001:A.5.8:evidence",
+      "iso-27001:A.5.9:evidence",
+      "iso-27001:A.5.10:evidence",
+      "iso-27001:A.5.11:evidence",
+      "iso-27001:A.5.12:evidence",
+      "iso-27001:A.5.13:evidence",
+      "iso-27001:A.5.14:evidence",
+      "iso-27001:A.5.15:evidence",
+      "iso-27001:A.5.16:evidence",
+      "iso-27001:A.5.17:evidence",
+      "iso-27001:A.5.18:evidence",
+      "iso-27001:A.5.19:evidence",
+      "iso-27001:A.5.20:evidence",
+      "iso-27001:A.5.21:evidence",
+      "iso-27001:A.5.22:evidence",
+      "iso-27001:A.5.23:evidence",
+      "iso-27001:A.5.24:evidence",
+      "iso-27001:A.5.25:evidence",
+      "iso-27001:A.5.26:evidence",
+      "iso-27001:A.5.27:evidence",
+      "iso-27001:A.5.28:evidence",
+      "iso-27001:A.5.29:evidence",
+      "iso-27001:A.5.30:evidence",
+      "iso-27001:A.5.31:evidence",
+      "iso-27001:A.5.32:evidence",
+      "iso-27001:A.5.33:evidence",
+      "iso-27001:A.5.34:evidence",
+      "iso-27001:A.5.35:evidence",
+      "iso-27001:A.5.36:evidence",
+      "iso-27001:A.5.37:evidence",
+      "iso-27001:A.6.1:evidence",
+      "iso-27001:A.6.2:evidence",
+      "iso-27001:A.6.3:evidence",
+      "iso-27001:A.6.4:evidence",
+      "iso-27001:A.6.5:evidence",
+      "iso-27001:A.6.6:evidence",
+      "iso-27001:A.6.7:evidence",
+      "iso-27001:A.6.8:evidence",
+      "iso-27001:A.7.1:evidence",
+      "iso-27001:A.7.2:evidence",
+      "iso-27001:A.7.3:evidence",
+      "iso-27001:A.7.4:evidence",
+      "iso-27001:A.7.5:evidence",
+      "iso-27001:A.7.6:evidence",
+      "iso-27001:A.7.7:evidence",
+      "iso-27001:A.7.8:evidence",
+      "iso-27001:A.7.9:evidence",
+      "iso-27001:A.7.10:evidence",
+      "iso-27001:A.7.11:evidence",
+      "iso-27001:A.7.12:evidence",
+      "iso-27001:A.7.13:evidence",
+      "iso-27001:A.7.14:evidence",
+      "iso-27001:A.8.1:evidence",
+      "iso-27001:A.8.2:evidence",
+      "iso-27001:A.8.3:evidence",
+      "iso-27001:A.8.4:evidence",
+      "iso-27001:A.8.5:evidence",
+      "iso-27001:A.8.6:evidence",
+      "iso-27001:A.8.7:evidence",
+      "iso-27001:A.8.8:evidence",
+      "iso-27001:A.8.9:evidence",
+      "iso-27001:A.8.10:evidence",
+      "iso-27001:A.8.11:evidence",
+      "iso-27001:A.8.12:evidence",
+      "iso-27001:A.8.13:evidence",
+      "iso-27001:A.8.14:evidence",
+      "iso-27001:A.8.15:evidence",
+      "iso-27001:A.8.16:evidence",
+      "iso-27001:A.8.17:evidence",
+      "iso-27001:A.8.18:evidence",
+      "iso-27001:A.8.19:evidence",
+      "iso-27001:A.8.20:evidence",
+      "iso-27001:A.8.21:evidence",
+      "iso-27001:A.8.22:evidence",
+      "iso-27001:A.8.23:evidence",
+      "iso-27001:A.8.24:evidence",
+      "iso-27001:A.8.25:evidence",
+      "iso-27001:A.8.26:evidence",
+      "iso-27001:A.8.27:evidence",
+      "iso-27001:A.8.28:evidence",
+      "iso-27001:A.8.29:evidence",
+      "iso-27001:A.8.30:evidence",
+      "iso-27001:A.8.31:evidence",
+      "iso-27001:A.8.32:evidence",
+      "iso-27001:A.8.33:evidence",
+      "iso-27001:A.8.34:evidence"
+    ],
+    "supportedMappingOmissions": []
+  },
+  "owned_test_commit": "f3f1dff4c069eaef40da59ccd78f46b52165430b",
+  "independent_controlled_ranking_receipt": {
+    "base": "a46a3500583338917eb96949458cb75c6373546a",
+    "evidence": "Controlled source-runtime fixtures; no browser or client writes",
+    "cases": [
+      {
+        "name": "Unsupported ID excluded",
+        "observed": [
+          "1.1"
+        ],
+        "expected": [
+          "1.1"
+        ],
+        "pass": true
+      },
+      {
+        "name": "Known supported missing metadata remains explicit neutral fallback",
+        "observed": [
+          {
+            "id": "18.5",
+            "priority": 2,
+            "unmapped": true
+          }
+        ],
+        "expected": [
+          {
+            "id": "18.5",
+            "priority": 2,
+            "unmapped": true
+          }
+        ],
+        "pass": true
+      },
+      {
+        "name": "Active Risk behind closed connector",
+        "observed": 4,
+        "expected": 4,
+        "pass": true
+      },
+      {
+        "name": "Accepted Risk is native active",
+        "observed": 4,
+        "expected": 4,
+        "pass": true
+      },
+      {
+        "name": "Closed Risk excluded",
+        "observed": 1,
+        "expected": 1,
+        "pass": true
+      },
+      {
+        "name": "Foreign-client Risk excluded",
+        "observed": 1,
+        "expected": 1,
+        "pass": true
+      },
+      {
+        "name": "Authoritative Review date breaks final-bucket tie",
+        "observed": [
+          "1.2",
+          "1.1"
+        ],
+        "expected": [
+          "1.2",
+          "1.1"
+        ],
+        "pass": true
+      },
+      {
+        "name": "Unsupported saved interview cannot reenter through resume",
+        "observed": [],
+        "expected": [],
+        "pass": true
+      },
+      {
+        "name": "Existing accepted Risk expiry breaks exact severity/status tie",
+        "observed": [
+          "1.2",
+          "1.1"
+        ],
+        "expected": [
+          "1.2",
+          "1.1"
+        ],
+        "pass": true
+      },
+      {
+        "name": "Assessed Risk ignores inactive acceptance expiry and uses existing review date",
+        "observed": [
+          "1.1",
+          "1.2"
+        ],
+        "expected": [
+          "1.1",
+          "1.2"
+        ],
+        "pass": true
+      },
+      {
+        "name": "Unaccepted Risk with no review date has no invented deadline",
+        "observed": null,
+        "expected": null,
+        "pass": true
+      }
+    ]
+  },
+  "test_commits": [
+    "f3f1dff4c069eaef40da59ccd78f46b52165430b",
+    "c6a258f8639ef7f10c26c04773b16d51ed208bae"
+  ],
+  "owned_test_commit_scope": "Exactly eleven initially assigned tests plus a two-path assertion follow-up; no source, shared fixture, preview test, other-worker tests, or root documents committed.",
+  "historical_and_current_contract": "Old explicit catalogs/readers/evaluator status fixtures retained; current V5 mandatory unknown-only remains Not Assessed, known absence/partial stays determinate, optional context cannot manufacture status deficiency, inactive legacy prefill remains stored without inferred affirmative intent.",
+  "warning_disposition": "Four existing FastAPI on_event deprecation warnings in each backend invocation; no warnings suppressed and no runtime/dependency migration made.",
+  "remaining_reproduced_source_defects": [],
+  "app_source_or_test_diff_from_freeze": [],
+  "limitations": [
+    "No browser, hosted client/provider/session, production, account/grant, main merge, push or release action performed by this reviewer.",
+    "FrameworkWorkspace native rows and server write authorization remain the real selected-client/group/category authority; public helper fixtures are not hosted evidence.",
+    "No current approved explicit client gap-priority model exists in the native contract; documented exact native severity then reviewed-default precedence remains in use.",
+    "ISO normative source availability limitations are preserved in the independent content review; passing triage/source tests does not imply standard certification or full-platform security assurance."
+  ]
+}

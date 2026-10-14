@@ -32,6 +32,17 @@ test('pilot distribution uses the same applicable counts without changing assess
   expect(container.querySelector('circle.bd-seg-addressed').getAttribute('pathLength')).toBe('100');
   expect(parseFloat(container.querySelector('circle.bd-seg-addressed').getAttribute('stroke-dasharray'))).toBeCloseTo(100/3-.9);
 });
+
+test('missing canonical records do not render zero implementation, assessed counts or no-scope claims',async()=>{
+  const implementation_position={availability:'partial',total:56,denominator:0,implemented:0,assessed:0,missing_records:56,
+    reason:'Expected native source records are unavailable.',included_counts:['addressed','in_progress','needs_attention','not_assessed'].map(key=>({key,count:0}))};
+  await act(async()=>root.render(<ClientWorkDashboard workspacePilot queue={queue} programs={[{key:'cis-ig1',label:'CIS IG1',implementation_position}]} cisRows={[]} filter="all" onFilter={()=>{}} onOpen={()=>{}}/>));
+  const card=container.querySelector('.bd-program');
+  expect(card.querySelector('.bd-donut-value').textContent).toBe('—');
+  expect(card.querySelector('.bd-donut').getAttribute('aria-label')).toBe('CIS IG1: implementation data unavailable');
+  expect(card.textContent).toContain('Expected native source records are unavailable.');
+  expect(card.textContent).not.toMatch(/0 of 0|0 safeguards|No applicable/);
+});
 test.each(['soc-2','hipaa','nist-csf-2'])('%s shared ring preserves its actual conclusion vocabulary',async key=>{
   await act(async()=>root.render(<ClientWorkDashboard workspacePilot queue={queue} programs={[{key,label:key}]} programRows={{[key]:cisRows}} filter="all" onFilter={()=>{}} onOpen={()=>{}}/>));
   const expected=operatorStatuses(key).addressed.split(/[\s(]/)[0].toUpperCase();

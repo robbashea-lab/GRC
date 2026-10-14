@@ -5,7 +5,7 @@ import {omniCisSummary} from './omniCisSummary';
 import {inventorySummary} from './omniInventorySummary';
 
 const complete=id=>Object.fromEntries(catalogForVersion(versionForSafeguard(id)).safeguards[id].map(q=>[q.id,
-  q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):
+  q.optional?'No':q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):
     q.type==='text'?'':q.type==='date'?'2026-09-01':q.type==='multi'?['Quarantine or isolate']:
       q.id==='frequency'?(id==='1.1'?'Every six months':id==='1.3'?'Daily':'Weekly'):
         q.id==='sources'?'One source':q.id==='unresolved'?'No':q.choices.includes('Yes')?'Yes':q.choices[0]]));

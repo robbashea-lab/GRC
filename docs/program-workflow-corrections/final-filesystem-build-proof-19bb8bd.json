@@ -1,0 +1,32 @@
+{
+  "runtime_source_revision": "19bb8bd5bd84ac30a958e62ec9db19235f51bb09",
+  "build_exit_code": 0,
+  "manifest": {
+    "files": {
+      "main.css": "/static/css/main.7e6897c1.css",
+      "main.js": "/static/js/main.a46cd0fe.js",
+      "static/js/472.80e43652.chunk.js": "/static/js/472.80e43652.chunk.js",
+      "static/js/617.6f8d8744.chunk.js": "/static/js/617.6f8d8744.chunk.js",
+      "static/media/governara-scene.webp": "/static/media/governara-scene.41f90fa5b6e74e22d94b.webp",
+      "static/media/nara-owl.webp": "/static/media/nara-owl.87326e07f90e4acacc48.webp",
+      "static/media/nara-avatar.webp": "/static/media/nara-avatar.0b98c8010cfef77d6d15.webp",
+      "index.html": "/index.html",
+      "static/media/governara-feather.svg": "/static/media/governara-feather.0a4f7eb57b2953455d5b787040f51902.svg",
+      "main.7e6897c1.css.map": "/static/css/main.7e6897c1.css.map",
+      "main.a46cd0fe.js.map": "/static/js/main.a46cd0fe.js.map",
+      "472.80e43652.chunk.js.map": "/static/js/472.80e43652.chunk.js.map",
+      "617.6f8d8744.chunk.js.map": "/static/js/617.6f8d8744.chunk.js.map"
+    },
+    "entrypoints": [
+      "static/css/main.7e6897c1.css",
+      "static/js/main.a46cd0fe.js"
+    ]
+  },
+  "assets": {
+    "static\\js\\main.a46cd0fe.js": "ff1ce83d986b0d6ac5e8b927fcb98e548f0803531bd27495f28c3d921f8c3143",
+    "static\\css\\main.7e6897c1.css": "52bd9f1111daaef1147922737ede6ec8c06114ea63db5a464c07793dbbd6c29d"
+  },
+  "loaded_dom_receipt": "final-loaded-bundle-19bb8bd.json",
+  "environment": "Root-owned compiled loopbackDemo4341",
+  "limits": "Source association checked with clean tracked runtime; not authenticated hosted or independent browser interaction proof."
+}

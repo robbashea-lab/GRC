@@ -8,7 +8,7 @@ import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
-import {captureDemoReporting} from './portfolioReporting';
+import {captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting} from './portfolioReporting';
 import {finishDunder} from './programs/dunder';
 import {addInitech,finishInitech} from './programs/initech';
 import {removeRetiredDemoClients} from './retiredClients';
@@ -91,7 +91,7 @@ export function readStore() {
   let saved;
   try {saved=sessionStorage.getItem(STORE_KEY);}catch(error){throw demoStorageError(error,'read');}
   if (saved) {
-    let db;try{db=JSON.parse(saved);}catch(error){throw demoStorageError(error,'parse');}
+    let db;try{db=restorePortfolioReporting(JSON.parse(saved));}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
     const retired=removeRetiredDemoClients(db),installed=installCanonicalDunder(db);
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
@@ -108,10 +108,10 @@ export function readStore() {
 export function saveStore(db,{resetFiles=false}={}) {
   // Persist before responding: quota failures must never masquerade as saved changes.
   try {
-    const previous=resetFiles?null:JSON.parse(sessionStorage.getItem(STORE_KEY)||'null');
+    const previous=resetFiles?null:restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)||'null'));
     const persisted=lightweightStore(db,previous?.evidence||[]);
     captureDemoReporting(persisted, previous, new Date().toISOString());
-    sessionStorage.setItem(STORE_KEY, JSON.stringify(persisted));
+    sessionStorage.setItem(STORE_KEY, JSON.stringify(compactPortfolioReporting(persisted)));
     rememberFiles(db,persisted);
   } catch (error) {
     throw demoStorageError(error);

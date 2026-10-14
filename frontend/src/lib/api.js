@@ -76,6 +76,11 @@ api.interceptors.request.use((cfg) => {
 
 api.interceptors.response.use(response => {
   assertPendingCommandGeneration(response.config?.pendingCommandGeneration);
+  const config = response.config;
+  if (['post', 'put', 'patch', 'delete'].includes(config?.method?.toLowerCase())
+      && !/^\/?(?:auth|demo)(?:\/|$)/.test(config.url || '')) {
+    window.dispatchEvent(new Event('grc:portfolio-changed'));
+  }
   return response;
 }, error => {
   assertPendingCommandGeneration(error.config?.pendingCommandGeneration);

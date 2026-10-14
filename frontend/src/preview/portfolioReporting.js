@@ -7,6 +7,7 @@ import {isoProgramMetrics} from '../lib/isoProgramMetrics';
 import {operatorStatuses} from '../lib/frameworkOperator';
 import {evidenceAccess} from './evidence';
 import {stable} from './commandRequests';
+import {latestPortfolioActivity} from '../lib/portfolioOverview';
 
 const VERSION='native-implementation-v1',DAY=86400000;
 const STATUS=['addressed','in_progress','needs_attention','not_assessed'];
@@ -18,11 +19,104 @@ const timestamp=value=>{const time=Date.parse(value);if(!Number.isFinite(time)||
 const counts=(rows,key)=>{const labels=operatorStatuses(key),values=STATUS.map(status=>({key:status,label:labels[status],count:rows.filter(r=>r.status===status).length}));const unknown=rows.filter(r=>!STATUS.includes(r.status)).length;if(unknown)values.push({key:'unknown',label:'Unresolved status',count:unknown});return values;};
 const component=(key,label,rows,framework)=>({key,label,counts:counts(rows,framework),implemented:rows.filter(r=>r.status==='addressed').length,denominator:rows.length});
 
+// Demo has no synchronous cryptographic digest. Intern exact scope strings per
+// native program at the same atomic source commit; GETs only resolve identities.
+const programIdentity=position=>position.program_id||position.client_id+':'+position.framework_key;
+const implementationScope=scope=>Object.fromEntries(Object.entries(scope).filter(([field])=>field!=='enrollment_ids'));
+function scopeText(signature){
+  if(!signature?.startsWith('{'))return signature;
+  return stable(implementationScope(JSON.parse(signature)));
+}
+const exactScope=current=>current.scope?stable(implementationScope(current.scope)):scopeText(current.scope_signature);
+const exactSource=current=>current.scope?stable({scope:current.scope,references:current.provenance?.source_references||[]}):null;
+function knownScopes(db,identity){
+  const recorded=db.portfolio_reporting?.identities?.find(row=>row.program_id===identity);
+  if(recorded)return recorded.scopes.map(scopeText);
+  const values=[];
+  const remember=current=>{const signature=current&&exactScope(current);if(signature&&!values.includes(signature))values.push(signature);};
+  for(const snapshot of db.portfolio_reporting?.snapshots||[])if(programIdentity(snapshot)===identity)remember(snapshot.current);
+  for(const event of db.portfolio_reporting?.scope_events||[])if(event.client_id+':'+event.framework_key===identity){remember(event.before);remember(event.after);}
+  return values;
+}
+function normalizedCurrent(db,identity,current,document=null){
+  const exact=exactScope(current),scopes=knownScopes(db,identity),index=scopes.indexOf(exact);
+  const scope_signature=exact?`demo-scope:${identity}:${index<0?scopes.length:index}`:current.scope_signature;
+  const head=db.portfolio_reporting?.identities?.find(row=>row.program_id===identity)?.head;
+  const source=exactSource(current);
+  const legacy=document||[...(db.portfolio_reporting?.snapshots||[])].reverse().find(snapshot=>programIdentity(snapshot)===identity&&exactSource(snapshot.current)===source);
+  const source_revision=document?document.source_revision?.startsWith('demo-source:')?document.source_revision:`demo-source:${identity}:legacy:${document.snapshot_id}`:
+    head&&source===head.signature?`demo-source:${identity}:${head.revision}`:
+    legacy?`demo-source:${identity}:legacy:${legacy.snapshot_id}`:null;
+  const included_counts=current.included_counts||current.counts?.filter(value=>STATUS.includes(value.key))||[];
+  return {...current,scope_signature,source_revision,status_signature:scope_signature?stable({scope_signature,included_counts,implemented:current.implemented,denominator:current.denominator,availability:current.availability}):null};
+}
+const OBSERVATION_FIELDS=['program_id','measure_version','availability','reason','percentage','implemented','denominator','total','excluded','counts','included_counts','assessed','not_started','scope_signature','status_signature','scope_undetermined','missing_records','duplicate_records','unrecognized_status_count','effective_until','continuity_proven','continuity_source_event'];
+function thinCurrent(current){
+  return {...Object.fromEntries(OBSERVATION_FIELDS.filter(field=>Object.hasOwn(current,field)).map(field=>[field,current[field]])),
+    invalid_applicability_count:current.invalid_applicability_count??0,
+    provenance:Object.fromEntries(['kind','label','source_as_of','cutoff_consistent','event_time_bound','source_event'].filter(field=>Object.hasOwn(current.provenance||{},field)).map(field=>[field,current.provenance[field]]))};
+}
+
+// Serialization only: retain every observation and exact historical vector,
+// but store repeated whole-program scope/source arrays once. Native records
+// and their histories never enter this pool. Decoding allocates separate copies.
+export function compactPortfolioReporting(db){
+  const history=db?.portfolio_reporting;if(!history)return db;
+  const identities=(history.identities||[]).map(row=>({...row,scopes:[...row.scopes]}));
+  const source_vectors=[...(history.source_vectors||[])],sources=new Map(source_vectors.map((value,index)=>[value,index]));
+  const current=(value,identity)=>{
+    if(!value)return value;
+    const result={...value};
+    if(value.scope){
+      let recorded=identities.find(row=>row.program_id===identity);
+      if(!recorded){recorded={program_id:identity,scopes:[],head:null};identities.push(recorded);}
+      const signature=exactScope(value);let index=recorded.scopes.indexOf(signature);
+      if(index<0){index=recorded.scopes.length;recorded.scopes.push(signature);}
+      delete result.scope;result._portfolio_scope_index=index;
+      if(Object.hasOwn(value.scope,'enrollment_ids'))result._portfolio_enrollment_ids=[...value.scope.enrollment_ids];
+    }
+    if(Array.isArray(value.provenance?.source_references)){
+      const vector=stable(value.provenance.source_references);let index=sources.get(vector);
+      if(index===undefined){index=source_vectors.length;source_vectors.push(vector);sources.set(vector,index);}
+      result.provenance={...value.provenance,_portfolio_source_index:index};delete result.provenance.source_references;
+    }
+    return result;
+  };
+  return {...db,portfolio_reporting:{...history,storage_version:1,identities,source_vectors,
+    snapshots:(history.snapshots||[]).map(snapshot=>({...snapshot,current:current(snapshot.current,programIdentity(snapshot))})),
+    scope_events:(history.scope_events||[]).map(event=>({...event,before:current(event.before,event.client_id+':'+event.framework_key),after:current(event.after,event.client_id+':'+event.framework_key)}))}};
+}
+
+export function restorePortfolioReporting(db){
+  const history=db?.portfolio_reporting;if(!history?.storage_version)return db;
+  if(history.storage_version!==1)throw new Error('The saved Demo implementation history format is unavailable.');
+  const current=(value,identity)=>{
+    if(!value)return value;
+    const result={...value};
+    if(Object.hasOwn(value,'_portfolio_scope_index')){
+      const vector=history.identities?.find(row=>row.program_id===identity)?.scopes[value._portfolio_scope_index];
+      if(typeof vector!=='string')throw new Error('The saved Demo implementation scope reference is unavailable.');
+      result.scope=JSON.parse(vector);delete result._portfolio_scope_index;
+      if(Object.hasOwn(value,'_portfolio_enrollment_ids'))result.scope.enrollment_ids=[...value._portfolio_enrollment_ids];
+      delete result._portfolio_enrollment_ids;
+    }
+    if(Object.hasOwn(value.provenance||{},'_portfolio_source_index')){
+      const vector=history.source_vectors?.[value.provenance._portfolio_source_index];
+      if(typeof vector!=='string')throw new Error('The saved Demo implementation source reference is unavailable.');
+      result.provenance={...value.provenance,source_references:JSON.parse(vector)};delete result.provenance._portfolio_source_index;
+    }
+    return result;
+  };
+  return {...db,portfolio_reporting:{...history,
+    snapshots:(history.snapshots||[]).map(snapshot=>({...snapshot,current:current(snapshot.current,programIdentity(snapshot))})),
+    scope_events:(history.scope_events||[]).map(event=>({...event,before:current(event.before,event.client_id+':'+event.framework_key),after:current(event.after,event.client_id+':'+event.framework_key)}))}};
+}
+
 export function demoRangeStart(asOf,range){
   const date=new Date(timestamp(asOf));
-  if(range==='30d')return iso(+date-30*DAY);
-  if(!['6m','12m'].includes(range))return fail(422,'Choose 30d, 6m, or 12m');
-  const day=date.getUTCDate();date.setUTCDate(1);date.setUTCMonth(date.getUTCMonth()-(range==='6m'?6:12));
+  if(['30d','90d'].includes(range))return iso(+date-Number(range.slice(0,-1))*DAY);
+  if(!['1m','3m','6m','12m','36m'].includes(range))return fail(422,'Choose 1m, 3m, 6m, 12m, or 36m');
+  const day=date.getUTCDate();date.setUTCDate(1);date.setUTCMonth(date.getUTCMonth()-Number(range.slice(0,-1)));
   const last=new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()+1,0)).getUTCDate();date.setUTCDate(Math.min(day,last));return date.toISOString();
 }
 
@@ -33,8 +127,10 @@ export function demoCurrentPositions(db,clients,asOf=new Date().toISOString()){
       const key=framework.key,configuration=key==='cis-ig1'?cisConfiguration(client):key==='soc-2'?socConfiguration(client):{};
       const valid=key==='cis-ig1'?Number.isInteger(configuration.implementation_group)&&frameworkCatalog(key).available_implementation_groups.includes(configuration.implementation_group):key!=='soc-2'||Array.isArray(configuration.categories)&&configuration.categories.includes('security')&&new Set(configuration.categories).size===configuration.categories.length&&configuration.categories.every(c=>Object.hasOwn(SOC_CATEGORIES,c));
       const label=key==='cis-ig1'&&valid?`CIS IG${configuration.implementation_group}`:framework.label;
-      const position={client_id:client.client_id,client_name:client.name,framework_key:key,program_key:key==='cis-ig1'&&valid?`cis-ig${configuration.implementation_group}`:key,program_label:label,scope_label:label,to:'/compliance/'+key};
-      const unavailable={captured_at:asOf,measure_version:VERSION,availability:'unavailable',percentage:null,implemented:null,denominator:null,total:null,excluded:null,counts:[],components:[],scope_signature:null,provenance:{kind:'demo_local',label:'Current browser-local Demo records'}};
+      const position={client_id:client.client_id,client_name:client.name,program_id:client.client_id+':'+key,framework_key:key,program_key:key==='cis-ig1'&&valid?`cis-ig${configuration.implementation_group}`:key,program_label:label,scope_label:label,to:'/compliance/'+key};
+      const version=frameworkCatalog(key)?.version||framework.version||null,title=framework.name||framework.label;
+      Object.assign(position,{framework_version:version,program_title:key==='cis-ig1'&&valid?`CIS Controls v${version} · Implementation Group ${configuration.implementation_group}`:title+(version&&!title.includes(version)?' · '+version:''),unit_label:key==='iso-27001'?'requirements and controls':(frameworkCatalog(key)?.labels?.items||(key==='cis-ig1'?'Safeguards':'Items')).toLowerCase()});
+      const unavailable={captured_at:asOf,effective_at:asOf,retrieved_at:asOf,observation_kind:'current_source',program_id:position.program_id,measure_version:VERSION,availability:'unavailable',percentage:null,implemented:null,denominator:null,total:null,excluded:null,counts:[],included_counts:[],assessed:null,not_started:false,components:[],scope_signature:null,provenance:{kind:'demo_local',label:'Current browser-local Demo records'}};
       if(!framework.implemented||!valid)return {...position,current:{...unavailable,reason:valid?'Native implementation tracking is unavailable.':'Saved framework configuration is invalid.'}};
       const definitions=activeDefinitions(key,configuration),expected=new Set(definitions.map(d=>d.id));
       const sources=(db.framework_assessments||[]).filter(r=>r.client_id===client.client_id&&r.framework_key===key&&expected.has(r.definition_id)&&!inactive(r));
@@ -60,6 +156,8 @@ export function demoCurrentPositions(db,clients,asOf=new Date().toISOString()){
       if(missing||duplicates)values.push({key:'missing',label:'Source records unavailable',count:missing+duplicates});
       const config=key==='cis-ig1'?{implementation_group:configuration.implementation_group}:key==='soc-2'?{categories:[...configuration.categories].sort()}:{};
       const scope={framework_key:key,catalog_version:frameworkCatalog(key).version,configuration:config,definition_ids:[...expected].sort(),applicability,source_versions:rows.map(r=>[r.definition_id,r.framework_version??null]).sort(),measure_version:VERSION};
+      scope.enrollment_ids=(db.requirements||[]).filter(row=>row.client_id===client.client_id&&row.baseline_key===key&&!inactive(row)&&row.baseline_response==='applies').map(row=>row.requirement_id).sort();
+      for(const definition of definitions)if(!groups.has(definition.id)||groups.get(definition.id).length>1)applicability[definition.id]=groups.has(definition.id)?'duplicate':'missing';
       let components=[];
       if(key==='iso-27001'){
         components=[component('isms','ISMS requirements',included.filter(r=>r.specification==='isms_clause'),key),component('annex','Included Annex A controls',included.filter(r=>r.specification==='annex_control'),key),{key:'soa',label:'Statement of Applicability',...metrics.soa,included:metrics.soa.applicable,unavailable:definitions.filter(d=>d.specification==='annex_control'&&!groups.has(d.id)).length}];
@@ -67,22 +165,49 @@ export function demoCurrentPositions(db,clients,asOf=new Date().toISOString()){
       }else if(key==='soc-2'){
         components=config.categories.map(category=>component(category,SOC_CATEGORIES[category],included.filter(r=>r.category===category),key));position.scope_label=config.categories.map(c=>SOC_CATEGORIES[c]).join(', ');
       }else if(key==='cis-ig1')position.scope_label=`Cumulative IG${configuration.implementation_group} safeguards`;
-      const complete=!missing&&!duplicates&&!unknown&&!invalid;
-      return {...position,current:{...unavailable,availability:complete?'available':'partial',counts:values,implemented,denominator:included.length,total:definitions.length,excluded:excluded.length,percentage:complete&&included.length?implemented/included.length*100:null,components,scope,scope_signature:stable(scope),scope_undetermined:undetermined.length,missing_records:missing,duplicate_records:duplicates,unrecognized_status_count:unknown,
-        reason:!complete?'Some native Demo records or decisions are unavailable or invalid.':undetermined.length?'Percentages describe ISMS and included Annex A; unresolved SoA decisions remain separate.':!included.length?'No applicable implementation items.':null}};
+      const included_counts=values.filter(value=>STATUS.includes(value.key));
+      const references=sources.map(row=>({kind:'framework_assessments',id:row.framework_assessment_id,definition_id:row.definition_id,framework_version:row.framework_version??null,status:row.status,version:row.last_saved||row.last_assessed||row.created_at||null})).sort((a,b)=>a.id.localeCompare(b.id));
+      const sourceDates=references.map(reference=>Date.parse(reference.version)).filter(Number.isFinite),afterCutoff=sourceDates.some(date=>date>timestamp(asOf));
+      const complete=!missing&&!duplicates&&!unknown&&!invalid&&!afterCutoff;
+      const status_signature=stable({scope_signature:stable(scope),counts:included_counts,availability:complete?'available':'partial'});
+      return {...position,current:normalizedCurrent(db,position.program_id,{...unavailable,availability:complete?'available':'partial',counts:values,included_counts,assessed:included_counts.filter(value=>value.key!=='not_assessed').reduce((sum,value)=>sum+value.count,0),not_started:!!(complete&&included.length&&included.every(row=>row.status==='not_assessed')&&!rows.some(row=>row.last_saved||row.last_assessed)),status_signature,source_revision:stable({scope,references}),provenance:{...unavailable.provenance,source_references:references,cutoff_consistent:!afterCutoff,source_as_of:sourceDates.length?iso(Math.max(...sourceDates)):null},implemented,denominator:included.length,total:definitions.length,excluded:excluded.length,percentage:complete&&included.length?implemented/included.length*100:null,components,scope,scope_signature:stable(scope),scope_undetermined:undetermined.length,missing_records:missing,duplicate_records:duplicates,unrecognized_status_count:unknown,invalid_applicability_count:invalid,
+        reason:afterCutoff?'Native source changed after this cutoff; reload the current position.':!complete?'Some native Demo records or decisions are unavailable or invalid.':undetermined.length?'Percentages describe ISMS and included Annex A; unresolved SoA decisions remain separate.':!included.length?'No applicable implementation items.':null})};
     });
   });
 }
 
-const positionState=position=>stable({scope:position.current.scope_signature,counts:position.current.counts,availability:position.current.availability});
+const positionState=position=>stable({scope:exactScope(position.current)||position.current.scope_signature,counts:position.current.counts,availability:position.current.availability,sources:position.current.provenance?.source_references?.map(({id,status})=>({id,status}))});
 
 // Hook this into saveStore before its single setItem. A failed commit persists
 // neither source changes nor these derived observations. Report GETs never call it.
 export function captureDemoReporting(db,previous,at=new Date().toISOString()){
-  const prior=previous?.portfolio_reporting||{},snapshots=[...(prior.snapshots||[])];
-  for(const position of demoCurrentPositions(db,db.clients||[],at)){
+  const prior=previous?.portfolio_reporting||{},snapshots=(prior.snapshots||[]).map(snapshot=>({...snapshot,current:{...snapshot.current}}));
+  const identities=(prior.identities||[]).map(row=>({...row,scopes:row.scopes.map(scopeText),head:row.head?{...row.head}:null}));
+  const projection={...db,portfolio_reporting:{...prior,identities}},scope_events=[...(prior.scope_events||[])];
+  for(const position of demoCurrentPositions(projection,db.clients||[],at)){
+    let identity=identities.find(row=>row.program_id===position.program_id);
+    if(!identity){identity={program_id:position.program_id,scopes:knownScopes(projection,position.program_id),head:null};identities.push(identity);}
+    const signature=exactScope(position.current);if(signature&&!identity.scopes.includes(signature))identity.scopes.push(signature);
+    const source=exactSource(position.current);
+    if(source&&source!==identity.head?.signature)identity.head={signature:source,revision:(identity.head?.revision||0)+1};
+  }
+  const beforePositions=previous?demoCurrentPositions({...previous,portfolio_reporting:{...prior,identities}},previous.clients||[],at):[];
+  const afterPositions=demoCurrentPositions(projection,db.clients||[],at);
+  if(previous)for(const identity of new Set([...beforePositions,...afterPositions].map(position=>position.program_id))){
+    const before=beforePositions.find(position=>position.program_id===identity),after=afterPositions.find(position=>position.program_id===identity);
+    if(stable(before?.current.scope??null)!==stable(after?.current.scope??null)){
+      const position=after||before;scope_events.push({client_id:position.client_id,framework_key:position.framework_key,at,provenance:'committed_demo_scope',before:before?.current||null,after:after?.current||null});
+    }
+  }
+  for(const position of afterPositions){
     const latest=[...snapshots].reverse().find(s=>s.client_id===position.client_id&&s.framework_key===position.framework_key);
-    if(!latest||positionState(latest)!==positionState(position))snapshots.push({...position,snapshot_id:`demo:${position.client_id}:${position.program_key}:${at}:${snapshots.length}`,captured_at:at});
+    const before=beforePositions.find(before=>before.program_id===position.program_id);
+    const membershipChanged=before&&stable(before.current.scope)!==stable(position.current.scope);
+    if(!latest||positionState(latest)!==positionState(position)||previous&&!before||membershipChanged){
+      const snapshot_id=`demo:${position.program_id}:${at}:${snapshots.length}`,kind=previous&&(!before||membershipChanged||positionState(before)!==positionState(position))?'committed_event':previous?'sampled':'current_baseline';
+      if(latest&&beforePositions.some(before=>before.program_id===position.program_id&&positionState(before)===positionState(latest)))latest.current={...latest.current,effective_until:at,continuity_proven:true,continuity_source_event:snapshot_id};
+      snapshots.push({...position,snapshot_id,captured_at:at,effective_at:at,observation_sequence:snapshots.length+1,observation_kind:kind,source_revision:position.current.source_revision,source_event:snapshot_id,current:{...position.current,effective_at:at,source_event:snapshot_id,observation_kind:kind,provenance:{...position.current.provenance,kind,source_event:snapshot_id}}});
+    }
   }
   const activity_proofs={...(prior.activity_proofs||{})};
   if(previous){
@@ -116,24 +241,27 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
       activity_proofs[chosen.audit_id||chosen.log_id]={eligible:true,type:logType(chosen,kind,true),changed_fields:changed};
     }
   }
-  db.portfolio_reporting={...prior,started_at:prior.started_at||at,last_captured_at:snapshots.at(-1)?.captured_at||null,snapshots,activity_proofs};
+  db.portfolio_reporting={...prior,started_at:prior.started_at||at,last_captured_at:snapshots.at(-1)?.captured_at||null,snapshots,scope_events,activity_proofs,identities};
 }
 
 function comparison(snapshots,current,start){
-  const ordered=snapshots.filter(s=>timestamp(s.captured_at)<=timestamp(current.captured_at)).sort((a,b)=>timestamp(a.captured_at)-timestamp(b.captured_at));
-  const baseline=ordered.filter(s=>timestamp(s.captured_at)<=timestamp(start)).at(-1)?.current||null;
-  const result={baseline,change_pp:null,comparable:false,scope_changed:false,requested_start:start,available_from:ordered[0]?.captured_at||current.captured_at,coverage:'sampled_demo_positions',continuous_history:false,reason:'No captured Demo position on or before the requested start.'};
+  const effective=s=>s.effective_at||s.current?.effective_at||s.captured_at;
+  const ordered=snapshots.filter(s=>timestamp(effective(s))<=timestamp(current.captured_at)).sort((a,b)=>timestamp(effective(a))-timestamp(effective(b))||(a.observation_sequence||0)-(b.observation_sequence||0));
+  const prior=ordered.filter(s=>timestamp(effective(s))<=timestamp(start)).at(-1),baseline=prior?{...prior.current,effective_at:effective(prior)}:null;
+  const proven=!!baseline&&(timestamp(baseline.effective_at)===timestamp(start)||baseline.continuity_proven===true&&baseline.effective_until&&timestamp(baseline.effective_until)>=timestamp(start));
+  const result={baseline,change_pp:null,change_implemented:null,baseline_effective_at_start:!!proven,comparable:false,scope_changed:false,requested_start:start,available_from:ordered[0]?effective(ordered[0]):current.captured_at,coverage:'committed_demo_positions',continuous_history:false,reason:'No captured Demo position on or before the requested start.'};
   if(!baseline)return result;
-  const signatures=new Set([...ordered.filter(s=>timestamp(s.captured_at)>=timestamp(baseline.captured_at)).map(s=>s.current.scope_signature),current.scope_signature]);
+  const signatures=new Set([...ordered.filter(s=>timestamp(effective(s))>=timestamp(baseline.effective_at)).map(s=>s.current.scope_signature),current.scope_signature]);
   result.scope_changed=new Set([...signatures].filter(Boolean)).size>1;
-  if(result.scope_changed)result.reason='Native program scope changed; captured endpoints are not like-for-like.';
+  if(result.scope_changed){result.reason='Native program scope changed; raw endpoint change uses each position\'s own denominator.';if(proven&&baseline.percentage!=null&&current.percentage!=null)Object.assign(result,{change_pp:current.percentage-baseline.percentage,change_implemented:current.implemented-baseline.implemented});}
   else if(signatures.has(null)||baseline.percentage==null||current.percentage==null)result.reason='A complete comparable implementation position is unavailable.';
-  else Object.assign(result,{comparable:true,change_pp:current.percentage-baseline.percentage,reason:'Actual browser-local capture dates; gaps between observations are not reconstructed.'});
+  else if(!proven)result.reason='The older observation does not establish the state effective at the period boundary.';
+  else Object.assign(result,{comparable:true,change_pp:current.percentage-baseline.percentage,change_implemented:current.implemented-baseline.implemented,reason:'Actual browser-local committed dates and proven predecessor state.'});
   return result;
 }
 
-function cohort(db,params){
-  if(!['super_admin','platform_admin'].includes(db.user.role))return fail(403,'Portfolio reporting is restricted to internal admins');
+function cohort(db,params,history=false){
+  if(!(history?['super_admin','platform_admin','client_grc_manager','client_contributor','client_readonly','client_viewer']:['super_admin','platform_admin']).includes(db.user.role))return fail(403,history?'History is restricted to authorized client readers':'Portfolio reporting is restricted to internal admins');
   const selected=params.client_ids===undefined?null:[...new Set(String(params.client_ids).split(',').filter(Boolean))];
   if(selected&&(selected.length>500||selected.some(id=>!/^[A-Za-z0-9_-]{1,128}$/.test(id))))return fail(422,'Invalid portfolio client scope');
   if(selected?.some(id=>!evidenceAccess(db.user,id)))return fail(403,'Forbidden for this client');
@@ -214,22 +342,44 @@ function events(db,clients,at,days,type){
   }).sort((a,b)=>b.at.localeCompare(a.at)||b.event_id.localeCompare(a.event_id));
 }
 
+function demoHistory(db,position,available,range,asOf){
+  const start=demoRangeStart(asOf,range),forecastStart=demoRangeStart(asOf,'90d');
+  const effective=snapshot=>snapshot.effective_at||snapshot.current.effective_at||snapshot.captured_at;
+  const ordered=available.map(snapshot=>({...snapshot,current:normalizedCurrent(db,position.program_id,snapshot.current,snapshot)})).sort((a,b)=>timestamp(effective(a))-timestamp(effective(b))||(a.observation_sequence||0)-(b.observation_sequence||0));
+  const flat=snapshot=>({...thinCurrent(snapshot.current),snapshot_id:snapshot.snapshot_id,effective_at:effective(snapshot),captured_at:snapshot.captured_at,observation_kind:snapshot.observation_kind||'sampled',source_revision:snapshot.current.source_revision,source_event:snapshot.source_event||null,observation_sequence:snapshot.observation_sequence||0});
+  const scopePoint=current=>current?Object.fromEntries(['total','denominator','implemented','scope_signature','measure_version'].map(field=>[field,current[field]])):null;
+  const changes=[];
+  for(let i=1;i<ordered.length;i++)if(ordered[i-1].current.scope_signature!==ordered[i].current.scope_signature)changes.push({at:effective(ordered[i]),before:scopePoint(ordered[i-1].current),after:scopePoint(ordered[i].current),provenance:'observed_scope_transition'});
+  for(const change of db.portfolio_reporting?.scope_events||[])if(change.client_id===position.client_id&&change.framework_key===position.framework_key&&timestamp(change.at)<=timestamp(asOf)){
+    const normalized={...change,before:scopePoint(change.before&&normalizedCurrent(db,position.program_id,change.before)),after:scopePoint(change.after&&normalizedCurrent(db,position.program_id,change.after))};
+    if(!changes.some(existing=>timestamp(existing.at)===timestamp(change.at)&&existing.before?.scope_signature===normalized.before?.scope_signature&&existing.after?.scope_signature===normalized.after?.scope_signature))changes.push(normalized);
+  }
+  changes.sort((a,b)=>timestamp(a.at)-timestamp(b.at));
+  const result=comparison(ordered,position.current,start);
+  if(result.baseline&&changes.some(change=>timestamp(change.at)>timestamp(result.baseline.effective_at))){
+    Object.assign(result,{scope_changed:true,comparable:false,reason:'Committed scope changed; raw endpoint change uses each position\'s own denominator.'});
+  }
+  if(result.baseline)result.baseline={...thinCurrent(result.baseline),captured_at:result.baseline.captured_at,effective_at:result.baseline.effective_at,source_revision:result.baseline.source_revision};
+  return {range,period_start:start,period_end:asOf,snapshots:ordered.filter(snapshot=>timestamp(effective(snapshot))>=timestamp(start)).map(flat),forecast_snapshots:ordered.filter(snapshot=>timestamp(effective(snapshot))>=timestamp(forecastStart)).map(flat),comparison:result,scope_changes:changes.filter(change=>timestamp(change.at)>=timestamp(start)),forecast_scope_changes:changes.filter(change=>timestamp(change.at)>=timestamp(forecastStart)),capture_method:'Browser-local atomic committed posture/scope changes; no historical interpolation.'};
+}
+
 export function portfolioReportingRequest(db,path,params={}){
   if(!path.startsWith('/portfolio/reporting/'))return undefined;
-  const clients=cohort(db,params),asOf=params.as_of?iso(timestamp(params.as_of)):new Date().toISOString();
+  const isHistory=path.endsWith('/history');
+  const clients=cohort(db,isHistory?{...params,client_ids:params.client_id}:params,isHistory),asOf=params.as_of?iso(timestamp(params.as_of)):new Date().toISOString();
   if(timestamp(asOf)>Date.now())return fail(422,'The reporting cutoff cannot be in the future');
-  const range=params.range||'30d',start=demoRangeStart(asOf,range),programs=demoCurrentPositions(db,clients,asOf);
+  const range=params.range||(isHistory?'3m':'90d'),start=demoRangeStart(asOf,range),programs=demoCurrentPositions(db,clients,asOf);
   const snapshots=(db.portfolio_reporting?.snapshots||[]).filter(s=>clients.some(c=>c.client_id===s.client_id)&&timestamp(s.captured_at)<=timestamp(asOf)).sort((a,b)=>a.captured_at.localeCompare(b.captured_at));
   if(path.endsWith('/overview')){
-    const frameworks=new Map();for(const p of programs){p.comparison=comparison(snapshots.filter(s=>s.client_id===p.client_id&&s.framework_key===p.framework_key),p.current,start);if(p.current.availability==='unavailable')continue;if(!frameworks.has(p.program_key))frameworks.set(p.program_key,{key:p.program_key,label:p.program_label,framework_key:p.framework_key,clients:[]});frameworks.get(p.program_key).clients.push({client_id:p.client_id,name:p.client_name});}
-    return {total_clients:clients.length,as_of:asOf,programs,frameworks:[...frameworks.values()].map(f=>({...f,client_count:f.clients.length})),recent_changes_count:events(db,clients,asOf,7).length,coverage:coverage(db,snapshots)};
+    const frameworks=new Map();for(const p of programs){const available=snapshots.filter(s=>s.client_id===p.client_id&&s.framework_key===p.framework_key),recent=demoHistory(db,p,available,'90d',asOf);p.comparison=demoHistory(db,p,available,range,asOf).comparison;Object.assign(p,{snapshots_90d:recent.snapshots,comparison_90d:recent.comparison,scope_changes_90d:recent.scope_changes});if(p.current.availability==='unavailable')continue;if(!frameworks.has(p.program_key))frameworks.set(p.program_key,{key:p.program_key,label:p.program_label,framework_key:p.framework_key,clients:[]});frameworks.get(p.program_key).clients.push({client_id:p.client_id,name:p.client_name});}
+    const latest=latestPortfolioActivity(db.logs||[],new Date(asOf),db.portfolio_reporting?.activity_proofs);
+    const clientRows=clients.map(client=>{const lead=(db.users||[]).find(user=>user.user_id===client.assigned_owner_id);return {...client,grc_lead_id:client.assigned_owner_id||null,grc_lead:lead?Object.fromEntries(['user_id','name','email','status','role'].map(field=>[field,lead[field]])):null,last_activity:latest.get(client.client_id)||null};});
+    return {total_clients:clients.length,clients:clientRows,as_of:asOf,programs,frameworks:[...frameworks.values()].map(f=>({...f,client_count:f.clients.length})),recent_changes_count:events(db,clients,asOf,7).length,coverage:coverage(db,snapshots)};
   }
   if(path.endsWith('/history')){
     const position=programs.find(p=>p.client_id===params.client_id&&p.program_key===params.program_key);if(!position)return fail(404,'Enabled Demo program not found');
-    const available=snapshots.filter(s=>s.client_id===position.client_id&&s.framework_key===position.framework_key),baseline=available.filter(s=>timestamp(s.captured_at)<=timestamp(start)).at(-1),selected=[...(baseline?[baseline]:[]),...available.filter(s=>timestamp(s.captured_at)>timestamp(start))];
-    const shown=selected.length?selected.map(s=>({...s.current,snapshot_id:s.snapshot_id})):[{...position.current,snapshot_id:'demo-current-read',provenance:{kind:'demo_local',label:'Current Demo read; no earlier saved history'}}];
-    const scope_changes=[];for(let i=1;i<selected.length;i++)if(selected[i-1].current.scope_signature!==selected[i].current.scope_signature)scope_changes.push({at:selected[i].captured_at,before:selected[i-1].current,after:selected[i].current});
-    return {...position,as_of:asOf,range,period_start:start,snapshots:shown,scope_changes,comparison:comparison(available,position.current,start),coverage:coverage(db,available)};
+    const available=snapshots.filter(s=>s.client_id===position.client_id&&s.framework_key===position.framework_key);
+    return {...position,as_of:asOf,...demoHistory(db,position,available,range,asOf),coverage:coverage(db,available)};
   }
   if(path.endsWith('/activity')){
     const days=Number(params.days||7),limit=Number(params.limit||50),type=params.type;if(![7,30,90].includes(days)||!Number.isInteger(limit)||limit<1||limit>100||type&&!TYPES.includes(type))return fail(422,'Invalid Demo activity filters');

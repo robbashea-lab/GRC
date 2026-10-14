@@ -14,6 +14,9 @@ import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import {canExportReports} from '@/lib/permissions';
+import {usePortfolioView} from '@/lib/usePortfolioView';
+import {assignedToUser} from '@/lib/portfolioProgress';
+import {clientDestination} from '@/lib/clientSelection';
 import { Input } from "@/components/ui/input";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
@@ -110,7 +113,9 @@ function PlatformClientsSection() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [filter, setFilter] = useState("all");
+  const [portfolioView, updatePortfolioView] = usePortfolioView(user);
+  const filter = portfolioView.mine ? 'assigned' : 'all';
+  const setFilter = value => updatePortfolioView({mine: value === 'assigned'});
   const [q, setQ] = useState("");
 
   const active = useMemo(
@@ -121,7 +126,7 @@ function PlatformClientsSection() {
   const scoped = useMemo(() => {
     let list = active;
     // Same definition as the Portfolio's Assigned to Me: the client's GRC lead.
-    if (filter === "assigned") list = list.filter((c) => (c.grc_lead_id || c.assigned_owner_id) === user?.user_id);
+    if (filter === "assigned") list = list.filter((c) => assignedToUser(c, user?.user_id));
     const s = q.trim().toLowerCase();
     if (s) list = list.filter((c) => (c.name || "").toLowerCase().includes(s));
     return [...list].sort((a, b) => (a.name || "").trim().localeCompare((b.name || "").trim()));
@@ -193,7 +198,7 @@ function PlatformClientsSection() {
                 >
                   <button
                     type="button"
-                    onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}
+                    onClick={() => { switchClient(c.client_id); navigate(clientDestination(c.client_id)); }}
                     className="flex-1 min-w-0 text-left"
                     data-testid={`sidebar-open-${c.client_id}`}
                   >

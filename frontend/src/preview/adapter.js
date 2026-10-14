@@ -147,7 +147,10 @@ export async function previewAdapter(config) {
         Object.assign(db,latest);
         authorizeDemo(db,method,parts,body,config.headers?.['Idempotency-Key']);
       }
-      return save(frameworkRequest(db,path,method,params,body,context));
+      const result=frameworkRequest(db,path,method,params,body,context);
+      // Ordinary reads stay pure; CIS export retains its existing audit write.
+      const auditedExport=kind==='frameworks'&&id==='cis-ig1'&&name==='export';
+      return method==='get'&&!auditedExport?respond(result):save(result);
     }
     if (path === '/demo/onboarding-draft') {
       record(db, 'clients', params.client_id || body.client_id);

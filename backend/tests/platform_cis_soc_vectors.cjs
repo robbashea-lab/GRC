@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '../..');
 const json = relative => JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8'));
-const pureModules = new Set(['guidedAssessment', 'guidedLifecycle', 'focusedOmni', 'refinedOmni', 'omniInventorySummary', 'omniCisSummary', 'socGuidedAssessment', 'inlineAssessment']);
+const pureModules = new Set(['guidedAssessment', 'guidedLifecycle', 'focusedOmni', 'refinedOmni', 'omniInventorySummary', 'omniCisSummary', 'socGuidedAssessment', 'inlineAssessment', 'programTriage', 'managementDates', 'grcWork']);
+const pureData = new Set(['grcRules.json']);
 const modules = new Map();
 class AssessmentDate extends Date {
   constructor(...args) { super(...(args.length ? args : ['2026-10-09T12:00:00Z'])); }
@@ -18,7 +19,14 @@ function engine(name) {
   source = source.replace(/^import (.+?) from ['"](.+?)['"];\r?\n/gm, (_, binding, reference) => {
     parameters.push(binding);
     if (reference.startsWith('@catalogs/')) inputs.push(json('shared/catalogs/' + reference.slice(10)));
-    else { assert(reference.startsWith('./')); inputs.push(engine(reference.slice(2))); }
+    else {
+      assert(reference.startsWith('./'));
+      const dependency = reference.slice(2);
+      if (dependency.endsWith('.json')) {
+        assert(pureData.has(dependency), 'Only inspected pure assessment data may load');
+        inputs.push(json('frontend/src/lib/' + dependency));
+      } else inputs.push(engine(dependency));
+    }
     return '';
   });
   const exports = [...source.matchAll(/^export (?:const|function) (\w+)/gm)].map(match => match[1]);
@@ -30,6 +38,8 @@ const cis = json('shared/catalogs/cisIG1.json'), soc = json('shared/catalogs/soc
 const guided = engine('guidedAssessment'), refined = engine('refinedOmni'), summary = engine('omniCisSummary'), socEngine = engine('socGuidedAssessment');
 const sourceCases = Object.fromEntries([1, 2, 3].map(group => [group, json('docs/omni-cis-rollout/ig' + group + '-status-cases.json').cases]));
 const reviewedMappings = [...json('docs/omni-cis-rollout/ig2-review.json').rows, ...json('docs/omni-cis-rollout/ig3-review.json').rows];
+// Only these authored supplements were retired by the approved Navigator reconciliation.
+const retiredCriteria = {'11.1': ['11.1-guided-backup-procedures'], '17.5': ['17.5-guided-third-parties']};
 const clone = value => JSON.parse(JSON.stringify(value));
 const clients = {cis1: 'Synthetic platform acceptance CIS IG1', cis2: 'Synthetic platform acceptance CIS IG2', cis3: 'Synthetic platform acceptance CIS IG3',
   soc38: 'Synthetic platform acceptance SOC Security Availability Confidentiality', soc61: 'Synthetic platform acceptance SOC all-category derivative'};
@@ -63,6 +73,10 @@ function cisVector(native, scenario) {
       const mapping = review.atomic_requirements.find(row => row.requirement_id === criterion).answer_mapping;
       if (mapping.type === 'matrix') {
         const question = questions.find(row => row.criterion_ids?.includes(criterion));
+        if (!question && version === 'cis-v8.1-program-5' && retiredCriteria[id]?.includes(criterion)) {
+          assert(!pack.definitions[id].elements.some(element => element.id === criterion));
+          continue;
+        }
         assert(question, 'Unmapped source requirement: ' + criterion);
         const label = question.rows[question.criterion_ids.indexOf(criterion)];
         answers[question.id] = {...answers[question.id], [label]: value};
@@ -74,6 +88,7 @@ function cisVector(native, scenario) {
     }
     answers[pack.definitions[id].root] = accepted.aggregate_answer ?? accepted.root_answer ?? (scenario === 'adequate' ? 'Yes' : 'Not sure');
   }
+  for (const question of questions.filter(question => question.optional)) answers[question.id] = 'No';
   // Source vectors retain old inactive fields; only active facts enter this new interview.
   const active = guided.visibleQuestions(id, answers, version);
   answers = Object.fromEntries(Object.entries(answers).filter(([key]) => active.some(question => key === question.id || key === question.id + '_detail')));
@@ -95,7 +110,7 @@ function socVector(native, scenario) {
   // Context determines its children before they are answered; hidden children are never injected.
   for (let pass = 0; pass < 3; pass++) for (const question of socEngine.socQuestions(id, answers, version)) {
     if (['text'].includes(question.type) || ['gaps', 'unknowns', 'evidence'].includes(question.id)) continue;
-    const value = scenario === 'unknown' ? 'Not sure' : question.type === 'context' ? 'Relevant' : 'Yes';
+    const value = question.optional ? 'No' : scenario === 'unknown' ? 'Not sure' : question.type === 'context' ? 'Relevant' : 'Yes';
     assert(question.choices.includes(value), `${id}/${question.id}: positive framing/choices require source review`);
     answers[question.id] = value;
   }
@@ -107,8 +122,15 @@ function socVector(native, scenario) {
   return {framework: 'soc-2', id, version, scenario, client, answers, expected_status: expected,
     expected_basis: scenario === 'adequate' ? 'All active positively framed substantive practices are affirmed; optional prose/evidence is omitted. Reported readiness is separate from operating assurance.' : 'No substantive practice or affirmative absence is supported. Context uncertainty cannot fabricate implementation or deficiency.',
     expected_source: native.source, fixture_id: `SOC-${id}-${scenario}`,
-    groups: socEngine.socGroups(id, answers, version).map(group => group.questions.map(question => question.id)),
-    checkpoints: checkpoints(id, version, answers, socEngine.socGroups), result};
+    groups: socCheckpointGroups(id, answers, version).map(group => group.questions.map(question => question.id)),
+    checkpoints: checkpoints(id, version, answers, socCheckpointGroups), result};
+}
+// The existing popup renders optional presence questions within its last native group.
+function socCheckpointGroups(id, answers, version) {
+  const groups = socEngine.socGroups(id, answers, version);
+  return groups.map((group, index) => index === groups.length - 1
+    ? {...group, questions: [...group.questions, ...socEngine.socExtraQuestions(answers, version).filter(question => question.id !== 'evidence')]}
+    : group);
 }
 const vectors = [...cis.requirements.flatMap(row => ['adequate', 'unknown'].map(scenario => cisVector(row, scenario))),
   ...soc.requirements.flatMap(row => ['adequate', 'unknown'].map(scenario => socVector(row, scenario)))];

@@ -1,22 +1,19 @@
 import {generateResult,visibleQuestions,pilotEnabled,catalogForVersion} from './guidedAssessment';
 import {prioritizeGuidedLifecycle} from './guidedLifecycle';
-const comparisonConflict=(id,answers,version)=>id==='1.2'&&version!=='cis-v8.1-control1-4'&&answers.detection==='Yes'&&answers.inventory_dependency==='No';
+const comparisonConflict=(id,answers,version)=>id==='1.2'&&!['cis-v8.1-control1-4','cis-v8.1-control1-5'].includes(version)&&answers.detection==='Yes'&&answers.inventory_dependency==='No';
 
 export const focusedOmniEnabled=(clientId,user,framework,configuration,id)=>
   !!user&&pilotEnabled(clientId,framework,configuration,id);
 
 export function focusedRecommendations(rows,drafts,contextComplete){
   const scoped=rows.filter(row=>row.framework_key==='cis-ig1'&&row.in_active_scope!==false);
-  const overview=prioritizeGuidedLifecycle(scoped,{drafts,contextComplete,limit:2});
+  const overview=prioritizeGuidedLifecycle(scoped,{drafts,contextComplete,limit:5});
   const resumable=new Set(overview.resume.map(row=>row.definition_id));
   const reasons={not_assessed:'The safeguard has no saved assessment position.',not_implemented:'The saved implementation identifies work still to address.',partial_or_unresolved:'Partial implementation or linked unresolved work is recorded.',verification_or_review:'The saved implementation needs verification or an existing scheduled review.',unfinished_interview:'Your saved interview has unresolved work to resume.'};
-  const items=new Map([...overview.resume,...overview.recommendations.filter(row=>!resumable.has(row.definition_id))].map(row=>[row.definition_id,{...row,reason:reasons[row.reasonCode]}]));
-  // A recorded inventory gap is a prerequisite, not a numerical ordering rule.
-  const inventory=items.get('1.1'),handling=items.get('1.2');
-  if(inventory&&handling&&inventory.status==='needs_attention'&&!resumable.has('1.2')){
-    return [{...inventory,reason:inventory.reason+' This inventory foundation supports unauthorized-asset comparison in 1.2.'},handling];
-  }
-  return [...items.values()];
+  const items=new Map([...overview.recommendations,...overview.resume.filter(row=>!overview.recommendations.some(item=>item.definition_id===row.definition_id))].map(row=>[row.definition_id,{...row,reason:reasons[row.reasonCode],...(resumable.has(row.definition_id)?{action:'resume'}:{})}]));
+  const inventory=items.get('1.1');
+  if(inventory&&items.has('1.2')&&inventory.status==='needs_attention'&&!resumable.has('1.2'))inventory.reason+=' This inventory foundation supports unauthorized-asset comparison in 1.2.';
+  return [...items.values()].slice(0,5);
 }
 
 export function nextFocusedQuestion(id,answers,version){
