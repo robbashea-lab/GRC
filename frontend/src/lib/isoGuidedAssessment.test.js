@@ -108,9 +108,13 @@ test('all 30 clauses and 93 controls have inline summaries built only from suppo
     expect(inline.split('\n\nControls in place\n')[1].split('\n').map(line=>line.slice(2))).toEqual(before.basis);
     expect(isoGuidedResult(row.id,answers)).toEqual(before);
     const noAnswers={...answers};for(const q of isoQuestions(row.id,answers).filter(q=>q.type==='select'))noAnswers[q.id]='No';
-    const deficient=isoInlineNarrative(row.id,noAnswers);expect(deficient).toContain('Controls in place');expect(deficient).not.toContain('\n• ');expect(deficient).toContain('Reported gap:');
+    const noBefore=JSON.stringify(noAnswers),noResult=isoGuidedResult(row.id,noAnswers);
+    const deficient=isoInlineNarrative(row.id,noAnswers);expect(deficient).not.toContain('Controls in place');expect(deficient).not.toContain('\n• ');expect(deficient).toContain('Reported gap:');
+    expect(noResult.status).toBe('needs_attention');expect(isoGuidedResult(row.id,noAnswers)).toEqual(noResult);expect(JSON.stringify(noAnswers)).toBe(noBefore);
     const uncertain={...answers};for(const q of isoQuestions(row.id,answers).filter(q=>q.type==='select'))uncertain[q.id]='Not sure';
-    expect(isoInlineNarrative(row.id,uncertain)).not.toContain('\n• ');expect(isoInlineNarrative(row.id,uncertain)).toContain('Requires confirmation:');
+    const uncertainBefore=JSON.stringify(uncertain),uncertainResult=isoGuidedResult(row.id,uncertain),uncertainInline=isoInlineNarrative(row.id,uncertain);
+    expect(uncertainInline).not.toContain('Controls in place');expect(uncertainInline).not.toContain('\n• ');expect(uncertainInline).toContain('Requires confirmation:');
+    expect(uncertainResult.status).toBe('not_assessed');expect(isoGuidedResult(row.id,uncertain)).toEqual(uncertainResult);expect(JSON.stringify(uncertain)).toBe(uncertainBefore);
   }
 });
 

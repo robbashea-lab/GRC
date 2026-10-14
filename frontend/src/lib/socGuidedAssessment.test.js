@@ -246,7 +246,7 @@ test.each(['Partially','No','Not sure'])('%s practices are excluded from control
 
 test('unconfirmed inline reports do not invent any controls in place',()=>{
   const narrative=socInlineSummary('CC1.1',{},version,'Synthetic client','2026-10-13');
-  expect(narrative.endsWith('\n\nControls in place')).toBe(true);
+  expect(narrative).not.toContain('Controls in place');
   expect(narrative).not.toContain('•');expect(narrative).toContain('unconfirmed implementation position');
 });
 
