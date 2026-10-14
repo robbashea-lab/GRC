@@ -118,3 +118,13 @@ test('CIS overview defaults retain approved wording while supplied N/A label sta
   const naRows=[{status:'not_applicable'}];await render(<AssessmentOverview programName="SOC 2" summary={cisSummary(naRows)} filter="all" onFilter={()=>{}} implementedLabel={SOC_LABELS.addressed} segmentLabels={SOC_SEGMENTS}/>);
   expect(document.querySelector('.bcis-legend-na').textContent).toBe('Not Applicable 1');expect(naRows[0].status).toBe('not_applicable');
 });
+
+test('native CIS/SOC overview never presents missing source records as zero posture',async()=>{
+  const canonical={availability:'partial',denominator:0,implemented:0,assessed:0,total:56,missing_records:56,
+    reason:'Native source records are missing.',included_counts:['addressed','in_progress','needs_attention','not_assessed'].map(key=>({key,count:0}))};
+  await render(<AssessmentOverview workspacePilot summary={cisSummary([],new Date(),canonical)} filter="all" onFilter={()=>{}}/>);
+  expect(document.querySelector('.bcis-summary').textContent).toContain('Native source records are missing.');
+  expect(document.querySelector('.bwp-program-counts').textContent).toContain('Unavailable');
+  expect(document.querySelector('.bcis-summary').textContent).not.toMatch(/0 of 0|0 safeguards|0 still to assess/);
+  expect(document.querySelectorAll('.bcis-bar [role="img"]')).toHaveLength(0);
+});

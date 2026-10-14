@@ -8,6 +8,9 @@ import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import {canExportReports} from '@/lib/permissions';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
+import {usePortfolioView} from '@/lib/usePortfolioView';
+import {assignedToUser} from '@/lib/portfolioProgress';
+import {clientDestination} from '@/lib/clientSelection';
 import NotificationBell from './NotificationBell';
 import {BrandMark} from './Brand';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator} from './ui/dropdown-menu';
@@ -52,10 +55,13 @@ const Brand=()=><div className="bsb-brand" aria-label="GoverNara by Prestige Wor
 // Portfolio (platform) context in the reference theme: Portfolio, the client navigator, Administration.
 export function BrawndoPlatformSidebar({adminItems=[]}){
   const {user}=useAuth(),{clients,switchClient,loading,error,refresh}=useOrg(),nav=useNavigate();
-  const [theme]=useBrawndoTheme(),[filter,setFilter]=useState('all'),[q,setQ]=useState('');
+  const [theme]=useBrawndoTheme(),[q,setQ]=useState('');
+  const [portfolioView,updatePortfolioView]=usePortfolioView(user);
+  const filter=portfolioView.mine?'assigned':'all';
+  const setFilter=value=>updatePortfolioView({mine:value==='assigned'});
   const active=useMemo(()=>(clients||[]).filter(c=>(c.status||'active')!=='archived'),[clients]);
   const scoped=useMemo(()=>{let list=active;
-    if(filter==='assigned')list=list.filter(c=>(c.grc_lead_id||c.assigned_owner_id)===user?.user_id);
+    if(filter==='assigned')list=list.filter(c=>assignedToUser(c,user?.user_id));
     const s=q.trim().toLowerCase();if(s)list=list.filter(c=>(c.name||'').toLowerCase().includes(s));
     return [...list].sort((a,b)=>(a.name||'').trim().localeCompare((b.name||'').trim()));},[active,filter,user?.user_id,q]);
   const empty=loading?'Loading clients…':filter==='assigned'?'None assigned to you.':q?'No matches.':'No clients available.';
@@ -70,7 +76,7 @@ export function BrawndoPlatformSidebar({adminItems=[]}){
         <div data-testid="sidebar-client-list">
           {error?<div className="bsb-note" role="alert" data-testid="sidebar-client-error">Clients could not be loaded. <button type="button" onClick={refresh}>Retry</button></div>
           :scoped.length===0?<div className="bsb-note" data-testid="sidebar-client-empty">{empty}</div>
-          :scoped.map(c=><div key={c.client_id} data-testid={`sidebar-client-${c.client_id}`}><button type="button" className="bsb-link bsb-client-link" data-testid={`sidebar-open-${c.client_id}`} onClick={()=>{switchClient(c.client_id);nav('/dashboard');}}><span className="bsb-dot" aria-hidden="true">{c.name?.[0]}</span><span className="truncate">{c.name}</span></button></div>)}
+          :scoped.map(c=><div key={c.client_id} data-testid={`sidebar-client-${c.client_id}`}><button type="button" className="bsb-link bsb-client-link" data-testid={`sidebar-open-${c.client_id}`} onClick={()=>{switchClient(c.client_id);nav(clientDestination(c.client_id));}}><span className="bsb-dot" aria-hidden="true">{c.name?.[0]}</span><span className="truncate">{c.name}</span></button></div>)}
         </div>
       </div>
       {adminItems.length>0&&<div className="bsb-group" role="group" aria-labelledby="bsb-admin"><div id="bsb-admin" className="bsb-group-label">Administration</div>

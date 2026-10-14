@@ -6,6 +6,7 @@ write. Retained audit coverage is deliberately partial, not a complete history.
 """
 import base64
 from datetime import datetime, timedelta, timezone
+import logging
 import hashlib
 import json
 import re
@@ -68,7 +69,7 @@ BUSINESS_FIELDS = {
         'approval_basis', 'approved_at', 'verified_at', 'review_id', 'next_review_date', 'governance_context'},
     'evidence': {'filename', 'display_name', 'evidence_type', 'evidence_date', 'effective_date', 'expiration_date',
         'refresh_date', 'notes', 'relationships', 'archived_at', 'linked_type', 'linked_id', 'content_base64'},
-    'clients': {'framework_settings', 'onboarding_baseline', 'iso_audit_program'},
+    'clients': {'framework_settings', 'onboarding_baseline', 'iso_audit_program', 'status', 'archived', 'archived_at'},
     'requirements': {'baseline_response', 'baseline_key', 'applicability', 'status', 'effective_date'},
 }
 SAFE_ENUMS = {
@@ -182,7 +183,19 @@ def _scope(record):
     result['programs'] = baseline.get('requirements', {})
     result['completed'] = baseline.get('completed')
     result['iso_audit_program'] = record.get('iso_audit_program')
+    result['archived'] = bool(record.get('archived') or record.get('archived_at'))
     return result
+
+
+def _implementation_scope(record):
+    from framework_catalog import client_configuration
+    from portfolio_progress import _active
+    categories = client_configuration('soc-2', record).get('categories')
+    categories = sorted(categories) if isinstance(categories, list) and all(isinstance(value, str) for value in categories) else categories
+    return {'active': _active(record), 'programs': (record.get('onboarding_baseline') or {}).get('requirements'),
+        'completed': (record.get('onboarding_baseline') or {}).get('completed'),
+        'cis': client_configuration('cis-ig1', record).get('implementation_group'),
+        'soc': categories}
 
 
 def _base(kind, entity_id, client_id, user, at, action, identity):
@@ -258,10 +271,13 @@ def project_committed_change(entity_type, entity_id, client_id, user, before, af
     if current:
         event['after'] = current
     if kind == 'requirements':
-        program = after.get('baseline_key') or before.get('baseline_key')
-        if isinstance(program, str) and re.fullmatch(r'[a-z0-9-]{1,80}', program):
-            event['program_keys'] = [program]
+        from portfolio_progress import _active
+        event['implementation_scope_changed'] = ([_active(before), before.get('baseline_key'), before.get('baseline_response')]
+            != [_active(after), after.get('baseline_key'), after.get('baseline_response')])
+        event['program_keys'] = sorted({program for program in (before.get('baseline_key'), after.get('baseline_key'))
+            if isinstance(program, str) and re.fullmatch(r'[a-z0-9-]{1,80}', program)})
     elif kind == 'clients':
+        event['implementation_scope_changed'] = _implementation_scope(before) != _implementation_scope(after)
         keys = set()
         for field in ('framework_settings',):
             old, new = before.get(field) or {}, after.get(field) or {}
@@ -273,6 +289,8 @@ def project_committed_change(entity_type, entity_id, client_id, user, before, af
             keys.add('iso-27001')
         event['program_keys'] = sorted(key for key in keys if isinstance(key, str) and re.fullmatch(r'[a-z0-9-]{1,80}', key))
     if kind == 'framework_assessments':
+        event['position_predecessor_event'] = before.get('_portfolio_activity_last_event_id')
+        event['position_before_version'] = before.get('last_saved') or before.get('last_assessed') or before.get('created_at')
         program = after.get('_portfolio_program_key') or after.get('framework_key') or before.get('framework_key')
         if isinstance(program, str) and re.fullmatch(r'[a-z0-9-]{1,80}', program):
             event['program_key'] = program
@@ -402,6 +420,15 @@ async def _acknowledge_pending(db, kind, row, identity, event):
     _validate_pending(kind, row, identity, event)
     key = SOURCES[kind][0]
     inserted = await persist_event(db, event)
+    try:
+        # Import at the hook to preserve the existing module ownership cycle.
+        import portfolio_reporting
+        await portfolio_reporting.capture_committed(db, event)
+    except Exception as exc:
+        # The native write already committed. Retain its receipt for recovery,
+        # without turning delayed derived history into a failed business save.
+        logging.getLogger(__name__).warning('Portfolio committed capture delayed (%s)', type(exc).__name__)
+        return inserted
     # Remove only this exact durable envelope. A concurrent write may already
     # have added a newer envelope, and the durable last-event identity stays.
     await db[kind].update_one({key: row[key], 'client_id': row['client_id'],

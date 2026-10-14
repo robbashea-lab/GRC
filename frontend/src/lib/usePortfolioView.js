@@ -1,62 +1,58 @@
-import { useEffect, useRef, useState } from 'react';
+import {useCallback, useEffect, useRef, useSyncExternalStore} from 'react';
+import {PREVIEW_MODE} from './api';
 
-// Preferences only, never records. The authenticated identity object is the
-// lifetime: navigating clients preserves context; a new login cannot inherit it.
+// Preferences survive refresh; actor, workspace mode and authorized scope isolate them.
 const views = new WeakMap();
-const empty = () => ({
-  search: '',
-  mine: false,
-  includeArchived: false,
-  table: {
-    filters: {}
-  },
-  scroll: 0
-});
+const empty = () => ({search: '', mine: false, framework: 'all', sort: 'name', chartView: 'line',
+  includeArchived: false, table: {filters: {}}, scroll: 0});
+
+function readPreferences(key) {
+  if (!key) return empty();
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(key) || 'null');
+    if (!saved || typeof saved !== 'object') return empty();
+    return {...empty(),search: typeof saved.search === 'string' ? saved.search.slice(0, 1000) : '',mine: saved.mine === true,
+      framework: typeof saved.framework === 'string' ? saved.framework : 'all',
+      sort: ['name','change','progress','activity'].includes(saved.sort) ? saved.sort : 'name',
+      chartView: ['line','mix'].includes(saved.chartView) ? saved.chartView : 'line'};
+  } catch { return empty(); }
+}
+
+function rememberPreferences(entry) {
+  if (!entry.key) return;
+  const {search,mine,framework,sort,chartView} = entry.view;
+  try { sessionStorage.setItem(entry.key,JSON.stringify({search,mine,framework,sort,chartView})); }
+  catch { /* Preferences are optional; assessment persistence uses its own error handling. */ }
+}
+
 export function usePortfolioView(user) {
-  const scope = JSON.stringify([user.role, [...(user.client_ids || [])].sort()]);
-  const stored = views.get(user);
-  if (!stored || stored.scope !== scope) views.set(user, {
-    scope,
-    view: empty()
-  });
-  const [local, setLocal] = useState(() => ({
-    user,
-    scope,
-    view: views.get(user).view
-  }));
-  const view = local.user === user && local.scope === scope ? local.view : views.get(user).view;
-  const update = patch => {
-    const next = {
-      ...views.get(user).view,
-      ...patch
-    };
-    views.set(user, {
-      scope,
-      view: next
-    });
-    setLocal({
-      user,
-      scope,
-      view: next
-    });
-  };
+  const scope = JSON.stringify([!!PREVIEW_MODE,user.role, !!user.all_clients, [...(user.client_ids || [])].sort()]);
+  let entry = views.get(user);
+  if (!entry || entry.scope !== scope) {
+    const key = user.user_id ? 'grc:portfolio-view:' + JSON.stringify([user.user_id,scope]) : null;
+    entry = {scope, key, view: readPreferences(key), listeners: new Set()};
+    views.set(user, entry);
+  }
+  const subscribe = useCallback(listener => {
+    entry.listeners.add(listener);
+    return () => entry.listeners.delete(listener);
+  }, [entry]);
+  const getSnapshot = useCallback(() => entry.view, [entry]);
+  const view = useSyncExternalStore(subscribe, getSnapshot);
+  const update = useCallback(patch => {
+    entry.view = {...entry.view, ...patch};
+    rememberPreferences(entry);
+    for (const listener of entry.listeners) listener();
+  }, [entry]);
   const restoring = useRef(true);
   useEffect(() => {
-    const save = () => {
-      const entry = views.get(user);
-      if (!restoring.current && entry?.scope === scope) entry.view = {
-        ...entry.view,
-        scroll: window.scrollY
-      };
-    };
-    window.addEventListener('scroll', save, {
-      passive: true
-    });
+    const save = () => { if (!restoring.current) entry.scroll = window.scrollY; };
+    window.addEventListener('scroll', save, {passive: true});
     return () => window.removeEventListener('scroll', save);
-  }, [user, scope]);
+  }, [entry]);
   const restore = () => {
     if (restoring.current) {
-      window.scrollTo(0, views.get(user).view.scroll);
+      window.scrollTo(0, entry.scroll ?? entry.view.scroll);
       restoring.current = false;
     }
   };

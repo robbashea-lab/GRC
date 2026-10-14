@@ -8,6 +8,8 @@ import authorization
 import portfolio_progress
 import portfolio_activity
 import portfolio_reporting as reports
+import client_relationships
+import portfolio_overview
 
 router = APIRouter(prefix='/api/portfolio/reporting', tags=['portfolio reporting'])
 
@@ -43,9 +45,12 @@ def cutoff(value):
 
 @router.get('/overview')
 async def overview(client_ids: Optional[str] = Query(None, max_length=65000), include_archived: bool = False,
-                   range: Literal['30d', '6m', '12m'] = '30d', user: Dict = Depends(get_current_user)):
+                   range: Literal['30d', '90d', '1m', '3m', '6m', '12m', '36m'] = '90d', user: Dict = Depends(get_current_user)):
     clients = await cohort(user, client_ids, include_archived)
     at = cutoff(None)
+    clients = await client_relationships.project(server.db, clients)
+    latest = await portfolio_overview.latest_activity(server.db, [client['client_id'] for client in clients], at)
+    clients = [{**client, 'last_activity': latest.get(client['client_id'])} for client in clients]
     programs = []
     frameworks = {}
     for client in clients:
@@ -53,6 +58,9 @@ async def overview(client_ids: Optional[str] = Query(None, max_length=65000), in
         for position in positions:
             history = await reports.history_positions(server.db, position, range, at)
             position['comparison'] = history['comparison']
+            recent_history = history if range == '90d' else await reports.history_positions(server.db, position, '90d', at)
+            position.update(snapshots_90d=recent_history['snapshots'], comparison_90d=recent_history['comparison'],
+                            scope_changes_90d=recent_history['scope_changes'])
             programs.append(position)
             if position['current']['availability'] == 'unavailable':
                 continue
@@ -62,16 +70,22 @@ async def overview(client_ids: Optional[str] = Query(None, max_length=65000), in
     for framework in frameworks.values():
         framework['client_count'] = len(framework['clients'])
     recent = await portfolio_activity.count_activity(server.db, user, clients, at, days=7)
-    return {'total_clients': len(clients), 'as_of': at, 'programs': programs, 'frameworks': list(frameworks.values()),
+    return {'total_clients': len(clients), 'clients': portfolio_activity.public_source(clients), 'as_of': at, 'programs': programs, 'frameworks': list(frameworks.values()),
             'recent_changes_count': recent, 'coverage': await reports.coverage(server.db, [c['client_id'] for c in clients], at)}
 
 
 @router.get('/history')
 async def history(client_id: str = Query(..., min_length=1, max_length=128, pattern=r'^[A-Za-z0-9_-]+$'),
                   program_key: str = Query(..., min_length=1, max_length=80, pattern=r'^[A-Za-z0-9_-]+$'),
-                  range: Literal['30d', '6m', '12m'] = '30d', include_archived: bool = False,
+                  range: Literal['30d', '90d', '1m', '3m', '6m', '12m', '36m'] = '3m', include_archived: bool = False,
                   user: Dict = Depends(get_current_user)):
-    clients = await cohort(user, client_id, include_archived)
+    # Native client readers may inspect their own enabled program history;
+    # platform portfolio enumeration retains its separate internal-role boundary.
+    query = authorization.scope(user, client_id)
+    if not include_archived:
+        query = {'$and': [query, {'status': {'$ne': 'archived'}}]}
+    client = await server.db.clients.find_one(query, {'_id': 0})
+    clients = [client] if client else []
     if not clients:
         raise HTTPException(404, 'Client is unavailable in the current portfolio scope')
     at = cutoff(None)

@@ -1,19 +1,254 @@
 import {activeDefinitions,frameworkCatalog} from '../lib/frameworks';
 import {cisSummary} from '../lib/cisVerification';
 import {isoProgramMetrics} from '../lib/isoProgramMetrics';
-import {captureDemoReporting,demoCurrentPositions,demoRangeStart,portfolioReportingRequest} from './portfolioReporting';
+import {captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting,demoCurrentPositions,demoRangeStart,portfolioReportingRequest} from './portfolioReporting';
 import {frameworkRequest} from './frameworks';
+import {saveStore,STORE_KEY} from './store';
+import axios from 'axios';
+import {previewAdapter} from './commandTestAdapter';
+import {isoGuidedCatalog,isoQuestions,isoGuidedResult} from '../lib/isoGuidedAssessment';
+import {FRAMEWORKS} from '../lib/frameworks';
+import baseline from '@catalogs/onboardingCatalog.json';
 
 const AS_OF='2026-10-13T18:00:00.000Z';
 const copy=value=>JSON.parse(JSON.stringify(value));
 function fixture(keys=['cis-ig1'],configuration={}){
   const client={client_id:'isolated',name:'Isolated local reporting fixture',status:'active',framework_settings:configuration};
   return {user:{user_id:'owner',role:'super_admin',name:'Demo Owner'},users:[],clients:[client],baselines:{isolated:{completed:true}},requirements:keys.map(key=>({requirement_id:key,client_id:client.client_id,baseline_key:key,baseline_response:'applies',status:'active'})),
-    framework_assessments:keys.flatMap(key=>activeDefinitions(key,key==='cis-ig1'?configuration[key]||{implementation_group:1}:configuration[key]).map(d=>({...d,definition_id:d.id,framework_assessment_id:key+':'+d.id,client_id:client.client_id,framework_key:key,framework_version:frameworkCatalog(key).version,status:'not_assessed',created_at:'2026-10-01T00:00:00.000Z'}))),findings:[],risks:[],policies:[],evidence:[],logs:[]};
+    framework_assessments:keys.flatMap(key=>activeDefinitions(key,key==='cis-ig1'?configuration[key]||{implementation_group:1}:configuration[key]).map(d=>({...d,definition_id:d.id,framework_assessment_id:key+':'+d.id,client_id:client.client_id,framework_key:key,framework_version:frameworkCatalog(key).version,status:'not_assessed',created_at:'2026-07-01T00:00:00.000Z'}))),findings:[],risks:[],policies:[],evidence:[],logs:[],tasks:[],reviews:[],vendors:[]};
 }
 const request=(db,kind,params={})=>portfolioReportingRequest(db,'/portfolio/reporting/'+kind,{client_ids:'isolated',...params});
 beforeEach(()=>jest.useFakeTimers().setSystemTime(new Date(AS_OF)));
 afterEach(()=>jest.useRealTimers());
+
+test('program metadata uses every native supported catalog and the actual CIS group',()=>{
+  for(const [key,unit] of [['cis-ig1','safeguards'],['nist-csf-2','subcategories'],['soc-2','criteria'],['iso-27001','requirements and controls']]){
+    const position=demoCurrentPositions(fixture([key]),fixture([key]).clients,AS_OF)[0];
+    expect(position.unit_label).toBe(unit);expect(position.framework_version).toBe(frameworkCatalog(key).version);
+    expect(position.program_title).toContain(position.framework_version);expect(position.program_id).toBe('isolated:'+key);
+  }
+  const ig3=fixture(['cis-ig1'],{'cis-ig1':{implementation_group:3}});
+  expect(demoCurrentPositions(ig3,ig3.clients,AS_OF)[0].program_title).toContain('Implementation Group 3');
+});
+
+test('legacy exact scope identities normalize on GET and the next atomic commit without synthetic observations',()=>{
+  const db=fixture();captureDemoReporting(db,null,AS_OF);
+  delete db.portfolio_reporting.identities;
+  for(const snapshot of db.portfolio_reporting.snapshots){delete snapshot.current.scope.enrollment_ids;snapshot.current.scope_signature=JSON.stringify(snapshot.current.scope);snapshot.current.status_signature='legacy full signature';snapshot.source_revision=snapshot.current.source_revision='legacy source signature';}
+  const before=copy(db),initial=request(db,'history',{client_id:'isolated',program_key:'cis-ig1'});
+  expect(initial.scope_changes).toEqual([]);expect(initial.snapshots[0].scope_signature).toBe(initial.current.scope_signature);
+  expect(db).toEqual(before);
+  captureDemoReporting(db,before,AS_OF);
+  expect(db.portfolio_reporting.snapshots).toHaveLength(1);expect(db.logs).toEqual(before.logs);
+  expect(request(copy(db),'history',{client_id:'isolated',program_key:'cis-ig1'}).scope_changes).toEqual([]);
+  expect(demoCurrentPositions(db,db.clients,AS_OF)[0].current.scope_signature).toBe(initial.current.scope_signature);
+  const previous=copy(db),row=db.framework_assessments[0],oldRevision=demoCurrentPositions(db,db.clients,AS_OF)[0].current.source_revision;
+  row.implementation='Reviewed wording only';row.last_saved=AS_OF;
+  captureDemoReporting(db,previous,AS_OF);
+  expect(db.portfolio_reporting.snapshots).toHaveLength(1);
+  const current=demoCurrentPositions(db,db.clients,AS_OF)[0].current;
+  expect(current.source_revision).not.toBe(oldRevision);expect(current.status_signature).toBe(initial.current.status_signature);
+  expect(request(db,'overview').programs[0].current.source_revision).toBe(current.source_revision);
+  expect(frameworkRequest(db,'/frameworks/cis-ig1','get',{client_id:'isolated'},null).implementation_position.source_revision).toBe(current.source_revision);
+});
+
+test('same-denominator Annex membership changes keep distinct exact scope identities and reset scope coverage',()=>{
+  const db=fixture(['iso-27001']),annex=db.framework_assessments.filter(row=>row.specification==='annex_control');
+  Object.assign(annex[0],{soa_applicability:'included',soa_justification:'Actual local inclusion'});
+  captureDemoReporting(db,null,'2026-09-01T00:00:00.000Z');const previous=copy(db);
+  Object.assign(annex[0],{soa_applicability:'excluded',soa_justification:'Actual local exclusion'});
+  Object.assign(annex[1],{soa_applicability:'included',soa_justification:'Actual local inclusion'});
+  captureDemoReporting(db,previous,AS_OF);
+  const result=request(db,'history',{client_id:'isolated',program_key:'iso-27001',range:'1m'});
+  expect(result.snapshots).toHaveLength(1);expect(result.comparison.baseline.denominator).toBe(result.snapshots[0].denominator);
+  expect(result.comparison.baseline.scope_signature).not.toBe(result.snapshots[0].scope_signature);
+  expect(result.scope_changes).toHaveLength(1);expect(result.comparison.scope_changed).toBe(true);
+});
+
+test('large portfolio history sends compact genuine points while retaining each full stored source proof',()=>{
+  const db=fixture(['cis-ig1'],{'cis-ig1':{implementation_group:3}}),native=copy(db);
+  db.clients=[];db.requirements=[];db.framework_assessments=[];db.baselines={};
+  for(let client=0;client<20;client++){
+    const id='isolated'+client;
+    db.clients.push({...native.clients[0],client_id:id});db.baselines[id]={completed:true};
+    db.requirements.push({...native.requirements[0],client_id:id,requirement_id:id+':program'});
+    db.framework_assessments.push(...native.framework_assessments.map(row=>({...row,client_id:id,framework_assessment_id:id+':'+row.definition_id})));
+  }
+  captureDemoReporting(db,null,AS_OF);
+  const positions=db.portfolio_reporting.snapshots;
+  db.portfolio_reporting.snapshots=positions.flatMap(position=>Array.from({length:90},(_,index)=>{
+    const at=new Date(Date.parse(AS_OF)-(89-index)*86400000).toISOString();
+    return {...position,snapshot_id:position.snapshot_id+':'+index,captured_at:at,effective_at:at,observation_sequence:index+1};
+  }));
+  const before=JSON.stringify(db),overview=portfolioReportingRequest(db,'/portfolio/reporting/overview');
+  expect(overview.programs).toHaveLength(20);expect(overview.programs.every(position=>position.snapshots_90d.length===90)).toBe(true);
+  const point=overview.programs[0].snapshots_90d[0];
+  expect(point.scope).toBeUndefined();expect(point.components).toBeUndefined();expect(point.provenance.source_references).toBeUndefined();
+  expect(point.source_revision.length).toBeLessThan(150);expect(point.scope_signature.length).toBeLessThan(100);
+  expect(JSON.stringify(point).length).toBeLessThan(2200);expect(JSON.stringify(overview).length).toBeLessThan(5*1024*1024);
+  expect(db.portfolio_reporting.snapshots[0].current.scope.definition_ids).toHaveLength(153);
+  expect(db.portfolio_reporting.snapshots[0].current.provenance.source_references).toHaveLength(153);
+  expect(JSON.stringify(db)).toBe(before);
+});
+
+test('failed Demo storage preserves both native source and persisted scope/source identities',()=>{
+  const db=fixture();sessionStorage.setItem(STORE_KEY,JSON.stringify(db));saveStore(db);
+  const previous=sessionStorage.getItem(STORE_KEY),edited=JSON.parse(previous);edited.framework_assessments[0].status='addressed';
+  const failure=jest.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw new DOMException('Isolated quota failure','QuotaExceededError');});
+  try{expect(()=>saveStore(edited)).toThrow();expect(sessionStorage.getItem(STORE_KEY)).toBe(previous);}
+  finally{failure.mockRestore();sessionStorage.removeItem(STORE_KEY);}
+});
+
+test('storage pools roundtrip each historical scope/source proof independently and preserve legacy data without read writes',()=>{
+  const db=fixture(['iso-27001']),annex=db.framework_assessments.filter(row=>row.specification==='annex_control');
+  Object.assign(annex[0],{soa_applicability:'included',soa_justification:'First actual membership'});
+  captureDemoReporting(db,null,'2026-09-01T00:00:00.000Z');const previous=copy(db);
+  Object.assign(annex[0],{soa_applicability:'excluded',soa_justification:'Changed actual membership',last_saved:AS_OF});
+  Object.assign(annex[1],{soa_applicability:'included',soa_justification:'Replacement membership',last_saved:AS_OF});
+  captureDemoReporting(db,previous,AS_OF);
+  // A pre-field observation has unknown enrollment lineage; decoding must not
+  // inherit today's enrollment IDs into that historical point.
+  delete db.portfolio_reporting.snapshots[0].current.scope.enrollment_ids;
+  const original=copy(db),packed=compactPortfolioReporting(db),raw=JSON.stringify(packed),restored=restorePortfolioReporting(JSON.parse(raw));
+  expect(db).toEqual(original);expect(packed.portfolio_reporting.snapshots[0].current.scope).toBeUndefined();
+  expect(packed.portfolio_reporting.snapshots[0].current.provenance.source_references).toBeUndefined();
+  expect(restored.portfolio_reporting.snapshots).toEqual(original.portfolio_reporting.snapshots);
+  expect(restored.portfolio_reporting.scope_events).toEqual(original.portfolio_reporting.scope_events);
+  expect(restored.framework_assessments).toEqual(original.framework_assessments);
+  expect(Object.hasOwn(restored.portfolio_reporting.snapshots[0].current.scope,'enrollment_ids')).toBe(false);
+  expect(packed.portfolio_reporting.snapshots[0].current._portfolio_scope_index).toBe(0);
+  const invalidScope=JSON.parse(raw);invalidScope.portfolio_reporting.snapshots[0].current._portfolio_scope_index=999;
+  expect(()=>restorePortfolioReporting(invalidScope)).toThrow(/scope reference/);
+  const invalidSource=JSON.parse(raw);invalidSource.portfolio_reporting.snapshots[0].current.provenance._portfolio_source_index=999;
+  expect(()=>restorePortfolioReporting(invalidSource)).toThrow(/source reference/);
+  expect(portfolioReportingRequest(restored,'/portfolio/reporting/history',{client_id:'isolated',program_key:'iso-27001',range:'1m'}))
+    .toEqual(portfolioReportingRequest(db,'/portfolio/reporting/history',{client_id:'isolated',program_key:'iso-27001',range:'1m'}));
+  expect(JSON.stringify(packed)).toBe(raw);
+  restored.portfolio_reporting.snapshots[1].current.scope.applicability[annex[0].definition_id]='locally mutated';
+  restored.portfolio_reporting.scope_events[0].before.provenance.source_references[0].status='locally mutated';
+  expect(restored.portfolio_reporting.snapshots[0].current.scope).toEqual(original.portfolio_reporting.snapshots[0].current.scope);
+  expect(restored.portfolio_reporting.snapshots[0].current.provenance.source_references).toEqual(original.portfolio_reporting.snapshots[0].current.provenance.source_references);
+  expect(JSON.stringify(packed)).toBe(raw);
+  expect(restorePortfolioReporting(original)).toEqual(original);
+});
+
+test('changing native Annex scopes and guided saves retain all positions within actual Demo storage',async()=>{
+  sessionStorage.clear();localStorage.clear();const api=axios.create({adapter:previewAdapter});
+  const actualSet=Storage.prototype.setItem;let footprint,matchedFootprint;
+  const measure=jest.spyOn(Storage.prototype,'setItem').mockImplementation(function(key,value){
+    if(key===STORE_KEY){const parsed=JSON.parse(value),history=parsed.portfolio_reporting||{};
+      footprint={total:value.length,snapshots:JSON.stringify(history.snapshots||[]).length,scope_events:JSON.stringify(history.scope_events||[]).length,identities:JSON.stringify(history.identities||[]).length,source_vectors:JSON.stringify(history.source_vectors||[]).length,
+        native:JSON.stringify({...parsed,portfolio_reporting:undefined}).length,snapshot_count:history.snapshots?.length||0,scope_event_count:history.scope_events?.length||0};}
+    if(footprint?.snapshot_count===40&&footprint.scope_event_count===19)matchedFootprint=footprint;
+    return actualSet.call(this,key,value);
+  });
+  try{
+    await api.post('/demo/enter');const cid=(await api.post('/clients',{name:'Isolated actual changing scope storage fixture'})).data.client_id;
+    const state={version:3,step:3,policies:Object.fromEntries(baseline.policies.map(policy=>[policy.key,'unsure'])),requirements:Object.fromEntries(FRAMEWORKS.map(framework=>[framework.key,framework.key==='iso-27001'?'applies':'does_not_apply'])),reviews:[],framework_reviews:{}};
+    await api.post('/onboarding/baseline',{client_id:cid,state,finalize:true});
+    const ws=(await api.get('/frameworks/iso-27001',{params:{client_id:cid}})).data,selected=ws.assessments.filter(row=>row.specification==='annex_control'||isoGuidedCatalog.definitions[row.definition_id].specification==='annex_control').slice(0,25);
+    expect(selected).toHaveLength(25);
+    for(let row of selected){
+      const path='/framework_assessments/'+row.framework_assessment_id;
+      jest.advanceTimersByTime(1000);
+      row=(await api.patch(path,{soa_applicability:'included',soa_justification:'Synthetic risk treatment scope decision',expected_last_assessed:row.last_saved||row.last_assessed||null})).data;
+      const draft=(await api.get(path+'/guided-assessment')).data,answers={};
+      for(let pass=0;pass<30;pass++){const missing=isoQuestions(row.definition_id,answers).filter(question=>!(question.id in answers));if(!missing.length)break;for(const question of missing)answers[question.id]=question.type==='text'?'':question.type==='context'?'Relevant':'Yes';}
+      const result=isoGuidedResult(row.definition_id,answers,draft.version,'Synthetic storage regression');
+      const reviewed=(await api.put(path+'/guided-assessment',{version:draft.version,answers,summary_review:{version:draft.version,answers},step:0,completed:true,narrative:result.narrative,result,expected_revision:draft.revision,base_assessment_token:draft.current_assessment_token,base_scope_fingerprint:draft.current_scope_fingerprint})).data;
+      jest.advanceTimersByTime(1000);
+      const saved=(await api.patch(path,{implementation:reviewed.narrative,status:reviewed.result.status,guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(field=>[field,reviewed[field]])),expected_last_assessed:row.last_saved})).data;
+      expect(saved.assessment_history.slice(0,-1)).toEqual(row.assessment_history);expect(saved.implementation).toBe(result.narrative);
+    }
+    const saved=restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY))),history=portfolioReportingRequest(saved,'/portfolio/reporting/history',{client_id:cid,program_key:'iso-27001'});
+    expect(history.snapshots).toHaveLength(51);expect(history.scope_changes).toHaveLength(26);
+    expect(history.scope_changes[0].before).toBeNull();
+    expect(history.scope_changes.filter(change=>change.before&&change.after)).toHaveLength(25);
+    expect(history.current.implemented).toBe(25);expect(history.current.denominator).toBe(55);
+    expect(saved.framework_assessments.filter(row=>row.client_id===cid&&row.status==='addressed')).toHaveLength(25);
+    expect(footprint.total).toBeLessThan(5000000);
+  }finally{console.info('Changing ISO storage footprint (code units)',{matched_prefix:matchedFootprint,final:footprint});measure.mockRestore();sessionStorage.clear();localStorage.clear();}
+},120000);
+
+test('normal native ISO save supplies last activity while rejected and no-op receipts never replace it',()=>{
+  const db=fixture(['iso-27001']),row=db.framework_assessments.find(row=>row.definition_id==='A.5.1');
+  Object.assign(row,{implementation:'',technology:'',notes:'',na_rationale:'',related_links:[]});
+  captureDemoReporting(db,null,AS_OF);const previous=copy(db);
+  frameworkRequest(db,'/framework_assessments/'+row.framework_assessment_id,'patch',{},
+    {expected_last_assessed:null,status:'addressed',implementation:'Actual native implementation',soa_applicability:'included',soa_justification:'Actual scope decision'});
+  captureDemoReporting(db,previous,AS_OF);
+  const activity=request(db,'overview').clients[0].last_activity;
+  expect(activity).toEqual({at:AS_OF,label:'Assessment saved'});
+  const retained=copy(db);db.logs.unshift({...db.logs[0],audit_id:'noop-receipt'});
+  captureDemoReporting(db,retained,AS_OF);
+  expect(db.portfolio_reporting.activity_proofs['noop-receipt'].eligible).toBe(false);
+  expect(request(db,'overview').clients[0].last_activity).toEqual(activity);
+  expect(request(db,'activity').total).toBe(1);
+});
+
+test.each(['legacy','pooled'])('initialized %s native/guided reads preserve complete saved bytes; export and writes retain their persistence',async shape=>{
+  sessionStorage.clear();localStorage.clear();const db=fixture(),row=db.framework_assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
+  Object.assign(row,{implementation:'',technology:'',notes:'',na_rationale:'',related_links:[]});
+  saveStore(db);
+  if(shape==='legacy'){
+    const legacy=restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)));
+    delete legacy.portfolio_reporting.storage_version;delete legacy.portfolio_reporting.source_vectors;
+    sessionStorage.setItem(STORE_KEY,JSON.stringify(legacy));
+  }
+  sessionStorage.setItem('grc_demo_entered','true');
+  const api=axios.create({adapter:previewAdapter}),before=sessionStorage.getItem(STORE_KEY),savedBefore=restorePortfolioReporting(JSON.parse(before));
+  const writes=jest.spyOn(Storage.prototype,'setItem');
+  try{
+    for(const url of ['/frameworks/cis-ig1',path,path+'/related',path+'/activity',path+'/guided-assessment',path+'/guided-assessment/history'])await api.get(url,{params:{client_id:'isolated'}});
+    expect(writes).not.toHaveBeenCalled();expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+    for(const [index,url] of ['/frameworks/cis-ig1/export','/frameworks/cis-ig1/export/'].entries()){
+      const file=(await api.get(url,{params:{client_id:'isolated'}})).data;
+      expect(file).toBeInstanceOf(Blob);expect(writes).toHaveBeenCalledTimes(index+1);
+    }
+    const exported=restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)));
+    expect(exported.logs[0].action).toBe('CIS assessment export');
+    expect(exported.logs.filter(log=>log.action==='CIS assessment export')).toHaveLength(2);
+    expect(exported.portfolio_reporting.snapshots).toEqual(savedBefore.portfolio_reporting.snapshots);
+    const changed=(await api.patch(path,{expected_last_assessed:null,status:'in_progress',implementation:'Actual persisted native work'})).data;
+    expect(changed.status).toBe('in_progress');expect(writes).toHaveBeenCalledTimes(3);
+    const persisted=restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)));
+    expect(persisted.framework_assessments.find(record=>record.framework_assessment_id===row.framework_assessment_id).implementation).toBe('Actual persisted native work');
+    expect(persisted.portfolio_reporting.snapshots).toHaveLength(savedBefore.portfolio_reporting.snapshots.length+1);
+    expect(persisted.portfolio_reporting.snapshots.at(-1).observation_kind).toBe('committed_event');
+  }finally{writes.mockRestore();sessionStorage.clear();localStorage.clear();}
+});
+
+test('all calendar ranges clamp month ends and the forecast horizon remains 90 elapsed days',()=>{
+  expect(demoRangeStart('2024-03-31T12:00:00Z','1m')).toBe('2024-02-29T12:00:00.000Z');
+  expect(demoRangeStart('2024-05-31T12:00:00Z','3m')).toBe('2024-02-29T12:00:00.000Z');
+  expect(demoRangeStart('2024-02-29T12:00:00Z','36m')).toBe('2021-02-28T12:00:00.000Z');
+  const db=fixture();captureDemoReporting(db,null,'2026-07-20T18:00:00.000Z');
+  let previous=copy(db);db.framework_assessments[0].status='in_progress';captureDemoReporting(db,previous,'2026-09-01T18:00:00.000Z');
+  previous=copy(db);db.framework_assessments[0].status='addressed';captureDemoReporting(db,previous,AS_OF);
+  const one=request(db,'history',{client_id:'isolated',program_key:'cis-ig1',range:'1m'}),threeYears=request(db,'history',{client_id:'isolated',program_key:'cis-ig1',range:'36m'});
+  expect(one.snapshots).toHaveLength(1);expect(threeYears.snapshots).toHaveLength(3);
+  expect(one.forecast_snapshots).toEqual(threeYears.forecast_snapshots);
+  expect(one.comparison.baseline_effective_at_start).toBe(true);
+  expect(one.forecast_snapshots.map(snapshot=>snapshot.observation_kind)).toEqual(['current_baseline','committed_event','committed_event']);
+});
+
+test('Demo profile reads and metadata do not become progress votes; disable and reenable retain scope history',()=>{
+  const db=fixture();captureDemoReporting(db,null,AS_OF);
+  let previous=copy(db);db.clients[0].industry='Updated metadata';captureDemoReporting(db,previous,AS_OF);
+  expect(db.portfolio_reporting.snapshots).toHaveLength(1);
+  previous=copy(db);db.requirements[0].baseline_response='does_not_apply';captureDemoReporting(db,previous,AS_OF);
+  expect(request(db,'overview').programs).toHaveLength(0);
+  previous=copy(db);db.requirements[0].baseline_response='applies';captureDemoReporting(db,previous,AS_OF);
+  const history=request(db,'history',{client_id:'isolated',program_key:'cis-ig1'});
+  expect(history.scope_changes).toHaveLength(2);
+  expect(db.portfolio_reporting.snapshots).toHaveLength(2);
+  expect(db.portfolio_reporting.snapshots[0].current.continuity_proven).not.toBe(true);
+  expect(history.current.program_id).toBe('isolated:cis-ig1');
+  db.user={user_id:'reader',role:'client_readonly',client_ids:['isolated']};
+  expect(request(db,'history',{client_id:'isolated',program_key:'cis-ig1'}).current.denominator).toBe(56);
+  expect(()=>request(db,'overview')).toThrow(/internal admins/);
+  expect(()=>request(db,'history',{client_id:'foreign',program_key:'cis-ig1'})).toThrow(/Forbidden/);
+});
 
 const assessmentItem=changes=>({item_id:'item_private_fixture',question_id:'practice',kind:'gap',state:'open',
   text:'PRIVATE ITEM TEXT',resolution:'PRIVATE ITEM RESOLUTION',notes:'PRIVATE LEGACY ITEM NOTES',finding_id:null,
@@ -229,7 +464,7 @@ test('capture occurs at actual local commit dates, skips unchanged state, and re
 
 test('no captured Demo history returns the current actual read and never seeds earlier dates',()=>{
   const db=fixture(),before=copy(db),result=request(db,'history',{client_id:'isolated',program_key:'cis-ig1'});
-  expect(result.snapshots).toHaveLength(1);expect(result.snapshots[0].provenance.label).toMatch(/no earlier saved history/);
+  expect(result.snapshots).toHaveLength(0);expect(result.current.denominator).toBe(56);expect(result.current.observation_kind).toBe('current_source');
   expect(result.comparison.baseline).toBeNull();expect(result.coverage.started_at).toBeNull();expect(db).toEqual(before);
 });
 
@@ -241,7 +476,7 @@ test('genuine local observations spanning IG expansion retain scope-change treat
   db.framework_assessments.push(...fixture(['cis-ig1'],{'cis-ig1':{implementation_group:2}}).framework_assessments.filter(r=>!baseline.has(r.definition_id)));
   captureDemoReporting(db,previous,'2026-10-01T00:00:00.000Z');
   const result=request(db,'history',{client_id:'isolated',program_key:'cis-ig2',range:'30d'});
-  expect(result.comparison.scope_changed).toBe(true);expect(result.comparison.comparable).toBe(false);expect(result.comparison.change_pp).toBeNull();
+  expect(result.comparison.scope_changed).toBe(true);expect(result.comparison.comparable).toBe(false);expect(result.comparison.change_pp).toBe(0);expect(result.comparison.baseline_effective_at_start).toBe(true);
   expect(result.scope_changes).toHaveLength(1);expect(result.comparison.baseline.captured_at).toBe('2026-09-01T00:00:00.000Z');
 });
 
@@ -307,9 +542,9 @@ test('scope changes and applicability changes that revert still invalidate a sam
     else {db.framework_assessments[0].status='not_assessed';delete db.framework_assessments[0].na_rationale;}
     captureDemoReporting(db,previous,AS_OF);
     const result=request(db,'history',{client_id:'isolated',program_key:'cis-ig1',range:'30d'});
-    expect(result.snapshots[0].scope_signature).toBe(result.snapshots.at(-1).scope_signature);
+    expect(result.comparison.baseline.scope_signature).toBe(result.snapshots.at(-1).scope_signature);
     expect(result.scope_changes).toHaveLength(2);expect(result.comparison.scope_changed).toBe(true);
-    expect(result.comparison.comparable).toBe(false);expect(result.comparison.change_pp).toBeNull();
+    expect(result.comparison.comparable).toBe(false);expect(result.comparison.change_pp).toBe(0);expect(result.comparison.baseline_effective_at_start).toBe(true);
     expect(request(db,'activity').total).toBe(0);
   }
 });

@@ -121,7 +121,8 @@ def main():
     if args.include_portfolio_reporting:
         from test_portfolio_reporting import PortfolioReportingTests
         from test_portfolio_activity import PortfolioActivityTests, PortfolioDeletionReceiptTests
-        for base in (PortfolioReportingTests, PortfolioActivityTests, PortfolioDeletionReceiptTests):
+        from test_client_portfolio_dashboard import ClientPortfolioDashboardTests
+        for base in (PortfolioReportingTests, PortfolioActivityTests, PortfolioDeletionReceiptTests, ClientPortfolioDashboardTests):
             concrete = type('Mongo' + base.__name__, (MongoStorage, base), {})
             suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     if args.include_generic_saves:

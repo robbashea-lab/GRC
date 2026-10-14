@@ -35,11 +35,11 @@ def _datetime(value):
 def range_start(as_of, period):
     """UTC calendar-month subtraction, preserving time and clamping month ends."""
     at = _datetime(as_of)
-    if period == '30d':
-        return (at - timedelta(days=30)).isoformat()
-    if period not in ('6m', '12m'):
-        raise ValueError('Choose 30d, 6m, or 12m')
-    months = 6 if period == '6m' else 12
+    if period in ('30d', '90d'):
+        return (at - timedelta(days=int(period[:-1]))).isoformat()
+    if period not in ('1m', '3m', '6m', '12m', '36m'):
+        raise ValueError('Choose 1m, 3m, 6m, 12m, or 36m')
+    months = int(period[:-1])
     month_index = at.year * 12 + at.month - 1 - months
     year, month_index = divmod(month_index, 12)
     month = month_index + 1
@@ -97,11 +97,26 @@ def current_position(client, framework, assignments, assessments, as_of):
                            {'categories': sorted(categories)} if key == 'soc-2' and valid_configuration else {})
     label = f'CIS IG{group}' if key == 'cis-ig1' and valid_configuration else framework['label']
     program_key = f'cis-ig{group}' if key == 'cis-ig1' and valid_configuration else key
+    catalog = CATALOGS.get(key, {})
+    version = catalog.get('version') or framework.get('version')
+    title = framework.get('name') or framework['label']
+    if key == 'cis-ig1' and valid_configuration:
+        title = f'CIS Controls v{version} · Implementation Group {group}'
+    elif version and version not in title:
+        title += ' · ' + version
+    unit = (catalog.get('labels', {}).get('items') or ('Safeguards' if key == 'cis-ig1' else 'Items')).lower()
+    if key == 'iso-27001':
+        unit = 'requirements and controls'
     position = {'client_id': client['client_id'], 'client_name': client.get('name', client['client_id']),
+                'program_id': client['client_id'] + ':' + key,
+                'program_title': title, 'unit_label': unit, 'framework_version': version,
                 'program_key': program_key, 'program_label': label, 'framework_key': key,
                 'scope_label': label, 'to': '/compliance/' + key}
-    base = {'captured_at': _datetime(as_of).isoformat(), 'measure_version': MEASURE_VERSION,
+    base = {'captured_at': _datetime(as_of).isoformat(), 'effective_at': _datetime(as_of).isoformat(),
+            'retrieved_at': _datetime(as_of).isoformat(), 'observation_kind': 'current_source',
+            'program_id': position['program_id'], 'measure_version': MEASURE_VERSION,
             'counts': [], 'implemented': None, 'denominator': None, 'excluded': None,
+            'included_counts': [], 'assessed': None, 'not_started': False,
             'total': None, 'percentage': None, 'scope_signature': None, 'components': [],
             'availability': 'unavailable', 'missing_records': 0, 'unrecognized_status_count': 0,
             'provenance': {'kind': 'captured', 'source_as_of': None, 'source_references': [],
@@ -151,6 +166,7 @@ def current_position(client, framework, assignments, assessments, as_of):
     for ident in missing | duplicates:
         applicability[ident] = 'missing' if ident in missing else 'duplicate'
     counts, unknown = _counts(included, key)
+    included_counts = [dict(count) for count in counts if count['key'] in STATUS_KEYS]
     if excluded:
         counts.append({'key': 'excluded', 'label': 'Excluded / Not Applicable', 'count': len(excluded)})
     if undetermined:
@@ -162,6 +178,8 @@ def current_position(client, framework, assignments, assessments, as_of):
     versions = sorted({(row['definition_id'], row.get('framework_version')) for row in rows})
     scope = {'framework_key': key, 'catalog_version': CATALOGS[key]['version'], 'configuration': scope_configuration,
              'definition_ids': sorted(by_id), 'source_versions': versions,
+             'enrollment_ids': sorted(row['requirement_id'] for row in assignments
+                 if row.get('baseline_key') == key and row.get('requirement_id')),
              'applicability': applicability, 'measure_version': MEASURE_VERSION}
     components = []
     if key == 'iso-27001':
@@ -182,15 +200,19 @@ def current_position(client, framework, assignments, assessments, as_of):
     elif key == 'cis-ig1':
         position['scope_label'] = f"Cumulative IG{configuration['implementation_group']} safeguards"
 
-    references = [{'kind': 'requirements', 'id': row.get('requirement_id'), 'version': row.get('updated_at') or row.get('created_at')}
+    references = [{'kind': 'requirements', 'id': row.get('requirement_id'), 'version': row.get('updated_at') or row.get('created_at'),
+                   'source_event': row.get('_portfolio_activity_last_event_id')}
                   for row in assignments if row.get('baseline_key') == key]
     references.extend({'kind': 'framework_assessments', 'id': row.get('framework_assessment_id'),
                        'definition_id': row['definition_id'], 'framework_version': row.get('framework_version'),
+                       'source_event': row.get('_portfolio_activity_last_event_id'),
+                       'status': row.get('status'),
                        'version': row.get('last_saved') or row.get('last_assessed') or row.get('created_at')}
                       for values in grouped.values() for row in values)
     configuration_at = client.get('cis_configuration_updated_at' if key == 'cis-ig1' else 'soc_configuration_updated_at') if key in ('cis-ig1', 'soc-2') else None
     if configuration_at:
         references.append({'kind': 'clients', 'id': client['client_id'], 'field': key + '_configuration', 'version': configuration_at})
+    references.sort(key=lambda reference: (reference['kind'], reference.get('id') or '', reference.get('field') or ''))
     source_dates = []
     for reference in references:
         try:
@@ -208,15 +230,25 @@ def current_position(client, framework, assignments, assessments, as_of):
               'Annex A applicability remains undetermined; percentages describe ISMS and included Annex A only.' if undetermined else
               'No applicable implementation items.' if not denominator else None)
     current = {**base, 'counts': counts, 'implemented': implemented, 'denominator': denominator,
+               'included_counts': included_counts,
+               'assessed': sum(value['count'] for value in included_counts if value['key'] != 'not_assessed'),
+               'not_started': bool(complete and denominator and all(row.get('status') == 'not_assessed' for row in included)
+                   and not any(row.get('last_saved') or row.get('last_assessed') for row in rows)),
                'excluded': len(excluded), 'total': len(by_id),
                'percentage': implemented / denominator * 100 if denominator and complete else None,
-               'scope': scope, 'scope_signature': _fingerprint(scope), 'components': components,
+               # Enrollment is source/lifecycle proof. The implementation scope
+               # identity remains compatible with prior saved catalog populations.
+               'scope': scope, 'scope_signature': _fingerprint({field: value for field, value in scope.items()
+                   if field != 'enrollment_ids'}), 'components': components,
                'availability': 'available' if complete else 'partial', 'reason': reason,
                'missing_records': len(missing), 'duplicate_records': len(duplicates),
                'unrecognized_status_count': unknown, 'invalid_applicability': invalid_applicability,
                'scope_undetermined': len(undetermined),
                'provenance': {**base['provenance'], 'source_as_of': max(source_dates).isoformat() if source_dates else None,
                               'source_references': references, 'cutoff_consistent': not after_cutoff}}
+    current['status_signature'] = _fingerprint({field: current.get(field) for field in
+        ('scope_signature', 'included_counts', 'implemented', 'denominator', 'availability')})
+    current['source_revision'] = _fingerprint({'scope': scope, 'references': references})
     return {**position, 'current': current}
 
 
@@ -227,7 +259,8 @@ async def build_current_positions(db, client, as_of=None):
     cid = client['client_id']
     assignments = await db.requirements.find({'client_id': cid, 'baseline_response': 'applies'},
         {'_id': 0, 'requirement_id': 1, 'client_id': 1, 'baseline_key': 1, 'baseline_response': 1,
-         'status': 1, 'archived': 1, 'archived_at': 1, 'created_at': 1, 'updated_at': 1}).to_list(SOURCE_LIMIT + 1)
+         'status': 1, 'archived': 1, 'archived_at': 1, 'created_at': 1, 'updated_at': 1,
+         '_portfolio_activity_last_event_id': 1}).to_list(SOURCE_LIMIT + 1)
     if len(assignments) > SOURCE_LIMIT:
         raise ValueError('Portfolio native program population exceeds the supported size')
     assignments = [row for row in assignments if row.get('client_id') == cid and row.get('baseline_response') == 'applies' and _active(row)]
@@ -239,7 +272,8 @@ async def build_current_positions(db, client, as_of=None):
     assessments = await db.framework_assessments.find({'client_id': cid, 'framework_key': {'$in': tracked}},
         {'_id': 0, 'client_id': 1, 'framework_assessment_id': 1, 'definition_id': 1, 'framework_key': 1,
          'framework_version': 1, 'status': 1, 'soa_applicability': 1, 'soa_justification': 1, 'na_rationale': 1,
-         'archived': 1, 'archived_at': 1, 'created_at': 1, 'last_saved': 1, 'last_assessed': 1}).to_list(SOURCE_LIMIT + 1)
+         'archived': 1, 'archived_at': 1, 'created_at': 1, 'last_saved': 1, 'last_assessed': 1,
+         '_portfolio_activity_last_event_id': 1}).to_list(SOURCE_LIMIT + 1)
     if len(assessments) > SOURCE_LIMIT:
         raise ValueError('Portfolio native assessment population exceeds the supported size')
     captured_at = as_of or datetime.now(timezone.utc).isoformat()
@@ -258,7 +292,7 @@ def compare_positions(snapshots, current, requested_start):
     for snapshot in snapshots:
         item = snapshot.get('current', snapshot)
         try:
-            captured = _datetime(item['captured_at'])
+            captured = _datetime(item.get('effective_at') or item['captured_at'])
         except (KeyError, TypeError, ValueError):
             continue
         if captured <= end:
@@ -266,6 +300,7 @@ def compare_positions(snapshots, current, requested_start):
     valid.sort(key=lambda entry: entry[0])
     before = [entry for entry in valid if entry[0] <= start]
     result = {'baseline': None, 'change_pp': None, 'comparable': False, 'scope_changed': False,
+              'change_implemented': None, 'baseline_effective_at_start': False,
               'reason': 'No trustworthy snapshot on or before the requested period start.',
               'requested_start': start.isoformat(), 'as_of': end.isoformat(),
               'available_from': valid[0][0].isoformat() if valid else current['captured_at'],
@@ -275,6 +310,13 @@ def compare_positions(snapshots, current, requested_start):
     baseline_at, baseline = before[-1]
     result['baseline'] = baseline
     result['baseline_before_requested_start'] = baseline_at < start
+    try:
+        valid_until = _datetime(baseline.get('effective_until'))
+    except (ValueError, TypeError):
+        valid_until = None
+    boundary_proven = baseline_at == start or (baseline.get('continuity_proven') is True and valid_until
+        and valid_until >= start)
+    result['baseline_effective_at_start'] = bool(boundary_proven)
     tied_baselines = [item for at, item in before if at == baseline_at]
     tied_states = {json.dumps({field: item.get(field) for field in (
         'scope_signature', 'measure_version', 'implemented', 'denominator', 'percentage')}, sort_keys=True)
@@ -291,13 +333,20 @@ def compare_positions(snapshots, current, requested_start):
     result['scope_changed'] = changed
     if changed:
         result['reason'] = 'Scope, applicability, catalog version, or measurement semantics changed between captured positions.'
+        if (boundary_proven and baseline.get('percentage') is not None and current.get('percentage') is not None
+                and baseline.get('measure_version') == current.get('measure_version')):
+            result.update(change_pp=current['percentage'] - baseline['percentage'],
+                          change_implemented=current['implemented'] - baseline['implemented'])
     elif None in signatures:
         result['reason'] = 'Scope identity is unavailable; like-for-like comparison cannot be established.'
     elif baseline.get('percentage') is None or current.get('percentage') is None:
         result['reason'] = 'An endpoint has no applicable denominator or complete implementation position.'
     elif not baseline.get('measure_version') or baseline.get('measure_version') != current.get('measure_version'):
         result['reason'] = 'Implementation measurement versions differ or are unavailable.'
+    elif not boundary_proven:
+        result['reason'] = 'The older observation does not establish which committed state was effective at the period boundary.'
     else:
         result.update(comparable=True, change_pp=current['percentage'] - baseline['percentage'],
+                      change_implemented=current['implemented'] - baseline['implemented'],
                       reason='Comparison uses actual captured dates; intervals between snapshots are not reconstructed.')
     return result
