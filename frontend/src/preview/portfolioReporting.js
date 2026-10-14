@@ -57,6 +57,61 @@ function thinCurrent(current){
     provenance:Object.fromEntries(['kind','label','source_as_of','cutoff_consistent','event_time_bound','source_event'].filter(field=>Object.hasOwn(current.provenance||{},field)).map(field=>[field,current.provenance[field]]))};
 }
 
+// Serialization only: retain every observation and exact historical vector,
+// but store repeated whole-program scope/source arrays once. Native records
+// and their histories never enter this pool. Decoding allocates separate copies.
+export function compactPortfolioReporting(db){
+  const history=db?.portfolio_reporting;if(!history)return db;
+  const identities=(history.identities||[]).map(row=>({...row,scopes:[...row.scopes]}));
+  const source_vectors=[...(history.source_vectors||[])],sources=new Map(source_vectors.map((value,index)=>[value,index]));
+  const current=(value,identity)=>{
+    if(!value)return value;
+    const result={...value};
+    if(value.scope){
+      let recorded=identities.find(row=>row.program_id===identity);
+      if(!recorded){recorded={program_id:identity,scopes:[],head:null};identities.push(recorded);}
+      const signature=exactScope(value);let index=recorded.scopes.indexOf(signature);
+      if(index<0){index=recorded.scopes.length;recorded.scopes.push(signature);}
+      delete result.scope;result._portfolio_scope_index=index;
+      if(Object.hasOwn(value.scope,'enrollment_ids'))result._portfolio_enrollment_ids=[...value.scope.enrollment_ids];
+    }
+    if(Array.isArray(value.provenance?.source_references)){
+      const vector=stable(value.provenance.source_references);let index=sources.get(vector);
+      if(index===undefined){index=source_vectors.length;source_vectors.push(vector);sources.set(vector,index);}
+      result.provenance={...value.provenance,_portfolio_source_index:index};delete result.provenance.source_references;
+    }
+    return result;
+  };
+  return {...db,portfolio_reporting:{...history,storage_version:1,identities,source_vectors,
+    snapshots:(history.snapshots||[]).map(snapshot=>({...snapshot,current:current(snapshot.current,programIdentity(snapshot))})),
+    scope_events:(history.scope_events||[]).map(event=>({...event,before:current(event.before,event.client_id+':'+event.framework_key),after:current(event.after,event.client_id+':'+event.framework_key)}))}};
+}
+
+export function restorePortfolioReporting(db){
+  const history=db?.portfolio_reporting;if(!history?.storage_version)return db;
+  if(history.storage_version!==1)throw new Error('The saved Demo implementation history format is unavailable.');
+  const current=(value,identity)=>{
+    if(!value)return value;
+    const result={...value};
+    if(Object.hasOwn(value,'_portfolio_scope_index')){
+      const vector=history.identities?.find(row=>row.program_id===identity)?.scopes[value._portfolio_scope_index];
+      if(typeof vector!=='string')throw new Error('The saved Demo implementation scope reference is unavailable.');
+      result.scope=JSON.parse(vector);delete result._portfolio_scope_index;
+      if(Object.hasOwn(value,'_portfolio_enrollment_ids'))result.scope.enrollment_ids=[...value._portfolio_enrollment_ids];
+      delete result._portfolio_enrollment_ids;
+    }
+    if(Object.hasOwn(value.provenance||{},'_portfolio_source_index')){
+      const vector=history.source_vectors?.[value.provenance._portfolio_source_index];
+      if(typeof vector!=='string')throw new Error('The saved Demo implementation source reference is unavailable.');
+      result.provenance={...value.provenance,source_references:JSON.parse(vector)};delete result.provenance._portfolio_source_index;
+    }
+    return result;
+  };
+  return {...db,portfolio_reporting:{...history,
+    snapshots:(history.snapshots||[]).map(snapshot=>({...snapshot,current:current(snapshot.current,programIdentity(snapshot))})),
+    scope_events:(history.scope_events||[]).map(event=>({...event,before:current(event.before,event.client_id+':'+event.framework_key),after:current(event.after,event.client_id+':'+event.framework_key)}))}};
+}
+
 export function demoRangeStart(asOf,range){
   const date=new Date(timestamp(asOf));
   if(['30d','90d'].includes(range))return iso(+date-Number(range.slice(0,-1))*DAY);

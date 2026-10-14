@@ -1,9 +1,14 @@
 import {activeDefinitions,frameworkCatalog} from '../lib/frameworks';
 import {cisSummary} from '../lib/cisVerification';
 import {isoProgramMetrics} from '../lib/isoProgramMetrics';
-import {captureDemoReporting,demoCurrentPositions,demoRangeStart,portfolioReportingRequest} from './portfolioReporting';
+import {captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting,demoCurrentPositions,demoRangeStart,portfolioReportingRequest} from './portfolioReporting';
 import {frameworkRequest} from './frameworks';
 import {saveStore,STORE_KEY} from './store';
+import axios from 'axios';
+import {previewAdapter} from './commandTestAdapter';
+import {isoGuidedCatalog,isoQuestions,isoGuidedResult} from '../lib/isoGuidedAssessment';
+import {FRAMEWORKS} from '../lib/frameworks';
+import baseline from '@catalogs/onboardingCatalog.json';
 
 const AS_OF='2026-10-13T18:00:00.000Z';
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -93,6 +98,77 @@ test('failed Demo storage preserves both native source and persisted scope/sourc
   try{expect(()=>saveStore(edited)).toThrow();expect(sessionStorage.getItem(STORE_KEY)).toBe(previous);}
   finally{failure.mockRestore();sessionStorage.removeItem(STORE_KEY);}
 });
+
+test('storage pools roundtrip each historical scope/source proof independently and preserve legacy data without read writes',()=>{
+  const db=fixture(['iso-27001']),annex=db.framework_assessments.filter(row=>row.specification==='annex_control');
+  Object.assign(annex[0],{soa_applicability:'included',soa_justification:'First actual membership'});
+  captureDemoReporting(db,null,'2026-09-01T00:00:00.000Z');const previous=copy(db);
+  Object.assign(annex[0],{soa_applicability:'excluded',soa_justification:'Changed actual membership',last_saved:AS_OF});
+  Object.assign(annex[1],{soa_applicability:'included',soa_justification:'Replacement membership',last_saved:AS_OF});
+  captureDemoReporting(db,previous,AS_OF);
+  // A pre-field observation has unknown enrollment lineage; decoding must not
+  // inherit today's enrollment IDs into that historical point.
+  delete db.portfolio_reporting.snapshots[0].current.scope.enrollment_ids;
+  const original=copy(db),packed=compactPortfolioReporting(db),raw=JSON.stringify(packed),restored=restorePortfolioReporting(JSON.parse(raw));
+  expect(db).toEqual(original);expect(packed.portfolio_reporting.snapshots[0].current.scope).toBeUndefined();
+  expect(packed.portfolio_reporting.snapshots[0].current.provenance.source_references).toBeUndefined();
+  expect(restored.portfolio_reporting.snapshots).toEqual(original.portfolio_reporting.snapshots);
+  expect(restored.portfolio_reporting.scope_events).toEqual(original.portfolio_reporting.scope_events);
+  expect(restored.framework_assessments).toEqual(original.framework_assessments);
+  expect(Object.hasOwn(restored.portfolio_reporting.snapshots[0].current.scope,'enrollment_ids')).toBe(false);
+  expect(packed.portfolio_reporting.snapshots[0].current._portfolio_scope_index).toBe(0);
+  const invalidScope=JSON.parse(raw);invalidScope.portfolio_reporting.snapshots[0].current._portfolio_scope_index=999;
+  expect(()=>restorePortfolioReporting(invalidScope)).toThrow(/scope reference/);
+  const invalidSource=JSON.parse(raw);invalidSource.portfolio_reporting.snapshots[0].current.provenance._portfolio_source_index=999;
+  expect(()=>restorePortfolioReporting(invalidSource)).toThrow(/source reference/);
+  expect(portfolioReportingRequest(restored,'/portfolio/reporting/history',{client_id:'isolated',program_key:'iso-27001',range:'1m'}))
+    .toEqual(portfolioReportingRequest(db,'/portfolio/reporting/history',{client_id:'isolated',program_key:'iso-27001',range:'1m'}));
+  expect(JSON.stringify(packed)).toBe(raw);
+  restored.portfolio_reporting.snapshots[1].current.scope.applicability[annex[0].definition_id]='locally mutated';
+  restored.portfolio_reporting.scope_events[0].before.provenance.source_references[0].status='locally mutated';
+  expect(restored.portfolio_reporting.snapshots[0].current.scope).toEqual(original.portfolio_reporting.snapshots[0].current.scope);
+  expect(restored.portfolio_reporting.snapshots[0].current.provenance.source_references).toEqual(original.portfolio_reporting.snapshots[0].current.provenance.source_references);
+  expect(JSON.stringify(packed)).toBe(raw);
+  expect(restorePortfolioReporting(original)).toEqual(original);
+});
+
+test('changing native Annex scopes and guided saves retain all positions within actual Demo storage',async()=>{
+  sessionStorage.clear();localStorage.clear();const api=axios.create({adapter:previewAdapter});
+  const actualSet=Storage.prototype.setItem;let footprint,matchedFootprint;
+  const measure=jest.spyOn(Storage.prototype,'setItem').mockImplementation(function(key,value){
+    if(key===STORE_KEY){const parsed=JSON.parse(value),history=parsed.portfolio_reporting||{};
+      footprint={total:value.length,snapshots:JSON.stringify(history.snapshots||[]).length,scope_events:JSON.stringify(history.scope_events||[]).length,identities:JSON.stringify(history.identities||[]).length,source_vectors:JSON.stringify(history.source_vectors||[]).length,
+        native:JSON.stringify({...parsed,portfolio_reporting:undefined}).length,snapshot_count:history.snapshots?.length||0,scope_event_count:history.scope_events?.length||0};}
+    if(footprint?.snapshot_count===40&&footprint.scope_event_count===19)matchedFootprint=footprint;
+    return actualSet.call(this,key,value);
+  });
+  try{
+    await api.post('/demo/enter');const cid=(await api.post('/clients',{name:'Isolated actual changing scope storage fixture'})).data.client_id;
+    const state={version:3,step:3,policies:Object.fromEntries(baseline.policies.map(policy=>[policy.key,'unsure'])),requirements:Object.fromEntries(FRAMEWORKS.map(framework=>[framework.key,framework.key==='iso-27001'?'applies':'does_not_apply'])),reviews:[],framework_reviews:{}};
+    await api.post('/onboarding/baseline',{client_id:cid,state,finalize:true});
+    const ws=(await api.get('/frameworks/iso-27001',{params:{client_id:cid}})).data,selected=ws.assessments.filter(row=>row.specification==='annex_control'||isoGuidedCatalog.definitions[row.definition_id].specification==='annex_control').slice(0,25);
+    expect(selected).toHaveLength(25);
+    for(let row of selected){
+      const path='/framework_assessments/'+row.framework_assessment_id;
+      jest.advanceTimersByTime(1000);
+      row=(await api.patch(path,{soa_applicability:'included',soa_justification:'Synthetic risk treatment scope decision',expected_last_assessed:row.last_saved||row.last_assessed||null})).data;
+      const draft=(await api.get(path+'/guided-assessment')).data,answers={};
+      for(let pass=0;pass<30;pass++){const missing=isoQuestions(row.definition_id,answers).filter(question=>!(question.id in answers));if(!missing.length)break;for(const question of missing)answers[question.id]=question.type==='text'?'':question.type==='context'?'Relevant':'Yes';}
+      const result=isoGuidedResult(row.definition_id,answers,draft.version,'Synthetic storage regression');
+      const reviewed=(await api.put(path+'/guided-assessment',{version:draft.version,answers,summary_review:{version:draft.version,answers},step:0,completed:true,narrative:result.narrative,result,expected_revision:draft.revision,base_assessment_token:draft.current_assessment_token,base_scope_fingerprint:draft.current_scope_fingerprint})).data;
+      jest.advanceTimersByTime(1000);
+      const saved=(await api.patch(path,{implementation:reviewed.narrative,status:reviewed.result.status,guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(field=>[field,reviewed[field]])),expected_last_assessed:row.last_saved})).data;
+      expect(saved.assessment_history.slice(0,-1)).toEqual(row.assessment_history);expect(saved.implementation).toBe(result.narrative);
+    }
+    const saved=restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY))),history=portfolioReportingRequest(saved,'/portfolio/reporting/history',{client_id:cid,program_key:'iso-27001'});
+    expect(history.snapshots).toHaveLength(51);expect(history.scope_changes).toHaveLength(26);
+    expect(history.scope_changes[0].before).toBeNull();
+    expect(history.scope_changes.filter(change=>change.before&&change.after)).toHaveLength(25);
+    expect(history.current.implemented).toBe(25);expect(history.current.denominator).toBe(55);
+    expect(saved.framework_assessments.filter(row=>row.client_id===cid&&row.status==='addressed')).toHaveLength(25);
+    expect(footprint.total).toBeLessThan(5000000);
+  }finally{console.info('Changing ISO storage footprint (code units)',{matched_prefix:matchedFootprint,final:footprint});measure.mockRestore();sessionStorage.clear();localStorage.clear();}
+},120000);
 
 test('normal native ISO save supplies last activity while rejected and no-op receipts never replace it',()=>{
   const db=fixture(['iso-27001']),row=db.framework_assessments.find(row=>row.definition_id==='A.5.1');

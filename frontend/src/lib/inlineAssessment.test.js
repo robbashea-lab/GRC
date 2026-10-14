@@ -3,6 +3,10 @@ import {omniCisSummary} from './omniCisSummary';
 import {catalogForVersion,versionForSafeguard} from './guidedAssessment';
 import cis from '@catalogs/cisIG1.json';
 
+const EVALUATED_AT='2026-10-13T12:00:00Z';
+beforeEach(()=>{jest.useFakeTimers();jest.setSystemTime(new Date(EVALUATED_AT));});
+afterEach(()=>{jest.useRealTimers();});
+
 test('reported paragraph and supported controls share the multiline native field',()=>{
   expect(formatInlineSummary({paragraph:'Client reports a working inventory.',controls:['Assets are recorded.','Assets are recorded.'],limitations:'Coverage remains partial.',date:'2026-10-13T12:00:00Z'})).toBe('Client reports a working inventory. Coverage remains partial. This assessment reflects practices reported on 2026-10-13; independent verification remains separate.\n\nControls in place\n• Assets are recorded.');
   expect(formatInlineSummary({paragraph:'No current practice is established.',date:'2026-10-13'})).toMatch(/\n\nControls in place$/);
@@ -11,7 +15,7 @@ test('reported paragraph and supported controls share the multiline native field
 test.each(cis.requirements.map(row=>row.id))('%s uses the unchanged evaluator with only supported controls in the inline narrative',id=>{
   const version=versionForSafeguard(id),questions=catalogForVersion(version).safeguards[id];
   const answers=Object.fromEntries(questions.map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':q.type==='date'?'2026-10-01':q.type==='multi'?['Quarantine or isolate']:q.id==='frequency'?(id==='1.1'?'Every six months':id==='1.3'?'Daily':'Weekly'):q.id==='sources'?'One source':q.id==='unresolved'?'No':q.choices.includes('Yes')?'Yes':q.choices[0]]));
-  const before=omniCisSummary(id,answers,version,'Synthetic client'),after=omniCisSummary(id,answers,version,'Synthetic client','2026-10-13T12:00:00Z');
+  const before=omniCisSummary(id,answers,version,'Synthetic client'),after=omniCisSummary(id,answers,version,'Synthetic client',EVALUATED_AT);
   expect({...after.result,narrative:''}).toEqual({...before.result,narrative:''});
   expect(after.result.narrative).toContain('\n\nControls in place\n• ');
   expect(after.result.narrative).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);
