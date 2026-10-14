@@ -1,0 +1,865 @@
+{
+  "version": "soc2-omni-1",
+  "framework_id": "soc-2",
+  "source": {
+    "edition": "AICPA/ASEC TSP Section 100, 2017 Trust Services Criteria with revised Points of Focus (2022)",
+    "url": "https://assets.ctfassets.net/rb9cdnjh59cm/5jT1narHNQNzt4JGlkd1gr/248661d08e42531329d147782a6f8854/Trust-services-criteria.pdf",
+    "publisher_url": "https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022",
+    "reviewed_on": "2026-10-10",
+    "classification": "Omnisciente-authored interview; not official criterion wording",
+    "page_numbering": "Printed publication page numbers, starting at 1; not zero-based PDF page indexes",
+    "interpretation": "Criterion outcomes are considered in the selected system and its commitments. Points of Focus inform inquiry, not universally mandatory individual controls. Reported readiness does not establish verified operation or an auditor opinion."
+  },
+  "definitions": {
+    "CC1.1": {
+      "title": "Ethical conduct", "category": "security", "source_page": 14,
+      "objective": "Understand how ethical expectations are demonstrated and followed through in the people supporting the system.",
+      "groups": [
+        {"id": "expectations", "title": "Ethical expectations", "questions": [
+          {"id": "CC1.1-expectations", "prompt": "Are expectations for honest and ethical conduct clear to the people supporting this system?", "help": "Describe the expectations and how employees, contractors, and relevant provider personnel learn them. A handbook, conversations, agreements, or another effective approach may be used; no particular document title is required.", "topic": "Conduct expectations and communication", "remediation": "Clarify and communicate ethical expectations to the relevant internal and external personnel.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "leadership", "title": "Leadership in practice", "questions": [
+          {"id": "CC1.1-leadership", "prompt": "Does leadership's actual behavior reinforce those expectations, including when business pressure makes them inconvenient?", "help": "Explain how management decisions and actions support integrity. Written statements alone do not demonstrate conduct, and a particular committee or certification is not required.", "topic": "Leadership conduct", "remediation": "Address leadership behavior or decisions that conflict with stated ethical expectations.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "adherence", "title": "Adherence and concerns", "questions": [
+          {"id": "CC1.1-adherence", "prompt": "Is there a working way to identify whether people are following the conduct expectations and to raise concerns?", "help": "Describe who considers conduct concerns and how adherence is evaluated, including relevant external personnel. A trusted reporting contact can be appropriate; a hotline product or annual attestation is not a universal requirement.", "topic": "Adherence and reporting", "remediation": "Establish a workable way to evaluate conduct and bring concerns to an appropriate responsible person.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "departures", "title": "Responding to departures", "questions": [
+          {"id": "CC1.1-departures", "prompt": "Are departures from expected conduct handled consistently and promptly by someone with appropriate authority?", "help": "Explain the response route and, if available, a redacted example. If no concern has occurred, describe the established response rather than treating the absence of reports as proof of effectiveness.", "topic": "Conduct follow-through", "remediation": "Resolve gaps in responsibility, consistency, or timeliness when ethical conduct falls short.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC1.2": {
+      "title": "Independent oversight", "category": "security", "source_page": 15,
+      "objective": "Understand how governance provides appropriately objective oversight of control development and performance.",
+      "groups": [
+        {"id": "objectivity", "title": "Appropriate governance", "questions": [
+          {"id": "CC1.2-objectivity", "prompt": "Does the governance arrangement provide objective challenge and oversight appropriate to the organization's structure?", "help": "Explain who oversees management and how conflicts are handled. The publisher recognizes simplified governance for smaller, less complex entities; do not assume a separate board or independent director is always necessary.", "topic": "Governance objectivity", "remediation": "Clarify how the governance arrangement provides appropriate challenge and handles conflicts in oversight.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "CC1.2-structure-note", "type": "text", "prompt": "What governance arrangement is used? (Optional)", "help": "For example, an owner-led structure, trustees, partners, or a board. The name or form alone does not decide readiness.", "topic": "Governance arrangement", "remediation": ""}
+        ]},
+        {"id": "development", "title": "Control development oversight", "questions": [
+          {"id": "CC1.2-development", "prompt": "Does governance oversee how the system's important controls are designed and developed?", "help": "Describe the questions, decisions, or challenges made by the oversight body or person. Meeting minutes are one possible record, not the only acceptable approach.", "topic": "Oversight of control development", "remediation": "Ensure governance considers significant control-design decisions rather than leaving them without oversight.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "performance", "title": "Control performance oversight", "questions": [
+          {"id": "CC1.2-performance", "prompt": "Does governance receive and act on information about control performance and significant shortcomings?", "help": "Explain what reaches the oversight role and how it challenges or follows up management's response. Use the actual oversight arrangement, not an assumed enterprise committee.", "topic": "Oversight of control performance", "remediation": "Improve governance visibility and follow-through on material control performance issues.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC1.3": {
+      "title": "Roles and reporting lines", "category": "security", "source_page": 16,
+      "objective": "Understand how management establishes the structures and authority needed for system objectives under governance oversight.",
+      "groups": [
+        {"id": "structure", "title": "Structure and reporting", "questions": [
+          {"id": "CC1.3-structure", "prompt": "Has management established reporting lines that allow system responsibilities and important information to reach the right people, under governance oversight?", "help": "Explain the actual reporting structure, including provider interactions where relevant. An organization chart is useful but not mandatory if the arrangement is otherwise clear and working.", "topic": "Reporting structure and oversight", "remediation": "Clarify reporting lines and governance oversight for the system's control responsibilities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "authority", "title": "Authority and responsibility", "questions": [
+          {"id": "CC1.3-authority", "prompt": "Are appropriate responsibilities, decision authority, and limits established by management under governance oversight?", "help": "Describe who can decide, perform, and escalate important work. Include outsourced responsibilities without assuming the provider takes over management's accountability.", "topic": "Assigned authority and responsibilities", "remediation": "Resolve unclear responsibility, authority, or oversight that could prevent system objectives being met.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC1.4": {
+      "title": "Workforce competence", "category": "security", "source_page": 17,
+      "objective": "Understand the commitment to obtaining, developing, and retaining the competence needed for control responsibilities.",
+      "groups": [
+        {"id": "attract", "title": "Obtaining competence", "questions": [
+          {"id": "CC1.4-attract", "prompt": "Does the organization demonstrate a commitment to obtaining people with the skills needed for its system and control responsibilities?", "help": "Describe role expectations and how competence is considered in hiring or engagement. An unfilled vacancy is not automatically a failure if the commitment and interim coverage are adequate.", "topic": "Attracting relevant competence", "remediation": "Strengthen the approach to obtaining needed competence and covering identified skill gaps.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "develop", "title": "Developing competence", "questions": [
+          {"id": "CC1.4-develop", "prompt": "Does the organization demonstrate a commitment to developing the competence people need as their responsibilities or the system change?", "help": "Training, coaching, supervised practice, or other suitable methods may work. No particular course, certificate, or annual schedule is required by this question.", "topic": "Competence development", "remediation": "Address gaps in developing the competence needed for current responsibilities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "retain", "title": "Retaining capability", "questions": [
+          {"id": "CC1.4-retain", "prompt": "Does the organization demonstrate a commitment to retaining the competent people and continuity needed to support objectives?", "help": "Explain retention and continuity measures relevant to the organization. Someone leaving is not by itself a criterion failure; distinguish the response and commitment from guaranteed retention outcomes.", "topic": "Competence retention and continuity", "remediation": "Improve the commitment to retaining capability and handling loss of key competence.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC1.5": {
+      "title": "Control accountability", "category": "security", "source_page": 18,
+      "objective": "Understand whether people are held accountable for their actual control responsibilities.",
+      "groups": [
+        {"id": "expectations", "title": "Known responsibilities", "questions": [
+          {"id": "CC1.5-expectations", "prompt": "Do the people responsible for controls know what they are accountable for delivering?", "help": "Describe how responsibilities and expectations are agreed, including relevant provider work. A job description, task ownership, or another clear arrangement may support accountability.", "topic": "Control responsibility expectations", "remediation": "Clarify who is accountable for important control responsibilities and expected results.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "follow-through", "title": "Accountability in practice", "questions": [
+          {"id": "CC1.5-follow-through", "prompt": "Does management follow through when assigned control responsibilities are not carried out?", "help": "Explain how missed work and repeated problems are considered and addressed. A particular performance-review form or incentive scheme is not required.", "topic": "Accountability follow-through", "remediation": "Address missing or inconsistent follow-through on assigned control responsibilities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC2.1": {
+      "title": "Useful control information", "category": "security", "source_page": 19,
+      "objective": "Understand whether controls use relevant, sufficiently reliable information rather than merely collecting records.",
+      "groups": [
+        {"id": "information", "title": "Relevant information", "questions": [
+          {"id": "CC2.1-information", "prompt": "Is the information needed to perform and oversee important controls obtained or produced?", "help": "Identify the information used for actual decisions, such as access lists, exceptions, or service commitments. Focus on the selected system rather than demanding a universal report set.", "topic": "Information needed by controls", "remediation": "Identify and obtain information needed to perform or oversee controls.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "quality", "title": "Information quality", "questions": [
+          {"id": "CC2.1-quality", "prompt": "Is that information sufficiently accurate, complete, current, and usable for the control decisions it supports?", "help": "Explain how quality problems are noticed and corrected, including provider-supplied information. Appropriate manual checks or automated validation can both work.", "topic": "Quality of control information", "remediation": "Resolve information-quality weaknesses that impair control decisions.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "use", "title": "Use in control work", "questions": [
+          {"id": "CC2.1-use", "prompt": "Do the responsible people actually use this information to carry out and oversee controls?", "help": "Describe a decision or activity the information supports and how missing information is handled. Possessing a report without using it is not the same as operating the control.", "topic": "Use of information in controls", "remediation": "Ensure relevant information reaches and is used by the people carrying out controls.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC2.2": {
+      "title": "Internal control communications", "category": "security", "source_page": 21,
+      "objective": "Understand whether internal communications enable people to perform their control responsibilities.",
+      "groups": [
+        {"id": "objectives", "title": "Communicating objectives", "questions": [
+          {"id": "CC2.2-objectives", "prompt": "Are relevant system and control objectives communicated to the people who need to act on them?", "help": "Explain what people are told about the outcomes they must protect. Team meetings, written guidance, or other appropriate communication can work.", "topic": "Internal communication of objectives", "remediation": "Communicate relevant objectives to the people responsible for supporting them.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "responsibilities", "title": "Responsibilities and changes", "questions": [
+          {"id": "CC2.2-responsibilities", "prompt": "Do people receive the responsibility, procedure, and change information needed to perform their control work?", "help": "Describe how updates reach the affected roles and how misunderstanding is resolved. An awareness platform or fixed communication calendar is not required.", "topic": "Internal responsibility information", "remediation": "Close communication gaps affecting people's ability to perform control responsibilities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "escalation", "title": "Two-way communication", "questions": [
+          {"id": "CC2.2-escalation", "prompt": "Can staff communicate important control issues to someone who can act on them?", "help": "Explain the route for questions, errors, or concerns. The route should fit the organization; a specific hotline or reporting product is not required.", "topic": "Internal issue communication", "remediation": "Make important control concerns reachable by an appropriate decision-maker.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC2.3": {
+      "title": "External control communications", "category": "security", "source_page": 22,
+      "objective": "Understand how external parties exchange information relevant to the system's controls.",
+      "groups": [
+        {"id": "outbound", "title": "Communicating outward", "questions": [
+          {"id": "CC2.3-outbound", "prompt": "Are customers, providers, and other relevant external parties given the control information and responsibilities they need?", "help": "Describe the information relevant to these relationships, such as service responsibilities or reporting contacts. Only applicable parties and commitments are in scope.", "topic": "External control information", "remediation": "Communicate relevant control expectations and responsibilities to affected external parties.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "inbound", "title": "Receiving and acting", "questions": [
+          {"id": "CC2.3-inbound", "prompt": "Can important external concerns or changes reach the responsible internal team and receive an appropriate response?", "help": "Explain how customer reports, provider alerts, or other control-relevant information is routed and considered. Merely having a contact address does not show follow-through.", "topic": "External concerns and follow-through", "remediation": "Resolve gaps in receiving, routing, or responding to external control information.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC3.1": {
+      "title": "Clear risk objectives", "category": "security", "source_page": 24,
+      "objective": "Understand whether objectives are clear enough to identify and assess risks to the selected system.",
+      "groups": [
+        {"id": "clarity", "title": "Clear objectives", "questions": [
+          {"id": "CC3.1-clarity", "prompt": "Are the relevant objectives clear enough that people can identify what could prevent them being achieved?", "help": "Use the system's actual commitments and requirements. Objectives may be expressed in agreements, plans, or other suitable records; a particular risk methodology is not required.", "topic": "Objective clarity for risk identification", "remediation": "Clarify objectives sufficiently to identify associated risks.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "assessment", "title": "Usable for assessment", "questions": [
+          {"id": "CC3.1-assessment", "prompt": "Are those objectives specific enough to assess the significance of risks and decide how to respond?", "help": "Explain how the objectives help distinguish an acceptable result from a failure. Do not invent numerical service commitments that management has not adopted.", "topic": "Objectives supporting risk assessment", "remediation": "Resolve ambiguity that prevents meaningful assessment of risks to objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC3.2": {
+      "title": "Risks to objectives", "category": "security", "source_page": 27,
+      "objective": "Understand how relevant risks are identified and analyzed to decide how they should be managed.",
+      "groups": [
+        {"id": "identification", "title": "Identifying risks", "questions": [
+          {"id": "CC3.2-identification", "prompt": "Are risks to the system's objectives identified across the relevant activities, people, technology, and external dependencies?", "help": "Describe the approach and coverage, not a complete risk register here. Consider internal and external causes; a prescribed template or scoring product is not required.", "topic": "Risk identification coverage", "remediation": "Address blind spots in identifying risks to the selected system's objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "analysis", "title": "Analyzing significance", "questions": [
+          {"id": "CC3.2-analysis", "prompt": "Are identified risks analyzed sufficiently to understand their significance to those objectives?", "help": "Explain how likelihood, impact, or other suitable considerations inform decisions. A qualitative approach can be appropriate; no universal scoring threshold is imposed.", "topic": "Risk analysis", "remediation": "Improve analysis of identified risks so their significance can be understood.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "response", "title": "Management decisions", "questions": [
+          {"id": "CC3.2-response", "prompt": "Does the analysis lead to decisions about how risks will be managed?", "help": "Describe the responsible decision-maker and how responses are selected. Risk acceptance is a management decision, not proof that another criterion or control has been implemented.", "topic": "Risk management decisions", "remediation": "Connect risk analysis to appropriate management decisions and responses.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC3.3": {
+      "title": "Fraud-risk consideration", "category": "security", "source_page": 28,
+      "objective": "Understand whether fraud is considered within risks to the system's objectives.",
+      "groups": [
+        {"id": "consideration", "title": "Potential fraud", "questions": [
+          {"id": "CC3.3-consideration", "prompt": "Does risk assessment consider ways fraud or deliberate misconduct could prevent system objectives being met?", "help": "Explain relevant scenarios involving people, information, assets, or privileged access. The lack of a past fraud incident is not a reason to skip the consideration.", "topic": "Fraud consideration in risk assessment", "remediation": "Include relevant fraud possibilities when assessing risks to system objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "assessment", "title": "Assessing relevant scenarios", "questions": [
+          {"id": "CC3.3-assessment", "prompt": "Are those fraud possibilities considered seriously enough to inform the assessment and response?", "help": "Describe consideration of relevant incentives, opportunities, or potential overrides. These are inquiry prompts, not a requirement to use a particular fraud checklist or create a separate committee.", "topic": "Fraud-risk analysis and response context", "remediation": "Analyze relevant fraud scenarios rather than recording a blanket assumption that fraud cannot occur.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC3.4": {
+      "title": "Significant change assessment", "category": "security", "source_page": 29,
+      "objective": "Understand how significant changes are identified and assessed for their effects on controls.",
+      "groups": [
+        {"id": "identification", "title": "Recognizing significant change", "questions": [
+          {"id": "CC3.4-identification", "prompt": "Is there a working way to identify changes that could significantly affect the system's controls?", "help": "Consider relevant business, leadership, technology, provider, or external changes. Routine technical change tickets alone may not cover all significant changes.", "topic": "Significant change identification", "remediation": "Resolve gaps in recognizing changes that could materially affect controls.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "impact", "title": "Assessing the impact", "questions": [
+          {"id": "CC3.4-impact", "prompt": "Are significant changes assessed for their effect on control responsibilities, risks, and continued achievement of objectives?", "help": "Describe who considers the impact and how conclusions inform the control response. If no major change has occurred, describe the established process rather than claiming historical effectiveness.", "topic": "Control impact of significant changes", "remediation": "Assess material changes before relying on controls that may no longer fit the system.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC4.1": {
+      "title": "Ongoing and separate evaluations", "category": "security", "source_page": 30,
+      "objective": "Understand how evaluations determine whether the control system exists and functions.",
+      "groups": [
+        {"id": "design", "title": "Selecting evaluations", "questions": [
+          {"id": "CC4.1-design", "prompt": "Are ongoing evaluations, separate evaluations, or an appropriate combination selected and developed to assess the control system?", "help": "Explain the approach, coverage, and why it fits the system. Do not require both methods in every case or assume an external audit is the only acceptable evaluation.", "topic": "Evaluation approach and coverage", "remediation": "Establish evaluations suited to determining whether the control system is present and functioning.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "performance", "title": "Performing evaluations", "questions": [
+          {"id": "CC4.1-performance", "prompt": "Are the selected evaluations actually performed and their results considered?", "help": "Describe who evaluates controls and what the results reveal. An evaluation plan or completed questionnaire without actual examination is not proof of performance.", "topic": "Performed control evaluations", "remediation": "Carry out the selected evaluations and consider their results rather than relying on a plan alone.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC4.2": {
+      "title": "Deficiency follow-up", "category": "security", "source_page": 31,
+      "objective": "Understand how control deficiencies are evaluated and promptly communicated to those responsible for correction.",
+      "groups": [
+        {"id": "evaluation", "title": "Evaluating deficiencies", "questions": [
+          {"id": "CC4.2-evaluation", "prompt": "Are identified control deficiencies evaluated promptly to understand their significance and need for correction?", "help": "Describe triage and responsibility. Recording an issue or accepting a risk does not by itself evaluate whether the system's objectives remain supported.", "topic": "Deficiency evaluation", "remediation": "Resolve delays or gaps in evaluating control deficiencies.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "communication", "title": "Communicating for correction", "questions": [
+          {"id": "CC4.2-communication", "prompt": "Do deficiencies promptly reach the people responsible for corrective action, including management and governance where appropriate?", "help": "Explain escalation and how responsibility for correction becomes clear. A named ticketing product or universal reporting interval is not required.", "topic": "Deficiency communication and escalation", "remediation": "Ensure deficiencies reach appropriate correction owners and oversight roles promptly.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC5.1": {
+      "title": "Risk-responsive control selection", "category": "security", "source_page": 31,
+      "objective": "Understand how control activities are selected and developed to reduce risks to acceptable levels.",
+      "groups": [
+        {"id": "selection", "title": "Selecting responses", "questions": [
+          {"id": "CC5.1-selection", "prompt": "Are control activities selected to respond to identified risks to the system's objectives?", "help": "Describe how the chosen activities fit the risks, rather than listing tools. Management selects suitable controls; there is no single universal SOC control library.", "topic": "Risk-responsive control selection", "remediation": "Connect selected control activities to the risks and objectives they are intended to address.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "development", "title": "Developing suitable controls", "questions": [
+          {"id": "CC5.1-development", "prompt": "Are the selected activities developed sufficiently to reduce the relevant risks to levels management considers acceptable?", "help": "Explain coverage, responsibility, and how overlapping or missing controls are considered. A documented exception is not automatic implementation of the missing activity.", "topic": "Development of risk-reducing controls", "remediation": "Develop selected controls to address remaining risk or coverage gaps.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC5.2": {
+      "title": "Technology control activities", "category": "security", "source_page": 32,
+      "objective": "Understand how general technology controls support the selected system's objectives.",
+      "groups": [
+        {"id": "selection", "title": "Technology dependencies", "questions": [
+          {"id": "CC5.2-selection", "prompt": "Are general technology control activities selected for the technology dependencies that support system objectives?", "help": "Explain relevant infrastructure, access, operations, or change dependencies. Examples guide inquiry; they do not require a particular tool, vendor, or identical control set for every system.", "topic": "Selection of technology controls", "remediation": "Identify technology control activities needed to support the system's objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "development", "title": "Developed control activities", "questions": [
+          {"id": "CC5.2-development", "prompt": "Are those technology control activities developed with appropriate coverage and responsibility?", "help": "Describe how the activities work, including shared responsibilities with providers. Buying a managed service alone does not demonstrate that its relevant controls are adequate.", "topic": "Development of technology controls", "remediation": "Resolve gaps in the design, coverage, or responsibility of selected technology controls.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC5.3": {
+      "title": "Policy-backed control operation", "category": "security", "source_page": 33,
+      "objective": "Understand how policy expectations are translated into procedures that actually operate.",
+      "groups": [
+        {"id": "expectations", "title": "Policy expectations", "questions": [
+          {"id": "CC5.3-expectations", "prompt": "Are policy expectations for the system's control activities established and understood by those responsible?", "help": "Describe the expectations and the form used to convey them. This question does not prescribe a document title or require a separate policy for every activity.", "topic": "Established policy expectations", "remediation": "Clarify policy expectations underlying relevant control activities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "procedures", "title": "Putting expectations into practice", "questions": [
+          {"id": "CC5.3-procedures", "prompt": "Are procedures deployed and carried out to put those policy expectations into action?", "help": "Explain how work is performed, who is responsible, and how exceptions are handled. A policy that exists but is not put into practice does not satisfy this inquiry.", "topic": "Operating procedures", "remediation": "Put policy expectations into workable procedures and address gaps in actual performance.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC6.1": {
+      "title": "Logical-access protection", "category": "security", "source_page": 34,
+      "objective": "Understand logical-access safeguards across the software, infrastructure, and architecture protecting information assets.",
+      "groups": [
+        {"id": "coverage", "title": "Protected information assets", "questions": [
+          {"id": "CC6.1-coverage", "prompt": "Do logical-access protections cover the information assets and system components that need protection?", "help": "Describe coverage across applications, infrastructure, interfaces, and administrative access relevant to the system. Do not assume one login screen protects every path.", "topic": "Logical-access coverage", "remediation": "Close gaps in logical-access coverage of protected information assets and system components.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "protection", "title": "Access protections in place", "questions": [
+          {"id": "CC6.1-protection", "prompt": "Are logical-access mechanisms implemented to protect those assets against security events relevant to system objectives?", "help": "Explain authentication, authorization, or other appropriate mechanisms and how they fit the risks. No particular identity provider or single prescribed technical method is required.", "topic": "Implemented logical-access mechanisms", "remediation": "Implement suitable logical-access mechanisms for the system's relevant security risks.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "operation", "title": "Protecting access in practice", "questions": [
+          {"id": "CC6.1-operation", "prompt": "Do those mechanisms operate across the relevant access paths, including privileged and provider-managed access?", "help": "Describe actual enforcement and how bypasses or exceptions are handled. Provider involvement alone does not establish adequate logical-access protection.", "topic": "Logical-access enforcement", "remediation": "Resolve unenforced, bypassed, or uncovered access paths that weaken protection.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC6.2": {
+      "title": "Identity registration and authorization", "category": "security", "source_page": 36,
+      "objective": "Understand registration and authorization before access is granted, and removal of credentials when authorization ends.",
+      "groups": [
+        {"id": "registration", "title": "Before access is issued", "questions": [
+          {"id": "CC6.2-registration", "prompt": "Are new internal and external users registered before organization-administered credentials or access are issued?", "help": "Describe how a user is identified and recorded before access. Include relevant contractors and provider users; a particular identity-management product is not required.", "topic": "User registration before access", "remediation": "Register relevant users before issuing credentials or granting access.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "authorization", "title": "Authorized access issuance", "questions": [
+          {"id": "CC6.2-authorization", "prompt": "Is authorization established before those users receive credentials or access?", "help": "Explain who approves access and how issuance follows that decision. Registration or a request alone is not authorization.", "topic": "Authorization before access", "remediation": "Ensure approval precedes credential issuance or access grants.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "revocation", "title": "Ending credential authorization", "questions": [
+          {"id": "CC6.2-revocation", "prompt": "Are organization-administered credentials removed when access is no longer authorized?", "help": "Describe how departures and ended external engagements reach the responsible team and how removal is performed. Avoid inventing a universal hour-based deadline.", "topic": "Credential removal", "remediation": "Resolve gaps in identifying and removing credentials that are no longer authorized.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC6.3": {
+      "title": "Access changes and removal", "category": "security", "source_page": 36,
+      "objective": "Understand entitlement decisions and changes according to applicable roles, responsibilities, or system design.",
+      "groups": [
+        {"id": "entitlements", "title": "Appropriate permissions", "questions": [
+          {"id": "CC6.3-entitlements", "prompt": "Is access to protected information authorized according to the applicable roles, responsibilities, or system design?", "help": "Describe the basis for permission decisions. These are applicable alternatives, not a requirement to implement all three bases simultaneously.", "topic": "Entitlement authorization", "remediation": "Align access authorization with the applicable roles, responsibilities, or system design.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "changes", "title": "Keeping permissions aligned", "questions": [
+          {"id": "CC6.3-changes", "prompt": "Are permissions modified or removed according to those bases and relevant changes?", "help": "Explain how role changes, changed duties, and other authorization changes reach access owners. This concerns permissions, not only deleting a departing user's account.", "topic": "Entitlement modification and removal", "remediation": "Resolve permissions that are not updated or removed when their authorization basis changes.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "considerations", "title": "Limiting incompatible access", "questions": [
+          {"id": "CC6.3-considerations", "prompt": "Are least privilege and separation of incompatible duties considered when granting and changing access?", "help": "Describe the consideration and any appropriate compensating arrangements. The criterion does not demand an identical role model or complete personnel separation in every organization.", "topic": "Least-privilege and duty-separation considerations", "remediation": "Consider excessive or incompatible permissions and appropriate mitigating arrangements.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC6.4": {
+      "title": "Physical-access restriction", "category": "security", "source_page": 37,
+      "objective": "Understand physical-access restrictions for relevant facilities and protected information assets.",
+      "groups": [
+        {"id": "facilities", "title": "Relevant facilities", "questions": [
+          {"id": "CC6.4-facilities", "prompt": "Is physical access to facilities relevant to the system limited to authorized people?", "help": "Consider the actual locations used, including relevant hosted facilities. Remote work or cloud hosting changes the boundary and responsibilities; it does not automatically make physical protection irrelevant.", "topic": "Facility access restrictions", "remediation": "Resolve uncovered physical-access restrictions at relevant facilities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "assets", "title": "Protected physical assets", "questions": [
+          {"id": "CC6.4-assets", "prompt": "Is physical access to protected information assets restricted appropriately, including storage locations and devices within the system boundary?", "help": "Describe suitable restrictions and provider responsibilities where relevant. Locks, supervised access, and other risk-appropriate arrangements are alternatives, not a mandatory badge system.", "topic": "Physical protection of information assets", "remediation": "Address physical access paths that expose protected information assets to unauthorized people.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC6.5": {
+      "title": "Retired asset information protection", "category": "security", "source_page": 37,
+      "objective": "Understand how data and software are protected before physical assets leave their protective arrangements.",
+      "groups": [
+        {"id": "recoverability", "title": "Before releasing assets", "questions": [
+          {"id": "CC6.5-recoverability", "prompt": "Is the ability to read or recover data and software reduced appropriately before physical assets lose their logical or physical protections?", "help": "Describe the actual retirement, reuse, return, or disposal process. Appropriate sanitization, destruction, or another effective method may be used; a named wiping tool is not required.", "topic": "Recoverability reduction before release", "remediation": "Reduce data and software recoverability before releasing assets from protection.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "release", "title": "Permitted release", "questions": [
+          {"id": "CC6.5-release", "prompt": "Is protection ended only after recovery of the affected data or software is no longer needed to meet objectives?", "help": "Explain how retention, legal holds, or recovery needs are considered before release. A disposal ticket alone does not show that these needs were addressed.", "topic": "Recovery needs before ending protection", "remediation": "Resolve recovery or retention needs before ending protection of physical assets.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC6.6": {
+      "title": "External-boundary protection", "category": "security", "source_page": 38,
+      "objective": "Understand logical-access protection against threats entering from outside the system boundary.",
+      "groups": [
+        {"id": "entry-paths", "title": "External entry paths", "questions": [
+          {"id": "CC6.6-entry-paths", "prompt": "Are external access paths protected against threats entering the system from outside its boundary?", "help": "Describe relevant internet, remote-access, integration, and provider paths. Appropriate architecture and access controls may differ; no specific firewall product is prescribed.", "topic": "External access-path protection", "remediation": "Close gaps in logical protection of external entry paths.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "enforcement", "title": "Boundary protection in use", "questions": [
+          {"id": "CC6.6-enforcement", "prompt": "Are those protections implemented and enforced across the relevant boundary, including exceptions and provider-managed paths?", "help": "Explain how the intended restrictions are put into practice and who handles exceptions. A network diagram or a purchased service alone does not demonstrate enforcement.", "topic": "Boundary protection enforcement", "remediation": "Resolve unenforced boundary protections and unmanaged exceptions or dependencies.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC6.7": {
+      "title": "Protected information movement", "category": "security", "source_page": 38,
+      "objective": "Understand authorization and protection when information is transmitted, moved, or removed.",
+      "groups": [
+        {"id": "authorization", "title": "Who may move information", "questions": [
+          {"id": "CC6.7-authorization", "prompt": "Can only authorized users and processes transmit, move, or remove protected information?", "help": "Describe relevant transfers, exports, integrations, or removable media. Authorization may be enforced through technical or administrative arrangements suited to the risk.", "topic": "Authorization of information movement", "remediation": "Restrict information movement to authorized users and processes.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "protection", "title": "Protection while moving", "questions": [
+          {"id": "CC6.7-protection", "prompt": "Is information protected appropriately while it is transmitted, moved, or removed?", "help": "Explain the safeguards for the actual channels and destinations used. Encryption, protected physical handling, or other suitable measures may apply; no single method covers every movement.", "topic": "Protection during information movement", "remediation": "Address exposure of information during relevant transfers, movement, or removal.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC6.8": {
+      "title": "Malicious-software prevention", "category": "security", "source_page": 39,
+      "objective": "Understand prevention or detection of unauthorized and malicious software, and action when it is introduced.",
+      "groups": [
+        {"id": "prevention-detection", "title": "Preventing or detecting software", "questions": [
+          {"id": "CC6.8-prevention-detection", "prompt": "Are controls implemented to prevent or detect unauthorized or malicious software relevant to the system?", "help": "Describe coverage and the approach used. Prevention, detection, or suitable combinations can work; antivirus from a particular vendor is not the only possible control.", "topic": "Unauthorized or malicious software controls", "remediation": "Implement suitable prevention or detection for relevant unauthorized or malicious software.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "response", "title": "Action on introduction", "questions": [
+          {"id": "CC6.8-response", "prompt": "Is appropriate action taken when unauthorized or malicious software is introduced?", "help": "Explain who receives alerts and how the affected software is handled. If none has been detected, describe the established response; silence is not proof of protection.", "topic": "Action on software introduction", "remediation": "Resolve gaps in responding to introduced unauthorized or malicious software.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC7.1": {
+      "title": "Configuration and vulnerability detection", "category": "security", "source_page": 40,
+      "objective": "Understand detection of vulnerability-producing configuration changes and susceptibility to newly identified vulnerabilities.",
+      "groups": [
+        {"id": "changes", "title": "Configuration changes", "questions": [
+          {"id": "CC7.1-changes", "prompt": "Are configuration changes that introduce vulnerabilities detected in relevant system components?", "help": "Describe how changes are examined or monitored and how blind spots are handled. Configuration review or suitable detection mechanisms can work without a mandated product.", "topic": "Vulnerability-producing configuration detection", "remediation": "Improve detection of configuration changes that introduce vulnerabilities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "new-vulnerabilities", "title": "Newly discovered vulnerabilities", "questions": [
+          {"id": "CC7.1-new-vulnerabilities", "prompt": "Is the system monitored for susceptibility to newly discovered vulnerabilities?", "help": "Explain how relevant advisories, component information, scans, or another suitable source are assessed. No universal scan interval or fixed remediation deadline is introduced here.", "topic": "New vulnerability susceptibility detection", "remediation": "Resolve gaps in identifying whether newly discovered vulnerabilities affect the system.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC7.2": {
+      "title": "Anomaly monitoring", "category": "security", "source_page": 40,
+      "objective": "Understand monitoring for harmful anomalies and analysis to determine whether they are security events.",
+      "groups": [
+        {"id": "monitoring", "title": "Monitoring system behavior", "questions": [
+          {"id": "CC7.2-monitoring", "prompt": "Are relevant components and their operation monitored for unusual behavior that could reflect malicious acts, natural disruptions, or errors?", "help": "Describe what is watched and how coverage fits system objectives. A particular monitoring platform or continuously staffed operations center is not universally required.", "topic": "Monitoring for relevant anomalies", "remediation": "Close monitoring gaps for anomalies that could affect system objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "analysis", "title": "Analyzing anomalies", "questions": [
+          {"id": "CC7.2-analysis", "prompt": "Are detected anomalies analyzed to decide whether they represent security events?", "help": "Explain responsibility for assessment and how alerts reach that role. Collecting logs without analysis is not the same as determining whether a security event occurred.", "topic": "Anomaly analysis and event identification", "remediation": "Ensure detected anomalies receive analysis rather than remaining unattended alerts or logs.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC7.3": {
+      "title": "Security-event evaluation", "category": "security", "source_page": 41,
+      "objective": "Understand evaluation of security-event impacts and action to prevent or address failures to meet objectives.",
+      "groups": [
+        {"id": "impact", "title": "Evaluating security events", "questions": [
+          {"id": "CC7.3-impact", "prompt": "Are security events evaluated to determine whether they could cause, or have caused, failure to meet system objectives?", "help": "Describe how impact and affected information are considered. Distinguish analyzing an unusual signal from evaluating an identified security event's consequences.", "topic": "Security-event impact evaluation", "remediation": "Resolve gaps in evaluating potential or actual objective failures caused by security events.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "action", "title": "Acting on the evaluation", "questions": [
+          {"id": "CC7.3-action", "prompt": "Does that evaluation lead to appropriate action to prevent or address the identified failures?", "help": "Explain escalation and decisions, including the established approach if no incident has occurred. A record marked resolved does not itself demonstrate that the relevant failure was addressed.", "topic": "Action on security-event impact", "remediation": "Connect event-impact conclusions to appropriate preventive or corrective action.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC7.4": {
+      "title": "Incident response operation", "category": "security", "source_page": 42,
+      "objective": "Understand execution of a defined incident-response approach to understand, contain, remediate, and communicate incidents as appropriate.",
+      "groups": [
+        {"id": "understand", "title": "Defined response and understanding", "questions": [
+          {"id": "CC7.4-understand", "prompt": "Is a defined response approach in use to understand identified security incidents and assign appropriate response responsibility?", "help": "Describe the working approach and how incidents are assessed. If none has occurred, describe established readiness without claiming observed execution throughout a past period.", "topic": "Defined response and incident understanding", "remediation": "Establish or improve the response approach for understanding identified incidents.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "contain-remediate", "title": "Containment and remediation", "questions": [
+          {"id": "CC7.4-contain", "prompt": "Does the response approach provide for appropriate containment of identified incidents?", "help": "Explain how affected services, information, or access can be contained. The method should fit the incident rather than demand one prescribed tool.", "topic": "Incident containment", "remediation": "Address gaps in containing identified incidents appropriately.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "CC7.4-remediate", "prompt": "Does the response approach provide for appropriate remediation of the incident and its relevant effects?", "help": "Describe how corrective response work is determined and performed. Opening a remediation ticket alone does not demonstrate that the response is working.", "topic": "Incident remediation", "remediation": "Resolve missing or incomplete incident-remediation arrangements.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "communication", "title": "Incident communication", "questions": [
+          {"id": "CC7.4-communication", "prompt": "Does the response approach communicate incidents to the appropriate parties?", "help": "Explain who decides what communication is needed under the actual commitments and circumstances. Do not infer a universal notification deadline or notify every party for every event.", "topic": "Appropriate incident communication", "remediation": "Clarify and operate the communication responsibilities for identified incidents.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC7.5": {
+      "title": "Incident recovery operation", "category": "security", "source_page": 44,
+      "objective": "Understand development and implementation of activities to recover after identified security incidents.",
+      "groups": [
+        {"id": "development", "title": "Recovery activities", "questions": [
+          {"id": "CC7.5-development", "prompt": "Are activities for recovering from security incidents identified and developed for the relevant system?", "help": "Describe how services and information would be restored under actual system objectives. Recovery remains relevant to Common Criteria even without the optional Availability category.", "topic": "Developed incident recovery activities", "remediation": "Identify and develop recovery activities for relevant security-incident effects.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "implementation", "title": "Recovery implementation", "questions": [
+          {"id": "CC7.5-implementation", "prompt": "Are the recovery activities implemented so the responsible people can carry them out when needed?", "help": "Explain available capabilities, responsibilities, and actual recovery experience where it exists. No incident does not establish historical operation; a documented plan alone may leave capability gaps.", "topic": "Implemented incident recovery", "remediation": "Resolve recovery capability or execution gaps in the developed activities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC8.1": {
+      "title": "Authorized system changes", "category": "security", "source_page": 45,
+      "objective": "Understand the lifecycle used to authorize, design, develop or acquire, configure, document, test, approve, and implement relevant changes.",
+      "groups": [
+        {"id": "authorize-design", "title": "Authorization and design", "questions": [
+          {"id": "CC8.1-authorize", "prompt": "Are changes to relevant infrastructure, data, software, and procedures authorized?", "help": "Describe who permits changes and the applicable paths, including emergency or provider changes. A specific change-board structure is not required.", "topic": "Change authorization", "remediation": "Resolve gaps in authorizing changes across relevant change paths.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "CC8.1-design", "prompt": "Are changes designed with the system's objectives and affected components in mind?", "help": "Explain how intended behavior and relevant effects are considered. Suitable lightweight design can work; a formal design document for every minor change is not required.", "topic": "Change design", "remediation": "Address missing design consideration for relevant system changes.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "develop-configure", "title": "Development and configuration", "questions": [
+          {"id": "CC8.1-develop", "prompt": "Are changes developed or acquired through arrangements suited to the intended system objectives?", "help": "Describe the actual development or acquisition route. Buying software does not automatically establish suitable change controls.", "topic": "Change development or acquisition", "remediation": "Resolve gaps in development or acquisition of relevant changes.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "CC8.1-configure", "prompt": "Are the changes configured appropriately before being relied on?", "help": "Explain how intended settings and integration details are established. This applies to the relevant change, not a mandatory universal configuration product.", "topic": "Change configuration", "remediation": "Address incomplete or inappropriate configuration of changes.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "document-test", "title": "Documentation and testing", "questions": [
+          {"id": "CC8.1-document", "prompt": "Are changes documented sufficiently for their implementation and continued operation?", "help": "Describe the records actually needed for the type of change. Tickets, version records, or other suitable documentation can work without a prescribed template.", "topic": "Change documentation", "remediation": "Fill documentation gaps that impair implementation or operation of changes.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "CC8.1-test", "prompt": "Are changes tested appropriately against their intended behavior and system objectives?", "help": "Describe testing and handling of unresolved results. The depth should fit the change; a passing build alone may not test its business or security effects.", "topic": "Change testing", "remediation": "Address missing or inadequate testing of changes and unresolved test results.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "approve-implement", "title": "Approval and implementation", "questions": [
+          {"id": "CC8.1-approve", "prompt": "Are changes approved through the appropriate decision path?", "help": "Explain approval, including relevant exceptions or emergency paths. Authorization to start work and approval of the resulting change are distinct considerations.", "topic": "Change approval", "remediation": "Resolve gaps in approving changes through appropriate decision paths.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "CC8.1-implement", "prompt": "Are approved changes implemented so the resulting system continues to meet its objectives?", "help": "Describe deployment or procedural rollout and how implementation problems are handled. Do not assume a specific release platform or universal rollback technology.", "topic": "Change implementation", "remediation": "Address implementation practices that leave approved changes incomplete or undermine objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC9.1": {
+      "title": "Disruption risk mitigation", "category": "security", "source_page": 47,
+      "objective": "Understand identification, selection, and development of mitigation activities for potential business disruptions.",
+      "groups": [
+        {"id": "identification", "title": "Mitigation activities", "questions": [
+          {"id": "CC9.1-identification", "prompt": "Are activities that could mitigate potential business-disruption risks identified?", "help": "Describe candidate mitigation activities for relevant dependencies or disruption scenarios. Identifying risks alone is not the same as identifying activities to mitigate them.", "topic": "Identification of disruption mitigations", "remediation": "Identify mitigation activities for relevant potential business disruptions.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "selection-development", "title": "Selected and developed mitigations", "questions": [
+          {"id": "CC9.1-selection-development", "prompt": "Are appropriate mitigation activities selected and developed for those disruption risks?", "help": "Explain how the chosen activities fit system commitments. Insurance, alternate arrangements, continuity measures, or other appropriate approaches are alternatives, not universal required purchases.", "topic": "Selection and development of disruption mitigations", "remediation": "Develop suitable disruption mitigations rather than relying on identified risks or an unfinished plan.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "CC9.2": {
+      "title": "Third-party risk oversight", "category": "security", "source_page": 48,
+      "objective": "Understand assessment and management of risks from relevant vendor and business-partner relationships.",
+      "groups": [
+        {"id": "assessment", "title": "Relationship risks", "questions": [
+          {"id": "CC9.2-assessment", "prompt": "Are risks from relevant vendors and business partners assessed in relation to the system's objectives?", "help": "Describe the relationships and how their significance is considered. Providers with a SOC report still require consideration of scope, dependencies, and responsibilities.", "topic": "Third-party risk assessment", "remediation": "Assess relevant risks associated with vendor and business-partner relationships.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "management", "title": "Managing the relationships", "questions": [
+          {"id": "CC9.2-management", "prompt": "Are those relationship risks managed through appropriate responsibilities and arrangements?", "help": "Explain how contracts, oversight, monitoring, or other selected measures address the actual risks. No universal questionnaire, annual interval, or provider certification is imposed.", "topic": "Third-party risk management", "remediation": "Resolve unmanaged third-party risks or unclear shared responsibilities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "A1.1": {
+      "title": "Capacity adequacy", "category": "availability", "source_page": 50,
+      "objective": "Understand whether current capacity is maintained, monitored against demand, and increased as needed for availability objectives.",
+      "groups": [
+        {"id": "capacity", "title": "Current processing capacity", "questions": [
+          {"id": "A1.1-capacity", "prompt": "Is current processing capacity across relevant infrastructure, data, and software maintained to support availability objectives?", "help": "Describe the capacity needed for the actual service commitments and dependencies. Do not assume a universal uptime target or overprovisioning percentage.", "topic": "Current processing capacity", "remediation": "Address current capacity gaps affecting availability objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "demand", "title": "Capacity and demand monitoring", "questions": [
+          {"id": "A1.1-demand", "prompt": "Are capacity and component use monitored and evaluated against demand?", "help": "Explain how trends or bottlenecks are noticed and assessed. Appropriate manual analysis or automated monitoring can both work.", "topic": "Capacity monitoring and demand evaluation", "remediation": "Improve monitoring and evaluation of capacity and component use against demand.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "expansion", "title": "Additional capacity", "questions": [
+          {"id": "A1.1-expansion", "prompt": "Can additional capacity be enabled when needed to meet the system's objectives?", "help": "Describe the working response to identified capacity needs, including provider constraints. Autoscaling is an option, not a mandatory method.", "topic": "Enabling needed capacity", "remediation": "Resolve limitations preventing additional capacity being enabled when needed.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "A1.2": {
+      "title": "Resilient operating infrastructure", "category": "availability", "source_page": 50,
+      "objective": "Understand the lifecycle of environmental, software, backup, and recovery protections supporting availability objectives.",
+      "groups": [
+        {"id": "authorize-design", "title": "Authorization and design", "questions": [
+          {"id": "A1.2-authorize-design", "prompt": "Are relevant environmental protections, software, backup processes, and recovery infrastructure authorized and designed for availability objectives?", "help": "Describe the protections suited to actual dependencies, including provider-managed infrastructure. A cloud-hosted system does not require invented on-site equipment but still needs appropriate responsibility and coverage.", "topic": "Authorized availability protection design", "remediation": "Resolve authorization or design gaps in relevant availability protections.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "develop-approve-implement", "title": "Developed and implemented protections", "questions": [
+          {"id": "A1.2-develop-approve-implement", "prompt": "Are those protections developed or acquired, approved, and implemented to meet the objectives?", "help": "Explain the actual adoption and implementation path. Purchasing backup software or receiving a provider assurance statement alone does not establish working protections.", "topic": "Development, approval, and implementation", "remediation": "Complete appropriate development or acquisition, approval, and implementation of availability protections.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "operate-maintain", "title": "Operation and maintenance", "questions": [
+          {"id": "A1.2-operate-maintain", "prompt": "Are the availability protections operated and maintained so they remain usable?", "help": "Describe actual operation and maintenance, including relevant backup or environmental arrangements. Use the adopted objectives; no universal backup frequency or retention number is supplied here.", "topic": "Operation and maintenance of availability protections", "remediation": "Address operational or maintenance gaps in availability protections.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "monitor", "title": "Monitoring the protections", "questions": [
+          {"id": "A1.2-monitor", "prompt": "Are those protections monitored so failures or deterioration are noticed and addressed?", "help": "Explain responsibility for checking the relevant protections and acting on failures. A backup configured once without checking its continued operation is not sufficient support.", "topic": "Monitoring of availability protections", "remediation": "Resolve monitoring and follow-through gaps affecting availability protections.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "A1.3": {
+      "title": "Recovery validation", "category": "availability", "source_page": 52,
+      "objective": "Understand testing of recovery procedures supporting system recovery and availability objectives.",
+      "groups": [
+        {"id": "testing", "title": "Recovery procedures tested", "questions": [
+          {"id": "A1.3-testing", "prompt": "Are recovery-plan procedures tested to determine whether they can support system recovery?", "help": "Describe the testing actually performed, its relevant scope, and the recovery approach used. A plan alone is not a test; no universal annual interval or test format is mandated here.", "topic": "Testing recovery procedures", "remediation": "Perform suitable testing of recovery-plan procedures rather than relying only on documented plans.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "objectives", "title": "Recovery objectives considered", "questions": [
+          {"id": "A1.3-objectives", "prompt": "Does the testing evaluate whether recovery can meet the organization's actual system objectives?", "help": "Explain what recovery capability the results establish and what remains uncertain. Use adopted commitments and recovery goals; do not invent recovery times or imply that one successful test proves an entire examination period.", "topic": "Recovery test relevance to objectives", "remediation": "Resolve test-scope or result gaps that leave recovery objectives unsupported.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "C1.1": {
+      "title": "Confidential information lifecycle", "category": "confidentiality", "source_page": 52,
+      "objective": "Understand identification and maintenance of information designated confidential in line with confidentiality objectives.",
+      "groups": [
+        {"id": "identification", "title": "What is confidential", "questions": [
+          {"id": "C1.1-identification", "prompt": "Is information subject to confidentiality objectives identified when it is received or created?", "help": "Describe how contractual, legal, or organizational confidentiality expectations are recognized. Confidential information is not limited to personal information, and a particular classification scheme is not required.", "topic": "Identification of confidential information", "remediation": "Identify information subject to confidentiality commitments and requirements.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "maintenance", "title": "Maintaining confidential information", "questions": [
+          {"id": "C1.1-maintenance", "prompt": "Is that information maintained in a way consistent with its confidentiality objectives?", "help": "Describe relevant access, retention, and protection arrangements during its lifecycle, including providers. Use actual obligations rather than a universal retention duration.", "topic": "Maintenance of confidential information", "remediation": "Resolve lifecycle practices that conflict with confidentiality objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "C1.2": {
+      "title": "Confidential information disposal", "category": "confidentiality", "source_page": 52,
+      "objective": "Understand appropriate identification and disposal of confidential information when its retention purpose ends.",
+      "groups": [
+        {"id": "identification", "title": "Identifying information for disposal", "questions": [
+          {"id": "C1.2-identification", "prompt": "Is confidential information identified for disposal when that is appropriate under the confidentiality objectives?", "help": "Explain how retention needs, applicable holds, and copies are considered. The question does not impose a universal destruction interval or treat every stored copy as immediately disposable.", "topic": "Confidential information disposal decisions", "remediation": "Resolve gaps in identifying confidential information for appropriate disposal.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "disposal", "title": "Disposal in practice", "questions": [
+          {"id": "C1.2-disposal", "prompt": "Is the identified confidential information disposed of in a way that meets confidentiality objectives?", "help": "Describe actual disposal across relevant media, systems, or providers. Appropriate deletion, sanitization, or destruction can work; a disposal policy without execution is not enough.", "topic": "Disposal of confidential information", "remediation": "Address incomplete or unsuitable disposal of confidential information.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "PI1.1": {
+      "title": "Processing information and specifications", "category": "processing_integrity", "source_page": 53,
+      "objective": "Understand the quality, definition, use, and communication of information describing processing objectives and specifications.",
+      "groups": [
+        {"id": "definitions", "title": "Processing definitions", "questions": [
+          {"id": "PI1.1-definitions", "prompt": "Are the data being processed and the relevant product or service specifications defined clearly enough to support their intended use?", "help": "Describe what the processing is expected to produce and how important data meanings are established. A particular data dictionary format is not required.", "topic": "Data definitions and processing specifications", "remediation": "Clarify data definitions and product or service specifications needed for intended use.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "PI1.1-specification-note", "type": "text", "prompt": "Which processing outcome or specification is most relevant here? (Optional)", "help": "Identify an actual service or product specification if useful. Its document name is optional and does not determine readiness.", "topic": "Relevant processing context", "remediation": ""}
+        ]},
+        {"id": "quality", "title": "Relevant, reliable information", "questions": [
+          {"id": "PI1.1-quality", "prompt": "Is relevant information about processing objectives obtained or generated with sufficient quality for the decisions and work it supports?", "help": "Explain how completeness, accuracy, and changing specifications are considered. This is information about processing requirements, not merely validation of transaction inputs.", "topic": "Quality of processing-objective information", "remediation": "Resolve unreliable or missing information about processing objectives and specifications.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "communication", "title": "Use and communication", "questions": [
+          {"id": "PI1.1-communication", "prompt": "Is that information used and communicated to the people who need it to operate or use the products and services?", "help": "Describe how relevant users receive and apply the definitions and specifications. Their existence in an unused file is not the same as effective use or communication.", "topic": "Use and communication of processing information", "remediation": "Ensure relevant processing definitions and specifications are used and communicated to the appropriate people.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "PI1.2": {
+      "title": "Input quality and authorization", "category": "processing_integrity", "source_page": 54,
+      "objective": "Understand how input policies and procedures support completeness and accuracy for the intended products, services, and reporting.",
+      "groups": [
+        {"id": "procedures", "title": "Working input procedures", "questions": [
+          {"id": "PI1.2-procedures", "prompt": "Are policies and procedures for system inputs implemented according to the relevant processing objectives?", "help": "Describe how inputs enter the process, who is responsible, and how unsuitable inputs are handled. Authorization may be relevant to the adopted specifications; do not invent an approval for every input.", "topic": "Implemented input policies and procedures", "remediation": "Implement suitable input procedures for the system's processing objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "completeness", "title": "Complete inputs", "questions": [
+          {"id": "PI1.2-completeness", "prompt": "Do input controls address missing, omitted, or duplicate information that would prevent the intended results?", "help": "Explain completeness checks appropriate to the inputs, such as reconciliation, review, or validation. These are alternative methods, not mandatory individual controls.", "topic": "Input completeness", "remediation": "Resolve input-completeness gaps that affect intended products, services, or reporting.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "accuracy", "title": "Accurate inputs", "questions": [
+          {"id": "PI1.2-accuracy", "prompt": "Do input controls address incorrect information before it compromises the intended processing results?", "help": "Describe how relevant input errors are detected and corrected or appropriately rejected. Automated checks and suitable manual review are both possible approaches.", "topic": "Input accuracy", "remediation": "Address input-accuracy gaps and the handling of incorrect inputs.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "PI1.3": {
+      "title": "Processing execution", "category": "processing_integrity", "source_page": 54,
+      "objective": "Understand implemented processing procedures and how actual execution supports the intended products, services, and reporting.",
+      "groups": [
+        {"id": "procedures", "title": "Implemented processing approach", "questions": [
+          {"id": "PI1.3-procedures", "prompt": "Are processing policies and procedures implemented to produce results consistent with the system's objectives?", "help": "Describe the actual processing activities and responsibilities, not only input or output checks. Suitable manual or automated processing can be used.", "topic": "Implemented processing procedures", "remediation": "Resolve missing or unimplemented procedures for relevant processing activities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "execution", "title": "Execution according to expectations", "questions": [
+          {"id": "PI1.3-execution", "prompt": "Does actual processing follow the intended specifications, including relevant completeness, accuracy, timing, and authorization expectations?", "help": "Explain how execution is controlled and how expected results are understood. These expectations come from the actual processing purpose, not an invented universal timing target.", "topic": "Processing execution against specifications", "remediation": "Address processing behavior that does not meet the relevant specifications.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "exceptions", "title": "Processing errors and exceptions", "questions": [
+          {"id": "PI1.3-exceptions", "prompt": "Are processing errors or interruptions handled so they do not remain unexplained or undermine the intended results?", "help": "Describe detection and correction in the actual process. No particular error-queue product or numerical retry policy is required.", "topic": "Processing exception handling", "remediation": "Resolve gaps in handling errors or interruptions affecting processing results.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "PI1.4": {
+      "title": "Output quality and delivery", "category": "processing_integrity", "source_page": 55,
+      "objective": "Understand complete, accurate, and timely output availability or delivery according to the relevant specifications.",
+      "groups": [
+        {"id": "procedures", "title": "Output arrangements", "questions": [
+          {"id": "PI1.4-procedures", "prompt": "Are policies and procedures implemented for making outputs available or delivering them according to specifications?", "help": "Describe the actual delivery or availability path and intended recipients. Either approach may apply; the question does not require a particular distribution platform.", "topic": "Implemented output procedures", "remediation": "Implement suitable output availability or delivery procedures.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "quality", "title": "Complete and accurate outputs", "questions": [
+          {"id": "PI1.4-completeness", "prompt": "Are outputs made available or delivered completely according to the relevant specifications?", "help": "Explain how missing, truncated, or duplicate output is addressed where relevant. Appropriate reconciliation or review can work without a mandatory report template.", "topic": "Output completeness", "remediation": "Resolve incomplete output availability or delivery.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "PI1.4-accuracy", "prompt": "Are the outputs accurate when made available or delivered?", "help": "Describe the checks and handling of incorrect outputs. Correct inputs alone do not establish that the final outputs remain accurate.", "topic": "Output accuracy", "remediation": "Address inaccurate outputs and inadequate correction arrangements.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "timeliness", "title": "Timely availability or delivery", "questions": [
+          {"id": "PI1.4-timeliness", "prompt": "Are outputs made available or delivered at the times required by the actual specifications?", "help": "Use the agreed product, service, or reporting expectations. Do not invent a universal deadline or equate a successful processing run with timely delivery.", "topic": "Output timeliness", "remediation": "Resolve output timing gaps relative to actual specifications.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "PI1.5": {
+      "title": "Protected processing storage", "category": "processing_integrity", "source_page": 56,
+      "objective": "Understand complete, accurate, and timely storage of inputs, work in progress, and outputs according to system specifications.",
+      "groups": [
+        {"id": "procedures", "title": "Storage across processing stages", "questions": [
+          {"id": "PI1.5-procedures", "prompt": "Are storage policies and procedures implemented for inputs, information in processing, and outputs according to system specifications?", "help": "Describe the stages and relevant storage locations. Do not reduce this criterion to backup availability or assume that final outputs are the only records needing protection.", "topic": "Implemented processing-storage procedures", "remediation": "Resolve storage-procedure gaps across relevant processing stages.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "quality", "title": "Complete and accurate storage", "questions": [
+          {"id": "PI1.5-completeness", "prompt": "Are the required processing items stored completely?", "help": "Explain how omitted or lost items are detected and addressed. Suitable record checks or other methods may be used without a prescribed database design.", "topic": "Stored processing-item completeness", "remediation": "Address omitted or lost items in processing storage.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "PI1.5-accuracy", "prompt": "Are stored processing items kept accurate for their intended use?", "help": "Describe how corruption or unintended alteration is controlled or detected. A storage vendor's name alone does not establish data accuracy.", "topic": "Stored processing-item accuracy", "remediation": "Resolve corruption or alteration risks that undermine stored-item accuracy.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "timeliness", "title": "Storage at the required time", "questions": [
+          {"id": "PI1.5-timeliness", "prompt": "Are processing items stored in time to meet the relevant system specifications?", "help": "Explain timing needs for the actual process and how storage delays are handled. There is no universal retention duration or write-latency target in this question.", "topic": "Processing-storage timeliness", "remediation": "Address storage delays that prevent processing specifications being met.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P1.1": {
+      "title": "Privacy-purpose notice", "category": "privacy", "source_page": 57,
+      "objective": "Understand how people receive privacy-practice notice and timely communication when those practices change.",
+      "groups": [
+        {"id": "responsibility", "title": "Notice responsibility", "questions": [
+          {"id": "P1.1-responsibility", "prompt": "Are notice responsibilities understood for the organization's actual controller or processor role and privacy commitments?", "help": "Describe who provides notice and what the organization must supply or support. Processing for a customer is not an automatic exemption or proof that the customer has fulfilled the responsibility.", "topic": "Privacy notice responsibility", "remediation": "Clarify and support privacy notice responsibilities under the actual role and commitments.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "notice", "title": "Notice of actual practices", "questions": [
+          {"id": "P1.1-notice", "prompt": "Do people receive notice of the relevant privacy practices consistent with the organization's responsibilities and objectives?", "help": "Describe how notice reflects actual information handling and reaches affected people, directly or through the agreed controller arrangement. A website link alone may not demonstrate coverage.", "topic": "Communication of privacy practices", "remediation": "Resolve missing, inaccurate, or undelivered notice of relevant privacy practices.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "changes", "title": "Updating and communicating changes", "questions": [
+          {"id": "P1.1-changes", "prompt": "Are changes to privacy practices, including new uses of personal information, reflected in updated notices and communicated promptly to affected people?", "help": "Explain who recognizes the change and updates or supports the notice. The question preserves timely change communication without imposing a universal review calendar.", "topic": "Privacy notice changes", "remediation": "Address delays or gaps in updating and communicating changed privacy practices.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P2.1": {
+      "title": "Consent and choice communication", "category": "privacy", "source_page": 58,
+      "objective": "Understand communicated privacy choices, their consequences, and appropriate consent for the intended purpose.",
+      "groups": [
+        {"id": "choices", "title": "Choices and consequences", "questions": [
+          {"id": "P2.1-choices", "prompt": "Are people told their available choices and consequences for collection, use, retention, disclosure, and disposal of personal information?", "help": "Describe the relevant choices and how they reach people under the organization's controller or processor responsibilities. Do not presume every activity offers an identical choice.", "topic": "Privacy choices and consequences", "remediation": "Clarify and communicate applicable privacy choices and their consequences.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "explicit-consent", "title": "Required explicit consent", "questions": [
+          {"id": "P2.1-explicit-context", "type": "context", "prompt": "Are there activities within this system for which explicit consent is required?", "help": "Use the privacy owner's assessment of actual purposes and obligations. If outside the selected system, explain the basis; this is not a whole-criterion applicability conclusion.", "topic": "Explicit-consent context", "remediation": "Confirm which in-scope activities require explicit consent.", "choices": ["Relevant", "Outside the selected system", "Not sure"]},
+          {"id": "P2.1-explicit-consent", "prompt": "For those activities, is explicit consent obtained from the person or authorized representative and limited to the intended purpose?", "help": "Explain how consent is obtained and respected, including the organization's responsibilities when a controller collects it. A general agreement should not be assumed to cover unrelated purposes.", "topic": "Required explicit consent and purpose", "remediation": "Resolve missing or insufficient explicit consent for the intended activities and purposes.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P2.1-explicit-context", "equals": "Relevant"}}
+        ]},
+        {"id": "implicit-consent", "title": "Implicit-consent basis", "questions": [
+          {"id": "P2.1-implicit-context", "type": "context", "prompt": "Is implicit consent relied on for activities in the selected system?", "help": "Implicit consent means consent inferred from the circumstances rather than an express statement. If it is not relied on, explain that basis instead of inventing an implicit-consent record.", "topic": "Implicit-consent context", "remediation": "Confirm whether and where implicit consent is relied on.", "choices": ["Relevant", "Outside the selected system", "Not sure"]},
+          {"id": "P2.1-implicit-basis", "prompt": "Is the basis for determining that implicit consent exists documented?", "help": "Describe the actual reasoning for the relevant purpose. Do not infer consent merely because information was obtained or an unrelated agreement exists.", "topic": "Documented implicit-consent basis", "remediation": "Document and review the basis for relied-upon implicit consent.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P2.1-implicit-context", "equals": "Relevant"}}
+        ]}
+      ]
+    },
+    "P3.1": {
+      "title": "Purpose-aligned collection", "category": "privacy", "source_page": 59,
+      "objective": "Understand whether personal-information collection aligns with the system's privacy objectives.",
+      "groups": [
+        {"id": "purpose", "title": "Collection purpose", "questions": [
+          {"id": "P3.1-purpose", "prompt": "Are personal-information collection purposes understood and consistent with privacy objectives?", "help": "Describe the information collected and why, including indirect sources and processor responsibilities where relevant. Do not presume collection is absent merely because the organization does not collect directly from individuals.", "topic": "Personal-information collection purposes", "remediation": "Clarify collection purposes and resolve inconsistencies with privacy objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "practice", "title": "Collection in practice", "questions": [
+          {"id": "P3.1-practice", "prompt": "Does actual collection follow those purposes and privacy objectives?", "help": "Explain how collection channels and changes are kept aligned, and how unexpected collection is handled. A notice describing an intended purpose is not proof that actual collection follows it.", "topic": "Purpose-aligned collection practice", "remediation": "Address actual collection that extends beyond or conflicts with privacy objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P3.2": {
+      "title": "Explicit-consent collection", "category": "privacy", "source_page": 60,
+      "objective": "Understand communication and timing of explicit consent when it is required before collection.",
+      "groups": [
+        {"id": "context", "title": "Required-consent context", "questions": [
+          {"id": "P3.2-basis", "prompt": "Has the privacy owner established which collection activities require explicit consent in this system?", "help": "Explain the actual assessment, including controller instructions where relevant. Uncertainty about the requirement is material; this interview does not decide legal applicability or create a whole-criterion N/A.", "topic": "Required collection-consent assessment", "remediation": "Confirm which collection activities require explicit consent.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "P3.2-collection-context", "type": "context", "prompt": "Is collection requiring explicit consent part of the selected system?", "help": "Use the privacy owner's established assessment. Explain any outside-system decision; lack of direct contact with individuals alone is not sufficient.", "topic": "Explicit-consent collection context", "remediation": "Confirm whether explicit-consent collection is relevant to the selected system.", "choices": ["Relevant", "Outside the selected system", "Not sure"]}
+        ]},
+        {"id": "communication", "title": "Consent and refusal explained", "questions": [
+          {"id": "P3.2-communication", "prompt": "Are the required consent and consequences of refusal explained to the person or authorized representative?", "help": "Describe the actual communication or supported controller process. Do not assume a generic privacy notice explains the relevant refusal consequences.", "topic": "Required consent and refusal communication", "remediation": "Explain required collection consent and the consequences of refusal.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P3.2-collection-context", "equals": "Relevant"}}
+        ]},
+        {"id": "timing", "title": "Consent before collection", "questions": [
+          {"id": "P3.2-timing", "prompt": "Is required explicit consent obtained before the personal information is collected?", "help": "Explain how the sequence is enforced or checked. Consent obtained afterward is not the same outcome, and a provider's involvement does not automatically demonstrate the required timing.", "topic": "Explicit consent before collection", "remediation": "Resolve collection that occurs before required explicit consent is obtained.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P3.2-collection-context", "equals": "Relevant"}}
+        ]}
+      ]
+    },
+    "P4.1": {
+      "title": "Purpose-limited use", "category": "privacy", "source_page": 60,
+      "objective": "Understand whether personal information is used only for identified purposes consistent with privacy objectives.",
+      "groups": [
+        {"id": "purposes", "title": "Permitted uses", "questions": [
+          {"id": "P4.1-purposes", "prompt": "Are the identified purposes for using personal information understood by those who handle it?", "help": "Describe the relevant purposes and responsibilities, including controller instructions for processors. A broad business-interest statement should not automatically justify every new use.", "topic": "Identified personal-information use purposes", "remediation": "Clarify permitted uses of personal information under privacy objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "limitations", "title": "Limiting actual use", "questions": [
+          {"id": "P4.1-limitations", "prompt": "Is actual use limited to those identified purposes?", "help": "Explain how access, procedures, instructions, or other suitable arrangements prevent unrelated uses and address exceptions. A permitted access role alone does not establish that every use is appropriate.", "topic": "Purpose-limited personal-information use", "remediation": "Address actual uses outside the identified privacy purposes.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P4.2": {
+      "title": "Purpose-aligned retention", "category": "privacy", "source_page": 60,
+      "objective": "Understand whether personal-information retention remains consistent with privacy purposes and applicable obligations.",
+      "groups": [
+        {"id": "basis", "title": "Retention basis", "questions": [
+          {"id": "P4.2-basis", "prompt": "Are retention needs for personal information defined consistently with privacy objectives and applicable obligations?", "help": "Describe the purpose and obligations behind the actual retention approach, including holds or processor instructions. No universal SOC retention duration is prescribed.", "topic": "Personal-information retention basis", "remediation": "Clarify retention needs in relation to privacy purposes and applicable obligations.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "practice", "title": "Retention in practice", "questions": [
+          {"id": "P4.2-practice", "prompt": "Does actual retention follow that approach across relevant systems and copies?", "help": "Explain how information is retained for the appropriate purpose and how excessive or insufficient retention is noticed. A published schedule alone does not demonstrate implementation.", "topic": "Purpose-aligned retention practice", "remediation": "Resolve retention practices that do not match established privacy needs or obligations.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P4.3": {
+      "title": "Secure personal-data disposal", "category": "privacy", "source_page": 61,
+      "objective": "Understand secure disposal of personal information consistent with privacy objectives.",
+      "groups": [
+        {"id": "decisions", "title": "Disposal responsibility", "questions": [
+          {"id": "P4.3-decisions", "prompt": "Are decisions and responsibility for disposing of personal information established under the privacy objectives?", "help": "Explain how retention needs, applicable holds, and controller instructions affect disposal decisions. Do not presume all data must be deleted immediately or set an invented universal deadline.", "topic": "Personal-information disposal decisions", "remediation": "Clarify when and by whom personal-information disposal is performed.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "secure-disposal", "title": "Secure disposal in use", "questions": [
+          {"id": "P4.3-secure-disposal", "prompt": "Is personal information disposed of securely in the relevant systems, media, and provider arrangements?", "help": "Describe the method, coverage, and handling of copies or exceptions. Appropriate technical or physical methods may be used; a particular deletion product is not required.", "topic": "Secure personal-information disposal", "remediation": "Address incomplete or insecure disposal of personal information.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P5.1": {
+      "title": "Authenticated subject access", "category": "privacy", "source_page": 61,
+      "objective": "Understand authenticated access to personal information, requested copies, and appropriate explanations when access is denied.",
+      "groups": [
+        {"id": "authentication", "title": "Authenticating the requester", "questions": [
+          {"id": "P5.1-authentication", "prompt": "Are people identified and authenticated before access to their stored personal information is granted?", "help": "Explain the verification appropriate to the request, including authorized representatives or controller-forwarded requests. A particular identity-checking product is not required, but the requester's assertion alone is not authentication.", "topic": "Authentication before subject access", "remediation": "Resolve inadequate identity verification before granting access to personal information.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "access-copies", "title": "Review and requested copies", "questions": [
+          {"id": "P5.1-access", "prompt": "Can authenticated people review their stored personal information under the applicable privacy objectives?", "help": "Describe the request path and how information is located and made understandable, directly or through the appropriate controller arrangement. No prior requests does not establish that a response capability exists.", "topic": "Subject review access", "remediation": "Address gaps preventing appropriate authenticated access to personal information.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "P5.1-copies", "prompt": "When applicable copies are requested, are physical or electronic copies actually provided consistently with privacy objectives?", "help": "Assess fulfillment of applicable requests, not just the ability to produce copies. Required copies left undelivered are incomplete performance. If no request has occurred, describe established response readiness without inventing completed requests or historical evidence. Neither a particular portal nor both formats is required.", "topic": "Requested personal-information copies", "remediation": "Resolve gaps in providing appropriate requested copies of personal information.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "denials", "title": "Explaining denials", "questions": [
+          {"id": "P5.1-denials", "prompt": "Is there a working approach to explaining access denials and their reasons where required by privacy objectives?", "help": "Describe the applicable decision and communication process. Legal restrictions need the privacy owner's assessment; they are not a blanket product exception or automatic criterion success.", "topic": "Access denial explanations", "remediation": "Clarify and implement appropriate explanations for denied access requests.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P5.2": {
+      "title": "Correction and amendment handling", "category": "privacy", "source_page": 62,
+      "objective": "Understand changes requested by people, required downstream communication, and reasons when correction is denied.",
+      "groups": [
+        {"id": "correction", "title": "Correcting personal information", "questions": [
+          {"id": "P5.2-correction", "prompt": "When an appropriate correction, amendment, or supplementation request arises, is the change actually made based on information supplied by the person?", "help": "Assess fulfillment of appropriate requests, including controller requests to a processor. An accepted correction left unperformed is incomplete performance; justified denials are assessed separately. If no request has occurred, describe established response readiness without inventing completed changes or historical evidence. No particular portal or record format is required.", "topic": "Personal-information correction", "remediation": "Resolve gaps in processing appropriate correction, amendment, or supplementation requests.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "communication", "title": "Communicating changes", "questions": [
+          {"id": "P5.2-communication", "prompt": "Are those changes communicated to third parties where the organization has committed to do so or is required to do so?", "help": "Explain how applicable recipients and obligations are identified and supported. Do not impose notification to every party for every correction or assume processor involvement removes the responsibility.", "topic": "Required downstream correction communication", "remediation": "Address missing communication of corrections to applicable third parties.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "denials", "title": "Explaining denied requests", "questions": [
+          {"id": "P5.2-denials", "prompt": "Are denied correction requests and the reasons for denial explained to the person in accordance with privacy objectives?", "help": "Describe the actual decision and communication route, including the established approach if no denial has occurred. An internal closed ticket is not automatically an explanation to the person.", "topic": "Correction denial explanations", "remediation": "Resolve gaps in explaining denied correction requests and their reasons.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P6.1": {
+      "title": "Consent-based disclosure", "category": "privacy", "source_page": 63,
+      "objective": "Understand explicit consent before third-party disclosure of personal information under privacy objectives.",
+      "groups": [
+        {"id": "disclosure-context", "title": "Disclosure responsibilities", "questions": [
+          {"id": "P6.1-responsibility", "prompt": "Are third-party disclosure and consent responsibilities understood for the organization's actual privacy role and commitments?", "help": "Describe the information, parties, and responsibilities involved. Controller instructions, outsourcing, or a general lawful-basis statement are not automatic substitutes for the criterion's consent outcome.", "topic": "Disclosure and consent responsibilities", "remediation": "Clarify third-party disclosure and consent responsibilities for the selected system.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "P6.1-disclosure-context", "type": "context", "prompt": "Are third-party disclosures of personal information part of the selected system?", "help": "Consider actual sharing and service-provider arrangements. Explain an outside-system decision; this interview does not declare the entire criterion N/A or resolve legal exceptions.", "topic": "Third-party disclosure context", "remediation": "Confirm relevant third-party disclosures and the applicable consent context.", "choices": ["Relevant", "Outside the selected system", "Not sure"]}
+        ]},
+        {"id": "consent", "title": "Explicit consent for disclosure", "questions": [
+          {"id": "P6.1-consent", "prompt": "Is explicit consent for the relevant disclosure obtained from the person before disclosure occurs?", "help": "Explain how consent and its timing are established for the actual disclosure. The publisher's interpretive context may require privacy-owner judgment; unresolved alternatives need confirmation, not automatic readiness or a blanket legal exception.", "topic": "Explicit consent before disclosure", "remediation": "Resolve absent or late explicit consent, or obtain appropriate confirmation of unresolved disclosure treatment.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P6.1-disclosure-context", "equals": "Relevant"}}
+        ]}
+      ]
+    },
+    "P6.2": {
+      "title": "Authorized-disclosure records", "category": "privacy", "source_page": 63,
+      "objective": "Understand creation and retention of complete, accurate, and timely authorized-disclosure records.",
+      "groups": [
+        {"id": "records", "title": "Recording authorized disclosures", "questions": [
+          {"id": "P6.2-records", "prompt": "Are complete and accurate records created for authorized disclosures of personal information relevant to privacy objectives?", "help": "Describe how relevant disclosure activity is captured, including provider arrangements. Existing operational records may collectively support this; a dedicated disclosure-register product is not required.", "topic": "Complete and accurate authorized-disclosure records", "remediation": "Address missing or inaccurate records of authorized personal-information disclosures.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "timeliness", "title": "Timely recording", "questions": [
+          {"id": "P6.2-timeliness", "prompt": "Are those records created in time to meet privacy objectives?", "help": "Explain recording timing and how delayed or missing entries are handled. No universal minute-based deadline is imposed.", "topic": "Authorized-disclosure recording timeliness", "remediation": "Resolve delays in recording authorized disclosures.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "retention", "title": "Retaining disclosure records", "questions": [
+          {"id": "P6.2-retention", "prompt": "Are the disclosure records retained consistently with privacy objectives?", "help": "Describe the actual retention and retrieval arrangement. If no disclosure has occurred, describe the established capability without inventing records or historical operation.", "topic": "Retention of authorized-disclosure records", "remediation": "Resolve retention or retrieval gaps for authorized-disclosure records.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P6.3": {
+      "title": "Unauthorized-disclosure records", "category": "privacy", "source_page": 64,
+      "objective": "Understand records of detected or reported unauthorized disclosures, including breaches, separately from notification or remediation.",
+      "groups": [
+        {"id": "capture", "title": "Detected or reported disclosures", "questions": [
+          {"id": "P6.3-capture", "prompt": "Is there a working approach to creating complete and accurate records of detected or reported unauthorized disclosures of personal information, including breaches?", "help": "Describe how reports and detected events become records and how affected information is represented. Lack of known incidents is not proof that the recording approach exists or works.", "topic": "Complete and accurate unauthorized-disclosure records", "remediation": "Address gaps in recording detected or reported unauthorized disclosures and breaches.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "timeliness-retention", "title": "Timely and retained records", "questions": [
+          {"id": "P6.3-timeliness", "prompt": "Are those records created promptly enough and retained to meet privacy objectives?", "help": "Explain timing and retention of relevant records without inventing a universal period. Incident response and breach notification are separate activities; their existence does not automatically satisfy this recording criterion.", "topic": "Timeliness and retention of unauthorized-disclosure records", "remediation": "Resolve untimely recording or inadequate retention of unauthorized-disclosure records.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P6.4": {
+      "title": "Third-party privacy commitments", "category": "privacy", "source_page": 64,
+      "objective": "Understand obtained third-party privacy commitments, periodic and as-needed assessment, and corrective action when necessary.",
+      "groups": [
+        {"id": "context", "title": "Relevant third parties", "questions": [
+          {"id": "P6.4-responsibility", "prompt": "Are responsibility and coverage understood for vendors or other third parties that can access personal information?", "help": "Describe how relevant parties and responsibilities are determined. Include appropriate subprocessors or shared arrangements; outsourcing itself does not establish adequate privacy commitments.", "topic": "Third-party privacy responsibility and coverage", "remediation": "Clarify responsibility and coverage for third parties with personal-information access.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "P6.4-third-party-context", "type": "context", "prompt": "Do vendors or other third parties have access to personal information in the selected system?", "help": "Consider hosting and support access, not just deliberate file sharing. Explain any outside-system decision without treating it as automatic whole-criterion N/A.", "topic": "Third-party personal-information access context", "remediation": "Confirm the relevant third-party personal-information access arrangements.", "choices": ["Relevant", "Outside the selected system", "Not sure"]}
+        ]},
+        {"id": "commitments", "title": "Obtaining commitments", "questions": [
+          {"id": "P6.4-commitments", "prompt": "Are privacy commitments obtained from those parties to meet the relevant privacy objectives?", "help": "Describe actual agreements or other suitable commitments. A provider's marketing statement or a generic security certification is not automatically the necessary privacy commitment.", "topic": "Obtained third-party privacy commitments", "remediation": "Obtain appropriate privacy commitments from relevant third parties.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P6.4-third-party-context", "equals": "Relevant"}}
+        ]},
+        {"id": "assessment", "title": "Periodic and as-needed assessment", "questions": [
+          {"id": "P6.4-assessment", "prompt": "Is those parties' compliance with privacy commitments assessed periodically and when needed?", "help": "Describe the actual assessment approach and relevant change triggers. The criterion includes periodic and as-needed assessment, but does not prescribe a universal annual or quarterly interval.", "topic": "Assessment of third-party privacy compliance", "remediation": "Resolve gaps in periodic and as-needed assessment of third-party privacy compliance.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P6.4-third-party-context", "equals": "Relevant"}}
+        ]},
+        {"id": "correction", "title": "Correcting shortcomings", "questions": [
+          {"id": "P6.4-correction", "prompt": "Is corrective action taken when those assessments or other information identify a need?", "help": "Explain the response to deficiencies, or the established response if none has occurred. Accepting a risk or recording a ticket does not automatically resolve an unfulfilled privacy commitment.", "topic": "Third-party privacy corrective action", "remediation": "Address shortcomings in corrective action for third-party privacy issues.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P6.4-third-party-context", "equals": "Relevant"}}
+        ]}
+      ]
+    },
+    "P6.5": {
+      "title": "Third-party disclosure notification", "category": "privacy", "source_page": 65,
+      "objective": "Understand third-party commitments to report actual or suspected unauthorized disclosures and the routing and response to those reports.",
+      "groups": [
+        {"id": "context", "title": "Reporting responsibility", "questions": [
+          {"id": "P6.5-responsibility", "prompt": "Are reporting and response responsibilities understood for third parties with personal-information access?", "help": "Describe relevant parties, contacts, and responsibilities, including applicable processor arrangements. Do not equate a vendor's incident process with the organization's own reporting and response responsibilities.", "topic": "Third-party disclosure reporting responsibility", "remediation": "Clarify responsibility for receiving and responding to third-party disclosure reports.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "P6.5-third-party-context", "type": "context", "prompt": "Are third parties with personal-information access part of the selected system?", "help": "Consider actual hosting, support, and sharing arrangements. Explain any outside-system decision; unresolved access scope is material uncertainty.", "topic": "Third-party disclosure-reporting context", "remediation": "Confirm which third parties must support unauthorized-disclosure reporting.", "choices": ["Relevant", "Outside the selected system", "Not sure"]}
+        ]},
+        {"id": "commitments", "title": "Commitments to notify", "questions": [
+          {"id": "P6.5-commitments", "prompt": "Are commitments obtained for those parties to report actual or suspected unauthorized disclosures?", "help": "Explain what they must report and to whom. Requiring only confirmed breaches may miss the criterion's suspected-disclosure coverage; no universal notification hour count is invented.", "topic": "Third-party notification commitments", "remediation": "Obtain commitments covering actual and suspected unauthorized-disclosure reports.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P6.5-third-party-context", "equals": "Relevant"}}
+        ]},
+        {"id": "routing-response", "title": "Routing and response", "questions": [
+          {"id": "P6.5-routing", "prompt": "Do those notifications reach the appropriate internal personnel?", "help": "Describe routing and escalation, including the working route if no notification has occurred. An unmonitored mailbox does not establish that reports reach decision-makers.", "topic": "Internal routing of third-party notifications", "remediation": "Resolve gaps in routing third-party disclosure notifications to appropriate personnel.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P6.5-third-party-context", "equals": "Relevant"}},
+          {"id": "P6.5-response", "prompt": "Are those notifications acted on under established incident-response procedures?", "help": "Explain assessment and action responsibilities. Simply forwarding or logging the report is not the same as acting on it.", "topic": "Response to third-party disclosure notifications", "remediation": "Address gaps in acting on third-party notifications through established response procedures.", "choices": ["Yes", "Partially", "No", "Not sure"], "condition": {"id": "P6.5-third-party-context", "equals": "Relevant"}}
+        ]}
+      ]
+    },
+    "P6.6": {
+      "title": "Breach notification process", "category": "privacy", "source_page": 65,
+      "objective": "Understand notification of breaches and incidents to affected people, regulators, and others under actual privacy objectives.",
+      "groups": [
+        {"id": "decisions", "title": "Notification decisions", "questions": [
+          {"id": "P6.6-decisions", "prompt": "Is there a working approach to deciding which breach or incident notifications are required under the actual privacy objectives?", "help": "Describe the responsible privacy or legal decision role and relevant commitments. Do not invent a universal notification deadline or assume every incident requires identical recipients.", "topic": "Breach and incident notification decisions", "remediation": "Clarify and implement decisions about applicable notification responsibilities.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "people", "title": "Affected people", "questions": [
+          {"id": "P6.6-people", "prompt": "When a breach or incident calls for notice, are affected people actually notified as needed to meet privacy objectives?", "help": "Assess actual fulfillment under the applicable obligations and controller responsibilities. A required notice left undelivered is incomplete performance, even if a notification process exists. If no event requiring notice has occurred, describe established readiness without inventing notifications or historical evidence. No universal notification deadline is prescribed here.", "topic": "Notifications to affected people", "remediation": "Resolve gaps in required breach or incident notification to affected people.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "others", "title": "Regulators and other recipients", "questions": [
+          {"id": "P6.6-others", "prompt": "When a breach or incident calls for notice, are regulators and other relevant recipients actually notified as needed to meet privacy objectives?", "help": "Assess delivery to the applicable recipients under actual obligations, not a promise to notify everyone. A required notice left undelivered is incomplete performance. If no event requiring notice has occurred, describe established readiness without inventing notifications or historical evidence. Use applicable timing, not an invented universal deadline.", "topic": "Notifications to regulators and other recipients", "remediation": "Address gaps in required notification to regulators or other relevant recipients.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P6.7": {
+      "title": "Subject disclosure accounting", "category": "privacy", "source_page": 65,
+      "objective": "Understand requested accounting of both personal information held and disclosures of that information.",
+      "groups": [
+        {"id": "held", "title": "Accounting of information held", "questions": [
+          {"id": "P6.7-held", "prompt": "When an applicable request is made, are people actually given an accounting of their personal information held?", "help": "Assess fulfillment, including appropriate controller-forwarded requests, not merely the ability to locate data. A required accounting left undelivered is incomplete performance. If no request has occurred, describe established response readiness without inventing an accounting or historical evidence. An incident log is not an accounting of information held.", "topic": "Requested accounting of personal information held", "remediation": "Resolve gaps in accounting for the personal information held about a requester.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "disclosures", "title": "Accounting of disclosures", "questions": [
+          {"id": "P6.7-disclosures", "prompt": "When an applicable request is made, are people actually given an accounting of disclosures of their personal information?", "help": "Assess fulfillment using relevant disclosure records, not just their availability. A required accounting left undelivered is incomplete performance. If no request has occurred, describe established response readiness without inventing an accounting or historical evidence. This differs from giving a data copy or reporting only unauthorized disclosures.", "topic": "Requested accounting of personal-information disclosures", "remediation": "Resolve gaps in providing requested disclosure accounting.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P7.1": {
+      "title": "Personal-data accuracy", "category": "privacy", "source_page": 66,
+      "objective": "Understand accurate, current, complete, and relevant personal information in relation to its intended privacy purpose.",
+      "groups": [
+        {"id": "accuracy-current", "title": "Accurate and current information", "questions": [
+          {"id": "P7.1-accuracy", "prompt": "Is personal information collected and maintained with accuracy suitable for its intended purpose?", "help": "Describe suitable checks and handling of reported errors. Appropriate manual review or technical validation may be used without demanding one universal verification source.", "topic": "Personal-information accuracy", "remediation": "Address inaccurate personal information or inadequate error handling.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "P7.1-current", "prompt": "Is personal information kept sufficiently current for the purpose it serves?", "help": "Explain how needed updates reach the relevant records and responsibilities. Do not impose a universal refresh interval unrelated to the purpose.", "topic": "Currency of personal information", "remediation": "Resolve outdated personal information that impairs its intended purpose.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "completeness", "title": "Complete for the purpose", "questions": [
+          {"id": "P7.1-completeness", "prompt": "Is personal information complete enough for its intended purpose?", "help": "Describe how missing information that matters to the purpose is addressed. Completeness does not mean collecting every possible personal detail.", "topic": "Personal-information completeness", "remediation": "Address missing personal information that is necessary for the intended purpose.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "relevance", "title": "Relevant information", "questions": [
+          {"id": "P7.1-relevance", "prompt": "Is the personal information collected and maintained relevant to the privacy objectives?", "help": "Explain how irrelevant information is recognized and handled. A larger or more detailed dataset is not automatically better or more appropriate.", "topic": "Personal-information relevance", "remediation": "Resolve collection or maintenance of personal information unrelated to the privacy purposes.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    },
+    "P8.1": {
+      "title": "Complaints and privacy monitoring", "category": "privacy", "source_page": 66,
+      "objective": "Understand a working privacy inquiry and dispute process, periodic compliance monitoring, and prompt correction of deficiencies.",
+      "groups": [
+        {"id": "receive-address", "title": "Receiving and addressing concerns", "questions": [
+          {"id": "P8.1-receive-address", "prompt": "Is a process implemented to receive and address privacy inquiries, complaints, and disputes from people and others?", "help": "Describe how concerns reach responsible people and are taken up. A mailbox or isolated ad hoc response is not necessarily an implemented process; a dedicated complaints platform is not required.", "topic": "Privacy inquiry and complaint intake", "remediation": "Implement a workable process for receiving and addressing privacy inquiries, complaints, and disputes.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "resolve-communicate", "title": "Resolution and communication", "questions": [
+          {"id": "P8.1-resolve-communicate", "prompt": "Does that process resolve the matters and communicate their resolution appropriately?", "help": "Explain decisions and communication to the relevant person or party, including controller arrangements. Closing an internal record without communicating the resolution is a different outcome.", "topic": "Privacy complaint resolution and communication", "remediation": "Resolve gaps in addressing matters to resolution and communicating the outcome.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]},
+        {"id": "monitor-correct", "title": "Monitoring and correction", "questions": [
+          {"id": "P8.1-monitor", "prompt": "Is compliance with privacy objectives monitored periodically?", "help": "Describe the actual monitoring approach and coverage. Periodic monitoring is part of the criterion, but no universal annual or quarterly interval is prescribed.", "topic": "Periodic privacy compliance monitoring", "remediation": "Establish or improve periodic monitoring of compliance with privacy objectives.", "choices": ["Yes", "Partially", "No", "Not sure"]},
+          {"id": "P8.1-correct", "prompt": "Are identified deficiencies corrected and other necessary actions taken promptly?", "help": "Explain responsibility and follow-through. An open action or accepted risk is not automatic evidence that a necessary correction occurred; if no deficiency has been found, describe the established response.", "topic": "Prompt correction of privacy deficiencies", "remediation": "Address delayed or missing correction and follow-through on privacy deficiencies.", "choices": ["Yes", "Partially", "No", "Not sure"]}
+        ]}
+      ]
+    }
+  }
+}

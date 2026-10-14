@@ -5,10 +5,36 @@ const answersFor=id=>{
   for(let pass=0;pass<30;pass++){
     const missing=isoQuestions(id,answers).filter(q=>!(q.id in answers));
     if(!missing.length)break;
-    for(const q of missing)answers[q.id]=q.type==='text'?'':q.type==='context'?'Relevant':'Yes';
+    for(const q of missing)answers[q.id]=q.type==='text'?'':q.type==='context'?'Relevant':q.optional?'No':'Yes';
   }
   return answers;
 };
+test('all explicit ISO v1 readers retain historical uncertainty and context',()=>{
+  for(const row of native.requirements){
+    const answers=answersFor(row.id);
+    delete answers.additional_gap;delete answers.additional_confirmation;
+    const first=isoQuestions(row.id,answers,'iso27001-omni-1').find(question=>question.type==='select');
+    const retained={...answers,[first.id]:'Not sure',gaps:'Historical optional context'};
+    validateIsoCompletion(row.id,retained,'iso27001-omni-1');
+    const output=isoGuidedResult(row.id,retained,'iso27001-omni-1');
+    expect(output.status).toBe('in_progress');expect(output.narrative).toContain('Historical optional context');
+    expect(output.signals.some(signal=>signal.questionId==='gaps')).toBe(false);
+  }
+});
+test('current optional ISO intent cannot promote hidden negative context into work',()=>{
+  const answers={...answersFor('4.1'),gaps:'No outstanding gaps.',unknowns:'None'};
+  for(const intent of [undefined,'No','Not sure']){
+    const retained={...answers};
+    if(intent)Object.assign(retained,{additional_gap:intent,additional_confirmation:intent});
+    else {delete retained.additional_gap;delete retained.additional_confirmation;}
+    validateIsoCompletion('4.1',retained);
+    expect(isoGuidedResult('4.1',retained).signals).toEqual([]);
+    expect(isoGuidedResult('4.1',retained).status).toBe('addressed');
+  }
+  for(const [parent,detail] of [['additional_gap','gaps'],['additional_confirmation','unknowns']]){
+    expect(()=>validateIsoCompletion('4.1',{...answers,[parent]:'Yes',[detail]:' \n'})).toThrow(/Describe/);
+  }
+});
 test('exact native 30/93 catalog coverage, stable grouped questions, no legacy generic fallback',()=>{
   expect(Object.keys(isoGuidedCatalog.definitions).sort()).toEqual(native.requirements.map(r=>r.id).sort());
   expect(native.requirements.filter(r=>r.specification==='isms_clause')).toHaveLength(30);
@@ -31,7 +57,7 @@ for(const row of native.requirements){
     const first=substantive[0].id;
     expect(isoGuidedResult(row.id,{...answers,[first]:'Partially'}).status).toBe('in_progress');
     expect(isoGuidedResult(row.id,{...answers,[first]:'No'}).status).toBe('needs_attention');
-    expect(isoGuidedResult(row.id,{...answers,[first]:'Not sure'}).status).toBe('in_progress');
+    expect(isoGuidedResult(row.id,{...answers,[first]:'Not sure'}).status).toBe('not_assessed');
     expect(isoGuidedResult(row.id,{...answers,gaps:'Optional note not a status judgment',unknowns:'Tool name unknown'}).status).toBe('addressed');
     for(const q of isoQuestions(row.id,answers).filter(q=>q.type==='text'))expect(isoGuidedResult(row.id,{...answers,[q.id]:'Not sure'}).status).toBe('addressed');
     expect(()=>validateIsoAnswers(row.id,{...answers,role:'platform_owner'})).toThrow();
@@ -50,16 +76,16 @@ test('A.5.3 explicitly assesses evaluated compensating arrangements without trea
   answers[question.id+'_detail']='Independent transaction review addresses the identified conflict; effectiveness was evaluated.';
   expect(isoGuidedResult('A.5.3',answers).status).toBe('addressed');
   expect(isoGuidedResult('A.5.3',{...answers,'ISO-A.5.3-exceptions':'No'}).status).toBe('needs_attention');
-  expect(isoGuidedResult('A.5.3',{...answers,'ISO-A.5.3-exceptions':'Not sure'}).status).toBe('in_progress');
+  expect(isoGuidedResult('A.5.3',{...answers,'ISO-A.5.3-exceptions':'Not sure'}).status).toBe('not_assessed');
 });
 
 test('optional reported concerns remain visible without contradicting the selected-answer outcome',()=>{
-  const result=isoGuidedResult('A.8.13',{...answersFor('A.8.13'),gaps:'Backup coverage is missing for the finance database.',unknowns:'Whether backups can be restored has not been confirmed.'});
-  expect(result.status).toBe('addressed');expect(result.gaps).toEqual([]);expect(result.unknowns).toEqual([]);
+  const result=isoGuidedResult('A.8.13',{...answersFor('A.8.13'),additional_gap:'Yes',additional_confirmation:'Yes',gaps:'Backup coverage is missing for the finance database.',unknowns:'Whether backups can be restored has not been confirmed.'});
+  expect(result.status).toBe('addressed');expect(result.gaps).toEqual(['Backup coverage is missing for the finance database.']);expect(result.unknowns).toEqual(['Whether backups can be restored has not been confirmed.']);
   expect(result.narrative).toContain('Backup coverage is missing');expect(result.narrative).toContain('Whether backups can be restored');
-  expect(result.narrative).toContain('derived from the selected substantive answers');
+  expect(result.nextSteps).toEqual(['Address the reported gap: Backup coverage is missing for the finance database.','Confirm the reported information: Whether backups can be restored has not been confirmed.']);
   expect(result.narrative).not.toContain('No confirmation or remediation items were reported in this interview.');
-  expect(result.answers.filter(q=>q.prompt.includes('context')).every(q=>q.prompt.includes('optional'))).toBe(true);
+  expect(result.signals.map(signal=>[signal.questionId,signal.kind])).toEqual([['gaps','gap'],['unknowns','verification']]);
 });
 test('conditional context exclusion needs its own reason and cannot erase a mandatory requirement',()=>{
   for(const [id,definition] of Object.entries(isoGuidedCatalog.definitions)){
@@ -82,9 +108,13 @@ test('all 30 clauses and 93 controls have inline summaries built only from suppo
     expect(inline.split('\n\nControls in place\n')[1].split('\n').map(line=>line.slice(2))).toEqual(before.basis);
     expect(isoGuidedResult(row.id,answers)).toEqual(before);
     const noAnswers={...answers};for(const q of isoQuestions(row.id,answers).filter(q=>q.type==='select'))noAnswers[q.id]='No';
-    const deficient=isoInlineNarrative(row.id,noAnswers);expect(deficient).toContain('Controls in place');expect(deficient).not.toContain('\n• ');expect(deficient).toContain('incomplete or not in place');
+    const noBefore=JSON.stringify(noAnswers),noResult=isoGuidedResult(row.id,noAnswers);
+    const deficient=isoInlineNarrative(row.id,noAnswers);expect(deficient).not.toContain('Controls in place');expect(deficient).not.toContain('\n• ');expect(deficient).toContain('Reported gap:');
+    expect(noResult.status).toBe('needs_attention');expect(isoGuidedResult(row.id,noAnswers)).toEqual(noResult);expect(JSON.stringify(noAnswers)).toBe(noBefore);
     const uncertain={...answers};for(const q of isoQuestions(row.id,answers).filter(q=>q.type==='select'))uncertain[q.id]='Not sure';
-    expect(isoInlineNarrative(row.id,uncertain)).not.toContain('\n• ');expect(isoInlineNarrative(row.id,uncertain)).toContain('facts that need confirmation');
+    const uncertainBefore=JSON.stringify(uncertain),uncertainResult=isoGuidedResult(row.id,uncertain),uncertainInline=isoInlineNarrative(row.id,uncertain);
+    expect(uncertainInline).not.toContain('Controls in place');expect(uncertainInline).not.toContain('\n• ');expect(uncertainInline).toContain('Requires confirmation:');
+    expect(uncertainResult.status).toBe('not_assessed');expect(isoGuidedResult(row.id,uncertain)).toEqual(uncertainResult);expect(JSON.stringify(uncertain)).toBe(uncertainBefore);
   }
 });
 
@@ -92,6 +122,6 @@ test('inline partial practice is a limitation rather than a control in place and
   const answers=answersFor('A.8.13'),questions=isoQuestions('A.8.13',answers).filter(q=>q.type==='select'),[partial,supported]=questions;
   answers[partial.id]='Partially';answers[partial.id+'_detail']='Backup coverage is incomplete for the finance database.';answers[supported.id+'_detail']='Approved scoped procedure and operator responsibilities.';
   const narrative=isoInlineNarrative('A.8.13',answers,isoGuidedCatalog.version,'Synthetic ISO organization');
-  expect(narrative.split('\n\nControls in place')[1]).not.toContain(partial.topic);expect(narrative).toContain('Approved scoped procedure and operator responsibilities.');expect(narrative).toContain('incomplete or not in place');
+  expect(narrative.split('\n\nControls in place')[1]).not.toContain(partial.topic);expect(narrative).toContain('Approved scoped procedure and operator responsibilities.');expect(narrative).toContain('Reported gap:');
   expect(isoGuidedResult('A.8.13',answers).gaps.join(' ')).toContain('finance database');
 });

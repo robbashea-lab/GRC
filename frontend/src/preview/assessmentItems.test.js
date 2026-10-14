@@ -12,7 +12,7 @@ beforeEach(async()=>{
   const workspace=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_brawndo'}})).data;
   row=workspace.assessments.find(row=>row.definition_id==='2.1');path='/framework_assessments/'+row.framework_assessment_id;
 });
-async function complete(answers={practice:'No',gaps:'Reported follow-up'}){
+async function complete(answers={practice:'No',additional_gap:'Yes',gaps:'Reported follow-up',additional_confirmation:'No'}){
   const draft=(await api.get(path+'/guided-assessment')).data;
   const result=generateResult(row.definition_id,answers,new Date(),draft.version);
   return (await api.put(path+'/guided-assessment',{version:draft.version,answers,step:0,completed:true,narrative:result.narrative,result,

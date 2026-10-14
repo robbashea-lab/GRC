@@ -32,17 +32,24 @@ test('changed prerequisite invalidates dependent current conclusions; unrelated 
   expect(generateResult('1.1',corrected,new Date(),version).status).toBe('needs_attention');
 });
 
-test('recommendations contain only justified 1.1/1.2 work, with recorded foundation rationale',()=>{
+test('recommendations put Not Assessed first and retain the inventory foundation rationale',()=>{
   const rows=[{definition_id:'1.2',framework_assessment_id:'handling',status:'not_assessed'},{definition_id:'1.1',framework_assessment_id:'inventory',status:'needs_attention'},{definition_id:'3.5',status:'needs_attention'}].map(row=>({...row,framework_key:'cis-ig1'}));
   const items=focusedRecommendations(rows,{},false);
-  expect(items.map(r=>r.definition_id)).toEqual(['1.1','1.2']);expect(items[0].reason).toContain('supports unauthorized-asset comparison');
+  expect(items.map(r=>r.definition_id)).toEqual(['1.2','1.1','3.5']);expect(items.find(r=>r.definition_id==='1.1').reason).toContain('supports unauthorized-asset comparison');
   expect(focusedRecommendations(rows,{'1.2':{revision:2,completed:false}},false)[0].definition_id).toBe('1.2');
   expect(focusedRecommendations([{framework_key:'cis-ig1',definition_id:'1.1',status:'addressed',verification:'verified',work:{context_complete:true,open_findings:0,open_actions:0}}],{},true)).toEqual([]);
 });
 
+test('unsupported identities never enter recommendations through saved-interview resume',()=>{
+  const unsupported={client_id:'client-a',framework_key:'cis-ig1',framework_assessment_id:'unsupported',definition_id:'99.1',status:'not_assessed'};
+  expect(focusedRecommendations([unsupported],{'99.1':{revision:1,completed:false}},true)).toEqual([]);
+  const clean={...unsupported,definition_id:'1.1',status:'addressed',verification:'verified',work:{context_complete:true,open_findings:0,open_actions:0}};
+  expect(focusedRecommendations([clean],{'1.1':{revision:1,completed:false}},true)).toMatchObject([{definition_id:'1.1',action:'resume'}]);
+});
+
 const complete=id=>{
   const current=new Date(),day=[current.getFullYear(),String(current.getMonth()+1).padStart(2,'0'),String(current.getDate()).padStart(2,'0')].join('-');
-  return Object.fromEntries(catalogForVersion(versionForSafeguard(id,true)).safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':q.type==='date'?day:q.type==='multi'?['Quarantine or isolate']:q.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):q.id==='sources'?'One source':q.id==='unresolved'?'No':'Yes']));
+  return Object.fromEntries(catalogForVersion(versionForSafeguard(id,true)).safeguards[id].map(q=>[q.id,q.optional?'No':q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':q.type==='date'?day:q.type==='multi'?['Quarantine or isolate']:q.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):q.id==='sources'?'One source':q.id==='unresolved'?'No':'Yes']));
 };
 
 test('all material criteria must be addressed, not merely answered, and verification is separate',()=>{
@@ -79,7 +86,7 @@ test.each(['1.1','1.2'])('%s narrative names unknown requirements without claimi
   const answers=complete(id),v=versionForSafeguard(id,true);
   const uncertain=id==='1.1'?{...answers,attributes:{...answers.attributes,'Hardware address':'Not sure'}}:{...answers,detection:'Not sure'};
   const result=focusedResult(id,uncertain,v);
-  expect(result.status).toBe('in_progress');expect(result.unknowns.length).toBeGreaterThan(0);
+  expect(result.status).toBe(id==='1.1'?'not_assessed':'in_progress');expect(result.unknowns.length).toBeGreaterThan(0);
   for(const unknown of result.unknowns)expect(result.narrative).toContain(unknown);
   expect(result.verification).toBeUndefined();
 });

@@ -1,0 +1,20 @@
+{
+  "source_commit": "ef967960b1e709210940dd7b02b95919b51324a3",
+  "test_followup_commit": "59238111da234c7c94a36c347a58401f9bb16276",
+  "browser_source_receipts": ["work/program-review/browser/final-source-reopen-same-ticket-a46.txt", "work/program-review/browser/final-source-reopen-action-view-a46.txt"],
+  "root_cause": "FrameworkDrawer refreshed its own revision after a nested RecordDrawer saved but did not forward the existing containing onSaved callback. The nested Source showed a reopened authoritative Finding and child while the original Action Items ticket retained its own old loaded records.",
+  "source_fix": "Forward the existing containing onSaved callback after incrementing FrameworkDrawer's local revision. No Work form remount/reset, API, OrgContext, count path or native lifecycle changes.",
+  "component_demo_before": {"failed": 2, "passed": 0, "seconds": 64.687, "log": "work/program-shared-source-refresh-before.log"},
+  "component_demo_final": {"suites": 4, "passed": 22, "failed": 0, "seconds": 38.901, "log": "work/program-shared-source-refresh-final.log"},
+  "verified_guards": [
+    "The original Action Items drawer returns to the same Finding ticket identity with the new open child and retained completed original child.",
+    "The original unsaved Planned action remains in its original Work form, triggers the leave warning, and is not written to the saved Action by reading/reopening the Source.",
+    "Native implementation, status, verification, last_saved, assessment history and Evidence are unchanged by the nested ticket lifecycle mutation.",
+    "The existing actor-bound command and remediation behavior suites remain passing."
+  ],
+  "harness_corrections": "The multi-round-trip regression uses a recorded saved plan and an explicit 30-second journey budget; the first post-fix run exposed a default 5-second test timeout and an undefined-versus-empty initial plan fixture assertion. No assertion was removed or skipped. Existing RemediationUX mocks emit DOM event-handler warnings.",
+  "iso_queue_before": {"failed": 2, "passed": 2, "seconds": 6.814, "log": "work/program-shared-iso-queue-before.log"},
+  "iso_queue_after": {"failed": 0, "passed": 4, "seconds": 4.571, "log": "work/program-shared-iso-queue-after.log"},
+  "iso_queue_test_contract": "Not Assessed precedes assessed native gaps. Known audit deadlines precede an undated audit within its separate bucket. Native identity/destination, exact dates, no invented overdue state, verification-independent figures and input immutability remain checked.",
+  "limitations": "This owner used isolated component/Demo transport verification and did not operate a browser, real Mongo, staging session or deployment. The compiled browser return journey must be repeated by root after integration/rebuild."
+}

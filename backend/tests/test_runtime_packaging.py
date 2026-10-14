@@ -43,6 +43,8 @@ class RuntimePackagingTests(unittest.TestCase):
         self.assertIn("frontend/src/lib/managementRules.json",paths)
         self.assertIn("shared/catalogs/onboardingHandoffFields.json",paths)
         self.assertIn("shared/catalogs/operatorGuidance/socAssessmentGuidance.json",paths)
+        self.assertLessEqual({'shared/catalogs/'+name for name in (
+            'guidedControl1V5.json', 'guidedCisProgramV5.json', 'guidedSoc2V1.json', 'guidedSoc2.json', 'guidedIsoV2.json')},paths)
         for path in paths:
             self.assertTrue((root/path).is_file(),path)
             if path.startswith("shared/catalogs/"):
@@ -81,8 +83,23 @@ class RuntimePackagingTests(unittest.TestCase):
                     shutil.copy2(root/parts[1],destination)
             script = """
 import server, framework_catalog, framework_governance, iso_audit, framework_report_pdf, framework_reports
+import guided_assessment, soc_guided_assessment, iso_guided_assessment
+from pathlib import Path
 from datetime import datetime, timezone
 from routes.onboarding import BASELINE_CATALOG
+for module in (server, framework_catalog, framework_governance, iso_audit, framework_report_pdf, framework_reports,
+               guided_assessment, soc_guided_assessment, iso_guided_assessment):
+    assert Path(module.__file__).resolve().parent == Path.cwd().resolve(), module.__name__
+assert not list((Path.cwd().parent/'frontend').rglob('*.js'))
+assert guided_assessment.current_version('1.1', upgraded=True) == 'cis-v8.1-control1-5'
+assert guided_assessment.current_version('18.5', upgraded=True) == 'cis-v8.1-program-5'
+assert 'brawndo-cis-pilot-1' in guided_assessment.VERSIONS
+assert 'cis-v8.1-control1-4' in guided_assessment.VERSIONS
+assert 'cis-v8.1-program-3' in guided_assessment.VERSIONS
+assert soc_guided_assessment.CATALOG['version'] == 'soc2-omni-2'
+assert 'soc2-omni-1' in soc_guided_assessment.VERSIONS
+assert iso_guided_assessment.CATALOG['version'] == 'iso27001-omni-2'
+assert 'iso27001-omni-1' in iso_guided_assessment.VERSIONS
 assert BASELINE_CATALOG['policies']
 assert framework_governance.SOC_GUIDANCE
 assert len(framework_catalog.active_definitions('cis-ig1')) == 56
@@ -96,6 +113,10 @@ snapshot = framework_reports.build_snapshot(client, 'cis-ig1', rows, [], [],
     datetime.now(timezone.utc), '6m', ('packaged read start', 'packaged read end'), 'packaged read position')
 assert framework_report_pdf.render_framework_report(snapshot, 'executive').startswith(b'%PDF')
 """
+            # Keep configured third-party runtime dependencies, excluding this
+            # checkout so application source cannot mask an incomplete package.
+            dependencies=[path for path in os.environ.get('PYTHONPATH','').split(os.pathsep)
+                          if path and not Path(path).resolve().is_relative_to(root)]
             result=subprocess.run([sys.executable,"-c", script],
-                cwd=backend,env={**os.environ,"PYTHONPATH":str(backend),"MONGO_URL":"mongodb://127.0.0.1:1","DB_NAME":"runtime_import_smoke"},capture_output=True,text=True)
+                cwd=backend,env={**os.environ,"PYTHONPATH":os.pathsep.join([str(backend),*dependencies]),"MONGO_URL":"mongodb://127.0.0.1:1","DB_NAME":"runtime_import_smoke"},capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stderr)

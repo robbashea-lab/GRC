@@ -7,7 +7,7 @@ const today=new Date(2026,9,7);
 test('Omni priorities are bounded, deterministic and preserve input records',()=>{
   const rows=[{definition_id:'1.4',status:'not_assessed'},{definition_id:'1.3',status:'not_assessed'},{definition_id:'1.2',status:'addressed',work:{overdue_reviews:1}},{definition_id:'1.1',status:'in_progress'},{definition_id:'2.1',status:'not_assessed'}];
   const before=JSON.stringify(rows);
-  expect(prioritizeGuidedRows(rows,{'1.1':{revision:2,completed:false}}).map(r=>r.definition_id)).toEqual(['1.1','1.2','1.3']);
+  expect(prioritizeGuidedRows(rows,{'1.1':{revision:2,completed:false}}).map(r=>r.definition_id)).toEqual(['1.4','2.1','1.3','1.1','1.2']);
   expect(JSON.stringify(rows)).toBe(before);
   expect(prioritizeGuidedRows([{definition_id:'1.2',status:'not_assessed'},{definition_id:'1.1',status:'not_assessed'}]).map(r=>r.definition_id)).toEqual(['1.1','1.2']);
   expect(prioritizeGuidedRows([{definition_id:'1.1',status:'addressed',verification:'verified',work:{next_review_due:'2026-12-01'}},{definition_id:'1.2',status:'addressed',verification:'verified',work:{next_review_due:'2026-11-01'}}]).map(r=>r.definition_id)).toEqual(['1.2','1.1']);
@@ -61,10 +61,10 @@ test('bounded known question schemas and per-question metadata',()=>{
 });
 test('historical callers can explicitly retain original versions; new CIS interviews default to current source',()=>{
   expect(versionForSafeguard('1.1')).toBe('cis-v8.1-control1-2');
-  expect(currentVersion('1.1')).toBe('cis-v8.1-control1-3');
+  expect(currentVersion('1.1')).toBe('cis-v8.1-control1-5');
   expect(generateResult('1.1',{inventory:'Not sure'},today).version).toBe('cis-v8.1-control1-2');
   expect(versionForSafeguard('2.1')).toBe('cis-v8.1-program-1');
-  expect(currentVersion('2.1')).toBe('cis-v8.1-program-3');
+  expect(currentVersion('2.1')).toBe('cis-v8.1-program-5');
 });
 test('confirmed matrix gaps remain distinct from unknown coverage and response alternatives are readable',()=>{
   const a={...complete('1.1'),system:'RMM',owner:'IT'};

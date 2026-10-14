@@ -23,6 +23,7 @@ import soc_guided_assessment
 import iso_guided_assessment
 import iso_guided_lease
 import portfolio_activity
+import grc_rules
 from framework_catalog import CATALOGS, CIS, FRAMEWORKS, ROOT as CATALOG_ROOT, capabilities, definition_for, assessment_title, active_definitions
 from csf_profile import CsfProfile
 from soc_readiness import SocConfiguration, ManagementControl, configuration as soc_configuration
@@ -36,6 +37,15 @@ SOC_GUIDANCE=json.loads((CATALOG_ROOT/'operatorGuidance/socAssessmentGuidance.js
 ISO_CRITERIA=json.loads((CATALOG_ROOT/'operatorGuidance/isoAssessmentCriteria.json').read_text(encoding='utf-8'))['requirements']
 STATUSES=('not_assessed','in_progress','addressed','needs_attention','not_applicable')
 CADENCES=('monthly','quarterly','semiannual','annual','custom')
+# Replay recognition and write pruning must agree about unset optional fields.
+NATIVE_EMPTY_DEFAULTS={'addressable_decision':'','addressable_rationale':'','iso_assessment_checks':[]}
+
+def same_native_field(key,value,previous):
+    if key in NATIVE_EMPTY_DEFAULTS:
+        empty=NATIVE_EMPTY_DEFAULTS[key]
+        value=empty if value is None else value
+        previous=empty if previous is None else previous
+    return value==previous
 
 def stable(cid,kind,key,framework='cis-ig1'):
     # Retain the original CIS namespace and IDs, including stored occurrence links.
@@ -228,12 +238,14 @@ async def workspace_work(s,cid,rows,*,upgraded=False):
     if not rows:return {}
     projection={'_id':0,'client_id':1,'review_id':1,'finding_id':1,'task_id':1,'framework_assessment_id':1,'framework_key':1,'framework_safeguards':1,'status':1,'due_date':1}
     if upgraded:
-        projection.update({field:1 for field in ('title','severity','priority','owner_id','assignee_id','reviewer_id')})
+        projection.update({field:1 for field in ('title','severity','priority','owner_id','assignee_id','reviewer_id','assessment_item_id','risk_id')})
     async def read(cursor,what):
         # Existing bounded-list contract refuses overflow; partial counts must not look complete.
         return await s._bounded(cursor,10000,what) if upgraded else await cursor.to_list(None)
     reviews=await read(s.db.reviews.find({'client_id':cid},projection),'workspace reviews')
     findings=await read(s.db.findings.find({'client_id':cid},projection),'workspace findings')
+    risks=await read(s.db.risks.find({'client_id':cid,'risk_id':{'$in':list({finding['risk_id'] for finding in findings if finding.get('risk_id')})}},
+        {'_id':0,'client_id':1,'risk_id':1,'status':1,'likelihood_score':1,'impact_score':1,'next_review':1,'acceptance_expires_at':1}),'workspace linked risks') if upgraded else []
     if upgraded:
         scope_rows=await read(s.db.framework_assessments.find({'client_id':cid},{'_id':0,'framework_assessment_id':1,'related_links':1}),'workspace finding scopes')
         scopes={}
@@ -271,13 +283,20 @@ async def workspace_work(s,cid,rows,*,upgraded=False):
           'evidence_count':len(es),'latest_evidence_at':dates[-1] if dates else None}
         if upgraded:
             def priority_record(kind,record,id_field,fields,open_gap=False):
-                return {'kind':kind,'id':record[id_field],id_field:record[id_field],
-                    **{field:record.get(field) for field in ('title','status','due_date',*fields)},'open_gap':open_gap}
+                return {'kind':kind,'id':record[id_field],id_field:record[id_field],'client_id':cid,
+                    **{field:record.get(field) for field in ('title','status',*fields)},
+                    'due_date':grc_rules.risk_due(record) if kind=='risks' else record.get('due_date'),'open_gap':open_gap}
+            gap_items={(item.get('item_id'),item.get('finding_id')) for item in row.get('items_to_address',[]) if item.get('kind')=='gap' and item.get('state')=='open'}
+            gap_fids={f['finding_id'] for f in findings if f.get('framework_assessment_id')==aid and (f.get('assessment_item_id'),f['finding_id']) in gap_items}
+            connectors=[f for f in findings if f['finding_id'] in gap_fids and f['finding_id'] not in fids and f.get('risk_id')]
+            risk_ids={f.get('risk_id') for f in [*fs,*connectors]}
             result[aid].update({'task_ids':sorted({t['task_id'] for t in ts}),'context_complete':True,
                 'priority_records':[
                     *[priority_record('reviews',r,'review_id',('owner_id','reviewer_id')) for r in rs if r.get('status') not in ('completed','cancelled')],
-                    *[priority_record('findings',f,'finding_id',('severity','owner_id'),True) for f in fs],
-                    *[priority_record('tasks',t,'task_id',('priority','assignee_id','owner_id'),t.get('finding_id') in fids) for t in ts]]})
+                    *[priority_record('findings',f,'finding_id',('severity','owner_id','framework_assessment_id','assessment_item_id','risk_id'),f['finding_id'] in gap_fids) for f in fs],
+                    *[priority_record('findings',f,'finding_id',('severity','owner_id','framework_assessment_id','assessment_item_id','risk_id')) for f in connectors],
+                    *[priority_record('risks',grc_rules.assessed_risk(r),'risk_id',('risk_level',)) for r in risks if r['risk_id'] in risk_ids],
+                    *[priority_record('tasks',t,'task_id',('priority','assignee_id','owner_id','finding_id'),t.get('finding_id') in gap_fids) for t in ts]]})
     return result
 
 class FindingInput(BaseModel):
@@ -584,12 +603,14 @@ def router_for(s):
                 upgraded=guided_assessment.upgraded_pilot(old,user)
                 draft=await guided_assessment.read_draft(s,old,user,source_client,upgraded=upgraded)
                 source=changes['guided_assessment_source']
+                recorded=old.get('guided_assessment_source') or {}
+                same_application=recorded.get('by')==user['user_id'] and source=={key:recorded.get(key) for key in ('version','revision','generated_at')} and all(same_native_field(key,value,old.get(key)) for key,value in changes.items() if key not in ('guided_assessment_source','expected_last_assessed','record_assessment'))
                 if not draft['completed'] or source!={k:draft.get(k) for k in ('version','revision','generated_at')}:
                     raise HTTPException(409,'Guided result changed; regenerate before applying')
                 if upgraded:
-                    if draft['version'] != guided_assessment.current_version(old['definition_id'], upgraded=True, framework=old['framework_key']):
+                    if not same_application and draft['version'] != guided_assessment.current_version(old['definition_id'], upgraded=True, framework=old['framework_key']):
                         raise HTTPException(409, 'Current-source interview review is required before saving a new assessment')
-                    guided_assessment.require_current_lineage(draft,old,source_client)
+                    if not same_application:guided_assessment.require_current_lineage(draft,old,source_client)
                 if old['framework_key']=='iso-27001':
                     iso_guided_assessment.validate_completion(old['definition_id'],draft['answers'],draft['version'])
                     if draft.get('summary_review') != {'version':draft['version'],'answers':draft['answers']}:
@@ -622,6 +643,7 @@ def router_for(s):
         s._require_snapshot(changes,{'last_assessed':old.get('last_saved') or old.get('last_assessed')},'last_assessed')
         changes.pop('expected_last_assessed')
         record_assessment=changes.pop('record_assessment',False)
+        if changes.get('guided_assessment_source') and same_application:record_assessment=False
         ownership_only=bool(changes) and set(changes)<= {'owner_id','process_owner_id'} and not record_assessment
         if 'record_assessment' in body.model_fields_set and old['framework_key']!='soc-2':
             raise HTTPException(422,'Explicit assessment recording applies only to SOC 2')
@@ -659,7 +681,8 @@ def router_for(s):
             if old['framework_key']!='iso-27001':
                 raise HTTPException(422,'ISO assessment checks apply only to ISO 27001')
             entry=ISO_CRITERIA.get(old['definition_id'],{})
-            valid={c['id'] for c in entry.get('criteria',[]) if entry.get('coverage')=='verified'} | set(old.get('iso_assessment_checks',[]))
+            previous_checks=old.get('iso_assessment_checks')
+            valid={c['id'] for c in entry.get('criteria',[]) if entry.get('coverage')=='verified'} | set([] if previous_checks is None else previous_checks)
             if any(c not in valid for c in changes['iso_assessment_checks']):
                 raise HTTPException(422,'Invalid ISO assessment check')
             changes['iso_assessment_checks']=list(dict.fromkeys(changes['iso_assessment_checks']))
@@ -705,6 +728,11 @@ def router_for(s):
             if items!=old.get('items_to_address',[]):
                 changes.update(items_to_address=items,items_revision=old.get('items_revision',0)+1)
                 data.update(changes)
+        # Empty footer defaults do not add a native decision or confirmation.
+        for key in NATIVE_EMPTY_DEFAULTS:
+            if key in changes and same_native_field(key,changes[key],old.get(key)):
+                changes.pop(key)
+        data={**old,**changes}
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed or record_assessment:
             if changes.get('guided_assessment_source') and guided_assessment.upgraded_pilot(old,user):
