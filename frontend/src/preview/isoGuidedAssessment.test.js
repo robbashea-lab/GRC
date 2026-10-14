@@ -27,6 +27,29 @@ async function complete(row){
 async function apply(row,draft){return (await api.patch(nativePath(row),{implementation:draft.narrative,status:draft.result.status,guided_assessment_source:source(draft),expected_last_assessed:row.last_saved||row.last_assessed||null})).data;}
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');cid=(await api.post('/clients',{name:'Agent 2 isolated ISO fixture'})).data.client_id;});
 
+test('first and repeated unchanged native footer saves preserve guided state and do not materialize empty fields',async()=>{
+  const row=(await configure()).assessments.find(a=>a.definition_id==='4.2');
+  const saved=await apply(row,await complete(row));
+  const footer=Object.fromEntries(['status','implementation','technology','notes','na_rationale','addressable_decision','addressable_rationale'].map(key=>[key,saved[key]??'']));
+  Object.assign(footer,{owner_id:saved.owner_id??null,process_owner_id:saved.process_owner_id??null,iso_assessment_checks:saved.iso_assessment_checks??[],expected_last_assessed:saved.last_saved||saved.last_assessed||null});
+  const before=readStore();
+  for(let attempt=0;attempt<2;attempt++){
+    expect((await api.patch(nativePath(saved),footer)).data).toEqual(saved);
+    expect(readStore()).toEqual(before);
+  }
+  const noted=(await api.patch(nativePath(saved),{...footer,notes:'Actual additional note.'})).data;
+  for(const key of ['addressable_decision','addressable_rationale','iso_assessment_checks']){
+    expect(noted[key]).toEqual(saved[key]);
+    expect(Object.hasOwn(noted,key)).toBe(Object.hasOwn(saved,key));
+  }
+  expect(noted.guided_assessment_source).toEqual(saved.guided_assessment_source);
+  const changed=(await api.patch(nativePath(saved),{...footer,notes:noted.notes,implementation:saved.implementation+'\nActual manual change.',expected_last_assessed:noted.last_saved})).data;
+  expect(changed.last_saved).not.toBe(noted.last_saved);
+  expect(changed.assessment_history).toHaveLength(noted.assessment_history.length+1);
+  expect(changed.guided_assessment_source).toBeNull();
+  await expect(api.patch(nativePath(saved),footer)).rejects.toMatchObject({response:{status:409}});
+});
+
 test('new/add/mixed program defaults and repeated activation retain other programs without reseeding',async()=>{
   const fresh=await configure();expect(fresh.assessments).toHaveLength(123);
   for(const row of fresh.assessments){expect(row.status).toBe('not_assessed');expect(row.implementation).toBe('');expect(row.soa_applicability||'').toBe('');expect((await api.get(nativePath(row)+'/guided-assessment')).data.version).toBe(isoGuidedCatalog.version);}

@@ -24,6 +24,14 @@ const assessmentTitle=a=>`${frameworkCatalog(a.framework_key)?.label||(a.framewo
 const VERIFICATION_FIELDS=['verification','verification_checklist'],VERIFICATION_STATES=['not_verified','needs_validation','gap_identified','verified'],VERIFICATION_TIERS={foundation:'f',operational:'o',mature:'m'};
 const fail=(message,status=422)=>{const error=new Error(message);error.status=status;throw error;};
 const copy=value=>JSON.parse(JSON.stringify(value));
+// Replay recognition and write pruning must agree about unset optional fields.
+const NATIVE_EMPTY_DEFAULTS={addressable_decision:'',addressable_rationale:'',iso_assessment_checks:[]};
+function sameNativeField(key,value,previous){
+  if(Object.hasOwn(NATIVE_EMPTY_DEFAULTS,key)){
+    value=value??NATIVE_EMPTY_DEFAULTS[key];previous=previous??NATIVE_EMPTY_DEFAULTS[key];
+  }
+  return canonicalSnapshot(value)===canonicalSnapshot(previous);
+}
 const BASE_FIELDS=['base_assessment_token','base_scope_fingerprint'];
 const guidedConfiguration=(db,row)=>row.framework_key==='iso-27001'?{__program_active:db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key==='iso-27001'&&r.baseline_response==='applies')}:row.framework_key==='soc-2'?socConfiguration(record(db,'clients',row.client_id)):cisConfiguration(record(db,'clients',row.client_id));
 const guidedEnabled=(db,row)=>row.framework_key==='iso-27001'?isoGuidedEnabled(row.client_id,db.user,row.framework_key,guidedConfiguration(db,row),row.definition_id):row.framework_key==='soc-2'?db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key==='soc-2'&&r.baseline_response==='applies')&&socGuidedEnabled(row.client_id,db.user,row.framework_key,guidedConfiguration(db,row),row.definition_id):pilotEnabled(row.client_id,row.framework_key,guidedConfiguration(db,row),row.definition_id);
@@ -392,7 +400,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       if(body.guided_assessment_source){
         const draft=readDraft(),source=body.guided_assessment_source;
         const savedSource=row.guided_assessment_source;
-        sameApplication=savedSource?.by===db.user.user_id&&['version','revision','generated_at'].every(key=>source[key]===savedSource[key])&&Object.entries(body).every(([key,value])=>['guided_assessment_source','record_assessment'].includes(key)||canonicalSnapshot(value)===canonicalSnapshot(row[key]));
+        sameApplication=savedSource?.by===db.user.user_id&&['version','revision','generated_at'].every(key=>source[key]===savedSource[key])&&Object.entries(body).every(([key,value])=>['guided_assessment_source','record_assessment'].includes(key)||sameNativeField(key,value,row[key]));
         if(!draft.completed||Object.keys(source).length!==3||['version','revision','generated_at'].some(k=>source[k]!==draft[k]))fail('Guided result changed; regenerate before applying',409);
         if(upgraded&&!sameApplication&&draft.version!==guidedVersion(row))fail('Current-source interview review is required before saving a new assessment',409);
         if(upgraded&&!sameApplication&&(!draft.lineage_known||draft.lineage_stale))fail('Assessment or scope changed after this review began; begin a new review before applying',409);
@@ -468,7 +476,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       if(JSON.stringify(body.management_controls)!==JSON.stringify(row.management_controls||[])&&(row.controls_migrated||db.organizational_controls?.some(c=>c.client_id===row.client_id&&(c.assessment_ids.includes(id)||c.legacy_sources.some(s=>s.assessment_id===id)))))throw new Error('Legacy descriptions are preserved. Edit the shared organizational Control instead');
       body={...body,management_controls:validateManagementControls(body.management_controls)};
     }
-    const data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
+    let data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
     if(recordAssessment&&data.status==='not_assessed')fail('Choose an assessment status before recording an assessment');
     const definition=frameworkDefinition(row.framework_key,row.definition_id);
     if(data.status==='not_applicable'&&definition?.specification!=='annex_control'&&!data.na_rationale.trim())throw new Error('N/A rationale is required');
@@ -494,6 +502,10 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       if(JSON.stringify(items)!==JSON.stringify(row.items_to_address||[]))Object.assign(body,{items_to_address:items,items_revision:(row.items_revision||0)+1});
       historyFields.push('items_to_address','items_revision');
     }
+    // Match native no-op semantics for optional empty footer fields.
+    body={...body};
+    for(const key of Object.keys(NATIVE_EMPTY_DEFAULTS))if(Object.hasOwn(body,key)&&sameNativeField(key,body[key],row[key]))delete body[key];
+    data={...row,...body};
     const changed=Object.keys(body).filter(k=>['guided_assessment_source','verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation'].includes(k)?canonicalSnapshot(body[k])!==canonicalSnapshot(row[k]??null):body[k]!==row[k]);
     if(changed.length||recordAssessment){
       const at=new Date(Math.max(Date.now(),(Date.parse(row.last_saved??row.last_assessed)||0)+1)).toISOString();

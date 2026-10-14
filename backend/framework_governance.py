@@ -37,6 +37,15 @@ SOC_GUIDANCE=json.loads((CATALOG_ROOT/'operatorGuidance/socAssessmentGuidance.js
 ISO_CRITERIA=json.loads((CATALOG_ROOT/'operatorGuidance/isoAssessmentCriteria.json').read_text(encoding='utf-8'))['requirements']
 STATUSES=('not_assessed','in_progress','addressed','needs_attention','not_applicable')
 CADENCES=('monthly','quarterly','semiannual','annual','custom')
+# Replay recognition and write pruning must agree about unset optional fields.
+NATIVE_EMPTY_DEFAULTS={'addressable_decision':'','addressable_rationale':'','iso_assessment_checks':[]}
+
+def same_native_field(key,value,previous):
+    if key in NATIVE_EMPTY_DEFAULTS:
+        empty=NATIVE_EMPTY_DEFAULTS[key]
+        value=empty if value is None else value
+        previous=empty if previous is None else previous
+    return value==previous
 
 def stable(cid,kind,key,framework='cis-ig1'):
     # Retain the original CIS namespace and IDs, including stored occurrence links.
@@ -595,7 +604,7 @@ def router_for(s):
                 draft=await guided_assessment.read_draft(s,old,user,source_client,upgraded=upgraded)
                 source=changes['guided_assessment_source']
                 recorded=old.get('guided_assessment_source') or {}
-                same_application=recorded.get('by')==user['user_id'] and source=={key:recorded.get(key) for key in ('version','revision','generated_at')} and all(value==old.get(key) for key,value in changes.items() if key not in ('guided_assessment_source','expected_last_assessed','record_assessment'))
+                same_application=recorded.get('by')==user['user_id'] and source=={key:recorded.get(key) for key in ('version','revision','generated_at')} and all(same_native_field(key,value,old.get(key)) for key,value in changes.items() if key not in ('guided_assessment_source','expected_last_assessed','record_assessment'))
                 if not draft['completed'] or source!={k:draft.get(k) for k in ('version','revision','generated_at')}:
                     raise HTTPException(409,'Guided result changed; regenerate before applying')
                 if upgraded:
@@ -672,7 +681,8 @@ def router_for(s):
             if old['framework_key']!='iso-27001':
                 raise HTTPException(422,'ISO assessment checks apply only to ISO 27001')
             entry=ISO_CRITERIA.get(old['definition_id'],{})
-            valid={c['id'] for c in entry.get('criteria',[]) if entry.get('coverage')=='verified'} | set(old.get('iso_assessment_checks',[]))
+            previous_checks=old.get('iso_assessment_checks')
+            valid={c['id'] for c in entry.get('criteria',[]) if entry.get('coverage')=='verified'} | set([] if previous_checks is None else previous_checks)
             if any(c not in valid for c in changes['iso_assessment_checks']):
                 raise HTTPException(422,'Invalid ISO assessment check')
             changes['iso_assessment_checks']=list(dict.fromkeys(changes['iso_assessment_checks']))
@@ -718,6 +728,11 @@ def router_for(s):
             if items!=old.get('items_to_address',[]):
                 changes.update(items_to_address=items,items_revision=old.get('items_revision',0)+1)
                 data.update(changes)
+        # Empty footer defaults do not add a native decision or confirmation.
+        for key in NATIVE_EMPTY_DEFAULTS:
+            if key in changes and same_native_field(key,changes[key],old.get(key)):
+                changes.pop(key)
+        data={**old,**changes}
         changed=[k for k in changes if changes[k]!=old.get(k)]
         if changed or record_assessment:
             if changes.get('guided_assessment_source') and guided_assessment.upgraded_pilot(old,user):
