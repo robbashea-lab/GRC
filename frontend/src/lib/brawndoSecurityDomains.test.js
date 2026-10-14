@@ -25,6 +25,22 @@ test('the default gate honors the committed rollout flag', () => {
   expect(securityDomainsEnabled(pilot.clientId, 'cis-ig1', data, user)).toBe(pilot.enabled === true);
 });
 
+test('each committed pilot client uses its own complete native program and row references', () => {
+  const clients = [pilot.clientId, ...(pilot.fixtureClientIds || [])];
+  expect(new Set(clients).size).toBe(clients.length);
+  for (const clientId of clients) {
+    const {data, rows} = fixture(clientId);
+    expect(enabled(data, clientId)).toBe(true);
+    const domains = securityDomainModel(data, rows, clientId);
+    expect(domains.every(domain => domain.available)).toBe(true);
+    expect(domains.flatMap(domain => domain.rows)).toHaveLength(56);
+    domains.flatMap(domain => domain.rows).forEach(row => {
+      expect(row.client_id).toBe(clientId);
+      expect(row).toBe(rows.find(native => native.definition_id === row.definition_id));
+    });
+  }
+});
+
 test('approved mapping is a disjoint complete native IG1 partition and remains presentation taxonomy', () => {
   const ids = mapping.domains.flatMap(domain => domain.safeguardIds);
   expect(mapping.domains).toHaveLength(11);

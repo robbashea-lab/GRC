@@ -1,6 +1,7 @@
 {
   "enabled": true,
   "clientId": "cli_60dee41ebbcd0e39b8bff87da17aee838ac50ecd799cb955f99d921eb6be4b20",
+  "fixtureClientIds": ["cli_525eaf424ce93b8803867404f7adae6b1076b5a9289f9dca94925091845d06e8"],
   "frameworkKey": "cis-ig1",
   "frameworkVersion": "8.1",
   "implementationGroup": 1
