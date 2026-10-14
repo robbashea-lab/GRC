@@ -8,6 +8,27 @@ import guided_assessment
 
 
 class AssessmentUnknownsTests(unittest.TestCase):
+    def test_current_control1_unknown_root_keeps_exact_confirmation_origin_and_unchanged_notes(self):
+        catalog=guided_assessment.CONTROL1_V5
+        for identity,definition in catalog['definitions'].items():
+            with self.subTest(definition=identity):
+                root=definition['root']
+                answers={root:'Not sure',root+'_detail':'Synthetic QA root remains unconfirmed.',
+                    'additional_gap':'No','additional_confirmation':'No','gaps':'HIDDEN GAP','unknowns':'HIDDEN UNKNOWN'}
+                row={'framework_key':'cis-ig1','framework_assessment_id':'isolated:'+identity,'definition_id':identity}
+                draft={'answers':answers,'version':catalog['version']}
+                items=assessment_items.generated(row,draft)
+                item=next((item for item in items if item['question_id']==root),None)
+                self.assertIsNotNone(item)
+                question=next(q for q in catalog['safeguards'][identity] if q['id']==root)
+                self.assertEqual((item['question_id'],item['kind'],item['text']),
+                    (root,'verification',question['unknown_template']+' — '+answers[root+'_detail']))
+                self.assertFalse(any(item['kind']=='gap' or 'HIDDEN' in item['text'] for item in items))
+                saved=assessment_items.reconcile(row,draft,'reviewer','original')
+                root_item=next(current for current in saved if current['item_id']==item['item_id'])
+                root_item.update(state='resolved',resolution='Synthetic retained analyst note.')
+                self.assertEqual(assessment_items.reconcile({**row,'items_to_address':saved},draft,'reviewer','later'),saved)
+
     def test_original_cis_pilot_preserves_mixed_follow_up_as_confirmation_without_inventing_gap(self):
         version=guided_assessment.LEGACY['version']
         for identity,root in [('1.1','inventory'),('1.2','process')]:

@@ -239,6 +239,11 @@ function generateCurrentCisResult(id,answers,version){
   const confirmedGap=meaningful.some(row=>['absent','partial'].includes(row.state));
   const corrected=[programV5.version,control1V5.version].includes(version);
   let status=corrected?(root==='No'&&!supported?'needs_attention':!supported?confirmedGap?'needs_attention':'not_assessed':applicable.every(row=>row.state==='met')?'addressed':confirmedGap?'in_progress':'not_assessed'):(root==='No'&&!supported?'needs_attention':!supported?meaningful.length===applicable.length&&!!meaningful.length?'needs_attention':'not_assessed':applicable.every(row=>row.state==='met')?'addressed':'in_progress');
+  if(version===control1V5.version&&(!root||root==='Not sure')){
+    const question=questions.find(q=>q.id===definition.root),detail=active[definition.root+'_detail']?.trim();
+    unknowns.push((question.unknown_template||`Confirm: ${question.prompt}`)+(detail?' — '+detail:''));
+    signals.push({questionId:definition.root,kind:'verification'});
+  }
   if(corrected&&root==='No'&&!gaps.length){gaps.push('The requirement practice is reported not in place.');signals.push({questionId:definition.root,kind:'gap'});}
   if(root==='No'&&meaningful.some(row=>['met','partial'].includes(row.state))||root==='Partially'&&status==='addressed'){
     status='in_progress';unknowns.push('The overall practice answer conflicts with the reported requirement details; confirm the actual implementation.');signals.push({questionId:definition.root,kind:'verification'});

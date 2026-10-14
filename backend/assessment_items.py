@@ -137,6 +137,9 @@ def _origins(row, draft, questions):
                 text = question.get('gap_template' if kind == 'gap' else 'unknown_template') or ('Address: ' if kind == 'gap' else 'Confirm: ') + prompt
                 origins[(key, kind)] = text
     if current:
+        if draft['version'] == guided_assessment.CONTROL1_V5['version'] and answers.get(root) in (None, '', 'Not sure'):
+            question = questions[root]
+            origins[(root, 'verification')] = question.get('unknown_template') or 'Confirm: '+question['prompt']
         if corrected and answers.get(root) == 'No' and not any(kind == 'gap' for _, kind in origins):
             origins[(root, 'gap')] = 'The requirement practice is reported not in place.'
         applicable = [state for state in states if state != 'excluded']

@@ -22,6 +22,54 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
     body = harness.FrameworkTests.body
     configure = harness.FrameworkTests.configure
 
+    async def test_current_control1_root_confirmation_native_repeat_preserves_id_notes_and_history(self):
+        initial_workspace=await self.configure()
+        changed=await self.client.patch('/api/frameworks/cis-ig1/configuration',json={
+            'client_id':'a','implementation_group':3,'expected_updated_at':initial_workspace['configuration']['expected_updated_at']},
+            headers={'Idempotency-Key':'synthetic-root-confirmation-scope'})
+        self.assertEqual(changed.status_code,200,changed.text)
+        workspace=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json()
+        for identity in ('1.3','1.4','1.5'):
+            with self.subTest(definition=identity):
+                row=next(row for row in workspace['assessments'] if row['definition_id']==identity)
+                root=guided_assessment.CONTROL1_V5['definitions'][identity]['root']
+                base='/api/framework_assessments/'+row['framework_assessment_id']
+                initial=(await self.client.get(base+'/guided-assessment')).json()
+                self.assertEqual(initial['version'],guided_assessment.CONTROL1_V5['version'])
+                answers={root:'Not sure',root+'_detail':'Synthetic QA cannot confirm this practice.',
+                    'additional_gap':'No','additional_confirmation':'No'}
+                for q in guided_assessment.CONTROL1_V5['safeguards'][identity]:
+                    if q['id'] in ('coverage','frequency','inventory_update'):
+                        answers[q['id']]='No' if 'No' in q['choices'] else q['choices'][0]
+                result={'version':initial['version'],'status':'not_assessed','narrative':'Synthetic QA reports an unconfirmed practice.',
+                    'basis':[],'gaps':[],'unknowns':['Confirm the reported practice.'],'nextSteps':[],'evidence':[],'answers':[],
+                    'signals':[{'questionId':root,'kind':'verification'}]}
+                body={'version':initial['version'],'answers':answers,'step':0,'completed':True,'narrative':result['narrative'],
+                    'result':result,'expected_revision':initial['revision'],
+                    **{key:initial[key] for key in ('base_assessment_token','base_scope_fingerprint')}}
+                response=await self.client.put(base+'/guided-assessment',json=body)
+                self.assertEqual(response.status_code,200,response.text)
+                draft=response.json()
+                replay=await self.client.put(base+'/guided-assessment',json={**body,'expected_revision':draft['revision']})
+                self.assertEqual(replay.status_code,200,replay.text)
+                self.assertEqual(replay.json()['revision'],draft['revision'])
+                saved=await self.apply(base,draft,row)
+                self.assertEqual(saved['status'],'not_assessed')
+                self.assertEqual(saved.get('verification'),row.get('verification'))
+                self.assertEqual(len(saved['items_to_address']),1)
+                item=saved['items_to_address'][0]
+                self.assertEqual((item['question_id'],item['kind'],item['state']),(root,'verification','open'))
+                self.assertIn(answers[root+'_detail'],item['text'])
+                response=await self.client.patch(base+'/items/'+item['item_id'],json={
+                    'expected_revision':saved['items_revision'],'state':'resolved','resolution':'Synthetic retained analyst confirmation note.'})
+                self.assertEqual(response.status_code,200,response.text)
+                resolved=response.json()
+                repeated=await self.apply(base,draft,resolved)
+                for key in ('items_to_address','items_revision','assessment_history','status','verification','implementation','last_saved'):
+                    self.assertEqual(repeated.get(key),resolved.get(key))
+                self.assertEqual(repeated['items_to_address'][0]['item_id'],item['item_id'])
+                self.assertEqual((await self.client.get(base)).json()['items_to_address'],resolved['items_to_address'])
+
     async def completed(self, row, answers=None):
         base = '/api/framework_assessments/' + row['framework_assessment_id']
         draft = (await self.client.get(base + '/guided-assessment')).json()
