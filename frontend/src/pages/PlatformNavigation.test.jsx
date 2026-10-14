@@ -133,8 +133,12 @@ test('portfolio client/framework links and whole progress area open exact native
   expect(mockNavigate).toHaveBeenLastCalledWith(`/compliance/soc-2?client_id=${first.client_id}`);
   await click([...dialog.querySelectorAll('button')].find(node=>node.textContent==='Open client portal'));
   expect(mockNavigate).toHaveBeenLastCalledWith(`/dashboard?client_id=${first.client_id}`);
+  expect(dialog.contains(document.activeElement)).toBe(true);
+  // Radix schedules close autofocus on unmount; observe the real focus return.
+  const focusReturned=new Promise(resolve=>progress.addEventListener('focus',resolve,{once:true}));
   await click([...dialog.querySelectorAll('button')].find(node=>node.textContent==='Close'));
   expect(document.querySelector('[data-testid="portfolio-history-dialog"]')).toBeNull();
+  await focusReturned;
   expect(document.activeElement).toBe(progress);
   await change(container.querySelector('[data-testid="client-directory-search"]'),first.name);
   expect(visibleClients()).toEqual([first.client_id]);

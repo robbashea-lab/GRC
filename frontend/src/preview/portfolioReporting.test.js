@@ -186,6 +186,38 @@ test('normal native ISO save supplies last activity while rejected and no-op rec
   expect(request(db,'activity').total).toBe(1);
 });
 
+test.each(['legacy','pooled'])('initialized %s native/guided reads preserve complete saved bytes; export and writes retain their persistence',async shape=>{
+  sessionStorage.clear();localStorage.clear();const db=fixture(),row=db.framework_assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
+  Object.assign(row,{implementation:'',technology:'',notes:'',na_rationale:'',related_links:[]});
+  saveStore(db);
+  if(shape==='legacy'){
+    const legacy=restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)));
+    delete legacy.portfolio_reporting.storage_version;delete legacy.portfolio_reporting.source_vectors;
+    sessionStorage.setItem(STORE_KEY,JSON.stringify(legacy));
+  }
+  sessionStorage.setItem('grc_demo_entered','true');
+  const api=axios.create({adapter:previewAdapter}),before=sessionStorage.getItem(STORE_KEY),savedBefore=restorePortfolioReporting(JSON.parse(before));
+  const writes=jest.spyOn(Storage.prototype,'setItem');
+  try{
+    for(const url of ['/frameworks/cis-ig1',path,path+'/related',path+'/activity',path+'/guided-assessment',path+'/guided-assessment/history'])await api.get(url,{params:{client_id:'isolated'}});
+    expect(writes).not.toHaveBeenCalled();expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+    for(const [index,url] of ['/frameworks/cis-ig1/export','/frameworks/cis-ig1/export/'].entries()){
+      const file=(await api.get(url,{params:{client_id:'isolated'}})).data;
+      expect(file).toBeInstanceOf(Blob);expect(writes).toHaveBeenCalledTimes(index+1);
+    }
+    const exported=restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)));
+    expect(exported.logs[0].action).toBe('CIS assessment export');
+    expect(exported.logs.filter(log=>log.action==='CIS assessment export')).toHaveLength(2);
+    expect(exported.portfolio_reporting.snapshots).toEqual(savedBefore.portfolio_reporting.snapshots);
+    const changed=(await api.patch(path,{expected_last_assessed:null,status:'in_progress',implementation:'Actual persisted native work'})).data;
+    expect(changed.status).toBe('in_progress');expect(writes).toHaveBeenCalledTimes(3);
+    const persisted=restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)));
+    expect(persisted.framework_assessments.find(record=>record.framework_assessment_id===row.framework_assessment_id).implementation).toBe('Actual persisted native work');
+    expect(persisted.portfolio_reporting.snapshots).toHaveLength(savedBefore.portfolio_reporting.snapshots.length+1);
+    expect(persisted.portfolio_reporting.snapshots.at(-1).observation_kind).toBe('committed_event');
+  }finally{writes.mockRestore();sessionStorage.clear();localStorage.clear();}
+});
+
 test('all calendar ranges clamp month ends and the forecast horizon remains 90 elapsed days',()=>{
   expect(demoRangeStart('2024-03-31T12:00:00Z','1m')).toBe('2024-02-29T12:00:00.000Z');
   expect(demoRangeStart('2024-05-31T12:00:00Z','3m')).toBe('2024-02-29T12:00:00.000Z');
