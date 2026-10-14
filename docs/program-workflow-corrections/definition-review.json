@@ -16491,7 +16491,7 @@
       "ranking_review": "Reviewed exact question defaults supplied; shared implementation/integrated test pending",
       "baseline_disposition": "FAIL - required unknown cannot by itself establish partial implementation",
       "runtime_acceptance": "PASS: independent source and controlled evaluator/mapping checks at a46a3500583338917eb96949458cb75c6373546a; native API/Mongo coverage is sampled, not every-definition E2E",
-      "browser_acceptance": "UNVERIFIED: this definition did not receive an individual browser journey",
+      "browser_acceptance": "Root-operated final19 compiled native absence, unknown andPartial+unknown; accepted narrative/Items and reload checked. Separate from hosted proof.",
       "normative_comparison": "PUBLIC COMPARISON - no material mismatch identified against exposed clauses4-6 and amendment",
       "questions": [
         {
@@ -22091,6 +22091,8 @@
     "persistence-engine-review.json"
   ],
   "coverage_limit": "All-definition authored source and controlled evaluator coverage is distinct from sampled browser and native persistence coverage. ISO111 unavailable licensed units remain unverified against full normative text.",
-  "final_runtime_revision": "8e4466607255b0ca926f7da7181ff8e7c190e8d3",
-  "browser_coverage_limit": "Sampled compiled local native journeys; final1.1 runs inIG3 after earlier actualIG1;1.3 reproduced in actualIG2 then corrected under restoredIG3. All-definition source coverage is separate from individual browser proof."
+  "final_runtime_revision": "19bb8bd5bd84ac30a958e62ec9db19235f51bb09",
+  "browser_coverage_limit": "Sampled compiled local native journeys; final1.1 runs inIG3 after earlier actualIG1;1.3 reproduced in actualIG2 then corrected under restoredIG3. All-definition source coverage is separate from individual browser proof.",
+  "sampled_browser_unique_definitions": 8,
+  "sampled_browser_limit": "8 root-operated local native definitions across actual earlierIG1/IG2 and inherited finalIG3, SecuritySOC and ISO. Source/evaluator review covers337 unique definitions, not337 browserE2E."
 }

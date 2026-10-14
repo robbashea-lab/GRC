@@ -1,29 +1,31 @@
 {
   "reviewer": "/root/soc2_review",
   "kind": "Independent artifact review of root-operated local browser receipts",
-  "status": "Finite87/628 source-labelled artifacts reviewed. Both nested refresh failures and SOC duplicate-period correction supported by representative compiled evidence. CurrentControl1 root-unknown correction and ISO dashboard reconciliation remain active; independent browser execution0.",
-  "latest_operator_runtime_label": "6281bb1 / compiledDemo main.9d93447c.js; actual files/hashes and source association independently inspected",
-  "final_frozen_source_revision": "a46a3500583338917eb96949458cb75c6373546a",
+  "status": "Finite source-labelled87/628/8e artifacts independently inspected. Representative nested refresh, same-field conflict, current SOC prose and Control1 root-origin defects corrected; current canonical SOC/ISO punctuation fixed in source/tests pending final compiled artifact review. ISO dashboard reconciliation remains separately owned. Independent browser execution0.",
+  "latest_operator_runtime_label": "8e44666 compiledDemo main.94f96200.js artifacts; earlier628 SOC CC1.2 separately source-labelled",
+  "final_frozen_source_revision": "19bb8bd5bd84ac30a958e62ec9db19235f51bb09",
   "final_source_review_receipt": "persistence-engine-review.json",
   "independent_browser_execution": false,
   "independent_browser_attempt": "Blocked: new hidden iab tab unavailable and listBrowsers returned []; no tab or fixture created. See independent-browser-smoke-blocked.json.",
   "independently_executed_browser_definition_count": 0,
-  "reviewed_operator_browser_workflow_definition_count": 5,
+  "reviewed_operator_browser_workflow_definition_count": 7,
   "workflow_definitions": {
     "cis": [
       "1.1",
+      "1.3",
       "1.4",
       "18.5"
     ],
     "soc-2": [
-      "CC1.1"
+      "CC1.1",
+      "CC1.2"
     ],
     "iso-27001": [
       "4.1"
     ]
   },
   "environment": "Root-operated local Demo browser at http://127.0.0.1:4341. Workflow changes are confined to the named disposable synthetic client. Baseline artifacts are Demo observations, not real authorized hosted customer evidence.",
-  "source_provenance_limit": "87 and628 compiled source/asset associations independently inspected at their respective verification points. Current Control1 root-unknown correction is not frozen yet; no final corrected-runtime acceptance is claimed.",
+  "source_provenance_limit": "Each87/628/8e browser artifact retains its observed source association; no older run is relabelled current19bb8bd. Latest coupled source independently reviewed/tested, final compiled corrected ISO receipts pending. Independent browser execution remains0.",
   "verified_artifact_states": [
     {
       "case": "CIS unknown native outcome",
@@ -245,7 +247,15 @@
       "id": "CURRENT-CONTROL1-ROOT-UNKNOWN-ORIGIN",
       "classification": "Coordinator-reported compiled1.3 defect; source owner confirms omission/reproduction; not yet an independently inspected failing AX artifact",
       "observed": "Current1.3NotSure omitted root verification origin and was displayed as a supported control despite the unassessed judgment.",
-      "disposition": "Narrow currentControl1V5 evaluator/canonical-origin correction is being authored. Frozen source, independent review, focused execution and corrected compiled native proof remain pending."
+      "disposition": "Independent source/evaluator/API Item review passed. Compiled8e full1.3 proposal has no false supported-control section and native Items show one genuine root confirmation with retained note across Save/reload. Accepted native prose capture remains a precise small artifact limit, not a source finding.",
+      "resolved_in_final8e_source_and_representative_artifact_review": true
+    },
+    {
+      "id": "CURRENT-SOC-CANONICAL-ITEM-DOUBLE-TERMINAL-PERIOD",
+      "classification": "Independent controlled Python canonical Item reproduction; distinct from prior compiled frontend punctuation defect",
+      "observed": "Current native SOC Item generator appended a second period to already terminal supplied partial detail. Exact reproduction retained in soc-backend-item-terminal-period-repro.json.",
+      "resolved_in_final19bb8bd_source_and_tests": true,
+      "disposition": "Coupled current SOC/ISO label correction frozen d5bb958/root19bb8bd independently reviewed, 585 FE and28 backend checks passed. Final corrected compiled ISO frontend/Item artifact acceptance is root-owned and pending this artifact receipt."
     }
   ],
   "unverified_cases": [
@@ -1196,8 +1206,7 @@
     }
   ],
   "active_failures": [
-    "ISO-DASHBOARD-APPLICABILITY-DENOMINATOR",
-    "CURRENT-CONTROL1-ROOT-UNKNOWN-ORIGIN"
+    "ISO-DASHBOARD-APPLICABILITY-DENOMINATOR"
   ],
   "latest_runtime_operator_browser_workflow_definition_count": 4,
   "latest_runtime_operator_browser_workflow_definitions": {
@@ -1468,5 +1477,180 @@
     "cis": [
       "18.5"
     ]
+  },
+  "additional8e_and_cc12_reviewed_artifacts": [
+    {
+      "name": "final-cis13-root-unknown-proposal-8e44666.txt",
+      "sha256": "f0e0f6ba7e5876450b1677fa29b4ea85a00034a98484b95902d8616a97fc0536",
+      "bytes": 5553,
+      "lines": 95,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-cis13-root-unknown-native-items-8e44666.txt",
+      "sha256": "3cf019f6ab3e77b3aeec6163dd637bf77b922af9271f77fc02e7d5c7304e3d05",
+      "bytes": 2525,
+      "lines": 46,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-cis13-root-note-native-noop-8e44666.txt",
+      "sha256": "51ba6388b3ace68f7f825a34ffb47188b8b20620634bb768639f208ce5472407",
+      "bytes": 2577,
+      "lines": 46,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-cis13-root-note-reloaded-8e44666.txt",
+      "sha256": "a8d8bb339e23f3c8ca987e7ec68eac893200d1df0132c124db41048086a22583",
+      "bytes": 2669,
+      "lines": 46,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "soc-cc12-absent-proposal-6281bb1.txt",
+      "sha256": "d2c55b48bef91f0d0c53ca21de71b36fed51314820ed38ad6cc46f07cd4c2420",
+      "bytes": 5069,
+      "lines": 93,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "soc-cc12-absent-native-items-6281bb1.txt",
+      "sha256": "1bc696879729f6a3f462448f95b725a6d29a89102e099bee0fe52ce6cd7fc840",
+      "bytes": 3383,
+      "lines": 66,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "soc-cc12-unknown-proposal-6281bb1.txt",
+      "sha256": "edf9fdbea2823169215d9941dd2fd7066f6af1bc85ee95973bb81ac666c3dc27",
+      "bytes": 5760,
+      "lines": 93,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "soc-cc12-unknown-native-items-6281bb1.txt",
+      "sha256": "7fa9ea9c2c36983a1ac5109c81b6d2dd9f8c8d9a5b75673b4d7c25a3d440410b",
+      "bytes": 3400,
+      "lines": 68,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "soc-cc12-supported-proposal-6281bb1.txt",
+      "sha256": "cc7c538b461f24cc9be57a5a852ed41066ebc8855bf3227349d8377a120eb788",
+      "bytes": 5735,
+      "lines": 98,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "soc-cc12-supported-native-items-history-6281bb1.txt",
+      "sha256": "c6260eb71785ad33f8ae9c6032e8af5e1835c8697f275c34f897082138850e35",
+      "bytes": 4784,
+      "lines": 88,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "soc-cc12-manual-native-noop-6281bb1.txt",
+      "sha256": "444f96f0a884fda6b08e1e7141fec0253e71657530831411008cfeb18483b288",
+      "bytes": 3738,
+      "lines": 75,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "soc-cc12-manual-reloaded-6281bb1.txt",
+      "sha256": "0ef9ddcd7455cf2084c5f831ca237af3b9c38766cd57520bb6724d7d754adb92",
+      "bytes": 3722,
+      "lines": 75,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-loaded-bundle-8e44666.json",
+      "sha256": "51cb0a393a7d334cf95cb1baa57f9939fc72859488c780905cfd788eb25ee9bc",
+      "bytes": 271,
+      "lines": 9,
+      "capture_kind": "coordinator DOM/build provenance",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-filesystem-build-proof-8e44666.json",
+      "sha256": "8b89c4fac16fba7cf9dd1f589029be2ea09133be35f246adec6b0ebac959f421",
+      "bytes": 2118,
+      "lines": 39,
+      "capture_kind": "coordinator DOM/build provenance",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    }
+  ],
+  "additional8e_and_cc12_verified_states": [
+    {
+      "case": "Current1.3 root unknown yields truthful proposed native judgment and one clarification",
+      "source": "8e4466607255b0ca926f7da7181ff8e7c190e8d3",
+      "artifacts": [
+        "final-cis13-root-unknown-proposal-8e44666.txt",
+        "final-cis13-root-unknown-native-items-8e44666.txt",
+        "final-cis13-root-note-native-noop-8e44666.txt",
+        "final-cis13-root-note-reloaded-8e44666.txt"
+      ],
+      "observed": "Same1.3 native URL under IG3/153 shows proposed Not Assessed and truthful unconfirmed root paragraph without a false controls section. Before acceptance the native field still retains its earlier generated false-controls wording. Accepted Items show exactly one root clarification, Not Assessed / Not verified; the open clarification ownership note is unchanged after native Save and reload.",
+      "limits": "Post-apply native Requirement & implementation prose is not visible in the supplied Items snapshots. No rendered Item ID or expanded resolution-history event is exposed; exact identity/history are separately verified in source/API tests. Status/note remain reported clarification rather than implementation."
+    },
+    {
+      "case": "SOC CC1.2 confirmed absence becomes an unassessed confirmation position, then reported readiness",
+      "source": "6281bb1ae16626f98431711b7a8101761a1682c4",
+      "artifacts": [
+        "soc-cc12-absent-proposal-6281bb1.txt",
+        "soc-cc12-absent-native-items-6281bb1.txt",
+        "soc-cc12-unknown-proposal-6281bb1.txt",
+        "soc-cc12-unknown-native-items-6281bb1.txt",
+        "soc-cc12-supported-proposal-6281bb1.txt",
+        "soc-cc12-supported-native-items-history-6281bb1.txt"
+      ],
+      "observed": "SameCC1.2 URL and selected Security scope2of33. All-absence proposal has no false supported-controls heading and Needs Remediation / Validation; accepted native has three gap Items. Unknown proposal is Not Assessed, native has three confirmation Items and Previous items affordance. Supported proposal has exactly three supported controls and Addressed (Readiness); accepted native has no current Items and expanded Previous items visibly retains all six earlier gap/confirmation entries as Superseded. Verification remains Not verified throughout.",
+      "limits": "Input choice clicks are operator-reported; these full snapshots expose proposal and accepted outcomes, not every answer control. Superseded prior Items are shown, but their collapsed detailed resolution-history events and IDs are not inspected."
+    },
+    {
+      "case": "SOC CC1.2 manual native wording survives unchanged native Save and reload",
+      "source": "6281bb1ae16626f98431711b7a8101761a1682c4",
+      "artifacts": [
+        "soc-cc12-manual-native-noop-6281bb1.txt",
+        "soc-cc12-manual-reloaded-6281bb1.txt"
+      ],
+      "observed": "The exact manual analyst paragraph is identical in both full native views, Addressed (Readiness) and Not verified remain selected. Native Save shows Changes saved; assessment date unchanged. Reloaded native retains the paragraph.",
+      "limits": "Browser snapshots do not expose raw date/history/source-revision fields. The unchanged date feedback is visible; strict no-op raw persistence is independently tested separately."
+    }
+  ],
+  "source8e_bundle_proof": {
+    "source": "8e4466607255b0ca926f7da7181ff8e7c190e8d3",
+    "renderedScriptReceipt": "final-loaded-bundle-8e44666.json",
+    "filesystemProofReceipt": "final-filesystem-build-proof-8e44666.json",
+    "rootObservedScript": "http://127.0.0.1:4341/static/js/main.94f96200.js",
+    "rootProvidedJsSHA256": "43c5f1d3aac7bde4321cc839a5a074ad8e91b2dedf9406dc586baf86c87b0d2f",
+    "rootProvidedCssSHA256": "52bd9f1111daaef1147922737ede6ec8c06114ea63db5a464c07793dbbd6c29d",
+    "independentProvenanceLimit": "Saved DOM/script and file proof inspected and mutually consistent. The actual current build had advanced to19bb8bd/main.a46cd0fe at review, and the old8e JS file no longer existed, so its original hash is provided coordinator evidence rather than a newly recomputed independent hash."
   }
 }

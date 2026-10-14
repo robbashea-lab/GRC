@@ -9,8 +9,8 @@ This record belongs to actual Agent3. Complete baseline is `3e43ce3b9385e860d32c
 | CIS IG1 | 56 | Earlier4453 actualIG1 1.1 unknown/absence andItemresolve; final87 IG1-origin1.1 sampled underIG3, draft/final andfinding lifecycle |
 | CIS IG2 | 130, cumulative including IG1 | ActualIG2 1.3 rootunknown draft/review/native outcome; restoreIG3 with earlier18.5 retained |
 | CIS IG3 | 153, cumulative including IG2 | 1.4 Partial plus unknown; 18.5 matrix/operating context |
-| SOC2 | 61 across all five categories | CC1.1 Partial plus unknown in enrolled Security |
-| ISO27001 | 123:30 ISMS,93 Annex | 4.1 all-confirmed/hidden follow-up/manual wording; A.5.1 included and A.5.2 excluded scope decisions |
+| SOC2 | 61 across all five categories | CC1.1 Partial plus unknown; CC1.2 absence/unknown/allYes/manual save and reload, enrolledSecurity33 |
+| ISO27001 | 123:30 ISMS,93 Annex | 4.1 all-confirmed/hidden follow-up/manual wording;4.2 absence/unknown/Partial plus unknown;A.5.1 included/A.5.2 excluded |
 
 The unique count is337; the five placements sum to523. Current composed catalogs have3,580 question entries,3,396 eligible exact question/gap mappings and462 matrix criterion mappings.184 authored evidence fields remain separate from implementation-gap ranking. Zero supported eligible mapping omissions were found. The per-placement inventory retains baseline findings and adds current acceptance without concealing initial failures.
 
@@ -45,7 +45,7 @@ Read-only local Demo canonical snapshots: Brawndo32/56 implemented (32/12/5/7); 
 
 Only local client `Workflow QA 20261013 — disposable local` (`clients_demo_mv79rkv9_e6junuyj`) was mutated in browser4341. Native ISO scope vector:30 mandatoryISMS+1includedAnnex=31 eligible,1excluded91undetermined. The prior ClientDashboard's122 denominator was reported to reserved Portfolio owner; Agent2 implemented canonical consumer corrections, with combined exact-vector recheck pending.
 
-Agent2 is the acknowledged sole shared staging/session operator. PortfolioPR79 is frozen at010861ca5999e11c7bd4333ab2ec0370d23827b4 after a lossless Demo serialization-boundary storage fix; unchanged ISO123 campaign passed and exact-head CI168 was reported running. It remains separate from a combined candidate. Program runtime source is8e4466607255b0ca926f7da7181ff8e7c190e8d3 after the final SOC punctuation and current Control1 root-confirmation corrections. Exact program CI, combined candidate, hosted build and cleanup remain pending and must be appended before final handoff.
+Agent2 is the acknowledged sole shared staging/session operator. PortfolioPR79 is frozen at010861ca5999e11c7bd4333ab2ec0370d23827b4 after a lossless Demo serialization-boundary storage fix; unchanged ISO123 campaign passed and exact-head CI168 was reported running. It remains separate from a combined candidate. Program runtime source is19bb8bd5bd84ac30a958e62ec9db19235f51bb09 after currentSOC/ISO punctuation and currentControl1 root-confirmation corrections. Exact program CI, combined candidate, hosted build and cleanup remain pending and must be appended before final handoff.
 
 ## Final compiled local acceptance updates
 
@@ -60,10 +60,23 @@ Protected clients/records, originalTab5, real authenticated logout/login/MFA/ema
 
 ## Final program source freeze
 
-Final runtime source8e4466607255b0ca926f7da7181ff8e7c190e8d3 preserves currentSOC supplied terminal punctuation and creates genuine currentControl1 root clarification work. These are the only runtime changes after87. Current1.3/1.4/1.5 missing/NotSure roots have exact verification origins; legacy readers, all known implementation statuses, scope, permissions, counts and capture remain unchanged. Source-owner32 frontend tests and27 backend tests plus6,832subtests passed, including nativeDemo/ASGI exactItem retention on unchanged repeated applies. Non-author focused review is separate.
+The intermediate runtime source8e4466607255b0ca926f7da7181ff8e7c190e8d3 preserves currentSOC supplied terminal punctuation and creates genuine currentControl1 root clarification work. The final19bb8bd coupled label/writer correction follows this source; no status, scope, permissions, counts or capture are changed. Current1.3/1.4/1.5 missing/NotSure roots have exact verification origins; legacy readers, all known implementation statuses, scope, permissions, counts and capture remain unchanged. Source-owner32 frontend tests and27 backend tests plus6,832subtests passed, including nativeDemo/ASGI exactItem retention on unchanged repeated applies. Non-author focused review is separate.
 
 CompiledDemo94f96200 exited0 with original7e6897c1 CSS, was observably loaded, and1.3 explicit reviewed generation/nativeSave now has no false supported-controls heading, staysNotAssessed/NotVerified and creates one root clarificationItem. Notes save asOpen without implying implementation; unchanged nativeSave and reload preserve that note and oneItem. Earlier failed87 receipt is retained. SOC CC1.2 browser also passed confirmedabsence -> unknown -> allYes, native gaps/clarifications/obsoletework history, then native manual wording/unchangedSave/reload. OwnSOC is now1Implemented+1Partial+31NotAssessed of33; owncombined expected217 is3Implemented+3Partial+211NotAssessed before additional ISO samples.
 
 DraftPR80 is the program review/CI vehicle. CI169 atce9cac3 passed Mongo but was still running offlinebackend/frontend when checked; it is superseded by this final source. Agent2 prepares one combined candidate withPortfolio010861, inspects the complete diff and human task boundaries, and requires exact combined gates plus final QAACK before staging. No deployment, main merge or production/publication occurred in this program work.
 
 Three skipped offline FrameworkReportMongoSnapshotTests require FRAMEWORK_REPORT_TEST_MONGO on an isolated replica set. Neither the169-test general loopback campaign nor four-case SOC/ISO replay is evidence for those separate snapshot tests. They remain unverified unless a separate receipt supplies proof.
+
+
+## Coupled final source and QA ACK
+
+Runtime freeze19bb8bd5bd84ac30a958e62ec9db19235f51bb09 adds the same existing terminal-sentence policy to currentISO generation and canonical backendSOC/ISO Item labels. CurrentV2 only; legacyV1 remains exact. Item IDs/fingerprints still derive from original source answers, and unchanged notes/resolutions/history remain intact. There is no separate Python narrative writer: Python validates the reviewed result DTO and independently derives nativeItem origins.
+
+Before: compiledISO4.2 terminal-detail generated a doubleperiod, and independent backendSOC currentItem reproduced the same defect. After: author4FE suites33PASS and serial28backend tests+9,196subtestsPASS; independent4FE suites585PASS and2backend suites28PASS. Counts overlap; independent backend run did not print subtest totals. Coupled conformance additionally compares actual current generated signal text with canonicalItem labels across applicable facets. A Windows test subprocess transport was explicitly corrected to UTF8 rather than dropping the strengthened exact-text assertion; its failed receipt remains retained.
+
+FinalDemo main.a46cd0fe.js compiled with original7e6897c1 CSS and was observably loaded. Root-operatedISO4.2 native acceptance now passes: allNo -> NotImplemented with3gaps; allNotSure -> NotAssessed with3clarifications/oldgap history; Partial identification + unknownobligations + affirmativeISMSresponse -> Partial with1gap+1confirmation. Final summary/reload retains actual limited practice and independentNotVerified. AcceptedCIS1.3 native CurrentImplementation is directly captured on final19 and contains no false supported controls. A finite keyboardTab check reaches the interviewSave button fromBack; this is not full accessibility conformance.
+
+Final local ownfixture canonical expectation: CIS153(1Implemented,2Partial,0NI,150NA); SOC33(1Implemented,1Partial,0NI,31NA); ISO31eligible(1Implemented,1Partial,0NI,29NA),1excluded/91undetermined separate. Total217(3Implemented,4Partial,0NI,210NA),7assessed. Two genuine nativeFinding tickets are completed; five child actions on1.4 remainDone and the assessment remainsPartial/NotVerified. These are isolated syntheticDemo records, not customer posture or historical customer activity. CombinedPortfolio canonical31/217, realrelease/hosted smoke and ownfixture recoverablecleanup remain pending.
+
+ProgramPR80 review base is codex/governara-release-20261013 at3e43, keeping unmerged baseline changes outside this program review. It staysdraft/unmerged. Agent2's Portfolio010861 freeze is itself superseded by demonstrated pure-native-GET read persistence repair; existing writes/export audits/auth/currentidentity must remain. One exact combined candidate and all4 existing gates are required. Main/production/provider/account/grants/heldTab5 remain unchanged; no staging completion claim is made here.
