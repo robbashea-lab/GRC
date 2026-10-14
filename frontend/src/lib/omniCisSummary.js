@@ -2,7 +2,7 @@ import {guidedCatalog,catalogForVersion,visibleQuestions} from './guidedAssessme
 import {focusedResult,focusedEvaluationDate} from './focusedOmni';
 import {inventorySummary} from './omniInventorySummary';
 import {omniGroups} from './refinedOmni';
-import {formatInlineSummary} from './inlineAssessment';
+import {formatInlineSummary,inlineSentence} from './inlineAssessment';
 
 const unique=items=>[...new Set(items.map(item=>item.trim()).filter(Boolean))];
 const bullets=items=>unique(items).map(item=>'- '+item).join('\n');
@@ -12,9 +12,10 @@ const contextLabels={existing:'Current practice',system:'Systems or processes',o
 export function omniCisSummary(id,answers,version,clientName='The organization',inlineDate=null){
   if(id==='1.1')return inventorySummary(answers,version,clientName,inlineDate);
   const definition=catalogForVersion(version)?.definitions?.[id]||guidedCatalog.definitions[id],questions=visibleQuestions(id,answers,version),result=focusedResult(id,answers,version,focusedEvaluationDate(inlineDate));
+  const current=['cis-v8.1-control1-5','cis-v8.1-program-5'].includes(version);
   const active=Object.fromEntries(Object.entries(answers).filter(([key])=>questions.some(q=>key===q.id||key===q.id+'_detail')));
   const subject=definition.title.toLowerCase();
-  const overview=[result.status==='addressed'?`${clientName} reports the practice to ${subject} is in place.`:result.status==='in_progress'?`${clientName} reports partial implementation of the practice to ${subject}.`:result.status==='needs_attention'?`${clientName} reports the practice to ${subject} is not currently in place.`:`${clientName}’s implementation of the practice to ${subject} needs confirmation.`];
+  const overview=[result.status==='addressed'?`${clientName} reports the practice to ${subject} is in place.`:result.status==='in_progress'?`${clientName} reports partial implementation of the practice to ${subject}.`:result.status==='needs_attention'?active[definition.root]==='No'?`${clientName} reports the practice to ${subject} is not currently in place.`:`${clientName} reports confirmed missing components of the practice to ${subject}.`:`${clientName}’s implementation of the practice to ${subject} needs confirmation.`];
   if(active.operation?.trim())overview.push(`Reported operation: ${active.operation.trim()}`);
   else if(active.system?.trim())overview.push(`The reported system or process is ${active.system.trim()}.`);
   const sections={'In place':[],'Needs confirmation':[],'Incomplete or missing':[],'Reported outside scope':[]},actions={confirmation:[],remediation:[]},breakdown=[];
@@ -45,7 +46,7 @@ export function omniCisSummary(id,answers,version,clientName='The organization',
   for(const issue of result.unknowns.filter(value=>/^(Applicability requires|The overall practice answer)/.test(value))){sections['Needs confirmation'].push(issue);actions.confirmation.push(issue);}
   const context=[],noteGroups=new Map(omniGroups(id,answers,version).map(group=>[group.note,group.name]));
   for(const q of questions){
-    if(!q.critical&&!['gaps','unknowns'].includes(q.id)&&active[q.id]){const value=Array.isArray(active[q.id])?active[q.id].join(', '):active[q.id];context.push(`${contextLabels[q.id]||labels[q.id]||q.id.replaceAll('_',' ')}: ${value}`);}
+    if(!q.critical&&!['gaps','unknowns',...(current?['additional_gap','additional_confirmation','operation']:[])].includes(q.id)&&active[q.id]){const value=Array.isArray(active[q.id])?active[q.id].join(', '):active[q.id];context.push(`${contextLabels[q.id]||labels[q.id]||q.id.replaceAll('_',' ')}: ${value}`);}
     if(active[q.id+'_detail']?.trim()){
       const groupName=q.type==='matrix'&&!labels[q.id]?noteGroups.get(q.id):null;
       context.push(groupName?`Reported context for ${groupName}: ${active[q.id+'_detail'].trim()}`:`Reported ${labels[q.id]?.toLowerCase()||q.id.replaceAll('_',' ')} context: ${active[q.id+'_detail'].trim()}`);
@@ -54,6 +55,6 @@ export function omniCisSummary(id,answers,version,clientName='The organization',
   const grouped=Object.entries(sections).filter(([name,items])=>items.length||name==='Incomplete or missing').map(([name,items])=>name+'\n'+bullets(items.length?items:['No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.']));
   if(context.length)grouped.push('Reported operating context\n'+bullets(context));
   const next=[actions.confirmation.length&&'Confirmation work\n'+bullets(actions.confirmation),actions.remediation.length&&'Remediation\n'+bullets(actions.remediation)].filter(Boolean);
-  const narrative=inlineDate?formatInlineSummary({paragraph:[...overview,...context].join(' '),controls:sections['In place'],limitations:[result.gaps.length&&'Reported missing or incomplete practices limit this implementation.',result.unknowns.length&&'Some reported practices remain unconfirmed.'].filter(Boolean).join(' '),date:inlineDate}):['OVERVIEW',overview.join(' '),'IMPLEMENTATION BREAKDOWN',grouped.join('\n\n'),'ITEMS TO ADDRESS',next.length?next.join('\n\n'):'- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.'].join('\n\n');
+  const narrative=inlineDate?formatInlineSummary({paragraph:[...overview,...context].map(fragment=>current?inlineSentence(fragment):fragment).join(' '),controls:sections['In place'],limitations:[result.gaps.length&&'Reported missing or incomplete practices limit this implementation.',result.unknowns.length&&'Some reported practices remain unconfirmed.'].filter(Boolean).join(' '),date:inlineDate}):['OVERVIEW',overview.join(' '),'IMPLEMENTATION BREAKDOWN',grouped.join('\n\n'),'ITEMS TO ADDRESS',next.length?next.join('\n\n'):'- No outstanding next steps were identified from the reported answers. Evidence verification remains separate.'].join('\n\n');
   return {result:{...result,narrative},breakdown,deficiencies:unique(result.gaps),confirmations:unique(result.unknowns)};
 }

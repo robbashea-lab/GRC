@@ -55,7 +55,7 @@ test('applicable CIS clients start clean, ISO uses its own version, and inactive
   expect(interview.answers).toEqual({});expect(interview.revision).toBe(0);
   const iso=(await api.get('/frameworks/iso-27001',{params:{client_id:'demo_dunder'}})).data;
   const route='/framework_assessments/'+iso.assessments[0].framework_assessment_id+'/guided-assessment';
-  expect((await api.get(route)).data.version).toBe('iso27001-omni-1');
+  expect((await api.get(route)).data.version).toBe('iso27001-omni-2');
   await api.patch('/onboarding/programs/iso-27001',{client_id:'demo_dunder',applicability:'does_not_apply'});
   await expect(api.get(route)).rejects.toMatchObject({response:{status:404}});
 });

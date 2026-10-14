@@ -76,6 +76,9 @@ def _origins(row, draft, questions):
     answers, framework = draft['answers'], row['framework_key']
     origins = {}
     if framework in ('soc-2', 'iso-27001'):
+        engine = soc_guided_assessment if framework == 'soc-2' else iso_guided_assessment
+        def sentence(fragment):
+            return fragment if draft['version'] == engine.CATALOG['version'] and fragment.endswith(('.', '!', '?')) else fragment + '.'
         substantive = 0
         outside = 'Outside the selected system' if framework == 'soc-2' else 'Not relevant here'
         for question in questions.values():
@@ -88,26 +91,27 @@ def _origins(row, draft, questions):
             if question['type'] == 'context':
                 if value != 'Relevant' and not (value == outside and detail):
                     relevance = 'system relevance' if framework=='soc-2' else 'conditional relevance'
-                    origins[(key, 'verification')] = topic + ': '+relevance+' needs confirmation' + suffix + '.'
+                    origins[(key, 'verification')] = sentence(topic + ': '+relevance+' needs confirmation' + suffix)
                 continue
             substantive += 1
             if value in ('No', 'Partially'):
-                origins[(key, 'gap')] = topic + (': reported not in place' if value == 'No' else ': reported partially in place') + suffix + '.'
+                origins[(key, 'gap')] = sentence(topic + (': reported not in place' if value == 'No' else ': reported partially in place') + suffix)
             elif value != 'Yes':
-                origins[(key, 'verification')] = topic + ': needs confirmation' + suffix + '.'
+                origins[(key, 'verification')] = sentence(topic + ': needs confirmation' + suffix)
         if not substantive:
             scope = 'selected system' if framework == 'soc-2' else 'ISMS scope'
             label='criterion assessment' if framework=='soc-2' else 'implementation assessment'
             origins[('summary_confirmation', 'verification')] = 'No substantive practice is established by the applicable answers; confirm the '+label+' in the ' + scope + '.'
         return origins
     catalog = guided_assessment.VERSIONS[draft['version']]
-    definition = catalog['definitions'][row['definition_id']]
-    current = draft['version'] in (guided_assessment.PROGRAM['version'], guided_assessment.PROGRAM_V4['version'], guided_assessment.CONTROL1_V4['version'])
+    definition = catalog.get('definitions', {}).get(row['definition_id']) or guided_assessment.CONTROL1['definitions'][row['definition_id']]
+    corrected = draft['version'] in (guided_assessment.PROGRAM_V5['version'], guided_assessment.CONTROL1_V5['version'])
+    current = draft['version'] in (guided_assessment.PROGRAM['version'], guided_assessment.PROGRAM_V4['version'], guided_assessment.PROGRAM_V5['version'], guided_assessment.CONTROL1_V4['version']) or corrected and row['definition_id'] not in ('1.1','1.2')
     root, states = definition.get('root'), []
     for question in questions.values():
         key = question['id']
         critical = question.get('critical', question['type'] == 'matrix' or key == root)
-        if not critical or current and root == 'practice' and key == root:
+        if not critical or current and (root == 'practice' or corrected) and key == root:
             continue
         value = answers.get(key)
         values = list((value or {}).get(name) for name in question['rows']) if question['type'] == 'matrix' else value if question['type'] == 'multi' else [value]
@@ -136,7 +140,15 @@ def _origins(row, draft, questions):
                 text = question.get('gap_template' if kind == 'gap' else 'unknown_template') or ('Address: ' if kind == 'gap' else 'Confirm: ') + prompt
                 origins[(key, kind)] = text
     if current:
+        if draft['version'] == guided_assessment.CONTROL1_V5['version'] and answers.get(root) in (None, '', 'Not sure'):
+            question = questions[root]
+            origins[(root, 'verification')] = question.get('unknown_template') or 'Confirm: '+question['prompt']
+        if corrected and answers.get(root) == 'No' and not any(kind == 'gap' for _, kind in origins):
+            origins[(root, 'gap')] = 'The requirement practice is reported not in place.'
         applicable = [state for state in states if state != 'excluded']
+        if draft['version'] == guided_assessment.CONTROL1_V5['version'] and answers.get(root) == 'Partially' and applicable and not any(kind == 'gap' for _, kind in origins):
+            question=questions[root]
+            origins[(root, 'gap')] = question.get('gap_template') or 'Address: '+question['prompt']
         if states and not applicable:
             origins[('scope_reason', 'verification')] = 'Applicability requires native assessment decision; excluded scope is not proof of implementation.'
         elif (answers.get(root) == 'No' and any(state in ('met', 'partial') for state in applicable)
@@ -170,6 +182,13 @@ def generated(row, draft):
                 text += ' — ' + _text(answers,question_id + '_detail')
             origins[(question_id, kind)] = text
     for question_id, kind in (('gaps', 'gap'), ('unknowns', 'verification')):
+        if row['framework_key']=='cis-ig1' and draft['version']==guided_assessment.LEGACY['version'] and question_id=='gaps':
+            kind='verification'  # The original prompt combines deficiencies, exclusions and uncertainty.
+        if row['framework_key']=='cis-ig1' and draft['version'] in (guided_assessment.PROGRAM_V5['version'],guided_assessment.CONTROL1_V5['version']) and answers.get('additional_gap' if kind=='gap' else 'additional_confirmation')!='Yes':
+            continue
+        engine = soc_guided_assessment if row['framework_key'] == 'soc-2' else iso_guided_assessment if row['framework_key'] == 'iso-27001' else None
+        if engine and draft['version'] != engine.LEGACY['version'] and answers.get('additional_gap' if kind == 'gap' else 'additional_confirmation') != 'Yes':
+            continue
         if isinstance(answers.get(question_id), str) and _text(answers,question_id):
             origins[(question_id, kind)] = _text(answers,question_id)
     return [{

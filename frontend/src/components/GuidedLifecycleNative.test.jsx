@@ -56,7 +56,7 @@ test('Omni Finding navigation retains the existing native RecordDrawer callback'
 test('scoped Omni save reuses native PATCH, CAS and fields without changing verification',async()=>{
   api.patch.mockImplementation(async (_path,body)=>({data:{...saved,...body,last_saved:'2026-10-09T12:01:00Z',assessment_history:[saved]}}));
   await render();await click('Save Omni native assessment');
-  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.1',expect.objectContaining({implementation:'Reviewed synthetic inventory',status:'in_progress',verification:'verified',expected_last_assessed:null,guided_assessment_source:{version:'cis-v8.1-control1-3',revision:9,generated_at:'2026-10-09T12:00:00Z'}}));
+  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.1',expect.objectContaining({implementation:'Reviewed synthetic inventory',status:'in_progress',verification:'verified',expected_last_assessed:null,guided_assessment_source:{version:'cis-v8.1-control1-5',revision:9,generated_at:'2026-10-09T12:00:00Z'}}));
   expect(container.textContent).toContain('Assessment saved.');
 });
 

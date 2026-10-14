@@ -19,8 +19,10 @@ PROGRAM = json.loads((ROOT / 'guidedCisProgram.json').read_text(encoding='utf-8'
 PROGRAM_V1 = json.loads((ROOT / 'guidedCisProgramV1.json').read_text(encoding='utf-8'))
 PROGRAM_V2 = json.loads((ROOT / 'guidedCisProgramV2.json').read_text(encoding='utf-8'))
 PROGRAM_V4 = json.loads((ROOT / 'guidedCisProgramV4.json').read_text(encoding='utf-8'))
+PROGRAM_V5 = json.loads((ROOT / 'guidedCisProgramV5.json').read_text(encoding='utf-8'))
 CONTROL1_V3 = json.loads((ROOT / 'guidedControl1V3.json').read_text(encoding='utf-8'))
 CONTROL1_V4 = json.loads((ROOT / 'guidedControl1V4.json').read_text(encoding='utf-8'))
+CONTROL1_V5 = json.loads((ROOT / 'guidedControl1V5.json').read_text(encoding='utf-8'))
 
 def program_questions(definition):
     questions = [{'id': 'practice', 'type': 'select', 'choices': ['Yes', 'Partially', 'No', 'Not sure']}]
@@ -49,11 +51,18 @@ PROGRAM3_CATALOG = {**CURRENT_PROGRAM,
     'definitions': {**CURRENT_PROGRAM['definitions'], **{id: {**d, 'question_set_version': CONTROL1_V3['version']} for id, d in CONTROL1_V3['definitions'].items()}, **{id: {**d, 'question_set_version': CONTROL1_V4['version']} for id, d in CONTROL1_V4['definitions'].items()}},
     'safeguards': {**CURRENT_PROGRAM['safeguards'], **CONTROL1_V3['safeguards'], **CONTROL1_V4['safeguards']}}
 PROGRAM4_CATALOG = program_catalog(PROGRAM_V4)
+PROGRAM5_CATALOG = program_catalog(PROGRAM_V5)
+for questions in PROGRAM5_CATALOG['safeguards'].values():
+    for key,parent in [('gaps','additional_gap'),('unknowns','additional_confirmation')]:
+        question = next((q for q in questions if q['id']==key),None)
+        if question:
+            question['when']={parent:['Yes']}
+            questions.insert(questions.index(question),{'id':parent,'type':'select','choices':['Yes','No','Not sure'],'optional':True})
 # Preserve other current versions and immutable program3 interview semantics.
 CATALOG = {**PROGRAM3_CATALOG,
-    'definitions': {**PROGRAM3_CATALOG['definitions'], **{id: PROGRAM4_CATALOG['definitions'][id] for id in PROGRAM_V4['definitions']}},
-    'safeguards': {**PROGRAM3_CATALOG['safeguards'], **{id: PROGRAM4_CATALOG['safeguards'][id] for id in PROGRAM_V4['definitions']}}}
-VERSIONS = {LEGACY['version']: LEGACY, CONTROL1['version']: CONTROL1, PROGRAM_V1['version']: PROGRAM1_CATALOG, PROGRAM_V2['version']: PROGRAM2_CATALOG, CONTROL1_V3['version']: CONTROL1_V3, CONTROL1_V4['version']: CONTROL1_V4, PROGRAM['version']: PROGRAM3_CATALOG, PROGRAM_V4['version']: PROGRAM4_CATALOG}
+    'definitions': {**PROGRAM3_CATALOG['definitions'], **{id: PROGRAM4_CATALOG['definitions'][id] for id in PROGRAM_V4['definitions']}, **{id: PROGRAM5_CATALOG['definitions'][id] for id in PROGRAM_V5['definitions']}, **{id: {**d,'question_set_version':CONTROL1_V5['version']} for id,d in CONTROL1_V5['definitions'].items()}},
+    'safeguards': {**PROGRAM3_CATALOG['safeguards'], **{id: PROGRAM4_CATALOG['safeguards'][id] for id in PROGRAM_V4['definitions']}, **{id: PROGRAM5_CATALOG['safeguards'][id] for id in PROGRAM_V5['definitions']}, **CONTROL1_V5['safeguards']}}
+VERSIONS = {LEGACY['version']: LEGACY, CONTROL1['version']: CONTROL1, PROGRAM_V1['version']: PROGRAM1_CATALOG, PROGRAM_V2['version']: PROGRAM2_CATALOG, CONTROL1_V3['version']: CONTROL1_V3, CONTROL1_V4['version']: CONTROL1_V4, CONTROL1_V5['version']:CONTROL1_V5, PROGRAM['version']: PROGRAM3_CATALOG, PROGRAM_V4['version']: PROGRAM4_CATALOG, PROGRAM_V5['version']:PROGRAM5_CATALOG}
 
 def current_version(id, upgraded=True, framework='cis-ig1'):
     if framework == 'iso-27001':
@@ -155,12 +164,19 @@ def validate_answers(id, answers, version=None):
                 valid = isinstance(value, dict) and all(k in q['rows'] and v in q.get('row_choices', {}).get(k, q['choices']) for k, v in value.items())
             elif q['type'] == 'multi':
                 valid = isinstance(value, list) and all(isinstance(v, str) and v in q['choices'] for v in value) and len(value) == len(set(value))
-                if valid and version == CONTROL1_V4['version'] and len(value) > 1 and any(v in ('None', 'Not sure') for v in value):
+                if valid and version in (CONTROL1_V4['version'], CONTROL1_V5['version']) and len(value) > 1 and any(v in ('None', 'Not sure') for v in value):
                     valid = False
             else:
                 valid = isinstance(value, str) and value in q['choices']
         if not valid:
             raise HTTPException(422, 'Invalid guided interview answer')
+
+def validate_completion(id, answers, version):
+    validate_answers(id, answers, version)
+    if version in (PROGRAM_V5['version'], CONTROL1_V5['version']):
+        for parent, detail in [('additional_gap', 'gaps'), ('additional_confirmation', 'unknowns')]:
+            if answers.get(parent) == 'Yes' and not (answers.get(detail) or '').strip(soc_guided_assessment.TEXT_WHITESPACE):
+                raise HTTPException(422, 'Describe the additional reported work before completing the interview')
 
 def upgraded_pilot(row, user):
     # The router authenticates tenant/record access and canonical group scope first.
@@ -294,6 +310,8 @@ async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=Non
         if body.version != current_version(row['definition_id']):
             raise HTTPException(409, 'Question set changed; reload the interview')
         validate_answers(row['definition_id'], body.answers, body.version)
+        if body.completed and row['framework_key']=='cis-ig1':
+            validate_completion(row['definition_id'],body.answers,body.version)
     identity = row['framework_assessment_id'] + ':' + user['user_id']
     old = await stored_draft(s, row, user) or {'revision': 0}
     if old['revision'] != body.expected_revision:
@@ -316,6 +334,8 @@ async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=Non
         if body.result is not None and body.result.version is not None and body.result.version != body.version:
             raise HTTPException(422, 'Recorded result question version must match the interview')
         validate_answers(row['definition_id'], body.answers, body.version)
+        if body.completed and row['framework_key']=='cis-ig1':
+            validate_completion(row['definition_id'],body.answers,body.version)
         if row['framework_key'] == 'iso-27001':
             if body.version not in iso_guided_assessment.VERSIONS:
                 raise HTTPException(409, 'ISO interview version is unavailable')
@@ -351,16 +371,6 @@ async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=Non
                 raise HTTPException(409, 'The saved interview base cannot be replaced; explicitly restart for a new review')
     at = s._now()
     evaluation_date, generated_at = await _recorded_result_clock(s, row, user, old, body, at)
-    # Archive a saved state before replacement. A losing CAS may leave this valid
-    # prior-state snapshot; it is not evidence that a restart/edit succeeded.
-    archive = old['revision'] and ((old['completed'] or body.restart or body.rebase) if upgraded else (
-        old['version'] != body.version or old['completed'] and not body.completed and not body.answers))
-    if old['revision'] and archive:
-        if lease is not None:
-            await lease.check()
-        await s.db.guided_assessment_history.update_one(
-            {'_id': identity + ':' + str(old['revision'])},
-            {'$setOnInsert': {**old, 'client_id': row['client_id'], 'assessment_id': row['framework_assessment_id'], 'user_id': user['user_id']}}, upsert=True)
     data = {**body.model_dump(exclude={'expected_revision', 'base_assessment_token', 'base_scope_fingerprint', 'restart', 'rebase', 'result', 'summary_review'}), **base, 'client_id': row['client_id'],
             'assessment_id': row['framework_assessment_id'], 'user_id': user['user_id'],
             'revision': old['revision'] + 1, 'updated_at': at, 'generated_at': generated_at if body.completed else None}
@@ -372,6 +382,23 @@ async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=Non
         data['summary_review'] = body.summary_review.model_dump() if body.summary_review else None if body.restart or 'summary_review' in body.model_fields_set else old.get('summary_review')
     if row['framework_key'] == 'iso-27001':
         data['summary_review'] = body.summary_review.model_dump() if body.summary_review else None if body.restart or 'summary_review' in body.model_fields_set else old.get('summary_review')
+    semantic = ('version','answers','step','completed','narrative','result','summary_review','base_assessment_token','base_scope_fingerprint')
+    if old['revision'] and not body.restart and all(old.get(key) == data.get(key) for key in semantic):
+        if lease is not None:
+            await lease.check()
+        if not await s.db.guided_assessment_pilot.find_one({'_id':identity,'revision':old['revision'],'client_id':row['client_id']}):
+            raise HTTPException(409, 'Interview changed; reload before saving')
+        return await read_draft(s,row,user,client,upgraded=upgraded)
+    # Archive a saved state before replacement. A losing CAS may leave this valid
+    # prior-state snapshot; it is not evidence that a restart/edit succeeded.
+    archive = old['revision'] and ((old['completed'] or body.restart or body.rebase) if upgraded else (
+        old['version'] != body.version or old['completed'] and not body.completed and not body.answers))
+    if old['revision'] and archive:
+        if lease is not None:
+            await lease.check()
+        await s.db.guided_assessment_history.update_one(
+            {'_id': identity + ':' + str(old['revision'])},
+            {'$setOnInsert': {**old, 'client_id': row['client_id'], 'assessment_id': row['framework_assessment_id'], 'user_id': user['user_id']}}, upsert=True)
     if lease is not None:
         await lease.check()
     if old['revision']:

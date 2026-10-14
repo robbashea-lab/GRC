@@ -27,17 +27,45 @@ const mayEdit=(user,task)=>canOperate(user)&&(user.role!=='client_contributor'||
 
 function Work({task,users,user,onSaved,onDirty}) {
   const update=useCreateIntent((...args)=>api.patch(...args),user.user_id+':'+task.client_id+':'+task.task_id,true);
-  const [form,setForm]=useState(()=>draft(task)),[busy,setBusy]=useState(false),[error,setError]=useState(''),[feedback,setFeedback]=useState('');
-  const dirty=JSON.stringify(form)!==JSON.stringify(draft(task));
+  const [edits,setEdits]=useState({}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[feedback,setFeedback]=useState('');
+  const editVersion=useRef(task.updated_at??null),current=draft(task);
+  const form={...current,...Object.fromEntries(Object.entries(edits).map(([key,edit])=>[key,edit.value]))};
+  const dirty=JSON.stringify(form)!==JSON.stringify(current);
+  // Untouched fields follow native reads; a colliding edit retains its original CAS token.
+  const conflict=Object.entries(edits).some(([key,edit])=>current[key]!==edit.before&&current[key]!==edit.value);
+  useEffect(()=>{
+    // A confirmed read may acknowledge edits, but must not erase different local text.
+    setEdits(previous=>{
+      const retained=Object.fromEntries(Object.entries(previous).filter(([key,edit])=>edit.value!==draft(task)[key]&&!(key==='status'&&task.status==='done')));
+      return Object.keys(retained).length===Object.keys(previous).length?previous:retained;
+    });
+  },[task]);
   useEffect(()=>{onDirty(task.task_id,dirty);return()=>onDirty(task.task_id,false);},[dirty,task.task_id,onDirty]);
   const allowed=editableFields('tasks',user,task),writable=mayEdit(user,task);
   const enabled=k=>writable&&(!allowed||allowed.has(k)||(k==='assignee_id'&&user.role==='client_contributor'));
-  const put=(k,v)=>{setForm(f=>({...f,[k]:v}));setFeedback('');};
+  const put=(k,v)=>{
+    if(!dirty)editVersion.current=task.updated_at??null;
+    setEdits(previous=>{
+      const next=dirty?{...previous}:{};
+      if(v===current[k])delete next[k];else next[k]={value:v,before:next[k]?.before??current[k]};
+      return next;
+    });
+    setFeedback('');
+  };
+  function acknowledge(saved){
+    if(saved?.task_id!==task.task_id||saved.client_id!==task.client_id)return;
+    editVersion.current=saved.updated_at??null;
+    const accepted=draft(saved);
+    // Recovery acknowledges the original request, not newer text typed while its response was lost.
+    setEdits(previous=>Object.fromEntries(Object.entries(previous)
+      .filter(([key,edit])=>edit.value!==accepted[key]&&!(key==='status'&&saved.status==='done'))
+      .map(([key,edit])=>[key,{...edit,before:accepted[key]}])));
+  }
   async function save(status){
     setBusy(true);setError('');
     const next={...form,...(status?{status}:{})};
-    const body=Object.fromEntries(fields.filter(k=>enabled(k)&&next[k]!==draft(task)[k]).map(k=>[k,['assignee_id','due_date'].includes(k)?next[k]||null:next[k]]));
-    try{await update('/tasks/'+task.task_id,{...body,expected_updated_at:task.updated_at??null});setFeedback('Saved.');await onSaved();}
+    const body=Object.fromEntries(fields.filter(k=>enabled(k)&&next[k]!==current[k]).map(k=>[k,['assignee_id','due_date'].includes(k)?next[k]||null:next[k]]));
+    try{const result=await update('/tasks/'+task.task_id,{...body,expected_updated_at:conflict?editVersion.current:task.updated_at??null});acknowledge(result?.data);setFeedback('Saved.');await onSaved();}
     catch(e){setError(formatError(e));}finally{setBusy(false);}
   }
   return <section className="space-y-3 border border-line rounded-lg p-4" aria-label={task.title} data-ticket-task={task.task_id}>
@@ -47,7 +75,7 @@ function Work({task,users,user,onSaved,onDirty}) {
         <label>Due date (optional)<Input aria-label="Due date" type="date" value={form.due_date.slice(0,10)} disabled={!enabled('due_date')} onChange={e=>put('due_date',e.target.value)}/></label></div>
       {!form.assignee_id&&<p className="text-sm ticket-field-wide">Unassigned</p>}
       <label className="block">Priority<select aria-label="Priority" value={form.priority} disabled={!enabled('priority')} onChange={e=>put('priority',e.target.value)}><option value="">Classification needed</option>{!priorities.some(o=>o.value===form.priority)&&form.priority&&<option value={form.priority}>{form.priority}</option>}{priorities.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>
-      <label className="block">Work status<select className="block bg-surface-card border border-line rounded p-2" aria-label="Work status" value={form.status} disabled={!enabled('status')||task.status==='done'} onChange={e=>put('status',e.target.value)}>
+      <label className="block">Work status<select className="block bg-surface-card border border-line rounded p-2" aria-label="Work status" value={task.status==='done'?'done':form.status} disabled={!enabled('status')||task.status==='done'} onChange={e=>put('status',e.target.value)}>
         {['open','in_progress','blocked','cancelled',...(task.status==='done'?['done']:[])].map(s=><option key={s} value={s}>{s==='done'?'Work completed':labels[s]}</option>)}
       </select></label>
       <label className="block ticket-field-wide">Planned action<Textarea aria-label="Planned action" value={form.description} disabled={!enabled('description')} onChange={e=>put('description',e.target.value)}/></label>
@@ -56,7 +84,7 @@ function Work({task,users,user,onSaved,onDirty}) {
       {writable&&<div className="ticket-field-wide flex flex-wrap gap-2"><Button disabled={!dirty||!form.title.trim()} onClick={()=>save()}>Save changes</Button>{!['done','cancelled'].includes(task.status)&&<Button disabled={!form.title.trim()} onClick={()=>save('done')}>Complete work</Button>}</div>}
     </fieldset>
     {error&&<p role="alert">{error}</p>}{feedback&&<p role="status">{feedback}</p>}
-    {update.unconfirmed()&&<Button disabled={busy} onClick={async()=>{setBusy(true);setError('');try{await update.retry();await onSaved();}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Retry unconfirmed save</Button>}
+    {update.unconfirmed()&&<Button disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const result=await update.retry();acknowledge(result?.data);await onSaved();}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Retry unconfirmed save</Button>}
     {task.completed_at&&<p className="text-xs">Work completed {task.completed_at}</p>}
   </section>;
 }
@@ -109,7 +137,7 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
       {ticket.finding&&<p className="whitespace-pre-wrap"><strong>Finding:</strong> {ticket.issue||'Issue description not recorded'}</p>}
       {origin.id&&<p>Originated from: {origin.target?<button className="text-link underline" onClick={()=>setNested({kind:origin.kind,record:origin.target,initialValues:origin.initialValues})}>{origin.label}{origin.detail?' · '+origin.detail:''}</button>:<span>{origin.label} · {origin.id} · unavailable</span>}</p>}
       {ticket.diagnostic&&<p role="status">{ticket.diagnostic}. Existing records and their assignments are retained.</p>}
-      {ticket.actions.map(task=><Work key={task.task_id+':'+task.updated_at} {...{task,users,user}} onSaved={saved} onDirty={markDirty}/>)}
+      {ticket.actions.map(task=><Work key={user.user_id+':'+task.client_id+':'+task.task_id} {...{task,users,user}} onSaved={saved} onDirty={markDirty}/>)}
       {!ticket.actions.length&&<p>No remediation Action is recorded. The Finding remains open.</p>}
       {!ticket.actions.length&&ticket.finding&&isInternal(user)&&<Button disabled={busy} onClick={async()=>{setBusy(true);setCommandError('');try{await api.post('/findings/'+ticket.finding.finding_id+'/create-task',{title:ticket.title});await saved();}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Start remediation</Button>}
       {ticket.finding&&['closed','accepted'].includes(ticket.finding.status)&&isInternal(user)&&<Button disabled={busy} onClick={async()=>{setBusy(true);setCommandError('');try{await reopen('/findings/'+ticket.finding.finding_id+'/reopen',{expected_updated_at:ticket.finding.updated_at??null});await saved();setFeedback('Ticket reopened. Previous completed work and decisions are retained.');}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Reopen ticket</Button>}

@@ -22,6 +22,54 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
     body = harness.FrameworkTests.body
     configure = harness.FrameworkTests.configure
 
+    async def test_current_control1_root_confirmation_native_repeat_preserves_id_notes_and_history(self):
+        initial_workspace=await self.configure()
+        changed=await self.client.patch('/api/frameworks/cis-ig1/configuration',json={
+            'client_id':'a','implementation_group':3,'expected_updated_at':initial_workspace['configuration']['expected_updated_at']},
+            headers={'Idempotency-Key':'synthetic-root-confirmation-scope'})
+        self.assertEqual(changed.status_code,200,changed.text)
+        workspace=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json()
+        for identity in ('1.3','1.4','1.5'):
+            with self.subTest(definition=identity):
+                row=next(row for row in workspace['assessments'] if row['definition_id']==identity)
+                root=guided_assessment.CONTROL1_V5['definitions'][identity]['root']
+                base='/api/framework_assessments/'+row['framework_assessment_id']
+                initial=(await self.client.get(base+'/guided-assessment')).json()
+                self.assertEqual(initial['version'],guided_assessment.CONTROL1_V5['version'])
+                answers={root:'Not sure',root+'_detail':'Synthetic QA cannot confirm this practice.',
+                    'additional_gap':'No','additional_confirmation':'No'}
+                for q in guided_assessment.CONTROL1_V5['safeguards'][identity]:
+                    if q['id'] in ('coverage','frequency','inventory_update'):
+                        answers[q['id']]='No' if 'No' in q['choices'] else q['choices'][0]
+                result={'version':initial['version'],'status':'not_assessed','narrative':'Synthetic QA reports an unconfirmed practice.',
+                    'basis':[],'gaps':[],'unknowns':['Confirm the reported practice.'],'nextSteps':[],'evidence':[],'answers':[],
+                    'signals':[{'questionId':root,'kind':'verification'}]}
+                body={'version':initial['version'],'answers':answers,'step':0,'completed':True,'narrative':result['narrative'],
+                    'result':result,'expected_revision':initial['revision'],
+                    **{key:initial[key] for key in ('base_assessment_token','base_scope_fingerprint')}}
+                response=await self.client.put(base+'/guided-assessment',json=body)
+                self.assertEqual(response.status_code,200,response.text)
+                draft=response.json()
+                replay=await self.client.put(base+'/guided-assessment',json={**body,'expected_revision':draft['revision']})
+                self.assertEqual(replay.status_code,200,replay.text)
+                self.assertEqual(replay.json()['revision'],draft['revision'])
+                saved=await self.apply(base,draft,row)
+                self.assertEqual(saved['status'],'not_assessed')
+                self.assertEqual(saved.get('verification'),row.get('verification'))
+                self.assertEqual(len(saved['items_to_address']),1)
+                item=saved['items_to_address'][0]
+                self.assertEqual((item['question_id'],item['kind'],item['state']),(root,'verification','open'))
+                self.assertIn(answers[root+'_detail'],item['text'])
+                response=await self.client.patch(base+'/items/'+item['item_id'],json={
+                    'expected_revision':saved['items_revision'],'state':'resolved','resolution':'Synthetic retained analyst confirmation note.'})
+                self.assertEqual(response.status_code,200,response.text)
+                resolved=response.json()
+                repeated=await self.apply(base,draft,resolved)
+                for key in ('items_to_address','items_revision','assessment_history','status','verification','implementation','last_saved'):
+                    self.assertEqual(repeated.get(key),resolved.get(key))
+                self.assertEqual(repeated['items_to_address'][0]['item_id'],item['item_id'])
+                self.assertEqual((await self.client.get(base)).json()['items_to_address'],resolved['items_to_address'])
+
     async def completed(self, row, answers=None):
         base = '/api/framework_assessments/' + row['framework_assessment_id']
         draft = (await self.client.get(base + '/guided-assessment')).json()
@@ -35,6 +83,9 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
             draft = response.json()
         answers = answers or {'practice': 'No', 'gaps': 'Reported gap'}
         answers={**answers}
+        if draft['version'] in (guided_assessment.PROGRAM_V5['version'],guided_assessment.CONTROL1_V5['version']):
+            for parent,key in [('additional_gap','gaps'),('additional_confirmation','unknowns')]:
+                if answers.get(key):answers.setdefault(parent,'Yes')
         for question in guided_assessment.VERSIONS[draft['version']]['safeguards'][row['definition_id']]:
             if question['type']=='matrix':
                 answers.setdefault(question['id'],{name:answers['practice'] for name in question['rows']})
@@ -61,6 +112,94 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         row = next(row for row in workspace['assessments'] if row['definition_id'] == '2.1')
         base, draft = await self.completed(row)
         return base, await self.apply(base, draft, row)
+
+    async def test_unchanged_interview_and_applied_native_save_are_idempotent(self):
+        workspace=await self.configure()
+        row=next(row for row in workspace['assessments'] if row['definition_id']=='2.1')
+        base,draft=await self.completed(row)
+        payload={key:draft[key] for key in ('version','answers','step','completed','narrative','result','base_assessment_token','base_scope_fingerprint')}
+        payload['expected_revision']=draft['revision']
+        history=await server.db.guided_assessment_history.count_documents({})
+        response=await self.client.put(base+'/guided-assessment',json=payload)
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(response.json()['revision'],draft['revision'])
+        self.assertEqual(response.json()['generated_at'],draft['generated_at'])
+        self.assertEqual(await server.db.guided_assessment_history.count_documents({}),history)
+        saved=await self.apply(base,draft,row)
+        native={key:draft[key] for key in ('version','revision','generated_at')}
+        response=await self.client.patch(base,json={'implementation':saved['implementation'],'status':saved['status'],
+            'expected_last_assessed':saved['last_saved'],'guided_assessment_source':native})
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(response.json()['last_saved'],saved['last_saved'])
+        self.assertEqual(response.json()['assessment_history'],saved['assessment_history'])
+        changed=await self.client.put(base+'/guided-assessment',json={**payload,'step':1})
+        self.assertEqual(changed.status_code,200,changed.text)
+        self.assertEqual(changed.json()['revision'],draft['revision']+1)
+
+    async def test_ranking_metadata_proves_same_item_and_native_risk_without_changing_counts(self):
+        base,row=await self.initial()
+        item=next(item for item in row['items_to_address'] if item['kind']=='gap')
+        created=await self.client.post(base+'/findings',json={'title':'Isolated specific gap','remediation_title':'Correct the isolated gap',
+            'severity':'high','request_id':'ranking-origin','item_id':item['item_id']})
+        self.assertEqual(created.status_code,200,created.text)
+        finding=created.json()
+        await server.db.risks.insert_one({'risk_id':'rank-risk','client_id':'a','status':'open','likelihood_score':5,'impact_score':5})
+        await server.db.risks.insert_one({'risk_id':'foreign-risk','client_id':'b','status':'open','likelihood_score':5,'impact_score':5})
+        await server.db.findings.update_one({'finding_id':finding['finding_id']},{'$set':{'risk_id':'rank-risk'}})
+        workspace=await self.configure()
+        current=next(record for record in workspace['assessments'] if record['framework_assessment_id']==row['framework_assessment_id'])
+        work=workspace['work'][row['framework_assessment_id']]
+        record=next(record for record in work['priority_records'] if record['kind']=='findings')
+        self.assertEqual(record['client_id'],'a')
+        self.assertEqual(record['framework_assessment_id'],row['framework_assessment_id'])
+        self.assertEqual(record['assessment_item_id'],item['item_id'])
+        self.assertTrue(record['open_gap'])
+        risk=next(record for record in work['priority_records'] if record['kind']=='risks')
+        self.assertEqual((risk['id'],risk['risk_level']),('rank-risk','critical'))
+        self.assertNotIn('foreign-risk',str(work))
+        self.assertEqual((current['status'],current.get('verification')),(row['status'],row.get('verification')))
+
+    async def test_unchanged_native_application_can_acknowledge_the_same_committed_source(self):
+        base,saved=await self.initial()
+        source={key:saved['guided_assessment_source'][key] for key in ('version','revision','generated_at')}
+        response=await self.client.patch(base,json={'implementation':saved['implementation'],'status':saved['status'],
+            'expected_last_assessed':saved['last_saved'],'guided_assessment_source':source})
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(response.json()['last_saved'],saved['last_saved'])
+        self.assertEqual(response.json()['assessment_history'],saved['assessment_history'])
+
+    async def test_closed_finding_retains_exact_active_risk_projection_without_open_count(self):
+        base,row=await self.initial()
+        item=next(item for item in row['items_to_address'] if item['kind']=='gap')
+        response=await self.client.post(base+'/findings',json={'title':'Isolated closed connector','remediation_title':'Correct the specific gap',
+            'severity':'low','request_id':'closed-ranking-origin','item_id':item['item_id']})
+        self.assertEqual(response.status_code,200,response.text);finding=response.json()
+        await server.db.risks.insert_one({'risk_id':'accepted-ranking-risk','client_id':'a','status':'accepted','likelihood_score':5,'impact_score':5,
+            'next_review':'2026-12-01','acceptance_expires_at':'2026-11-01'})
+        await server.db.findings.update_one({'finding_id':finding['finding_id']},{'$set':{'risk_id':'accepted-ranking-risk'}})
+        tasks=await server.db.tasks.find({'finding_id':finding['finding_id'],'client_id':'a'}).to_list(None)
+        self.assertEqual(len(tasks),1)
+        response=await self.client.patch('/api/tasks/'+tasks[0]['task_id'],json={'status':'done','expected_updated_at':tasks[0]['updated_at']})
+        self.assertEqual(response.status_code,200,response.text)
+        pending=await server.db.findings.find_one({'finding_id':finding['finding_id']})
+        response=await self.client.post('/api/findings/'+finding['finding_id']+'/validate',json={
+            'request_id':'close-ranking-connector','rationale':'Controlled validation of completed work','expected_updated_at':pending['updated_at']})
+        self.assertEqual(response.status_code,200,response.text)
+        workspace=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json();work=workspace['work'][row['framework_assessment_id']]
+        self.assertEqual(work['open_findings'],0);self.assertEqual(work['finding_ids'],[])
+        connector=next((record for record in work['priority_records'] if record['kind']=='findings'),None)
+        self.assertIsNotNone(connector)
+        self.assertEqual((connector['id'],connector['status'],connector['assessment_item_id']),(finding['finding_id'],'closed',item['item_id']))
+        self.assertFalse(connector['open_gap'])
+        risk=next(record for record in work['priority_records'] if record['kind']=='risks')
+        self.assertEqual((risk['id'],risk['status'],risk['risk_level']),('accepted-ranking-risk','accepted','critical'))
+        self.assertEqual(risk['due_date'],'2026-11-01')
+        await server.db.risks.update_one({'risk_id':'accepted-ranking-risk'},{'$set':{'status':'assessed'}})
+        next_workspace=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json()
+        next_risk=next(record for record in next_workspace['work'][row['framework_assessment_id']]['priority_records'] if record['kind']=='risks')
+        self.assertEqual(next_risk['due_date'],'2026-12-01')
+        persisted=await server.db.framework_assessments.find_one({'framework_assessment_id':row['framework_assessment_id']})
+        self.assertEqual((persisted['status'],persisted['last_saved']),(row['status'],row['last_saved']))
 
     async def test_items_response_filters_capture_fields_on_update_and_noop(self):
         base, row = await self.initial()
@@ -216,7 +355,7 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         questions = guided_assessment.VERSIONS[draft['version']]['safeguards']['1.1']
         answers = {question['id']: ({name: 'Yes' for name in question['rows']} if question['type'] == 'matrix'
             else [question['choices'][0]] if question['type'] == 'multi' else '2026-04-12' if question['type'] == 'date'
-            else '' if question['type'] == 'text' else 'Yes' if 'Yes' in question['choices'] else question['choices'][0])
+            else '' if question['type'] == 'text' else 'No' if question.get('optional') else 'Yes' if 'Yes' in question['choices'] else question['choices'][0])
             for question in questions}
         result = {'version': draft['version'], 'status': 'addressed', 'narrative': 'Reviewed inventory summary.',
             'basis': [], 'gaps': [], 'unknowns': [], 'nextSteps': [], 'evidence': [], 'answers': [], 'signals': []}
@@ -252,7 +391,8 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
             retained = response.json()
             self.assertEqual(retained['result']['evaluation_date'], '2026-10-12')
             self.assertEqual(retained['generated_at'], draft['generated_at'])
-            self.assertEqual(retained['updated_at'], '2026-10-20T00:30:00+00:00')
+            self.assertEqual(retained['updated_at'], draft['updated_at'])
+            self.assertEqual(retained['revision'], draft['revision'])
             row = await self.apply(base, retained, row)
         with patch.object(server, '_now', return_value='2026-10-25T00:30:00+00:00'):
             current = (await self.client.get(base + '/guided-assessment')).json()
@@ -475,6 +615,7 @@ class AssessmentItemsReconciliationTests(unittest.TestCase):
         cases=[]
         records=set()
         def affirmative(question):
+            if question.get('optional'):return 'No'
             if question['type']=='matrix':return {name:'Yes' for name in question['rows']}
             if question['type']=='multi':return [next((choice for choice in question['choices'] if choice not in ('None','Not sure')),question['choices'][0])]
             if question['type']=='date':return '2026-10-13'
@@ -505,19 +646,31 @@ class AssessmentItemsReconciliationTests(unittest.TestCase):
                         variants.extend({**answers,key:value} for value in ('','invalid','2026-01-01','2026-10-14','2026-04-13','2026-04-12'))
                     elif question['type']!='text':
                         variants.extend({**answers,key:choice} for choice in question['choices'])
+                    if framework != 'cis-ig1' and question['type'] != 'text':
+                        for choice in (('Not sure',) if question['type'] == 'context' else ('No','Partially','Not sure')):
+                            variants.append({**answers,key:choice,key+'_detail':'Synthetic literal detail.'})
                 for variant in variants:
                     try:
                         guided_assessment.validate_answers(definition,variant,version)
                     except HTTPException:
                         continue  # Row-specific choices remain part of the unchanged answer boundary.
                     cases.append({'framework':framework,'id':definition,'version':version,'answers':variant})
+        for framework,engine,definition,key in [('soc-2',guided_assessment.soc_guided_assessment,'CC1.1','CC1.1-expectations'),
+                ('iso-27001',guided_assessment.iso_guided_assessment,'4.2','ISO-4.2-parties')]:
+            for version in (engine.CATALOG['version'],engine.LEGACY['version']):
+                for choice in ('No','Partially','Not sure'):
+                    for ending in ('.','!','?','...',''):
+                        answers={q['id']:affirmative(q) for q in engine._questions(definition,version)}
+                        answers.update({key:choice,key+'_detail':'Synthetic literal detail'+ending})
+                        cases.append({'framework':framework,'id':definition,'version':version,'answers':answers})
         self.assertEqual({(case['framework'],case['id']) for case in cases},records)
         script=r"""
 const fs=require('node:fs'),path=require('node:path'),root=process.argv[1],cache=new Map();
-const allowed=new Set(['guidedAssessment','socGuidedAssessment','isoGuidedAssessment','inlineAssessment']);
+const allowed=new Set(['guidedAssessment','socGuidedAssessment','isoGuidedAssessment','inlineAssessment','programTriage','managementDates','grcWork','grcRules.json']);
 function load(name){
   if(!allowed.has(name))throw new Error('Unreviewed evaluator import '+name);
   if(cache.has(name))return cache.get(name);
+  if(name==='grcRules.json')return JSON.parse(fs.readFileSync(path.join(root,'frontend/src/lib',name),'utf8'));
   let source=fs.readFileSync(path.join(root,'frontend/src/lib',name+'.js'),'utf8');const params=[],inputs=[];
   source=source.replace(/^import (.+?) from ['"](.+?)['"];\r?\n/gm,(_,binding,reference)=>{
     params.push(binding);inputs.push(reference.startsWith('@catalogs/')?JSON.parse(fs.readFileSync(path.join(root,'shared/catalogs',reference.slice(10)),'utf8')):load(reference.slice(2)));return '';
@@ -531,13 +684,14 @@ process.stdout.write(JSON.stringify(cases.map(({framework,id,version,answers})=>
   const today=new Date('2026-10-13T12:00:00Z');
   const result=framework==='cis-ig1'?cis.generateResult(id,answers,today,version):framework==='soc-2'?soc.socGuidedResult(id,answers,version):iso.isoGuidedResult(id,answers,version);
   const origins=(result.signals||[]).map(signal=>signal.questionId+':'+signal.kind);
-  for(const [key,kind] of [['gaps','gap'],['unknowns','verification']])if(answers[key]?.trim())origins.push(key+':'+kind);
+  for(const [key,kind] of [['gaps','gap'],['unknowns','verification']])if(answers[key==='gaps'?'additional_gap':'additional_confirmation']==='Yes'&&answers[key]?.trim())origins.push(key+':'+kind);
   if(result.unknowns.some(text=>text.startsWith('No substantive practice is established')||text.startsWith('The overall practice answer conflicts with the reported absence')))origins.push('summary_confirmation:verification');
-  return {origins:[...new Set(origins)].sort(),evaluation_date:framework==='cis-ig1'?[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-'):null};
+  const texts=Object.fromEntries((result.signals||[]).filter(signal=>signal.text).map(signal=>[signal.questionId+':'+signal.kind,signal.text]));
+  return {origins:[...new Set(origins)].sort(),texts,evaluation_date:framework==='cis-ig1'?[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-'):null};
 })));
 """
         result=subprocess.run(['node','-e',script,str(Path(__file__).resolve().parents[2])],input=json.dumps(cases),
-            capture_output=True,text=True,timeout=60)
+            capture_output=True,text=True,encoding='utf-8',timeout=60)
         self.assertEqual(result.returncode,0,result.stderr)
         expected=json.loads(result.stdout)
         self.assertEqual(len(expected),len(cases))
@@ -547,8 +701,12 @@ process.stdout.write(JSON.stringify(cases.map(({framework,id,version,answers})=>
                 draft={'version':case['version'],'answers':case['answers'],'generated_at':'2026-10-13T12:00:00+00:00',
                     'result':{'evaluation_date':snapshot['evaluation_date'],
                         'signals':[{'questionId':'forged','kind':'gap','text':'Ignored client metadata'}]}}
-                actual=sorted(item['question_id']+':'+item['kind'] for item in assessment_items.generated(row,draft))
+                native=assessment_items.generated(row,draft)
+                actual=sorted(item['question_id']+':'+item['kind'] for item in native)
                 self.assertEqual(actual,snapshot['origins'])
+                labels={item['question_id']+':'+item['kind']:item['text'] for item in native}
+                for key,text in snapshot['texts'].items():
+                    self.assertEqual(labels[key],text)
 
     def test_cis_date_uses_recorded_local_day_and_legacy_boundary_confirmation(self):
         row = {'framework_assessment_id': 'date-vector', 'framework_key': 'cis-ig1', 'definition_id': '1.1'}

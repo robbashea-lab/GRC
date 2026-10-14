@@ -2,10 +2,35 @@ import nativeCatalog from '@catalogs/soc2.json';
 import {socGuidedCatalog, socGuidedEnabled, socQuestions, socGroups, validateSocAnswers, validateSocCompletion, socGuidedResult, socInlineSummary} from './socGuidedAssessment';
 
 const ids = Object.keys(socGuidedCatalog.definitions);
-const version = 'soc2-omni-1';
+const version = 'soc2-omni-2';
 const allQuestions = id => socGuidedCatalog.definitions[id].groups.flatMap(group => group.questions);
 const complete = id => Object.fromEntries(allQuestions(id).map(question => [question.id, question.type === 'text' ? '' : question.type === 'context' ? 'Relevant' : 'Yes']));
 const firstPractice = id => allQuestions(id).find(question => !['text', 'context'].includes(question.type));
+
+test.each(ids)('%s retains explicit v1 uncertainty and context semantics', id => {
+  const answers={...complete(id),[firstPractice(id).id]:'Not sure',gaps:'Historical optional context'};
+  const output=socGuidedResult(id,answers,'soc2-omni-1');
+  expect(output.status).toBe('in_progress');
+  expect(output.narrative).toContain('Historical optional context');
+  expect(output.signals.some(signal=>signal.questionId==='gaps')).toBe(false);
+  expect(()=>validateSocCompletion(id,answers,'soc2-omni-1')).not.toThrow();
+});
+
+test('current optional intent gates text and requires detail only for affirmative intent',()=>{
+  const answers={...complete('CC1.1'),gaps:'No outstanding gaps.',unknowns:'None'};
+  for(const intent of [undefined,'No','Not sure']){
+    const retained={...answers,...(intent?{additional_gap:intent,additional_confirmation:intent}:{})};
+    validateSocCompletion('CC1.1',retained);
+    expect(socGuidedResult('CC1.1',retained).signals).toEqual([]);
+    expect(socGuidedResult('CC1.1',retained).status).toBe('addressed');
+  }
+  const affirmative={...answers,additional_gap:'Yes',additional_confirmation:'Yes',gaps:'A reported scoped exception remains.',unknowns:'Confirm the applicable coverage.'};
+  validateSocCompletion('CC1.1',affirmative);
+  const output=socGuidedResult('CC1.1',affirmative);
+  expect(output.status).toBe('addressed');
+  expect(output.signals.map(signal=>[signal.questionId,signal.kind])).toEqual([['gaps','gap'],['unknowns','verification']]);
+  for(const key of ['gaps','unknowns'])expect(()=>validateSocCompletion('CC1.1',{...affirmative,[key]:' \n'})).toThrow(/Describe/);
+});
 
 test('all 61 supported criteria have versioned, bounded, native-category question definitions', () => {
   expect(socGuidedCatalog.version).toBe(version);
@@ -85,7 +110,7 @@ test.each(ids)('%s evaluates material uncertainty separately from optional notes
   const answers = complete(id), key = firstPractice(id).id;
   for (const value of ['Partially', 'Not sure']) {
     const result = socGuidedResult(id, {...answers, [key]: value});
-    expect(result.status).toBe('in_progress');
+    expect(result.status).toBe(value === 'Partially' ? 'in_progress' : 'not_assessed');
     expect(value === 'Partially' ? result.gaps.length : result.unknowns.length).toBeGreaterThan(0);
   }
   const uncertain = Object.fromEntries(allQuestions(id).map(question => [question.id, question.type === 'text' ? '' : 'Not sure']));
@@ -99,7 +124,7 @@ test.each(ids)('%s evaluates material uncertainty separately from optional notes
   expect(socGuidedResult(id, {...answers, gaps: '\ufeff', unknowns: '\ufeff'}).status).toBe('addressed');
 });
 
-test.each(ids)('%s treats neutral freeform gaps and optional-name uncertainty as reported context only', id => {
+test.each(ids)('%s ignores ungated retained freeform gaps and optional-name uncertainty', id => {
   const answers = complete(id), key = firstPractice(id).id;
   const variants = [
     {gaps: 'No outstanding gaps.'},
@@ -111,9 +136,9 @@ test.each(ids)('%s treats neutral freeform gaps and optional-name uncertainty as
     for (const context of variants) {
       const result = socGuidedResult(id, {...structured, ...context});
       for (const field of ['status', 'basis', 'gaps', 'unknowns', 'nextSteps', 'signals']) expect(result[field]).toEqual(baseline[field]);
-      expect(result.narrative).toContain('Additional reported context');
+      expect(result.narrative).not.toContain('Additional reported context');
       Object.values(context).forEach(prose => {
-        expect(result.narrative).toContain(prose);
+        expect(result.narrative).not.toContain(prose);
         expect(result.narrative.split('ITEMS TO ADDRESS\n')[1]).not.toContain(prose);
       });
       expect(result.narrative).not.toContain('Address the reported gap:');
@@ -186,7 +211,7 @@ test.each(['Outside the selected system', 'Not sure'])('P6.1 skips empty consent
   expect(groups.flatMap(group => group.questions).some(question => question.id === 'P6.1-consent')).toBe(false);
   validateSocCompletion('P6.1', answers);
   const result = socGuidedResult('P6.1', answers);
-  expect(result.status).toBe(context === 'Not sure' ? 'in_progress' : 'addressed');
+  expect(result.status).toBe(context === 'Not sure' ? 'not_assessed' : 'addressed');
   expect(result.narrative).not.toContain('Retained conditional consent gap');
   expect(result.signals.some(signal => signal.questionId === 'P6.1-consent')).toBe(false);
   expect(JSON.stringify(answers)).toBe(before);
@@ -202,7 +227,7 @@ test.each(ids)('%s inline wording retains only confirmed controls and the canoni
   expect(narrative).toContain('Synthetic SOC client reports confirmed deficiencies affecting '+id);
   expect(narrative).toContain('\n\nControls in place\n');
   expect(narrative).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);
-  expect(narrative).not.toContain(question.topic+': reported not in place');
+  expect(narrative.split('\n\nControls in place')[1]).not.toContain(question.topic+': reported not in place');
   for(const control of result.basis)expect(narrative).toContain(control);
   expect(narrative).toContain('2026-10-13');expect(JSON.stringify(answers)).toBe(before);
   expect(socGuidedResult(id,answers,version,'Synthetic SOC client')).toEqual(result);
@@ -215,13 +240,13 @@ test.each(['Partially','No','Not sure'])('%s practices are excluded from control
   const controls=narrative.split('\n\nControls in place')[1];
   expect(controls).not.toContain(question.topic+':');
   for(const gap of [...result.gaps,...result.unknowns])expect(controls).not.toContain(gap);
-  expect(narrative).toContain('Incomplete practices or unresolved confirmation items');
-  expect(result.status).toBe(value==='No'?'needs_attention':'in_progress');
+  expect(narrative).toContain(value==='Not sure'?'Requires confirmation:':'Reported gap:');
+  expect(result.status).toBe(value==='No'?'needs_attention':value==='Partially'?'in_progress':'not_assessed');
 });
 
 test('unconfirmed inline reports do not invent any controls in place',()=>{
   const narrative=socInlineSummary('CC1.1',{},version,'Synthetic client','2026-10-13');
-  expect(narrative.endsWith('\n\nControls in place')).toBe(true);
+  expect(narrative).not.toContain('Controls in place');
   expect(narrative).not.toContain('•');expect(narrative).toContain('unconfirmed implementation position');
 });
 

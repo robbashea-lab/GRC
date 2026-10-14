@@ -15,7 +15,7 @@ function positive(id){
   const answers={};
   for(let pass=0;pass<30;pass++){
     const missing=isoQuestions(id,answers).filter(q=>!(q.id in answers));if(!missing.length)break;
-    for(const q of missing)answers[q.id]=q.type==='text'?'':q.type==='context'?'Relevant':'Yes';
+    for(const q of missing)answers[q.id]=q.type==='text'?'':q.type==='context'?'Relevant':q.optional?'No':'Yes';
   }
   return answers;
 }
@@ -54,6 +54,8 @@ test.each(batches.map((ids,index)=>[index+1,ids]))('catalog batch %s: exact nati
     expect(saved.assessment_history.at(-1).guided_assessment_source.answers).toEqual(draft.answers);
     expect((await api.get(nativePath(row))).data.implementation).toBe(text);
     await expect(apply(row,reviewed)).rejects.toMatchObject({response:{status:409}});
+    const nativeBeforeReplay=readStore();
+    expect(await apply(saved,reviewed)).toEqual(saved);expect(readStore()).toEqual(nativeBeforeReplay);
   }
   expect(readStore().findings.filter(row=>row.client_id===cid)).toHaveLength(0);
 },120000);

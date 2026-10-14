@@ -24,7 +24,7 @@ const body=(draft,answers,result)=>({version:draft.version,answers,narrative:res
   base_assessment_token:draft.base_assessment_token,base_scope_fingerprint:draft.base_scope_fingerprint});
 async function complete(){
   const draft=await get(),answers={inventory:'Yes'};
-  for(const q of visibleQuestions('1.1',answers,draft.version))answers[q.id]=q.type==='matrix'?Object.fromEntries(q.rows.map(name=>[name,'Yes'])):q.type==='text'?'':q.type==='date'?'2026-04-12':q.id==='frequency'?'Every six months':q.id==='sources'?'One source':q.choices.includes('Yes')?'Yes':q.choices[0];
+  for(const q of visibleQuestions('1.1',answers,draft.version))answers[q.id]=q.type==='matrix'?Object.fromEntries(q.rows.map(name=>[name,'Yes'])):q.type==='text'?'':q.type==='date'?'2026-04-12':q.id==='frequency'?'Every six months':q.id==='sources'?'One source':['additional_gap','additional_confirmation'].includes(q.id)?'No':q.choices.includes('Yes')?'Yes':q.choices[0];
   const result=omniCisSummary('1.1',answers,draft.version,'Synthetic client',new Date()).result;
   return (await api.put(path+'/guided-assessment',body(draft,answers,result))).data;
 }
@@ -35,7 +35,7 @@ test('review clock metadata persists on unchanged or wording-only saves and boun
   const omitted={...original.result};delete omitted.evaluation_date;
   const retained=(await api.put(path+'/guided-assessment',body(original,original.answers,omitted))).data;
   expect(retained.result.evaluation_date).toBe(original.result.evaluation_date);expect(retained.generated_at).toBe(original.generated_at);
-  expect(retained.updated_at).not.toBe(original.updated_at);expect(retained.revision).toBe(original.revision+1);
+  expect(retained).toEqual(original);
   const manual={...retained.result,narrative:'Manually reviewed wording without changing any answers.'};
   const edited=(await api.put(path+'/guided-assessment',body(retained,retained.answers,manual))).data;
   expect(edited.generated_at).toBe(original.generated_at);expect((await get()).result).toEqual(manual);
@@ -77,6 +77,10 @@ test('review clock metadata and timestamp replay stay limited to active CIS date
   const original=(await api.put(path+'/guided-assessment',body(draft,answers,result))).data;
   setClock(2026,9,15,0,1);
   const repeated=(await api.put(path+'/guided-assessment',body(original,answers,result))).data;
-  expect(repeated.generated_at).not.toBe(original.generated_at);
-  await expect(api.put(path+'/guided-assessment',body(repeated,answers,{...result,evaluation_date:'2026-10-15'}))).rejects.toMatchObject({response:{status:422}});
+  expect(repeated).toEqual(original);
+  const manual={...result,narrative:'Manually reviewed non-date wording without changing any answers.'};
+  const edited=(await api.put(path+'/guided-assessment',body(repeated,answers,manual))).data;
+  expect(edited.generated_at).not.toBe(original.generated_at);expect(edited.revision).toBe(original.revision+1);
+  expect(edited.result).not.toHaveProperty('evaluation_date');
+  await expect(api.put(path+'/guided-assessment',body(edited,answers,{...manual,evaluation_date:'2026-10-15'}))).rejects.toMatchObject({response:{status:422}});
 });

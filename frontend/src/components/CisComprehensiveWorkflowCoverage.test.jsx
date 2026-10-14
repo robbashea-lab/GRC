@@ -2,7 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import cis from '@catalogs/cisIG1.json';
-import {catalogForVersion,versionForSafeguard,visibleQuestions} from '@/lib/guidedAssessment';
+import {catalogForVersion,versionForSafeguard,visibleQuestions,validateAnswers} from '@/lib/guidedAssessment';
 import {omniGroups} from '@/lib/refinedOmni';
 import {omniCisSummary} from '@/lib/omniCisSummary';
 import {socGuidedCatalog} from '@/lib/socGuidedAssessment';
@@ -28,26 +28,39 @@ jest.mock('./ui/dialog',()=>{
 const copy=value=>JSON.parse(JSON.stringify(value)),fingerprint='c'.repeat(64),token='2026-10-09T12:00:00Z';
 const sourceCases={1:ig1Cases.cases,2:ig2Cases.cases,3:ig3Cases.cases};
 const reviews=[...ig2Review.rows,...ig3Review.rows];
+const retiredCriteria={'11.1':['11.1-guided-backup-procedures'],'17.5':['17.5-guided-third-parties']};
 const placements=[1,2,3].flatMap(group=>cis.requirements.filter(row=>row.implementation_group<=group).map(row=>[group,row.id]));
 const representatives=['1.1','1.2','1.3','1.4','1.5','2.1','2.2','2.3','2.4','2.5','3.1','3.3','3.6','3.13','4.10','4.12','5.1','6.5','7.5','8.4','8.5','16.2','16.5','17.1','17.5'];
 
 // Accepted inputs come from source-authored cases; evaluator output does not choose them.
 function completeAnswers(id){
   const canonical=cis.requirements.find(row=>row.id===id),fixture=sourceCases[canonical.implementation_group].find(row=>row.safeguard_id===id&&(row.id==='IG1-'+id+'-complete'||row.id===id+':complete'));
-  if(fixture.answers)return copy(fixture.answers);
-  const pack=catalogForVersion(versionForSafeguard(id)),questions=pack.safeguards[id],definition=pack.definitions[id],review=reviews.find(row=>row.id===id),answers={};
-  for(const [criterion,value]of Object.entries(fixture.criterion_answers)){
+  const version=versionForSafeguard(id),pack=catalogForVersion(version),questions=pack.safeguards[id],definition=pack.definitions[id],review=reviews.find(row=>row.id===id),answers=copy(fixture.answers||{});
+  for(const [criterion,value]of Object.entries(fixture.criterion_answers||{})){
     const mapping=review.atomic_requirements.find(row=>row.requirement_id===criterion).answer_mapping;
     if(mapping.type==='matrix'){
-      const q=questions.find(q=>q.criterion_ids?.includes(criterion)),row=q.rows[q.criterion_ids.indexOf(criterion)];answers[q.id]={...answers[q.id],[row]:value};
+      const q=questions.find(q=>q.criterion_ids?.includes(criterion));
+      if(!q&&version==='cis-v8.1-program-5'&&retiredCriteria[id]?.includes(criterion)){
+        expect(definition.elements.some(element=>element.id===criterion)).toBe(false);continue;
+      }
+      expect(q).toBeTruthy();const row=q.rows[q.criterion_ids.indexOf(criterion)];answers[q.id]={...answers[q.id],[row]:value};
     }else{
       const q=questions.find(q=>q.id===mapping.field);answers[q.id]=q.choices.includes(value)?value:value==='Yes'?mapping.accepted[0]:value;
     }
   }
-  if(definition.root==='practice')answers.practice='Yes';
+  if(!fixture.answers&&definition.root==='practice')answers.practice='Yes';
   if(fixture.aggregate_answer!=null)answers[definition.root]=fixture.aggregate_answer;
   if(fixture.root_answer!=null)answers[definition.root]=fixture.root_answer;
-  return answers;
+  // The old direct 11.1 fixture retains its now-retired authored supplement.
+  if(id==='11.1'&&version==='cis-v8.1-program-5'&&answers.requirements_5){
+    expect(Object.keys(answers.requirements_5)).toEqual(['The documented recovery process includes detailed backup procedures.']);
+    expect(questions.some(question=>question.id==='requirements_5')).toBe(false);delete answers.requirements_5;
+  }
+  for(const question of questions.filter(question=>question.optional))answers[question.id]='No';
+  // Unknown fields still fail validation; only known inactive context is omitted from a fresh interview.
+  validateAnswers(id,answers,version);
+  const active=visibleQuestions(id,answers,version);
+  return Object.fromEntries(Object.entries(answers).filter(([key])=>active.some(question=>key===question.id||key===question.id+'_detail')));
 }
 
 let root,container,native,stored,group,interviewHistory,nativeHistory,opened,configurationExtra;
@@ -208,7 +221,11 @@ test.each(['1.3','1.4','1.5'])('control1 %s root transitions retain inactive his
   stored.answers.system='SYNTHETIC retained inactive discovery system';const original=copy(stored.answers);
   await render();await open();await click('Back to questions');while(guideButton('Back')&&!guideButton('Back').disabled)await click('Back');
   const rootQuestion=catalogForVersion(stored.version).safeguards[id].find(q=>q.id===rootId);await fillQuestion(rootQuestion,'No');
-  expect(workspace().querySelector('[aria-label="Question group 1 of 2"]')).toBeTruthy();await click('Save & close');
+  const declaredGroupCount=id==='1.3'?4:5;
+  expect(catalogForVersion(stored.version).groups[id]).toHaveLength(declaredGroupCount);
+  expect(workspace().querySelector(`[aria-label="Question group 1 of ${declaredGroupCount}"]`)).toBeTruthy();await click('Save & close');
+  expect(omniGroups(id,stored.answers,stored.version).filter(group=>group.questions.length).map(group=>group.name)).toEqual(['Current practice','Review and confirmation']);
+  expect(visibleQuestions(id,stored.answers,stored.version).some(question=>question.id==='coverage')).toBe(false);
   expect(stored.answers.system).toBe(original.system);expect(stored.answers.coverage).toBe(original.coverage);
   const proposal=omniCisSummary(id,stored.answers,stored.version,mockName).result;expect(proposal.status).toBe('needs_attention');expect(proposal.narrative).not.toContain(original.system);expect(api.patch).not.toHaveBeenCalled();
   await remount();await open();while(guideButton('Back')&&!guideButton('Back').disabled)await click('Back');await fillQuestion(rootQuestion,'Yes');

@@ -1,0 +1,11 @@
+{
+  "url": "http://127.0.0.1:4341/action-items?view=active",
+  "scripts": [
+    "http://127.0.0.1:4341/static/js/main.296e55c7.js"
+  ],
+  "stylesheets": [
+    "http://127.0.0.1:4341/static/css/main.7e6897c1.css"
+  ],
+  "appSourceRevision": "87d37b67fde542710c337c238a5bc9833d1aeaa6",
+  "environment": "Root-owned loopback Demo; app source association must be checked against filesystem build manifest and Git diff."
+}

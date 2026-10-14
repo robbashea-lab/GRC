@@ -1,0 +1,457 @@
+{
+  "baseline": "3e43ce3b9385e860d32c0bba998468f0dcee3507",
+  "final_content_delta_review": {
+    "revision": "a46a3500583338917eb96949458cb75c6373546a",
+    "comparison_base": "609c62184f3214049f18ba58c495a46aee7f2e16",
+    "observed": "The sole shared/catalogs delta after the reviewed root content is shortening two ISO additional gap/confirmation detail labels. IDs, Yes-parent conditions, optional metadata, current definition coverage and all retained historical packs are unchanged.",
+    "disposition": "PASS - labels remain faithful to the affirmative intent gates and do not change selected-answer status, criterion wording or obligations. This is an independent root-content delta review, not self-certification of authored SOC/ISO priority judgments."
+  },
+  "review_scope": "Non-author root content and IG2 priority review; self-authored SOC/ISO structural reconciliation only",
+  "results": [
+    {
+      "file": "guidedControl1.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedControl1Additional.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedControl1V3.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedControl1V4.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedCisProgramV1.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedCisProgramV2.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedCisProgram.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedCisProgramV4.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedIsoIsms.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedIsoOrganizationalPeople.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedIsoPhysicalTechnology.json",
+      "historical_content": "PASS - exact Git-normalized bytes and JSON",
+      "raw_git_blob_equals_checkout_bytes": false
+    },
+    {
+      "file": "guidedSoc2V1.json",
+      "retained_baseline": "PASS - exact JSON and Git-normalized source text",
+      "raw_git_blob_equals_file_bytes": false
+    },
+    {
+      "file": "guidedSoc2.json",
+      "definition_count": 61,
+      "existing_definition_question_preservation": "PASS - exact JSON",
+      "extra_intent_branch_metadata": "PASS - optional Yes-only typed conditional children; no cycles or collisions",
+      "runtime_enforcement": "UNVERIFIED - engine work reserved until freeze"
+    },
+    {
+      "file": "guidedIsoV2.json",
+      "definition_count": 123,
+      "existing_definition_question_preservation": "PASS - exact JSON",
+      "extra_intent_branch_metadata": "PASS - optional Yes-only typed conditional children; no cycles or collisions",
+      "runtime_enforcement": "UNVERIFIED - engine work reserved until freeze"
+    },
+    {
+      "file": "guidedCisProgramV5.json",
+      "definitions": 148,
+      "composition_and_scope": "PASS - exact baseline program3 + program4 overlay; only two demonstrated extra elements removed",
+      "removed_current_elements": [
+        {
+          "definition_id": "11.1",
+          "retired_current_code": "11.1-guided-backup-procedures",
+          "preserved_historical": true
+        },
+        {
+          "definition_id": "17.5",
+          "retired_current_code": "17.5-guided-third-parties",
+          "preserved_historical": true
+        }
+      ]
+    },
+    {
+      "file": "guidedControl1V5.json",
+      "definition_count": 5,
+      "content_diff": {
+        "1.1": {
+          "inventory": [
+            "/question_set_version"
+          ],
+          "existing": [
+            "/question_set_version"
+          ],
+          "system": [
+            "/question_set_version"
+          ],
+          "sources": [
+            "/question_set_version"
+          ],
+          "owner": [
+            "/question_set_version"
+          ],
+          "coverage": [
+            "/question_set_version"
+          ],
+          "attributes": [
+            "/question_set_version"
+          ],
+          "scope_reason": [
+            "/question_set_version"
+          ],
+          "maintenance": [
+            "/question_set_version"
+          ],
+          "maintenance_detail": [
+            "/question_set_version"
+          ],
+          "frequency": [
+            "/question_set_version"
+          ],
+          "last_review": [
+            "/question_set_version"
+          ],
+          "reconciled": [
+            "/question_set_version"
+          ],
+          "evidence": [
+            "/question_set_version"
+          ],
+          "gaps": [
+            "/when",
+            "/question_set_version"
+          ],
+          "unknowns": [
+            "/prompt",
+            "/when",
+            "/status_impact",
+            "/question_set_version",
+            "/unknown_template",
+            "/help"
+          ]
+        },
+        "1.2": {
+          "process": [
+            "/question_set_version"
+          ],
+          "existing": [
+            "/question_set_version"
+          ],
+          "inventory_dependency": [
+            "/question_set_version"
+          ],
+          "detection": [
+            "/question_set_version"
+          ],
+          "system": [
+            "/question_set_version"
+          ],
+          "owner": [
+            "/question_set_version"
+          ],
+          "frequency": [
+            "/question_set_version"
+          ],
+          "actions": [
+            "/question_set_version"
+          ],
+          "disposition": [
+            "/question_set_version"
+          ],
+          "confirmation": [
+            "/question_set_version"
+          ],
+          "exceptions": [
+            "/question_set_version"
+          ],
+          "reconciled": [
+            "/question_set_version"
+          ],
+          "unresolved": [
+            "/question_set_version"
+          ],
+          "evidence": [
+            "/question_set_version"
+          ],
+          "gaps": [
+            "/when",
+            "/question_set_version"
+          ],
+          "unknowns": [
+            "/prompt",
+            "/when",
+            "/status_impact",
+            "/question_set_version",
+            "/unknown_template",
+            "/help"
+          ]
+        },
+        "1.3": {
+          "tool": [
+            "/question_set_version"
+          ],
+          "existing": [
+            "/question_set_version"
+          ],
+          "system": [
+            "/question_set_version"
+          ],
+          "owner": [
+            "/question_set_version"
+          ],
+          "coverage": [
+            "/question_set_version"
+          ],
+          "frequency": [
+            "/question_set_version"
+          ],
+          "context": [
+            "/question_set_version"
+          ],
+          "evidence": [
+            "/question_set_version"
+          ],
+          "gaps": [
+            "/when",
+            "/question_set_version"
+          ],
+          "unknowns": [
+            "/prompt",
+            "/when",
+            "/status_impact",
+            "/question_set_version",
+            "/unknown_template",
+            "/help"
+          ]
+        },
+        "1.4": {
+          "logging": [
+            "/question_set_version"
+          ],
+          "existing": [
+            "/question_set_version"
+          ],
+          "system": [
+            "/question_set_version"
+          ],
+          "owner": [
+            "/question_set_version"
+          ],
+          "coverage": [
+            "/question_set_version"
+          ],
+          "approach": [
+            "/question_set_version"
+          ],
+          "inventory_update": [
+            "/question_set_version"
+          ],
+          "frequency": [
+            "/question_set_version"
+          ],
+          "context": [
+            "/question_set_version"
+          ],
+          "evidence": [
+            "/question_set_version"
+          ],
+          "gaps": [
+            "/when",
+            "/question_set_version"
+          ],
+          "unknowns": [
+            "/prompt",
+            "/when",
+            "/status_impact",
+            "/question_set_version",
+            "/unknown_template",
+            "/help"
+          ]
+        },
+        "1.5": {
+          "tool": [
+            "/question_set_version"
+          ],
+          "existing": [
+            "/question_set_version"
+          ],
+          "system": [
+            "/question_set_version"
+          ],
+          "owner": [
+            "/question_set_version"
+          ],
+          "coverage": [
+            "/question_set_version"
+          ],
+          "inventory_update": [
+            "/question_set_version"
+          ],
+          "frequency": [
+            "/question_set_version"
+          ],
+          "context": [
+            "/question_set_version"
+          ],
+          "evidence": [
+            "/question_set_version"
+          ],
+          "gaps": [
+            "/when",
+            "/question_set_version"
+          ],
+          "unknowns": [
+            "/prompt",
+            "/when",
+            "/status_impact",
+            "/question_set_version",
+            "/unknown_template",
+            "/help"
+          ]
+        }
+      },
+      "existing_framework_question_and_group_preservation": "PASS within explicit approved v5 edits"
+    }
+  ],
+  "copies": {
+    "guidedSoc2.json": {
+      "root_sha256": "28cea805b825dcaef97fb5a44691c3c28cf21af00e6fa1583ee0b2aeb5c277e7",
+      "shared_sha256": "28cea805b825dcaef97fb5a44691c3c28cf21af00e6fa1583ee0b2aeb5c277e7",
+      "identical": true
+    },
+    "guidedSoc2V1.json": {
+      "root_sha256": "8e72ad8d9a88f87536022e13f75c5fefec701cae5005f77a0073370a6506042f",
+      "shared_sha256": "8e72ad8d9a88f87536022e13f75c5fefec701cae5005f77a0073370a6506042f",
+      "identical": true
+    },
+    "guidedIsoV2.json": {
+      "root_sha256": "a3c74f76da2c2ac5a45645eadff359686a82fb36a91f9b5958a20a4dcc0d5712",
+      "shared_sha256": "a3c74f76da2c2ac5a45645eadff359686a82fb36a91f9b5958a20a4dcc0d5712",
+      "identical": true
+    },
+    "guidedControl1V5.json": {
+      "root_sha256": "1e676859bf4097014b3dc828996c2c01dc9ce290bc47fa425f57f25639189266",
+      "shared_sha256": "1e676859bf4097014b3dc828996c2c01dc9ce290bc47fa425f57f25639189266",
+      "identical": true
+    },
+    "guidedCisProgramV5.json": {
+      "root_sha256": "dc0dffd409ef6ba4cfd692ef03372f947c3e6c1228f7b237a2e7c78a0d9362cf",
+      "shared_sha256": "dc0dffd409ef6ba4cfd692ef03372f947c3e6c1228f7b237a2e7c78a0d9362cf",
+      "identical": true
+    },
+    "guidedControl1.json": {
+      "root_sha256": "77f790b086304859b3a9babd36ad10829bc6f19e814332b43d669f423db1f688",
+      "shared_sha256": "77f790b086304859b3a9babd36ad10829bc6f19e814332b43d669f423db1f688",
+      "identical": true
+    },
+    "guidedControl1Additional.json": {
+      "root_sha256": "ed8adf81dd81fdd4d9e69083b8d202e423cb06f962bce7677e72327e2ff5145b",
+      "shared_sha256": "ed8adf81dd81fdd4d9e69083b8d202e423cb06f962bce7677e72327e2ff5145b",
+      "identical": true
+    },
+    "guidedControl1V3.json": {
+      "root_sha256": "e6e957c93ad4beef6d9a6363ed8906c4c8f4b44e77b023b6f1215fee55ff9448",
+      "shared_sha256": "e6e957c93ad4beef6d9a6363ed8906c4c8f4b44e77b023b6f1215fee55ff9448",
+      "identical": true
+    },
+    "guidedControl1V4.json": {
+      "root_sha256": "8d58f425fddb19b45971d7fd2e931f75f10c471d2931688de21e9f2a85c97f70",
+      "shared_sha256": "8d58f425fddb19b45971d7fd2e931f75f10c471d2931688de21e9f2a85c97f70",
+      "identical": true
+    },
+    "guidedCisProgramV1.json": {
+      "root_sha256": "f97e2c29e0d89df372be8dcdaad2224c5a7a182eee436834aaecec1fefd63f82",
+      "shared_sha256": "f97e2c29e0d89df372be8dcdaad2224c5a7a182eee436834aaecec1fefd63f82",
+      "identical": true
+    },
+    "guidedCisProgramV2.json": {
+      "root_sha256": "83ca847abbe6dada5629a9f7304849be08c47af0f505ce23bbf7d00dd7bea1ea",
+      "shared_sha256": "83ca847abbe6dada5629a9f7304849be08c47af0f505ce23bbf7d00dd7bea1ea",
+      "identical": true
+    },
+    "guidedCisProgram.json": {
+      "root_sha256": "76c9eae3ab8928cce359a82dac1e737f61d0e9ff2b25e5ebf6d2fdbcb7c9b8e2",
+      "shared_sha256": "76c9eae3ab8928cce359a82dac1e737f61d0e9ff2b25e5ebf6d2fdbcb7c9b8e2",
+      "identical": true
+    },
+    "guidedCisProgramV4.json": {
+      "root_sha256": "a2585d349d2c23e7541d93c57ebe44c536cb0c3eadaac01c0519d91c6153d9f6",
+      "shared_sha256": "a2585d349d2c23e7541d93c57ebe44c536cb0c3eadaac01c0519d91c6153d9f6",
+      "identical": true
+    },
+    "guidedIsoIsms.json": {
+      "root_sha256": "9c538291c5b250f158f9eae42194b17fa2cd3de7954a1e760286f565b19fc59f",
+      "shared_sha256": "9c538291c5b250f158f9eae42194b17fa2cd3de7954a1e760286f565b19fc59f",
+      "identical": true
+    },
+    "guidedIsoOrganizationalPeople.json": {
+      "root_sha256": "e5b8558eaf37222e7846b0cd2f406f7013b82a3ea34f9697e79f3c5c1ba9e277",
+      "shared_sha256": "e5b8558eaf37222e7846b0cd2f406f7013b82a3ea34f9697e79f3c5c1ba9e277",
+      "identical": true
+    },
+    "guidedIsoPhysicalTechnology.json": {
+      "root_sha256": "89387dec1153ec2fb646c92499df36a9f5703074dd113deb3642ecd3b4dcfa57",
+      "shared_sha256": "89387dec1153ec2fb646c92499df36a9f5703074dd113deb3642ecd3b4dcfa57",
+      "identical": true
+    }
+  },
+  "findings": [],
+  "ig2_priority_review": {
+    "definitions": 130,
+    "question_keys": 1338,
+    "structured_row_keys": 413,
+    "semantic_disposition": "PASS - exact inherent question/row priorities, neutral unspecified context; no saved client ratings or source obligations changed",
+    "sensitive_boundary_defaults": "MFA externally exposed, remote, and privileged identity boundaries can use internal urgent4; this does not assert known client critical exposure.",
+    "trust_boundary_limit": "Runtime exact link/tenant/approved-priority enforcement reserved for frozen-engine review; mappings alone do not prove authorization."
+  },
+  "own_mapping_checks": {
+    "soc-2": {
+      "definitions": 61,
+      "existing_questions": "PASS exact key coverage",
+      "new_parent_intent_codes": "Not in v1 proposal; owner must add explicit neutral non-emitting metadata or disclose intentional exemption",
+      "independence_limit": "Author structural reconciliation only; separate reviewer required for independent semantic assessment of these rationales."
+    },
+    "iso-27001": {
+      "definitions": 123,
+      "existing_questions": "PASS exact key coverage",
+      "new_parent_intent_codes": "Not in v1 proposal; owner must add explicit neutral non-emitting metadata or disclose intentional exemption",
+      "independence_limit": "Author structural reconciliation only; separate reviewer required for independent semantic assessment of these rationales."
+    }
+  },
+  "builder_checks": [
+    "PASS current program5 --check",
+    "PASS historical program3 --check --historical-program-3"
+  ],
+  "browser_scenarios": 0,
+  "engine_execution": "Not run; shared owner still editing",
+  "source_edits": 0
+}

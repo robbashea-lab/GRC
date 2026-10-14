@@ -17,7 +17,7 @@ const record=id=>({client_id:'demo_brawndo',framework_key:'cis-ig1',framework_as
 const interview=id=>({client_id:'demo_brawndo',assessment_id:'focused-'+id,user_id:'focused-actor',version:versionForSafeguard(id,true),revision:0,answers:{},step:0,completed:false,narrative:'',result:null,base_assessment_token:token,base_scope_fingerprint:fingerprint,current_scope_fingerprint:fingerprint,lineage_known:true});
 function completeAnswers(id){
   const version=versionForSafeguard(id,true),rootAnswer={[id==='1.1'?'inventory':'process']:'Yes'},today=new Date(),day=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
-  return Object.fromEntries(visibleQuestions(id,rootAnswer,version).map(question=>[question.id,question.type==='matrix'?Object.fromEntries(question.rows.map(row=>[row,'Yes'])):question.type==='text'?question.id==='system'?'OriginalTool':question.id==='owner'?'Synthetic IT team':'':question.type==='date'?day:question.type==='multi'?['Quarantine or isolate']:question.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):question.id==='sources'?'One source':question.id==='unresolved'?'No':'Yes']));
+  return Object.fromEntries(visibleQuestions(id,rootAnswer,version).map(question=>[question.id,question.optional?'No':question.type==='matrix'?Object.fromEntries(question.rows.map(row=>[row,'Yes'])):question.type==='text'?question.id==='system'?'OriginalTool':question.id==='owner'?'Synthetic IT team':'':question.type==='date'?day:question.type==='multi'?['Quarantine or isolate']:question.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):question.id==='sources'?'One source':question.id==='unresolved'?'No':'Yes']));
 }
 function completedSaved(id){
   const answers=completeAnswers(id),result=focusedResult(id,answers,versionForSafeguard(id,true));
@@ -255,5 +255,6 @@ test('inline reload retains reviewed wording, and changed-answer refresh keeps t
   for(let count=0;button('Save & next')&&count<12;count++)await click('Save & next');
   expect(button('Save assessment').disabled).toBe(true);await click('Refresh from answers');
   const text=document.querySelector('[aria-label="Omnibot implementation summary"]').value;
-  expect(text).toContain('\n\nControls in place');expect(text).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(text).toContain('not currently in place');expect(text).toContain('Establish or complete the enterprise asset inventory.');
+  expect(text).not.toContain('Controls in place');expect(text).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
