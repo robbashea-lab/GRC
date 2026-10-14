@@ -37,7 +37,7 @@
       "ranking_review": "REVIEWED: every current question and every matrix row explicitly mapped",
       "baseline_disposition": "CORRECTION REQUIRED",
       "runtime_acceptance": "PASS: independent source and controlled evaluator/mapping checks at a46a3500583338917eb96949458cb75c6373546a; native API/Mongo coverage is sampled, not every-definition E2E",
-      "browser_acceptance": "Sampled root-operated local Demo journey; final correction retest pending",
+      "browser_acceptance": "Sampled root-operated compiled local native journey; see acceptance.md and revision-specific receipts for exact scope/outcome. Not every-definition E2E.",
       "baseline_defects": [
         "IG1-STATE-1",
         "IG1-HIDDEN-1"
@@ -2186,7 +2186,7 @@
       "ranking_review": "REVIEWED: all current questions and every source row explicitly mapped",
       "baseline_disposition": "CORRECTION REQUIRED",
       "runtime_acceptance": "PASS: independent source and controlled evaluator/mapping checks at a46a3500583338917eb96949458cb75c6373546a; native API/Mongo coverage is sampled, not every-definition E2E",
-      "browser_acceptance": "UNVERIFIED: this definition did not receive an individual browser journey",
+      "browser_acceptance": "Sampled root-operated compiled local native journey; see acceptance.md and revision-specific receipts for exact scope/outcome. Not every-definition E2E.",
       "new_policy_reproduction": {
         "mandatoryUnknownOnlyObserved": "in_progress",
         "mandatoryUnknownOnlyExpected": "not_assessed",
@@ -7737,7 +7737,7 @@
       "ranking_review": "REVIEWED: every current question and every matrix row explicitly mapped",
       "baseline_disposition": "CORRECTION REQUIRED",
       "runtime_acceptance": "PASS: independent source and controlled evaluator/mapping checks at a46a3500583338917eb96949458cb75c6373546a; native API/Mongo coverage is sampled, not every-definition E2E",
-      "browser_acceptance": "UNVERIFIED: this definition did not receive an individual browser journey",
+      "browser_acceptance": "Sampled root-operated compiled local native journey; see acceptance.md and revision-specific receipts for exact scope/outcome. Not every-definition E2E.",
       "new_policy_reproduction": {
         "mandatoryUnknownOnlyObserved": "in_progress",
         "mandatoryUnknownOnlyExpected": "not_assessed",
@@ -7841,7 +7841,7 @@
       "ranking_review": "REVIEWED: all current questions and every source row explicitly mapped",
       "baseline_disposition": "CORRECTION REQUIRED",
       "runtime_acceptance": "PASS: independent source and controlled evaluator/mapping checks at a46a3500583338917eb96949458cb75c6373546a; native API/Mongo coverage is sampled, not every-definition E2E",
-      "browser_acceptance": "UNVERIFIED: this definition did not receive an individual browser journey",
+      "browser_acceptance": "Sampled root-operated compiled local native journey; see acceptance.md and revision-specific receipts for exact scope/outcome. Not every-definition E2E.",
       "new_policy_reproduction": {
         "mandatoryUnknownOnlyObserved": "in_progress",
         "mandatoryUnknownOnlyExpected": "not_assessed",
@@ -7883,7 +7883,7 @@
       "ranking_review": "REVIEWED: all current questions and every source row explicitly mapped",
       "baseline_disposition": "CORRECTION REQUIRED",
       "runtime_acceptance": "PASS: independent source and controlled evaluator/mapping checks at a46a3500583338917eb96949458cb75c6373546a; native API/Mongo coverage is sampled, not every-definition E2E",
-      "browser_acceptance": "Sampled root-operated local Demo journey; final correction retest pending",
+      "browser_acceptance": "Sampled root-operated compiled local native journey; see acceptance.md and revision-specific receipts for exact scope/outcome. Not every-definition E2E.",
       "new_policy_reproduction": {
         "mandatoryUnknownOnlyObserved": "in_progress",
         "mandatoryUnknownOnlyExpected": "not_assessed",
@@ -14325,7 +14325,7 @@
       "ranking_review": "REVIEWED: every current question and matrix criterion precisely mapped",
       "baseline_disposition": "PASS for source relevance; shared-policy correction remains required",
       "runtime_acceptance": "PASS: independent source and controlled evaluator/mapping checks at a46a3500583338917eb96949458cb75c6373546a; native API/Mongo coverage is sampled, not every-definition E2E",
-      "browser_acceptance": "Sampled root-operated local Demo journey; final correction retest pending",
+      "browser_acceptance": "Sampled root-operated compiled local native journey; see acceptance.md and revision-specific receipts for exact scope/outcome. Not every-definition E2E.",
       "new_policy_reproduction": {
         "mandatoryUnknownOnlyObserved": "in_progress",
         "mandatoryUnknownOnlyExpected": "not_assessed",
@@ -14360,7 +14360,7 @@
       "ranking_review": "FAIL baseline native SocProgram status/draft-only sorting; reviewed exact mapping supplied; shared correction pending",
       "baseline_disposition": "FAIL - shared mandatory-unknown mapping; no confirmed absence/partial must remain not_assessed",
       "runtime_acceptance": "PASS: independent source and controlled evaluator/mapping checks at a46a3500583338917eb96949458cb75c6373546a; native API/Mongo coverage is sampled, not every-definition E2E",
-      "browser_acceptance": "Sampled root-operated local Demo journey; final correction retest pending",
+      "browser_acceptance": "Sampled root-operated compiled local native journey; see acceptance.md and revision-specific receipts for exact scope/outcome. Not every-definition E2E.",
       "questions": [
         {
           "id": "CC1.1-expectations",
@@ -14400,7 +14400,7 @@
       "ranking_review": "FAIL baseline native SocProgram status/draft-only sorting; reviewed exact mapping supplied; shared correction pending",
       "baseline_disposition": "FAIL - shared mandatory-unknown mapping; no confirmed absence/partial must remain not_assessed",
       "runtime_acceptance": "PASS: independent source and controlled evaluator/mapping checks at a46a3500583338917eb96949458cb75c6373546a; native API/Mongo coverage is sampled, not every-definition E2E",
-      "browser_acceptance": "UNVERIFIED: this definition did not receive an individual browser journey",
+      "browser_acceptance": "Sampled root-operated compiled local native journey; see acceptance.md and revision-specific receipts for exact scope/outcome. Not every-definition E2E.",
       "questions": [
         {
           "id": "CC1.2-objectivity",
@@ -16450,7 +16450,7 @@
       "ranking_review": "Reviewed exact question defaults supplied; shared implementation/integrated test pending",
       "baseline_disposition": "FAIL - required unknown cannot by itself establish partial implementation",
       "runtime_acceptance": "PASS: independent source and controlled evaluator/mapping checks at a46a3500583338917eb96949458cb75c6373546a; native API/Mongo coverage is sampled, not every-definition E2E",
-      "browser_acceptance": "Sampled root-operated local Demo journey; final correction retest pending",
+      "browser_acceptance": "Sampled root-operated compiled local native journey; see acceptance.md and revision-specific receipts for exact scope/outcome. Not every-definition E2E.",
       "normative_comparison": "PUBLIC COMPARISON - no material mismatch identified against exposed clauses4-6 and amendment",
       "questions": [
         {
@@ -22090,5 +22090,7 @@
     "ranking-engine-review.json",
     "persistence-engine-review.json"
   ],
-  "coverage_limit": "All-definition authored source and controlled evaluator coverage is distinct from sampled browser and native persistence coverage. ISO111 unavailable licensed units remain unverified against full normative text."
+  "coverage_limit": "All-definition authored source and controlled evaluator coverage is distinct from sampled browser and native persistence coverage. ISO111 unavailable licensed units remain unverified against full normative text.",
+  "final_runtime_revision": "8e4466607255b0ca926f7da7181ff8e7c190e8d3",
+  "browser_coverage_limit": "Sampled compiled local native journeys; final1.1 runs inIG3 after earlier actualIG1;1.3 reproduced in actualIG2 then corrected under restoredIG3. All-definition source coverage is separate from individual browser proof."
 }

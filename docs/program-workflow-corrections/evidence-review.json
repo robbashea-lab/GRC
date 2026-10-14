@@ -1,0 +1,1472 @@
+{
+  "reviewer": "/root/soc2_review",
+  "kind": "Independent artifact review of root-operated local browser receipts",
+  "status": "Finite87/628 source-labelled artifacts reviewed. Both nested refresh failures and SOC duplicate-period correction supported by representative compiled evidence. CurrentControl1 root-unknown correction and ISO dashboard reconciliation remain active; independent browser execution0.",
+  "latest_operator_runtime_label": "6281bb1 / compiledDemo main.9d93447c.js; actual files/hashes and source association independently inspected",
+  "final_frozen_source_revision": "a46a3500583338917eb96949458cb75c6373546a",
+  "final_source_review_receipt": "persistence-engine-review.json",
+  "independent_browser_execution": false,
+  "independent_browser_attempt": "Blocked: new hidden iab tab unavailable and listBrowsers returned []; no tab or fixture created. See independent-browser-smoke-blocked.json.",
+  "independently_executed_browser_definition_count": 0,
+  "reviewed_operator_browser_workflow_definition_count": 5,
+  "workflow_definitions": {
+    "cis": [
+      "1.1",
+      "1.4",
+      "18.5"
+    ],
+    "soc-2": [
+      "CC1.1"
+    ],
+    "iso-27001": [
+      "4.1"
+    ]
+  },
+  "environment": "Root-operated local Demo browser at http://127.0.0.1:4341. Workflow changes are confined to the named disposable synthetic client. Baseline artifacts are Demo observations, not real authorized hosted customer evidence.",
+  "source_provenance_limit": "87 and628 compiled source/asset associations independently inspected at their respective verification points. Current Control1 root-unknown correction is not frozen yet; no final corrected-runtime acceptance is claimed.",
+  "verified_artifact_states": [
+    {
+      "case": "CIS unknown native outcome",
+      "artifact": "cis-unknown-saved-4453.txt",
+      "lines": [
+        1,
+        19,
+        21,
+        33,
+        35,
+        40
+      ],
+      "observed": "Exact assessment URL ends in 1.1. Saved implementation is Not Assessed, verification Not verified; open Confirm inventory-existence Item and Assessment saved message are visible.",
+      "limit": "Pre-apply guided answers, draft status and actual Apply interaction are not present in this receipt."
+    },
+    {
+      "case": "Native Item resolution does not imply implementation",
+      "artifact": "cis-item-resolved-refresh-4453.txt",
+      "lines": [
+        1,
+        19,
+        21,
+        33,
+        34,
+        35
+      ],
+      "observed": "Same 1.1 URL displays resolved checked Item and exact synthetic analyst note, while saved implementation remains Not Assessed and verification remains Not verified.",
+      "limit": "The filename indicates refresh, but the refresh interaction itself is not recorded."
+    },
+    {
+      "case": "CIS absence produces native gap and previous-item affordance",
+      "artifact": "cis-absent-saved-4453.txt",
+      "lines": [
+        1,
+        19,
+        21,
+        34,
+        35,
+        41,
+        45
+      ],
+      "observed": "Same 1.1 URL displays Not Implemented, Not verified, an open Confirm or address inventory-existence Item, Previous items expander and Assessment saved message.",
+      "limit": "Previous items is collapsed, so this receipt does not prove retained old Item ID, resolved note or superseded history content."
+    },
+    {
+      "case": "SOC partial plus uncertainty remains distinct",
+      "artifact": "soc-partial-unknown-native-4453.txt",
+      "lines": [
+        1,
+        22,
+        24,
+        37,
+        45,
+        52
+      ],
+      "observed": "CC1.1 URL displays Partially Addressed and Not verified, one explicit partial communication gap and one leadership-conduct confirmation Item. Save message states verification/linked work unchanged.",
+      "limit": "The native final state is shown; the selected interview answers and saved source IDs are not exposed."
+    },
+    {
+      "case": "ISO native manual wording",
+      "artifact": "iso-manual-save-next-refresh-4453.txt",
+      "lines": [
+        1,
+        22,
+        23,
+        26,
+        63
+      ],
+      "observed": "ISO 4.1 URL displays Implemented, 2026-10-13 assessment date, 1 of 30 and the exact synthetic analyst wording distinguishing reported implementation from independent evidence verification.",
+      "limit": "Save & next and refresh interactions are not independently documented by this single final-state snapshot."
+    },
+    {
+      "case": "ISO confirmed final state contains no phantom current Items",
+      "artifact": "iso-confirmed-hidden-gap-native-4453.txt",
+      "lines": [
+        1,
+        22,
+        34,
+        36
+      ],
+      "observed": "ISO 4.1 remains Implemented and its Items tab displays No current items to address are recorded; save message states applicability, verification and linked work unchanged.",
+      "limit": "Missing/No/Not sure parent choices and retained hidden gap text are not visible, so this is not proof of the hidden-answer scenario itself."
+    },
+    {
+      "case": "ISO native SoA aggregate distinguishes necessary, excluded and undetermined",
+      "artifact": "iso-applicability-counts-4453.txt",
+      "lines": [
+        67,
+        72,
+        73,
+        74,
+        75,
+        82,
+        84,
+        91,
+        93
+      ],
+      "observed": "2 of 93 applicability decisions completed: 1 applicable, 1 excluded, 91 not determined. ISMS shows 1 implemented and 29 Not Assessed of mandatory 30. Annex implemented denominator is 1 applicable control, with that control Not Assessed.",
+      "limit": "Decision records, justification contents and exact Annex IDs are not in the overview snapshot."
+    },
+    {
+      "case": "CIS cumulative scopes and displayed control totals",
+      "artifacts": [
+        "cis-ig2-cumulative-counts-4453.txt",
+        "cis-ig3-cumulative-counts-4453.txt"
+      ],
+      "observed": "IG2 shows 130 safeguards with 1 Not Implemented / 129 Not Assessed; IG3 shows 153 with 1 Not Implemented / 152 Not Assessed. Both show 18 control rows. Control 1 expands from four to five safeguards while retaining one assessed gap.",
+      "limit": "This is aggregate/control-list coverage, not 153 independently exercised interviews; source-record preservation across group changes is not proven by aggregate totals alone."
+    },
+    {
+      "case": "IG3 native final matrix-related definition",
+      "artifact": "cis-ig3-matrix-native-4453.txt",
+      "lines": [
+        1,
+        19,
+        21,
+        24,
+        32,
+        34
+      ],
+      "observed": "18.5 exact URL and IG3 breadcrumb, Implemented / Not verified, position 153 of 153, No current Items, Assessment saved.",
+      "limit": "The matrix rows/choices, conditional presence branch, missing-component branch and draft Q&A are not in this native Items-tab snapshot."
+    },
+    {
+      "case": "Reopened remediation ticket has a native source affordance",
+      "artifact": "action-reopen-source-roundtrip-4453.txt",
+      "lines": [
+        1,
+        11,
+        13,
+        28,
+        29,
+        30,
+        31
+      ],
+      "observed": "Action Items completed URL contains a 1.1 assessment workspace, native status Not Implemented / Not verified, one displayed synthetic remediation ticket with open label and explicit Safeguard 1.1 source button.",
+      "limit": "No exact Finding/Action/Item IDs, full ticket detail, reopen command or source button target are recorded; cross-surface exact identity remains Unverified."
+    },
+    {
+      "case": "Validation completion feedback",
+      "artifact": "action-validation-completed-4453.txt",
+      "lines": [
+        1,
+        4,
+        5,
+        6
+      ],
+      "observed": "A root-operated tree diff adds Completed, Reopen ticket and Ticket completed. Validation saved.",
+      "limit": "A complete ticket detail, validation fields, Pending Validation pre-state and exact ticket identity are absent."
+    },
+    {
+      "case": "CIS/SOC dashboard aggregate post-states",
+      "artifact": "client-dashboard-reconciliation-4453.txt",
+      "lines": [
+        50,
+        69,
+        110,
+        128
+      ],
+      "observed": "CIS IG3 dashboard shows 1 Implemented / 1 Not Implemented / 151 Not Assessed of 153; SOC shows 1 Partially Addressed / 32 Not Assessed of Security scope 33. These are consistent with the visible synthetic native final outcomes.",
+      "limit": "No exported authoritative record payloads or exact source/hash metadata accompany the snapshot. ISO aggregate is a separate recorded failure."
+    }
+  ],
+  "failures": [
+    {
+      "id": "NESTED-REOPEN-CONTAINING-TICKET-STALE",
+      "source_revision": "a46a3500583338917eb96949458cb75c6373546a",
+      "disposition": "Earlier failure preserved. Frozen source correction independently reviewed/tested; final87 full AX/DOM and visual artifact inspection supports the representative same-ticket refresh/draft-retention/conflict correction. Root operated the browser.",
+      "artifacts": [
+        "final-source-reopen-same-ticket-a46.txt",
+        "final-source-reopen-action-view-a46.txt"
+      ],
+      "exact_ticket_identity": "finding:fw_clients_demo_mv79rkv9_e6junuyj_finding_fw_clients_demo_mv79rkv9_e6junuyj_assessment_1.4:item:item_fw_clients_demo_mv79rkv9_e6junuyj_assessment_1.4:logging:gap",
+      "observed": "Nested source ticket shows Open with a new Open action and the previous completed action retained. The containing Action Items ticket drawer shows the identical Finding/Item identity as Completed with only the old completed action.",
+      "expected": "A saved nested reopen refreshes the containing ticket's authoritative register data while retaining dirty unsaved parent fields and prior completed work.",
+      "review_evidence_class": "Reviewer independently identified disagreement in full operator artifacts and read connected callbacks; actual browser reproduction and component execution were performed by root/source owner, not this reviewer.",
+      "resolved_in_final87_artifact_review": true
+    },
+    {
+      "id": "NESTED-SAME-ACTION-REFRESH-LOSES-UNSAVED-PLAN",
+      "source_revision_label": "0c252c7",
+      "disposition": "Earlier failure preserved. Frozen source correction independently reviewed/tested; final87 full AX/DOM and visual artifact inspection supports the representative same-ticket refresh/draft-retention/conflict correction. Root operated the browser.",
+      "artifacts": [
+        "final-parent-dirty-before-source-0c252c7.txt:45",
+        "final-parent-dirty-before-source-0c252c7.txt:48",
+        "final-parent-dirty-after-source-0c252c7.txt:46",
+        "final-parent-dirty-after-source-0c252c7.txt:49"
+      ],
+      "observed": "Before nested source action completion, original ticket is Open with the exact unsaved planned action text and enabled Save changes. After returning, the identical ticket is Pending validation with three completed children, all Planned action fields blank and Save changes disabled.",
+      "lost_client_text": "Synthetic QA retained unsaved original action plan — final browser regression.",
+      "expected": "Refresh authoritative child state without silently clearing unsaved fields. Preserve an explicit stale-write boundary if the same saved child changed; do not overwrite newly completed native data with a fresh token on behalf of an old draft.",
+      "limit": "This proves loss of an unsaved client draft, not overwrite of a previously saved native field. AX contains exact Finding/Item identity but no individual child task_id; root reports same-child completion and no draft text remains in any child section.",
+      "review_evidence_class": "Independent artifact review; actual UI execution performed by root.",
+      "resolved_in_final87_artifact_review": true
+    },
+    {
+      "id": "ISO-DASHBOARD-APPLICABILITY-DENOMINATOR",
+      "disposition": "Root already assigned correction to Agent 2; final correction receipt pending",
+      "artifacts": [
+        "client-dashboard-reconciliation-4453.txt:80",
+        "client-dashboard-reconciliation-4453.txt:103",
+        "iso-applicability-counts-4453.txt:72",
+        "iso-applicability-counts-4453.txt:74",
+        "iso-applicability-counts-4453.txt:75",
+        "iso-applicability-counts-4453.txt:84"
+      ],
+      "observed": "Dashboard uses 122 ISO records: 1 Implemented / 121 Not Assessed, including 91 undetermined Annex controls in implementation progress. Native overview distinguishes 30 mandatory clauses plus one applicable Annex control, with 91 undetermined and one excluded separately.",
+      "expected": "Dashboard progress must reconcile with 31 assessment-eligible units and display applicability-undetermined scope separately without treating it as failed/assessed implementation."
+    },
+    {
+      "id": "SOC-CURRENT-PROPOSAL-DOUBLE-TERMINAL-PERIOD",
+      "artifact": "final-soc-proposal-separator-defect-87d37b6.txt",
+      "observed": "CurrentCC1.1Partial detail with its own terminal period has an added second period in generated proposal.",
+      "disposition": "Earlier87 failure retained. Source correction independently reviewed with452focusedchecks; corrected628 proposal/native/Items/reload full artifacts support the representative compiled fix.",
+      "sourceReviewReceipt": "soc-terminal-period-review.json",
+      "resolved_in_final628_artifact_review": true
+    },
+    {
+      "id": "CURRENT-CONTROL1-ROOT-UNKNOWN-ORIGIN",
+      "classification": "Coordinator-reported compiled1.3 defect; source owner confirms omission/reproduction; not yet an independently inspected failing AX artifact",
+      "observed": "Current1.3NotSure omitted root verification origin and was displayed as a supported control despite the unassessed judgment.",
+      "disposition": "Narrow currentControl1V5 evaluator/canonical-origin correction is being authored. Frozen source, independent review, focused execution and corrected compiled native proof remain pending."
+    }
+  ],
+  "unverified_cases": [
+    {
+      "case": "Cancel leaves native record unchanged",
+      "reason": "No cancel artifact or exact before/after native comparison provided."
+    },
+    {
+      "case": "Create finding double-click creates exactly one Finding and one Action",
+      "reason": "No bounded interaction receipt, collection count or exact IDs; a single visible row does not prove uniqueness."
+    },
+    {
+      "case": "ISO hidden-parent negative scenario",
+      "reason": "Final no-Item state exists without hidden text or parent selection receipt."
+    },
+    {
+      "case": "ISO SoA justification and exact scope gate",
+      "reason": "Aggregate count receipt does not expose the decision fields or rejected out-of-scope interaction."
+    },
+    {
+      "case": "IG3 matrix positive/negative row behavior",
+      "reason": "Only saved 18.5 native post-state provided."
+    },
+    {
+      "case": "Baseline register/Brawndo preservation",
+      "reason": "Three baseline files contain only no-change diffs, not full initial register/assessment state or comparable after snapshots."
+    },
+    {
+      "case": "Visual layout/accessibility acceptance",
+      "reason": "One actual retained-draft screenshot inspected for visible readability/overlap/clipping. Full dialog, keyboard-only interaction, contrast measurement, responsive/device matrix and whole-application accessibility remain unverified."
+    },
+    {
+      "case": "Exact final-source browser version",
+      "reason": "Resolved for87 by rendered-script/manifest/actualSHA256 inspection. Latest628 SOC correction compiled proof remains pending; earlier87 artifacts are not relabeled as628."
+    },
+    {
+      "case": "Actual child task identity in full AX",
+      "reason": "Resolved for the edited completion child by root-rendered DOM task_id snapshots before/after; exact new conflict-child identity is not exposed in AX. Individual task identity is not inferred from ordering alone."
+    }
+  ],
+  "operator_reported_known_issues": [
+    {
+      "case": "CIS 1.1 empty Controls in place heading",
+      "artifact_status": "Prior native text showed the old empty heading; a freshly generated and explicitly accepted unknown summary omits it in full 0c252c7 artifacts. Historical saved wording was preserved until acceptance."
+    },
+    {
+      "case": "CIS 18.5 duplicated operation prose / absent-presence Q&A",
+      "artifact_status": "Corrected current18.5 operation-once/no-No-Q&A behavior observed in628 proposed and explicitly accepted native output; old saved wording remains preserved until acceptance. Negative matrix/presence branches remain separate coverage."
+    }
+  ],
+  "baseline_observations": {
+    "initech_ig2": "130 Not Assessed / 18 control rows in the initial local Demo source context; no customer posture claim.",
+    "dunder_iso": "30 clauses: 24 implemented / 6 partial. Annex 90 applicable: 70 implemented / 13 partial / 4 needs attention / 3 Not Assessed; 2 excluded / 1 undetermined. Native overview uses necessary scope.",
+    "prestige_soc": "38 in-scope criteria across Security (33), Availability (3), Confidentiality (2); 27 addressed / 7 partial / 2 remediation / 2 Not Assessed. No Processing Integrity or Privacy configured in this client baseline.",
+    "scope_limit": "Opening baseline program overview and control rows is not per-definition interview acceptance, and does not independently establish protected records were unchanged."
+  },
+  "final_receipt_requirement": "Review final operator full AX snapshots with disableDiffing:true, applicable screenshots and exact final build/source association. Preserve this initial review and classify fixes/retests explicitly. No browser actions or UI source edits by this reviewer.",
+  "initial_artifacts": [
+    {
+      "name": "action-completed-same-source-4453.txt",
+      "sha256": "3c3153d9f22069d3de462146dc12c20fcb3d8b30e312e9b1819d3aa148b37247",
+      "lines": 3,
+      "bytes": 231,
+      "capture_kind": "no-change diff"
+    },
+    {
+      "name": "action-reopen-source-roundtrip-4453.txt",
+      "sha256": "ea3efad3b9040262e402ea86ff7525dfb59cc683b7e381e73706bdfb6eb2b1cc",
+      "lines": 37,
+      "bytes": 2038,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "action-validation-completed-4453.txt",
+      "sha256": "e596027173904796febe01aa08391fb33a4cbdde81302a1da71ffcbf2deb9299",
+      "lines": 7,
+      "bytes": 541,
+      "capture_kind": "AX diff"
+    },
+    {
+      "name": "baseline-register.txt",
+      "sha256": "34773a53f2285f84ad632b8d0ac08979aeca0f302bb45a9709dc7fa705fd6901",
+      "lines": 3,
+      "bytes": 248,
+      "capture_kind": "no-change diff"
+    },
+    {
+      "name": "brawndo-1.1-native-baseline.txt",
+      "sha256": "95b40576c6acc1cf522e1e6749f1b474e532d394a7852445ecaace94dd33d062",
+      "lines": 3,
+      "bytes": 324,
+      "capture_kind": "no-change diff"
+    },
+    {
+      "name": "brawndo-ig1-baseline.txt",
+      "sha256": "9de5b6de08b8b2e7b4c82303464ef0e1d9b9f8180d9d98c98443c565f8999d27",
+      "lines": 3,
+      "bytes": 270,
+      "capture_kind": "no-change diff"
+    },
+    {
+      "name": "cis-absent-saved-4453.txt",
+      "sha256": "2a0af40381a419fbcfbc3fdcb3ecfad57b6aa697b1915151ad9c88230c8b142e",
+      "lines": 49,
+      "bytes": 2420,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "cis-child-pending-validation-4453.txt",
+      "sha256": "b519417a68db62a5c0877fd80ced02464a7b0cf53b079624531b08838af58fdf",
+      "lines": 3,
+      "bytes": 337,
+      "capture_kind": "no-change diff"
+    },
+    {
+      "name": "cis-ig2-cumulative-counts-4453.txt",
+      "sha256": "7d374cf8e7e6891618981de8478f2b815840484c629ceff724598ceed5225e5e",
+      "lines": 269,
+      "bytes": 10226,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "cis-ig3-cumulative-counts-4453.txt",
+      "sha256": "5a1969ac5c1a75c4cb665d99394bf354dd84f87c089486c23a308ffdd89d83ac",
+      "lines": 276,
+      "bytes": 10484,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "cis-ig3-matrix-native-4453.txt",
+      "sha256": "bc7ee8628896aff3a0823c10ac4c8d3716482e2d12918fcdff34b99272049781",
+      "lines": 38,
+      "bytes": 1823,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "cis-item-resolved-refresh-4453.txt",
+      "sha256": "b6c6e7288a5dac504a31ab8a27f5b4253beea85d486a33544c1e66ac6b6a84f7",
+      "lines": 46,
+      "bytes": 2414,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "cis-unknown-saved-4453.txt",
+      "sha256": "582718919432d4c10777d9b711612ac332c98ceb0aa50f7739e9d57beee0f7d4",
+      "lines": 46,
+      "bytes": 2261,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "client-dashboard-reconciliation-4453.txt",
+      "sha256": "6393645879cca6682a9ecb5f5ac7f70079728db22f586c30b46d9d23282f08ec",
+      "lines": 277,
+      "bytes": 11968,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "dunder-annex-baseline.txt",
+      "sha256": "5721f083db148ee79117a3f849eba9f48bab6a04718c4532a60c365fd4e3aae0",
+      "lines": 103,
+      "bytes": 5225,
+      "capture_kind": "AX diff"
+    },
+    {
+      "name": "dunder-iso-baseline.txt",
+      "sha256": "1a1081929676acae9f871c44b42498c002d1200b7c595f77f330dad97be41d91",
+      "lines": 105,
+      "bytes": 5452,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "initech-ig2-baseline.txt",
+      "sha256": "aa157ae46468bba2cc3e6a22487f9c62c236696fe0347db171283ff987a0d737",
+      "lines": 263,
+      "bytes": 9845,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "iso-applicability-counts-4453.txt",
+      "sha256": "9c0174d28190d39e6531e45fea11072c46a2bb86d737a31f4cd1c6fa8fd10d12",
+      "lines": 105,
+      "bytes": 5422,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "iso-confirmed-hidden-gap-native-4453.txt",
+      "sha256": "20eb86e5850f2fbb8509d50a3ad39d9192e6a5b6625110c7557fec9b664f3f2c",
+      "lines": 41,
+      "bytes": 1962,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "iso-manual-save-next-refresh-4453.txt",
+      "sha256": "65997afdbd6790ff94ee08aa4c08fd34033d85dad76f42b809abc0a04e0c8447",
+      "lines": 72,
+      "bytes": 3730,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "local-fixture-created.txt",
+      "sha256": "441a2d465ea8cc5ad714542572fa0a03b3b0682e0b0424055c510f55736f8788",
+      "lines": 75,
+      "bytes": 3481,
+      "capture_kind": "AX diff"
+    },
+    {
+      "name": "prestige-soc-baseline.txt",
+      "sha256": "fa0d7b27d6d1ca7a79a8a811d1b609f03d338fb3d4ac9bd66393b0caf9730530",
+      "lines": 134,
+      "bytes": 5947,
+      "capture_kind": "full AX state"
+    },
+    {
+      "name": "soc-partial-unknown-native-4453.txt",
+      "sha256": "fd825beaf4a1ea4bafff171afe39c088c89cfc513bc994e56bf27cc127ab6ee8",
+      "lines": 58,
+      "bytes": 2950,
+      "capture_kind": "full AX state"
+    }
+  ],
+  "initial_artifact_count": 23,
+  "displayed_control_group_arithmetic": {
+    "cis-ig2-cumulative-counts-4453.txt": {
+      "displayed_control_count": 18,
+      "counts_by_control": {
+        "1": 4,
+        "2": 6,
+        "3": 12,
+        "4": 11,
+        "5": 6,
+        "6": 7,
+        "7": 7,
+        "8": 11,
+        "9": 6,
+        "10": 7,
+        "11": 5,
+        "12": 7,
+        "13": 6,
+        "14": 9,
+        "15": 4,
+        "16": 11,
+        "17": 8,
+        "18": 3
+      },
+      "sum_displayed_safeguards": 130
+    },
+    "cis-ig3-cumulative-counts-4453.txt": {
+      "displayed_control_count": 18,
+      "counts_by_control": {
+        "1": 5,
+        "2": 7,
+        "3": 14,
+        "4": 12,
+        "5": 6,
+        "6": 8,
+        "7": 7,
+        "8": 12,
+        "9": 7,
+        "10": 7,
+        "11": 5,
+        "12": 8,
+        "13": 11,
+        "14": 9,
+        "15": 7,
+        "16": 14,
+        "17": 9,
+        "18": 5
+      },
+      "sum_displayed_safeguards": 153
+    },
+    "initech-ig2-baseline.txt": {
+      "displayed_control_count": 18,
+      "counts_by_control": {
+        "1": 4,
+        "2": 6,
+        "3": 12,
+        "4": 11,
+        "5": 6,
+        "6": 7,
+        "7": 7,
+        "8": 11,
+        "9": 6,
+        "10": 7,
+        "11": 5,
+        "12": 7,
+        "13": 6,
+        "14": 9,
+        "15": 4,
+        "16": 11,
+        "17": 8,
+        "18": 3
+      },
+      "sum_displayed_safeguards": 130
+    }
+  },
+  "additional_full_artifacts": [
+    {
+      "name": "final-cis-blank-next-a46.txt",
+      "sha256": "65598cb0bd48961ac0af3957f86b589d28d4c6fa540a9fa1e5b2cefc28c24801",
+      "bytes": 5462,
+      "lines": 102,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-cis-partial-unknown-proposal-a46.txt",
+      "sha256": "277b49ec5fce637dfcc1e701a6434b8f52fc00f07e363dfc763adaf5eabbd229",
+      "bytes": 5623,
+      "lines": 96,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-cis-partial-unknown-native-a46.txt",
+      "sha256": "22c744ca86e77868d2dff2db6c47aba8eca782996475c22f784f3d03dd1641f0",
+      "bytes": 3168,
+      "lines": 55,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-item-resolution-refresh-a46.txt",
+      "sha256": "147e1b2de7a35891326772513913afa207226194ea48df58f0d176bdfd0df082",
+      "bytes": 3299,
+      "lines": 55,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-doubleclick-one-source-finding-a46.txt",
+      "sha256": "5f75e3cea472d06f80ba05c8b9b6ecbf37a59e0772617766bdad56c7e5eaaac6",
+      "bytes": 2496,
+      "lines": 47,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-source-ticket-identity-a46.txt",
+      "sha256": "40c395741a66dd39fcc99e615009ed7dc39058dd0665058dc66d3edf89f4f64d",
+      "bytes": 3551,
+      "lines": 72,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-action-ticket-same-identity-a46.txt",
+      "sha256": "3feeaffd3db500cd89106779cc22ae781c3fb83d84d5acd03d5764e0e83c099d",
+      "bytes": 3421,
+      "lines": 72,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-child-pending-validation-a46.txt",
+      "sha256": "9553d1f8ebe7043d18efbde0ea42bb8e6e413730ab2389f939250453aa934225",
+      "bytes": 3918,
+      "lines": 78,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-action-validated-completed-a46.txt",
+      "sha256": "b97d47e804d8af6bc09fa0b1ecac0140af79979b501fcfaf4724278182b7c9b9",
+      "bytes": 3697,
+      "lines": 75,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-action-closure-at-source-a46.txt",
+      "sha256": "da3767c391c7becbdc59d8dbbf224558784e4471b2cc82fb292a3542276e8f9e",
+      "bytes": 2115,
+      "lines": 37,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-source-reopen-same-ticket-a46.txt",
+      "sha256": "5b7607f13e941a662d026b60ab1295c75a11c5d4d44c16d3e5a4364c4744ee8f",
+      "bytes": 5734,
+      "lines": 115,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-source-reopen-action-view-a46.txt",
+      "sha256": "674f63d2224b596c67bcb94c8a01048eea957c29825a7275fc0f3bc3d4e38881",
+      "bytes": 3655,
+      "lines": 75,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-source-closure-0c252c7.txt",
+      "sha256": "7d6a6ee81667dc2aa2209c7ca57cb116ff4319484ff821a69037c74e4a22c777",
+      "bytes": 5763,
+      "lines": 115,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-source-close-parent-0c252c7.txt",
+      "sha256": "001bca8965f8e37ba9951e0fe10cd3c162343872892049f5cb0f7e0c92b0f604",
+      "bytes": 5670,
+      "lines": 115,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-parent-dirty-before-source-0c252c7.txt",
+      "sha256": "46799080cd3ea1742baf85f46611226ea7a822910429bf87fa893ff5b41ea68c",
+      "bytes": 7831,
+      "lines": 155,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-parent-dirty-after-source-0c252c7.txt",
+      "sha256": "e46456ee7d9a02d29622f21ae50e62e6290d938fbff68b4a2269707a2ffea0b9",
+      "bytes": 7990,
+      "lines": 160,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-cis-native-counts-0c252c7.txt",
+      "sha256": "b02c4fc097b2879a8d0b9f45e60d43de070fa25b0a793c5ca2c5300c9ab8ad39",
+      "bytes": 7765,
+      "lines": 174,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-inventory-unknown-draft-0c252c7.txt",
+      "sha256": "4aec72551493256cad04363bbdd41b2545d86b96d68e645264a160519a60806b",
+      "bytes": 7128,
+      "lines": 111,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-inventory-unknown-proposal-0c252c7.txt",
+      "sha256": "e38c55d7bfa37225ddf2897d2a4c13cc232af0518332af08dcaec02f30d7fa24",
+      "bytes": 6483,
+      "lines": 94,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-inventory-unknown-native-0c252c7.txt",
+      "sha256": "1ef9009b5792f4fcebed46cb66f3d9c9cf2c4de7db3b0e64c3614d7624660be3",
+      "bytes": 4874,
+      "lines": 73,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-inventory-reconciled-history-0c252c7.txt",
+      "sha256": "6994d1fd6bd8d483396cd3e4a7a6b3dae93715e7b13885c23b6ea901a31e6e8a",
+      "bytes": 2945,
+      "lines": 57,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-inventory-confirmed-native-0c252c7.txt",
+      "sha256": "530f325b475f8e3a6503a507bf2fd1c079dc387add4d167e712f1444c6791dad",
+      "bytes": 5888,
+      "lines": 83,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-inventory-partial-draft-native-unchanged-0c252c7.txt",
+      "sha256": "530f325b475f8e3a6503a507bf2fd1c079dc387add4d167e712f1444c6791dad",
+      "bytes": 5888,
+      "lines": 83,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    },
+    {
+      "name": "final-inventory-partial-draft-resume-0c252c7.txt",
+      "sha256": "0358d457c3988fefed32974fa8c78ea294f715caf6f6437e5666f43ea14b232e",
+      "bytes": 10591,
+      "lines": 187,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root"
+    }
+  ],
+  "additional_full_artifact_count": 24,
+  "initial_unverified_cases": [
+    {
+      "case": "Unknown guided draft before Apply",
+      "reason": "Only the saved native outcome is recorded."
+    },
+    {
+      "case": "Cancel leaves native record unchanged",
+      "reason": "No cancel artifact or exact before/after native comparison provided."
+    },
+    {
+      "case": "Create finding double-click creates exactly one Finding and one Action",
+      "reason": "No bounded interaction receipt, collection count or exact IDs; a single visible row does not prove uniqueness."
+    },
+    {
+      "case": "Pending Validation pre-state",
+      "reason": "cis-child-pending-validation-4453.txt is a three-line no-change diff containing only focused container and source URL."
+    },
+    {
+      "case": "Action Items Completed view contains the same exact record",
+      "reason": "action-completed-same-source-4453.txt is a three-line no-change diff with Completed filter focus, without row or source IDs."
+    },
+    {
+      "case": "Validation fields and exact Completed transition",
+      "reason": "Completion toast/diff exists, but no full identified ticket detail before and after."
+    },
+    {
+      "case": "Reopen and source round-trip exact IDs",
+      "reason": "Final workspace and source button visible, but Action/Finding/native Item IDs and destination identity are absent."
+    },
+    {
+      "case": "ISO hidden-parent negative scenario",
+      "reason": "Final no-Item state exists without hidden text or parent selection receipt."
+    },
+    {
+      "case": "ISO SoA justification and exact scope gate",
+      "reason": "Aggregate count receipt does not expose the decision fields or rejected out-of-scope interaction."
+    },
+    {
+      "case": "IG3 matrix positive/negative row behavior",
+      "reason": "Only saved 18.5 native post-state provided."
+    },
+    {
+      "case": "Baseline register/Brawndo preservation",
+      "reason": "Three baseline files contain only no-change diffs, not full initial register/assessment state or comparable after snapshots."
+    },
+    {
+      "case": "Visual layout/accessibility acceptance",
+      "reason": "No image artifacts supplied in the initial receipt set; AX text does not establish clipping, focus styling, contrast or screenshot fidelity."
+    },
+    {
+      "case": "Exact final-source browser version",
+      "reason": "Awaiting final source freeze, rebuilt/reloaded browser and version-labelled full receipts."
+    }
+  ],
+  "subsequent_full_artifact_states": [
+    {
+      "case": "Blank CIS answer cannot advance",
+      "artifacts": [
+        "final-cis-blank-next-a46.txt"
+      ],
+      "observed": "CIS 1.4 first question has no selected answer; explicit Choose an answer error follows Save & next. Native status and verification remain Not Assessed / Not verified.",
+      "limit": "Root operated the interaction; this reviewer inspected the full resulting accessibility state."
+    },
+    {
+      "case": "CIS partial with mandatory uncertainty",
+      "artifacts": [
+        "final-cis-partial-unknown-proposal-a46.txt",
+        "final-cis-partial-unknown-native-a46.txt"
+      ],
+      "observed": "1.4 proposal retains confirmed partial DHCP/IPAM practice plus uncertain update cadence; before Apply native remains Not Assessed. Accepted native becomes Partially Implemented / Not verified with separate gap and confirmation Items.",
+      "limit": "Recorded proposal/native states establish this representative definition, not all 153 CIS interviews."
+    },
+    {
+      "case": "Native Item resolution retains separate assessment judgment",
+      "artifacts": [
+        "final-item-resolution-refresh-a46.txt"
+      ],
+      "observed": "Resolved cadence confirmation note and open missing partial-practice gap coexist; native implementation remains partial and verification remains Not verified."
+    },
+    {
+      "case": "Native source and Action Items exact Finding/Item identity",
+      "artifacts": [
+        "final-source-ticket-identity-a46.txt",
+        "final-action-ticket-same-identity-a46.txt"
+      ],
+      "observed": "Both full drawers display the identical Finding/Item-based ticket identifier for CIS 1.4 and native source affordance.",
+      "limit": "Individual task IDs are not exposed in AX; root actual operation and component fixtures provide stronger child identity evidence separately."
+    },
+    {
+      "case": "Completion still requires validation",
+      "artifacts": [
+        "final-child-pending-validation-a46.txt",
+        "final-action-validated-completed-a46.txt",
+        "final-action-closure-at-source-a46.txt"
+      ],
+      "observed": "Same exact ticket progresses from Pending validation with completed work/resolution and disabled empty-rationale validation to Completed with retained resolution and validation date. Source assessment stays partial / Not verified.",
+      "limit": "Independent artifact review of root-operated before/after states; no hosted authentication/persistence proof."
+    },
+    {
+      "case": "Clean containing drawer refresh corrected",
+      "artifacts": [
+        "final-source-closure-0c252c7.txt",
+        "final-source-close-parent-0c252c7.txt"
+      ],
+      "observed": "Nested source closure and containing Action Items drawer now share exact ticket identity, Completed stage, both completed child sections, retained resolutions and validation state.",
+      "limit": "This clean round trip is corrected. The separate same-child unsaved planned-action loss remains a confirmed failure in this runtime."
+    },
+    {
+      "case": "Current unknown proposal does not rewrite native before acceptance",
+      "artifacts": [
+        "final-inventory-unknown-draft-0c252c7.txt",
+        "final-inventory-unknown-proposal-0c252c7.txt",
+        "final-inventory-unknown-native-0c252c7.txt"
+      ],
+      "observed": "CIS 1.1 final-group draft and proposed Not Assessed summary leave prior native Not Implemented wording intact. Proposal has substantive unknown practice and no empty Controls in place heading. Accepted native is Not Assessed / Not verified with the same substantive text and no empty heading.",
+      "limit": "The old native wording visibly retained the earlier empty heading until explicit acceptance; that is preserved saved history, not automatic relabeling."
+    },
+    {
+      "case": "Changed origin preserves previous native Item history",
+      "artifacts": [
+        "final-inventory-reconciled-history-0c252c7.txt"
+      ],
+      "observed": "Current inventory confirmation Item is open and retains the earlier synthetic resolution note; previous absence-origin Item is visibly Superseded under expanded Previous items. Native stays Not Assessed / Not verified.",
+      "limit": "AX does not expose exact native Item identifiers or expanded per-Item resolution history."
+    },
+    {
+      "case": "Current IG3 aggregate scope remains 153",
+      "artifacts": [
+        "final-cis-native-counts-0c252c7.txt"
+      ],
+      "observed": "Local synthetic client overview displays 18 controls, 153 safeguards, 1 implemented, 1 partial, 1 absent, 150 unassessed before the later 1.1 unknown reassessment.",
+      "limit": "This is an aggregate snapshot at its recorded point in the workflow, not a final customer posture or interview-coverage count."
+    },
+    {
+      "case": "Progress-only partial draft preserves accepted native assessment",
+      "artifacts": [
+        "final-inventory-confirmed-native-0c252c7.txt",
+        "final-inventory-partial-draft-native-unchanged-0c252c7.txt",
+        "final-inventory-partial-draft-resume-0c252c7.txt"
+      ],
+      "observed": "Two full native snapshots are byte-identical and display Implemented / Not verified with exact accepted synthetic inventory prose. Resumed group2 visibly retains Servers Partially and Cloud-hosted assets Not sure, while the saved native assessment remains Implemented and a reassessment warning explicitly states no status has changed.",
+      "limit": "This supports changed saved interview progress versus visible native judgment. It does not independently prove a Cancel command or hidden full-record equivalence; old native context punctuation remains unchanged until deliberate current-generation acceptance."
+    }
+  ],
+  "latest_independently_reviewed_application_source_revision": "6281bb1ae16626f98431711b7a8101761a1682c4",
+  "additional_source_review_receipts": [
+    "work-draft-refresh-review.json",
+    "inline-context-review.json",
+    "soc-terminal-period-review.json"
+  ],
+  "final87_artifacts": [
+    {
+      "name": "final-action-completed-counts-87d37b6.txt",
+      "sha256": "2ae8ff1ebdd16d93e63dbb50ef27aaa654a333d59def8e8b846fab33ea3dcb34",
+      "bytes": 3932,
+      "lines": 77,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-action-side-closed-87d37b6.txt",
+      "sha256": "8306a874cc510a7c5ba2849f96762428e4ec49cbed64f4d0cd8eee6a2199db8f",
+      "bytes": 11861,
+      "lines": 236,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-cis-position-87d37b6.txt",
+      "sha256": "d1815056a8df9ab8d2746013bb0d90cc62005c619b424c1e8c559f28295998c7",
+      "bytes": 7593,
+      "lines": 172,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-conflict-local-before-source-87d37b6.txt",
+      "sha256": "bb7a5640e859fb210688a8f9967c2c2374a80aa0b31d9ee978c91c24be4199c3",
+      "bytes": 11938,
+      "lines": 235,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-conflict-native-preserved-refresh-87d37b6.txt",
+      "sha256": "bc53d931987d4e453ce68100d9a58b05519077a32460801e8ce48b5c0c776658",
+      "bytes": 11742,
+      "lines": 234,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-conflict-rejected-draft-retained-87d37b6.txt",
+      "sha256": "41fe63ba91a432b943754aac1a6030f5a7acd81739860f1b6894b6a6bfc6489f",
+      "bytes": 11924,
+      "lines": 236,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-conflict-source-saved-87d37b6.txt",
+      "sha256": "37522173e6d584d0c18c91667b2715f73abcfa20b477f426ce1d2bcf91669b30",
+      "bytes": 11867,
+      "lines": 236,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-inventory-exact-items-87d37b6.txt",
+      "sha256": "d29a76c28287898d69cae24e757cc531bb0fd6422e5464603c5214ff4a8d628e",
+      "bytes": 2792,
+      "lines": 57,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-inventory-partial-native-87d37b6.txt",
+      "sha256": "69f78075fa1907f027d5c80ec703de66b77d3a2906c03586e8e389fe99a96647",
+      "bytes": 5921,
+      "lines": 83,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-inventory-partial-proposal-87d37b6.txt",
+      "sha256": "8dfb9680f01171a37afcbeac71f786393a211c566fdefc922b529b32b7f662b6",
+      "bytes": 8678,
+      "lines": 113,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-omni-top-five-87d37b6.txt",
+      "sha256": "9aae7b29d0817ae003094ec24f4f12a22fd55e8124a24c47c925f2357ce55e8b",
+      "bytes": 10828,
+      "lines": 253,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-parent-dirty-after-source-87d37b6.txt",
+      "sha256": "f800e385abaef57f4b2ce0dc19bc0d47ffbd1597ac2f8e9b3a19bc6595234081",
+      "bytes": 10141,
+      "lines": 200,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-parent-dirty-before-source-87d37b6.txt",
+      "sha256": "bd41e607f29bad75397a0d9894802a711394fca18fe994772bedfaa64a26b31a",
+      "bytes": 9896,
+      "lines": 195,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-parent-retained-leave-guard-87d37b6.txt",
+      "sha256": "c01155e2d1fff2f7d65baeef2490cdda7e28b1db744ae4b82493c93eda6018bd",
+      "bytes": 549,
+      "lines": 12,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-parent-validated-draft-retained-87d37b6.txt",
+      "sha256": "aa0d5ad8f5f2d1b5e0abd965863e0416c816be1212de21b55e3cc8e5be111879",
+      "bytes": 9743,
+      "lines": 195,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-retained-plan-reopened-view-87d37b6.txt",
+      "sha256": "461dca6946d1f2f35769cd6da70693070413e2deb1f5549fa6048332f1534a1e",
+      "bytes": 9718,
+      "lines": 194,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-retained-plan-saved-87d37b6.txt",
+      "sha256": "7ae31d38e430de0a1c3823f485c079992f74f42e15d10eccc6199903cbe2b12a",
+      "bytes": 9796,
+      "lines": 196,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-source-child-pending-87d37b6.txt",
+      "sha256": "35fe47396b820e472da7ee76e47ac983f5c4ba8ce4dd0ff7e2a4db3f343e2e16",
+      "bytes": 9987,
+      "lines": 201,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-source-closed-assessment-unchanged-87d37b6.txt",
+      "sha256": "d975ecbbea6e910f1550ca151bece1e4b64be9b52d3fc0644c17dd88ee5ec3f3",
+      "bytes": 2094,
+      "lines": 37,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-source-reopen-parent-refreshed-87d37b6.txt",
+      "sha256": "e36a2f92119e852fc69db389fcdc4a48e5403ce577a347d01d5b45e1ae7d9a88",
+      "bytes": 11880,
+      "lines": 235,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-source-validated-87d37b6.txt",
+      "sha256": "f10f33a924f2023163debec9fe6ab8c256c8f3b06893eeb4b5cb736c2994bf6d",
+      "bytes": 9634,
+      "lines": 195,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-parent-dom-before-source-87d37b6.json",
+      "sha256": "113950d574494997d3ff0df1b8a33c47f22f6e4adc9d1801ae4b217e608e2c40",
+      "bytes": 525,
+      "lines": 22,
+      "capture_kind": "rendered DOM field/task identity",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-parent-dom-after-source-87d37b6.json",
+      "sha256": "9e1759ec2a42f7e303f2f018c337309879b94b41c446c0af203fa95c7be6109f",
+      "bytes": 525,
+      "lines": 22,
+      "capture_kind": "rendered DOM field/task identity",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    }
+  ],
+  "final87_full_ax_count": 21,
+  "final87_rendered_dom_count": 2,
+  "final87_exact_child": {
+    "task_id": "tasks_demo_mv7eapid_tdzi86k9",
+    "before_status": "open",
+    "after_status": "done",
+    "retained_exact_plan": "Synthetic QA final preserved parent plan: this unsaved text must remain after the same child is completed and its Finding validated through the source.",
+    "same_rendered_task_set": true,
+    "children": 4
+  },
+  "final87_visuals": [
+    {
+      "path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-13\\agent-1-implement-the-approved-internal\\outputs\\program-draft-retention.png",
+      "sha256": "ddb477262e731c79f8c7c1a3c8b00663e71b86299c0889368c663a0bd87a5843",
+      "bytes": 71935,
+      "reviewer_viewed_actual_image": true,
+      "observed": "Visible scrollable ticket section has the exact retained unsaved plan, disabled Work completed status, fresh completed-work resolution, and enabled Save changes. Labels, text and button are readable with no visible overlap or clipping in the captured 1280x720 viewport.",
+      "limits": "Screenshot is scrolled and does not contain the full ticket header/identity or entire dialog. It is visual evidence for this visible section, not a full accessibility/contrast/responsiveness conformance test."
+    }
+  ],
+  "final87_verified_states": [
+    {
+      "case": "Same exact child draft survives Source completion",
+      "artifacts": [
+        "final-parent-dom-before-source-87d37b6.json",
+        "final-parent-dom-after-source-87d37b6.json",
+        "final-parent-dirty-before-source-87d37b6.txt",
+        "final-parent-dirty-after-source-87d37b6.txt"
+      ],
+      "observed": "Exact rendered child task_id is stable Open to Done, four-child identity set unchanged, exact unsaved planned action remains. Parent displays Pending validation and fresh native completion/resolution while Save changes remains enabled."
+    },
+    {
+      "case": "Source validation refreshes parent without clearing draft",
+      "artifacts": [
+        "final-source-validated-87d37b6.txt",
+        "final-parent-validated-draft-retained-87d37b6.txt",
+        "final-parent-retained-leave-guard-87d37b6.txt"
+      ],
+      "observed": "Same Finding/Item ticket identity displays Completed in source and parent, retained exact unsaved plan with Save enabled; leaving presents Discard unsaved ticket changes with focus on Keep editing."
+    },
+    {
+      "case": "Saving retained text preserves completion and native resolution",
+      "artifacts": [
+        "final-retained-plan-saved-87d37b6.txt",
+        "final-retained-plan-reopened-view-87d37b6.txt"
+      ],
+      "observed": "Retained plan is still shown after Saved feedback and in the subsequently reopened drawer, with Save disabled, completed work state/resolution and prior completed actions retained.",
+      "limit": "Artifact review establishes visible states. Only-text PATCH payload/CAS is proven separately by this reviewer's seven-case component run, not by AX alone."
+    },
+    {
+      "case": "Source reopen refreshes the containing same ticket",
+      "artifacts": [
+        "final-source-reopen-parent-refreshed-87d37b6.txt"
+      ],
+      "observed": "Exact Finding/Item ticket is Open with five child sections: one new open action and four previous completed actions, retaining the saved prior plan and resolutions."
+    },
+    {
+      "case": "Actual same-field native conflict rejects overwrite and retains local draft",
+      "artifacts": [
+        "final-conflict-local-before-source-87d37b6.txt",
+        "final-conflict-source-saved-87d37b6.txt",
+        "final-conflict-rejected-draft-retained-87d37b6.txt",
+        "final-conflict-native-preserved-refresh-87d37b6.txt"
+      ],
+      "observed": "Separate source committed plan differs from local draft. Parent Save produces Record changed since it was opened; reload before saving, retaining local text. After operator discard/refresh, source committed plan remains, prior completed child plan remains, and no stale local overwrite is shown.",
+      "limit": "The exact same-field operator actions are root-operated; task-level conflict CAS payload is separately verified by the independent component test. AX displays the same Finding/Item identifier but no new conflict-child task ID."
+    },
+    {
+      "case": "Final Action Items closure retains cumulative work",
+      "artifacts": [
+        "final-action-side-closed-87d37b6.txt"
+      ],
+      "observed": "Same ticket is Completed, all five child statuses are Work completed, both separately saved plans and all recorded resolutions remain; validation feedback/date are present."
+    },
+    {
+      "case": "Current generated inventory prose and scoped Items",
+      "artifacts": [
+        "final-inventory-partial-proposal-87d37b6.txt",
+        "final-inventory-partial-native-87d37b6.txt",
+        "final-inventory-exact-items-87d37b6.txt"
+      ],
+      "observed": "Proposal is Partial while native is still Implemented. Correct sentence separators distinguish responsibility/update/supporting records. Servers gap and Cloud-hosted confirmation are outside the supported-control list, then accepted native is Partial / Not verified and exactly those two current scoped Items are shown."
+    },
+    {
+      "case": "Current CIS position and five recommendations",
+      "artifacts": [
+        "final-cis-position-87d37b6.txt",
+        "final-omni-top-five-87d37b6.txt"
+      ],
+      "observed": "153-unit progress reconciles 1 implemented / 2 partial / 150 unassessed and Control1 five rows. Recommendations show discovery 1.2/1.3/1.5 then assessed partial 1.1/1.4 with relevant gap/confirmation and linked work context.",
+      "limit": "Visible ordering/content for this synthetic fixture, not exhaustive priority permutations or all-153 interview browser coverage."
+    },
+    {
+      "case": "Ticket completion leaves assessment and verification separate",
+      "artifacts": [
+        "final-source-closed-assessment-unchanged-87d37b6.txt"
+      ],
+      "observed": "Native source assessment remains Partially Implemented / Not verified even though its ticket is completed."
+    }
+  ],
+  "active_failures": [
+    "ISO-DASHBOARD-APPLICABILITY-DENOMINATOR",
+    "CURRENT-CONTROL1-ROOT-UNKNOWN-ORIGIN"
+  ],
+  "latest_runtime_operator_browser_workflow_definition_count": 4,
+  "latest_runtime_operator_browser_workflow_definitions": {
+    "cis": [
+      "1.1",
+      "1.4"
+    ],
+    "iso-27001": [
+      "4.1"
+    ],
+    "soc-2": [
+      "CC1.1"
+    ]
+  },
+  "final87_browser_execution_owner": "/root",
+  "final87_automated_vs_browser": "Author27-case component receipt, independent7-case component execution, and this independent artifact review of root browser operations are separate evidence and counts.",
+  "final87_additional_ISO_SOC_provenance_artifacts": [
+    {
+      "name": "final-loaded-bundle-87d37b6.json",
+      "sha256": "0ea56bc96cd1eb4ce72792f8ea0ff744963f1665b8c793061b99aff0f3c4499a",
+      "bytes": 417,
+      "lines": 11,
+      "capture_kind": "DOM/build provenance",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-filesystem-build-proof-87d37b6.json",
+      "sha256": "7f5e64a9eb1e4adbac49868cf084a952d688fc9a26e2b47549abb5679da4eeca",
+      "bytes": 2016,
+      "lines": 39,
+      "capture_kind": "DOM/build provenance",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-iso-manual-native-before-87d37b6.txt",
+      "sha256": "998b5eb7f762e69ac7df0cab1915813ed0b8461239cd0200a05687ce37328861",
+      "bytes": 3737,
+      "lines": 72,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-iso-manual-native-after-noop-87d37b6.txt",
+      "sha256": "9285313a9d58157164cce5dd8e4d4c8b17e65b0133b7b26282b6cb660a7af6cc",
+      "bytes": 3673,
+      "lines": 72,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-iso-yes-empty-rejected-87d37b6.txt",
+      "sha256": "3697e8ea7c699ce0322010a89cfad67bfc9288836ba00b4977d1ecafe133b474",
+      "bytes": 7147,
+      "lines": 128,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-iso-no-hidden-manual-proposal-87d37b6.txt",
+      "sha256": "18c91a6581ac48916df49697a9fe23f1006de48098809d44505febaacac89cc3",
+      "bytes": 4992,
+      "lines": 93,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-iso-no-hidden-native-items-87d37b6.txt",
+      "sha256": "9354b85eda8ab58dc98233e04c870658d0bea03262ff6664b24e87f666f9aeec",
+      "bytes": 1962,
+      "lines": 41,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-iso-position-87d37b6.txt",
+      "sha256": "3a8a519be773a9cd475af385a39a7d2f030aa81d45639b81828d51941d2e8703",
+      "bytes": 5441,
+      "lines": 105,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-soc-proposal-separator-defect-87d37b6.txt",
+      "sha256": "f454162b6179cda1a0a97c48308f5356b92d6601567214c935000dff4b534403",
+      "bytes": 5927,
+      "lines": 102,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    }
+  ],
+  "final87_provenance_review_receipt": "final87-provenance-review.json",
+  "latest_runtime_scope_arithmetic": {
+    "cis": 153,
+    "socSecurityOnly": 33,
+    "isoEligible": 31,
+    "combinedEligible": 217,
+    "basis": "Root own synthetic fixture uses Security33; initial Prestige baseline38 is a separate Demo client. ISO counts30mandatory+1includedAnnex, with91undetermined and1excluded separately."
+  },
+  "final87_iso_verified_states": [
+    {
+      "case": "ISO native no-op preserves accepted manual wording",
+      "artifacts": [
+        "final-iso-manual-native-before-87d37b6.txt",
+        "final-iso-manual-native-after-noop-87d37b6.txt"
+      ],
+      "observed": "Exact4.1 manual paragraph, Implemented and displayed assessment date2026-10-13 remain identical while feedback changes to Assessment saved.",
+      "limit": "AX proves visible wording/status/date; full storage/timestamp/event no-op behavior is separately covered by independent ASGI/Mongo tests."
+    },
+    {
+      "case": "ISO affirmative extra requires detail",
+      "artifact": "final-iso-yes-empty-rejected-87d37b6.txt",
+      "observed": "Additional gap parent visiblyYes, detail area empty, explicit Describe the additional reported work error. Native remainsImplemented with exact manual paragraph."
+    },
+    {
+      "case": "ISO reported No-parent flow retains manual summary and no current Items",
+      "artifacts": [
+        "final-iso-no-hidden-manual-proposal-87d37b6.txt",
+        "final-iso-no-hidden-native-items-87d37b6.txt"
+      ],
+      "observed": "Proposed and native manual paragraph stay unchanged with Implemented outcome; accepted Items view has no current Items.",
+      "limit": "Root reports the actual No-parent/retained-hidden-text interaction; parent choice and retained hidden value are not displayed in these summary/Items captures. Those exact inputs remain separately covered by pure/API tests, not exposed artifact proof."
+    },
+    {
+      "case": "ISO necessary scope remains separate from undetermined applicability",
+      "artifact": "final-iso-position-87d37b6.txt",
+      "observed": "30mandatoryclauses with1Implemented/29unassessed;1includedAnnexunassessed;91undetermined and1excluded separate. Eligible implementation scope31, not122."
+    }
+  ],
+  "additional628_reviewed_artifacts": [
+    {
+      "name": "final-filesystem-build-proof-6281bb1.json",
+      "sha256": "59247019cecd2344c728c493596d17dc04bcdebb6b478ebf69f6fae31e2f8e97",
+      "bytes": 2346,
+      "lines": 46,
+      "capture_kind": "coordinator DOM/build provenance",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-soc-proposal-punctuation-corrected-6281bb1.txt",
+      "sha256": "a46baa1dc6308c859963743adfbe2bbf87cb84de36dfd0eb242606606314c3a3",
+      "bytes": 5931,
+      "lines": 102,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-soc-native-corrected-6281bb1.txt",
+      "sha256": "ba4814121eae4727e1116be0a7e300985ec3dfcf6493016612df8e7b0b1d8341",
+      "bytes": 4192,
+      "lines": 79,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-soc-items-corrected-6281bb1.txt",
+      "sha256": "24f8df7975e4ffc583544a19e5e7de05c6dada8306f9ded8c029f598fa158d2f",
+      "bytes": 2946,
+      "lines": 58,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-soc-reloaded-native-6281bb1.txt",
+      "sha256": "584dc7fd24a0aa8555ded71feaaa4d69cb4fb5e07b6b8c364d0c276ce480dc5c",
+      "bytes": 4156,
+      "lines": 79,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-ig3-185-current-proposal-6281bb1.txt",
+      "sha256": "52d1874a12edeca08709ed3c7630b1807fbe24a73e22bd8740aa9f668394716e",
+      "bytes": 6111,
+      "lines": 101,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-ig3-185-current-native-6281bb1.txt",
+      "sha256": "02b9e5896017d9b06bab1b57d4dc602d770e6f56648fd5dffdf9e7c43a1016e2",
+      "bytes": 4219,
+      "lines": 77,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-ig2-scope-87d37b6.txt",
+      "sha256": "829b07e16475cfed41b0b11e87708c53458e53f879fb92adc8db567dfb7ed4e7",
+      "bytes": 8920,
+      "lines": 168,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    },
+    {
+      "name": "final-ig3-restored-preserved-87d37b6.txt",
+      "sha256": "0a36a73624742960edf22f1e120d21844e5eaa81e84d8472bcc939099699ba5f",
+      "bytes": 8920,
+      "lines": 168,
+      "capture_kind": "full AX state",
+      "execution_owner": "/root",
+      "review_classification": "independent artifact inspection"
+    }
+  ],
+  "source628_bundle_proof": {
+    "artifact": "final-filesystem-build-proof-6281bb1.json",
+    "appSource": "6281bb1ae16626f98431711b7a8101761a1682c4",
+    "recordedHead": "ce9cac3a6c2c8a09f5b40182013dd0b0aa3d9df9",
+    "independentlyVerifiedRuntimeGitDiffFrom628": "empty",
+    "observedScript": "http://127.0.0.1:4341/static/js/main.9d93447c.js",
+    "independentlyVerifiedActualJsSHA256": "710cb0c839a20edac2b7b9b89ab2e24ac955cebf7c9f0597a7459bad3a35bfd8",
+    "independentlyVerifiedActualCssSHA256": "52bd9f1111daaef1147922737ede6ec8c06114ea63db5a464c07793dbbd6c29d",
+    "matchesSavedAssetProof": true,
+    "limits": "Coordinator operated the observed rendered script check; reviewer inspected saved receipt, current files/hashes and Git source association. No independent browser execution."
+  },
+  "additional628_verified_states": [
+    {
+      "case": "Current SOC terminal punctuation correction survives acceptance/reload",
+      "artifacts": [
+        "final-soc-proposal-punctuation-corrected-6281bb1.txt",
+        "final-soc-native-corrected-6281bb1.txt",
+        "final-soc-items-corrected-6281bb1.txt",
+        "final-soc-reloaded-native-6281bb1.txt"
+      ],
+      "observed": "CC1.1 new proposal contains one terminal period and exact supplied partial detail, while prior saved double-period wording remains until explicit Update. Accepted and reloaded native text has corrected punctuation, Partially Addressed / Not verified, and exactly one conduct gap plus one independent leadership confirmation Item.",
+      "limits": "UI displays exact criterion URL and Item text/kind affordances; precise question-derived Item identities were statically reviewed separately, not exposed in these AX views."
+    },
+    {
+      "case": "Current IG3 18.5 prose excludes duplicate operation and optional No answers",
+      "artifacts": [
+        "final-ig3-185-current-proposal-6281bb1.txt",
+        "final-ig3-185-current-native-6281bb1.txt"
+      ],
+      "observed": "New proposed/accepted implementation states reported operation once, includes the explicit changed context, omits additional-gap/confirmation No Q&A, preserves the three source-supported internal-test requirement bullets and Implemented / Not verified.",
+      "limits": "This is a representative current positive requirement/operation path. It does not expose every matrix choice or the negative presence branch."
+    },
+    {
+      "case": "Cumulative IG2 and restored IG3 scope selectors",
+      "artifacts": [
+        "final-ig2-scope-87d37b6.txt",
+        "final-ig3-restored-preserved-87d37b6.txt"
+      ],
+      "observed": "Configuration visibly selects IG2 130 then IG3 153, and applicability label follows the configured group. Subsequent18.5 current native proof uses the same synthetic assessment URL after restore.",
+      "limits": "These configuration snapshots do not themselves expose all native record IDs/history or the full18-control overview arithmetic. Full source/API preservation tests and prior aggregate receipts are separate evidence."
+    }
+  ],
+  "latest_628_operator_browser_workflow_definition_count": 2,
+  "latest_628_operator_browser_workflow_definitions": {
+    "soc-2": [
+      "CC1.1"
+    ],
+    "cis": [
+      "18.5"
+    ]
+  }
+}

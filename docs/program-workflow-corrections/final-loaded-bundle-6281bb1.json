@@ -1,0 +1,9 @@
+{
+  "scripts": [
+    "http://127.0.0.1:4341/static/js/main.9d93447c.js"
+  ],
+  "stylesheets": [
+    "http://127.0.0.1:4341/static/css/main.7e6897c1.css"
+  ],
+  "url": "http://127.0.0.1:4341/compliance/cis-ig1"
+}
