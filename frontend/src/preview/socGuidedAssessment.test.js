@@ -10,7 +10,7 @@ const state=programs=>({version:3,step:3,policies:Object.fromEntries(baseline.po
 const workspace=async id=>(await api.get('/frameworks/soc-2',{params:{client_id:id||cid}})).data;
 async function configure(programs=['soc-2']){await api.post('/onboarding/baseline',{client_id:cid,state:state(programs),finalize:true});return workspace();}
 async function scope(selected){const config=(await workspace()).configuration;await api.patch('/frameworks/soc-2/configuration',{client_id:cid,categories:selected,expected_updated_at:config.expected_updated_at??null});return workspace();}
-const complete=id=>Object.fromEntries(socQuestions(id,{},socGuidedCatalog.version).filter(q=>!q.condition).map(q=>[q.id,q.type==='context'?'Relevant':q.type==='text'?'':'Yes']));
+const complete=id=>Object.fromEntries(socQuestions(id,{},socGuidedCatalog.version).filter(q=>!q.condition).map(q=>[q.id,q.type==='context'?'Relevant':q.type==='text'?'':q.optional?'No':'Yes']));
 async function completed(row){
   const path='/framework_assessments/'+row.framework_assessment_id+'/guided-assessment',initial=(await api.get(path)).data;
   const answers=complete(row.definition_id);for(const q of socQuestions(row.definition_id,answers))if(!(q.id in answers))answers[q.id]=q.type==='text'?'':'Yes';
@@ -42,6 +42,8 @@ test('every61criterion saves only progress then exact text/status with native hi
     expect(saved.assessment_history.at(-1).guided_assessment_source.answers).toEqual(draft.answers);
     expect((await api.get(path)).data.implementation).toBe(text);
     await expect(api.patch(path,body)).rejects.toMatchObject({response:{status:409}});
+    const nativeBeforeReplay=readStore();
+    expect((await api.patch(path,{...body,expected_last_assessed:saved.last_saved||saved.last_assessed||null})).data).toEqual(saved);expect(readStore()).toEqual(nativeBeforeReplay);
   }
   const snapshot=readStore();expect(snapshot.findings.filter(row=>row.client_id===cid)).toHaveLength(0);
 },60000);
