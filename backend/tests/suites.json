@@ -21,6 +21,7 @@
     "test_ai_governance.py",
     "test_assessment_verification.py",
     "test_assignment_eligibility.py",
+    "test_brawndo_action_owner_eligibility.py",
     "test_auth_boundaries.py",
     "test_client_dashboard_sources.py",
     "test_client_management.py",

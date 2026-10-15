@@ -5,7 +5,7 @@ const kinds=['tasks','findings','reviews','risks','vendors','policies'];
 const empty={data:{},users:[],loading:false,error:''};
 
 // Both register presentations read the same authoritative records and reject stale client loads.
-export function useActionRegisterData(clientId) {
+export function useActionRegisterData(clientId,{retainOnRefreshError=false}={}) {
   const [state,setState]=useState({...empty,clientId:null});
   const sequence=useRef(0);
   const load=useCallback(async()=>{
@@ -30,10 +30,12 @@ export function useActionRegisterData(clientId) {
         assessments:(results[kinds.length+1].data.assessments||[]).filter(row=>row.client_id===clientId),
         framework_assessments:frameworks.map(result=>result.data).filter(row=>row?.client_id===clientId),
       },users:results[kinds.length].data||[],loading:false,error:''});
+      return {ok:true};
     } catch(error) {
-      if(version===sequence.current)setState({...empty,clientId,error:formatError(error)});
+      if(version===sequence.current)setState(previous=>({...retainOnRefreshError?previous:empty,clientId,loading:false,error:formatError(error)}));
+      return {ok:false,error:formatError(error)};
     }
-  },[clientId]);
+  },[clientId,retainOnRefreshError]);
   useEffect(()=>{
     const generation=sequence;
     setState({...empty,clientId,loading:!!clientId});
