@@ -13,6 +13,8 @@
 .portfolio-history-dialog .ph-line,.governara-portfolio .gp-spark-line { stroke:var(--chart-implemented); }.portfolio-history-dialog .ph-marker,.portfolio-history-dialog .ph-active,.governara-portfolio .gp-spark-end { fill:var(--chart-implemented); }.portfolio-history-dialog .ph-grid { stroke:var(--chart-grid); }
 @media(max-width:760px) { .ph-current-overview { grid-template-columns:1fr; gap:20px; }.ph-current-value > strong { font-size:32px; } }
 .portfolio-history-dialog { display:flex; flex-direction:column; gap:0; padding:0; width:calc(100vw - 32px); max-width:1120px; max-height:calc(100dvh - 32px); overflow:hidden; border:1px solid var(--color-border-strong); border-radius:12px; background:var(--color-bg-surface); color:var(--color-text-primary); font:13.5px/1.5 var(--font-body); }
+/* Only the body scrolls; the shared dialog rule otherwise scrolls the shell too. */
+:root .ui-dialog.portfolio-history-dialog[data-state] { overflow:hidden; }
 .portfolio-history-dialog p,.portfolio-history-dialog h3,.portfolio-history-dialog h4 { margin:0; }
 .ph-head { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 64px 16px 24px; border-bottom:1px solid var(--color-border); }
 .ph-client { display:flex; gap:12px; align-items:center; min-width:0; }
