@@ -11,6 +11,7 @@ import {dashboardRecordHref} from '@/lib/dashboardItemSummary';
 import {ProfileMenu} from './BrawndoSidebar';
 import NotificationBell from './NotificationBell';
 import {BrandMark} from './Brand';
+import {brawndoDemoRisksGate} from '@/lib/brawndoDemoRisks';
 import './BrawndoWorkspace.css';
 
 const PAGES=[['Dashboard','/dashboard'],['Calendar','/calendar'],['Reviews','/reviews'],['Action Items','/action-items'],['Risks','/risks'],['Policies','/policies'],['Vendors','/vendors'],['Reports','/reports'],['Evidence Library','/evidence'],['Contacts','/contacts'],['Systems & Scope','/systems'],['AI Governance','/ai-governance'],['Client Profile','/client-profile']];
@@ -47,8 +48,10 @@ function WorkspaceSearch({clientId}){
 }
 
 export default function BrawndoWorkspace({children}){
-  const {currentClientId,currentClient}=useOrg(),[theme,setTheme]=useBrawndoTheme(),[navigation,setNavigation]=useState(false),navigate=useNavigate();
-  const {user}=useAuth(),{pathname}=useLocation();
+  const org=useOrg(),auth=useAuth();
+  const {currentClientId,currentClient}=org,[theme,setTheme]=useBrawndoTheme(),[navigation,setNavigation]=useState(false),navigate=useNavigate();
+  const {user}=auth,{pathname}=useLocation();
+  const risksPresentation=brawndoDemoRisksGate({...org,...auth,pathname,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
   const platform=['/clients','/admin','/platform','/account'].some(path=>pathname.startsWith(path));
   const canOpenDirectory=['super_admin','platform_admin'].includes(user?.role);
   const searchClient=platform?null:currentClientId;
@@ -59,7 +62,7 @@ export default function BrawndoWorkspace({children}){
   return <div className="brawndo-workspace-pilot" data-theme={theme} data-navigation={navigation?'open':'closed'}>
     <header className="bwp-topbar">
       <button type="button" className="bwp-mobile-nav" aria-label="Toggle client navigation" aria-expanded={navigation} onClick={()=>setNavigation(!navigation)}><Menu size={22}/></button>
-      <Link to={currentClientId?'/dashboard':'/clients'} className="bwp-brand" aria-label="GoverNara"><BrandMark className="bwp-mark"/><span>GoverNara<small>CLARITY FOR A STRONGER TOMORROW</small></span></Link>
+      <Link to={currentClientId?'/dashboard':'/clients'} className="bwp-brand" aria-label="GoverNara"><BrandMark className="bwp-mark"/><span>GoverNara<small>{risksPresentation?'BY PRESTIGE WORLDWIDE':'CLARITY FOR A STRONGER TOMORROW'}</small></span></Link>
       <WorkspaceSearch key={searchClient} clientId={searchClient}/>
       {canOpenDirectory?<button type="button" className="bwp-client" onClick={()=>navigate('/clients')}>{platform?'Portfolio':currentClient?.name||'Portfolio'}<ChevronDown size={15} aria-hidden="true"/><span className="sr-only">Open authorized client directory</span></button>:<span className="bwp-client">{currentClient?.name||'Client workspace'}</span>}
       <button type="button" className="bwp-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-label={theme==='dark'?'Use light workspace theme':'Use dark workspace theme'}>{theme==='dark'?<Sun size={20}/>:<Moon size={20}/>}</button>
