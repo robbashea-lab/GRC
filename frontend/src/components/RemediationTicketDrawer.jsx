@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from './ui/alert-dialog';
 import {Button} from './ui/button';
@@ -25,7 +25,7 @@ const fields=['title','assignee_id','due_date','description','resolution','statu
 const draft=t=>Object.fromEntries(fields.map(k=>[k,t[k]??'']));
 const mayEdit=(user,task)=>canOperate(user)&&(user.role!=='client_contributor'||isAssignedTo(user,task)||!task.assignee_id&&task.created_by===user.user_id);
 
-function Work({task,users,user,onSaved,onDirty}) {
+function Work({task,users,user,onSaved,onDirty,readOnly=false}) {
   const update=useCreateIntent((...args)=>api.patch(...args),user.user_id+':'+task.client_id+':'+task.task_id,true);
   const [edits,setEdits]=useState({}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[feedback,setFeedback]=useState('');
   const editVersion=useRef(task.updated_at??null),current=draft(task);
@@ -41,7 +41,7 @@ function Work({task,users,user,onSaved,onDirty}) {
     });
   },[task]);
   useEffect(()=>{onDirty(task.task_id,dirty);return()=>onDirty(task.task_id,false);},[dirty,task.task_id,onDirty]);
-  const allowed=editableFields('tasks',user,task),writable=mayEdit(user,task);
+  const allowed=editableFields('tasks',user,task),writable=!readOnly&&mayEdit(user,task);
   const enabled=k=>writable&&(!allowed||allowed.has(k)||(k==='assignee_id'&&user.role==='client_contributor'));
   const put=(k,v)=>{
     if(!dirty)editVersion.current=task.updated_at??null;
@@ -62,6 +62,7 @@ function Work({task,users,user,onSaved,onDirty}) {
       .map(([key,edit])=>[key,{...edit,before:accepted[key]}])));
   }
   async function save(status){
+    if(readOnly)return;
     setBusy(true);setError('');
     const next={...form,...(status?{status}:{})};
     const body=Object.fromEntries(fields.filter(k=>enabled(k)&&next[k]!==current[k]).map(k=>[k,['assignee_id','due_date'].includes(k)?next[k]||null:next[k]]));
@@ -84,29 +85,30 @@ function Work({task,users,user,onSaved,onDirty}) {
       {writable&&<div className="ticket-field-wide flex flex-wrap gap-2"><Button disabled={!dirty||!form.title.trim()} onClick={()=>save()}>Save changes</Button>{!['done','cancelled'].includes(task.status)&&<Button disabled={!form.title.trim()} onClick={()=>save('done')}>Complete work</Button>}</div>}
     </fieldset>
     {error&&<p role="alert">{error}</p>}{feedback&&<p role="status">{feedback}</p>}
-    {update.unconfirmed()&&<Button disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const result=await update.retry();acknowledge(result?.data);await onSaved();}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Retry unconfirmed save</Button>}
+    {update.unconfirmed()&&<Button disabled={busy||readOnly} onClick={async()=>{setBusy(true);setError('');try{const result=await update.retry();acknowledge(result?.data);await onSaved();}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Retry unconfirmed save</Button>}
     {task.completed_at&&<p className="text-xs">Work completed {task.completed_at}</p>}
   </section>;
 }
 
-function History({ticket,onDirty}) {
+function History({ticket,onDirty,presentation,readOnly=false}) {
   const {user}=useAuth();
   const [comment,setComment]=useState(''),[busy,setBusy]=useState(false),[version,setVersion]=useState(0);
   const [rows,setRows]=useState([]),[error,setError]=useState('');
   useEffect(()=>{onDirty('comment',!!comment);return()=>onDirty('comment',false);},[comment,onDirty]);
   const target=ticket.primary&&mayEdit(user,ticket.primary)?ticket.primary:ticket.actions.find(t=>mayEdit(user,t))||ticket.finding;
   const kind=target?.task_id?'tasks':'findings',id=target?.task_id||target?.finding_id;
-  const writable=target&&canOperate(user)&&(user.role!=='client_contributor'||isAssignedTo(user,target));
+  const writable=!readOnly&&target&&canOperate(user)&&(user.role!=='client_contributor'||isAssignedTo(user,target));
   const key=JSON.stringify([...(ticket.finding?[['findings',ticket.finding.finding_id,ticket.finding.updated_at]]:[]),...ticket.actions.map(t=>['tasks',t.task_id,t.updated_at])]);
   useEffect(()=>{let active=true;const refs=JSON.parse(key);
     Promise.all(refs.flatMap(([kind,id])=>[api.get('/'+kind+'/'+id+'/activity'),api.get('/comments',{params:{entity_type:kind,entity_id:id}})])).then(results=>{if(active)setRows(results.flatMap(r=>r.data).sort((a,b)=>(a.at||a.created_at||'').localeCompare(b.at||b.created_at||'')));}).catch(e=>{if(active)setError(formatError(e));});
     return()=>{active=false;};
   },[key,version]); // The ticket's records, not unrelated register changes, invalidate history.
-  return <details><summary>History and comments</summary>{error&&<p role="alert">{error}</p>}<ul className="space-y-2 text-sm">{rows.map((r,i)=><li key={r.audit_id||r.comment_id||i}>{r.at||r.created_at} · {r.action||r.body}{r.meta?.rationale?' · '+r.meta.rationale:''}</li>)}</ul>{writable&&<div className="space-y-2"><label>Comment (optional)<Textarea aria-label="Ticket comment" value={comment} disabled={busy} onChange={e=>setComment(e.target.value)}/></label><Button disabled={busy||!comment.trim()} onClick={async()=>{setBusy(true);setError('');try{await api.post('/comments',{entity_type:kind,entity_id:id,body:comment});setComment('');setVersion(v=>v+1);}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Add comment</Button></div>}</details>;
+  return <details><summary>History and comments</summary>{error&&<p role="alert">{error}</p>}<ul className="space-y-2 text-sm">{rows.map((r,i)=><li className="whitespace-pre-wrap" key={r.log_id||r.audit_id||r.comment_id||i}>{presentation==='brawndo-demo-actions'&&<span className="block text-xs text-ink-secondary">{r.user_name||r.user_email||r.user_id||'Historical actor unavailable'}</span>}{r.at||r.created_at} · {r.action||r.body}{r.meta?.rationale?' · '+r.meta.rationale:''}</li>)}</ul>{writable&&<div className="space-y-2"><label>Comment (optional)<Textarea aria-label="Ticket comment" value={comment} disabled={busy} onChange={e=>setComment(e.target.value)}/></label><Button disabled={busy||!comment.trim()} onClick={async()=>{setBusy(true);setError('');try{await api.post('/comments',{entity_type:kind,entity_id:id,body:comment});setComment('');setVersion(v=>v+1);}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Add comment</Button></div>}</details>;
 }
 
-export default function RemediationTicketDrawer({open,onOpenChange,kind,record,clientId,onSaved}) {
-  const {user}=useAuth(),{data,users,loading,error,load}=useActionRegisterData(record.client_id||clientId);
+export default function RemediationTicketDrawer({open,onOpenChange,kind,record,clientId,onSaved,presentation,closeRequest=0,onCloseCancelled}) {
+  const pilot=presentation==='brawndo-demo-actions';
+  const {user}=useAuth(),{data,users,loading,error,load}=useActionRegisterData(record.client_id||clientId,{retainOnRefreshError:pilot});
   const [nested,setNested]=useState(null),[rationale,setRationale]=useState(''),[busy,setBusy]=useState(false),[commandError,setCommandError]=useState(''),[feedback,setFeedback]=useState(''),[discard,setDiscard]=useState(false);
   const [evidenceVersion,setEvidenceVersion]=useState(0);
   const dirty=useRef(new Set()),surface=useRef(null);
@@ -118,40 +120,57 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
   useEffect(()=>{markDirty('rationale',!!rationale);return()=>markDirty('rationale',false);},[rationale,markDirty]);
   const ticket=ticketRecords(data,record.client_id||clientId).find(t=>kind==='findings'?t.finding?.finding_id===record.finding_id:t.actions.some(a=>a.task_id===record.task_id));
   const stage=ticket&&ticketStage(ticket),origin=ticket&&actionOrigin(ticket.raw,data,ticket.finding);
-  const close=v=>{if(v)onOpenChange(true);else if(!busy){if(dirty.current.size)setDiscard(true);else onOpenChange(false);}};
+  const canMutate=!pilot||!loading&&!error;
+  const close=useCallback(v=>{if(v)onOpenChange(true);else if(!busy){if(dirty.current.size)setDiscard(true);else onOpenChange(false);}},[busy,onOpenChange]);
+  const handledCloseRequest=useRef(closeRequest);
+  useEffect(()=>{
+    if(!pilot||busy||!closeRequest||handledCloseRequest.current===closeRequest)return;
+    handledCloseRequest.current=closeRequest;
+    close(false);
+  },[pilot,busy,closeRequest,close]);
   useEffect(()=>{const warn=e=>{if(dirty.current.size){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[]);
-  const saved=async()=>{await load();onSaved?.();window.dispatchEvent(new Event('grc:ticket-saved'));setFeedback('Ticket saved.');};
+  const saved=async()=>{
+    const result=await load();
+    if(pilot){
+      try{await onSaved?.();}
+      catch{throw new Error('Saved, but the register could not be refreshed. Reload before making further changes.');}
+      window.dispatchEvent(new Event('grc:ticket-saved'));
+      if(result?.ok===false)throw new Error('Saved, but ticket details could not be refreshed. Reload before making further changes.');
+    }else{onSaved?.();window.dispatchEvent(new Event('grc:ticket-saved'));}
+    setFeedback('Ticket saved.');
+  };
   async function validate(action='validate'){
     setBusy(true);setCommandError('');
     const body={rationale,expected_updated_at:ticket.finding.updated_at??null};
     try{await decision('/findings/'+ticket.finding.finding_id+'/'+action,body);setRationale('');await saved();setFeedback(action==='validate'?'Ticket completed. Validation saved.':'Ticket accepted, not remediated.');}
     catch(e){setCommandError(formatError(e));}finally{setBusy(false);}
   }
-  return <><Dialog open={open} onOpenChange={close}><DialogContent ref={surface} onOpenAutoFocus={()=>{opener.current=document.activeElement;openerSurface.current=opener.current?.closest('[role="dialog"]');}} onCloseAutoFocus={e=>{e.preventDefault();restoreFocus();}} className="remediation-ticket-dialog max-h-[90vh] overflow-y-auto min-w-0 break-words" data-testid="remediation-ticket-drawer">
-    <DialogTitle>{ticket?.title||'Remediation ticket'}</DialogTitle><DialogDescription>{ticket?ticket.ticketId:'Loading ticket…'}</DialogDescription>
+  return <><Dialog open={open} onOpenChange={close}><DialogContent ref={surface} onOpenAutoFocus={()=>{opener.current=document.activeElement;openerSurface.current=opener.current?.closest('[role="dialog"]');}} onCloseAutoFocus={e=>{e.preventDefault();restoreFocus();}} className={'remediation-ticket-dialog max-h-[90vh] overflow-y-auto min-w-0 break-words'+(pilot?' brawndo-demo-actions-ticket':'')} data-testid="remediation-ticket-drawer">
+    <header className="ticket-heading"><DialogTitle>{ticket?.title||'Remediation ticket'}</DialogTitle><DialogDescription>{ticket?ticket.ticketId:'Loading ticket…'}</DialogDescription></header>
     {error&&<p role="alert">{error}<Button onClick={load}>Retry</Button></p>}
     {!loading&&!error&&!ticket&&<p role="alert">This ticket is unavailable for this client.</p>}
     {ticket&&<div className="space-y-4">
       <p>{labels[stage]}</p>
       {ticket.finding?.status==='accepted'&&stage!=='accepted'&&<p>Issue accepted. Outstanding Actions remain active until completed or cancelled; acceptance is not verified remediation.</p>}
       {ticket.finding&&<p className="whitespace-pre-wrap"><strong>Finding:</strong> {ticket.issue||'Issue description not recorded'}</p>}
-      {origin.id&&<p>Originated from: {origin.target?<button className="text-link underline" onClick={()=>setNested({kind:origin.kind,record:origin.target,initialValues:origin.initialValues})}>{origin.label}{origin.detail?' · '+origin.detail:''}</button>:<span>{origin.label} · {origin.id} · unavailable</span>}</p>}
+      {origin.id&&<p>Originated from: {origin.target?<button className="text-link underline" disabled={!canMutate} onClick={()=>setNested({kind:origin.kind,record:origin.target,initialValues:origin.initialValues})}>{origin.label}{origin.detail?' · '+origin.detail:''}</button>:<span>{origin.label} · {origin.id} · unavailable</span>}</p>}
       {ticket.diagnostic&&<p role="status">{ticket.diagnostic}. Existing records and their assignments are retained.</p>}
-      {ticket.actions.map(task=><Work key={user.user_id+':'+task.client_id+':'+task.task_id} {...{task,users,user}} onSaved={saved} onDirty={markDirty}/>)}
+      {ticket.actions.map(task=><Work key={user.user_id+':'+task.client_id+':'+task.task_id} {...{task,users,user}} readOnly={!canMutate} onSaved={saved} onDirty={markDirty}/>)}
       {!ticket.actions.length&&<p>No remediation Action is recorded. The Finding remains open.</p>}
-      {!ticket.actions.length&&ticket.finding&&isInternal(user)&&<Button disabled={busy} onClick={async()=>{setBusy(true);setCommandError('');try{await api.post('/findings/'+ticket.finding.finding_id+'/create-task',{title:ticket.title});await saved();}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Start remediation</Button>}
-      {ticket.finding&&['closed','accepted'].includes(ticket.finding.status)&&isInternal(user)&&<Button disabled={busy} onClick={async()=>{setBusy(true);setCommandError('');try{await reopen('/findings/'+ticket.finding.finding_id+'/reopen',{expected_updated_at:ticket.finding.updated_at??null});await saved();setFeedback('Ticket reopened. Previous completed work and decisions are retained.');}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Reopen ticket</Button>}
-      {stage==='pending_validation'&&<section className="space-y-3"><p>Work is complete. A platform administrator must validate the resolution before this ticket is Completed.</p>{isInternal(user)&&<><label className="block">Validation rationale (required)<Textarea aria-label="Validation rationale" value={rationale} disabled={busy} onChange={e=>setRationale(e.target.value)}/></label><Button disabled={busy||!rationale.trim()} onClick={()=>validate()}>Validate and complete</Button></>}</section>}
-      {ticket.finding&&!['closed','accepted'].includes(ticket.finding.status)&&isInternal(user)&&<details><summary>Accept the issue instead of remediation</summary><p>Acceptance is recorded separately from successful remediation. Existing work and evidence are retained.</p><label>Acceptance rationale (required)<Textarea aria-label="Acceptance rationale" value={rationale} disabled={busy} onChange={e=>setRationale(e.target.value)}/></label><Button disabled={busy||!rationale.trim()} onClick={()=>validate('accept')}>Accept issue</Button></details>}
+      {!ticket.actions.length&&ticket.finding&&isInternal(user)&&canMutate&&<Button disabled={busy||!canMutate} onClick={async()=>{setBusy(true);setCommandError('');try{await api.post('/findings/'+ticket.finding.finding_id+'/create-task',{title:ticket.title});await saved();}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Start remediation</Button>}
+      {ticket.finding&&['closed','accepted'].includes(ticket.finding.status)&&isInternal(user)&&canMutate&&<Button disabled={busy||!canMutate} onClick={async()=>{setBusy(true);setCommandError('');try{await reopen('/findings/'+ticket.finding.finding_id+'/reopen',{expected_updated_at:ticket.finding.updated_at??null});await saved();setFeedback('Ticket reopened. Previous completed work and decisions are retained.');}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Reopen ticket</Button>}
+      {stage==='pending_validation'&&<section className="space-y-3"><p>Work is complete. A platform administrator must validate the resolution before this ticket is Completed.</p>{isInternal(user)&&canMutate&&<><label className="block">Validation rationale (required)<Textarea aria-label="Validation rationale" value={rationale} disabled={busy||!canMutate} onChange={e=>setRationale(e.target.value)}/></label><Button disabled={busy||!rationale.trim()} onClick={()=>validate()}>Validate and complete</Button></>}</section>}
+      {ticket.finding&&!['closed','accepted'].includes(ticket.finding.status)&&isInternal(user)&&canMutate&&<details><summary>Accept the issue instead of remediation</summary><p>Acceptance is recorded separately from successful remediation. Existing work and evidence are retained.</p><label>Acceptance rationale (required)<Textarea aria-label="Acceptance rationale" value={rationale} disabled={busy||!canMutate} onChange={e=>setRationale(e.target.value)}/></label><Button disabled={busy||!rationale.trim()} onClick={()=>validate('accept')}>Accept issue</Button></details>}
       {ticket.finding&&['open','in_progress','blocked'].includes(stage)&&<p className="text-sm">Complete outstanding work, then validate the resolution here. Control implementation and verification are unchanged.</p>}
       {commandError&&<p role="alert">{commandError}</p>}{feedback&&<p role="status">{feedback}</p>}
-      {[[decision,'decision'],[reopen,'reopening']].filter(([command])=>command.unconfirmed()).map(([command,name])=><Button key={name} disabled={busy} onClick={async()=>{setBusy(true);setCommandError('');try{await command.retry();setRationale('');await saved();}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Retry unconfirmed {name}</Button>)}
-      {ticket.actions.filter(task=>mayEdit(user,task)).map(task=><label key={task.task_id} className="block text-sm">Attach supporting evidence (optional){ticket.actions.length>1?' — '+task.title:''}<Input type="file" aria-label={ticket.actions.length===1?'Attach ticket evidence':'Attach evidence to '+task.title} disabled={busy} onChange={async e=>{const file=e.target.files?.[0];if(!file)return;setBusy(true);setCommandError('');try{await api.post('/evidence',{client_id:ticket.raw.client_id,linked_type:'task',linked_id:task.task_id,filename:file.name,mime_type:file.type||'application/octet-stream',content_base64:await readEvidenceFile(file)});setEvidenceVersion(v=>v+1);setFeedback('Evidence attached to this ticket.');}catch(err){setCommandError(formatError(err));}finally{setBusy(false);}}}/></label>)}
-      <EvidencePanel clientId={ticket.raw.client_id} kind={ticket.kind} id={ticket.raw.finding_id||ticket.raw.task_id} refreshKey={evidenceVersion} validatedAt={ticket.finding?.validated_at} onOpen={async ref=>{try{const target=await resolveEvidenceSource(ref,ticket.raw.client_id);if(target.kind==='tasks'&&ticket.actions.some(t=>t.task_id===target.record.task_id)){Array.from(surface.current?.querySelectorAll('[data-ticket-task]')||[]).find(e=>e.dataset.ticketTask===target.record.task_id)?.querySelector('input')?.focus();}else if(!(target.kind==='findings'&&target.record.finding_id===ticket.finding?.finding_id))setNested(target);}catch(e){setCommandError(formatError(e));}}} allowLink={isInternal(user)}/>
-      <History ticket={ticket} onDirty={markDirty}/>
+      {[[decision,'decision'],[reopen,'reopening']].filter(([command])=>command.unconfirmed()).map(([command,name])=><Button key={name} disabled={busy||!canMutate} onClick={async()=>{setBusy(true);setCommandError('');try{await command.retry();setRationale('');await saved();}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Retry unconfirmed {name}</Button>)}
+      {ticket.actions.filter(task=>canMutate&&mayEdit(user,task)).map(task=><label key={task.task_id} className="block text-sm">Attach supporting evidence (optional){ticket.actions.length>1?' — '+task.title:''}<Input type="file" aria-label={ticket.actions.length===1?'Attach ticket evidence':'Attach evidence to '+task.title} disabled={busy||!canMutate} onChange={async e=>{const file=e.target.files?.[0];if(!file)return;setBusy(true);setCommandError('');try{await api.post('/evidence',{client_id:ticket.raw.client_id,linked_type:'task',linked_id:task.task_id,filename:file.name,mime_type:file.type||'application/octet-stream',content_base64:await readEvidenceFile(file)});setEvidenceVersion(v=>v+1);setFeedback('Evidence attached to this ticket.');}catch(err){setCommandError(formatError(err));}finally{setBusy(false);}}}/></label>)}
+      <EvidencePanel clientId={ticket.raw.client_id} kind={ticket.kind} id={ticket.raw.finding_id||ticket.raw.task_id} refreshKey={evidenceVersion} validatedAt={ticket.finding?.validated_at} onOpen={async ref=>{if(!canMutate)return;try{const target=await resolveEvidenceSource(ref,ticket.raw.client_id);if(target.kind==='tasks'&&ticket.actions.some(t=>t.task_id===target.record.task_id)){Array.from(surface.current?.querySelectorAll('[data-ticket-task]')||[]).find(e=>e.dataset.ticketTask===target.record.task_id)?.querySelector('input')?.focus();}else if(!(target.kind==='findings'&&target.record.finding_id===ticket.finding?.finding_id))setNested(target);}catch(e){setCommandError(formatError(e));}}} allowLink={isInternal(user)&&canMutate}/>
+      <History ticket={ticket} onDirty={markDirty} presentation={presentation} readOnly={!canMutate}/>
     </div>}
+    {pilot&&<footer className="ticket-footer"><span>Save each Action above to retain its changes.</span><Button variant="outline" disabled={busy} onClick={()=>close(false)}>Cancel</Button></footer>}
   </DialogContent></Dialog>
-  <AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent onOpenAutoFocus={()=>{discardOpener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();if(dirty.current.size){const target=discardOpener.current?.isConnected?discardOpener.current:surface.current?.querySelector('button,input');target?.focus({preventScroll:true});}else restoreFocus();}}><AlertDialogTitle>Discard unsaved ticket changes?</AlertDialogTitle><AlertDialogDescription>Saved records remain unchanged.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{dirty.current.clear();setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-  {nested&&<RecordDrawer {...nested} open clientId={clientId} onSaved={saved} onOpenChange={v=>{if(!v)setNested(null);}}/>}
+  <AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent onOpenAutoFocus={()=>{discardOpener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();if(dirty.current.size){const target=discardOpener.current?.isConnected?discardOpener.current:surface.current?.querySelector('button,input');target?.focus({preventScroll:true});}else restoreFocus();}}><AlertDialogTitle>Discard unsaved ticket changes?</AlertDialogTitle><AlertDialogDescription>Saved records remain unchanged.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel onClick={()=>{if(pilot)onCloseCancelled?.();}}>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{dirty.current.clear();setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+  {nested&&<RecordDrawer {...nested} open clientId={clientId} onSaved={()=>{saved().catch(e=>setCommandError(formatError(e)));}} onOpenChange={v=>{if(!v)setNested(null);}}/>}
   </>;
 }
