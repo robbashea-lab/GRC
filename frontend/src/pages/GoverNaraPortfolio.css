@@ -56,3 +56,17 @@
 @media(max-width:1100px) { .gp-sort { margin-left:0; } }
 @media(max-width:760px) { .governara-portfolio { padding:20px 16px 32px; }.gp-head h1 { font-size:24px; }.gp-head { flex-wrap:wrap; }.gp-search { flex:1 1 100%; }.gp-field select { max-width:min(250px,70vw); }.gp-countbar { gap:8px; } }
 @media(prefers-reduced-motion:reduce) { .governara-portfolio * { scroll-behavior:auto; } }
+@media(max-width:760px) {
+  .governara-portfolio .gp-table { min-width:0; table-layout:auto; }
+  .gp-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+  .gp-table,.gp-table tbody,.gp-table tr,.gp-table td { display:block; width:100%; }
+  .gp-table tr { padding:12px; }
+  .gp-table tr.gp-first-row { border-top:1px solid var(--color-border-strong); }
+  .gp-table tr td,.gp-table tr.gp-first-row td { padding:6px 2px; border:0; }
+  .gp-table td[data-label]::before { content:attr(data-label); display:block; font-size:11px; color:var(--color-text-muted); margin-bottom:4px; }
+  .gp-progress { grid-template-columns:minmax(0,1fr) minmax(0,1fr) 14px; gap:8px; width:100%; margin:0; padding:8px 0; }
+  .gp-progress .gp-trend { grid-column:1 / 3; }
+  .gp-progress > svg { grid-column:3; grid-row:1 / 3; }
+  .gp-progress-count,.gp-progress-caption { overflow-wrap:anywhere; }
+  .gp-field { max-width:100%; }.gp-field select { min-width:0; max-width:100%; }
+}

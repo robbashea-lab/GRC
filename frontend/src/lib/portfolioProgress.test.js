@@ -1,5 +1,5 @@
 import {applicableCounts, calendarRangeStart, currentPercentage, forecastImplementation, historyWindow,
-  periodChange, portfolioGroups, programIdentity} from './portfolioProgress';
+  periodChange, portfolioGroups, programIdentity, snapshotTime} from './portfolioProgress';
 
 const at = day => new Date(Date.UTC(2026, 6, 15) + day * 86400000).toISOString();
 const snapshot = (day, implemented, overrides = {}) => ({effective_at: at(day), captured_at: at(day),
@@ -110,6 +110,16 @@ test('an authoritative missing/conflicting baseline is never replaced by an arbi
   const result=periodChange(tied,tied[2],at(0),{comparison});
   expect(result.comparable).toBe(false);expect(result.baseline).toBeNull();expect(result.change_pp).toBeNull();
   expect(result.reason).toBe(comparison.reason);
+});
+
+test('displayed carried baseline requires boundary proof and retains the original saved time', () => {
+  const baseline = snapshot(0, 20), current = snapshot(60, 32);
+  expect(historyWindow([current], at(20), at(60), {baseline,baseline_effective_at_start:false})).toEqual([current]);
+  const displayed = historyWindow([current], at(20), at(60), {baseline,baseline_effective_at_start:true});
+  expect(displayed).toHaveLength(2);
+  expect(snapshotTime(displayed[0])).toBe(snapshotTime(baseline));
+  expect(displayed[0].display_at).toBe(at(20));
+  expect(displayed[0].carried).toBe(true);
 });
 
 test('client search composes visible framework filter and real lead IDs, with stable minimum sorts', () => {

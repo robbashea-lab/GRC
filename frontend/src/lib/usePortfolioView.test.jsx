@@ -22,7 +22,7 @@ test('refresh restores only validated preferences and isolates changed role/mode
   act(()=>root.render(<Harness user={user}/>));
   act(()=>current[1]({search:'  ISO  ',mine:true,framework:'iso-27001',sort:'activity',chartView:'mix'}));
   act(()=>root.render(<Harness user={{...user}}/>));
-  expect(current[0]).toMatchObject({search:'  ISO  ',mine:true,framework:'iso-27001',sort:'activity',chartView:'mix'});
+  expect(current[0]).toMatchObject({search:'  ISO  ',mine:true,framework:'iso-27001',sort:'activity-desc',chartView:'mix'});
   act(()=>root.render(<Harness user={{...user,role:'platform_admin',client_ids:['only-one']}}/>));
   expect(current[0]).toMatchObject({search:'',mine:false,framework:'all',sort:'name'});
 });

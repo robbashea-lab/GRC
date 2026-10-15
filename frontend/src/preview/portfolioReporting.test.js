@@ -21,6 +21,22 @@ const request=(db,kind,params={})=>portfolioReportingRequest(db,'/portfolio/repo
 beforeEach(()=>jest.useFakeTimers().setSystemTime(new Date(AS_OF)));
 afterEach(()=>jest.useRealTimers());
 
+test('same-timestamp scope substitutions keep each transition membership separate',()=>{
+  const db=fixture(), [first,second]=db.framework_assessments;
+  captureDemoReporting(db,null,AS_OF);
+  let previous=copy(db);
+  Object.assign(first,{status:'not_applicable',na_rationale:'Isolated exclusion'});
+  captureDemoReporting(db,previous,AS_OF);
+  previous=copy(db);
+  first.status='not_assessed';
+  Object.assign(second,{status:'not_applicable',na_rationale:'Isolated replacement'});
+  captureDemoReporting(db,previous,AS_OF);
+  const changes=request(db,'history',{client_id:'isolated',program_key:'cis-ig1'}).scope_changes;
+  expect(changes[0].removed_ids).toEqual([first.definition_id]);
+  expect(changes[1].added_ids).toEqual([first.definition_id]);
+  expect(changes[1].removed_ids).toEqual([second.definition_id]);
+});
+
 test('program metadata uses every native supported catalog and the actual CIS group',()=>{
   for(const [key,unit] of [['cis-ig1','safeguards'],['nist-csf-2','subcategories'],['soc-2','criteria'],['iso-27001','requirements and controls']]){
     const position=demoCurrentPositions(fixture([key]),fixture([key]).clients,AS_OF)[0];

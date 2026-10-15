@@ -120,3 +120,77 @@ Finite combined evidence on application source `5f0dfd1`: seven UI/inline/contex
 The actual ISO-v2 25-save case completed in 13.887s at 4,287,684 stored code units under the unchanged 5,000,000 quota. It retained 55 global observations and 26 scope events, including 51 observations for its synthetic program, 25 implemented / 55 applicable and exact native history/text. These are newly measured version-2 results. Original failing receipts are retained; neither validation nor the quota or test budget was weakened.
 
 Earlier Program CI169 exposed a separate inventory clock fixture returning October 14 where its recorded local-day assertions required October 13; the inline clock failure was already resolved in the merge. Installed Jest 27.5.1 `jest-runtime/build/index.js` 2163-2170 ignores the object `now` argument to `useFakeTimers`; `@jest/fake-timers/build/modernFakeTimers.js` 120-145 installs the real current clock unless `setSystemTime` explicitly pins it. Controlled installed-runtime probes confirmed both behaviors. Test-only clock corrections preserve all local-day, future-date and Risk assertions: five coupled inventory/inline/context/evaluation-date suites passed 198 tests in 3.747s, all four Risk cases passed in 2.981s, and the entire current comprehensive CIS suite passed 615 tests in 42.466s with its intended October 10 clock. No application date logic, timezone, expected result or gate change is involved. Final complete combined CI and hosted receipts remain pending and belong in the latest combined pull request.
+# Final portfolio polish — 15 October 2026
+
+This section records the new candidate and does not relabel earlier release evidence.
+Owner branch: `codex/portfolio-final-polish-20261015`. Integration base:
+`f9af4fdad69643cecb5628f2deaab16bde37efec`, descending from PR81's `b12e507`.
+The Demo-only Brawndo CIS v8.1 IG1 Security Domains gate is inherited unchanged.
+
+The supplied final HTML matches its ZIP reference byte for byte and all eight
+package SHA256 entries passed. It is a fixture-based design reference; neither its
+client names nor its fixed clock/history are copied into native records. A separate
+standalone polished HTML is available for design review, not production hosting.
+
+Native changes reach ClientDirectory, the existing history dialog and shared
+portfolio presentation helpers, view preferences, platform sidebar/Layout, the
+backend reporting projection and the corresponding isolated Demo projection.
+Normal sign-in and Explore demo share the components and existing canonical
+metrics/save/refresh paths. Assessment writers, tenant authorization, concurrency
+controls, forecast eligibility, native program configuration and history persistence
+are retained. No dependency manifest or lockfile changes are required.
+
+The portfolio has six visible sorts, four dialog periods (1/3/6/12 calendar months),
+a six-month default, current implementation followed by interactive four-status
+breakdown, selected-period change, estimated-completion timeline, history and View
+data. The sidebar lists distinct active client IDs and keeps assignment filtering
+in the portfolio. Mobile rows reflow into cards. Non-chart branding/theme tokens
+remain native; chart colors follow the supplied light/dark palette.
+
+Implementation remains implemented/applicable, with no partial or verification
+credit. Changes use percentage points and original denominators. Grouped numeric
+sorts use the highest visible program for descending sorts and lowest visible
+program for ascending sorts; they never average frameworks. Unknown numeric values
+follow known values. Old saved activity/change sort keys migrate to current options.
+
+The existing UTC calendar clamping, rolling 90-day forecast fit, genuine daily
+observations, scope/freshness/current-state checks and five-year horizon policy
+remain authoritative. The timeline derives from the calculated date; it adds no
+statistical confidence claim or invented uncertainty interval. A complete program
+and zero applicable scope remain distinct from an unavailable forecast.
+
+Saved-state steps and area fills are drawn only across proven continuity. Sparse
+observations retain discrete markers; absent history stays absent. An evidenced
+carried baseline retains its original saved timestamp and is not counted as another
+save. Current-matching endpoints and a fixed 0–100% history axis retain the reference
+hierarchy. An open exact-program chart remains mounted during revalidation.
+
+Scope additions/removals derive from each stored transition's actual applicability
+membership. Same-time transitions are associated with their actual saved position,
+not timestamp alone. Native and Demo responses expose added/removed IDs only within
+the existing authorized program history response. When membership evidence is absent,
+the UI reports only recorded before/after totals and implementation counts. These
+facts cannot establish that a percentage loss was solely denominator-driven.
+
+Migration/rollback: no stored-history rewrite, schema replacement, fixture seeding,
+retention change or data deletion. New projection fields are additive. Revert this
+candidate's code commit to restore the inherited UI without reverting or destroying
+native saved records/history. Do not roll back to a writer incompatible with existing
+records or deploy a source older than the inherited pilot removal.
+
+Verification milestone: 141 focused frontend tests passed across seven suites;
+83 focused native backend tests plus 16 subtests passed. The final sparkline marker
+review fix passed its separate dialog/chart suite. Both build modes compiled during
+development; final frozen-source builds and full-suite verification are being collected.
+An independent AI source review identified issues that were corrected; this is not
+human approval. Browser local-file preview was blocked by URL policy, so visual,
+mobile, zoom and actual native browser save/reload acceptance are unverified here.
+No new production data or hosted customer record was written for this work.
+
+Delivery state: local implementation; no claim yet of pushed, merged, deployed or
+Robb-accepted behavior. Existing required CI/Mongo gates must pass on the delivered
+candidate before release readiness. Shared staging authority is coordinated through
+the parent hub; no main merge, production/Sites publication, new infrastructure,
+account/grant/credential change or Security Domains expansion is authorized by this
+candidate. Next: collect final checks, prepare the draft PR and exact revision receipt,
+then resolve only the actual remaining release/browser boundaries through the hub.

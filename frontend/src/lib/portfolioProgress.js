@@ -45,10 +45,15 @@ export function calendarRangeStart(asOf, months) {
   return at.toISOString();
 }
 
-export function historyWindow(snapshots = [], start, asOf) {
+export function historyWindow(snapshots = [], start, asOf, comparison = null) {
   const first = time(start), last = time(asOf);
-  return snapshots.map(position).filter(snapshot => time(snapshotTime(snapshot)) >= first && time(snapshotTime(snapshot)) <= last)
+  const points = snapshots.map(position).filter(snapshot => time(snapshotTime(snapshot)) >= first && time(snapshotTime(snapshot)) <= last)
     .sort((a, b) => time(snapshotTime(a)) - time(snapshotTime(b)) || time(a.captured_at) - time(b.captured_at));
+  const baseline = position(comparison?.baseline);
+  if (comparison?.baseline_effective_at_start === true && baseline && time(snapshotTime(baseline)) < first) {
+    points.unshift({...baseline, carried: true, display_at: start});
+  }
+  return points;
 }
 
 export function periodChange(snapshots, current, start, options = {}) {
@@ -137,13 +142,25 @@ export function portfolioGroups(clients, programs, view, userId) {
     const text = [client.name, client.industry, lead, ...enabled.map(program => program.program_label)].join(' ').toLocaleLowerCase();
     return {client, programs: visible, match: !query || text.includes(query), enabled: enabled.length};
   }).filter(group => group.match && (group.programs.length || !group.enabled && (!view.framework || view.framework === 'all')));
-  const minimum = values => Math.min(...values.filter(Number.isFinite), Infinity);
-  const key = group => view.sort === 'progress' ? minimum(group.programs.map(program => currentPercentage(program.current)))
-    : view.sort === 'change' ? minimum(group.programs.map(program => program.comparison_90d?.baseline_effective_at_start && program.comparison_90d?.change_pp))
-      : view.sort === 'activity' ? Number.isFinite(time(group.client.last_activity?.at)) ? time(group.client.last_activity.at) : -Infinity : null;
+  const numeric = (group, descending) => {
+    const values = view.sort?.startsWith('progress')
+      ? group.programs.map(program => currentPercentage(program.current))
+      : view.sort?.startsWith('change')
+        ? group.programs.map(program => program.comparison_90d?.baseline_effective_at_start ? program.comparison_90d.change_pp : null)
+        : [time(group.client.last_activity?.at)];
+    const known = values.filter(Number.isFinite);
+    return known.length ? (descending ? Math.max(...known) : Math.min(...known)) : null;
+  };
+  const descending = view.sort?.endsWith('-desc');
+  const numericSort = /^(progress|change|activity)/.test(view.sort || '');
   return groups.sort((a, b) => {
-    const left = key(a), right = key(b);
-    return (left < right ? -1 : left > right ? 1 : 0) || (a.client.name || '').localeCompare(b.client.name || '', undefined, {sensitivity: 'base'})
-      || a.client.client_id.localeCompare(b.client.client_id);
+    if (numericSort) {
+      const left = numeric(a, descending), right = numeric(b, descending);
+      if (left == null && right != null) return 1;
+      if (left != null && right == null) return -1;
+      if (left != null && right != null && left !== right) return descending ? right - left : left - right;
+    }
+    const name = (a.client.name || '').localeCompare(b.client.name || '', undefined, {sensitivity: 'base'});
+    return (view.sort === 'name-desc' ? -name : name) || a.client.client_id.localeCompare(b.client.client_id);
   }).map(({client, programs: visible}) => ({client, programs: visible}));
 }

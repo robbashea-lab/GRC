@@ -81,9 +81,9 @@ test("approved five-column portfolio preserves native All/Mine scope and its sha
   await click(scopeButton('Assigned to Me'));
   expect(visibleClients()).toEqual([mockClients[0].client_id]);
   expect(container.querySelector('.gp-countbar').textContent).toContain('1 client · 2 programs');
-  expect(container.querySelector('[data-testid="sidebar-filter-assigned"]').getAttribute('aria-pressed')).toBe('true');
-  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]')).toHaveLength(1);
-  await click(container.querySelector('[data-testid="sidebar-filter-all"]'));
+  expect(container.querySelector('[aria-label="Client list scope"]')).toBeNull();
+  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]')).toHaveLength(2);
+  await click(scopeButton('All Clients'));
   expect(scopeButton('All Clients').getAttribute('aria-pressed')).toBe('true');
   expect(visibleClients()).toEqual(mockClients.map(client=>client.client_id));
   await change(container.querySelector('[data-testid="client-directory-search"]'),' SOC 2 ');
@@ -94,9 +94,9 @@ test("approved five-column portfolio preserves native All/Mine scope and its sha
   expect(container.querySelectorAll('[data-testid^="sidebar-open-"]')).toHaveLength(2);
 });
 
-test.each([['name',[0,1]],['change',[0,1]],['progress',[0,1]],['activity',[1,0]]])('%s approved sort keeps client groups and uses the lowest visible program value',async (key,order)=>{
+test.each([['name',[0,1]],['name-desc',[1,0]],['change-desc',[0,1]],['progress',[0,1]],['progress-desc',[0,1]],['activity-desc',[0,1]]])('%s approved sort keeps client groups and uses the lowest visible program value',async (key,order)=>{
   await render(<ClientDirectory />);
-  expect([...container.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['name','change','progress','activity']);
+  expect([...container.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['name','name-desc','progress-desc','progress','change-desc','activity-desc']);
   await select('Sort clients',key);
   expect(visibleClients()).toEqual(order.map(index=>mockPortfolio.clients[index].client_id));
   expect(container.querySelectorAll(`[data-client-id="${mockPortfolio.clients[0].client_id}"]`)).toHaveLength(2);
@@ -126,8 +126,8 @@ test('portfolio client/framework links and whole progress area open exact native
   await click(progress);
   const dialog=document.querySelector('[data-testid="portfolio-history-dialog"]');
   expect(dialog).toBeTruthy(); expect(dialog.querySelector('[role="tab"][data-state="active"]').textContent).toContain('SOC 2');
-  expect(api.get).toHaveBeenLastCalledWith('/portfolio/reporting/history',expect.objectContaining({params:{client_id:first.client_id,program_key:'soc-2',range:'3m',include_archived:false}}));
-  expect(dialog.querySelector('.ph-metrics > div').textContent).toContain('4 of 38');
+  expect(api.get).toHaveBeenLastCalledWith('/portfolio/reporting/history',expect.objectContaining({params:{client_id:first.client_id,program_key:'soc-2',range:'6m',include_archived:false}}));
+  expect(dialog.querySelector('.ph-current-value').textContent).toContain('4 of 38');
   await click([...dialog.querySelectorAll('button')].find(node=>node.textContent==='Open SOC 2 workspace →'));
   expect(mockSwitch).toHaveBeenLastCalledWith(first.client_id);
   expect(mockNavigate).toHaveBeenLastCalledWith(`/compliance/soc-2?client_id=${first.client_id}`);
@@ -144,14 +144,12 @@ test('portfolio client/framework links and whole progress area open exact native
   expect(visibleClients()).toEqual([first.client_id]);
 });
 
-test("sidebar removes favorites and preserves ALL/MINE and navigation", async () => {
+test("sidebar removes favorites and keeps client navigation with scope filtering in the portfolio", async () => {
   await render(<Layout />);
   expect(container.textContent).not.toMatch(/Favorites|Fav/);
-  expect(container.querySelector('[data-testid="sidebar-filter-all"]').textContent).toBe("All");
-  await click(container.querySelector('[data-testid="sidebar-filter-assigned"]'));
-  const mine = mockFixtures.responses["/clients"].filter(c => c.assigned_owner_id === mockUser.user_id && c.status !== "archived");
-  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]').length).toBe(mine.length);
-  await click(container.querySelector('[data-testid="sidebar-filter-all"]'));
+  expect(container.querySelector('[aria-label="Client list scope"]')).toBeNull();
+  const active = mockFixtures.responses["/clients"].filter(c => c.status !== "archived");
+  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]').length).toBe(active.length);
   expect(container.querySelector('a[href="/admin/clients"]')).toBeTruthy();
   const client = mockFixtures.responses["/clients"][0];
   expect(container.querySelector('[data-testid="sidebar-client-search"]')).toBeNull(); // two clients: nothing to search

@@ -295,13 +295,22 @@ async def history_positions(db, position, range_key, as_of):
     if len(events) > 10000:
         raise HTTPException(413, 'Too many scope changes for this range; choose a shorter period')
     scope_changes = [{'at': event['at'], 'event_id': event.get('event_id'), 'provenance': 'committed_scope_activity'} for event in events]
-    observed = samples + [position['current']]
+    # Stored membership is authoritative; a denominator delta alone cannot identify additions.
+    full = {document['snapshot_id']: document['current'] for document in documents}
+    observed = [{**sample, 'scope': full.get(sample['snapshot_id'], {}).get('scope')} for sample in samples] + [position['current']]
     for before, after in zip(observed, observed[1:]):
         if before.get('scope_signature') != after.get('scope_signature'):
-            scope_changes.append({'at': after.get('effective_at') or after['captured_at'],
+            change = {'at': after.get('effective_at') or after['captured_at'],
+                'after_snapshot_id': after.get('snapshot_id'),
                 'provenance': 'observed_scope_transition',
                 'before': {key: before.get(key) for key in ('total', 'denominator', 'implemented', 'scope_signature')},
-                'after': {key: after.get(key) for key in ('total', 'denominator', 'implemented', 'scope_signature')}})
+                'after': {key: after.get(key) for key in ('total', 'denominator', 'implemented', 'scope_signature')}}
+            before_scope, after_scope = before.get('scope') or {}, after.get('scope') or {}
+            if isinstance(before_scope.get('applicability'), dict) and isinstance(after_scope.get('applicability'), dict):
+                old = {key for key, value in before_scope['applicability'].items() if value == 'included'}
+                new = {key for key, value in after_scope['applicability'].items() if value == 'included'}
+                change.update(added_ids=sorted(new - old), removed_ids=sorted(old - new), membership_known=True)
+            scope_changes.append(change)
     scope_changes.sort(key=lambda change: date_time(change['at']))
     if baseline and any(date_time(change['at']) > date_time(baseline.get('effective_at') or baseline['captured_at']) for change in scope_changes):
         comparison.update(scope_changed=True, comparable=False,
