@@ -84,7 +84,7 @@ export function PortfolioSparkline({program, asOf, span}) {
   </svg>;
 }
 
-function useHistory(client, program, range, refreshToken) {
+function useHistory(client, program, range, refreshToken, requireIdentity = false) {
   const key = JSON.stringify([client.client_id, program.program_key, range]);
   const [state, setState] = useState({key: '', data: null, loading: true, error: ''}), [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -95,17 +95,21 @@ function useHistory(client, program, range, refreshToken) {
     api.get('/portfolio/reporting/history', {params: {client_id, program_key, range: selectedRange, include_archived: false}, signal: controller.signal}).then(({data}) => {
       if (!Array.isArray(data?.snapshots) || !data.current || !Number.isFinite(Date.parse(data.as_of))) throw new Error('The history response is incomplete.');
       if (data.client_id && data.client_id !== client_id || data.program_key && data.program_key !== program_key) throw new Error('The history does not belong to the selected client program.');
+      if(requireIdentity && (data.client_id !== client_id || data.program_key !== program_key)) throw new Error('The history program identity is unavailable.');
+      if(requireIdentity && client_id === 'demo_brawndo' && program_key === 'cis-ig1'
+        && (data.current.scope?.framework_key !== 'cis-ig1' || data.current.scope?.catalog_version !== '8.1'
+          || data.current.scope?.configuration?.implementation_group !== 1)) throw new Error('The CIS history scope does not match the configured IG1 program.');
       if (active) setState({key, data, loading: false, error: ''});
     }).catch(failure => { if (active) setState({key, data: null, loading: false, error: formatError(failure)}); });
     return () => { active = false; controller.abort(); };
-  }, [key, attempt, refreshToken]);
+  }, [key, attempt, refreshToken, requireIdentity]);
   return {...(state.key === key ? state : {data: null, loading: true, error: ''}), retry: () => setAttempt(value => value + 1)};
 }
 
-function CurrentStatusBreakdown({current}) {
+function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
   const [activeStatus, setActiveStatus] = useState(null);
   if (!validImplementationPosition(current)) {
-    return <div className="ph-breakdown"><p>Applicable scope unavailable. {current.reason || current.notice || 'Current counts are unavailable.'}</p></div>;
+    return <div className="ph-breakdown"><p>Applicable scope unavailable. {current?.reason || current?.notice || 'Current counts are unavailable.'}</p></div>;
   }
   const counts = applicableCounts(current), total = current.denominator;
   const assessed = total - counts.find(value => value.key === 'not_assessed').count;
@@ -115,9 +119,14 @@ function CurrentStatusBreakdown({current}) {
     onPointerLeave: () => setActiveStatus(null),
     onFocus: () => setActiveStatus(key),
     onBlur: () => setActiveStatus(null),
-    onClick: () => setActiveStatus(key)
+    onClick: () => { setActiveStatus(key); onStatusNavigate?.(key); }
   });
   const selected = counts.find(value => value.key === activeStatus);
+  const cells = counts.map(value => <button type="button" key={value.key} {...interactions(value.key)}
+    className={`ph-breakdown-row ${activeStatus === value.key ? 'is-active' : ''}`} aria-pressed={activeStatus === value.key}>
+    <span><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label}</span>
+    <span>{share(value)}</span><strong>{value.count} / {total}</strong>
+  </button>);
   return <div className="ph-breakdown">
     <div className="ph-interactive-bar" role="group" aria-label="Current status composition">
       {total > 0 && counts.filter(value => value.count > 0).map(value => <button
@@ -128,19 +137,15 @@ function CurrentStatusBreakdown({current}) {
       {selected && <div className="ph-segment-detail" role="status">{selected.label} · {share(selected)} · {selected.count} / {total}</div>}
     </div>
     <div className="ph-breakdown-head"><span>Status breakdown</span><span>{assessed} of {total} assessed</span></div>
-    {counts.map(value => <button type="button" key={value.key} {...interactions(value.key)}
-      className={`ph-breakdown-row ${activeStatus === value.key ? 'is-active' : ''}`} aria-pressed={activeStatus === value.key}>
-      <span><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label}</span>
-      <span>{share(value)}</span><strong>{value.count} / {total}</strong>
-    </button>)}
+    {inline ? <div className="ph-breakdown-cells">{cells}</div> : cells}
   </div>;
 }
 
-export default function PortfolioHistoryDialog({client, programs, selected, onSelect, onClose, onCloseAutoFocus, onNavigate, chartView, onChartViewChange, refreshToken, asOf: overviewAsOf}) {
+export default function PortfolioHistoryDialog({client, programs, selected, onSelect, onClose, onCloseAutoFocus, onNavigate, chartView, onChartViewChange, refreshToken, asOf: overviewAsOf, inline = false, onStatusNavigate}) {
   const [range, setRange] = useState('6m'), [showData, setShowData] = useState(false);
   const program = programs.find(value => programIdentity(value) === selected);
-  const report = useHistory(client, program, range, refreshToken);
-  const current = report.data?.current || program.current, asOf = report.data?.as_of || overviewAsOf || current.retrieved_at || current.captured_at;
+  const report = useHistory(client, program, range, refreshToken, inline);
+  const current = report.data?.current || program.current || {}, asOf = report.data?.as_of || overviewAsOf || current.retrieved_at || current.captured_at;
   const language = programLanguage({...program, current}), months = RANGES.find(([key]) => key === range)[2], start = calendarRangeStart(asOf, months);
   const points = historyWindow(report.data?.snapshots, start, asOf, report.data?.comparison), scopeChanges = report.data?.scope_changes || [];
   const comparison = periodChange(report.data?.snapshots, current, start, {comparison: report.data?.comparison, scopeChanges});
@@ -149,10 +154,10 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
   const counts = applicableCounts(current);
   const lead = grcLead(client);
   const details = <>
-    <div className="ph-program-head"><div><h3>{program.program_label}</h3><p>{program.scope_label}</p></div><button type="button" className="ph-link" onClick={() => onNavigate(program.to)}>Open {program.program_label} workspace →</button></div>
+    <div className="ph-program-head"><div><h3>{inline ? 'CIS IG1 Status' : program.program_label}</h3><p>{program.scope_label}</p></div><button type="button" className="ph-link" onClick={() => onNavigate(program.to)}>Open {program.program_label} workspace →</button></div>
     <div className="ph-current-overview">
       <div className="ph-current-value"><span>Current implementation</span><strong>{percentage != null ? current.not_started ? 'Not started' : `${percentage.toFixed(1)}%` : noScope ? 'No applicable scope' : 'Unavailable'}</strong><p>{percentage != null ? `${current.implemented} of ${current.denominator} ${language.unit} ${language.verb}` : current.reason || current.notice || 'No applicable implementation units.'}</p><small>As of {dateTime(current.effective_at || current.captured_at || asOf)}</small></div>
-      <CurrentStatusBreakdown key={selected} current={current} />
+      <CurrentStatusBreakdown key={selected} current={current} onStatusNavigate={onStatusNavigate} inline={inline} />
     </div>
     <div className="ph-range"><div className="ph-segmented" role="group" aria-label="History period">{RANGES.map(([key, label]) => <button key={key} type="button" aria-pressed={key === range} onClick={() => setRange(key)}>{label}</button>)}</div><span>{formatPortfolioDate(start)} – {formatPortfolioDate(asOf)} · UTC</span></div>
     <div className="ph-metrics">
@@ -170,6 +175,10 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
 
     </div>
   </>;
+  if (inline) return <section className="brawndo-demo-program" aria-label="CIS IG1 Status">
+    {details}
+    <p className="ph-inline-foot">Assessment progress, not a compliance determination. The estimate uses comparable genuine progress in the latest 90 days, independently of the selected chart period.</p>
+  </section>;
   return <Dialog open onOpenChange={open => { if (!open) onClose(); }}><DialogContent className="portfolio-history-dialog" data-testid="portfolio-history-dialog" onCloseAutoFocus={onCloseAutoFocus}>
     <div className="ph-head"><div className="ph-client"><span className="gp-client-initial" aria-hidden="true">{client.name?.trim().charAt(0)}</span><div><DialogTitle>{client.name}</DialogTitle><DialogDescription>GRC Lead · {lead.name} · {client.industry || 'Industry not recorded'}</DialogDescription></div></div><button type="button" className="ph-button" onClick={() => onNavigate('/dashboard')}>Open client portal</button></div>
     <div className="ph-body">{programs.length > 1 ? <Tabs value={selected} onValueChange={onSelect}><TabsList aria-label="Client frameworks" className="ph-tabs">{programs.map(value => {
@@ -250,7 +259,7 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
         })}</g>;
       })}
       <path className="ph-line" d={line} />
-      {endpointPercentage != null && <g><rect x={right+5} y={y(endpointPercentage)-11} width="54" height="22" rx="5" fill="var(--chart-implemented)"/><text x={right+32} y={y(endpointPercentage)+4} textAnchor="middle" style={{fill:'white'}}>{endpointPercentage.toFixed(1)}%</text></g>}
+      {endpointPercentage != null && <g><rect x={right+5} y={y(endpointPercentage)-11} width="54" height="22" rx="5" fill="var(--chart-implemented)"/><text x={right+32} y={y(endpointPercentage)+4} textAnchor="middle" style={{fill:'var(--chart-flag-text, white)'}}>{endpointPercentage.toFixed(1)}%</text></g>}
       {points.map(point => currentPercentage(point) != null && <circle key={identity(point)} className="ph-marker" cx={x(point)} cy={y(currentPercentage(point))} r={3.5} />)}
       {scopeChanges.filter(change => Date.parse(change.effective_at || change.at) >= Date.parse(start) && Date.parse(change.effective_at || change.at) <= Date.parse(asOf)).map((change, index) => <g key={index}><line className="ph-scope-marker" x1={x({effective_at: change.effective_at || change.at})} x2={x({effective_at: change.effective_at || change.at})} y1={top} y2={bottom} /><text x={Math.min(x({effective_at: change.effective_at || change.at}) + 6, right - 90)} y={top + 15}>Scope changed</text></g>)}
       {Array.from({length: width < 520 ? 3 : 5}, (_, index) => {

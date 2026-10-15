@@ -1,0 +1,302 @@
+.brawndo-demo-dashboard {
+  --bdd-bg:var(--color-bg-app, #EDF3FA);
+  --bdd-card:var(--color-bg-surface, #FFFFFF);
+  --bdd-text:var(--color-text-primary, #132A49);
+  --bdd-muted:var(--color-text-muted, #536A84);
+  --bdd-line:var(--color-border, #C6D4E4);
+  --bdd-accent:var(--color-link, #215BC1);
+  --bdd-soft:var(--color-selected-bg, #E4EEFC);
+  --bdd-danger:var(--color-critical, #B42318);
+  --bdd-amber:var(--color-moderate-text, #93370D);
+  background:var(--bdd-bg);
+  color:var(--bdd-text);
+  padding:28px 32px 48px;
+  min-height:100%;
+  font-family:var(--font-body, 'Segoe UI', sans-serif);
+  font-size:14px;
+  line-height:1.5
+}
+.brawndo-demo-dashboard h1 {
+  font-size:27px;
+  letter-spacing:-.5px;
+  font-weight:650;
+  margin:0 0 4px
+}
+.brawndo-demo-dashboard h2 {
+  font-size:19px;
+  font-weight:650;
+  margin:0
+}
+.brawndo-demo-dashboard p {
+  margin:4px 0;
+  color:var(--bdd-muted)
+}
+.brawndo-demo-dashboard button,.brawndo-demo-dashboard input,.brawndo-demo-dashboard select {
+  font:inherit;
+  color:inherit
+}
+.brawndo-demo-dashboard button {
+  cursor:pointer;
+  border:1px solid var(--bdd-line);
+  background:var(--bdd-card);
+  border-radius:6px;
+  padding:6px 10px
+}
+.brawndo-demo-dashboard button:disabled {
+  cursor:default;
+  opacity:.5
+}
+.brawndo-demo-dashboard :focus-visible {
+  outline:3px solid var(--bdd-accent);
+  outline-offset:3px
+}
+.brawndo-demo-dashboard .bdd-heading {
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  align-items:center;
+  margin-bottom:24px
+}
+.brawndo-demo-dashboard .bdd-heading>div:last-child {
+  display:flex;
+  gap:14px;
+  align-items:center
+}
+.brawndo-demo-dashboard .bdd-heading button {
+  display:flex;
+  align-items:center;
+  gap:5px
+}
+.brawndo-demo-dashboard .bdd-summary {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  border:1px solid var(--bdd-line);
+  border-radius:10px;
+  overflow:hidden;
+  background:var(--bdd-card);
+  margin-bottom:24px
+}
+.brawndo-demo-dashboard .bdd-summary button {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  text-align:left;
+  gap:5px;
+  padding:18px 22px;
+  border:0;
+  border-right:1px solid var(--bdd-line);
+  border-radius:0;
+  min-width:0
+}
+.brawndo-demo-dashboard .bdd-summary button:last-child {
+  border-right:0
+}
+.brawndo-demo-dashboard .bdd-summary button[aria-pressed=true] {
+  box-shadow:inset 0 -3px var(--bdd-accent);
+  background:var(--bdd-soft)
+}
+.brawndo-demo-dashboard .bdd-summary strong {
+  font-size:30px;
+  line-height:1.2;
+  font-weight:650;
+  font-variant-numeric:tabular-nums
+}
+.brawndo-demo-dashboard small {
+  display:block;
+  color:var(--bdd-muted);
+  font-size:12px
+}
+.brawndo-demo-dashboard .bdd-late {
+  color:var(--bdd-danger)
+}
+.brawndo-demo-dashboard .bdd-card {
+  background:var(--bdd-card);
+  border:1px solid var(--bdd-line);
+  border-radius:10px;
+  margin:24px 0 0;
+  overflow:hidden
+}
+.brawndo-demo-dashboard .bdd-card>header {
+  padding:20px 22px 14px
+}
+.brawndo-demo-dashboard .bdd-controls {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:12px;
+  padding:8px 22px 18px
+}
+.brawndo-demo-dashboard .bdd-controls label {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-size:12px;
+  color:var(--bdd-muted)
+}
+.brawndo-demo-dashboard input,.brawndo-demo-dashboard select {
+  background:var(--bdd-card);
+  border:1px solid var(--bdd-line);
+  border-radius:6px;
+  padding:8px;
+  max-width:100%;
+  min-width:0
+}
+.brawndo-demo-dashboard .bdd-search {
+  flex:1;
+  min-width:180px
+}
+.brawndo-demo-dashboard .bdd-search input {
+  width:100%
+}
+.brawndo-demo-dashboard .bdd-filters {
+  display:flex;
+  gap:3px;
+  flex-wrap:wrap
+}
+.brawndo-demo-dashboard .bdd-filters button {
+  font-size:12px;
+  white-space:nowrap
+}
+.brawndo-demo-dashboard .bdd-filters button[aria-pressed=true] {
+  color:var(--bdd-accent);
+  border-color:var(--bdd-accent);
+  background:var(--bdd-soft)
+}
+.brawndo-demo-dashboard .bdd-filters span {
+  margin-left:4px;
+  opacity:.8;
+  font-variant-numeric:tabular-nums
+}
+.brawndo-demo-dashboard .bdd-results {
+  padding:12px 22px;
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  border-top:1px solid var(--bdd-line);
+  font-size:12px;
+  color:var(--bdd-muted)
+}
+.brawndo-demo-dashboard .bdd-results nav {
+  display:flex;
+  align-items:center;
+  gap:8px
+}
+.brawndo-demo-dashboard .bdd-table-scroll {
+  overflow-x:auto
+}
+.brawndo-demo-dashboard table {
+  width:100%;
+  border-collapse:collapse;
+  text-align:left;
+  min-width:650px
+}
+.brawndo-demo-dashboard th {
+  color:var(--bdd-muted);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  font-weight:600;
+  background:var(--bdd-bg)
+}
+.brawndo-demo-dashboard th,.brawndo-demo-dashboard td {
+  padding:13px 22px;
+  border-top:1px solid var(--bdd-line)
+}
+.brawndo-demo-dashboard td:first-child {
+  width:49%
+}
+.brawndo-demo-dashboard tbody tr:hover {
+  background:var(--bdd-soft)
+}
+.brawndo-demo-dashboard .bdd-item {
+  padding:0;
+  border:0;
+  background:none;
+  text-align:left;
+  font-weight:600;
+  line-height:1.5
+}
+.brawndo-demo-dashboard .bdd-item:hover {
+  text-decoration:underline
+}
+.brawndo-demo-dashboard td small {
+  margin-top:3px
+}
+.brawndo-demo-dashboard .bdd-status {
+  font-size:12px;
+  display:inline-block;
+  border:1px solid var(--bdd-line);
+  border-radius:20px;
+  padding:3px 8px;
+  white-space:nowrap
+}
+.brawndo-demo-dashboard .bdd-status-in_progress {
+  color:var(--bdd-accent);
+  background:var(--bdd-soft)
+}
+.brawndo-demo-dashboard .bdd-status-remediated,.brawndo-demo-dashboard .bdd-status-pending_validation,.brawndo-demo-dashboard .bdd-attention {
+  color:var(--bdd-amber)
+}
+.brawndo-demo-dashboard .bdd-empty,.brawndo-demo-dashboard .bdd-error {
+  padding:20px 22px
+}
+.brawndo-demo-dashboard .bdd-error {
+  color:var(--bdd-danger)
+}
+@media(max-width:900px) {
+  .brawndo-demo-dashboard {
+    padding:24px 18px
+  }
+  .brawndo-demo-dashboard .bdd-summary {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .brawndo-demo-dashboard .bdd-summary button:nth-child(2) {
+    border-right:0
+  }
+  .brawndo-demo-dashboard .bdd-summary button:nth-child(-n+2) {
+    border-bottom:1px solid var(--bdd-line)
+  }
+  .brawndo-demo-dashboard .bdd-heading {
+    align-items:flex-start
+  }
+  .brawndo-demo-dashboard .bdd-heading>div:last-child {
+    align-items:flex-end;
+    flex-direction:column;
+    gap:6px
+  }
+  .brawndo-demo-dashboard .bdd-results {
+    flex-wrap:wrap
+  }
+}
+@media(max-width:480px) {
+  .brawndo-demo-dashboard {
+    padding:20px 12px
+  }
+  .brawndo-demo-dashboard h1 {
+    font-size:22px
+  }
+  .brawndo-demo-dashboard .bdd-summary button {
+    padding:14px 12px
+  }
+  .brawndo-demo-dashboard .bdd-summary small {
+    font-size:11px
+  }
+  .brawndo-demo-dashboard .bdd-heading {
+    gap:8px
+  }
+  .brawndo-demo-dashboard .bdd-heading>div:last-child p {
+    font-size:11px
+  }
+  .brawndo-demo-dashboard .bdd-controls {
+    padding:8px 14px 16px
+  }
+  .brawndo-demo-dashboard .bdd-card>header {
+    padding:18px 14px 12px
+  }
+  .brawndo-demo-dashboard .bdd-controls select {
+    max-width:210px
+  }
+  .brawndo-demo-dashboard .bdd-results {
+    padding:12px 14px
+  }
+}
