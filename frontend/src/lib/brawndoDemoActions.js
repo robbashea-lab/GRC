@@ -46,7 +46,7 @@ export function brawndoTicketMatches(row,{view='active',q='',source='',owner='',
   if(filter==='unassigned'&&!brawndoNeedsOwner(row,eligibleOwnerIds))return false;
   if(filter==='upcoming'&&(!active||!['next14','15_30'].includes(brawndoDueWindow(row,now))))return false;
   if(BRAWNDO_DUE_WINDOWS.includes(filter)&&(!active||brawndoDueWindow(row,now)!==filter))return false;
-  if(['blocked','in_progress','open','pending_validation','accepted','cancelled'].includes(filter)&&stage!==filter)return false;
+  if(['blocked','in_progress','open','pending_validation','completed','accepted','cancelled'].includes(filter)&&stage!==filter)return false;
   const search=q.trim().toLocaleLowerCase();
   return !search||[row.title,row.issue,row.finding?.title,row.actionSearchText,row.source?.label,row.source?.id,row.finding?.remediation_plan].filter(Boolean).join(' ').toLocaleLowerCase().includes(search);
 }

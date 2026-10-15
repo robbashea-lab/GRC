@@ -48,3 +48,9 @@ test('register filters use complete ticket search text, stable source IDs and na
   expect(brawndoTicketMatches(row,{view:'all',unassigned:true},new Set(),now)).toBe(true);
   expect(brawndoTicketMatches(row,{owner:'someone'},new Set(),now)).toBe(false);
 });
+
+test('Completed status excludes open work in All records',()=>{
+  const tickets=rows({tasks:[task('open'),task('done',{status:'done'})]});
+  expect(brawndoTicketMatches(tickets.find(row=>row.ticketId==='task:open'),{view:'all',quick:'completed'})).toBe(false);
+  expect(brawndoTicketMatches(tickets.find(row=>row.ticketId==='task:done'),{view:'all',quick:'completed'})).toBe(true);
+});
