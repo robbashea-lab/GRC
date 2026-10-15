@@ -178,19 +178,30 @@ candidate's code commit to restore the inherited UI without reverting or destroy
 native saved records/history. Do not roll back to a writer incompatible with existing
 records or deploy a source older than the inherited pilot removal.
 
-Verification milestone: 141 focused frontend tests passed across seven suites;
-83 focused native backend tests plus 16 subtests passed. The final sparkline marker
-review fix passed its separate dialog/chart suite. Both build modes compiled during
-development; final frozen-source builds and full-suite verification are being collected.
+Verification receipt on runtime commit `cdbdf2f309c9d3de71ad71498015b241370db784`:
+141 focused frontend tests passed across seven suites; 83 focused native backend
+tests plus 16 subtests passed. The final sparkline marker fix passed all 19 dialog
+tests. Frozen-source standard-sign-in and Demo builds both compiled successfully.
+The complete frontend suite is still running and is not recorded as passing.
 An independent AI source review identified issues that were corrected; this is not
-human approval. Browser local-file preview was blocked by URL policy, so visual,
-mobile, zoom and actual native browser save/reload acceptance are unverified here.
-No new production data or hosted customer record was written for this work.
+human approval.
 
-Delivery state: local implementation; no claim yet of pushed, merged, deployed or
-Robb-accepted behavior. Existing required CI/Mongo gates must pass on the delivered
-candidate before release readiness. Shared staging authority is coordinated through
-the parent hub; no main merge, production/Sites publication, new infrastructure,
-account/grant/credential change or Security Domains expansion is authorized by this
-candidate. Next: collect final checks, prepare the draft PR and exact revision receipt,
-then resolve only the actual remaining release/browser boundaries through the hub.
+The actual local native Explore a demo flow was exercised at desktop and 390px
+mobile width in light/dark themes. All four history periods, default six months,
+current canonical counts, unavailable-history/forecast messages and View data
+were checked. Mobile portfolio and dialog measured no horizontal overflow.
+Evidence screenshots are retained with the delivery artifacts. This does not
+verify authenticated hosted sessions, browser save/reload or customer data.
+The standalone file URL was blocked by browser policy; that restriction was
+respected. Native application preview used the documented development server.
+
+Delivery state: pushed draft PR83, stacked on the inherited pilot branch; runtime
+commit above. No merge, staging deployment, production/Sites publication,
+account/grant/credential change or Security Domains expansion. No hosted customer
+record was written. Existing required CI/Mongo gates must pass on the delivered
+head before release readiness. The workflow does not automatically trigger for
+this stacked base and the available connector cannot dispatch it; an authorized
+operator must dispatch Release Verification on the candidate branch and record
+its exact SHA. Shared staging authority remains coordinated through the parent
+hub. Next: finish complete-suite verification, dispatch exact-head CI, then perform
+authorized hosted acceptance before any release claim.
