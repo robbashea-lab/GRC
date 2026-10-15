@@ -50,4 +50,3 @@ test('cancellation starts no additional relationship reads and rejects an aborte
   const unused=jest.fn();
   expect(await loadRiskRelations([{risk_id:'r'}],unused,controller.signal)).toEqual({relations:{},unavailable:[]});expect(unused).not.toHaveBeenCalled();
 });
-
