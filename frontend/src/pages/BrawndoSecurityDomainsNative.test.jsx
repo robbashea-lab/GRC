@@ -10,16 +10,16 @@ import mapping from '@catalogs/brawndoSecurityDomains.json';
 import pilot from '@catalogs/brawndoSecurityDomainsPilot.json';
 
 // Real routing, dialogs, native editor, items, findings and Omnibot are retained.
-// The actor, network/persistence boundary and rollout flag are synthetic. Canonical
-// targeting metadata remains real so a gate-only rollback can still run this suite.
+// The Demo actor, network/persistence boundary and rollout flag are synthetic.
+// Native editor and route behavior are retained, including a gate-only rollback.
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),put:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:error=>error.message}));
-jest.mock('@catalogs/brawndoSecurityDomainsPilot.json',()=>({...jest.requireActual('@catalogs/brawndoSecurityDomainsPilot.json'),enabled:true,fixtureClientIds:[]}));
+jest.mock('@catalogs/brawndoSecurityDomainsPilot.json',()=>({...jest.requireActual('@catalogs/brawndoSecurityDomainsPilot.json'),enabled:true}));
 
 const CLIENT=pilot.clientId,TOKEN='2026-10-14T12:00:00Z',FINGERPRINT='a'.repeat(64);
-// Test-only identity; this is never the ID of a hosted fixture or a rollout default.
-const FIXTURE_CLIENT='synthetic-brawndo-equivalent-local-native';
+const AUTHENTICATED_CLIENT='authenticated-brawndo-test-client';
+const FORMER_FIXTURE_CLIENT='former-authenticated-fixture-test-client';
 const definitions=cis.requirements.filter(definition=>definition.implementation_group===1);
 const routeCases=mapping.domains.flatMap(domain=>domain.safeguardIds.map(id=>[domain.id,id]));
 const clone=value=>JSON.parse(JSON.stringify(value));
@@ -90,8 +90,8 @@ async function openOmni(){
 
 beforeEach(()=>{
   currentCase={active:true};
-  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();group=1;contextClient=CLIENT;deniedContext=false;saveRevision=0;pilot.enabled=true;pilot.fixtureClientIds=[];
-  mockUser={user_id:'native-actor',role:'super_admin'};
+  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();group=1;contextClient=CLIENT;deniedContext=false;saveRevision=0;pilot.enabled=true;
+  mockUser={user_id:'native-actor',role:'super_admin',workspace_mode:'demo'};
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   records=definitions.map(definition=>({client_id:CLIENT,framework_key:'cis-ig1',framework_version:'8.1',framework_assessment_id:'native-'+definition.id,definition_id:definition.id,status:'not_assessed',verification:'needs_validation',owner_id:'native-owner',implementation:'Original native '+definition.id,technology:'Recorded native platform',notes:'Preserved original notes '+definition.id,last_saved:TOKEN,last_assessed:null,items_to_address:[],items_revision:0,assessment_history:[],related_links:[]}));
   interviews=Object.fromEntries(definitions.map(definition=>[definition.id,interview(definition.id)]));related={};
@@ -239,11 +239,15 @@ test('disabling the pilot removes domains while native Controls and the original
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
-test.each(['1.1','1.2'])('the exact allowlisted synthetic client keeps %s on its own native editor, save and Omnibot paths',async id=>{
-  pilot.fixtureClientIds=[FIXTURE_CLIENT];useSyntheticClient(FIXTURE_CLIENT);
+test.each(['1.1','1.2'])('Demo Brawndo keeps %s on its own native routes and manual saves after an interview checkpoint',async id=>{
+  useSyntheticClient(CLIENT);
   const assessmentId=record(id).framework_assessment_id,otherRecords=clone(records.filter(value=>value.definition_id!==id));
   const preserved=clone({notes:record(id).notes,owner:record(id).owner_id,verification:record(id).verification});
-  await mount(FIXTURE_CLIENT);
+  // This mock persistence boundary starts at the checkpoint independently reached
+  // through the real Omni UI in the separate resume case below.
+  interviews[id]={...interviews[id],revision:2,answers:{[id==='1.1'?'inventory':'process']:'No'},step:0};
+  const savedInterview=clone(interviews[id]);
+  await mount(CLIENT);
   expect(container.querySelectorAll('[data-testid^="security-domain-"]')).toHaveLength(11);
   expect(container.querySelectorAll('[data-testid^="domain-safeguard-"]')).toHaveLength(56);
   await openDomain(id);const domainRoute=route(),domainView=editorSnapshot();
@@ -251,28 +255,45 @@ test.each(['1.1','1.2'])('the exact allowlisted synthetic client keeps %s on its
   expect(assessmentId).toBe('fixture-native-'+id);expect(domainRoute.state).toEqual({fromWorkspace:true});
   await closeNative();await openControl(id);
   expect(route()).toEqual(domainRoute);expect(editorSnapshot()).toEqual(domainView);
-  const originalRecord=clone(record(id));await openOmni();await clickName('No',omni());await clickName('Save & close',omni());
-  expect(api.put).toHaveBeenCalledWith('/framework_assessments/'+assessmentId+'/guided-assessment',expect.objectContaining({expected_revision:0,completed:false,answers:expect.objectContaining({[id==='1.1'?'inventory':'process']:'No'})}));
-  await closeNative();await remount(FIXTURE_CLIENT);await openDomain(id);await openOmni();
-  expect(button('No',omni()).getAttribute('aria-pressed')).toBe('true');expect(record(id)).toEqual(originalRecord);
-  expect(interviews[id]).toEqual(expect.objectContaining({client_id:FIXTURE_CLIENT,assessment_id:assessmentId}));
-  await clickName('Save & close',omni());await closeNative();await openControl(id);
   await value('Current implementation','Synthetic Controls wording '+id);await clickName('Save assessment',native());
   expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/'+assessmentId,expect.objectContaining({implementation:'Synthetic Controls wording '+id,owner_id:preserved.owner,verification:preserved.verification,expected_last_assessed:TOKEN}));
+  const firstSavedToken=record(id).last_saved;
   await closeNative();await openDomain(id);expect(editorSnapshot().implementation).toBe('Synthetic Controls wording '+id);
   await value('Current implementation','Synthetic domain wording '+id);await clickName('Save assessment',native());
-  await closeNative();await remount(FIXTURE_CLIENT);await openControl(id);
+  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/'+assessmentId,expect.objectContaining({implementation:'Synthetic domain wording '+id,owner_id:preserved.owner,verification:preserved.verification,expected_last_assessed:firstSavedToken}));
+  await closeNative();await remount(CLIENT);await openControl(id);
   expect(editorSnapshot().implementation).toBe('Synthetic domain wording '+id);
   expect(record(id).assessment_history).toHaveLength(2);
-  expect(record(id)).toEqual(expect.objectContaining({client_id:FIXTURE_CLIENT,framework_assessment_id:assessmentId,notes:preserved.notes,owner_id:preserved.owner,verification:preserved.verification}));
+  expect(record(id)).toEqual(expect.objectContaining({client_id:CLIENT,framework_assessment_id:assessmentId,notes:preserved.notes,owner_id:preserved.owner,verification:preserved.verification}));
+  expect(interviews[id]).toEqual(savedInterview);
   expect(records.filter(value=>value.definition_id!==id)).toEqual(otherRecords);
   expect(api.patch).toHaveBeenCalledTimes(2);expect(api.patch.mock.calls.every(([path])=>path==='/framework_assessments/'+assessmentId)).toBe(true);
-  expect(api.get.mock.calls.filter(([path])=>path==='/frameworks/cis-ig1').every(([,options])=>options.params.client_id===FIXTURE_CLIENT)).toBe(true);
-  expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+  expect(api.get.mock.calls.filter(([path])=>path==='/frameworks/cis-ig1').every(([,options])=>options.params.client_id===CLIENT)).toBe(true);
+  expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
-test('a same-name client with a complete native IG1 program stays outside the exact fixture allowlist',async()=>{
-  pilot.fixtureClientIds=[FIXTURE_CLIENT];useSyntheticClient('unlisted-synthetic-client');mockUser.client_name='Brawndo';
+test.each(['1.1','1.2'])('Demo Brawndo keeps %s on its native Omnibot checkpoint and resume paths without assessment writes',async id=>{
+  useSyntheticClient(CLIENT);
+  const assessmentId=record(id).framework_assessment_id,originalRecord=clone(record(id)),otherRecords=clone(records.filter(value=>value.definition_id!==id));
+  const answers={[id==='1.1'?'inventory':'process']:'No'},path='/framework_assessments/'+assessmentId+'/guided-assessment';
+  await mount(CLIENT);await openDomain(id);await openOmni();await clickName('No',omni());await clickName('Save & close',omni());
+  expect(api.put).toHaveBeenLastCalledWith(path,expect.objectContaining({expected_revision:0,completed:false,answers:expect.objectContaining(answers)}));
+  await closeNative();await remount(CLIENT);await openControl(id);await openOmni();
+  expect(new URLSearchParams(route().search).get('assessment')).toBe(assessmentId);expect(assessmentId).toBe('fixture-native-'+id);
+  expect(route().state).toEqual({fromWorkspace:true});expect(button('No',omni()).getAttribute('aria-pressed')).toBe('true');
+  expect(record(id)).toEqual(originalRecord);
+  expect(interviews[id]).toEqual(expect.objectContaining({client_id:CLIENT,assessment_id:assessmentId,revision:1,answers}));
+  await clickName('Save & close',omni());
+  expect(api.put).toHaveBeenLastCalledWith(path,expect.objectContaining({expected_revision:1,completed:false,answers:expect.objectContaining(answers)}));
+  expect(interviews[id]).toEqual(expect.objectContaining({client_id:CLIENT,assessment_id:assessmentId,revision:2,answers}));
+  expect(record(id)).toEqual(originalRecord);expect(records.filter(value=>value.definition_id!==id)).toEqual(otherRecords);
+  expect(api.put).toHaveBeenCalledTimes(2);expect(api.put.mock.calls.every(([target])=>target===path)).toBe(true);
+  expect(api.get.mock.calls.filter(([target])=>target==='/frameworks/cis-ig1').every(([,options])=>options.params.client_id===CLIENT)).toBe(true);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+});
+
+test('a same-name Demo client with a complete native IG1 program stays outside the exact pilot identity',async()=>{
+  useSyntheticClient('unlisted-synthetic-client');mockUser.client_name='Brawndo';
   const before=clone(records);await mount('unlisted-synthetic-client');
   expect(query('.bcis-domains')).toBeNull();expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
   await openControl('1.1');expect(new URLSearchParams(route().search).get('assessment')).toBe('fixture-native-1.1');
@@ -280,17 +301,26 @@ test('a same-name client with a complete native IG1 program stays outside the ex
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
 
-test('mixed-client records cannot produce counts or shortcuts inside an allowlisted fixture program',async()=>{
-  pilot.fixtureClientIds=[FIXTURE_CLIENT];useSyntheticClient(FIXTURE_CLIENT);record('1.2').client_id=CLIENT;
-  const before=clone(records);await mount(FIXTURE_CLIENT);await expandDomain('assets');
+test('mixed-client records cannot produce counts or shortcuts inside Demo Brawndo',async()=>{
+  record('1.2').client_id=AUTHENTICATED_CLIENT;
+  const before=clone(records);await mount();await expandDomain('assets');
   expect(query('.bcis-domains')).toBeTruthy();expect(query('[data-testid="security-domain-assets"]').textContent).toContain('Counts unavailable');
   expect(query('[aria-label="View mapped controls for Asset & Software Management"]').disabled).toBe(true);
   expect(container.querySelectorAll('[data-testid^="domain-safeguard-"]')).toHaveLength(0);
   expect(records).toEqual(before);expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
 
-test.each([2,3])('an exact allowlisted fixture configured as IG%s still cannot activate domains',async implementationGroup=>{
-  pilot.fixtureClientIds=[FIXTURE_CLIENT];useSyntheticClient(FIXTURE_CLIENT);group=implementationGroup;await mount(FIXTURE_CLIENT);
+test.each([AUTHENTICATED_CLIENT,FORMER_FIXTURE_CLIENT])('authenticated client %s no longer activates domains or changes its native save path',async clientId=>{
+  useSyntheticClient(clientId);delete mockUser.workspace_mode;
+  const before=clone(records);await mount(clientId);
+  expect(query('.bcis-domains')).toBeNull();expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
+  await openControl('1.1');expect(new URLSearchParams(route().search).get('assessment')).toBe('fixture-native-1.1');
+  expect(editorSnapshot().implementation).toBe('Original native 1.1');expect(records).toEqual(before);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
+test.each([2,3])('Demo Brawndo configured as IG%s still cannot activate domains',async implementationGroup=>{
+  useSyntheticClient(CLIENT);group=implementationGroup;await mount();
   expect(query('.bcis-domains')).toBeNull();await openControl('1.1');
   expect(native().querySelector('.bcis-crumbs').textContent).toContain('CIS IG'+implementationGroup);
   expect(new URLSearchParams(route().search).get('assessment')).toBe('fixture-native-1.1');

@@ -14,9 +14,9 @@ function fixture(clientId = pilot.clientId) {
       counts: ['addressed','in_progress','needs_attention','not_assessed'].map(key => ({key, count: key === 'not_assessed' ? 56 : 0}))}};
   return {data, rows};
 }
-const user = {user_id: 'native-actor', role: 'super_admin'};
-const fixtureClientId = 'synthetic-brawndo-equivalent-local-unit';
-const fixtureConfig = {...pilot, enabled: true, fixtureClientIds: [fixtureClientId]};
+const user = {user_id: 'demo_admin', role: 'super_admin', workspace_mode: 'demo'};
+const realClientId = 'authenticated-brawndo-test-client';
+const formerFixtureClientId = 'former-authenticated-fixture-test-client';
 // Exercise feature behavior independently of whether the rollout is currently disabled.
 const enabled = (data, clientId = pilot.clientId, framework = 'cis-ig1', actor = user, config = {...pilot, enabled: true}) => securityDomainsEnabled(clientId, framework, data, actor, config);
 
@@ -25,20 +25,21 @@ test('the default gate honors the committed rollout flag', () => {
   expect(securityDomainsEnabled(pilot.clientId, 'cis-ig1', data, user)).toBe(pilot.enabled === true);
 });
 
-test('each committed pilot client uses its own complete native program and row references', () => {
-  const clients = [pilot.clientId, ...(pilot.fixtureClientIds || [])];
-  expect(new Set(clients).size).toBe(clients.length);
-  for (const clientId of clients) {
-    const {data, rows} = fixture(clientId);
-    expect(enabled(data, clientId)).toBe(true);
-    const domains = securityDomainModel(data, rows, clientId);
-    expect(domains.every(domain => domain.available)).toBe(true);
-    expect(domains.flatMap(domain => domain.rows)).toHaveLength(56);
-    domains.flatMap(domain => domain.rows).forEach(row => {
-      expect(row.client_id).toBe(clientId);
-      expect(row).toBe(rows.find(native => native.definition_id === row.definition_id));
-    });
-  }
+test('the committed profile targets only canonical demo Brawndo and its native program', () => {
+  expect(pilot.clientId).toBe('demo_brawndo');
+  expect(pilot).not.toHaveProperty('fixtureClientIds');
+  expect(pilot.frameworkKey).toBe('cis-ig1');
+  expect(pilot.frameworkVersion).toBe('8.1');
+  expect(pilot.implementationGroup).toBe(1);
+  const {data, rows} = fixture();
+  expect(enabled(data)).toBe(true);
+  const domains = securityDomainModel(data, rows, pilot.clientId);
+  expect(domains.every(domain => domain.available)).toBe(true);
+  expect(domains.flatMap(domain => domain.rows)).toHaveLength(56);
+  domains.flatMap(domain => domain.rows).forEach(row => {
+    expect(row.client_id).toBe('demo_brawndo');
+    expect(row).toBe(rows.find(native => native.definition_id === row.definition_id));
+  });
 });
 
 test('approved mapping is a disjoint complete native IG1 partition and remains presentation taxonomy', () => {
@@ -54,30 +55,29 @@ test('approved mapping is a disjoint complete native IG1 partition and remains p
   expect(mapping.metadata.taxonomyType).toBe('Custom presentation taxonomy');
 });
 
-test('only the verified selected canonical native Brawndo CIS v8.1 IG1 context enables the pilot', () => {
+test('only the verified selected demo Brawndo CIS v8.1 IG1 context enables the pilot', () => {
   const {data} = fixture();
   expect(enabled(data)).toBe(true);
-  for (const clientId of ['Brawndo', 'demo_brawndo', 'other-client', '', null]) expect(enabled(data, clientId)).toBe(false);
+  for (const clientId of ['Brawndo', 'demo_dunder', 'demo_prestige', 'demo_Brawndo', 'new-client', realClientId, formerFixtureClientId, '', null]) {
+    expect(enabled(fixture(clientId).data, clientId, 'cis-ig1', {...user, name: 'Brawndo'})).toBe(false);
+  }
   for (const framework of ['cis-ig2', 'cis-ig3', 'iso-27001', 'soc-2']) expect(enabled(data, pilot.clientId, framework)).toBe(false);
-  expect(enabled(data, pilot.clientId, 'cis-ig1', {...user, workspace_mode: 'demo'})).toBe(false);
+  for (const workspace_mode of ['standard', 'authenticated', 'live', 'Demo', '', undefined, null]) {
+    expect(enabled(data, pilot.clientId, 'cis-ig1', {...user, workspace_mode})).toBe(false);
+  }
   expect(enabled(data, pilot.clientId, 'cis-ig1', null)).toBe(false);
   expect(securityDomainsEnabled(pilot.clientId, 'cis-ig1', data, user, {...pilot, enabled: false})).toBe(false);
 });
 
-test('a synthetic fixture requires an explicit exact client allowlist and its own native program', () => {
-  const {data} = fixture(fixtureClientId);
-  expect(enabled(data, fixtureClientId, 'cis-ig1', user, fixtureConfig)).toBe(true);
-  expect(enabled(fixture().data, pilot.clientId, 'cis-ig1', user, fixtureConfig)).toBe(true);
-  for (const fixtureClientIds of [undefined, [], [fixtureClientId.toUpperCase()], 'synthetic-brawndo-equivalent-local-unit']) {
-    expect(enabled(data, fixtureClientId, 'cis-ig1', user, {...fixtureConfig, fixtureClientIds})).toBe(false);
+test('former authenticated and fixture targets remain excluded even with a leftover fixture allowlist', () => {
+  const config = {...pilot, enabled: true, fixtureClientIds: [realClientId, formerFixtureClientId]};
+  for (const clientId of [realClientId, formerFixtureClientId]) {
+    const {data, rows} = fixture(clientId);
+    for (const workspace_mode of ['demo', 'standard']) {
+      expect(enabled(data, clientId, 'cis-ig1', {...user, workspace_mode}, config)).toBe(false);
+    }
+    expect(securityDomainModel(data, rows, clientId, config).every(domain => !domain.available && !domain.rows.length)).toBe(true);
   }
-  expect(enabled(fixture('unlisted-synthetic-client').data, 'unlisted-synthetic-client', 'cis-ig1', user, fixtureConfig)).toBe(false);
-  expect(enabled(data, fixtureClientId, 'cis-ig1', user, {...fixtureConfig, enabled: false})).toBe(false);
-  expect(enabled(data, fixtureClientId, 'cis-ig1', null, fixtureConfig)).toBe(false);
-  expect(enabled(data, fixtureClientId, 'cis-ig1', {...user, workspace_mode: 'demo'}, fixtureConfig)).toBe(false);
-  expect(enabled(data, pilot.clientId, 'cis-ig1', user, fixtureConfig)).toBe(false);
-  data.implementation_position.program_id = `${pilot.clientId}:cis-ig1`;
-  expect(enabled(data, fixtureClientId, 'cis-ig1', user, fixtureConfig)).toBe(false);
 });
 
 test.each([
@@ -88,8 +88,6 @@ test.each([
   data => { data.implementation_position.program_id = 'other:cis-ig1'; }, data => { delete data.implementation_position; },
 ])('uncertain or different native program identity fails closed (%#)', mutate => {
   const {data} = fixture(); data.framework = {...data.framework}; mutate(data); expect(enabled(data)).toBe(false);
-  const synthetic = fixture(fixtureClientId).data; synthetic.framework = {...synthetic.framework}; mutate(synthetic);
-  expect(enabled(synthetic, fixtureClientId, 'cis-ig1', user, fixtureConfig)).toBe(false);
 });
 
 test('models preserve every native row reference and all-unassessed remains unknown', () => {
@@ -101,28 +99,25 @@ test('models preserve every native row reference and all-unassessed remains unkn
   });
 });
 
-test('an explicitly listed fixture models all 56 native rows without copying records', () => {
-  const {data, rows} = fixture(fixtureClientId), domains = securityDomainModel(data, rows, fixtureClientId, fixtureConfig);
-  expect(domains.every(domain => domain.available)).toBe(true);
-  expect(domains.flatMap(domain => domain.rows)).toHaveLength(56);
-  domains.flatMap(domain => domain.rows).forEach(row => expect(row).toBe(rows.find(native => native.definition_id === row.definition_id)));
-  expect(securityDomainModel(data, rows, fixtureClientId, {...fixtureConfig, enabled: false}).every(domain => domain.available)).toBe(true);
+test('the presentation model does not replace the rollout gate', () => {
+  const {data, rows} = fixture();
+  expect(securityDomainModel(data, rows, pilot.clientId, {...pilot, enabled: false}).every(domain => domain.available)).toBe(true);
+  expect(enabled(data, pilot.clientId, 'cis-ig1', user, {...pilot, enabled: false})).toBe(false);
 });
 
 test('the model rejects missing, unlisted or mismatched current client and program identities', () => {
-  const {data, rows} = fixture(fixtureClientId);
-  for (const clientId of [undefined, null, '', 'unlisted-synthetic-client', pilot.clientId]) {
-    expect(securityDomainModel(data, rows, clientId, fixtureConfig).every(domain => !domain.available && !domain.rows.length)).toBe(true);
+  const {data, rows} = fixture();
+  for (const clientId of [undefined, null, '', 'demo_dunder', realClientId, formerFixtureClientId]) {
+    expect(securityDomainModel(data, rows, clientId).every(domain => !domain.available && !domain.rows.length)).toBe(true);
   }
-  expect(securityDomainModel(data, rows, fixtureClientId, {...fixtureConfig, fixtureClientIds: []}).every(domain => !domain.available)).toBe(true);
-  data.implementation_position.program_id = `${pilot.clientId}:cis-ig1`;
-  expect(securityDomainModel(data, rows, fixtureClientId, fixtureConfig).every(domain => !domain.available)).toBe(true);
+  data.implementation_position.program_id = `${realClientId}:cis-ig1`;
+  expect(securityDomainModel(data, rows, pilot.clientId).every(domain => !domain.available)).toBe(true);
 });
 
-test.each(['assessment', 'native'])('a fixture cannot mix canonical Brawndo %s records even when both clients are allowed', source => {
-  const {data, rows} = fixture(fixtureClientId);
-  (source === 'assessment' ? data.assessments : rows)[0].client_id = pilot.clientId;
-  securityDomainModel(data, rows, fixtureClientId, fixtureConfig).forEach(domain => {
+test.each(['assessment', 'native'])('demo Brawndo cannot mix authenticated Brawndo %s records', source => {
+  const {data, rows} = fixture();
+  (source === 'assessment' ? data.assessments : rows)[0].client_id = realClientId;
+  securityDomainModel(data, rows, pilot.clientId).forEach(domain => {
     expect(domain.available).toBe(false); expect(domain.rows).toEqual([]); expect(domain.applicable).toBeUndefined();
   });
 });
@@ -161,11 +156,6 @@ test.each([
 ])('incomplete, foreign, duplicate or unreconciled source provides no counts or shortcuts (%#)', mutate => {
   const source = fixture(); mutate(source);
   securityDomainModel(source.data, source.rows, pilot.clientId).forEach(domain => {
-    expect(domain.available).toBe(false); expect(domain.rows).toEqual([]); expect(domain.applicable).toBeUndefined();
-    expect(domain.reason).toContain('unavailable');
-  });
-  const synthetic = fixture(fixtureClientId); mutate(synthetic);
-  securityDomainModel(synthetic.data, synthetic.rows, fixtureClientId, fixtureConfig).forEach(domain => {
     expect(domain.available).toBe(false); expect(domain.rows).toEqual([]); expect(domain.applicable).toBeUndefined();
     expect(domain.reason).toContain('unavailable');
   });

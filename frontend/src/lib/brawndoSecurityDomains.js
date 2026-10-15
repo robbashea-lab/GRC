@@ -9,7 +9,7 @@ const statuses = new Set(['addressed', 'in_progress', 'needs_attention', 'not_as
 const sameIds = (values, expected) => Array.isArray(values) && values.length === expected.length
   && new Set(values).size === values.length && expected.every(id => values.includes(id));
 const permittedClient = (clientId, config) => typeof clientId === 'string' && !!clientId
-  && (clientId === config.clientId || (Array.isArray(config.fixtureClientIds) && config.fixtureClientIds.includes(clientId)));
+  && clientId === config.clientId;
 const nativeProgramMatches = (clientId, frameworkKey, data, config) => permittedClient(clientId, config)
   && frameworkKey === config.frameworkKey && data?.selected === true && data?.configured === true
   && data.framework?.key === config.frameworkKey && data.framework?.version === config.frameworkVersion
@@ -18,7 +18,7 @@ const nativeProgramMatches = (clientId, frameworkKey, data, config) => permitted
 
 // Presentation only. The native server remains the authorization and persistence boundary.
 export function securityDomainsEnabled(clientId, frameworkKey, data, user, config = pilot) {
-  return config.enabled === true && !!user && user.workspace_mode !== 'demo'
+  return config.enabled === true && user?.workspace_mode === 'demo'
     && nativeProgramMatches(clientId, frameworkKey, data, config);
 }
 
