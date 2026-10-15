@@ -56,7 +56,7 @@ export function identityRequest(db, path, method, params, body) {
       .map(u => {
         const orphaned = !u.client_ids?.includes(id);
         const assignment_eligible=eligible(u,id);
-        if (minimal) return { user_id: u.user_id, name: u.name || 'Former user', status: u.status || 'active', assignment_eligible, ...(orphaned ? {orphaned: true} : {}) };
+        if (minimal) return { user_id: u.user_id, name: u.name || 'Former user', status: u.status || 'active', ...(orphaned ? {orphaned: true} : {}) };
         return { user_id: u.user_id, name: u.name, email: u.email, status: u.status, role: u.role,
           client_ids: (u.client_ids || []).filter(cid => clientAccess(db.user, cid)), assignment_eligible, ...(orphaned ? {orphaned: true} : {}) };
       });

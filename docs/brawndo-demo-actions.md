@@ -103,3 +103,26 @@ Native records, evidence, history, commands and all other pilots remain. No main
 merge, production publication, new hosting or account/grant changes are authorized.
 Finish exact-head release verification and coordinated review acceptance before any
 deployment/readiness claim. The missing package documents remain an explicit limit.
+
+
+## Privacy correction after required CI184
+
+CI184 exposed an introduced contract regression: assignment_eligible had been added
+AFTER the native minimal people projection. Client roles must continue receiving
+only user_id/name/status/orphaned; the original people-visibility tests are unchanged.
+The eligibility signal is now included only for existing internal account projections,
+in the API and Demo mirror. Historical owners and assignment permissions are unchanged.
+
+The presentation gate now also requires the established isInternal role definition.
+This retains the redesigned view for the actual internal Explore Demo actor while
+client-role sessions retain their original Action Items page, instead of fabricating
+owner-health counts from metadata their privacy contract intentionally withholds.
+This is a narrower presentation rollout, not a grant of permissions or change to
+native operational workflows. Client and legacy reader role fallbacks are tested.
+
+Run184 on a455f5e FAILED and cannot establish readiness: backend people privacy test
+failed, Mongo passed, frontend was still running at the failure report. The focused
+correction must be reviewed and forward-integrated by the sole cumulative Risks
+release owner; that new candidate requires its own exact-head release verification.
+Robb's later explicit staging grant removes any visual-signoff/authority hold for
+existing Render staging, not required checks or workflow/isolation safeguards.

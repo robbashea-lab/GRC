@@ -1791,8 +1791,11 @@ async def client_members(client_id: str, user: Dict = Depends(get_current_user))
             u["orphaned"] = True
         members.extend(orphans)
     members.sort(key=lambda u: (u.get("name") or u.get("email") or "").lower())
+    # Preserve the minimal client-role people contract. Assignment health is only
+    # available with the existing internal account projection.
+    internal = authorization.role_of(user) in {authorization.OWNER, authorization.PROVIDER}
     return [{**_member_summary(member, user),
-             "assignment_eligible": member.get("status") == "active" and _can_access_client(member, client_id)}
+             **({"assignment_eligible": member.get("status") == "active" and _can_access_client(member, client_id)} if internal else {})}
             for member in members]
 
 # ---------------- Generic list/create/update/delete factory ----------------
