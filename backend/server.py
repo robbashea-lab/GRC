@@ -2307,6 +2307,7 @@ async def dashboard(
     scope: Optional[str] = Query("org"),  # org | mine | user | unassigned
     user_id: Optional[str] = Query(None),
     work_queue: bool = Query(False),
+    work_metadata: bool = Query(False),
     framework: Optional[str] = Query(None, max_length=80),
     search: str = Query('', max_length=200),
     detail: Optional[str] = Query(None, max_length=40),
@@ -2362,14 +2363,15 @@ async def dashboard(
         members = await db.users.find({'$or': [{'role': 'super_admin'}, {'client_ids': client_id}]},
                                       {'_id': 0, 'user_id': 1, 'name': 1, 'email': 1, 'status': 1}).to_list(None)
         queue_groups = dashboard_contract.work_queue(management, [m for m in members if m.get('status') == 'active'])
+        membership = {}
+        if framework or work_metadata:
+            assessments = await db.framework_assessments.find({'client_id': client_id},
+                {'_id':0, 'framework_assessment_id':1, 'framework_key':1, 'definition_id':1, 'related_links':1}).to_list(None)
+            controls = await db.organizational_controls.find({'client_id': client_id},
+                {'_id':0, 'assessment_ids':1, 'related_links':1}).to_list(None)
+            membership, metadata = dashboard_contract.framework_membership(records, assessments, controls, include_metadata=True)
+            queue_groups = {key: [{**row, **metadata.get((row['kind'], row['id']), {})} for row in rows] for key, rows in queue_groups.items()}
         if framework or search:
-            membership = {}
-            if framework:
-                assessments = await db.framework_assessments.find({'client_id': client_id},
-                    {'_id':0, 'framework_assessment_id':1, 'framework_key':1, 'related_links':1}).to_list(None)
-                controls = await db.organizational_controls.find({'client_id': client_id},
-                    {'_id':0, 'assessment_ids':1, 'related_links':1}).to_list(None)
-                membership = dashboard_contract.framework_membership(records, assessments, controls)
             queue_groups = dashboard_contract.filter_queue(queue_groups, membership, framework, search)
         if detail:
             if detail not in queue_groups:

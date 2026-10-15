@@ -62,8 +62,8 @@ export function dashboard(db,params) {
   // Opt-in read-only queue contract; ordinary dashboards keep their current view.
   if(params.work_queue) {
     const base=dashboardWorkQueue(m,new Set(db.users.filter(u=>eligible(u,params.client_id)).map(u=>u.user_id)),records);
-    const groups=filterDashboardQueue(base,records,(db.framework_assessments||[]).filter(r=>r.client_id===params.client_id),(db.organizational_controls||[]).filter(r=>r.client_id===params.client_id),params.framework||'',params.search||'');
-    const brief=row=>({...Object.fromEntries(['key','id','kind','type','due_date','owner_id','unassigned','status','severity'].map(key=>[key,row[key]])),
+    const groups=filterDashboardQueue(base,records,(db.framework_assessments||[]).filter(r=>r.client_id===params.client_id),(db.organizational_controls||[]).filter(r=>r.client_id===params.client_id),params.framework||'',params.search||'',!!params.work_metadata);
+    const brief=row=>({...Object.fromEntries(['key','id','kind','type','due_date','owner_id','unassigned','status','severity','framework_keys','safeguard_ids','safeguard_labels','framework_membership_known'].map(key=>[key,row[key]])),
       title:String(row.title||'').slice(0,240),owner:String(row.owner||'Unassigned').slice(0,200),source_label:String(row.source_label||'').slice(0,240)});
     if(params.detail) {
       const rows=groups[params.detail],offset=Number(params.offset||0),limit=Number(params.limit||25);

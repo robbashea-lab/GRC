@@ -247,3 +247,36 @@ test('carried sparkline baseline participates in shared scaling without connecti
   for (const command of path.split(' ')) expect(Number(command.split(',')[1])).toBeGreaterThanOrEqual(0);
   expect(Number(container.querySelector('.gp-spark-end').getAttribute('cy'))).toBeLessThan(30);
 });
+
+test('inline program reuses canonical reporting and navigates all native statuses', async () => {
+  const onStatusNavigate = jest.fn();
+  const render = refreshToken => root.render(<PortfolioHistoryDialog inline client={client} programs={[programs[0]]}
+    selected={programIdentity(programs[0])} onNavigate={navigate} onStatusNavigate={onStatusNavigate}
+    chartView="line" onChartViewChange={() => {}} refreshToken={refreshToken} asOf={AT} />);
+  await act(async () => render(1));
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  const inline = document.querySelector('.brawndo-demo-program');
+  expect(inline.querySelector('h3').textContent).toBe('CIS IG1 Status');
+  expect(inline.querySelector('.ph-current-value').textContent).toContain('32 of 56');
+  for (const [index, key] of ['addressed', 'in_progress', 'needs_attention', 'not_assessed'].entries()) {
+    await act(async () => inline.querySelectorAll('.ph-breakdown-row')[index].click());
+    expect(onStatusNavigate).toHaveBeenLastCalledWith(key);
+  }
+  await act(async () => inline.querySelector('.ph-interactive-bar button').click());
+  expect(onStatusNavigate).toHaveBeenLastCalledWith('addressed');
+  await click('1 month'); await click('View data');
+  await act(async () => render(2));
+  expect(inline.querySelector('[aria-label="History period"] [aria-pressed=true]').textContent).toBe('1 month');
+  expect(inline.querySelector('#portfolio-history-data')).toBeTruthy();
+  expect(api.get).toHaveBeenLastCalledWith('/portfolio/reporting/history', expect.objectContaining({params: expect.objectContaining({range:'1m'})}));
+});
+
+test('inline program reports missing current and history honestly', async () => {
+  api.get.mockRejectedValue(new Error('History unavailable'));
+  const program = {...programs[0], current: null};
+  await act(async () => root.render(<PortfolioHistoryDialog inline client={client} programs={[program]}
+    selected={programIdentity(program)} onNavigate={navigate} chartView="line" onChartViewChange={() => {}} asOf={AT} />));
+  expect(document.querySelector('.ph-current-value strong').textContent).toBe('Unavailable');
+  expect(document.querySelector('[role=alert]').textContent).toContain('History unavailable');
+  expect(document.body.textContent).not.toContain('NaN');
+});

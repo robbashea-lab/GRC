@@ -51,3 +51,35 @@
 .portfolio-history-dialog :is(button,[tabindex]):focus-visible { outline:2px solid var(--color-focus-ring); outline-offset:2px; }
 @media(max-width:760px) { .portfolio-history-dialog { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); }.ph-head { flex-wrap:wrap; padding-left:16px; }.ph-body,.ph-foot { padding-left:16px; padding-right:16px; }.ph-metrics { grid-template-columns:1fr; }.ph-legend { grid-template-columns:repeat(2,minmax(0,1fr)); }.ph-range .ph-segmented { max-width:100%; overflow-x:auto; }.ph-chart-card { padding:12px; }.ph-tab { min-width:110px; }.ph-head .ph-button { margin-left:46px; } }
 @media(prefers-reduced-motion:reduce) { .portfolio-history-dialog { animation:none!important; transition:none!important; } }
+/* Local reference palette: the Portfolio's approved colors remain independent. */
+.brawndo-demo-program { --chart-implemented:#0A7358; --chart-partial:#E2AA30; --chart-not:#E46F7A; --chart-unassessed:#D3DBE5; --chart-track:#EDF1F5; --chart-grid:#EDF1F5; --chart-area:rgba(10,115,88,.10); --chart-flag-text:#FFFFFF; min-width:0; padding:20px 24px; border:1px solid var(--color-border); border-radius:12px; background:var(--color-bg-surface); }
+[data-brawndo-portal=dark] .brawndo-demo-program { --chart-implemented:#3CC2A0; --chart-partial:#D4A13C; --chart-not:#D9505F; --chart-unassessed:#2C3747; --chart-track:#1B2430; --chart-grid:#1A2330; --chart-area:rgba(60,194,160,.14); --chart-flag-text:#06251C; }
+.brawndo-demo-program .ph-current-overview { grid-template-columns:240px minmax(0,1fr); gap:24px 40px; align-items:start; padding:4px 0 24px; border-bottom:1px solid var(--color-border); }
+.brawndo-demo-program .ph-current-value > strong { font-size:56px; }
+.brawndo-demo-program .ph-breakdown-head { margin-bottom:10px; }
+.brawndo-demo-program .ph-breakdown { display:block; min-width:0; container-type:inline-size; }
+.brawndo-demo-program .ph-breakdown-cells { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-items:stretch; }
+.brawndo-demo-program .ph-breakdown-row { display:grid; grid-template-columns:1fr auto; grid-template-rows:minmax(36px,1fr) auto; width:100%; padding:12px; border-right:1px solid var(--color-border); text-align:left; }
+.brawndo-demo-program .ph-breakdown-row > span:first-child { grid-column:1/-1; }
+.brawndo-demo-program .ph-breakdown-row strong { font-size:20px; }
+.brawndo-demo-program .ph-line { stroke:var(--chart-implemented); }
+.brawndo-demo-program :is(.ph-marker,.ph-active) { fill:var(--chart-implemented); }
+.brawndo-demo-program .ph-grid { stroke:var(--chart-grid); }
+.brawndo-demo-program .is-implemented { background:var(--chart-implemented); }
+.brawndo-demo-program .is-partial { background:var(--chart-partial); }
+.brawndo-demo-program .is-not { background:var(--chart-not); }
+.brawndo-demo-program .is-unassessed { background:var(--chart-unassessed); }
+.brawndo-demo-program .ph-interactive-bar { background:var(--chart-track); }
+.brawndo-demo-program .ph-band.is-implemented { fill:var(--chart-implemented); }
+.brawndo-demo-program .ph-band.is-partial { fill:var(--chart-partial); }
+.brawndo-demo-program .ph-band.is-not { fill:var(--chart-not); }
+.brawndo-demo-program .ph-band.is-unassessed { fill:var(--chart-unassessed); }
+.brawndo-demo-program .ph-inline-foot { margin-top:12px; color:var(--color-text-muted); font-size:12px; }
+.brawndo-demo-program :is(button,[tabindex]):focus-visible { outline:2px solid var(--color-focus-ring); outline-offset:2px; }
+@media(max-width:600px) { .brawndo-demo-program { padding:16px; }.brawndo-demo-program .ph-breakdown-cells { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.brawndo-demo-program .ph-link { padding:0; border:0; background:none; color:var(--color-link); border-radius:0; }
+.brawndo-demo-program .ph-interactive-bar button { padding:0; border:0; }
+.brawndo-demo-program .ph-segmented button { padding:5px 10px; border:1px solid transparent; background:transparent; color:var(--color-text-secondary); }
+.brawndo-demo-program .ph-segmented button[aria-pressed=true] { background:var(--color-selected-bg); border-color:var(--color-border-strong); color:var(--color-text-primary); }
+@container(max-width:620px) { .brawndo-demo-program .ph-breakdown-cells { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:760px) { .brawndo-demo-program .ph-current-overview { grid-template-columns:1fr; gap:20px; }.brawndo-demo-program .ph-current-value > strong { font-size:38px; } }
