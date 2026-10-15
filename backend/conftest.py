@@ -1,4 +1,5 @@
 """Default discovery is offline; environment tests require an explicit target."""
+import math
 import os
 from pathlib import Path
 import sys
@@ -11,6 +12,7 @@ sys.path.insert(0, str(BACKEND.parent))
 sys.path.insert(0, str(BACKEND))
 sys.path.insert(0, str(TESTS))
 from suite_registry import classified_suites, environment_url  # noqa: E402
+from stack_diagnostics import stack_watchdog  # noqa: E402
 
 
 def pytest_addoption(parser):
@@ -19,10 +21,15 @@ def pytest_addoption(parser):
                     help="Allow tests that mutate the explicitly selected test server")
     group.addoption("--environment-url", default=None,
                     help="Explicit HTTP(S) origin of the isolated test server")
+    group.addoption("--python-stack-timeout", type=float, default=0,
+                    help="Best-effort Python stack diagnostic after this many seconds per test (0 disables)")
 
 
 def pytest_configure(config):
     try:
+        timeout = config.getoption("--python-stack-timeout")
+        if not math.isfinite(timeout) or timeout < 0:
+            raise ValueError("--python-stack-timeout must be finite and nonnegative")
         outside = [path.relative_to(BACKEND).as_posix() for path in BACKEND.rglob("*.py")
                    if (path.name.startswith("test_") or path.name.endswith("_test.py"))
                    and not path.is_relative_to(TESTS)]
@@ -51,6 +58,14 @@ def pytest_unconfigure(config):
             os.environ.pop("REACT_APP_BACKEND_URL", None)
         else:
             os.environ["REACT_APP_BACKEND_URL"] = previous
+
+
+@pytest.fixture(autouse=True)
+def python_stack_diagnostic(request, worker_id):
+    # Runs in each xdist worker; its lifetime includes unittest setup/teardown.
+    with stack_watchdog(request.config.getoption("--python-stack-timeout"),
+                        f"{worker_id} {request.node.nodeid}"):
+        yield
 
 
 def pytest_ignore_collect(collection_path, config):

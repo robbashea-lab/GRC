@@ -76,6 +76,23 @@ Local browser data is disposable Explore demo state, not staging/customer writes
 Current source checkpoint requires exact-head cumulative CI/build and hosted
 verification before release claims. Subsequent receipts belong with the PR and
 the Risks output handoff. Do not treat inherited module receipts as cumulative CI.
+
+CI188 passed all 327 frontend suites (9,560 tests), both frontend builds and the
+Mongo gate. Its two backend attempts lost a Python worker with SIGSEGV midway
+through the 60-second timed faulthandler dump, then exceeded the unchanged
+30-minute deadline. Different active tests failed when their worker disappeared;
+neither attempt established an application assertion failure or a root cause.
+CPython issue https://github.com/python/cpython/issues/116008 describes a similar
+watchdog dump failure and recommends calling dump_traceback while holding the GIL.
+The test-only replacement uses a one-shot Python Timer per test in each worker,
+with worker/test labels and the same 60-second diagnostic threshold. Fatal-signal
+handling, the worker-loss observer, every classified test, two workers/loadscope,
+dependencies and the 30-minute gate remain unchanged. This is a controlled
+diagnostic correction, not proof of crash attribution; fresh full CI is required.
+A native hang holding the GIL may prevent the callback from running. Cancellation
+prevents callbacks that have not passed the active check; an already-running
+callback may outlive its bounded one-second teardown join. Earlier session/module
+fixture setup is outside the per-test diagnostic lifetime. No locals are captured.
 Manual binary evidence round trips, every role/cadence combination and authenticated
 staging durability require their own evidence; source retention is not execution.
 
