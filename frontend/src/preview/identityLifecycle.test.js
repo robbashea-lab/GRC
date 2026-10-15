@@ -100,7 +100,7 @@ test('assessment actor names are client scoped and do not grant membership or ex
   db.user = {user_id:'alex', role:'client_readonly', client_ids:['a']};
   const before = JSON.stringify(db.users);
   const members = call('/clients/a/members');
-  expect(members.find(u => u.user_id === 'super')).toEqual({user_id:'super', name:'Super', status:'active', orphaned:true, assignment_eligible:true});
+  expect(members.find(u => u.user_id === 'super')).toEqual({user_id:'super', name:'Super', status:'active', orphaned:true});
   expect(members.some(u => u.user_id === 'foreign')).toBe(false);
   expect(JSON.stringify(db.users)).toBe(before);
 });
@@ -114,6 +114,6 @@ test('members match the backend contract: referenced former accounts included, c
   db.user = {user_id:'alex', role:'client_readonly', client_ids:['a']};
   const reader = call('/clients/a/members');
   expect(reader.map(u => u.user_id).sort()).toEqual(['alex', 'former', 'shared', 'super']);
-  reader.forEach(row => expect(Object.keys(row).every(k => ['user_id', 'name', 'status', 'orphaned', 'assignment_eligible'].includes(k))).toBe(true));
+  reader.forEach(row => expect(Object.keys(row).every(k => ['user_id', 'name', 'status', 'orphaned'].includes(k))).toBe(true));
   expect(reader.find(u => u.user_id === 'former').status).toBe('disabled');
 });

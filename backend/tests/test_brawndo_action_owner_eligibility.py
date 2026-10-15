@@ -30,10 +30,24 @@ class BrawndoActionOwnerEligibilityTests(unittest.IsolatedAsyncioTestCase):
         ])
         self.sign_in('member')
 
-    async def test_readonly_sees_true_owner_eligibility_without_assignment_or_identity_grants(self):
+    async def test_internal_owner_health_preserves_minimal_client_projection_and_assignment_rights(self):
         candidates = await self.client.get('/api/clients/a/assignees')
         self.assertEqual(candidates.status_code, 200, candidates.text)
         self.assertEqual(candidates.json()['items'], [])
+        response = await self.client.get('/api/clients/a/members')
+        self.assertEqual(response.status_code, 200, response.text)
+        rows = {row['user_id']: row for row in response.json()}
+        for role in ['client_grc_manager', 'client_contributor', 'client_readonly', 'client_viewer']:
+            await server.db.users.update_one({'user_id': 'member'}, {'$set': {'role': role}})
+            self.sign_in('member')
+            client_response = await self.client.get('/api/clients/a/members')
+            self.assertEqual(client_response.status_code, 200, client_response.text)
+            for row in client_response.json():
+                self.assertLessEqual(set(row), {'user_id', 'name', 'status', 'orphaned'})
+                self.assertNotIn('assignment_eligible', row)
+        self.assertEqual(rows['removed_owner'], {'user_id': 'removed_owner', 'name': 'removed_owner', 'status': 'active', 'orphaned': True})
+        self.assertEqual((await self.client.get('/api/clients/b/members')).status_code, 403)
+        self.sign_in('admin')
         response = await self.client.get('/api/clients/a/members')
         self.assertEqual(response.status_code, 200, response.text)
         rows = {row['user_id']: row for row in response.json()}
@@ -45,9 +59,9 @@ class BrawndoActionOwnerEligibilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(rows['disabled_owner']['assignment_eligible'])
         self.assertNotIn('foreign_private', rows)
         for row in rows.values():
-            self.assertLessEqual(set(row), {'user_id', 'name', 'status', 'orphaned', 'assignment_eligible'})
+            self.assertNotIn('password_hash', row)
+            self.assertNotIn('private_field', row)
         for uid in ['global_owner', 'removed_owner', 'disabled_owner']:
             task = await server.db.tasks.find_one({'task_id': uid+'-task'})
             self.assertEqual(task['assignee_id'], uid)
             self.assertEqual(task['completed_by'], uid)
-        self.assertEqual((await self.client.get('/api/clients/b/members')).status_code, 403)

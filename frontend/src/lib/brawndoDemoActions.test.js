@@ -2,7 +2,7 @@ import {unifiedActions} from './brawndoActions';
 import {brawndoDemoActionsGate,brawndoTicketMetrics,brawndoDueWindow,brawndoTicketMatches,brawndoEligibleOwnerIds} from './brawndoDemoActions';
 
 const clientId='demo_brawndo';
-const user={user_id:'actor',workspace_mode:'demo'};
+const user={user_id:'actor',role:'super_admin',workspace_mode:'demo'};
 const gate={workspaceMode:'demo',user,currentClientId:clientId,currentClient:{client_id:clientId,status:'active'},pathname:'/action-items'};
 const now=new Date(2026,9,15,23,30);
 const task=(id,extra={})=>({client_id:clientId,task_id:id,title:id,status:'open',...extra});
@@ -53,4 +53,9 @@ test('Completed status excludes open work in All records',()=>{
   const tickets=rows({tasks:[task('open'),task('done',{status:'done'})]});
   expect(brawndoTicketMatches(tickets.find(row=>row.ticketId==='task:open'),{view:'all',quick:'completed'})).toBe(false);
   expect(brawndoTicketMatches(tickets.find(row=>row.ticketId==='task:done'),{view:'all',quick:'completed'})).toBe(true);
+});
+
+test('client-role demos retain the original page without internal assignment-health metadata',()=>{
+  for(const role of ['client_grc_manager','client_contributor','client_readonly','client_viewer'])expect(brawndoDemoActionsGate({...gate,user:{...user,role}})).toBe(false);
+  expect(brawndoDemoActionsGate({...gate,user:{...user,role:'platform_admin'}})).toBe(true);
 });
