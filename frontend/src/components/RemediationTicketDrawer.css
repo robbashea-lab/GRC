@@ -71,3 +71,6 @@
   :root .ui-dialog.remediation-ticket-dialog.brawndo-demo-actions-ticket[data-state] { padding: 0 16px; }
   .brawndo-demo-actions-ticket .ticket-work-fields { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Keep the native close button above the sticky ticket heading. */
+.brawndo-demo-actions-ticket > button:last-child { z-index: 3; }
