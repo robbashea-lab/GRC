@@ -348,10 +348,16 @@ function demoHistory(db,position,available,range,asOf){
   const ordered=available.map(snapshot=>({...snapshot,current:normalizedCurrent(db,position.program_id,snapshot.current,snapshot)})).sort((a,b)=>timestamp(effective(a))-timestamp(effective(b))||(a.observation_sequence||0)-(b.observation_sequence||0));
   const flat=snapshot=>({...thinCurrent(snapshot.current),snapshot_id:snapshot.snapshot_id,effective_at:effective(snapshot),captured_at:snapshot.captured_at,observation_kind:snapshot.observation_kind||'sampled',source_revision:snapshot.current.source_revision,source_event:snapshot.source_event||null,observation_sequence:snapshot.observation_sequence||0});
   const scopePoint=current=>current?Object.fromEntries(['total','denominator','implemented','scope_signature','measure_version'].map(field=>[field,current[field]])):null;
+  const membership = (before, after) => {
+    if (!before?.scope?.applicability || !after?.scope?.applicability) return {};
+    const old = new Set(Object.keys(before.scope.applicability).filter(id => before.scope.applicability[id] === 'included'));
+    const next = new Set(Object.keys(after.scope.applicability).filter(id => after.scope.applicability[id] === 'included'));
+    return {added_ids:[...next].filter(id=>!old.has(id)).sort(),removed_ids:[...old].filter(id=>!next.has(id)).sort(),membership_known:true};
+  };
   const changes=[];
-  for(let i=1;i<ordered.length;i++)if(ordered[i-1].current.scope_signature!==ordered[i].current.scope_signature)changes.push({at:effective(ordered[i]),before:scopePoint(ordered[i-1].current),after:scopePoint(ordered[i].current),provenance:'observed_scope_transition'});
+  for(let i=1;i<ordered.length;i++)if(ordered[i-1].current.scope_signature!==ordered[i].current.scope_signature)changes.push({at:effective(ordered[i]),after_snapshot_id:ordered[i].snapshot_id,before:scopePoint(ordered[i-1].current),after:scopePoint(ordered[i].current),provenance:'observed_scope_transition',...membership(ordered[i-1].current,ordered[i].current)});
   for(const change of db.portfolio_reporting?.scope_events||[])if(change.client_id===position.client_id&&change.framework_key===position.framework_key&&timestamp(change.at)<=timestamp(asOf)){
-    const normalized={...change,before:scopePoint(change.before&&normalizedCurrent(db,position.program_id,change.before)),after:scopePoint(change.after&&normalizedCurrent(db,position.program_id,change.after))};
+    const normalized={...change,...membership(change.before,change.after),before:scopePoint(change.before&&normalizedCurrent(db,position.program_id,change.before)),after:scopePoint(change.after&&normalizedCurrent(db,position.program_id,change.after))};
     if(!changes.some(existing=>timestamp(existing.at)===timestamp(change.at)&&existing.before?.scope_signature===normalized.before?.scope_signature&&existing.after?.scope_signature===normalized.after?.scope_signature))changes.push(normalized);
   }
   changes.sort((a,b)=>timestamp(a.at)-timestamp(b.at));

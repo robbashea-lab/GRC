@@ -13,7 +13,8 @@ function readPreferences(key) {
     if (!saved || typeof saved !== 'object') return empty();
     return {...empty(),search: typeof saved.search === 'string' ? saved.search.slice(0, 1000) : '',mine: saved.mine === true,
       framework: typeof saved.framework === 'string' ? saved.framework : 'all',
-      sort: ['name','change','progress','activity'].includes(saved.sort) ? saved.sort : 'name',
+      sort: ['name','name-desc','change-desc','progress','progress-desc','activity-desc'].includes(saved.sort) ? saved.sort
+        : ({change:'change-desc',activity:'activity-desc'})[saved.sort] || 'name',
       chartView: ['line','mix'].includes(saved.chartView) ? saved.chartView : 'line'};
   } catch { return empty(); }
 }

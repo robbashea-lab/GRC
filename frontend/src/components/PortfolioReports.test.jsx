@@ -1,6 +1,6 @@
 import React, {act, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import PortfolioHistoryDialog, {PortfolioHistoryChart, PortfolioSparkline} from './PortfolioReports';
+import PortfolioHistoryDialog, {PortfolioHistoryChart, PortfolioSparkline, sparklineSpan, scopeNote} from './PortfolioReports';
 import api from '@/lib/api';
 import {programIdentity} from '@/lib/portfolioProgress';
 
@@ -30,15 +30,38 @@ const dialog = () => document.querySelector('[data-testid="portfolio-history-dia
 const click = label => act(async () => { const button = [...document.querySelectorAll('button')].find(node => node.textContent.trim() === label); expect(button).toBeTruthy(); button.click(); });
 const tab = name => act(async () => { const node = [...document.querySelectorAll('[role="tab"]')].find(value => value.textContent.startsWith(name)); node.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 0})); });
 
-test('native dialog opens the exact program, offers all five ranges and keeps canonical current independent from old history', async () => {
+test('status interaction synchronizes segment and row, exposes zero-count statuses, and preserves canonical counts', async () => {
+  await act(async () => root.render(<Harness />));
+  const segments = dialog().querySelectorAll('.ph-interactive-bar button');
+  expect(segments).toHaveLength(2);
+  expect(segments[0].getAttribute('aria-label')).toBe('Implemented: 57.1%, 32 of 56');
+  await act(async () => segments[0].focus());
+  expect(dialog().querySelector('.ph-breakdown-row.is-active').textContent).toContain('32 / 56');
+  expect(dialog().querySelectorAll('.ph-interactive-bar .is-dim')).toHaveLength(1);
+  const rows = dialog().querySelectorAll('.ph-breakdown-row');
+  expect(rows).toHaveLength(4);
+  await act(async () => rows[1].click());
+  expect(rows[1].classList.contains('is-active')).toBe(true);
+  expect(rows[1].textContent).toContain('0 / 56');
+  expect(dialog().querySelector('.ph-current-value').textContent).toContain('57.1%');
+});
+
+test('scope notes use membership evidence and retain simultaneous implementation changes', () => {
+  expect(scopeNote({membership_known:true,added_ids:['a','b'],removed_ids:[],before:{denominator:54,implemented:23},after:{denominator:56,implemented:23}},'safeguards'))
+    .toBe('2 safeguards added to scope. Applicable went from 54 to 56.');
+  expect(scopeNote({before:{denominator:54,implemented:23},after:{denominator:56,implemented:22}}))
+    .toBe('Scope changed. Applicable went from 54 to 56. Implemented went from 23 to 22.');
+});
+
+test('native dialog opens the exact program, offers the four approved ranges and keeps canonical current independent from old history', async () => {
   api.get.mockResolvedValue({data: history({snapshots: [snapshot(-60, 55)], forecast_snapshots: []})});
   await act(async () => root.render(<Harness />));
-  expect(api.get).toHaveBeenCalledWith('/portfolio/reporting/history', expect.objectContaining({params: {client_id: 'isolated', program_key: 'cis-ig3', range: '3m', include_archived: false}}));
-  expect([...dialog().querySelectorAll('[aria-label="History period"] button')].map(node => node.textContent)).toEqual(['1 month', '3 months', '6 months', '12 months', '3 years']);
-  expect(dialog().querySelector('.ph-metrics > div').textContent).toContain('57.1%'); expect(dialog().querySelector('.ph-metrics > div').textContent).toContain('32 of 56');
+  expect(api.get).toHaveBeenCalledWith('/portfolio/reporting/history', expect.objectContaining({params: {client_id: 'isolated', program_key: 'cis-ig3', range: '6m', include_archived: false}}));
+  expect([...dialog().querySelectorAll('[aria-label="History period"] button')].map(node => node.textContent)).toEqual(['1 month', '3 months', '6 months', '12 months']);
+  expect(dialog().querySelector('.ph-current-value').textContent).toContain('57.1%'); expect(dialog().querySelector('.ph-current-value').textContent).toContain('32 of 56');
   expect(dialog().querySelector('.ph-readout').textContent).toContain('55'); expect(dialog().querySelector('.ph-readout').textContent).not.toContain('matches current committed state');
-  expect(dialog().querySelector('.ph-metrics > div:nth-child(2)').textContent).toContain('No genuine period boundary');
-  expect(dialog().querySelector('.ph-metrics > div:nth-child(2)').textContent).not.toContain('No change');
+  expect(dialog().querySelector('.ph-metrics > div:first-child').textContent).toContain('No genuine period boundary');
+  expect(dialog().querySelector('.ph-metrics > div:first-child').textContent).not.toContain('No change');
   await click('Open CIS IG3 workspace →'); expect(navigate).toHaveBeenLastCalledWith('/compliance/cis-ig1');
   await click('Open client portal'); expect(navigate).toHaveBeenLastCalledWith('/dashboard');
 });
@@ -46,13 +69,13 @@ test('native dialog opens the exact program, offers all five ranges and keeps ca
 test('range changes preserve expanded data and the 90-day estimate, while reopening resets range/data and retains chart view', async () => {
   await act(async () => root.render(<Harness />)); await click('View data'); await click('Status mix');
   const estimate = dialog().querySelector('.ph-metrics > div:last-child').textContent;
-  for (const range of ['1 month', '6 months', '12 months', '3 years']) {
+  for (const range of ['1 month', '3 months', '12 months']) {
     await click(range); expect(dialog().querySelector('#portfolio-history-data')).toBeTruthy();
     expect(dialog().querySelector('.ph-metrics > div:last-child').textContent).toBe(estimate);
   }
   expect(dialog().querySelectorAll('#portfolio-history-data tbody tr')).toHaveLength(3);
   await click('Close'); expect(dialog()).toBeNull(); expect(document.activeElement.textContent).toBe('Open exact program history');
-  await click('Open exact program history'); expect(dialog().querySelector('[aria-label="History period"] [aria-pressed="true"]').textContent).toBe('3 months');
+  await click('Open exact program history'); expect(dialog().querySelector('[aria-label="History period"] [aria-pressed="true"]').textContent).toBe('6 months');
   expect(dialog().querySelector('#portfolio-history-data')).toBeNull(); expect(dialog().querySelector('[aria-label="Chart view"] [aria-pressed="true"]').textContent).toBe('Status mix');
 });
 
@@ -60,19 +83,19 @@ test('program tabs replace current/history/routes, retain data expansion and rej
   let resolveOld;
   api.get.mockImplementation((path, {params}) => params.program_key === 'cis-ig3' ? new Promise(resolve => { resolveOld = resolve; }) : Promise.resolve({data: history({program_key: 'soc-2', current: programs[1].current, snapshots: [programs[1].current], forecast_snapshots: []})}));
   await act(async () => root.render(<Harness />)); await click('View data'); await tab('SOC 2');
-  expect(dialog().querySelector('.ph-metrics > div').textContent).toContain('17.9%'); expect(dialog().textContent).toContain('Security and Availability');
+  expect(dialog().querySelector('.ph-current-value').textContent).toContain('17.9%'); expect(dialog().textContent).toContain('Security and Availability');
   await act(async () => resolveOld({data: history({current: snapshot(0, 55)})}));
-  expect(dialog().querySelector('.ph-metrics > div').textContent).not.toContain('98.2%'); expect(dialog().querySelector('#portfolio-history-data')).toBeTruthy();
+  expect(dialog().querySelector('.ph-current-value').textContent).not.toContain('98.2%'); expect(dialog().querySelector('#portfolio-history-data')).toBeTruthy();
   await click('Open SOC 2 workspace →'); expect(navigate).toHaveBeenLastCalledWith('/compliance/soc-2');
 });
 
 test('same-sized scope changes are disclosed and reconstructed positions retain both effective and capture dates', async () => {
-  const baseline = snapshot(-100, 20), reconstructed = snapshot(-30, 29, {captured_at: AT, observation_kind: 'reconstructed'});
+  const baseline = snapshot(-200, 20), reconstructed = snapshot(-30, 29, {captured_at: AT, observation_kind: 'reconstructed'});
   api.get.mockResolvedValue({data: history({snapshots: [reconstructed, snapshot(0, 32)], comparison: {baseline, baseline_effective_at_start: true, scope_changed: true},
     scope_changes: [{effective_at: '2026-09-01T12:00:00Z', before: {denominator: 56}, after: {denominator: 56}}]})});
   await act(async () => root.render(<Harness />)); await click('View data');
   expect(dialog().textContent).toContain('Scope changed'); expect(dialog().textContent).toContain('denominator reduction is not additional implemented work');
-  const rows = dialog().querySelectorAll('#portfolio-history-data tbody tr'); expect(rows).toHaveLength(2);
+  const rows = dialog().querySelectorAll('#portfolio-history-data tbody tr'); expect(rows).toHaveLength(3); expect(rows[2].textContent).toContain("In effect at period start");
   expect(rows[1].textContent).toContain('Sep 13'); expect(rows[1].textContent).toContain('Captured'); expect(rows[1].textContent).toContain('Oct 13');
   expect(dialog().querySelectorAll('.ph-scope-marker')).toHaveLength(1);
 });
@@ -80,11 +103,11 @@ test('same-sized scope changes are disclosed and reconstructed positions retain 
 test('no history and failed history reads preserve real current counts without false changes or invented points', async () => {
   api.get.mockResolvedValue({data: history({snapshots: [], forecast_snapshots: []})});
   await act(async () => root.render(<Harness choices={[programs[0]]} />));
-  expect(dialog().querySelector('[role="tablist"]')).toBeNull(); expect(dialog().querySelector('.ph-metrics > div').textContent).toContain('57.1%');
+  expect(dialog().querySelector('[role="tablist"]')).toBeNull(); expect(dialog().querySelector('.ph-current-value').textContent).toContain('57.1%');
   expect(dialog().textContent).toContain('No saved positions'); expect(dialog().querySelectorAll('.ph-marker')).toHaveLength(0);
-  expect(dialog().querySelector('.ph-metrics > div:nth-child(2)').textContent).toContain('Unavailable'); expect(dialog().querySelector('.ph-metrics > div:last-child').textContent).toContain('Not estimated');
+  expect(dialog().querySelector('.ph-metrics > div:first-child').textContent).toContain('Unavailable'); expect(dialog().querySelector('.ph-metrics > div:last-child').textContent).toContain('Not estimated');
   api.get.mockRejectedValue(new Error('History service unavailable')); await click('1 month');
-  expect(dialog().querySelector('[role="alert"]').textContent).toContain('History service unavailable'); expect(dialog().querySelector('.ph-metrics > div').textContent).toContain('57.1%');
+  expect(dialog().querySelector('[role="alert"]').textContent).toContain('History service unavailable'); expect(dialog().querySelector('.ph-current-value').textContent).toContain('57.1%');
   expect(dialog().querySelectorAll('.ph-marker')).toHaveLength(0);
 });
 
@@ -97,7 +120,7 @@ test('chart keyboard and pointer choose genuine nearest observations, keep dates
   await key('ArrowRight'); expect(container.querySelector('.ph-readout').textContent).toContain('29'); await key('End'); expect(container.querySelector('.ph-readout').textContent).toContain('32');
   svg.getBoundingClientRect = () => ({left: 0, width: 900});
   await act(async () => svg.querySelector('rect[fill="transparent"]').dispatchEvent(new MouseEvent('pointermove', {bubbles: true, clientX: 350})));
-  expect(container.querySelector('.ph-readout').textContent).toContain('26'); expect(container.textContent).toContain('Vertical axis zoomed');
+  expect(container.querySelector('.ph-readout').textContent).toContain('26'); expect(container.textContent).not.toContain('Vertical axis zoomed'); expect(container.textContent).toContain('100%');
   await act(async () => root.render(<PortfolioHistoryChart points={points} start="2026-07-13T12:00:00Z" asOf={AT} view="mix" current={snapshot(0, 32)} scopeChanges={[]} />));
   expect(container.textContent).toContain('0%'); expect(container.textContent).toContain('100%'); expect(container.textContent).not.toContain('Vertical axis zoomed');
   expect([...container.querySelectorAll('.ph-grid')].map(line => line.nextSibling.textContent)).toEqual(['0%', '25%', '50%', '75%', '100%']);
@@ -131,7 +154,7 @@ test('touch pointerdown reads genuine nearest positions after range, program and
 
 test('a new two-week sparkline retains the common ninety-day axis rather than stretching first capture to the left edge', async () => {
   await act(async () => root.render(<PortfolioSparkline program={{snapshots_90d: [snapshot(-14, 29), snapshot(0, 32)]}} asOf={AT} span={8} />));
-  const svg = container.querySelector('svg'), points = svg.querySelector('polyline').getAttribute('points').split(' ');
+  const svg = container.querySelector('svg'), points = svg.querySelector('.gp-spark-line').getAttribute('d').split(' ').map(value => value.slice(1));
   expect(svg.dataset.start).toBe('2026-07-15T12:00:00.000Z'); expect(Number(points[0].split(',')[0])).toBeGreaterThan(100); expect(Number(points[1].split(',')[0])).toBe(131);
 });
 
@@ -149,8 +172,8 @@ test.each([{client_id: 'another-client'}, {program_key: 'another-program'}])('a 
   api.get.mockResolvedValue({data: history({...wrongIdentity, current: snapshot(0, 55)})});
   await act(async () => root.render(<Harness choices={[programs[0]]} />));
     expect(dialog().querySelector('[role="alert"]').textContent).toContain('does not belong to the selected client program');
-    expect(dialog().querySelector('.ph-metrics > div').textContent).toContain('57.1%');
-    expect(dialog().querySelector('.ph-metrics > div').textContent).not.toContain('98.2%');
+    expect(dialog().querySelector('.ph-current-value').textContent).toContain('57.1%');
+    expect(dialog().querySelector('.ph-current-value').textContent).not.toContain('98.2%');
 });
 
 test('backdrop dismisses the native modal and restores its initiating control', async () => {
@@ -170,12 +193,12 @@ test('partial missing native source cannot be presented as zero scope, assessed 
   const current = snapshot(0, 0, {availability: 'partial', denominator: 0, assessed: 0, counts: counts(56).map(value => ({...value, count: 0})), reason: 'Expected native records are missing'});
   api.get.mockResolvedValue({data: history({current, snapshots: [], forecast_snapshots: []})});
   await act(async () => root.render(<Harness choices={[{...programs[0], current}]} />));
-  expect(dialog().querySelector('.ph-metrics > div').textContent).toContain('Unavailable');
-  expect(dialog().querySelector('.ph-current-status').textContent).toContain('Applicable scope unavailable');
-  expect(dialog().querySelector('.ph-current-status').textContent).toContain('Expected native records are missing');
+  expect(dialog().querySelector('.ph-current-value').textContent).toContain('Unavailable');
+  expect(dialog().querySelector('.ph-breakdown').textContent).toContain('Applicable scope unavailable');
+  expect(dialog().querySelector('.ph-breakdown').textContent).toContain('Expected native records are missing');
   expect(dialog().querySelector('.ph-legend')).toBeNull();
-  expect(dialog().querySelector('.ph-current-status').textContent).not.toContain('0 applicable');
-  expect(dialog().querySelector('.ph-metrics > div').textContent).not.toContain('0 of 0');
+  expect(dialog().querySelector('.ph-breakdown').textContent).not.toContain('0 applicable');
+  expect(dialog().querySelector('.ph-current-value').textContent).not.toContain('0 of 0');
 });
 
 test('an unavailable retained position keeps its real date and diagnostic without zero counts or a current-state match', async () => {
@@ -200,7 +223,7 @@ test('program tabs and genuine zero-scope history distinguish no applicable scop
   const tabs = [...dialog().querySelectorAll('[role="tab"]')];
   expect(tabs[0].querySelector('small').textContent).toBe('No applicable scope');
   expect(tabs[1].querySelector('small').textContent).toBe('Unavailable');
-  expect(dialog().querySelector('.ph-metrics > div').textContent).toContain('No applicable scope');
+  expect(dialog().querySelector('.ph-current-value').textContent).toContain('No applicable scope');
   expect(dialog().querySelector('.ph-metrics > div:last-child').textContent).toContain('Not estimated');
   await click('View data');
   expect(dialog().querySelector('#portfolio-history-data tbody tr td:last-child').textContent).toBe('N/A');
@@ -210,4 +233,17 @@ test('Escape closes the native modal and restores focus to its initiating contro
   await act(async () => root.render(<Harness initial={false} />)); await click('Open exact program history');
   await act(async () => dialog().dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true})));
   expect(dialog()).toBeNull(); expect(document.activeElement.textContent).toBe('Open exact program history');
+});
+
+test('carried sparkline baseline participates in shared scaling without connecting an unproved gap', async () => {
+  const baseline = snapshot(-100, 2), endpoint = snapshot(0, 54);
+  const program = {snapshots_90d:[endpoint],comparison_90d:{baseline,baseline_effective_at_start:true}};
+  const span = sparklineSpan([program],AT);
+  expect(span).toBeGreaterThan(90);
+  await act(async () => root.render(<PortfolioSparkline program={program} asOf={AT} span={span}/>));
+  const path = container.querySelector('.gp-spark-line').getAttribute('d');
+  expect(path.match(/M/g)).toHaveLength(2);
+  expect(container.querySelectorAll('.gp-spark-position')).toHaveLength(1);
+  for (const command of path.split(' ')) expect(Number(command.split(',')[1])).toBeGreaterThanOrEqual(0);
+  expect(Number(container.querySelector('.gp-spark-end').getAttribute('cy'))).toBeLessThan(30);
 });

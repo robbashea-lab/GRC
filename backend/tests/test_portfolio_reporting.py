@@ -12,6 +12,26 @@ import portfolio_progress
 
 
 class PortfolioReportingTests(ClientDashboardSourcesTests):
+    async def test_scope_details_retain_membership_for_each_same_timestamp_transition(self):
+        await self.seed_program()
+        client = await server.db.clients.find_one({'client_id': 'a'})
+        rows = await server.db.framework_assessments.find({'client_id': 'a'}).to_list(None)
+        first, second = rows[:2]
+        with patch.object(reports, 'now', return_value='2026-10-12T12:00:00+00:00'):
+            await reports.capture_client(server.db, client)
+            await server.db.framework_assessments.update_one({'_id': first['_id']}, {'$set': {'status': 'not_applicable', 'na_rationale': 'Isolated scope test'}})
+            await reports.capture_client(server.db, client)
+            await server.db.framework_assessments.update_one({'_id': first['_id']}, {'$set': {'status': 'not_assessed'}})
+            await server.db.framework_assessments.update_one({'_id': second['_id']}, {'$set': {'status': 'not_applicable', 'na_rationale': 'Isolated substitution'}})
+            await reports.capture_client(server.db, client)
+        self.sign_in('admin')
+        response = await self.client.get('/api/portfolio/reporting/history', params={'client_id':'a','program_key':'cis-ig1','range':'6m'})
+        self.assertEqual(response.status_code, 200, response.text)
+        transitions = [change for change in response.json()['scope_changes'] if change.get('membership_known')]
+        self.assertEqual(transitions[0]['removed_ids'], [first['definition_id']])
+        self.assertEqual(transitions[1]['added_ids'], [first['definition_id']])
+        self.assertEqual(transitions[1]['removed_ids'], [second['definition_id']])
+
     def test_compact_historical_projection_retains_counts_identity_and_continuity_without_catalog_payload(self):
         client = {'client_id': 'large', 'name': 'Isolated large contract fixture', 'status': 'active',
             'onboarding_baseline': {'completed': True}, 'framework_settings': {'cis-ig1': {'implementation_group': 3}}}

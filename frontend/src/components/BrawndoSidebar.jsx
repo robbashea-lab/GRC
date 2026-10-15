@@ -8,8 +8,6 @@ import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import {canExportReports} from '@/lib/permissions';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
-import {usePortfolioView} from '@/lib/usePortfolioView';
-import {assignedToUser} from '@/lib/portfolioProgress';
 import {clientDestination} from '@/lib/clientSelection';
 import NotificationBell from './NotificationBell';
 import {BrandMark} from './Brand';
@@ -54,24 +52,21 @@ const Brand=()=><div className="bsb-brand" aria-label="GoverNara by Prestige Wor
 
 // Portfolio (platform) context in the reference theme: Portfolio, the client navigator, Administration.
 export function BrawndoPlatformSidebar({adminItems=[]}){
-  const {user}=useAuth(),{clients,switchClient,loading,error,refresh}=useOrg(),nav=useNavigate();
+  const {clients,switchClient,loading,error,refresh}=useOrg(),nav=useNavigate();
   const [theme]=useBrawndoTheme(),[q,setQ]=useState('');
-  const [portfolioView,updatePortfolioView]=usePortfolioView(user);
-  const filter=portfolioView.mine?'assigned':'all';
-  const setFilter=value=>updatePortfolioView({mine:value==='assigned'});
-  const active=useMemo(()=>(clients||[]).filter(c=>(c.status||'active')!=='archived'),[clients]);
-  const scoped=useMemo(()=>{let list=active;
-    if(filter==='assigned')list=list.filter(c=>assignedToUser(c,user?.user_id));
-    const s=q.trim().toLowerCase();if(s)list=list.filter(c=>(c.name||'').toLowerCase().includes(s));
-    return [...list].sort((a,b)=>(a.name||'').trim().localeCompare((b.name||'').trim()));},[active,filter,user?.user_id,q]);
-  const empty=loading?'Loading clients…':filter==='assigned'?'None assigned to you.':q?'No matches.':'No clients available.';
+  const active=useMemo(()=>[...new Map((clients||[]).filter(c=>(c.status||'active')!=='archived').map(c=>[c.client_id,c])).values()],[clients]);
+  const scoped=useMemo(()=>{
+    const search=q.trim().toLowerCase();
+    return active.filter(c=>!search||(c.name||'').toLowerCase().includes(search)).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  },[active,q]);
+  const empty=loading?'Loading clients…':q?'No matches.':'No clients available.';
   return <aside className="app-sidebar bsb w-64 shrink-0 hidden lg:flex flex-col h-screen sticky top-0" data-theme={theme}>
     <div className="bsb-head"><Brand/></div>
     <nav className="bsb-nav" data-testid="sidebar-platform" aria-label="Platform">
       <div className="bsb-group" data-testid="sidebar-clients-section">
         <NavLink to="/clients" end data-testid="nav-clients" className={({isActive})=>`bsb-link${isActive?' is-active':''}`}><Briefcase size={17} aria-hidden="true"/><span>Portfolio</span></NavLink>
         <div className="bsb-group-label bsb-sub-label">Clients</div>
-        <div className="bsb-seg" role="group" aria-label="Client list scope">{[['all','All'],['assigned','Mine']].map(([id,label])=><button key={id} type="button" data-testid={`sidebar-filter-${id}`} aria-pressed={filter===id} className={filter===id?'is-active':''} onClick={()=>setFilter(id)}>{label}</button>)}</div>
+
         {active.length>8&&<input className="bsb-search" value={q} onChange={e=>setQ(e.target.value)} placeholder="Search clients…" aria-label="Search clients" data-testid="sidebar-client-search"/>}
         <div data-testid="sidebar-client-list">
           {error?<div className="bsb-note" role="alert" data-testid="sidebar-client-error">Clients could not be loaded. <button type="button" onClick={refresh}>Retry</button></div>

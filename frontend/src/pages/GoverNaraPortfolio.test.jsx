@@ -54,12 +54,12 @@ test('trimmed framework search matches clients but selected framework controls r
   await click('All Clients'); await search('  RECORDED lead  '); expect(container.querySelector('.gp-countbar').textContent).toContain('2 clients · 3 programs');
 });
 
-test('minimum visible program sorts preserve grouping, missing data last, and never-active clients first', async () => {
+test('minimum visible program sorts preserve grouping, missing data last, and most recent activity first', async () => {
   api.get.mockResolvedValue({data: overview({clients: [client('Alpha', {last_activity: {at: '2026-10-12T12:00:00Z', label: 'Review completed'}}), client('Beta'), client('Zeta')], programs: [program('Alpha', 'cis-ig3', 9), program('Alpha', 'soc-2', 1), program('Beta', 'cis-ig3', 2), program('Zeta', 'cis-ig3', 0, {current: position(0, {availability: 'unavailable'})})]})});
   await act(async () => root.render(<ClientDirectory />)); await select('Sort clients', 'progress');
   expect([...container.querySelectorAll('.gp-first-row')].map(node => node.dataset.clientId)).toEqual(['Alpha', 'Beta', 'Zeta']);
   await select('Framework', 'cis-ig3'); expect([...container.querySelectorAll('.gp-first-row')].map(node => node.dataset.clientId)).toEqual(['Beta', 'Alpha', 'Zeta']);
-  await select('Sort clients', 'activity'); expect([...container.querySelectorAll('.gp-first-row')].map(node => node.dataset.clientId)).toEqual(['Beta', 'Zeta', 'Alpha']);
+  await select('Sort clients', 'activity-desc'); expect([...container.querySelectorAll('.gp-first-row')].map(node => node.dataset.clientId)).toEqual(['Alpha', 'Beta', 'Zeta']);
   expect(container.textContent).toContain('Never active');
 });
 
