@@ -93,6 +93,13 @@ A native hang holding the GIL may prevent the callback from running. Cancellatio
 prevents callbacks that have not passed the active check; an already-running
 callback may outlive its bounded one-second teardown join. Earlier session/module
 fixture setup is outside the per-test diagnostic lifetime. No locals are captured.
+CI189's full backend campaign passed (1,014 tests / 16,250 subtests), but log review
+found pytest's fd capture could hide the periodic output. Configuration now owns
+a duplicate of the original stderr destination, passed explicitly to each worker's
+watchdog and closed at unconfigure. This also preserves Windows execnet's retained
+stderr descriptor. An ordinary-capture xdist probe now exposes the actual blocked
+frame and worker/test marker in the run log. The follow-up still requires fresh
+exact-head full CI; the prior backend pass is historical evidence only.
 Manual binary evidence round trips, every role/cadence combination and authenticated
 staging durability require their own evidence; source retention is not execution.
 

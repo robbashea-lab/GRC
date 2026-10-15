@@ -49,9 +49,33 @@ def pytest_configure(config):
         raise pytest.UsageError(str(error)) from error
     config.addinivalue_line("markers", "offline: isolated in-process test without an external target")
     config.addinivalue_line("markers", "environment: may mutate the explicitly selected test server")
+    if timeout:
+        # Retain the original destination before pytest redirects fd2 for capture.
+        try:
+            descriptor = sys.stderr.fileno()
+            if descriptor < 0:
+                raise ValueError("stderr has no file descriptor")
+        except (AttributeError, ValueError):
+            descriptor = sys.__stderr__.fileno()
+        owned_descriptor = os.dup(descriptor)
+        try:
+            config.grc_stack_stream = os.fdopen(owned_descriptor, "w", buffering=1)
+        except BaseException:
+            os.close(owned_descriptor)
+            raise
 
 
 def pytest_unconfigure(config):
+    stream = getattr(config, "grc_stack_stream", None)
+    if stream is not None:
+        try:
+            stream.close()
+        except (OSError, ValueError) as error:
+            try:
+                print(f"[python-stack-watchdog] stream cleanup unavailable ({type(error).__name__})", file=sys.__stderr__)
+            except (OSError, ValueError):
+                pass  # Diagnostic cleanup must not replace the test outcome.
+        config.grc_stack_stream = None
     if hasattr(config, "grc_original_backend_url"):
         previous = config.grc_original_backend_url
         if previous is None:
@@ -64,7 +88,8 @@ def pytest_unconfigure(config):
 def python_stack_diagnostic(request, worker_id):
     # Runs in each xdist worker; its lifetime includes unittest setup/teardown.
     with stack_watchdog(request.config.getoption("--python-stack-timeout"),
-                        f"{worker_id} {request.node.nodeid}"):
+                        f"{worker_id} {request.node.nodeid}",
+                        stream=getattr(request.config, "grc_stack_stream", None)):
         yield
 
 

@@ -24,7 +24,7 @@ def stack_watchdog(seconds, label, stream=None):
             faulthandler.dump_traceback(file=destination, all_threads=True)
         except (OSError, ValueError, RuntimeError) as error:
             try:
-                print(f"[python-stack-watchdog] {label}: diagnostic unavailable ({type(error).__name__})", file=sys.__stderr__, flush=True)
+                print(f"[python-stack-watchdog] {label}: diagnostic unavailable ({type(error).__name__})", file=destination, flush=True)
             except (OSError, ValueError):
                 pass  # No usable diagnostic stream; preserve the test outcome.
 
