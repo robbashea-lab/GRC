@@ -129,11 +129,9 @@ html[data-visual-surface] :is(.ui-dialog,.ui-sheet) :is(input:not([type=checkbox
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) label {font:500 12px/1.5 var(--font);color:var(--muted)}
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) .drawer-tab {font:500 12.5px/1.5 var(--font);white-space:nowrap;flex:none}
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) .drawer-tab.active {color:var(--link);border-color:var(--link)}
-/* Keep the references' browser-native gutter instead of guessing its platform-dependent width. */
-html[data-visual-surface]::-webkit-scrollbar,html[data-visual-surface] ::-webkit-scrollbar,
-html[data-visual-surface]::-webkit-scrollbar-track,html[data-visual-surface] ::-webkit-scrollbar-track,
-html[data-visual-surface]::-webkit-scrollbar-thumb,html[data-visual-surface] ::-webkit-scrollbar-thumb,
-html[data-visual-surface]::-webkit-scrollbar-thumb:hover,html[data-visual-surface] ::-webkit-scrollbar-thumb:hover {all:revert}
+/* Reverting author pseudo styles leaves blank scrollbar parts; index.css excludes this gate. */
+html[data-visual-surface] {color-scheme:light}
+html[data-visual-surface][data-visual-theme=dark] {color-scheme:dark}
 
 .bsb-client-industry {display:none}
 .brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bsb-client .bsb-group-label {display:none}

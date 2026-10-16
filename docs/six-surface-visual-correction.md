@@ -64,6 +64,20 @@ the source; do not identify it by the parent 2cef checkpoint SHA.
 
 ## Evidence and its limits
 
+Follow-up: both local builds passed for published `7a41e849fb607036e82a70b45898793ea1aa52f5`
+(tree `b41c0991a7b4a982f6e2b642258d349561d850c9`, local equivalent `9ab6b306`).
+Its [CI198](https://github.com/robbashea-lab/GRC/actions/runs/38961534150) started
+at 20:20:32Z. Subsequent direct comparison of the saved primary modal rasters
+confirmed blank scrollbar parts: `all:revert` restored width but did not restore
+browser painting. This is a presentation defect, not an accepted adaptation.
+The successor excludes gated root/descendant scrollbars from the four global
+author pseudo rules, removes the ineffective reset, and sets the gated root's
+native light/dark color scheme. Zero-specificity prefixes preserve the original
+cascade outside the existing, cleanup-managed gate. Independent AI source review
+is clear. New compiled visual observations and a complete successor release gate
+are required; CI198 cannot qualify this successor. No six-surface staging deploy
+has occurred.
+
 Evidence receipts are in the task workspace's `outputs/` directory; they are not
 all committed repository files. Start with:
 
