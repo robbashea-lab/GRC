@@ -6,17 +6,17 @@ import {loadClientDashboard} from '@/lib/loadClientDashboard';
 import api from '@/lib/api';
 jest.mock('@/context/OrgContext',()=>({useOrg:jest.fn()}));
 let mockDashboardUser={user_id:'u',role:'super_admin'};
-let mockWorkspaceMode='standard';
+let mockWorkspaceMode='standard',mockDashboardSearch='';
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockDashboardUser,workspaceMode:mockWorkspaceMode})}));
 jest.mock('@/components/RecordDrawer',()=>({kind,record,initialValues,onSaved,onOpenChange})=><div role="dialog" aria-label="Native record test boundary"><span>{kind}: {record.title}</span>{initialValues?.occurrence&&<span>Historical period: {initialValues.occurrence.period}</span>}<button onClick={onSaved}>Save native record</button><button onClick={()=>onOpenChange(false)}>Cancel native record</button></div>);
 jest.mock('@/lib/loadClientDashboard',()=>({loadClientDashboard:jest.fn()}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn(),delete:jest.fn()},formatError:e=>e.message}));
-jest.mock('react-router-dom',()=>({Link:({to,children,...p})=><a href={to} {...p}>{children}</a>,useNavigate:()=>jest.fn(),useLocation:()=>({pathname:'/dashboard'}),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
+jest.mock('react-router-dom',()=>({Link:({to,children,...p})=><a href={to} {...p}>{children}</a>,useNavigate:()=>jest.fn(),useLocation:()=>({pathname:'/dashboard',search:mockDashboardSearch}),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 let root,container;
 const row=(id='t',kind='tasks')=>({key:kind+':'+id,id,kind,type:kind==='tasks'?'Action Item':'Review',title:'Synthetic work '+id,status:'open',owner:'Unassigned',unassigned:true,due_date:'2026-09-01'});
 const queue=items=>({as_of:'2026-10-05',groups:Object.fromEntries(['all','pastDue','due30','unassigned'].map(key=>[key,{total:items.length,items:items.slice(0,9)}]))});
 const snapshot=items=>({contract_version:2,members:[],programs:[],programRows:{},queue:queue(items)});
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockDashboardUser={user_id:'u',role:'super_admin'};mockWorkspaceMode='standard';container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);useOrg.mockReturnValue({currentClientId:'a',currentClient:{name:'Synthetic A'}});loadClientDashboard.mockReset();Object.values(api).forEach(fn=>fn.mockReset());});
+beforeEach(()=>{localStorage.setItem('grc_client_id','demo_brawndo');sessionStorage.setItem('grc_client_id','demo_brawndo');global.IS_REACT_ACT_ENVIRONMENT=true;mockDashboardUser={user_id:'u',role:'super_admin'};mockWorkspaceMode='standard';mockDashboardSearch='';container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);useOrg.mockReturnValue({currentClientId:'a',currentClient:{name:'Synthetic A'}});loadClientDashboard.mockReset();Object.values(api).forEach(fn=>fn.mockReset());});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();localStorage.clear();});
 const click=async text=>act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());
 test('shared empty layout has compact filters instead of tiles',async()=>{loadClientDashboard.mockResolvedValue(snapshot([]));await act(async()=>root.render(<Dashboard/>));expect(container.textContent).toContain('Synthetic A Dashboard');expect(container.textContent).toContain('Priority overview');expect(container.querySelectorAll('.bd-tile')).toHaveLength(0);expect(container.querySelectorAll('.quick-filters button')).toHaveLength(4);expect(container.textContent).toContain('No items match these filters.');expect(container.textContent).not.toMatch(/Posture|Ranked by|Board Report|Work items:|Next:/);expect(loadClientDashboard.mock.calls[0][1].workQueue).toBe(true);});
@@ -57,7 +57,7 @@ test.each(['dismiss','replace'])('late dashboard refresh cannot %s the current s
 
 test('canonical demo alone uses the new dashboard and retains native save and refresh',async()=>{
  mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
- useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo'}});
+ useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}});
  const items=[row('native')];loadClientDashboard.mockResolvedValue(snapshot(items));
  api.get.mockImplementation(async(path,options)=>({data:path==='/dashboard'?{client_id:'demo_brawndo',items,total:1,offset:options.params.offset,limit:options.params.limit,has_more:false}:{client_id:'demo_brawndo',task_id:'native',title:items[0].title,description:'Stored native purpose',source_type:'manual'}}));
  await act(async()=>root.render(<Dashboard/>));
@@ -65,6 +65,7 @@ test('canonical demo alone uses the new dashboard and retains native save and re
  expect(container.querySelector('[aria-label="Work summary"]')).not.toBeNull();
  expect(loadClientDashboard.mock.calls[0][1].includeProgramMetadata).toBe(true);
  expect(container.textContent).toContain('program is unavailable');
+ expect(container.querySelector('[aria-label="CIS IG1 Status"]').classList.contains('bdd-card')).toBe(true);
  await click('Synthetic work native');await click('Open Action Item');await click('Save native record');await click('Cancel native record');
  expect(document.querySelector('[role=dialog]').textContent).toContain('Stored native purpose');
  expect(loadClientDashboard).toHaveBeenCalledTimes(2);
@@ -72,7 +73,7 @@ test('canonical demo alone uses the new dashboard and retains native save and re
 
 test('switching mode immediately hides pilot and ignores an outstanding demo response',async()=>{
  mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
- useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo'}});
+ useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}});
  let resolveDemo;loadClientDashboard.mockImplementationOnce(()=>new Promise(resolve=>{resolveDemo=resolve;}));
  await act(async()=>root.render(<Dashboard/>));const signal=loadClientDashboard.mock.calls[0][1].signal;
  mockWorkspaceMode='standard';mockDashboardUser={...mockDashboardUser,workspace_mode:'standard'};loadClientDashboard.mockResolvedValue(snapshot([]));
@@ -84,7 +85,7 @@ test('switching mode immediately hides pilot and ignores an outstanding demo res
 
 test('pilot refresh replaces queue fields and dismisses work removed by native completion',async()=>{
  mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
- useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo'}});
+ useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}});
  let items=[row('saved')];loadClientDashboard.mockImplementation(async()=>snapshot(items));
  api.get.mockImplementation(async(path,options)=>({data:path==='/dashboard'?{client_id:'demo_brawndo',items,total:items.length,offset:options.params.offset,limit:options.params.limit,has_more:false}:{client_id:'demo_brawndo',task_id:'saved',title:'Synthetic work saved',source_type:'manual'}}));
  await act(async()=>root.render(<Dashboard/>));await click('Synthetic work saved');await click('Open Action Item');
@@ -94,3 +95,25 @@ test('pilot refresh replaces queue fields and dismisses work removed by native c
  await click('Open Action Item');items=[];await click('Save native record');await click('Cancel native record');
  expect(document.querySelector('[role=dialog]')).toBeNull();expect(container.textContent).toContain('No open work items.');
 });
+
+ test.each(['selection','route'])('shared appearance boundary excludes a mismatched %s identity',async mismatch=>{
+ mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
+ useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}});
+ if(mismatch==='selection')localStorage.setItem('grc_client_id','another-client');else mockDashboardSearch='?client_id=another-client';
+ loadClientDashboard.mockResolvedValue(snapshot([]));
+ await act(async()=>root.render(<Dashboard/>));
+ expect(container.querySelector('.brawndo-demo-dashboard')).toBeNull();
+ expect(container.textContent).toContain('Priority overview');
+ });
+ test('same-client appearance suspension keeps the open native record mounted',async()=>{
+ mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
+ const org={currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}};useOrg.mockReturnValue(org);
+ const items=[row('draft')];loadClientDashboard.mockResolvedValue(snapshot(items));
+ api.get.mockImplementation(async(path,options)=>({data:path==='/dashboard'?{client_id:'demo_brawndo',items,total:1,offset:options.params.offset,limit:options.params.limit,has_more:false}:{client_id:'demo_brawndo',task_id:'draft',title:items[0].title,source_type:'manual'}}));
+ await act(async()=>root.render(<Dashboard/>));await click('Synthetic work draft');await click('Open Action Item');
+ const editor=document.querySelector('[aria-label="Native record test boundary"]');
+ useOrg.mockReturnValue({...org,loading:true});await act(async()=>root.render(<Dashboard/>));
+ expect(container.querySelector('.brawndo-demo-dashboard')).toBeNull();expect(document.querySelector('[aria-label="Native record test boundary"]')).toBe(editor);
+ useOrg.mockReturnValue(org);await act(async()=>root.render(<Dashboard/>));
+ expect(document.querySelector('[aria-label="Native record test boundary"]')).toBe(editor);expect(api.patch).not.toHaveBeenCalled();
+ });

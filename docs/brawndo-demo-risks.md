@@ -1,3 +1,65 @@
+# October 16 six-surface correction — current Risks handoff
+
+This section supersedes the presentation and coordination guidance below. The
+older sections are historical evidence, not current rendered acceptance.
+
+Owner: Risks chat 01a14116-9e44-72f3-9a7a-392b6de811f0.
+Branch: codex/six-surface-risks-20261016.
+Base: 847bceacc84f93355ae15c01fc051c6c7a2f90d2.
+Agent007 owns cumulative integration, shared shell/theme/portals/full native
+popup styling, browser coordination and release. This branch changes only Risks
+presentation, its focused tests and this handoff. No deployment is performed here.
+
+Authority: GoverNara-Six-Surface-Visual-Correction-20261016 visual-targets/risks.html,
+73,291 bytes, SHA256
+50c1c2a68e055aef149c1f996ab0054db1c285b5a36068ae59aae5f05eba567f.
+All twelve supplied reference/target files matched manifest hashes and lengths.
+The target now governs page fonts, palette, density and geometry. Native records,
+predicates, permissions, commands, lifecycle, exports and full forms remain
+operational authority. No sample rows, mock schedules, autosave or Undo introduced.
+
+Implemented: target-scoped light/dark tokens and Segoe UI stack; numbered matrix
+axes; equal summary cards; grouped Coming Up dates with every distinct native
+record opener; target primary filters plus retained native controls under More
+filters; owner initials, score/level detail, native IDs, score bars and row grid.
+The existing canonical demo_brawndo Explore Demo /risks gate is unchanged.
+Shared files, APIs, persistence, commands and dependencies are unchanged.
+
+Target selector/geometry map for the integrator's rendered comparison:
+- Root .bpage.approved-risk-register.brawndo-demo-risks: padding 28px 24px 120px,
+  gap 20px, max width 1600px, 13.5px/1.5 Segoe UI/Inter/Arial.
+- .bdr-overview: padding 16px 24px 18px, gaps 20px/32px; stacks at 1240px.
+- .bdr-cell: 54px by 44px, gap 4px; 50px by 48px at 420px.
+- .bdr-figures: four equal cards, 1px gaps, 14px 16px 15px card padding;
+  two columns at 1100px.
+- .register-table-frame: inline-size container; seven-column row grid
+  76px minmax(280px,3fr) 170px minmax(160px,1.1fr) 130px 150px 12px,
+  16px gaps/padding; compact areas at container width 860px.
+- .bdr-scorebar: maximum 280px, native assessed likelihood times impact,
+  native bands 1–4 / 5–9 / 10–14 / 15–25, ticks 5/10/15/20.
+- .bdr-avatar: 28px square, radius 8px; original native owner/account note retained.
+
+Necessary native adaptations: full historical Last Review dates remain visible
+with their independent filter/sort control under More filters; additional native
+Critical/High/Review Due views remain there too. No fabricated As Of timestamp.
+Closed rows display actual closure data. Native matrix cells remain interactive,
+with unrated and clear-selection controls when applicable. All linked Actions
+and all grouped review/expiry IDs are retained. Groups wrap rather than clipping
+later openers. At container widths 861–1105px the desktop grid scrolls horizontally
+to retain every column; the target's 860px compact boundary is preserved.
+
+Verification: seven focused frontend suites, 51 tests passed; git diff --check
+passed. Separate AI source review found two access issues; both fixed and reviewed
+again with no remaining actionable findings. Final staging build passed after the access fixes. Tests cover native callers, filters, closed-record access, distinct grouped
+source openers, exact opener identity and no write calls from the overview.
+
+Remaining acceptance: this branch has no rendered/browser fidelity claim. The
+integrator must verify equal-scale target/candidate light/dark views with actual
+font metrics, canonical scope boundaries, responsive/container edges, popup
+portals, full native workflows and cumulative CI against the integrated commit.
+No push, merge, release or production claim is made by this handoff.
+
+---
 # Brawndo Explore demo Risks visual pilot
 
 Owner: local Risks chat `01a14116-9e44-72f3-9a7a-392b6de811f0`.
@@ -118,3 +180,33 @@ Gate-only rollback: set BRAWNDO_DEMO_RISKS_ENABLED=false. This restores the reta
 native Risks presentation without changing records/history or the other pilots.
 The previous verified cumulative hosted baseline is 4abf774; provider rollback
 changes application code only and must never reset data.
+
+## Integration follow-up: wrapped row overflow
+
+The integrator's 1440px light capture confirmed native .tbl-cell height46px
+constrained grid cells with wrapped titles, score bars and category/treatment
+metadata. Reset gated Risks body/header cell heights to auto and borders to zero;
+row borders remain authoritative. Native content, dates, widths, breakpoints,
+openers and workflows are unchanged. No header-position change: the reported
+16px offset was capture scrollY, confirmed by the integrator.
+
+Validation: three focused suites / 28 tests passed and diff-check passed.
+Source cascade: scoped body selector specificity (0,3,1) overrides native
+.app-workspace .tbl-cell (0,2,0). Header reset also overrides native38px height.
+Pinned target uses content-sized grid children, row padding12px and one row
+border; the fix retains those values. These checks do not prove rendered layout.
+Integrator must recapture actual long titles and extra Last Review lines at
+scroll zero, verify row bounds/content containment and absence of per-cell lines.
+No browser, release or deployment performed in this follow-up.
+
+## Integration follow-up: leaf typography
+
+Matched desktop review found owner/review TD font overrides lost to the more
+specific scoped tbody .tbl-cell font:inherit reset. Match that selector's
+specificity for owner13px/500/19.5px and review12.5px/400/18.75px. Explicitly set
+metadata and secondary review text12px/400/18px, and let nested HistoryDate spans
+inherit their review-line font instead of native15px line-height/detail-size.
+Target owner/two/meta rules plus body1.5 line-height are the source of these values.
+All dates, Last Review content, account notes and record openers remain intact.
+Two focused suites /24tests passed; diff-check passed. No browser or build rerun:
+root retains computed-style, matched screenshot and cumulative-build validation.

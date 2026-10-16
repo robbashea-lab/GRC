@@ -10,17 +10,35 @@ import {occurrenceId} from '@/lib/reviewOccurrences';
 import {calendarPeriod,localCalendarDate,calendarSelection,canMoveCalendar,rescheduledDate,calendarType,calendarStatus} from '@/lib/calendarView';
 import {useCreateIntent} from '@/lib/createIntent';
 import {toast} from 'sonner';
+import {useLocation} from 'react-router-dom';
+import {selectedClient} from '@/lib/clientSelection';
+import {brawndoDemoCalendar} from '@/lib/brawndoDemoCalendar';
+import BrawndoDemoCalendar from './BrawndoDemoCalendar';
 import BrawndoCalendarView,{calendarEntries} from './BrawndoCalendar';
 
 const emptyBuckets=()=>({reviews:{},findings:{},tasks:{}});
 export default function Calendar() {
-  const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
+  const {currentClientId,currentClient,loading:orgLoading,error:orgError}=useOrg(),{user,workspaceMode,loading:authLoading,error:authError}=useAuth();
+  const location=useLocation();
+  const demoCalendar=brawndoDemoCalendar({workspaceMode,user,currentClientId,currentClient,selectedClientId:selectedClient(),pathname:location.pathname,routeClientId:new URLSearchParams(location.search).get('client_id'),authLoading,authError,orgLoading,orgError});
+  const [memberResult,setMemberResult]=useState(null),[summaryResult,setSummaryResult]=useState(null);
+  const memberKey=`${user?.user_id}:${user?.role}:${workspaceMode}:${currentClientId}`;
+  useEffect(()=>{
+    if(!demoCalendar)return;
+    const controller=new AbortController();
+    api.get(`/clients/${encodeURIComponent(currentClientId)}/members`,{signal:controller.signal}).then(({data})=>{if(!controller.signal.aborted)setMemberResult({key:memberKey,data});}).catch(()=>{if(!controller.signal.aborted)setMemberResult({key:memberKey,data:[],error:'Calendar owners could not be loaded.'});});
+    return()=>controller.abort();
+  },[demoCalendar,currentClientId,memberKey]);
   const actorKey=`${user?.user_id||''}:${user?.role||''}:${user?.workspace_mode||''}`;
   const [anchor,setAnchor]=useState(()=>new Date()),[view,setView]=useState('month'),[revision,setRevision]=useState(0);
   const [result,setResult]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[drawer,setDrawer]=useState(null),[popup,setPopup]=useState(null),[saveError,setSaveError]=useState('');
   const [dragging,setDragging]=useState(null),[dragOverDay,setDragOverDay]=useState(''),[expanded,setExpanded]=useState({});
   const period=useMemo(()=>calendarPeriod(anchor,view),[anchor,view]),{days}=period;
-  const start=localCalendarDate(days[0]),end=localCalendarDate(days[days.length-1]),today=localCalendarDate(new Date());
+  const today=localCalendarDate(new Date());
+  // Pilot summaries cover the anchor month and next seven days in every visual view.
+  const monthDays=demoCalendar?calendarPeriod(anchor,'month').days:days;
+  const start=[localCalendarDate(days[0]),localCalendarDate(monthDays[0])].sort()[0];
+  const end=[localCalendarDate(days[days.length-1]),localCalendarDate(monthDays[monthDays.length-1])].sort().at(-1);
   const periodKey=`${actorKey}:${currentClientId}:${start}:${end}`,requestKey=`${periodKey}:${revision}`;
   const activeRequest=useRef(requestKey);activeRequest.current=requestKey;
   const actorClient=`${actorKey}:${currentClientId}`,scopeRef=useRef(actorClient);scopeRef.current=actorClient;
@@ -43,6 +61,17 @@ export default function Calendar() {
   const data=result?.periodKey===periodKey?result.data:emptyBuckets();
   const itemsForDay=day=>[...(data.reviews[day]||[]),...(data.findings[day]||[]),...(data.tasks[day]||[]),...(data.vendor_dates?.[day]||[])];
   const entries=calendarEntries(data);
+  const summaryKey=`${actorClient}:${demoCalendar}:${today}:${revision}`;
+  useEffect(()=>{
+    if(!demoCalendar)return;
+    const controller=new AbortController(),last=new Date(today+'T12:00:00');last.setDate(last.getDate()+7);
+    api.get('/calendar',{params:{client_id:currentClientId,start:today,end:localCalendarDate(last),scope:'all',overdue_before:today},signal:controller.signal}).then(({data:next})=>{
+      if(controller.signal.aborted)return;
+      if(['reviews','findings','tasks'].some(kind=>!next[kind])||calendarEntries(next).some(item=>item.client_id!==currentClientId))throw new Error('Calendar records do not match the selected client.');
+      setSummaryResult({key:summaryKey,entries:calendarEntries(next)});
+    }).catch(e=>{if(!controller.signal.aborted)setSummaryResult({key:summaryKey,error:formatError(e)});});
+    return()=>controller.abort();
+  },[demoCalendar,currentClientId,summaryKey,today,revision]);
   async function source(item) {
     const vendor=item.kind.startsWith('vendor_'),kind=vendor?'vendors':item.kind+'s';
     const {data:record}=await api.get(`/${kind}/${vendor?item.vendor_id:item.id}`);
@@ -115,9 +144,11 @@ export default function Calendar() {
     </DialogContent></Dialog>}
     {drawer&&drawer.record.client_id===currentClientId&&<RecordDrawer key={drawer.key} open onOpenChange={open=>{if(!open){openingRecord.current=false;setDrawer(null);reload();opener.current?.focus();}}} kind={drawer.kind} record={drawer.record} initialValues={drawer.initialValues} schema={SCHEMAS[drawer.kind].fields} clientId={currentClientId} onSaved={reload}/>}
   </>;
-  return <BrawndoCalendarView clientName={currentClient?.name||'Client'} anchor={anchor} setAnchor={setAnchor} view={view} setView={setView} period={period} days={days} itemsForDay={itemsForDay} today={today}
+  const CalendarView=demoCalendar?BrawndoDemoCalendar:BrawndoCalendarView;
+  // Keep native editor drafts mounted while the appearance gate is rechecked.
+  return <><CalendarView key={`${actorKey}:${currentClientId}:${demoCalendar}`} members={memberResult?.key===memberKey?memberResult.data:[]} memberError={memberResult?.key===memberKey?memberResult.error:null} summaryEntries={summaryResult?.key===summaryKey?summaryResult.entries:null} summaryError={summaryResult?.key===summaryKey?summaryResult.error:null} clientName={currentClient?.name||'Client'} anchor={anchor} setAnchor={setAnchor} view={view} setView={setView} period={period} days={days} itemsForDay={itemsForDay} today={today}
     entries={entries} loading={loading} error={error} errorNode={<RegisterLoadError error={error} onRetry={reload} name="Calendar"/>} busy={busy}
     dragging={dragging} dragOverDay={dragOverDay} setDragOverDay={setDragOverDay} setDragging={setDragging} expanded={expanded} setExpanded={setExpanded}
-    onDragStart={onDragStart} onDrop={onDrop} openSchedule={openSchedule} ymd={localCalendarDate} drawerNode={drawerNode}
-    recoveryNode={!popup&&(saveError||save.unconfirmed())&&<div className="bcal-note">{saveError&&<p role="alert">{saveError}</p>}{save.unconfirmed()&&<button type="button" className="bpage-btn" disabled={busy} onClick={()=>persist(null,null,null,true)}>Retry save</button>}</div>}/>;
+    onDragStart={onDragStart} onDrop={onDrop} openSchedule={openSchedule} ymd={localCalendarDate}
+    recoveryNode={!popup&&(saveError||save.unconfirmed())&&<div className="bcal-note">{saveError&&<p role="alert">{saveError}</p>}{save.unconfirmed()&&<button type="button" className="bpage-btn" disabled={busy} onClick={()=>persist(null,null,null,true)}>Retry save</button>}</div>}/>{drawerNode}</>;
 }

@@ -14,7 +14,7 @@ let root,container,rows;
 const render=()=>act(async()=>root.render(<RiskRegister/>));
 const click=node=>act(async()=>node.click());
 beforeEach(()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();mockSearch='';mockPath='/risks';
+  global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();localStorage.setItem('grc_client_id','demo_brawndo');mockSearch='';mockPath='/risks';
   mockAuth={workspaceMode:'demo',loading:false,user:{user_id:'admin',role:'super_admin',workspace_mode:'demo'}};
   mockOrg={currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'},loading:false};
   rows=[{risk_id:'risk-high',client_id:'demo_brawndo',display_id:'RISK-101',title:'Native high risk',status:'assessed',likelihood_score:3,impact_score:4,next_review:'2099-01-01'},
@@ -108,3 +108,30 @@ test.each(['new-risk','risk-matrix-btn'])('pending Coming up cannot overlay nati
   expect(container.querySelector('[data-testid="native-dispatch"]')).toBeNull();
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
 });
+
+test('presentation-only treatment filter preserves native column controls and closed record access',async()=>{
+  rows=[{...rows[0],status:'in_progress',owner_id:'owner',last_reviewed:'2026-09-18'},
+    {...rows[1],status:'treated'},
+    {...rows[2],status:'retired',closed_at:'2026-10-01',closure_reason:'other',last_reviewed:'2026-09-01'}];
+  const original=api.get.getMockImplementation();
+  api.get.mockImplementation((path,...args)=>path.endsWith('/members')?Promise.resolve({data:[{user_id:'owner',name:'Joe Bowers',status:'active'}]}):original(path,...args));
+  await render();await click(container.querySelector('[data-testid="risk-view-treatment"]'));
+  expect([...container.querySelectorAll('tbody tr')].map(row=>row.dataset.testid)).toHaveLength(2);
+  expect(container.querySelector('tbody .bdr-avatar').textContent).toBe('JB');
+  expect(container.querySelector('tbody .bdr-row-review').textContent).toContain('Sep 18, 2026');
+  const more=container.querySelector('.bdr-more');more.open=true;
+  expect(more.textContent).toContain('Last Review');
+  for(const key of ['critical','high','review_due'])expect(more.querySelector(`[data-testid="risk-view-${key}"]`)).not.toBeNull();
+  await click(container.querySelector('[data-testid="risk-view-closed"]'));
+  expect(container.querySelector('tbody').textContent).toContain('Closed Oct 1');
+  expect(container.querySelector('tbody').textContent).toContain('Sep 1, 2026');
+  await click(container.querySelector('tbody .register-record-link'));
+  expect(container.querySelector('[data-testid="native-dispatch"]').dataset).toMatchObject({kind:'risks',id:'closed'});
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+ test.each(['selection','route'])('shared appearance boundary excludes mismatched %s identity',async mismatch=>{
+ if(mismatch==='selection')localStorage.setItem('grc_client_id','another-client');else mockSearch='?client_id=another-client';
+ await render();expect(container.querySelector('[data-testid="demo-risks-overview"]')).toBeNull();
+ expect(container.querySelector('.approved-risk-register')).not.toBeNull();
+ });

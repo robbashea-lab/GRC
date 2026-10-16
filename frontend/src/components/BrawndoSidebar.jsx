@@ -13,6 +13,7 @@ import NotificationBell from './NotificationBell';
 import {BrandMark} from './Brand';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator} from './ui/dropdown-menu';
 import './BrawndoSidebar.css';
+import DemoNotice from '@/preview/DemoNotice';
 
 // Brawndo reference sidebar: grouped navigation, one theme with the workspace,
 // and counts that show where attention is needed from anywhere in the client.
@@ -29,12 +30,11 @@ export function sidebarCounts(summary){
   return {reviews:[k.overdue_reviews||0,'critical'],actions:[(k.overdue_actions||0),'critical'],risks:[k.significant_risks||0,'critical'],vendors:[v?.total??v?.items?.length??0,'attention']};
 }
 
-export function ProfileMenu({compact=false}){
+export function ProfileMenu({compact=false,storageTools=false}){
   const {user,logout}=useAuth(),nav=useNavigate();
-  return <div className={compact?'bwp-profile':'bsb-foot'}>
-      <DropdownMenu>
+  const menu=(openStorage,storageOpener)=><DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button type="button" data-testid="profile-menu-trigger" className="bsb-profile">
+          <button ref={storageOpener} type="button" data-testid="profile-menu-trigger" className="bsb-profile">
             <span className="bsb-avatar" aria-hidden="true">{user?.name?.trim().split(/\s+/).map(part=>part[0]).slice(0,2).join('').toUpperCase()||user?.email?.[0]?.toUpperCase()}</span>
             <span className={compact?'sr-only':'min-w-0 flex-1 text-left'}><span className="bsb-client-name">{user?.name||user?.email}</span><span className="bsb-group-label">{(user?.role||'').replace('_',' ')}</span></span>
             <ChevronsUpDown size={14} aria-hidden="true"/>
@@ -42,11 +42,12 @@ export function ProfileMenu({compact=false}){
         </DropdownMenuTrigger>
         <DropdownMenuContent align={compact?'end':'start'} side={compact?'bottom':'top'} className="w-56">
           <DropdownMenuItem onClick={()=>nav('/account')} data-testid="profile-menu-account" className="text-sm"><UserCircle2 className="h-3.5 w-3.5 mr-2"/> My Account</DropdownMenuItem>
+          {openStorage&&<><DropdownMenuSeparator/><DropdownMenuItem onSelect={openStorage} data-testid="profile-menu-storage">Demo storage &amp; recovery</DropdownMenuItem></>}
           {!compact&&<><DropdownMenuSeparator/><div className="px-2 py-1"><NotificationBell/></div></>}<DropdownMenuSeparator/>
           <DropdownMenuItem data-testid="logout-button" onClick={async()=>{if(await logout())nav('/login');}} className="text-sm text-semantic-critical focus:text-semantic-critical"><LogOut className="h-3.5 w-3.5 mr-2"/> Sign out</DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>
-    </div>;
+      </DropdownMenu>;
+  return <div className={compact?'bwp-profile':'bsb-foot'}>{storageTools?<DemoNotice renderTrigger={menu}/>:menu()}</div>;
 }
 const Brand=()=><div className="bsb-brand" aria-label="GoverNara by Prestige Worldwide"><BrandMark className="bsb-mark"/><span><span className="bsb-name">GoverNara</span><span className="bsb-sub">By Prestige Worldwide</span></span></div>;
 
@@ -104,7 +105,7 @@ export default function BrawndoSidebar({complianceItems=[],isInternal,showFindin
     <div className="bsb-head">
       <Brand/>
       {isInternal&&<button type="button" className="bsb-back" aria-label="Return to portfolio" title="Portfolio" onClick={()=>nav('/clients')} data-testid="return-to-portfolio"><ArrowLeft size={13} aria-hidden="true"/>Portfolio</button>}
-      <div className="bsb-client" data-testid="context-header-client"><span className="bsb-client-mark" aria-hidden="true">{currentClient?.name?.[0]||'•'}</span><span className="min-w-0"><span className="bsb-group-label">Client</span><span className="bsb-client-name">{currentClient?.name||'Select a client…'}</span></span></div>
+      <div className="bsb-client" data-testid="context-header-client"><span className="bsb-client-mark" aria-hidden="true">{currentClient?.name?.[0]||'•'}</span><span className="min-w-0"><span className="bsb-group-label">Client</span><span className="bsb-client-name">{currentClient?.name||'Select a client…'}</span><span className="bsb-client-industry">{currentClient?.industry||'Industry not recorded'}</span></span></div>
     </div>
     <nav className="bsb-nav" data-testid="sidebar-client" aria-label="Client workspace">
       {GROUPS.map(([group,items])=><div key={group} className="bsb-group" role="group" aria-labelledby={`bsb-${group}`}>

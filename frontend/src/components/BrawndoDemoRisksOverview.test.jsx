@@ -62,3 +62,19 @@ test('scope change aborts pending reads and never shows their stale linked Actio
   expect(container.textContent).not.toContain('Stale action');
   expect(container.textContent).toContain('No linked Action deadlines.');
 });
+
+test('same-day visual grouping keeps every distinct Action and Risk opener',async()=>{
+  const risks=[{...base,risk_id:'r1',display_id:'RISK-001',title:'First risk',next_review:'2026-10-16'},
+    {...base,risk_id:'r2',display_id:'RISK-002',title:'Second risk',next_review:'2026-10-16'}];
+  const actions=[{task_id:'a1',client_id:'demo_brawndo',title:'First saved Action',status:'open',due_date:'2026-10-16'},
+    {task_id:'a2',client_id:'demo_brawndo',title:'Second saved Action',status:'open',due_date:'2026-10-16'}];
+  api.get.mockImplementation((url,{params})=>Promise.resolve({data:{tasks:params.entity_id==='r1'?actions:[]}}));
+  const onOpen=jest.fn();
+  await render({rows:risks,matrixRows:risks,view:'all_active',onSelect:jest.fn(),onView:jest.fn(),matches:riskMatches,onOpen,scope:'demo_brawndo'});
+  expect(container.querySelectorAll('.bdr-event')).toHaveLength(2);
+  expect(container.textContent).toContain('2 risk reviews');
+  expect(container.querySelectorAll('.bdr-event-source button')).toHaveLength(4);
+  for(const risk of risks){const link=[...container.querySelectorAll('.bdr-event-source button')].find(el=>el.getAttribute('aria-label').includes(risk.title));await act(async()=>link.click());expect(onOpen).toHaveBeenLastCalledWith('risks',risk);}
+  for(const action of actions){await act(async()=>button(action.title).click());expect(onOpen).toHaveBeenLastCalledWith('tasks',action);}
+  for(const verb of ['post','put','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
+});

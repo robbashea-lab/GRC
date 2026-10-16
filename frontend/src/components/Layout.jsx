@@ -8,6 +8,7 @@ import BrawndoWorkspace from './BrawndoWorkspace';
 import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
+import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -16,7 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import {canExportReports} from '@/lib/permissions';
 import {usePortfolioView} from '@/lib/usePortfolioView';
 import {assignedToUser} from '@/lib/portfolioProgress';
-import {clientDestination} from '@/lib/clientSelection';
+import {clientDestination,selectedClient} from '@/lib/clientSelection';
 import { Input } from "@/components/ui/input";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
@@ -301,14 +302,16 @@ function Sidebar() {
 }
 
 export default function Layout() {
-  const {currentClientId}=useOrg();
-  const {user}=useAuth();
-  const {pathname}=useLocation();
+  const org=useOrg(),auth=useAuth();
+  const {currentClientId}=org;
+  const {user}=auth;
+  const {pathname,search}=useLocation();
+  const visualSurface=visualCorrectionSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
   const pilot=!!user;
   const content=<div className={'app-shell min-h-screen flex bg-surface-app '+(pathname==='/clients'?'governara-portfolio-shell':'governara-operational-shell')}>
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
-        {pathname !== '/clients' && !(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
+        {!visualSurface && pathname !== '/clients' && !(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
         {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
       </main>
     </div>;

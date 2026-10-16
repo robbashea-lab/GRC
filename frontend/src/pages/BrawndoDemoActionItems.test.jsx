@@ -30,11 +30,11 @@ const tickets=()=>[...container.querySelectorAll('tbody tr')];
 const summary=key=>container.querySelector('.bda-cell.bda-'+key+' strong').textContent;
 
 beforeEach(()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();mockDrawer=null;mockForm=null;
+  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();sessionStorage.setItem('grc_client_id','demo_brawndo');mockDrawer=null;mockForm=null;
   mockAuth={workspaceMode:'demo',loading:false,user:{user_id:'actor',role:'super_admin',workspace_mode:'demo'}};
   mockOrg={currentClientId:cid,currentClient:{client_id:cid,name:'Brawndo',status:'active'},loading:false,error:''};
   records={tasks:Array.from({length:12},(_,i)=>task(String(i).padStart(2,'0'),{assignee_id:i===0?'eligible':'removed'})),findings:[]};
-  api.get.mockImplementation(async(path)=>({data:path==='/onboarding/state'?{assessments:[]}:path.endsWith('/members')?[{user_id:'eligible',name:'Eligible owner',assignment_eligible:true},{user_id:'removed',name:'Historical owner',assignment_eligible:false}]:records[path.slice(1)]||[]}));
+  api.get.mockImplementation(async(path)=>({data:path.startsWith('/framework_assessments/')?(records.framework_assessments||[]).find(row=>row.framework_assessment_id===path.split('/').pop()):path==='/onboarding/state'?{assessments:records.framework_assessments||[]}:path.endsWith('/members')?[{user_id:'eligible',name:'Eligible owner',assignment_eligible:true},{user_id:'removed',name:'Historical owner',assignment_eligible:false}]:records[path.slice(1)]||[]}));
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
@@ -81,8 +81,8 @@ test('native origin opens the exact source and retained assurance context withou
 test('completed contains only genuine completion; All records retains acceptance and cancellation',async()=>{
   records={tasks:[task('done',{status:'done'}),task('cancelled',{status:'cancelled'})],findings:[finding('accepted',{status:'accepted'}),finding('closed',{status:'closed'}),finding('pending',{status:'remediated'})]};
   await render();expect(tickets()).toHaveLength(1);expect(tickets()[0].textContent).toContain('Pending validation');
-  await click([...container.querySelectorAll('.bda-tabs button')].find(node=>node.textContent.startsWith('Completed')));expect(tickets()).toHaveLength(2);expect(tickets().every(row=>row.textContent.includes('Completed'))).toBe(true);
-  await click([...container.querySelectorAll('.bda-tabs button')].find(node=>node.textContent.startsWith('All records')));expect(tickets()).toHaveLength(5);expect(container.textContent).toContain('Accepted');expect(container.textContent).toContain('Cancelled');
+  await click([...container.querySelectorAll('.bda-tabs button')].find(node=>node.textContent.startsWith('Completed')));expect(tickets()).toHaveLength(2);expect(tickets().map(row=>row.dataset.ticketId).sort()).toEqual(['finding:closed','task:done']);
+  await change([...container.querySelectorAll('select')].find(node=>[...node.options].some(option=>option.value==='__all__')),'__all__');expect(tickets()).toHaveLength(5);expect([...container.querySelectorAll('select')].find(node=>node.value==='__all__')).toBeDefined();expect(container.querySelector('.bda-show [aria-pressed="true"]')).toBeNull();expect(container.textContent).toContain('Accepted');expect(container.textContent).toContain('Cancelled');
 });
 
 test.each([['?finding_id=collision','findings'],['?task_id=collision','tasks'],['?id=collision',null]])('typed link %s resolves its exact native identity; ambiguous legacy link is denied',async(query,kind)=>{
@@ -153,3 +153,24 @@ test('repeated Back after Keep editing requests close again and preserves the re
   await act(async()=>navigate(-1));expect(mockDrawer.closeRequest).toBeGreaterThan(firstRequest);expect(location.pathname).toBe('/action-items');expect(location.search).toBe('');expect(container.querySelector('[data-testid="native-ticket"]')).toBe(existing);
   await act(async()=>mockDrawer.onOpenChange(false));expect(container.querySelector('[data-testid="native-ticket"]')).toBeNull();expect(location.pathname).toBe('/action-items');
 });
+
+
+test('reference row uses structured source, Finding title, neutral priority and avatar with Due before Status',async()=>{
+  records={tasks:[task('native-work',{title:'Native work title',finding_id:'native-finding',priority:'medium',assignee_id:'eligible',due_date:'2026-11-20'})],findings:[finding('native-finding',{title:'Short native Finding title',description:'Long detail remains inside the full native record',framework_assessment_id:'assess'})],framework_assessments:[{client_id:cid,framework_assessment_id:'assess',framework_key:'cis-ig1',definition_id:'14.1'}]};
+  await render();const row=tickets()[0];
+  expect(row.querySelector('.bda-title').textContent).toBe('Native work title');
+  expect(row.querySelector('.bda-origin button').textContent).toBe('CIS 14.1');
+  expect(row.textContent).toContain('Finding: Short native Finding title');
+  expect(row.textContent).not.toContain('Long detail remains');
+  expect(row.querySelectorAll('.bda-bars rect.on')).toHaveLength(2);
+  expect(row.querySelector('.bda-avatar').textContent).toBe('EO');
+  const columns=[...row.children];expect(columns.indexOf(row.querySelector('.bda-due'))).toBeLessThan(columns.indexOf(row.querySelector('.bda-stage')));
+  await click(row);expect(mockDrawer.record.description).toBe('Long detail remains inside the full native record');
+});
+
+ test.each(['selection','route'])('shared appearance boundary excludes mismatched %s identity',async mismatch=>{
+ if(mismatch==='selection')sessionStorage.setItem('grc_client_id','another-client');
+ await render(mismatch==='route'?'/action-items?client_id=another-client':'/action-items');
+ expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();
+ expect(container.querySelector('.brawndo-demo-actions')).toBeNull();
+ });

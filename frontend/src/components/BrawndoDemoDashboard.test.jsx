@@ -38,5 +38,27 @@ test('visible safeguard associations use authoritative labels without duplicate 
  const linked=rows.map(row=>({...row,source_label:'CIS 1.1',safeguard_labels:['CIS 1.1','CIS 2.1']}));
  const loadDetail=async(key,offset,signal,{limit})=>({items:linked.slice(offset,offset+limit),offset,limit,total:linked.length,has_more:offset+limit<linked.length});
  await act(async()=>root.render(<BrawndoDemoDashboard {...props} loadDetail={loadDetail}/>));
- expect(container.querySelector('tbody small').textContent).toBe('Action Item · CIS 1.1 · CIS 2.1');
+ expect([...container.querySelector('tbody .bdd-meta').children].map(node=>node.textContent)).toEqual(['Action Item','CIS 1.1','CIS 2.1']);
+ expect([...container.querySelectorAll('tbody tr')[0].querySelectorAll('.bdd-framework-chip')].map(node=>node.textContent)).toEqual(['CIS 1.1','CIS 2.1']);
+});
+
+test('target row keeps native identity and separates owner, due and lifecycle without mutation controls',async()=>{
+ const onOpen=jest.fn();
+ await act(async()=>root.render(<BrawndoDemoDashboard {...props} onOpen={onOpen}/>));
+ const row=container.querySelector('tbody tr');
+ expect(row.querySelector('.bdd-avatar').textContent).toBe('A');
+ expect(row.querySelector('.bdd-avatar').getAttribute('aria-hidden')).toBe('true');
+ expect([...row.children].map(node=>node.className)).toEqual(['bdd-cell-item','bdd-cell-owner','bdd-cell-due','bdd-cell-status','bdd-chevron']);
+ expect(row.querySelector('time').dateTime).toBe('2026-10-15');
+ expect(row.querySelector('.bdd-status').textContent).toBe('In progress');
+ expect(row.querySelectorAll('button')).toHaveLength(1);
+ await act(async()=>row.querySelector('.bdd-cell-owner').click());
+ expect(onOpen).toHaveBeenCalledTimes(1);
+ expect(onOpen).toHaveBeenCalledWith(rows[0],row.querySelector('button'));
+});
+
+test('unknown membership has no invented program-wide chip',async()=>{
+ await act(async()=>root.render(<BrawndoDemoDashboard {...props}/>));
+ expect(container.querySelector('tbody .bdd-meta').textContent).toBe('Action Item');
+ expect(container.querySelector('tbody .bdd-framework-chip')).toBeNull();
 });

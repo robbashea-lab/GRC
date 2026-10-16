@@ -32,6 +32,10 @@ test('approved five-column grouped register uses batched current data and exact 
   expect(alpha.querySelector('td').rowSpan).toBe(2);
   expect(container.querySelectorAll('[data-client-id="Alpha"]')).toHaveLength(2);
   expect(container.querySelector('.gp-metric')).toBeNull();
+  expect(alpha.querySelector('.gp-percent').textContent).toBe('90.0%');
+  expect(alpha.querySelector('.gp-unit').textContent).toBe('%');
+  expect(container.querySelector('.gp-framework-scope')).toBeNull();
+  expect(container.querySelector('.gp-footnote')).toBeNull();
   expect(container.textContent).not.toContain('Open Work'); expect(container.textContent).not.toContain('Recent changes');
   expect(api.get).toHaveBeenCalledTimes(1);
   await click('Alpha'); expect(mockSwitch).toHaveBeenCalledWith('Alpha'); expect(mockNavigate).toHaveBeenCalledWith('/dashboard?client_id=Alpha');

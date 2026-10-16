@@ -1,5 +1,33 @@
 # Approved Calendar redesign
 
+## Six-surface correction checkpoint — October 16, 2026
+
+The current correction starts at cumulative `847bceacc84f93355ae15c01fc051c6c7a2f90d2`;
+the earlier delivery below is historical. Calendar module commit
+`b238367261af5aea5d6155de2e924ec08edf7060` adds the narrowly gated presentation from
+`visual-targets/calendar.html`, SHA256
+`bb1e6153689ba6122122017ae36cc29bdaa7a695db7b7a650d5537e879a7759c`.
+Trusted Demo actor/mode, authorized active canonical selected/current/resolved client,
+route agreement and ready/error-free context are required. Other contexts retain
+the working Calendar. Existing source reads, occurrence/version checks, date policy,
+native permissions, rescheduling and full records remain authoritative.
+
+Month, Week, Day, agenda, summary and read-only filter/tooltip views use native events.
+The summary's separate next-seven-day read is invalidated with every native refresh;
+pending/failed reads remain unavailable. Accepted/cancelled history stays accessible
+but does not count as completed. The completed metric is explicitly by scheduled
+date because the Calendar projection does not supply completion timestamps. Vendor
+subtypes retain their native labels with the target triangle. Native full popup/editor
+controls replace the reference's mock auto-save/completion/Undo operations.
+
+Combined Dashboard/Calendar verification passes 12 suites / 74 tests. Calendar's
+actual pilot controller test checks fresh occurrence/version, original time/offset,
+idempotency, recurrence preservation, Cancel without PATCH, and deferred post-save
+summary freshness. Independent AI source review found one stale-summary issue, now
+fixed and covered. Agent007 owns shared shell/portal styling, matched rendered font/
+cascade/boundary comparisons, native browser journeys and final exact-head release.
+This checkpoint establishes source/test evidence, not rendered or hosted acceptance.
+
 Baseline: `0e1494247be98fe3f329f19ed03f51e1ec5c0c3b` (remote main).
 Branch: `codex/approved-calendar-redesign`; isolated worktree.
 PR: [#44](https://github.com/robbashea-lab/GRC/pull/44), draft while final regressions and protected release gates remain unresolved.

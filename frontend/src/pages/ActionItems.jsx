@@ -1,3 +1,5 @@
+import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
+import {selectedClient} from '@/lib/clientSelection';
 import {useEffect,useRef} from 'react';
 import {useLocation,useSearchParams} from 'react-router-dom';
 import {useOrg} from '@/context/OrgContext';
@@ -17,14 +19,14 @@ export default function ActionItems(){
     ['owner','unassigned','finding_id','task_id','id','view','q','quick','source','sort','page'].forEach(k=>next.delete(k));
     setParams(next,{replace:true});
   },[currentClientId,params,setParams]);
-  const gate={...org,...auth,pathname:location.pathname,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error};
-  const pilot=brawndoDemoActionsGate(gate);
+  const gate={...org,...auth,pathname:location.pathname,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(location.search).get('client_id')};
+  const pilot=brawndoDemoActionsGate(gate)&&visualCorrectionSurface(gate)==='actions';
   const scope=JSON.stringify([auth.user?.user_id,auth.user?.role,auth.user?.client_ids,auth.user?.password_change_required,auth.workspaceMode,auth.user?.workspace_mode,currentClientId]);
   const retainedScope=useRef(null);
   // Native write notifications refresh OrgContext. Conceal, rather than discard,
   // the same authorized editor while its client list is being rechecked.
   if(pilot)retainedScope.current=scope;
-  const suspended=!pilot&&(auth.loading||org.loading)&&retainedScope.current===scope&&brawndoDemoActionsGate({...gate,authLoading:false,orgLoading:false});
+  const suspended=!pilot&&(auth.loading||org.loading)&&retainedScope.current===scope&&brawndoDemoActionsGate({...gate,authLoading:false,orgLoading:false})&&visualCorrectionSurface({...gate,authLoading:false,orgLoading:false})==='actions';
   if(!pilot&&!suspended)retainedScope.current=null;
   return pilot||suspended?<><div hidden={suspended}><BrawndoDemoActionItems key={scope} suspended={!!suspended}/></div>{suspended&&<p role="status">Checking workspace access…</p>}</>:<BrawndoActionItems key={currentClientId}/>;
 }
