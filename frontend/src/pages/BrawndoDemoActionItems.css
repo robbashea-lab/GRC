@@ -128,7 +128,7 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
 }
 .brawndo-demo-actions .bda-attention {color:var(--bda-warning);}
 .brawndo-demo-actions .bda-late,.brawndo-demo-actions .bda-error {color:var(--bda-danger);}
-.brawndo-demo-actions .bda-status {display:inline-flex;align-items:center;gap:7px;white-space:nowrap;}
+.brawndo-demo-actions .bda-status {display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:12.5px;color:var(--bda-fg2);}
 .brawndo-demo-actions .bda-status::before {content:'';width:8px;height:8px;border-radius:50%;border:1px solid var(--bda-muted);}
 .brawndo-demo-actions .bda-status-in_progress::before {background:var(--bda-accent);border-color:var(--bda-accent);}
 .brawndo-demo-actions .bda-status-pending_validation::before {background:var(--bda-part);border-color:var(--bda-part);}

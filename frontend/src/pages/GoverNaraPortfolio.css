@@ -36,9 +36,10 @@
 .governara-portfolio .gp-table { display:block; width:100%; border-collapse:collapse; text-align:left; }
 .gp-table thead { display:block; background:var(--gp-tablehead); border-bottom:1px solid var(--gp-border); }
 .gp-table thead tr,.gp-table tbody { display:grid; grid-template-columns:minmax(150px,1.15fr) 112px 128px minmax(400px,3fr) 136px; column-gap:16px; padding-inline:16px; }
-.governara-portfolio .gp-table th { padding:9px 0; color:var(--gp-muted); font-size:12px; font-weight:500; }
+.governara-portfolio .gp-table th { padding:9px 0; color:var(--gp-muted); font-size:12px; line-height:1.5; font-weight:500; }
 .gp-table tbody tr { display:contents; }
-.gp-table td { position:relative; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; min-width:0; padding:14px 0; }
+/* Keep the row divider in layout; the pseudo-element draws it across the column gaps. */
+.gp-table td { position:relative; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; min-width:0; padding:14px 0; border-bottom:1px solid transparent; }
 .gp-table td::after { content:""; position:absolute; bottom:0; left:0; right:-16px; border-bottom:1px solid var(--gp-border); }
 .gp-table td[data-label=Client]::after { left:-16px; }
 .gp-table td[data-label=Client] { grid-column:1; }.gp-table td[data-label="GRC Lead"] { grid-column:2; }.gp-table td[data-label=Framework] { grid-column:3; }.gp-table td[data-label="Implementation progress"] { grid-column:4; }.gp-table td[data-label="Last activity"] { grid-column:5; }
@@ -49,7 +50,7 @@
 .gp-client-name { font-size:13.5px; font-weight:600; letter-spacing:-.005em; color:var(--gp-fg); text-align:left; }
 .gp-client-name:hover,.gp-framework:hover { text-decoration:underline; text-underline-offset:3px; }
 .gp-industry { display:block; font-size:12px; color:var(--gp-muted); }
-.gp-lead { font-size:13px; font-weight:500; }.gp-muted { color:var(--gp-muted); }.gp-table td[data-label="GRC Lead"] > .gp-muted { font-size:13px; font-style:italic; }
+.gp-table td[data-label="GRC Lead"] { font-size:13px; }.gp-lead { font-size:13px; font-weight:500; }.gp-muted { color:var(--gp-muted); }.gp-table td[data-label="GRC Lead"] > .gp-muted { font-size:13px; font-style:italic; }
 .gp-framework { display:inline-flex; align-items:center; padding:2px 8px; border:1px solid var(--gp-border); border-radius:6px; background:var(--gp-subtle); color:var(--gp-fg2); font-size:11.5px; font-weight:600; letter-spacing:.01em; }
 .gp-progress { display:grid; grid-template-columns:132px minmax(90px,1fr) 150px 12px; align-items:center; gap:16px; width:calc(100% + 20px); margin:-8px -10px; padding:8px 10px; border:1px solid transparent; border-radius:8px; color:var(--gp-fg); text-align:left; }
 .gp-progress:hover { background:var(--gp-surface); border-color:var(--gp-border); box-shadow:var(--gp-shadow); }
@@ -66,14 +67,14 @@
 .gp-delta { display:block; font-size:12px; font-weight:400; white-space:nowrap; color:var(--gp-muted); font-variant-numeric:tabular-nums; }.gp-delta.is-up { color:var(--gp-good); }.gp-delta.is-down { color:var(--gp-bad); }
 .gp-progress > svg { color:var(--gp-muted); width:12px; }
 .gp-activity { display:block; font-size:12.5px; font-variant-numeric:tabular-nums; }.gp-activity small { display:block; color:var(--gp-muted); font-size:12px; }
-.gp-inactive { display:flex; gap:5px; align-items:center; color:var(--gp-warn); font-size:12px; font-weight:600; margin-top:2px; }
+.gp-inactive { display:inline-flex; gap:5px; align-items:center; color:var(--gp-warn); font-size:12px; font-weight:600; margin-top:2px; }
 .gp-empty { padding:32px 20px!important; color:var(--gp-fg2); }.gp-empty p { margin:0; }
 .gp-link { color:var(--gp-link); text-decoration:underline; text-underline-offset:3px; }
 .governara-portfolio :is(button,input,select,[tabindex]):focus-visible { outline:2px solid var(--gp-focus); outline-offset:2px; }
 @container (max-width:960px) {
  .governara-portfolio .gp-table,.gp-table tbody { display:block; width:100%; padding:0; }
  .gp-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
- .gp-table tbody tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-areas:"client act" "lead fw" "prog prog"; gap:10px 16px; padding:16px; border-bottom:1px solid var(--gp-border); }
+ .gp-table tbody tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-areas:"client act" "lead fw" "prog prog"; align-items:center; gap:10px 16px; padding:16px; border-bottom:1px solid var(--gp-border); }
  .gp-table tr:last-child { border-bottom:0; }
  .gp-table td { display:block; padding:0; border:0; min-width:0; grid-column:auto; }.gp-table td::after { display:none; }
  /* Compact cards replace inline desktop row spans with their named row and column. */

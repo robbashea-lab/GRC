@@ -224,3 +224,29 @@ shared label/tone/isolation assertion. Its four tests pass; independent AI
 review found no weakening of operational checks. Fresh final-head CI is required.
 Runtime/build inputs are frozen at `7a03aece`; this last change touches only this
 handoff and that test. No subsequent CI success is assumed here.
+
+## Matched-data table precision follow-up
+
+The isolated native ClientDirectory fixture exposed remaining presentation
+differences after af07ffdb. Scoped corrections restore the target's18px table
+header line, desktop row-divider space, centered compact cells,13px lead cell
+and inline empty-activity badge. The no-activity branch adds its explicit line
+break. Action lifecycle labels use the target's12.5px secondary foreground.
+No client/program identity, grouping, counts, controller or permission changes.
+
+Fresh controlled browser measurements match the first three desktop row pitches
+and phone activity/framework/empty-activity positions; residual x rounding is
+0.33px. Three affected suites24tests pass. Independent AI source review found no
+issues; it is not human approval. Both-theme complete popup top/bottom captures
+replace the earlier clipped images. The4.447906px cached reference SVG scaling
+adaptation remains explicit; native responsive measuring and forecast math stay
+authoritative. Exact source hashes and fixture provenance are in the external
+evidence receipts. CI194 on af07 is a checkpoint, not this follow-up's gate.
+Fresh final-head builds, CI and existing-staging hosted verification remain
+required. No merge, production deployment or temporary-account reactivation.
+
+Full-popup cascade review additionally corrects populated Portfolio KPI panels
+to equal columns through761px (one column at760px), retaining860px padding and
+divider rules. The100% chart gridline is solid grid color; the reference dashed
+line is for an optional goal, not every100% tick. These are Portfolio-only CSS
+corrections, with Dashboard and all history/forecast calculations unchanged.

@@ -149,13 +149,13 @@
   .portfolio-history-dialog .ph-chart-card { padding:14px; }
 }
 
-.ph-history-tip { min-width:min(210px,100%); max-width:min(270px,100%); }.ph-axis,.ph-target { stroke:var(--color-border-strong); stroke-width:1; }.portfolio-history-dialog .ph-target { stroke-dasharray:6 4; }.ph-current-flag { fill:var(--color-text-primary); }.ph-chart text.ph-current-flag-label { fill:var(--color-bg-surface); font-size:12px; font-weight:600; }.brawndo-demo-program .ph-current-flag { fill:var(--chart-implemented); }.brawndo-demo-program .ph-chart text.ph-current-flag-label { fill:var(--chart-flag-text); }
+.ph-history-tip { min-width:min(210px,100%); max-width:min(270px,100%); }.ph-axis,.ph-target { stroke:var(--color-border-strong); stroke-width:1; }.portfolio-history-dialog .ph-target { stroke:var(--chart-grid); stroke-dasharray:none; }.ph-current-flag { fill:var(--color-text-primary); }.ph-chart text.ph-current-flag-label { fill:var(--color-bg-surface); font-size:12px; font-weight:600; }.brawndo-demo-program .ph-current-flag { fill:var(--chart-implemented); }.brawndo-demo-program .ph-chart text.ph-current-flag-label { fill:var(--chart-flag-text); }
 
 .ph-change-badge { display:inline-grid; place-items:center; width:26px; height:26px; margin-right:10px; border-radius:7px; font-size:15px; vertical-align:middle; }.ph-change-badge.is-up { background:var(--color-success-bg,#E7F6EF); }.ph-change-badge.is-down { background:var(--color-critical-bg,#FDECEA); }.portfolio-history-dialog { --color-success:#05603A; --color-critical:#B42318; }[data-brawndo-portal=dark] .portfolio-history-dialog { --color-success:#3DC79F; --color-critical:#F2828C; --color-success-bg:rgba(61,199,159,.13); --color-critical-bg:rgba(242,130,140,.13); }
 
 .portfolio-history-dialog .ph-client h2 { font-size:19px; font-weight:650; }
-.portfolio-history-dialog .ph-metrics:not(.ph-metrics-sparse) { grid-template-columns:minmax(0,1fr) minmax(0,2fr); }
-@media(max-width:860px) { .portfolio-history-dialog .ph-metrics:not(.ph-metrics-sparse) { grid-template-columns:minmax(0,1fr); } }
+.portfolio-history-dialog .ph-metrics:not(.ph-metrics-sparse) { grid-template-columns:repeat(2,minmax(0,1fr)); }
+@media(max-width:760px) { .portfolio-history-dialog .ph-metrics:not(.ph-metrics-sparse) { grid-template-columns:minmax(0,1fr); } }
 .portfolio-history-dialog .ph-status-scale { padding:24px 4px 0; }
 .portfolio-history-dialog .ph-status-axis { line-height:14px; }
 .portfolio-history-dialog .ph-interactive-bar { gap:0; background:transparent; }

@@ -276,7 +276,7 @@ function LastActivity({activity, asOf}) {
 
   const days = inactiveDays(activity, new Date(asOf));
 
-  if (!activity) return <span className="gp-activity">No activity recorded<span className="gp-inactive"><Clock size={13} aria-hidden="true" />Never active</span></span>;
+  if (!activity) return <span className="gp-activity">No activity recorded<br /><span className="gp-inactive"><Clock size={13} aria-hidden="true" />Never active</span></span>;
 
   return <span className="gp-activity"><time dateTime={activity.at}>{formatPortfolioDate(activity.at, {year: undefined})}</time><small>{activity.label}</small>{days >= STALE_AFTER_DAYS && <span className="gp-inactive"><Clock size={13} aria-hidden="true" />{days} days inactive</span>}</span>;
 
