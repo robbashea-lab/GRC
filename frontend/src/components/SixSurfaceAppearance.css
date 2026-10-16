@@ -129,8 +129,11 @@ html[data-visual-surface] :is(.ui-dialog,.ui-sheet) :is(input:not([type=checkbox
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) label {font:500 12px/1.5 var(--font);color:var(--muted)}
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) .drawer-tab {font:500 12.5px/1.5 var(--font);white-space:nowrap;flex:none}
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) .drawer-tab.active {color:var(--link);border-color:var(--link)}
-/* Match the references' native scrollbar gutter; the global app otherwise narrows it to 10px. */
-html[data-visual-surface]::-webkit-scrollbar,html[data-visual-surface] ::-webkit-scrollbar {width:16px;height:16px}
+/* Keep the references' browser-native gutter instead of guessing its platform-dependent width. */
+html[data-visual-surface]::-webkit-scrollbar,html[data-visual-surface] ::-webkit-scrollbar,
+html[data-visual-surface]::-webkit-scrollbar-track,html[data-visual-surface] ::-webkit-scrollbar-track,
+html[data-visual-surface]::-webkit-scrollbar-thumb,html[data-visual-surface] ::-webkit-scrollbar-thumb,
+html[data-visual-surface]::-webkit-scrollbar-thumb:hover,html[data-visual-surface] ::-webkit-scrollbar-thumb:hover {all:revert}
 
 .bsb-client-industry {display:none}
 .brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bsb-client .bsb-group-label {display:none}

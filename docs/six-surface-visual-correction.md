@@ -282,3 +282,11 @@ certifies only `58c3fec4`. Existing staging still runs `847bceac`; its current
 browser session shows sign-in, so hosted standard-sign-in Portfolio coverage
 needs an authenticated session. No merge, production deployment, new access or
 temporary-account reactivation is authorized by this checkpoint.
+
+Final controlled modal measurement found a scoped16px scrollbar override was
+incorrect: the unchanged target uses browser-native `auto` sizing (1120px body,
+1105px client width), while the candidate produced1104px at the same viewport.
+The approved-surface scrollbar, track and thumb rules now revert to browser
+defaults rather than guessing a platform width. The global application10px
+scrollbar outside the approved scopes stays intact. This correction supersedes
+the0f3b97b build/CI196 checkpoint and needs final-head verification.
