@@ -1,3 +1,7 @@
+import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
+import {selectedClient} from '@/lib/clientSelection';
+import BrawndoDemoReviews,{BrawndoReviewRows} from './BrawndoDemoReviews';
+import {brawndoDemoReviewsGate} from '@/lib/brawndoDemoReviews';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import {SETUP_FILTERS} from '@/lib/onboardingHandoff';
@@ -116,16 +120,21 @@ export default function RecordListPage({ kind }) {
 }
 function EntityListPage({ kind }) {
   const schema = SCHEMAS[kind];
-  const { currentClient, currentClientId } = useOrg();
-  const { user } = useAuth();
+  const org=useOrg(),auth=useAuth();
+  const { currentClient, currentClientId } = org;
+  const { user } = auth;
   // Preserve the existing drawer's guarded completion workflow independently of list presentation.
   const guardedReviewDrawer = kind==='reviews' && isReferenceWorkflow(currentClientId,user);
   const policiesPilot = kind==='policies';
   const POLICY_HIDDEN=['version'];
   const displayColumns = policiesPilot ? schema.columns.filter(c=>!POLICY_HIDDEN.includes(c.key)).map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c).sort((a,b)=>POLICY_COLUMN_ORDER.indexOf(a.key)-POLICY_COLUMN_ORDER.indexOf(b.key)) : schema.columns;
-  const [theme]=useBrawndoTheme();useBrawndoPortalTheme(policiesPilot,theme);
+  const [theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(policiesPilot,theme);
   const [alignmentTarget,setAlignmentTarget]=useState(null);
   const location = useLocation();
+  const appearanceContext={...org,...auth,loading:org.loading,authLoading:auth.loading,error:org.error,authError:auth.error,orgLoading:org.loading,orgError:org.error,pathname:location.pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(location.search).get('client_id')};
+  const reviewsPilot=kind==='reviews'&&brawndoDemoReviewsGate(appearanceContext)&&visualCorrectionSurface(appearanceContext)==='reviews';
+  const reviewScope=kind==='reviews'?`${user?.user_id}:${user?.role}:${auth.workspaceMode}:${currentClientId}`:'';
+  const loadedReviewScope=useRef('');
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
 
@@ -264,11 +273,12 @@ function EntityListPage({ kind }) {
         });
       }
       if (sequence !== loadSequence.current) return;
+      loadedReviewScope.current=reviewScope;
       setRows(data);
       setChecked(new Set(options?.selection || []));
     } catch (e) { if (sequence === loadSequence.current) { setRows([]); setLoadError(formatError(e)); } }
     finally { if (sequence === loadSequence.current) setLoading(false); }
-  }, [kind, currentClientId]);
+  }, [kind, currentClientId,reviewScope]);
 
   useEffect(() => { const sequence = loadSequence; setOpen(false); setSelected(null); setLinkedInitialValues({});setLinkError('');setRows([]); load(); return () => { sequence.current++; }; }, [load]);
 
@@ -320,7 +330,7 @@ function EntityListPage({ kind }) {
     filterClient.current = currentClientId;
     const next = new URLSearchParams(params);
     next.delete('owner'); next.delete('unassigned'); next.delete('reviewView');
-    if(['reviews','policies'].includes(kind)&&resetView) ['q','tab','status','signal','sortBy','sortDir','setup','policyView'].forEach(key=>next.delete(key));
+    if(['reviews','policies'].includes(kind)&&resetView) ['q','tab','status','signal','sortBy','sortDir','setup','policyView','basis'].forEach(key=>next.delete(key));
     setAlignmentTarget(null);
     setParams(next, { replace: true });
   }, [currentClientId, params, setParams, kind, policiesPilot, user]);
@@ -359,7 +369,7 @@ function EntityListPage({ kind }) {
     return parts.join(" · ");
   }, [hasUrlFilters, urlFilters, users, user]);
 
-  const tableSource = rows.filter(r => r.client_id === currentClientId);
+  const tableSource = rows.filter(r => r.client_id === currentClientId&&(!reviewsPilot||loadedReviewScope.current===reviewScope));
   const columnCount = displayColumns.length + 2;
   const baseColumns = tableColumns(kind, { rows: tableSource, users });
   const columns = policiesPilot ? policyColumns(baseColumns,tableSource,programs,policyAssessments,cisGroup) : baseColumns;
@@ -383,7 +393,8 @@ function EntityListPage({ kind }) {
   const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
     const passed = rows.filter((r) => {
-      if (r.client_id !== currentClientId) return false;
+      if (r.client_id !== currentClientId||reviewsPilot&&loadedReviewScope.current!==reviewScope) return false;
+      if (reviewsPilot&&params.get('basis')&&basisSummary(r)!==params.get('basis'))return false;
       if (urlFilters.setup && !urlFilters.setup.matches(r)) return false;
       // URL-carried filters (from the scoped dashboard). These are additive.
       if (urlFilters.owner) {
@@ -398,7 +409,7 @@ function EntityListPage({ kind }) {
 
       if (!policiesPilot && signal && !signal.test(r)) return false;
       if (policiesPilot && !policyViewMatches(r, policyView)) return false;
-      if (isReviews && !signal && !columnStatusActive && !reviewMatches(r, reviewTab, undefined, user?.user_id)) return false;
+      if (isReviews && !signal && !columnStatusActive && !(reviewsPilot&&reviewTab==='history'&&r.occurrences?.some(occurrence=>['completed','cancelled'].includes(occurrence.status)))&&!reviewMatches(r, reviewTab, undefined, user?.user_id)) return false;
       if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && (statusFilter === "active" ? (TERMINAL_STATUS[kind] || []).includes(r.status) : (policiesPilot?policyStatus(r):r.status) !== statusFilter)) return false;
       if (!s) return true;
       const {occurrences, ...searchable} = r;
@@ -439,7 +450,7 @@ function EntityListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, policiesPilot, user, policyView]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, policiesPilot, user, policyView,reviewsPilot,reviewScope]);
   const filtered = table.apply(presetRows);
   // Keep the register's geometry/opener during an in-place modal save refresh.
   const showLoading = loading && (!(isReviews||policiesPilot) || !tableSource.length);
@@ -534,9 +545,56 @@ function EntityListPage({ kind }) {
     }
   }
 
-  return (
-    <div className={`register-surface${policiesPilot?' bpage':''}`} data-layout={isReviews ? 'reviews' : undefined} data-theme={policiesPilot?theme:undefined}>
-      {policiesPilot ? <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Policy library`} title="Policies">
+  const openReviewRow=row=>{if(reviewsPilot)setLinkedInitialValues(row._execution?{occurrence:row._execution}:{});setSelected(reviewsPilot?row._review||row:row);setOpen(true);};
+  const rowActions=(row,i)=>(<DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          data-testid={`${kind}-row-menu-${i}`}
+                          className="p-1 rounded hover:bg-surface-subtle text-ink-help"
+                          aria-label="Row actions"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => openReviewRow(row)}
+                          data-testid={`${kind}-row-open-${i}`}
+                          className="text-sm"
+                        >
+                          <Pencil className="h-3.5 w-3.5 mr-2" /> Open / edit
+                        </DropdownMenuItem>
+                        {/* Keep the existing drawer-only completion guards where they already apply. */}
+                        {isReviews && canWrite && !guardedReviewDrawer && row.status !== "completed" && row.status !== "cancelled" && (
+                          <DropdownMenuItem
+                            onClick={() => markComplete(row)}
+                            data-testid={`${kind}-row-complete-${i}`}
+                            className="text-sm"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> Mark complete
+                          </DropdownMenuItem>
+                        )}
+                        {canDelete && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => remove(reviewsPilot?row._review||row:row)}
+                              data-testid={`${kind}-delete-${i}`}
+                              className="text-sm text-semantic-critical focus:text-semantic-critical"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                              {isReviews && <span className="ml-auto text-xs font-mono text-ink-help">admin</span>}
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>);
+  const Surface=reviewsPilot?BrawndoDemoReviews:'div';
+
+
+  return (<>
+    <Surface {...(reviewsPilot?{rows:loading||loadError?[]:tableSource,available:!loading&&!loadError&&loadedReviewScope.current===reviewScope,theme,view:reviewTab,onView:setReviewTab,actions:<><button onClick={()=>setTheme(theme==='light'?'dark':'light')}>{theme==='light'?'Dark':'Light'}</button><SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId||!rows.length} testid="export-reviews-button"/>{canWrite&&<PrimaryAction label="New review" testid="create-reviews-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}</>}: {className:`register-surface${policiesPilot?' bpage':''}`, 'data-layout':isReviews?'reviews':undefined,'data-theme':policiesPilot?theme:undefined})}>
+      {!reviewsPilot&&(policiesPilot ? <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Policy library`} title="Policies">
           <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId || rows.length === 0} testid="export-policies-button" />
           {canWrite && <PrimaryAction label="New Policy" testid="create-policies-button" onClick={() => { setSelected(null); setOpen(true); }} />}
         </BrawndoPageHeader> : <PageHeader
@@ -548,9 +606,7 @@ function EntityListPage({ kind }) {
             {canWrite && <PrimaryAction label={`New ${schema.singular}`} testid={`create-${kind}-button`} onClick={() => { setSelected(null); setOpen(true); }} />}
           </HeaderActions>
         }
-      />}
-      {frameworkError&&<p role="alert">{frameworkError}</p>}
-      {frameworkRecord&&frameworkRecord.client_id===currentClientId&&<FrameworkDrawer key={currentClientId+':'+frameworkRecord.framework_assessment_id} open reviewManagement record={frameworkRecord} clientId={currentClientId} onSaved={load} onOpenChange={v=>{if(!v){const next=new URLSearchParams(params);next.delete('framework_assessment');setFrameworkRecord(null);setParams(next,{replace:true});}}}/>}
+      />)}
       {kind==='policies'&&<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       {!policiesPilot && !isReviews && signals.length > 0 && <RegisterSignalBar signals={signals} rows={tableSource} active={signal?.id} onPick={setSignal} />}
       <div className="register-toolbar">
@@ -591,7 +647,8 @@ function EntityListPage({ kind }) {
             </Select>
           )
         )}
-        {!policiesPilot && <RegisterCount shown={filtered.length} total={isReviews && !columnStatusActive && signal?.id!=='recent' ? tableSource.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : tableSource.length} />}
+        {reviewsPilot&&<div className="bdr-filter-right"><label>Basis <select aria-label="Review basis" value={params.get('basis')||''} onChange={event=>setParam('basis',event.target.value)}><option value="">All</option>{[...new Set(tableSource.map(basisSummary))].sort().map(basis=><option key={basis}>{basis}</option>)}</select></label><label>Sort by <select aria-label="Sort reviews" value={sortBy+':'+sortDir} onChange={event=>{const [by,dir]=event.target.value.split(':');table.setSort(null);const next=new URLSearchParams(params);next.set('sortBy',by);next.set('sortDir',dir);setParams(next,{replace:true});}}><option value="due_date:asc">Due date, soonest first</option><option value="due_date:desc">Due date, latest first</option><option value="title:asc">Review A–Z</option><option value="owner_id:asc">Owner A–Z</option><option value="recurrence:asc">Cadence</option></select></label></div>}
+        {!policiesPilot && !reviewsPilot && <RegisterCount shown={filtered.length} total={isReviews && !columnStatusActive && signal?.id!=='recent' ? tableSource.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : tableSource.length} />}
       </div>
 
       {(bulkReport || pendingBulkRequest) && <div role="status" aria-live="polite" data-testid="bulk-operation-report">
@@ -674,6 +731,7 @@ function EntityListPage({ kind }) {
       <div className="register-body">
         <TableFilterChips table={table} />
         <RegisterLoadError error={loadError} onRetry={load} name="records" />
+        {reviewsPilot?<BrawndoReviewRows rows={filtered} users={users} checked={checked} toggleOne={toggleOne} toggleAll={toggleAll} allChecked={allChecked} history={reviewTab==='history'} widths={reviewWidths} loading={showLoading} error={loadError} onOpen={openReviewRow} rowMenu={rowActions} controls={<table><thead><tr>{columns.map(column=>['title','owner_id','status','due_date','recurrence'].includes(column.key)?<ReviewColumnHeader key={column.key} table={table} column={column} width={reviewWidths[column.key]} onResize={(key,width,initial)=>setReviewWidths(previous=>({...initial,...previous,[key]:width}))}/>:<th key={column.key}><ColumnControl table={table} column={column}/></th>)}</tr></thead></table>}/>:<>
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-layout={isReviews ? 'reviews' : undefined}>
           <table className="w-full" style={isReviews&&Object.keys(reviewWidths).length?{width:72+displayColumns.reduce((sum,c)=>sum+(reviewWidths[c.key]||REVIEW_COLUMN_MIN[c.key]||90),0)}:undefined}>
             {isReviews && <colgroup><col className="register-col-check" />{displayColumns.map(c => <col key={c.key} style={reviewWidths[c.key]?{width:reviewWidths[c.key]}:undefined} className={c.primary ? 'register-col-title' : c.user ? 'register-col-owner' : c.date ? 'register-col-date' : `register-col-${c.key}`} />)}<col className="register-col-actions" /></colgroup>}
@@ -751,49 +809,7 @@ function EntityListPage({ kind }) {
                   );
                   })}
                   <td className="tbl-cell text-right" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          data-testid={`${kind}-row-menu-${i}`}
-                          className="p-1 rounded hover:bg-surface-subtle text-ink-help"
-                          aria-label="Row actions"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem
-                          onClick={() => { setSelected(row); setOpen(true); }}
-                          data-testid={`${kind}-row-open-${i}`}
-                          className="text-sm"
-                        >
-                          <Pencil className="h-3.5 w-3.5 mr-2" /> Open / edit
-                        </DropdownMenuItem>
-                        {/* Keep the existing drawer-only completion guards where they already apply. */}
-                        {isReviews && canWrite && !guardedReviewDrawer && row.status !== "completed" && row.status !== "cancelled" && (
-                          <DropdownMenuItem
-                            onClick={() => markComplete(row)}
-                            data-testid={`${kind}-row-complete-${i}`}
-                            className="text-sm"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> Mark complete
-                          </DropdownMenuItem>
-                        )}
-                        {canDelete && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => remove(row)}
-                              data-testid={`${kind}-delete-${i}`}
-                              className="text-sm text-semantic-critical focus:text-semantic-critical"
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-                              {isReviews && <span className="ml-auto text-xs font-mono text-ink-help">admin</span>}
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {rowActions(row,i)}
                   </td>
                 </tr>
                 );
@@ -801,9 +817,12 @@ function EntityListPage({ kind }) {
             </tbody>
           </table>
           {policiesPilot && !showLoading && <p className="bpage-foot" data-testid="policies-count">Showing {filtered.length} of {tableSource.length} {tableSource.length===1?'policy':'policies'}{sortBy==='next_review_date'&&sortDir==='asc'?' · next review first':''}</p>}
-        </div>
+        </div></>}
       </div>
 
+    </Surface>
+      {frameworkError&&<p role="alert">{frameworkError}</p>}
+      {frameworkRecord&&frameworkRecord.client_id===currentClientId&&<FrameworkDrawer key={currentClientId+':'+frameworkRecord.framework_assessment_id} open reviewManagement record={frameworkRecord} clientId={currentClientId} onSaved={load} onOpenChange={v=>{if(!v){const next=new URLSearchParams(params);next.delete('framework_assessment');setFrameworkRecord(null);setParams(next,{replace:true});}}}/>}
       <RecordDrawer
         reviewsPilot={guardedReviewDrawer}
         open={open&&(!selected||selected.client_id===currentClientId)}
@@ -818,6 +837,6 @@ function EntityListPage({ kind }) {
       />
       {linkError&&<p role="alert">{linkError}</p>}
       {alignmentTarget&&<RecordDrawer open kind={alignmentTarget.kind} record={alignmentTarget.record} clientId={currentClientId} onOpenChange={value=>!value&&setAlignmentTarget(null)} onSaved={load}/>}
-    </div>
+    </>
   );
 }

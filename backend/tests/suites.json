@@ -1,5 +1,6 @@
 {
   "offline": [
+    "test_stack_diagnostics.py",
     "test_assessment_items.py",
     "test_assessment_unknowns.py",
     "test_portfolio_progress.py",

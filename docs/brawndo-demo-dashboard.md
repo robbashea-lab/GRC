@@ -1,5 +1,25 @@
 # Brawndo Explore demo dashboard
 
+## Superseding visual correction — October 16, 2026
+
+The six-surface request supersedes the earlier native-font/palette/layout exception.
+Dashboard now follows the pinned `visual-targets/dashboard.html` appearance
+(SHA256 `5e824ee4a878d5dee2914db05fd8643c72249b10c706ea20f7459162f3c9d8a9`).
+The working cumulative baseline is `847bceacc84f93355ae15c01fc051c6c7a2f90d2`.
+Dashboard's first focused correction is `53d9217f99c3392666adcca267f6722d4df3c222`:
+page typography, summary, controls, native work-row structure and container reflow.
+The shared history owner supplies the target inline composition and concise copy;
+this page does not replace history math, provenance or native queue controllers.
+Native summary → Open item → full native record remains the opening contract.
+
+Six focused suites / 55 tests pass, including native saves, historical occurrences,
+mode/client changes and late responses. A separate AI source review found no
+actionable finding. These are component/controller checks, not rendered acceptance.
+Agent007 owns common-environment target/candidate font, cascade, geometry, both-theme
+and breakpoint comparisons, integrated native journeys and exact-head release.
+No new staging deployment or visual acceptance is claimed for this correction.
+The earlier delivery notes below are historical evidence, not current completion.
+
 ## Scope and recovery checkpoint — October 15, 2026
 
 This candidate implements the supplied dashboard package in the native application.
@@ -63,8 +83,9 @@ Inline reporting reuses PortfolioReports and portfolioProgress, the native histo
 endpoint, denominators, scope changes, genuine positions and guarded forecast.
 Work completion cannot independently grant implementation credit. Missing history
 and baselines remain unavailable. The selected period survives revalidation.
-Native fonts and non-chart theme tokens are retained; supplied chart colors are
-local to this dashboard. Existing Portfolio defaults remain unchanged.
+The October 15 delivery retained native fonts and non-chart tokens. That visual
+exception is superseded by the October 16 correction above; Portfolio has its own
+independently pinned appearance and shared-history presentation variant.
 
 ## Verification and review limits
 

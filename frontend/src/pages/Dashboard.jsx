@@ -1,3 +1,5 @@
+import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
+import {selectedClient} from '@/lib/clientSelection';
 import {useEffect,useRef,useState} from 'react';
 import {useLocation,useSearchParams} from 'react-router-dom';
 import api,{formatError} from '@/lib/api';
@@ -21,9 +23,11 @@ import {SCHEMAS} from '@/lib/schemas';
 
 const SCOPE={kind:'org'};
 export default function Dashboard(){
-  const {currentClient,currentClientId}=useOrg(),{user,workspaceMode}=useAuth(),[params,setParams]=useSearchParams();
-  const {pathname}=useLocation();
+  const org=useOrg(),auth=useAuth(),{currentClient,currentClientId}=org,{user,workspaceMode}=auth,[params,setParams]=useSearchParams();
+  const {pathname,search}=useLocation();
   const demoDashboard=brawndoDemoDashboard({workspaceMode,user,currentClientId,currentClient,pathname});
+  // Appearance rechecks must not change the native data scope or discard open editor drafts.
+  const demoPresentation=demoDashboard&&visualCorrectionSurface({...org,...auth,pathname,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')})==='dashboard';
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(null),[revision,setRevision]=useState(0),[selection,setSelection]=useState(null);
   const [linked,setLinked]=useState(null),[refreshVersion,setRefreshVersion]=useState(0),[refreshError,setRefreshError]=useState('');
   const pilot=isWorkspacePresentation(currentClientId,user),linkedOpener=useRef(null),refreshRequest=useRef(null);
@@ -79,12 +83,12 @@ export default function Dashboard(){
     }catch(e){if(!controller.signal.aborted&&activeRequest.current===requestKey)setRefreshError((saved?'The record was saved, but dashboard refresh failed: ':'Dashboard refresh failed: ')+formatError(e));}
   }
   const program=demoDashboard?brawndoDemoProgram(data.programs,data.programMetadata):null;
-  return <>{demoDashboard?<BrawndoDemoDashboard key={requestKey} queue={data.queue} programs={data.programs} client={currentClient} members={data.members}
+  return <>{demoPresentation?<BrawndoDemoDashboard key={requestKey} queue={data.queue} programs={data.programs} client={currentClient} members={data.members}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion}>
-      {program?<BrawndoDemoProgram client={currentClient} program={program} refreshToken={refreshVersion}/>:<section aria-label="CIS IG1 Status"><h2>CIS IG1 Status</h2><p role="status">The configured Brawndo CIS v8.1 IG1 program is unavailable. Review its native configuration.</p></section>}
+      {program?<BrawndoDemoProgram client={currentClient} program={program} refreshToken={refreshVersion}/>:<section className="bdd-card" aria-label="CIS IG1 Status"><header><h2>CIS IG1 Status</h2></header><p className="bdd-empty" role="status">The configured Brawndo CIS v8.1 IG1 program is unavailable. Review its native configuration.</p></section>}
     </BrawndoDemoDashboard>:<ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} workspacePilot={pilot}/>}
     {refreshError&&<p role="alert">{refreshError} <button onClick={()=>refreshDashboard(false)}>Retry dashboard refresh</button></p>}
-    {selection?.key===requestKey&&<DashboardItemSummary selection={selection} onClose={close} opener={opener.current} fallbackFocus={demoDashboard?()=>document.getElementById('bdd-work-heading'):undefined} onOpenRecord={pilot?(item,element)=>{linkedOpener.current=element;setLinked({...item,key:requestKey});}:undefined}/>}
-    {linked?.key===requestKey&&<RecordDrawer open kind={linked.kind} record={linked.record} initialValues={linked.initialValues} schema={SCHEMAS[linked.kind]?.fields} clientId={currentClientId} reviewsPilot onSaved={()=>refreshDashboard()} onOpenChange={open=>{if(!open){setLinked(null);requestAnimationFrame(()=>{const target=linkedOpener.current?.isConnected?linkedOpener.current:demoDashboard?document.getElementById('bdd-work-heading'):null;target?.focus({preventScroll:true});});}}}/>}</>;
+    {selection?.key===requestKey&&<DashboardItemSummary selection={selection} onClose={close} opener={opener.current} fallbackFocus={demoPresentation?()=>document.getElementById('bdd-work-heading'):undefined} onOpenRecord={pilot?(item,element)=>{linkedOpener.current=element;setLinked({...item,key:requestKey});}:undefined}/>}
+    {linked?.key===requestKey&&<RecordDrawer open kind={linked.kind} record={linked.record} initialValues={linked.initialValues} schema={SCHEMAS[linked.kind]?.fields} clientId={currentClientId} reviewsPilot onSaved={()=>refreshDashboard()} onOpenChange={open=>{if(!open){setLinked(null);requestAnimationFrame(()=>{const target=linkedOpener.current?.isConnected?linkedOpener.current:demoPresentation?document.getElementById('bdd-work-heading'):null;target?.focus({preventScroll:true});});}}}/>}</>;
 }

@@ -60,7 +60,7 @@ test('native dialog opens the exact program, offers the four approved ranges and
   expect([...dialog().querySelectorAll('[aria-label="History period"] button')].map(node => node.textContent)).toEqual(['1 month', '3 months', '6 months', '12 months']);
   expect(dialog().querySelector('.ph-current-value').textContent).toContain('57.1%'); expect(dialog().querySelector('.ph-current-value').textContent).toContain('32 of 56');
   expect(dialog().querySelector('.ph-readout').textContent).toContain('55'); expect(dialog().querySelector('.ph-readout').textContent).not.toContain('matches current committed state');
-  expect(dialog().querySelector('.ph-metrics > div:first-child').textContent).toContain('No genuine period boundary');
+  expect(dialog().querySelector('.ph-metrics-sparse').textContent).toContain('Available after more saved history');
   expect(dialog().querySelector('.ph-metrics > div:first-child').textContent).not.toContain('No change');
   await click('Open CIS IG3 workspace →'); expect(navigate).toHaveBeenLastCalledWith('/compliance/cis-ig1');
   await click('Open client portal'); expect(navigate).toHaveBeenLastCalledWith('/dashboard');
@@ -74,7 +74,8 @@ test('range changes preserve expanded data and the 90-day estimate, while reopen
     expect(dialog().querySelector('.ph-metrics > div:last-child').textContent).toBe(estimate);
   }
   expect(dialog().querySelectorAll('#portfolio-history-data tbody tr')).toHaveLength(3);
-  await click('Close'); expect(dialog()).toBeNull(); expect(document.activeElement.textContent).toBe('Open exact program history');
+  await act(async () => dialog().querySelector('.ph-head-actions [aria-label="Close"]').click());
+  expect(dialog()).toBeNull(); expect(document.activeElement.textContent).toBe('Open exact program history');
   await click('Open exact program history'); expect(dialog().querySelector('[aria-label="History period"] [aria-pressed="true"]').textContent).toBe('6 months');
   expect(dialog().querySelector('#portfolio-history-data')).toBeNull(); expect(dialog().querySelector('[aria-label="Chart view"] [aria-pressed="true"]').textContent).toBe('Status mix');
 });
@@ -94,7 +95,7 @@ test('same-sized scope changes are disclosed and reconstructed positions retain 
   api.get.mockResolvedValue({data: history({snapshots: [reconstructed, snapshot(0, 32)], comparison: {baseline, baseline_effective_at_start: true, scope_changed: true},
     scope_changes: [{effective_at: '2026-09-01T12:00:00Z', before: {denominator: 56}, after: {denominator: 56}}]})});
   await act(async () => root.render(<Harness />)); await click('View data');
-  expect(dialog().textContent).toContain('Scope changed'); expect(dialog().textContent).toContain('denominator reduction is not additional implemented work');
+  expect(dialog().textContent).toContain('Scope changed'); expect(dialog().textContent).toContain('Scope changed (56 → 56 applicable)');
   const rows = dialog().querySelectorAll('#portfolio-history-data tbody tr'); expect(rows).toHaveLength(3); expect(rows[2].textContent).toContain("In effect at period start");
   expect(rows[1].textContent).toContain('Sep 13'); expect(rows[1].textContent).toContain('Captured'); expect(rows[1].textContent).toContain('Oct 13');
   expect(dialog().querySelectorAll('.ph-scope-marker')).toHaveLength(1);
@@ -105,7 +106,7 @@ test('no history and failed history reads preserve real current counts without f
   await act(async () => root.render(<Harness choices={[programs[0]]} />));
   expect(dialog().querySelector('[role="tablist"]')).toBeNull(); expect(dialog().querySelector('.ph-current-value').textContent).toContain('57.1%');
   expect(dialog().textContent).toContain('No saved positions'); expect(dialog().querySelectorAll('.ph-marker')).toHaveLength(0);
-  expect(dialog().querySelector('.ph-metrics > div:first-child').textContent).toContain('Unavailable'); expect(dialog().querySelector('.ph-metrics > div:last-child').textContent).toContain('Not estimated');
+  expect(dialog().querySelector('.ph-metrics-sparse').textContent).toContain('Available after more saved history'); expect(dialog().querySelector('.ph-history-meter').textContent).toContain('0 retained');
   api.get.mockRejectedValue(new Error('History service unavailable')); await click('1 month');
   expect(dialog().querySelector('[role="alert"]').textContent).toContain('History service unavailable'); expect(dialog().querySelector('.ph-current-value').textContent).toContain('57.1%');
   expect(dialog().querySelectorAll('.ph-marker')).toHaveLength(0);
@@ -123,7 +124,108 @@ test('chart keyboard and pointer choose genuine nearest observations, keep dates
   expect(container.querySelector('.ph-readout').textContent).toContain('26'); expect(container.textContent).not.toContain('Vertical axis zoomed'); expect(container.textContent).toContain('100%');
   await act(async () => root.render(<PortfolioHistoryChart points={points} start="2026-07-13T12:00:00Z" asOf={AT} view="mix" current={snapshot(0, 32)} scopeChanges={[]} />));
   expect(container.textContent).toContain('0%'); expect(container.textContent).toContain('100%'); expect(container.textContent).not.toContain('Vertical axis zoomed');
-  expect([...container.querySelectorAll('.ph-grid')].map(line => line.nextSibling.textContent)).toEqual(['0%', '25%', '50%', '75%', '100%']);
+  expect([...container.querySelectorAll('.ph-grid,.ph-axis,.ph-target')].map(line => line.nextSibling.textContent)).toEqual(['0%', '25%', '50%', '75%', '100%']);
+});
+
+test('modal history tooltips flip at the right edge and remain inside a resized chart while keyboard selection retains real counts', async () => {
+  let paneWidth = 600, paneHeight = 296;
+  const originalBounds = Element.prototype.getBoundingClientRect;
+  const bounds = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this.matches('.ph-chart,.ph-chart > svg')) return {left:100, top:50, width:paneWidth, height:paneHeight};
+    if (this.matches('.ph-history-tip')) return {left:0, top:0, width:220, height:100};
+    return originalBounds.call(this);
+  });
+  try {
+    const points = [snapshot(-60, 26), snapshot(-30, 29), snapshot(0, 32)];
+    await act(async () => root.render(<PortfolioHistoryChart points={points} start="2026-07-13T12:00:00Z" asOf={AT} view="line" current={points[2]} scopeChanges={[]} />));
+    const svg = container.querySelector('svg');
+    const key = value => act(async () => svg.dispatchEvent(new KeyboardEvent('keydown', {key:value, bubbles:true})));
+    const expectContained = () => {
+      const tip = container.querySelector('.ph-history-tip'), left = parseFloat(tip.style.left), top = parseFloat(tip.style.top);
+      expect(left).toBeGreaterThanOrEqual(0); expect(left + 220).toBeLessThanOrEqual(paneWidth);
+      expect(top).toBeGreaterThanOrEqual(0); expect(top + 100).toBeLessThanOrEqual(paneHeight);
+      return left;
+    };
+    await key('Home');
+    expect(container.querySelector('.ph-readout').textContent).toContain('Implemented 26 ·');
+    expect(expectContained()).toBeGreaterThan(Number(container.querySelector('.ph-active').getAttribute('cx')));
+    await key('End');
+    expect(container.querySelector('.ph-history-tip').textContent).toContain('32 of 56');
+    expect(expectContained() + 220).toBeLessThan(Number(container.querySelector('.ph-active').getAttribute('cx')));
+    paneWidth = 240; paneHeight = 180;
+    await act(async () => window.dispatchEvent(new Event('resize')));
+    expectContained();
+    await key('ArrowLeft'); expectContained();
+    expect(container.querySelector('.ph-readout').textContent).toContain('Implemented 29 ·');
+  } finally { bounds.mockRestore(); }
+});
+
+test('status keyboard focus centers measured tooltips over the segment and clamps both horizontal edges without changing counts', async () => {
+  const originalBounds = Element.prototype.getBoundingClientRect;
+  const bounds = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this.matches('.portfolio-history-dialog')) return {left:80, top:100, width:350, height:600};
+    if (this.matches('.ph-status-scale')) return {left:100, top:200, width:300, height:62};
+    if (this.matches('.ph-interactive-bar')) return {left:104, top:224, width:292, height:14};
+    if (this.matches('.ph-segment-detail')) return {left:0, top:0, width:170, height:90};
+    return originalBounds.call(this);
+  });
+  try {
+    await act(async () => root.render(<Harness />));
+    const segments = dialog().querySelectorAll('.ph-interactive-bar button');
+    for (const segment of segments) {
+      await act(async () => segment.focus());
+      const tip = dialog().querySelector('.ph-segment-detail'), left = parseFloat(tip.style.left), top = parseFloat(tip.style.top);
+      expect(left + 80).toBeGreaterThanOrEqual(100); expect(left + 80 + 170).toBeLessThanOrEqual(400);
+      expect(top + 100 + 90).toBeLessThan(224);
+      expect(dialog().querySelectorAll('.ph-breakdown-row.is-active')).toHaveLength(1);
+      expect(dialog().querySelector('.ph-current-value').textContent).toContain('32 of 56');
+    }
+    expect(dialog().querySelector('.ph-segment-detail').textContent).toContain('24 / 56');
+    await act(async () => dialog().querySelector('.ph-head-actions .ph-button').focus());
+    expect(dialog().querySelector('.ph-segment-detail')).toBeNull();
+    expect(dialog().querySelectorAll('.ph-breakdown-row')).toHaveLength(4);
+  } finally { bounds.mockRestore(); }
+});
+
+test('modal status details escape the scroll clip, follow body scrolling, fit a narrow scale and clean up while keyboard focus preserves genuine counts', async () => {
+  let scrollOffset = 0, scaleWidth = 760, addedScroll, removedScroll;
+  const originalBounds = Element.prototype.getBoundingClientRect;
+  const bounds = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this.matches('.portfolio-history-dialog')) return {left:160, top:16, width:1120, height:843};
+    if (this.matches('.ph-body')) return {left:160, top:94, width:1120, height:766};
+    if (this.matches('.ph-status-scale')) return {left:468, top:164 - scrollOffset, width:scaleWidth, height:62};
+    if (this.matches('.ph-interactive-bar')) return {left:472, top:188 - scrollOffset, width:scaleWidth - 8, height:14};
+    if (this.matches('.ph-segment-detail')) return {left:0, top:0, width:Math.min(180, parseFloat(this.style.maxWidth) || 180), height:92};
+    return originalBounds.call(this);
+  });
+  try {
+    await act(async () => root.render(<Harness />));
+    const body = dialog().querySelector('.ph-body'), segments = dialog().querySelectorAll('.ph-interactive-bar button');
+    addedScroll = jest.spyOn(body, 'addEventListener'); removedScroll = jest.spyOn(body, 'removeEventListener');
+    await act(async () => segments[0].focus());
+    const tip = dialog().querySelector('.ph-segment-detail'), top = parseFloat(tip.style.top);
+    expect(tip.parentElement).toBe(dialog()); expect(body.contains(tip)).toBe(false);
+    expect(top + 16).toBeLessThan(body.getBoundingClientRect().top);
+    expect(top).toBeGreaterThanOrEqual(0);
+    expect(tip.textContent).toContain('Implemented'); expect(tip.textContent).toContain('32 / 56');
+    scrollOffset = 40;
+    await act(async () => body.dispatchEvent(new Event('scroll')));
+    expect(parseFloat(tip.style.top)).toBe(top - 40);
+    expect(document.activeElement).toBe(segments[0]); expect(tip.textContent).toContain('32 / 56');
+    scaleWidth = 160;
+    await act(async () => window.dispatchEvent(new Event('resize')));
+    const left = parseFloat(tip.style.left) + 160, width = tip.getBoundingClientRect().width;
+    expect(width).toBeLessThanOrEqual(scaleWidth);
+    expect(left).toBeGreaterThanOrEqual(468); expect(left + width).toBeLessThanOrEqual(468 + scaleWidth);
+    expect(tip.textContent).toContain('32 / 56');
+    await act(async () => segments[1].focus());
+    expect(dialog().querySelector('.ph-segment-detail').textContent).toContain('24 / 56');
+    expect(dialog().querySelector('.ph-current-value').textContent).toContain('32 of 56');
+    const scrollHandler = addedScroll.mock.calls.filter(([type]) => type === 'scroll').at(-1)[1];
+    await act(async () => dialog().querySelector('.ph-head-actions .ph-button').focus());
+    expect(dialog().querySelector('.ph-segment-detail')).toBeNull();
+    expect(removedScroll).toHaveBeenCalledWith('scroll', scrollHandler);
+  } finally { bounds.mockRestore(); addedScroll?.mockRestore(); removedScroll?.mockRestore(); }
 });
 
 test('touch pointerdown reads genuine nearest positions after range, program and chart-view changes', async () => {
@@ -279,4 +381,79 @@ test('inline program reports missing current and history honestly', async () => 
   expect(document.querySelector('.ph-current-value strong').textContent).toBe('Unavailable');
   expect(document.querySelector('[role=alert]').textContent).toContain('History unavailable');
   expect(document.body.textContent).not.toContain('NaN');
+});
+
+
+test('reference presentation keeps the full graph and truthful empty history without technical disclosure', async () => {
+  api.get.mockResolvedValue({data:history({snapshots:[],forecast_snapshots:[],capture_method:'Browser-local atomic committed posture/scope changes; no historical interpolation',coverage:{notice:'hosted-history disclaimer'}})});
+  await act(async () => root.render(<Harness choices={[programs[0]]} />));
+  expect(dialog().querySelector('.ph-chart svg').getAttribute('viewBox')).toBe('0 0 900 296');
+  expect(dialog().querySelector('.ph-current-value .ph-unit').textContent).toBe('%');
+  expect(dialog().textContent).toContain('No saved positions in this period');
+  expect(dialog().textContent).not.toContain('Browser-local atomic');
+  expect(dialog().textContent).not.toContain('hosted-history disclaimer');
+  expect(dialog().querySelector('.ph-foot')).toBeNull();
+  expect(dialog().querySelector('.ph-inline-foot')).toBeNull();
+  expect(dialog().querySelector('.ph-breakdown-track')).toBeTruthy();
+});
+
+test('inline reference has four native status destinations, paired panel and a 284px graph', async () => {
+  const openStatus=jest.fn();
+  await act(async () => root.render(<PortfolioHistoryDialog inline client={client} programs={[programs[0]]} selected={programIdentity(programs[0])} onNavigate={navigate} onStatusNavigate={openStatus} chartView="line" onChartViewChange={()=>{}} asOf={AT} />));
+  const panel=container.querySelector('.brawndo-demo-program');
+  expect(panel.querySelector('.ph-chart svg').getAttribute('viewBox')).toBe('0 0 900 284');
+  expect(panel.querySelectorAll('.ph-breakdown-cells button')).toHaveLength(4);
+  expect(panel.querySelector('.ph-status-axis')).toBeNull();
+  expect(panel.querySelector('.ph-history-panel > .ph-metrics')).toBeTruthy();
+  await act(async () => panel.querySelectorAll('.ph-breakdown-cells button')[1].click());
+  expect(openStatus).toHaveBeenCalledWith('in_progress');
+  expect(panel.querySelector('.ph-inline-foot')).toBeNull();
+});
+
+test('keyboard history tooltip uses the same exact scope evidence as View data', async () => {
+  const change={at:AT,after_snapshot_id:'position-0',membership_known:true,added_ids:['a','b'],removed_ids:[],before:{denominator:54,implemented:32},after:{denominator:56,implemented:32}};
+  api.get.mockResolvedValue({data:history({scope_changes:[change]})});
+  await act(async () => root.render(<Harness choices={[programs[0]]} />));
+  expect(dialog().querySelector('.ph-history-tip')).toBeNull();
+  const graph=dialog().querySelector('.ph-chart svg');
+  await act(async () => graph.dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true})));
+  expect(dialog().querySelector('.ph-history-tip').textContent).toContain('2 safeguards added to scope. Applicable went from 54 to 56.');
+  expect(dialog().querySelector('.ph-readout').classList.contains('sr-only')).toBe(true);
+  expect(dialog().querySelector('.ph-history-tip').textContent).not.toContain('matches current committed state');
+  await click('View data');
+  expect(dialog().querySelector('#portfolio-history-data tbody tr').textContent).toContain('2 safeguards added to scope. Applicable went from 54 to 56.');
+});
+
+
+test('Portfolio sparse presentation counts retained saves once and keeps the complete chart and table', async () => {
+  const point=snapshot(0,32);
+  api.get.mockResolvedValue({data:history({snapshots:[point],forecast_snapshots:[point]})});
+  await act(async () => root.render(<Harness choices={[programs[0]]} />));
+  expect(dialog().querySelector('.ph-metrics-sparse').textContent).toContain('Available after more saved history');
+  expect([...dialog().querySelectorAll('.ph-history-meter')].map(node=>node.textContent)).toEqual(['Saved positions · 1 retained','History span · 0 days']);
+  expect([...dialog().querySelectorAll('.ph-status-axis > span')].map(node=>node.textContent)).toEqual(['0%','100%']);
+  expect(dialog().querySelector('.ph-chart svg')).toBeTruthy();
+  await click('View data');expect(dialog().querySelectorAll('#portfolio-history-data tbody tr')).toHaveLength(1);
+});
+
+test('Portfolio not-started sparse state keeps actual retained observations and errors remain visible', async () => {
+  const point=snapshot(0,0,{not_started:true});
+  api.get.mockResolvedValue({data:history({current:point,snapshots:[point],forecast_snapshots:[]})});
+  await act(async () => root.render(<Harness choices={[{...programs[0],current:point}]} />));
+  expect(dialog().querySelector('.ph-metrics-sparse').textContent).toContain('Available after the assessment starts');
+  expect(dialog().querySelector('.ph-history-meter').textContent).toContain('1 retained');
+  api.get.mockRejectedValue(new Error('History unavailable'));await click('1 month');
+  expect(dialog().querySelector('.ph-metrics-sparse')).toBeNull();
+  expect(dialog().querySelector('[role="alert"]').textContent).toContain('History unavailable');
+});
+
+
+test('scope change without a period baseline never prints an unknown before-count', async () => {
+  const change={at:AT,after_snapshot_id:'position-0',membership_known:true,added_ids:['a','b'],removed_ids:[],before:{denominator:54,implemented:32},after:{denominator:56,implemented:32}};
+  api.get.mockResolvedValue({data:history({comparison:{baseline:null,scope_changed:true,comparable:false},scope_changes:[change]})});
+  await act(async () => root.render(<Harness choices={[programs[0]]} />));
+  const changeCard=dialog().querySelector('.ph-metrics > div:first-child');
+  expect(changeCard.textContent).toContain('Scope changed.');
+  expect(changeCard.textContent).not.toContain('→');
+  expect(dialog().querySelector('.ph-scope-notes').textContent).toContain('2 safeguards added to scope. Applicable went from 54 to 56.');
 });
