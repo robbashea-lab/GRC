@@ -35,13 +35,27 @@ test('Risks cannot repaint shared High or Accepted pills in sibling modules',()=
   expect(shared).toContain('.pill-accepted { color: var(--color-neutral)');
 });
 
-test('Portfolio grouped table keeps tabular neutral metrics and distinct native status colors',()=>{
+test('Portfolio grouped table reflows at its container boundary with neutral metrics and its reviewed status palette',()=>{
   const css=read('pages/GoverNaraPortfolio.css');
-  expect(css).toMatch(/\.gp-table-frame\s*\{[^}]*overflow-x:\s*auto/);
-  expect(css).toMatch(/\.governara-portfolio \.gp-table\s*\{[^}]*table-layout:\s*fixed/);
+  expect(css).toMatch(/\.gp-table-frame\s*\{[^}]*container-type:\s*inline-size/);
+  expect(css).toMatch(/\.gp-table thead tr,\.gp-table tbody\s*\{[^}]*display:grid[^}]*grid-template-columns:/);
+  expect(css).toMatch(/@container\s*\(max-width:960px\)/);
   expect(css).toContain('font-variant-numeric:tabular-nums');
   expect(css).not.toMatch(/\.gp-(percent|progress-count)[^{}]*\{[^}]*background:\s*var\(--color-(critical|moderate)-bg\)/);
-  for(const [status,color] of [['implemented','success'],['partial','moderate-text'],['not','critical'],['unassessed','text-muted']])
-    expect(css).toContain(`.gp-statusbar .is-${status} { background:var(--color-${color}); }`);
+  const palette = [['implemented','--chart-implemented'],['partial','--gp-part'],['not','--gp-not'],['unassessed','--gp-none']];
+  for(const [status,color] of palette)
+    expect(css).toContain(`.gp-statusbar .is-${status} { background:var(${color}); }`);
+  // Portfolio has its own reviewed light/dark palette, independent of the native workspace.
+  const sheet = require('postcss').parse(css);
+  for(const [selector,expected] of [
+    ['.governara-portfolio',['#0F8C69','#CC8B12','#CC4655','#D3DBE5']],
+    ['.governara-portfolio[data-theme=dark]',['#2BA688','#D4A13C','#E06A78','#2C3747']]
+  ]) {
+    const colors = new Map();
+    sheet.walkRules(selector, rule => rule.walkDecls(declaration => colors.set(declaration.prop,declaration.value)));
+    const actual = palette.map(([,token]) => colors.get(token));
+    expect(actual).toEqual(expected);
+    expect(new Set(actual).size).toBe(4);
+  }
   const source=read('pages/ClientDirectory.jsx');expect(source).toContain("import './GoverNaraPortfolio.css'");expect(source).not.toContain("import './BrawndoPortfolio.css'");
 });

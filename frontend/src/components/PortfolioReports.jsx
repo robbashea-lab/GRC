@@ -153,7 +153,7 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
         {total > 0 && counts.filter(value => value.count > 0).map(value => <button
           type="button" key={value.key} {...interactions(value.key)}
           className={`is-${tone(value.key)} ${activeStatus && activeStatus !== value.key ? 'is-dim' : ''}`}
-          style={{flexGrow:value.count}} aria-pressed={activeStatus === value.key}
+          style={inline ? {flexGrow:value.count} : {flexGrow:0,width:`${value.count / total * 100}%`}} aria-pressed={activeStatus === value.key}
           aria-label={`${value.label}: ${share(value)}, ${value.count} of ${total}`} />)}
         {selected && <div className="ph-segment-detail" role="status"><span>{selected.label}</span><b>{share(selected)}</b><span>{selected.count} / {total}</span></div>}
       </div>

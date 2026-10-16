@@ -100,9 +100,9 @@
 .brawndo-workspace-pilot[data-visual-surface=portfolio] .bsb-link.is-active {background:var(--selected);color:var(--fg)}
 .brawndo-workspace-pilot[data-visual-surface=portfolio] .bsb-dot {background:var(--subtle);color:var(--fg2);box-shadow:inset 0 0 0 1px var(--border);font-size:10.5px}
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content){background:var(--surface);color:var(--fg);border-color:var(--border);font-family:var(--font)}
-html[data-visual-surface] :is(.ui-dialog,.ui-sheet){border-radius:12px;box-shadow:var(--shadow);font-size:13.5px;line-height:1.5}
-html[data-visual-surface] .ui-overlay {background:rgba(15,27,45,.38);backdrop-filter:blur(3px)}
-html[data-visual-surface][data-visual-theme=dark] .ui-overlay {background:rgba(0,0,0,.6)}
+:root[data-visual-surface] :is(.ui-dialog,.ui-sheet)[data-state]{border-radius:12px;box-shadow:var(--shadow);font-size:13.5px;line-height:1.5}
+:root[data-visual-surface] .ui-overlay[data-state] {background:rgba(15,27,45,.38);backdrop-filter:blur(3px)}
+:root[data-visual-surface][data-visual-theme=dark] .ui-overlay[data-state] {background:rgba(0,0,0,.6)}
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) :is(input,select,textarea){font:13px/1.5 var(--font);border-color:var(--border-strong);background:var(--surface);color:var(--fg);border-radius:7px}
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) :is(button,a,input,select,textarea):focus-visible {outline:2px solid var(--focus);outline-offset:2px}
 @media(min-width:861px) and (max-width:1023px){.brawndo-workspace-pilot[data-visual-surface] .app-sidebar{display:flex}.brawndo-workspace-pilot[data-visual-surface] .bsb-link{justify-content:initial}.brawndo-workspace-pilot[data-visual-surface] .bsb-link>span,.brawndo-workspace-pilot[data-visual-surface] .bsb-client,.brawndo-workspace-pilot[data-visual-surface] .bsb-group-label{display:initial}.brawndo-workspace-pilot[data-visual-surface] .bsb-back{font-size:12.5px;justify-content:initial}.brawndo-workspace-pilot[data-visual-surface] .bsb-group{border:0;padding-top:0}}

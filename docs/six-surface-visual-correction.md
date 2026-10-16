@@ -164,3 +164,63 @@ compiled remeasurement and independent review follow. CI191 remains evidence
 only for1dd, never this later head. Existing staging is still the prior release;
 acceptance, full boundary/native coverage and exact-head staging verification
 remain open. No merge, production deployment or QA reactivation occurred.
+
+## Final portal and native-journey checkpoint — 16 October 2026
+
+Cumulative PR86 published through4349d877 (tree1d2d7153); existing staging
+still847bceac. FullCI193 was dispatched for4349 at16:39:05Z. Final portal
+cascade fixes follow that head and require their own exact-head release gate.
+The fixes retain Radix native Close/focus semantics; four relevant suites51tests
+pass. An earlier exploratory command named a nonexistent test and was corrected;
+that command is not a passing check. No test expectations were weakened.
+
+Measured corrections now include explicit native Reviews menu placement within
+compact grid cells (no implicit fourth track), target modal radius/shadow/scrim,
+button/heading/segmented-control rules, viewport-32 fit, 1:2 populated modal KPI
+columns and native-count composition geometry. All target files remain untouched.
+The reference builds its SVG viewBox before its body scrollbar is allocated;
+normal period redraw repeats this. Native history measures its current container.
+The resulting4.45px full-desktop history height difference remains documented,
+not falsely accepted as normal1px edge rounding. Native forecast remains its
+existing point estimate, with no invented reference uncertainty interval/baseline.
+
+Actual local compiled native browser checks (synthetic Explore demo only):
+- Policy Review and Approval Q4 2026: Start then Complete, saved history and
+  next quarterly occurrence Jan8 2027 survived reload; Calendar showed exact
+  completed source/occurrence. Historical editor remained read-only.
+- Calendar handover Action: empty date disabled Save; native date-control edit
+  Oct28 toOct29 saved/reloaded, then originalOct28 restored. Actual source link
+  retained task demo_brawndo_handover_action and client demo_brawndo.
+- Native standalone Action Complete work persisted in Completed view. Separate
+  Finding demo_brawndo_finding_1 stayed pending validation until nonempty required
+  rationale; validation and native comment persisted after reload with history.
+- Risk acceptance renewal form rejected empty rationale and was cancelled.
+  Risk001 Assessment dirty guard/Keep editing and Save/reload worked; original
+  assessment rationale restored and assessed score12 retained. Earlier native
+  Review Risk/Close Risk automatic save-before-command checks remain recorded.
+
+These are local browser durability checks, not hosted database certification.
+Temporary staging QA remains disabled. Native API/permission/version/recurrence
+semantics are unchanged; no new accounts/grants, merges or production releases.
+
+Comparison capture correction: browser viewport overrides target its selected
+IAB tab. Dedicated selected verification tab plus actual-innerWidth assertions
+replace an invalid modal-boundary batch. Full-page modal screenshots include the
+complete frame; earlier viewport JPEGs clipped109px and are superseded. Fixture
+and genuine-native evidence remain distinct. Additional-sections team works in
+an isolated checkout and may not modify this candidate or compete for staging.
+
+Remaining: final native/fixture comparisons and boundary assessment, final frozen
+build/source publication/fullCI, then specific-commit existing staging deployment
+and hosted verification. Record any incomplete role, drag, upload,200%zoom or
+persistence checks explicitly; old847/1dd/5009/4349 gates never certify a later head.
+
+Full CI191 on historical `1ddad7e8` finished with backend/Mongo successful and
+one frontend failure: `SemanticPresentation` still demanded the superseded
+horizontal-scroll/fixed native table and global status palette. The focused
+regression now requires the reviewed container reflow and exact distinct
+Portfolio light/dark palette while retaining tabular/neutral metrics and every
+shared label/tone/isolation assertion. Its four tests pass; independent AI
+review found no weakening of operational checks. Fresh final-head CI is required.
+Runtime/build inputs are frozen at `7a03aece`; this last change touches only this
+handoff and that test. No subsequent CI success is assumed here.
