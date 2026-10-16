@@ -130,7 +130,10 @@
   .brawndo-demo-reviews .bdr-c-cb { grid-area:cb; } .brawndo-demo-reviews .bdr-c-item { grid-area:item; } .brawndo-demo-reviews .bdr-c-owner { grid-area:owner; } .brawndo-demo-reviews .bdr-c-due { grid-area:due; text-align:right; } .brawndo-demo-reviews .bdr-c-st { grid-area:st; } .brawndo-demo-reviews .bdr-c-cad { grid-area:cad; text-align:right; }
   .brawndo-demo-reviews .bdr-c-due small, .brawndo-demo-reviews .bdr-c-cad small { justify-content:flex-end; }
   .brawndo-demo-reviews .bdr-table.bdr-history .bdr-c-cad {grid-area:st;}
-  .brawndo-demo-reviews .bdr-row-menu {grid-column:-1;justify-self:end;}
+  /* Retain native row actions in an existing cell without creating an implicit track. */
+  .brawndo-demo-reviews .bdr-row-menu {grid-column:1;grid-row:3;justify-self:start;align-self:center;}
+  .brawndo-demo-reviews .bdr-table.bdr-history .bdr-row-menu {grid-column:2;justify-self:end;}
+  .brawndo-demo-reviews .bdr-table.bdr-history .bdr-c-cad {padding-right:32px;}
   .brawndo-demo-reviews .bdr-row-menu button[aria-label="Row actions"] svg {display:block;}
   .brawndo-demo-reviews .bdr-row-menu button[aria-label="Row actions"]::after {display:none;}
 }
