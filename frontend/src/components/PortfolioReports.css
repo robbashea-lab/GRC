@@ -183,6 +183,7 @@
 }
 /* The scale and Breakdown share a grid, whose 2px gap completes the target's 8px separation. */
 .portfolio-history-dialog .ph-status-scale { position:relative; margin-bottom:6px; }
+.portfolio-history-dialog .ph-range { font-size:12.5px; font-variant-numeric:tabular-nums; }
 .portfolio-history-dialog .ph-range > span { color:var(--color-text-muted); }
 .portfolio-history-dialog .ph-segmented button:hover { color:var(--color-text-primary); }
 .portfolio-history-dialog .ph-segmented button[aria-pressed=true] { box-shadow:var(--ph-control-shadow); }

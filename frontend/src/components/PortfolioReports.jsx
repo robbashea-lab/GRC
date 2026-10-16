@@ -1,4 +1,5 @@
 import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
+import {createPortal} from 'react-dom';
 import api, {formatError} from '@/lib/api';
 import {Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription} from '@/components/ui/dialog';
 import {X} from 'lucide-react';
@@ -31,9 +32,12 @@ const scopeChangesForPosition = (changes, point) => changes.filter(change => cha
   : change.after?.scope_signature === point.scope_signature && Date.parse(change.effective_at || change.at) === Date.parse(snapshotTime(point)));
 
 // Tooltip content can change size with genuine counts, scope notes, fonts and pane width.
-function observeTooltipLayout(container, tooltip, position) {
+function observeTooltipLayout(container, tooltip, position, {scrollTarget, constrainWidth = false} = {}) {
   const measure = () => {
-    const bounds = container.getBoundingClientRect(), size = tooltip.getBoundingClientRect();
+    const bounds = container.getBoundingClientRect();
+    // A portaled status detail keeps the scale's width cap instead of inheriting the dialog's.
+    if (constrainWidth) tooltip.style.maxWidth = `${bounds.width}px`;
+    const size = tooltip.getBoundingClientRect();
     if (!bounds.width || !size.width) return;
     const point = position(bounds, size);
     tooltip.style.left = `${point.left}px`;
@@ -44,7 +48,8 @@ function observeTooltipLayout(container, tooltip, position) {
   observer?.observe(container);
   observer?.observe(tooltip);
   window.addEventListener('resize', measure);
-  return () => { observer?.disconnect(); window.removeEventListener('resize', measure); };
+  scrollTarget?.addEventListener('scroll', measure);
+  return () => { observer?.disconnect(); window.removeEventListener('resize', measure); scrollTarget?.removeEventListener('scroll', measure); };
 }
 
 function ChangeArrow({up}) {
@@ -148,6 +153,7 @@ function useHistory(client, program, range, refreshToken, requireIdentity = fals
 function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
   const [activeStatus, setActiveStatus] = useState(null);
   const scale = useRef(null), bar = useRef(null), tooltip = useRef(null);
+  const tooltipHost = !inline ? scale.current?.closest('.portfolio-history-dialog') : null;
   useLayoutEffect(() => {
     if (inline || !activeStatus || !validImplementationPosition(current) || !scale.current || !tooltip.current) return;
     const values = applicableCounts(current), selectedIndex = values.findIndex(value => value.key === activeStatus);
@@ -155,11 +161,12 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
     const before = values.slice(0, selectedIndex).reduce((total, value) => total + value.count, 0);
     return observeTooltipLayout(scale.current, tooltip.current, (bounds, size) => {
       const barBounds = bar.current.getBoundingClientRect();
+      const hostBounds = tooltipHost?.getBoundingClientRect() || bounds;
       const share = current.denominator > 0 ? (before + values[selectedIndex].count / 2) / current.denominator : .5;
       const center = barBounds.left - bounds.left + share * barBounds.width;
-      return {left:Math.max(0, Math.min(bounds.width - size.width, center - size.width / 2)), top:barBounds.top - bounds.top - size.height - 10};
-    });
-  }, [activeStatus, current, inline]);
+      return {left:bounds.left - hostBounds.left + Math.max(0, Math.min(bounds.width - size.width, center - size.width / 2)), top:barBounds.top - hostBounds.top - size.height - 10};
+    }, {scrollTarget:tooltipHost?.querySelector('.ph-body'), constrainWidth:!!tooltipHost});
+  }, [activeStatus, current, inline, tooltipHost]);
   if (!validImplementationPosition(current)) {
     return <div className="ph-breakdown"><p>Applicable scope unavailable. {current?.reason || current?.notice || 'Current counts are unavailable.'}</p></div>;
   }
@@ -193,7 +200,8 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
         {inline && detail}
       </div>
       {!inline && <div className="ph-status-axis" aria-hidden="true">{[0,100].map(value => <span key={value}>{value}%</span>)}</div>}
-      {!inline && detail}
+      {/* Keep modal status details above the scrolling body, inside the native dialog. */}
+      {!inline && (tooltipHost ? createPortal(detail, tooltipHost) : detail)}
     </div>
     {!inline && <div className="ph-breakdown-head"><span>Breakdown</span><span>Assessed {assessed} of {total} · {total ? (assessed/total*100).toFixed(1)+'%' : 'N/A'}</span></div>}
     {inline ? <div className="ph-breakdown-cells">{cells}</div> : cells}

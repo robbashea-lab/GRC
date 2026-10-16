@@ -163,6 +163,7 @@ test('modal history tooltips flip at the right edge and remain inside a resized 
 test('status keyboard focus centers measured tooltips over the segment and clamps both horizontal edges without changing counts', async () => {
   const originalBounds = Element.prototype.getBoundingClientRect;
   const bounds = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this.matches('.portfolio-history-dialog')) return {left:80, top:100, width:350, height:600};
     if (this.matches('.ph-status-scale')) return {left:100, top:200, width:300, height:62};
     if (this.matches('.ph-interactive-bar')) return {left:104, top:224, width:292, height:14};
     if (this.matches('.ph-segment-detail')) return {left:0, top:0, width:170, height:90};
@@ -174,8 +175,8 @@ test('status keyboard focus centers measured tooltips over the segment and clamp
     for (const segment of segments) {
       await act(async () => segment.focus());
       const tip = dialog().querySelector('.ph-segment-detail'), left = parseFloat(tip.style.left), top = parseFloat(tip.style.top);
-      expect(left).toBeGreaterThanOrEqual(0); expect(left + 170).toBeLessThanOrEqual(300);
-      expect(top + 90).toBeLessThan(24);
+      expect(left + 80).toBeGreaterThanOrEqual(100); expect(left + 80 + 170).toBeLessThanOrEqual(400);
+      expect(top + 100 + 90).toBeLessThan(224);
       expect(dialog().querySelectorAll('.ph-breakdown-row.is-active')).toHaveLength(1);
       expect(dialog().querySelector('.ph-current-value').textContent).toContain('32 of 56');
     }
@@ -184,6 +185,47 @@ test('status keyboard focus centers measured tooltips over the segment and clamp
     expect(dialog().querySelector('.ph-segment-detail')).toBeNull();
     expect(dialog().querySelectorAll('.ph-breakdown-row')).toHaveLength(4);
   } finally { bounds.mockRestore(); }
+});
+
+test('modal status details escape the scroll clip, follow body scrolling, fit a narrow scale and clean up while keyboard focus preserves genuine counts', async () => {
+  let scrollOffset = 0, scaleWidth = 760, addedScroll, removedScroll;
+  const originalBounds = Element.prototype.getBoundingClientRect;
+  const bounds = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this.matches('.portfolio-history-dialog')) return {left:160, top:16, width:1120, height:843};
+    if (this.matches('.ph-body')) return {left:160, top:94, width:1120, height:766};
+    if (this.matches('.ph-status-scale')) return {left:468, top:164 - scrollOffset, width:scaleWidth, height:62};
+    if (this.matches('.ph-interactive-bar')) return {left:472, top:188 - scrollOffset, width:scaleWidth - 8, height:14};
+    if (this.matches('.ph-segment-detail')) return {left:0, top:0, width:Math.min(180, parseFloat(this.style.maxWidth) || 180), height:92};
+    return originalBounds.call(this);
+  });
+  try {
+    await act(async () => root.render(<Harness />));
+    const body = dialog().querySelector('.ph-body'), segments = dialog().querySelectorAll('.ph-interactive-bar button');
+    addedScroll = jest.spyOn(body, 'addEventListener'); removedScroll = jest.spyOn(body, 'removeEventListener');
+    await act(async () => segments[0].focus());
+    const tip = dialog().querySelector('.ph-segment-detail'), top = parseFloat(tip.style.top);
+    expect(tip.parentElement).toBe(dialog()); expect(body.contains(tip)).toBe(false);
+    expect(top + 16).toBeLessThan(body.getBoundingClientRect().top);
+    expect(top).toBeGreaterThanOrEqual(0);
+    expect(tip.textContent).toContain('Implemented'); expect(tip.textContent).toContain('32 / 56');
+    scrollOffset = 40;
+    await act(async () => body.dispatchEvent(new Event('scroll')));
+    expect(parseFloat(tip.style.top)).toBe(top - 40);
+    expect(document.activeElement).toBe(segments[0]); expect(tip.textContent).toContain('32 / 56');
+    scaleWidth = 160;
+    await act(async () => window.dispatchEvent(new Event('resize')));
+    const left = parseFloat(tip.style.left) + 160, width = tip.getBoundingClientRect().width;
+    expect(width).toBeLessThanOrEqual(scaleWidth);
+    expect(left).toBeGreaterThanOrEqual(468); expect(left + width).toBeLessThanOrEqual(468 + scaleWidth);
+    expect(tip.textContent).toContain('32 / 56');
+    await act(async () => segments[1].focus());
+    expect(dialog().querySelector('.ph-segment-detail').textContent).toContain('24 / 56');
+    expect(dialog().querySelector('.ph-current-value').textContent).toContain('32 of 56');
+    const scrollHandler = addedScroll.mock.calls.filter(([type]) => type === 'scroll').at(-1)[1];
+    await act(async () => dialog().querySelector('.ph-head-actions .ph-button').focus());
+    expect(dialog().querySelector('.ph-segment-detail')).toBeNull();
+    expect(removedScroll).toHaveBeenCalledWith('scroll', scrollHandler);
+  } finally { bounds.mockRestore(); addedScroll?.mockRestore(); removedScroll?.mockRestore(); }
 });
 
 test('touch pointerdown reads genuine nearest positions after range, program and chart-view changes', async () => {

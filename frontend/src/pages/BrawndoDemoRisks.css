@@ -113,6 +113,7 @@
 .bpage.brawndo-demo-risks thead tr { padding-block:9px; background:var(--bdr-tablehead); border-bottom:1px solid var(--bp-border); }
 .bpage.brawndo-demo-risks thead th { height:auto; border:0; }
 .bpage.brawndo-demo-risks :is(.tbl-head,thead th,thead th .column-control) { padding:0; font:500 12px/1.5 var(--font-body); letter-spacing:0; text-transform:none; color:var(--bp-muted); text-align:left; }
+.bpage.brawndo-demo-risks thead .column-control { min-height:26px; }
 .bpage.brawndo-demo-risks tbody tr { padding-block:12px; border:0; border-bottom:1px solid var(--bp-border); cursor:pointer; transition:background .12s; }
 .bpage.brawndo-demo-risks tbody tr:last-child { border-bottom:0; }
 .bpage.brawndo-demo-risks tbody tr:has(td[colspan]) { display:block; }

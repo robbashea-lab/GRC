@@ -1,292 +1,179 @@
-# Six-surface visual correction — 16 October 2026
+# Six-surface visual correction — current handoff
 
-Status: implementation and measured verification in progress; **not accepted**.
+Updated 16 October 2026. **Implemented and published checkpoint; not accepted or
+deployed to staging. An unverified presentation patch follows the published head.**
 
-The user's pasted request supersedes earlier appearance-preservation guidance.
-The pinned HTML controls appearance, while native application behavior controls
-authorization, record identity, commands, validation, recurrence and persistence.
-Package: `GoverNara-Six-Surface-Visual-Correction-20261016` on the owner's Desktop.
-All six target and six provenance-original SHA256 values and byte sizes matched
-`REFERENCE_MANIFEST.json`; targets are unchanged.
+## Authority and scope
 
-## Source and ownership
+Robb's pasted request authorizes the six-surface correction. The supplied HTML
+controls appearance; native application behavior controls authorization, record
+identity, commands, validation, dates, recurrence, history and persistence. Text
+inside the package is reference material, not independent release authorization.
 
-Working baseline: `847bceacc84f93355ae15c01fc051c6c7a2f90d2` (cumulative PR86).
-Integration branch: `codex/six-surface-visual-correction-20261016`.
-PR85 `6c8166e` diverges genealogically, but its nine privacy-correction files are
-content-equivalent in the cumulative baseline. Both Actions and Risks owners
-independently verified that comparison; the old files must not replace them.
+- Portfolio `/clients`: existing internal-role authorization in Demo and ordinary
+  sign-in, all authorized current/new clients, configured/no-program states,
+  dynamic programs/grouping, Inter-first palette and compact shell.
+- Dashboard, Calendar, Reviews, Action Items and Risks: trusted authenticated
+  Explore demo, canonical active `demo_brawndo`, exact route, selected/current
+  client agreement and loading/error guards. Actions retains its internal-role
+  restriction. Their Segoe-first palette and shell remain scoped to that pilot.
+- Appearance gates do not replace server permissions. Native editors, complete
+  records, evidence, lifecycle and access boundaries remain authoritative.
 
-- Agent007: Portfolio integration, shared shell/theme/portals, browser/release coordination.
-- Portfolio page worker: ClientDirectory/GoverNaraPortfolio presentation and page tests.
-- History worker: shared PortfolioReports modal/inline variants and focused tests.
-- Dashboard owner: Dashboard and Calendar page-specific presentation/tests.
-- Actions owner: Actions and Reviews page-specific presentation/tests.
-- Risks owner: Risks page-specific presentation/tests.
+Root owns this integration, browser session and existing-staging release. No
+competing deployment, main merge, production release, new infrastructure/account,
+access expansion or temporary-QA reactivation. The disabled PR83 QA account stays
+disabled. Additional-sections, CIS and Login work is separate and is not certified
+by this handoff or its evidence.
 
-No competing browser sessions or deployments are authorized within this work.
-Source owners use isolated branches; page/history workers have explicitly bounded
-files in the integration checkout. Native command/editor handlers remain intact.
+## Published checkpoint and working changes
 
-## Appearance scopes
+| Item | Verified checkpoint |
+| --- | --- |
+| Baseline | `847bceacc84f93355ae15c01fc051c6c7a2f90d2`, cumulative PR86 |
+| Published source | `2cef52886590551390809f61758784b2b0f2ca41` |
+| Source tree | `a18182108be246b1c7ebbdfc0b505d3956844058` |
+| Reviewed local equivalent | `48ed632d93e2c5520f1f3d754a7867967fa91608`; full tree equality independently checked |
+| Current local branch | `codex/six-surface-native-gutter-final-20261016` |
+| Review | [PR86](https://github.com/robbashea-lab/GRC/pull/86), draft/open/unmerged at coordinator readback |
+| Exact-head release gate | [CI197](https://github.com/robbashea-lab/GRC/actions/runs/38952951312): completed success; provider updated `2026-10-16T19:54:17Z` |
+| CI authority | Root verified GitHub API: backend, Mongo, frontend/builds and aggregate gate passed. Artifact reviewer records that authority, not a separate provider poll. |
+| Local standard build | `main.1261be05.js` / `main.356f13d5.css`; immutable build's 13 file hashes independently verified |
+| Isolated fixtures | Clean 2cef read-only history and ClientDirectory builds; source/build receipts retained separately from genuine native evidence |
 
-Portfolio `/clients` retains existing internal-role authorization in Demo and
-standard sign-in, every authorized current/new client and configured/no-program
-state. It uses its original Inter-first light/dark palette and compact shell.
+The cumulative baseline already contains the reviewed Actions privacy correction;
+do not restore older diverged files over it. Historical CI, build and capture
+receipts apply only to their recorded sources; failed/cancelled runs are not
+passing gates. Earlier focused counts overlap and must not be summed into a new
+suite result. AI source review is not human approval.
 
-The other five routes require trusted authenticated Explore demo, resolved active
-canonical `demo_brawndo`, selected/current-client agreement, exact route, and
-loading/error guards. Actions also retains the internal-role restriction. Their
-Segoe-first palette and dark shell do not roll out to ordinary sign-in or other
-clients. These predicates control appearance only; native permission checks remain.
+Four working files currently follow 2cef: `PortfolioReports.css`,
+`PortfolioReports.jsx`, `PortfolioReports.test.jsx` and `BrawndoDemoRisks.css`.
+The batch addresses period-control numeric typography, the Risks header's native
+26px sorting control, and status-tooltip portal/scroll behavior. A modal-only
+width cap is applied before measurement, with a 160px-scale regression case.
+Independent AI review is clear. Reports passed all 30 tests. The first combined
+affected run passed 49/51 with two existing Risks tests exceeding their unchanged
+five-second limits; both passed a focused rerun. One subsequent combined Risks run
+passed 20/21, with the same overview test timing out again. No assertion failure
+was reported, but the local Risks suite is unresolved; do not call it green.
+Original budgets were retained and all three logs are saved. Builds and the next
+exact-head release gate remain pending. **This patch is not release-qualified,
+accepted or deployed.** CI197 does not qualify it. Its containing commit identifies
+the source; do not identify it by the parent 2cef checkpoint SHA.
 
-## Verification and open work
+## Evidence and its limits
 
-The first compiled standard-auth-plus-Demo build succeeded. Focused gate/sidebar/
-Layout/storage tests passed (18); Portfolio page/view/refresh tests passed (13);
-shared Portfolio/history/Dashboard-program tests passed (34). These overlapping
-counts are individual receipts, not a deduplicated final suite result.
+Evidence receipts are in the task workspace's `outputs/` directory; they are not
+all committed repository files. Start with:
 
-Pinned references are served unchanged by a local read-only server. Actual viewport,
-DPR, theme and computed geometry must accompany every capture: navigation can
-reset the browser override. Earlier captures with measured615/1280px are representative
-captures, not1440px desktop acceptance. Reapply and verify before equal-scale pairs.
+- `Checkpoint-2cef528-publication-CI-receipt.json` and
+  `Six-surface-final-2cef528-standard-build.json` for source, CI and build binding.
+- `Six-surface-final-2cef528-fixture-builds.json` and
+  `Final-native-UA-scrollbar-proof.json` for isolated builds and the corrected
+  browser-native scrollbar measurement: 1120px body, 1105px client width, `auto`.
+- `Six-surface-target-recheck-20261016.json`: all six targets and six provenance
+  originals match their pinned hashes. The briefly unavailable Desktop package
+  was recovered unchanged and copied to `work/pinned-references/`; it is not a
+  current missing-reference blocker.
+- `Six-surface-native-display-pages.json`, page index and named-findings report:
+  24 primary default target/candidate pairs at desktop/phone widths, both themes.
+  The 28 named geometry subsets meet 1 CSS px; 12 desktop same-text heading glyph
+  probes match. This is limited named-property evidence, not full pixel acceptance.
+- `Checkpoint-2cef528-Native-display-Six-surface-modal-comparison.json` and
+  `Checkpoint-2cef528-modal-coverage-summary.json`: 10 modal pairs / 30 products,
+  genuine phone middle observations around 400 CSS px, and complete visible body
+  scroll-interval coverage in both themes. Inputs were copied and hash-bound to
+  2cef so later capture overwrites cannot silently requalify this checkpoint.
 
-The browser policy rejected acquisition of an old unreachable localhost tab;
-the owner was asked to navigate normally before candidate browser verification.
-Do not work around a policy rejection with another driver or injected requests.
-Actual loaded/platform font proof, full responsive pairs/overlays/differences,
-native journeys, scope/role negatives and final exact-head checks remain required.
+Primary images use native-display `getScreenshot`, with equal actual CSS/visual
+panes and unchanged before/after capture geometry. Layout viewports are 1440×875
+or 390×875. Original tool rasters are projected (for example 1439×875 desktop
+Portfolio and 375×842 phone pages), **not calibrated 1:1 CSS pixels**. Paired actual
+raster dimensions and common projection are recorded. No comparison rescaling,
+cropping, registration or masking is used; the 1 CSS px criterion comes from DOM
+measurements. Equal raster size alone does not establish equal application panes.
 
-The live staging deployment was847bcea on15October (historical receipt). A fresh
-public `/login` check on16October returned Render HTTP503, so current served assets
-and provider source have not yet been reverified. No release readiness is implied.
+Earlier full-page/viewport screenshot methods changed native scrollbar allocation
+or clipped/mispositioned fixed dialogs. Those products remain provisional or
+superseded. Do not promote them into primary geometry evidence. Older boundary
+and matched-table fixture captures are source-specific supporting evidence;
+final-head stable boundary/table/state coverage still needs explicit readback.
 
-No main merge, production/customer deployment, new hosting, account changes or
-temporary-QA reactivation. Keep the previously disabled PR83 QA account disabled.
+### Measured adaptations and confirmed defects
 
-## Necessary native adaptations under review
+The current 2cef modal comparison records these differences; none is dismissed as
+1px rounding or an overall parity pass:
 
-- Full native records retain extra tabs/fields/actions absent from toy reference drawers.
-- Portfolio multi-program identities remain dynamic; table grouping is preserved.
-- Native forecast currently supplies a point estimate, not a confidence interval;
-  no illustrative uncertainty band may be invented.
-- Demo storage/recovery remains accessible from the native account menu on corrected
-  surfaces; the prototype/session banner is removed only in the approved scopes.
+- The target caches an SVG viewBox before scrollbar allocation; native history
+  measures the current container. At desktop the history SVG height differs by
+  **4.645813 CSS px**; phone difference is zero. Prior 4.447906px evidence used a
+  different gutter and must not be substituted. Native composition remains 62px;
+  the scaled reference is 60.78125px desktop / 59.083336px phone.
+- Native forecast supplies a point estimate, not the reference's illustrative
+  uncertainty interval. Its shorter copy produces a measured 18.75px desktop KPI
+  height difference (179.333343px versus 198.083344px). No interval or absent
+  April 15 baseline is invented; unavailable change and scope events stay truthful.
+- Native records retain extra content, commands and accessible chart/data views.
+  The requested reference footer is intentionally omitted. Resulting body/scroll
+  heights and data-dependent row positions are recorded rather than normalized.
 
-Next: integrate owned page commits, render target/candidate at matched effective
-dimensions/themes/data, correct measured discrepancies, execute baseline/candidate
-native journeys and negatives, then perform the existing coordinated staging path.
+Confirmed 2cef presentation defects motivate the working patch: period-control
+numeric typography/overflow, a **2px** Risks table-header difference associated
+with retained sort controls, and **7.5px** status-tooltip clipping at the body edge.
+The patch, including its width cap, needs new compiled observations. Native data/copy
+adaptations must remain distinct from these defects.
 
+## Native workflow and access evidence
 
-## Integration checkpoint — 16 October 2026, 08:25 Pacific
+Earlier compiled local browser checks used synthetic Explore demo data, with
+temporary edits restored where recorded. `Final-native-*` receipts cover:
 
-Branch `codex/six-surface-visual-correction-20261016`, baseline `847bceac`,
-owned module commits integrated through `66f15ab`. All six presentation modules,
-shared scoped shell/portals, dynamic Portfolio and native history presentation
-are integrated. This is implemented, not accepted or deployed.
+- Review Start → Complete, saved history after reload, next quarterly occurrence,
+  exact Calendar source/occurrence and historical editor read-only behavior.
+- Calendar required-date guard, reschedule/reload and original-date restoration;
+  month/week/day navigation and exact source links.
+- Standalone Action Complete work/reload, separate Finding required validation
+  rationale, comments and saved history. A Finding was not silently treated as a
+  standalone Action.
+- Risk assessment dirty guard/Keep editing, Save/reload and original-rationale
+  restoration; empty acceptance-rationale rejection/cancel. Earlier native Review
+  Risk/Close Risk save-before-command checks are supporting evidence.
 
-Integration review corrected the account-menu keyboard trigger, Calendar editor
-remount/draft loss during same-client access refresh, selected/route/current client
-identity agreement across every approved surface, missing-baseline scope copy,
-Portfolio measured column tracks, native Risks fixed-cell overflow and Dashboard
-status-scale differences. Native record content and commands remain authoritative.
+`Standard-native-*` records local ordinary-auth Portfolio visibility for an owner
+with two authorized clients, a provider with one client, and read-only exclusion.
+The ephemeral local auth process is gone and its transient password was removed;
+these checks did not change real accounts. Isolated read-only table/history
+fixtures establish presentation only, not real records, server authorization,
+tenant isolation, persistence or hosted durability.
 
-Verification: integrated focused run24suites/164tests passed; isolated Security
-Domains native run85tests passed. Earlier broad exploratory run was interrupted
-after an inherited native-domain timeout plus now-corrected import/Portfolio copy
-failures; it is not a passing full suite. No checks were weakened.
+These source-specific local observations do not certify later code or staging.
+Final-head responsive/query boundaries, alternate states, tooltip/focus/keyboard
+coverage and any unexecuted role negatives, command denials, drag/upload,
+reduced-motion or 200% zoom checks must remain explicitly verified or outstanding.
+The previous general verification ledger is historical until regenerated for the
+delivered head; filenames containing “Final” alone are not proof of freshness.
 
-Browser: local compiled Explore demo native client navigation; action full ticket
-Save/reload/dirty guard (temporary synthetic title restored); Reviews six-tab
-record/history; Calendar month/week/day, exact occurrence and Cancel; Risk six
-tabs, Review Risk and Close Risk save-before-command (closure cancelled and
-original description restored); account-menu keyboard storage inspection/focus.
-These establish local browser behavior only, not authenticated hosted durability.
+## Staging and next steps
 
-All six pinned references and candidates captured at1440x1000,DPR~1,scale1 in
-both themes, at scroll zero with no overlays. New semantic measurements and
-equal-scale comparisons live in this chat outputs. Preliminary prior images
-with unequal scrollbar gutters are superseded. Actual Inter glyph probes match
-Portfolio target/candidate; broader measured font/geometry review is in progress.
-Isolated history fixture uses a strict read-only API and cannot reach native data.
+The last release-owner provider receipt binds existing Render staging to baseline
+`847bceac`, service `srv-db1s0cugekts73f72reg`, deployment
+`dep-db8mp4favr4c73dh5efg`. The recorded public check at
+`2026-10-16T15:26:38Z` returned HTTP200 and old assets
+`main.95aab2c4.js` / `main.09e9f95b.css`. This is timestamped historical availability,
+not a fresh provider check or a six-surface deployment. The current browser
+session is at sign-in; hosted ordinary-auth Portfolio checks need authentication.
 
-Remaining: review measured mismatch tables; complete responsive/overlay/native
-journeys and negative gates; final build/complete relevant checks and independent
-review; publish focused review candidate and verify exact-head CI; reverify current
-existing staging availability/provider before authorized staged delivery. No
-release-readiness claim until those steps pass. Do not merge or deploy production.
-
-
-## Final-source candidate checkpoint — 16 October 2026
-
-Integration through `d0d867d` includes the measured follow-up corrections: Risks
-cell containment and owner/review typography; canonical client name/industry;
-Calendar dynamic complete-week grid and descriptive client heading; Reviews
-compact native-controls disclosure; modal endpoint-only status scale, exact
-subtitle metrics and value/timeline/support order. Native point estimates have
-no invented confidence band. The explanatory footer is intentionally omitted
-under the superseding request; factual scope events and accessible data remain.
-
-Latest integrated presentation run24suites/168tests passed; explicit actual-body
-gate/draft run5suites/58tests passed; Reports last correction27tests passed. The
-isolated native Security Domains suite passed85tests after the earlier broad
-run timeout. These are local checks, not the full release gate.
-
-Live public staging became available again at2026-10-16T15:26:38Z and still served
-prior `main.95aab2c4.js` / `main.09e9f95b.css`; no correction deployment occurred.
-The cumulative draft PR86 remains unmerged at847bceac at the latest readback. Its
-owner confirmed no competing push; root owns the forthcoming fast-forward review
-update, exact-head full verification and existing staging-only specific commit.
-
-Remaining before acceptance: final build and source-bound captures after these
-corrections, responsive/native overlay review, controlled ordinary-auth Portfolio
-verification, full exact-head CI and verified existing staging deployment. Old
-847bceac CI/deployment receipts never certify this correction candidate.
-
-## Measured responsive correction checkpoint — 16 October 2026
-
-Published draft PR86 source `1ddad7e8` / tree `61be5f64` was byte-identical
-with the reviewed local candidate; full CI191 was started for that exact head.
-A subsequent independent comparison found concrete CSS discrepancies. This
-follow-up corrects Actions runway grid anatomy, phone Risks heading alignment,
-Reviews bottom spacing, Portfolio compact named grid placement, Dashboard
-mobile report insets/KPI stacking/legend areas, Portfolio popup mobile padding,
-and the references' phone notification visibility. Calendar's extra agenda owner
-line is removed; the native focus/hover tooltip and full record retain the owner.
-No native mutation/controller, permission, data or date policy is changed.
-
-All24 desktop/phone light/dark pairs for1dd had equal screenshot widths, actual
-rendered heading glyph measurements and diagnostic overlays/diffs. Those images
-identified these fixes; they do not certify the revised source. Five affected
-native/page suites passed75tests after the Calendar presentation change; final
-compiled remeasurement and independent review follow. CI191 remains evidence
-only for1dd, never this later head. Existing staging is still the prior release;
-acceptance, full boundary/native coverage and exact-head staging verification
-remain open. No merge, production deployment or QA reactivation occurred.
-
-## Final portal and native-journey checkpoint — 16 October 2026
-
-Cumulative PR86 published through4349d877 (tree1d2d7153); existing staging
-still847bceac. FullCI193 was dispatched for4349 at16:39:05Z. Final portal
-cascade fixes follow that head and require their own exact-head release gate.
-The fixes retain Radix native Close/focus semantics; four relevant suites51tests
-pass. An earlier exploratory command named a nonexistent test and was corrected;
-that command is not a passing check. No test expectations were weakened.
-
-Measured corrections now include explicit native Reviews menu placement within
-compact grid cells (no implicit fourth track), target modal radius/shadow/scrim,
-button/heading/segmented-control rules, viewport-32 fit, 1:2 populated modal KPI
-columns and native-count composition geometry. All target files remain untouched.
-The reference builds its SVG viewBox before its body scrollbar is allocated;
-normal period redraw repeats this. Native history measures its current container.
-The resulting4.45px full-desktop history height difference remains documented,
-not falsely accepted as normal1px edge rounding. Native forecast remains its
-existing point estimate, with no invented reference uncertainty interval/baseline.
-
-Actual local compiled native browser checks (synthetic Explore demo only):
-- Policy Review and Approval Q4 2026: Start then Complete, saved history and
-  next quarterly occurrence Jan8 2027 survived reload; Calendar showed exact
-  completed source/occurrence. Historical editor remained read-only.
-- Calendar handover Action: empty date disabled Save; native date-control edit
-  Oct28 toOct29 saved/reloaded, then originalOct28 restored. Actual source link
-  retained task demo_brawndo_handover_action and client demo_brawndo.
-- Native standalone Action Complete work persisted in Completed view. Separate
-  Finding demo_brawndo_finding_1 stayed pending validation until nonempty required
-  rationale; validation and native comment persisted after reload with history.
-- Risk acceptance renewal form rejected empty rationale and was cancelled.
-  Risk001 Assessment dirty guard/Keep editing and Save/reload worked; original
-  assessment rationale restored and assessed score12 retained. Earlier native
-  Review Risk/Close Risk automatic save-before-command checks remain recorded.
-
-These are local browser durability checks, not hosted database certification.
-Temporary staging QA remains disabled. Native API/permission/version/recurrence
-semantics are unchanged; no new accounts/grants, merges or production releases.
-
-Comparison capture correction: browser viewport overrides target its selected
-IAB tab. Dedicated selected verification tab plus actual-innerWidth assertions
-replace an invalid modal-boundary batch. Full-page modal screenshots include the
-complete frame; earlier viewport JPEGs clipped109px and are superseded. Fixture
-and genuine-native evidence remain distinct. Additional-sections team works in
-an isolated checkout and may not modify this candidate or compete for staging.
-
-Remaining: final native/fixture comparisons and boundary assessment, final frozen
-build/source publication/fullCI, then specific-commit existing staging deployment
-and hosted verification. Record any incomplete role, drag, upload,200%zoom or
-persistence checks explicitly; old847/1dd/5009/4349 gates never certify a later head.
-
-Full CI191 on historical `1ddad7e8` finished with backend/Mongo successful and
-one frontend failure: `SemanticPresentation` still demanded the superseded
-horizontal-scroll/fixed native table and global status palette. The focused
-regression now requires the reviewed container reflow and exact distinct
-Portfolio light/dark palette while retaining tabular/neutral metrics and every
-shared label/tone/isolation assertion. Its four tests pass; independent AI
-review found no weakening of operational checks. Fresh final-head CI is required.
-Runtime/build inputs are frozen at `7a03aece`; this last change touches only this
-handoff and that test. No subsequent CI success is assumed here.
-
-## Matched-data table precision follow-up
-
-The isolated native ClientDirectory fixture exposed remaining presentation
-differences after af07ffdb. Scoped corrections restore the target's18px table
-header line, desktop row-divider space, centered compact cells,13px lead cell
-and inline empty-activity badge. The no-activity branch adds its explicit line
-break. Action lifecycle labels use the target's12.5px secondary foreground.
-No client/program identity, grouping, counts, controller or permission changes.
-
-Fresh controlled browser measurements match the first three desktop row pitches
-and phone activity/framework/empty-activity positions; residual x rounding is
-0.33px. Three affected suites24tests pass. Independent AI source review found no
-issues; it is not human approval. Both-theme complete popup top/bottom captures
-replace the earlier clipped images. The4.447906px cached reference SVG scaling
-adaptation remains explicit; native responsive measuring and forecast math stay
-authoritative. Exact source hashes and fixture provenance are in the external
-evidence receipts. CI194 on af07 is a checkpoint, not this follow-up's gate.
-Fresh final-head builds, CI and existing-staging hosted verification remain
-required. No merge, production deployment or temporary-account reactivation.
-
-Full-popup cascade review additionally corrects populated Portfolio KPI panels
-to equal columns through761px (one column at760px), retaining860px padding and
-divider rules. The100% chart gridline is solid grid color; the reference dashed
-line is for an optional goal, not every100% tick. These are Portfolio-only CSS
-corrections, with Dashboard and all history/forecast calculations unchanged.
-
-## Final popup audit follow-up
-
-Full CI195 passed on published `58c3fec4`, tree `e165a366`. A subsequent
-comprehensive popup audit found remaining visual differences: the scale-to-legend
-gap, muted date/forecast labels, selected-control and tooltip shadows, numeric
-optical settings, unassessed borders, marker/crosshair treatments, View data
-headers and change-arrow/endpoint anatomy. This follow-up scopes those rules to
-the Portfolio dialog. It measures real tooltip dimensions and flips/clamps their
-positions as the chart/container resizes; observer and resize listeners clean up
-on selection changes and unmount. Inline Dashboard presentation is preserved.
-History observations, counts, UTC dates, forecast calculations, navigation and
-identity/authorization gates are unchanged. Independent AI source review found
-no actionable issue; it is not human approval or rendered acceptance.
-All29 Reports tests pass in the complete rerun with the original5-second test
-timeout. Two earlier existing-test timing failures also passed unchanged in
-isolation; no assertion or timeout setting was weakened. Diff whitespace checks
-are clean. Builds and final-head CI remain separate required checks.
-
-Capture review also identified browser full-page screenshots changing scrollbar
-allocation. Final page evidence must measure before and after capture and retain
-only a stable image/geometry pair. Modal viewport evidence uses actual document
-scroll coordinates to avoid falsely adding page scroll to the modal's position.
-Old affected rasters are superseded, not accepted as CSS evidence. Source-bound
-fixtures remain read-only and separate from genuine native workflow checks.
-
-This later source requires its own complete release gate, final comparisons,
-specific-commit deployment to existing staging and hosted verification. CI195
-certifies only `58c3fec4`. Existing staging still runs `847bceac`; its current
-browser session shows sign-in, so hosted standard-sign-in Portfolio coverage
-needs an authenticated session. No merge, production deployment, new access or
-temporary-account reactivation is authorized by this checkpoint.
-
-Final controlled modal measurement found a scoped16px scrollbar override was
-incorrect: the unchanged target uses browser-native `auto` sizing (1120px body,
-1105px client width), while the candidate produced1104px at the same viewport.
-The approved-surface scrollbar, track and thumb rules now revert to browser
-defaults rather than guessing a platform width. The global application10px
-scrollbar outside the approved scopes stays intact. This correction supersedes
-the0f3b97b build/CI196 checkpoint and needs final-head verification.
+1. Record the affected test results for the bounded presentation patch; review the
+   complete diff, finish builds, publish a clean source, then pass the complete
+   release gate on that exact head. Keep separate Login/CIS work out of this claim.
+2. Bind stable primary default/modal, boundary and affected-state evidence to that
+   source/build; independently review measured mismatches and preserve all native
+   adaptations/unexecuted limitations. Regenerate one concise final ledger.
+3. Through the sole release owner, deploy only the authorized exact commit to
+   [existing staging](https://omnisciente-staging.onrender.com). Verify provider
+   Live/full SHA, actual served build assets and critical hosted native journeys,
+   counts/history, mode/client/Security Domains and tenant gates. Passing old
+   Portfolio checks or local Windows bundle names does not certify hosted assets.
+4. Report the review URL/navigation and honest remaining limitations to Robb.
+   User visual acceptance remains separate. Do not merge or deploy to production.
