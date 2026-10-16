@@ -1,4 +1,4 @@
-import {useEffect, useId, useRef, useState} from 'react';
+import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
 import api, {formatError} from '@/lib/api';
 import {Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription} from '@/components/ui/dialog';
 import {X} from 'lucide-react';
@@ -29,6 +29,27 @@ export function scopeNote(change, unit = 'items') {
 const scopeChangesForPosition = (changes, point) => changes.filter(change => change.after_snapshot_id
   ? change.after_snapshot_id === point.snapshot_id
   : change.after?.scope_signature === point.scope_signature && Date.parse(change.effective_at || change.at) === Date.parse(snapshotTime(point)));
+
+// Tooltip content can change size with genuine counts, scope notes, fonts and pane width.
+function observeTooltipLayout(container, tooltip, position) {
+  const measure = () => {
+    const bounds = container.getBoundingClientRect(), size = tooltip.getBoundingClientRect();
+    if (!bounds.width || !size.width) return;
+    const point = position(bounds, size);
+    tooltip.style.left = `${point.left}px`;
+    tooltip.style.top = `${point.top}px`;
+  };
+  measure();
+  const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+  observer?.observe(container);
+  observer?.observe(tooltip);
+  window.addEventListener('resize', measure);
+  return () => { observer?.disconnect(); window.removeEventListener('resize', measure); };
+}
+
+function ChangeArrow({up}) {
+  return <svg className="ph-change-arrow" viewBox="0 0 12 12" aria-hidden="true"><path d={up ? 'M6 10V2.5M2.5 6 6 2.5 9.5 6' : 'M6 2v7.5M2.5 6 6 9.5 9.5 6'} /></svg>;
+}
 
 function ForecastTimeline({asOf, estimatedAt}) {
   const start = Date.parse(asOf), estimate = Date.parse(estimatedAt);
@@ -126,6 +147,19 @@ function useHistory(client, program, range, refreshToken, requireIdentity = fals
 
 function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
   const [activeStatus, setActiveStatus] = useState(null);
+  const scale = useRef(null), bar = useRef(null), tooltip = useRef(null);
+  useLayoutEffect(() => {
+    if (inline || !activeStatus || !validImplementationPosition(current) || !scale.current || !tooltip.current) return;
+    const values = applicableCounts(current), selectedIndex = values.findIndex(value => value.key === activeStatus);
+    if (selectedIndex < 0) return;
+    const before = values.slice(0, selectedIndex).reduce((total, value) => total + value.count, 0);
+    return observeTooltipLayout(scale.current, tooltip.current, (bounds, size) => {
+      const barBounds = bar.current.getBoundingClientRect();
+      const share = current.denominator > 0 ? (before + values[selectedIndex].count / 2) / current.denominator : .5;
+      const center = barBounds.left - bounds.left + share * barBounds.width;
+      return {left:Math.max(0, Math.min(bounds.width - size.width, center - size.width / 2)), top:barBounds.top - bounds.top - size.height - 10};
+    });
+  }, [activeStatus, current, inline]);
   if (!validImplementationPosition(current)) {
     return <div className="ph-breakdown"><p>Applicable scope unavailable. {current?.reason || current?.notice || 'Current counts are unavailable.'}</p></div>;
   }
@@ -140,6 +174,7 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
     onClick: () => { setActiveStatus(key); onStatusNavigate?.(key); }
   });
   const selected = counts.find(value => value.key === activeStatus);
+  const detail = selected && <div ref={tooltip} className="ph-segment-detail" role="status"><span className={!inline ? 'ph-tip-status-label' : undefined}>{!inline && <i className={`ph-dot is-${tone(selected.key)}`} aria-hidden="true" />}{selected.label}</span><b>{share(selected)}</b><span>{selected.count} / {total}</span></div>;
   const cells = counts.map(value => <button type="button" key={value.key} {...interactions(value.key)}
     className={`ph-breakdown-row ${activeStatus === value.key ? 'is-active' : ''}`} aria-pressed={activeStatus === value.key}>
     <span className="ph-breakdown-label"><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label}</span>
@@ -148,16 +183,17 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
   </button>);
   return <div className="ph-breakdown">
     {inline && <div className="ph-breakdown-head"><span>Status of {total} applicable safeguards</span><span>Assessed {assessed} of {total} · {total ? (assessed/total*100).toFixed(1)+'%' : 'N/A'}</span></div>}
-    <div className="ph-status-scale">
-      <div className="ph-interactive-bar" role="group" aria-label="Current status composition">
+    <div ref={scale} className="ph-status-scale">
+      <div ref={bar} className="ph-interactive-bar" role="group" aria-label="Current status composition">
         {total > 0 && counts.filter(value => value.count > 0).map(value => <button
           type="button" key={value.key} {...interactions(value.key)}
           className={`is-${tone(value.key)} ${activeStatus && activeStatus !== value.key ? 'is-dim' : ''}`}
           style={inline ? {flexGrow:value.count} : {flexGrow:0,width:`${value.count / total * 100}%`}} aria-pressed={activeStatus === value.key}
           aria-label={`${value.label}: ${share(value)}, ${value.count} of ${total}`} />)}
-        {selected && <div className="ph-segment-detail" role="status"><span>{selected.label}</span><b>{share(selected)}</b><span>{selected.count} / {total}</span></div>}
+        {inline && detail}
       </div>
       {!inline && <div className="ph-status-axis" aria-hidden="true">{[0,100].map(value => <span key={value}>{value}%</span>)}</div>}
+      {!inline && detail}
     </div>
     {!inline && <div className="ph-breakdown-head"><span>Breakdown</span><span>Assessed {assessed} of {total} · {total ? (assessed/total*100).toFixed(1)+'%' : 'N/A'}</span></div>}
     {inline ? <div className="ph-breakdown-cells">{cells}</div> : cells}
@@ -200,7 +236,14 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
       {retained.length > 0 && <small>Tracking since {dateTime(snapshotTime(retained[0]))}</small>}
     </div></div> : <div className="ph-metrics">
 
-      <div className="ph-metric"><span>Change · {RANGES.find(([key]) => key === range)[1]}</span><strong className={comparison.comparable ? comparison.change_pp > 0 ? 'is-up' : comparison.change_pp < 0 ? 'is-down' : '' : 'is-text'}>{comparison.comparable ? comparison.change_pp === 0 ? 'No change' : <>{comparison.change_pp !== 0 && <span className={`ph-change-badge ${comparison.change_pp > 0 ? 'is-up' : 'is-down'}`} aria-hidden="true">{comparison.change_pp > 0 ? '↗' : '↘'}</span>}{signed(comparison.change_pp)}<span className="ph-unit"> pts</span></> : 'Change unavailable'}</strong><p>{comparison.comparable ? `${signed(comparison.change_count, 0)} ${language.verb} · from ${rate(comparison.baseline)} on ${formatPortfolioDate(snapshotTime(comparison.baseline))}` : report.loading ? 'Loading saved period history…' : report.error || (comparison.baseline ? 'The saved positions are not comparable.' : 'No saved baseline for the start of this period.')}</p>{comparison.scope_changed && <small>{Number.isInteger(comparison.baseline?.denominator) && Number.isInteger(current.denominator) ? `Scope changed (${comparison.baseline.denominator} → ${current.denominator} applicable).` : 'Scope changed.'}</small>}</div>
+      <div className="ph-metric"><span>Change · {RANGES.find(([key]) => key === range)[1]}</span>
+        <strong className={[comparison.comparable ? comparison.change_pp > 0 ? 'is-up' : comparison.change_pp < 0 ? 'is-down' : '' : 'is-text', !inline && comparison.comparable && comparison.change_pp !== 0 ? 'ph-change-figure' : ''].filter(Boolean).join(' ')}>
+          {comparison.comparable ? comparison.change_pp === 0 ? 'No change' : <>
+            <span className={`ph-change-badge ${comparison.change_pp > 0 ? 'is-up' : 'is-down'}`} aria-hidden="true">{inline ? comparison.change_pp > 0 ? '↗' : '↘' : <ChangeArrow up={comparison.change_pp > 0} />}</span>
+            {inline ? <>{signed(comparison.change_pp)}<span className="ph-unit"> pts</span></> : <span>{signed(comparison.change_pp)}<span className="ph-unit"> pts</span></span>}
+          </> : 'Change unavailable'}
+        </strong>
+        <p>{comparison.comparable ? `${signed(comparison.change_count, 0)} ${language.verb} · from ${rate(comparison.baseline)} on ${formatPortfolioDate(snapshotTime(comparison.baseline))}` : report.loading ? 'Loading saved period history…' : report.error || (comparison.baseline ? 'The saved positions are not comparable.' : 'No saved baseline for the start of this period.')}</p>{comparison.scope_changed && <small>{Number.isInteger(comparison.baseline?.denominator) && Number.isInteger(current.denominator) ? `Scope changed (${comparison.baseline.denominator} → ${current.denominator} applicable).` : 'Scope changed.'}</small>}</div>
       <div className="ph-metric"><span>Estimated completion</span><strong className={forecast.ok ? '' : 'is-text'}>{forecast.ok ? forecast.estimated_at ? formatPortfolioDate(forecast.estimated_at, {day:undefined}) : forecast.label : 'Not estimated yet'}</strong>{forecast.estimated_at && <ForecastTimeline asOf={asOf} estimatedAt={forecast.estimated_at} />}<p>{forecastExplanation(forecast)}</p></div>
     </div>}
     <div className="ph-chart-card">
@@ -240,7 +283,7 @@ function historyTicks(start, asOf, width) {
 }
 
 export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', inline = false}) {
-  const box = useRef(null), svg = useRef(null);
+  const box = useRef(null), svg = useRef(null), tooltip = useRef(null);
   const chartId = useId().replace(/:/g, '');
   const [width, setWidth] = useState(900), [active, setActive] = useState(null), [engaged, setEngaged] = useState(false);
   useEffect(() => {
@@ -290,11 +333,25 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
   const endpointMatches = endpoint && validImplementationPosition(endpoint) && validImplementationPosition(current)
     && endpoint.scope_signature === current.scope_signature && endpoint.source_revision === current.source_revision;
   const endpointPercentage = endpointMatches ? currentPercentage(current) : null;
+  const endpointLabel = endpointPercentage == null ? '' : `${endpointPercentage.toFixed(1)}%`;
+  const endpointWidth = inline ? 54 : endpointLabel.length * 7 + 14;
+  const tooltipAnchorX = selected ? x(selected) : 0, tooltipAnchorY = selected ? y(currentPercentage(selected) ?? 0) : 0;
+  useLayoutEffect(() => {
+    if (inline || !engaged || !selected || !tooltip.current || !box.current) return;
+    return observeTooltipLayout(box.current, tooltip.current, (bounds, size) => {
+      const chartBounds = svg.current.getBoundingClientRect();
+      const anchorX = tooltipAnchorX * chartBounds.width / width;
+      const anchorY = tooltipAnchorY * chartBounds.height / height;
+      const after = anchorX + 14;
+      const left = after + size.width > bounds.width ? anchorX - 14 - size.width : after;
+      return {left:Math.max(0, Math.min(bounds.width - size.width, left)), top:Math.max(0, Math.min(chartBounds.height - size.height, anchorY - 30))};
+    });
+  }, [engaged, selected, inline, width, height, tooltipAnchorX, tooltipAnchorY, view]);
   return <div ref={box} className="ph-chart">
     <svg ref={svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" tabIndex={points.length ? 0 : undefined} aria-label="Implementation history over the selected period. Use Left, Right, Home and End to read genuine positions." onKeyDown={keyboard} onFocus={() => setEngaged(true)} onBlur={() => {setActive(null);setEngaged(false);}}>
       <title>Implementation history</title><desc>Each marker is a saved observation at its genuine effective date. The text readout and View data provide exact counts.</desc>
       <defs><pattern id={`${chartId}-hatch`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" className="ph-hatch-line" /></pattern><linearGradient id={`${chartId}-area`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--chart-implemented)" stopOpacity=".22"/><stop offset="100%" stopColor="var(--chart-implemented)" stopOpacity=".02"/></linearGradient></defs>
-      {shadeEnd - left >= 130 && points.length > 0 && <g><rect x={left} y={top} width={shadeEnd-left} height={bottom-top} fill={`url(#${chartId}-hatch)`}/><text x={(left+shadeEnd)/2} y={(top+bottom)/2} textAnchor="middle">Before tracking began</text></g>}
+      {shadeEnd - left >= 130 && points.length > 0 && <g><rect x={left} y={top} width={shadeEnd-left} height={bottom-top} fill={`url(#${chartId}-hatch)`}/><text className="ph-before-tracking" x={(left+shadeEnd)/2} y={(top+bottom)/2} textAnchor="middle">Before tracking began</text></g>}
       {ticks.map(value => <g key={value}><line className={value === 0 ? 'ph-axis' : value === 100 ? 'ph-target' : 'ph-grid'} x1={left} x2={right} y1={y(value)} y2={y(value)} /><text x={left - 8} y={y(value) + 4} textAnchor="end">{`${value}%`}</text></g>)}
       {view === 'line' && points.slice(1).map((point, index) => {
         const previous = points[index];
@@ -310,16 +367,16 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
         })}</g>;
       })}
       <path className="ph-line" d={line} />
-      {endpointPercentage != null && <g><rect className="ph-current-flag" x={right+9} y={y(endpointPercentage)-11} width="54" height="22" rx="6"/><text className="ph-current-flag-label" x={right+36} y={y(endpointPercentage)+4} textAnchor="middle" >{endpointPercentage.toFixed(1)}%</text></g>}
+      {endpointPercentage != null && <g><rect className="ph-current-flag" x={right+9} y={y(endpointPercentage)-11} width={endpointWidth} height="22" rx="6"/><text className="ph-current-flag-label" x={right+9+endpointWidth/2} y={y(endpointPercentage)+4} textAnchor="middle" >{endpointLabel}</text></g>}
       {points.map(point => currentPercentage(point) != null && <circle key={identity(point)} className="ph-marker" cx={x(point)} cy={y(currentPercentage(point))} r={4} />)}
       {scopeChanges.filter(change => Date.parse(change.effective_at || change.at) >= Date.parse(start) && Date.parse(change.effective_at || change.at) <= Date.parse(asOf)).map((change, index) => <g key={index}><line className="ph-scope-marker" x1={x({effective_at: change.effective_at || change.at})} x2={x({effective_at: change.effective_at || change.at})} y1={top} y2={bottom} /><text x={Math.min(x({effective_at: change.effective_at || change.at}) + 6, right - 90)} y={top + 15}>{change.before?.denominator != null && change.after?.denominator != null ? `Scope ${change.before.denominator} → ${change.after.denominator}` : 'Scope changed'}</text></g>)}
       {historyTicks(start,asOf,width).map(at => <text key={at} x={x({effective_at:at})} y={height-8} textAnchor="middle">{formatPortfolioDate(at,{year:undefined,...(Date.parse(asOf)-Date.parse(start)>45*DAY ? {day:undefined} : {})})}</text>)}
       {!points.length && <text className="ph-chart-empty" x={(left + right) / 2} y={(top + bottom) / 2} textAnchor="middle">No saved positions in this period</text>}
-      {engaged && selected && <><line className="ph-crosshair" x1={x(selected)} x2={x(selected)} y1={top} y2={bottom} />{currentPercentage(selected) != null && <circle className="ph-active" cx={x(selected)} cy={y(currentPercentage(selected))} r={5.5} />}</>}
+      {engaged && selected && <><line className="ph-crosshair" x1={x(selected)} x2={x(selected)} y1={top} y2={bottom} />{currentPercentage(selected) != null && <circle className="ph-active" cx={x(selected)} cy={y(currentPercentage(selected))} r={inline ? 5.5 : 6} />}</>}
       <rect x={left} y={top} width={right - left} height={bottom - top} fill="transparent" onPointerMove={nearest} onPointerDown={nearest} onPointerLeave={() => { if (document.activeElement !== svg.current) {setActive(null);setEngaged(false);} }} />
     </svg>
     {view === 'line' && (low > 0 || high < 100) && <p className="ph-axis-disclosure">Vertical axis zoomed to the data range ({low}–{high}%).</p>}
-    {engaged && selected && <div className="ph-history-tip" style={{left:Math.max(0,Math.min(width-270,x(selected)+14)) / width * 100+'%',top:Math.max(0,Math.min(100,y(currentPercentage(selected) ?? 0)-30)) * (box.current?.clientWidth || width) / width}}>
+    {engaged && selected && <div ref={tooltip} className="ph-history-tip" style={inline ? {left:Math.max(0,Math.min(width-270,x(selected)+14)) / width * 100+'%',top:Math.max(0,Math.min(100,y(currentPercentage(selected) ?? 0)-30)) * (box.current?.clientWidth || width) / width} : undefined}>
       <div className="ph-tip-date">{selected.carried ? 'In effect at period start · saved ' : 'Saved '}{formatPortfolioDate(snapshotTime(selected))}</div>
       <strong>{rate(selected)}</strong><p>{selectedValid ? `${selected.implemented} of ${selected.denominator} ${unit} implemented` : selected.reason || 'Implementation unavailable'}</p>
       {selectedValid && <div className="ph-tip-rows">{applicableCounts(selected).map(value => <div key={value.key}><span><i className={`ph-dot is-${tone(value.key)}`} />{value.label}</span><b>{value.count}</b></div>)}</div>}

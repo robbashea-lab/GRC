@@ -250,3 +250,35 @@ to equal columns through761px (one column at760px), retaining860px padding and
 divider rules. The100% chart gridline is solid grid color; the reference dashed
 line is for an optional goal, not every100% tick. These are Portfolio-only CSS
 corrections, with Dashboard and all history/forecast calculations unchanged.
+
+## Final popup audit follow-up
+
+Full CI195 passed on published `58c3fec4`, tree `e165a366`. A subsequent
+comprehensive popup audit found remaining visual differences: the scale-to-legend
+gap, muted date/forecast labels, selected-control and tooltip shadows, numeric
+optical settings, unassessed borders, marker/crosshair treatments, View data
+headers and change-arrow/endpoint anatomy. This follow-up scopes those rules to
+the Portfolio dialog. It measures real tooltip dimensions and flips/clamps their
+positions as the chart/container resizes; observer and resize listeners clean up
+on selection changes and unmount. Inline Dashboard presentation is preserved.
+History observations, counts, UTC dates, forecast calculations, navigation and
+identity/authorization gates are unchanged. Independent AI source review found
+no actionable issue; it is not human approval or rendered acceptance.
+All29 Reports tests pass in the complete rerun with the original5-second test
+timeout. Two earlier existing-test timing failures also passed unchanged in
+isolation; no assertion or timeout setting was weakened. Diff whitespace checks
+are clean. Builds and final-head CI remain separate required checks.
+
+Capture review also identified browser full-page screenshots changing scrollbar
+allocation. Final page evidence must measure before and after capture and retain
+only a stable image/geometry pair. Modal viewport evidence uses actual document
+scroll coordinates to avoid falsely adding page scroll to the modal's position.
+Old affected rasters are superseded, not accepted as CSS evidence. Source-bound
+fixtures remain read-only and separate from genuine native workflow checks.
+
+This later source requires its own complete release gate, final comparisons,
+specific-commit deployment to existing staging and hosted verification. CI195
+certifies only `58c3fec4`. Existing staging still runs `847bceac`; its current
+browser session shows sign-in, so hosted standard-sign-in Portfolio coverage
+needs an authenticated session. No merge, production deployment, new access or
+temporary-account reactivation is authorized by this checkpoint.

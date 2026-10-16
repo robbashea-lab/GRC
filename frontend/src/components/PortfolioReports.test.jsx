@@ -127,6 +127,65 @@ test('chart keyboard and pointer choose genuine nearest observations, keep dates
   expect([...container.querySelectorAll('.ph-grid,.ph-axis,.ph-target')].map(line => line.nextSibling.textContent)).toEqual(['0%', '25%', '50%', '75%', '100%']);
 });
 
+test('modal history tooltips flip at the right edge and remain inside a resized chart while keyboard selection retains real counts', async () => {
+  let paneWidth = 600, paneHeight = 296;
+  const originalBounds = Element.prototype.getBoundingClientRect;
+  const bounds = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this.matches('.ph-chart,.ph-chart > svg')) return {left:100, top:50, width:paneWidth, height:paneHeight};
+    if (this.matches('.ph-history-tip')) return {left:0, top:0, width:220, height:100};
+    return originalBounds.call(this);
+  });
+  try {
+    const points = [snapshot(-60, 26), snapshot(-30, 29), snapshot(0, 32)];
+    await act(async () => root.render(<PortfolioHistoryChart points={points} start="2026-07-13T12:00:00Z" asOf={AT} view="line" current={points[2]} scopeChanges={[]} />));
+    const svg = container.querySelector('svg');
+    const key = value => act(async () => svg.dispatchEvent(new KeyboardEvent('keydown', {key:value, bubbles:true})));
+    const expectContained = () => {
+      const tip = container.querySelector('.ph-history-tip'), left = parseFloat(tip.style.left), top = parseFloat(tip.style.top);
+      expect(left).toBeGreaterThanOrEqual(0); expect(left + 220).toBeLessThanOrEqual(paneWidth);
+      expect(top).toBeGreaterThanOrEqual(0); expect(top + 100).toBeLessThanOrEqual(paneHeight);
+      return left;
+    };
+    await key('Home');
+    expect(container.querySelector('.ph-readout').textContent).toContain('Implemented 26 ·');
+    expect(expectContained()).toBeGreaterThan(Number(container.querySelector('.ph-active').getAttribute('cx')));
+    await key('End');
+    expect(container.querySelector('.ph-history-tip').textContent).toContain('32 of 56');
+    expect(expectContained() + 220).toBeLessThan(Number(container.querySelector('.ph-active').getAttribute('cx')));
+    paneWidth = 240; paneHeight = 180;
+    await act(async () => window.dispatchEvent(new Event('resize')));
+    expectContained();
+    await key('ArrowLeft'); expectContained();
+    expect(container.querySelector('.ph-readout').textContent).toContain('Implemented 29 ·');
+  } finally { bounds.mockRestore(); }
+});
+
+test('status keyboard focus centers measured tooltips over the segment and clamps both horizontal edges without changing counts', async () => {
+  const originalBounds = Element.prototype.getBoundingClientRect;
+  const bounds = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this.matches('.ph-status-scale')) return {left:100, top:200, width:300, height:62};
+    if (this.matches('.ph-interactive-bar')) return {left:104, top:224, width:292, height:14};
+    if (this.matches('.ph-segment-detail')) return {left:0, top:0, width:170, height:90};
+    return originalBounds.call(this);
+  });
+  try {
+    await act(async () => root.render(<Harness />));
+    const segments = dialog().querySelectorAll('.ph-interactive-bar button');
+    for (const segment of segments) {
+      await act(async () => segment.focus());
+      const tip = dialog().querySelector('.ph-segment-detail'), left = parseFloat(tip.style.left), top = parseFloat(tip.style.top);
+      expect(left).toBeGreaterThanOrEqual(0); expect(left + 170).toBeLessThanOrEqual(300);
+      expect(top + 90).toBeLessThan(24);
+      expect(dialog().querySelectorAll('.ph-breakdown-row.is-active')).toHaveLength(1);
+      expect(dialog().querySelector('.ph-current-value').textContent).toContain('32 of 56');
+    }
+    expect(dialog().querySelector('.ph-segment-detail').textContent).toContain('24 / 56');
+    await act(async () => dialog().querySelector('.ph-head-actions .ph-button').focus());
+    expect(dialog().querySelector('.ph-segment-detail')).toBeNull();
+    expect(dialog().querySelectorAll('.ph-breakdown-row')).toHaveLength(4);
+  } finally { bounds.mockRestore(); }
+});
+
 test('touch pointerdown reads genuine nearest positions after range, program and chart-view changes', async () => {
   const socPoints = [snapshot(-14, 40, {source_revision: 'soc-earlier'}), snapshot(0, 50, {source_revision: 'soc-current'})];
   api.get.mockImplementation((path, {params}) => Promise.resolve({data: params.program_key === 'soc-2'
