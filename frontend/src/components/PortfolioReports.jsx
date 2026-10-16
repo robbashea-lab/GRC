@@ -1,6 +1,7 @@
 import {useEffect, useId, useRef, useState} from 'react';
 import api, {formatError} from '@/lib/api';
-import {Dialog, DialogContent, DialogTitle, DialogDescription} from '@/components/ui/dialog';
+import {Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription} from '@/components/ui/dialog';
+import {X} from 'lucide-react';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/components/ui/tabs';
 import {grcLead} from '@/lib/clientRelationships';
 import {applicableCounts, calendarRangeStart, currentPercentage, forecastImplementation, historyWindow, periodChange, programIdentity, snapshotTime, validImplementationPosition} from '@/lib/portfolioProgress';
@@ -216,7 +217,7 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
     {details}
   </section>;
   return <Dialog open onOpenChange={open => { if (!open) onClose(); }}><DialogContent className="portfolio-history-dialog" data-testid="portfolio-history-dialog" onCloseAutoFocus={onCloseAutoFocus}>
-    <div className="ph-head"><div className="ph-client"><span className="gp-client-initial" aria-hidden="true">{client.name?.trim().charAt(0)}</span><div><DialogTitle>{client.name}</DialogTitle><DialogDescription>GRC Lead · {lead.name} · {client.industry || 'Industry not recorded'}</DialogDescription></div></div><button type="button" className="ph-button" onClick={() => onNavigate('/dashboard')}>Open client portal</button></div>
+    <div className="ph-head"><div className="ph-client"><span className="gp-client-initial" aria-hidden="true">{client.name?.trim().charAt(0)}</span><div><DialogTitle>{client.name}</DialogTitle><DialogDescription>GRC Lead · {lead.name} · {client.industry || 'Industry not recorded'}</DialogDescription></div></div><div className="ph-head-actions"><button type="button" className="ph-button" onClick={() => onNavigate('/dashboard')}>Open client portal</button><DialogClose className="ph-close" aria-label="Close"><X aria-hidden="true" /></DialogClose></div></div>
     <div className="ph-body">{programs.length > 1 ? <Tabs value={selected} onValueChange={onSelect}><TabsList aria-label="Client frameworks" className="ph-tabs">{programs.map(value => {
       const valid = validImplementationPosition(value.current);
       const summary = !valid ? 'Unavailable' : value.current.denominator === 0 ? 'No applicable scope' : value.current.not_started ? 'Not started' : `${rate(value.current)} ${programLanguage(value).verb}`;

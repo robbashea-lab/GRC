@@ -74,7 +74,8 @@ test('range changes preserve expanded data and the 90-day estimate, while reopen
     expect(dialog().querySelector('.ph-metrics > div:last-child').textContent).toBe(estimate);
   }
   expect(dialog().querySelectorAll('#portfolio-history-data tbody tr')).toHaveLength(3);
-  await click('Close'); expect(dialog()).toBeNull(); expect(document.activeElement.textContent).toBe('Open exact program history');
+  await act(async () => dialog().querySelector('.ph-head-actions [aria-label="Close"]').click());
+  expect(dialog()).toBeNull(); expect(document.activeElement.textContent).toBe('Open exact program history');
   await click('Open exact program history'); expect(dialog().querySelector('[aria-label="History period"] [aria-pressed="true"]').textContent).toBe('6 months');
   expect(dialog().querySelector('#portfolio-history-data')).toBeNull(); expect(dialog().querySelector('[aria-label="Chart view"] [aria-pressed="true"]').textContent).toBe('Status mix');
 });

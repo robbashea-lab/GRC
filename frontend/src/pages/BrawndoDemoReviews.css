@@ -10,7 +10,7 @@
   --shadow-tip:0 0 0 1px rgba(15,27,45,.05), 0 12px 28px -8px rgba(15,27,45,.24);
   --shadow:0 0 0 1px rgba(15,27,45,.06), 0 28px 64px -16px rgba(15,27,45,.34);
   --font:'Segoe UI', Inter, Arial, sans-serif;
- font:13.5px/1.5 var(--font);color:var(--fg);background:var(--bg);padding:28px 24px;display:grid;gap:20px;max-width:1600px;min-width:0;}
+ font:13.5px/1.5 var(--font);color:var(--fg);background:var(--bg);padding:28px 24px 120px;display:grid;gap:20px;max-width:1600px;min-width:0;}
 .brawndo-demo-reviews[data-theme="dark"] {
   --bg:#071321; --surface:#0C1B30; --subtle:#11243A; --tablehead:#112238; --hover:#172B45; --border:#263C58; --border-strong:#3D5778;
   --fg:#EDF3FF; --fg2:#A8BAD5; --muted:#A2AEC4; --link:#85D4FF; --selected:#25416A; --rail:#85D4FF; --focus:#85D4FF;

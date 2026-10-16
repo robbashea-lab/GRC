@@ -26,7 +26,7 @@
 .bpage.approved-risk-register.brawndo-demo-risks > * { min-width:0; }
 .bpage.brawndo-demo-risks :is(button,input,select) { font-family:inherit; color:inherit; }
 .bpage.brawndo-demo-risks :is(button,input,select,summary):focus-visible { outline:2px solid var(--bp-focus); outline-offset:2px; }
-.bpage.brawndo-demo-risks .bpage-head { padding:0; gap:12px; align-items:center; }
+.bpage.brawndo-demo-risks .bpage-head { padding:0; gap:12px; align-items:center; flex-direction:row; }
 .bpage.brawndo-demo-risks .bpage-eyebrow { display:none; }
 .bpage.brawndo-demo-risks .bpage-head h1 { margin:0; font:650 24px/1.5 var(--font-body); letter-spacing:-.025em; text-wrap:balance; }
 .bpage.brawndo-demo-risks .bpage-subtitle { margin:3px 0 0; font-size:12.5px; line-height:1.5; color:var(--bp-muted); }

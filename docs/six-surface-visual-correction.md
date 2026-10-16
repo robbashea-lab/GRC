@@ -143,3 +143,24 @@ Remaining before acceptance: final build and source-bound captures after these
 corrections, responsive/native overlay review, controlled ordinary-auth Portfolio
 verification, full exact-head CI and verified existing staging deployment. Old
 847bceac CI/deployment receipts never certify this correction candidate.
+
+## Measured responsive correction checkpoint — 16 October 2026
+
+Published draft PR86 source `1ddad7e8` / tree `61be5f64` was byte-identical
+with the reviewed local candidate; full CI191 was started for that exact head.
+A subsequent independent comparison found concrete CSS discrepancies. This
+follow-up corrects Actions runway grid anatomy, phone Risks heading alignment,
+Reviews bottom spacing, Portfolio compact named grid placement, Dashboard
+mobile report insets/KPI stacking/legend areas, Portfolio popup mobile padding,
+and the references' phone notification visibility. Calendar's extra agenda owner
+line is removed; the native focus/hover tooltip and full record retain the owner.
+No native mutation/controller, permission, data or date policy is changed.
+
+All24 desktop/phone light/dark pairs for1dd had equal screenshot widths, actual
+rendered heading glyph measurements and diagnostic overlays/diffs. Those images
+identified these fixes; they do not certify the revised source. Five affected
+native/page suites passed75tests after the Calendar presentation change; final
+compiled remeasurement and independent review follow. CI191 remains evidence
+only for1dd, never this later head. Existing staging is still the prior release;
+acceptance, full boundary/native coverage and exact-head staging verification
+remain open. No merge, production deployment or QA reactivation occurred.

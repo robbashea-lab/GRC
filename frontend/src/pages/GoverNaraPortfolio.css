@@ -75,8 +75,9 @@
  .gp-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
  .gp-table tbody tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-areas:"client act" "lead fw" "prog prog"; gap:10px 16px; padding:16px; border-bottom:1px solid var(--gp-border); }
  .gp-table tr:last-child { border-bottom:0; }
- .gp-table td { display:block; padding:0; border:0; min-width:0; grid-row:auto!important; grid-column:auto; }.gp-table td::after { display:none; }
- .gp-table td[data-label=Client] { grid-area:client; }.gp-table td[data-label="Last activity"] { grid-area:act; text-align:right; }.gp-table td[data-label="GRC Lead"] { grid-area:lead; }.gp-table td[data-label=Framework] { grid-area:fw; text-align:right; }.gp-table td[data-label="Implementation progress"] { grid-area:prog; }
+ .gp-table td { display:block; padding:0; border:0; min-width:0; grid-column:auto; }.gp-table td::after { display:none; }
+ /* Compact cards replace inline desktop row spans with their named row and column. */
+ .gp-table td[data-label=Client] { grid-area:client!important; }.gp-table td[data-label="Last activity"] { grid-area:act!important; text-align:right; }.gp-table td[data-label="GRC Lead"] { grid-area:lead!important; }.gp-table td[data-label=Framework] { grid-area:fw!important; text-align:right; }.gp-table td[data-label="Implementation progress"] { grid-area:prog!important; }
  .gp-table td[data-label="GRC Lead"]::before { content:"GRC Lead · "; font-size:13px; color:var(--gp-muted); }
  .gp-progress { grid-template-columns:minmax(0,1fr) minmax(0,1.4fr); }.gp-progress > .gp-trend { grid-column:1/-1; }.gp-progress > svg { display:none; }
 }
