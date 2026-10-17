@@ -68,6 +68,16 @@ body[data-brawndo-cis-visual=true] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-select-
  --bwp-top:60px;--bwp-sidebar:240px;--bwp-bg:var(--bg);--bwp-card:var(--surface);--bwp-line:var(--border);--bwp-text:var(--fg);--bwp-muted:var(--fg2);--bwp-accent:var(--link);--bwp-subtle:var(--subtle);--bwp-focus:var(--focus);
  font:13.5px/1.5 var(--font);font-optical-sizing:auto;-webkit-font-smoothing:antialiased;
 }
+/* Native primary controls use the reference's dark text on its pale-blue accent. */
+.brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface="portfolio"])[data-theme=dark],
+html[data-visual-surface]:not([data-visual-surface="portfolio"])[data-visual-theme=dark] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content),
+.brawndo-workspace-pilot[data-additional-surface][data-theme=dark],
+html[data-additional-surface][data-additional-theme=dark] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating),
+html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark],
+.brawndo-workspace-pilot[data-cis-visual=true][data-theme=dark],
+html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-select-content,.ui-popover) {
+  --color-brand-on-accent:var(--surface);
+}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-topbar,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-topbar,
 .brawndo-workspace-pilot[data-cis-visual=true] .bwp-topbar {height:60px;gap:16px;padding:0 16px;background:#081426;border-bottom:1px solid #263c58;box-shadow:none;color:#edf3ff}
