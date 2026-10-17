@@ -42,6 +42,7 @@
 .brawndo-demo-dashboard .bdd-summary button > span {font-size:12.5px;font-weight:500;color:var(--bdd-muted)}
 .brawndo-demo-dashboard .bdd-summary strong {font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums}
 .brawndo-demo-dashboard .bdd-summary small {font-variant-numeric:tabular-nums}
+.brawndo-demo-dashboard .bdd-summary small.bdd-late {font-weight:500}
 .brawndo-demo-dashboard .bdd-card {background:var(--bdd-card);border:1px solid var(--bdd-line);border-radius:10px;overflow:hidden;box-shadow:var(--bdd-shadow)}
 .brawndo-demo-dashboard .bdd-card > header {padding:18px 24px 0}
 .brawndo-demo-dashboard .bdd-card > header p {font-size:12.5px;color:var(--bdd-muted);margin-top:2px}

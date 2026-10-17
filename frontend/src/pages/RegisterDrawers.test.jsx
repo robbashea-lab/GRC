@@ -9,7 +9,7 @@ import {ClientPresentationContext} from '@/components/ClientSurface';
 jest.mock('@/context/OrgContext', () => ({useOrg:() => ({currentClientId:'a',currentClient:{name:'Client A'}})}));
 jest.mock('@/context/AuthContext', () => ({useAuth:() => ({user:{user_id:'owner',name:'Owner',role:'super_admin'}})}));
 jest.mock('@/lib/api', () => ({__esModule:true, default:{get:jest.fn(),patch:jest.fn(),post:jest.fn()},formatError:e=>e.message,API:'/api'}));
-jest.mock('react-router-dom', () => ({useLocation:()=>({pathname:'/risks',search:''}),useSearchParams:()=>[new URLSearchParams(),jest.fn()],Link:({children,to}) => <a href={to}>{children}</a>}), {virtual:true});
+jest.mock('react-router-dom', () => ({useLocation:()=>({pathname:'/risks',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>[new URLSearchParams(),jest.fn()],Link:({children,to}) => <a href={to}>{children}</a>}), {virtual:true});
 let root, container;
 const requestOptions = expect.objectContaining({headers:{'Idempotency-Key':expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)},pendingCommandGeneration:expect.any(Number)});
 beforeEach(() => {

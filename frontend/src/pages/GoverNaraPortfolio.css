@@ -27,7 +27,7 @@
 .gp-segmented button { padding:4px 11px; border:0; border-radius:6px; color:var(--gp-fg2); font-size:12.5px; font-weight:500; white-space:nowrap; }
 .gp-segmented button[aria-pressed=true] { color:var(--gp-fg); background:var(--gp-seg-on); font-weight:600; box-shadow:var(--gp-seg-shadow); }
 .governara-portfolio .gp-field { display:flex; align-items:center; gap:8px; color:var(--gp-muted); font-size:12.5px; font-weight:400; }
-.gp-field select { height:34px; border:1px solid var(--gp-border-strong); border-radius:7px; background:var(--gp-surface); color:var(--gp-fg); padding:0 10px; font-size:12.5px; font-weight:500; }
+.gp-field select { height:34px; border:1px solid var(--gp-border-strong); border-radius:7px; background:var(--gp-surface); color:inherit; padding:0 10px; font-size:12.5px; font-weight:500; }
 .gp-sort { margin-left:auto; }
 .gp-countbar { display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px 16px; padding:8px 16px; border-bottom:1px solid var(--gp-border); color:var(--gp-muted); font-size:12px; font-variant-numeric:tabular-nums; }
 .gp-countbar strong { font-weight:400; }

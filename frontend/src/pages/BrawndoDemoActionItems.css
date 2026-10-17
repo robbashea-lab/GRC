@@ -31,6 +31,8 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
 .brawndo-demo-actions .bda-cell span {font-size:12.5px;color:var(--bda-muted);font-weight:500;}
 .brawndo-demo-actions .bda-cell strong {font-size:32px;font-weight:600;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
 .brawndo-demo-actions .bda-cell small {color:var(--bda-muted);font-size:12px;}
+.brawndo-demo-actions .bda-cell small.bda-late {color:var(--bda-danger);font-weight:500;}
+.brawndo-demo-actions .bda-cell small.bda-attention {color:var(--bda-warning);font-weight:500;}
 .brawndo-demo-actions .bda-cell[aria-pressed="true"] {background:var(--bda-soft);box-shadow:inset 0 -2px var(--bda-accent);}
 .brawndo-demo-actions .bda-overdue strong {color:var(--bda-danger);}
 .brawndo-demo-actions .bda-unassigned strong {color:var(--bda-warning);}
@@ -98,6 +100,9 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
 .brawndo-demo-actions .bda-avatar {flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--bda-subtle);box-shadow:inset 0 0 0 1px var(--bda-line);color:var(--bda-fg2);font-weight:600;font-size:11.5px;font-style:normal;}
 .brawndo-demo-actions .bda-owner-unavailable .bda-avatar {background:transparent;box-shadow:inset 0 0 0 1px var(--bda-warning);color:var(--bda-warning);}
 .brawndo-demo-actions .bda-due {display:grid;font-variant-numeric:tabular-nums;}
+.brawndo-demo-actions .bda-due small {display:flex;align-items:center;gap:5px;}
+.brawndo-demo-actions .bda-due small.bda-late {font-weight:600;}
+.brawndo-demo-actions .bda-due small svg {flex:none;}
 .brawndo-demo-actions .bda-chevron {color:var(--bda-muted);font-size:16px;line-height:1;}
 .brawndo-demo-actions .bda-no-finding {color:var(--bda-muted);}
 .brawndo-demo-actions .bda-more-controls {display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-left:auto;}
@@ -123,6 +128,7 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
  .brawndo-demo-actions .bda-item {grid-area:item;}
  .brawndo-demo-actions .bda-owner-cell {grid-area:owner;}
  .brawndo-demo-actions .bda-due {grid-area:due;text-align:right;}
+ .brawndo-demo-actions .bda-due small {justify-content:flex-end;}
  .brawndo-demo-actions .bda-prio {grid-area:prio;}
  .brawndo-demo-actions .bda-stage {grid-area:st;justify-self:end;}
  .brawndo-demo-actions .bda-done .bda-stage {justify-self:start;}

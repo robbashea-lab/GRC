@@ -650,8 +650,8 @@ td:last-child > button[aria-label="Row actions"] {
 :root .pill[data-status="upcoming"] { color: var(--color-text-secondary); }
 :root td[data-column="recurrence"] .register-value { color: var(--color-text-secondary); }
 :root :focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
-:root [data-testid="reviews-tab-overdue"]:not([aria-pressed="true"]),
-:root [data-testid="reviews-tab-overdue"]:not([aria-pressed="true"]) span { color: var(--color-critical); }
+:root:not([data-visual-surface="reviews"]) [data-testid="reviews-tab-overdue"]:not([aria-pressed="true"]),
+:root:not([data-visual-surface="reviews"]) [data-testid="reviews-tab-overdue"]:not([aria-pressed="true"]) span { color: var(--color-critical); }
 @media (hover: hover) and (pointer: fine) {
   :root .quick-filters button:not([aria-pressed="true"]):hover { background: var(--color-bg-subtle); border-color: var(--color-border-strong); }
   :root .quick-filters button:not([aria-pressed="true"]):active { background: var(--color-border); border-color: var(--color-input-border); }

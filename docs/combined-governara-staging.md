@@ -92,6 +92,22 @@ override. The existing exact-surface marker and cleanup boundaries are unchanged
 This proves the cascade correction; final compiled styles and scrollbar paint must
 still be checked, rather than assuming the property alone explains a raster gap.
 
+The cadcb59 combined source subsequently passed all 56 affected suites/725 tests
+and both canonical 13-file builds, with actual outer exit zero and an independent
+receipt audit. Its exact tree was published as `4564534f08f0611e2ea1dda7f3aabc6914ccaa57`.
+CI200 passed backend and Mongo; its frontend was still running when the following
+single rendered correction batch was prepared. It does not qualify the successor.
+
+All 24 final-source desktop/phone light/dark pairs passed equal-pane, asset-binding,
+rendered-content and stable-capture guards. Independent image review found narrow
+presentation residues: muted Portfolio select text, summary helper emphasis,
+Dashboard link typography and a 4px phone gap, Action overdue-clock emphasis, and
+Risks title/badge/divider inheritance. This follow-up corrects those scoped styles
+and decorative markup only. Counts, dates, controllers, permissions and commands
+are unchanged. Fresh checks and exact-head CI bind the successor. Remaining minor
+visual limitations are documented without adding a Robb signoff or open-ended
+pixel-polish hold before the authorized existing-staging release.
+
 ## Evidence and historical limits
 
 Task `outputs/` and the owners' source-specific receipts retain raw commands, exits,
