@@ -18,6 +18,8 @@ test('same-client authorization recheck preserves the native drawer instance and
   expect(container.querySelector('[data-visual-surface="reviews"]')).toBeTruthy();
   await act(async()=>container.querySelector('.bdr-name').click());
   const draft=container.querySelector('[aria-label="Native draft"]'),mounts=mockDrawerMounts;
+  const themeAction=container.querySelector('.bdr-head-actions .surface-theme-action'),previousTheme=container.querySelector('.brawndo-demo-reviews').dataset.theme;
+  await act(async()=>themeAction.click());expect(container.querySelector('.brawndo-demo-reviews').dataset.theme).toBe(previousTheme==='dark'?'light':'dark');expect(container.querySelector('[aria-label="Native draft"]')).toBe(draft);expect(mockDrawerMounts).toBe(mounts);
   mockOrgLoading=true;await act(async()=>root.render(<RecordListPage kind="reviews"/>));
   expect(container.querySelector('[data-visual-surface="reviews"]')).toBeNull();
   expect(container.querySelector('[aria-label="Native draft"]')).toBe(draft);

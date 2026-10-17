@@ -84,7 +84,7 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
 .brawndo-demo-actions .bda-title:hover {text-decoration:underline;text-underline-offset:3px;}
 .brawndo-demo-actions .bda-meta {display:flex;align-items:center;gap:8px;min-width:0;margin-top:4px;font-size:12px;color:var(--bda-muted);}
 .brawndo-demo-actions .bda-meta .bda-origin {flex:none;max-width:100%;min-width:0;}
-.brawndo-demo-actions .bda-origin > :is(button,span) {display:inline-flex;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 7px;border:1px solid var(--bda-line);border-radius:6px;font-size:11px;font-weight:600;letter-spacing:.01em;background:var(--bda-subtle);color:var(--bda-fg2);text-decoration:none;}
+.brawndo-demo-actions .bda-origin > :is(button,span) {display:inline-flex;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 7px;border:1px solid var(--bda-line);border-radius:6px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.01em;background:var(--bda-subtle);color:var(--bda-fg2);text-decoration:none;}
 .brawndo-demo-actions .bda-origin button:hover {text-decoration:underline;}
 .brawndo-demo-actions .bda-meta small {min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .brawndo-demo-actions .bda-priority {display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--bda-fg2);}
@@ -111,6 +111,8 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
 .brawndo-demo-actions .bpage-head h1 {line-height:1.5;margin:0;}
 .brawndo-demo-actions .bpage-subtitle {font-size:12.5px;margin:3px 0 0;color:var(--bda-muted);}
 .brawndo-demo-actions .bpage-actions {gap:8px;}
+.brawndo-demo-actions .bpage-actions .surface-theme-action {gap:7px;box-shadow:var(--bda-shadow);}
+.brawndo-demo-actions .bpage-actions .surface-theme-action:hover {background:var(--bda-hover);color:var(--bda-fg);}
 .brawndo-demo-actions :is(.bpage-btn,.bda-button) {display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;font:500 12.5px/1.5 'Segoe UI',Inter,Arial,sans-serif;border:1px solid var(--bda-line);border-radius:7px;background:var(--bda-card);color:var(--bda-fg2);}
 .brawndo-demo-actions .bda-primary {font-weight:600;background:var(--bda-accent);border-color:var(--bda-accent);color:var(--bda-card);}
 @container (max-width:860px) {

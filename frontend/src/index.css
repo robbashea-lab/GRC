@@ -47,15 +47,16 @@ a:hover { color: var(--color-link-hover); }
   }
 }
 
-/* Approved visual surfaces use native scrollbar painting; their root marker is removed on exit. */
-:where(html:not([data-visual-surface]))::-webkit-scrollbar,
-:where(html:not([data-visual-surface])) ::-webkit-scrollbar { width: 10px; height: 10px; }
-:where(html:not([data-visual-surface]))::-webkit-scrollbar-track,
-:where(html:not([data-visual-surface])) ::-webkit-scrollbar-track { background: transparent; }
-:where(html:not([data-visual-surface]))::-webkit-scrollbar-thumb,
-:where(html:not([data-visual-surface])) ::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 8px; }
-:where(html:not([data-visual-surface]))::-webkit-scrollbar-thumb:hover,
-:where(html:not([data-visual-surface])) ::-webkit-scrollbar-thumb:hover { background: var(--color-input-border); }
+/* Approved surface markers and the mounted Login retain native scrollbar painting.
+   The inner forgiving :where preserves ordinary styles in engines without :has. */
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara))))::-webkit-scrollbar,
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara)))) ::-webkit-scrollbar { width: 10px; height: 10px; }
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara))))::-webkit-scrollbar-track,
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara)))) ::-webkit-scrollbar-track { background: transparent; }
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara))))::-webkit-scrollbar-thumb,
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara)))) ::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 8px; }
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara))))::-webkit-scrollbar-thumb:hover,
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara)))) ::-webkit-scrollbar-thumb:hover { background: var(--color-input-border); }
 
 /* Compact table utilities */
 .tbl-cell {

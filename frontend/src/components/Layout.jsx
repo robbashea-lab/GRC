@@ -9,6 +9,7 @@ import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
+import {AdditionalSectionsProvider, additionalAppearanceSurface, useAdditionalSectionsAppearance} from '@/lib/brawndoAdditionalScope';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -302,16 +303,22 @@ function Sidebar() {
 }
 
 export default function Layout() {
+  return <AdditionalSectionsProvider><LayoutContents/></AdditionalSectionsProvider>;
+}
+
+function LayoutContents() {
   const org=useOrg(),auth=useAuth();
   const {currentClientId}=org;
   const {user}=auth;
   const {pathname,search}=useLocation();
   const visualSurface=visualCorrectionSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
+  const additionalAppearance=useAdditionalSectionsAppearance();
+  const additionalSurface=additionalAppearanceSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error},additionalAppearance);
   const pilot=!!user;
   const content=<div className={'app-shell min-h-screen flex bg-surface-app '+(pathname==='/clients'?'governara-portfolio-shell':'governara-operational-shell')}>
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
-        {!visualSurface && pathname !== '/clients' && !(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
+        {!visualSurface && !additionalSurface && pathname !== '/clients' && !(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
         {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
       </main>
     </div>;

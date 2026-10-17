@@ -52,6 +52,20 @@ function observeTooltipLayout(container, tooltip, position, {scrollTarget, const
   return () => { observer?.disconnect(); window.removeEventListener('resize', measure); scrollTarget?.removeEventListener('scroll', measure); };
 }
 
+function modalCanvasWidth(element, minimum) {
+  const width = element?.getBoundingClientRect().width || 900;
+  const body = element?.closest('.ph-body'), content = body?.firstElementChild;
+  const bodyWidth = body?.getBoundingClientRect().width, contentWidth = content?.getBoundingClientRect().width;
+  let gutter = 0;
+  if (bodyWidth && contentWidth) {
+    const style = getComputedStyle(body);
+    const inset = ['borderLeftWidth', 'borderRightWidth', 'paddingLeft', 'paddingRight'].reduce((sum, property) => sum + (parseFloat(style[property]) || 0), 0);
+    // The body's first child must fill its content width; recover the reference's pre-scroll canvas without rounding the gutter.
+    gutter = Math.max(0, bodyWidth - inset - contentWidth);
+  }
+  return Math.max(minimum, Math.round(width + gutter));
+}
+
 function ChangeArrow({up}) {
   return <svg className="ph-change-arrow" viewBox="0 0 12 12" aria-hidden="true"><path d={up ? 'M6 10V2.5M2.5 6 6 2.5 9.5 6' : 'M6 2v7.5M2.5 6 6 9.5 9.5 6'} /></svg>;
 }
@@ -152,8 +166,18 @@ function useHistory(client, program, range, refreshToken, requireIdentity = fals
 
 function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
   const [activeStatus, setActiveStatus] = useState(null);
+  const [width, setWidth] = useState(900);
   const scale = useRef(null), bar = useRef(null), tooltip = useRef(null);
   const tooltipHost = !inline ? scale.current?.closest('.portfolio-history-dialog') : null;
+  useLayoutEffect(() => {
+    if (inline || !scale.current) return;
+    const measure = () => setWidth(modalCanvasWidth(scale.current, 280));
+    measure();
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+    observer?.observe(scale.current);
+    window.addEventListener('resize', measure);
+    return () => { observer?.disconnect(); window.removeEventListener('resize', measure); };
+  }, [inline, current]);
   useLayoutEffect(() => {
     if (inline || !activeStatus || !validImplementationPosition(current) || !scale.current || !tooltip.current) return;
     const values = applicableCounts(current), selectedIndex = values.findIndex(value => value.key === activeStatus);
@@ -166,7 +190,7 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
       const center = barBounds.left - bounds.left + share * barBounds.width;
       return {left:bounds.left - hostBounds.left + Math.max(0, Math.min(bounds.width - size.width, center - size.width / 2)), top:barBounds.top - hostBounds.top - size.height - 10};
     }, {scrollTarget:tooltipHost?.querySelector('.ph-body'), constrainWidth:!!tooltipHost});
-  }, [activeStatus, current, inline, tooltipHost]);
+  }, [activeStatus, current, inline, tooltipHost, width]);
   if (!validImplementationPosition(current)) {
     return <div className="ph-breakdown"><p>Applicable scope unavailable. {current?.reason || current?.notice || 'Current counts are unavailable.'}</p></div>;
   }
@@ -182,6 +206,14 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
   });
   const selected = counts.find(value => value.key === activeStatus);
   const detail = selected && <div ref={tooltip} className="ph-segment-detail" role="status"><span className={!inline ? 'ph-tip-status-label' : undefined}>{!inline && <i className={`ph-dot is-${tone(selected.key)}`} aria-hidden="true" />}{selected.label}</span><b>{share(selected)}</b><span>{selected.count} / {total}</span></div>;
+  const composition = <div ref={bar} className="ph-interactive-bar" role="group" aria-label="Current status composition">
+    {total > 0 && counts.filter(value => value.count > 0).map(value => <button
+      type="button" key={value.key} {...interactions(value.key)}
+      className={`is-${tone(value.key)} ${activeStatus && activeStatus !== value.key ? 'is-dim' : ''}`}
+      style={inline ? {flexGrow:value.count} : {flexGrow:0,width:`${value.count / total * 100}%`}} aria-pressed={activeStatus === value.key}
+      aria-label={`${value.label}: ${share(value)}, ${value.count} of ${total}`} />)}
+    {inline && detail}
+  </div>;
   const cells = counts.map(value => <button type="button" key={value.key} {...interactions(value.key)}
     className={`ph-breakdown-row ${activeStatus === value.key ? 'is-active' : ''}`} aria-pressed={activeStatus === value.key}>
     <span className="ph-breakdown-label"><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label}</span>
@@ -191,15 +223,10 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
   return <div className="ph-breakdown">
     {inline && <div className="ph-breakdown-head"><span>Status of {total} applicable safeguards</span><span>Assessed {assessed} of {total} · {total ? (assessed/total*100).toFixed(1)+'%' : 'N/A'}</span></div>}
     <div ref={scale} className="ph-status-scale">
-      <div ref={bar} className="ph-interactive-bar" role="group" aria-label="Current status composition">
-        {total > 0 && counts.filter(value => value.count > 0).map(value => <button
-          type="button" key={value.key} {...interactions(value.key)}
-          className={`is-${tone(value.key)} ${activeStatus && activeStatus !== value.key ? 'is-dim' : ''}`}
-          style={inline ? {flexGrow:value.count} : {flexGrow:0,width:`${value.count / total * 100}%`}} aria-pressed={activeStatus === value.key}
-          aria-label={`${value.label}: ${share(value)}, ${value.count} of ${total}`} />)}
-        {inline && detail}
-      </div>
-      {!inline && <div className="ph-status-axis" aria-hidden="true">{[0,100].map(value => <span key={value}>{value}%</span>)}</div>}
+      {inline ? composition : <svg className="ph-composition-canvas" viewBox={`0 0 ${width} 62`} width={width} height="62" role="presentation">
+        <foreignObject x="4" y="24" width={width - 8} height="14" overflow="visible">{composition}</foreignObject>
+        {[0,100].map(value => <text key={value} x={value ? width - 4 : 4} y="56" textAnchor={value ? 'end' : 'start'} aria-hidden="true">{value}%</text>)}
+      </svg>}
       {/* Keep modal status details above the scrolling body, inside the native dialog. */}
       {!inline && (tooltipHost ? createPortal(detail, tooltipHost) : detail)}
     </div>
@@ -295,13 +322,13 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
   const chartId = useId().replace(/:/g, '');
   const [width, setWidth] = useState(900), [active, setActive] = useState(null), [engaged, setEngaged] = useState(false);
   useEffect(() => {
-    const measure = () => setWidth(Math.max(300, Math.round(box.current?.getBoundingClientRect().width || 900)));
+    const measure = () => setWidth(inline ? Math.max(300, Math.round(box.current?.getBoundingClientRect().width || 900)) : modalCanvasWidth(box.current, 300));
     measure();
     const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
     if (observer) observer.observe(box.current);
     window.addEventListener('resize', measure);
     return () => { observer?.disconnect(); window.removeEventListener('resize', measure); };
-  }, []);
+  }, [inline]);
   const selected = points.find(point => identity(point) === active) || points.at(-1);
   const low = 0, high = 100;
   const height = inline ? 284 : 296, left = 44, right = width - 72, top = inline ? 32 : 26, bottom = height - 30;

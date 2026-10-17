@@ -15,28 +15,34 @@ import TableLoadingRow from '@/components/TableLoadingRow';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem} from '@/components/ui/dropdown-menu';
 import {Button} from '@/components/ui/button';
 import {BrawndoSurface,BrawndoPageHeader} from '@/components/BrawndoPage';
+import {useAdditionalSectionsSurface} from '@/lib/brawndoAdditionalScope';
+import {additionalDirectoryRows} from '@/lib/additionalContactsPresentation';
+import BrawndoAdditionalContacts from '@/components/BrawndoAdditionalContacts';
 
 import './BrawndoContacts.css';
 
 const columns=[{key:'name',label:'Contact'},{key:'title',label:'Job Title'},{key:'email',label:'Email'},{key:'phone',label:'Phone'}];
 export default function Contacts(){
-  const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
+  const {currentClientId,currentClient}=useOrg(),{user,workspaceMode}=useAuth();
   // Remount the directory on identity/tenant changes, including its open editor.
-  return <ContactDirectory key={`${user?.user_id}:${currentClientId}`} clientId={currentClientId} user={user} brawndo={!!currentClientId} clientName={currentClient?.name}/>;
+  const scope=`${user?.user_id}:${user?.role}:${user?.workspace_mode}:${workspaceMode}:${currentClientId}`;
+  return <ContactDirectory key={scope} clientId={currentClientId} user={user} brawndo={!!currentClientId} clientName={currentClient?.name} client={currentClient}/>;
 }
-function ContactDirectory({clientId,user,brawndo,clientName}){
+function ContactDirectory({clientId,user,brawndo,clientName,client}){
   const [params,setParams]=useSearchParams(),[rows,setRows]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[revision,setRevision]=useState(0);
+  const [loadedClientId,setLoadedClientId]=useState(null);
+  const additional=useAdditionalSectionsSurface('contacts',!error?loadedClientId:null);
   const [selected,setSelected]=useState(null),[open,setOpen]=useState(false);
   const canWrite=['super_admin','platform_admin'].includes(user?.role);
   const refresh=useCallback(()=>setRevision(n=>n+1),[]);
   useEffect(()=>{if(!clientId){setLoading(false);return;}const abort=new AbortController();setLoading(true);setError('');
-    api.get('/contacts',{params:{client_id:clientId},signal:abort.signal}).then(({data})=>{if(!abort.signal.aborted)setRows(data.filter(r=>r.client_id===clientId));}).catch(e=>{if(!abort.signal.aborted)setError(formatError(e));}).finally(()=>{if(!abort.signal.aborted)setLoading(false);});return()=>abort.abort();
+    api.get('/contacts',{params:{client_id:clientId},signal:abort.signal}).then(({data})=>{if(!abort.signal.aborted){setRows(data.filter(r=>r.client_id===clientId));setLoadedClientId(clientId);}}).catch(e=>{if(!abort.signal.aborted)setError(formatError(e));}).finally(()=>{if(!abort.signal.aborted)setLoading(false);});return()=>abort.abort();
   },[clientId,revision]);
   const context=useContactAccess(clientId,!!clientId,rows);
   const table=useTableControls({columns,rows,module:'contacts-directory',scope:`${user?.user_id}:${clientId}`});
   const query=params.get('q')||'',access=params.get('access')||'',archived=params.get('archived')==='true';
   const setParam=(key,value)=>{const next=new URLSearchParams(params);value?next.set(key,value):next.delete(key);setParams(next,{replace:true});};
-  const filtered=table.apply(directoryRows(rows,{query,access,archived,clientId,context}));
+  const filtered=table.apply((additional?additionalDirectoryRows:directoryRows)(rows,{query,access,archived,clientId,context}));
   const initialLoading=loading&&!rows.length;
   const edit=row=>{setSelected(row);setOpen(true);};
   // Keep old contact links usable, including archived records.
@@ -65,7 +71,8 @@ function ContactDirectory({clientId,user,brawndo,clientName}){
         </DropdownMenuContent></DropdownMenu></td></tr>;})}
         {!loading&&!error&&!filtered.length&&<tr><td className="empty-state" colSpan={6}>{rows.length?'No contacts match these filters.':'No contacts yet. Add a person to this client directory; platform access is optional.'}</td></tr>}
       </tbody></table></div>
-    <ContactWorkspace open={open} onOpenChange={close} record={selected} clientId={clientId} onSaved={refresh}/>
   </>;
-  return brawndo?<BrawndoSurface className="register-surface contacts-directory bcontacts">{body}</BrawndoSurface>:<div className="register-surface contacts-directory">{body}</div>;
+  const surface=additional?<BrawndoAdditionalContacts client={client} clientId={clientId} rows={rows} filtered={filtered} query={query} access={access} archived={archived} context={context} table={table} onParam={setParam} onClear={()=>{setParams({},{replace:true});table.clear();}} onOpen={edit} newContact={newContact} error={error} onRetry={refresh}/>:brawndo?<BrawndoSurface className="register-surface contacts-directory bcontacts">{body}</BrawndoSurface>:<div className="register-surface contacts-directory">{body}</div>;
+  // A same-scope appearance fallback must not remount the native editor or discard its draft.
+  return <>{surface}<ContactWorkspace open={open} onOpenChange={close} record={selected} clientId={clientId} onSaved={refresh} additionalPresentation={additional}/></>;
 }

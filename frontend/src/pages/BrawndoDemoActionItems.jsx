@@ -13,6 +13,7 @@ import {displayDay,displayRecordedAt} from '@/lib/managementDates';
 import {daysDue} from '@/lib/actionItems';
 import {recordUuid} from '@/lib/recordUuid';
 import {BrawndoSurface,BrawndoPageHeader} from '@/components/BrawndoPage';
+import SurfaceThemeAction from '@/components/SurfaceThemeAction';
 import RecordDrawer from '@/components/RecordDrawer';
 import {ActionPriority,ActionOwner,actionSourceChip,actionDateLabel} from './BrawndoActionPresentation';
 import './BrawndoDemoActionItems.css';
@@ -94,7 +95,8 @@ export default function BrawndoDemoActionItems({suspended=false}){
   async function creationSaved(){try{await saved();if(mounted.current)setRefreshError('');}catch(failure){if(mounted.current)setRefreshError(failure.message);}}
   const total=metrics.active.length,quickLabels={active:'Active tickets',overdue:'Overdue',unassigned:'Needs an owner',high_critical:'High-severity findings',unscheduled:'Unscheduled',...Object.fromEntries(windows)};
   return <BrawndoSurface className="brawndo-demo-actions" data-visual-surface="action-items">
-    <BrawndoPageHeader title={`${currentClient.name} Action Items`} subtitle="Corrective actions from findings, risks, reviews and manual entries">
+    <BrawndoPageHeader title={`${currentClient.name} Action Items`} subtitle="Corrective actions from findings, risks, reviews and manual entries"
+      renderThemeAction={props=><SurfaceThemeAction {...props} className="bpage-btn"/>}>
       {isInternal(user)&&<button className="bda-button" onClick={()=>setDrawer({kind:'findings',record:null})}>New finding</button>}
       {canOperate(user)&&<button className="bda-button bda-primary" onClick={()=>setDrawer({kind:'tasks',record:null})}><Plus size={15} aria-hidden="true"/>New action item</button>}
     </BrawndoPageHeader>

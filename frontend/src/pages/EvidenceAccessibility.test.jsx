@@ -1,3 +1,4 @@
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false}));
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import Evidence from './Evidence';

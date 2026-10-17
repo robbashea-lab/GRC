@@ -10,11 +10,11 @@ beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;jest.useFakeTimers();contai
   jest.spyOn(HTMLHeadingElement.prototype,'getClientRects').mockImplementation(function(){return this.closest('[hidden]')?[]:[{}];});
 });
 afterEach(async()=>{await act(async()=>root.unmount());await flushClose();container.remove();jest.restoreAllMocks();jest.useRealTimers();});
-function Example({removeOpener=false,hiddenHeader=false}){
+function Example({removeOpener=false,hiddenHeader=false,closeInNavigation=false,onNativeClose=()=>{}}){
   const [open,setOpen]=useState(false),[step,setStep]=useState(1);
   return <main>{hiddenHeader&&<header hidden><h1>Hidden generic header</h1></header>}<h1>Framework workspace</h1>{(!removeOpener||!open)&&<button onClick={()=>setOpen(true)}>Open assessment</button>}
     {open&&<AssessmentShell key={step} title={'Assessment '+step} description="Review the recorded implementation."
-      close={()=>setOpen(false)} next={()=>setStep(step+1)} position={step+' of 2'}
+      close={()=>{onNativeClose();setOpen(false);}} closeInNavigation={closeInNavigation} next={()=>setStep(step+1)} position={step+' of 2'}
       footer={<button onClick={()=>setOpen(false)}>Close assessment</button>}>Assessment content</AssessmentShell>}</main>;
 }
 async function openExample(props){await act(async()=>root.render(<Example {...props}/>));const opener=button('Open assessment');opener.focus();await act(async()=>opener.click());return opener;}
@@ -23,8 +23,8 @@ async function close(){await act(async()=>button('Close assessment').click());aw
 test('closing an assessment returns to its connected page opener',async()=>{
   const opener=await openExample();await close();expect(document.activeElement).toBe(opener);
 });
-test('without an Escape hook the native dialog closes and restores its connected opener',async()=>{
-  const opener=await openExample();await act(async()=>document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));await flushClose();
+test.each([false,true])('with navigation Close=%s, Escape still closes the native dialog and restores its connected opener',async closeInNavigation=>{
+  const opener=await openExample({closeInNavigation});await act(async()=>document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));await flushClose();
   expect(document.querySelector('[data-assessment-shell]')).toBeNull();expect(document.activeElement).toBe(opener);
 });
 test('a removed opener falls back to the page heading without creating a tab stop',async()=>{
@@ -41,4 +41,20 @@ test('Next then close falls back to the visible workspace heading, not an earlie
   await openExample({hiddenHeader:true});const next=button('Next');next.focus();await act(async()=>next.click());await flushClose();
   await close();expect(document.activeElement).toBe(container.querySelector('main > h1'));
   expect(container.querySelector('header h1').hasAttribute('tabindex')).toBe(false);
+});
+
+
+test.each([false,true])('navigation Close=%s retains one native Close and the original opener return',async closeInNavigation=>{
+  const onNativeClose=jest.fn(),opener=await openExample({closeInNavigation,onNativeClose});
+  const surface=document.querySelector('[data-assessment-shell]'),nav=surface.querySelector('[aria-label="Assessment navigation"]');
+  const closes=[...surface.querySelectorAll('button')].filter(element=>element.textContent==='Close');
+  expect(closes).toHaveLength(1);
+  expect(closes[0].parentElement).toBe(closeInNavigation?nav:surface);
+  expect([...nav.children].map(element=>element.textContent)).toEqual(closeInNavigation?['Previous','1 of 2','Next','Close']:['Previous','1 of 2','Next']);
+  expect(surface.querySelector('h2').textContent).toBe('Assessment 1');
+  expect(surface.hasAttribute('showCloseButton')).toBe(false);
+  closes[0].focus();await act(async()=>closes[0].click());await flushClose();
+  expect(onNativeClose).toHaveBeenCalledTimes(1);
+  expect(document.querySelector('[data-assessment-shell]')).toBeNull();
+  expect(document.activeElement).toBe(opener);
 });

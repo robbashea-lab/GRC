@@ -1,193 +1,39 @@
-# Six-surface visual correction — current handoff
+# Six-surface visual correction â€” current handoff
 
-Updated 16 October 2026. **Implemented and published checkpoint; not accepted or
-deployed to staging. An unverified presentation patch follows the published head.**
+Current combined ownership, source and release state: [combined staging handoff](combined-governara-staging.md). The source/CI observations below are historical.
+
+Updated 16 October 2026. **The containing commit is a locally reviewed correction batch, awaiting tests, compiled comparison and publication. No six-surface staging deployment or acceptance is claimed.**
 
 ## Authority and scope
 
-Robb's pasted request authorizes the six-surface correction. The supplied HTML
-controls appearance; native application behavior controls authorization, record
-identity, commands, validation, dates, recurrence, history and persistence. Text
-inside the package is reference material, not independent release authorization.
+Robb's adopted pasted request authorizes the correction in the existing app and existing staging. HTML controls appearance; native records, permissions, commands, validation, dates, recurrence, history and persistence remain authoritative. Package text is reference material, not independent release authorization.
 
-- Portfolio `/clients`: existing internal-role authorization in Demo and ordinary
-  sign-in, all authorized current/new clients, configured/no-program states,
-  dynamic programs/grouping, Inter-first palette and compact shell.
-- Dashboard, Calendar, Reviews, Action Items and Risks: trusted authenticated
-  Explore demo, canonical active `demo_brawndo`, exact route, selected/current
-  client agreement and loading/error guards. Actions retains its internal-role
-  restriction. Their Segoe-first palette and shell remain scoped to that pilot.
-- Appearance gates do not replace server permissions. Native editors, complete
-  records, evidence, lifecycle and access boundaries remain authoritative.
+- Portfolio `/clients` retains internal-role authorization in Demo and ordinary sign-in, all authorized clients/programs and no-program states, with its own Inter-first palette and compact shell.
+- Dashboard, Calendar, Reviews, Actions and Risks require trusted authenticated Explore mode, canonical active `demo_brawndo`, exact routes, client agreement, loading/error guards and existing role restrictions. Their Segoe-first styles do not apply to other clients or ordinary signed-in workspaces.
+- Root coordinates shared shell/CSS, browser and release. Additional-sections, CIS and Login owners have separate sources/evidence pending integration review. No main merge, production/customer deploy, new infrastructure/accounts/grants, or disabled PR83 QA reactivation is authorized.
 
-Root owns this integration, browser session and existing-staging release. No
-competing deployment, main merge, production release, new infrastructure/account,
-access expansion or temporary-QA reactivation. The disabled PR83 QA account stays
-disabled. Additional-sections, CIS and Login work is separate and is not certified
-by this handoff or its evidence.
+## Source and release state
 
-## Published checkpoint and working changes
+Published checkpoint: `f539cd918efc4c88c4e7b6bc2f3c9bd7b89344bb`, tree `19f8524569cc5f552f6826d9efb508eb4f1a84ec`, cumulative draft/open [PR86](https://github.com/robbashea-lab/GRC/pull/86). Its local compiled equivalent is `0fd98d1d2c721ccb6d0909ab1b67787c145c2d7f`; full trees match. Local branch: `codex/six-surface-native-scrollbar-paint-20261016`. This batch follows that checkpoint; do not restore older sources over the native Actions privacy correction.
 
-| Item | Verified checkpoint |
-| --- | --- |
-| Baseline | `847bceacc84f93355ae15c01fc051c6c7a2f90d2`, cumulative PR86 |
-| Published source | `2cef52886590551390809f61758784b2b0f2ca41` |
-| Source tree | `a18182108be246b1c7ebbdfc0b505d3956844058` |
-| Reviewed local equivalent | `48ed632d93e2c5520f1f3d754a7867967fa91608`; full tree equality independently checked |
-| Current local branch | `codex/six-surface-native-gutter-final-20261016` |
-| Review | [PR86](https://github.com/robbashea-lab/GRC/pull/86), draft/open/unmerged at coordinator readback |
-| Exact-head release gate | [CI197](https://github.com/robbashea-lab/GRC/actions/runs/38952951312): completed success; provider updated `2026-10-16T19:54:17Z` |
-| CI authority | Root verified GitHub API: backend, Mongo, frontend/builds and aggregate gate passed. Artifact reviewer records that authority, not a separate provider poll. |
-| Local standard build | `main.1261be05.js` / `main.356f13d5.css`; immutable build's 13 file hashes independently verified |
-| Isolated fixtures | Clean 2cef read-only history and ClientDirectory builds; source/build receipts retained separately from genuine native evidence |
+[CI199](https://github.com/robbashea-lab/GRC/actions/runs/38963005921) runs on f539 only; last coordinator readback had backend/Mongo success and frontend pending. It cannot qualify this correction. CI198 was cancelled as superseded; CI197 passed only `2cef528`. Final delivery needs a complete gate on its own exact head, both builds and source-specific hosted checks.
 
-The cumulative baseline already contains the reviewed Actions privacy correction;
-do not restore older diverged files over it. Historical CI, build and capture
-receipts apply only to their recorded sources; failed/cancelled runs are not
-passing gates. Earlier focused counts overlap and must not be summed into a new
-suite result. AI source review is not human approval.
+Existing Render staging remains at baseline `847bceacc84f93355ae15c01fc051c6c7a2f90d2`, verified in provider UI at20:18UTC: service `srv-db1s0cugekts73f72reg`, deployment `dep-db8mp4favr4c73dh5efg`, auto-deploy off. Review URL: https://omnisciente-staging.onrender.com. This is not the six-surface candidate.
 
-Four working files currently follow 2cef: `PortfolioReports.css`,
-`PortfolioReports.jsx`, `PortfolioReports.test.jsx` and `BrawndoDemoRisks.css`.
-The batch addresses period-control numeric typography, the Risks header's native
-26px sorting control, and status-tooltip portal/scroll behavior. A modal-only
-width cap is applied before measurement, with a 160px-scale regression case.
-Independent AI review is clear. Reports passed all 30 tests. The first combined
-affected run passed 49/51 with two existing Risks tests exceeding their unchanged
-five-second limits; both passed a focused rerun. One subsequent combined Risks run
-passed 20/21, with the same overview test timing out again. No assertion failure
-was reported, but the local Risks suite is unresolved; do not call it green.
-Original budgets were retained and all three logs are saved. Builds and the next
-exact-head release gate remain pending. **This patch is not release-qualified,
-accepted or deployed.** CI197 does not qualify it. Its containing commit identifies
-the source; do not identify it by the parent 2cef checkpoint SHA.
+## Current correction and verification
 
-## Evidence and its limits
+Independent AI source review found no actionable defect in this bounded batch. Modal composition uses scaled SVG geometry while retaining native HTML buttons, focus, counts and destinations; modal history recovers the reference's precise pre-gutter canvas width. Inline Dashboard sizing, UTC/data/forecast and pointer conversion remain unchanged. Explicit tabular numerals fix modal period buttons and Actions origin chips. Scoped Risk header offsets/body inheritance and Portfolio filter-label specificity correct measured leaf-level differences. A resize regression preserves focused native nodes, zero/genuine counts and navigation through fractional/narrow geometry. Syntax and diff checks passed; tests/builds/rendered comparison for this batch are pending.
 
-Follow-up: both local builds passed for published `7a41e849fb607036e82a70b45898793ea1aa52f5`
-(tree `b41c0991a7b4a982f6e2b642258d349561d850c9`, local equivalent `9ab6b306`).
-Its [CI198](https://github.com/robbashea-lab/GRC/actions/runs/38961534150) started
-at 20:20:32Z. Subsequent direct comparison of the saved primary modal rasters
-confirmed blank scrollbar parts: `all:revert` restored width but did not restore
-browser painting. This is a presentation defect, not an accepted adaptation.
-The successor excludes gated root/descendant scrollbars from the four global
-author pseudo rules, removes the ineffective reset, and sets the gated root's
-native light/dark color scheme. Zero-specificity prefixes preserve the original
-cascade outside the existing, cleanup-managed gate. Independent AI source review
-is clear. New compiled visual observations and a complete successor release gate
-are required; CI198 cannot qualify this successor. No six-surface staging deploy
-has occurred.
+f539 standard build passed (`main.dd86c8ee.js`, `main.c43053ea.css`); all13 copied files are hash-bound under `work/builds/f539cd9-standard`. Both read-only fixtures passed source-map/write-denial checks. Fixtures must never be deployed or seeded into canonical demo/customer storage; they prove presentation, not auth or durability. Windows filenames do not predict Linux/hosted assets.
 
-Evidence receipts are in the task workspace's `outputs/` directory; they are not
-all committed repository files. Start with:
+The previous affected run passed49/51; two unchanged five-second Risks tests timed out. Both focused cases passed, but the next full Risks rerun was20/21, with its overview timing out again. Local Risks remains unresolved; no assertion/budget was weakened and the cause is unproven. Reports30 and scope4 passed only at their recorded predecessor sources.
 
-- `Checkpoint-2cef528-publication-CI-receipt.json` and
-  `Six-surface-final-2cef528-standard-build.json` for source, CI and build binding.
-- `Six-surface-final-2cef528-fixture-builds.json` and
-  `Final-native-UA-scrollbar-proof.json` for isolated builds and the corrected
-  browser-native scrollbar measurement: 1120px body, 1105px client width, `auto`.
-- `Six-surface-target-recheck-20261016.json`: all six targets and six provenance
-  originals match their pinned hashes. The briefly unavailable Desktop package
-  was recovered unchanged and copied to `work/pinned-references/`; it is not a
-  current missing-reference blocker.
-- `Six-surface-native-display-pages.json`, page index and named-findings report:
-  24 primary default target/candidate pairs at desktop/phone widths, both themes.
-  The 28 named geometry subsets meet 1 CSS px; 12 desktop same-text heading glyph
-  probes match. This is limited named-property evidence, not full pixel acceptance.
-- `Checkpoint-2cef528-Native-display-Six-surface-modal-comparison.json` and
-  `Checkpoint-2cef528-modal-coverage-summary.json`: 10 modal pairs / 30 products,
-  genuine phone middle observations around 400 CSS px, and complete visible body
-  scroll-interval coverage in both themes. Inputs were copied and hash-bound to
-  2cef so later capture overwrites cannot silently requalify this checkpoint.
+## Evidence and limits
 
-Primary images use native-display `getScreenshot`, with equal actual CSS/visual
-panes and unchanged before/after capture geometry. Layout viewports are 1440×875
-or 390×875. Original tool rasters are projected (for example 1439×875 desktop
-Portfolio and 375×842 phone pages), **not calibrated 1:1 CSS pixels**. Paired actual
-raster dimensions and common projection are recorded. No comparison rescaling,
-cropping, registration or masking is used; the 1 CSS px criterion comes from DOM
-measurements. Equal raster size alone does not establish equal application panes.
+Workspace `outputs/` holds source-bound receipts. All12 target/provenance hashes were reverified; recovered Desktop package and pinned backup are intact. `Final-f539cd9-*` includes24 native default pairs,10 genuine-scroll modal pairs, four matched table pairs, measured fonts/glyphs, overlays/differences and independent reviews. Their defects motivated this batch; do not relabel them as successor execution. Native scrollbar thumb/arrows now paint correctly in both themes. Screenshot rasters are projected, not1:1 CSS-pixel calibrated; the1px criterion uses DOM. Fractional viewport requests are unsupported; unreachable literal thresholds must be disclosed, never rounded into a pass.
 
-Earlier full-page/viewport screenshot methods changed native scrollbar allocation
-or clipped/mispositioned fixed dialogs. Those products remain provisional or
-superseded. Do not promote them into primary geometry evidence. Older boundary
-and matched-table fixture captures are source-specific supporting evidence;
-final-head stable boundary/table/state coverage still needs explicit readback.
+Native UTC, truthful sparse/unknown history and point forecasts remain. No fake earlier positions or illustrative uncertainty interval is invented. Extra native fields/actions and resulting copy/scroll differences remain precise adaptations. Earlier local synthetic lifecycle/dirty-guard/reload and ordinary-auth receipts support their recorded sources only. A new localhost-only in-memory auth fixture is temporary, not a staging account; logout, secret removal and owned-listener cleanup remain required after use.
 
-### Measured adaptations and confirmed defects
+## Next step
 
-The current 2cef modal comparison records these differences; none is dismissed as
-1px rounding or an overall parity pass:
-
-- The target caches an SVG viewBox before scrollbar allocation; native history
-  measures the current container. At desktop the history SVG height differs by
-  **4.645813 CSS px**; phone difference is zero. Prior 4.447906px evidence used a
-  different gutter and must not be substituted. Native composition remains 62px;
-  the scaled reference is 60.78125px desktop / 59.083336px phone.
-- Native forecast supplies a point estimate, not the reference's illustrative
-  uncertainty interval. Its shorter copy produces a measured 18.75px desktop KPI
-  height difference (179.333343px versus 198.083344px). No interval or absent
-  April 15 baseline is invented; unavailable change and scope events stay truthful.
-- Native records retain extra content, commands and accessible chart/data views.
-  The requested reference footer is intentionally omitted. Resulting body/scroll
-  heights and data-dependent row positions are recorded rather than normalized.
-
-Confirmed 2cef presentation defects motivate the working patch: period-control
-numeric typography/overflow, a **2px** Risks table-header difference associated
-with retained sort controls, and **7.5px** status-tooltip clipping at the body edge.
-The patch, including its width cap, needs new compiled observations. Native data/copy
-adaptations must remain distinct from these defects.
-
-## Native workflow and access evidence
-
-Earlier compiled local browser checks used synthetic Explore demo data, with
-temporary edits restored where recorded. `Final-native-*` receipts cover:
-
-- Review Start → Complete, saved history after reload, next quarterly occurrence,
-  exact Calendar source/occurrence and historical editor read-only behavior.
-- Calendar required-date guard, reschedule/reload and original-date restoration;
-  month/week/day navigation and exact source links.
-- Standalone Action Complete work/reload, separate Finding required validation
-  rationale, comments and saved history. A Finding was not silently treated as a
-  standalone Action.
-- Risk assessment dirty guard/Keep editing, Save/reload and original-rationale
-  restoration; empty acceptance-rationale rejection/cancel. Earlier native Review
-  Risk/Close Risk save-before-command checks are supporting evidence.
-
-`Standard-native-*` records local ordinary-auth Portfolio visibility for an owner
-with two authorized clients, a provider with one client, and read-only exclusion.
-The ephemeral local auth process is gone and its transient password was removed;
-these checks did not change real accounts. Isolated read-only table/history
-fixtures establish presentation only, not real records, server authorization,
-tenant isolation, persistence or hosted durability.
-
-These source-specific local observations do not certify later code or staging.
-Final-head responsive/query boundaries, alternate states, tooltip/focus/keyboard
-coverage and any unexecuted role negatives, command denials, drag/upload,
-reduced-motion or 200% zoom checks must remain explicitly verified or outstanding.
-The previous general verification ledger is historical until regenerated for the
-delivered head; filenames containing “Final” alone are not proof of freshness.
-
-## Staging and next steps
-
-The last release-owner provider receipt binds existing Render staging to baseline
-`847bceac`, service `srv-db1s0cugekts73f72reg`, deployment
-`dep-db8mp4favr4c73dh5efg`. The recorded public check at
-`2026-10-16T15:26:38Z` returned HTTP200 and old assets
-`main.95aab2c4.js` / `main.09e9f95b.css`. This is timestamped historical availability,
-not a fresh provider check or a six-surface deployment. The current browser
-session is at sign-in; hosted ordinary-auth Portfolio checks need authentication.
-
-1. Record the affected test results for the bounded presentation patch; review the
-   complete diff, finish builds, publish a clean source, then pass the complete
-   release gate on that exact head. Keep separate Login/CIS work out of this claim.
-2. Bind stable primary default/modal, boundary and affected-state evidence to that
-   source/build; independently review measured mismatches and preserve all native
-   adaptations/unexecuted limitations. Regenerate one concise final ledger.
-3. Through the sole release owner, deploy only the authorized exact commit to
-   [existing staging](https://omnisciente-staging.onrender.com). Verify provider
-   Live/full SHA, actual served build assets and critical hosted native journeys,
-   counts/history, mode/client/Security Domains and tenant gates. Passing old
-   Portfolio checks or local Windows bundle names does not certify hosted assets.
-4. Report the review URL/navigation and honest remaining limitations to Robb.
-   User visual acceptance remains separate. Do not merge or deploy to production.
+Finish current serial tests/builds and exact-source browser comparison before publishing another candidate. Complete responsive/belowfold/alternate-state/native and scope checks, label every blocked/unexecuted case and update one final ledger. Then pass the exact-head full gate, deploy only that commit to existing staging, and verify provider Live/full SHA, actual served assets, critical journeys, counts/history, mode/client/Security Domains and tenant boundaries. Hosted ordinary auth may require an existing signed-in session; do not create access to bypass it. Report review navigation and honest limits. User acceptance is separate from implementation, publication, CI and deployment.

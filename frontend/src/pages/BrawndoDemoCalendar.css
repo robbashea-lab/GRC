@@ -26,7 +26,9 @@
 .bdcal button,.bdcal input,.bdcal select {font:inherit;color:inherit;}
 .bdcal button {background:none;border:0;cursor:pointer;padding:0;text-align:inherit;}
 .bdcal :is(button,a,input,select):focus-visible {outline:2px solid var(--focus);outline-offset:2px;}
-.bdcal .bpage-head {padding:0;margin:0;}
+.bdcal .bpage-head {padding:0;margin:0;align-items:center;gap:12px;flex-direction:row;}
+.bdcal .bpage-actions .surface-theme-action {display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface);font-size:12.5px;font-weight:500;color:var(--fg2);box-shadow:var(--shadow-sm);}
+.bdcal .bpage-actions .surface-theme-action:hover {background:var(--hover);color:var(--fg);}
 .bdcal .bpage-head h1 {font:650 24px/1.5 var(--font);letter-spacing:-.025em;}
 .bdcal .bpage-subtitle {margin-top:3px;font-size:12.5px;color:var(--muted);}
 .bdcal .bpage-eyebrow {display:none;}
@@ -49,7 +51,7 @@
 .bdcal .seg button{ padding:4px 12px; border-radius:6px; color:var(--fg2); font-size:12.5px; font-weight:500; white-space:nowrap; transition:background .12s, color .12s; }
 .bdcal .seg button:hover{ color:var(--fg); }
 .bdcal .seg button[aria-pressed="true"]{ background:var(--seg-on); color:var(--fg); font-weight:600; box-shadow:var(--shadow-seg); }
-.bdcal .f-field{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); }
+.bdcal .f-field{ display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:400; color:var(--muted); }
 .bdcal select{ height:32px; padding:0 10px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); font-size:12.5px; font-weight:500; }
 .bdcal .btn{ display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); font-size:12.5px; font-weight:600; white-space:nowrap; box-shadow:var(--shadow-sm); }
 .bdcal .btn:hover{ background:var(--hover); }

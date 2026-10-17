@@ -2,17 +2,24 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import CalendarView from './BrawndoDemoCalendar';
 import {calendarPeriod,localCalendarDate} from '@/lib/calendarView';
+import {THEME_KEY} from '@/lib/brawndoTheme';
 test('pilot filters are read-only and open native items; month overflow navigates to Day',async()=>{
  global.IS_REACT_ACT_ENVIRONMENT=true;const container=document.createElement('div');document.body.appendChild(container);const root=createRoot(container);
  const anchor=new Date(2026,9,16),period=calendarPeriod(anchor),openSchedule=jest.fn(),setView=jest.fn(),setAnchor=jest.fn();
  const entries=Array.from({length:4},(_,n)=>({key:`t${n}`,id:`t${n}`,kind:'task',title:`Task ${n}`,owner_id:'u',date:'2026-10-16',client_id:'demo_brawndo',historical:false,can_reschedule:true,status:'open'}));
  const props={clientName:'Brawndo',anchor,setAnchor,view:'month',setView,period,days:period.days,today:'2026-10-16',entries,summaryEntries:entries,openSchedule,ymd:localCalendarDate,members:[{user_id:'u',name:'Dana Evans'}],setDragging:jest.fn(),setDragOverDay:jest.fn(),onDragStart:jest.fn(),onDrop:jest.fn()};
+ const previousTheme=localStorage.getItem(THEME_KEY);localStorage.removeItem(THEME_KEY);
  try {
  await act(async()=>root.render(<CalendarView {...props}/>));expect(container.querySelectorAll('.kcell')).toHaveLength(4);expect(container.querySelector('h1').textContent).toBe('Brawndo Calendar');
+ const themeAction=container.querySelector('.surface-theme-action');expect(themeAction.textContent).toBe('Dark');await act(async()=>themeAction.click());expect(container.querySelector('.bdcal').dataset.theme).toBe('dark');expect(themeAction.textContent).toBe('Light');
+ const viewButtons=[...container.querySelectorAll('[aria-label="Calendar view"] button')];expect(viewButtons.map(button=>button.textContent)).toEqual(['Day','Week','Month']);await act(async()=>viewButtons[1].click());expect(setView).toHaveBeenLastCalledWith('week');
+ const owner=container.querySelector('.f-right > label select');expect(owner.value).toBe('all');expect(owner.closest('label').nextElementSibling.getAttribute('aria-label')).toBe('Calendar state');
  await act(async()=>container.querySelector('[data-testid="cal-item-t0"]').click());expect(openSchedule.mock.calls[0][0]).toBe(entries[0]);
  await act(async()=>container.querySelector('.more').click());expect(setView).toHaveBeenCalledWith('day');expect(localCalendarDate(setAnchor.mock.calls[0][0])).toBe('2026-10-16');
+ await act(async()=>{owner.value='';owner.dispatchEvent(new Event('change',{bubbles:true}));});expect(container.querySelector('[data-testid="cal-item-t0"]')).toBeNull();
+ await act(async()=>{owner.value='u';owner.dispatchEvent(new Event('change',{bubbles:true}));});expect(container.querySelector('[data-testid="cal-item-t0"]')).not.toBeNull();
  await act(async()=>[...container.querySelectorAll('.tchip')].find(button=>button.textContent.includes('Action items')).click());expect(container.querySelector('[data-testid="cal-item-t0"]')).toBeNull();expect(openSchedule).toHaveBeenCalledTimes(1);
- } finally {await act(async()=>root.unmount());container.remove();}
+ } finally {await act(async()=>root.unmount());container.remove();if(previousTheme===null)localStorage.removeItem(THEME_KEY);else localStorage.setItem(THEME_KEY,previousTheme);}
 });
 
 test('Completed summary excludes accepted/cancelled records and retains their historical access',async()=>{

@@ -44,9 +44,9 @@ function programObstacles(dock){
   }).filter(r=>r&&r.right>r.left&&r.bottom>r.top);
 }
 export default function OmniDock(props){return props.freePosition?<FreeDock {...props}/>:<ClassicDock {...props}/>;}
-function FreeDock({preferenceKey,inAssessment,children,name='Omni',focused=false}){
+function FreeDock({preferenceKey,inAssessment,children,name='Omni',focused=false,visualReference=false}){
   const root=useRef(null),drag=useRef(null),moved=useRef(false),key=preferenceKey+':free-position';
-  const [point,setPoint]=useState(()=>{try{const value=JSON.parse(localStorage.getItem(key));if(value&&Number.isFinite(value.x)&&Number.isFinite(value.y))return value;}catch{/* Cosmetic preference only. */}return {x:window.innerWidth-190,y:window.innerHeight-260};});
+  const [point,setPoint]=useState(()=>{try{const value=JSON.parse(localStorage.getItem(key));if(value&&Number.isFinite(value.x)&&Number.isFinite(value.y))return value;}catch{/* Cosmetic preference only. */}return visualReference?{x:window.innerWidth-88,y:window.innerHeight-96}:{x:window.innerWidth-190,y:window.innerHeight-260};});
   const pointRef=useRef(point);pointRef.current=point;
   const move=(x,y)=>{const rect=root.current?.getBoundingClientRect(),height=rect?.height||190,top=focused&&window.innerHeight<height+90?8:82;const next={x:Math.max(8,Math.min(window.innerWidth-(rect?.width||168)-8,x)),y:Math.max(top,Math.min(window.innerHeight-height-8,y))};setPoint(next);try{localStorage.setItem(key,JSON.stringify(next));}catch{/* Cosmetic preference only. */}};
   const place=()=>{

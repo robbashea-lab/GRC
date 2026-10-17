@@ -1,5 +1,7 @@
 /* Scoped appearance from the pinned targets. Native record controllers and commands are unchanged. */
 @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap');
+/* Async Dashboard content must not narrow an already mounted history-period strip. */
+html[data-visual-surface="dashboard"] { scrollbar-gutter: stable; }
 .brawndo-workspace-pilot[data-visual-surface="portfolio"], html[data-visual-surface="portfolio"] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content) {
   --bg:#F4F6F9; --surface:#FFFFFF; --subtle:#F7F9FB; --tablehead:#F9FAFC; --hover:#F2F5F9; --border:#E3E8EF; --border-strong:#CDD5E0;
   --fg:#0F1B2D; --fg2:#46566B; --muted:#5A687B; --link:#1F56C3; --selected:#EDF2FC; --rail:#215BC1; --focus:#215BC1;
@@ -56,6 +58,8 @@
  font:13.5px/1.5 var(--font);font-optical-sizing:auto;-webkit-font-smoothing:antialiased;
 }
 .brawndo-workspace-pilot[data-visual-surface] .bwp-topbar {height:60px;gap:16px;padding:0 16px;background:#081426;border-bottom:1px solid #263c58;box-shadow:none;color:#edf3ff}
+.brawndo-workspace-pilot[data-visual-surface] .bwp-top-actions {margin-left:auto;display:flex;align-items:center;gap:4px}
+.brawndo-workspace-pilot[data-visual-surface] .bwp-top-actions .bwp-client {margin-left:0}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-brand {width:228px;min-width:228px;flex:none;gap:10px;font:600 16px/1.05 var(--font);letter-spacing:0}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-mark {width:30px;height:30px}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-brand small {margin:0;color:#a8bad5;font:600 10px/1.5 var(--font);letter-spacing:.08em;text-transform:uppercase}
@@ -130,7 +134,7 @@ html[data-visual-surface] :is(.ui-dialog,.ui-sheet) label {font:500 12px/1.5 var
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) .drawer-tab {font:500 12.5px/1.5 var(--font);white-space:nowrap;flex:none}
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) .drawer-tab.active {color:var(--link);border-color:var(--link)}
 /* Reverting author pseudo styles leaves blank scrollbar parts; index.css excludes this gate. */
-html[data-visual-surface] {color-scheme:light}
+html[data-visual-surface] {color-scheme:normal}
 html[data-visual-surface][data-visual-theme=dark] {color-scheme:dark}
 
 .bsb-client-industry {display:none}
@@ -138,3 +142,20 @@ html[data-visual-surface][data-visual-theme=dark] {color-scheme:dark}
 .brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bsb-client-mark {width:30px;height:30px;font-size:13px}
 .brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bsb-client-name {font-size:13.5px;line-height:1.3}
 .brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bsb-client-industry {display:block;font:400 11.5px/1.5 var(--font);color:#a8bad5}
+/* Match the reference's separate navigation row and client-card margins. */
+.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-head {
+  display:grid; gap:2px; padding:16px 12px 2px;
+}
+.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-back {
+  display:flex; align-self:stretch; width:100%; gap:10px; padding:7px 10px;
+  border-radius:7px; font:400 13px/1.5 var(--font); color:#c9d6eb;
+}
+.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-back svg {
+  width:16px; height:16px; flex:none;
+}
+.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-client {
+  margin:8px 0 2px;
+}
+.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-client-mark {
+  border-radius:8px; background:#25416a; color:#edf3ff; box-shadow:inset 0 0 0 1px #263c58;
+}

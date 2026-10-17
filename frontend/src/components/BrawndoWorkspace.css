@@ -1,4 +1,6 @@
 /* GoverNara shared operational shell. Layout and assistant geometry are preserved; private presentation aliases use canonical root roles. */
+/* Keep the existing header layout unless a scoped presentation groups its controls. */
+.bwp-top-actions{display:contents}
 .brawndo-workspace-pilot{--bwp-top:74px;--bwp-sidebar:228px;--bwp-bg:var(--color-bg-app);--bwp-card:var(--color-bg-surface);--bwp-line:var(--color-border);--bwp-text:var(--color-text-primary);--bwp-muted:var(--color-text-secondary);--bwp-accent:var(--color-link);--bwp-subtle:var(--color-bg-subtle);--bwp-focus:var(--color-focus-ring);color:var(--bwp-text);font-family:var(--font-body);min-height:100vh;background:var(--bwp-bg)}
 .brawndo-workspace-pilot[data-theme=dark]{--bwp-bg:var(--color-bg-app);--bwp-card:var(--color-bg-surface);--bwp-line:var(--color-border);--bwp-text:var(--color-text-primary);--bwp-muted:var(--color-text-secondary);--bwp-accent:var(--color-link);--bwp-subtle:var(--color-bg-subtle);--bwp-focus:var(--color-focus-ring);color-scheme:dark}
 .brawndo-workspace-pilot .bsb{--sb-head:var(--color-sidebar-active-text);--sb-text:var(--color-sidebar-text);--sb-muted:var(--color-sidebar-icon);--sb-hover:var(--color-sidebar-hover-bg);--sb-focus:var(--color-brand-lime);--sb-accent:var(--color-brand-lime)}

@@ -3,7 +3,7 @@ import {Tabs,TabsList,TabsTrigger,TabsContent} from './ui/tabs';
 import './AssessmentLayout.css';
 
 // Tabs only control presentation. Drafts and saved conclusions belong to the caller.
-export default function AssessmentLayout({summary,requirement,children,findings,checklist,review,outcome,criteriaTitle,reference,criteriaSummary,inlineCriteria=false,inlineWorkflow=false,interview,itemsToAddress,findingDraft=false}) {
+export default function AssessmentLayout({summary,summaryLabel='Requirement summary',requirement,children,findings,checklist,review,outcome,criteriaTitle,reference,criteriaSummary,inlineCriteria=false,inlineWorkflow=false,interview,itemsToAddress,findingDraft=false,sectionCounts}) {
   const [section,setSection]=useState('implementation'),[summaryOpen,setSummaryOpen]=useState(false);
   const summaryControl=useRef(null),findingsControl=useRef(null);
   const closeInterview=()=>{setSummaryOpen(false);summaryControl.current?.focus();};
@@ -19,11 +19,11 @@ export default function AssessmentLayout({summary,requirement,children,findings,
   return <Tabs value={section} onValueChange={setSection} className="assessment-layout">
     <TabsList aria-label="Assessment sections">
       <TabsTrigger value="implementation">Requirement &amp; implementation</TabsTrigger>
-      {inlineWorkflow?<TabsTrigger value="items">Items to address</TabsTrigger>:!inlineCriteria&&<TabsTrigger value="criteria">Assessment criteria</TabsTrigger>}
-      <TabsTrigger value="findings" ref={findingsControl}>Findings</TabsTrigger>
+      {inlineWorkflow?<TabsTrigger value="items">Items to address{sectionCounts&&<span className={`assessment-tab-count${sectionCounts.items>0?' has-items':''}`} aria-label={sectionCounts.items==null?'Item count unavailable':undefined}>{sectionCounts.items??'—'}</span>}</TabsTrigger>:!inlineCriteria&&<TabsTrigger value="criteria">Assessment criteria</TabsTrigger>}
+      <TabsTrigger value="findings" ref={findingsControl}>Findings{sectionCounts&&<span className="assessment-tab-count" aria-label={sectionCounts.findings==null?'Finding count unavailable':undefined}>{sectionCounts.findings??'—'}</span>}</TabsTrigger>
     </TabsList>
     <TabsContent value="implementation" forceMount>
-      <details className="assessment-summary" open={summaryOpen} onToggle={event=>setSummaryOpen(event.currentTarget.open)}><summary ref={summaryControl}>Requirement summary</summary><p>{summary}</p>{interview?.({open:summaryOpen,close:closeInterview})}</details>
+      <details className="assessment-summary" open={summaryOpen} onToggle={event=>setSummaryOpen(event.currentTarget.open)}><summary ref={summaryControl}>{summaryLabel}</summary><p>{summary}</p>{interview?.({open:summaryOpen,close:closeInterview})}</details>
       {requirement}{children}
       {!inlineWorkflow&&inlineCriteria&&<details className="assessment-inline-criteria"><summary>Assessment guidance &amp; working checklist</summary>{criteria}</details>}
     </TabsContent>

@@ -21,10 +21,10 @@ let root, container;
 const navigate = jest.fn();
 beforeEach(() => { global.IS_REACT_ACT_ENVIRONMENT = true; api.get.mockReset(); navigate.mockReset(); container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container); api.get.mockResolvedValue({data: history()}); });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
-function Harness({initial = true, choices = programs, refreshToken = 1}) {
+function Harness({initial = true, choices = programs, refreshToken = 1, onStatusNavigate}) {
   const [open, setOpen] = useState(initial), [selected, setSelected] = useState(programIdentity(choices[0])), [view, setView] = useState('line');
   const trigger = useRef(null);
-  return <><button type="button" ref={trigger} onClick={() => setOpen(true)}>Open exact program history</button>{open && <PortfolioHistoryDialog client={client} programs={choices} selected={selected} onSelect={setSelected} onClose={() => setOpen(false)} onCloseAutoFocus={event => { event.preventDefault(); trigger.current?.focus(); }} onNavigate={navigate} chartView={view} onChartViewChange={setView} refreshToken={refreshToken} asOf={AT} />}</>;
+  return <><button type="button" ref={trigger} onClick={() => setOpen(true)}>Open exact program history</button>{open && <PortfolioHistoryDialog client={client} programs={choices} selected={selected} onSelect={setSelected} onClose={() => setOpen(false)} onCloseAutoFocus={event => { event.preventDefault(); trigger.current?.focus(); }} onNavigate={navigate} onStatusNavigate={onStatusNavigate} chartView={view} onChartViewChange={setView} refreshToken={refreshToken} asOf={AT} />}</>;
 }
 const dialog = () => document.querySelector('[data-testid="portfolio-history-dialog"]');
 const click = label => act(async () => { const button = [...document.querySelectorAll('button')].find(node => node.textContent.trim() === label); expect(button).toBeTruthy(); button.click(); });
@@ -228,6 +228,58 @@ test('modal status details escape the scroll clip, follow body scrolling, fit a 
   } finally { bounds.mockRestore(); addedScroll?.mockRestore(); removedScroll?.mockRestore(); }
 });
 
+test('modal canvases retain native focused controls, genuine counts and status destinations across fractional-gutter and narrow resizes', async () => {
+  let bodyWidth = 1120, gutter = 15 + 1 / 3, scaleWidth = 744 + 2 / 3, chartWidth = 1003 + 2 / 3;
+  const originalBounds = Element.prototype.getBoundingClientRect, originalObserver = global.ResizeObserver;
+  const observers = new Set(), openStatus = jest.fn();
+  global.ResizeObserver = class {
+    constructor(callback) { this.callback = callback; this.targets = new Set(); observers.add(this); }
+    observe(target) { this.targets.add(target); }
+    disconnect() { observers.delete(this); }
+  };
+  const resize = () => act(async () => { [...observers].filter(observer => [...observer.targets].some(target => target.matches('.ph-status-scale,.ph-chart'))).forEach(observer => observer.callback()); });
+  const bounds = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this.matches('.ph-body')) return {left:0, top:0, width:bodyWidth, height:700};
+    if (this.parentElement?.matches('.ph-body')) return {left:0, top:0, width:bodyWidth - gutter, height:900};
+    if (this.matches('.ph-status-scale')) return {left:0, top:0, width:scaleWidth, height:62};
+    if (this.matches('.ph-chart,.ph-chart > svg')) return {left:0, top:0, width:chartWidth, height:296};
+    return originalBounds.call(this);
+  });
+  try {
+    await act(async () => root.render(<Harness onStatusNavigate={openStatus} />));
+    const group = dialog().querySelector('[aria-label="Current status composition"]'), segments = group.querySelectorAll('button');
+    expect(group.getAttribute('role')).toBe('group'); expect(segments).toHaveLength(2);
+    expect(segments[0].namespaceURI).toBe('http://www.w3.org/1999/xhtml');
+    expect(dialog().querySelector('.ph-composition-canvas').getAttribute('viewBox')).toBe('0 0 760 62');
+    expect(dialog().querySelector('.ph-chart svg').getAttribute('viewBox')).toBe('0 0 1019 296');
+    await act(async () => segments[0].focus());
+    expect(dialog().querySelector('.ph-segment-detail').textContent).toContain('32 / 56');
+    bodyWidth = 340; gutter = 0; scaleWidth = 240; chartWidth = 240;
+    await resize();
+    expect(group.querySelector('button')).toBe(segments[0]); expect(document.activeElement).toBe(segments[0]);
+    expect(segments[0].getAttribute('aria-pressed')).toBe('true');
+    expect(dialog().querySelector('.ph-segment-detail').textContent).toContain('32 / 56');
+    expect(dialog().querySelector('.ph-composition-canvas').getAttribute('viewBox')).toBe('0 0 280 62');
+    expect(dialog().querySelector('.ph-chart svg').getAttribute('viewBox')).toBe('0 0 300 296');
+    await act(async () => segments[0].click()); expect(openStatus).toHaveBeenLastCalledWith('addressed');
+    const zeroCount = dialog().querySelectorAll('.ph-breakdown-row')[1];
+    await act(async () => zeroCount.focus());
+    expect(dialog().querySelector('.ph-segment-detail').textContent).toContain('0 / 56');
+    await act(async () => zeroCount.click()); expect(openStatus).toHaveBeenLastCalledWith('in_progress');
+    expect(dialog().querySelectorAll('.ph-breakdown-row')).toHaveLength(4);
+    expect(dialog().querySelector('.ph-current-value').textContent).toContain('32 of 56');
+    const graph = dialog().querySelector('.ph-chart svg');
+    await act(async () => { graph.focus(); graph.dispatchEvent(new KeyboardEvent('keydown', {key:'Home', bubbles:true})); });
+    expect(dialog().querySelector('.ph-readout').textContent).toContain('Implemented 26 ·');
+    bodyWidth = 800; gutter = 15 + 1 / 3; scaleWidth = 500; chartWidth = 660;
+    await resize();
+    expect(document.activeElement).toBe(graph);
+    expect(dialog().querySelector('.ph-readout').textContent).toContain('Implemented 26 ·');
+    await act(async () => graph.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowRight', bubbles:true})));
+    expect(dialog().querySelector('.ph-readout').textContent).toContain('Implemented 29 ·');
+  } finally { bounds.mockRestore(); global.ResizeObserver = originalObserver; }
+});
+
 test('touch pointerdown reads genuine nearest positions after range, program and chart-view changes', async () => {
   const socPoints = [snapshot(-14, 40, {source_revision: 'soc-earlier'}), snapshot(0, 50, {source_revision: 'soc-current'})];
   api.get.mockImplementation((path, {params}) => Promise.resolve({data: params.program_key === 'soc-2'
@@ -403,7 +455,7 @@ test('inline reference has four native status destinations, paired panel and a 2
   const panel=container.querySelector('.brawndo-demo-program');
   expect(panel.querySelector('.ph-chart svg').getAttribute('viewBox')).toBe('0 0 900 284');
   expect(panel.querySelectorAll('.ph-breakdown-cells button')).toHaveLength(4);
-  expect(panel.querySelector('.ph-status-axis')).toBeNull();
+  expect(panel.querySelector('.ph-status-axis,.ph-composition-canvas')).toBeNull();
   expect(panel.querySelector('.ph-history-panel > .ph-metrics')).toBeTruthy();
   await act(async () => panel.querySelectorAll('.ph-breakdown-cells button')[1].click());
   expect(openStatus).toHaveBeenCalledWith('in_progress');
@@ -431,7 +483,7 @@ test('Portfolio sparse presentation counts retained saves once and keeps the com
   await act(async () => root.render(<Harness choices={[programs[0]]} />));
   expect(dialog().querySelector('.ph-metrics-sparse').textContent).toContain('Available after more saved history');
   expect([...dialog().querySelectorAll('.ph-history-meter')].map(node=>node.textContent)).toEqual(['Saved positions · 1 retained','History span · 0 days']);
-  expect([...dialog().querySelectorAll('.ph-status-axis > span')].map(node=>node.textContent)).toEqual(['0%','100%']);
+  expect([...dialog().querySelectorAll('.ph-composition-canvas text')].map(node=>node.textContent)).toEqual(['0%','100%']);
   expect(dialog().querySelector('.ph-chart svg')).toBeTruthy();
   await click('View data');expect(dialog().querySelectorAll('#portfolio-history-data tbody tr')).toHaveLength(1);
 });

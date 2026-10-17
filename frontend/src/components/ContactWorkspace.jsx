@@ -18,7 +18,7 @@ import './Contacts.css';
 
 export function ContactAccessPill({state}) {return <span className={`contact-access contact-access-${state.key}`} title={state.description}>{state.label}</span>;}
 
-export default function ContactWorkspace({open,onOpenChange,record,clientId,onSaved}) {
+export default function ContactWorkspace({open,onOpenChange,record,clientId,onSaved,additionalPresentation=false}) {
   const {user}=useAuth(),navigate=useNavigate();
   const canWrite=['super_admin','platform_admin'].includes(user?.role);
   const [current,setCurrent]=useState(record),[form,setForm]=useState(()=>contactForm(record));
@@ -75,7 +75,7 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
     }catch(e){setError(formatError(e));}finally{setSaving(false);setArchive(false);}
   }
   return <Sheet open={open} onOpenChange={value=>value?onOpenChange(true):close()}>
-    <SheetContent className="contact-workspace" onPointerDownOutside={e=>e.preventDefault()} onOpenAutoFocus={()=>{opener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();(opener.current?.isConnected?opener.current:document.querySelector('[data-testid="contacts-search"]'))?.focus();}}>
+    <SheetContent className={`contact-workspace${additionalPresentation?' brawndo-additional bac-workspace':''}`} onPointerDownOutside={e=>e.preventDefault()} onOpenAutoFocus={()=>{opener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();(opener.current?.isConnected?opener.current:document.querySelector('[data-testid="contacts-search"]'))?.focus();}}>
       <SheetHeader className="contact-workspace-header"><SheetTitle>{current?current.name:'New Contact'}</SheetTitle><SheetDescription>{current?'Contact information and linked platform access.':'Add a client contact and optionally invite them to Omnisciente.'}</SheetDescription></SheetHeader>
       <form onSubmit={save} className="contact-workspace-form">
         <div className="contact-workspace-body">

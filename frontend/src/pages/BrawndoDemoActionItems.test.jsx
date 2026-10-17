@@ -43,7 +43,7 @@ test('actual route gate accepts only resolved active Brawndo Demo with consisten
   await render();expect(container.querySelector('[aria-label="Action summaries"]')).not.toBeNull();
   const originalAuth=mockAuth,originalOrg=mockOrg;
   const cases=[()=>{mockAuth={...originalAuth,user:{...originalAuth.user,role:'client_readonly'}};},()=>{mockAuth={...originalAuth,workspaceMode:'standard'};},()=>{mockAuth={...originalAuth,user:{...originalAuth.user,workspace_mode:'standard'}};},()=>{mockOrg={...originalOrg,error:'Denied'};},()=>{mockOrg={...originalOrg,currentClient:null};},()=>{mockOrg={...originalOrg,currentClientId:'other'};},()=>{mockOrg={...originalOrg,currentClient:{client_id:'other',name:'Brawndo'}};},()=>{mockOrg={...originalOrg,currentClient:{...originalOrg.currentClient,status:'archived'}};}];
-  for(const apply of cases){mockAuth=originalAuth;mockOrg=originalOrg;apply();await rerender();expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();expect(container.querySelector('[aria-label="Action summaries"]')).toBeNull();}
+  for(const apply of cases){mockAuth=originalAuth;mockOrg=originalOrg;apply();await rerender();expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();expect(container.querySelector('[aria-label="Action summaries"]')).toBeNull();expect(container.querySelector('.surface-theme-action')).toBeNull();}
   mockAuth=originalAuth;mockOrg=originalOrg;await rerender();await act(async()=>navigate('/findings'));expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();
 });
 
@@ -59,6 +59,8 @@ test('full-population summary is independent of search/source and filters preced
 
 test('presentation preserves native creation forms and adds no selection, bulk or selected CSV operations',async()=>{
   await render();
+  const themeAction=container.querySelector('.surface-theme-action');expect(themeAction.textContent).toBe('Dark');
+  await click(themeAction);expect(container.querySelector('.brawndo-demo-actions').dataset.theme).toBe('dark');expect(themeAction.textContent).toBe('Light');
   expect(container.querySelector('table input[type="checkbox"]')).toBeNull();expect(container.querySelector('[aria-label="Selected ticket actions"]')).toBeNull();
   expect(button('Reassign selected')).toBeUndefined();expect(button('Export selected CSV')).toBeUndefined();
   await click(button('New finding'));expect(mockForm).toMatchObject({kind:'findings',record:null,clientId:cid,open:true});

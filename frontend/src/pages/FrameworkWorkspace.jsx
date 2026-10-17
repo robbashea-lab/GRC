@@ -11,7 +11,12 @@ import {focusFallback} from '@/lib/focusRescue';
 import {Link,useLocation,useNavigate,useSearchParams} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import {isWorkspacePresentation} from '@/lib/reference';
-import api,{formatError} from '@/lib/api';
+import {useOrg} from '@/context/OrgContext';
+import {selectedClient} from '@/lib/clientSelection';
+import {brawndoCisVisualGate} from '@/lib/brawndoCisVisual';
+import {useCisVisualAppearance} from '@/components/BrawndoCisVisualAppearance';
+import CisVisualRegister,{CisVisualHeader,CisVisualSnapshot} from '@/components/BrawndoCisVisualRegister';
+import api,{formatError,PREVIEW_MODE} from '@/lib/api';
 import {frameworkCatalog,frameworkWorkspace} from '@/lib/frameworks';
 import {SearchField} from '@/components/Register';
 import RegisterLoadError from '@/components/RegisterLoadError';
@@ -98,14 +103,16 @@ function Sections({nodes,expanded,toggle,openRecord,onManage,statuses,prototype,
 }
 export default function FrameworkWorkspace({frameworkKey,clientId}){
   const workspaceRef=useRef(null);
-  const [params,setParams]=useSearchParams(),{user}=useAuth(),location=useLocation(),navigate=useNavigate();
+  const auth=useAuth(),org=useOrg()||{},trustedDemo=PREVIEW_MODE;
+  const [params,setParams]=useSearchParams(),{user}=auth,location=useLocation(),navigate=useNavigate();
+  const [loadedScope,setLoadedScope]=useState(null);
   const workspacePilot=isWorkspacePresentation(clientId,user);
   // The reference workspace (summary, derived views, result table) serves every assessed framework,
   // in that framework's own vocabulary. CMMC has no assessment tracking yet.
   const prototype=frameworkKey!=='cmmc',categoryFirst=['cis-ig1','iso-27001','soc-2'].includes(frameworkKey);
   const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=useMemo(()=>viewLabels({...operatorVocabulary(frameworkKey),statuses:readinessLabels(frameworkKey)}),[frameworkKey]);
   // Framework metadata selects the appropriate assessment structure for every client.
-  const workspace=frameworkWorkspace(frameworkKey),brawndoCis=workspace==='cis',prestigeSoc=workspace==='soc',referenceAssessment=brawndoCis||prestigeSoc,iso=workspace==='iso',[theme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
+  const workspace=frameworkWorkspace(frameworkKey),brawndoCis=workspace==='cis',prestigeSoc=workspace==='soc',referenceAssessment=brawndoCis||prestigeSoc,iso=workspace==='iso',[theme,setCisVisualTheme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
   const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
   const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);
@@ -118,7 +125,21 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const initialView=prototype?params.get('view'):null;
   useEffect(()=>{setFilter(initialView&&VIEW_LABELS[initialView]?initialView:'all');},[initialView,VIEW_LABELS]);
   useEffect(()=>{const p=readPreference(preferenceKey);setPreference(p);setExpanded(p.section?[p.section]:[]);setData(null);setSearch('');setFilter(initialView&&VIEW_LABELS[initialView]?initialView:'all');setView('all');setShowRetained(false);setAdditionsGroup(0);setManagedId(null);},[preferenceKey]);// eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(()=>{const c=new AbortController();setError('');if(!clientId)return;api.get('/frameworks/'+frameworkKey,{params:{client_id:clientId},signal:c.signal}).then(r=>{if(!c.signal.aborted)setData(r.data);}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[frameworkKey,clientId,revision,user?.user_id]);
+  // Preserve native drafts during same-origin refreshes. A different origin must
+  // discard its appearance receipt, including an away/back switch before reads finish.
+  useEffect(()=>{
+    const c=new AbortController();
+    const origin={clientId,frameworkKey,userId:user?.user_id,role:user?.role,workspaceMode:auth.workspaceMode,userWorkspaceMode:user?.workspace_mode,trustedDemo};
+    setLoadedScope(previous=>previous&&Object.entries(origin).every(([key,value])=>previous[key]===value)?previous:null);
+    setError('');
+    if(!clientId)return()=>c.abort();
+    api.get('/frameworks/'+frameworkKey,{params:{client_id:clientId},signal:c.signal}).then(r=>{
+      if(!c.signal.aborted){setData(r.data);setLoadedScope(origin);}
+    }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});
+    return()=>c.abort();
+  },[frameworkKey,clientId,revision,user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,trustedDemo]);
+  const visualReference=brawndoCisVisualGate({...org,...auth,trustedDemo,clientId,frameworkKey,data,loadedScope,error,pathname:location.pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(location.search).get('client_id'),authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
+  useCisVisualAppearance(visualReference,theme);
   const remember=value=>{const p={...preference,...value};setPreference(p);try{sessionStorage.setItem(preferenceKey,JSON.stringify(p));}catch{/* UI preference only; assessment persistence is server-owned. */}};
   const catalog=frameworkCatalog(frameworkKey),statuses=operatorStatuses(frameworkKey);
   const rows=useMemo(()=>{
@@ -180,6 +201,28 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     setParams(n);setSearch('');setFilter('all');};
   const isoCrumb=(view,path=[])=>{setSearch('');setFilter('all');remember({['category:'+view]:path});const n=new URLSearchParams(params);n.delete('assessment');n.set('iso_view',view);setParams(n,{replace:true});};
   const drawerBreadcrumb=!selected?undefined:brawndoCis?[{label:`CIS IG${data.configuration?.implementation_group||1}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.definition_id.split('.')[0]}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(hierarchyPath(frameworkKey,selected)[0].id);}},{label:`Safeguard ${selected.definition_id}`}]:prestigeSoc?[{label:'SOC 2',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}},{label:socCategoryCrumb(selected.category),onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([selectedPath[0].id]);}},{label:selected.control,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath(selectedPath.map(p=>p.id));}},{label:selected.definition_id}]:undefined;
+  if(visualReference){
+    const savedDates=activeRows.map(row=>row.last_saved||row.last_assessed).filter(value=>Number.isFinite(Date.parse(value))).sort((a,b)=>Date.parse(b)-Date.parse(a));
+    const asOf=savedDates[0]?new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(savedDates[0])):null;
+    const retainedRows=rows.filter(row=>!workspaceScope(frameworkKey,data,row));
+    const retainedVisible=visible.filter(row=>!workspaceScope(frameworkKey,data,row));
+    const visualBreadcrumb=selected?[{label:'CIS IG1',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.control}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(String(selected.control));}},{label:`Safeguard ${selected.definition_id}`}]:undefined;
+    return <div ref={workspaceRef} className="bcis brawndo-cis-visual" data-theme={theme} data-testid="cis-workspace">
+      {!selected&&!managed&&<GuidedAssessor visualReference invitationContext={controlKey?'control-'+controlKey:'program'} clientId={clientId} framework={frameworkKey} configuration={data.configuration} rows={activeRows.filter(row=>!controlKey||row.definition_id.split('.')[0]===String(controlKey))} contextComplete={!!data.active_definition_ids?.length&&activeRows.length===data.active_definition_ids.length} draftSummaries={data.guided_assessment_drafts} onSelect={row=>openRecord(row,!focusedOmniEnabled(clientId,user,frameworkKey,data.configuration,row.definition_id))} onViewAll={()=>{dropLinkedView();setSearch('');setFilter('all');}}/>}
+      <CisVisualHeader rows={activeRows} summary={readiness} asOf={asOf} resume={resume} onContinue={()=>openRecord(resume)} theme={theme} onTheme={()=>setCisVisualTheme(theme==='dark'?'light':'dark')}/>
+      <CisVisualSnapshot summary={readiness} filter={filter} onFilter={chooseFilter} asOf={asOf}/>
+      {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
+      {selected&&!workspaceScope(frameworkKey,data,selected)&&<p role="status">Retained out-of-scope safeguard · history and linked work remain available. It is excluded from active program totals.</p>}
+      {retainedRows.length>0&&<label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showRetained} onChange={event=>setShowRetained(event.target.checked)}/>Include retained out-of-scope safeguards</label>}
+      <CisVisualRegister controlKey={controlKey} onResetControl={()=>chooseControl('')} rows={activeRows} visible={visible} domains={domains} filter={filter} search={search} onFilter={chooseFilter} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');}} onOpen={openRecord}/>
+      {showRetained&&retainedRows.length>0&&<section className="pcard" aria-labelledby="cis-retained-heading"><div className="card-head"><div><h2 id="cis-retained-heading">Retained out-of-scope safeguards</h2><p>Showing {retainedVisible.length} of {retainedRows.length} retained safeguards. These records are outside the current IG1 scope and excluded from active program totals.</p></div></div>
+        {retainedVisible.length>0?<CisResultTable nativeFacts rows={retainedVisible} onOpen={openRecord} onManage={manageRecord} label="Retained out-of-scope safeguards"/>:<p role="status" className="p-4 text-sm">No retained safeguards match the current search and filters.</p>}
+      </section>}
+      {managed&&<FrameworkDrawer key={clientId+':'+managed.framework_assessment_id+':manage'} visualReference open recordManagement record={managed} clientId={clientId} onReviews={navigate} onSaved={()=>setRevision(n=>n+1)} onOpenChange={value=>{if(!value)closeManagement();}}/>}
+      {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} visualReference open record={selected} clientId={clientId} onManage={()=>{closeRecord();manageRecord(selected);}} onSaved={()=>setRevision(n=>n+1)} onOpenChange={value=>{if(!value)closeRecord();}}
+        onPrevious={index>0?()=>openRecord(navigationRows[index-1]):null} onNext={index>=0&&index<navigationRows.length-1?()=>openRecord(navigationRows[index+1]):null} position={index>=0?`${index+1} of ${navigationRows.length} in framework order`:'Retained assessment'} breadcrumb={visualBreadcrumb}/>}
+    </div>;
+  }
   return <div ref={workspaceRef} className={iso?'bcis framework-presentation':referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment||iso?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
     {!selected&&!managed&&prestigeSoc&&data.selected&&data.configured&&<SocGuidedAssessor clientId={clientId} configuration={data.configuration} rows={activeRows} contextComplete={!!data.active_definition_ids?.length&&activeRows.length===data.active_definition_ids.length} draftSummaries={data.guided_assessment_drafts} onSelect={row=>openRecord(row,true)} onViewAll={()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}}/>}
     {!selected&&!managed&&(!controlKey||focusedOmniEnabled(clientId,user,frameworkKey,data.configuration))&&<GuidedAssessor invitationContext={controlKey?'control-'+controlKey:'program'} clientId={clientId} framework={frameworkKey} configuration={data.configuration} rows={activeRows.filter(row=>!controlKey||row.definition_id.split('.')[0]===String(controlKey))} contextComplete={!!data.active_definition_ids?.length&&activeRows.length===data.active_definition_ids.length} draftSummaries={data.guided_assessment_drafts} onSelect={row=>openRecord(row,!focusedOmniEnabled(clientId,user,frameworkKey,data.configuration,row.definition_id))} onViewAll={()=>{dropLinkedView();setSearch('');setFilter('all');setAdditionsGroup(0);}}/>}
@@ -213,7 +256,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
 {brawndoCis?<BrawndoCisControls workspacePilot={workspacePilot} implementationGroup={data.configuration?.implementation_group||1} scopeControls={<div className="flex flex-wrap gap-4 text-xs px-4 pb-3">{data.configuration?.implementation_group===2&&<label className="flex gap-2"><input type="checkbox" checked={additionsGroup===2} onChange={e=>setAdditionsGroup(e.target.checked?2:0)}/>Added in IG2 only · display filter; full program totals unchanged</label>}{data.configuration?.implementation_group===3&&<label className="flex gap-2">Safeguard scope<select aria-label="Safeguard scope" value={additionsGroup||0} onChange={e=>setAdditionsGroup(Number(e.target.value))}><option value={0}>All safeguards</option><option value={2}>Added in IG2 only</option><option value={3}>Added in IG3 only</option></select><span>Display filter; full program totals unchanged</span></label>}{rows.some(r=>!workspaceScope(frameworkKey,data,r))&&<label className="flex gap-2"><input type="checkbox" checked={showRetained} onChange={e=>setShowRetained(e.target.checked)}/>Include retained out-of-scope safeguards</label>}</div>} domainFocusKey={selectedDomain?`${selectedDomain.id}:${visible.map(row=>row.framework_assessment_id).join()}`:undefined} clientId={clientId} rows={scoped} visible={selectedDomain?visible.filter(row=>selectedDomain.safeguardIds.includes(row.definition_id)):visible} filtered={!!selectedDomain||!!additionsGroup||filter!=='all'||!!search.trim()} filterLabel={selectedDomain?`${selectedDomain.label}${filter!=='all'?` · ${VIEW_LABELS[filter]}`:''}`:additionsGroup?`Added in IG${additionsGroup}`:filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{if(selectedDomain){setDomainId(null);return;}dropLinkedView();setSearch('');setFilter('all');setAdditionsGroup(0);}} controlKey={controlKey} onControl={chooseControl} onOpen={openRecord} onManage={manageRecord} selected={selected}/>:prestigeSoc?<PrestigeSocNavigator clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}} path={socPath} onPath={chooseSocPath} onOpen={openRecord} onManage={manageRecord} selected={selected}/>:prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='soa'?<SoaTable rows={visible} onOpen={openRecord} onManage={manageRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} onManage={manageRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} onManage={manageRecord} soa={frameworkKey==='iso-27001'&&isoView==='soa'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})}/>:<Sections {...{nodes,expanded,toggle,openRecord,onManage:manageRecord,statuses,prototype,framework:frameworkKey}}/>}
     </>}
     </IsoPanel>
-    {managed&&<FrameworkDrawer key={clientId+':'+managed.framework_assessment_id} open recordManagement record={managed} clientId={clientId} onReviews={navigate} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeManagement();}}/>}
+    {managed&&<FrameworkDrawer key={clientId+':'+managed.framework_assessment_id+':manage'} open recordManagement record={managed} clientId={clientId} onReviews={navigate} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeManagement();}}/>}
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId}
       onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}}
       onPrevious={index>0?()=>openRecord(navigationRows[index-1]):null} onNext={index>=0&&index<navigationRows.length-1?()=>openRecord(navigationRows[index+1]):null}
