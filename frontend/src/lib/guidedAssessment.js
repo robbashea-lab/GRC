@@ -57,6 +57,24 @@ export function visibleQuestions(id,answers,version=versionForSafeguard(id)){
   const matrices=version===control1V5.version?active:(catalogForVersion(version)?.safeguards[id]||[]);
   return active.filter(q=>q.condition!=='not_applicable'||matrices.some(matrix=>matrix.type==='matrix'&&matrix.choices.includes('Not applicable')&&matrix.rows.some(row=>answers[matrix.id]?.[row]==='Not applicable')));
 }
+// UI edits only: saved/submitted answers still pass through strict validation unchanged.
+export function updateGuidedMultiAnswer(values,option,checked,version){
+  if(!checked)return values.filter(value=>value!==option);
+  const exclusive=[control1V4.version,control1V5.version].includes(version),sentinels=['None','Not sure'];
+  if(exclusive&&sentinels.includes(option))return [option];
+  const retained=values.filter(value=>!exclusive||!sentinels.includes(value));
+  return retained.includes(option)?retained:[...retained,option];
+}
+
+export function updateGuidedAnswer(answers,question,value){
+  const next={...answers};
+  if(question.type==='select'&&value==='')delete next[question.id];
+  else next[question.id]=question.type==='matrix'&&value&&typeof value==='object'&&!Array.isArray(value)
+    ?Object.fromEntries(Object.entries(value).filter(([,answer])=>answer!==''))
+    :value;
+  return next;
+}
+
 export function validateAnswers(id,answers,version=versionForSafeguard(id)){
   if(!answers||typeof answers!=='object'||Array.isArray(answers))throw new Error('Invalid interview answers');
   const questions=catalogForVersion(version)?.safeguards[id];

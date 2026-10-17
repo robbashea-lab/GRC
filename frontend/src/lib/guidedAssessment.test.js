@@ -1,4 +1,6 @@
-import {pilotEnabled,visibleQuestions as runtimeQuestions,generateResult as runtimeResult,validateAnswers as runtimeValidate,catalogForPilot,versionForSafeguard as currentVersion,prioritizeGuidedRows} from './guidedAssessment';
+import {pilotEnabled,visibleQuestions as runtimeQuestions,generateResult as runtimeResult,validateAnswers as runtimeValidate,catalogForPilot,versionForSafeguard as currentVersion,prioritizeGuidedRows,updateGuidedMultiAnswer,updateGuidedAnswer,catalogForVersion} from './guidedAssessment';
+import control1V4 from '@catalogs/guidedControl1V4.json';
+import control1V5 from '@catalogs/guidedControl1V5.json';
 const guidedCatalog=catalogForPilot(false),versionForSafeguard=id=>currentVersion(id,false);
 const visibleQuestions=(id,answers,version=versionForSafeguard(id))=>runtimeQuestions(id,answers,version);
 const generateResult=(id,answers,today,version=versionForSafeguard(id))=>runtimeResult(id,answers,today,version);
@@ -75,4 +77,108 @@ test('confirmed matrix gaps remain distinct from unknown coverage and response a
   expect(output.unknowns.join(' ')).toContain('Cloud-hosted assets: Not sure');
   expect(output.unknowns.join(' ')).not.toContain('Network devices');
   expect(generateResult('1.2',{...complete('1.2'),system:'EDR',owner:'IT'},today).answers.find(a=>a.prompt.includes('permitted response')).answer).toBe('Quarantine or isolate');
+});
+
+test.each([control1V4.version,control1V5.version])('%s UI response selections honor exclusivity while external invalid arrays remain rejected',version=>{
+  const original=Object.freeze(['Remove from network']);
+  let selected=updateGuidedMultiAnswer(original,'Deny remote connection',true,version);
+  expect(selected).toEqual(['Remove from network','Deny remote connection']);
+  expect(original).toEqual(['Remove from network']);
+  selected=updateGuidedMultiAnswer(selected,'None',true,version);expect(selected).toEqual(['None']);
+  expect(()=>runtimeValidate('1.2',{actions:selected},version)).not.toThrow();
+  selected=updateGuidedMultiAnswer(selected,'Not sure',true,version);expect(selected).toEqual(['Not sure']);
+  expect(()=>runtimeValidate('1.2',{actions:selected},version)).not.toThrow();
+  selected=updateGuidedMultiAnswer(selected,'Quarantine or isolate',true,version);expect(selected).toEqual(['Quarantine or isolate']);
+  selected=updateGuidedMultiAnswer(selected,'Quarantine or isolate',false,version);expect(selected).toEqual([]);
+  expect(()=>runtimeValidate('1.2',{actions:selected},version)).not.toThrow();
+  for(const actions of [['None','Remove from network'],['Not sure','None'],['Remove from network','Remove from network'],['Unrecognized response'],'None']){
+    expect(()=>runtimeValidate('1.2',{actions},version)).toThrow('Invalid answer selection');
+  }
+});
+
+test('legacy multi-select UI and validator retain historical combinations',()=>{
+  const version=versionForSafeguard('1.2');
+  let selected=updateGuidedMultiAnswer(['Remove from network'],'None',true,version);
+  selected=updateGuidedMultiAnswer(selected,'Not sure',true,version);
+  expect(selected).toEqual(['Remove from network','None','Not sure']);
+  expect(()=>runtimeValidate('1.2',{actions:selected},version)).not.toThrow();
+  expect(updateGuidedMultiAnswer(selected,'None',false,version)).toEqual(['Remove from network','Not sure']);
+  expect(()=>runtimeValidate('1.2',{actions:['None','None']},version)).toThrow('Invalid answer selection');
+});
+
+test.each([control1V4.version,control1V5.version])('%s checkbox repeats and removals retain concrete choices without mutating input',version=>{
+  const original=Object.freeze(['Remove from network','Deny remote connection']);
+  const repeated=updateGuidedMultiAnswer(original,'Remove from network',true,version);
+  expect(repeated).toEqual(['Remove from network','Deny remote connection']);
+  expect(updateGuidedMultiAnswer(original,'Remove from network',false,version)).toEqual(['Deny remote connection']);
+  expect(updateGuidedMultiAnswer(original,'Quarantine or isolate',false,version)).toEqual(original);
+  expect(updateGuidedMultiAnswer(Object.freeze(['None']),'None',true,version)).toEqual(['None']);
+  expect(updateGuidedMultiAnswer(Object.freeze(['Not sure']),'Not sure',false,version)).toEqual([]);
+  expect(original).toEqual(['Remove from network','Deny remote connection']);
+});
+
+test.each([control1V4.version,control1V5.version])('%s explicitly clearing a select omits only that answer and preserves its context',version=>{
+  const question=catalogForVersion(version).safeguards['1.2'].find(item=>item.id==='frequency');
+  const actions=Object.freeze(['Quarantine or isolate']);
+  const original=Object.freeze({process:'Yes',frequency:'Weekly',frequency_detail:'Preserved response context',actions});
+  const cleared=updateGuidedAnswer(original,question,'');
+  expect(Object.prototype.hasOwnProperty.call(cleared,'frequency')).toBe(false);
+  expect(cleared).toEqual({process:'Yes',frequency_detail:'Preserved response context',actions});
+  expect(original.frequency).toBe('Weekly');expect(cleared).not.toBe(original);
+  expect(()=>runtimeValidate('1.2',cleared,version)).not.toThrow();
+  expect(()=>runtimeValidate('1.2',{...original,frequency:''},version)).toThrow('Invalid answer selection');
+  const answered=updateGuidedAnswer(cleared,question,'Monthly');
+  expect(answered.frequency).toBe('Monthly');expect(answered.frequency_detail).toBe(original.frequency_detail);
+  expect(Object.prototype.hasOwnProperty.call(cleared,'frequency')).toBe(false);
+});
+
+test.each([versionForSafeguard('1.1'),control1V5.version])('%s matrix clears omit only empty rows and preserve a valid partial checkpoint',version=>{
+  const question=catalogForVersion(version).safeguards['1.1'].find(item=>item.id==='coverage');
+  const [clearedRow,missingRow,unknownRow]=question.rows;
+  const recorded=Object.freeze({[clearedRow]:'Yes',[missingRow]:'No',[unknownRow]:'Not sure'});
+  const original=Object.freeze({inventory:'Yes',coverage:recorded,coverage_detail:'Preserved evidence context',owner:'Original owner'});
+  const edit=Object.freeze({...recorded,[clearedRow]:''});
+  const cleared=updateGuidedAnswer(original,question,edit);
+  expect(Object.prototype.hasOwnProperty.call(cleared.coverage,clearedRow)).toBe(false);
+  expect(cleared.coverage).toEqual({[missingRow]:'No',[unknownRow]:'Not sure'});
+  expect(cleared.coverage).not.toBe(edit);expect(cleared.coverage).not.toBe(recorded);
+  expect(cleared.coverage_detail).toBe(original.coverage_detail);expect(cleared.owner).toBe(original.owner);
+  expect(recorded[clearedRow]).toBe('Yes');expect(edit[clearedRow]).toBe('');
+  expect(()=>runtimeValidate('1.1',cleared,version)).not.toThrow();
+  expect(()=>runtimeValidate('1.1',{...original,coverage:edit},version)).toThrow('Invalid matrix answer');
+  const empty=updateGuidedAnswer(cleared,question,Object.fromEntries(Object.keys(cleared.coverage).map(row=>[row,''])));
+  expect(Object.prototype.hasOwnProperty.call(empty,'coverage')).toBe(true);expect(empty.coverage).toEqual({});
+  expect(()=>runtimeValidate('1.1',empty,version)).not.toThrow();
+  const answered=updateGuidedAnswer(cleared,question,{...cleared.coverage,[clearedRow]:'Partially'});
+  expect(answered.coverage).toEqual({[missingRow]:'No',[unknownRow]:'Not sure',[clearedRow]:'Partially'});
+  expect(Object.prototype.hasOwnProperty.call(cleared.coverage,clearedRow)).toBe(false);
+});
+
+test('UI clears preserve blank text/date values and other answer types without broad falsy normalization',()=>{
+  for(const type of ['text','date','multi']){
+    const question={id:'recorded',type},value=type==='multi'?[]:'';
+    const original=Object.freeze({recorded:'Previous value',recorded_detail:'Preserved note',other:'Preserved answer'});
+    const next=updateGuidedAnswer(original,question,value);
+    expect(Object.prototype.hasOwnProperty.call(next,'recorded')).toBe(true);expect(next.recorded).toBe(value);
+    expect(next.recorded_detail).toBe(original.recorded_detail);expect(next.other).toBe(original.other);
+    expect(original.recorded).toBe('Previous value');
+  }
+  const question={id:'frequency',type:'select'};
+  for(const value of [null,undefined,false,0,' ']){
+    const next=updateGuidedAnswer({process:'Yes'},question,value);
+    expect(Object.prototype.hasOwnProperty.call(next,'frequency')).toBe(true);expect(next.frequency).toBe(value);
+    expect(()=>runtimeValidate('1.2',next,control1V5.version)).toThrow('Invalid answer selection');
+  }
+});
+
+test('UI matrix edits do not coerce malformed values or discard nonempty unsupported rows',()=>{
+  const question=catalogForVersion(control1V5.version).safeguards['1.1'].find(item=>item.id==='coverage');
+  for(const value of [null,undefined,false,42,[],{Foreign:'Yes'}]){
+    const next=updateGuidedAnswer({inventory:'Yes'},question,value);
+    expect(next.coverage).toEqual(value);
+    expect(()=>runtimeValidate('1.1',next,control1V5.version)).toThrow('Invalid matrix answer');
+  }
+  const rows=Object.freeze({Retained:'Not applicable',Cleared:''});
+  expect(updateGuidedAnswer({},question,rows).coverage).toEqual({Retained:'Not applicable'});
+  expect(rows).toEqual({Retained:'Not applicable',Cleared:''});
 });

@@ -1,6 +1,7 @@
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import {omniGroups,multipleOmniSources} from '@/lib/refinedOmni';
+import {updateGuidedMultiAnswer} from '@/lib/guidedAssessment';
 
 const wording={
   inventory:'Does an enterprise asset inventory exist?',system:'Where do you maintain your inventory?',
@@ -10,7 +11,7 @@ const wording={
   frequency:'How often is the complete inventory reviewed?',last_review:'When was the last complete review?',
   reconciled:'Do you compare the inventory with other device records?'
 };
-export default function RefinedOmniInterview({id,answers,version,step,setStep,put,detail,blocked,busy,onNext,onSaveClose,inventoryContext,visualReference=false}){
+export default function RefinedOmniInterview({id,answers,version,step,setStep,put,detail,blocked,busy,onNext,onSaveClose,inventoryContext,visualReference=false,boundedGuideCorrections=false}){
   const groups=omniGroups(id,answers,version);
   // Native step is an index into production visibleQuestions, not a new stored group index.
   const index=Math.max(0,groups.findIndex(g=>g.ids.includes(step))),group=groups[index];
@@ -27,7 +28,7 @@ export default function RefinedOmniInterview({id,answers,version,step,setStep,pu
         return <section className="omni-question" key={q.id}>
           {i===0?<h3>{title}{criterion}</h3>:<label htmlFor={'omni-answer-'+q.id}>{title}{criterion}</label>}
           {q.help&&<p className="omni-help">{q.help}</p>}
-          {q.type==='matrix'?<div className="omni-matrix">{q.rows.map(row=><label key={row}>{row}<select aria-label={row} value={answers[q.id]?.[row]||''} onChange={e=>put(q,{...answers[q.id],[row]:e.target.value})}><option value="">Choose an answer</option>{(q.row_choices?.[row]||q.choices).map(v=><option key={v}>{v}</option>)}</select></label>)}</div>:choices?<div className="omni-answer-choices" role="group" aria-label={title}>{q.choices.map(value=><button type="button" key={value} aria-pressed={answers[q.id]===value} onClick={()=>put(q,value)}>{value}</button>)}</div>:q.type==='multi'?<div className="omni-response-choices" role="group" aria-label={title}>{q.choices.map(value=><label key={value}><input type="checkbox" checked={(answers[q.id]||[]).includes(value)} onChange={e=>put(q,e.target.checked?[...(answers[q.id]||[]),value]:(answers[q.id]||[]).filter(v=>v!==value))}/>{value}</label>)}</div>:q.type==='select'?<select id={'omni-answer-'+q.id} aria-label={title} value={answers[q.id]||''} onChange={e=>put(q,e.target.value)}><option value="">Choose an answer</option>{q.choices.map(value=><option key={value}>{value}</option>)}</select>:q.type==='date'?<input id={'omni-answer-'+q.id} aria-label={title} type="date" value={answers[q.id]||''} onInput={e=>put(q,e.target.value)}/>:<Textarea id={'omni-answer-'+q.id} aria-label={title} maxLength={2000} value={answers[q.id]||''} onChange={e=>put(q,e.target.value)}/>}
+          {q.type==='matrix'?<div className="omni-matrix">{q.rows.map(row=><label key={row}>{row}<select aria-label={row} value={answers[q.id]?.[row]||''} onChange={e=>put(q,{...answers[q.id],[row]:e.target.value})}><option value="">Choose an answer</option>{(q.row_choices?.[row]||q.choices).map(v=><option key={v}>{v}</option>)}</select></label>)}</div>:choices?<div className="omni-answer-choices" role="group" aria-label={title}>{q.choices.map(value=><button type="button" key={value} aria-pressed={answers[q.id]===value} onClick={()=>put(q,value)}>{value}</button>)}</div>:q.type==='multi'?<div className="omni-response-choices" role="group" aria-label={title}>{q.choices.map(value=><label key={value}><input type="checkbox" checked={(answers[q.id]||[]).includes(value)} onChange={e=>put(q,boundedGuideCorrections?updateGuidedMultiAnswer(answers[q.id]||[],value,e.target.checked,version):e.target.checked?[...(answers[q.id]||[]),value]:(answers[q.id]||[]).filter(v=>v!==value))}/>{value}</label>)}</div>:q.type==='select'?<select id={'omni-answer-'+q.id} aria-label={title} value={answers[q.id]||''} onChange={e=>put(q,e.target.value)}><option value="">Choose an answer</option>{q.choices.map(value=><option key={value}>{value}</option>)}</select>:q.type==='date'?<input id={'omni-answer-'+q.id} aria-label={title} type="date" value={answers[q.id]||''} onInput={e=>put(q,e.target.value)}/>:<Textarea id={'omni-answer-'+q.id} aria-label={title} maxLength={2000} value={answers[q.id]||''} onChange={e=>put(q,e.target.value)}/>}
           {q.id==='sources'&&multipleOmniSources(answers)&&<div className="omni-source-detail"><label htmlFor="omni-source-details">Which sources do you combine?</label><p className="omni-help">List each source and what it covers. Record anything still unknown.</p><Textarea id="omni-source-details" maxLength={2000} value={answers.sources_detail||''} onChange={e=>detail('sources_detail',e.target.value)}/></div>}
           {q.id!==group.note&&q.id!=='sources'&&answers[q.id+'_detail']&&<p className="omni-retained-detail">Previously reported context: {answers[q.id+'_detail']}</p>}
         </section>;

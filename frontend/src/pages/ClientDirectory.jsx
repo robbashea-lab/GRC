@@ -2,7 +2,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 
 import {useNavigate} from 'react-router-dom';
 
-import api, {formatError} from '@/lib/api';
+import api, {formatError, PREVIEW_MODE} from '@/lib/api';
 
 import {useAuth} from '@/context/AuthContext';
 
@@ -232,7 +232,7 @@ function Portfolio({user}) {
 
     </div>
 
-    {selectedClient && selectedProgram && <PortfolioHistoryDialog client={selectedClient} programs={clientPrograms} selected={selection.identity} onSelect={identity => setSelection(value => ({...value, identity}))} onClose={closeHistory} onCloseAutoFocus={focusOpener} onNavigate={path => enter(selectedClient, path)} chartView={view.chartView || 'line'} onChartViewChange={chartView => update({chartView})} refreshToken={refreshToken} asOf={data.as_of} />}
+    {selectedClient && selectedProgram && <PortfolioHistoryDialog client={selectedClient} programs={clientPrograms} selected={selection.identity} onSelect={identity => setSelection(value => ({...value, identity}))} onClose={closeHistory} onCloseAutoFocus={focusOpener} onNavigate={path => enter(selectedClient, path)} chartView={view.chartView || 'line'} onChartViewChange={chartView => update({chartView})} referenceHistory={PREVIEW_MODE === true && user.workspace_mode === 'demo'} refreshToken={refreshToken} asOf={data.as_of} />}
 
   </section>;
 

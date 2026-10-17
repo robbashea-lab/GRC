@@ -1,4 +1,3 @@
-import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import PortfolioHistoryDialog from './PortfolioReports';
 import {programIdentity} from '@/lib/portfolioProgress';
@@ -6,7 +5,6 @@ import {programIdentity} from '@/lib/portfolioProgress';
 // The dashboard gate resolves and validates the native client/program before rendering.
 export default function BrawndoDemoProgram({client, program, refreshToken}) {
   const navigate = useNavigate();
-  const [chartView, setChartView] = useState('line');
   const openStatus = status => {
     const [path, query = ''] = program.to.split('?');
     const params = new URLSearchParams(query);
@@ -14,8 +12,7 @@ export default function BrawndoDemoProgram({client, program, refreshToken}) {
     params.set('view', status);
     navigate(`${path}?${params}`);
   };
-  return <PortfolioHistoryDialog inline client={client} programs={[program]}
+  return <PortfolioHistoryDialog inline referenceHistory client={client} programs={[program]}
     selected={programIdentity(program)} refreshToken={refreshToken}
-    onNavigate={navigate} onStatusNavigate={openStatus}
-    chartView={chartView} onChartViewChange={setChartView} />;
+    onNavigate={navigate} onStatusNavigate={openStatus} />;
 }

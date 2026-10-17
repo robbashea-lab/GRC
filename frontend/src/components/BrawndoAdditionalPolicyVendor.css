@@ -1,22 +1,18 @@
 :is(.bap-page,.bav-page) {
-  --pv-bg:#F4F6F9; --pv-surface:#FFF; --pv-subtle:#F7F9FB; --pv-tablehead:#F9FAFC; --pv-hover:#F2F5F9;
-  --pv-border:#E3E8EF; --pv-strong:#CDD5E0; --pv-fg:#0F1B2D; --pv-fg2:#46566B; --pv-muted:#5A687B;
-  --pv-link:#1F56C3; --pv-selected:#EDF2FC; --pv-rail:#215BC1; --pv-good:#05603A; --pv-bad:#B42318;
-  --pv-warn:#93370D; --pv-due:#B7791F; --pv-over:#D64550; --pv-seg:#FFF;
-  --pv-review:#215BC1; --pv-assurance:#B7791F; --pv-renewal:#0F8A7A;
-  --pv-shadow:0 1px 2px rgba(15,27,45,.05),0 1px 1px rgba(15,27,45,.02);
-  --pv-seg-shadow:0 1px 2px rgba(15,27,45,.10),0 0 0 1px rgba(15,27,45,.06);
+  /* Private adapters follow the shared scoped palette in both themes. */
+  --pv-bg:var(--bg); --pv-surface:var(--surface); --pv-subtle:var(--subtle); --pv-tablehead:var(--tablehead); --pv-hover:var(--hover);
+  --pv-border:var(--border); --pv-strong:var(--border-strong); --pv-fg:var(--fg); --pv-fg2:var(--fg2); --pv-muted:var(--muted);
+  --pv-link:var(--link); --pv-selected:var(--selected); --pv-rail:var(--rail); --pv-good:var(--good); --pv-bad:var(--bad);
+  --pv-warn:var(--warn); --pv-due:var(--c-due); --pv-over:var(--c-over); --pv-seg:var(--seg-on);
+  --pv-review:var(--m-rev); --pv-assurance:var(--m-asr); --pv-renewal:var(--m-ren);
+  --pv-shadow:var(--shadow-sm);
+  --pv-seg-shadow:var(--shadow-seg);
   display:grid; gap:20px; min-width:0; max-width:1600px; padding:28px 24px 120px; padding-right:max(24px,env(safe-area-inset-right,0px));
-  background:var(--pv-bg); color:var(--pv-fg); font:13.5px/1.5 Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  background:var(--pv-bg); color:var(--pv-fg); font:13.5px/1.5 var(--font);
   font-optical-sizing:auto; -webkit-font-smoothing:antialiased;
 }
 [data-theme="dark"] :is(.bap-page,.bav-page),:is(.bap-page,.bav-page)[data-theme="dark"] {
-  --pv-bg:#0A0F16; --pv-surface:#111823; --pv-subtle:#151D29; --pv-tablehead:#131B26; --pv-hover:#19222F;
-  --pv-border:#222C3A; --pv-strong:#34404F; --pv-fg:#EDF1F7; --pv-fg2:#A7B3C4; --pv-muted:#8E9BAE;
-  --pv-link:#8EC5FF; --pv-selected:#1B2738; --pv-rail:#8EC5FF; --pv-good:#3DC79F; --pv-bad:#F2828C;
-  --pv-warn:#E9B65A; --pv-due:#C2862F; --pv-over:#E66767; --pv-seg:#243042;
-  --pv-review:#4A8BDB; --pv-assurance:#C2862F; --pv-renewal:#1F9E89;
-  --pv-shadow:none; --pv-seg-shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+  color-scheme:dark;
 }
 :is(.bap-page,.bav-page) :is(h1,h2,h3,h4,p) { margin:0; }
 :is(.bap-page,.bav-page) button { cursor:pointer; }

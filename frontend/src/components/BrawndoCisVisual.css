@@ -1,28 +1,9 @@
-/* Scoped from target82d56fbb; native operations are unchanged. */
+/* Core palette/font/chrome share Dashboard; native CIS structure and status roles stay local. */
 html[data-brawndo-cis-visual=true] {
-  --bg:#F4F6F9; --surface:#FFFFFF; --subtle:#F7F9FB; --tablehead:#F9FAFC; --hover:#F2F5F9; --border:#E3E8EF; --border-strong:#CDD5E0;
-  --fg:#0F1B2D; --fg2:#46566B; --muted:#5A687B; --link:#1F56C3; --selected:#EDF2FC; --rail:#215BC1; --focus:#215BC1;
-  --good:#05603A; --good-bg:#E7F6EF; --bad:#B42318; --bad-bg:#FDECEA; --warn:#93370D; --warn-bg:#FEF3E2;
-  --chrome:#FFFFFF; --banner:#FAFBFC; --brand:#1D4FA8; --avatar:#1D4FA8; --avatar-fg:#FFFFFF; --scrim:rgba(15,27,45,.38);
   --c-impl:#0A7358; --c-part:#E2AA30; --c-not:#E46F7A; --c-none:#D3DBE5; --c-track:#EDF1F5;
-  --seg-on:#FFFFFF; --tip-bg:#FFFFFF;
-  --shadow-sm:0 1px 2px rgba(15,27,45,.05), 0 1px 1px rgba(15,27,45,.02);
-  --shadow-seg:0 1px 2px rgba(15,27,45,.10), 0 0 0 1px rgba(15,27,45,.06);
-  --shadow-tip:0 0 0 1px rgba(15,27,45,.05), 0 12px 28px -8px rgba(15,27,45,.24);
-  --shadow:0 0 0 1px rgba(15,27,45,.06), 0 28px 64px -16px rgba(15,27,45,.34);
-  --font:Inter, 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
 }
 html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] {
-  --bg:#0A0F16; --surface:#111823; --subtle:#151D29; --tablehead:#131B26; --hover:#19222F; --border:#222C3A; --border-strong:#34404F;
-  --fg:#EDF1F7; --fg2:#A7B3C4; --muted:#8E9BAE; --link:#8EC5FF; --selected:#1B2738; --rail:#8EC5FF; --focus:#8EC5FF;
-  --good:#3DC79F; --good-bg:rgba(61,199,159,.13); --bad:#F2828C; --bad-bg:rgba(242,130,140,.13); --warn:#E9B65A; --warn-bg:rgba(233,182,90,.13);
-  --chrome:#0D131B; --banner:#0D131B; --brand:#8CC4FF; --avatar:#2F6FD6; --avatar-fg:#FFFFFF; --scrim:rgba(0,0,0,.6);
   --c-impl:#3CC2A0; --c-part:#D4A13C; --c-not:#D9505F; --c-none:#2C3747; --c-track:#1B2430;
-  --seg-on:#243042; --tip-bg:#161F2B;
-  --shadow-sm:none; --shadow-seg:0 1px 2px rgba(0,0,0,.4);
-  --shadow-tip:0 0 0 1px rgba(255,255,255,.05), 0 12px 32px -8px rgba(0,0,0,.65);
-  --shadow:0 0 0 1px rgba(255,255,255,.06), 0 28px 64px -16px rgba(0,0,0,.75);
-  color-scheme:dark;
 }
 /* main */
 .brawndo-cis-visual .main { min-width:0; }

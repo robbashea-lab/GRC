@@ -1,83 +1,38 @@
-/* The six additional references share these tokens; earlier pilots keep their own cascade. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap');
+/* Core palette/font/chrome come from SixSurfaceAppearance; category colors retain their meaning. */
 .brawndo-workspace-pilot[data-additional-surface],
 html[data-additional-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating) {
-  --bg:#F4F6F9; --surface:#FFFFFF; --subtle:#F7F9FB; --tablehead:#F9FAFC; --hover:#F2F5F9; --border:#E3E8EF; --border-strong:#CDD5E0;
-  --fg:#0F1B2D; --fg2:#46566B; --muted:#5A687B; --link:#1F56C3; --selected:#EDF2FC; --rail:#215BC1; --focus:#215BC1;
-  --good:#05603A; --good-bg:#E7F6EF; --bad:#B42318; --bad-bg:#FDECEA; --warn:#93370D; --warn-bg:#FEF3E2;
-  --chrome:#FFFFFF; --banner:#FAFBFC; --brand:#1D4FA8; --avatar:#1D4FA8; --avatar-fg:#FFFFFF; --scrim:rgba(15,27,45,.38);
-  --c-part:#E2AA30; --c-sched:#215BC1; --c-due:#B7791F; --c-over:#D64550; --m-rev:#215BC1; --m-asr:#B7791F; --m-ren:#0F8A7A;
-  --seg-on:#FFFFFF; --tip-bg:#FFFFFF;
-  --shadow-sm:0 1px 2px rgba(15,27,45,.05),0 1px 1px rgba(15,27,45,.02);
-  --shadow-seg:0 1px 2px rgba(15,27,45,.10),0 0 0 1px rgba(15,27,45,.06);
-  --shadow-tip:0 0 0 1px rgba(15,27,45,.05),0 12px 28px -8px rgba(15,27,45,.24);
-  --shadow:0 0 0 1px rgba(15,27,45,.06),0 28px 64px -16px rgba(15,27,45,.34);
-  --font:Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
-  color-scheme:light;
+  --c-sched:#215BC1; --c-due:#B7791F; --c-over:#D64550; --m-rev:#215BC1; --m-asr:#B7791F; --m-ren:#0F8A7A;
 }
 .brawndo-workspace-pilot[data-additional-surface][data-theme=dark],
 html[data-additional-surface][data-additional-theme=dark] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating) {
-  --bg:#0A0F16; --surface:#111823; --subtle:#151D29; --tablehead:#131B26; --hover:#19222F; --border:#222C3A; --border-strong:#34404F;
-  --fg:#EDF1F7; --fg2:#A7B3C4; --muted:#8E9BAE; --link:#8EC5FF; --selected:#1B2738; --rail:#8EC5FF; --focus:#8EC5FF;
-  --good:#3DC79F; --good-bg:rgba(61,199,159,.13); --bad:#F2828C; --bad-bg:rgba(242,130,140,.13); --warn:#E9B65A; --warn-bg:rgba(233,182,90,.13);
-  --chrome:#0D131B; --banner:#0D131B; --brand:#8CC4FF; --avatar:#2F6FD6; --avatar-fg:#FFFFFF; --scrim:rgba(0,0,0,.6);
-  --c-part:#D4A13C; --c-sched:#4A8BDB; --c-due:#C2862F; --c-over:#E66767; --m-rev:#4A8BDB; --m-asr:#C2862F; --m-ren:#1F9E89;
-  --seg-on:#243042; --tip-bg:#161F2B;
-  --shadow-sm:none; --shadow-seg:0 1px 2px rgba(0,0,0,.4);
-  --shadow-tip:0 0 0 1px rgba(255,255,255,.05),0 12px 32px -8px rgba(0,0,0,.65);
-  --shadow:0 0 0 1px rgba(255,255,255,.06),0 28px 64px -16px rgba(0,0,0,.75);
-  color-scheme:dark;
+  --c-sched:#4A8BDB; --c-due:#C2862F; --c-over:#E66767; --m-rev:#4A8BDB; --m-asr:#C2862F; --m-ren:#1F9E89;
 }
 .brawndo-workspace-pilot[data-additional-surface],
 html[data-additional-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating) {
-  --font-body:var(--font); --font-heading:var(--font);
-  --color-bg-app:var(--bg); --color-bg-surface:var(--surface); --color-bg-subtle:var(--subtle); --color-bg-tablehead:var(--tablehead); --color-bg-row-hover:var(--hover);
-  --color-border:var(--border); --color-border-strong:var(--border-strong); --color-input-border:var(--border-strong);
-  --color-text-primary:var(--fg); --color-text-secondary:var(--fg2); --color-text-muted:var(--muted);
-  --color-link:var(--link); --color-focus-ring:var(--focus); --color-selected-bg:var(--selected); --color-brand-accent:var(--rail); --color-brand-on-accent:#fff;
   --ba-bg:var(--bg); --ba-surface:var(--surface); --ba-subtle:var(--subtle); --ba-hover:var(--hover); --ba-border:var(--border); --ba-strong:var(--border-strong);
   --ba-text:var(--fg); --ba-muted:var(--muted); --ba-link:var(--link); --ba-selected:var(--selected); --ba-rail:var(--rail); --ba-good:var(--good); --ba-warn:var(--warn); --ba-tablehead:var(--tablehead);
   --ba-fg2:var(--fg2); --ba-shadow:var(--shadow-sm); --ba-shadow-seg:var(--shadow-seg); --ba-seg-on:var(--seg-on); --ba-due:var(--c-due); --ba-bad:var(--bad);
-  --bwp-top:60px; --bwp-sidebar:240px; --bwp-bg:var(--bg); --bwp-card:var(--surface); --bwp-line:var(--border); --bwp-text:var(--fg); --bwp-muted:var(--fg2); --bwp-accent:var(--link); --bwp-subtle:var(--subtle); --bwp-focus:var(--focus);
-  background:var(--bg); color:var(--fg); font:13.5px/1.5 var(--font); font-optical-sizing:auto; -webkit-font-smoothing:antialiased;
+  background:var(--bg); color:var(--fg);
 }
-.brawndo-workspace-pilot[data-additional-surface] .bwp-topbar {height:60px;gap:16px;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));background:var(--chrome);border-color:var(--border);box-shadow:none;color:var(--fg)}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-brand {width:228px;min-width:228px;flex:none;gap:10px;color:var(--brand);font:700 20px/1.05 var(--font);letter-spacing:-.03em}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-mark {width:32px;height:32px}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-brand small {margin:0;font:600 7.5px/1.5 var(--font);letter-spacing:1.3px;white-space:nowrap;color:var(--muted);text-transform:uppercase}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-search {flex:1 1 360px;max-width:400px}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-search input {height:36px;padding:0 64px 0 36px;border:1px solid var(--border);border-radius:8px;background:var(--subtle);color:var(--fg);font:inherit}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-search input::placeholder {color:var(--muted)}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-search >svg {left:12px;top:10px;width:16px;height:16px;color:var(--muted)}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-search kbd {display:block;right:8px;top:8px;padding:0 6px;border:1px solid var(--border);border-radius:5px;background:var(--surface);font:500 11px/18px var(--font);color:var(--muted)}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-client {display:flex;max-width:none;height:36px;gap:10px;padding:0 10px 0 12px;border:1px solid var(--border);border-radius:8px;font:500 13px/1.5 var(--font);background:transparent;color:var(--fg);margin-left:auto}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-top-actions {display:flex;align-items:center;gap:4px;margin-left:auto}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-top-actions .bwp-client {margin-left:0}
+.brawndo-workspace-pilot[data-additional-surface] .bwp-topbar {padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.brawndo-workspace-pilot[data-additional-surface] .bwp-brand small {white-space:nowrap}
+.brawndo-workspace-pilot[data-additional-surface] .bwp-client {max-width:none}
 .brawndo-workspace-pilot[data-additional-surface] .bwp-client svg {width:16px;height:16px}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-theme {width:36px;height:36px;margin-left:0;color:var(--fg2)}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-theme svg {width:16px;height:16px}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-topbar [data-testid=notification-bell] {display:grid;place-items:center;width:36px;height:36px;padding:0;border-radius:8px;color:var(--fg2)}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-profile .bsb-profile {width:34px;height:34px;margin-left:8px}
 .brawndo-workspace-pilot[data-additional-surface] .bwp-profile .bsb-profile >svg {display:none}
-.brawndo-workspace-pilot[data-additional-surface] .bwp-profile .bsb-avatar {width:34px;height:34px;background:var(--avatar);color:var(--avatar-fg);border:0;font:600 12px/1.5 var(--font);letter-spacing:.02em}
-.brawndo-workspace-pilot[data-additional-surface] .app-sidebar {display:flex;width:240px;top:60px;height:calc(100dvh - 60px);background:var(--chrome);border-color:var(--border)}
-.brawndo-workspace-pilot[data-additional-surface] .bsb {--sb-head:var(--fg);--sb-text:var(--fg2);--sb-muted:var(--muted);--sb-hover:var(--hover);--sb-active-bg:var(--selected);--sb-active-text:var(--fg);--sb-border:var(--border);--sb-chip:var(--subtle);--sb-focus:var(--focus);--sb-accent:var(--rail);font-family:var(--font)}
+.brawndo-workspace-pilot[data-additional-surface] .app-sidebar {display:flex}
 .brawndo-workspace-pilot[data-additional-surface] .bsb-brand,.brawndo-workspace-pilot[data-additional-surface] .bsb-foot {display:none}
 .brawndo-workspace-pilot[data-additional-surface] .bsb-head {display:grid;padding:16px 12px 0;gap:0}
-.brawndo-workspace-pilot[data-additional-surface] .bsb-back {justify-content:start;gap:10px;padding:7px 10px;font:400 13px/1.5 var(--font);color:var(--fg2)}
-.brawndo-workspace-pilot[data-additional-surface] .bsb-client {display:flex;gap:10px;margin:8px 0 2px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--subtle)}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-back {justify-content:start}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-client {display:flex;gap:10px;margin:8px 0 2px;padding:9px 10px;border-width:1px;border-style:solid}
 .brawndo-workspace-pilot[data-additional-surface] .bsb-client .bsb-group-label {display:none}
-.brawndo-workspace-pilot[data-additional-surface] .bsb-client-mark {width:30px;height:30px;flex:none;background:var(--subtle);border-radius:8px;box-shadow:inset 0 0 0 1px var(--border);color:var(--fg2);font:600 13px/1.5 var(--font)}
-.brawndo-workspace-pilot[data-additional-surface] .bsb-client-name {font:600 13.5px/1.3 var(--font);color:var(--fg)}
-.brawndo-workspace-pilot[data-additional-surface] .bsb-client-industry {display:block;font:400 11.5px/1.5 var(--font);color:var(--muted)}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-client-mark {flex:none}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-client-name {font:600 13.5px/1.3 var(--font)}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-client-industry {display:block}
 .brawndo-workspace-pilot[data-additional-surface] .bsb-nav {padding:0 12px 16px;gap:2px}
 .brawndo-workspace-pilot[data-additional-surface] .bsb-group {gap:2px;border:0;padding:0}
-.brawndo-workspace-pilot[data-additional-surface] .bsb-group >.bsb-group-label {display:block;margin:16px 10px 6px;padding:0;font:600 11px/1.5 var(--font);letter-spacing:.06em;color:var(--muted)}
-.brawndo-workspace-pilot[data-additional-surface] .bsb-link {justify-content:start;min-height:0;gap:10px;padding:7px 10px;border:0;border-radius:7px;font:400 13px/1.5 var(--font);color:var(--fg2)}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-group >.bsb-group-label {display:block;margin:16px 10px 6px;padding:0;font:600 11px/1.5 var(--font);letter-spacing:.06em}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-link {justify-content:start}
 .brawndo-workspace-pilot[data-additional-surface] .bsb-link >span {display:initial}
-.brawndo-workspace-pilot[data-additional-surface] .bsb-link svg {width:16px;height:16px;color:var(--muted)}
-.brawndo-workspace-pilot[data-additional-surface] .bsb-link.is-active {background:var(--selected);color:var(--fg);box-shadow:none;font-weight:600}
-.brawndo-workspace-pilot[data-additional-surface] .bsb-link.is-active svg {color:var(--rail)}
 .brawndo-workspace-pilot[data-additional-surface] .bsb-badge {min-width:18px;padding:0 6px;border-radius:999px;font:600 11px/18px var(--font)}
 .brawndo-workspace-pilot[data-additional-surface] .bsb-badge.is-critical {background:var(--bad-bg);color:var(--bad)}
 .brawndo-workspace-pilot[data-additional-surface] .bsb-badge.is-attention {background:var(--warn-bg);color:var(--warn)}
@@ -89,7 +44,7 @@ html[data-additional-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-
 .brawndo-additional :is(button,a,input,select,textarea,summary):focus-visible,
 .brawndo-workspace-pilot[data-additional-surface] :is(button,a,input,select,textarea,summary):focus-visible {outline:2px solid var(--focus);outline-offset:2px}
 /* Native viewport and scrollbar-corner paint follow the verified workspace theme. */
-html[data-additional-surface] {color-scheme:light}
+html[data-additional-surface] {color-scheme:normal}
 html[data-additional-surface][data-additional-theme=dark] {color-scheme:dark}
 html[data-additional-surface] :is(.ui-sheet,.ui-dialog,.ui-popover,.ui-menu,.ui-select-content) {background:var(--surface);color:var(--fg);border-color:var(--border);font-family:var(--font)}
 html[data-additional-surface] :is(.ui-sheet,.ui-dialog) {box-shadow:var(--shadow)}
@@ -125,7 +80,7 @@ html[data-additional-surface] .evidence-workspace {width:min(520px,100vw)!import
 html[data-additional-surface] .evidence-workspace >:is(.space-y-4,form) {flex:1;min-height:0;overflow:auto;padding:20px 24px}
 @media(max-width:860px) {
   .brawndo-workspace-pilot[data-additional-surface] {--bwp-sidebar:0px}
-  .brawndo-workspace-pilot[data-additional-surface] .bwp-mobile-nav {display:grid;width:36px;height:36px;color:var(--fg2)}
+  .brawndo-workspace-pilot[data-additional-surface] .bwp-mobile-nav {display:grid;width:36px;height:36px}
   .brawndo-workspace-pilot[data-additional-surface] .bwp-brand {width:auto;min-width:0}
   .brawndo-workspace-pilot[data-additional-surface] :is(.bwp-brand small,.bwp-search) {display:none}
   .brawndo-workspace-pilot[data-additional-surface] .bwp-client {display:flex;font-size:0;gap:0}

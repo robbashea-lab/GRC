@@ -1,171 +1,52 @@
 # GoverNara combined staging handoff
 
-Updated 17 October 2026. Agent 007 owns integration, serialized CPU/browser windows,
-publication and the existing Render staging release. Implementation, local checks,
-full CI, deployment, hosted verification and Robb's acceptance are separate states.
+Updated 17 October 2026. Agent 007 owns integration, publication, serialized resource windows and the existing Render staging release. Agent 69 independently exercises native workflows. Implementation, local checks, full CI, deployment, hosted verification and Robb's acceptance are separate states.
 
-## Authorized scope and ownership
+## Scope and current source
 
-Robb's adopted six-surface request makes each pinned HTML target authoritative for
-appearance and the native application authoritative for records and workflows.
-The verified 17 October 14:28:36 UTC instruction authorizes completion of all five
-implementation workstreams and publication to existing Render staging, followed by
-Agent 69's independent workflow review. No additional Robb visual/security approval
-hold is required before staging. Required CI and material safety failures remain
-release gates. There is no main merge, production/customer deployment, new hosting,
-access expansion or temporary PR83 QA reactivation.
+The containing commit combines the approved five workstreams with owner-reviewed workflow repairs and Robb's limited chart/theme correction addendum. Its exact commit/tree must be recorded in the external checkpoint before qualification. Local branch: `codex/combined-governara-visual-integration-20261016`; cumulative draft PR: [86](https://github.com/robbashea-lab/GRC/pull/86), `codex/brawndo-demo-risks-20261015`.
 
-- Portfolio `/clients`: existing internal-role authorization, all authorized
-  current/new clients and programs, both Explore and ordinary sign-in; independent
-  Inter-first target palette and compact shell.
-- Dashboard, Calendar, Reviews, Actions and Risks: trusted authorized active Explore
-  `demo_brawndo`, exact routes and selected/current/resolved client agreement;
-  loading/error, stale-response and native role restrictions remain fail-closed.
-- Additional sections: Contacts, Client Profile, AI Governance, Evidence, Policies
-  and Vendors retain their own strict Brawndo Explore presentation gates and native
-  record controllers. Source owners' BCC/handoff commits are integrated.
-- CIS: scoped visual work retains native assessment, interview, evidence, history,
-  review/recurrence, saved values and retained-item access. No framework expansion.
-- Login: native authentication/recovery/forced-change/logout paths are preserved.
-- Onboarding: separate, strictly gated Brawndo Explore Client Profile presentation;
-  native four-step saves, queued versions, AI intake, applicability/framework
-  choices, completion intent, completed-client configuration and history remain.
-  Read-only forecasts use existing dated proposals and recurrence rules; unknown
-  anchors stay unavailable. No onboarding authority extends to unrelated CIS work.
+- Preserve native records, IDs, controllers, lifecycle, evidence/history, dirty guards, required fields, version checks, permissions, recurrence and persistence. Risk Review/Close retain native save-before-command.
+- Portfolio retains its existing internal-role/all-authorized-client scope and its independent Inter-first reference. The new chart-control correction is limited to native Explore Demo; ordinary sign-in retains its prior native chart options.
+- The five original Brawndo surfaces, CIS and Additional presentation remain within their existing trusted, active canonical `demo_brawndo` gates. No other-client rollout or framework expansion is authorized.
+- Login/authentication and separately assigned Onboarding workflows are preserved. Completed-client configuration must not restart onboarding. A contact-only QA business record is not a platform account/invitation.
+- No main merge, production/customer deployment, new infrastructure/accounts/credentials, access expansion, disabled PR83 QA reactivation, Demo reset or history deletion.
 
-Root integrated the reviewed onboarding commits through
-`fd2a638a34bac85244c5ecd22fd38d3dfae900c4`, tree
-`56f3fec095cfdd628b065d0bc760b73a27a89e86`, on the qualified supporting
-`3784f477d17c454ba08b251059e55cec9230fb10` integration. The containing commit
-reconciles documentation; its exact SHA/tree is pinned in the external checkpoint
-before the final combined qualification. The local branch is
-`codex/combined-governara-visual-integration-20261016`.
+The prior local `5461a6aad14b429355068a750871168ad339a69b` and published `7c0366c020003727b70c0e185cdf52fbe93efb7c` share tree `2af431ec19364fd6ed231b541ff9b754df6b421c`. Local Vendor commit `7db58cdcba6503e310e7be33c0d705388326e22c` and CIS commit `e635a75a44d274067ddadcdc488252e654ace74b` preserve two focused repair milestones. Their seven exact file hashes match implementation-owner handoffs; they were not separately published or deployed.
 
-## Verification at this source freeze
+## Repairs and approved presentation corrections
 
-The 3784 supporting source passed the original, uninstrumented 46-suite selection:
-641 tests, zero failed/pending/runtime-error results, no timeout changes, filtering
-or retries. Both canonical standard and preview builds passed; all 13 files in each
-actual output and immutable copy matched their manifests/hashes. Actual outer exit
-was zero and an independent AI receipt review agreed. Standard JS was
-`main.2f1b8944.js`, preview JS `main.2c1a309a.js`, CSS `main.f5b47c94.css`.
-Windows build names do not predict Linux CI or Render hashes.
+1. **Vendor parent status:** the native Review saved the correct Vendor state, but the retained parent copied dates/version only. The existing refresh now reconciles saved status, baseline and untouched form status together in Brawndo Demo. Genuine name/status drafts and dirty CAS token survive; a clean form adopts the fresh version. Generation, client, exact Vendor and latest-request guards prevent stale/foreign responses. The nested Review remains open. No lifecycle/API/status vocabulary/persistence rule changes.
+2. **CIS partial checkpoints:** earlier-group navigation now uses schema validation in the bounded loaded Brawndo Demo IG1 context. Current-group requirements and strict final/server completion validation remain. An unfinished later confirmation no longer prevents reaching its detail.
+3. **CIS explicit choices:** UI transitions honor existing V4/V5 None/Not sure exclusivity; legacy semantics and strict invalid external-answer rejection remain. Clearing a choice omits the partial select key/matrix row while preserving other answers, notes, versions and native assessment state. Both render paths use the same small helpers within the bounded context. No automatic native assessment save, new schema/catalog, migration or outcome rule.
+4. **Approved chart controls:** Explore Portfolio and the already-gated Brawndo Dashboard use the approved single implemented-history chart and period/View data controls. The additional History/Status mix selector is omitted there; a retained mix preference cannot override the approved presentation. Standard/native callers retain their previous options. Reporting identity, dates, counts, scope/forecast math, genuine points, proven continuity, axes, tooltip, keyboard and status navigation are unchanged.
+5. **Shared Brawndo appearance:** the existing non-Portfolio Dashboard palette, Segoe-first family and shared chrome are reused by existing CIS/Additional origin markers and portals. Competing old gray/Inter declarations are removed; Policy/Vendor private tokens map one way to shared roles. Module status/category meanings, geometry, full native records, content and controls remain. Portfolio's separate palette/font and the original five rules are preserved. There is no new presentation gate or preference store.
 
-The compiled Dashboard phone period strip measured 309.3333 by 48.0833 CSS px in
-both themes, matching the target. At 414 px it fits without the horizontal scrollbar;
-returning to 390 restores the correct gutter. Native navigation to Risks withdraws
-Dashboard's root gutter and returning restores it. Genuine View data expanded and
-the native work summary opened/dismissed. These are first-available DOM observations,
-not a first-paint trace or final combined hosted acceptance. More complete source,
-focus, history-row and negative-context readbacks belong to final qualification.
+Robb explicitly authorized bounded material-blocker repairs and the limited visual-freeze exception. Significant redesign, architecture or business-rule changes beyond these corrections remain held for a concrete decision; editorial proposals are reported rather than applied.
 
-The scoped `scrollbar-gutter: stable` rule follows `@import` and applies only to the
-existing authorized Dashboard root marker. An isolated same-node late-growth
-reproduction demonstrated the previous 15.3333 px missing scrollbar reservation;
-its stable-gutter control preserved the target height. No padding or fixed strip
-height was substituted. See [CSS Overflow Level 3, section 4.2](https://www.w3.org/TR/css-overflow-3/#scrollbar-gutter-property),
-a Working Draft; observed application behavior establishes this result.
+## Evidence established before successor qualification
 
-Onboarding's frozen 476e and ac88 sources passed the original 11 focused suites/82
-tests and both local optimized builds. Separate comparison-harness asset/receipt
-failures were preserved and corrected outside application source. The final fd2
-delivery corrects measured scoped card, stepper, control and preview spacing while
-preserving stable native forms and focus. Its 6a predecessor passed all 12 focused
-onboarding tests, including draft/focus/loading regressions; subsequent changes
-only align selector padding and the fourth-step introduction. Final-source browser
-checks covered all four steps, both themes, phone/tablet widths, native completion
-and completed-client configuration/history. The owner reports 200% zoom unverified;
-reduced-motion CSS was inspected, but an active reduced-motion session was not run.
-Direct glyph probes confirmed native and target headings render Inter; empty
-font-face enumeration from the browser proxy was not a missing-font defect. No
-font asset was added. Checks used isolated loopback origins, with no canonical demo
-storage reset or hosted writes. Independent source and Additional Profile overlap
-reviews found no actionable defect; these AI reviews are not human approval or
-runtime acceptance. The final integrated 56-suite selection, canonical builds and
-exact-head full CI remain required. A demonstrated regression supersedes this
-candidate; it must never be waived as a minor visual issue.
+- Prior local5461: 58 whole suites/739 tests and both canonical builds passed at original budgets; independent AI receipt review agreed. All actual/preserved13-file outputs matched. These results qualify only that source.
+- Exact published7c: [Release verification201](https://github.com/robbashea-lab/GRC/actions/runs/39049459576) passed frontend, backend, Mongo and aggregate gate. Frontend364 suites/9,929 tests/one snapshot and both builds passed. CI200 had failed router mocks; it is not qualifying evidence.
+- Existing Render staging was verified Live7c at17:15:13UTC: service `srv-db1s0cugekts73f72reg`, deployment `dep-db9qpc61egvs7389ndc0`, [staging](https://omnisciente-staging.onrender.com). All13 served standard files matched the qualified build byte-for-byte; JS `main.fdbe0815.js`, CSS `main.c0de60eb.css`. Provider auto-deploy was disabled at preflight. These are dated7c observations, not successor proof.
+- Vendor candidate: whole existing36-case suite passed. CIS candidate: library23 passed; lifecycle initial49 passed/one proposed legacy fixture failed, then the affected whole lifecycle suite passed50 after correcting that fixture. Actual child/wrapper/outer evidence and original pre-Jest harness/encoding errors are retained. Independent AI source reviews found no actionable defect; this is not human peer approval or hosted acceptance.
+- Agent69 reproduced all four workflow failures on7c before repair. Those failures remain unresolved on that deployed baseline until a qualified successor is independently retested.
+- Fresh Demo chart checks showed one actual saved position, then three genuine positions after a native3.5 save/restore. Dashboard/Portfolio counts synchronized and keyboard/tooltips read the correct values. Minutes of history occupy about0.04px of the six-month axis. No missing binding was established there; sparse history is not permission to fabricate a trend or forecast.
+- Four native CSV downloads were saved, parsed and independently rehashed. Binary attachment inspection remains separate/unverified. Native save/reload checks concern browser-local Explore Demo, not authenticated Mongo durability or real-role/API tenant-denial acceptance.
+- Both-theme14-page hosted baseline confirmed the theme preference propagates; the defect was duplicated gray/Inter palette/font declarations on CIS and six Additional pages. Systems/Reports already used the approved palette/font; legitimate module heading differences were retained.
 
-All six pinned targets leave light-theme `color-scheme` at its initial `normal`
-value. Actual target/candidate readbacks confirmed that the scoped application rule
-instead forced `light`; this integration restores `normal` and retains the dark
-override. The existing exact-surface marker and cleanup boundaries are unchanged.
-This proves the cascade correction; final compiled styles and scrollbar paint must
-still be checked, rather than assuming the property alone explains a raster gap.
+## References and evidence limits
 
-The cadcb59 combined source subsequently passed all 56 affected suites/725 tests
-and both canonical 13-file builds, with actual outer exit zero and an independent
-receipt audit. Its exact tree was published as `4564534f08f0611e2ea1dda7f3aabc6914ccaa57`.
-CI200 passed backend and Mongo; its frontend was still running when the following
-single rendered correction batch was prepared. It does not qualify the successor.
+Latest approved chart references are the pinned `visual-targets/portfolio.html` (78,152 bytes, SHA256 `b728df00aa961f7bebf34fafdeb46ae4263475854db320a002f8b9ea6beb0a99`) and `dashboard.html` (86,407 bytes, `5e824ee4a878d5dee2914db05fd8643c72249b10c706ea20f7459162f3c9d8a9`) in the Desktop `GoverNara-Six-Surface-Visual-Correction-20261016` package. Full hashes/provenance are recorded in `Portfolio-Dashboard-approved-reference-inventory-20261017.json`. The adopted request, manifest and12 target/provenance files were reverified. An older similarly named Portfolio-Final file is not the current appearance authority.
 
-All 24 final-source desktop/phone light/dark pairs passed equal-pane, asset-binding,
-rendered-content and stable-capture guards. Independent image review found narrow
-presentation residues: muted Portfolio select text, summary helper emphasis,
-Dashboard link typography and a 4px phone gap, Action overdue-clock emphasis, and
-Risks title/badge/divider inheritance. This follow-up corrects those scoped styles
-and decorative markup only. Counts, dates, controllers, permissions and commands
-are unchanged. Fresh checks and exact-head CI bind the successor. Remaining minor
-visual limitations are documented without adding a Robb signoff or open-ended
-pixel-polish hold before the authorized existing-staging release.
+Both references use single implemented-percentage step/area charts with real-position markers, fixed percentage axes,1/3/6/12-month controls, tooltips/readout and View data. Illustrative reference dates, counts and history are not product data. Native UTC/history/forecast rules remain authoritative. Source equality/cascade projections do not prove rendered equality; compute actual fonts, colors, frames and focus/scroll behavior in the compiled candidate.
 
-## Evidence and historical limits
+Task outputs retain source-specific visual pairs, overlays, computed-style/font/boundary audits, native observations, failed attempts, hashes and independent reviews. Prior5461 visual images and7c hosted captures remain bound to those sources. Captures138-146 were misleadingly named for freshTab3, while their metadata/AX consistently refer to oldTab2; originals are preserved and those filename claims are downgraded. Later captures use explicit tab binding. The old QA tab's Evidence metadata cancellation remains blocked by documented browser focus/confirmation timeouts, with an unsaved draft preserved; no Save or successful Cancel is claimed.
 
-Task `outputs/` and the owners' source-specific receipts retain raw commands, exits,
-logs, test JSON, target hashes, canonical Git bindings, screenshots, measurements,
-overlays/differences and independent reviews. All six Desktop targets and their six
-provenance originals rehashed to the supplied manifest on 17 October, unchanged.
-The f15 24 native default pairs/48 images and matched Portfolio fixtures support
-only their recorded source. Screenshot rasters are not 1:1 CSS-pixel calibration;
-geometry comes from equal-environment DOM measurements. New font probes distinguish
-explicit families/fallbacks using glyph metrics; declarations/loading flags alone
-do not establish the rendered face. Full final visual/state coverage remains open.
+## Required next release steps
 
-Earlier 729 AI timeout failures and bounded diagnostics remain preserved. The new
-uninstrumented passes do not prove their cause. Preview-store behavior was not
-changed. The original f15 preview receipt copied the wrong stale `frontend/build`
-output and is invalid; a separate corrected receipt preserves actual `GRC/build`.
+Freeze the final combined tree after complete diff/independent review. Run the reviewed whole-suite union at original budgets with no filtering, timeout weakening or automatic retries, and both canonical standard/private-preview builds. Bind actual child/wrapper/outer exits, manifests and preserved output hashes to that exact source. Windows build hashes do not predict Linux CI/Render output.
 
-Earlier f15 CIS checks observed a Review schedule and genuine 8.1 checkpoint after
-reopen, plus a 93-byte attachment accepted on an existing completed ticket. Exact
-reopened record/version evidence, fresh 1.2 history contents, actual downloaded
-bytes and a nonzero retained-items live case were limited/unexecuted. These do not
-certify the successor or hosted persistence. Do not seed records or broaden IG1
-scope to manufacture coverage. Preserve native data, truthful sparse history,
-status/denominator/forecast math, all native fields/tabs and save-before-command
-Risk Review/Close behavior. Document operational additions to target anatomy.
+Publish the exact tree once to draft/open/unmerged PR86, require the complete exact-head Release verification gate, and deploy only that commit to the existing staging service. Verify provider Live/full SHA, actual served bytes and compiled native behavior. Agent69 then independently retests Vendor Review refresh/drafts, all three CIS failure paths, approved charts and both-theme Brawndo pages/portals, plus affected native save/history flows and client/mode boundaries. Preserve genuine QA history and explicitly report remaining role/Mongo/download/cancellation/accessibility limits.
 
-## Release state and next steps
-
-At freeze, published draft/open/unmerged PR86 remains
-`f539cd918efc4c88c4e7b6bc2f3c9bd7b89344bb`; CI199 succeeded for that old head only.
-The last provider observation, not refreshed today, was Live
-`847bceacc84f93355ae15c01fc051c6c7a2f90d2`, deployment
-`dep-db8mp4favr4c73dh5efg`, staging service `srv-db1s0cugekts73f72reg`, auto-deploy
-off, at https://omnisciente-staging.onrender.com. No new staging deployment has
-started. Refresh the actual branch/ref before a leased update.
-
-Finish source-specific checks and all implementation owners' handoffs. Publish one
-exact tree to cumulative draft [PR86](https://github.com/robbashea-lab/GRC/pull/86),
-require its complete Release verification gate, then deploy that specific commit to
-the existing staging service. Confirm provider Live/full SHA and actual served
-assets, critical native journeys, client/mode/Security Domains boundaries and honest
-remaining coverage before inviting review. CI may run while isolated browser checks
-continue; that does not start final acceptance on moving source.
-
-Agent 69 (`01a14a40-f650-77d1-ad4a-9a3523a4cc80`) has prepared the independent
-workflow plan. Its final campaign waits for every implementation stream, one
-verified deployed candidate, a fresh correct Explore session and an explicit safe
-browser/data window. Provide final exact source/CI/provider/asset receipts and known
-limits through the authorized handoff. Login/onboarding remain outside that reviewer's
-modification scope. Do not claim its final report before it exists.
-
-The task's `Six-surface-coordination-current.txt` is the concise restart handoff;
-`outputs/Combined-resumable-checkpoint.json` records exact current source, operation
-outcomes, browser leases, receipts and next steps. Reconcile those with live state
-on restart. Pause all project work at or below 3% remaining supported usage; resume
-only on Robb's renewed usage/continue instruction. Do not reset or bypass limits.
-
-Login fixture processes were stopped and sessions signed out. Automatic approval
-review twice rejected deletion of protected private local fixture files with
-`blocked by policy`. They remain outside Git. Cleanup is open; do not retry through
-another tool, agent or route.
+The final report separates implemented, locally verified, published, deployed/hosted verified, deferred significant issues and remaining limitations. Do not certify this successor from older builds, CI, screenshots or a source review alone. No merge or production deployment follows automatically.

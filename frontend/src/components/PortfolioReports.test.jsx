@@ -21,14 +21,48 @@ let root, container;
 const navigate = jest.fn();
 beforeEach(() => { global.IS_REACT_ACT_ENVIRONMENT = true; api.get.mockReset(); navigate.mockReset(); container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container); api.get.mockResolvedValue({data: history()}); });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
-function Harness({initial = true, choices = programs, refreshToken = 1, onStatusNavigate}) {
-  const [open, setOpen] = useState(initial), [selected, setSelected] = useState(programIdentity(choices[0])), [view, setView] = useState('line');
+function Harness({initial = true, choices = programs, refreshToken = 1, onStatusNavigate, referenceHistory = false, initialView = 'line'}) {
+  const [open, setOpen] = useState(initial), [selected, setSelected] = useState(programIdentity(choices[0])), [view, setView] = useState(initialView);
   const trigger = useRef(null);
-  return <><button type="button" ref={trigger} onClick={() => setOpen(true)}>Open exact program history</button>{open && <PortfolioHistoryDialog client={client} programs={choices} selected={selected} onSelect={setSelected} onClose={() => setOpen(false)} onCloseAutoFocus={event => { event.preventDefault(); trigger.current?.focus(); }} onNavigate={navigate} onStatusNavigate={onStatusNavigate} chartView={view} onChartViewChange={setView} refreshToken={refreshToken} asOf={AT} />}</>;
+  return <><button type="button" ref={trigger} onClick={() => setOpen(true)}>Open exact program history</button>{open && <PortfolioHistoryDialog client={client} programs={choices} selected={selected} onSelect={setSelected} onClose={() => setOpen(false)} onCloseAutoFocus={event => { event.preventDefault(); trigger.current?.focus(); }} onNavigate={navigate} onStatusNavigate={onStatusNavigate} chartView={view} onChartViewChange={setView} referenceHistory={referenceHistory} refreshToken={refreshToken} asOf={AT} />}</>;
 }
 const dialog = () => document.querySelector('[data-testid="portfolio-history-dialog"]');
 const click = label => act(async () => { const button = [...document.querySelectorAll('button')].find(node => node.textContent.trim() === label); expect(button).toBeTruthy(); button.click(); });
 const tab = name => act(async () => { const node = [...document.querySelectorAll('[role="tab"]')].find(value => value.textContent.startsWith(name)); node.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 0})); });
+
+test('approved history ignores a saved mix preference while preserving genuine positions, period controls and data', async () => {
+  await act(async () => root.render(<Harness referenceHistory initialView="mix" />));
+  expect(dialog().querySelector('.ph-chart-options')).toBeNull();
+  expect(dialog().querySelectorAll('.ph-band')).toHaveLength(0);
+  expect(dialog().querySelectorAll('.ph-chart .ph-marker')).toHaveLength(3);
+  expect(dialog().querySelector('.ph-current-value').textContent).toContain('32 of 56');
+  await click('View data');
+  expect(dialog().querySelectorAll('#portfolio-history-data tbody tr')).toHaveLength(3);
+  await click('3 months');
+  expect(api.get).toHaveBeenLastCalledWith('/portfolio/reporting/history', expect.objectContaining({params:expect.objectContaining({client_id:client.client_id, program_key:'cis-ig3', range:'3m'})}));
+  expect(dialog().querySelector('#portfolio-history-data')).toBeTruthy();
+  expect(dialog().querySelectorAll('.ph-chart .ph-marker')).toHaveLength(3);
+  expect(dialog().querySelector('.ph-chart-options')).toBeNull();
+  await act(async () => dialog().querySelector('.ph-head-actions [aria-label="Close"]').click());
+  await click('Open exact program history');
+  expect(dialog().querySelector('[aria-label="History period"] [aria-pressed="true"]').textContent).toBe('6 months');
+  expect(dialog().querySelector('.ph-chart-options')).toBeNull();
+});
+
+test('approved inline history retains the native single-position marker and exact readout without a mix selector', async () => {
+  const current=programs[0].current;
+  api.get.mockResolvedValue({data:history({snapshots:[current],forecast_snapshots:[]})});
+  await act(async () => root.render(<PortfolioHistoryDialog inline referenceHistory client={client} programs={[programs[0]]} selected={programIdentity(programs[0])} onNavigate={navigate} chartView="mix" asOf={AT} />));
+  const panel=container.querySelector('.brawndo-demo-program'),svg=panel.querySelector('.ph-chart svg');
+  expect(panel.querySelector('.ph-chart-options')).toBeNull();
+  expect(panel.querySelectorAll('.ph-marker')).toHaveLength(1);
+  expect(panel.querySelectorAll('.ph-band')).toHaveLength(0);
+  expect(panel.querySelector('.ph-line').getAttribute('d')).not.toMatch(/[HLV]/);
+  await act(async()=>svg.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true})));
+  expect(panel.querySelector('.ph-history-tip').textContent).toContain('32 of 56');
+  await click('View data');
+  expect(panel.querySelectorAll('#portfolio-history-data tbody tr')).toHaveLength(1);
+});
 
 test('status interaction synchronizes segment and row, exposes zero-count statuses, and preserves canonical counts', async () => {
   await act(async () => root.render(<Harness />));

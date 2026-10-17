@@ -5,11 +5,11 @@ import api from '@/lib/api';
 import {PORTFOLIO_CHANGED} from '@/lib/usePortfolioRefresh';
 
 const mockNavigate = jest.fn(), mockSwitch = jest.fn();
-let mockUser;
+let mockUser, mockPreviewMode;
 jest.mock('react-router-dom', () => ({useNavigate: () => mockNavigate}), {virtual: true});
 jest.mock('@/context/OrgContext', () => ({useOrg: () => ({switchClient: mockSwitch})}));
 jest.mock('@/context/AuthContext', () => ({useAuth: () => ({user: mockUser})}));
-jest.mock('@/lib/api', () => ({__esModule: true, default: {get: jest.fn(), post: jest.fn(), put: jest.fn(), patch: jest.fn(), delete: jest.fn()}, formatError: error => error.message}));
+jest.mock('@/lib/api', () => ({__esModule: true, get PREVIEW_MODE(){return mockPreviewMode;}, default: {get: jest.fn(), post: jest.fn(), put: jest.fn(), patch: jest.fn(), delete: jest.fn()}, formatError: error => error.message}));
 const AT = '2026-10-13T12:00:00Z';
 const position = (implemented = 2, extra = {}) => ({availability: 'available', denominator: 10, implemented, assessed: implemented,
   counts: [{key: 'addressed', label: 'Implemented', count: implemented}, {key: 'in_progress', label: 'Partially Implemented', count: 0}, {key: 'needs_attention', label: 'Needs Attention', count: 0}, {key: 'not_assessed', label: 'Not Assessed', count: 10 - implemented}], captured_at: AT, retrieved_at: AT, scope_signature: 'scope', source_revision: 'current', ...extra});
@@ -18,11 +18,25 @@ const program = (client_id, program_key, implemented = 2, extra = {}) => ({clien
 const client = (id, extra = {}) => ({client_id: id, name: id, industry: 'Technology', status: 'active', assigned_owner_id: 'u', grc_lead: {name: 'Recorded Lead'}, ...extra});
 const overview = (extra = {}) => ({as_of: AT, clients: [client('Alpha'), client('Beta', {assigned_owner_id: 'other', grc_lead: {name: 'Recorded Lead'}})], programs: [program('Alpha', 'cis-ig3', 9), program('Alpha', 'soc-2', 1), program('Beta', 'cis-ig3', 2)], ...extra});
 let root, container;
-beforeEach(() => { global.IS_REACT_ACT_ENVIRONMENT = true; sessionStorage.clear(); window.scrollTo = jest.fn(); mockUser = {user_id: 'u', role: 'super_admin'}; container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container); jest.clearAllMocks(); api.get.mockResolvedValue({data: overview()}); });
+beforeEach(() => { global.IS_REACT_ACT_ENVIRONMENT = true; sessionStorage.clear(); window.scrollTo = jest.fn(); mockPreviewMode=false; mockUser = {user_id: 'u', role: 'super_admin'}; container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container); jest.clearAllMocks(); api.get.mockResolvedValue({data: overview()}); });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 const click = label => act(async () => { const button = [...document.querySelectorAll('button')].find(node => node.textContent.trim() === label); expect(button).toBeTruthy(); button.click(); });
 const select = (label, value) => act(async () => { const node = container.querySelector(`select[aria-label="${label}"]`); node.value = value; node.dispatchEvent(new Event('change', {bubbles: true})); });
 const search = value => act(async () => { const node = container.querySelector('input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(node, value); node.dispatchEvent(new Event('input', {bubbles: true})); });
+
+test.each([[true,'demo',false],[false,'demo',true],[true,'standard',true],[false,'standard',true]])('approved history controls require native Demo agreement: preview=%s actor=%s', async (preview,mode,hasNativeOptions) => {
+  mockPreviewMode=preview;mockUser={...mockUser,workspace_mode:mode};
+  const selectedProgram=program('Alpha','cis-ig3');
+  api.get.mockImplementation(async path=>({data:path.endsWith('/overview')?overview({clients:[client('Alpha')],programs:[selectedProgram]}):{client_id:'Alpha',program_key:'cis-ig3',as_of:AT,current:selectedProgram.current,snapshots:[selectedProgram.current],forecast_snapshots:[],scope_changes:[],forecast_scope_changes:[]}}));
+  await act(async()=>root.render(<ClientDirectory/>));
+  await act(async()=>container.querySelector('.gp-progress').click());
+  const modal=document.querySelector('[data-testid="portfolio-history-dialog"]');
+  expect(modal).toBeTruthy();
+  expect(!!modal.querySelector('.ph-chart-options')).toBe(hasNativeOptions);
+  expect(modal.querySelectorAll('.ph-marker')).toHaveLength(1);
+  expect(modal.querySelector('.ph-current-value').textContent).toContain('2 of 10');
+  for(const method of ['post','put','patch','delete'])expect(api[method]).not.toHaveBeenCalled();
+});
 
 test('approved five-column grouped register uses batched current data and exact native client routes', async () => {
   await act(async () => root.render(<ClientDirectory />));

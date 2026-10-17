@@ -175,6 +175,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const tabList = vendorPilot?[...TABS_BY_KIND.vendors.map(t=>t.id==='assurance'?{...t,label:'Security Assurance Reviews'}:t),{id:'evidence',label:'Evidence'},{id:'comments',label:'Comments'}]:TABS_BY_KIND[kind];
   const vendorSession = useRef(null);
   const vendorEditVersion = useRef(null);
+  const vendorReviewRefresh = useRef(0);
   const vendorRecordId = record?.vendor_id;
   useEffect(() => {
     if(open&&kind==='vendors')setTab(tabList.some(t=>t.id===initialValues?.vendorTab)?initialValues.vendorTab:'overview');
@@ -309,16 +310,18 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   async function refreshVendorDates(){
     if(!vendorPilot||!record?.vendor_id)return;
-    const generation=loadGeneration.current;
-    try{const {data}=await api.get('/vendors/'+record.vendor_id);if(generation!==loadGeneration.current||data.client_id!==clientId)return;
-      Object.assign(record,{last_review:data.last_review,next_review:data.next_review,updated_at:data.updated_at});
+    const generation=loadGeneration.current,request=++vendorReviewRefresh.current;
+    try{const {data}=await api.get('/vendors/'+record.vendor_id);if(generation!==loadGeneration.current||request!==vendorReviewRefresh.current||data.client_id!==clientId||data.vendor_id!==record.vendor_id)return;
+      // Nested Reviews also change the saved Demo status; a local status draft must remain separate.
+      const statusPatch=user?.workspace_mode==='demo'&&clientId==='demo_brawndo'?{status:data.status}:{};
+      Object.assign(record,{last_review:data.last_review,next_review:data.next_review,updated_at:data.updated_at,...statusPatch});
       const dates={last_review:toDateInput(data.last_review),next_review:toDateInput(data.next_review)};
       const baseline=initialForm.current;
-      initialForm.current={...baseline,...dates};
+      initialForm.current={...baseline,...dates,...statusPatch};
       setForm(p=>{
         if(JSON.stringify(p)===JSON.stringify(baseline))vendorEditVersion.current=data.updated_at??null;
         const nextUnchanged=p.next_review===baseline.next_review;
-        return {...p,last_review:dates.last_review,...(nextUnchanged?{next_review:dates.next_review}:{})};
+        return {...p,last_review:dates.last_review,...(nextUnchanged?{next_review:dates.next_review}:{}),...(p.status===baseline.status?statusPatch:{})};
       });
     }catch(e){toast.error('Vendor schedule could not be refreshed: '+formatError(e));}
   }
