@@ -253,6 +253,9 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
   const historySpan = retained.length > 1 ? Math.floor((Date.parse(snapshotTime(retained.at(-1)))-Date.parse(snapshotTime(retained[0])))/DAY) : 0;
   const sparseModal = !inline && !!report.data && !report.error && valid && !noScope && (current.not_started || retained.length < 2);
   const lead = grcLead(client);
+  const referenceFooter = referenceHistory && <div className={inline ? 'ph-foot ph-reference-foot ph-inline-foot' : 'ph-foot ph-reference-foot'}>
+    {!inline && program.framework_key === 'soc-2' ? 'Internal readiness, not an auditor opinion.' : 'Assessment progress, not a compliance determination.'} Estimated completion is based on implementation progress over the latest 90 days.
+  </div>;
   const details = <>
     <div className="ph-program-head"><div><h3>{inline ? 'CIS IG1 Status' : `${program.program_label} Status`}</h3><span className="sr-only">{program.scope_label}</span></div><button type="button" className="ph-link" onClick={() => onNavigate(program.to)}>Open {program.program_label} workspace →</button></div>
     <div className="ph-current-overview">
@@ -285,15 +288,16 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
     <div className="ph-chart-card">
       <div className="ph-chart-top"><div><h4>Implementation history</h4><p>{historyView === 'mix' ? `Share of applicable ${language.unit} in each status at each saved position` : `${counts[0]?.label || 'Implemented'} ${language.unit} as a share of applicable scope`}</p></div><div className="ph-chart-tools">{!referenceHistory && <details className="ph-chart-options"><summary>Chart view</summary><div className="ph-segmented" role="group" aria-label="Chart view">{[['line', 'Implemented'], ['mix', 'Status mix']].map(([key, label]) => <button key={key} type="button" aria-pressed={key === chartView} onClick={() => onChartViewChange(key)}>{label}</button>)}</div></details>}<button type="button" className="ph-link" aria-expanded={showData} aria-controls="portfolio-history-data" onClick={() => setShowData(value => !value)}>{showData ? 'Hide data' : 'View data'}</button></div></div>
       {report.loading && !report.data ? <div className="ph-empty" role="status">Loading saved history…</div> : report.error ? <div className="ph-empty" role="alert"><p>{report.error}</p><button type="button" className="ph-link" onClick={report.retry}>Retry</button></div> : <>
-        <PortfolioHistoryChart key={selected + ':' + range} points={points} start={start} asOf={asOf} view={historyView} current={current} scopeChanges={scopeChanges} unit={language.unit} inline={inline} />
+        <PortfolioHistoryChart key={selected + ':' + range} points={points} start={start} asOf={asOf} view={historyView} current={current} scopeChanges={scopeChanges} unit={language.unit} inline={inline} referenceHistory={referenceHistory} />
         {scopeChanges.length > 0 && <div className="ph-scope-notes">{scopeChanges.map((change,index) => <p key={index}>{formatPortfolioDate(change.effective_at || change.at)}: {scopeNote(change,language.unit)}</p>)}</div>}
         {showData && <div className="ph-data" id="portfolio-history-data"><table><caption className="sr-only">Genuine implementation positions, newest effective date first</caption><thead><tr><th scope="col">Position date</th>{counts.map(value => <th scope="col" key={value.key}>{value.label}</th>)}<th scope="col">Applicable</th><th scope="col">{counts[0]?.label || 'Implemented'} %</th></tr></thead><tbody>{[...points].reverse().map(point => <tr key={identity(point)}><td>{dateTime(snapshotTime(point))}{point.carried && <small>In effect at period start</small>}{point.effective_at && point.captured_at && Date.parse(point.effective_at) !== Date.parse(point.captured_at) && <small>Captured {dateTime(point.captured_at)}</small>}{scopeChangesForPosition(scopeChanges, point).map((change,index)=><small key={index}>{scopeNote(change, language.unit)}</small>)}</td>{counts.map(value => <td key={value.key}>{validImplementationPosition(point) ? applicableCounts(point).find(item => item.key === value.key)?.count ?? '—' : 'Unavailable'}</td>)}<td>{validImplementationPosition(point) ? point.denominator : 'Unavailable'}</td><td>{rate(point)}</td></tr>)}</tbody></table>{!points.length && <p className="ph-empty">No saved positions in this period.</p>}</div>}
       </>}
 
     </div></div>
   </>;
-  if (inline) return <section className="brawndo-demo-program" aria-label="CIS IG1 Status">
+  if (inline) return <section className="brawndo-demo-program" data-reference-history={referenceHistory ? 'true' : undefined} aria-label="CIS IG1 Status">
     {details}
+    {referenceFooter}
   </section>;
   return <Dialog open onOpenChange={open => { if (!open) onClose(); }}><DialogContent className="portfolio-history-dialog" data-testid="portfolio-history-dialog" onCloseAutoFocus={onCloseAutoFocus}>
     <div className="ph-head"><div className="ph-client"><span className="gp-client-initial" aria-hidden="true">{client.name?.trim().charAt(0)}</span><div><DialogTitle>{client.name}</DialogTitle><DialogDescription>GRC Lead · {lead.name} · {client.industry || 'Industry not recorded'}</DialogDescription></div></div><div className="ph-head-actions"><button type="button" className="ph-button" onClick={() => onNavigate('/dashboard')}>Open client portal</button><DialogClose className="ph-close" aria-label="Close"><X aria-hidden="true" /></DialogClose></div></div>
@@ -302,6 +306,7 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
       const summary = !valid ? 'Unavailable' : value.current.denominator === 0 ? 'No applicable scope' : value.current.not_started ? 'Not started' : `${rate(value.current)} ${programLanguage(value).verb}`;
       return <TabsTrigger key={programIdentity(value)} value={programIdentity(value)} className="ph-tab"><span>{value.program_label}</span><small>{summary}</small></TabsTrigger>;
     })}</TabsList><TabsContent value={selected} className="ph-tab-content">{details}</TabsContent></Tabs> : details}</div>
+    {referenceFooter}
 
   </DialogContent></Dialog>;
 }
@@ -318,7 +323,7 @@ function historyTicks(start, asOf, width) {
   return ticks.filter((_,index)=>index%stride===0);
 }
 
-export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', inline = false}) {
+export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', inline = false, referenceHistory = false}) {
   const box = useRef(null), svg = useRef(null), tooltip = useRef(null);
   const chartId = useId().replace(/:/g, '');
   const [width, setWidth] = useState(900), [active, setActive] = useState(null), [engaged, setEngaged] = useState(false);
@@ -371,6 +376,9 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
   const endpointPercentage = endpointMatches ? currentPercentage(current) : null;
   const endpointLabel = endpointPercentage == null ? '' : `${endpointPercentage.toFixed(1)}%`;
   const endpointWidth = inline ? 54 : endpointLabel.length * 7 + 14;
+  const savedEndpointPercentage = endpointMatches ? currentPercentage(endpoint) : null;
+  const showCompleteLabel = inline && referenceHistory && endpointPercentage != null && savedEndpointPercentage != null
+    && Math.abs(y(savedEndpointPercentage) - y(100)) > 24;
   const tooltipAnchorX = selected ? x(selected) : 0, tooltipAnchorY = selected ? y(currentPercentage(selected) ?? 0) : 0;
   useLayoutEffect(() => {
     if (inline || !engaged || !selected || !tooltip.current || !box.current) return;
@@ -404,6 +412,7 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
       })}
       <path className="ph-line" d={line} />
       {endpointPercentage != null && <g><rect className="ph-current-flag" x={right+9} y={y(endpointPercentage)-11} width={endpointWidth} height="22" rx="6"/><text className="ph-current-flag-label" x={right+9+endpointWidth/2} y={y(endpointPercentage)+4} textAnchor="middle" >{endpointLabel}</text></g>}
+      {showCompleteLabel && <text x={right+9} y={y(100)+4}>Complete</text>}
       {points.map(point => currentPercentage(point) != null && <circle key={identity(point)} className="ph-marker" cx={x(point)} cy={y(currentPercentage(point))} r={4} />)}
       {scopeChanges.filter(change => Date.parse(change.effective_at || change.at) >= Date.parse(start) && Date.parse(change.effective_at || change.at) <= Date.parse(asOf)).map((change, index) => <g key={index}><line className="ph-scope-marker" x1={x({effective_at: change.effective_at || change.at})} x2={x({effective_at: change.effective_at || change.at})} y1={top} y2={bottom} /><text x={Math.min(x({effective_at: change.effective_at || change.at}) + 6, right - 90)} y={top + 15}>{change.before?.denominator != null && change.after?.denominator != null ? `Scope ${change.before.denominator} → ${change.after.denominator}` : 'Scope changed'}</text></g>)}
       {historyTicks(start,asOf,width).map(at => <text key={at} x={x({effective_at:at})} y={height-8} textAnchor="middle">{formatPortfolioDate(at,{year:undefined,...(Date.parse(asOf)-Date.parse(start)>45*DAY ? {day:undefined} : {})})}</text>)}

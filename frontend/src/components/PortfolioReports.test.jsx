@@ -29,12 +29,16 @@ function Harness({initial = true, choices = programs, refreshToken = 1, onStatus
 const dialog = () => document.querySelector('[data-testid="portfolio-history-dialog"]');
 const click = label => act(async () => { const button = [...document.querySelectorAll('button')].find(node => node.textContent.trim() === label); expect(button).toBeTruthy(); button.click(); });
 const tab = name => act(async () => { const node = [...document.querySelectorAll('[role="tab"]')].find(value => value.textContent.startsWith(name)); node.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 0})); });
+const completeLabel = (element = container) => [...element.querySelectorAll('.ph-chart text')].find(node => node.textContent === 'Complete');
+const chartPosition = (implemented, denominator = 56, extra = {}) => snapshot(0, implemented, {denominator,
+  counts: counts(implemented).map(value => value.key === 'not_assessed' ? {...value, count: denominator - implemented} : value), ...extra});
 
 test('approved history ignores a saved mix preference while preserving genuine positions, period controls and data', async () => {
   await act(async () => root.render(<Harness referenceHistory initialView="mix" />));
   expect(dialog().querySelector('.ph-chart-options')).toBeNull();
   expect(dialog().querySelectorAll('.ph-band')).toHaveLength(0);
   expect(dialog().querySelectorAll('.ph-chart .ph-marker')).toHaveLength(3);
+  expect(completeLabel(dialog())).toBeUndefined();
   expect(dialog().querySelector('.ph-current-value').textContent).toContain('32 of 56');
   await click('View data');
   expect(dialog().querySelectorAll('#portfolio-history-data tbody tr')).toHaveLength(3);
@@ -54,14 +58,96 @@ test('approved inline history retains the native single-position marker and exac
   api.get.mockResolvedValue({data:history({snapshots:[current],forecast_snapshots:[]})});
   await act(async () => root.render(<PortfolioHistoryDialog inline referenceHistory client={client} programs={[programs[0]]} selected={programIdentity(programs[0])} onNavigate={navigate} chartView="mix" asOf={AT} />));
   const panel=container.querySelector('.brawndo-demo-program'),svg=panel.querySelector('.ph-chart svg');
+  expect(panel.dataset.referenceHistory).toBe('true');
   expect(panel.querySelector('.ph-chart-options')).toBeNull();
   expect(panel.querySelectorAll('.ph-marker')).toHaveLength(1);
   expect(panel.querySelectorAll('.ph-band')).toHaveLength(0);
   expect(panel.querySelector('.ph-line').getAttribute('d')).not.toMatch(/[HLV]/);
+  expect(completeLabel(panel)).toBeTruthy();
+  expect(panel.lastElementChild.classList.contains('ph-inline-foot')).toBe(true);
+  expect(panel.lastElementChild.textContent.trim()).toBe('Assessment progress, not a compliance determination. Estimated completion is based on implementation progress over the latest 90 days.');
   await act(async()=>svg.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true})));
   expect(panel.querySelector('.ph-history-tip').textContent).toContain('32 of 56');
   await click('View data');
   expect(panel.querySelectorAll('#portfolio-history-data tbody tr')).toHaveLength(1);
+});
+
+test.each([
+  [32, 56, true], [89, 100, true], [90, 100, false],
+  [32, 37, true], [33, 37, false], [34, 37, false], [56, 56, false],
+])('Dashboard Complete label follows the approved endpoint spacing: %i of %i, visible %s', async (implemented, denominator, visible) => {
+  const point = chartPosition(implemented, denominator);
+  await act(async () => root.render(<PortfolioHistoryChart inline referenceHistory points={[point]} start="2026-07-13T12:00:00Z" asOf={AT} view="line" current={point} scopeChanges={[]} />));
+  const label = completeLabel(), chart = container.querySelector('.ph-chart'), flag = chart.querySelector('.ph-current-flag');
+  const target = [...chart.querySelectorAll('text')].find(node => node.textContent === '100%');
+  const top = Number(target.getAttribute('y')) - 4;
+  const endpointY = Number(chart.querySelector('.ph-marker').getAttribute('cy'));
+  expect(Boolean(label)).toBe(visible);
+  expect(chart.querySelectorAll('.ph-marker')).toHaveLength(1);
+  expect(chart.querySelector('.ph-current-flag-label').textContent).toBe(`${(implemented / denominator * 100).toFixed(1)}%`);
+  if (implemented === 33 && denominator === 37) expect(endpointY - top).toBeCloseTo(24, 10);
+  if (visible) {
+    expect(Number(label.getAttribute('x'))).toBe(Number(flag.getAttribute('x')));
+    expect(Number(label.getAttribute('y'))).toBe(top + 4);
+    expect(Number(flag.getAttribute('y')) - Number(label.getAttribute('y'))).toBeGreaterThan(9);
+  }
+});
+
+test('Dashboard target spacing uses the actual saved endpoint rather than a separate current read', async () => {
+  const point = chartPosition(51), current = chartPosition(32);
+  await act(async () => root.render(<PortfolioHistoryChart inline referenceHistory points={[point]} start="2026-07-13T12:00:00Z" asOf={AT} view="line" current={current} scopeChanges={[]} />));
+  expect(completeLabel()).toBeUndefined();
+  expect(container.querySelector('.ph-current-flag-label').textContent).toBe('57.1%');
+});
+
+test.each([
+  ['missing endpoint', {points: []}],
+  ['unavailable endpoint', {point: {availability: 'partial'}}],
+  ['inconsistent endpoint counts', {point: {denominator: 57}}],
+  ['different scope', {current: {scope_signature: 'other-scope'}}],
+  ['different revision', {current: {source_revision: 'other-revision'}}],
+  ['unavailable current', {current: {availability: 'unavailable'}}],
+  ['zero applicable scope', {point: {denominator: 0, implemented: 0, counts: counts(56).map(value => ({...value, count: 0}))}}],
+])('Dashboard omits Complete for %s without borrowing an earlier point', async (_, overrides) => {
+  const point = chartPosition(32, 56, overrides.point), current = {...point, ...overrides.current};
+  await act(async () => root.render(<PortfolioHistoryChart inline referenceHistory points={overrides.points || [snapshot(-30, 26), point]} start="2026-07-13T12:00:00Z" asOf={AT} view="line" current={current} scopeChanges={[]} />));
+  expect(completeLabel()).toBeUndefined();
+});
+
+test.each([{inline: true}, {referenceHistory: true}, {}])('Complete does not change a native or Portfolio chart: %j', async presentation => {
+  const point = chartPosition(32);
+  await act(async () => root.render(<PortfolioHistoryChart {...presentation} points={[point]} start="2026-07-13T12:00:00Z" asOf={AT} view="line" current={point} scopeChanges={[]} />));
+  expect(completeLabel()).toBeUndefined();
+  expect(container.querySelector('.ph-current-flag-label').textContent).toBe('57.1%');
+});
+
+test.each([
+  ['cis-ig1', programs[0], 'Assessment progress, not a compliance determination.'],
+  ['soc-2', programs[1], 'Internal readiness, not an auditor opinion.'],
+])('approved Portfolio footer follows the selected native framework: %s', async (_, program, prefix) => {
+  api.get.mockResolvedValue({data: history({program_key: program.program_key, current: program.current, snapshots: [program.current]})});
+  await act(async () => root.render(<Harness referenceHistory choices={[program]} />));
+  const footer = dialog().querySelector('.ph-reference-foot');
+  expect(footer.textContent.trim()).toBe(`${prefix} Estimated completion is based on implementation progress over the latest 90 days.`);
+  expect(footer.parentElement).toBe(dialog());
+  expect(dialog().querySelector('.ph-body').contains(footer)).toBe(false);
+  expect(dialog().querySelectorAll('.ph-reference-foot')).toHaveLength(1);
+  expect(completeLabel(dialog())).toBeUndefined();
+});
+
+test.each([true, false])('approved footer persists alongside loading and error states: inline %s', async inline => {
+  let resolveHistory;
+  api.get.mockImplementation(() => new Promise(resolve => { resolveHistory = resolve; }));
+  await act(async () => root.render(<PortfolioHistoryDialog inline={inline} referenceHistory client={client} programs={[programs[0]]} selected={programIdentity(programs[0])} onNavigate={navigate} asOf={AT} />));
+  const frame = () => inline ? container.querySelector('.brawndo-demo-program') : dialog();
+  const footer = frame().querySelector('.ph-reference-foot');
+  expect(footer.textContent).toContain('Assessment progress, not a compliance determination.');
+  await act(async () => resolveHistory({data: history()}));
+  expect(frame().querySelector('.ph-reference-foot')).toBe(footer);
+  api.get.mockRejectedValue(new Error('History unavailable'));
+  await click('1 month');
+  expect(frame().querySelector('[role="alert"]').textContent).toContain('History unavailable');
+  expect(frame().querySelector('.ph-reference-foot')).toBe(footer);
 });
 
 test('status interaction synchronizes segment and row, exposes zero-count statuses, and preserves canonical counts', async () => {
@@ -487,6 +573,7 @@ test('inline reference has four native status destinations, paired panel and a 2
   const openStatus=jest.fn();
   await act(async () => root.render(<PortfolioHistoryDialog inline client={client} programs={[programs[0]]} selected={programIdentity(programs[0])} onNavigate={navigate} onStatusNavigate={openStatus} chartView="line" onChartViewChange={()=>{}} asOf={AT} />));
   const panel=container.querySelector('.brawndo-demo-program');
+  expect(panel.hasAttribute('data-reference-history')).toBe(false);
   expect(panel.querySelector('.ph-chart svg').getAttribute('viewBox')).toBe('0 0 900 284');
   expect(panel.querySelectorAll('.ph-breakdown-cells button')).toHaveLength(4);
   expect(panel.querySelector('.ph-status-axis,.ph-composition-canvas')).toBeNull();

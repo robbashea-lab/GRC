@@ -208,6 +208,14 @@
 .portfolio-history-dialog .ph-active { stroke-width:3; }
 .portfolio-history-dialog .ph-crosshair { stroke:var(--color-text-secondary); opacity:.6; }
 .portfolio-history-dialog .ph-chart text.ph-before-tracking { font-size:12px; }
+/* Approved Demo footers span the outer card/dialog, outside its scrolling content. */
+.brawndo-demo-program[data-reference-history=true] .ph-range .ph-segmented { --ph-hover:#EAF1FA; --ph-seg-on:#FFFFFF; }
+[data-brawndo-portal=dark] .brawndo-demo-program[data-reference-history=true] .ph-range .ph-segmented { --ph-hover:#172B45; --ph-seg-on:#243042; }
+.brawndo-demo-program > .ph-foot.ph-reference-foot { margin:0; padding:12px 24px; background:var(--color-bg-subtle); }
+.portfolio-history-dialog > .ph-foot.ph-reference-foot { padding:12px 28px; background:var(--color-bg-subtle); }
+@media(max-width:860px) {
+  .portfolio-history-dialog > .ph-foot.ph-reference-foot { padding-left:16px; padding-right:16px; }
+}
 .portfolio-history-dialog .ph-chart svg:focus-visible { outline-offset:4px; border-radius:4px; }
 .portfolio-history-dialog .ph-chart-card { grid-template-columns:minmax(0,1fr); min-width:0; }
 .portfolio-history-dialog :is(.ph-chart-card,.ph-metric) > * { min-width:0; }

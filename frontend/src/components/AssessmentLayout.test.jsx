@@ -61,6 +61,32 @@ test('inline interview stays mounted across disclosure and tabs, with close rest
   expect(container.textContent).not.toContain('Assessment guidance & working checklist');
 });
 
+test('a caller can reveal the mounted interview while explicit close retains its draft and focus',async()=>{
+  let reveal;
+  await act(async()=>root.render(<AssessmentLayout inlineWorkflow interview={({open,close,reveal:show})=>{
+    reveal=show;
+    return <div hidden={!open}><input aria-label="Interview answer" defaultValue="Retained answer"/><button onClick={close}>Close revealed interview</button></div>;
+  }}/>));
+  const details=container.querySelector('.assessment-summary'),answer=container.querySelector('[aria-label="Interview answer"]');
+  expect(details.open).toBe(false);
+  await act(async()=>reveal());expect(details.open).toBe(true);
+  await fill('Interview answer','Unsaved reported answer');
+  await act(async()=>[...container.querySelectorAll('button')].find(element=>element.textContent==='Close revealed interview').click());
+  expect(details.open).toBe(false);expect(document.activeElement).toBe(details.querySelector('summary'));
+  await act(async()=>reveal());expect(details.open).toBe(false);
+  await act(async()=>details.querySelector('summary').click());
+  expect(container.querySelector('[aria-label="Interview answer"]')).toBe(answer);expect(answer.value).toBe('Unsaved reported answer');
+});
+
+test('a late initial reveal does not override a disclosure choice made during loading',async()=>{
+  let reveal;
+  await act(async()=>root.render(<AssessmentLayout interview={({reveal:show})=>{reveal=show;return <p>Loading interview</p>;}}/>));
+  const details=container.querySelector('.assessment-summary'),summary=details.querySelector('summary');
+  await act(async()=>{summary.click();details.open=true;details.dispatchEvent(new Event('toggle'));});
+  await act(async()=>{summary.click();details.open=false;details.dispatchEvent(new Event('toggle'));});
+  await act(async()=>reveal());expect(details.open).toBe(false);
+});
+
 test('explicit item finding creation moves focus into the selected Findings section',()=>{
   function ItemFinding(){
     const [finding,setFinding]=useState(false);

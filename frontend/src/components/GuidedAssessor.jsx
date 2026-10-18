@@ -36,7 +36,7 @@ export default function GuidedAssessor(props){
   if(props.record?.client_id&&props.record.client_id!==props.clientId||!pilotEnabled(props.clientId,props.framework,props.configuration,props.record?.definition_id))return null;
   return <Pilot key={user?.user_id+':'+props.clientId+':'+props.record?.framework_assessment_id+(focusedOmniEnabled(props.clientId,user,props.framework,props.configuration,props.record?.definition_id)?':'+(props.invitationContext||'program'):'')} {...props}/>;
 }
-function Pilot({clientId,framework,configuration,invitationContext,inventoryContext,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onSaveAssessment,onDraftChange,onUpdateImplementation,disabled=false,current=record,related={},contextComplete=false,assessmentDirty=false,onOpenNative,people=EMPTY_ROWS,inline=false,inlineOpen=false,onInlineClose,visualReference=false}){
+function Pilot({clientId,framework,configuration,invitationContext,inventoryContext,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onSaveAssessment,onDraftChange,onUpdateImplementation,disabled=false,current=record,related={},contextComplete=false,assessmentDirty=false,onOpenNative,people=EMPTY_ROWS,inline=false,inlineOpen=false,onInlineClose,onFreshInterviewReady,visualReference=false}){
   const auth=useAuth(),{user}=auth,org=useOrg(),key='guided-pilot-ui:'+user?.user_id+':'+clientId,initial=readPreference(key);
   const focused=focusedOmniEnabled(clientId,user,framework,configuration,record?.definition_id);
   const visualOmni=visualReference===true&&focused&&clientId==='demo_brawndo'&&framework==='cis-ig1'&&configuration?.implementation_group===1;
@@ -65,6 +65,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   const [reuseAnswers,setReuseAnswers]=useState(false);
   const [stagedImplementation,setStagedImplementation]=useState(null),[changeTopic,setChangeTopic]=useState(''),[compareTarget,setCompareTarget]=useState(null);
   const focusedStarted=useRef(false);
+  const freshEntryRevealed=useRef(false);
   const nativeUpdate=useRef(onUpdateImplementation);nativeUpdate.current=onUpdateImplementation;
   const nativeApplication=useRef({onApply,onSaveAssessment,form,assessmentDirty,current,disabled});nativeApplication.current={onApply,onSaveAssessment,form,assessmentDirty,current,disabled};
   const [mode,setMode]=useState(record&&new URLSearchParams(window.location.search).get('guided')==='pilot'?'expanded':focused?'collapsed':initial.mode||'collapsed'),[greeting,setGreeting]=useState(false),[draft,setDraft]=useState(null),[answers,setAnswers]=useState({}),[step,setStep]=useState(0),[result,setResult]=useState(null),[narrative,setNarrative]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[restart,setRestart]=useState(false),[replace,setReplace]=useState(false);
@@ -106,6 +107,15 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     else if(supported)setView('result');
     else{setResult(null);setStep(nextFocusedQuestion(id,draft.answers,draft.version));setView('interview');}
   },[focused,record,draft,loaded,current?.status,id,directAssessment]);
+  useEffect(()=>{
+    if(freshEntryRevealed.current||!inline||!visualOmni||!boundedGuideCorrections||!onFreshInterviewReady
+      ||!loaded||disabled||assessmentDirty||dirty||!['initial','saved'].includes(context?.state)
+      ||version!==currentVersion||draft?.revision!==0||draft.completed!==false||draft.step!==0
+      ||Object.keys(answers).length||draft.narrative?.trim()||draft.result||current?.status==='not_applicable')return;
+    // Fresh personal progress can accompany a saved manual assessment; opening never changes either.
+    freshEntryRevealed.current=true;
+    onFreshInterviewReady();
+  },[inline,visualOmni,boundedGuideCorrections,onFreshInterviewReady,loaded,disabled,assessmentDirty,dirty,context?.state,version,currentVersion,draft,answers,current?.status]);
   useEffect(()=>{if(!applied)return;const timer=setTimeout(()=>setApplied(false),1200);return()=>clearTimeout(timer);},[applied]);
   useEffect(()=>{onDraftChange?.(dirty||!!incremental);return()=>onDraftChange?.(false);},[dirty,incremental,onDraftChange]);
   useEffect(()=>{

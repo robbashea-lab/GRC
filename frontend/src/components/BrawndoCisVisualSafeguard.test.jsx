@@ -44,6 +44,7 @@ test('visual requirement retains native official text, complete guidance and edi
 test('native guide callbacks and tab transitions retain manual drafts and distinct save actions',async()=>{
   await render();
   expect(mockGuideProps.visualReference).toBe(true);
+  expect(mockGuideProps.onFreshInterviewReady).toEqual(expect.any(Function));
   expect(mockGuideProps.onApply).toBe(actions.applyGuided);
   expect(mockGuideProps.onSaveAssessment).toBe(actions.saveGuidedAssessment);
   expect(mockGuideProps.onUpdateImplementation).toBe(actions.stageGuidedImplementation);
@@ -95,5 +96,6 @@ test.each([false,undefined])('without an explicit visual gate (%s) the existing 
   expect(container.querySelector('.assessment-summary summary').textContent).toBe('Requirement summary');
   expect([...container.querySelectorAll('[role="tab"]')].map(element=>element.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
   expect(mockGuideProps.visualReference).toBe(false);
+  expect(mockGuideProps.onFreshInterviewReady).toBeUndefined();
   expect(mockShellProps.closeInNavigation).toBe(false);expect(mockShellProps.close).toBe(actions.close);
 });

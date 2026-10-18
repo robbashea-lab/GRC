@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from './ui/tabs';
 import './AssessmentLayout.css';
 
@@ -6,7 +6,9 @@ import './AssessmentLayout.css';
 export default function AssessmentLayout({summary,summaryLabel='Requirement summary',requirement,children,findings,checklist,review,outcome,criteriaTitle,reference,criteriaSummary,inlineCriteria=false,inlineWorkflow=false,interview,itemsToAddress,findingDraft=false,sectionCounts}) {
   const [section,setSection]=useState('implementation'),[summaryOpen,setSummaryOpen]=useState(false);
   const summaryControl=useRef(null),findingsControl=useRef(null);
-  const closeInterview=()=>{setSummaryOpen(false);summaryControl.current?.focus();};
+  const interviewChoiceMade=useRef(false);
+  const revealInterview=useCallback(()=>{if(!interviewChoiceMade.current)setSummaryOpen(true);},[]);
+  const closeInterview=()=>{interviewChoiceMade.current=true;setSummaryOpen(false);summaryControl.current?.focus();};
   useEffect(()=>{if(findingDraft){setSection('findings');if(inlineWorkflow)findingsControl.current?.focus();}},[findingDraft,inlineWorkflow]);
   const criteria=<>
     {criteriaTitle&&<div className="assessment-criteria-intro"><h3>{criteriaTitle}</h3>{criteriaSummary&&<p>{criteriaSummary}</p>}{reference&&<p>{reference}</p>}</div>}
@@ -23,7 +25,7 @@ export default function AssessmentLayout({summary,summaryLabel='Requirement summ
       <TabsTrigger value="findings" ref={findingsControl}>Findings{sectionCounts&&<span className="assessment-tab-count" aria-label={sectionCounts.findings==null?'Finding count unavailable':undefined}>{sectionCounts.findings??'—'}</span>}</TabsTrigger>
     </TabsList>
     <TabsContent value="implementation" forceMount>
-      <details className="assessment-summary" open={summaryOpen} onToggle={event=>setSummaryOpen(event.currentTarget.open)}><summary ref={summaryControl}>{summaryLabel}</summary><p>{summary}</p>{interview?.({open:summaryOpen,close:closeInterview})}</details>
+      <details className="assessment-summary" open={summaryOpen} onToggle={event=>setSummaryOpen(event.currentTarget.open)}><summary ref={summaryControl} onClick={()=>{interviewChoiceMade.current=true;}}>{summaryLabel}</summary><p>{summary}</p>{interview?.({open:summaryOpen,close:closeInterview,reveal:revealInterview})}</details>
       {requirement}{children}
       {!inlineWorkflow&&inlineCriteria&&<details className="assessment-inline-criteria"><summary>Assessment guidance &amp; working checklist</summary>{criteria}</details>}
     </TabsContent>

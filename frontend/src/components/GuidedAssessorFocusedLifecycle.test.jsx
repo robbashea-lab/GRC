@@ -448,7 +448,7 @@ test('clearing and reselecting a software requirement removes only that matrix r
   expectNativeUnchanged(nativeBefore);
 });
 
-test.each([
+const boundedContextNegatives=[
   ['untrusted preview',()=>{mockTrustedDemo=false;}],
   ['ordinary authenticated mode',()=>{mockAuth.workspaceMode='standard';mockAuth.user.workspace_mode='standard';}],
   ['auth mode mismatch',()=>{mockAuth.workspaceMode='standard';}],
@@ -467,7 +467,8 @@ test.each([
   ['archived client',()=>{mockOrg.currentClient.archived=true;}],
   ['incomplete native context',()=>{props.contextComplete=false;}],
   ['other framework version',()=>{props.record={...props.record,framework_version:'8.0'};}],
-])('the bounded progress correction does not change %s',async(_label,changeContext)=>{
+];
+test.each(boundedContextNegatives)('the bounded progress correction does not change %s',async(_label,changeContext)=>{
   enableBoundedDemoContext();
   const answers={...completeAnswers('1.1'),additional_confirmation:'Yes',unknowns:''};answers.coverage.Servers='Not sure';
   stored={...interview('1.1'),revision:2,answers};props.visualReference=true;changeContext();
@@ -477,4 +478,39 @@ test.each([
   expect(document.body.textContent).toContain('Describe the additional reported work before reviewing the summary.');
   expect(document.querySelector('[aria-label="Question group 2 of 5"]')).toBeTruthy();
   expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(nativeBefore);
+});
+
+test.each(boundedContextNegatives)('fresh interview visibility does not widen %s',async(_label,changeContext)=>{
+  enableBoundedDemoContext();changeContext();
+  const reveal=jest.fn(),nativeBefore=copy(props.current);
+  await render({inline:true,visualReference:true,onFreshInterviewReady:reveal});
+  expect(reveal).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(nativeBefore);
+});
+
+test('fresh personal entry can reveal questions alongside a saved manual assessment only once',async()=>{
+  enableBoundedDemoContext();
+  const current={...record('1.1'),status:'needs_attention',verification:'gap_identified',implementation:'Retain this exact manual wording.',last_assessed:token,assessment_history:[{implementation:'Earlier manual wording.'}]};
+  const reveal=jest.fn();props={...props,record:current,current,form:copy(current)};
+  await render({inline:true,visualReference:true,onFreshInterviewReady:reveal});
+  expect(reveal).toHaveBeenCalledTimes(1);expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(current);
+  // A later callback identity or explicit close must not undo the user's choice.
+  const laterReveal=jest.fn();await render({inlineOpen:false,onFreshInterviewReady:laterReveal});
+  expect(laterReveal).not.toHaveBeenCalled();expectNativeUnchanged(current);
+});
+
+test.each([
+  ['saved checkpoint',()=>{stored={...stored,revision:1,answers:{inventory:'Not sure',inventory_detail:'Previously reported uncertainty.'}};}],
+  ['completed interview',()=>completedSaved('1.1')],
+  ['historical question version',()=>{stored.version=legacyVersionForSafeguard('1.1');}],
+  ['native dirty draft',()=>{props.assessmentDirty=true;props.form={...props.form,implementation:'Unsaved native wording.'};}],
+  ['read-only assessment',()=>{props.disabled=true;}],
+  ['recorded Not Applicable position',()=>{props.current={...props.current,status:'not_applicable',na_rationale:'Retain the recorded scope decision.'};}],
+  ['failed interview read',()=>{api.get.mockRejectedValueOnce(new Error('Synthetic read unavailable'));}],
+])('fresh entry preserves the existing %s',async(_label,prepare)=>{
+  enableBoundedDemoContext();prepare();
+  const reveal=jest.fn(),nativeBefore=copy(props.current),formBefore=copy(props.form),interviewBefore=copy(stored);
+  await render({inline:true,visualReference:true,onFreshInterviewReady:reveal});
+  expect(reveal).not.toHaveBeenCalled();expect(stored).toEqual(interviewBefore);
+  expect(api.put).not.toHaveBeenCalled();expect(props.current).toEqual(nativeBefore);expect(props.form).toEqual(formBefore);
+  expect(props.onApply).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onUpdateImplementation).not.toHaveBeenCalled();
 });
