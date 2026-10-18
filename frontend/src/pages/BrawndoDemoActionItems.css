@@ -5,6 +5,15 @@
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }
 .brawndo-demo-actions {
+  /* Shared page/control rules resolve these aliases only inside this landing. */
+  --font:'GoverNara Actions Inter',Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  --font-body:var(--font); --font-heading:var(--font);
+  --color-bg-app:var(--bda-bg); --color-bg-surface:var(--bda-card); --color-bg-subtle:var(--bda-subtle);
+  --color-bg-tablehead:var(--bda-tablehead); --color-bg-row-hover:var(--bda-hover);
+  --color-border:var(--bda-line); --color-border-strong:var(--bda-line-strong);
+  --color-text-primary:var(--bda-fg); --color-text-secondary:var(--bda-fg2); --color-text-muted:var(--bda-muted);
+  --color-input-border:var(--bda-line-strong); --color-link:var(--bda-link); --color-selected-bg:var(--bda-soft);
+  --focus:var(--bda-accent); --color-focus-ring:var(--bda-accent);
   --bda-shadow:0 1px 2px rgba(15,27,45,.05),0 1px 1px rgba(15,27,45,.02); --bda-card:#fff; --bda-bg:#f4f6f9; --bda-line:#e3e8ef; --bda-line-strong:#cdd5e0;
   --bda-muted:#5a687b; --bda-fg:#0f1b2d; --bda-fg2:#46566b; --bda-subtle:#f7f9fb;
   --bda-soft:#edf2fc; --bda-hover:#f2f5f9; --bda-accent:#215bc1; --bda-seg:#fff;
@@ -156,7 +165,7 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
 .brawndo-workspace-pilot[data-visual-surface="actions"] .app-workspace:has(.brawndo-demo-actions[data-theme="light"]) {background:#f4f6f9;}
 .brawndo-workspace-pilot[data-visual-surface="actions"] .app-workspace:has(.brawndo-demo-actions[data-theme="dark"]) {background:#0a0f16;}
 /* The shared heading rule uses the shell font; keep this override inside the landing. */
-.brawndo-workspace-pilot[data-visual-surface="actions"] .brawndo-demo-actions .bpage-head h1 {font-family:'GoverNara Actions Inter',Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif;}
+.brawndo-workspace-pilot[data-visual-surface="actions"] .brawndo-demo-actions .bpage-head h1 {font-family:'GoverNara Actions Inter',Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif;color:var(--bda-fg);}
 @media(prefers-reduced-motion:reduce){.brawndo-demo-actions .bda-runway-bar span{transition:none;}}
 
 .brawndo-demo-actions .bda-controls select {font-size:12.5px;font-weight:500;}
