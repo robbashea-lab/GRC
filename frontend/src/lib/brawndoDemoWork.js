@@ -39,9 +39,9 @@ export function selectDemoWork(items,{filter='all',asOf,search='',sort='due',fra
     return order||due(a,b)||textCompare(a.title,b.title)||textCompare(a.key,b.key);
   });
 }
-export function demoWorkSummary(items,asOf){
+export function demoWorkSummary(items,asOf,formatDay=displayDay){
   const today=calendarDay(asOf),due=rows=>rows.map(r=>calendarDay(r.due_date)).filter(d=>d!==null).sort((a,b)=>a-b);
   const late=due(items.filter(r=>matchesDemoWorkFilter(r,'pastDue',asOf))),soon=due(items.filter(r=>matchesDemoWorkFilter(r,'due30',asOf))),unassigned=items.filter(r=>r.unassigned),orphan=due(unassigned);
-  const iso=day=>displayDay(new Date(day*86400000).toISOString().slice(0,10));
+  const iso=day=>formatDay(new Date(day*86400000).toISOString().slice(0,10));
   return {all:`${items.filter(r=>r.status==='in_progress').length} in progress · ${items.filter(r=>['remediated','pending_validation'].includes(r.status)).length} awaiting validation`,pastDue:late.length?`Oldest ${today-late[0]} days past due`:'Nothing past due',due30:soon.length?`Next due ${iso(soon[0])}`:'Nothing due in 30 days',unassigned:!unassigned.length?'Every item has an owner':orphan.length?`Earliest due ${iso(orphan[0])}`:'No known due dates'};
 }

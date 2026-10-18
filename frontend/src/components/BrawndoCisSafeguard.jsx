@@ -21,6 +21,7 @@ import GuidedAssessor from './GuidedAssessor';
 import AssessmentItems from './AssessmentItems';
 import {useAuth} from '@/context/AuthContext';
 import {focusedOmniEnabled} from '@/lib/focusedOmni';
+import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
 
 // Shared CIS IG1 workspace. The historical name is retained for existing callers.
 // Read-only guidance never writes assessment responses, status or verification.
@@ -42,6 +43,23 @@ export default function BrawndoCisSafeguard({state,actions}){
   const programLabel=ctx?cisLabel(ctx.configuration):breadcrumb?.[0]?.label||'CIS';
   const inventoryContext=id==='1.2'&&focusedOmniEnabled(clientId,user,record.framework_key,ctx?.configuration,id)?ctx?.inventoryContext:undefined;
   const visualReference=state.visualReference===true,summary=summaryData.requirements[id];
+  const brawndoRecord=useBrawndoFullRecord(record,clientId);
+  const savedFooter=visualReference&&brawndoRecord&&current.client_id===clientId
+    &&current.framework_key===record.framework_key&&current.framework_assessment_id===record.framework_assessment_id
+    &&current.definition_id===record.definition_id;
+  // Only the native confirmed record supplies the timestamp; drafts and interview checkpoints never do.
+  const savedDate=typeof current.last_saved==='string'&&/T.*(?:Z|[+-]\d{2}:\d{2})$/i.test(current.last_saved)?new Date(current.last_saved):null;
+  const savedTimestamp=savedDate&&!Number.isNaN(savedDate.getTime())?savedDate.toISOString():null;
+  const savedLabel=savedTimestamp?`${new Intl.DateTimeFormat('en-US',{timeZone:'UTC',year:'numeric',month:'short',day:'numeric'}).format(savedDate)} · ${new Intl.DateTimeFormat('en-US',{timeZone:'UTC',hour:'numeric',minute:'2-digit',second:'2-digit',timeZoneName:'short'}).format(savedDate)}`:null;
+  const footerStatus=dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes remain in your draft until saved.');
+  let footerContent=footerStatus;
+  if(savedFooter){
+    if(busy)footerContent='Working…';
+    else if(!dirty)footerContent=<>
+      {savedTimestamp?<>Last saved: <time dateTime={savedTimestamp} title={savedTimestamp} aria-label={`Last saved ${savedTimestamp}`}>{savedLabel}</time></>:'Last saved: unavailable'}
+      {!writable?' · Read-only assessment':''}{feedback?` · ${feedback}`:''}
+    </>;
+  }
   const sectionCounts=visualReference?{
     items:Array.isArray(current.items_to_address)?current.items_to_address.filter(item=>item.state==='open').length:null,
     findings:ctx&&current.work?.context_complete===true&&Array.isArray(related?.findings)?directFindings(current,related).length:null,
@@ -67,7 +85,7 @@ export default function BrawndoCisSafeguard({state,actions}){
     {...{position,previous,next,close,busy}} testId="brawndo-cis-assessment" ariaModal
     crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb} label={`${programLabel} location`}/>:null}
     returnSelector={`[data-testid="requirement-${id}"]`}
-    footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes remain in your draft until saved.')}</span>{finding&&<p id="bcsg-finding-draft" className="text-xs text-ink-secondary">Create or cancel the open Finding before using Save & next.</p>}</div>
+    footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{footerContent}</span>{finding&&<p id="bcsg-finding-draft" className="text-xs text-ink-secondary">Create or cancel the open Finding before using Save & next.</p>}</div>
       <div className="flex flex-wrap gap-2">{visualReference&&state.manageRecord&&<Button variant="outline" disabled={busy} onClick={state.manageRecord}>Manage</Button>}{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={finding?'bcsg-finding-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
     {!ctx&&!error&&<p role="status" className="py-3 text-sm">Loading assessment…</p>}
     <AssessmentLayout inlineWorkflow criteriaSummary="Omnisciente guidance for assessing this safeguard. These are not additional CIS requirements." criteriaTitle="CIS assessment criteria" reference={`CIS v8.1 · Safeguard ${id}`} key={clientId+':'+id} summary={visualReference?undefined:summary?.plain} summaryLabel={visualReference?'Guided assessment':undefined}

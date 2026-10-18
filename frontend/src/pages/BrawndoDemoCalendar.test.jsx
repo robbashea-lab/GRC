@@ -15,7 +15,11 @@ test('pilot filters are read-only and open native items; month overflow navigate
  const viewButtons=[...container.querySelectorAll('[aria-label="Calendar view"] button')];expect(viewButtons.map(button=>button.textContent)).toEqual(['Day','Week','Month']);await act(async()=>viewButtons[1].click());expect(setView).toHaveBeenLastCalledWith('week');
  const owner=container.querySelector('.f-right > label select');expect(owner.value).toBe('all');expect(owner.closest('label').nextElementSibling.getAttribute('aria-label')).toBe('Calendar state');
  await act(async()=>container.querySelector('[data-testid="cal-item-t0"]').click());expect(openSchedule.mock.calls[0][0]).toBe(entries[0]);
+ expect(container.querySelectorAll('.wk .ev')).toHaveLength(2);expect(container.querySelector('.more').textContent).toBe('+2 more');
  await act(async()=>container.querySelector('.more').click());expect(setView).toHaveBeenCalledWith('day');expect(localCalendarDate(setAnchor.mock.calls[0][0])).toBe('2026-10-16');
+ await act(async()=>root.render(<CalendarView {...props} view="day"/>));expect(container.querySelectorAll('.drow')).toHaveLength(4);
+ for(const item of entries)expect(container.querySelector(`[data-testid="cal-item-${item.key}"]`)).not.toBeNull();
+ await act(async()=>root.render(<CalendarView {...props}/>));
  await act(async()=>{owner.value='';owner.dispatchEvent(new Event('change',{bubbles:true}));});expect(container.querySelector('[data-testid="cal-item-t0"]')).toBeNull();
  await act(async()=>{owner.value='u';owner.dispatchEvent(new Event('change',{bubbles:true}));});expect(container.querySelector('[data-testid="cal-item-t0"]')).not.toBeNull();
  await act(async()=>[...container.querySelectorAll('.tchip')].find(button=>button.textContent.includes('Action items')).click());expect(container.querySelector('[data-testid="cal-item-t0"]')).toBeNull();expect(openSchedule).toHaveBeenCalledTimes(1);

@@ -1,29 +1,59 @@
-/* Dashboard target 5e824ee4: page-only presentation; native queue/controllers are unchanged. */
+/* Exact Latin variable face from the original reference's Google Inter stylesheet.
+   A distinct family keeps font delivery local to this Dashboard. See assets/fonts/Inter-OFL.txt. */
+@font-face {
+  font-family: 'GoverNara Dashboard Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Original Dashboard 124570bd: local presentation only; native queue and reporting stay authoritative. */
 .brawndo-demo-dashboard {
-  --bdd-bg:#EDF3FA; --bdd-card:#FFFFFF; --bdd-subtle:#F3F7FC; --bdd-head:#F3F7FC;
-  --bdd-hover:#EAF1FA; --bdd-line:#C6D4E4; --bdd-strong:#B6C6DB;
-  --bdd-text:#132A49; --bdd-secondary:#4A617B; --bdd-muted:#536A84;
-  --bdd-accent:#215BC1; --bdd-soft:#E4EEFC; --bdd-danger:#B42318; --bdd-amber:#93370D;
-  --bdd-segment:#FFFFFF; --bdd-partial:#E2AA30;
+  --font:'GoverNara Dashboard Inter',Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  --font-body:var(--font); --font-heading:var(--font);
+  --bdd-bg:#F4F6F9; --bdd-card:#FFFFFF; --bdd-subtle:#F7F9FB; --bdd-head:#F9FAFC;
+  --bdd-hover:#F2F5F9; --bdd-line:#E3E8EF; --bdd-strong:#CDD5E0;
+  --bdd-text:#0F1B2D; --bdd-secondary:#46566B; --bdd-muted:#5A687B;
+  --bdd-accent:#215BC1; --bdd-soft:#EDF2FC; --bdd-danger:#B42318; --bdd-amber:#93370D;
+  --bdd-link:#1F56C3; --bdd-segment:#FFFFFF; --bdd-partial:#E2AA30;
   --bdd-shadow:0 1px 2px rgba(15,27,45,.05),0 1px 1px rgba(15,27,45,.02);
   --bdd-segment-shadow:0 1px 2px rgba(15,27,45,.10),0 0 0 1px rgba(15,27,45,.06);
   display:grid; gap:20px; padding:28px 24px 120px; max-width:1600px;
   min-height:100%; min-width:0; box-sizing:border-box;
   background:var(--bdd-bg); color:var(--bdd-text);
-  font:13.5px/1.5 'Segoe UI',Inter,Arial,sans-serif;
+  font:13.5px/1.5 var(--font);
   font-optical-sizing:auto; -webkit-font-smoothing:antialiased;
 }
 .brawndo-demo-dashboard[data-theme="dark"] {
-  --bdd-bg:#071321; --bdd-card:#0C1B30; --bdd-subtle:#11243A; --bdd-head:#112238;
-  --bdd-hover:#172B45; --bdd-line:#263C58; --bdd-strong:#3D5778;
-  --bdd-text:#EDF3FF; --bdd-secondary:#A8BAD5; --bdd-muted:#A2AEC4;
-  --bdd-accent:#85D4FF; --bdd-soft:#25416A; --bdd-danger:#FA7B85; --bdd-amber:#F5BC4F;
-  --bdd-segment:#243042; --bdd-partial:#D4A13C; --bdd-shadow:none;
+  --bdd-bg:#0A0F16; --bdd-card:#111823; --bdd-subtle:#151D29; --bdd-head:#131B26;
+  --bdd-hover:#19222F; --bdd-line:#222C3A; --bdd-strong:#34404F;
+  --bdd-text:#EDF1F7; --bdd-secondary:#A7B3C4; --bdd-muted:#8E9BAE;
+  --bdd-accent:#8EC5FF; --bdd-soft:#1B2738; --bdd-danger:#F2828C; --bdd-amber:#E9B65A;
+  --bdd-link:#8EC5FF; --bdd-segment:#243042; --bdd-partial:#D4A13C; --bdd-shadow:none;
   --bdd-segment-shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
 }
 .brawndo-demo-dashboard > * {min-width:0}
+/* Reset inherited heading shorthands and the shared Portfolio fixed optical axis only here. */
+.brawndo-demo-dashboard :where(*) {font-family:var(--font);font-optical-sizing:auto;font-variation-settings:normal}
+.brawndo-demo-dashboard {
+  --color-bg-app:var(--bdd-bg); --color-bg-surface:var(--bdd-card); --color-bg-subtle:var(--bdd-subtle);
+  --color-bg-tablehead:var(--bdd-head); --color-bg-row-hover:var(--bdd-hover);
+  --color-border:var(--bdd-line); --color-border-strong:var(--bdd-strong); --color-input-border:var(--bdd-strong);
+  --color-text-primary:var(--bdd-text); --color-text-secondary:var(--bdd-secondary); --color-text-muted:var(--bdd-muted);
+  --color-link:var(--bdd-link); --color-focus-ring:var(--bdd-accent); --color-selected-bg:var(--bdd-soft);
+  --color-success:#05603A; --color-success-bg:#E7F6EF; --color-critical:#B42318; --color-critical-bg:#FDECEA;
+}
+.brawndo-demo-dashboard[data-theme=dark] {--color-success:#3DC79F;--color-success-bg:rgba(61,199,159,.13);--color-critical:#F2828C;--color-critical-bg:rgba(242,130,140,.13)}
+.brawndo-demo-dashboard .brawndo-demo-program {box-shadow:var(--bdd-shadow);font:13.5px/1.5 var(--font);--ph-hover:var(--bdd-hover);--ph-seg-on:var(--bdd-segment);--ph-tip-bg:var(--bdd-card)}
+.brawndo-demo-dashboard .brawndo-demo-program .ph-current-value > strong {font-optical-sizing:auto;font-variation-settings:normal}
+.brawndo-demo-dashboard .brawndo-demo-program .ph-program-head h3 {font:600 15px/1.5 var(--font);letter-spacing:-.01em}
+.brawndo-demo-dashboard .brawndo-demo-program .ph-current-value p {font-size:13px}
+.brawndo-demo-dashboard .brawndo-demo-program .ph-current-value small {font-size:12px}
+.brawndo-demo-dashboard .brawndo-demo-program .ph-inline-foot {margin:0;padding:12px 24px;background:var(--bdd-subtle)}
+
 .brawndo-demo-dashboard :is(h1,h2,h3,h4,p) {margin:0}
-.brawndo-demo-dashboard h1 {font:650 24px/1.5 'Segoe UI',Inter,Arial,sans-serif;letter-spacing:-.025em;text-wrap:balance}
+.brawndo-demo-dashboard h1 {font:650 24px/1.5 var(--font);letter-spacing:-.025em;text-wrap:balance}
 .brawndo-demo-dashboard h2 {font-size:15px;font-weight:600;line-height:1.5;letter-spacing:-.01em}
 .brawndo-demo-dashboard :is(button,input,select) {font:inherit;color:inherit;box-sizing:border-box}
 .brawndo-demo-dashboard button {cursor:pointer;border:0;background:none;padding:0;text-align:inherit}
@@ -111,3 +141,19 @@
   .brawndo-demo-dashboard .bdd-controls label:last-of-type {margin-left:0}
 }
 @media(prefers-reduced-motion:reduce) {.brawndo-demo-dashboard * {animation:none!important;transition:none!important}}
+/* The inline report keeps native data/controllers, with the original Dashboard geometry. */
+.brawndo-demo-dashboard .brawndo-demo-program .ph-breakdown-head {padding:0;margin:0}
+.brawndo-demo-dashboard .brawndo-demo-program .ph-status-scale {padding:6px 0;margin:0}
+.brawndo-demo-dashboard .brawndo-demo-program .ph-interactive-bar,
+.brawndo-demo-dashboard .brawndo-demo-program .ph-interactive-bar button {height:12px}
+.brawndo-demo-dashboard .brawndo-demo-program .ph-breakdown-value {white-space:normal}
+.brawndo-demo-dashboard .brawndo-demo-program .ph-breakdown-value > span {white-space:nowrap}
+.brawndo-demo-dashboard .brawndo-demo-program .ph-segmented button[aria-pressed=true] {box-shadow:var(--bdd-segment-shadow)}
+.brawndo-demo-dashboard .bdd-table-scroll caption.sr-only {position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.brawndo-demo-dashboard .bdd-empty {display:grid;gap:10px;justify-items:start}
+.brawndo-demo-dashboard .bdd-empty h3 {font-size:15px;color:var(--bdd-text)}
+.brawndo-demo-dashboard .bdd-clear {display:inline-flex;align-items:center;height:32px;padding:0 12px;border:1px solid var(--bdd-strong);border-radius:7px;background:var(--bdd-card);font-size:12.5px;font-weight:600;box-shadow:var(--bdd-shadow)}
+.brawndo-demo-dashboard .bdd-clear:hover {background:var(--bdd-hover)}
+@media(max-width:860px) {.brawndo-demo-dashboard .brawndo-demo-program .ph-inline-foot {padding-left:16px;padding-right:16px}}
+
+.brawndo-demo-dashboard .brawndo-demo-program :is(.ph-marker,.ph-active) {stroke:var(--bdd-card)}

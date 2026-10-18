@@ -5,7 +5,8 @@ import catalog from '@catalogs/cisIG1.json';
 import guide from '@catalogs/operatorGuidance/cisRequirementGuide.json';
 import criteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 
-let mockGuideProps,mockShellProps;
+let mockGuideProps,mockShellProps,mockBrawndoRecord=true;
+jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>mockBrawndoRecord}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'u',role:'super_admin',workspace_mode:'demo'}})}));
 jest.mock('./AssessmentShell',()=>({__esModule:true,default:props=>{mockShellProps=props;const {className,title,status,children,footer}=props;return <section className={className} data-testid="native-shell"><h2>{title}</h2>{status}{children}<footer>{footer}</footer></section>;},AssessmentStep:({title,children})=><section><h3>{title}</h3>{children}</section>}));
 jest.mock('./GuidedAssessor',()=>props=>{mockGuideProps=props;return <section hidden={!props.inlineOpen} data-testid="native-interview"><button onClick={props.onInlineClose}>Close interview</button></section>;});
@@ -15,6 +16,7 @@ jest.mock('./AssessmentItems',()=>()=> <p>Native items</p>);
 let root,container,state,actions;
 const button=name=>[...container.querySelectorAll('button')].find(element=>element.textContent===name);
 beforeEach(()=>{
+  mockBrawndoRecord=true;
   global.IS_REACT_ACT_ENVIRONMENT=true;
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   const record={client_id:'demo_brawndo',framework_key:'cis-ig1',framework_assessment_id:'a',definition_id:'1.1',status:'in_progress',verification:'needs_validation',implementation:'Keep the exact manual wording.',notes:'Native prior notes',items_to_address:[{item_id:'open',state:'open'},{item_id:'resolved',state:'resolved'},{item_id:'old',state:'superseded'}],work:{context_complete:true}};
@@ -98,4 +100,38 @@ test.each([false,undefined])('without an explicit visual gate (%s) the existing 
   expect(mockGuideProps.visualReference).toBe(false);
   expect(mockGuideProps.onFreshInterviewReady).toBeUndefined();
   expect(mockShellProps.closeInNavigation).toBe(false);expect(mockShellProps.close).toBe(actions.close);
+});
+
+test('clean footer uses confirmed native save with full accessible timestamp, independent of draft and assessment dates',async()=>{
+  state.current={...state.current,last_saved:'2026-10-18T09:06:07Z',last_assessed:'2026-09-01T00:00:00Z',assessed_by:'Prior assessor'};
+  state.form={...state.form,last_saved:'2030-01-01T00:00:00Z'};await render();
+  const time=container.querySelector('footer time');expect(time.dateTime).toBe('2026-10-18T09:06:07.000Z');
+  expect(time.title).toBe(time.dateTime);expect(time.getAttribute('aria-label')).toContain(time.dateTime);
+  expect(time.textContent).toContain('Oct 18, 2026 · ');expect(time.textContent).toContain('9:06:07');expect(time.textContent).toContain('UTC');
+  expect(container.querySelector('footer').textContent).not.toContain('Prior assessor');
+  await render();expect(container.querySelector('footer time').dateTime).toBe(time.dateTime);
+  state={...state,writable:false};await render();expect(container.querySelector('footer').textContent).toContain('Read-only assessment');
+  expect(container.querySelector('footer time').dateTime).toBe(time.dateTime);
+});
+test.each([undefined,null,'invalid','2026-10-18','2026-10-18T09:06:07'])('legacy unproven timestamp %s is honestly unavailable',async value=>{
+  state.current={...state.current,last_saved:value,last_assessed:'2026-10-17T12:00:00Z'};await render();
+  expect(container.querySelector('footer').textContent).toContain('Last saved: unavailable');expect(container.querySelector('footer time')).toBeNull();
+});
+test('dirty, busy, failed and successful states retain native timestamp boundaries',async()=>{
+  state.current={...state.current,last_saved:'2026-10-17T12:00:00Z'};
+  state={...state,dirty:true,feedback:'Interview checkpoint saved.'};await render();
+  expect(container.querySelector('footer').textContent).toContain('Unsaved assessment changes');expect(container.querySelector('footer time')).toBeNull();
+  state={...state,busy:true};await render();expect(container.querySelector('footer [role="status"]').textContent).toBe('Working…');
+  state={...state,busy:false,error:'Save failed'};await render();expect(container.querySelector('[role="alert"]').textContent).toBe('Save failed');
+  expect(state.current.last_saved).toBe('2026-10-17T12:00:00Z');
+  state={...state,dirty:false,error:'',feedback:'Assessment saved.'};await render();
+  expect(container.querySelector('footer time').dateTime).toBe('2026-10-17T12:00:00.000Z');
+  state.current={...state.current,last_saved:'2026-10-18T12:00:00Z'};await render();expect(container.querySelector('footer time').dateTime).toBe('2026-10-18T12:00:00.000Z');
+});
+test.each(['gate','visual','client','assessment','definition','framework'])('saved footer fails closed on %s mismatch',async mismatch=>{
+  state.current={...state.current,last_saved:'2026-10-18T12:00:00Z'};
+  if(mismatch==='gate')mockBrawndoRecord=false;if(mismatch==='visual')state.visualReference=false;
+  const key={client:'client_id',assessment:'framework_assessment_id',definition:'definition_id',framework:'framework_key'}[mismatch];if(key)state.current={...state.current,[key]:'other'};
+  await render();expect(container.querySelector('footer').textContent).not.toContain('Last saved:');
+  expect(container.querySelector('footer').textContent).toContain('Changes remain in your draft until saved.');
 });

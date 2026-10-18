@@ -25,3 +25,11 @@ test('five sorts keep missing values last',()=>{
 test('summary distinguishes native workflow and lateness and missing deadlines',()=>{
  expect(demoWorkSummary([row(1,{status:'in_progress',due_date:'2026-10-10'}),row(2,{status:'remediated',unassigned:true,due_date:null})],'2026-10-15')).toEqual({all:'1 in progress · 1 awaiting validation',pastDue:'Oldest 5 days past due',due30:'Nothing due in 30 days',unassigned:'No known due dates'});
 });
+
+test('Dashboard can format summary deadline labels without changing native date or default callers',()=>{
+ const items=[row(1,{unassigned:true,due_date:'2026-10-16'})],format=jest.fn(value=>`Readable ${value}`);
+ const summary=demoWorkSummary(items,'2026-10-15',format);
+ expect(summary.due30).toBe('Next due Readable 2026-10-16');expect(summary.unassigned).toBe('Earliest due Readable 2026-10-16');
+ expect(items[0].due_date).toBe('2026-10-16');expect(format).toHaveBeenCalledWith('2026-10-16');
+ expect(demoWorkSummary(items,'2026-10-15').due30).not.toContain('Readable');
+});

@@ -1,3 +1,5 @@
+import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
+import './BrawndoFullRecord.css';
 import {useEffect,useRef,useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import api,{formatError} from '@/lib/api';
@@ -29,6 +31,7 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
   const update=useCreateIntent((...args)=>api.patch(...args),`${user?.user_id}:${clientId}:contacts:${record?.contact_id}:update`,true);
   const context=useContactAccess(clientId,open,current);
   const state=directoryAccess(current||{client_id:clientId},clientId,context);
+  const fullRecord=useBrawndoFullRecord(record,clientId)&&(!current||current.client_id===clientId);
   const archived=isArchivedContact(current||{});
   const dirty=JSON.stringify(form)!==JSON.stringify(baseline.current)||(!current&&invite);
   useEffect(()=>{if(open){setCurrent(record);const value=contactForm(record);setForm(value);baseline.current=value;setInvite(false);setError('');setRole('client_readonly');setDiscard(false);setArchive(false);}},[open,record,clientId]);
@@ -75,7 +78,7 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
     }catch(e){setError(formatError(e));}finally{setSaving(false);setArchive(false);}
   }
   return <Sheet open={open} onOpenChange={value=>value?onOpenChange(true):close()}>
-    <SheetContent className={`contact-workspace${additionalPresentation?' brawndo-additional bac-workspace':''}`} onPointerDownOutside={e=>e.preventDefault()} onOpenAutoFocus={()=>{opener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();(opener.current?.isConnected?opener.current:document.querySelector('[data-testid="contacts-search"]'))?.focus();}}>
+    <SheetContent data-testid="contact-drawer" className={`contact-workspace${additionalPresentation?' brawndo-additional bac-workspace':''}${fullRecord?' brawndo-full-record':''}`} onPointerDownOutside={e=>e.preventDefault()} onOpenAutoFocus={()=>{opener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();(opener.current?.isConnected?opener.current:document.querySelector('[data-testid="contacts-search"]'))?.focus();}}>
       <SheetHeader className="contact-workspace-header"><SheetTitle>{current?current.name:'New Contact'}</SheetTitle><SheetDescription>{current?'Contact information and linked platform access.':'Add a client contact and optionally invite them to Omnisciente.'}</SheetDescription></SheetHeader>
       <form onSubmit={save} className="contact-workspace-form">
         <div className="contact-workspace-body">

@@ -8,7 +8,8 @@ const mockTask={task_id:'action',client_id:'demo_brawndo',title:'Retained action
 const mockFinding={finding_id:'issue',client_id:'demo_brawndo',title:'Issue',description:'Original issue',status:'open',primary_task_id:'action',source_type:'risk',source_id:'origin-risk'};
 const mockOrigin={risk_id:'origin-risk',client_id:'demo_brawndo',title:'Native origin risk'};
 const mockLoad=jest.fn();
-let mockLoading=false,mockError='',mockTaskStatus='open',mockFindingStatus='open';
+let mockLoading=false,mockError='',mockTaskStatus='open',mockFindingStatus='open',mockFullRecord=false;
+jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>mockFullRecord}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/useActionRegisterData',()=>({useActionRegisterData:()=>({data:{tasks:[{...mockTask,status:mockTaskStatus,finding_id:'issue'}],findings:[{...mockFinding,status:mockFindingStatus}],risks:[mockOrigin]},users:[],loading:mockLoading,error:mockError,load:mockLoad})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message}));
@@ -20,7 +21,7 @@ const click=text=>act(async()=>[...document.querySelectorAll('button')].find(b=>
 const change=async(label,value)=>act(async()=>{const node=document.querySelector(`[aria-label="${label}"]`);Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
 const render=(presentation,props={})=>act(async()=>root.render(<RemediationTicketDrawer open kind="findings" record={mockFinding} clientId="demo_brawndo" presentation={presentation} onOpenChange={close} {...props}/>));
 beforeAll(()=>Object.defineProperty(globalThis,'crypto',{value:require('crypto').webcrypto,configurable:true}));
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockLoading=false;mockError='';mockTaskStatus='open';mockFindingStatus='open';close=jest.fn();mockLoad.mockResolvedValue({ok:true});api.get.mockResolvedValue({data:[]});api.patch.mockResolvedValue({data:mockTask});container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockFullRecord=false;mockLoading=false;mockError='';mockTaskStatus='open';mockFindingStatus='open';close=jest.fn();mockLoad.mockResolvedValue({ok:true});api.get.mockResolvedValue({data:[]});api.patch.mockResolvedValue({data:mockTask});container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
 test('presentation is opt-in and retains only the original native source navigation',async()=>{
@@ -98,3 +99,19 @@ test.each(['loading','error'])('retained %s data keeps drafts but blocks mutatio
   expect([...document.querySelectorAll('button')].some(button=>button.textContent==='Reopen ticket'&&!button.disabled)).toBe(false);
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
+
+ test('full native presentation works without a list-only flag and survives scope rechecks without losing drafts',async()=>{
+  mockFullRecord=true;await render();
+  const surface=document.querySelector('[data-testid="remediation-ticket-drawer"]');
+  expect(surface.classList.contains('brawndo-full-record')).toBe(true);
+  await change('Action title','Retained native draft');
+  const title=document.querySelector('[aria-label="Action title"]');
+  mockFullRecord=false;await render();
+  expect(document.querySelector('[data-testid="remediation-ticket-drawer"]')).toBe(surface);
+  expect(surface.classList.contains('brawndo-full-record')).toBe(false);
+  expect(document.querySelector('[aria-label="Action title"]')).toBe(title);
+  expect(title.value).toBe('Retained native draft');
+  mockFullRecord=true;await render();await click('Cancel');
+  expect(document.body.textContent).toContain('Discard unsaved ticket changes?');
+  expect(api.patch).not.toHaveBeenCalled();
+ });

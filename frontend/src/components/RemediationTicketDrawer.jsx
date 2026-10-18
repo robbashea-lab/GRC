@@ -1,3 +1,5 @@
+import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
+import './BrawndoFullRecord.css';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from './ui/alert-dialog';
@@ -120,6 +122,7 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
   useEffect(()=>{markDirty('rationale',!!rationale);return()=>markDirty('rationale',false);},[rationale,markDirty]);
   const ticket=ticketRecords(data,record.client_id||clientId).find(t=>kind==='findings'?t.finding?.finding_id===record.finding_id:t.actions.some(a=>a.task_id===record.task_id));
   const stage=ticket&&ticketStage(ticket),origin=ticket&&actionOrigin(ticket.raw,data,ticket.finding);
+  const fullRecord=useBrawndoFullRecord(record,clientId)&&(!ticket||ticket.raw.client_id===clientId);
   const nestedCisVisualOrigin=nested?.kind==='framework_assessments' && origin?.kind==='framework_assessments'
     && origin.id===cisVisualOrigin?.assessmentId && nested.record.framework_assessment_id===origin.id
     && origin.target?.framework_assessment_id===cisVisualOrigin?.assessmentId && origin.target?.definition_id===cisVisualOrigin?.definitionId
@@ -149,7 +152,7 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
     try{await decision('/findings/'+ticket.finding.finding_id+'/'+action,body);setRationale('');await saved();setFeedback(action==='validate'?'Ticket completed. Validation saved.':'Ticket accepted, not remediated.');}
     catch(e){setCommandError(formatError(e));}finally{setBusy(false);}
   }
-  return <><Dialog open={open} onOpenChange={close}><DialogContent ref={surface} onOpenAutoFocus={()=>{opener.current=document.activeElement;openerSurface.current=opener.current?.closest('[role="dialog"]');}} onCloseAutoFocus={e=>{e.preventDefault();restoreFocus();}} className={'remediation-ticket-dialog max-h-[90vh] overflow-y-auto min-w-0 break-words'+(pilot?' brawndo-demo-actions-ticket':'')} data-testid="remediation-ticket-drawer">
+  return <><Dialog open={open} onOpenChange={close}><DialogContent ref={surface} onOpenAutoFocus={()=>{opener.current=document.activeElement;openerSurface.current=opener.current?.closest('[role="dialog"]');}} onCloseAutoFocus={e=>{e.preventDefault();restoreFocus();}} className={'remediation-ticket-dialog max-h-[90vh] overflow-y-auto min-w-0 break-words'+(pilot?' brawndo-demo-actions-ticket':'')+(fullRecord?' brawndo-full-record':'')} data-testid="remediation-ticket-drawer">
     <header className="ticket-heading"><DialogTitle>{ticket?.title||'Remediation ticket'}</DialogTitle><DialogDescription>{ticket?ticket.ticketId:'Loading ticket…'}</DialogDescription></header>
     {error&&<p role="alert">{error}<Button onClick={load}>Retry</Button></p>}
     {!loading&&!error&&!ticket&&<p role="alert">This ticket is unavailable for this client.</p>}
@@ -172,7 +175,7 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
       <EvidencePanel clientId={ticket.raw.client_id} kind={ticket.kind} id={ticket.raw.finding_id||ticket.raw.task_id} refreshKey={evidenceVersion} validatedAt={ticket.finding?.validated_at} onOpen={async ref=>{if(!canMutate)return;try{const target=await resolveEvidenceSource(ref,ticket.raw.client_id);if(target.kind==='tasks'&&ticket.actions.some(t=>t.task_id===target.record.task_id)){Array.from(surface.current?.querySelectorAll('[data-ticket-task]')||[]).find(e=>e.dataset.ticketTask===target.record.task_id)?.querySelector('input')?.focus();}else if(!(target.kind==='findings'&&target.record.finding_id===ticket.finding?.finding_id))setNested(target);}catch(e){setCommandError(formatError(e));}}} allowLink={isInternal(user)&&canMutate}/>
       <History ticket={ticket} onDirty={markDirty} presentation={presentation} readOnly={!canMutate}/>
     </div>}
-    {pilot&&<footer className="ticket-footer"><span>Save each Action above to retain its changes.</span><Button variant="outline" disabled={busy} onClick={()=>close(false)}>Cancel</Button></footer>}
+    {(pilot||fullRecord)&&<footer className="ticket-footer"><span>Save each Action above to retain its changes.</span><Button variant="outline" disabled={busy} onClick={()=>close(false)}>Cancel</Button></footer>}
   </DialogContent></Dialog>
   <AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent onOpenAutoFocus={()=>{discardOpener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();if(dirty.current.size){const target=discardOpener.current?.isConnected?discardOpener.current:surface.current?.querySelector('button,input');target?.focus({preventScroll:true});}else restoreFocus();}}><AlertDialogTitle>Discard unsaved ticket changes?</AlertDialogTitle><AlertDialogDescription>Saved records remain unchanged.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel onClick={()=>{if(pilot)onCloseCancelled?.();}}>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{dirty.current.clear();setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
   {nested&&<RecordDrawer {...nested} open clientId={clientId} cisVisualOrigin={nestedCisVisualOrigin} onSaved={()=>{saved().catch(e=>setCommandError(formatError(e)));}} onOpenChange={v=>{if(!v)setNested(null);}}/>}

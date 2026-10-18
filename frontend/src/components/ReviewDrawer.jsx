@@ -1,3 +1,5 @@
+import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
+import './BrawndoFullRecord.css';
 import {riskTreatments} from "@/lib/brawndoRisks";
 import RemediationTickets from './RemediationTickets';
 import {readEvidenceFile as fileData} from '@/lib/evidenceFile';
@@ -67,6 +69,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const generation = useRef(0);
   const shown = selected || current;
   const cid = current?.client_id || record?.client_id || clientId;
+  const fullRecord=useBrawndoFullRecord(record,clientId)&&(!current||current.client_id===clientId);
   const createRecord = useCreateIntent((...args) => api.post(...args), cid);
   const updateRecord = useCreateIntent((...args)=>api.patch(...args), `${user?.user_id}:${cid}:${record?.review_id}:update`, true);
   const createFinding = useCreateIntent(async (...args) => {
@@ -193,7 +196,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},
       onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector('[data-testid="reviews-search"]');target?.focus({preventScroll:true});}
     }}
-      className="brawndo-cis-assessment approved-review-dialog bg-surface-card" data-testid="reviews-drawer">
+      className={'brawndo-cis-assessment approved-review-dialog bg-surface-card'+(fullRecord?' brawndo-full-record':'')} data-testid="reviews-drawer">
       <DialogDescription className="sr-only">Conduct this Review, edit its schedule and assigned reviewer, and access evidence, related work and completion history.</DialogDescription>
       <SheetHeader className="px-6 py-4 pr-12 border-b border-line shrink-0">
         <div className="flex justify-between gap-3"><div>{(!pilot||selected)&&<div className="text-xs text-ink-help">{selected?'Historical occurrence':'Review'}</div>}<SheetTitle ref={heading} tabIndex={-1} data-review-title className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>

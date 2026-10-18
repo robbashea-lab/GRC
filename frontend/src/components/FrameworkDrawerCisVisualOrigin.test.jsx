@@ -4,6 +4,7 @@ import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
 
 let mockAuth,mockGuideProps;
+jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>true}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:true,default:{get:jest.fn(),patch:jest.fn(),put:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:error=>error.message}));
 jest.mock('./GuidedAssessor',()=>props=>{mockGuideProps=props;return null;});
@@ -199,4 +200,20 @@ test('live nested receipt withdrawal retains its draft and requires a fresh join
   expect(host.querySelector('[aria-label="Current implementation"]').value).toBe(text);
   expect(native.implementation).toBe('Saved native implementation');
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('Last saved follows native failed, no-op and successful save responses',async()=>{
+  await render();const savedTime=()=>host.querySelector('.brawndo-assessment-footer time')?.dateTime;
+  expect(savedTime()).toBe('2026-10-01T12:00:00.000Z');
+  api.patch.mockImplementationOnce(async()=>({data:{...native}}));
+  await clickNative(nativeButton('Save assessment'));
+  expect(savedTime()).toBe('2026-10-01T12:00:00.000Z');
+  await editNativeImplementation('A real manual change awaiting confirmation.');
+  api.patch.mockRejectedValueOnce(new Error('Native save rejected'));
+  await clickNative(nativeButton('Save assessment'));
+  expect(host.textContent).toContain('Native save rejected');expect(host.textContent).toContain('Unsaved assessment changes');
+  expect(native.last_saved).toBe(token);expect(savedTime()).toBeUndefined();
+  await clickNative(nativeButton('Save assessment'));
+  expect(savedTime()).toBe('2026-10-02T12:00:00.000Z');expect(native.last_saved).toBe(savedToken);
+  expect(host.textContent).not.toContain('Unsaved assessment changes');
 });

@@ -12,7 +12,7 @@ test('renders eight rows from full work with native identity, full counts and pa
  await act(async()=>root.render(<BrawndoDemoDashboard {...props}><section>CIS IG1 Status</section></BrawndoDemoDashboard>));
  expect(container.querySelectorAll('tbody tr')).toHaveLength(8);expect(container.querySelector('.bdd-summary').textContent).toContain('32');expect(container.textContent).toContain('32 in progress');
  await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Next').click());
- expect(container.querySelector('[role=status]').textContent).toContain('9–16');
+ expect(container.querySelector('nav[aria-label="Priority work pages"]').textContent).toContain('9–16 of 32');
  await act(async()=>container.querySelector('tbody button').click());expect(props.onOpen).toHaveBeenCalledWith(rows[8],expect.any(HTMLElement));
  await act(async()=>container.querySelector('.bdd-summary button').click());expect(props.onFilter).toHaveBeenCalledWith('all');
 });
@@ -35,7 +35,7 @@ test('Program-wide needs proven framework arrays and never guesses unknown rows'
 
 
 test('visible safeguard associations use authoritative labels without duplicate repeats',async()=>{
- const linked=rows.map(row=>({...row,source_label:'CIS 1.1',safeguard_labels:['CIS 1.1','CIS 2.1']}));
+ const linked=rows.map(row=>({...row,source_label:'CIS 1.1',safeguard_labels:['CIS Controls v8.1 1.1','CIS Controls v8.1 2.1']}));
  const loadDetail=async(key,offset,signal,{limit})=>({items:linked.slice(offset,offset+limit),offset,limit,total:linked.length,has_more:offset+limit<linked.length});
  await act(async()=>root.render(<BrawndoDemoDashboard {...props} loadDetail={loadDetail}/>));
  expect([...container.querySelector('tbody .bdd-meta').children].map(node=>node.textContent)).toEqual(['Action Item','CIS 1.1','CIS 2.1']);
@@ -61,4 +61,29 @@ test('unknown membership has no invented program-wide chip',async()=>{
  await act(async()=>root.render(<BrawndoDemoDashboard {...props}/>));
  expect(container.querySelector('tbody .bdd-meta').textContent).toBe('Action Item');
  expect(container.querySelector('tbody .bdd-framework-chip')).toBeNull();
+});
+
+test('clean Dashboard copy, compact dates and pagination retain real metadata and accessible table naming',async()=>{
+ await act(async()=>root.render(<BrawndoDemoDashboard {...props}/>));
+ expect(container.querySelector('h1').textContent).toBe('Brawndo Dashboard');
+ expect(container.querySelector('.bdd-heading p').textContent).toContain('As of Oct 15, 2026');
+ expect(container.querySelector('.bdd-heading p').textContent).not.toContain('AM');
+ expect(container.querySelector('input[type=search]').placeholder).toBe('Search work…');
+ expect(container.querySelector('caption').textContent).toBe('Priority work');expect(container.querySelector('caption').className).toBe('sr-only');
+ expect(container.textContent).not.toContain('Authoritative active work');
+ expect(container.querySelector('.bdd-cell-due time').textContent).toBe('Oct 15, 2026');
+ expect(container.querySelector('.bdd-cell-due time').dateTime).toBe(rows[0].due_date);
+ expect(container.querySelector('.bdd-summary button:nth-child(3) small').textContent).toBe('Next due Oct 15');
+ expect(container.querySelector('.bdd-results [role=status]').textContent).toBe('32 items');
+ expect(container.querySelector('nav[aria-label="Priority work pages"]').textContent).toContain('1–8 of 32');
+});
+
+test('snapshot instants show the actual UTC time and filtered emptiness retains clear filters',async()=>{
+ await act(async()=>root.render(<BrawndoDemoDashboard {...props} queue={{...queue,as_of:'2026-10-15T23:21:00Z'}}/>));
+ expect(container.querySelector('.bdd-heading p').textContent).toContain('Oct 15, 2026, 11:21 PM UTC');
+ const input=container.querySelector('input[type=search]');
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Nothing matches');input.dispatchEvent(new Event('input',{bubbles:true}));});
+ expect(container.querySelectorAll('tbody tr')).toHaveLength(0);expect(container.querySelector('.bdd-empty h3').textContent).toBe('No work matches these filters');
+ await act(async()=>container.querySelector('.bdd-empty button').click());
+ expect(input.value).toBe('');expect(container.querySelectorAll('tbody tr')).toHaveLength(8);expect(props.onFilter).toHaveBeenCalledWith('all');
 });

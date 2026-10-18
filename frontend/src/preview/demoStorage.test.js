@@ -86,7 +86,11 @@ test('full reset recovers corrupted data and restores canonical roles and framew
  expect(reporting).toMatchObject({started_at:RESET_AT,last_captured_at:RESET_AT,activity_proofs:{}});
  expect(reporting.activity_proofs).toEqual({});
  expect(reporting.snapshots).toHaveLength(originalReporting.snapshots.length);
- expect(reporting.snapshots.every(snapshot=>snapshot.captured_at===RESET_AT&&snapshot.current.captured_at===RESET_AT)).toBe(true);
+ const currentSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind!=='demo_fixture');
+ const fixtureSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture');
+ expect(currentSnapshots.every(snapshot=>snapshot.captured_at===RESET_AT&&snapshot.current.captured_at===RESET_AT)).toBe(true);
+ expect(fixtureSnapshots).toHaveLength(11);
+ expect(fixtureSnapshots.every(snapshot=>snapshot.current.provenance.fixture_anchor===RESET_AT&&snapshot.captured_at<RESET_AT)).toBe(true);
  const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
  expect(reporting.snapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
  expect(new Set(restored.users.map(u=>u.role))).toEqual(new Set(canonical.users.map(u=>u.role)));

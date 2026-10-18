@@ -9,6 +9,7 @@ import { buildDemoStore } from './demoSeed';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
 import {captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting} from './portfolioReporting';
+import {enrichBrawndoReportingHistory} from './brawndoReportingHistory';
 import {finishDunder} from './programs/dunder';
 import {addInitech,finishInitech} from './programs/initech';
 import {removeRetiredDemoClients} from './retiredClients';
@@ -72,6 +73,7 @@ export function seedStore(clock=new Date()) {
   addInitech(finished,clock);
   reconcileFramework(finished,'demo_initech',finished.baselines.demo_initech);
   finishInitech(finished,clock);
+  enrichBrawndoReportingHistory(finished,clock);
   return finished;
 }
 function installCanonicalDunder(db){
@@ -97,7 +99,8 @@ export function readStore() {
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
     if(initech){reconcileFramework(db,'demo_initech',db.baselines.demo_initech);finishInitech(db);}
     const light=lightweightStore(db,db.evidence);
-    if(retired||installed||initech||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
+    const enriched=enrichBrawndoReportingHistory(db);
+    if(retired||installed||initech||enriched||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
     return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
   }
   clearFileCache();
@@ -111,6 +114,7 @@ export function saveStore(db,{resetFiles=false}={}) {
     const previous=resetFiles?null:restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)||'null'));
     const persisted=lightweightStore(db,previous?.evidence||[]);
     captureDemoReporting(persisted, previous, new Date().toISOString());
+    enrichBrawndoReportingHistory(persisted);
     sessionStorage.setItem(STORE_KEY, JSON.stringify(compactPortfolioReporting(persisted)));
     rememberFiles(db,persisted);
   } catch (error) {
