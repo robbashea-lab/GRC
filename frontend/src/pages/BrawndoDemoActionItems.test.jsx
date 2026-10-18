@@ -59,6 +59,26 @@ test('full-population summary is independent of search/source and filters preced
   await search('does not exist');expect(tickets()).toHaveLength(0);expect(summary('active')).toBe('13');
 });
 
+test('unavailable loads never describe unknown summaries as empty or fully assigned',async()=>{
+  let rejectLoad;
+  const pending=new Promise((resolve,reject)=>{rejectLoad=reject;});
+  api.get.mockReturnValue(pending);
+  const expectUnavailable=()=>{
+    const cells=[...container.querySelectorAll('.bda-cell')];
+    expect(cells).toHaveLength(4);
+    for(const cell of cells){
+      expect(cell.querySelector('strong').textContent).toBe('—');
+      expect(cell.querySelector('small').textContent).toBe('—');
+      expect(cell.disabled).toBe(true);
+    }
+  };
+  await render();
+  expectUnavailable();
+  await act(async()=>rejectLoad(new Error('Tickets service unavailable')));
+  expectUnavailable();
+  expect(container.querySelector('[role="alert"]').textContent).toContain('Tickets service unavailable');
+});
+
 test('presentation preserves native creation forms and adds no selection, bulk or selected CSV operations',async()=>{
   await render();
   const themeAction=container.querySelector('.surface-theme-action');expect(themeAction.textContent).toBe('Dark');

@@ -42,6 +42,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from "@/components/ui/textarea";
 import { Grid3x3, Download, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import {Popover,PopoverTrigger,PopoverContent} from '@/components/ui/popover';
+import {riskRefreshLabel,riskReviewDate} from '@/lib/brawndoRisksPresentation';
 
 const LIKELIHOOD_LABELS = { 1: "Rare", 2: "Unlikely", 3: "Possible", 4: "Likely", 5: "Almost Certain" };
 const IMPACT_LABELS = { 1: "Minimal", 2: "Minor", 3: "Moderate", 4: "Major", 5: "Severe" };
@@ -69,6 +71,15 @@ function ScoreCell({r,compact=false}){
   return <div className="brisk-score"><span className={`brisk-num is-${level}`}>{score}</span><span className="sr-only">out of {RISK_SCORE_MAX}</span>{compact?<span className="bdr-score-detail">{label}<small>L{r.likelihood_score} × I{r.impact_score}</small></span>:label}</div>;
 }
 
+function DemoRiskReviewDate({risk,closed,days,now}) {
+  if(closed)return <><span>{risk.closed_at?`Closed ${shortDate(risk.closed_at)}`:pilotRiskStatus(risk.status)}</span><small>{risk.closure_reason?.replaceAll('_',' ')||'Closure date not recorded'} · Last <HistoryDate value={risk.last_reviewed} empty="Never reviewed"/></small></>;
+  const next=riskReviewDate(risk.next_review);
+  const last=riskReviewDate(risk.last_reviewed,{compact:true,now});
+  const lastFull=riskReviewDate(risk.last_reviewed);
+  const relative=!next?'':days===0?'Today':days<0?`${plural(-days,'day')} overdue`:`in ${plural(days,'day')}`;
+  return <><strong className="brisk-date">{next||(risk.next_review?'Date unavailable':'Not scheduled')}</strong><span className="bpage-meta">{relative&&<>{relative} · </>}Last {last?<time dateTime={String(risk.last_reviewed).slice(0,10)} title={lastFull} aria-label={lastFull}>{last}</time>:'Never reviewed'}</span></>;
+}
+
 export default function RiskRegister() {
   const [searchParams,setSearchParams]=useSearchParams();
   const portfolioSignificant=searchParams.get('portfolio')==='significant';
@@ -82,6 +93,8 @@ export default function RiskRegister() {
   const scope=JSON.stringify([user?.user_id,user?.role,user?.client_ids,auth.workspaceMode,user?.workspace_mode,currentClientId]);
   const currentScope=useRef(scope);currentScope.current=scope;
   const [loadedScope,setLoadedScope]=useState(null);
+  const [acceptedRefresh,setAcceptedRefresh]=useState(null);
+  useEffect(()=>setAcceptedRefresh(null),[scope,demoRisks]);
   const [eventDrawer,setEventDrawer]=useState(null);
   const eventRequest=useRef(0);
   const pilot=isReferenceRegister(currentClientId,user);
@@ -133,8 +146,12 @@ export default function RiskRegister() {
         api.get("/risks", { params: { client_id: currentClientId, ...(!pilot&&portfolioSignificant?{portfolio_significant:true}:{}) } }).then((r) => r.data),
         api.get(`/clients/${currentClientId}/members`).then((r) => r.data).catch(() => []),
       ]);
-      if(version===generation.current&&currentScope.current===scope){setRows((r || []).map(assessedRisk)); setUsers(u || []);setLoadedScope(scope);}
-    } catch (e) { if(version===generation.current&&currentScope.current===scope){setRows([]);setLoadError(formatError(e));} }
+      if(version===generation.current&&currentScope.current===scope){
+        setRows((r || []).map(assessedRisk)); setUsers(u || []);setLoadedScope(scope);
+        // Display metadata only: acknowledge this accepted same-client register response.
+        setAcceptedRefresh(currentDemo.current&&(r||[]).every(row=>row.client_id===currentClientId)?{scope,instant:new Date().toISOString()}:null);
+      }
+    } catch (e) { if(version===generation.current&&currentScope.current===scope){setRows([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
     finally { if(version===generation.current&&currentScope.current===scope)setLoading(false); }
   },[currentClientId,portfolioSignificant,pilot,scope]);
   useEffect(() => { const scopeGeneration=generation;setRows([]);setUsers([]);setView(linkedView);setQ("");setDrawer({open:false,record:null});setAddOpen(false);load();return()=>{scopeGeneration.current++;}; }, [currentClientId,load]); // eslint-disable-line react-hooks/exhaustive-deps -- deep-linked view applies on client change only
@@ -161,6 +178,7 @@ export default function RiskRegister() {
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
   const demoPresentation=demoRisks&&loadedScope===scope&&!loadError&&tableSource.length===rows.length;
+  const refreshLabel=demoPresentation&&!loading&&acceptedRefresh?.scope===scope?riskRefreshLabel(acceptedRefresh.instant):null;
   // Keep the projection population stable across matrix/filter changes.
   const demoRows=useMemo(()=>rows.filter(r=>r.client_id===currentClientId),[rows,currentClientId]);
   useEffect(()=>{setEventDrawer(null);eventRequest.current++;},[scope]);
@@ -216,7 +234,7 @@ export default function RiskRegister() {
   }
 
   return <BrawndoSurface className={`approved-risk-register${demoPresentation?' brawndo-demo-risks':''}`}>
-      <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Risk register`} title={demoPresentation?'Brawndo Risks':'Risks'} subtitle={demoPresentation?'Risk register · current assessed likelihood × impact':undefined}
+      <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Risk register`} title={demoPresentation?'Brawndo Risks':'Risks'} subtitle={demoPresentation?`Risk register · current assessed likelihood × impact${refreshLabel?` · As of ${refreshLabel}`:''}`:undefined}
         renderThemeAction={demoPresentation?props=><SurfaceThemeAction {...props} className="bpage-btn"/>:undefined}>
         <button type="button" className="bpage-btn" onClick={openMatrix} data-testid="risk-matrix-btn"><Grid3x3 size={16} aria-hidden="true"/>{demoPresentation?'Risk scale':'Risk Scale & Matrix'}</button>
         <button type="button" className="bpage-btn" onClick={exportCsv} data-testid="risks-export"><Download size={16} aria-hidden="true"/>Export CSV</button>
@@ -227,18 +245,20 @@ export default function RiskRegister() {
       {demoPresentation?<BrawndoDemoRisksOverview rows={demoRows} matrixRows={matrixRows} selected={matrixSelection} onSelect={setMatrixSelection} view={view} onView={selectView} matches={matches} onOpen={openUpcoming} scope={scope} users={users}/>:workspacePilot&&<BrawndoRiskMatrix rows={matrixRows} selected={matrixSelection} onSelect={setMatrixSelection} loading={loading}/>}
       <div className="register-toolbar">
           <SearchField label="Search risks" placeholder="Search risks…" value={q} onChange={setQ} testid="risk-search"/>
-          {demoPresentation?<>
-            <div className="bdr-view-segment" role="group" aria-label="Risk views">
-              {[['all_active','All'],['significant','High or critical'],['treatment','In treatment'],['accepted','Accepted'],['upcoming','Review due in 30 days']].map(([id,label])=><button type="button" key={id} aria-pressed={id==='treatment'?treatmentSelected:view===id&&!matrixSelection} data-testid={`risk-view-${id}`} onClick={()=>id==='treatment'?selectTreatment():selectView(id)}>{label}<span>{id==='treatment'?tableSource.filter(r=>['in_progress','treated'].includes(r.status)&&matches(r,'all_active',new Date(now))).length:tableSource.filter(r=>matches(r,id,new Date(now))).length}</span></button>)}
-            </div>
-            <div className="brisk-filters"><ColumnControl table={table} columnKey="category"/>
-              <div className="bdr-view-segment" role="group" aria-label="Records"><button type="button" aria-pressed={view!=='closed'} onClick={()=>selectView('all_active')}>Active</button><button type="button" data-testid="risk-view-closed" aria-pressed={view==='closed'} onClick={()=>selectView('closed')}>Closed</button></div>
-              <details className="bdr-more"><summary>More filters</summary><div className="bdr-more-content">
-                <div role="group" aria-label="Additional risk views">{riskViews.filter(v=>['critical','high','review_due'].includes(v.id)).map(v=><button type="button" key={v.id} data-testid={`risk-view-${v.id}`} aria-pressed={view===v.id} onClick={()=>selectView(v.id)}>{v.label}</button>)}</div>
-                {['title','risk_level','risk_score','owner_id','status','next_review','last_reviewed'].map(key=><ColumnControl key={key} table={table} columnKey={key}/>)}
-              </div></details>
-            </div>
-          </>:<><BrawndoChips label="Risk views" chips={riskViews.map(v=>({id:v.id,label:v.label[0]+v.label.slice(1).toLowerCase(),count:loading?null:tableSource.filter(r=>matches(r,v.id,new Date(now))).length,pressed:view===v.id,onClick:()=>selectView(v.id),testid:`risk-view-${v.id}`}))}/><div className="brisk-filters"><ColumnControl table={table} columnKey="category"/><ColumnControl table={table} columnKey="risk_level"/></div></>}
+          {demoPresentation?<div className="bdr-view-segment bdr-record-controls" role="group" aria-label="Records">
+            <button type="button" aria-pressed={view!=='closed'} onClick={()=>selectView('all_active')}>Active</button>
+            <button type="button" data-testid="risk-view-closed" aria-pressed={view==='closed'} onClick={()=>selectView('closed')}>Closed</button>
+            <Popover><PopoverTrigger asChild><button type="button" className="bdr-filter-trigger">Filters ▾</button></PopoverTrigger>
+              <PopoverContent align="end" className="bdr-filters-panel" aria-label="Risk filters">
+                <div className="bdr-filter-views" role="group" aria-label="Risk views">
+                  {[['all_active','All active'],['significant','High or critical'],['treatment','In treatment'],['accepted','Accepted'],['upcoming','Review due in 30 days'],...riskViews.filter(v=>['critical','high','review_due'].includes(v.id)).map(v=>[v.id,v.label])].map(([id,label])=><button type="button" key={id} aria-pressed={id==='treatment'?treatmentSelected:view===id&&!matrixSelection} data-testid={`risk-view-${id}`} onClick={()=>id==='treatment'?selectTreatment():selectView(id)}>{label}<span>{id==='treatment'?tableSource.filter(r=>['in_progress','treated'].includes(r.status)&&matches(r,'all_active',new Date(now))).length:tableSource.filter(r=>matches(r,id,new Date(now))).length}</span></button>)}
+                </div>
+                <div className="bdr-filter-columns" role="group" aria-label="Column filters and sorting">
+                  {['category','title','risk_level','risk_score','owner_id','status','next_review','last_reviewed'].map(key=><ColumnControl key={key} table={table} columnKey={key} menuClassName="bdr-filter-menu"/>)}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>:<><BrawndoChips label="Risk views" chips={riskViews.map(v=>({id:v.id,label:v.label[0]+v.label.slice(1).toLowerCase(),count:loading?null:tableSource.filter(r=>matches(r,v.id,new Date(now))).length,pressed:view===v.id,onClick:()=>selectView(v.id),testid:`risk-view-${v.id}`}))}/><div className="brisk-filters"><ColumnControl table={table} columnKey="category"/><ColumnControl table={table} columnKey="risk_level"/></div></>}
       </div>
       <div className="register-body">
         <TableFilterChips table={table}/>
@@ -264,7 +284,7 @@ export default function RiskRegister() {
                   <td className="tbl-cell bdr-row-score"><ScoreCell r={r} compact={demoPresentation}/></td>
                   <td className="tbl-cell bdr-row-owner">{demoPresentation&&<i className="bdr-avatar" aria-hidden="true">{r.owner_id?personLabel(users,r.owner_id).split(/\s+/).map(part=>part[0]).join('').slice(0,2):'—'}</i>}<OwnerCell people={users} id={r.owner_id} status={r.status}/></td>
                   <td className="tbl-cell"><StatusBadge value={r.status||'open'} label={(pilot?pilotRiskStatus:riskStatus)(r.status||'open')}/>{pilot&&r.status==='accepted'&&!riskMatches(r,'accepted')&&<p className="text-xs text-ink-secondary">Acceptance needs review</p>}</td>
-                  <td className="tbl-cell bdr-row-review whitespace-nowrap">{demoPresentation&&closed?<><span>{r.closed_at?`Closed ${shortDate(r.closed_at)}`:pilotRiskStatus(r.status)}</span><small>{r.closure_reason?.replaceAll('_',' ')||'Closure date not recorded'} · last <HistoryDate value={r.last_reviewed} empty="Never reviewed"/></small></>:r.next_review?<><strong className="brisk-date">{shortDate(r.next_review)}</strong><span className="bpage-meta">{closed?'Closed':d===0?'Today':d<0?`${plural(-d,'day')} overdue`:`in ${plural(d,'day')}`}{demoPresentation&&<> · last <HistoryDate value={r.last_reviewed} empty="Never reviewed"/></>}</span></>:<span className="register-empty">Not scheduled{demoPresentation&&<> · last <HistoryDate value={r.last_reviewed} empty="Never reviewed"/></>}</span>}</td>
+                  <td className="tbl-cell bdr-row-review whitespace-nowrap">{demoPresentation?<DemoRiskReviewDate risk={r} closed={closed} days={d} now={new Date(now)}/>:r.next_review?<><strong className="brisk-date">{shortDate(r.next_review)}</strong><span className="bpage-meta">{closed?'Closed':d===0?'Today':d<0?`${plural(-d,'day')} overdue`:`in ${plural(d,'day')}`}{demoPresentation&&<> · last <HistoryDate value={r.last_reviewed} empty="Never reviewed"/></>}</span></>:<span className="register-empty">Not scheduled{demoPresentation&&<> · last <HistoryDate value={r.last_reviewed} empty="Never reviewed"/></>}</span>}</td>
                   {demoPresentation?<td className="tbl-cell bdr-chevron" aria-hidden="true">›</td>:<td className="tbl-cell"><HistoryDate value={r.last_reviewed} empty="Never reviewed"/></td>}
                 </tr>);})}
             </tbody>

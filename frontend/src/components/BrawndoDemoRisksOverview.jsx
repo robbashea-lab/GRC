@@ -55,7 +55,7 @@ export default function BrawndoDemoRisksOverview({rows,matrixRows,selected,onSel
       <div className="bdr-matrix-wrap">
       <div className="bdr-matrix-y" aria-hidden="true">{[5,4,3,2,1].map(n=><span key={n}>{n}</span>)}</div>
       <div className="bdr-matrix" role="group" aria-label="Risk matrix: likelihood 5 to 1; impact 1 to 5">
-        {[5,4,3,2,1].flatMap(l=>[1,2,3,4,5].map(i=>{const key=`${l}:${i}`,count=counts[key]||0;return <button type="button" key={key} className={`bdr-cell is-${riskLevel(l*i)}${count?' has-risks':''}`} aria-pressed={selected===key} aria-label={`Likelihood ${l}, impact ${i}, ${riskLevel(l*i)}: ${count} risks`} onClick={()=>onSelect(selected===key?null:key)}>{count?<><strong>{count}</strong><small>{count===1?'risk':'risks'}</small></>:<span>{l*i}</span>}</button>;}))}
+        {[5,4,3,2,1].flatMap(l=>[1,2,3,4,5].map(i=>{const key=`${l}:${i}`,score=l*i,count=counts[key]||0,level=riskLevel(score),countLabel=`${count} ${count===1?'risk':'risks'}`;return <button type="button" key={key} className={`bdr-cell is-${level}${count?' has-risks':''}`} aria-pressed={selected===key} aria-label={`Likelihood ${l}, impact ${i}, score ${score}, band ${level}: ${countLabel}`} onClick={()=>onSelect(selected===key?null:key)}>{count?<><strong>{score}</strong><small>{countLabel}</small></>:<span>{score}</span>}</button>;}))}
       </div><div className="bdr-matrix-x" aria-hidden="true">{[1,2,3,4,5].map(n=><span key={n}>{n}</span>)}</div>
       <div className="bdr-axis" aria-hidden="true"><span>↑ Likelihood</span><span>Impact →</span></div></div>
       <div className={`bdr-matrix-controls${!counts.unrated&&!selected?' sr-only':''}`}><span>{matrixRows.length} risks · {counts.unrated||0} unrated</span>

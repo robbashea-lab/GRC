@@ -10,12 +10,17 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(
 jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:mockPath,search:mockSearch}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams(mockSearch))}),{virtual:true});
 // Native drawer behavior is exercised separately by RecordDrawerRiskReview/RiskRecordPanels.
 jest.mock('@/components/RecordDrawer',()=>props=><div data-testid="native-dispatch" data-kind={props.kind} data-id={props.record?.risk_id||props.record?.task_id}><button onClick={()=>props.onOpenChange(false)}>Close native record</button><button onClick={props.onSaved}>Refresh native record</button></div>);
-let root,container,rows;
+let root,container,rows,mockActorSequence=0;
 const render=()=>act(async()=>root.render(<RiskRegister/>));
 const click=node=>act(async()=>node.click());
+const subtitle=()=>container.querySelector('.bpage-subtitle')?.textContent||'';
+const openFilters=async()=>{await click(container.querySelector('.bdr-filter-trigger'));return document.querySelector('.bdr-filters-panel');};
 beforeEach(()=>{
+  // Freeze only the clock; Radix's native scheduling and focus timers remain real.
+  jest.useFakeTimers({doNotFake:['nextTick','setImmediate','clearImmediate','setTimeout','clearTimeout','setInterval','clearInterval','requestAnimationFrame','cancelAnimationFrame','queueMicrotask','performance']});
+  jest.setSystemTime(new Date('2026-10-18T18:00:00.000Z'));
   global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();localStorage.setItem('grc_client_id','demo_brawndo');mockSearch='';mockPath='/risks';
-  mockAuth={workspaceMode:'demo',loading:false,user:{user_id:'admin',role:'super_admin',workspace_mode:'demo'}};
+  mockAuth={workspaceMode:'demo',loading:false,user:{user_id:`admin-${++mockActorSequence}`,role:'super_admin',workspace_mode:'demo'}};
   mockOrg={currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'},loading:false};
   rows=[{risk_id:'risk-high',client_id:'demo_brawndo',display_id:'RISK-101',title:'Native high risk',status:'assessed',likelihood_score:3,impact_score:4,next_review:'2099-01-01'},
     {risk_id:'unrated',client_id:'demo_brawndo',title:'Native unrated',status:'open'},
@@ -23,13 +28,13 @@ beforeEach(()=>{
   api.get.mockImplementation(async path=>({data:path==='/risks'?rows:path==='/related'?{tasks:[]}:path.startsWith('/risks/')?rows.find(r=>r.risk_id===path.split('/').at(-1)):[]}));
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
-afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();jest.useRealTimers();});
 
 test('exact demo overview preserves current search, cell clear, unrated access and direct native opening',async()=>{
   await render();expect(container.querySelector('[data-testid="demo-risks-overview"]')).not.toBeNull();
   const search=container.querySelector('[data-testid="risk-search"]');
   await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,'Native');search.dispatchEvent(new Event('input',{bubbles:true}));});
-  await click(container.querySelector('[aria-label="Likelihood 3, impact 4, high: 1 risks"]'));
+  await click(container.querySelector('[aria-label="Likelihood 3, impact 4, score 12, band high: 1 risk"]'));
   expect(container.querySelectorAll('tbody .register-record-link')).toHaveLength(1);
   await click([...container.querySelectorAll('button')].find(b=>b.textContent==='Clear matrix selection'));
   expect(search.value).toBe('Native');expect(container.querySelectorAll('tbody .register-record-link')).toHaveLength(2);
@@ -50,6 +55,7 @@ test.each(['standard','other-demo','wrong-route','unresolved','archived','mismat
   if(condition==='mismatch')mockOrg.currentClient.client_id='other';
   if(condition==='denied')mockOrg.error='Access denied';
   await render();expect(container.querySelector('[data-testid="demo-risks-overview"]')).toBeNull();expect(container.querySelector('.bdr-scorebar')).toBeNull();
+  expect(subtitle()).not.toContain('As of');
   expect(api.get.mock.calls.some(([path])=>path==='/related')).toBe(false);
 });
 
@@ -115,13 +121,17 @@ test('presentation-only treatment filter preserves native column controls and cl
     {...rows[2],status:'retired',closed_at:'2026-10-01',closure_reason:'other',last_reviewed:'2026-09-01'}];
   const original=api.get.getMockImplementation();
   api.get.mockImplementation((path,...args)=>path.endsWith('/members')?Promise.resolve({data:[{user_id:'owner',name:'Joe Bowers',status:'active'}]}):original(path,...args));
-  await render();await click(container.querySelector('[data-testid="risk-view-treatment"]'));
+  await render();const panel=await openFilters();await click(panel.querySelector('[data-testid="risk-view-treatment"]'));
   expect([...container.querySelectorAll('tbody tr')].map(row=>row.dataset.testid)).toHaveLength(2);
   expect(container.querySelector('tbody .bdr-avatar').textContent).toBe('JB');
-  expect(container.querySelector('tbody .bdr-row-review').textContent).toContain('Sep 18, 2026');
-  const more=container.querySelector('.bdr-more');more.open=true;
-  expect(more.textContent).toContain('Last Review');
-  for(const key of ['critical','high','review_due'])expect(more.querySelector(`[data-testid="risk-view-${key}"]`)).not.toBeNull();
+  const last=container.querySelector('tbody .bdr-row-review time');
+  expect(last.textContent).toBe('Sep 18');expect(last.getAttribute('aria-label')).toBe('Sep 18, 2026');expect(last.title).toBe('Sep 18, 2026');
+  expect(panel.textContent).toContain('Last Review');
+  expect(panel.querySelectorAll('.bdr-filter-columns .column-control')).toHaveLength(8);
+  for(const key of ['all_active','significant','treatment','accepted','upcoming','critical','high','review_due'])expect(panel.querySelector(`[data-testid="risk-view-${key}"]`)).not.toBeNull();
+  expect(container.querySelector('.bdr-more')).toBeNull();expect(container.querySelector('.brisk-filters')).toBeNull();
+  expect(container.querySelector('.register-toolbar .column-control')).toBeNull();
+  await click(container.querySelector('.bdr-filter-trigger'));
   await click(container.querySelector('[data-testid="risk-view-closed"]'));
   expect(container.querySelector('tbody').textContent).toContain('Closed Oct 1');
   expect(container.querySelector('tbody').textContent).toContain('Sep 1, 2026');
@@ -135,3 +145,64 @@ test('presentation-only treatment filter preserves native column controls and cl
  await render();expect(container.querySelector('[data-testid="demo-risks-overview"]')).toBeNull();
  expect(container.querySelector('.approved-risk-register')).not.toBeNull();
  });
+
+test('accepted refresh stamps once; render, search, matrix, theme and immediate Filters preserve that instant',async()=>{
+  await render();const initial=subtitle();expect(initial).toBe('Risk register · current assessed likelihood × impact · As of Oct 18, 2026, 2:00 PM ET');
+  const nativeReads=api.get.mock.calls.filter(([path])=>path==='/risks').length;
+  jest.setSystemTime(new Date('2026-10-18T18:10:00.000Z'));await render();expect(subtitle()).toBe(initial);
+  const search=container.querySelector('[data-testid="risk-search"]');
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,'Native');search.dispatchEvent(new Event('input',{bubbles:true}));});
+  await click(container.querySelector('[aria-label="Likelihood 3, impact 4, score 12, band high: 1 risk"]'));
+  await click([...container.querySelectorAll('button')].find(b=>b.textContent==='Clear matrix selection'));
+  await click(container.querySelector('.surface-theme-action'));
+  const controls=container.querySelector('[aria-label="Records"]');
+  expect([...controls.querySelectorAll(':scope > button')].map(b=>b.textContent)).toEqual(['Active','Closed','Filters ▾']);
+  let panel=await openFilters();expect(panel).not.toBeNull();expect(container.querySelector('.bdr-filter-trigger').getAttribute('aria-expanded')).toBe('true');
+  await click(panel.querySelector('[data-testid="risk-view-significant"]'));
+  expect(container.querySelectorAll('tbody .register-record-link')).toHaveLength(1);
+  expect(panel.querySelector('[data-testid="risk-view-significant"]').getAttribute('aria-pressed')).toBe('true');
+  await act(async()=>panel.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true})));
+  expect(document.querySelector('.bdr-filters-panel')).toBeNull();
+  panel=await openFilters();expect(panel.querySelector('[data-testid="risk-view-significant"]').getAttribute('aria-pressed')).toBe('true');
+  await click(container.querySelector('.bdr-filter-trigger'));
+  expect(search.value).toBe('Native');expect(subtitle()).toBe(initial);
+  expect(api.get.mock.calls.filter(([path])=>path==='/risks')).toHaveLength(nativeReads);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('successful native onSaved refresh advances the acknowledged instant and failure hides it',async()=>{
+  await render();await click(container.querySelector('tbody .register-record-link'));
+  jest.setSystemTime(new Date('2026-10-18T18:12:00.000Z'));
+  await click(container.querySelector('[data-testid="native-dispatch"] button:last-child'));
+  expect(subtitle()).toContain('As of Oct 18, 2026, 2:12 PM ET');
+  const original=api.get.getMockImplementation();api.get.mockImplementation((path,...args)=>path==='/risks'?Promise.reject(new Error('Refresh failed')):original(path,...args));
+  jest.setSystemTime(new Date('2026-10-18T18:20:00.000Z'));
+  await click(container.querySelector('[data-testid="native-dispatch"] button:last-child'));
+  expect(subtitle()).not.toContain('As of');expect(container.textContent).toContain('Refresh failed');
+  expect(container.querySelectorAll('tbody .register-record-link')).toHaveLength(0);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('a genuinely successful empty register receives a refresh timestamp',async()=>{
+  rows=[];await render();expect(subtitle()).toContain('As of Oct 18, 2026, 2:00 PM ET');
+  expect(container.querySelectorAll('tbody .register-record-link')).toHaveLength(0);
+  expect(container.textContent).toContain('No risks have been added yet.');
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test.each(['actor','route','mode','mixed-client'])('pending refresh cannot retain or publish an old timestamp after %s change',async change=>{
+  await render();expect(subtitle()).toContain('2:00 PM ET');
+  await click(container.querySelector('tbody .register-record-link'));
+  const original=api.get.getMockImplementation(),pending=[];
+  api.get.mockImplementation((path,...args)=>path==='/risks'?new Promise(resolve=>pending.push(resolve)):original(path,...args));
+  await click(container.querySelector('[data-testid="native-dispatch"] button:last-child'));
+  expect(subtitle()).not.toContain('As of');
+  if(change==='actor')mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'next-actor'}};
+  if(change==='route')mockPath='/dashboard';
+  if(change==='mode')mockAuth={...mockAuth,workspaceMode:'standard'};
+  await render();jest.setSystemTime(new Date('2026-10-18T18:25:00.000Z'));
+  await act(async()=>pending[0]({data:change==='mixed-client'?[...rows,{...rows[0],risk_id:'foreign',client_id:'demo_dunder'}]:rows}));
+  expect(subtitle()).not.toContain('As of');
+  if(change==='actor')expect(container.querySelector('tbody').textContent).not.toContain('Native high risk');
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});

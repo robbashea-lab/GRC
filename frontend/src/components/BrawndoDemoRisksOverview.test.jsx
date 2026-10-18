@@ -23,7 +23,7 @@ test('matrix and summary drills use saved ratings and native predicates without 
   await render(props);
   expect(container.querySelectorAll('.bdr-cell')).toHaveLength(25);
   expect(container.textContent).toContain('2 risks · 1 unrated');
-  const rated=container.querySelector('[aria-label="Likelihood 3, impact 5, critical: 1 risks"]');
+  const rated=container.querySelector('[aria-label="Likelihood 3, impact 5, score 15, band critical: 1 risk"]');
   await act(async()=>rated.click());expect(onSelect).toHaveBeenLastCalledWith('3:5');
   await render({...props,selected:'3:5'});
   await act(async()=>button('Clear matrix selection').click());expect(onSelect).toHaveBeenLastCalledWith(null);
@@ -38,6 +38,42 @@ test('matrix and summary drills use saved ratings and native predicates without 
   expect(api.get).toHaveBeenCalledTimes(3);
   for(const verb of ['post','put','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
   expect(onOpen).not.toHaveBeenCalled();
+});
+
+test('all matrix coordinates distinguish score from count and empty cells still select and clear without writes',async()=>{
+  const rows=[];
+  for(let likelihood=1;likelihood<=5;likelihood++)for(let impact=1;impact<=5;impact++){
+    for(let n=0;n<(likelihood+impact)%3;n++)rows.push({...base,risk_id:`r-${likelihood}-${impact}-${n}`,likelihood_score:likelihood,impact_score:impact,risk_score:likelihood*impact});
+  }
+  const before=JSON.stringify(rows),onSelect=jest.fn();
+  const props={rows,matrixRows:rows,selected:null,onSelect,view:'all_active',onView:jest.fn(),matches:riskMatches,onOpen:jest.fn(),scope:'demo_brawndo'};
+  await render(props);
+  expect([...container.querySelectorAll('.bdr-matrix-y span')].map(el=>el.textContent)).toEqual(['5','4','3','2','1']);
+  expect([...container.querySelectorAll('.bdr-matrix-x span')].map(el=>el.textContent)).toEqual(['1','2','3','4','5']);
+  const cells=[...container.querySelectorAll('.bdr-cell')];
+  expect(cells).toHaveLength(25);
+  for(let likelihood=1;likelihood<=5;likelihood++)for(let impact=1;impact<=5;impact++){
+    const score=likelihood*impact,count=(likelihood+impact)%3;
+    const band=score>=15?'critical':score>=10?'high':score>=5?'moderate':'low';
+    const countLabel=`${count} ${count===1?'risk':'risks'}`;
+    const cell=cells.find(el=>el.getAttribute('aria-label')===`Likelihood ${likelihood}, impact ${impact}, score ${score}, band ${band}: ${countLabel}`);
+    expect(cell).toBeDefined();expect(cell.disabled).toBe(false);
+    if(count){expect(cell.querySelector('strong').textContent).toBe(String(score));expect(cell.querySelector('small').textContent).toBe(countLabel);}
+    else{expect(cell.querySelector('strong')).toBeNull();expect(cell.querySelector('small')).toBeNull();expect(cell.textContent).toBe(String(score));}
+  }
+  // L3/I4 is score 12 with one risk; L2/I3 is score 6 with two risks.
+  expect(cells.find(el=>el.getAttribute('aria-label').startsWith('Likelihood 3, impact 4,')).textContent).toBe('121 risk');
+  expect(cells.find(el=>el.getAttribute('aria-label').startsWith('Likelihood 2, impact 3,')).textContent).toBe('62 risks');
+  const emptyLabel='Likelihood 5, impact 1, score 5, band moderate: 0 risks';
+  await act(async()=>cells.find(el=>el.getAttribute('aria-label')===emptyLabel).click());
+  expect(onSelect).toHaveBeenLastCalledWith('5:1');
+  await render({...props,selected:'5:1'});
+  const selected=container.querySelector(`[aria-label="${emptyLabel}"]`);expect(selected.getAttribute('aria-pressed')).toBe('true');
+  await act(async()=>selected.click());expect(onSelect).toHaveBeenLastCalledWith(null);
+  await act(async()=>button('Clear matrix selection').click());expect(onSelect).toHaveBeenLastCalledWith(null);
+  expect(JSON.stringify(rows)).toBe(before);
+  for(const verb of ['post','put','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
+  expect(props.onView).not.toHaveBeenCalled();expect(props.onOpen).not.toHaveBeenCalled();
 });
 
 test('event links hand complete saved records to native opening and partial errors are visible',async()=>{

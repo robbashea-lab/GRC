@@ -1,25 +1,36 @@
+@font-face {
+  font-family:'GoverNara Risks Inter';
+  src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');
+  font-style:normal;
+  font-weight:400 700;
+  font-display:swap;
+}
+/* Page-local variables never change the existing HTML portal/editor theme. */
 /* Exact Risks target presentation; native controllers and other clients stay outside this scope. */
+.brawndo-workspace-pilot[data-visual-surface="risks"] .bpage.approved-risk-register.brawndo-demo-risks,
 .bpage.approved-risk-register.brawndo-demo-risks {
-  --font-body:'Segoe UI',Inter,Arial,sans-serif; --font-heading:var(--font-body);
-  --bp-bg:#EDF3FA; --bp-card:#FFFFFF; --bp-subtle:#F3F7FC; --bp-border:#C6D4E4;
-  --bp-text:#132A49; --bp-muted:#536A84; --bp-link:#215BC1; --bp-focus:#215BC1;
-  --bdr-fg2:#4A617B; --bdr-border-strong:#B6C6DB; --bdr-hover:#EAF1FA;
-  --bdr-selected:#E4EEFC; --bdr-segment:#FFFFFF; --bdr-tablehead:#F3F7FC;
+  --font:'GoverNara Risks Inter',Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif; --font-body:var(--font); --font-heading:var(--font);
+  --bp-bg:#F4F6F9; --bp-card:#FFFFFF; --bp-subtle:#F7F9FB; --bp-border:#E3E8EF;
+  --bp-text:#0F1B2D; --bp-muted:#5A687B; --bp-link:#1F56C3; --bp-focus:#215BC1;
+  --bdr-fg2:#46566B; --bdr-border-strong:#CDD5E0; --bdr-hover:#F2F5F9;
+  --bdr-selected:#EDF2FC; --bdr-segment:#FFFFFF; --bdr-tablehead:#F9FAFC;
   --bdr-warn:#93370D; --bdr-good:#05603A; --bdr-part:#E2AA30;
   --bdr-low:#94A3B8; --bdr-moderate:#E8B341; --bdr-high:#DD6B2E; --bdr-critical:#B4232F;
   --bdr-shadow:0 1px 2px rgba(15,27,45,.05),0 1px 1px rgba(15,27,45,.02);
   --bdr-segment-shadow:0 1px 2px rgba(15,27,45,.10),0 0 0 1px rgba(15,27,45,.06);
+  --color-text-primary:var(--bp-text); --color-text-secondary:var(--bdr-fg2); --color-text-muted:var(--bp-muted);
   display:grid; align-content:start; gap:20px; width:100%; max-width:1600px;
-  min-height:calc(100dvh - 60px); padding:28px 24px 120px;
+  min-height:calc(100dvh - 60px); padding:28px calc(24px + env(safe-area-inset-right)) 120px calc(24px + env(safe-area-inset-left));
   background:var(--bp-bg); color:var(--bp-text); font:13.5px/1.5 var(--font-body);
   font-optical-sizing:auto; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
 }
+.brawndo-workspace-pilot[data-visual-surface="risks"] .bpage.approved-risk-register.brawndo-demo-risks[data-theme="dark"],
 .bpage.approved-risk-register.brawndo-demo-risks[data-theme="dark"] {
-  --bp-bg:#071321; --bp-card:#0C1B30; --bp-subtle:#11243A; --bp-border:#263C58;
-  --bp-text:#EDF3FF; --bp-muted:#A2AEC4; --bp-link:#85D4FF; --bp-focus:#85D4FF;
-  --bdr-fg2:#A8BAD5; --bdr-border-strong:#3D5778; --bdr-hover:#172B45;
-  --bdr-selected:#25416A; --bdr-segment:#243042; --bdr-tablehead:#112238;
-  --bdr-warn:#F5BC4F; --bdr-good:#39C7A5; --bdr-part:#D4A13C;
+  --bp-bg:#0A0F16; --bp-card:#111823; --bp-subtle:#151D29; --bp-border:#222C3A;
+  --bp-text:#EDF1F7; --bp-muted:#8E9BAE; --bp-link:#8EC5FF; --bp-focus:#8EC5FF;
+  --bdr-fg2:#A7B3C4; --bdr-border-strong:#34404F; --bdr-hover:#19222F;
+  --bdr-selected:#1B2738; --bdr-segment:#151D29; --bdr-tablehead:#131B26;
+  --bdr-warn:#E9B65A; --bdr-good:#3DC79F; --bdr-part:#F0CF78;
   --bdr-low:#5B6878; --bdr-moderate:#F0CF78; --bdr-high:#A8481A; --bdr-critical:#F2555E;
   --bdr-shadow:none; --bdr-segment-shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
 }
@@ -184,3 +195,37 @@
   .bpage.brawndo-demo-risks :is(.bdr-matrix,.bdr-matrix-y) { grid-template-rows:repeat(5,48px); }
 }
 @media(prefers-reduced-motion:reduce) { .bpage.brawndo-demo-risks * { animation:none!important; transition:none!important; } }
+
+/* The scoped landing owns its canvas; native chrome and portalled forms retain their theme. */
+.brawndo-workspace-pilot[data-visual-surface="risks"] .app-workspace:has(.brawndo-demo-risks) { background:#F4F6F9; }
+.brawndo-workspace-pilot[data-visual-surface="risks"][data-theme="dark"] .app-workspace:has(.brawndo-demo-risks) { background:#0A0F16; }
+.bpage.brawndo-demo-risks .register-table-frame tbody .bdr-row-id { padding-left:0; }
+.bpage.brawndo-demo-risks .bdr-row-owner .register-owner > span { color:var(--bp-text); }
+.bpage.brawndo-demo-risks .bdr-row-review time { white-space:nowrap; }
+.bpage.brawndo-demo-risks .bdr-record-controls { margin-left:auto; overflow:visible; }
+.bpage.brawndo-demo-risks .bdr-record-controls button { font:500 12.5px/1.5 var(--font); }
+.bpage.brawndo-demo-risks .bdr-record-controls button[aria-pressed="true"] { font-weight:600; }
+.bpage.brawndo-demo-risks .bdr-filter-trigger[data-state="open"] { background:var(--bdr-segment); }
+:root[data-visual-surface="risks"] :is(.bdr-filters-panel,.bdr-filter-menu),
+.bdr-filters-panel, .bdr-filter-menu {
+  --font-body:'GoverNara Risks Inter',Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  --font:var(--font-body); --font-heading:var(--font-body);
+  --color-text-primary:#0F1B2D; --color-text-secondary:#46566B; --color-text-muted:#5A687B;
+  font:400 12.5px/1.5 var(--font-body); font-optical-sizing:auto;
+  color:#0F1B2D; background:#FFFFFF; border-color:#E3E8EF;
+}
+.bdr-filters-panel { width:min(440px,calc(100vw - 32px)); max-height:min(560px,70dvh); overflow:auto; padding:12px; }
+.bdr-filter-views { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:12px; border-bottom:1px solid #E3E8EF; }
+.bdr-filter-views button { padding:5px 8px; border:1px solid #E3E8EF; border-radius:6px; color:inherit; font:500 12.5px/1.5 var(--font-body); }
+.bdr-filter-views button[aria-pressed="true"] { background:#EDF2FC; font-weight:600; }
+.bdr-filter-views button span { margin-left:6px; font-variant-numeric:tabular-nums; }
+.bdr-filter-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; padding-top:12px; }
+.bdr-filter-columns .column-control { justify-content:space-between; padding:6px 8px; font:500 12.5px/1.5 var(--font-body); }
+html[data-visual-surface="risks"][data-visual-theme="dark"] :is(.bdr-filters-panel,.bdr-filter-menu) {
+  --color-text-primary:#EDF1F7; --color-text-secondary:#A7B3C4; --color-text-muted:#8E9BAE;
+  color:#EDF1F7; background:#111823; border-color:#222C3A;
+}
+html[data-visual-surface="risks"][data-visual-theme="dark"] .bdr-filter-views,
+html[data-visual-surface="risks"][data-visual-theme="dark"] .bdr-filter-views button { border-color:#222C3A; }
+html[data-visual-surface="risks"][data-visual-theme="dark"] .bdr-filter-views button[aria-pressed="true"] { background:#1B2738; }
+@media(max-width:860px) { .bpage.brawndo-demo-risks .bdr-record-controls { margin-left:0; } }
