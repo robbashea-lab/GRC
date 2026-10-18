@@ -72,7 +72,9 @@ beforeEach(async()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.restoreAllMocks();jest.clearAllMocks();});
 
-test('the completed ticket opens its exact native CIS source with verified appearance and preserves completed personal progress',async()=>{
+test.each(['Close','Escape'])('the completed ticket opens its exact native CIS source and %s restores its source opener without changing saved progress',async closeMethod=>{
+  // jsdom has no layout; keep real portals, focus scopes and hidden/aria attributes.
+  jest.spyOn(HTMLElement.prototype,'getClientRects').mockImplementation(function(){return this.closest('[hidden]')?[]:[{}];});
   await savePersonalProgress(true);await render();const outer=assessments()[0];await openTicket(outer);
   const work=ticket().querySelector('[data-ticket-task="'+task.task_id+'"]');
   await edit(work.querySelector('[aria-label="Actual resolution"]'),'Synthetic completed work retained through source browsing.');
@@ -81,6 +83,8 @@ test('the completed ticket opens its exact native CIS source with verified appea
   await click(ticket(),'Validate and complete');expect(ticket().textContent).toContain('Completed');
   const before=await snapshot();expect(before.records[3]).toMatchObject({status:'done',resolution:'Synthetic completed work retained through source browsing.'});
   expect(before.records[4].status).toBe('closed');observeWrites();
+  const sourceOpener=button(ticket(),'CIS Controls v8.1 Assessment → Safeguard 1.1');
+  sourceOpener.focus();expect(document.activeElement).toBe(sourceOpener);
   const nested=await openSource();expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
   expect(nested.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
   expect(nested.querySelector('[aria-label="Saved implementation status"]').textContent).toBe(outer.querySelector('[aria-label="Saved implementation status"]').textContent);
@@ -89,7 +93,15 @@ test('the completed ticket opens its exact native CIS source with verified appea
   expect(nested.querySelector('[aria-label$="location"]')).toBeNull();
   const guide=await revealInterview(nested);
   expect(guide.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Retained exact reviewed completion.');
-  await click(nested,'Close');expect(nested.isConnected).toBe(false);expect(ticket().textContent).toContain('Completed');
+  const disclosure=guide.closest('details');
+  await act(async()=>{disclosure.open=false;disclosure.dispatchEvent(new Event('toggle'));});
+  expect(disclosure.open).toBe(false);
+  if(closeMethod==='Close')await click(nested,'Close');
+  else await act(async()=>nested.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));
+  await act(async()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  expect(nested.isConnected).toBe(false);expect(ticket().textContent).toContain('Completed');
+  expect(sourceOpener.isConnected).toBe(true);expect(sourceOpener.closest('[aria-hidden="true"],[hidden],[inert]')).toBeNull();
+  expect(outer.closest('[aria-hidden="true"]')).not.toBeNull();expect(document.activeElement).toBe(sourceOpener);
   await click(ticket(),'Close');expect(ticket()).toBeNull();expect(outer.isConnected).toBe(true);
   expect(outer.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);expect(await snapshot()).toEqual(before);expectNoWrites();
 });
