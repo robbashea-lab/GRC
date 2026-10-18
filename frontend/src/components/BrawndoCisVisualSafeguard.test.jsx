@@ -135,3 +135,27 @@ test.each(['gate','visual','client','assessment','definition','framework'])('sav
   await render();expect(container.querySelector('footer').textContent).not.toContain('Last saved:');
   expect(container.querySelector('footer').textContent).toContain('Changes remain in your draft until saved.');
 });
+
+test('eligible clean footer uses explicit matching scenario date, while dirty/busy/failed states preserve saved metadata',async()=>{
+  state.current={...state.current,status:'addressed',last_saved:'2026-10-18T09:06:07Z',demo_date_metadata:{
+    client_id:'demo_brawndo',framework_key:'cis-ig1',assessment_id:'a',definition_id:'1.1',status:'addressed',before_status:'in_progress',
+    kind:'implementation_transition',effective_date:'2026-09-30',provenance:'demo_fixture',scenario_version:'brawndo-cis-ig1-history-v2',scenario_anchor:'2026-10-18T00:00:00Z',event_id:'scenario-1.1-complete',
+  }};
+  await render();expect(container.querySelector('footer').textContent).toContain('Completed on Sep 30, 2026');
+  expect(container.querySelector('footer time').dateTime).toBe('2026-09-30');
+  state={...state,dirty:true,feedback:'Interview checkpoint saved.'};await render();
+  expect(container.querySelector('footer').textContent).toContain('Unsaved assessment changes');expect(container.querySelector('footer time')).toBeNull();
+  state={...state,busy:true};await render();expect(container.querySelector('footer [role="status"]').textContent).toBe('Working…');
+  state={...state,busy:false,error:'Save failed'};await render();expect(container.querySelector('footer [role="alert"]').textContent).toBe('Save failed');
+  expect(state.current.demo_date_metadata.effective_date).toBe('2026-09-30');
+  state={...state,dirty:false,error:'',writable:false,feedback:'Assessment saved.'};await render();
+  expect(container.querySelector('footer').textContent).toContain('Completed on Sep 30, 2026');
+  expect(container.querySelector('footer').textContent).toContain('Read-only assessment');expect(container.querySelector('footer').textContent).toContain('Assessment saved.');
+  expect(actions.save).not.toHaveBeenCalled();expect(actions.put).not.toHaveBeenCalled();
+});
+
+test('fresh unassessed footer is honest and draft dates never supply saved metadata',async()=>{
+  state.current={...state.current,status:'not_assessed'};
+  state.form={...state.form,status:'addressed',last_saved:'2030-01-01T00:00:00Z'};
+  await render();expect(container.querySelector('footer').textContent).toContain('Not yet assessed.');expect(container.querySelector('footer time')).toBeNull();
+});

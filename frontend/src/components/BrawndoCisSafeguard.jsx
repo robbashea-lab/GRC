@@ -22,6 +22,7 @@ import AssessmentItems from './AssessmentItems';
 import {useAuth} from '@/context/AuthContext';
 import {focusedOmniEnabled} from '@/lib/focusedOmni';
 import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
+import {safeguardDateFooter} from '@/lib/brawndoSafeguardDates';
 
 // Shared CIS IG1 workspace. The historical name is retained for existing callers.
 // Read-only guidance never writes assessment responses, status or verification.
@@ -47,16 +48,13 @@ export default function BrawndoCisSafeguard({state,actions}){
   const savedFooter=visualReference&&brawndoRecord&&current.client_id===clientId
     &&current.framework_key===record.framework_key&&current.framework_assessment_id===record.framework_assessment_id
     &&current.definition_id===record.definition_id;
-  // Only the native confirmed record supplies the timestamp; drafts and interview checkpoints never do.
-  const savedDate=typeof current.last_saved==='string'&&/T.*(?:Z|[+-]\d{2}:\d{2})$/i.test(current.last_saved)?new Date(current.last_saved):null;
-  const savedTimestamp=savedDate&&!Number.isNaN(savedDate.getTime())?savedDate.toISOString():null;
-  const savedLabel=savedTimestamp?`${new Intl.DateTimeFormat('en-US',{timeZone:'UTC',year:'numeric',month:'short',day:'numeric'}).format(savedDate)} · ${new Intl.DateTimeFormat('en-US',{timeZone:'UTC',hour:'numeric',minute:'2-digit',second:'2-digit',timeZoneName:'short'}).format(savedDate)}`:null;
+  const savedDateFooter=safeguardDateFooter(current);
   const footerStatus=dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes remain in your draft until saved.');
   let footerContent=footerStatus;
   if(savedFooter){
     if(busy)footerContent='Working…';
     else if(!dirty)footerContent=<>
-      {savedTimestamp?<>Last saved: <time dateTime={savedTimestamp} title={savedTimestamp} aria-label={`Last saved ${savedTimestamp}`}>{savedLabel}</time></>:'Last saved: unavailable'}
+      {savedDateFooter.dateTime?<>{savedDateFooter.label} <time dateTime={savedDateFooter.dateTime} title={savedDateFooter.dateTime} aria-label={`${savedDateFooter.label.replace(':','')} ${savedDateFooter.dateTime}`}>{savedDateFooter.display}</time></>:savedDateFooter.text}
       {!writable?' · Read-only assessment':''}{feedback?` · ${feedback}`:''}
     </>;
   }

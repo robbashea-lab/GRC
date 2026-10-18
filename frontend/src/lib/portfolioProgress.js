@@ -6,6 +6,32 @@ const time = value => Date.parse(value);
 export const programIdentity = program => program.program_id || JSON.stringify([program.client_id, program.program_key]);
 export const snapshotTime = snapshot => position(snapshot)?.effective_at || position(snapshot)?.captured_at || position(snapshot)?.at;
 
+// Opt-in presentation context is supplied only by the trusted canonical Demo
+// adapter. Default consumers continue to require genuine committed positions.
+export function isDemoScenarioPosition(snapshot, context){
+  const value=position(snapshot);
+  return !!context&&context.version==='brawndo-cis-ig1-history-v2'&&context.client_id==='demo_brawndo'
+    &&context.program_id==='demo_brawndo:cis-ig1'&&value?.program_id===context.program_id
+    &&value.observation_kind==='demo_fixture'&&value.provenance?.kind==='demo_fixture'
+    &&value.scenario_version===context.version&&value.scenario_anchor===context.anchor
+    &&typeof context.fingerprint==='string'&&value.scenario_fingerprint===context.fingerprint
+    &&Array.isArray(context.point_ids)&&context.point_ids.includes(value.snapshot_id);
+}
+
+export function canConnectHistoryPositions(previous,next,{demoScenario}={}){
+  const before=position(previous),after=position(next);
+  if(!before||!after||before.scope_signature!==after.scope_signature||before.measure_version!==after.measure_version)return false;
+  const until=time(before.effective_until),at=time(snapshotTime(after));
+  return before.continuity_proven===true&&until>=at
+    ||isDemoScenarioPosition(before,demoScenario)&&(isDemoScenarioPosition(after,demoScenario)&&time(before.modeled_until)>=at
+      ||before.snapshot_id===demoScenario.point_ids.at(-1)&&after.snapshot_id===demoScenario.join_snapshot_id
+        &&before.status_signature===after.status_signature)
+    ||demoScenario?.version==='brawndo-cis-ig1-history-v2'&&before.snapshot_id===demoScenario.held_snapshot_id
+      &&after.program_id===demoScenario.program_id&&at<=time(demoScenario.held_until)
+      &&before.source_revision===demoScenario.held_source_revision&&after.source_revision===demoScenario.current_source_revision
+      &&before.status_signature===demoScenario.current_status_signature&&after.status_signature===demoScenario.current_status_signature;
+}
+
 export function applicableCounts(snapshot) {
   const current = position(snapshot);
   const values = current?.included_counts || current?.counts;
@@ -90,14 +116,16 @@ export function forecastImplementation(snapshots = [], snapshot, asOf, options =
       && typeof value.measure_version === 'string' && value.measure_version.length > 0
       && Number.isFinite(time(value.captured_at)) && time(value.captured_at) <= at;
   }).sort((a, b) => time(snapshotTime(a)) - time(snapshotTime(b)) || time(a.captured_at) - time(b.captured_at));
-  const genuine = observations.filter(value => ['committed_event', 'committed_baseline'].includes(value.observation_kind));
+  const eligiblePositions = observations.filter(value => ['committed_event', 'committed_baseline'].includes(value.observation_kind)
+    ||isDemoScenarioPosition(value,options.demoScenario));
+  const modeled=eligiblePositions.some(value=>isDemoScenarioPosition(value,options.demoScenario));
   const scopeEvents = options.scopeChanges || [];
   const explicitChange = Math.max(cut, ...scopeEvents.map(event => time(event.effective_at || event.at)).filter(value => Number.isFinite(value) && value <= at));
   let reset = explicitChange;
   for (const value of observations) {
     if (value.scope_signature !== current.scope_signature || value.measure_version !== current.measure_version) reset = Math.max(reset, time(snapshotTime(value)));
   }
-  const comparable = genuine.filter(value => time(snapshotTime(value)) >= reset && value.scope_signature === current.scope_signature && value.measure_version === current.measure_version);
+  const comparable = eligiblePositions.filter(value => time(snapshotTime(value)) >= reset && value.scope_signature === current.scope_signature && value.measure_version === current.measure_version);
   const latest = comparable.at(-1);
   if (!latest) return unavailable('No genuine committed history is available on the current scope.');
   const sameState = value => value.scope_signature === current.scope_signature && value.measure_version === current.measure_version
@@ -128,7 +156,8 @@ export function forecastImplementation(snapshots = [], snapshot, asOf, options =
   if (estimatedAt && !Number.isFinite(estimatedAt.getTime())) return unavailable('The projected date is outside the supported date range.');
   const label = beyond ? 'Beyond 5 years' : 'Around ' + estimatedAt.toLocaleDateString(undefined, {month: 'short', year: 'numeric', timeZone: 'UTC'});
   return {ok: true, label, days: remaining, slope, monthly_pace: monthlyPace, estimated_at: estimatedAt?.toISOString() || null,
-    note: `If the latest 90-day pace of +${monthlyPace.toFixed(1)} items per month continues and scope stays the same. Based on ${votes.length} genuine daily positions; this is an estimate, not a target date.`};
+    calculation_basis:modeled?'demo_scenario':'committed_history',
+    note: `If the latest 90-day pace of +${monthlyPace.toFixed(1)} items per month continues and scope stays the same. Based on ${votes.length} ${modeled?'demo scenario and saved':'genuine'} daily positions; this is an estimate, not a target date.`};
 }
 
 export const assignedToUser = (client, userId) => !!userId && (client.grc_lead_id === userId || client.assigned_owner_id === userId);

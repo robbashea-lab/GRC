@@ -7,6 +7,7 @@ import {policyApprovalRequest} from './policyApproval';
 import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
 import {frameworkSummary} from './frameworkSummary';
 import {portfolioReportingRequest} from './portfolioReporting';
+import {createBrawndoScenarioDateSelector} from './brawndoReportingHistory';
 import {calendarBuckets,vendorCalendarItems} from '../lib/calendarView';
 import {handoffSnapshot, adjustProgram} from './onboardingHandoff';
 import { identityRequest } from './identityLifecycle';
@@ -32,6 +33,17 @@ import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
 import {fileBytes} from './evidenceStorage';
 const CREATE_REPLAY_KINDS=['clients','reviews','findings','tasks','risks','vendors','policies','contacts','assets','exceptions','requirements','ai_systems'];
 const SESSION = 'grc_demo_entered';
+// Decorate copied Demo responses only; scenario dates never enter native rows or write payloads.
+function frameworkDateResponse(data,db){
+  const rows=data?.framework_assessment_id?[data]:data?.framework?.key==='cis-ig1'?data.assessments:null;
+  if(!Array.isArray(rows)||!rows.some(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1'))return data;
+  const dateForRecord=createBrawndoScenarioDateSelector(db);
+  const project=row=>{
+    const metadata=dateForRecord(row);
+    return metadata?{...row,demo_date_metadata:metadata}:row;
+  };
+  return data.framework_assessment_id?project(data):{...data,assessments:rows.map(project)};
+}
 // Loaded only by the explicit demo build. No request is forwarded to any server.
 export async function previewAdapter(config) {
   const url = new URL(config.url, 'https://demo.invalid'),
@@ -150,7 +162,9 @@ export async function previewAdapter(config) {
       const result=frameworkRequest(db,path,method,params,body,context);
       // Ordinary reads stay pure; CIS export retains its existing audit write.
       const auditedExport=kind==='frameworks'&&id==='cis-ig1'&&name==='export';
-      return method==='get'&&!auditedExport?respond(result):save(result);
+      if(method==='get'&&!auditedExport)return respond(frameworkDateResponse(result,db));
+      const persisted=saveStore(db);
+      return respond(frameworkDateResponse(result,persisted));
     }
     if (path === '/demo/onboarding-draft') {
       record(db, 'clients', params.client_id || body.client_id);

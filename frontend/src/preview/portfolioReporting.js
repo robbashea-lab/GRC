@@ -8,6 +8,8 @@ import {operatorStatuses} from '../lib/frameworkOperator';
 import {evidenceAccess} from './evidence';
 import {stable} from './commandRequests';
 import {latestPortfolioActivity} from '../lib/portfolioOverview';
+import {getBrawndoScenarioContext} from './brawndoReportingHistory';
+import {isDemoScenarioPosition} from '../lib/portfolioProgress';
 
 const VERSION='native-implementation-v1',DAY=86400000;
 const STATUS=['addressed','in_progress','needs_attention','not_assessed'];
@@ -50,7 +52,7 @@ function normalizedCurrent(db,identity,current,document=null){
   const included_counts=current.included_counts||current.counts?.filter(value=>STATUS.includes(value.key))||[];
   return {...current,scope_signature,source_revision,status_signature:scope_signature?stable({scope_signature,included_counts,implemented:current.implemented,denominator:current.denominator,availability:current.availability}):null};
 }
-const OBSERVATION_FIELDS=['program_id','measure_version','availability','reason','percentage','implemented','denominator','total','excluded','counts','included_counts','assessed','not_started','scope_signature','status_signature','scope_undetermined','missing_records','duplicate_records','unrecognized_status_count','effective_until','continuity_proven','continuity_source_event'];
+const OBSERVATION_FIELDS=['program_id','measure_version','availability','reason','percentage','implemented','denominator','total','excluded','counts','included_counts','assessed','not_started','scope_signature','status_signature','scope_undetermined','missing_records','duplicate_records','unrecognized_status_count','effective_until','continuity_proven','continuity_source_event','scenario_version','scenario_anchor','scenario_fingerprint','modeled_until'];
 function thinCurrent(current){
   return {...Object.fromEntries(OBSERVATION_FIELDS.filter(field=>Object.hasOwn(current,field)).map(field=>[field,current[field]])),
     invalid_applicability_count:current.invalid_applicability_count??0,
@@ -241,14 +243,54 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
       activity_proofs[chosen.audit_id||chosen.log_id]={eligible:true,type:logType(chosen,kind,true),changed_fields:changed};
     }
   }
-  db.portfolio_reporting={...prior,started_at:prior.started_at||at,last_captured_at:snapshots.at(-1)?.captured_at||null,snapshots,scope_events,activity_proofs,identities};
+  const source_refresh_proofs=[...(prior.source_refresh_proofs||[])];
+  const canonical=db.clients?.find(client=>client.client_id==='demo_brawndo');
+  const scenario=prior.fixture_versions?.['brawndo-cis-ig1-history-v2'];
+  if(previous&&scenario&&db.user?.workspace_mode==='demo'&&canonical?.status==='active'&&!inactive(canonical)
+    &&canonical.environment==='Demo'&&canonical.initial_program_baseline?.state?.version===3
+    &&canonical.initial_program_baseline.state.completed&&canonical.initial_program_baseline.completed_by==='demo_provider_lead'){
+    // Same posture, newer accepted source: retain a reporting proof without
+    // inventing a posture observation, historical date or forecast vote.
+    const before=demoCurrentPositions(previous,previous.clients.filter(client=>client.client_id==='demo_brawndo'),at).find(value=>value.program_id==='demo_brawndo:cis-ig1');
+    const after=afterPositions.find(value=>value.program_id==='demo_brawndo:cis-ig1');
+    const oldRefs=before?.current.provenance?.source_references||[],newRefs=after?.current.provenance?.source_references||[];
+    const sameMembers=oldRefs.length===56&&newRefs.length===56&&oldRefs.every(old=>newRefs.some(next=>next.id===old.id
+      &&next.kind===old.kind&&next.definition_id===old.definition_id&&next.framework_version===old.framework_version&&next.status===old.status));
+    const changed=newRefs.filter(next=>oldRefs.find(old=>old.id===next.id)?.version!==next.version);
+    const retained=new Set((previous.logs||[]).map(log=>log.audit_id||log.log_id));
+    const receipts=changed.map(reference=>(db.logs||[]).find(log=>!retained.has(log.audit_id||log.log_id)
+      &&log.client_id==='demo_brawndo'&&log.entity_type==='framework_assessments'&&log.entity_id===reference.id
+      &&log.action==='Framework assessment updated'&&log.meta?.status===reference.status
+      &&Number.isFinite(Date.parse(log.at))&&Date.parse(log.at)<=Date.parse(at)
+      &&Math.abs(Date.parse(log.at)-Date.parse(reference.version))<=1000
+      &&activity_proofs[log.audit_id||log.log_id]?.eligible===true));
+    if(sameMembers&&changed.length&&receipts.every(Boolean)&&before.current.availability==='available'&&after.current.availability==='available'
+      &&exactScope(before.current)===exactScope(after.current)&&before.current.denominator===56&&after.current.denominator===56
+      &&before.current.source_revision&&after.current.source_revision&&before.current.source_revision!==after.current.source_revision
+      &&changed.every(next=>Date.parse(next.version)>Date.parse(oldRefs.find(old=>old.id===next.id).version))
+      &&getBrawndoScenarioContext(previous,new Date(at))){
+      const proof_id=`demo-source-refresh:${after.program_id}:${after.current.source_revision}`;
+      if(!source_refresh_proofs.some(proof=>proof.proof_id===proof_id))source_refresh_proofs.push({proof_id,kind:'accepted_source_refresh',
+        client_id:'demo_brawndo',program_id:after.program_id,at,from_source_revision:before.current.source_revision,to_source_revision:after.current.source_revision,
+        scope_signature:after.current.scope_signature,measure_version:after.current.measure_version,status_signature:after.current.status_signature,
+        source_references_before:oldRefs,source_references_after:newRefs,source_event_ids:receipts.map(log=>log.audit_id||log.log_id)});
+    }
+  }
+  db.portfolio_reporting={...prior,started_at:prior.started_at||at,last_captured_at:snapshots.at(-1)?.captured_at||null,snapshots,scope_events,activity_proofs,identities,
+    ...(source_refresh_proofs.length?{source_refresh_proofs}:{})};
 }
 
-function comparison(snapshots,current,start){
+function comparison(snapshots,current,start,scenarioContext=null){
   const effective=s=>s.effective_at||s.current?.effective_at||s.captured_at;
   const ordered=snapshots.filter(s=>timestamp(effective(s))<=timestamp(current.captured_at)).sort((a,b)=>timestamp(effective(a))-timestamp(effective(b))||(a.observation_sequence||0)-(b.observation_sequence||0));
-  const prior=ordered.filter(s=>timestamp(effective(s))<=timestamp(start)).at(-1),baseline=prior?{...prior.current,effective_at:effective(prior)}:null;
-  const proven=!!baseline&&(timestamp(baseline.effective_at)===timestamp(start)||baseline.continuity_proven===true&&baseline.effective_until&&timestamp(baseline.effective_until)>=timestamp(start));
+  const prior=ordered.filter(s=>timestamp(effective(s))<=timestamp(start)).at(-1);
+  // Carried scenario positions need their original identity and kind to retain
+  // the validated interval and provenance; a date/count alone is insufficient.
+  const baseline=prior?{...prior.current,effective_at:effective(prior),...(scenarioContext?{
+    snapshot_id:prior.snapshot_id,observation_kind:prior.observation_kind,captured_at:prior.captured_at
+  }:{})}:null;
+  const modeled=prior&&isDemoScenarioPosition(prior,scenarioContext)&&prior.current.modeled_until&&timestamp(prior.current.modeled_until)>=timestamp(start);
+  const proven=!!baseline&&(timestamp(baseline.effective_at)===timestamp(start)||baseline.continuity_proven===true&&baseline.effective_until&&timestamp(baseline.effective_until)>=timestamp(start)||modeled);
   const result={baseline,change_pp:null,change_implemented:null,baseline_effective_at_start:!!proven,comparable:false,scope_changed:false,requested_start:start,available_from:ordered[0]?effective(ordered[0]):current.captured_at,coverage:'committed_demo_positions',continuous_history:false,reason:'No captured Demo position on or before the requested start.'};
   if(!baseline)return result;
   const signatures=new Set([...ordered.filter(s=>timestamp(effective(s))>=timestamp(baseline.effective_at)).map(s=>s.current.scope_signature),current.scope_signature]);
@@ -256,7 +298,7 @@ function comparison(snapshots,current,start){
   if(result.scope_changed){result.reason='Native program scope changed; raw endpoint change uses each position\'s own denominator.';if(proven&&baseline.percentage!=null&&current.percentage!=null)Object.assign(result,{change_pp:current.percentage-baseline.percentage,change_implemented:current.implemented-baseline.implemented});}
   else if(signatures.has(null)||baseline.percentage==null||current.percentage==null)result.reason='A complete comparable implementation position is unavailable.';
   else if(!proven)result.reason='The older observation does not establish the state effective at the period boundary.';
-  else Object.assign(result,{comparable:true,change_pp:current.percentage-baseline.percentage,change_implemented:current.implemented-baseline.implemented,reason:'Actual browser-local committed dates and proven predecessor state.'});
+  else Object.assign(result,{comparable:true,change_pp:current.percentage-baseline.percentage,change_implemented:current.implemented-baseline.implemented,calculation_basis:modeled?'demo_scenario':'committed_history',reason:modeled?'Illustrative demo scenario interval at the period boundary.':'Actual browser-local committed dates and proven predecessor state.'});
   return result;
 }
 
@@ -342,17 +384,31 @@ function events(db,clients,at,days,type){
   }).sort((a,b)=>b.at.localeCompare(a.at)||b.event_id.localeCompare(a.event_id));
 }
 
-function demoHistory(db,position,available,range,asOf){
+function demoHistory(db,position,available,range,asOf,scenarioContext=null){
   const start=demoRangeStart(asOf,range),forecastStart=demoRangeStart(asOf,'90d');
   const effective=snapshot=>snapshot.effective_at||snapshot.current.effective_at||snapshot.captured_at;
-  const ordered=available.map(snapshot=>({...snapshot,current:normalizedCurrent(db,position.program_id,snapshot.current,snapshot)})).sort((a,b)=>timestamp(effective(a))-timestamp(effective(b))||(a.observation_sequence||0)-(b.observation_sequence||0));
+  const lineageOrder=snapshot=>isDemoScenarioPosition(snapshot,scenarioContext)?0:snapshot.snapshot_id===scenarioContext?.join_snapshot_id?1:2;
+  const ordered=available.map(snapshot=>({...snapshot,current:normalizedCurrent(db,position.program_id,snapshot.current,snapshot)})).sort((a,b)=>timestamp(effective(a))-timestamp(effective(b))
+    ||(scenarioContext?lineageOrder(a)-lineageOrder(b):0)||(a.observation_sequence||0)-(b.observation_sequence||0));
   const flat=snapshot=>({...thinCurrent(snapshot.current),snapshot_id:snapshot.snapshot_id,effective_at:effective(snapshot),captured_at:snapshot.captured_at,observation_kind:snapshot.observation_kind||'sampled',source_revision:snapshot.current.source_revision,source_event:snapshot.source_event||null,observation_sequence:snapshot.observation_sequence||0});
-  const scopePoint=current=>current?Object.fromEntries(['total','denominator','implemented','scope_signature','measure_version'].map(field=>[field,current[field]])):null;
+  const scopePoint=current=>current?Object.fromEntries(['total','denominator','implemented','included_counts','scope_signature','measure_version'].map(field=>[field,current[field]])):null;
   const membership = (before, after) => {
-    if (!before?.scope?.applicability || !after?.scope?.applicability) return {};
+    if (!before?.scope?.applicability || !after?.scope?.applicability) return {status_changes_known:false};
     const old = new Set(Object.keys(before.scope.applicability).filter(id => before.scope.applicability[id] === 'included'));
     const next = new Set(Object.keys(after.scope.applicability).filter(id => after.scope.applicability[id] === 'included'));
-    return {added_ids:[...next].filter(id=>!old.has(id)).sort(),removed_ids:[...old].filter(id=>!next.has(id)).sort(),membership_known:true};
+    const common=[...old].filter(id=>next.has(id)).sort();
+    const previousRefs=before.provenance?.source_references,currentRefs=after.provenance?.source_references;
+    const known=Array.isArray(previousRefs)&&Array.isArray(currentRefs)&&common.every(id=>{
+      const first=previousRefs.filter(row=>row.definition_id===id),last=currentRefs.filter(row=>row.definition_id===id);
+      return first.length===1&&last.length===1&&first[0].id===last[0].id
+        &&STATUS.includes(first[0].status)&&STATUS.includes(last[0].status);
+    });
+    const status_changes=known?common.flatMap(id=>{
+      const first=previousRefs.find(row=>row.definition_id===id),last=currentRefs.find(row=>row.definition_id===id);
+      return first.status===last.status?[]:[{definition_id:id,before_status:first.status,after_status:last.status}];
+    }):[];
+    return {added_ids:[...next].filter(id=>!old.has(id)).sort(),removed_ids:[...old].filter(id=>!next.has(id)).sort(),membership_known:true,
+      status_changes_known:known,status_changes};
   };
   const changes=[];
   for(let i=1;i<ordered.length;i++)if(ordered[i-1].current.scope_signature!==ordered[i].current.scope_signature)changes.push({at:effective(ordered[i]),after_snapshot_id:ordered[i].snapshot_id,before:scopePoint(ordered[i-1].current),after:scopePoint(ordered[i].current),provenance:'observed_scope_transition',...membership(ordered[i-1].current,ordered[i].current)});
@@ -361,12 +417,24 @@ function demoHistory(db,position,available,range,asOf){
     if(!changes.some(existing=>timestamp(existing.at)===timestamp(change.at)&&existing.before?.scope_signature===normalized.before?.scope_signature&&existing.after?.scope_signature===normalized.after?.scope_signature))changes.push(normalized);
   }
   changes.sort((a,b)=>timestamp(a.at)-timestamp(b.at));
-  const result=comparison(ordered,position.current,start);
+  const result=comparison(ordered,position.current,start,scenarioContext);
   if(result.baseline&&changes.some(change=>timestamp(change.at)>timestamp(result.baseline.effective_at))){
     Object.assign(result,{scope_changed:true,comparable:false,reason:'Committed scope changed; raw endpoint change uses each position\'s own denominator.'});
   }
-  if(result.baseline)result.baseline={...thinCurrent(result.baseline),captured_at:result.baseline.captured_at,effective_at:result.baseline.effective_at,source_revision:result.baseline.source_revision};
-  return {range,period_start:start,period_end:asOf,snapshots:ordered.filter(snapshot=>timestamp(effective(snapshot))>=timestamp(start)).map(flat),forecast_snapshots:ordered.filter(snapshot=>timestamp(effective(snapshot))>=timestamp(forecastStart)).map(flat),comparison:result,scope_changes:changes.filter(change=>timestamp(change.at)>=timestamp(start)),forecast_scope_changes:changes.filter(change=>timestamp(change.at)>=timestamp(forecastStart)),capture_method:'Browser-local atomic committed posture/scope changes; no historical interpolation.'};
+  if(result.baseline)result.baseline={...thinCurrent(result.baseline),captured_at:result.baseline.captured_at,effective_at:result.baseline.effective_at,source_revision:result.baseline.source_revision,
+    ...(scenarioContext?{snapshot_id:result.baseline.snapshot_id,observation_kind:result.baseline.observation_kind}:{})};
+  const snapshots=ordered.filter(snapshot=>timestamp(effective(snapshot))>=timestamp(start)).map(flat);
+  // This is a read-only current-state readout, not a saved historical position.
+  // The validated held chain proves the last accepted posture remains current;
+  // forecast inputs deliberately remain the separately retained observations.
+  if(scenarioContext?.held_snapshot_id&&scenarioContext.held_until===asOf
+    &&timestamp(snapshots.at(-1)?.effective_at||start)<timestamp(asOf))snapshots.push({
+      ...thinCurrent(position.current),snapshot_id:`demo-current:${position.program_id}:${position.current.source_revision}:${asOf}`,
+      effective_at:asOf,captured_at:asOf,retrieved_at:asOf,observation_kind:'current_state',
+      source_revision:position.current.source_revision,source_event:null,
+      provenance:{kind:'current_state',label:'Current native assessment state',source_as_of:position.current.provenance.source_as_of}
+    });
+  return {range,period_start:start,period_end:asOf,snapshots,forecast_snapshots:ordered.filter(snapshot=>timestamp(effective(snapshot))>=timestamp(forecastStart)).map(flat),comparison:result,scope_changes:changes.filter(change=>timestamp(change.at)>=timestamp(start)),forecast_scope_changes:changes.filter(change=>timestamp(change.at)>=timestamp(forecastStart)),capture_method:'Browser-local atomic committed posture/scope changes; no historical interpolation.'};
 }
 
 export function portfolioReportingRequest(db,path,params={}){
@@ -385,7 +453,9 @@ export function portfolioReportingRequest(db,path,params={}){
   if(path.endsWith('/history')){
     const position=programs.find(p=>p.client_id===params.client_id&&p.program_key===params.program_key);if(!position)return fail(404,'Enabled Demo program not found');
     const available=snapshots.filter(s=>s.client_id===position.client_id&&s.framework_key===position.framework_key);
-    return {...position,as_of:asOf,...demoHistory(db,position,available,range,asOf),coverage:coverage(db,available)};
+    const scenario_context=params.demo_scenario==='brawndo-cis-ig1-history-v2'&&position.program_id==='demo_brawndo:cis-ig1'
+      ?getBrawndoScenarioContext(db,new Date(asOf)):null;
+    return {...position,as_of:asOf,...demoHistory(db,position,available,range,asOf,scenario_context),coverage:coverage(db,available),...(scenario_context?{scenario_context}:{})};
   }
   if(path.endsWith('/activity')){
     const days=Number(params.days||7),limit=Number(params.limit||50),type=params.type;if(![7,30,90].includes(days)||!Number.isInteger(limit)||limit<1||limit>100||type&&!TYPES.includes(type))return fail(422,'Invalid Demo activity filters');

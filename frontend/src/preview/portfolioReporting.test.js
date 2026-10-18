@@ -21,6 +21,34 @@ const request=(db,kind,params={})=>portfolioReportingRequest(db,'/portfolio/repo
 beforeEach(()=>jest.useFakeTimers().setSystemTime(new Date(AS_OF)));
 afterEach(()=>jest.useRealTimers());
 
+test.each([false,true])('scope-only and mixed growth disclose exact common-member status changes (mixed=%s)',mixed=>{
+  const db=fixture(),rows=db.framework_assessments;
+  rows.slice(0,23).forEach(row=>row.status='addressed');
+  rows.slice(-2).forEach(row=>Object.assign(row,{status:'not_applicable',na_rationale:'Isolated test exclusion'}));
+  captureDemoReporting(db,null,'2026-09-01T00:00:00.000Z');const previous=copy(db);
+  rows.slice(-2).forEach(row=>row.status='not_assessed');
+  if(mixed)rows[0].status='in_progress';
+  captureDemoReporting(db,previous,AS_OF);const before=copy(db);
+  const result=request(db,'history',{client_id:'isolated',program_key:'cis-ig1',range:'3m'}),change=result.scope_changes.at(-1);
+  expect(change.before.denominator).toBe(54);expect(change.after.denominator).toBe(56);
+  expect(change.added_ids).toEqual(rows.slice(-2).map(row=>row.definition_id).sort());
+  expect(change.status_changes_known).toBe(true);
+  expect(change.status_changes).toEqual(mixed?[{definition_id:rows[0].definition_id,before_status:'addressed',after_status:'in_progress'}]:[]);
+  expect(change.before.implemented).toBe(23);expect(change.after.implemented).toBe(mixed?22:23);
+  expect(change.after.included_counts.reduce((sum,row)=>sum+row.count,0)).toBe(56);
+  expect(db).toEqual(before);
+});
+
+test('scope differences with missing source vectors remain explicitly unknown',()=>{
+  const db=fixture();captureDemoReporting(db,null,'2026-09-01T00:00:00.000Z');const previous=copy(db);
+  Object.assign(db.framework_assessments[0],{status:'not_applicable',na_rationale:'Isolated test'});
+  captureDemoReporting(db,previous,AS_OF);
+  for(const snapshot of db.portfolio_reporting.snapshots)delete snapshot.current.provenance.source_references;
+  for(const change of db.portfolio_reporting.scope_events){delete change.before.provenance.source_references;delete change.after.provenance.source_references;}
+  const result=request(db,'history',{client_id:'isolated',program_key:'cis-ig1'});
+  expect(result.scope_changes.every(change=>change.status_changes_known===false)).toBe(true);
+});
+
 test('same-timestamp scope substitutions keep each transition membership separate',()=>{
   const db=fixture(), [first,second]=db.framework_assessments;
   captureDemoReporting(db,null,AS_OF);

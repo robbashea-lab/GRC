@@ -76,6 +76,11 @@
 .brawndo-demo-program .ph-band.is-partial { fill:var(--chart-partial); }
 .brawndo-demo-program .ph-band.is-not { fill:var(--chart-not); }
 .brawndo-demo-program .ph-band.is-unassessed { fill:var(--chart-unassessed); }
+.brawndo-demo-program [data-demo-scenario=true] .ph-step-band { opacity:1; }
+.brawndo-demo-program .ph-status-history-legend { display:flex; flex-wrap:wrap; gap:8px 18px; margin-bottom:8px; color:var(--color-text-secondary); font-size:12px; }
+.brawndo-demo-program .ph-history-basis { color:var(--color-text-secondary); font-size:12px; }
+.brawndo-demo-program [data-demo-scenario=true] .ph-history-tip { min-width:0; max-height:calc(100dvh - 16px); overflow:auto; overflow-wrap:anywhere; }
+.brawndo-demo-program [data-demo-scenario=true] .ph-tip-basis { font-size:11px; }
 .brawndo-demo-program .ph-inline-foot { margin-top:12px; color:var(--color-text-muted); font-size:12px; }
 .brawndo-demo-program :is(button,[tabindex]):focus-visible { outline:2px solid var(--color-focus-ring); outline-offset:2px; }
 @media(max-width:600px) { .brawndo-demo-program { padding:16px; }.brawndo-demo-program .ph-breakdown-cells { grid-template-columns:repeat(2,minmax(0,1fr)); } }

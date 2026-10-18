@@ -1,5 +1,5 @@
 import {applicableCounts, calendarRangeStart, currentPercentage, forecastImplementation, historyWindow,
-  periodChange, portfolioGroups, programIdentity, snapshotTime} from './portfolioProgress';
+  periodChange, portfolioGroups, programIdentity, snapshotTime,isDemoScenarioPosition,canConnectHistoryPositions} from './portfolioProgress';
 
 const at = day => new Date(Date.UTC(2026, 6, 15) + day * 86400000).toISOString();
 const snapshot = (day, implemented, overrides = {}) => ({effective_at: at(day), captured_at: at(day),
@@ -8,6 +8,23 @@ const snapshot = (day, implemented, overrides = {}) => ({effective_at: at(day), 
   counts: [{key: 'addressed', count: implemented}, {key: 'in_progress', count: 0},
     {key: 'needs_attention', count: 56 - implemented}, {key: 'not_assessed', count: 0}], ...overrides});
 const fixture = [snapshot(0, 26), snapshot(30, 29), snapshot(60, 32)];
+
+test('modeled fixture votes require the exact opt-in context and preserve their provenance',()=>{
+  const context={version:'brawndo-cis-ig1-history-v2',client_id:'demo_brawndo',program_id:'demo_brawndo:cis-ig1',anchor:at(60),fingerprint:'owned-model',point_ids:['p0','p1','p2']};
+  const points=fixture.map((value,index)=>({...value,program_id:context.program_id,snapshot_id:context.point_ids[index],
+    observation_kind:'demo_fixture',provenance:{kind:'demo_fixture'},scenario_version:context.version,scenario_anchor:context.anchor,scenario_fingerprint:context.fingerprint,
+    modeled_until:at([30,60,60][index])}));
+  const before=JSON.stringify(points);
+  expect(forecastImplementation(points,points[2],at(60)).ok).toBe(false);
+  expect(forecastImplementation(points,points[2],at(60),{demoScenario:context})).toMatchObject({ok:true,calculation_basis:'demo_scenario'});
+  expect(forecastImplementation(points,points[2],at(60),{demoScenario:{...context,fingerprint:'other'}}).ok).toBe(false);
+  expect(isDemoScenarioPosition({...points[0],program_id:'foreign'},context)).toBe(false);
+  expect(canConnectHistoryPositions(points[0],points[1])).toBe(false);
+  expect(canConnectHistoryPositions(points[0],points[1],{demoScenario:context})).toBe(true);
+  expect(canConnectHistoryPositions(points[0],points[2],{demoScenario:context})).toBe(false);
+  expect(canConnectHistoryPositions(points[0],{...points[1],snapshot_id:'unknown-foreign-fixture'},{demoScenario:context})).toBe(false);
+  expect(JSON.stringify(points)).toBe(before);
+});
 
 test('shared OLS fixture calculates 0.1 implemented items/day and 240 remaining days', () => {
   const forecast = forecastImplementation(fixture, fixture[2], at(60));

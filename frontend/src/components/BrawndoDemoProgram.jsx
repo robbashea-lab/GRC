@@ -12,7 +12,7 @@ export default function BrawndoDemoProgram({client, program, refreshToken}) {
     params.set('view', status);
     navigate(`${path}?${params}`);
   };
-  return <PortfolioHistoryDialog inline referenceHistory client={client} programs={[program]}
+  return <PortfolioHistoryDialog inline referenceHistory demoScenario client={client} programs={[program]}
     selected={programIdentity(program)} refreshToken={refreshToken}
     onNavigate={navigate} onStatusNavigate={openStatus} />;
 }

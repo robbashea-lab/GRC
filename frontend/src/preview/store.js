@@ -119,6 +119,7 @@ export function saveStore(db,{resetFiles=false}={}) {
     enrichBrawndoReportingHistory(persisted);
     sessionStorage.setItem(STORE_KEY, JSON.stringify(compactPortfolioReporting(persisted)));
     rememberFiles(db,persisted);
+    return persisted;
   } catch (error) {
     throw demoStorageError(error);
   }

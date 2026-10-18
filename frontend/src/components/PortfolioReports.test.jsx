@@ -33,6 +33,114 @@ const completeLabel = (element = container) => [...element.querySelectorAll('.ph
 const chartPosition = (implemented, denominator = 56, extra = {}) => snapshot(0, implemented, {denominator,
   counts: counts(implemented).map(value => value.key === 'not_assessed' ? {...value, count: denominator - implemented} : value), ...extra});
 
+async function renderBrawndoScenarioHistory(extra = {}) {
+  const scope = {framework_key:'cis-ig1',catalog_version:'8.1',configuration:{implementation_group:1}};
+  const current = snapshot(0,32,{program_id:'demo_brawndo:cis-ig1',scope});
+  const before = snapshot(-60,24,{program_id:'demo_brawndo:cis-ig1',scope,continuity_proven:true,effective_until:AT});
+  api.get.mockResolvedValue({data:history({client_id:'demo_brawndo',program_key:'cis-ig1',current,snapshots:[before,current],...extra})});
+  const program={...programs[0],client_id:'demo_brawndo',program_id:'demo_brawndo:cis-ig1',program_key:'cis-ig1',current};
+  await act(async()=>root.render(<PortfolioHistoryDialog inline referenceHistory demoScenario client={{...client,client_id:'demo_brawndo'}} programs={[program]} selected={program.program_id} onNavigate={navigate} asOf={AT}/>));
+  return container.querySelector('.brawndo-demo-program');
+}
+
+test('shared history discloses fixture provenance without enabling scenario controls or calculations',async()=>{
+  const fixture=snapshot(-60,26,{observation_kind:'demo_fixture',provenance:{kind:'demo_fixture'}});
+  api.get.mockResolvedValue({data:history({snapshots:[fixture,snapshot(0,32)],forecast_snapshots:[fixture,snapshot(0,32)]})});
+  await act(async()=>root.render(<Harness choices={[programs[0]]}/>));
+  await click('View data');
+  expect(dialog().querySelector('caption').textContent).toBe('Implementation positions, newest effective date first');
+  expect(dialog().querySelector('.ph-data').textContent).toContain('Illustrative demo scenario');
+  expect(dialog().querySelector('.ph-data').textContent).toContain('Saved demo activity');
+  const graph=dialog().querySelector('.ph-chart svg');
+  await act(async()=>graph.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true})));
+  expect(graph.getAttribute('aria-label')).not.toContain('genuine');
+  expect(graph.querySelector('desc').textContent).toContain('Illustrative');
+  expect(dialog().querySelector('.ph-history-tip').textContent).toContain('Scenario position');
+  expect(dialog().querySelector('.ph-tip-basis').textContent).toBe('Illustrative demo scenario');
+  expect(dialog().querySelector('.ph-readout').textContent).toContain('Illustrative demo scenario');
+  expect([...dialog().querySelectorAll('button')].some(button=>button.textContent==='View status history')).toBe(false);
+  expect(dialog().querySelector('.ph-scenario-area,.ph-step-band,.ph-status-history-legend')).toBeNull();
+  expect(dialog().querySelector('.ph-metrics').textContent).toContain('Not estimated yet');
+  expect(api.get.mock.calls.at(-1)[1].params).not.toHaveProperty('demo_scenario');
+});
+
+test('shared genuine-only history retains its existing wording and controls',async()=>{
+  await act(async()=>root.render(<Harness choices={[programs[0]]}/>));
+  await click('View data');
+  expect(dialog().querySelector('caption').textContent).toBe('Genuine implementation positions, newest effective date first');
+  const graph=dialog().querySelector('.ph-chart svg');
+  await act(async()=>graph.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true})));
+  expect(graph.getAttribute('aria-label')).toContain('read genuine positions');
+  expect(dialog().querySelector('.ph-tip-basis')).toBeNull();
+  expect(dialog().querySelector('.ph-chart-options')).toBeTruthy();
+});
+
+test('Brawndo status history shares the period/data state and keeps native commands read-only',async()=>{
+  const panel=await renderBrawndoScenarioHistory();
+  expect(api.get).toHaveBeenLastCalledWith('/portfolio/reporting/history',expect.objectContaining({params:expect.objectContaining({demo_scenario:'brawndo-cis-ig1-history-v2'})}));
+  expect(panel.querySelectorAll('.ph-scenario-area')).toHaveLength(1);
+  await click('View data');
+  await click('View status history');
+  expect(panel.querySelectorAll('.ph-step-band')).toHaveLength(4);
+  expect(panel.querySelectorAll('.ph-status-history-legend > span')).toHaveLength(4);
+  expect(panel.querySelector('.ph-line')).toBeNull();
+  expect(panel.querySelector('#portfolio-history-data')).toBeTruthy();
+  expect(panel.querySelector('caption').textContent).not.toContain('Genuine');
+  await click('3 months');
+  expect([...panel.querySelectorAll('button')].find(value=>value.textContent==='Implemented history').getAttribute('aria-pressed')).toBe('true');
+  expect(panel.querySelector('#portfolio-history-data')).toBeTruthy();
+  await click('Implemented history');
+  expect(panel.querySelector('.ph-line')).toBeTruthy();
+  expect(navigate).not.toHaveBeenCalled();
+});
+
+test('Brawndo history keyboard readout includes all shares and provenance without inventing continuity',async()=>{
+  const current=snapshot(0,32,{program_id:'demo_brawndo:cis-ig1'});
+  const panel=await renderBrawndoScenarioHistory({snapshots:[current]});
+  const svg=panel.querySelector('.ph-chart svg');
+  await act(async()=>svg.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true})));
+  expect(panel.querySelector('.ph-readout').textContent).toContain('Not Assessed 24');
+  expect(panel.querySelector('.ph-history-tip').textContent).toContain('42.9%');
+  expect(panel.querySelector('.ph-history-tip').textContent).toContain('Saved demo activity');
+  expect(panel.querySelector('.ph-line').getAttribute('d')).not.toMatch(/[HLV]/);
+});
+
+test('scoped status history never draws a full stack for zero applicable scope',async()=>{
+  const point=chartPosition(0,0);
+  await act(async()=>root.render(<PortfolioHistoryChart inline referenceHistory scenarioPresentation points={[point]} start="2026-07-13T12:00:00Z" asOf={AT} view="mix" current={point} scopeChanges={[]}/>));
+  expect(container.querySelectorAll('.ph-band')).toHaveLength(0);
+  expect(container.querySelectorAll('.ph-status-history-legend > span')).toHaveLength(4);
+});
+
+test('detailed scope explanation separates denominator changes from actual implementation loss',()=>{
+  const change={membership_known:true,added_ids:['new-a','new-b'],removed_ids:[],before:{denominator:54,implemented:23},after:{denominator:56,implemented:23}};
+  expect(scopeNote(change,'safeguards',true)).toContain('42.6% → 41.1%');
+  expect(scopeNote(change,'safeguards',true)).toContain('Added: new-a, new-b.');
+  expect(scopeNote({...change,after:{denominator:56,implemented:22}},'safeguards',true)).toContain('Both implementation and scope changed.');
+  expect(scopeNote({...change,status_changes_known:true,status_changes:[{definition_id:'1.1',before_status:'addressed',after_status:'in_progress'}]},'safeguards',true)).toContain('1.1: Implemented → Partially Implemented');
+});
+
+test('scoped tooltip measures the preceding legend and stays inside the native clipped card',async()=>{
+  const rect=(left,top,width,height)=>({left,top,width,height,right:left+width,bottom:top+height,x:left,y:top});
+  const bounds=jest.spyOn(Element.prototype,'getBoundingClientRect').mockImplementation(function(){
+    if(this.classList?.contains('brawndo-demo-program'))return rect(20,10,360,610);
+    if(this.classList?.contains('ph-chart'))return rect(42,190,316,220);
+    if(this.classList?.contains('ph-history-tip'))return rect(0,0,260,80);
+    if(this.tagName.toLowerCase()==='svg')return rect(42,230,316,180);
+    return rect(0,0,0,0);
+  });
+  try{
+    const panel=await renderBrawndoScenarioHistory();
+    await click('View status history');
+    await act(async()=>panel.querySelector('.ph-chart svg').dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true})));
+    const tip=panel.querySelector('.ph-history-tip');
+    expect(parseFloat(tip.style.top)).toBeGreaterThan(85);
+    expect(parseFloat(tip.style.top)).toBeLessThan(95);
+    expect(tip.style.maxWidth).toBe('270px');
+    expect(42+parseFloat(tip.style.left)).toBeGreaterThanOrEqual(28);
+  }finally{bounds.mockRestore();}
+});
+
 test('approved history ignores a saved mix preference while preserving genuine positions, period controls and data', async () => {
   await act(async () => root.render(<Harness referenceHistory initialView="mix" />));
   expect(dialog().querySelector('.ph-chart-options')).toBeNull();

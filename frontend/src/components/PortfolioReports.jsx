@@ -5,26 +5,42 @@ import {Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription} from
 import {X} from 'lucide-react';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/components/ui/tabs';
 import {grcLead} from '@/lib/clientRelationships';
-import {applicableCounts, calendarRangeStart, currentPercentage, forecastImplementation, historyWindow, periodChange, programIdentity, snapshotTime, validImplementationPosition} from '@/lib/portfolioProgress';
+import {applicableCounts, calendarRangeStart, canConnectHistoryPositions, currentPercentage, forecastImplementation, historyWindow, periodChange, programIdentity, snapshotTime, validImplementationPosition} from '@/lib/portfolioProgress';
 import './PortfolioReports.css';
 
 const DAY = 86400000;
 const RANGES = [['1m', '1 month', 1], ['3m', '3 months', 3], ['6m', '6 months', 6], ['12m', '12 months', 12]];
 const tone = key => ({addressed: 'implemented', in_progress: 'partial', needs_attention: 'not', not_assessed: 'unassessed'})[key];
+const statusLabel = key => ({addressed:'Implemented',in_progress:'Partially Implemented',needs_attention:'Not Implemented',not_assessed:'Not Assessed'})[key] || 'Unknown status';
 const signed = (value, digits = 1) => `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value).toFixed(digits)}`;
 const rate = value => currentPercentage(value) == null ? validImplementationPosition(value) && value.denominator === 0 ? 'N/A' : 'Unavailable' : `${currentPercentage(value).toFixed(1)}%`;
 const identity = value => value.snapshot_id || `${snapshotTime(value)}:${value.source_revision || ''}`;
 export const formatPortfolioDate = (value, options = {}) => Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC', ...options}) : 'Unavailable';
 const dateTime = value => Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString(undefined, {month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short'}) : 'Unavailable';
+const historyBasis = point => point.observation_kind === 'demo_fixture' ? 'Illustrative demo scenario'
+  : ['committed_event', 'committed_baseline'].includes(point.observation_kind) ? 'Saved demo activity'
+    : point.observation_kind === 'current_baseline' ? 'Initial native demo baseline'
+      : ['current','current_state'].includes(point.observation_kind) ? 'Current native assessment state' : 'Sampled demo position';
+const statusShare = (point, key) => validImplementationPosition(point) && point.denominator > 0
+  ? `${((applicableCounts(point).find(value => value.key === key)?.count || 0) / point.denominator * 100).toFixed(1)}%` : 'N/A';
 
-export function scopeNote(change, unit = 'items') {
+export function scopeNote(change, unit = 'items', detailed = false) {
   const before = change.before?.denominator, after = change.after?.denominator;
   const implementedBefore = change.before?.implemented, implementedAfter = change.after?.implemented;
   const membership = change.membership_known === true
     ? [change.added_ids?.length ? `${change.added_ids.length} ${unit} added to scope.` : '', change.removed_ids?.length ? `${change.removed_ids.length} ${unit} removed from scope.` : ''].filter(Boolean).join(' ') || 'Scope membership or version changed.'
     : 'Scope changed.';
+  const detail = detailed ? [
+    change.membership_known === true && change.added_ids?.length ? `Added: ${change.added_ids.join(', ')}.` : '',
+    change.membership_known === true && change.removed_ids?.length ? `Removed: ${change.removed_ids.join(', ')}.` : '',
+    before > 0 && after > 0 && Number.isInteger(implementedBefore) && Number.isInteger(implementedAfter)
+      ? `Implemented share ${(implementedBefore / before * 100).toFixed(1)}% → ${(implementedAfter / after * 100).toFixed(1)}%. ${implementedBefore === implementedAfter ? before !== after ? 'The implemented count is unchanged; the applicable denominator changed.' : 'The implemented count is unchanged; the scope definition or membership changed.' : 'Both implementation and scope changed.'}` : '',
+    change.status_changes_known === true ? change.status_changes?.length
+      ? `Status changes: ${change.status_changes.map(item=>`${item.definition_id}: ${statusLabel(item.before_status)} → ${statusLabel(item.after_status)}`).join('; ')}.`
+      : 'No status changes among retained scope members.' : ''
+  ].filter(Boolean).join(' ') : '';
   return membership + (Number.isInteger(before) && Number.isInteger(after) ? ` Applicable went from ${before} to ${after}.` : '')
-    + (Number.isInteger(implementedBefore) && Number.isInteger(implementedAfter) && implementedBefore !== implementedAfter ? ` Implemented went from ${implementedBefore} to ${implementedAfter}.` : '');
+    + (Number.isInteger(implementedBefore) && Number.isInteger(implementedAfter) && implementedBefore !== implementedAfter ? ` Implemented went from ${implementedBefore} to ${implementedAfter}.` : '') + (detail ? ` ${detail}` : '');
 }
 
 const scopeChangesForPosition = (changes, point) => changes.filter(change => change.after_snapshot_id
@@ -32,11 +48,11 @@ const scopeChangesForPosition = (changes, point) => changes.filter(change => cha
   : change.after?.scope_signature === point.scope_signature && Date.parse(change.effective_at || change.at) === Date.parse(snapshotTime(point)));
 
 // Tooltip content can change size with genuine counts, scope notes, fonts and pane width.
-function observeTooltipLayout(container, tooltip, position, {scrollTarget, constrainWidth = false} = {}) {
+function observeTooltipLayout(container, tooltip, position, {scrollTarget, constrainWidth = false, maximumWidth = Infinity, captureScroll = false} = {}) {
   const measure = () => {
     const bounds = container.getBoundingClientRect();
     // A portaled status detail keeps the scale's width cap instead of inheriting the dialog's.
-    if (constrainWidth) tooltip.style.maxWidth = `${bounds.width}px`;
+    if (constrainWidth) tooltip.style.maxWidth = `${Math.min(bounds.width, maximumWidth)}px`;
     const size = tooltip.getBoundingClientRect();
     if (!bounds.width || !size.width) return;
     const point = position(bounds, size);
@@ -48,8 +64,13 @@ function observeTooltipLayout(container, tooltip, position, {scrollTarget, const
   observer?.observe(container);
   observer?.observe(tooltip);
   window.addEventListener('resize', measure);
-  scrollTarget?.addEventListener('scroll', measure);
-  return () => { observer?.disconnect(); window.removeEventListener('resize', measure); scrollTarget?.removeEventListener('scroll', measure); };
+  if(captureScroll)scrollTarget?.addEventListener('scroll', measure, {capture:true,passive:true});
+  else scrollTarget?.addEventListener('scroll', measure);
+  return () => {
+    observer?.disconnect(); window.removeEventListener('resize', measure);
+    if(captureScroll)scrollTarget?.removeEventListener('scroll', measure, true);
+    else scrollTarget?.removeEventListener('scroll', measure);
+  };
 }
 
 function modalCanvasWidth(element, minimum) {
@@ -142,15 +163,16 @@ export function PortfolioSparkline({program, asOf, span}) {
   </svg>;
 }
 
-function useHistory(client, program, range, refreshToken, requireIdentity = false) {
-  const key = JSON.stringify([client.client_id, program.program_key, range]);
+function useHistory(client, program, range, refreshToken, requireIdentity = false, demoScenario = false) {
+  const key = JSON.stringify([client.client_id, program.program_key, range, demoScenario]);
   const [state, setState] = useState({key: '', data: null, loading: true, error: ''}), [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
     setState(previous => ({key, data: previous.key === key ? previous.data : null, loading: true, error: ''}));
-    const [client_id, program_key, selectedRange] = JSON.parse(key);
-    api.get('/portfolio/reporting/history', {params: {client_id, program_key, range: selectedRange, include_archived: false}, signal: controller.signal}).then(({data}) => {
+    const [client_id, program_key, selectedRange, scenarioRequested] = JSON.parse(key);
+    api.get('/portfolio/reporting/history', {params: {client_id, program_key, range: selectedRange, include_archived: false,
+      ...(scenarioRequested ? {demo_scenario:'brawndo-cis-ig1-history-v2'} : {})}, signal: controller.signal}).then(({data}) => {
       if (!Array.isArray(data?.snapshots) || !data.current || !Number.isFinite(Date.parse(data.as_of))) throw new Error('The history response is incomplete.');
       if (data.client_id && data.client_id !== client_id || data.program_key && data.program_key !== program_key) throw new Error('The history does not belong to the selected client program.');
       if(requireIdentity && (data.client_id !== client_id || data.program_key !== program_key)) throw new Error('The history program identity is unavailable.');
@@ -235,16 +257,23 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
   </div>;
 }
 
-export default function PortfolioHistoryDialog({client, programs, selected, onSelect, onClose, onCloseAutoFocus, onNavigate, chartView = 'line', onChartViewChange, refreshToken, asOf: overviewAsOf, inline = false, onStatusNavigate, referenceHistory = false}) {
+export default function PortfolioHistoryDialog({client, programs, selected, onSelect, onClose, onCloseAutoFocus, onNavigate, chartView = 'line', onChartViewChange, refreshToken, asOf: overviewAsOf, inline = false, onStatusNavigate, referenceHistory = false, demoScenario = false}) {
   const [range, setRange] = useState('6m'), [showData, setShowData] = useState(false);
-  const historyView = referenceHistory ? 'line' : chartView;
+  const [referenceView, setReferenceView] = useState('line');
   const program = programs.find(value => programIdentity(value) === selected);
-  const report = useHistory(client, program, range, refreshToken, inline);
+  const scopedScenario = demoScenario && inline && referenceHistory && client.client_id === 'demo_brawndo'
+    && program.program_id === 'demo_brawndo:cis-ig1' && program.program_key === 'cis-ig1' && program.framework_key === 'cis-ig1';
+  const historyView = referenceHistory ? scopedScenario ? referenceView : 'line' : chartView;
+  const report = useHistory(client, program, range, refreshToken, inline, scopedScenario);
+  const scenarioContext = scopedScenario ? report.data?.scenario_context : null;
   const current = report.data?.current || program.current || {}, asOf = report.data?.as_of || overviewAsOf || current.retrieved_at || current.captured_at;
   const language = programLanguage({...program, current}), months = RANGES.find(([key]) => key === range)[2], start = calendarRangeStart(asOf, months);
   const points = historyWindow(report.data?.snapshots, start, asOf, report.data?.comparison), scopeChanges = report.data?.scope_changes || [];
+  // Disclose typed fixtures wherever already displayed; this grants no scenario
+  // calculation eligibility, connected intervals or additional chart controls.
+  const showHistoryProvenance = scopedScenario || points.some(point => point.observation_kind === 'demo_fixture' && point.provenance?.kind === 'demo_fixture');
   const comparison = periodChange(report.data?.snapshots, current, start, {comparison: report.data?.comparison, scopeChanges});
-  const forecast = forecastImplementation(report.data?.forecast_snapshots, current, asOf, {scopeChanges: report.data?.forecast_scope_changes, verb: language.verb});
+  const forecast = forecastImplementation(report.data?.forecast_snapshots, current, asOf, {scopeChanges: report.data?.forecast_scope_changes, verb: language.verb, demoScenario:scenarioContext});
   const percentage = currentPercentage(current), valid = validImplementationPosition(current), noScope = valid && current.denominator === 0;
   const counts = applicableCounts(current);
   const retained = [...new Map([...(report.data?.snapshots || []), ...(report.data?.forecast_snapshots || []), ...(report.data?.comparison?.baseline ? [report.data.comparison.baseline] : [])]
@@ -286,11 +315,11 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
       <div className="ph-metric"><span>Estimated completion</span><strong className={forecast.ok ? '' : 'is-text'}>{forecast.ok ? forecast.estimated_at ? formatPortfolioDate(forecast.estimated_at, {day:undefined}) : forecast.label : 'Not estimated yet'}</strong>{forecast.estimated_at && <ForecastTimeline asOf={asOf} estimatedAt={forecast.estimated_at} />}<p>{forecastExplanation(forecast)}</p></div>
     </div>}
     <div className="ph-chart-card">
-      <div className="ph-chart-top"><div><h4>Implementation history</h4><p>{historyView === 'mix' ? `Share of applicable ${language.unit} in each status at each saved position` : `${counts[0]?.label || 'Implemented'} ${language.unit} as a share of applicable scope`}</p></div><div className="ph-chart-tools">{!referenceHistory && <details className="ph-chart-options"><summary>Chart view</summary><div className="ph-segmented" role="group" aria-label="Chart view">{[['line', 'Implemented'], ['mix', 'Status mix']].map(([key, label]) => <button key={key} type="button" aria-pressed={key === chartView} onClick={() => onChartViewChange(key)}>{label}</button>)}</div></details>}<button type="button" className="ph-link" aria-expanded={showData} aria-controls="portfolio-history-data" onClick={() => setShowData(value => !value)}>{showData ? 'Hide data' : 'View data'}</button></div></div>
+      <div className="ph-chart-top"><div><h4>Implementation history</h4><p>{historyView === 'mix' ? `Share of applicable ${language.unit} in each status at each saved position` : `${counts[0]?.label || 'Implemented'} ${language.unit} as a share of applicable scope`}</p></div><div className="ph-chart-tools">{!referenceHistory && <details className="ph-chart-options"><summary>Chart view</summary><div className="ph-segmented" role="group" aria-label="Chart view">{[['line', 'Implemented'], ['mix', 'Status mix']].map(([key, label]) => <button key={key} type="button" aria-pressed={key === chartView} onClick={() => onChartViewChange(key)}>{label}</button>)}</div></details>}{scopedScenario && <button type="button" className="ph-link" aria-pressed={referenceView === 'mix'} onClick={() => setReferenceView(value => value === 'line' ? 'mix' : 'line')}>{referenceView === 'line' ? 'View status history' : 'Implemented history'}</button>}<button type="button" className="ph-link" aria-expanded={showData} aria-controls="portfolio-history-data" onClick={() => setShowData(value => !value)}>{showData ? 'Hide data' : 'View data'}</button></div></div>
       {report.loading && !report.data ? <div className="ph-empty" role="status">Loading saved history…</div> : report.error ? <div className="ph-empty" role="alert"><p>{report.error}</p><button type="button" className="ph-link" onClick={report.retry}>Retry</button></div> : <>
-        <PortfolioHistoryChart key={selected + ':' + range} points={points} start={start} asOf={asOf} view={historyView} current={current} scopeChanges={scopeChanges} unit={language.unit} inline={inline} referenceHistory={referenceHistory} />
-        {scopeChanges.length > 0 && <div className="ph-scope-notes">{scopeChanges.map((change,index) => <p key={index}>{formatPortfolioDate(change.effective_at || change.at)}: {scopeNote(change,language.unit)}</p>)}</div>}
-        {showData && <div className="ph-data" id="portfolio-history-data"><table><caption className="sr-only">Genuine implementation positions, newest effective date first</caption><thead><tr><th scope="col">Position date</th>{counts.map(value => <th scope="col" key={value.key}>{value.label}</th>)}<th scope="col">Applicable</th><th scope="col">{counts[0]?.label || 'Implemented'} %</th></tr></thead><tbody>{[...points].reverse().map(point => <tr key={identity(point)}><td>{dateTime(snapshotTime(point))}{point.carried && <small>In effect at period start</small>}{point.effective_at && point.captured_at && Date.parse(point.effective_at) !== Date.parse(point.captured_at) && <small>Captured {dateTime(point.captured_at)}</small>}{scopeChangesForPosition(scopeChanges, point).map((change,index)=><small key={index}>{scopeNote(change, language.unit)}</small>)}</td>{counts.map(value => <td key={value.key}>{validImplementationPosition(point) ? applicableCounts(point).find(item => item.key === value.key)?.count ?? '—' : 'Unavailable'}</td>)}<td>{validImplementationPosition(point) ? point.denominator : 'Unavailable'}</td><td>{rate(point)}</td></tr>)}</tbody></table>{!points.length && <p className="ph-empty">No saved positions in this period.</p>}</div>}
+        <PortfolioHistoryChart key={selected + ':' + range} points={points} start={start} asOf={asOf} view={historyView} current={current} scopeChanges={scopeChanges} unit={language.unit} inline={inline} referenceHistory={referenceHistory} demoScenario={scenarioContext} scenarioPresentation={scopedScenario} showProvenance={showHistoryProvenance} />
+        {scopeChanges.length > 0 && <div className="ph-scope-notes">{scopeChanges.map((change,index) => <p key={index}>{formatPortfolioDate(change.effective_at || change.at)}: {scopeNote(change,language.unit,scopedScenario)}</p>)}</div>}
+        {showData && <>{scopedScenario && <p className="ph-history-basis">Initial history is illustrative demo scenario data. Later saved demo activity is identified separately below.</p>}<div className="ph-data" id="portfolio-history-data"><table><caption className="sr-only">{showHistoryProvenance ? 'Implementation positions, newest effective date first' : 'Genuine implementation positions, newest effective date first'}</caption><thead><tr><th scope="col">Position date</th>{counts.map(value => <th scope="col" key={value.key}>{value.label}{scopedScenario ? ' · count / share' : ''}</th>)}<th scope="col">Applicable</th><th scope="col">{counts[0]?.label || 'Implemented'} %</th></tr></thead><tbody>{[...points].reverse().map(point => <tr key={identity(point)}><td>{dateTime(snapshotTime(point))}{point.carried && <small>In effect at period start</small>}{point.effective_at && point.captured_at && Date.parse(point.effective_at) !== Date.parse(point.captured_at) && <small>Captured {dateTime(point.captured_at)}</small>}{scopeChangesForPosition(scopeChanges, point).map((change,index)=><small key={index}>{scopeNote(change, language.unit, scopedScenario)}</small>)}{showHistoryProvenance && <small>{historyBasis(point)}</small>}</td>{counts.map(value => <td key={value.key}>{validImplementationPosition(point) ? <>{applicableCounts(point).find(item => item.key === value.key)?.count ?? '—'}{scopedScenario && <small>{statusShare(point, value.key)}</small>}</> : 'Unavailable'}</td>)}<td>{validImplementationPosition(point) ? point.denominator : 'Unavailable'}</td><td>{rate(point)}</td></tr>)}</tbody></table>{!points.length && <p className="ph-empty">No saved positions in this period.</p>}</div></>}
       </>}
 
     </div></div>
@@ -323,7 +352,7 @@ function historyTicks(start, asOf, width) {
   return ticks.filter((_,index)=>index%stride===0);
 }
 
-export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', inline = false, referenceHistory = false}) {
+export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', inline = false, referenceHistory = false, demoScenario = null, scenarioPresentation = false, showProvenance = scenarioPresentation}) {
   const box = useRef(null), svg = useRef(null), tooltip = useRef(null);
   const chartId = useId().replace(/:/g, '');
   const [width, setWidth] = useState(900), [active, setActive] = useState(null), [engaged, setEngaged] = useState(false);
@@ -342,13 +371,31 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
   const y = value => bottom - (value - low) / (high - low) * (bottom - top);
   const step = high - low <= 30 ? 5 : high - low <= 60 ? 10 : 25, ticks = [];
   for (let value = low; value <= high; value += step) ticks.push(value);
+  const connected = (before, after) => demoScenario ? canConnectHistoryPositions(before, after, {demoScenario})
+    : before?.continuity_proven === true && Date.parse(before.effective_until) >= Date.parse(snapshotTime(after));
   let line = '', previous = null;
   for (const point of points) {
     const percentage = currentPercentage(point);
     if (percentage == null) { previous = null; continue; }
-    const continuous = previous && previous.continuity_proven === true && Date.parse(previous.effective_until) >= Date.parse(snapshotTime(point));
+    const continuous = previous && connected(previous, point);
     line += continuous ? `H${x(point)}V${y(percentage)} ` : `M${x(point)},${y(percentage)} `;
     previous = point;
+  }
+  // One gradient per supported run matches the reference without shading unknown gaps.
+  const areas = [];
+  let run = [];
+  const finishArea = () => {
+    if(run.length > 1)areas.push(`M${x(run[0])},${bottom}L${x(run[0])},${y(currentPercentage(run[0]))}`
+      + run.slice(1).map(point=>`H${x(point)}V${y(currentPercentage(point))}`).join('') + `L${x(run.at(-1))},${bottom}Z`);
+    run = [];
+  };
+  if(scenarioPresentation){
+    for(const point of points){
+      if(currentPercentage(point) == null){finishArea();continue;}
+      if(run.length && !connected(run.at(-1),point))finishArea();
+      run.push(point);
+    }
+    finishArea();
   }
   const selectedValid = validImplementationPosition(selected);
   const nearest = event => {
@@ -377,43 +424,63 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
   const endpointLabel = endpointPercentage == null ? '' : `${endpointPercentage.toFixed(1)}%`;
   const endpointWidth = inline ? 54 : endpointLabel.length * 7 + 14;
   const savedEndpointPercentage = endpointMatches ? currentPercentage(endpoint) : null;
-  const showCompleteLabel = inline && referenceHistory && endpointPercentage != null && savedEndpointPercentage != null
+  const showCompleteLabel = inline && referenceHistory && (!scenarioPresentation || view === 'line') && endpointPercentage != null && savedEndpointPercentage != null
     && Math.abs(y(savedEndpointPercentage) - y(100)) > 24;
   const tooltipAnchorX = selected ? x(selected) : 0, tooltipAnchorY = selected ? y(currentPercentage(selected) ?? 0) : 0;
   useLayoutEffect(() => {
-    if (inline || !engaged || !selected || !tooltip.current || !box.current) return;
+    if (inline && !scenarioPresentation || !engaged || !selected || !tooltip.current || !box.current) return;
     return observeTooltipLayout(box.current, tooltip.current, (bounds, size) => {
       const chartBounds = svg.current.getBoundingClientRect();
-      const anchorX = tooltipAnchorX * chartBounds.width / width;
-      const anchorY = tooltipAnchorY * chartBounds.height / height;
+      const anchorX = chartBounds.left - bounds.left + tooltipAnchorX * chartBounds.width / width;
+      const anchorY = chartBounds.top - bounds.top + tooltipAnchorY * chartBounds.height / height;
       const after = anchorX + 14;
       const left = after + size.width > bounds.width ? anchorX - 14 - size.width : after;
-      return {left:Math.max(0, Math.min(bounds.width - size.width, left)), top:Math.max(0, Math.min(chartBounds.height - size.height, anchorY - 30))};
-    });
-  }, [engaged, selected, inline, width, height, tooltipAnchorX, tooltipAnchorY, view]);
-  return <div ref={box} className="ph-chart">
-    <svg ref={svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" tabIndex={points.length ? 0 : undefined} aria-label="Implementation history over the selected period. Use Left, Right, Home and End to read genuine positions." onKeyDown={keyboard} onFocus={() => setEngaged(true)} onBlur={() => {setActive(null);setEngaged(false);}}>
-      <title>Implementation history</title><desc>Each marker is a saved observation at its genuine effective date. The text readout and View data provide exact counts.</desc>
+      const localLeft = Math.max(0, Math.min(bounds.width - size.width, left));
+      const localTop = Math.max(0, Math.min(chartBounds.height - size.height, anchorY - 30));
+      if(!scenarioPresentation)return {left:localLeft,top:localTop};
+      const card=box.current.closest('.brawndo-demo-program')?.getBoundingClientRect();
+      const clip=card?.width>0?card:{left:0,right:window.innerWidth,top:0,bottom:window.innerHeight};
+      const minLeft=Math.max(8,clip.left+8),maxRight=Math.min(window.innerWidth-8,clip.right-8);
+      const minTop=Math.max(8,clip.top+8),maxBottom=Math.min(window.innerHeight-8,clip.bottom-8);
+      tooltip.current.style.maxHeight=`${Math.max(0,maxBottom-minTop)}px`;
+      return {left:Math.max(minLeft-bounds.left,Math.min(maxRight-bounds.left-size.width,localLeft)),
+        top:Math.max(minTop-bounds.top,Math.min(maxBottom-bounds.top-size.height,localTop))};
+    }, {constrainWidth:scenarioPresentation, maximumWidth:270, scrollTarget:scenarioPresentation ? window : undefined, captureScroll:scenarioPresentation});
+  }, [engaged, selected, inline, width, height, tooltipAnchorX, tooltipAnchorY, view, scenarioPresentation]);
+  return <div ref={box} className="ph-chart" data-demo-scenario={scenarioPresentation ? 'true' : undefined}>
+    {scenarioPresentation && view === 'mix' && <div className="ph-status-history-legend" aria-label="Historical status shares">{applicableCounts(current).map(value => <span key={value.key}><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label}</span>)}</div>}
+    <svg ref={svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" tabIndex={points.length ? 0 : undefined} aria-label={showProvenance ? `${view === 'mix' ? 'Status' : 'Implementation'} history over the selected period. Use Left, Right, Home and End to read implementation positions.` : 'Implementation history over the selected period. Use Left, Right, Home and End to read genuine positions.'} onKeyDown={keyboard} onFocus={() => setEngaged(true)} onBlur={() => {setActive(null);setEngaged(false);}}>
+      <title>{view === 'mix' && scenarioPresentation ? 'Status history' : 'Implementation history'}</title><desc>{scenarioPresentation ? 'Historical state shares, not counts of transitions. Illustrative scenario history and later saved demo activity are identified in the readout and View data.' : showProvenance ? 'Illustrative demo scenario and later saved demo activity are identified in the readout and View data.' : 'Each marker is a saved observation at its genuine effective date. The text readout and View data provide exact counts.'}</desc>
       <defs><pattern id={`${chartId}-hatch`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" className="ph-hatch-line" /></pattern><linearGradient id={`${chartId}-area`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--chart-implemented)" stopOpacity=".22"/><stop offset="100%" stopColor="var(--chart-implemented)" stopOpacity=".02"/></linearGradient></defs>
       {shadeEnd - left >= 130 && points.length > 0 && <g><rect x={left} y={top} width={shadeEnd-left} height={bottom-top} fill={`url(#${chartId}-hatch)`}/><text className="ph-before-tracking" x={(left+shadeEnd)/2} y={(top+bottom)/2} textAnchor="middle">Before tracking began</text></g>}
       {ticks.map(value => <g key={value}><line className={value === 0 ? 'ph-axis' : value === 100 ? 'ph-target' : 'ph-grid'} x1={left} x2={right} y1={y(value)} y2={y(value)} /><text x={left - 8} y={y(value) + 4} textAnchor="end">{`${value}%`}</text></g>)}
-      {view === 'line' && points.slice(1).map((point, index) => {
+      {view === 'line' && scenarioPresentation && areas.map((area,index)=><path className="ph-scenario-area" key={index} d={area} fill={`url(#${chartId}-area)`} />)}
+      {view === 'line' && !scenarioPresentation && points.slice(1).map((point, index) => {
         const previous = points[index];
-        if (previous.continuity_proven !== true || !(Date.parse(previous.effective_until) >= Date.parse(snapshotTime(point))) || currentPercentage(previous) == null) return null;
+        if (!connected(previous, point) || currentPercentage(previous) == null || currentPercentage(point) == null) return null;
         return <path key={identity(point)} d={`M${x(previous)},${bottom}V${y(currentPercentage(previous))}H${x(point)}V${bottom}Z`} fill={`url(#${chartId}-area)`} />;
       })}
-      {view === 'mix' && points.map(point => {
-        if (currentPercentage(point) == null) return null;
+      {view === 'mix' && scenarioPresentation && points.slice(1).map((point, index) => {
+        const previous = points[index];
+        if (!connected(previous, point) || currentPercentage(previous) == null || currentPercentage(point) == null) return null;
+        let sum = 0;
+        return <g key={identity(point)}>{applicableCounts(previous).map(value => {
+          const before = sum; sum += value.count / previous.denominator * 100;
+          return <path key={value.key} className={`ph-band ph-step-band is-${tone(value.key)}`} d={`M${x(previous)},${y(before)}H${x(point)}V${y(sum)}H${x(previous)}Z`} />;
+        })}</g>;
+      })}
+      {view === 'mix' && points.map((point, index) => {
+        if (currentPercentage(point) == null || scenarioPresentation && (index < points.length - 1 && connected(point, points[index + 1]) || index > 0 && connected(points[index - 1], point))) return null;
         let sum = 0;
         return <g key={identity(point)}>{applicableCounts(point).map(value => {
           const before = sum; sum += value.count / point.denominator * 100;
           return <rect key={value.key} className={`ph-band is-${tone(value.key)}`} x={x(point) - 6} width={12} y={y(sum)} height={Math.max(0, y(before) - y(sum))} />;
         })}</g>;
       })}
-      <path className="ph-line" d={line} />
+      {(view === 'line' || !scenarioPresentation) && <path className="ph-line" d={line} />}
       {endpointPercentage != null && <g><rect className="ph-current-flag" x={right+9} y={y(endpointPercentage)-11} width={endpointWidth} height="22" rx="6"/><text className="ph-current-flag-label" x={right+9+endpointWidth/2} y={y(endpointPercentage)+4} textAnchor="middle" >{endpointLabel}</text></g>}
       {showCompleteLabel && <text x={right+9} y={y(100)+4}>Complete</text>}
-      {points.map(point => currentPercentage(point) != null && <circle key={identity(point)} className="ph-marker" cx={x(point)} cy={y(currentPercentage(point))} r={4} />)}
+      {(view === 'line' || !scenarioPresentation) && points.map(point => currentPercentage(point) != null && <circle key={identity(point)} className="ph-marker" cx={x(point)} cy={y(currentPercentage(point))} r={4} />)}
       {scopeChanges.filter(change => Date.parse(change.effective_at || change.at) >= Date.parse(start) && Date.parse(change.effective_at || change.at) <= Date.parse(asOf)).map((change, index) => <g key={index}><line className="ph-scope-marker" x1={x({effective_at: change.effective_at || change.at})} x2={x({effective_at: change.effective_at || change.at})} y1={top} y2={bottom} /><text x={Math.min(x({effective_at: change.effective_at || change.at}) + 6, right - 90)} y={top + 15}>{change.before?.denominator != null && change.after?.denominator != null ? `Scope ${change.before.denominator} → ${change.after.denominator}` : 'Scope changed'}</text></g>)}
       {historyTicks(start,asOf,width).map(at => <text key={at} x={x({effective_at:at})} y={height-8} textAnchor="middle">{formatPortfolioDate(at,{year:undefined,...(Date.parse(asOf)-Date.parse(start)>45*DAY ? {day:undefined} : {})})}</text>)}
       {!points.length && <text className="ph-chart-empty" x={(left + right) / 2} y={(top + bottom) / 2} textAnchor="middle">No saved positions in this period</text>}
@@ -421,12 +488,12 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
       <rect x={left} y={top} width={right - left} height={bottom - top} fill="transparent" onPointerMove={nearest} onPointerDown={nearest} onPointerLeave={() => { if (document.activeElement !== svg.current) {setActive(null);setEngaged(false);} }} />
     </svg>
     {view === 'line' && (low > 0 || high < 100) && <p className="ph-axis-disclosure">Vertical axis zoomed to the data range ({low}–{high}%).</p>}
-    {engaged && selected && <div ref={tooltip} className="ph-history-tip" style={inline ? {left:Math.max(0,Math.min(width-270,x(selected)+14)) / width * 100+'%',top:Math.max(0,Math.min(100,y(currentPercentage(selected) ?? 0)-30)) * (box.current?.clientWidth || width) / width} : undefined}>
-      <div className="ph-tip-date">{selected.carried ? 'In effect at period start · saved ' : 'Saved '}{formatPortfolioDate(snapshotTime(selected))}</div>
+    {engaged && selected && <div ref={tooltip} className="ph-history-tip" style={inline && !scenarioPresentation ? {left:Math.max(0,Math.min(width-270,x(selected)+14)) / width * 100+'%',top:Math.max(0,Math.min(100,y(currentPercentage(selected) ?? 0)-30)) * (box.current?.clientWidth || width) / width} : undefined}>
+      <div className="ph-tip-date">{showProvenance ? selected.carried ? 'In effect at period start · position ' : selected.observation_kind === 'demo_fixture' ? 'Scenario position · ' : selected.observation_kind === 'current_state' ? 'Current state · ' : 'Saved ' : selected.carried ? 'In effect at period start · saved ' : 'Saved '}{formatPortfolioDate(snapshotTime(selected))}</div>{showProvenance && <p className="ph-tip-basis">{historyBasis(selected)}</p>}
       <strong>{rate(selected)}</strong><p>{selectedValid ? `${selected.implemented} of ${selected.denominator} ${unit} implemented` : selected.reason || 'Implementation unavailable'}</p>
-      {selectedValid && <div className="ph-tip-rows">{applicableCounts(selected).map(value => <div key={value.key}><span><i className={`ph-dot is-${tone(value.key)}`} />{value.label}</span><b>{value.count}</b></div>)}</div>}
-      {scopeChangesForPosition(scopeChanges,selected).map((change,index)=><p className="ph-tip-scope" key={index}>{scopeNote(change,unit)}</p>)}
+      {selectedValid && <div className="ph-tip-rows">{applicableCounts(selected).map(value => <div key={value.key}><span><i className={`ph-dot is-${tone(value.key)}`} />{value.label}</span><b>{value.count}{scenarioPresentation && ` · ${statusShare(selected, value.key)}`}</b></div>)}</div>}
+      {scopeChangesForPosition(scopeChanges,selected).map((change,index)=><p className="ph-tip-scope" key={index}>{scopeNote(change,unit,scenarioPresentation)}</p>)}
     </div>}
-    <div className="ph-readout sr-only" aria-live="polite">{selected ? <><strong>{dateTime(snapshotTime(selected))}</strong>{selectedValid ? <>{applicableCounts(selected).map(value => <span key={value.key}><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label} {value.count}{value.key === 'addressed' && ` · ${rate(selected)}`}</span>)}<span>of {selected.denominator} applicable</span></> : <><span>Implementation/counts unavailable</span><span>{selected.reason || selected.notice || 'This saved position has unavailable implementation data.'}</span></>}{scopeChangesForPosition(scopeChanges, selected).map((change,index)=><span key={index}>{scopeNote(change, unit)}</span>)}{selected.effective_at && selected.captured_at && Date.parse(selected.effective_at) !== Date.parse(selected.captured_at) && <span>Captured {dateTime(selected.captured_at)}</span>}</> : <span>No saved position selected.</span>}</div>
+    <div className="ph-readout sr-only" aria-live="polite">{selected ? <><strong>{dateTime(snapshotTime(selected))}</strong>{selectedValid ? <>{applicableCounts(selected).map(value => <span key={value.key}><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label} {value.count}{scenarioPresentation ? ` · ${statusShare(selected, value.key)}` : value.key === 'addressed' && ` · ${rate(selected)}`} </span>)}<span>of {selected.denominator} applicable</span>{showProvenance && <span>{historyBasis(selected)}</span>}</> : <><span>Implementation/counts unavailable</span><span>{selected.reason || selected.notice || 'This saved position has unavailable implementation data.'}</span></>}{scopeChangesForPosition(scopeChanges, selected).map((change,index)=><span key={index}>{scopeNote(change, unit, scenarioPresentation)}</span>)}{selected.effective_at && selected.captured_at && Date.parse(selected.effective_at) !== Date.parse(selected.captured_at) && <span>Captured {dateTime(selected.captured_at)}</span>}</> : <span>No saved position selected.</span>}</div>
   </div>;
 }
