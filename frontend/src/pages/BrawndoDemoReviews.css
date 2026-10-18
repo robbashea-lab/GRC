@@ -1,7 +1,13 @@
+/* Same approved Inter bytes as Dashboard/Calendar; this family stays inside Reviews content. */
+@font-face {
+  font-family:'GoverNara Reviews Inter'; font-style:normal; font-weight:400 700; font-display:swap;
+  src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
 .brawndo-demo-reviews {
-  --bg:#EDF3FA; --surface:#FFFFFF; --subtle:#F3F7FC; --tablehead:#F3F7FC; --hover:#EAF1FA; --border:#C6D4E4; --border-strong:#B6C6DB;
-  --fg:#132A49; --fg2:#4A617B; --muted:#536A84; --link:#215BC1; --selected:#E4EEFC; --rail:#215BC1; --focus:#215BC1;
-  --good:#05603A; --good-bg:#ECFDF3; --bad:#B42318; --bad-bg:#FEF3F2; --warn:#93370D; --warn-bg:#FFFAEB;
+  --bg:#F4F6F9; --surface:#FFFFFF; --subtle:#F7F9FB; --tablehead:#F9FAFC; --hover:#F2F5F9; --border:#E3E8EF; --border-strong:#CDD5E0;
+  --fg:#0F1B2D; --fg2:#46566B; --muted:#5A687B; --link:#1F56C3; --selected:#EDF2FC; --rail:#215BC1; --focus:#215BC1;
+  --good:#05603A; --good-bg:#E7F6EF; --bad:#B42318; --bad-bg:#FDECEA; --warn:#93370D; --warn-bg:#FEF3E2;
   --chrome:#FFFFFF; --banner:#F3F7FC; --brand:#EDF3FF; --avatar:#215BC1; --avatar-fg:#FFFFFF; --scrim:rgba(15,27,45,.38);
   --c-part:#E2AA30; --c-due:#2A78D6; --c-late:#D64550; --c-done:#C3CCD8; --c-grid:#EDF1F5;
   --seg-on:#FFFFFF; --tip-bg:#FFFFFF;
@@ -9,12 +15,17 @@
   --shadow-seg:0 1px 2px rgba(15,27,45,.10), 0 0 0 1px rgba(15,27,45,.06);
   --shadow-tip:0 0 0 1px rgba(15,27,45,.05), 0 12px 28px -8px rgba(15,27,45,.24);
   --shadow:0 0 0 1px rgba(15,27,45,.06), 0 28px 64px -16px rgba(15,27,45,.34);
-  --font:'Segoe UI', Inter, Arial, sans-serif;
- font:13.5px/1.5 var(--font);color:var(--fg);background:var(--bg);padding:28px 24px 120px;display:grid;gap:20px;max-width:1600px;min-width:0;}
+  --font:'GoverNara Reviews Inter',Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  --font-body:var(--font); --font-heading:var(--font);
+  --bp-text:var(--fg); --bp-muted:var(--muted); --bp-border:var(--border); --bp-card:var(--surface);
+  --color-text-primary:var(--fg); --color-text-secondary:var(--fg2); --color-text-muted:var(--muted);
+  font:13.5px/1.5 var(--font);font-optical-sizing:auto;font-variation-settings:normal;font-variant-numeric:tabular-nums;
+  color:var(--fg);background:var(--bg);padding:28px max(24px,env(safe-area-inset-right,0px)) 120px max(24px,env(safe-area-inset-left,0px));display:grid;gap:20px;max-width:1600px;min-width:0;
+}
 .brawndo-demo-reviews[data-theme="dark"] {
-  --bg:#071321; --surface:#0C1B30; --subtle:#11243A; --tablehead:#112238; --hover:#172B45; --border:#263C58; --border-strong:#3D5778;
-  --fg:#EDF3FF; --fg2:#A8BAD5; --muted:#A2AEC4; --link:#85D4FF; --selected:#25416A; --rail:#85D4FF; --focus:#85D4FF;
-  --good:#39C7A5; --good-bg:#0E312E; --bad:#FA7B85; --bad-bg:#321C2B; --warn:#F5BC4F; --warn-bg:#332715;
+  --bg:#0A0F16; --surface:#111823; --subtle:#151D29; --tablehead:#131B26; --hover:#19222F; --border:#222C3A; --border-strong:#34404F;
+  --fg:#EDF1F7; --fg2:#A7B3C4; --muted:#8E9BAE; --link:#8EC5FF; --selected:#1B2738; --rail:#8EC5FF; --focus:#8EC5FF;
+  --good:#3DC79F; --good-bg:rgba(61,199,159,.13); --bad:#F2828C; --bad-bg:rgba(242,130,140,.13); --warn:#E9B65A; --warn-bg:rgba(233,182,90,.13);
   --chrome:#0C1B30; --banner:#11243A; --brand:#EDF3FF; --avatar:#215BC1; --avatar-fg:#FFFFFF; --scrim:rgba(0,0,0,.6);
   --c-part:#D4A13C; --c-due:#3987E5; --c-late:#E66767; --c-done:#3A4656; --c-grid:#1A2330;
   --seg-on:#243042; --tip-bg:#161F2B;
@@ -22,6 +33,9 @@
   --shadow-tip:0 0 0 1px rgba(255,255,255,.05), 0 12px 32px -8px rgba(0,0,0,.65);
   --shadow:0 0 0 1px rgba(255,255,255,.06), 0 28px 64px -16px rgba(0,0,0,.75);
   color-scheme:dark;}
+/* Background only: never change inherited workspace/portal fonts or native popup tokens. */
+.brawndo-workspace-pilot[data-visual-surface="reviews"] :is(.app-workspace,.client-surface):has(.brawndo-demo-reviews[data-theme="light"]) {background:#F4F6F9;}
+.brawndo-workspace-pilot[data-visual-surface="reviews"] :is(.app-workspace,.client-surface):has(.brawndo-demo-reviews[data-theme="dark"]) {background:#0A0F16;}
 /* summary strip: one frame, hairline dividers, each figure filters the register */
 .brawndo-demo-reviews .bdr-kstrip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:10px; overflow:hidden; box-shadow:var(--shadow-sm); }
 .brawndo-demo-reviews .bdr-kcell { display:grid; gap:4px; align-content:start; padding:16px 20px 18px; background:var(--surface); text-align:left; transition:background .12s; }
@@ -66,14 +80,17 @@
 .brawndo-demo-reviews .bdr-grid { stroke:var(--c-grid); stroke-width:1; } .brawndo-demo-reviews .bdr-axis { stroke:var(--border-strong); stroke-width:1; }
 .brawndo-demo-reviews .bdr-fill-due { fill:var(--c-due); } .brawndo-demo-reviews .bdr-fill-late { fill:var(--c-late); } .brawndo-demo-reviews .bdr-fill-done { fill:var(--c-done); }
 .brawndo-demo-reviews .bar { transition:opacity .12s; } .brawndo-demo-reviews .bar.dim { opacity:.3; }
-.brawndo-demo-reviews .bdr-tip { position:absolute; z-index:2; display:grid; gap:4px; width:max-content; min-width:220px; max-width:300px; padding:12px 14px; border-radius:10px; background:var(--tip-bg); box-shadow:var(--shadow-tip); pointer-events:none; font-size:12px; color:var(--fg2); font-variant-numeric:tabular-nums; }
+.brawndo-demo-reviews .bdr-tip { position:fixed; z-index:30; display:grid; gap:4px; width:max-content; min-width:min(220px,calc(100vw - 16px)); max-width:min(300px,calc(100vw - 16px)); max-height:calc(100dvh - var(--bwp-top,60px) - 16px); overflow-y:auto; overscroll-behavior:contain; padding:12px 14px; border-radius:10px; background:var(--tip-bg); box-shadow:var(--shadow-tip); font-size:12px; color:var(--fg2); font-variant-numeric:tabular-nums; }
 .brawndo-demo-reviews .bdr-tip .tip-h { font-size:11.5px; font-weight:500; color:var(--muted); }
 .brawndo-demo-reviews .bdr-tip .v { font-size:20px; font-weight:600; color:var(--fg); line-height:1.2; }
 .brawndo-demo-reviews .bdr-tip .r { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .brawndo-demo-reviews .bdr-tip .r span { display:flex; align-items:center; gap:7px; }
 .brawndo-demo-reviews .bdr-tip .r b { color:var(--fg); font-weight:600; }
 .brawndo-demo-reviews .bdr-tip .rows { display:grid; gap:3px; margin-top:4px; padding-top:7px; border-top:1px solid var(--border); }
-.brawndo-demo-reviews .bdr-tip .li { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.brawndo-demo-reviews .bdr-tip .li { display:grid; grid-template-columns:max-content minmax(0,1fr) max-content; gap:6px; align-items:baseline; }
+.brawndo-demo-reviews .bdr-tip-title {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.brawndo-demo-reviews .bdr-tip-kind {font-size:11.5px;color:var(--muted);}
+.brawndo-demo-reviews .bdr-tip-more {color:var(--muted);}
 .brawndo-demo-reviews .bdr-data { overflow:auto; max-height:260px; border:1px solid var(--border); border-radius:8px; }
 .brawndo-demo-reviews .bdr-data table { width:100%; min-width:420px; border-collapse:collapse; font-size:12.5px; }
 .brawndo-demo-reviews .bdr-data th { position:sticky; top:0; padding:8px 12px; text-align:left; background:var(--tablehead); color:var(--muted); font-weight:500; border-bottom:1px solid var(--border); }
@@ -115,7 +132,7 @@
 .brawndo-demo-reviews .bdr-avatar { flex:none; display:grid; place-items:center; width:28px; height:28px; border-radius:8px; background:var(--subtle); box-shadow:inset 0 0 0 1px var(--border); color:var(--fg2); font-weight:600; font-size:11.5px; font-style:normal; }
 .brawndo-demo-reviews .bdr-two { display:grid; font-size:12.5px; font-variant-numeric:tabular-nums; }
 .brawndo-demo-reviews .bdr-two small { display:flex; align-items:center; gap:5px; color:var(--muted); font-size:12px; }
-.brawndo-demo-reviews .bdr-two small.late { color:var(--bad); font-weight:600; }
+.brawndo-demo-reviews .bdr-two small.bdr-bad { color:var(--bad); font-weight:600; }
 .brawndo-demo-reviews .bdr-two small svg { width:13px; height:13px; flex:none; }
 .brawndo-demo-reviews .bdr-st { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:var(--fg2); white-space:nowrap; }
 .brawndo-demo-reviews .bdr-st i { width:8px; height:8px; border-radius:50%; flex:none; }
@@ -139,9 +156,10 @@
 }
 
 
-.brawndo-demo-reviews * { box-sizing:border-box; }
+.brawndo-demo-reviews *, .brawndo-demo-reviews *::before, .brawndo-demo-reviews *::after { box-sizing:border-box; }
 .brawndo-demo-reviews :is(h1,h2,p) {margin:0;}
 .brawndo-demo-reviews button {font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit;}
+.brawndo-demo-reviews :is(input,select,textarea) {font-family:var(--font);}
 .brawndo-demo-reviews :is(button,input,select,[tabindex]):focus-visible {outline:2px solid var(--focus);outline-offset:2px;}
 .brawndo-demo-reviews .bdr-page-head {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
 .brawndo-demo-reviews .bdr-page-head h1 {font-size:24px;font-weight:650;letter-spacing:-.025em;line-height:1.5;}
@@ -151,6 +169,7 @@
 .brawndo-workspace-pilot .brawndo-demo-reviews .bdr-head-actions button[data-testid="create-reviews-button"] {background:var(--rail);border-color:var(--rail);color:var(--surface);font-weight:600;gap:6px;}
 .brawndo-demo-reviews .bdr-head-actions svg {width:15px;height:15px;}
 .brawndo-demo-reviews .bdr-card {background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-sm);min-width:0;}
+.brawndo-demo-reviews .bdr-workload {overflow:visible;}
 .brawndo-demo-reviews .bdr-card-head {display:flex;justify-content:space-between;align-items:baseline;gap:6px 16px;flex-wrap:wrap;padding:18px 24px 0;}
 .brawndo-demo-reviews .bdr-card-head h2 {font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.5;}
 .brawndo-demo-reviews .bdr-card-head p {font-size:12.5px;color:var(--muted);margin-top:2px;}
@@ -170,14 +189,10 @@
 .brawndo-demo-reviews .bdr-summary nav {display:flex;align-items:center;gap:6px;}
 .brawndo-demo-reviews .bdr-summary button {height:26px;padding:0 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:500;color:var(--fg2);background:var(--surface);}
 .brawndo-demo-reviews button:disabled {opacity:.5;cursor:default;}
-.brawndo-demo-reviews .bdr-tip {top:0;display:grid;gap:4px;}
-.brawndo-demo-reviews .bdr-tip strong {font-size:20px;font-weight:600;color:var(--fg);}
-.brawndo-demo-reviews .bdr-tip div {display:flex;justify-content:space-between;gap:12px;}
-.brawndo-demo-reviews .bdr-tip span {overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
-.brawndo-demo-reviews .bdr-tip small {font-size:11.5px;color:var(--muted);}
 @media(max-width:1100px){.brawndo-demo-reviews .bdr-kstrip {grid-template-columns:repeat(2,minmax(0,1fr));}}
-@media(max-width:860px){.brawndo-demo-reviews{padding-inline:16px;}.brawndo-demo-reviews :is(.bdr-card-head,.bdr-wl-body){padding-left:16px;padding-right:16px;}}
+@media(max-width:860px){.brawndo-demo-reviews{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));}.brawndo-demo-reviews :is(.bdr-card-head,.bdr-wl-body){padding-left:16px;padding-right:16px;}}
 .brawndo-demo-reviews .bdr-filter-right {margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;}
+@media(max-width:860px){.brawndo-demo-reviews .bdr-filter-right{margin-left:0;}}
 .brawndo-demo-reviews .bdr-filter-right label {display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);}
 .brawndo-demo-reviews .bdr-filter-right select {height:34px;padding:0 10px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);font-size:12.5px;font-weight:500;color:var(--fg);}
 .brawndo-demo-reviews .bdr-row-menu button[aria-label="Row actions"] svg {display:none;}
