@@ -5,6 +5,7 @@ import { policyStatus, policyStatusLabel, policyViewMatches } from '@/lib/brawnd
 import { policyOverview, policyVisualMatches } from '@/lib/brawndoAdditionalPolicyVendor';
 import { AdditionalOwner, savedDate, relativePolicyDate } from './BrawndoAdditionalPolicyVendorCells';
 import { personLabel } from '@/lib/people';
+import { formatAcceptedRefresh } from '@/lib/acceptedRefreshPresentation';
 import { Checkbox } from './ui/checkbox';
 import './BrawndoAdditionalPolicyVendor.css';
 
@@ -17,7 +18,7 @@ export default function BrawndoAdditionalPolicies({
   alignmentError = '', loading = false, error = '', onRetry, q = '', onSearch, view = '', onView,
   category = '', onCategory, onClear, table, onOpen, onOpenReview, onAlignment, actions, pendingDecisions, nativeControls,
   selectedIds, onToggle, onSelectAll, rowActions,
-  theme = 'light',
+  theme = 'light', acceptedRefresh = null, refreshing = loading,
 }) {
   const overview = policyOverview(rows, reviews, programs, assessments, cisGroup);
   const statusRows = [...rows].sort((a, b) => STATUS_BAR_ORDER[statusTone(policyStatus(a))] - STATUS_BAR_ORDER[statusTone(policyStatus(b))]);
@@ -29,12 +30,13 @@ export default function BrawndoAdditionalPolicies({
   ];
   const review = overview.review;
   const reviewDate = { next_review_date: review?.due_date };
-  const reviewWarning = policyViewMatches(reviewDate, 'overdue') || policyViewMatches(reviewDate, 'due30');
+  const reviewTone = policyViewMatches(reviewDate, 'overdue') ? 'bad' : policyViewMatches(reviewDate, 'due30') ? 'warn' : '';
+  const refreshLabel = !refreshing && !error ? formatAcceptedRefresh(acceptedRefresh) : '';
   const header = (key, label) => table ? <ColumnControl table={table} column={{ ...table.columns.find(column => column.key === key), key, label }} /> : label;
   const clear = onClear || (() => { onSearch?.(''); onView?.(''); onCategory?.(''); table?.clear(); });
 
   return <div className="brawndo-additional bap-page" data-theme={theme} data-testid="additional-policies">
-    <div className="bapv-page-head"><div><h1>Brawndo Policies</h1><p>Policy library · {rows.length} {rows.length === 1 ? 'policy' : 'policies'}</p></div><div className="bapv-head-actions">{actions}</div></div>
+    <div className="bapv-page-head"><div><h1>Brawndo Policies</h1><p>Policy register · {refreshing ? 'Loading policies…' : error ? 'Policies unavailable' : `${rows.length} ${rows.length === 1 ? 'policy' : 'policies'}`}{refreshLabel && ` · As of ${refreshLabel}`}</p></div><div className="bapv-head-actions">{actions}</div></div>
     <section className="bapv-card bap-overview" aria-labelledby="bap-status-heading">
       <div className="bap-status">
         <div><h2 id="bap-status-heading">Policy status</h2><p className="bapv-sub">{rows.length} {rows.length === 1 ? 'policy' : 'policies'} in the Brawndo register. Select a figure to filter.</p></div>
@@ -48,9 +50,8 @@ export default function BrawndoAdditionalPolicies({
       </div>
       <div className="bap-review" aria-labelledby="bap-review-heading">
         <div className="bap-review-top"><h3 id="bap-review-heading">{review?.recurrence === 'annual' ? 'Annual policy review' : 'Policy review'}</h3>{review && <button type="button" className="bapv-link" onClick={() => onOpenReview?.(review)}>Open in Reviews <span aria-hidden="true">↗</span></button>}</div>
-        <div className="bap-review-date"><strong>{loading ? '—' : savedDate(review?.due_date) || 'Not scheduled'}</strong><small className={reviewWarning ? 'warn' : ''}>{review ? `Next review · ${relativePolicyDate(review.due_date).toLowerCase()}` : 'No active linked policy review'}</small></div>
-        <dl><dt>Last closed</dt><dd>{savedDate(overview.lastClosed) || 'Not recorded'}</dd><dt>Covers</dt><dd>{review ? `${overview.covered.length} of ${rows.length} policies` : 'No linked membership'}</dd><dt>Assigned to</dt><dd>{review ? personLabel(users, review.owner_id) : 'Unassigned'}</dd></dl>
-        {review && <p className="bap-review-note">{review.title}{overview.scheduledCount > 1 ? ` · ${overview.scheduledCount} active linked reviews` : ''}</p>}
+        <div className="bap-review-date"><strong>{loading ? '—' : savedDate(review?.due_date) || 'Not scheduled'}</strong><small className={reviewTone}>{review ? `Next review · ${relativePolicyDate(review.due_date).toLowerCase()}` : 'No active linked policy review'}</small></div>
+        <dl><dt>Last reviewed</dt><dd>{savedDate(overview.lastClosed) || 'Not recorded'}</dd><dt>Assigned to</dt><dd>{review ? personLabel(users, review.owner_id) : 'Unassigned'}</dd></dl>
       </div>
     </section>
     {pendingDecisions}

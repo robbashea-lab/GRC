@@ -49,7 +49,7 @@ test('vendor timeline and assurance cell open original native destinations witho
   await click(container.querySelector('.bav-lane-open')); expect(onOpen).toHaveBeenCalledWith(vendor, 'reviews_tab');
   expect(container.querySelector('.bav-assurance').textContent).toContain('Received');
   expect(container.querySelector('.bav-assurance').textContent).not.toContain('Reviewed');
-  await click([...container.querySelectorAll('.bav-event')].find(node => node.title.includes('Actual vendor review'))); expect(onOpenReview).toHaveBeenCalledWith(review);
+  await click([...container.querySelectorAll('.bav-event')].find(node => node.getAttribute('aria-label').includes('Actual vendor review'))); expect(onOpenReview).toHaveBeenCalledWith(review);
   expect(container.querySelectorAll('.bav-lane')).toHaveLength(1);
   expect(container.querySelector('.bav-renewal').textContent).toBe('No renewal date');
 });
@@ -69,9 +69,9 @@ test('policy review warning follows the native local-day overdue and 30-day wind
   const policy = { policy_id: 'p1', client_id: 'demo_brawndo', title: 'Recorded policy', status: 'draft' };
   const review = { review_id: 'r1', client_id: policy.client_id, policy_id: policy.policy_id, recurrence: 'annual', status: 'upcoming' };
   try {
-    for (const [due_date, warning] of [['2026-10-15', true], ['2026-10-16', true], ['2026-11-15', true], ['2026-11-16', false], [null, false], ['unknown', false]]) {
+    for (const [due_date, tone] of [['2026-10-15', 'bad'], ['2026-10-16', 'warn'], ['2026-11-15', 'warn'], ['2026-11-16', ''], [null, ''], ['unknown', '']]) {
       await act(async () => root.render(<BrawndoAdditionalPolicies rows={[policy]} reviews={[{ ...review, due_date }]} />));
-      expect(container.querySelector('.bap-review-date small').classList.contains('warn')).toBe(warning);
+      expect(container.querySelector('.bap-review-date small').className).toBe(tone);
     }
   } finally {
     jest.useRealTimers();

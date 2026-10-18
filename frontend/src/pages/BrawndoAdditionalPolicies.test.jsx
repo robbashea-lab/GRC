@@ -2,6 +2,8 @@ import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import RecordListPage from './RecordListPage';
 import api from '@/lib/api';
+import BrawndoAdditionalPolicies from '@/components/BrawndoAdditionalPolicies';
+import { savedDate } from '@/components/BrawndoAdditionalPolicyVendorCells';
 
 jest.setTimeout(15000);
 let mockAuth, mockOrg, mockDrawerProps, mockLocationSearch;
@@ -127,4 +129,95 @@ test('same-client role and actor changes await their own alignment snapshot and 
   await act(async () => resolvePrevious({ data: { client_id: 'demo_brawndo', items: [{ key: 'cis-ig1', tracking_available: true, implementation_group: 3 }] } }));
   expect(container.querySelector('[data-testid="additional-policy-metric-mapped"] strong').textContent.startsWith('0')).toBe(true);
   expect(container.textContent).not.toContain('Mapped to CIS IG3');
+});
+
+const policySubtitle = () => container.querySelector('.bapv-page-head p')?.textContent;
+const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
+
+test('accepted Policies + Reviews refresh stays stable across native filters, theme and open/cancel, and hides during refresh/failure', async () => {
+  await act(async () => root.render(<RecordListPage kind="policies" />));
+  const accepted = policySubtitle();
+  expect(accepted).toMatch(/^Policy register · 3 policies · As of .+ ET$/);
+  const reads = api.get.mock.calls.length;
+  await input(container.querySelector('[data-testid="policies-search"]'), 'Missing');
+  await click(container.querySelector('[data-testid="additional-policy-view-missing"]'));
+  await click([...container.querySelectorAll('.bapv-head-actions button')].find(node => node.textContent === 'Dark'));
+  await click(container.querySelector('.bapv-name'));
+  expect(policySubtitle()).toBe(accepted);
+  expect(api.get.mock.calls.length).toBe(reads);
+  await act(async () => mockDrawerProps.onOpenChange(false));
+  expect(policySubtitle()).toBe(accepted);
+  const pending = deferred();
+  const original = api.get.getMockImplementation();
+  api.get.mockImplementation((path, ...args) => path === '/policies' ? pending.promise : original(path, ...args));
+  let refresh;
+  await act(async () => { refresh = mockDrawerProps.onSaved(); });
+  expect(policySubtitle()).toBe('Policy register · Loading policies…');
+  await act(async () => { pending.reject(new Error('Policy refresh unavailable')); await refresh; });
+  expect(container.textContent).not.toContain('As of');
+  expect(container.textContent).toContain('Policy refresh unavailable');
+  expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled(); expect(api.delete).not.toHaveBeenCalled();
+});
+
+test('empty success installs a real refresh only after both Policies and Reviews accept', async () => {
+  const pendingReviews = deferred();
+  const original = api.get.getMockImplementation();
+  api.get.mockImplementation((path, ...args) => path === '/policies' ? Promise.resolve({ data: [] }) : path === '/reviews' ? pendingReviews.promise : original(path, ...args));
+  await act(async () => root.render(<RecordListPage kind="policies" />));
+  expect(container.textContent).not.toContain('As of');
+  await act(async () => pendingReviews.resolve({ data: [] }));
+  expect(policySubtitle()).toMatch(/^Policy register · 0 policies · As of .+ ET$/);
+  expect(container.querySelector('.bap-review-date').textContent).toContain('Not scheduled');
+  expect(container.querySelector('.bap-review dl').textContent).toBe('Last reviewedNot recordedAssigned toUnassigned');
+});
+
+test('Policies response alone cannot acknowledge refresh when its linked Reviews request fails', async () => {
+  const original = api.get.getMockImplementation();
+  api.get.mockImplementation((path, ...args) => path === '/reviews' ? Promise.reject(new Error('Linked Reviews unavailable')) : original(path, ...args));
+  await act(async () => root.render(<RecordListPage kind="policies" />));
+  expect(container.textContent).toContain('Linked Reviews unavailable');
+  expect(container.textContent).not.toContain('As of');
+  expect(container.querySelector('[data-testid="additional-policies"]')).toBeNull();
+});
+
+test('late previous actor response cannot replace accepted current rows or refresh', async () => {
+  const oldPolicies = deferred();
+  let policyReads = 0;
+  const original = api.get.getMockImplementation();
+  api.get.mockImplementation((path, ...args) => path === '/policies' && ++policyReads === 1 ? oldPolicies.promise : original(path, ...args));
+  await act(async () => root.render(<RecordListPage kind="policies" />));
+  expect(container.textContent).not.toContain('As of');
+  mockAuth = { ...mockAuth, user: { ...mockAuth.user, user_id: 'new-actor' } };
+  await act(async () => root.render(<RecordListPage kind="policies" />));
+  const accepted = policySubtitle();
+  expect(accepted).toMatch(/^Policy register · 3 policies · As of .+ ET$/);
+  await act(async () => oldPolicies.resolve({ data: [{ ...rows[0], title: 'Stale actor policy' }] }));
+  expect(policySubtitle()).toBe(accepted);
+  expect(container.textContent).not.toContain('Stale actor policy');
+});
+
+test.each([[-1, 'bad'], [0, 'warn'], [5, 'warn'], [40, ''], [null, '']])('card preserves selected Review data and native overdue tone at offset %s', async (offset, tone) => {
+  const day = new Date(); day.setDate(day.getDate() + (offset || 0));
+  const date = offset === null ? null : `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+  const selected = { ...review, due_date: date, owner_id: 'review-owner', occurrences: [
+    { status: 'completed', completed_at: '2025-10-01' }, { status: 'cancelled', completed_at: '2026-10-01' },
+  ] };
+  const onOpenReview = jest.fn();
+  await act(async () => root.render(<BrawndoAdditionalPolicies rows={rows} reviews={[{ ...selected, recurrence: 'monthly', review_id: 'earlier-monthly', due_date: '2020-01-01' }, selected]} users={[{ user_id: 'review-owner', name: 'Actual Reviewer' }]} onOpenReview={onOpenReview} acceptedRefresh="2026-10-18T18:00:00Z" />));
+  const card = container.querySelector('.bap-review');
+  expect(card.querySelector('h3').textContent).toBe('Annual policy review');
+  expect(card.querySelector('.bap-review-date strong').textContent).toBe(savedDate(date) || 'Not scheduled');
+  expect(card.querySelector('.bap-review-date small').className).toBe(tone);
+  expect([...card.querySelectorAll('dt')].map(node => node.textContent)).toEqual(['Last reviewed', 'Assigned to']);
+  expect([...card.querySelectorAll('dd')].map(node => node.textContent)).toEqual([savedDate('2025-10-01'), 'Actual Reviewer']);
+  expect(card.querySelector('.bap-review-note')).toBeNull();
+  await click(card.querySelector('.bapv-link'));
+  expect(onOpenReview).toHaveBeenCalledWith(selected);
+  expect(api.get).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();
+});
+
+test.each([[true, '', 'Loading policies…'], [false, 'Unavailable', 'Policies unavailable'], [false, '', '1 policy']])('header does not fabricate count or refresh during loading/error (%s, %s)', async (loading, error, text) => {
+  await act(async () => root.render(<BrawndoAdditionalPolicies rows={[rows[0]]} filteredRows={[]} loading={loading} error={error} acceptedRefresh="2026-10-18T18:00:00Z" />));
+  expect(policySubtitle()).toContain(`Policy register · ${text}`);
+  expect(policySubtitle().includes('As of')).toBe(!loading && !error);
 });

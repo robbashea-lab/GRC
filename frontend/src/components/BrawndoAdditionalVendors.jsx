@@ -1,3 +1,5 @@
+import * as Tooltip from '@radix-ui/react-tooltip';
+import { formatAcceptedRefresh } from '@/lib/acceptedRefreshPresentation';
 import { ChevronRight, Search } from 'lucide-react';
 import { ColumnControl, TableFilterChips } from './TableControls';
 import { assuranceAttention, assuranceName, assuranceState, vendorMatches } from '@/lib/brawndoVendors';
@@ -10,12 +12,22 @@ const VIEWS = [['all_active', 'All active'], ['review_due', 'Reviews due'], ['re
 const EXTRA_VIEWS = [['contract_soon', 'Contracts expiring'], ['assurance_attention', 'Assurance needs attention'], ['unassigned', 'Unassigned'], ['all', 'All records'], ['critical', 'Critical'], ['high', 'High']];
 const CRITICALITY = { critical: 'Critical', high: 'High', medium: 'Moderate', moderate: 'Moderate', low: 'Low' };
 
-function VendorTimeline({ rows, reviews, onOpen, onOpenReview }) {
+
+// Only facts already loaded for this exact event; legal dates imply no past renewal.
+function eventContext(event) {
+  const value = event.document
+    ? [assuranceName(event.document), assuranceState(event.document)].filter(Boolean).join(' · ')
+    : event.review?.description || event.review?.notes || event.vendor.service || event.vendor.services || '';
+  const text = typeof value === 'string' ? value.trim() : '';
+  return text.length > 240 ? `${text.slice(0, 237)}…` : text;
+}
+
+function VendorTimeline({ rows, reviews, onOpen, onOpenReview, theme }) {
   const now = new Date(), { start, end, months, position } = timelineBounds(now);
   const active = rows.filter(vendor => vendorMatches(vendor, 'all_active')).sort((a, b) => ({ critical: 0, high: 1, medium: 2, moderate: 2, low: 3 }[a.criticality] ?? 4) - ({ critical: 0, high: 1, medium: 2, moderate: 2, low: 3 }[b.criticality] ?? 4) || String(a.name).localeCompare(String(b.name)));
   const events = vendorTimelineEvents(active, reviews);
   const openEvent = event => event.review && onOpenReview ? onOpenReview(event.review) : onOpen(event.vendor, event.tab);
-  return <div className="bav-timeline">
+  return <Tooltip.Provider delayDuration={150} skipDelayDuration={100}><div className="bav-timeline">
     <div className="bav-up" style={{ gridRow: `1 / span ${active.length + 1}` }}><h4>Coming up</h4>
       {events.slice(0, 3).map(event => {
         const days = calendarDay(event.date) - start, progress = eventCycleProgress(event, now);
@@ -30,19 +42,26 @@ function VendorTimeline({ rows, reviews, onOpen, onOpenReview }) {
     <div className="bav-axis" aria-hidden="true">{months.map((month, index) => <span key={month.toISOString()} className={`${index % 2 ? 'alternate' : ''}${month.getUTCMonth() === 0 ? ' year' : ''}`} style={{ left: `calc(${position(month.toISOString())}% + 4px)` }}>{month.toLocaleDateString(undefined, { timeZone: 'UTC', month: 'short' })}{month.getUTCMonth() === 0 && <small> {month.getUTCFullYear()}</small>}</span>)}</div>
     {active.map(vendor => {
       const dated = events.filter(event => event.vendor.vendor_id === vendor.vendor_id && calendarDay(event.date) <= end);
-      return <div className="bav-lane" key={vendor.vendor_id} role="group" aria-label={`${vendor.name}: ${dated.map(event => `${event.label} ${savedDate(event.date)}`).join(', ') || 'No saved dates in the next 12 months'}`} title={vendor.name}>
+      return <div className="bav-lane" key={vendor.vendor_id} role="group" aria-label={`${vendor.name}: ${dated.map(event => `${event.label} ${savedDate(event.date)}`).join(', ') || 'No saved dates in the next 12 months'}`}>
         {months.map(month => <i key={month.toISOString()} className="bav-gridline" aria-hidden="true" style={{ left: `${position(month.toISOString())}%` }} />)}
         <button type="button" className="bav-lane-open" aria-label={`Open ${vendor.name}`} onClick={() => onOpen(vendor, 'reviews_tab')} />
         {dated.map(event => {
           const point = Math.max(0, position(event.date)), days = calendarDay(event.date) - start;
-          return <button type="button" key={event.id} className={`bav-event ${event.kind}${days <= 30 ? ' soon' : ''}${point > 86 ? ' flip' : ''}`} style={{ left: `${point}%` }} onClick={() => openEvent(event)} title={`${vendor.name} · ${event.label} · ${savedDate(event.date)} · ${relativeDate(event.date)}`} aria-label={`${vendor.name}, ${event.label}, ${savedDate(event.date)}. Open the full record.`}><i className={`bav-marker ${event.kind}`} aria-hidden="true" /><span>{savedDate(event.date, true)}</span></button>;
+          return <Tooltip.Root key={event.id}><Tooltip.Trigger asChild><button type="button" className={`bav-event ${event.kind}${days <= 30 ? ' soon' : ''}${point > 86 ? ' flip' : ''}`} style={{ left: `${point}%` }} onClick={() => openEvent(event)} aria-label={`${vendor.name}, ${event.label}, ${savedDate(event.date)}. Open the full record.`}><i className={`bav-marker ${event.kind}`} aria-hidden="true" /><span>{savedDate(event.date, true)}</span></button></Tooltip.Trigger>
+            <Tooltip.Portal><Tooltip.Content className="bav-event-preview" data-theme={theme} sideOffset={10} collisionPadding={{top:68,right:8,bottom:8,left:8}} avoidCollisions hideWhenDetached>
+              <div className="bav-preview-kind">{event.review ? 'Linked Review' : event.kind === 'rev' ? 'Vendor review' : event.label}</div>
+              <strong>{event.vendor.name}</strong><span>{event.label}</span>
+              <div className="bav-preview-date">{savedDate(event.date)} · {relativeDate(event.date)}</div>
+              {eventContext(event) && <p>{eventContext(event)}</p>}
+            </Tooltip.Content></Tooltip.Portal></Tooltip.Root>;
         })}
       </div>;
     })}
-  </div>;
+  </div></Tooltip.Provider>;
 }
 
-export default function BrawndoAdditionalVendors({ rows = [], filteredRows = rows, reviews = [], users = [], loading = false, error = '', onRetry, q = '', onSearch, view = 'all_active', onView, table, onOpen, onOpenReview, actions, theme = 'light' }) {
+export default function BrawndoAdditionalVendors({ rows = [], filteredRows = rows, reviews = [], users = [], loading = false, error = '', onRetry, q = '', onSearch, view = 'all_active', onView, table, onOpen, onOpenReview, actions, theme = 'light', acceptedRefresh = null }) {
+  const refreshLabel = !loading && !error ? formatAcceptedRefresh(acceptedRefresh) : '';
   const metrics = vendorOverview(rows);
   const figures = [['critical_high', 'Critical / High'], ['review_due', 'Reviews due in 30 days'], ['assurance', 'Assurance follow-up due'], ['renewal_soon', 'Renewal / notice actions in 30 days']];
   const header = (key, label) => table ? <ColumnControl table={table} column={{ ...table.columns.find(column => column.key === key), key, label }} /> : label;
@@ -53,10 +72,10 @@ export default function BrawndoAdditionalVendors({ rows = [], filteredRows = row
   const cohortLabel = cohort === 'inactive' ? 'inactive ' : cohort === 'all_active' ? 'active ' : '';
   const summary = countsAvailable ? `Showing ${filteredRows.length} of ${counts[cohort]} ${cohortLabel}${counts[cohort] === 1 ? 'vendor' : 'vendors'}` : error ? 'Vendor counts unavailable.' : 'Loading vendors…';
   return <div className="brawndo-additional bav-page" data-theme={theme} data-testid="additional-vendors">
-    <div className="bapv-page-head"><div><h1>Brawndo Vendors</h1><p>{countsAvailable ? `Third-party register · ${counts.all_active} active ${counts.all_active === 1 ? 'vendor' : 'vendors'}` : 'Third-party register'}</p></div><div className="bapv-head-actions">{actions}</div></div>
+    <div className="bapv-page-head"><div><h1>Brawndo Vendors</h1><p>{countsAvailable ? `Third-party register · ${counts.all_active} active ${counts.all_active === 1 ? 'vendor' : 'vendors'}` : 'Third-party register'}{refreshLabel && ` · As of ${refreshLabel}`}</p></div><div className="bapv-head-actions">{actions}</div></div>
     <section className="bapv-card bav-overview" aria-label="Vendor overview">
       <div className="bapv-kstrip" aria-label="Vendor summary. Select a figure to filter the register.">{figures.map(([id, label], index) => <button type="button" className="bapv-kcell" key={id} aria-pressed={view === id} disabled={!countsAvailable} onClick={() => onView(view === id ? 'all_active' : id)} data-testid={`additional-vendor-metric-${id}`}><span>{label}</span><strong>{countsAvailable ? metrics[index] : '—'}</strong></button>)}</div>
-      <div><div className="bav-timeline-head"><div><h3>Next 12 months</h3><p className="bapv-sub">Reviews, assurance follow-ups and contract renewals for each vendor.</p></div><div className="bav-legend" aria-label="Timeline markers"><span><i className="bav-marker rev" />Review</span><span><i className="bav-marker asr" />Assurance follow-up</span><span><i className="bav-marker ren" />Contract renewal</span></div></div>{!loading && !error && <VendorTimeline rows={rows} reviews={reviews} onOpen={onOpen} onOpenReview={onOpenReview} />}</div>
+      <div><div className="bav-timeline-head"><div><h3>Next 12 months</h3><p className="bapv-sub">Reviews, assurance follow-ups and contract renewals for each vendor.</p></div><div className="bav-legend" aria-label="Timeline markers"><span><i className="bav-marker rev" />Review</span><span><i className="bav-marker asr" />Assurance follow-up</span><span><i className="bav-marker ren" />Contract renewal</span></div></div>{!loading && !error && <VendorTimeline key={acceptedRefresh || 'unacknowledged'} rows={rows} reviews={reviews} onOpen={onOpen} onOpenReview={onOpenReview} theme={theme} />}</div>
     </section>
     <section className="bapv-card" aria-label="Vendor register">
       <div className="bapv-filters"><label className="bapv-search"><span className="sr-only">Search vendors</span><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search vendors…" value={q} onChange={event => onSearch(event.target.value)} data-testid="vendor-search" /></label><div className="bapv-segment" role="group" aria-label="Show vendors">{VIEWS.map(([id, label]) => <button type="button" key={id} aria-pressed={view === id} onClick={() => onView(id)} data-testid={`vendor-view-${id}`}>{label}<span>{countsAvailable ? counts[id] : '—'}</span></button>)}</div><label className="bapv-field">More views <select aria-label="Other vendor views" value={EXTRA_VIEWS.some(([id]) => id === view) ? view : ''} onChange={event => onView(event.target.value || 'all_active')}><option value="">Select</option>{EXTRA_VIEWS.map(([id, label]) => <option value={id} key={id}>{countsAvailable ? `${label} (${counts[id]})` : label}</option>)}</select></label></div>

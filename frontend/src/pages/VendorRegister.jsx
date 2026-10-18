@@ -90,6 +90,7 @@ export default function VendorRegister() {
   const [loadedClientId,setLoadedClientId] = useState(null);
   const vendorReadScope = `${user?.user_id}:${user?.role}:${auth.workspaceMode}:${user?.workspace_mode}:${currentClientId}`;
   const [loadedReadScope,setLoadedReadScope] = useState('');
+  const [acceptedRefresh,setAcceptedRefresh] = useState(null);
   const additional = useAdditionalSectionsSurface('vendors',loadedReadScope===vendorReadScope?loadedClientId:null);
   const pilot=isReferencePresentation(currentClientId,user);
   const vendorWorkflow=isReferenceWorkflow(currentClientId,user);
@@ -132,7 +133,7 @@ export default function VendorRegister() {
   async function load() {
     if (!currentClientId) return;
     const token=++generation.current;
-    setLoading(true); setLoadError('');
+    setLoading(true); setLoadError(''); setAcceptedRefresh(null);
     try {
       const [v, u, r] = await Promise.all([
         api.get("/vendors", { params: { client_id: currentClientId } }).then((r) => r.data),
@@ -141,10 +142,11 @@ export default function VendorRegister() {
       ]);
       if(token!==generation.current) return;
       setRows(v || []); setUsers(u || []); setReviews(r||[]);setLoadedClientId(currentClientId);setLoadedReadScope(vendorReadScope);
-    } catch (e) { if(token===generation.current){setRows([]);setLoadError(formatError(e));} }
+      setAcceptedRefresh({scope:vendorReadScope,at:new Date().toISOString()});
+    } catch (e) { if(token===generation.current){setRows([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
     finally { if(token===generation.current)setLoading(false); }
   }
-  useEffect(() => { const activeGeneration=generation; setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
+  useEffect(() => { const activeGeneration=generation; setAcceptedRefresh(null);setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClientId,vendorReadScope]);
 
@@ -194,7 +196,7 @@ export default function VendorRegister() {
       setSearchParams(next,{replace:true});
     };
     surface = <>
-      <BrawndoAdditionalVendors rows={tableSource} filteredRows={filtered} reviews={reviews} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme}
+      <BrawndoAdditionalVendors rows={tableSource} filteredRows={filtered} reviews={reviews} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
         onOpen={(record,tab)=>setDrawer({open:true,record,tab})}
         onOpenReview={review=>navigate(`/reviews?id=${encodeURIComponent(review.review_id)}&client_id=${encodeURIComponent(currentClientId)}`)}
         actions={<><button type="button" onClick={()=>setTheme(theme==='light'?'dark':'light')}><Sun size={15} aria-hidden="true"/>{theme==='light'?'Dark':'Light'}</button><button type="button" onClick={exportCsv} data-testid="vendors-export"><Download size={15} aria-hidden="true"/>Export CSV</button>{canWrite&&<button type="button" onClick={()=>setAddOpen(true)} data-testid="new-vendor">+ New vendor</button>}</>}/>

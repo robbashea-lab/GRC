@@ -1,5 +1,32 @@
+@font-face {
+  font-family:"GoverNara Policy Vendor Inter";
+  src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');
+  font-weight:400 700; font-style:normal; font-display:swap;
+}
+/* Landing-local aliases: native record/create/Review portals keep their own palette. */
+:is(.bap-page,.bav-page,.bav-event-preview) {
+  --font:"GoverNara Policy Vendor Inter",Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  --font-body:var(--font); --font-heading:var(--font);
+  --color-bg-app:var(--bg); --color-bg-surface:var(--surface); --color-bg-subtle:var(--subtle);
+  --color-bg-tablehead:var(--tablehead); --color-bg-row-hover:var(--hover);
+  --color-border:var(--border); --color-border-strong:var(--border-strong); --color-input-border:var(--border-strong);
+  --color-text-primary:var(--fg); --color-text-secondary:var(--fg2); --color-text-muted:var(--muted);
+  --color-link:var(--link); --color-selected-bg:var(--selected); --color-focus-ring:var(--focus);
+  --bg:#F4F6F9; --surface:#FFFFFF; --subtle:#F7F9FB; --tablehead:#F9FAFC; --hover:#F2F5F9;
+  --border:#E3E8EF; --border-strong:#CDD5E0; --fg:#0F1B2D; --fg2:#46566B; --muted:#5A687B;
+  --link:#1F56C3; --focus:#215BC1; --rail:#215BC1; --selected:#EDF2FC; --seg-on:#FFFFFF;
+  --good:#05603A; --bad:#B42318; --warn:#93370D; --c-due:#B7791F; --c-over:#D64550;
+  --m-rev:#215BC1; --m-asr:#B7791F; --m-ren:#0F8A7A;
+}
+:is(.bap-page,.bav-page,.bav-event-preview)[data-theme="dark"] {
+  --bg:#0A0F16; --surface:#111823; --subtle:#151D29; --tablehead:#131B26; --hover:#19222F;
+  --border:#222C3A; --border-strong:#34404F; --fg:#EDF1F7; --fg2:#A7B3C4; --muted:#8E9BAE;
+  --link:#8EC5FF; --focus:#8EC5FF; --rail:#8EC5FF; --selected:#1B2738; --seg-on:#243042;
+  --good:#3DC79F; --bad:#F2828C; --warn:#E9B65A; --c-due:#C2862F; --c-over:#E66767;
+  --m-rev:#4A8BDB; --m-asr:#C2862F; --m-ren:#1F9E89;
+}
 :is(.bap-page,.bav-page) {
-  /* Private adapters follow the shared scoped palette in both themes. */
+  /* Private aliases resolve only inside these eligible landing surfaces. */
   --pv-bg:var(--bg); --pv-surface:var(--surface); --pv-subtle:var(--subtle); --pv-tablehead:var(--tablehead); --pv-hover:var(--hover);
   --pv-border:var(--border); --pv-strong:var(--border-strong); --pv-fg:var(--fg); --pv-fg2:var(--fg2); --pv-muted:var(--muted);
   --pv-link:var(--link); --pv-selected:var(--selected); --pv-rail:var(--rail); --pv-good:var(--good); --pv-bad:var(--bad);
@@ -194,3 +221,20 @@
 @media (max-width:760px) { .bapv-kstrip { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:700px) { .bav-axis span.alternate,.bav-axis small { display:none; } }
 @media (prefers-reduced-motion:reduce) { :is(.bap-page,.bav-page) * { transition:none !important; animation:none !important; } }
+
+.bap-review-date small.bad { color:var(--pv-bad); font-weight:600; }
+/* Portalled read-only card avoids the overview clip and never styles native popups. */
+.bav-event-preview {
+  z-index:30; box-sizing:border-box; width:300px;
+  max-width:min(calc(100vw - 16px),var(--radix-tooltip-content-available-width));
+  max-height:var(--radix-tooltip-content-available-height); overflow:auto;
+  padding:12px 14px; border:1px solid var(--border); border-radius:10px;
+  background:var(--surface); color:var(--fg); box-shadow:0 12px 32px #0F1B2D26;
+  font:400 12.5px/1.5 var(--font); font-optical-sizing:auto; overflow-wrap:anywhere;
+}
+.bav-event-preview[data-theme="dark"] { background:#161F2B; box-shadow:0 12px 32px #0006; }
+.bav-event-preview strong,.bav-event-preview >span { display:block; }
+.bav-event-preview strong { font-size:13px; font-weight:650; margin:2px 0; }
+.bav-preview-kind { font-size:11px; font-weight:600; color:var(--muted); }
+.bav-preview-date { margin-top:6px; color:var(--fg2); font-variant-numeric:tabular-nums; }
+.bav-event-preview p { margin:6px 0 0; color:var(--muted); }

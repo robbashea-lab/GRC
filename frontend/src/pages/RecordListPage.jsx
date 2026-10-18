@@ -148,6 +148,7 @@ function EntityListPage({ kind }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [policyReviews, setPolicyReviews] = useState([]);
+  const [acceptedPolicyRefresh, setAcceptedPolicyRefresh] = useState(null);
   const [policyAlignmentScope, setPolicyAlignmentScope] = useState('');
   const additionalPolicies = useAdditionalSectionsSurface('policies',
     kind === 'policies' && !loadError && loadedPolicyScope.current === policyScope && policyAlignmentScope === policyScope ? currentClientId : null);
@@ -271,6 +272,7 @@ function EntityListPage({ kind }) {
 
   const load = useCallback(async (options) => {
     const sequence = ++loadSequence.current;
+    setAcceptedPolicyRefresh(null);
     if (!currentClientId) { setRows([]); setLoading(false); return; }
     setLoading(true); setLoadError('');
     try {
@@ -290,6 +292,8 @@ function EntityListPage({ kind }) {
       loadedPolicyScope.current=policyScope;
       setPolicyReviews(linkedPolicyReviews);
       setRows(data);
+      // This acknowledges only the accepted Policies + Reviews load, not alignment or people data.
+      if (kind === 'policies') setAcceptedPolicyRefresh({ scope: policyScope, instant: new Date().toISOString() });
       setChecked(new Set(options?.selection || []));
     } catch (e) { if (sequence === loadSequence.current) { setRows([]); setLoadError(formatError(e)); } }
     finally { if (sequence === loadSequence.current) setLoading(false); }
@@ -691,6 +695,8 @@ function EntityListPage({ kind }) {
       rows={tableSource} filteredRows={filtered} reviews={policyReviews} users={users} theme={theme}
       programs={programs} assessments={policyAssessments} cisGroup={cisGroup} alignmentError={alignmentError}
       loading={showLoading} error={loadError} onRetry={load} q={q} onSearch={setQ}
+      acceptedRefresh={!loading && !loadError && acceptedPolicyRefresh?.scope === policyScope ? acceptedPolicyRefresh.instant : null}
+      refreshing={loading}
       view={policyView} onView={value=>setParam('policyView',value)}
       onClear={()=>{const next=new URLSearchParams(params);['q','tab','status','owner','unassigned','severity','setup','reviewView','signal','policyView','category'].forEach(key=>next.delete(key));table.clear();setParams(next,{replace:true});}}
       category={params.get('category')||''} onCategory={value=>setParam('category',value)} table={table}
