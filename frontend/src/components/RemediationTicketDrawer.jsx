@@ -106,7 +106,7 @@ function History({ticket,onDirty,presentation,readOnly=false}) {
   return <details><summary>History and comments</summary>{error&&<p role="alert">{error}</p>}<ul className="space-y-2 text-sm">{rows.map((r,i)=><li className="whitespace-pre-wrap" key={r.log_id||r.audit_id||r.comment_id||i}>{presentation==='brawndo-demo-actions'&&<span className="block text-xs text-ink-secondary">{r.user_name||r.user_email||r.user_id||'Historical actor unavailable'}</span>}{r.at||r.created_at} · {r.action||r.body}{r.meta?.rationale?' · '+r.meta.rationale:''}</li>)}</ul>{writable&&<div className="space-y-2"><label>Comment (optional)<Textarea aria-label="Ticket comment" value={comment} disabled={busy} onChange={e=>setComment(e.target.value)}/></label><Button disabled={busy||!comment.trim()} onClick={async()=>{setBusy(true);setError('');try{await api.post('/comments',{entity_type:kind,entity_id:id,body:comment});setComment('');setVersion(v=>v+1);}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Add comment</Button></div>}</details>;
 }
 
-export default function RemediationTicketDrawer({open,onOpenChange,kind,record,clientId,onSaved,presentation,closeRequest=0,onCloseCancelled}) {
+export default function RemediationTicketDrawer({open,onOpenChange,kind,record,clientId,onSaved,presentation,closeRequest=0,onCloseCancelled,cisVisualOrigin}) {
   const pilot=presentation==='brawndo-demo-actions';
   const {user}=useAuth(),{data,users,loading,error,load}=useActionRegisterData(record.client_id||clientId,{retainOnRefreshError:pilot});
   const [nested,setNested]=useState(null),[rationale,setRationale]=useState(''),[busy,setBusy]=useState(false),[commandError,setCommandError]=useState(''),[feedback,setFeedback]=useState(''),[discard,setDiscard]=useState(false);
@@ -120,6 +120,10 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
   useEffect(()=>{markDirty('rationale',!!rationale);return()=>markDirty('rationale',false);},[rationale,markDirty]);
   const ticket=ticketRecords(data,record.client_id||clientId).find(t=>kind==='findings'?t.finding?.finding_id===record.finding_id:t.actions.some(a=>a.task_id===record.task_id));
   const stage=ticket&&ticketStage(ticket),origin=ticket&&actionOrigin(ticket.raw,data,ticket.finding);
+  const nestedCisVisualOrigin=nested?.kind==='framework_assessments' && origin?.kind==='framework_assessments'
+    && origin.id===cisVisualOrigin?.assessmentId && nested.record.framework_assessment_id===origin.id
+    && origin.target?.framework_assessment_id===cisVisualOrigin?.assessmentId && origin.target?.definition_id===cisVisualOrigin?.definitionId
+    && origin.target?.client_id===cisVisualOrigin?.clientId && origin.target?.framework_key==='cis-ig1'?cisVisualOrigin:undefined;
   const canMutate=!pilot||!loading&&!error;
   const close=useCallback(v=>{if(v)onOpenChange(true);else if(!busy){if(dirty.current.size)setDiscard(true);else onOpenChange(false);}},[busy,onOpenChange]);
   const handledCloseRequest=useRef(closeRequest);
@@ -171,6 +175,6 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
     {pilot&&<footer className="ticket-footer"><span>Save each Action above to retain its changes.</span><Button variant="outline" disabled={busy} onClick={()=>close(false)}>Cancel</Button></footer>}
   </DialogContent></Dialog>
   <AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent onOpenAutoFocus={()=>{discardOpener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();if(dirty.current.size){const target=discardOpener.current?.isConnected?discardOpener.current:surface.current?.querySelector('button,input');target?.focus({preventScroll:true});}else restoreFocus();}}><AlertDialogTitle>Discard unsaved ticket changes?</AlertDialogTitle><AlertDialogDescription>Saved records remain unchanged.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel onClick={()=>{if(pilot)onCloseCancelled?.();}}>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{dirty.current.clear();setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-  {nested&&<RecordDrawer {...nested} open clientId={clientId} onSaved={()=>{saved().catch(e=>setCommandError(formatError(e)));}} onOpenChange={v=>{if(!v)setNested(null);}}/>}
+  {nested&&<RecordDrawer {...nested} open clientId={clientId} cisVisualOrigin={nestedCisVisualOrigin} onSaved={()=>{saved().catch(e=>setCommandError(formatError(e)));}} onOpenChange={v=>{if(!v)setNested(null);}}/>}
   </>;
 }

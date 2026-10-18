@@ -30,7 +30,9 @@ let host,root,record,native,frameworkRead,onClose;
 const work={context_complete:true,evidence_count:0,finding_ids:[],review_ids:[],task_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,overdue_actions:0,priority_records:[]};
 const workspace=()=>({selected:true,configured:true,framework:{key:'cis-ig1',version:'8.1'},configuration:{implementation_group:1},
   implementation_position:{program_id:'demo_brawndo:cis-ig1'},assessments:[native],work:{[native.framework_assessment_id]:work}});
-const render=(visualReference=true)=>act(async()=>root.render(<FrameworkDrawer open visualReference={visualReference} record={record} clientId="demo_brawndo" onOpenChange={onClose}/>));
+const render=(visualReference=true,props={})=>act(async()=>root.render(<FrameworkDrawer open visualReference={visualReference} record={record} clientId="demo_brawndo" onOpenChange={onClose} {...props}/>));
+const visualReceipt=()=>({key:JSON.stringify([mockAuth.user?.user_id,mockAuth.user?.role,mockAuth.user?.workspace_mode,mockAuth.workspaceMode,true]),
+  clientId:'demo_brawndo',programId:'demo_brawndo:cis-ig1',assessmentId:record.framework_assessment_id,definitionId:record.definition_id});
 const visual=()=>host.querySelector('.brawndo-cis-visual-safeguard');
 
 beforeEach(()=>{
@@ -136,5 +138,65 @@ test('a clean assessment with an unsaved child interview still uses the existing
   await clickNative(inlineClose());expect(document.body.textContent).toContain('Leave unsaved changes?');
   await clickNative(nativeButton('Discard changes'));
   expect(onClose).toHaveBeenCalledTimes(1);expect(onClose).toHaveBeenCalledWith(false);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test.each(['super_admin','client_viewer'])('an exact nested origin enables appearance without changing native %s permissions',async role=>{
+  mockAuth={...mockAuth,user:{...mockAuth.user,role}};
+  await render(false,{cisVisualOrigin:visualReceipt()});
+  expect(visual()).toBeTruthy();
+  expect(host.querySelector('[aria-label="Current implementation"]').disabled).toBe(role==='client_viewer');
+  expect(!!nativeButton('Save assessment')).toBe(role!=='client_viewer');
+  expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test.each([
+  ['different actor',{key:'another actor'}],['other client',{clientId:'other-client'}],
+  ['other program',{programId:'demo_brawndo:iso-27001'}],['different source',{assessmentId:'another-assessment'}],
+  ['different safeguard',{definitionId:'2.1'}],['missing receipt',null],
+])('nested appearance fails closed for %s',async(_label,changes)=>{
+  const receipt=changes?{...visualReceipt(),...changes}:undefined;
+  await render(false,{cisVisualOrigin:receipt});
+  expect(visual()).toBeNull();
+  expect(host.querySelector('[aria-label="Current implementation"]').value).toBe(native.implementation);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test.each(['actor','role','workspace','user workspace','loading','error'])('a nested receipt is withdrawn for changed %s context',async change=>{
+  const receipt=visualReceipt();await render(false,{cisVisualOrigin:receipt});expect(visual()).toBeTruthy();
+  if(change==='actor')mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'new-actor'}};
+  if(change==='role')mockAuth={...mockAuth,user:{...mockAuth.user,role:'client_grc_manager'}};
+  if(change==='workspace')mockAuth={...mockAuth,workspaceMode:'signed_in'};
+  if(change==='user workspace')mockAuth={...mockAuth,user:{...mockAuth.user,workspace_mode:'signed_in'}};
+  if(change==='loading')mockAuth={...mockAuth,loading:true};
+  if(change==='error')mockAuth={...mockAuth,error:'Unavailable'};
+  await render(false,{cisVisualOrigin:receipt});
+  expect(visual()).toBeNull();expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test.each(['assessment','definition','client','version','program'])('the nested receiver independently rejects mismatched joined %s context',async change=>{
+  const receipt=visualReceipt();
+  if(change==='assessment')native={...native,framework_assessment_id:'different-current'};
+  if(change==='definition')native={...native,definition_id:'2.1'};
+  if(change==='client')native={...native,client_id:'other-client'};
+  if(change==='version')native={...native,framework_version:'8.0'};
+  if(change==='program')frameworkRead=()=>Promise.resolve({data:{...workspace(),implementation_position:{program_id:'other-client:cis-ig1'}}});
+  await render(false,{cisVisualOrigin:receipt});
+  expect(visual()).toBeNull();expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('live nested receipt withdrawal retains its draft and requires a fresh joined read before returning',async()=>{
+  const receipt=visualReceipt();await render(false,{cisVisualOrigin:receipt});expect(visual()).toBeTruthy();
+  const reads=api.get.mock.calls.length,text='Unsaved nested source wording remains a draft.';await editNativeImplementation(text);
+  expect(api.get.mock.calls).toHaveLength(reads);
+  const away=deferred(),back=deferred();let requested=0;
+  frameworkRead=()=>++requested===1?away.promise:back.promise;
+  await render(false);expect(visual()).toBeNull();
+  expect(host.querySelector('[aria-label="Current implementation"]').value).toBe(text);
+  await render(false,{cisVisualOrigin:receipt});expect(visual()).toBeNull();
+  await act(async()=>away.resolve({data:workspace()}));expect(visual()).toBeNull();
+  await act(async()=>back.resolve({data:workspace()}));expect(visual()).toBeTruthy();
+  expect(host.querySelector('[aria-label="Current implementation"]').value).toBe(text);
+  expect(native.implementation).toBe('Saved native implementation');
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
