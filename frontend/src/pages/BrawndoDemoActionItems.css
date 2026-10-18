@@ -45,9 +45,10 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
 .brawndo-demo-actions .bda-cell {display:grid;align-content:start;gap:4px;text-align:left;padding:16px 20px 18px;background:var(--bda-card);border:0;}
 .brawndo-demo-actions .bda-cell span {font-size:12.5px;color:var(--bda-muted);font-weight:500;}
 .brawndo-demo-actions .bda-cell strong {font-size:32px;font-weight:600;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
-.brawndo-demo-actions .bda-cell small {color:var(--bda-muted);font-size:12px;}
+.brawndo-demo-actions .bda-cell small {color:var(--bda-muted);font-size:12px;font-variant-numeric:tabular-nums;}
 .brawndo-demo-actions .bda-cell small.bda-late {color:var(--bda-danger);font-weight:500;}
 .brawndo-demo-actions .bda-cell small.bda-attention {color:var(--bda-warning);font-weight:500;}
+.brawndo-demo-actions .bda-cell:hover {background:var(--bda-subtle);}
 .brawndo-demo-actions .bda-cell[aria-pressed="true"] {background:var(--bda-soft);box-shadow:inset 0 -2px var(--bda-accent);}
 .brawndo-demo-actions .bda-overdue strong {color:var(--bda-danger);}
 .brawndo-demo-actions .bda-unassigned strong {color:var(--bda-warning);}
@@ -74,15 +75,15 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
 .brawndo-demo-actions :is(h1,h2,h3,h4) {font-family:inherit;}
 .brawndo-demo-actions h2 {margin:0;font-size:15px;font-weight:600;letter-spacing:-.01em;}
 .brawndo-demo-actions .bda-register header p {margin:2px 0 0;color:var(--bda-muted);font-size:12.5px;}
-.brawndo-demo-actions .bda-tabs {display:flex;gap:2px;padding:3px;border:1px solid var(--bda-line);border-radius:8px;background:var(--bda-subtle);}
+.brawndo-demo-actions .bda-tabs {display:flex;gap:2px;padding:3px;border:0;border-radius:8px;background:var(--bda-subtle);box-shadow:inset 0 0 0 1px var(--bda-line);}
 .brawndo-demo-actions .bda-tabs button {border:0;border-radius:6px;padding:4px 11px;background:transparent;color:var(--bda-muted);}
 .brawndo-demo-actions .bda-tabs button[aria-pressed="true"] {background:var(--bda-seg);color:var(--bda-fg);font-weight:600;box-shadow:0 1px 2px #0002;}
 .brawndo-demo-actions .bda-tabs span {margin-left:6px;font-variant-numeric:tabular-nums;}
 .brawndo-demo-actions .bda-controls {display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;padding:14px 16px 12px;margin-top:14px;border-block:1px solid var(--bda-line);}
-.brawndo-demo-actions .bda-controls label {display:flex;align-items:center;gap:8px;color:var(--bda-muted);font-size:12.5px;}
+.brawndo-demo-actions .bda-controls label {display:flex;align-items:center;gap:8px;color:var(--bda-muted);font-size:12.5px;font-weight:400;}
 .brawndo-demo-actions .bda-controls :is(input,select) {height:34px;border:1px solid var(--bda-line-strong);border-radius:7px;background:var(--bda-card);padding:0 10px;max-width:100%;}
 .brawndo-demo-actions .bda-search {position:relative;flex:1 1 200px;max-width:280px;min-width:180px;}
-.brawndo-demo-actions .bda-search input {width:100%;padding:0 12px 0 34px;color:var(--bda-fg);}
+.brawndo-demo-actions .bda-search input {width:100%;padding:0 12px 0 34px;color:var(--bda-fg);font-size:13.5px;font-weight:400;}
 .brawndo-demo-actions .bda-search > svg {position:absolute;left:11px;top:9.5px;color:var(--bda-muted);}
 .brawndo-demo-actions .bda-results {display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px;padding:8px 16px;min-height:43px;font-size:12px;color:var(--bda-muted);border-bottom:1px solid var(--bda-line);font-variant-numeric:tabular-nums;}
 .brawndo-demo-actions nav {display:flex;align-items:center;gap:8px;margin-left:auto;}
@@ -124,7 +125,6 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
 .brawndo-demo-actions .bda-more-controls {display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-left:auto;}
 .brawndo-demo-actions .bda-tabs {background:var(--bda-hover);font-size:12.5px;max-width:100%;overflow-x:auto;}
 .brawndo-demo-actions .bda-tabs button {white-space:nowrap;font-size:12.5px;font-weight:500;}
-.brawndo-demo-actions .bda-cell:hover {background:var(--bda-subtle);}
 .brawndo-demo-actions .bda-runway-bar span[data-dimmed="true"] {opacity:.3;}
 .brawndo-demo-actions .bda-runway-bar span {cursor:pointer;}
 .brawndo-demo-actions .bpage-eyebrow:empty {display:none;}
@@ -136,6 +136,7 @@ html[data-brawndo-demo-actions-suspended="true"] :is(.ui-dialog,.ui-sheet,.ui-ov
 .brawndo-demo-actions .bpage-actions .surface-theme-action:hover {background:var(--bda-hover);color:var(--bda-fg);}
 .brawndo-demo-actions :is(.bpage-btn,.bda-button) {display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;font:500 12.5px/1.5 'GoverNara Actions Inter',Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif;border:1px solid var(--bda-line);border-radius:7px;background:var(--bda-card);color:var(--bda-fg2);}
 .brawndo-demo-actions .bda-primary {font-weight:600;background:var(--bda-accent);border-color:var(--bda-accent);color:var(--bda-card);}
+.brawndo-demo-actions .bda-primary:hover {filter:brightness(1.08);}
 @container (max-width:860px) {
  .brawndo-demo-actions thead {display:none;}
  .brawndo-demo-actions tbody tr {grid-template-columns:18px minmax(0,1fr) auto;grid-template-areas:"cb item item" ". owner due" ". prio st";row-gap:10px;padding-block:14px;}
