@@ -119,11 +119,18 @@ test('reset recovers creations edits deletions completions and baseline without 
   const restored = readStore();
   // Canonical source records remain exact; prospective reports begin at the new reset commit.
   const {portfolio_reporting:reporting,...restoredSources}=JSON.parse(JSON.stringify(lightweightStore(restored)));
-  expect(restoredSources).toEqual(JSON.parse(JSON.stringify(lightweightStore(seedStore()))));
+  const {portfolio_reporting:seedReporting,...canonicalSources}=JSON.parse(JSON.stringify(lightweightStore(seedStore())));
+  expect(restoredSources).toEqual(canonicalSources);
   expect(reporting).toMatchObject({started_at:resetAt,last_captured_at:resetAt,activity_proofs:{}});
   expect(reporting.activity_proofs).toEqual({});
   expect(reporting.snapshots).toHaveLength(original.portfolio_reporting.snapshots.length);
-  expect(reporting.snapshots.every(snapshot=>snapshot.captured_at===resetAt&&snapshot.current.captured_at===resetAt)).toBe(true);
+  const currentSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind!=='demo_fixture');
+  const fixtureSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture');
+  expect(currentSnapshots.length).toBeGreaterThan(0);
+  expect(currentSnapshots.every(snapshot=>snapshot.captured_at===resetAt&&snapshot.current.captured_at===resetAt)).toBe(true);
+  expect(fixtureSnapshots).toHaveLength(seedReporting.snapshots.length);
+  expect(fixtureSnapshots).toHaveLength(11);
+  expect(fixtureSnapshots.every(snapshot=>snapshot.current.provenance.fixture_anchor===resetAt&&snapshot.captured_at<resetAt)).toBe(true);
   const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
   expect(reporting.snapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
   expect(restored.tasks.some(t => t.task_id === created.task_id)).toBe(false);

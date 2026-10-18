@@ -6,6 +6,7 @@ import { prepareTask } from './actionItems';
 import { validateAssignment } from './assignmentEligibility';
 import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
+import {demoDates} from './demoPortfolio';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
 import {captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting} from './portfolioReporting';
@@ -73,7 +74,8 @@ export function seedStore(clock=new Date()) {
   addInitech(finished,clock);
   reconcileFramework(finished,'demo_initech',finished.baselines.demo_initech);
   finishInitech(finished,clock);
-  enrichBrawndoReportingHistory(finished,clock);
+  // Raw seeds use the native UTC-day clock; persisted saves/reset events keep their exact time.
+  enrichBrawndoReportingHistory(finished,new Date(demoDates(clock)(0)+'T12:00:00.000Z'));
   return finished;
 }
 function installCanonicalDunder(db){

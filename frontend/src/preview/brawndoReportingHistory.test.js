@@ -42,6 +42,7 @@ test('native saved status reloads into current summaries and appends history wit
   expect(report(before).current.implemented).toBe(32);
   jest.setSystemTime(new Date('2026-10-18T18:01:00.000Z'));
   const {data:saved}=await api.patch('/framework_assessments/'+row.framework_assessment_id,{status:'addressed',expected_last_assessed:row.last_saved??row.last_assessed??null});
+  expect(saved.last_saved).toBe('2026-10-18T18:01:00.000Z');
   const reopened=readStore();
   expect(reopened.framework_assessments.find(value=>value.framework_assessment_id===row.framework_assessment_id)).toMatchObject({status:'addressed',last_saved:saved.last_saved});
   expect(fixtures(reopened)).toEqual(original);
