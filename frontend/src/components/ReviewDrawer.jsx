@@ -1,5 +1,11 @@
 import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
 import './BrawndoFullRecord.css';
+import './BrawndoReviewWorkflow.css';
+import {ReviewWorkflowContext,ReviewWorkflowIcon,ReviewWorkflowOccurrence,ReviewWorkflowComments,ReviewWorkflowActivity} from './BrawndoReviewWorkflow';
+import BrawndoReviewRequirementCards from './BrawndoReviewRequirementCards';
+import BrawndoReviewFindingFields from './BrawndoReviewFindingFields';
+import {AlertTriangle,Upload} from 'lucide-react';
+import {basisSummary} from '@/lib/requirementBasis';
 import {riskTreatments} from "@/lib/brawndoRisks";
 import RemediationTickets from './RemediationTickets';
 import {readEvidenceFile as fileData} from '@/lib/evidenceFile';
@@ -70,6 +76,9 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const shown = selected || current;
   const cid = current?.client_id || record?.client_id || clientId;
   const fullRecord=useBrawndoFullRecord(record,clientId)&&(!current||current.client_id===clientId);
+  // Appearance follows an existing same-client Review, independently of opener workflow flags.
+  const workflowPresentation=fullRecord&&!!record?.review_id&&current?.review_id===record.review_id
+    && (!selected || selected.review_id===record.review_id&&selected.client_id===clientId);
   const createRecord = useCreateIntent((...args) => api.post(...args), cid);
   const updateRecord = useCreateIntent((...args)=>api.patch(...args), `${user?.user_id}:${cid}:${record?.review_id}:update`, true);
   const createFinding = useCreateIntent(async (...args) => {
@@ -83,6 +92,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const rid = shown?.review_id;
   const oid = selected?.occurrence_id || (shown ? occurrenceId(shown) : null);
   const frozen = !!selected || ['completed','cancelled'].includes(current?.status);
+  const findingPresentation=workflowPresentation&&!selected&&!frozen&&writable;
   const person = id => personLabel(members, id);
 
   useEffect(() => {
@@ -196,18 +206,19 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},
       onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector('[data-testid="reviews-search"]');target?.focus({preventScroll:true});}
     }}
-      className={'brawndo-cis-assessment approved-review-dialog bg-surface-card'+(fullRecord?' brawndo-full-record':'')} data-testid="reviews-drawer">
+      className={'brawndo-cis-assessment approved-review-dialog bg-surface-card'+(fullRecord?' brawndo-full-record':'')+(workflowPresentation?' brawndo-review-workflow':'')} data-testid="reviews-drawer">
       <DialogDescription className="sr-only">Conduct this Review, edit its schedule and assigned reviewer, and access evidence, related work and completion history.</DialogDescription>
-      <SheetHeader className="px-6 py-4 pr-12 border-b border-line shrink-0">
-        <div className="flex justify-between gap-3"><div>{(!pilot||selected)&&<div className="text-xs text-ink-help">{selected?'Historical occurrence':'Review'}</div>}<SheetTitle ref={heading} tabIndex={-1} data-review-title className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
-          {!pilot&&shown && <div className="mt-2"><StatusBadge value={selected ? shown.status : reviewStatus(shown)} /></div>}</div>
+      <SheetHeader className="review-workflow-header px-6 py-4 pr-12 border-b border-line shrink-0">
+        <div className="review-workflow-heading flex justify-between gap-3">{workflowPresentation&&<ReviewWorkflowIcon/>}<div>{(!pilot||selected)&&<div className="text-xs text-ink-help">{selected?'Historical occurrence':'Review'}</div>}<SheetTitle ref={heading} tabIndex={-1} data-review-title className="font-heading text-xl">{shown?.title || 'New review'}</SheetTitle>
+          {workflowPresentation&&<ReviewWorkflowContext record={shown}/>}
+          {!workflowPresentation&&!pilot&&shown && <div className="mt-2"><StatusBadge value={selected ? shown.status : reviewStatus(shown)} /></div>}</div>
           </div>
-        <div className="flex gap-1 mt-3 -mb-3 overflow-x-auto">{(current?tabs:['Overview','Requirements']).map(t => <button key={t} data-testid={`tab-${t.toLowerCase()}`} className={`drawer-tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); if (t === 'Related' || t === 'Activity') reload(); }}>{t}</button>)}</div>
+        <div className="review-workflow-tabs flex gap-1 mt-3 -mb-3 overflow-x-auto">{(current?tabs:['Overview','Requirements']).map(t => <button key={t} aria-pressed={tab===t} data-testid={`tab-${t.toLowerCase()}`} className={`drawer-tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); if (t === 'Related' || t === 'Activity') reload(); }}>{t}{workflowPresentation&&t==='Comments'&&<span className="review-workflow-count">{comments.length}</span>}</button>)}</div>
       </SheetHeader>
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
+      <div className="review-workflow-body flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
         {selected && <Button size="sm" variant="link" onClick={() => {generation.current++;setSelected(null);setTab('Overview');}}>Back to current Review</Button>}
         {tab === 'Overview' && <>
-          <ReviewFacts record={shown} users={members} history={history} status={!pilot&&shown?reviewStatus(shown):undefined}/>
+          {workflowPresentation?<ReviewWorkflowOccurrence record={shown} users={members} history={history} historical={!!selected} historyLoading={basisLoading} historyError={basisError} writable={writable} busy={busy} onStart={()=>lifecycle('start')}/>:<ReviewFacts record={shown} users={members} history={history} status={!pilot&&shown?reviewStatus(shown):undefined}/>}
           {shown?.iso_audit&&<section className="border border-line rounded p-3 space-y-2 text-sm" aria-label="Audit workpapers">
             <h3 className="font-medium">{auditPackage(shown.iso_audit.package_key)?.title}</h3>
             <p>Cycle {shown.iso_audit.cycle} · {auditProgress(shown.iso_audit).complete} of {auditProgress(shown.iso_audit).total} workpapers complete</p>
@@ -225,7 +236,8 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             {selected?.risk_review_recommendation&&<p className="text-sm">{selected.risk_review_recommendation}</p>}
             {related.risks?.filter(r=>r.risk_id===current.risk_id).map(r=><Button key={r.risk_id} size="sm" variant="outline" onClick={()=>setLinked({kind:'risks',record:r})}>Open Risk · {r.display_id||r.title}</Button>)}
           </section>}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {workflowPresentation&&<h3 className="review-workflow-details-heading">Details <span>Edit and save. Completion evaluation is recorded separately.</span></h3>}
+          <div className="review-workflow-details grid grid-cols-1 sm:grid-cols-2 gap-4">
             {configFields.filter(f => (f.name !== 'custom_recurrence_days' || configuration.recurrence === 'custom') && (f.name !== 'policy_id' || !pilot && (configuration.review_type === 'policy' || configuration.policy_id))).map(field => {
               const f=field.name==='owner_id'?{...field,label:'Assigned Reviewer'}:field;
               const disabled = frozen || !admin, value = configuration[f.name] || '';
@@ -234,17 +246,18 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
               if (f.type === 'select') return <div key={f.name}>{picker(f.label,value,v => setForm(p => ({...p,[f.name]:v})), [...f.options,...(value && !f.options.some(o => o.value === value) ? [{value,label:value}] : [])],disabled,`field-${f.name}`)}</div>;
               return <div key={f.name} className={f.name === 'title' ? 'sm:col-span-2' : ''}><Label htmlFor={`review-${f.name}`}>{f.label}</Label><Input id={`review-${f.name}`} type={f.type || 'text'} value={f.type === 'date' ? value.slice(0,10) : value} disabled={disabled} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} data-testid={`field-${f.name}`} /></div>;
             })}
+            {workflowPresentation&&<div><Label>Origin</Label><p className="review-workflow-origin">{basisSummary(shown)}</p><p className="review-workflow-help">Source and configured cadence are explained in Requirements.</p></div>}
             <div><Label>Occurrence</Label><p className="text-sm py-2" data-testid="review-period">{selected?.period || derived.period}</p></div>
             <div><Label>Next Review Date</Label><p className="text-sm py-2" data-testid="review-next-date">{date(selected?.next_review_date || derived.next_review_date)}</p></div>
           </div>
-          <div><Label htmlFor="review-notes">Notes</Label><Textarea id="review-notes" data-testid="field-notes" rows={5} value={(selected || form).notes || ''} disabled={frozen || !writable} onChange={e => setForm(p => ({...p,notes:e.target.value}))} /></div>
+          <div className="review-workflow-notes"><Label htmlFor="review-notes">Notes</Label><Textarea id="review-notes" data-testid="field-notes" rows={5} value={(selected || form).notes || ''} disabled={frozen || !writable} onChange={e => setForm(p => ({...p,notes:e.target.value}))} /></div>
           {current&&<details className="border border-line rounded p-3 text-sm"><summary className="cursor-pointer font-medium">Review evaluation</summary>
             <p className="my-2 text-ink-secondary">Completion records the activity; Finding counts and effectiveness are separate. Notes, existing records or external references may support your judgment. A separate uploaded file is not required. Evaluation below is recorded when you complete this occurrence.</p>
             {frozen?(()=>{const recorded=selected||current.occurrences?.find(o=>o.occurrence_id===oid)||{};return <div className="space-y-2">{evaluationFields.map(([key,label])=>recorded[key]?<p key={key} className="whitespace-pre-wrap break-words"><strong>{label}: </strong>{recorded[key]}</p>:null)}{'checklist_confirmed' in recorded&&<p>Reviewer checklist confirmed: {recorded.checklist_confirmed?'Yes':'No'} (not an effectiveness conclusion)</p>}{!evaluationFields.some(([key])=>recorded[key])&&!('checklist_confirmed' in recorded)&&<p>No evaluation recorded for this occurrence.</p>}</div>;})():<fieldset disabled={!writable||busy} className="space-y-2">{evaluationFields.map(([key,label,max])=><label key={key} className="block">{label}<Textarea aria-label={label} maxLength={max} rows={key==='conclusion'?3:2} value={evaluation[key]||''} onChange={e=>setEvaluation(p=>({...p,[key]:e.target.value}))}/></label>)}<label className="flex gap-2 items-center"><input type="checkbox" checked={evaluation.checklist_confirmed||false} onChange={e=>setEvaluation(p=>({...p,checklist_confirmed:e.target.checked}))}/>Reviewer checklist confirmed (not an effectiveness conclusion)</label></fieldset>}
           </details>}
           {selected && <p className="text-sm">Completed {date(selected.completed_at || selected.completion_date)} by {selected.completed_by_name || person(selected.completed_by)} · {outcome(selected)}</p>}
-          {current && !frozen && writable && <div className="flex flex-wrap gap-2">
-            {current.status !== 'in_progress' && <Button size="sm" variant="outline" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-start" onClick={() => lifecycle('start')}>Start Review</Button>}
+          {current && !frozen && writable && <div className="review-workflow-actions flex flex-wrap gap-2">
+            {!workflowPresentation&&current.status !== 'in_progress' && <Button size="sm" variant="outline" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-start" onClick={() => lifecycle('start')}>Start Review</Button>}
             <Button size="sm" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-complete" onClick={() => {
               // Brawndo: completion closes the occurrence and schedules the next one, so it is confirmed first.
               if(!pilot) return lifecycle('complete');
@@ -258,6 +271,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           </section>}
         </>}
         {tab === 'Requirements' && <>
+          {workflowPresentation&&<BrawndoReviewRequirementCards record={{...(selected||form),client_id:cid}} related={related} historical={!!selected} loading={basisLoading} error={basisError} onOpen={setLinked}/>}
           {pilot?<ReviewExpectations reviewLayout record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
             policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.filter(p=>!(p.schedule_from_reviews&&p.next_review_date)).map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
           <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members} readable reviewLayout/>}
@@ -276,21 +290,19 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           })}</tbody></table></div>}
         </>}
         {tab === 'Evidence' && <>
-          {!frozen && writable && <Label className="block rounded-md border border-dashed border-line p-5 text-sm">Attach evidence to this occurrence<Input className="mt-2" type="file" multiple disabled={busy} data-testid="drawer-evidence-input" onChange={e => { const files = Array.from(e.target.files); run(async () => { for (const file of files) await api.post('/evidence',{client_id:cid,linked_type:'review',linked_id:rid,occurrence_id:oid,filename:file.name,mime_type:file.type,content_base64:await fileData(file)}); await reload(); toast.success('Evidence attached'); }); }} /></Label>}
+          {!frozen && writable && <Label className="review-workflow-upload block rounded-md border border-dashed border-line p-5 text-sm">{workflowPresentation&&<span className="review-workflow-upload-icon" aria-hidden="true"><Upload size={20}/></span>}Attach evidence to this occurrence<Input className="mt-2" type="file" multiple disabled={busy} data-testid="drawer-evidence-input" onChange={e => { const files = Array.from(e.target.files); run(async () => { for (const file of files) await api.post('/evidence',{client_id:cid,linked_type:'review',linked_id:rid,occurrence_id:oid,filename:file.name,mime_type:file.type,content_base64:await fileData(file)}); await reload(); toast.success('Evidence attached'); }); }} /></Label>}
           <EvidencePanel clientId={cid} kind="reviews" id={rid} occurrenceId={oid} refreshKey={evidenceVersion} allowLink={!frozen} onOpen={async ref=>{const version=generation.current;try{const target=await resolveEvidenceSource(ref,cid);if(version===generation.current)setLinked(target);}catch(e){toast.error(formatError(e));}}}/>
         </>}
-        {tab === 'Comments' && <>
-          {!comments.length && <p className="text-sm text-ink-help">No comments yet.</p>}
-          {comments.map(c => <div key={c.comment_id} className="border border-line rounded-md p-3 text-sm"><div className="text-xs text-ink-help mb-2">{c.user_name || c.user_email} · {date(c.created_at)}</div><p className="whitespace-pre-wrap">{c.body}</p></div>)}
+        {tab === 'Comments' && <ReviewCommentsLayout eligible={workflowPresentation} comments={comments} date={date}>
           {!frozen && writable && <><Textarea aria-label="Comment" data-testid="comment-input" value={comment} onChange={e => setComment(e.target.value)} placeholder="Add a comment…" /><Button size="sm" data-testid="comment-submit" disabled={busy || !comment.trim()} onClick={() => run(async () => { await api.post('/comments',{entity_type:'reviews',entity_id:rid,occurrence_id:oid,body:comment}); setComment(''); await reload(); })}>Post comment</Button></>}
-        </>}
-        {tab === 'Activity' && <>
+        </ReviewCommentsLayout>}
+        {tab === 'Activity' && (workflowPresentation?<ReviewWorkflowActivity activity={activity} selected={selected}/>:<>
           {!selected && <p className="text-sm text-ink-secondary">Major events across this Review's occurrences.</p>}
           {!activity.length && <p className="text-sm text-ink-help">No activity for this occurrence yet.</p>}
           {activity.map(a => <div key={a.log_id || a.audit_id} className="border-b border-line py-2 text-sm"><div className="text-xs text-ink-help">{new Date(a.at).toLocaleString()} · {a.meta?.by_name || a.user_name || a.user_email}</div><p>{a.action}{a.meta?.task_id ? ` · ${a.meta.task_id}` : a.meta?.finding_id ? ` · ${a.meta.finding_id}` : ''}{a.meta?.filename ? ` · ${a.meta.filename}` : ''}{a.meta?.due_date ? ` · ${date(a.meta.due_date)}` : ''}</p></div>)}
-        </>}
+        </>)}
       </div>
-      <div className="px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(async()=>{const {data}=await updateRecord.retry();setCurrent(data);await reload();onSaved?.();toast.success('Saved');})}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && ['Overview','Requirements'].includes(tab) && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
+      <div className="review-workflow-footer px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{workflowPresentation&&<span className="review-workflow-feedback">{busy?'Working…':dirty?'Unsaved changes':'No unsaved changes'}</span>}{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(async()=>{const {data}=await updateRecord.retry();setCurrent(data);await reload();onSaved?.();toast.success('Saved');})}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && ['Overview','Requirements'].includes(tab) && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
     </DialogContent>
     {<AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}>
       <AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle>
@@ -306,8 +318,9 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     </AlertDialog>}
     {linked && <RecordDrawer open kind={linked.kind} record={linked.record} clientId={cid} users={members} onOpenChange={v => {if (!v) {setLinked(null);reload();const target=cisBriefOpener.current;cisBriefOpener.current=null;if(target)requestAnimationFrame(()=>{if(target.isConnected)target.focus({preventScroll:true});});}}} onSaved={() => {reload();onSaved?.();}} />}
     <Sheet open={!!finding} onOpenChange={v => {if (!v) leave(()=>setFinding(null),true);}}>
-      <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className="w-full sm:max-w-xl overflow-y-auto" data-testid="review-finding-form"><SheetHeader><SheetTitle>Raise Finding</SheetTitle></SheetHeader>
-        {finding && <form className="mt-5 space-y-4" onSubmit={e => {e.preventDefault();run(async () => {await createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>
+      <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className={'w-full sm:max-w-xl overflow-y-auto'+(findingPresentation?' brawndo-review-finding':'')} data-testid="review-finding-form"><SheetHeader className={findingPresentation?'review-finding-header':undefined}><div className={findingPresentation?'review-finding-heading':undefined}>{findingPresentation&&<span className="review-finding-icon" aria-hidden="true"><AlertTriangle size={18}/></span>}<SheetTitle>Raise Finding</SheetTitle></div>{findingPresentation&&<div className="review-finding-context"><span>From {current.title}</span><span>{current.period||reviewSchedule(current).period} occurrence</span></div>}</SheetHeader>
+        {finding && <form className={findingPresentation?'review-finding-form':'mt-5 space-y-4'} onSubmit={e => {e.preventDefault();run(async () => {await createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>
+          {findingPresentation?<BrawndoReviewFindingFields finding={finding} onChange={setFinding} record={current} occurrenceId={occurrenceId(current)} users={members} clientId={cid} busy={busy} onCancel={()=>leave(()=>setFinding(null),true)}/>:<>
           <Label className="block">Finding title *<Input required data-testid="finding-title" value={finding.title} onChange={e => setFinding(p => ({...p,title:e.target.value}))} /></Label>
           <Label className="block">Description<Textarea value={finding.description} onChange={e => setFinding(p => ({...p,description:e.target.value}))} /></Label>
           {picker('Severity',finding.severity,v => setFinding(p => ({...p,severity:v})),SCHEMAS.findings.fields.find(f => f.name === 'severity').options)}
@@ -316,8 +329,14 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           <Label className="block">Corrective action *<Input required data-testid="finding-remediation-title" value={finding.remediation_title} onChange={e => setFinding(p => ({...p,remediation_title:e.target.value}))} /></Label>
           <Label className="block">Remediation notes<Textarea value={finding.remediation_plan} onChange={e => setFinding(p => ({...p,remediation_plan:e.target.value}))} /></Label>
           <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => leave(()=>setFinding(null),true)}>Cancel</Button><Button type="submit" disabled={busy} data-testid="finding-save">Save finding and action</Button></div>
+          </>}
         </form>}
       </SheetContent>
     </Sheet>
   </Dialog>;
+}
+
+function ReviewCommentsLayout({eligible,comments,date,children}) {
+  if(eligible)return <ReviewWorkflowComments comments={comments}>{children}</ReviewWorkflowComments>;
+  return <>{!comments.length&&<p className="text-sm text-ink-help">No comments yet.</p>}{comments.map(c=><div key={c.comment_id} className="border border-line rounded-md p-3 text-sm"><div className="text-xs text-ink-help mb-2">{c.user_name||c.user_email} · {date(c.created_at)}</div><p className="whitespace-pre-wrap">{c.body}</p></div>)}{children}</>;
 }
