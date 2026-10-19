@@ -14,6 +14,18 @@ const fixtures=db=>db.portfolio_reporting.snapshots.filter(row=>row.observation_
 beforeEach(()=>{jest.useFakeTimers().setSystemTime(new Date(AT));sessionStorage.clear();});
 afterEach(()=>jest.useRealTimers());
 
+test('an installed joined scenario needs no native projection during migration checks',async()=>{
+  await axios.create({adapter:previewAdapter}).post('/demo/enter');
+  const db=readStore(),before=clone(db);
+  expect(db.portfolio_reporting.fixture_versions[BRAWNDO_HISTORY_VERSION].join_snapshot_id).toBeTruthy();
+  const projection=jest.spyOn(require('./portfolioReporting'),'demoCurrentPositions');
+  try{
+    expect(enrichBrawndoReportingHistory(db)).toBe(false);
+    expect(projection).not.toHaveBeenCalled();
+    expect(db).toEqual(before);
+  }finally{projection.mockRestore();}
+});
+
 test('carried scenario boundary retains its original identity and provenance after the clock advances',async()=>{
   await axios.create({adapter:previewAdapter}).post('/demo/enter');
   const db=readStore(),before=clone(db);

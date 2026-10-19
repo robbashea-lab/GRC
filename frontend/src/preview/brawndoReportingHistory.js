@@ -155,10 +155,12 @@ function scenarioSnapshots(db,source,scenario){
 
 export function enrichBrawndoReportingHistory(db,clock=new Date()){
   const history=db.portfolio_reporting||{};
-  const source=eligibleSource(db,clock);if(!source)return false;
   const installed=history.fixture_versions?.[BRAWNDO_HISTORY_VERSION];
+  // A joined fixture has no migration work. Reporting admission still validates
+  // its complete payload in getBrawndoScenarioContext on each reporting request.
+  if(installed?.join_snapshot_id)return false;
+  const source=eligibleSource(db,clock);if(!source)return false;
   if(installed){
-    if(installed.join_snapshot_id)return false;
     const scenario=buildBrawndoScenario(installed.anchor,clock);
     if(!scenario||installed.fingerprint!==scenario.fingerprint||stable(installed.terminal)!==stable(scenario.terminal)
       ||stable(installed.events)!==stable(scenario.events)

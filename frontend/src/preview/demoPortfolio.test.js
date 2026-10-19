@@ -12,6 +12,7 @@ import { portfolio } from './summaries';
 const api = axios.create({
   adapter: previewAdapter
 });
+const SCENARIO_VERSION='brawndo-cis-ig1-history-v2';
 beforeEach(() => {
   jest.useFakeTimers().setSystemTime(new Date('2026-10-13T17:00:00.000Z'));
   sessionStorage.clear();
@@ -120,6 +121,8 @@ test('reset recovers creations edits deletions completions and baseline without 
   // Canonical source records remain exact; prospective reports begin at the new reset commit.
   const {portfolio_reporting:reporting,...restoredSources}=JSON.parse(JSON.stringify(lightweightStore(restored)));
   const {portfolio_reporting:seedReporting,...canonicalSources}=JSON.parse(JSON.stringify(lightweightStore(seedStore())));
+  // Raw source construction has no accepted reporting baseline; normal entry/reset installs it atomically.
+  expect(seedReporting).toBeUndefined();
   expect(restoredSources).toEqual(canonicalSources);
   expect(reporting).toMatchObject({started_at:resetAt,last_captured_at:resetAt,activity_proofs:{}});
   expect(reporting.activity_proofs).toEqual({});
@@ -128,9 +131,23 @@ test('reset recovers creations edits deletions completions and baseline without 
   const fixtureSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture');
   expect(currentSnapshots.length).toBeGreaterThan(0);
   expect(currentSnapshots.every(snapshot=>snapshot.captured_at===resetAt&&snapshot.current.captured_at===resetAt)).toBe(true);
-  expect(fixtureSnapshots).toHaveLength(seedReporting.snapshots.length);
-  expect(fixtureSnapshots).toHaveLength(11);
-  expect(fixtureSnapshots.every(snapshot=>snapshot.current.provenance.fixture_anchor===resetAt&&snapshot.captured_at<resetAt)).toBe(true);
+  expect(fixtureSnapshots).toHaveLength(original.portfolio_reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture').length);
+  // At this fixed anchor, V2 has eighteen historical positions and one exact terminal position.
+  expect(fixtureSnapshots).toHaveLength(19);
+  expect(fixtureSnapshots.every(snapshot=>snapshot.program_id==='demo_brawndo:cis-ig1'
+    &&snapshot.current.provenance.fixture_version===SCENARIO_VERSION
+    &&snapshot.current.provenance.fixture_anchor===resetAt)).toBe(true);
+  expect(fixtureSnapshots.slice(0,-1).every(snapshot=>snapshot.captured_at<resetAt)).toBe(true);
+  expect(fixtureSnapshots.at(-1).captured_at).toBe(resetAt);
+  const nativeRows=restored.framework_assessments.filter(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1');
+  const nativeStates=Object.fromEntries(nativeRows.map(row=>[row.definition_id,row.status]));
+  const marker=reporting.fixture_versions[SCENARIO_VERSION];
+  expect(nativeRows).toHaveLength(56);
+  expect(marker).toMatchObject({version:SCENARIO_VERSION,anchor:resetAt,count:19,terminal:nativeStates});
+  expect(currentSnapshots.map(snapshot=>snapshot.snapshot_id)).toContain(marker.join_snapshot_id);
+  const references=fixtureSnapshots.at(-1).current.provenance.source_references;
+  expect(references.map(row=>row.id).sort()).toEqual(nativeRows.map(row=>row.framework_assessment_id).sort());
+  expect(Object.fromEntries(references.map(row=>[row.definition_id,row.status]))).toEqual(nativeStates);
   const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
   expect(reporting.snapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
   expect(restored.tasks.some(t => t.task_id === created.task_id)).toBe(false);

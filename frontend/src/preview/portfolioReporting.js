@@ -246,7 +246,13 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
   const source_refresh_proofs=[...(prior.source_refresh_proofs||[])];
   const canonical=db.clients?.find(client=>client.client_id==='demo_brawndo');
   const scenario=prior.fixture_versions?.['brawndo-cis-ig1-history-v2'];
-  if(previous&&scenario&&db.user?.workspace_mode==='demo'&&canonical?.status==='active'&&!inactive(canonical)
+  const retainedLogIds=new Set((previous?.logs||[]).map(log=>log.audit_id||log.log_id));
+  const refreshReceipts=(db.logs||[]).filter(log=>!retainedLogIds.has(log.audit_id||log.log_id)
+    &&log.client_id==='demo_brawndo'&&log.entity_type==='framework_assessments'
+    &&log.action==='Framework assessment updated'&&activity_proofs[log.audit_id||log.log_id]?.eligible===true);
+  // No accepted Brawndo assessment receipt means this save cannot refresh its
+  // source. Avoid rebuilding that unrelated program for every other Demo save.
+  if(previous&&scenario&&refreshReceipts.length&&db.user?.workspace_mode==='demo'&&canonical?.status==='active'&&!inactive(canonical)
     &&canonical.environment==='Demo'&&canonical.initial_program_baseline?.state?.version===3
     &&canonical.initial_program_baseline.state.completed&&canonical.initial_program_baseline.completed_by==='demo_provider_lead'){
     // Same posture, newer accepted source: retain a reporting proof without
@@ -257,10 +263,7 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
     const sameMembers=oldRefs.length===56&&newRefs.length===56&&oldRefs.every(old=>newRefs.some(next=>next.id===old.id
       &&next.kind===old.kind&&next.definition_id===old.definition_id&&next.framework_version===old.framework_version&&next.status===old.status));
     const changed=newRefs.filter(next=>oldRefs.find(old=>old.id===next.id)?.version!==next.version);
-    const retained=new Set((previous.logs||[]).map(log=>log.audit_id||log.log_id));
-    const receipts=changed.map(reference=>(db.logs||[]).find(log=>!retained.has(log.audit_id||log.log_id)
-      &&log.client_id==='demo_brawndo'&&log.entity_type==='framework_assessments'&&log.entity_id===reference.id
-      &&log.action==='Framework assessment updated'&&log.meta?.status===reference.status
+    const receipts=changed.map(reference=>refreshReceipts.find(log=>log.entity_id===reference.id&&log.meta?.status===reference.status
       &&Number.isFinite(Date.parse(log.at))&&Date.parse(log.at)<=Date.parse(at)
       &&Math.abs(Date.parse(log.at)-Date.parse(reference.version))<=1000
       &&activity_proofs[log.audit_id||log.log_id]?.eligible===true));

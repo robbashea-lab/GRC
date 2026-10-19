@@ -5,6 +5,7 @@ import {clearFileCache,lightweightStore,rememberFiles,restoreFiles,storageDiagno
 const api=axios.create({adapter:previewAdapter});
 const persisted=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
 const OPENED_AT='2026-10-13T17:00:00.000Z',RESET_AT='2026-10-13T18:00:00.000Z';
+const SCENARIO_VERSION='brawndo-cis-ig1-history-v2';
 beforeEach(async()=>{jest.useFakeTimers().setSystemTime(new Date(OPENED_AT));sessionStorage.clear();localStorage.clear();clearFileCache();await api.post('/demo/enter');});
 afterEach(()=>jest.useRealTimers());
 const upload=async(bytes,name='sample.txt')=>(await api.post('/evidence',{client_id:persisted().clients[0].client_id,filename:name,mime_type:'text/plain',content_base64:btoa('x'.repeat(bytes))})).data;
@@ -88,9 +89,25 @@ test('full reset recovers corrupted data and restores canonical roles and framew
  expect(reporting.snapshots).toHaveLength(originalReporting.snapshots.length);
  const currentSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind!=='demo_fixture');
  const fixtureSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture');
+ expect(currentSnapshots.length).toBeGreaterThan(0);
  expect(currentSnapshots.every(snapshot=>snapshot.captured_at===RESET_AT&&snapshot.current.captured_at===RESET_AT)).toBe(true);
- expect(fixtureSnapshots).toHaveLength(11);
- expect(fixtureSnapshots.every(snapshot=>snapshot.current.provenance.fixture_anchor===RESET_AT&&snapshot.captured_at<RESET_AT)).toBe(true);
+ // At this fixed anchor, V2 has eighteen historical positions and one exact terminal position.
+ expect(fixtureSnapshots).toHaveLength(19);
+ expect(fixtureSnapshots.every(snapshot=>snapshot.program_id==='demo_brawndo:cis-ig1'
+   &&snapshot.current.provenance.fixture_version===SCENARIO_VERSION
+   &&snapshot.current.provenance.fixture_anchor===RESET_AT)).toBe(true);
+ expect(fixtureSnapshots.slice(0,-1).every(snapshot=>snapshot.captured_at<RESET_AT)).toBe(true);
+ expect(fixtureSnapshots.at(-1).captured_at).toBe(RESET_AT);
+ const nativeRows=restored.framework_assessments.filter(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1');
+ const nativeStates=Object.fromEntries(nativeRows.map(row=>[row.definition_id,row.status]));
+ const marker=reporting.fixture_versions[SCENARIO_VERSION];
+ expect(nativeRows).toHaveLength(56);
+ expect(marker).toMatchObject({version:SCENARIO_VERSION,anchor:RESET_AT,count:19,terminal:nativeStates});
+ expect(currentSnapshots.map(snapshot=>snapshot.snapshot_id)).toContain(marker.join_snapshot_id);
+ const terminal=readStore().portfolio_reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture').at(-1);
+ const references=terminal.current.provenance.source_references;
+ expect(references.map(row=>row.id).sort()).toEqual(nativeRows.map(row=>row.framework_assessment_id).sort());
+ expect(Object.fromEntries(references.map(row=>[row.definition_id,row.status]))).toEqual(nativeStates);
  const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
  expect(reporting.snapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
  expect(new Set(restored.users.map(u=>u.role))).toEqual(new Set(canonical.users.map(u=>u.role)));
