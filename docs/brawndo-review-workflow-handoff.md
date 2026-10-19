@@ -94,3 +94,9 @@ identity and true 200 percent browser zoom require tools that support those chec
 computed family or a narrow viewport alone must not be reported as that evidence.
 
 Publication base: rebase only this isolated new change onto the current published df396399 baseline before pushing; its tree is identical to the original local baseline. Full CI, hosted journeys, exact original Google font identity, true browser 200 percent zoom, cross-page paired pixel checks, upload/download, and authenticated failure/tenant checks are not certified by this delivery.
+
+## PR87 staging verification follow-up - 2026-10-19
+
+The exact concept font resource is now available from its observed Google Fonts URL and packaged unmodified in inter-review-latin.woff2, with hash/license provenance in Inter-review-source.txt. The prior Dashboard opsz face is no longer used inside these Review surfaces. Native keyboard clearing must clear all date segments: one missing segment correctly causes browser badInput validation. Clearing month/day/year produced a valid empty draft and accepted Finding/Action creation with No due date; the earlier programmatic-clear attempt remains retained, but is no longer an unresolved app defect. No date/controller change was necessary.
+
+Run215 on f1a9b03 was canceled intentionally before qualification because the font correction requires a new candidate. Final-head Release verification and specific-commit staging deployment remain required. No new access, credentials or provider settings are authorized or needed.

@@ -1,10 +1,7 @@
 @font-face {
-  font-family:'GoverNara Review Detail Inter'; font-style:normal; font-weight:400; font-display:swap;
-  src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');
+  font-family:'GoverNara Review Detail Inter'; font-style:normal; font-weight:400 700; font-display:swap;
+  src:url('../assets/fonts/inter-review-latin.woff2') format('woff2');
 }
-@font-face {font-family:'GoverNara Review Detail Inter';font-style:normal;font-weight:500;font-display:swap;src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');}
-@font-face {font-family:'GoverNara Review Detail Inter';font-style:normal;font-weight:600;font-display:swap;src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');}
-@font-face {font-family:'GoverNara Review Detail Inter';font-style:normal;font-weight:700;font-display:swap;src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');}
 /* Only the existing, verified main Review gets these tokens. Portalled editors do not inherit them. */
 :root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] {
   --rw-card:#fff; --rw-sunk:#f6f8fb; --rw-line:#e2e7ef; --rw-line2:#cfd7e3;
