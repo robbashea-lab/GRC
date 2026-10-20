@@ -215,6 +215,5 @@
   .sg11-finding-sheet :is(.sg11-finding-sheet-head,.sg11-finding-context,.sg11-finding-inputs,.sg11-finding-footer) {padding-left:16px;padding-right:16px;}
 }
 
-/* Portals sit outside the scoped dialog and must retain its local Inter face. */
-:root .ui-popover.sg11-owner-popover,
-:root .ui-popover.sg11-owner-popover :where(*) {font-family:'GoverNara Safeguard Inter',Inter,system-ui,sans-serif;}
+/* Native portal inputs resolve this local token through their existing shared rule. */
+:root .ui-popover.sg11-owner-popover {--font-body:'GoverNara Safeguard Inter',Inter,system-ui,sans-serif;font-family:var(--font-body);}

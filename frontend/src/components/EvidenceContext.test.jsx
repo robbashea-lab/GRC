@@ -155,3 +155,11 @@ test('optional entity pagination hides only a single first page and retains nati
   expect(pagers()).toHaveLength(1);expect(button('Previous').disabled).toBe(false);
   await click('Previous');expect(pagers()).toHaveLength(0);
 });
+test('occurrence evidence uses the actual singular file count without changing default headings',async()=>{
+  await upload('review',review.review_id,'actual-occurrence.pdf',{occurrence_id:review.current_occurrence_id});
+  await act(async()=>root.render(<EvidencePanel clientId={mockClient.client_id} kind="reviews" id={review.review_id} occurrenceId={review.current_occurrence_id} directPresentation={{heading:'This occurrence',countUnit:'files',singularCountUnit:'file'}}/>));
+  expect(container.querySelector('[aria-label="This occurrence"] h3').textContent).toBe('This occurrence · 1 file');
+  expect(container.textContent).toContain('actual-occurrence.pdf');
+  await act(async()=>root.render(<EvidencePanel clientId={mockClient.client_id} kind="reviews" id={review.review_id} occurrenceId={review.current_occurrence_id}/>));
+  expect(container.querySelector('[aria-label="Direct Evidence"] h3').textContent).toBe('Direct Evidence (1)');
+});

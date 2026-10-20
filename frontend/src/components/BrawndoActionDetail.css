@@ -221,6 +221,7 @@
   font-size: 13.5px;
 }
 :root .ui-popover.brawndo-action-owner-popover {
+  --font-body: 'GoverNara Action Detail Inter', Inter, system-ui, sans-serif;
   color: #0f1a2e; background: #ffffff; border-color: #cfd7e3;
 }
 :is(html[data-brawndo-portal='dark']:not([data-brawndo-workspace]),html[data-brawndo-workspace='dark']) .ui-popover.brawndo-action-owner-popover {

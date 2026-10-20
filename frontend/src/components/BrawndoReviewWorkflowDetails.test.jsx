@@ -81,3 +81,12 @@ test('native configuration permissions and read-only source navigation remain di
     for(const field of container.querySelectorAll('input,textarea'))expect(field.disabled).toBe(true);
   }finally{await act(async()=>root.unmount());container.remove();}
 });
+
+test('frozen historical occurrence keeps its recorded due date without an active overdue warning',()=>{
+  const historical={...record,status:'completed',due_date:'1999-01-31'};
+  const active=renderToStaticMarkup(<BrawndoReviewWorkflowDetails record={historical} source={sourceFor(historical)} picker={picker}/>);
+  expect(active).toContain('Overdue by');
+  const frozen=renderToStaticMarkup(<BrawndoReviewWorkflowDetails record={historical} source={sourceFor(historical)} picker={picker} frozen/>);
+  expect(frozen).toContain('value="1999-01-31"');
+  expect(frozen).not.toContain('Overdue by');
+});
