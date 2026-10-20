@@ -101,3 +101,47 @@ test('clearing an explicit modern follow-up does not resurrect its input or eras
   expect(container.querySelector('.asr-h .chip').textContent).toBe('Follow-up Nov 7, 2026');
   expect(container.textContent).toContain('retained; used when no next follow-up is recorded');
 });
+
+const downloadEvidence={evidence_id:'native-evidence',client_id:'demo_brawndo',filename:'Native assurance.pdf',created_at:'2026-10-01T12:00:00Z'};
+async function openDownloadRoute(route,downloadEv,overrides={}){
+  if(route!=='contract')form.assurance_records=[{
+    assurance_id:'current-document',type:'SOC 2',review_status:'received',evidence_ids:[],
+    ...(route==='history'?{history:[{review_status:'reviewed',reviewed_on:'2026-09-01',notes:'Retained native review',evidence_ids:[downloadEvidence.evidence_id]}]}:{})
+  }];
+  await render({tab:route==='contract'?'contract':'assurance',evidence:[downloadEvidence],downloadEv,...overrides});
+  if(route==='contract')return container.querySelector('.files .file button');
+  await click('Review document');
+  if(route==='assurance')return container.querySelector('.assurance-details .file button');
+  const history=[...container.querySelectorAll('details')].find(details=>details.querySelector('summary')?.textContent.startsWith('Earlier recorded states'));
+  expect(history).toBeDefined();await act(async()=>history.querySelector('summary').click());
+  return history.querySelector('button');
+}
+
+test.each(['contract','assurance','history'])('%s download reports native permission and unavailable-content errors and permits retry without changing records',async route=>{
+  const download=jest.fn()
+    .mockRejectedValueOnce(Error('You do not have access to this evidence.'))
+    .mockRejectedValueOnce(Error('This Demo file is unavailable after reload.'))
+    .mockResolvedValueOnce();
+  const saved=jest.fn(),target=await openDownloadRoute(route,download,{onSaved:saved});
+  expect(target).not.toBeNull();
+  const before=JSON.stringify({record,form});
+  await act(async()=>target.click());
+  expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+  expect(container.querySelector('[role="alert"]').textContent).toBe('You do not have access to this evidence.');
+  await act(async()=>target.click());
+  expect(container.querySelector('[role="alert"]').textContent).toBe('This Demo file is unavailable after reload.');
+  await act(async()=>target.click());
+  expect(container.querySelector('[role="alert"]')).toBeNull();expect(download).toHaveBeenCalledTimes(3);
+  expect(download.mock.calls).toEqual([[downloadEvidence],[downloadEvidence],[downloadEvidence]]);
+  expect(JSON.stringify({record,form})).toBe(before);expect(saved).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('a read-only Contract download delegates the unchanged native evidence identity without a record write',async()=>{
+  const download=jest.fn().mockResolvedValue(),saved=jest.fn();
+  const target=await openDownloadRoute('contract',download,{canWrite:false,isAdmin:false,onSaved:saved});
+  const before=JSON.stringify({record,form});
+  await act(async()=>target.click());
+  expect(download).toHaveBeenCalledWith(downloadEvidence);expect(download).toHaveBeenCalledTimes(1);
+  expect(container.querySelector('[role="alert"]')).toBeNull();expect(JSON.stringify({record,form})).toBe(before);
+  expect(saved).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
