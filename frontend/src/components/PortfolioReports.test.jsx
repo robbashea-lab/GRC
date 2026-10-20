@@ -30,6 +30,23 @@ const dialog = () => document.querySelector('[data-testid="portfolio-history-dia
 const click = label => act(async () => { const button = [...document.querySelectorAll('button')].find(node => node.textContent.trim() === label); expect(button).toBeTruthy(); button.click(); });
 const tab = name => act(async () => { const node = [...document.querySelectorAll('[role="tab"]')].find(value => value.textContent.startsWith(name)); node.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 0})); });
 const completeLabel = (element = container) => [...element.querySelectorAll('.ph-chart text')].find(node => node.textContent === 'Complete');
+
+test('stacked history opt-in preserves unknown gaps, default callers and genuine provenance',async()=>{
+  const before=snapshot(-30,20,{continuity_proven:true,effective_until:AT});
+  const after=snapshot(0,32);
+  const props={points:[before,after],start:before.effective_at,asOf:AT,view:'mix',current:after,scopeChanges:[]};
+  await act(async()=>root.render(<PortfolioHistoryChart {...props}/>));
+  expect(container.querySelectorAll('.ph-step-band')).toHaveLength(0);
+  expect(container.querySelector('.ph-line')).toBeTruthy();
+  await act(async()=>root.render(<PortfolioHistoryChart {...props} stackedHistory/>));
+  expect(container.querySelectorAll('.ph-step-band')).toHaveLength(4);
+  expect(container.querySelector('.ph-line')).toBeNull();
+  expect(container.querySelector('[data-demo-scenario]')).toBeNull();
+  expect(container.textContent).not.toContain('Illustrative');
+  await act(async()=>root.render(<PortfolioHistoryChart {...props} points={[{...before,continuity_proven:false},after]} stackedHistory/>));
+  expect(container.querySelectorAll('.ph-step-band')).toHaveLength(0);
+  expect(container.querySelectorAll('.ph-band')).toHaveLength(8);
+});
 const chartPosition = (implemented, denominator = 56, extra = {}) => snapshot(0, implemented, {denominator,
   counts: counts(implemented).map(value => value.key === 'not_assessed' ? {...value, count: denominator - implemented} : value), ...extra});
 

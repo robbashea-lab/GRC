@@ -12,6 +12,7 @@ import {dashboardPosture} from '../lib/dashboardPosture';
 import {COMPLIANCE_SECTIONS} from '../lib/complianceNavigation';
 import {dashboardWorkQueue,filterDashboardQueue} from '../lib/dashboardWorkQueue';
 import {eligible} from './assignmentEligibility';
+import {portfolioMonitoring} from './portfolioMonitoring';
 
 const sources=(db,cid)=>Object.fromEntries(DASHBOARD_KINDS.map(k=>[k,list(db,k,cid)]));
 const model=(db,cid,today,scope={kind:'org'})=>{
@@ -42,7 +43,7 @@ export function portfolio(db,includeArchived,today=new Date()) {
       open_actions:m.counts.past_due+m.counts.due_30d,open_findings:m.activeRecords.findings.length,
       significant_risks:m.significantRisks.length,critical_high_findings:m.materialFindings.length,
       overdue_reviews:m.metrics.past_due.filter(r=>r.kind==='reviews').length,upcoming_reviews:m.metrics.due_30d.filter(r=>r.kind==='reviews').length,
-      last_activity:latest.get(c.client_id)||null};
+      last_activity:latest.get(c.client_id)||null, monitoring:portfolioMonitoring(db,c,today)};
   });
   const active=rows.filter(c=>!['archived','inactive'].includes(c.client_status));
   const action_required=active.filter(c=>c.program_status==='action_required').length, needs_attention=active.filter(c=>c.program_status==='needs_attention').length;

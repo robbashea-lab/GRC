@@ -163,7 +163,7 @@ export function PortfolioSparkline({program, asOf, span}) {
   </svg>;
 }
 
-function useHistory(client, program, range, refreshToken, requireIdentity = false, demoScenario = false) {
+export function useHistory(client, program, range, refreshToken, requireIdentity = false, demoScenario = false) {
   const key = JSON.stringify([client.client_id, program.program_key, range, demoScenario]);
   const [state, setState] = useState({key: '', data: null, loading: true, error: ''}), [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -352,7 +352,7 @@ function historyTicks(start, asOf, width) {
   return ticks.filter((_,index)=>index%stride===0);
 }
 
-export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', inline = false, referenceHistory = false, demoScenario = null, scenarioPresentation = false, showProvenance = scenarioPresentation}) {
+export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', inline = false, referenceHistory = false, demoScenario = null, scenarioPresentation = false, showProvenance = scenarioPresentation, stackedHistory = false}) {
   const box = useRef(null), svg = useRef(null), tooltip = useRef(null);
   const chartId = useId().replace(/:/g, '');
   const [width, setWidth] = useState(900), [active, setActive] = useState(null), [engaged, setEngaged] = useState(false);
@@ -450,7 +450,7 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
   return <div ref={box} className="ph-chart" data-demo-scenario={scenarioPresentation ? 'true' : undefined}>
     {scenarioPresentation && view === 'mix' && <div className="ph-status-history-legend" aria-label="Historical status shares">{applicableCounts(current).map(value => <span key={value.key}><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label}</span>)}</div>}
     <svg ref={svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" tabIndex={points.length ? 0 : undefined} aria-label={showProvenance ? `${view === 'mix' ? 'Status' : 'Implementation'} history over the selected period. Use Left, Right, Home and End to read implementation positions.` : 'Implementation history over the selected period. Use Left, Right, Home and End to read genuine positions.'} onKeyDown={keyboard} onFocus={() => setEngaged(true)} onBlur={() => {setActive(null);setEngaged(false);}}>
-      <title>{view === 'mix' && scenarioPresentation ? 'Status history' : 'Implementation history'}</title><desc>{scenarioPresentation ? 'Historical state shares, not counts of transitions. Illustrative scenario history and later saved demo activity are identified in the readout and View data.' : showProvenance ? 'Illustrative demo scenario and later saved demo activity are identified in the readout and View data.' : 'Each marker is a saved observation at its genuine effective date. The text readout and View data provide exact counts.'}</desc>
+      <title>{view === 'mix' && (scenarioPresentation || stackedHistory) ? 'Status history' : 'Implementation history'}</title><desc>{scenarioPresentation ? 'Historical state shares, not counts of transitions. Illustrative scenario history and later saved demo activity are identified in the readout and View data.' : showProvenance ? 'Illustrative demo scenario and later saved demo activity are identified in the readout and View data.' : 'Each marker is a saved observation at its genuine effective date. The text readout and View data provide exact counts.'}</desc>
       <defs><pattern id={`${chartId}-hatch`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" className="ph-hatch-line" /></pattern><linearGradient id={`${chartId}-area`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--chart-implemented)" stopOpacity=".22"/><stop offset="100%" stopColor="var(--chart-implemented)" stopOpacity=".02"/></linearGradient></defs>
       {shadeEnd - left >= 130 && points.length > 0 && <g><rect x={left} y={top} width={shadeEnd-left} height={bottom-top} fill={`url(#${chartId}-hatch)`}/><text className="ph-before-tracking" x={(left+shadeEnd)/2} y={(top+bottom)/2} textAnchor="middle">Before tracking began</text></g>}
       {ticks.map(value => <g key={value}><line className={value === 0 ? 'ph-axis' : value === 100 ? 'ph-target' : 'ph-grid'} x1={left} x2={right} y1={y(value)} y2={y(value)} /><text x={left - 8} y={y(value) + 4} textAnchor="end">{`${value}%`}</text></g>)}
@@ -460,7 +460,7 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
         if (!connected(previous, point) || currentPercentage(previous) == null || currentPercentage(point) == null) return null;
         return <path key={identity(point)} d={`M${x(previous)},${bottom}V${y(currentPercentage(previous))}H${x(point)}V${bottom}Z`} fill={`url(#${chartId}-area)`} />;
       })}
-      {view === 'mix' && scenarioPresentation && points.slice(1).map((point, index) => {
+      {view === 'mix' && (scenarioPresentation || stackedHistory) && points.slice(1).map((point, index) => {
         const previous = points[index];
         if (!connected(previous, point) || currentPercentage(previous) == null || currentPercentage(point) == null) return null;
         let sum = 0;
@@ -470,17 +470,17 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
         })}</g>;
       })}
       {view === 'mix' && points.map((point, index) => {
-        if (currentPercentage(point) == null || scenarioPresentation && (index < points.length - 1 && connected(point, points[index + 1]) || index > 0 && connected(points[index - 1], point))) return null;
+        if (currentPercentage(point) == null || (scenarioPresentation || stackedHistory) && (index < points.length - 1 && connected(point, points[index + 1]) || index > 0 && connected(points[index - 1], point))) return null;
         let sum = 0;
         return <g key={identity(point)}>{applicableCounts(point).map(value => {
           const before = sum; sum += value.count / point.denominator * 100;
           return <rect key={value.key} className={`ph-band is-${tone(value.key)}`} x={x(point) - 6} width={12} y={y(sum)} height={Math.max(0, y(before) - y(sum))} />;
         })}</g>;
       })}
-      {(view === 'line' || !scenarioPresentation) && <path className="ph-line" d={line} />}
+      {(view === 'line' || !(scenarioPresentation || stackedHistory)) && <path className="ph-line" d={line} />}
       {endpointPercentage != null && <g><rect className="ph-current-flag" x={right+9} y={y(endpointPercentage)-11} width={endpointWidth} height="22" rx="6"/><text className="ph-current-flag-label" x={right+9+endpointWidth/2} y={y(endpointPercentage)+4} textAnchor="middle" >{endpointLabel}</text></g>}
       {showCompleteLabel && <text x={right+9} y={y(100)+4}>Complete</text>}
-      {(view === 'line' || !scenarioPresentation) && points.map(point => currentPercentage(point) != null && <circle key={identity(point)} className="ph-marker" cx={x(point)} cy={y(currentPercentage(point))} r={4} />)}
+      {(view === 'line' || !(scenarioPresentation || stackedHistory)) && points.map(point => currentPercentage(point) != null && <circle key={identity(point)} className="ph-marker" cx={x(point)} cy={y(currentPercentage(point))} r={4} />)}
       {scopeChanges.filter(change => Date.parse(change.effective_at || change.at) >= Date.parse(start) && Date.parse(change.effective_at || change.at) <= Date.parse(asOf)).map((change, index) => <g key={index}><line className="ph-scope-marker" x1={x({effective_at: change.effective_at || change.at})} x2={x({effective_at: change.effective_at || change.at})} y1={top} y2={bottom} /><text x={Math.min(x({effective_at: change.effective_at || change.at}) + 6, right - 90)} y={top + 15}>{change.before?.denominator != null && change.after?.denominator != null ? `Scope ${change.before.denominator} → ${change.after.denominator}` : 'Scope changed'}</text></g>)}
       {historyTicks(start,asOf,width).map(at => <text key={at} x={x({effective_at:at})} y={height-8} textAnchor="middle">{formatPortfolioDate(at,{year:undefined,...(Date.parse(asOf)-Date.parse(start)>45*DAY ? {day:undefined} : {})})}</text>)}
       {!points.length && <text className="ph-chart-empty" x={(left + right) / 2} y={(top + bottom) / 2} textAnchor="middle">No saved positions in this period</text>}
@@ -491,7 +491,7 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
     {engaged && selected && <div ref={tooltip} className="ph-history-tip" style={inline && !scenarioPresentation ? {left:Math.max(0,Math.min(width-270,x(selected)+14)) / width * 100+'%',top:Math.max(0,Math.min(100,y(currentPercentage(selected) ?? 0)-30)) * (box.current?.clientWidth || width) / width} : undefined}>
       <div className="ph-tip-date">{showProvenance ? selected.carried ? 'In effect at period start · position ' : selected.observation_kind === 'demo_fixture' ? 'Scenario position · ' : selected.observation_kind === 'current_state' ? 'Current state · ' : 'Saved ' : selected.carried ? 'In effect at period start · saved ' : 'Saved '}{formatPortfolioDate(snapshotTime(selected))}</div>{showProvenance && <p className="ph-tip-basis">{historyBasis(selected)}</p>}
       <strong>{rate(selected)}</strong><p>{selectedValid ? `${selected.implemented} of ${selected.denominator} ${unit} implemented` : selected.reason || 'Implementation unavailable'}</p>
-      {selectedValid && <div className="ph-tip-rows">{applicableCounts(selected).map(value => <div key={value.key}><span><i className={`ph-dot is-${tone(value.key)}`} />{value.label}</span><b>{value.count}{scenarioPresentation && ` · ${statusShare(selected, value.key)}`}</b></div>)}</div>}
+      {selectedValid && <div className="ph-tip-rows">{applicableCounts(selected).map(value => <div key={value.key}><span><i className={`ph-dot is-${tone(value.key)}`} />{value.label}</span><b>{value.count}{(scenarioPresentation || stackedHistory) && ` · ${statusShare(selected, value.key)}`}</b></div>)}</div>}
       {scopeChangesForPosition(scopeChanges,selected).map((change,index)=><p className="ph-tip-scope" key={index}>{scopeNote(change,unit,scenarioPresentation)}</p>)}
     </div>}
     <div className="ph-readout sr-only" aria-live="polite">{selected ? <><strong>{dateTime(snapshotTime(selected))}</strong>{selectedValid ? <>{applicableCounts(selected).map(value => <span key={value.key}><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label} {value.count}{scenarioPresentation ? ` · ${statusShare(selected, value.key)}` : value.key === 'addressed' && ` · ${rate(selected)}`} </span>)}<span>of {selected.denominator} applicable</span>{showProvenance && <span>{historyBasis(selected)}</span>}</> : <><span>Implementation/counts unavailable</span><span>{selected.reason || selected.notice || 'This saved position has unavailable implementation data.'}</span></>}{scopeChangesForPosition(scopeChanges, selected).map((change,index)=><span key={index}>{scopeNote(change, unit, scenarioPresentation)}</span>)}{selected.effective_at && selected.captured_at && Date.parse(selected.effective_at) !== Date.parse(selected.captured_at) && <span>Captured {dateTime(selected.captured_at)}</span>}</> : <span>No saved position selected.</span>}</div>

@@ -6,7 +6,7 @@ import {PORTFOLIO_CHANGED} from '@/lib/usePortfolioRefresh';
 
 const mockNavigate = jest.fn(), mockSwitch = jest.fn();
 let mockUser, mockPreviewMode;
-jest.mock('react-router-dom', () => ({useNavigate: () => mockNavigate}), {virtual: true});
+jest.mock('react-router-dom', () => ({useNavigate: () => mockNavigate, useLocation:()=>({pathname:'/clients',search:''})}), {virtual: true});
 jest.mock('@/context/OrgContext', () => ({useOrg: () => ({switchClient: mockSwitch})}));
 jest.mock('@/context/AuthContext', () => ({useAuth: () => ({user: mockUser})}));
 jest.mock('@/lib/api', () => ({__esModule: true, get PREVIEW_MODE(){return mockPreviewMode;}, default: {get: jest.fn(), post: jest.fn(), put: jest.fn(), patch: jest.fn(), delete: jest.fn()}, formatError: error => error.message}));
