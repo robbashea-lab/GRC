@@ -58,7 +58,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const {user,workspaceMode,error:authError} = useAuth();
   const {currentClient,currentClientId,error:orgError}=useOrg()||{};
   const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferenceWorkflow(clientId,user) && (!record || record.client_id===clientId);
-  const opener=useRef(null),heading=useRef(null),cisBriefOpener=useRef(null);
+  const opener=useRef(null),heading=useRef(null),cisBriefOpener=useRef(null),historyLinkedReturn=useRef(null);
   const [pending,setPending]=useState(null);
   const admin = ['super_admin','platform_admin'].includes(user?.role);
   const writable = admin || user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
@@ -132,6 +132,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     if (!open) return;
     const sequence = generation;
     sequence.current++;
+    historyLinkedReturn.current=null;
     setCurrent(record ? reviewView(record) : null);
     setForm(record ? {...record,due_date:record.due_date?.slice(0,10) || ''} : {title:'',review_type:'',owner_id:'',due_date:'',recurrence:'none',notes:''});
     setTab('Overview'); setSelected(initialValues?.occurrence || null); setRiskDraft(null);setRiskNext("");setRiskOutcome("Reviewed — No Change"); riskBase.current=null; setHistory([]); setComments([]); setActivity([]); setRelated({});
@@ -142,7 +143,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     api.get(`/clients/${record?.client_id || clientId}/members`).then(({data}) => { if (generation.current === version) setMembers(data); }).catch(e => toast.error(formatError(e)));
     setPolicies([]);
     api.get('/policies',{params:{client_id:record?.client_id || clientId}}).then(({data})=>{if(generation.current===version)setPolicies(data);}).catch(e=>toast.error(formatError(e)));
-    return () => { sequence.current++; };
+    return () => { sequence.current++;historyLinkedReturn.current=null; };
   }, [open,record,clientId,initialValues?.occurrence,pilot]);
 
   const reload = useCallback(async () => {
@@ -162,6 +163,16 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     finally {if(version===generation.current)setBasisLoading(false);}
   }, [open,rid,oid,current?.review_id,current?.risk_id,selected,pilot]);
   useEffect(() => { reload(); },[reload]);
+  useEffect(()=>{
+    if(linked)return;
+    const receipt=historyLinkedReturn.current;historyLinkedReturn.current=null;
+    if(receipt?.identity!==focusIdentity||receipt.version!==generation.current)return;
+    // Wait until the child has unmounted before returning from its transient history popover.
+    const frame=requestAnimationFrame(()=>{
+      if(receipt.identity===committedDetail.current?.identity&&receipt.version===generation.current&&receipt.node?.isConnected)receipt.node.focus({preventScroll:true});
+    });
+    return()=>cancelAnimationFrame(frame);
+  },[linked,focusIdentity]);
   useEffect(() => {
     if (!open || !['Related','Activity'].includes(tab)) return;
     const timer = setInterval(reload,10000);
@@ -306,7 +317,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             }}>{workflowPresentation&&<Check size={16} aria-hidden="true"/>}{workflowPresentation?'Complete review':'Complete Review'}</Button>
             <Button size="sm" variant="outline" disabled={busy} data-testid="quick-create-finding" onClick={() => setFinding({request_id:recordUuid(),title:'',description:'',severity:'medium',owner_id:current.owner_id || '',due_date:'',remediation_title:'',remediation_plan:''})}>{workflowPresentation?'Raise finding':'Raise Finding'}</Button>
           </div>}
-          {current&&!selected&&workflowPresentation&&<BrawndoReviewWorkflowHistory record={current} history={history} related={related} users={members} loading={basisLoading} error={basisError} onSelect={chooseHistory} onOpen={setLinked}/>}
+          {current&&!selected&&workflowPresentation&&<BrawndoReviewWorkflowHistory record={current} history={history} related={related} users={members} loading={basisLoading} error={basisError} onSelect={chooseHistory} onOpen={target=>{historyLinkedReturn.current={node:heading.current,identity:focusIdentity,version:generation.current};setLinked(target);}}/>}
           {current && !selected&&!workflowPresentation && <section className="border-t border-line pt-4" data-testid="review-history"><h3 className="font-medium text-sm mb-3">Review History</h3>
             {!history.length ? <p className="text-sm text-ink-help">No completed occurrences yet.</p> : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Occurrence','Due','Completed','Completed By','Outcome'].map(t => <th className="text-left font-medium py-2 pr-3" key={t}>{t}</th>)}</tr></thead><tbody>{history.map(o => <tr key={o.occurrence_id} className="border-t border-line"><td className="py-2 pr-3"><button className="underline text-left" onClick={() => chooseHistory(o)}>{o.period}</button></td><td className="pr-3">{date(o.due_date)}</td><td className="pr-3">{date(o.completed_at)}</td><td className="pr-3">{o.completed_by_name || person(o.completed_by)}</td><td>{outcome(o)}</td></tr>)}</tbody></table></div>}
           </section>}
@@ -358,7 +369,11 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction data-testid="review-complete-confirmed" onClick={()=>{setConfirmComplete(false);lifecycle('complete');}}>Complete Review</AlertDialogAction></AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>}
-    {linked && <RecordDrawer open kind={linked.kind} record={linked.record} initialValues={linked.initialValues} clientId={cid} users={members} onOpenChange={v => {if (!v) {setLinked(null);reload();const target=cisBriefOpener.current;cisBriefOpener.current=null;if(target)requestAnimationFrame(()=>{if(target.isConnected)target.focus({preventScroll:true});});}}} onSaved={() => {reload();onSaved?.();}} />}
+    {linked && <RecordDrawer open kind={linked.kind} record={linked.record} initialValues={linked.initialValues} clientId={cid} users={members} onOpenChange={v => {if (!v) {
+      setLinked(null);reload();
+      const target=cisBriefOpener.current;cisBriefOpener.current=null;
+      if(target)requestAnimationFrame(()=>{if(target.isConnected)target.focus({preventScroll:true});});
+    }}} onSaved={() => {reload();onSaved?.();}} />}
     <Sheet open={!!finding} onOpenChange={v => {if (!v) leave(()=>setFinding(null),true);}}>
       <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className={'w-full sm:max-w-xl overflow-y-auto'+(findingPresentation?' brawndo-review-finding':'')} data-testid="review-finding-form"><SheetHeader className={findingPresentation?'review-finding-header':undefined}><div className={findingPresentation?'review-finding-heading':undefined}>{findingPresentation&&<span className="review-finding-icon" aria-hidden="true"><AlertTriangle size={18}/></span>}<SheetTitle>Raise Finding</SheetTitle></div>{findingPresentation&&<div className="review-finding-context"><span>From {current.title}</span><span>{current.period||reviewSchedule(current).period} occurrence</span></div>}</SheetHeader>
         {finding && <form className={findingPresentation?'review-finding-form':'mt-5 space-y-4'} onSubmit={e => {e.preventDefault();run(async () => {await createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>

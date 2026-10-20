@@ -60,6 +60,8 @@
 /* Beat the shared compact-dialog controls; keep textarea and chooser exceptions local. */
 :root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] .review-workflow-body :where(input:not([type=checkbox]):not([type=radio]):not([type=file]),textarea,select,button[role=combobox]) {width:100%;max-width:100%;height:auto;min-height:40px;border:1px solid var(--rw-line2);background:var(--rw-card);border-radius:9px;padding:9px 11px;font-size:14px;color:var(--rw-ink);box-shadow:none;}
 :root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] .review-workflow-body textarea.ui-control {min-height:110px;line-height:1.5;}
+/* Native date layout keeps the calendar control at the field's far edge. */
+:root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] .review-workflow-body input[type=date] {display:block;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] [data-testid=field-owner_id] {height:auto;min-height:40px;padding:9px 11px;border-color:var(--rw-line2);border-radius:9px;font-size:14px;font-weight:400;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-field :is(input,textarea,[data-testid=field-owner_id],[role=combobox]):hover {border-color:var(--rw-muted);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-body :is(input,textarea,select):focus {border-color:var(--rw-accent);box-shadow:0 0 0 3px var(--rw-accent-soft);}
