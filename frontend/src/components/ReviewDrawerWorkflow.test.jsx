@@ -29,12 +29,14 @@ beforeEach(async()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.restoreAllMocks();jest.clearAllMocks();});
 
-test('eligible existing review retains six native tabs, type and evaluation',async()=>{
+test('eligible existing review follows approved tabs and removes the rejected legacy evaluation and type field',async()=>{
   await render();
   expect(query('reviews-drawer').classList.contains('brawndo-review-workflow')).toBe(true);
-  expect([...document.querySelectorAll('[data-testid^="tab-"]')].map(n=>n.textContent)).toEqual(['Overview','Requirements','Related','Evidence','Comments0','Activity']);
-  expect(query('field-review_type')).not.toBeNull();
-  expect(document.querySelector('[aria-label="Reviewer conclusion"]')).not.toBeNull();
+  expect([...document.querySelectorAll('[data-testid^="tab-"]')].map(n=>n.textContent)).toEqual(['Overview','Requirement','Evidence0','Comments0','Activity']);
+  expect(query('field-review_type')).toBeNull();
+  expect(document.querySelector('[aria-label="Reviewer conclusion"]')).toBeNull();
+  expect(document.body.textContent).not.toContain('Review evaluation');
+  expect(document.body.textContent).toContain('Notes for this occurrence');
   expect(button('In progress').disabled).toBe(false);
 });
 
@@ -88,13 +90,36 @@ test('Finding creation remains a separate native portal without workflow styling
   expect(query('finding-title')).not.toBeNull();expect(query('finding-remediation-title')).not.toBeNull();
 });
 
+test('approved footer keeps Save visible across tabs and saves only the native Review draft',async()=>{
+  await render();expect(query('drawer-save').disabled).toBe(true);
+  await input(query('field-notes'),'Native note from Overview');
+  await click(query('tab-comments'));
+  expect(document.querySelector('label[for="review-comment"]').textContent).toBe('Add a comment');
+  expect(query('comment-input').placeholder).toBe('Ask a question or leave context for the reviewer.');
+  expect(query('drawer-save').disabled).toBe(false);
+  const patch=jest.spyOn(api,'patch');await click(query('drawer-save'));
+  expect(patch).toHaveBeenCalledWith('/reviews/'+record.review_id,expect.objectContaining({notes:'Native note from Overview'}),expect.anything());
+  expect(query('drawer-save').disabled).toBe(true);
+  await click(query('tab-activity'));expect(query('drawer-save').disabled).toBe(true);
+});
+
 test('historical selection is frozen and displays the recorded actor rather than a fabricated reviewer',async()=>{
   const occurrence={...record,occurrence_id:'retained_occurrence',period:'Retained Q2',status:'completed',notes:'Frozen notes',completed_at:'2026-06-30T12:00:00Z',completed_by_name:'Actual retained actor',outcome:'no_findings',conclusion:'Retained evaluation'};
   await render({initialValues:{occurrence}});
   expect(query('reviews-drawer').classList.contains('brawndo-review-workflow')).toBe(true);
   expect(query('field-notes').value).toBe('Frozen notes');expect(query('field-notes').disabled).toBe(true);
-  expect(document.body.textContent).toContain('Actual retained actor');expect(document.body.textContent).toContain('Retained evaluation');
+  expect(document.body.textContent).toContain('Actual retained actor');expect(document.body.textContent).not.toContain('Retained evaluation');
   expect(button('In progress')).toBeUndefined();expect(query('drawer-save')).toBeNull();expect(query('review-complete')).toBeNull();
+  await click(query('tab-activity'));expect(document.body.textContent).toContain('Retained evaluation');
+});
+
+test.each([true,false])('historical checklist-only data remains readable in Activity (%s)',async checklist_confirmed=>{
+  const occurrence={...record,occurrence_id:'retained_checklist',period:'Retained Q2',status:'completed',checklist_confirmed};
+  await render({initialValues:{occurrence}});
+  expect(document.body.textContent).not.toContain('Review evaluation');
+  await click(query('tab-activity'));
+  expect(document.body.textContent).toContain(`Reviewer checklist confirmed: ${checklist_confirmed?'Yes':'No'}`);
+  expect(document.querySelector('[aria-label="Reviewer conclusion"]')).toBeNull();
 });
 
 test('a historical occurrence from another review does not gain workflow presentation',async()=>{
@@ -102,4 +127,103 @@ test('a historical occurrence from another review does not gain workflow present
   expect(query('reviews-drawer').classList.contains('brawndo-review-workflow')).toBe(false);
   expect(document.querySelector('.review-workflow-occurrence')).toBeNull();
   expect(query('field-notes').disabled).toBe(true);
+});
+
+test.each([['identity',{user_id:'different-demo-user'}],['role',{role:'client_viewer'}]])('Evidence count and cached files are discarded on authenticated %s change, including late old replies',async(_name,userChange)=>{
+  const originalGet=api.get.bind(api),pendingOld=[],pendingNew=[];
+  let phase='initial';
+  const catalog=(total,filename)=>({items:[{evidence_id:'evidence-'+total,filename,category:'direct',linked_type:'review',linked_id:record.review_id,context:{},references:[]}],
+    total,counts:{direct:total,actions:0,findings:0,review:0,treatment:0},page:1,page_size:25});
+  jest.spyOn(api,'get').mockImplementation((url,options)=>{
+    if(url!=='/evidence/catalog')return originalGet(url,options);
+    if(phase==='initial')return Promise.resolve({data:catalog(7,'Previously permitted evidence.pdf')});
+    return new Promise(resolve=>(phase==='old-refresh'?pendingOld:pendingNew).push(resolve));
+  });
+  await render();
+  expect(query('tab-evidence').textContent).toBe('Evidence7');
+  expect(document.body.textContent).toContain('Previously permitted evidence.pdf');
+
+  // Native Activity refresh starts an old-context catalog request that remains in flight.
+  phase='old-refresh';await click(query('tab-activity'));
+  expect(pendingOld.length).toBeGreaterThan(0);
+  phase='new-identity';mockUser={...mockUser,...userChange};
+  await render();
+  expect(query('tab-evidence').textContent).toBe('Evidence');
+  expect(document.body.textContent).not.toContain('Previously permitted evidence.pdf');
+  expect(pendingNew.length).toBeGreaterThan(0);
+
+  await act(async()=>{for(const resolve of pendingNew.splice(0))resolve({data:catalog(2,'Current permitted evidence.pdf')});});
+  expect(query('tab-evidence').textContent).toBe('Evidence2');
+  expect(document.body.textContent).toContain('Current permitted evidence.pdf');
+  await act(async()=>{for(const resolve of pendingOld.splice(0))resolve({data:catalog(9,'Late previous-context evidence.pdf')});});
+  expect(query('tab-evidence').textContent).toBe('Evidence2');
+  expect(document.body.textContent).not.toContain('Late previous-context evidence.pdf');
+});
+
+test.each(['field-notes','field-title'])('ordinary same-identity presentation withdrawal restores the unsaved %s field focus and caret',async fieldId=>{
+  await render();
+  const patch=jest.spyOn(api,'patch'),post=jest.spyOn(api,'post'),value='Unsaved native field with a retained caret';
+  const initial=query(fieldId),prototype=initial.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
+  await act(async()=>{
+    Object.getOwnPropertyDescriptor(prototype,'value').set.call(initial,value);
+    initial.dispatchEvent(new Event('input',{bubbles:true}));initial.focus();initial.setSelectionRange(8,20,'backward');
+  });
+  mockFullRecord=false;await render();
+  const native=query(fieldId);
+  expect(query('reviews-drawer').classList.contains('brawndo-review-workflow')).toBe(false);
+  expect(native).not.toBe(initial);expect(native.value).toBe(value);expect(document.activeElement).toBe(native);
+  expect([native.selectionStart,native.selectionEnd,native.selectionDirection]).toEqual([8,20,'backward']);
+  mockFullRecord=true;await render();
+  const restored=query(fieldId);
+  expect(query('reviews-drawer').classList.contains('brawndo-review-workflow')).toBe(true);
+  expect(restored).not.toBe(native);expect(restored.value).toBe(value);expect(document.activeElement).toBe(restored);
+  expect([restored.selectionStart,restored.selectionEnd,restored.selectionDirection]).toEqual([8,20,'backward']);
+  expect(patch).not.toHaveBeenCalled();expect(post).not.toHaveBeenCalled();
+});
+
+test.each(['user','role','workspace','client','review','occurrence','frozen','configuration field disabled'])('presentation focus is not transferred across a changed %s context',async change=>{
+  await render();
+  const patch=jest.spyOn(api,'patch'),post=jest.spyOn(api,'post');
+  const fieldId=change==='configuration field disabled'?'field-title':'field-notes';
+  const initial=query(fieldId);initial.focus();initial.setSelectionRange(1,4);
+  let props={};
+  if(change==='user')mockUser={...mockUser,user_id:'different-user'};
+  if(change==='role')mockUser={...mockUser,role:'client_viewer'};
+  if(change==='workspace')mockUser={...mockUser,workspace_mode:'standard'};
+  if(change==='client')props={clientId:'demo_dunder'};
+  if(change==='review')props={record:{...record,review_id:'different-review'}};
+  if(change==='occurrence')props={record:{...record,current_occurrence_id:'different-occurrence'}};
+  if(change==='frozen')props={record:{...record,status:'completed'}};
+  if(change==='configuration field disabled')mockUser={...mockUser,role:'client_grc_manager'};
+  mockFullRecord=false;await render(props);
+  expect(document.activeElement).not.toBe(query(fieldId));
+  mockFullRecord=true;await render(props);
+  expect(document.activeElement).not.toBe(query(fieldId));
+  expect(patch).not.toHaveBeenCalled();expect(post).not.toHaveBeenCalled();
+});
+
+test('presentation changes do not steal focus after the user moved to a surviving native control',async()=>{
+  await render();const notes=query('field-notes');notes.focus();notes.setSelectionRange(1,4);
+  const close=button('Close');close.focus();expect(document.activeElement).toBe(close);
+  mockFullRecord=false;await render();expect(document.activeElement).toBe(close);
+  mockFullRecord=true;await render();expect(document.activeElement).toBe(close);
+});
+
+test('same-auth Review appearance withdrawal preserves the open native Evidence reuse query',async()=>{
+  await render();const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');
+  await click(query('tab-evidence'));await click(button('Link existing Evidence'));
+  const search=document.querySelector('[aria-label="Find existing Evidence"]');
+  await act(async()=>{
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,'Retained Review library query');
+    search.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  mockFullRecord=false;await render();
+  expect(query('reviews-drawer').classList.contains('brawndo-review-workflow')).toBe(false);
+  expect(query('tab-evidence').getAttribute('aria-pressed')).toBe('true');
+  expect(document.querySelector('[aria-label="Find existing Evidence"]')).toBe(search);expect(search.value).toBe('Retained Review library query');
+  mockFullRecord=true;await render();
+  expect(query('reviews-drawer').classList.contains('brawndo-review-workflow')).toBe(true);
+  expect(query('tab-evidence').getAttribute('aria-pressed')).toBe('true');
+  expect(document.querySelector('[aria-label="Find existing Evidence"]')).toBe(search);expect(search.value).toBe('Retained Review library query');
+  expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
 });

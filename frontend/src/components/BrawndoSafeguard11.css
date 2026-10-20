@@ -1,0 +1,220 @@
+@font-face {
+  font-family: 'GoverNara Safeguard Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/inter-review-latin.woff2') format('woff2');
+}
+
+/* This class is assigned only after the live CIS origin and exact 1.1 record join. */
+:root body :is(.ui-dialog.brawndo-safeguard11, .ui-sheet.sg11-finding-sheet)[data-state] {
+  --sg-card:#fff; --sg-sunk:#f6f8fb; --sg-line:#e2e7ef; --sg-line2:#cfd7e3;
+  --sg-ink:#0f1a2e; --sg-ink2:#46536a; --sg-muted:#6b7686;
+  --sg-accent:#2f64e0; --sg-accent-ink:#fff; --sg-soft:#e8efff; --sg-quote:#f3f6fb;
+  --sg-ok:#137a43; --sg-ok-bg:#e5f5ec; --sg-warn:#8a4b05; --sg-warn-bg:#fdf3e1;
+  --sg-crit:#b42318; --sg-crit-bg:#fdebea; --sg-info:#2f4fa8; --sg-info-bg:#eef3ff;
+  --font:'GoverNara Safeguard Inter',Inter,system-ui,sans-serif;
+  --font-body:var(--font); --font-heading:var(--font);
+  --surface:var(--sg-card); --fg:var(--sg-ink); --fg2:var(--sg-ink2); --muted:var(--sg-muted);
+  --subtle:var(--sg-sunk); --border:var(--sg-line); --border-strong:var(--sg-line2);
+  --rail:var(--sg-accent); --link:var(--sg-accent); --selected:var(--sg-soft); --hover:var(--sg-sunk);
+  --good:var(--sg-ok); --good-bg:var(--sg-ok-bg); --warn:var(--sg-warn); --warn-bg:var(--sg-warn-bg);
+  --bad:var(--sg-crit); --bad-bg:var(--sg-crit-bg);
+  background:var(--sg-card); color:var(--sg-ink); font:400 14px/1.5 var(--font);
+}
+:root[data-brawndo-portal='dark'] body :is(.ui-dialog.brawndo-safeguard11, .ui-sheet.sg11-finding-sheet)[data-state] {
+  --sg-card:#0d1729; --sg-sunk:#0a1322; --sg-line:#1c2842; --sg-line2:#2a3858;
+  --sg-ink:#eef3fb; --sg-ink2:#b7c2d3; --sg-muted:#8793a6;
+  --sg-accent:#6f9bff; --sg-accent-ink:#06101f; --sg-soft:#16264a; --sg-quote:#0a1424;
+  --sg-ok:#5fd394; --sg-ok-bg:#0f2e20; --sg-warn:#f5c26b; --sg-warn-bg:#3a2a12;
+  --sg-crit:#ff8b85; --sg-crit-bg:#3a1820; --sg-info:#a9c4ff; --sg-info-bg:#15254a;
+}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .brawndo-assessment-header {padding:20px 24px 0; gap:14px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .brawndo-assessment-header h2 {margin-top:4px; font:650 20px/1.5 var(--font); letter-spacing:-.01em;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .bcis-crumbs :is(ol,button) {font:400 12.5px/1.5 var(--font);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .bcis-crumbs button {font-weight:500;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .brawndo-header-status {margin-top:4px; gap:8px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .brawndo-assessment-navigation-close {width:32px; height:32px;color:var(--sg-muted);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-layout > [role='tablist'] {padding:16px 24px 0; gap:4px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-layout > [role='tablist'] > [role='tab'] {font:400 13.5px/1.5 var(--font); padding:10px 12px; white-space:nowrap;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-layout > [role='tablist'] > [role='tab'][data-state='active'] {font-weight:600;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-layout > [role='tabpanel'] {padding:22px 24px 26px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-layout > [role='tabpanel'][data-state='active'] {gap:20px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-tab-count {font-weight:400; background:var(--sg-sunk); color:var(--sg-muted); box-shadow:inset 0 0 0 1px var(--sg-line);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .sg11-requirement {order:-1; border:1px solid var(--sg-line); border-radius:14px; overflow:hidden;}
+.brawndo-safeguard11 .sg11-requirement-head {display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:14px 18px 0;}
+.brawndo-safeguard11 .sg11-requirement-head h3 {margin:0; font-size:14px; font-weight:700;}
+.brawndo-safeguard11 .sg11-requirement-head span {font-size:12px; color:var(--sg-muted);}
+.brawndo-safeguard11 .sg11-requirement-body {padding:12px 18px 16px;}
+.brawndo-safeguard11 .sg11-requirement blockquote {margin:0; padding:14px 16px; border-left:3px solid var(--sg-accent); border-radius:0 10px 10px 0; background:var(--sg-quote); color:var(--sg-ink2); font-size:14px; line-height:1.6; white-space:pre-wrap;}
+.brawndo-safeguard11 .sg11-requirement-foot {display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:11px 18px; border-top:1px solid var(--sg-line); background:var(--sg-sunk); font-size:13px;}
+.brawndo-safeguard11 .sg11-requirement-foot a {margin-left:auto; color:var(--sg-accent); font-weight:600;}
+.brawndo-safeguard11 .sg11-requirement-foot span {padding:2px 9px; border-radius:999px; font-size:11.5px; font-weight:600; background:var(--sg-warn-bg); color:var(--sg-warn);}
+.brawndo-safeguard11 .sg11-requirement-foot span + span {background:var(--sg-card); color:var(--sg-ink2); border:1px solid var(--sg-line);}
+.brawndo-safeguard11 .sg11-native-guidance {order:2; padding:12px 18px; border-top:1px solid var(--sg-line); font-size:12.5px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-summary {border:0; padding:0; border-radius:0;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-summary > summary {font:600 15px/1.5 var(--font); margin-bottom:12px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .cis-omni-question-card {padding:0; border:0; background:transparent;}
+.brawndo-safeguard11 .sg11-group-strip {display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin:0; padding:0; list-style:none;}
+.brawndo-safeguard11 .sg11-group-strip li {min-width:0; border:1px solid var(--sg-line); border-radius:10px; padding:8px 10px; display:flex; flex-direction:column; gap:5px;}
+.brawndo-safeguard11 .sg11-group-strip li::before {content:''; height:3px; border-radius:3px; background:var(--sg-line);}
+.brawndo-safeguard11 .sg11-group-strip strong {font-size:12.5px; font-weight:600; line-height:1.5;}
+.brawndo-safeguard11 .sg11-group-strip small {font-size:11px; line-height:1.5; color:var(--sg-muted);}
+.brawndo-safeguard11 .sg11-group-number {display:none;}
+.brawndo-safeguard11 .sg11-earlier-group::before {background:var(--sg-ok);}
+.brawndo-safeguard11 .sg11-earlier-group strong {color:var(--sg-ok);}
+.brawndo-safeguard11 .sg11-group-check {float:right; margin-left:4px;}
+.brawndo-safeguard11 .sg11-group-strip [aria-current='step'] {border-color:var(--sg-accent); box-shadow:0 0 0 2px var(--sg-soft);}
+.brawndo-safeguard11 .sg11-group-strip [aria-current='step']::before {background:var(--sg-accent);}
+.brawndo-safeguard11 .sg11-question-card {border:1px solid var(--sg-line); border-radius:14px; padding:6px 18px 16px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .omni-question {padding:14px 0; border-bottom:1px solid var(--sg-line);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .omni-question :is(h3,label) {font-size:14px; font-weight:600; color:var(--sg-ink);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .omni-help {font-size:12.5px; color:var(--sg-muted);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .omni-answer-choices {display:flex; flex-wrap:wrap; gap:8px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .omni-answer-choices button {min-width:92px; padding:8px 14px; border:1px solid var(--sg-line2); border-radius:9px; background:var(--sg-card); color:var(--sg-ink); font:400 13.5px/1.5 var(--font);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .omni-answer-choices button[aria-pressed='true'] {background:var(--sg-accent); color:var(--sg-accent-ink); border-color:var(--sg-accent); font-weight:600;}
+.brawndo-safeguard11 .sg11-matrix {border:1px solid var(--sg-line); border-radius:11px; overflow:hidden;}
+.brawndo-safeguard11 .sg11-matrix-row {display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; padding:8px 12px; border-top:1px solid var(--sg-line);}
+.brawndo-safeguard11 .sg11-matrix-row:first-child {border-top:0;}
+.brawndo-safeguard11 .sg11-matrix-row > span {font-size:13.5px;}
+.brawndo-safeguard11 .sg11-matrix-options {display:flex; border:1px solid var(--sg-line2); border-radius:8px; overflow:hidden;}
+.brawndo-safeguard11 .sg11-matrix-options button {border:0; border-left:1px solid var(--sg-line2); background:var(--sg-card); color:var(--sg-ink2); padding:5px 9px; font:400 12px/1.5 var(--font);}
+.brawndo-safeguard11 .sg11-matrix-options button:first-child {border-left:0;}
+.brawndo-safeguard11 .sg11-matrix-options button[aria-pressed='true'] {background:var(--answer-color,#5b6475); color:#fff; font-weight:600;}
+.brawndo-safeguard11 .sg11-matrix-options [data-answer='Yes'] {--answer-color:#137a43;}
+.brawndo-safeguard11 .sg11-matrix-options [data-answer='Partially'] {--answer-color:#b7791f;}
+.brawndo-safeguard11 .sg11-matrix-options [data-answer='No'] {--answer-color:#b42318;}
+.brawndo-safeguard11 .sg11-matrix-options [data-answer='Not applicable'] {--answer-color:#3d4a63;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-implementation {grid-template-columns:280px minmax(0,1fr); gap:16px; padding:18px; border:1px solid var(--sg-line); border-radius:14px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-implementation .brawndo-step h3 {font:600 13.5px/1.5 var(--font); margin:0 0 10px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-implementation .brawndo-status-options label {padding:8px 10px; border-color:var(--sg-line2); border-radius:9px; color:var(--sg-ink); font:400 13.5px/1.5 var(--font);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-implementation .brawndo-status-options label.is-selected {font-weight:600; border-color:var(--sg-accent); background:var(--sg-soft);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-implementation .cis-dot {display:inline-block; width:9px; height:9px; border-radius:50%;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-implementation textarea {font:400 14px/1.55 var(--font); border-radius:9px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-implementation textarea[aria-label='Current implementation'] {min-height:300px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] :is(input,select,textarea) {font-family:var(--font);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .omni-question textarea {min-height:70px; font:400 14px/1.5 var(--font); padding:9px 11px; border:1px solid var(--sg-line2); border-radius:9px; background:var(--sg-card); color:var(--sg-ink);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .omni-action-bar {display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding-top:14px; border-top:1px solid var(--sg-line);}
+.brawndo-safeguard11 .sg11-items-intro {font-size:13.5px; color:var(--sg-ink2); margin:0 0 14px;}
+.brawndo-safeguard11 .sg11-item-group > h4 {margin:18px 0 2px; font:600 12px/1.5 var(--font); text-transform:uppercase; letter-spacing:.06em; color:var(--sg-muted);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .sg11-item {display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:12px; align-items:center; margin-top:8px; padding:12px 14px; border-radius:12px;}
+.brawndo-safeguard11 .sg11-item-content {min-width:0;}
+.brawndo-safeguard11 .sg11-item-content > strong {display:block; font-size:13.5px; font-weight:600;}
+.brawndo-safeguard11 :is(.sg11-item-state,.sg11-item-linked) {display:block; font-size:12px; color:var(--sg-muted);}
+.brawndo-safeguard11 .sg11-item-resolution {margin-top:3px; font-size:12px; color:var(--sg-muted);}
+.brawndo-safeguard11 .sg11-item-resolution > summary {cursor:pointer; width:fit-content;}
+.brawndo-safeguard11 .sg11-item-resolution[open] {margin-top:8px;}
+.brawndo-safeguard11 .sg11-item-resolution label {display:block; margin-bottom:8px; color:var(--sg-ink2);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .sg11-item > .assessment-item-actions {justify-content:flex-end; gap:6px; margin-top:0;}
+.brawndo-safeguard11 .sg11-item-kind {min-width:82px; text-align:center; padding:3px 7px; border-radius:6px; font:700 10.5px/1.5 var(--font); text-transform:uppercase; letter-spacing:.06em; background:var(--sg-sunk); color:var(--sg-ink2); border:1px solid var(--sg-line2);}
+.brawndo-safeguard11 .sg11-item-kind.gap {background:var(--sg-crit-bg); color:var(--sg-crit); border-color:transparent;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-item label {font-size:13.5px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .sg11-findings > .sg11-finding-card {display:block; position:relative; padding:0; border:1px solid var(--sg-line); border-radius:14px; overflow:hidden; margin-top:10px;}
+.brawndo-safeguard11 .sg11-finding-card header {padding:14px 18px 4px 22px;}
+.brawndo-safeguard11 .sg11-finding-meta {display:flex; gap:8px; flex-wrap:wrap; color:var(--sg-muted); font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;}
+.brawndo-safeguard11 .sg11-finding-card h4 {margin:6px 0 0; font:650 15px/1.5 var(--font);}
+.brawndo-safeguard11 .sg11-finding-description {margin:0; padding:4px 18px 12px 22px; color:var(--sg-ink2); font-size:13.5px; white-space:pre-wrap;}
+.brawndo-safeguard11 .sg11-finding-action {display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:11px 18px 11px 22px; border-top:1px solid var(--sg-line); background:var(--sg-sunk); color:var(--sg-ink2); font-size:13px;}
+.brawndo-safeguard11 .sg11-finding-action button {border:0; background:none; padding:0; color:var(--sg-accent); font-size:13px; font-weight:600;}
+:root body :is(.ui-dialog.brawndo-safeguard11,.ui-sheet.sg11-finding-sheet)[data-state] .ui-button {height:auto; min-height:36px; padding:8px 14px; border:1px solid var(--sg-line2); border-radius:9px; background:var(--sg-card); color:var(--sg-ink); font:500 13.5px/1.5 var(--font);}
+:root body :is(.ui-dialog.brawndo-safeguard11,.ui-sheet.sg11-finding-sheet)[data-state] .ui-button.bg-primary {border-color:var(--sg-accent); background:var(--sg-accent); color:var(--sg-accent-ink); font-weight:600;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .brawndo-assessment-header nav .ui-button {padding:6px 11px; font-size:12.5px;min-height:0;color:var(--sg-muted);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-item-actions .ui-button {padding:6px 10px; font-size:12.5px;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .brawndo-assessment-footer {padding:12px 24px;}
+:root body .ui-sheet.sg11-finding-sheet[data-state] {inset:0 0 0 auto; width:min(560px,100vw); max-width:none; height:100dvh; max-height:100dvh; border-radius:0; padding:0; display:flex; flex-direction:column; gap:0;}
+.sg11-finding-sheet .sg11-finding-error {margin:0; padding:12px 22px; color:var(--sg-crit); font-size:13px;}
+.sg11-finding-sheet .sg11-finding-sheet-head {padding:20px 22px 0; border-bottom:0;}
+.sg11-finding-sheet .sg11-finding-sheet-head h2 {display:flex; align-items:center; gap:12px; font:650 18px/1.5 var(--font); margin:0;}
+.sg11-finding-sheet .sg11-finding-sheet-head p {color:var(--sg-muted); font-size:12.5px;}
+.sg11-finding-sheet :is(input,textarea,select) {width:100%; min-height:40px; padding:9px 11px; border:1px solid var(--sg-line2); border-radius:9px; background:var(--sg-card); color:var(--sg-ink); font:400 14px/1.5 var(--font);}
+.sg11-finding-sheet .sg11-finding-severity {display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px;}
+.sg11-finding-sheet .sg11-finding-severity button {display:flex; flex-direction:column; gap:2px; padding:9px 10px; border:1px solid var(--sg-line2); border-radius:10px; background:var(--sg-card); color:var(--sg-ink); text-align:left; font:400 13px/1.5 var(--font);}
+.sg11-finding-sheet .sg11-finding-severity button[aria-pressed='true'] {border-color:var(--sg-accent); background:var(--sg-soft); box-shadow:0 0 0 2px var(--sg-soft);}
+.sg11-finding-sheet .sg11-finding-severity button[data-severity='low'] {--severity:#6b7686;}
+.sg11-finding-sheet .sg11-finding-severity button[data-severity='medium'] {--severity:#d08a1a;}
+.sg11-finding-sheet .sg11-finding-severity button[data-severity='high'] {--severity:#e0582f;}
+.sg11-finding-sheet .sg11-finding-severity button[data-severity='critical'] {--severity:#c81e1e;}
+.sg11-finding-sheet .sg11-finding-severity button b {display:flex; align-items:center; gap:6px;}
+.sg11-finding-sheet .sg11-finding-severity button b::before {content:''; width:8px; height:8px; border-radius:50%; background:var(--severity); flex:none;}
+.sg11-finding-sheet .sg11-finding-severity button[aria-pressed='true'] {border-color:var(--severity); background:color-mix(in srgb,var(--severity) 8%,var(--sg-card)); box-shadow:0 0 0 2px color-mix(in srgb,var(--severity) 30%,transparent);}
+.sg11-finding-sheet .sg11-finding-severity small {display:block; font-size:11px; line-height:1.3; color:var(--sg-muted);}
+.sg11-finding-sheet .sg11-finding-quick {display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
+.sg11-finding-sheet .sg11-finding-quick button {padding:2px 9px; border:1px solid var(--sg-line2); border-radius:999px; background:var(--sg-sunk); color:var(--sg-ink2); font:400 11.5px/1.5 var(--font);}
+.sg11-finding-sheet .sg11-finding-footer {padding:14px 22px; border-top:1px solid var(--sg-line); background:var(--sg-sunk);}
+.sg11-finding-sheet .sg11-finding-footer p {font-size:12.5px; color:var(--sg-ink2);}
+.sg11-finding-sheet .sg11-finding-fields {display:flex; flex-direction:column; flex:1; min-height:0;}
+.sg11-finding-sheet .sg11-finding-context {margin:0; padding:10px 22px 14px; border-bottom:1px solid var(--sg-line); color:var(--sg-muted); font-size:12.5px;}
+.sg11-finding-sheet .sg11-finding-inputs {flex:1; min-height:0; overflow:auto; padding:18px 22px 22px; border:0; margin:0;}
+.sg11-finding-sheet .sg11-finding-card {padding:16px; border:1px solid var(--sg-line); border-radius:14px;}
+.sg11-finding-sheet .sg11-finding-card + .sg11-finding-card {margin-top:14px;}
+.sg11-finding-sheet .sg11-finding-card-heading {display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:14px;}
+.sg11-finding-sheet .sg11-finding-card-heading h3 {margin:0; font:700 14px/1.5 var(--font);}
+.sg11-finding-sheet .sg11-finding-card-heading > span:last-child {margin-left:auto; font-size:12px; color:var(--sg-muted);}
+.sg11-finding-sheet .sg11-finding-number {display:grid; place-items:center; width:22px; height:22px; border-radius:50%; background:var(--sg-soft); color:var(--sg-info); font-size:11.5px; font-weight:700;}
+.sg11-finding-sheet .sg11-field {display:flex; flex-direction:column; gap:5px; margin-top:12px; min-width:0; font-size:12.5px; font-weight:600; color:var(--sg-ink2);}
+.sg11-finding-sheet .sg11-field textarea {min-height:76px; resize:vertical;}
+.sg11-finding-sheet .sg11-finding-row {display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.sg11-finding-sheet .sg11-finding-actions {display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; margin-top:12px;}
+.sg11-finding-sheet .sg11-button {padding:8px 14px; border:1px solid var(--sg-line2); border-radius:9px; background:var(--sg-card); color:var(--sg-ink); font:500 13.5px/1.5 var(--font);}
+.sg11-finding-sheet .sg11-button-primary {background:var(--sg-accent); color:var(--sg-accent-ink); border-color:var(--sg-accent); font-weight:600;}
+.sg11-finding-sheet button:disabled {opacity:.45; cursor:not-allowed;}
+:root body .ui-dialog.brawndo-safeguard11[data-state] button:disabled {opacity:.45;cursor:not-allowed;filter:none;}
+.sg11-owner-popover {font-family:'GoverNara Safeguard Inter',Inter,system-ui,sans-serif;}
+:root body :is(.ui-dialog.brawndo-safeguard11,.ui-sheet.sg11-finding-sheet)[data-state] :is(button,summary,input,select,textarea):focus-visible {outline:2px solid var(--sg-accent); outline-offset:2px;}
+@media (max-width:860px) {
+  :root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-implementation {grid-template-columns:minmax(0,1fr);}
+}
+
+
+/* Reference chips are owned by the pilot, including its separately portaled Finding sheet. */
+:is(.brawndo-safeguard11,.sg11-finding-sheet) .sg11-chip {display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border:1px solid var(--sg-line);border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.5;}
+:is(.brawndo-safeguard11,.sg11-finding-sheet) .sg11-chip:is(.plain,.sg11-chip-plain) {background:var(--sg-sunk);color:var(--sg-ink2);}
+:is(.brawndo-safeguard11,.sg11-finding-sheet) .sg11-chip:is(.info,.sg11-chip-info) {background:var(--sg-soft);color:var(--sg-accent);}
+.brawndo-safeguard11 .sg11-chip.warn {background:var(--sg-warn-bg);color:var(--sg-warn);}
+.brawndo-safeguard11 .sg11-chip.crit {color:var(--sg-crit);background:var(--sg-crit-bg);}
+.brawndo-safeguard11 .sg11-action-title {flex:1;min-width:0;}
+.brawndo-safeguard11 .sg11-finding-details {padding:0 18px 12px;font-size:11.5px;color:var(--sg-muted);}
+.brawndo-safeguard11 .sg11-finding-card h4 button {color:inherit;font:inherit;text-align:left;}
+.brawndo-safeguard11 .bcsg-findings-head h3 {font-size:13px;font-weight:400;color:var(--sg-muted);}
+.sg11-finding-sheet .sg11-required {color:var(--sg-danger,#c81e1e);}
+
+:is(.brawndo-safeguard11,.sg11-finding-sheet) .sg11-chip:is(.warn,.crit,.info,.sg11-chip-info) {border-color:transparent;}
+
+.brawndo-safeguard11 .sg11-guide-hint {margin-left:10px;color:var(--sg-muted);font:400 12.5px/1.5 var(--font);}
+
+
+
+/* Native list rules also target these cards; keep the reference edges explicit. */
+:root body .ui-dialog.brawndo-safeguard11[data-state] .sg11-findings {margin:0;padding:0;list-style:none;}
+.brawndo-safeguard11 .sg11-findings > .sg11-finding-card::before {content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--severity-color,#6b7686);}
+:root body .ui-dialog.brawndo-safeguard11[data-state] .cis-omni-criterion {color:var(--sg-crit);font-size:11px;font-weight:600;margin-left:8px;}
+.sg11-finding-sheet .sg11-warning-icon {display:grid;place-items:center;width:36px;height:36px;flex:none;margin:0;border-radius:10px;background:var(--sg-crit-bg);color:var(--sg-crit);}
+
+.sg11-finding-sheet .sg11-finding-summary {display:flex;gap:8px;align-items:flex-start;margin:0 0 12px;}
+.sg11-finding-sheet .sg11-finding-summary > svg {flex:none;margin-top:2px;color:var(--sg-accent);}
+
+@media (max-width:760px) {
+  :root body .ui-dialog.brawndo-safeguard11[data-state] :is(.brawndo-assessment-header,.brawndo-assessment-footer) {padding-left:16px; padding-right:16px;}
+  :root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-layout > :is([role='tablist'],[role='tabpanel']) {padding-left:16px; padding-right:16px;}
+  .brawndo-safeguard11 .sg11-group-strip {display:flex; gap:4px;}
+  .brawndo-safeguard11 .sg11-group-strip li {flex:1 1 0; min-width:0; padding:6px;}
+  .brawndo-safeguard11 .sg11-group-strip li[aria-current='step'] {flex:3 1 0;}
+  .brawndo-safeguard11 .sg11-group-strip li:not([aria-current='step']) .sg11-group-name {display:none;}
+  .brawndo-safeguard11 .sg11-group-strip li:not([aria-current='step']) .sg11-group-number {display:inline;}
+  .brawndo-safeguard11 .sg11-group-strip strong {font-size:11px;}
+  .brawndo-safeguard11 .sg11-group-strip small {display:none;}
+  .brawndo-safeguard11 .sg11-matrix-row {grid-template-columns:minmax(0,1fr);}
+  .brawndo-safeguard11 .sg11-matrix-options {flex-wrap:wrap;}
+  :root body .ui-dialog.brawndo-safeguard11[data-state] .sg11-item {grid-template-columns:minmax(0,1fr);}
+  .brawndo-safeguard11 .sg11-item > .sg11-item-kind {justify-self:start;}
+  :root body .ui-dialog.brawndo-safeguard11[data-state] .sg11-item > .assessment-item-actions {justify-content:flex-start;}
+  .sg11-finding-sheet .sg11-finding-severity {grid-template-columns:1fr 1fr;}
+  .sg11-finding-sheet .sg11-finding-row {grid-template-columns:minmax(0,1fr);}
+  :root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-layout > [role='tablist'] {gap:2px;}
+  :root body .ui-dialog.brawndo-safeguard11[data-state] .assessment-layout > [role='tablist'] > [role='tab'] {padding:10px 8px;}
+  .sg11-finding-sheet :is(.sg11-finding-sheet-head,.sg11-finding-context,.sg11-finding-inputs,.sg11-finding-footer) {padding-left:16px;padding-right:16px;}
+}
+
+/* Portals sit outside the scoped dialog and must retain its local Inter face. */
+:root .ui-popover.sg11-owner-popover,
+:root .ui-popover.sg11-owner-popover :where(*) {font-family:'GoverNara Safeguard Inter',Inter,system-ui,sans-serif;}
