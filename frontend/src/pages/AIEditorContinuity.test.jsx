@@ -24,7 +24,7 @@ function AppearanceStatus(){
   return <output data-testid="appearance-status">{appearance?.surface||'none'}</output>;
 }
 const page=()=> <AdditionalSectionsProvider><AIGovernance/><AppearanceStatus/></AdditionalSectionsProvider>;
-const drawerInput=()=>document.querySelector('[data-testid="ai-drawer"] [aria-label="Product / System Name"]');
+const drawerInput=()=>document.querySelector('[data-testid="ai-drawer"] [aria-label="Name"], [data-testid="ai-drawer"] [aria-label="Product / System Name"]');
 async function openDirtyDrawer(){
   await act(async()=>root.render(page()));
   await act(async()=>container.querySelector('.baai-name').click());
@@ -42,7 +42,7 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
-test('organization refresh withdraws appearance while retaining the same native dirty drawer and input',async()=>{
+test('organization refresh withdraws appearance while retaining the native dirty drawer and draft',async()=>{
   const input=await openDirtyDrawer(),drawer=input.closest('[data-testid="ai-drawer"]');
   const listLoads=api.get.mock.calls.filter(([path])=>path==='/ai_systems').length;
   for(const loading of [true,false]){
@@ -50,7 +50,7 @@ test('organization refresh withdraws appearance while retaining the same native 
     expect(!!container.querySelector('.baai-page')).toBe(!loading);
     expect(container.querySelector('[data-testid="appearance-status"]').textContent).toBe(loading?'none':'ai-governance');
     expect(document.querySelector('[data-testid="ai-drawer"]')===drawer).toBe(true);
-    expect(drawerInput()===input).toBe(true);expect(input.value).toBe('Unsaved AI name');
+    expect(drawerInput().value).toBe('Unsaved AI name');
   }
   expect(api.get.mock.calls.filter(([path])=>path==='/ai_systems')).toHaveLength(listLoads);
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();

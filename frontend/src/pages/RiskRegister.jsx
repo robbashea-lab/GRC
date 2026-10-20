@@ -44,6 +44,8 @@ import { Grid3x3, Download, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import {Popover,PopoverTrigger,PopoverContent} from '@/components/ui/popover';
 import {riskRefreshLabel,riskReviewDate} from '@/lib/brawndoRisksPresentation';
+import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
+import {RiskWorkflowHeader,RiskWorkflowNewBody,RiskWorkflowNewSummary} from '@/components/BrawndoRiskWorkflow';
 
 const LIKELIHOOD_LABELS = { 1: "Rare", 2: "Unlikely", 3: "Possible", 4: "Likely", 5: "Almost Certain" };
 const IMPACT_LABELS = { 1: "Minimal", 2: "Minor", 3: "Moderate", 4: "Major", 5: "Severe" };
@@ -363,6 +365,10 @@ function RiskMatrixModal({ open, onOpenChange }) {
 }
 
 function NewRiskDialog({ pilot=false, open, onOpenChange, clientId, users, onCreated, onOpenMatrix }) {
+  const fullRecord=useBrawndoFullRecord(null,clientId);
+  const workflow=fullRecord&&window.location.pathname==='/risks';
+  const dialogRef=useRef(null);
+  const [validation,setValidation]=useState([]);
   const [form, setForm] = useState({
     title: "", category: "cybersecurity", description: "", impact_description: "", source_type: "manual",
     likelihood_score: null, impact_score: null, owner_id: "", treatment: "mitigate", review_cadence:"annual", next_review:"",
@@ -374,6 +380,7 @@ function NewRiskDialog({ pilot=false, open, onOpenChange, clientId, users, onCre
   const close=value=>{if(value)onOpenChange(true);else if(!saving){if(dirty)setDiscard(true);else onOpenChange(false);}};
   useEffect(()=>{if(!open||!dirty)return;const warn=e=>{e.preventDefault();e.returnValue="";};window.addEventListener("beforeunload",warn);return()=>window.removeEventListener("beforeunload",warn);},[open,dirty]);
   useEffect(() => {
+    setValidation([]);
     if(open&&pilot){const next=newRiskDefaults();setForm(next);baseline.current=next;setDiscard(false);return;}
     if (open) setForm({
       title: "", category: "cybersecurity", description: "", impact_description: "", source_type: "manual",
@@ -386,7 +393,8 @@ function NewRiskDialog({ pilot=false, open, onOpenChange, clientId, users, onCre
 
   async function save() {
     if(createLock.current)return;
-    if (!form.title.trim() || !form.description.trim() || !form.category || !form.likelihood_score || !form.impact_score) { toast.error("Title, category, description, likelihood and impact are required"); return; }
+    const missing=['title','category','description','likelihood_score','impact_score'].filter(key=>typeof form[key]==='string'?!form[key].trim():!form[key]);
+    if (missing.length) { setValidation(missing);toast.error("Title, category, description, likelihood and impact are required");if(workflow)dialogRef.current?.querySelector(`[data-risk-field="${missing[0]}"]`)?.focus();return; }
     if (["review","finding","vendor","audit"].includes(form.source_type) && !form.source_id) { toast.error("Select the source record"); return; }
     createLock.current=true;setSaving(true);
     try {
@@ -400,8 +408,8 @@ function NewRiskDialog({ pilot=false, open, onOpenChange, clientId, users, onCre
   }
   return (
     <Dialog open={open} onOpenChange={pilot?close:onOpenChange}>
-      <DialogContent onPointerDownOutside={pilot?e=>e.preventDefault():undefined} className={pilot?"brawndo-cis-assessment bg-surface-card":"max-w-2xl max-h-[90vh] overflow-y-auto"} data-testid="new-risk-dialog">
-        <DialogHeader className={pilot?"px-6 py-4 pr-12 border-b border-line":undefined}>
+      <DialogContent ref={dialogRef} onPointerDownOutside={pilot?e=>e.preventDefault():undefined} showCloseButton={!workflow} className={workflow?"brawndo-cis-assessment brawndo-risk-workflow":pilot?"brawndo-cis-assessment bg-surface-card":"max-w-2xl max-h-[90vh] overflow-y-auto"} data-testid="new-risk-dialog">
+        {workflow?<><RiskWorkflowHeader title="New risk" newRisk form={form} onClose={()=>close(false)}/><RiskWorkflowNewBody validation={validation} form={form} setForm={next=>{setForm(next);setValidation([]);}} clientId={clientId} users={users} saving={saving}/><footer className="rw-footer">{validation.length>0&&<p className="rw-error" role="alert">Fill in the required fields.</p>}<RiskWorkflowNewSummary form={form} users={users}/><span className="rw-spacer"/><button type="button" className="rw-button" disabled={saving} onClick={()=>close(false)}>Cancel</button><button type="button" className="rw-button rw-primary" disabled={saving} data-testid="new-risk-save" onClick={save}>{saving?'Saving…':'Add to register'}</button></footer></>:<><DialogHeader className={pilot?"px-6 py-4 pr-12 border-b border-line":undefined}>
           <DialogTitle>New Risk</DialogTitle>
           <DialogDescription>Score and level are calculated automatically.</DialogDescription>
         </DialogHeader>
@@ -471,6 +479,7 @@ function NewRiskDialog({ pilot=false, open, onOpenChange, clientId, users, onCre
             {saving ? "Saving…" : "Add to register"}
           </Button>
         </DialogFooter>
+        </>}
       </DialogContent>
       {pilot&&<AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent><AlertDialogTitle>Discard new Risk?</AlertDialogTitle><AlertDialogDescription>This unsaved Risk has not been added to the register.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
     </Dialog>
