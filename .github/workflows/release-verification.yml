@@ -52,7 +52,9 @@ jobs:
         run: python backend/tests/run_isolated.py -vv --python-stack-timeout=60
 
   backend-mongo:
-    runs-on: ubuntu-24.04
+    # Mongo 8.0 rejects Linux 6.19+: https://jira.mongodb.org/browse/SERVER-121912
+    # The 22.04 runner currently uses kernel 6.8; retain the real Mongo persistence gate.
+    runs-on: ubuntu-22.04
     # The independent persistence campaign must not consume the offline suite's budget.
     timeout-minutes: 30
     services:
