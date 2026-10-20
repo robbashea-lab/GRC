@@ -163,16 +163,11 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     finally {if(version===generation.current)setBasisLoading(false);}
   }, [open,rid,oid,current?.review_id,current?.risk_id,selected,pilot]);
   useEffect(() => { reload(); },[reload]);
-  useEffect(()=>{
-    if(linked)return;
+  // The linked ticket calls this from its native close-autofocus teardown.
+  function returnFromHistoryTicket(){
     const receipt=historyLinkedReturn.current;historyLinkedReturn.current=null;
-    if(receipt?.identity!==focusIdentity||receipt.version!==generation.current)return;
-    // Wait until the child has unmounted before returning from its transient history popover.
-    const frame=requestAnimationFrame(()=>{
-      if(receipt.identity===committedDetail.current?.identity&&receipt.version===generation.current&&receipt.node?.isConnected)receipt.node.focus({preventScroll:true});
-    });
-    return()=>cancelAnimationFrame(frame);
-  },[linked,focusIdentity]);
+    if(receipt?.identity===committedDetail.current?.identity&&receipt.version===generation.current&&receipt.node?.isConnected)receipt.node.focus({preventScroll:true});
+  }
   useEffect(() => {
     if (!open || !['Related','Activity'].includes(tab)) return;
     const timer = setInterval(reload,10000);
@@ -344,7 +339,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         </>}
         {(tab==='Evidence'||workflowPresentation)&&<div hidden={tab!=='Evidence'}>
           {!workflowPresentation&&evidenceUpload&&<Label className="review-workflow-upload block rounded-md border border-dashed border-line p-5 text-sm">Attach evidence to this occurrence{evidenceUpload}</Label>}
-          <EvidencePanel key={evidenceScope} hideSinglePagePagination={workflowPresentation} clientId={cid} kind="reviews" id={rid} occurrenceId={oid} refreshKey={evidenceVersion} allowLink={!frozen} onSummary={workflowPresentation?onEvidenceSummary:undefined} renderHeader={workflowPresentation?evidenceHeader:undefined} directPresentation={workflowPresentation?{heading:'This occurrence',countUnit:'files',singularCountUnit:'file',emptyMessage:`No evidence on ${shown?.period||derived.period||'this occurrence'} yet. Evidence is optional, but it's what proves the review happened.`}:undefined} onOpen={async ref=>{const version=generation.current;try{const target=await resolveEvidenceSource(ref,cid);if(version===generation.current)setLinked(target);}catch(e){toast.error(formatError(e));}}}/>
+          <EvidencePanel key={evidenceScope} hideSinglePagePagination={workflowPresentation} clientId={cid} kind="reviews" id={rid} occurrenceId={oid} refreshKey={evidenceVersion} allowLink={!frozen} onSummary={workflowPresentation?onEvidenceSummary:undefined} renderHeader={workflowPresentation?evidenceHeader:undefined} directPresentation={workflowPresentation?{heading:'This occurrence',countUnit:'files',singularCountUnit:'file',emptyClassName:'review-workflow-empty',emptyMessage:`No evidence on ${shown?.period||derived.period||'this occurrence'} yet. Evidence is optional, but it's what proves the review happened.`}:undefined} onOpen={async ref=>{const version=generation.current;try{const target=await resolveEvidenceSource(ref,cid);if(version===generation.current)setLinked(target);}catch(e){toast.error(formatError(e));}}}/>
         </div>}
         {tab === 'Comments' && <ReviewCommentsLayout eligible={workflowPresentation} comments={comments} date={date} showComposer={!frozen&&writable}>
           {!frozen && writable && <><Textarea id={workflowPresentation?"review-comment":undefined} aria-label={workflowPresentation?"Add a comment":"Comment"} data-testid="comment-input" value={comment} onChange={e => setComment(e.target.value)} placeholder={workflowPresentation?"Ask a question or leave context for the reviewer.":"Add a comment…"} /><Button size="sm" data-testid="comment-submit" disabled={busy || !comment.trim()} onClick={() => run(async () => { await api.post('/comments',{entity_type:'reviews',entity_id:rid,occurrence_id:oid,body:comment}); setComment(''); await reload(); })}>Post comment</Button></>}
@@ -369,7 +364,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction data-testid="review-complete-confirmed" onClick={()=>{setConfirmComplete(false);lifecycle('complete');}}>Complete Review</AlertDialogAction></AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>}
-    {linked && <RecordDrawer open kind={linked.kind} record={linked.record} initialValues={linked.initialValues} clientId={cid} users={members} onOpenChange={v => {if (!v) {
+    {linked && <RecordDrawer open onReturnFocus={historyLinkedReturn.current?returnFromHistoryTicket:undefined} kind={linked.kind} record={linked.record} initialValues={linked.initialValues} clientId={cid} users={members} onOpenChange={v => {if (!v) {
       setLinked(null);reload();
       const target=cisBriefOpener.current;cisBriefOpener.current=null;
       if(target)requestAnimationFrame(()=>{if(target.isConnected)target.focus({preventScroll:true});});

@@ -1,7 +1,9 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ReviewDrawer from './ReviewDrawer';
+import RemediationTicketDrawer from './RemediationTicketDrawer';
 import api from '@/lib/api';
+import {readStore} from '../preview/store';
 
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -11,12 +13,12 @@ jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}
 jest.mock('sonner',()=>({toast:{error:jest.fn(),success:jest.fn()}}));
 beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
 
-let root,container,background,record,onOpenChange;
+let root,container,background,record,linkedFinding,onOpenChange;
 const drawer=()=>document.querySelector('[data-testid="reviews-drawer"]');
 const ticket=()=>document.querySelector('[data-testid="remediation-ticket-drawer"]');
 const heading=()=>drawer()?.querySelector('[data-review-title]');
 const button=(scope,label)=>[...scope.querySelectorAll('button')].find(node=>node.textContent===label);
-// Native focus scopes defer teardown, and Review then schedules its guarded return frame.
+// Allow the real native focus scopes to complete their deferred teardown.
 const flushNativeFocus=()=>act(async()=>{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
 const click=async node=>{expect(node).toBeTruthy();await act(async()=>{node.focus();node.click();});};
 const render=()=>act(async()=>root.render(<ReviewDrawer open record={record} clientId={record.client_id} onOpenChange={onOpenChange}/>));
@@ -34,7 +36,7 @@ beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
   mockUser=(await api.post('/demo/enter')).data.user;
   record=(await api.post('/reviews',{client_id:'demo_brawndo',title:'Linked return focus review',review_type:'access',recurrence:'quarterly',due_date:'2099-09-30'})).data;
-  await api.post(`/reviews/${record.review_id}/create-finding`,{request_id:crypto.randomUUID(),title:'Recorded access exception',remediation_title:'Restore reviewed access',occurrence_id:record.current_occurrence_id});
+  linkedFinding=(await api.post(`/reviews/${record.review_id}/create-finding`,{request_id:crypto.randomUUID(),title:'Recorded access exception',remediation_title:'Restore reviewed access',occurrence_id:record.current_occurrence_id})).data;
   background=document.createElement('main');background.innerHTML='<h1 tabindex="-1">Brawndo Reviews</h1>';document.body.appendChild(background);
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);onOpenChange=jest.fn();
 });
@@ -71,5 +73,39 @@ test.each(['identity','role'])('linked return does not restore an earlier Review
   const patch=jest.spyOn(api,'patch'),post=jest.spyOn(api,'post');
   await click(button(ticket(),'Cancel'));await flushNativeFocus();
   expect(ticket()).toBeNull();expect(document.activeElement).not.toBe(parentHeading);
+  expect(onOpenChange).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();expect(post).not.toHaveBeenCalled();
+});
+
+test('native ticket without an explicit parent return still restores its connected opener',async()=>{
+  const opener=document.createElement('button');opener.textContent='Open native ticket';background.appendChild(opener);opener.focus();
+  function NativeTicket(){
+    const [open,setOpen]=React.useState(true);
+    return <RemediationTicketDrawer open={open} onOpenChange={setOpen} kind="findings" record={linkedFinding} clientId={record.client_id}/>;
+  }
+  await act(async()=>root.render(<NativeTicket/>));await flushNativeFocus();
+  expect(ticket()).toBeTruthy();
+  const patch=jest.spyOn(api,'patch'),post=jest.spyOn(api,'post');
+  await click(button(ticket(),'Cancel'));await flushNativeFocus();
+  expect(ticket()).toBeNull();expect(document.activeElement).toBe(opener);
+  expect(patch).not.toHaveBeenCalled();expect(post).not.toHaveBeenCalled();
+});
+test('seeded User Access Review Q3 ticket Cancel returns to its open Q4 parent Review heading',async()=>{
+  const historicalFinding=readStore().findings.find(row=>row.finding_id==='demo_brawndo_finding_0');
+  expect(historicalFinding?.review_id).toBeTruthy();
+  record=(await api.get('/reviews/'+historicalFinding.review_id)).data;
+  expect(record.client_id).toBe('demo_brawndo');expect(record.title).toBe('User Access Review');
+  await render();
+  const history=drawer().querySelector('[data-testid="review-history"]');expect(history).toBeTruthy();
+  expect(history.querySelector('.is-current td').textContent).toBe('Q4 2026');
+  const q3=[...history.querySelectorAll('tbody tr')].find(row=>row.querySelector('td')?.textContent==='Q3 2026');
+  expect(q3).toBeTruthy();
+  await click(button(q3,'1 finding'));await flushNativeFocus();
+  const popover=document.querySelector('[aria-label="Findings from this occurrence"]');expect(popover).toBeTruthy();
+  const linked=popover.querySelector('[data-ticket-id="finding:demo_brawndo_finding_0"]');expect(linked).toBeTruthy();
+  await click(linked.querySelector('button'));await flushNativeFocus();
+  expect(ticket()).toBeTruthy();const parentHeading=heading();
+  const patch=jest.spyOn(api,'patch'),post=jest.spyOn(api,'post');
+  await click(button(ticket(),'Cancel'));await flushNativeFocus();
+  expect(ticket()).toBeNull();expect(drawer()).toBeTruthy();expect(document.activeElement).toBe(parentHeading);
   expect(onOpenChange).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();expect(post).not.toHaveBeenCalled();
 });

@@ -118,7 +118,7 @@ function History({ticket,onDirty,presentation,detail=false,readOnly=false}) {
   return <details className="bad-history" {...(detail?{open:true}:{})}><summary>History and comments</summary>{error&&<p role="alert">{error}</p>}<ul className="space-y-2 text-sm">{rows.map((r,i)=><li className="whitespace-pre-wrap bad-activity-row" key={r.log_id||r.audit_id||r.comment_id||i}>{detail&&<span className="bad-event-icon" aria-hidden="true">{r.comment_id?<MessageSquare size={14}/>:/(completed|validated)/i.test(r.action||'')?<CheckCircle2 size={14}/>:<Clock3 size={14}/>}</span>}<div className="bad-event-content">{(detail||presentation==='brawndo-demo-actions')&&<span className="block text-xs text-ink-secondary">{r.user_name||r.user_email||r.user_id||'Historical actor unavailable'}</span>}{!detail&&<>{r.at||r.created_at} · </>}{r.action||r.body}{r.meta?.rationale?' · '+r.meta.rationale:''}</div>{detail&&<time className="bad-event-time" dateTime={r.at||r.created_at}>{displayRecordedAt(r.at||r.created_at)||r.at||r.created_at}</time>}</li>)}</ul>{writable&&<div className="space-y-2"><label>Comment (optional)<Textarea aria-label="Ticket comment" value={comment} disabled={busy} onChange={e=>setComment(e.target.value)}/></label><Button disabled={busy||!comment.trim()} onClick={async()=>{setBusy(true);setError('');try{await api.post('/comments',{entity_type:kind,entity_id:id,body:comment});setComment('');setVersion(v=>v+1);}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Add comment</Button></div>}</details>;
 }
 
-export default function RemediationTicketDrawer({open,onOpenChange,kind,record,clientId,onSaved,presentation,closeRequest=0,onCloseCancelled,cisVisualOrigin}) {
+export default function RemediationTicketDrawer({open,onOpenChange,kind,record,clientId,onSaved,presentation,closeRequest=0,onCloseCancelled,cisVisualOrigin,onReturnFocus}) {
   const pilot=presentation==='brawndo-demo-actions';
   const panelPrefix=useId();
   const {user}=useAuth(),{data,users,loading,error,load}=useActionRegisterData(record.client_id||clientId,{retainOnRefreshError:pilot});
@@ -133,7 +133,10 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
   }).current;
   const dirty=useRef(new Set()),surface=useRef(null);
   const opener=useRef(null),openerSurface=useRef(null),discardOpener=useRef(null);
-  function restoreFocus(){const target=opener.current?.isConnected&&opener.current!==document.body?opener.current:openerSurface.current?.isConnected?openerSurface.current.querySelector('button,input,[tabindex]'):document.querySelector('[data-testid="ai-search"],main h1,main h2');if(target){if(!target.matches('button,input,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true});}}
+  function restoreFocus(){
+    // An explicit parent owns this return, including a denied stale-context return.
+    if(onReturnFocus){onReturnFocus();return;}
+    const target=opener.current?.isConnected&&opener.current!==document.body?opener.current:openerSurface.current?.isConnected?openerSurface.current.querySelector('button,input,[tabindex]'):document.querySelector('[data-testid="ai-search"],main h1,main h2');if(target){if(!target.matches('button,input,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true});}}
   const decision=useCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']},config),user.user_id+':'+record.client_id+':decision:'+(record.finding_id||record.task_id),true);
   const reopen=useCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']},config),user.user_id+':'+record.client_id+':reopen:'+(record.finding_id||record.task_id),true);
   const markDirty=useRef((id,value)=>{if(value)dirty.current.add(id);else dirty.current.delete(id);setHasDirty(dirty.current.size>0);}).current;
