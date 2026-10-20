@@ -147,7 +147,7 @@
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-chip.is-success {background:var(--rw-ok-bg);color:var(--rw-ok);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-chip.is-critical {background:var(--rw-crit-bg);color:var(--rw-crit);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-chip.is-warning {background:var(--rw-warn-bg);color:var(--rw-warn);}
-.review-workflow-assignee-popover,.review-workflow-related-popover {--font-body:'GoverNara Review Detail Inter',Inter,system-ui,sans-serif;font-family:var(--font-body);background:#fff;color:#0f1a2e;border-color:#e2e7ef;}
+:root .ui-popover.review-workflow-assignee-popover,:root .ui-popover.review-workflow-related-popover {--font-body:'GoverNara Review Detail Inter',Inter,system-ui,sans-serif;font-family:var(--font-body);background:#fff;color:#0f1a2e;border-color:#e2e7ef;}
 .review-workflow-related-popover {width:min(600px,calc(100vw - 32px));max-height:60vh;overflow:auto;}
 :root[data-brawndo-portal=dark] :is(.review-workflow-assignee-popover,.review-workflow-related-popover) {background:#0d1729;color:#eef3fb;border-color:#1c2842;}
 @media(max-width:760px) {
