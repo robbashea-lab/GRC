@@ -26,7 +26,7 @@
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .text-ink-help {color:var(--rw-muted);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .border-line {border-color:var(--rw-line);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .text-link {color:var(--rw-accent);}
-:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] > .review-workflow-header {padding:20px 24px 0; border-color:var(--rw-line);text-align:left;}
+:root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] > .review-workflow-header {padding:20px 24px 0; border-color:var(--rw-line);text-align:left;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-heading {justify-content:flex-start;align-items:flex-start;gap:14px;padding-right:32px;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-heading > div {min-width:0;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-icon {width:40px;height:40px;flex:none;border:1px solid var(--rw-line);border-radius:11px;background:linear-gradient(135deg,#85c4ff33,#9698fe33);color:var(--rw-accent);display:grid;place-items:center;}
@@ -38,7 +38,7 @@
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-tabs .drawer-tab {display:flex;align-items:center;gap:6px;padding:10px 12px;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--rw-muted);font-size:13.5px;font-weight:400;white-space:nowrap;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-tabs .drawer-tab.active {color:var(--rw-ink);border-bottom-color:var(--rw-accent);background:none;font-weight:600;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-count {font-size:11px;padding:0 6px;border:1px solid var(--rw-line);border-radius:999px;background:var(--rw-sunk);color:var(--rw-muted);}
-:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] > .review-workflow-body {padding:22px 24px 26px;overscroll-behavior:contain;}
+:root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] > .review-workflow-body {padding:22px 24px 26px;overscroll-behavior:contain;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-occurrence {display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));border:1px solid var(--rw-line);border-radius:12px;background:var(--rw-sunk);overflow:hidden;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-occurrence > div {padding:12px 16px;border-left:1px solid var(--rw-line);min-width:0;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-occurrence > div:first-child {border-left:0;}
@@ -57,9 +57,9 @@
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-field.is-full {grid-column:1/-1;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-details > div {min-width:0;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-body label {font-size:12.5px;font-weight:600;color:var(--rw-ink2);}
-/* Low baseline specificity lets Notes, Comments and the file chooser keep their own sizing. */
-:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-body :where(input:not([type=checkbox]):not([type=radio]),textarea,select,button[role=combobox]) {width:100%;max-width:100%;height:auto;min-height:40px;border:1px solid var(--rw-line2);background:var(--rw-card);border-radius:9px;padding:9px 11px;font-size:14px;color:var(--rw-ink);box-shadow:none;}
-:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-body textarea.ui-control {min-height:110px;line-height:1.5;}
+/* Beat the shared compact-dialog controls; keep textarea and chooser exceptions local. */
+:root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] .review-workflow-body :where(input:not([type=checkbox]):not([type=radio]):not([type=file]),textarea,select,button[role=combobox]) {width:100%;max-width:100%;height:auto;min-height:40px;border:1px solid var(--rw-line2);background:var(--rw-card);border-radius:9px;padding:9px 11px;font-size:14px;color:var(--rw-ink);box-shadow:none;}
+:root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] .review-workflow-body textarea.ui-control {min-height:110px;line-height:1.5;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] [data-testid=field-owner_id] {height:auto;min-height:40px;padding:9px 11px;border-color:var(--rw-line2);border-radius:9px;font-size:14px;font-weight:400;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-field :is(input,textarea,[data-testid=field-owner_id],[role=combobox]):hover {border-color:var(--rw-muted);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-body :is(input,textarea,select):focus {border-color:var(--rw-accent);box-shadow:0 0 0 3px var(--rw-accent-soft);}
@@ -94,25 +94,25 @@
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] [data-testid=context-evidence-file] .font-medium {font-size:13.5px;font-weight:600;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-empty {text-align:center;padding:26px 12px;color:var(--rw-muted);border:1px solid var(--rw-line);border-radius:12px;font-size:13.5px;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-comment {display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--rw-line);}
-:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-avatar {width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--rw-accent-soft);color:var(--rw-info);}
+:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-avatar {font-size:12px;font-weight:700;width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--rw-accent-soft);color:var(--rw-info);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-comment-author {font-size:12.5px;color:var(--rw-muted);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-comment-author strong {font-weight:600;color:var(--rw-ink);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-composer {display:flex;gap:12px;margin-top:16px;align-items:flex-start;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-composer-fields {display:flex;flex:1;min-width:0;flex-direction:column;gap:8px;align-items:flex-start;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-composer-fields textarea {width:100%;}
-:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-composer textarea.ui-control {min-height:70px;}
+:root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] .review-workflow-composer textarea.ui-control {min-height:70px;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-filters {display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-filters button {padding:4px 11px;border:1px solid var(--rw-line2);border-radius:999px;background:var(--rw-card);font-size:12.5px;color:var(--rw-ink2);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-filters button[aria-pressed=true] {background:var(--rw-accent);border-color:var(--rw-accent);color:var(--rw-accent-ink);font-weight:600;}
-:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event {display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:12px;align-items:start;padding:10px 0;}
+:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event {position:relative;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:12px;align-items:start;padding:10px 0;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event-group {margin-top:14px;}
-:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event-group > h4 {font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--rw-muted);overflow-wrap:anywhere;}
+:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event-group > h4 {margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--rw-muted);overflow-wrap:anywhere;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event-icon {display:grid;place-items:center;width:30px;height:30px;border:1px solid var(--rw-line);border-radius:50%;color:var(--rw-muted);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event-icon.is-success {color:var(--rw-ok);background:var(--rw-ok-bg);border-color:transparent;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event-icon.is-critical {color:var(--rw-crit);background:var(--rw-crit-bg);border-color:transparent;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event > div {font-size:13.5px;overflow-wrap:anywhere;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event time {font-size:12px;color:var(--rw-muted);text-align:right;}
-:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] > .review-workflow-footer {padding:12px 24px;gap:10px;align-items:center;background:var(--rw-sunk);border-color:var(--rw-line);flex-wrap:wrap;}
+:root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] > .review-workflow-footer {padding:12px 24px;gap:10px;align-items:center;background:var(--rw-sunk);border-color:var(--rw-line);flex-wrap:wrap;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-feedback {margin-right:auto;font-size:12.5px;color:var(--rw-muted);}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-source-card {border:1px solid var(--rw-line);border-radius:14px;overflow:hidden;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-source-card > header {padding:16px 18px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;border-bottom:1px solid var(--rw-line);}
@@ -151,7 +151,7 @@
 .review-workflow-related-popover {width:min(600px,calc(100vw - 32px));max-height:60vh;overflow:auto;}
 :root[data-brawndo-portal=dark] :is(.review-workflow-assignee-popover,.review-workflow-related-popover) {background:#0d1729;color:#eef3fb;border-color:#1c2842;}
 @media(max-width:760px) {
-  :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] > :is(.review-workflow-header,.review-workflow-body,.review-workflow-footer) {padding-left:16px;padding-right:16px;}
+  :root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] > :is(.review-workflow-header,.review-workflow-body,.review-workflow-footer) {padding-left:16px;padding-right:16px;}
   :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-occurrence {grid-template-columns:repeat(2,minmax(0,1fr));}
   :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-occurrence > div:first-child {grid-column:1/-1;}
   :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-occurrence > div:nth-child(2) {border-left:0;}
@@ -172,7 +172,12 @@
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .ui-button:disabled {opacity:.45;cursor:not-allowed;filter:none;}
 
 /* Keep the native chooser and keyboard target behind the approved button label. */
-:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-file-choice {position:relative;display:inline-flex;align-items:center;padding:8px 14px;border:1px solid var(--rw-accent);border-radius:9px;background:var(--rw-accent);color:var(--rw-accent-ink);font-size:13.5px;font-weight:600;cursor:pointer;}
+:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] label.review-workflow-file-choice {position:relative;display:inline-flex;align-items:center;padding:8px 14px;border:1px solid var(--rw-accent);border-radius:9px;background:var(--rw-accent);color:var(--rw-accent-ink);font-size:13.5px;font-weight:600;cursor:pointer;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-file-choice:focus-within {outline:2px solid var(--rw-accent);outline-offset:2px;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-file-choice:has(:disabled) {opacity:.45;cursor:not-allowed;}
 :root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-file-choice input.review-workflow-file-input {position:absolute;width:1px;height:1px;min-height:0;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
+
+/* Retain the native close command at the reference target size. */
+:root .ui-dialog.brawndo-review-workflow[data-state][data-testid=reviews-drawer] > button.absolute {width:32px;height:32px;border-radius:8px;color:var(--rw-muted);opacity:1;}
+
+:root .ui-dialog.brawndo-review-workflow[data-testid=reviews-drawer] .review-workflow-event:not(:last-child)::after {content:'';position:absolute;left:14px;top:40px;bottom:-10px;width:1px;background:var(--rw-line);pointer-events:none;}
