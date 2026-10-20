@@ -35,6 +35,13 @@ async function remount(){await act(async()=>root.unmount());root=createRoot(host
 async function openSavedInterview(){await act(async()=>{disclosure().open=true;disclosure().dispatchEvent(new Event('toggle'));});expect(guide().hidden).toBe(false);}
 const groupNumber=()=>guide().querySelector('.omni-group-progress').getAttribute('aria-label');
 const nativeWrites=()=>patchSpy.mock.calls.filter(([url])=>url===base);
+const matrixControl=label=>[...guide().querySelectorAll('select[aria-label],.sg11-matrix-options')].find(node=>node.getAttribute('aria-label').toLowerCase().includes(label.toLowerCase()));
+const matrixValue=node=>node.tagName==='SELECT'?node.value:node.querySelector('[aria-pressed="true"]')?.dataset.answer||'';
+async function matrixAnswer(node,value){
+  if(node.tagName==='SELECT')return edit(node,value);
+  const choice=[...node.querySelectorAll('button')].find(button=>button.dataset.answer===value);
+  expect(choice).toBeTruthy();await act(async()=>choice.click());
+}
 async function choose(id,value){
   const question=catalogForVersion(version).safeguards[record.definition_id].find(item=>item.id===id);
   const title=record.definition_id==='1.1'?({inventory:'Does an enterprise asset inventory exist?',maintenance:'Is the inventory updated when assets change?'}[id]||question.prompt):question.prompt;
@@ -50,6 +57,10 @@ async function fillGroup(){
   for(const select of guide().querySelectorAll('select')){
     const options=[...select.options].map(option=>option.value);
     await edit(select,select.id==='omni-answer-frequency'?'Every six months':options.includes('One source')?'One source':options.includes('Yes')?'Yes':options.find(Boolean));
+  }
+  for(const row of guide().querySelectorAll('.sg11-matrix-options')){
+    const choice=row.querySelector('[data-answer="Yes"]')||row.querySelector('button');
+    if(choice.getAttribute('aria-pressed')!=='true')await act(async()=>choice.click());
   }
   for(const date of guide().querySelectorAll('input[type="date"]'))await edit(date,today());
 }
@@ -107,8 +118,8 @@ test.each([
 
   await fillGroup();await click(guide(),'Save & next');expect(groupNumber()).toBe('Question group 2 of '+total);
   await fillGroup();
-  const affected=[...guide().querySelectorAll('select')].find(select=>select.getAttribute('aria-label').toLowerCase().includes(rowText.toLowerCase()));expect(affected).toBeTruthy();
-  const affectedLabel=affected.getAttribute('aria-label');await edit(affected,id==='2.1'?'':'Not sure');
+  const affected=matrixControl(rowText);expect(affected).toBeTruthy();
+  const affectedLabel=affected.getAttribute('aria-label');await matrixAnswer(affected,id==='2.1'?'':'Not sure');
   await edit(guide().querySelector('[aria-label="Known gaps or uncertainties"]'),'Retain this local matrix context.');
   await click(guide(),'Save & close');expect(disclosure().open).toBe(false);
   const partial=(await api.get(base+'/guided-assessment')).data;
@@ -117,9 +128,9 @@ test.each([
   await assertNativeUnchanged();
   await remount();expect(disclosure().open).toBe(false);await openSavedInterview();
   expect(groupNumber()).toBe('Question group 2 of '+total);
-  const resumed=[...guide().querySelectorAll('select')].find(select=>select.getAttribute('aria-label')===affectedLabel);
-  expect(resumed.value).toBe(id==='2.1'?'':'Not sure');expect(guide().querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe('Retain this local matrix context.');
-  await edit(resumed,'Not sure');await click(guide(),'Save & next');
+  const resumed=matrixControl(affectedLabel);
+  expect(matrixValue(resumed)).toBe(id==='2.1'?'':'Not sure');expect(guide().querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe('Retain this local matrix context.');
+  if(matrixValue(resumed)!=='Not sure')await matrixAnswer(resumed,'Not sure');await click(guide(),'Save & next');
   for(let number=3;number<total;number++){
     expect(groupNumber()).toBe('Question group '+number+' of '+total);await fillGroup();await click(guide(),'Save & next');
   }
@@ -156,13 +167,36 @@ test.each([
 
   await selectTab('Items to address');const itemSection=[...surface().querySelectorAll('.assessment-item')].find(section=>section.textContent.includes(affectedLabel));expect(itemSection).toBeTruthy();
   await edit(itemSection.querySelector('textarea'),'Owned local confirmation; judgment remains separately recorded.');
-  await act(async()=>itemSection.querySelector('input[type="checkbox"]').click());
+  await act(async()=>{const resolve=button(itemSection,'Mark done')||itemSection.querySelector('input[type="checkbox"]');expect(resolve).toBeTruthy();resolve.click();});
   const resolved=(await api.get(base)).data,resolvedItem=resolved.items_to_address.find(item=>item.item_id===items.find(item=>item.question_id===matrixId).item_id);
   expect(resolvedItem).toMatchObject({state:'resolved',resolution:'Owned local confirmation; judgment remains separately recorded.'});expect(resolvedItem.history.at(-1).event).toBe('resolved');
   for(const key of ['status','verification','implementation','last_saved','last_assessed','assessment_history'])expect(resolved[key]).toEqual(saved[key]);
   expect((await api.get(base+'/related')).data.findings).toEqual(relatedBefore.findings);
   await remount();expect(disclosure().open).toBe(false);expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(reviewed);
   expect((await api.get(base+'/guided-assessment')).data.narrative).toBe(reviewed);expect(nativeWrites()).toHaveLength(1);
+});
+
+test('pilot validation and failed group save retain the current answers and native assessment',async()=>{
+  await loadSafeguard('1.1');await render();
+  await click(guide(),'Save & next');
+  expect(groupNumber()).toBe('Question group 1 of 5');
+  expect(guide().textContent).toContain('Choose an answer before continuing.');
+  expect(putSpy).not.toHaveBeenCalled();
+  await fillGroup();
+  putSpy.mockRejectedValueOnce(new Error('Owned fixture group save failed'));
+  await click(guide(),'Save & next');
+  expect(groupNumber()).toBe('Question group 1 of 5');
+  expect(guide().textContent).toContain('Owned fixture group save failed');
+  expect(button(guide(),'Yes').getAttribute('aria-pressed')).toBe('true');
+  expect((await api.get(base+'/guided-assessment')).data).toMatchObject({revision:0,answers:{},completed:false});
+  await assertNativeUnchanged();
+  // A DOM click does not return the native async handler's promise. Await the actual retry.
+  await act(async()=>{button(guide(),'Save & next').click();await putSpy.mock.results[1].value;});
+  const retry=putSpy.mock.calls[1][1],persisted=(await api.get(base+'/guided-assessment')).data;
+  expect(retry.answers.inventory).toBe('Yes');expect(persisted).toMatchObject({step:retry.step,revision:1,answers:{inventory:'Yes'}});
+  expect({group:groupNumber(),errors:[...guide().querySelectorAll('[role=alert]')].map(node=>node.textContent),calls:putSpy.mock.calls.length}).toEqual({group:'Question group 2 of 5',errors:[],calls:2});
+  expect((await api.get(base+'/guided-assessment')).data.answers.inventory).toBe('Yes');
+  await assertNativeUnchanged();
 });
 
 test.each(['resume','completed','stale'])('%s personal interview retains its existing routing and native manual record on entry',async state=>{

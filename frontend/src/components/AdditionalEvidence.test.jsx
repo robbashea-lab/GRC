@@ -5,7 +5,16 @@ import api from '@/lib/api';
 import {dateMatches} from '@/lib/tableFilters';
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),put:jest.fn(),patch:jest.fn(),delete:jest.fn()},formatError:error=>error.message}));
 jest.mock('sonner',()=>({toast:{error:jest.fn()}}));
-let node,root;
+let node,root,originalCreate,originalRevoke;
+beforeEach(()=>{
+  originalCreate=URL.createObjectURL;originalRevoke=URL.revokeObjectURL;
+  URL.createObjectURL=jest.fn(()=>'blob:additional-evidence');URL.revokeObjectURL=jest.fn();
+});
+afterEach(()=>{
+  jest.restoreAllMocks();
+  if(originalCreate===undefined)delete URL.createObjectURL;else URL.createObjectURL=originalCreate;
+  if(originalRevoke===undefined)delete URL.revokeObjectURL;else URL.revokeObjectURL=originalRevoke;
+});
 const row={client_id:'demo_brawndo',evidence_id:'e1',filename:'Check.pdf',evidence_type:'Report',created_at:'2026-10-01',program_areas:['Reviews'],references:[{kind:'reviews',id:'r1',occurrence_id:'period-1',title:'Monthly check',label:'Review',available:true}]};
 beforeEach(()=>{jest.useFakeTimers('modern');jest.setSystemTime(new Date('2026-10-16T12:00:00Z'));global.IS_REACT_ACT_ENVIRONMENT=true;node=document.createElement('div');document.body.appendChild(node);root=createRoot(node);api.get.mockImplementation(async(path,{params}={})=>({data:path==='/evidence/catalog'?{items:[row],total:1,page_size:params.page_size,program_counts:{Reviews:1},facets:{evidence_type:['Report'],years:['2026']},folder_counts:[]}:path==='/frameworks/cis-ig1'?{assessments:[],active_definition_ids:[],selected:false,configured:false}:path==='/reviews'?[{client_id:'demo_brawndo',review_id:'r1',title:'Monthly check',recurrence:'monthly'}]:path.endsWith('/sets')?{items:[{occurrence_id:'period-1',period:'October',status:'completed',due_date:'2026-10-01',evidence_count:1},{occurrence_id:'cancelled',status:'cancelled',due_date:'2026-09-01',evidence_count:0}],total:2,page_size:25}:path.endsWith('/download')?{content_base64:'cGRm',mime_type:'application/pdf',filename:'Check.pdf'}:[]}));});
 afterEach(async()=>{await act(async()=>root.unmount());node.remove();jest.clearAllMocks();jest.useRealTimers();});
@@ -17,6 +26,12 @@ test('download uses native file bytes without opening a record; completed covera
   expect(axis.map(month=>month.textContent)).toEqual(['Oct ’25','Nov','Dec','Jan ’26','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct']);
   expect(axis.filter(month=>month.classList.contains('bae-year')).map(month=>month.title)).toEqual(['Oct 2025','Jan 2026']);expect(axis[1].title).toBe('Nov 2025');
   await act(async()=>node.querySelector('[aria-label="Download Check.pdf"]').click());expect(open).not.toHaveBeenCalled();expect(download).toHaveBeenCalled();expect(api.get).toHaveBeenCalledWith('/evidence/e1/download');
+  expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+  const blob=URL.createObjectURL.mock.calls[0][0];
+  expect(blob.type).toBe('application/octet-stream');expect(blob.size).toBe(3);
+  expect(await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsText(blob);})).toBe('pdf');
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:additional-evidence');
+  for(const method of ['post','put','patch','delete'])expect(api[method]).not.toHaveBeenCalled();
   await act(async()=>node.querySelector('.bae-cov-cells button').click());expect(source).toHaveBeenCalledWith({kind:'reviews',id:'r1',occurrence_id:'period-1',available:true});
   await act(async()=>node.querySelector('.bae-name').click());expect(open).toHaveBeenCalledWith('e1');download.mockRestore();
 });

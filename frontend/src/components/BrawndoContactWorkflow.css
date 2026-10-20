@@ -1,0 +1,162 @@
+/* Contact reference values scoped to the eligible native popup. */
+/* Match the specificity of native additional-surface dialog rules without changing shared CSS. */
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog]{--font:'GoverNara Contact Inter',Inter,system-ui,sans-serif;--font-body:var(--font);--font-heading:var(--font);--fg:var(--ink);--fg2:var(--ink2);--surface:var(--card);--subtle:var(--sunk);--border:var(--line);--border-strong:var(--line2);--link:var(--accent);--rail:var(--accent);--selected:var(--accent-soft)}
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog] .contact-concept-title{font:650 20px/1.5 var(--font);color:var(--ink);letter-spacing:-.01em}
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog] .in{font:400 14px/1.5 var(--font);height:auto;min-height:40px;padding:9px 11px;border-radius:9px;background:var(--card);color:var(--ink);border:1px solid var(--line2)}
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog] select.in{padding-right:32px}
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog] textarea.in{min-height:110px}
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog] .tab{font-size:13.5px;line-height:1.5;padding:10px 12px;color:var(--muted);height:auto;border-radius:0}
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog] .tab[aria-selected=true]{font-weight:600;color:var(--ink);border-bottom-color:var(--accent)}
+/* The reference header already provides the guarded Close action. */
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog]>button.absolute{display:none}
+
+
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog] {
+  --page:#e9edf3; --scrim:#0b142699; --card:#ffffff; --sunk:#f6f8fb; --line:#e2e7ef; --line2:#cfd7e3;
+  --ink:#0f1a2e; --ink2:#46536a; --muted:#6b7686; --accent:#2f64e0; --accent-ink:#ffffff; --accent-soft:#e8efff;
+  --ok:#137a43; --ok-bg:#e5f5ec; --warn:#8a4b05; --warn-bg:#fdf3e1; --crit:#b42318; --crit-bg:#fdebea;
+  --info:#2f4fa8; --info-bg:#eef3ff; --quote:#f3f6fb; --shadow:0 30px 80px #0f1a2e40; --focus:#2f64e0;
+}
+:root:is([data-brawndo-portal="dark"],[data-brawndo-workspace="dark"]) .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog] {
+  --page:#060c18; --scrim:#000000a6; --card:#0d1729; --sunk:#0a1322; --line:#1c2842; --line2:#2a3858;
+  --ink:#eef3fb; --ink2:#b7c2d3; --muted:#8793a6; --accent:#6f9bff; --accent-ink:#06101f; --accent-soft:#16264a;
+  --ok:#5fd394; --ok-bg:#0f2e20; --warn:#f5c26b; --warn-bg:#3a2a12; --crit:#ff8b85; --crit-bg:#3a1820;
+  --info:#a9c4ff; --info-bg:#15254a; --quote:#0a1424; --shadow:0 30px 80px #000a; --focus:#85c4ff;
+}
+.brawndo-contact-workflow * { box-sizing:border-box; }
+.brawndo-contact-workflow { background:var(--page); color:var(--ink); font:14px/1.5 Inter, system-ui, sans-serif; }
+.brawndo-contact-workflow button, .brawndo-contact-workflow input, .brawndo-contact-workflow select, .brawndo-contact-workflow textarea { font:inherit; color:inherit; }
+.brawndo-contact-workflow button { cursor:pointer; }
+.brawndo-contact-workflow :focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.brawndo-contact-workflow .mh { padding:20px 24px 0; border-bottom:1px solid var(--line); }
+.brawndo-contact-workflow .mh-top { display:flex; align-items:flex-start; gap:14px; }
+.brawndo-contact-workflow .mh-ic { width:40px; height:40px; border-radius:11px; background:linear-gradient(135deg,#85C4FF33,#9698FE33); border:1px solid var(--line); display:grid; place-items:center; color:var(--accent); flex-shrink:0; }
+.brawndo-contact-workflow .mh h1 { margin:0; font-size:20px; font-weight:650; letter-spacing:-.01em; }
+.brawndo-contact-workflow .mh .sub { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:4px; font-size:12.5px; color:var(--muted); }
+.brawndo-contact-workflow .x { margin-left:auto; border:0; background:none; width:32px; height:32px; border-radius:8px; color:var(--muted); display:grid; place-items:center; }
+.brawndo-contact-workflow .x:hover { background:var(--sunk); color:var(--ink); }
+.brawndo-contact-workflow .chip { display:inline-flex; align-items:center; gap:5px; padding:2px 9px; border-radius:999px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+.brawndo-contact-workflow .chip.ok { background:var(--ok-bg); color:var(--ok); }
+.brawndo-contact-workflow .chip.info { background:var(--info-bg); color:var(--info); }
+.brawndo-contact-workflow .chip.warn { background:var(--warn-bg); color:var(--warn); }
+.brawndo-contact-workflow .chip.crit { background:var(--crit-bg); color:var(--crit); }
+.brawndo-contact-workflow .chip.plain { background:var(--sunk); color:var(--ink2); border:1px solid var(--line); }
+.brawndo-contact-workflow .tabs { display:flex; gap:4px; margin-top:16px; overflow-x:auto; scrollbar-width:none; }
+.brawndo-contact-workflow .tab { border:0; background:none; padding:10px 12px; font-size:13.5px; color:var(--muted); border-bottom:2px solid transparent; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+.brawndo-contact-workflow .tab[aria-selected="true"] { color:var(--ink); border-color:var(--accent); font-weight:600; }
+.brawndo-contact-workflow .tab .n { font-size:11px; padding:0 6px; border-radius:999px; background:var(--sunk); color:var(--muted); border:1px solid var(--line); }
+.brawndo-contact-workflow .mb { flex:1; padding:22px 24px 26px; overflow:auto; }
+.brawndo-contact-workflow .mf { border-top:1px solid var(--line); padding:12px 24px; display:flex; gap:10px; align-items:center; background:var(--sunk); }
+.brawndo-contact-workflow .mf .dirty { font-size:12.5px; color:var(--muted); }
+.brawndo-contact-workflow .mf .sp { flex:1; }
+.brawndo-contact-workflow .btn { white-space:nowrap; border:1px solid var(--line2); background:var(--card); padding:8px 14px; border-radius:9px; font-size:13.5px; font-weight:500; display:inline-flex; align-items:center; gap:7px; }
+.brawndo-contact-workflow .btn:hover { border-color:var(--accent); }
+.brawndo-contact-workflow .btn.pri { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600; }
+.brawndo-contact-workflow .btn.pri:hover { filter:brightness(1.07); }
+.brawndo-contact-workflow .btn:disabled { opacity:.45; cursor:not-allowed; filter:none; }
+.brawndo-contact-workflow .panel[hidden] { display:none; }
+.brawndo-contact-workflow .lbl { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600; display:block; margin-bottom:4px; }
+.brawndo-contact-workflow .val { font-size:15px; font-weight:600; }
+.brawndo-contact-workflow .val small { display:block; font-size:12px; font-weight:400; color:var(--muted); }
+.brawndo-contact-workflow .sec { margin-top:22px; }
+.brawndo-contact-workflow .sec h3 { font-size:13px; font-weight:650; margin:0 0 10px; display:flex; align-items:center; gap:8px; }
+.brawndo-contact-workflow .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; }
+.brawndo-contact-workflow .f { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.brawndo-contact-workflow .f.full { grid-column:1 / -1; }
+.brawndo-contact-workflow .f label { font-size:12.5px; font-weight:600; color:var(--ink2); }
+.brawndo-contact-workflow .in { width:100%; border:1px solid var(--line2); background:var(--card); border-radius:9px; padding:9px 11px; font-size:14px; min-height:40px; }
+.brawndo-contact-workflow .in:hover { border-color:var(--muted); }
+.brawndo-contact-workflow .in:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.brawndo-contact-workflow select.in { appearance:none; background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%); background-position:calc(100% - 17px) 17px, calc(100% - 12px) 17px; background-size:5px 5px; background-repeat:no-repeat; padding-right:32px; }
+.brawndo-contact-workflow textarea.in { min-height:110px; resize:vertical; line-height:1.5; }
+.brawndo-contact-workflow .help { font-size:12px; color:var(--muted); }
+.brawndo-contact-workflow .help.warn { color:var(--warn); }
+.brawndo-contact-workflow .help.ok { color:var(--ok); }
+.brawndo-contact-workflow .help.err { color:var(--crit); }
+.brawndo-contact-workflow .acts { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items:center; }
+.brawndo-contact-workflow .empty { text-align:center; padding:26px 12px; color:var(--muted); border:1px solid var(--line); border-radius:12px; font-size:13.5px; }
+.brawndo-contact-workflow .ev { display:grid; grid-template-columns:30px 1fr auto; gap:12px; align-items:flex-start; padding:10px 0; position:relative; }
+.brawndo-contact-workflow .ev:not(:last-child)::after { content:""; position:absolute; left:14px; top:40px; bottom:-10px; width:1px; background:var(--line); }
+.brawndo-contact-workflow .ev .ei { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; border:1px solid var(--line); background:var(--card); color:var(--muted); }
+.brawndo-contact-workflow .ev .ei.chg { background:var(--info-bg); color:var(--info); border-color:transparent; }
+.brawndo-contact-workflow .ev .what { font-size:13.5px; }
+.brawndo-contact-workflow .ev .what b { font-weight:600; }
+.brawndo-contact-workflow .ev .what s { color:var(--muted); }
+.brawndo-contact-workflow .ev .meta { font-size:12px; color:var(--muted); white-space:nowrap; text-align:right; }
+.brawndo-contact-workflow .lock { margin-top:16px; font-size:12px; color:var(--muted); display:flex; gap:6px; align-items:center; }
+.brawndo-contact-workflow [hidden] { display:none !important; }
+.brawndo-contact-workflow .big-av { width:44px; height:44px; border-radius:50%; background:var(--accent-soft); color:var(--info); font-weight:700; font-size:15px; display:grid; place-items:center; flex-shrink:0; border:1px solid var(--line); }
+.brawndo-contact-workflow .strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid var(--line); border-radius:12px; background:var(--sunk); overflow:hidden; }
+.brawndo-contact-workflow .strip > div { padding:12px 16px; border-left:1px solid var(--line); min-width:0; }
+.brawndo-contact-workflow .strip > div:first-child { border-left:0; }
+.brawndo-contact-workflow .strip small { color:var(--muted); font-size:12.5px; display:block; }
+.brawndo-contact-workflow .lnkb { color:var(--accent); font-weight:600; background:none; border:0; padding:0; font-size:12.5px; cursor:pointer; }
+.brawndo-contact-workflow .toggle { display:flex; gap:10px; align-items:flex-start; border:1px solid var(--line); border-radius:11px; padding:12px 14px; cursor:pointer; }
+.brawndo-contact-workflow .toggle input { margin-top:3px; accent-color:var(--accent); }
+.brawndo-contact-workflow .toggle b { font-size:13.5px; display:block; }
+.brawndo-contact-workflow .toggle small { font-size:12px; color:var(--muted); font-weight:400; }
+.brawndo-contact-workflow .own-g { margin-top:16px; }
+.brawndo-contact-workflow .own-g:first-child { margin-top:0; }
+.brawndo-contact-workflow .own-g h4 { margin:0 0 4px; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600; display:flex; gap:8px; align-items:center; }
+.brawndo-contact-workflow .orow { display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; margin-top:6px; flex-wrap:wrap; }
+.brawndo-contact-workflow .orow b { font-size:13.5px; }
+.brawndo-contact-workflow .orow .sp { flex:1; }
+.brawndo-contact-workflow .reassign { display:flex; gap:10px; align-items:center; flex-wrap:wrap; border:1px solid var(--line); border-radius:12px; padding:12px 14px; background:var(--sunk); margin-bottom:16px; }
+.brawndo-contact-workflow .reassign .tx { flex:1; min-width:220px; font-size:13px; color:var(--ink2); }
+.brawndo-contact-workflow .reassign select { max-width:240px; }
+.brawndo-contact-workflow .roles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.brawndo-contact-workflow .roles button { border:1px solid var(--line2); background:var(--card); border-radius:12px; padding:12px 14px; text-align:left; display:flex; flex-direction:column; gap:4px; }
+.brawndo-contact-workflow .roles button b { font-size:13.5px; display:flex; gap:8px; align-items:center; }
+.brawndo-contact-workflow .roles button small { font-size:12px; color:var(--muted); line-height:1.4; }
+.brawndo-contact-workflow .roles button[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 2px var(--accent-soft); }
+.brawndo-contact-workflow .roles button:disabled { opacity:.5; cursor:not-allowed; }
+.brawndo-contact-workflow .can { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px 14px; margin-top:12px; font-size:12.5px; color:var(--ink2); }
+.brawndo-contact-workflow .can span::before { content:"✓ "; color:var(--ok); font-weight:700; }
+.brawndo-contact-workflow .can span.no::before { content:"✕ "; color:var(--muted); }
+.brawndo-contact-workflow .can span.no { color:var(--muted); }
+.brawndo-contact-workflow .acc-card { border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
+.brawndo-contact-workflow .acc-card .hd { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.brawndo-contact-workflow .acc-card .hd b { font-size:14.5px; }
+.brawndo-contact-workflow .acc-card .hd .sp { flex:1; }
+.brawndo-contact-workflow .danger { border:1px solid color-mix(in srgb, var(--crit) 35%, transparent); border-radius:12px; padding:14px 16px; margin-top:16px; }
+.brawndo-contact-workflow .danger h4 { margin:0 0 4px; font-size:13.5px; }
+.brawndo-contact-workflow .danger p { margin:0; font-size:13px; color:var(--ink2); }
+.brawndo-contact-workflow .secn { display:flex; align-items:center; gap:10px; margin:22px 0 12px; }
+.brawndo-contact-workflow .secn:first-child { margin-top:0; }
+.brawndo-contact-workflow .secn .num { width:24px; height:24px; border-radius:50%; background:var(--accent-soft); color:var(--info); font-size:12px; font-weight:700; display:grid; place-items:center; }
+.brawndo-contact-workflow .secn b { font-size:14.5px; }
+.brawndo-contact-workflow .secn span.h { font-size:12.5px; color:var(--muted); }
+.brawndo-contact-workflow .sumline { font-size:13px; color:var(--ink2); display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+@media (max-width:760px) {
+  .brawndo-contact-workflow .mh, .brawndo-contact-workflow .mb { padding-left:16px; padding-right:16px; }
+  .brawndo-contact-workflow .mf { padding:12px 16px; flex-wrap:wrap; }
+  .brawndo-contact-workflow .grid, .brawndo-contact-workflow .roles, .brawndo-contact-workflow .can { grid-template-columns:minmax(0,1fr); }
+  .brawndo-contact-workflow .strip { grid-template-columns:minmax(0,1fr); }
+  .brawndo-contact-workflow .strip > div { border-left:0; border-top:1px solid var(--line); }
+  .brawndo-contact-workflow .strip > div:first-child { border-top:0; }
+  .brawndo-contact-workflow .ev { grid-template-columns:30px 1fr; }
+  .brawndo-contact-workflow .ev .meta { grid-column:2; text-align:left; }
+}
+
+/* Match the original reference four font-face declarations. */
+@font-face{font-family:'GoverNara Contact Inter';font-style:normal;font-weight:400;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+@font-face{font-family:'GoverNara Contact Inter';font-style:normal;font-weight:500;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+@font-face{font-family:'GoverNara Contact Inter';font-style:normal;font-weight:600;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+@font-face{font-family:'GoverNara Contact Inter';font-style:normal;font-weight:700;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog]{background:var(--card);color:var(--ink);font:14px/1.5 'GoverNara Contact Inter',Inter,system-ui,sans-serif;border-color:var(--line);border-radius:16px;--font-body:'GoverNara Contact Inter',Inter,system-ui,sans-serif;--font-heading:var(--font-body)}
+.brawndo-contact-workflow>.absolute{display:none}
+.brawndo-contact-workflow .contact-concept-title{margin:0;font:650 20px/1.5 var(--font-body);letter-spacing:-.01em;color:var(--ink)}
+.brawndo-contact-workflow .contact-concept-form{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden}
+.brawndo-contact-workflow .mb{min-height:0;overscroll-behavior:contain}
+.brawndo-contact-workflow .mh{flex:none}.brawndo-contact-workflow .mf{flex:none}
+.brawndo-contact-workflow .mh:not(:has(.tabs)){padding-bottom:16px}
+.brawndo-contact-workflow .required{color:var(--crit)}
+.brawndo-contact-workflow .in{display:block;line-height:1.5}
+.brawndo-contact-workflow button:disabled{cursor:not-allowed;opacity:.45}
+.brawndo-contact-workflow .help.err{margin-bottom:12px}
+.brawndo-contact-workflow .mf .dirty{font-size:12.5px;color:var(--muted)}
+.brawndo-contact-workflow .contact-access-note{display:flex;gap:8px;margin-top:12px;font-size:12.5px;color:var(--muted)}
+.brawndo-contact-workflow .contact-access-note svg{flex-shrink:0;margin-top:2px}
+.brawndo-contact-workflow [data-testid=contact-actions] button{font:500 13.5px/1.5 var(--font-body);border:1px solid var(--line2);background:var(--card);padding:8px 14px;border-radius:9px;height:auto}
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog] .in:hover{border-color:var(--muted)}
+:root .ui-sheet.brawndo-contact-workflow[data-state][data-testid][role=dialog] .in:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}

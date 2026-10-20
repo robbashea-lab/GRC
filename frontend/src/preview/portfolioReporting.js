@@ -186,15 +186,17 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
   const prior=previous?.portfolio_reporting||{},snapshots=(prior.snapshots||[]).map(snapshot=>({...snapshot,current:{...snapshot.current}}));
   const identities=(prior.identities||[]).map(row=>({...row,scopes:row.scopes.map(scopeText),head:row.head?{...row.head}:null}));
   const projection={...db,portfolio_reporting:{...prior,identities}},scope_events=[...(prior.scope_events||[])];
-  for(const position of demoCurrentPositions(projection,db.clients||[],at)){
+  const initialPositions=demoCurrentPositions(projection,db.clients||[],at),changedIdentityPrograms=new Set();
+  for(const position of initialPositions){
     let identity=identities.find(row=>row.program_id===position.program_id);
-    if(!identity){identity={program_id:position.program_id,scopes:knownScopes(projection,position.program_id),head:null};identities.push(identity);}
-    const signature=exactScope(position.current);if(signature&&!identity.scopes.includes(signature))identity.scopes.push(signature);
+    if(!identity){identity={program_id:position.program_id,scopes:knownScopes(projection,position.program_id),head:null};identities.push(identity);changedIdentityPrograms.add(position.program_id);}
+    const signature=exactScope(position.current);if(signature&&!identity.scopes.includes(signature)){identity.scopes.push(signature);changedIdentityPrograms.add(position.program_id);}
     const source=exactSource(position.current);
-    if(source&&source!==identity.head?.signature)identity.head={signature:source,revision:(identity.head?.revision||0)+1};
+    if(source&&source!==identity.head?.signature){identity.head={signature:source,revision:(identity.head?.revision||0)+1};changedIdentityPrograms.add(position.program_id);}
   }
   const beforePositions=previous?demoCurrentPositions({...previous,portfolio_reporting:{...prior,identities}},previous.clients||[],at):[];
-  const afterPositions=demoCurrentPositions(projection,db.clients||[],at);
+  // The identity pass changes no source records; only changed program identity metadata needs normalization again.
+  const afterPositions=initialPositions.map(position=>position.current.scope&&changedIdentityPrograms.has(position.program_id)?{...position,current:normalizedCurrent(projection,position.program_id,position.current)}:position);
   if(previous)for(const identity of new Set([...beforePositions,...afterPositions].map(position=>position.program_id))){
     const before=beforePositions.find(position=>position.program_id===identity),after=afterPositions.find(position=>position.program_id===identity);
     if(stable(before?.current.scope??null)!==stable(after?.current.scope??null)){

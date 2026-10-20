@@ -56,7 +56,7 @@ function AIWorkspace({identity}){
   const addAction=canAdd?<PrimaryAction label="New AI System" onClick={()=>setSelected({})} testid="new-ai-system"/>:null;
   // The complete native drawer stays outside the appearance branch so refreshes retain its draft.
   const Shell=reference?BrawndoSurface:'div';
-  return <>{additional?<><AdditionalAI clientId={currentClientId} clientName={currentClient?.name||'Organization'} rows={rows} users={members} intake={data.intake} canCreate={canAdd} onOpen={setSelected} onCreate={()=>setSelected({})} error={error} onRetry={()=>setRevision(n=>n+1)} query={search} view={quick} showInactive={showInactive} onSearch={setSearch} onView={setQuick} onShowInactive={setShowInactive} intakeEditor={intakeEditor}/>
+  return <>{additional?<><AdditionalAI clientId={currentClientId} clientName={currentClient?.name||'Organization'} rows={rows} users={members} intake={data.intake} canCreate={canAdd} onOpen={setSelected} onCreate={template=>setSelected(template?{template}: {})} error={error} onRetry={()=>setRevision(n=>n+1)} query={search} view={quick} showInactive={showInactive} onSearch={setSearch} onView={setQuick} onShowInactive={setShowInactive} intakeEditor={intakeEditor}/>
     {rows.some(row=>row.relationship_integrity_warning)&&<p role="status" className="register-notice">{AI_RELATIONSHIP_NOTICE}</p>}
   </>:
   <Shell className="register-surface brawndo-ai-page">{reference?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · AI systems`} title="AI Governance" subtitle={SUBTITLE}>{addAction}</BrawndoPageHeader>:<PageHeader title="AI Governance" subtitle={SUBTITLE}
@@ -94,5 +94,5 @@ function AIWorkspace({identity}){
       </table></div>}
     </div>
   </Shell>}
-  {selected&&data&&<AIDrawer key={`${identity}:${selected.ai_system_id||'new'}`} open record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</>;
+  {selected&&data&&<AIDrawer key={`${identity}:${selected.ai_system_id||'new'}`} open conceptPresentation={additional} template={selected.template} record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</>;
 }
