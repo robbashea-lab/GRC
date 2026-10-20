@@ -96,6 +96,26 @@ test('legacy exact scope identities normalize on GET and the next atomic commit 
   expect(frameworkRequest(db,'/frameworks/cis-ig1','get',{client_id:'isolated'},null).implementation_position.source_revision).toBe(current.source_revision);
 });
 
+test('repairing one program source identity preserves unrelated program identity and history',()=>{
+  const db=fixture(['cis-ig1','soc-2']);
+  captureDemoReporting(db,null,'2026-09-01T00:00:00.000Z');
+  const unaffectedIdentity=copy(db.portfolio_reporting.identities.find(row=>row.program_id==='isolated:soc-2'));
+  const unaffectedSnapshots=copy(db.portfolio_reporting.snapshots.filter(row=>row.program_id==='isolated:soc-2'));
+  db.portfolio_reporting.identities.find(row=>row.program_id==='isolated:cis-ig1').head=null;
+  const previous=copy(db);
+  db.framework_assessments.find(row=>row.framework_key==='cis-ig1').status='addressed';
+  captureDemoReporting(db,previous,AS_OF);
+  const repaired=db.portfolio_reporting.identities.find(row=>row.program_id==='isolated:cis-ig1');
+  const current=request(db,'history',{client_id:'isolated',program_key:'cis-ig1'}).current;
+  expect(repaired.head.revision).toBe(1);
+  expect(current.source_revision).toBe('demo-source:isolated:cis-ig1:1');
+  expect(current.implemented).toBe(1);
+  expect(db.portfolio_reporting.identities.find(row=>row.program_id==='isolated:soc-2')).toEqual(unaffectedIdentity);
+  expect(db.portfolio_reporting.snapshots.filter(row=>row.program_id==='isolated:soc-2')).toEqual(unaffectedSnapshots);
+  expect(previous.framework_assessments.every(row=>row.status==='not_assessed')).toBe(true);
+  expect(previous.portfolio_reporting.identities.find(row=>row.program_id==='isolated:cis-ig1').head).toBeNull();
+});
+
 test('same-denominator Annex membership changes keep distinct exact scope identities and reset scope coverage',()=>{
   const db=fixture(['iso-27001']),annex=db.framework_assessments.filter(row=>row.specification==='annex_control');
   Object.assign(annex[0],{soa_applicability:'included',soa_justification:'Actual local inclusion'});
