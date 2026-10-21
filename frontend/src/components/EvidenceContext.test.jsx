@@ -1,7 +1,9 @@
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false}));
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordDrawer from './RecordDrawer';
 import Evidence from '../pages/Evidence';
+import EvidencePanel from './EvidencePanel';
 import api from '@/lib/api';
 import {readStore,saveStore} from '../preview/store';
 import {resolveEvidenceSource} from '../lib/evidenceContext';
@@ -128,4 +130,36 @@ test('library is not silently capped and deleted inventory retains authorized by
   expect((await api.get('/evidence/'+file.evidence_id+'/download')).data.filename).toBe('archive.pdf');
   const db=readStore();db.evidence.push(...Array.from({length:1005},(_,i)=>({client_id:mockClient.client_id,evidence_id:'bulk-'+i,filename:'bulk-'+i,linked_type:'task',linked_id:task.task_id,created_at:'2026-09-01'})));saveStore(db);
   const page=await catalog({q:'bulk-',page:11,page_size:100});expect(page.total).toBe(1005);expect(page.items).toHaveLength(5);
+});
+
+test('optional entity pagination hides only a single first page and retains native recovery and reuse paging',async()=>{
+  const render=async(props={})=>act(async()=>root.render(<EvidencePanel clientId={mockClient.client_id} kind="reviews" id={review.review_id} occurrenceId={review.current_occurrence_id} {...props}/>));
+  const pagers=()=>container.querySelectorAll('[aria-label="Evidence pagination"]');
+  await render();
+  expect(pagers()).toHaveLength(1);expect(pagers()[0].textContent).toContain('0 of 0 files');
+  await render({hideSinglePagePagination:true});expect(pagers()).toHaveLength(0);
+  await click('Link existing Evidence');
+  expect(container.querySelector('[aria-label="Find existing Evidence"]')).toBeTruthy();
+  expect(pagers()).toHaveLength(1);expect(pagers()[0].textContent).toContain('0 of 0 files');
+  await click('Cancel linking');
+  let db=readStore();
+  db.evidence.push(...Array.from({length:25},(_,i)=>({client_id:mockClient.client_id,evidence_id:'paging-'+i,filename:'paging-'+i+'.pdf',linked_type:'review',linked_id:review.review_id,occurrence_id:review.current_occurrence_id,created_at:'2026-09-01'})));
+  saveStore(db);await render({hideSinglePagePagination:true,refreshKey:1});
+  expect(container.querySelectorAll('[data-testid="context-evidence-file"]')).toHaveLength(25);expect(pagers()).toHaveLength(0);
+  db=readStore();db.evidence.push({...db.evidence.find(row=>row.evidence_id==='paging-0'),evidence_id:'paging-25',filename:'paging-25.pdf'});saveStore(db);
+  await render({hideSinglePagePagination:true,refreshKey:2});
+  expect(pagers()).toHaveLength(1);expect(pagers()[0].textContent).toContain('1–25 of 26 files');
+  await click('Next');expect(pagers()[0].textContent).toContain('26–26 of 26 files');
+  db=readStore();db.evidence=db.evidence.filter(row=>!row.evidence_id.startsWith('paging-'));saveStore(db);
+  await render({hideSinglePagePagination:true,refreshKey:3});
+  expect(pagers()).toHaveLength(1);expect(button('Previous').disabled).toBe(false);
+  await click('Previous');expect(pagers()).toHaveLength(0);
+});
+test('occurrence evidence uses the actual singular file count without changing default headings',async()=>{
+  await upload('review',review.review_id,'actual-occurrence.pdf',{occurrence_id:review.current_occurrence_id});
+  await act(async()=>root.render(<EvidencePanel clientId={mockClient.client_id} kind="reviews" id={review.review_id} occurrenceId={review.current_occurrence_id} directPresentation={{heading:'This occurrence',countUnit:'files',singularCountUnit:'file'}}/>));
+  expect(container.querySelector('[aria-label="This occurrence"] h3').textContent).toBe('This occurrence · 1 file');
+  expect(container.textContent).toContain('actual-occurrence.pdf');
+  await act(async()=>root.render(<EvidencePanel clientId={mockClient.client_id} kind="reviews" id={review.review_id} occurrenceId={review.current_occurrence_id}/>));
+  expect(container.querySelector('[aria-label="Direct Evidence"] h3').textContent).toBe('Direct Evidence (1)');
 });

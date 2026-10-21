@@ -8,11 +8,17 @@ import BrawndoWorkspace from './BrawndoWorkspace';
 import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
+import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
+import {AdditionalSectionsProvider, additionalAppearanceSurface, useAdditionalSectionsAppearance} from '@/lib/brawndoAdditionalScope';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
+import {canExportReports} from '@/lib/permissions';
+import {usePortfolioView} from '@/lib/usePortfolioView';
+import {assignedToUser} from '@/lib/portfolioProgress';
+import {clientDestination,selectedClient} from '@/lib/clientSelection';
 import { Input } from "@/components/ui/input";
 import {
   LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
@@ -39,6 +45,7 @@ const CLIENT_NAV = [
   { to: '/ai-governance', label: 'AI Governance', icon: Sparkles, testid: 'nav-ai-governance' },
   { to: "/contacts", label: "Contacts", icon: Users, testid: "nav-contacts" },
   { to: "/systems", label: "Systems & Scope", icon: Server, testid: "nav-systems" },
+  { to: "/reports", label: "Reports", icon: FileText, testid: "nav-reports" },
   { to: "/evidence", label: "Evidence Library", icon: FolderArchive, testid: "nav-evidence" },
   { to: "/client-profile", label: "Client Profile", icon: Settings2, testid: "nav-client-profile" },
 ];
@@ -108,7 +115,9 @@ function PlatformClientsSection() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [filter, setFilter] = useState("all");
+  const [portfolioView, updatePortfolioView] = usePortfolioView(user);
+  const filter = portfolioView.mine ? 'assigned' : 'all';
+  const setFilter = value => updatePortfolioView({mine: value === 'assigned'});
   const [q, setQ] = useState("");
 
   const active = useMemo(
@@ -119,7 +128,7 @@ function PlatformClientsSection() {
   const scoped = useMemo(() => {
     let list = active;
     // Same definition as the Portfolio's Assigned to Me: the client's GRC lead.
-    if (filter === "assigned") list = list.filter((c) => (c.grc_lead_id || c.assigned_owner_id) === user?.user_id);
+    if (filter === "assigned") list = list.filter((c) => assignedToUser(c, user?.user_id));
     const s = q.trim().toLowerCase();
     if (s) list = list.filter((c) => (c.name || "").toLowerCase().includes(s));
     return [...list].sort((a, b) => (a.name || "").trim().localeCompare((b.name || "").trim()));
@@ -191,7 +200,7 @@ function PlatformClientsSection() {
                 >
                   <button
                     type="button"
-                    onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}
+                    onClick={() => { switchClient(c.client_id); navigate(clientDestination(c.client_id)); }}
                     className="flex-1 min-w-0 text-left"
                     data-testid={`sidebar-open-${c.client_id}`}
                   >
@@ -217,7 +226,7 @@ function Sidebar() {
   // Client Workspace context covers everything else (dashboard, calendar, reviews, etc.).
   const atPlatform = ["/clients", "/admin", "/platform"].some((p) => location.pathname.startsWith(p));
   const { items: complianceItems } = useCompliance();
-  const items = atPlatform && isInternal ? PLATFORM_NAV : [...CLIENT_NAV.filter(item=>item.to!=='/findings'||!isReferenceRegister(currentClientId,user)), ...complianceItems.map(item => ({
+  const items = atPlatform && isInternal ? PLATFORM_NAV : [...CLIENT_NAV.filter(item=>(item.to!=='/findings'||!isReferenceRegister(currentClientId,user))&&(item.to!=='/reports'||canExportReports(user))), ...complianceItems.map(item => ({
     ...item, icon: ShieldCheck, testid: `nav-compliance-${item.key}`,
   }))];
 
@@ -294,14 +303,22 @@ function Sidebar() {
 }
 
 export default function Layout() {
-  const {currentClientId}=useOrg();
-  const {user}=useAuth();
-  const {pathname}=useLocation();
+  return <AdditionalSectionsProvider><LayoutContents/></AdditionalSectionsProvider>;
+}
+
+function LayoutContents() {
+  const org=useOrg(),auth=useAuth();
+  const {currentClientId}=org;
+  const {user}=auth;
+  const {pathname,search}=useLocation();
+  const visualSurface=visualCorrectionSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
+  const additionalAppearance=useAdditionalSectionsAppearance();
+  const additionalSurface=additionalAppearanceSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error},additionalAppearance);
   const pilot=!!user;
-  const content=<div className="app-shell min-h-screen flex bg-surface-app">
+  const content=<div className={'app-shell min-h-screen flex bg-surface-app '+(pathname==='/clients'?'governara-portfolio-shell':'governara-operational-shell')}>
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
-        {!(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
+        {!visualSurface && !additionalSurface && pathname !== '/clients' && !(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
         {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
       </main>
     </div>;

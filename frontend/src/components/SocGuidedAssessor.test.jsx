@@ -93,7 +93,8 @@ test('unconfirmed native save retains exact wording and does not claim rejection
 });
 test.each(['native','interview'])('new %s failure clears the prior success notice without closing or retrying',async stage=>{
   await render();await open();await complete();await click('Save assessment');
-  expect(document.body.textContent).toContain('Assessment saved.');
+  expect(document.querySelector('.omni-workspace-window')).toBeNull();
+  await open();expect(document.body.textContent).toContain('Assessment saved.');
   const wording=document.querySelector('[aria-label="Omnibot implementation summary"]').value;
   if(stage==='native')props.onSaveAssessment.mockResolvedValueOnce(false);else failWrite=true;
   await click('Save & close');
@@ -208,4 +209,64 @@ test.each(['compare','restart'])('%s requires explicit discard of unsaved answer
   expect(api.put.mock.calls.at(-1)[1]).toMatchObject(action==='compare'?{rebase:true,answers:savedInterview.answers,narrative:savedInterview.narrative}:{restart:true,answers:{},narrative:'',summary_review:null});
   expect(api.put.mock.calls.at(-1)[1].expected_revision).toBe(savedInterview.revision);
   expect(props.current).toEqual(nativeBefore);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(document.querySelector('.omni-refined-close')).toBeNull();
+});
+
+
+async function openInline(){await render({inline:true,inlineOpen:true,onInlineClose:jest.fn(()=>{props={...props,inlineOpen:false};root.render(<SocGuidedAssessor {...props}/>);})});}
+
+test.each(['CC1.1','A1.1','C1.1','PI1.1','P1.1'])('%s inline completion reuses category questions and saves a controls-only narrative',async id=>{
+ setup(id);await render();await openInline();
+ expect(document.querySelector('.omni-character,.omni-launch-button,.omni-workspace-window')).toBeNull();
+ await complete();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+ const text=document.querySelector('[aria-label="Assessment implementation summary"]').value;
+ expect(text).toContain('\n\nControls in place\n');expect(text).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);
+ await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledWith(expect.objectContaining({implementation:text,status:'addressed'}),expect.any(String));
+ expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+ await act(async()=>root.unmount());root=createRoot(container);await render();await openInline();await click('Resume your review');
+ expect(document.querySelector('[aria-label="Assessment implementation summary"]').value).toBe(text);
+});
+
+test('inline partial progress, Back and Save & close preserve answers without native application',async()=>{
+ await render();await openInline();await click('Start');
+ await act(async()=>document.querySelectorAll('.omni-answer-choices button').forEach(item=>{if(item.textContent==='Yes')item.click();}));
+ await click('Save & next');expect(stored.step).toBe(1);await click('Back');
+ expect(document.querySelector('.omni-answer-choices [aria-pressed="true"]').textContent).toBe('Yes');
+ await click('Save & close');expect(props.onSaveAssessment).not.toHaveBeenCalled();
+ expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+ const answers=copy(stored.answers);await act(async()=>root.unmount());root=createRoot(container);await render();await openInline();await click('Resume your review');
+ expect(stored.answers).toEqual(answers);expect(document.querySelector('.omni-answer-choices [aria-pressed="true"]').textContent).toBe('Yes');
+});
+
+test('collapsing and re-expanding the inline interview retains unsaved answers',async()=>{
+ await render();await openInline();await click('Start');
+ await act(async()=>document.querySelectorAll('.omni-answer-choices button').forEach(item=>{if(item.textContent==='No')item.click();}));
+ const reads=api.get.mock.calls.length;await render({inlineOpen:false});
+ expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+ await render({inlineOpen:true});expect(document.querySelector('.omni-answer-choices [aria-pressed="true"]').textContent).toBe('No');
+ expect(api.get.mock.calls.length).toBe(reads);expect(api.put).not.toHaveBeenCalled();
+});
+
+test('inline read-only, native drafts and related drafts preserve write boundaries',async()=>{
+ await render({disabled:true});await openInline();expect(button('Start').disabled).toBe(true);expect(api.put).not.toHaveBeenCalled();
+ await render({disabled:false,relatedDraft:true});await complete();expect(stored.completed).toBe(true);expect(button('Save assessment').disabled).toBe(true);
+ await render({relatedDraft:false,assessmentDirty:true});expect(button('Save assessment').disabled).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('inline failed application retains exact reviewed wording and independent native values',async()=>{
+ await render();await openInline();await complete();
+ const textarea=document.querySelector('[aria-label="Assessment implementation summary"]'),wording='Manual report paragraph.\n\nControls in place\n• Reported practice.';
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(textarea,wording);textarea.dispatchEvent(new Event('input',{bubbles:true}));});
+ props.onSaveAssessment.mockResolvedValueOnce(false);await click('Save & close');
+ expect(document.body.textContent).toContain('The assessment save could not be confirmed');
+ expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(false);
+ expect(document.querySelector('[aria-label="Assessment implementation summary"]').value).toBe(wording);expect(stored.narrative).toBe(wording);
+ expect(props.current.implementation).toBe('');expect(props.current.verification).toBe('not_verified');
+});
+
+test('program recommendations retain the Omnibot launcher and native open navigation',async()=>{
+ const onSelect=jest.fn(),row={client_id:'soc-fixture',framework_key:'soc-2',definition_id:'CC1.1',title:'Control environment',status:'not_assessed'};
+ await render({record:null,rows:[row],contextComplete:true,onSelect});
+ const launcher=document.querySelector('[aria-label="Open Omnibot guide"]');expect(launcher).toBeTruthy();
+ await act(async()=>launcher.click());expect(document.body.textContent).toContain('Omnibot’s recommended next steps');
+ await click('Open criterion CC1.1');expect(onSelect).toHaveBeenCalledWith(row);
 });

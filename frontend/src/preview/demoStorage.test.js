@@ -4,8 +4,42 @@ import {STORE_KEY,readStore,saveStore} from './store';
 import {clearFileCache,lightweightStore,rememberFiles,restoreFiles,storageDiagnostics} from './evidenceStorage';
 const api=axios.create({adapter:previewAdapter});
 const persisted=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
-beforeEach(async()=>{sessionStorage.clear();localStorage.clear();clearFileCache();await api.post('/demo/enter');});
+const OPENED_AT='2026-10-13T17:00:00.000Z',RESET_AT='2026-10-13T18:00:00.000Z';
+const SCENARIO_VERSION='brawndo-cis-ig1-history-v2';
+beforeEach(async()=>{jest.useFakeTimers().setSystemTime(new Date(OPENED_AT));sessionStorage.clear();localStorage.clear();clearFileCache();await api.post('/demo/enter');});
+afterEach(()=>jest.useRealTimers());
 const upload=async(bytes,name='sample.txt')=>(await api.post('/evidence',{client_id:persisted().clients[0].client_id,filename:name,mime_type:'text/plain',content_base64:btoa('x'.repeat(bytes))})).data;
+const utf8Base64=text=>btoa(encodeURIComponent(text).replace(/%([0-9A-F]{2})/g,(_,hex)=>String.fromCharCode(parseInt(hex,16))));
+
+test('binary and Unicode payloads survive document-cache loss when inline space is available',async()=>{
+ const db=readStore();db.evidence=[];saveStore(db);
+ const payloads=[
+  {filename:'sample.bin',mime_type:'application/octet-stream',content_base64:'data:application/octet-stream;base64,'+btoa(String.fromCharCode(0,255,128,1,2,10,13,65,127,254))},
+  {filename:'résumé 日本語 QA.txt',mime_type:'text/plain',content_base64:'data:text/plain;base64,'+utf8Base64('SYNTHETIC Phase 2 evidence\ncafé ✓ 日本語\n')}
+ ];
+ const rows=[];
+ for(const payload of payloads)rows.push((await api.post('/evidence',{client_id:'demo_brawndo',...payload})).data);
+ const before=persisted();
+ clearFileCache();readStore();
+ for(const [i,row] of rows.entries())expect((await api.get(`/evidence/${row.evidence_id}/download`)).data.content_base64).toBe(payloads[i].content_base64);
+ expect(persisted().evidence).toEqual(before.evidence);
+ expect((await api.get('/demo/storage')).data).toMatchObject({persisted_payload_count:2,temporary_payload_count:0,unavailable_temporary_payload_count:0,memory_file_count:0});
+});
+
+test('a retained saturated budget explicitly diagnoses small temporary files before and after reload',async()=>{
+ const db=readStore();
+ // Three retained files leave 16 bytes, less than even a 10-byte upload's base64.
+ db.evidence=Array.from({length:3},(_,i)=>({evidence_id:`retained-${i}`,client_id:'demo_dunder',filename:`retained-${i}.bin`,content_base64:btoa('r'.repeat(8190))}));
+ saveStore(db);const before=persisted().evidence;
+ const binary=await upload(10,'small.bin');
+ const unicode=(await api.post('/evidence',{client_id:'demo_brawndo',filename:'unicode.txt',mime_type:'text/plain',content_base64:utf8Base64('Résumé — 日本語 🔐\n')})).data;
+ expect((await api.get('/demo/storage')).data).toMatchObject({inline_budget_bytes:65536,persisted_payload_bytes:65520,inline_remaining_bytes:16,temporary_payload_count:2,unavailable_temporary_payload_count:0,memory_file_count:2});
+ for(const row of [binary,unicode])expect(persisted().evidence.find(e=>e.evidence_id===row.evidence_id)).toMatchObject({demo_file_storage:'session_only'});
+ clearFileCache();readStore();
+ expect((await api.get('/demo/storage')).data).toMatchObject({persisted_payload_bytes:65520,inline_remaining_bytes:16,temporary_payload_count:2,unavailable_temporary_payload_count:2,memory_file_count:0});
+ for(const row of [binary,unicode])await expect(api.get(`/evidence/${row.evidence_id}/download`)).rejects.toThrow('metadata and relationships are preserved');
+ expect(persisted().evidence.filter(e=>e.evidence_id.startsWith('retained-'))).toEqual(before);
+});
 
 test('small files persist; large files retain metadata but no payload after reload',async()=>{
  const small=await upload(10),large=await upload(20000);
@@ -73,10 +107,41 @@ test('legacy large payloads migrate without dropping evidence IDs or relationshi
  expect(persisted().users).toEqual(db.users);
 });
 test('full reset recovers corrupted data and restores canonical roles and frameworks',async()=>{
- const canonical=persisted();await upload(20000);sessionStorage.setItem(STORE_KEY,'{broken');
+ const canonical=persisted();await upload(20000);const beforeReset=persisted();
+ expect(Object.values(beforeReset.portfolio_reporting.activity_proofs).some(proof=>proof.eligible)).toBe(true);
+ sessionStorage.setItem(STORE_KEY,'{broken');
  await expect(api.get('/clients')).rejects.toMatchObject({response:{data:{storage_code:'UNKNOWN_STORAGE_ERROR'}}});
- await api.post('/demo/reset');expect(persisted()).toEqual(canonical);
- expect(new Set(persisted().users.map(u=>u.role))).toEqual(new Set(canonical.users.map(u=>u.role)));
+ jest.setSystemTime(new Date(RESET_AT));await api.post('/demo/reset');const restored=persisted();
+ const {portfolio_reporting:originalReporting,...originalSources}=canonical;
+ const {portfolio_reporting:reporting,...restoredSources}=restored;
+ expect(restoredSources).toEqual(originalSources);
+ expect(reporting).toMatchObject({started_at:RESET_AT,last_captured_at:RESET_AT,activity_proofs:{}});
+ expect(reporting.activity_proofs).toEqual({});
+ expect(reporting.snapshots).toHaveLength(originalReporting.snapshots.length);
+ const currentSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind!=='demo_fixture');
+ const fixtureSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture');
+ expect(currentSnapshots.length).toBeGreaterThan(0);
+ expect(currentSnapshots.every(snapshot=>snapshot.captured_at===RESET_AT&&snapshot.current.captured_at===RESET_AT)).toBe(true);
+ // At this fixed anchor, V2 has eighteen historical positions and one exact terminal position.
+ expect(fixtureSnapshots).toHaveLength(19);
+ expect(fixtureSnapshots.every(snapshot=>snapshot.program_id==='demo_brawndo:cis-ig1'
+   &&snapshot.current.provenance.fixture_version===SCENARIO_VERSION
+   &&snapshot.current.provenance.fixture_anchor===RESET_AT)).toBe(true);
+ expect(fixtureSnapshots.slice(0,-1).every(snapshot=>snapshot.captured_at<RESET_AT)).toBe(true);
+ expect(fixtureSnapshots.at(-1).captured_at).toBe(RESET_AT);
+ const nativeRows=restored.framework_assessments.filter(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1');
+ const nativeStates=Object.fromEntries(nativeRows.map(row=>[row.definition_id,row.status]));
+ const marker=reporting.fixture_versions[SCENARIO_VERSION];
+ expect(nativeRows).toHaveLength(56);
+ expect(marker).toMatchObject({version:SCENARIO_VERSION,anchor:RESET_AT,count:19,terminal:nativeStates});
+ expect(currentSnapshots.map(snapshot=>snapshot.snapshot_id)).toContain(marker.join_snapshot_id);
+ const terminal=readStore().portfolio_reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture').at(-1);
+ const references=terminal.current.provenance.source_references;
+ expect(references.map(row=>row.id).sort()).toEqual(nativeRows.map(row=>row.framework_assessment_id).sort());
+ expect(Object.fromEntries(references.map(row=>[row.definition_id,row.status]))).toEqual(nativeStates);
+ const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
+ expect(reporting.snapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
+ expect(new Set(restored.users.map(u=>u.role))).toEqual(new Set(canonical.users.map(u=>u.role)));
  expect((await api.get('/demo/storage')).data.memory_file_count).toBe(0);
 });
 test.each([['QuotaExceededError','QUOTA_EXCEEDED'],['SecurityError','STORAGE_UNAVAILABLE'],['Error','WRITE_FAILED']])('%s classifies writes and retains the prior snapshot',async(name,code)=>{

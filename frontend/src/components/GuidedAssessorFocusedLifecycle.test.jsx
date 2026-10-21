@@ -1,23 +1,27 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import GuidedAssessor from './GuidedAssessor';
-import {versionForSafeguard,visibleQuestions} from '@/lib/guidedAssessment';
+import {versionForSafeguard,visibleQuestions,catalogForVersion,legacyVersionForSafeguard} from '@/lib/guidedAssessment';
+import control1V4 from '@catalogs/guidedControl1V4.json';
+import control1V5 from '@catalogs/guidedControl1V5.json';
 import {focusedResult} from '@/lib/focusedOmni';
 import api from '@/lib/api';
 
-jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:error=>error.message}));
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'focused-actor',workspace_mode:'demo'}})}));
+let mockAuth,mockOrg,mockTrustedDemo;
+jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:error=>error.message,get PREVIEW_MODE(){return mockTrustedDemo;}}));
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 
 const token='2026-10-01T12:00:00Z',newToken='2026-10-02T12:00:00Z',generated='2026-10-01T13:00:00Z',fingerprint='a'.repeat(64);
 let root,container,stored,history,props,scopeFingerprint;
 const copy=value=>JSON.parse(JSON.stringify(value));
 const button=name=>[...document.querySelectorAll('button')].find(element=>element.textContent.trim()===name);
 const work=()=>({context_complete:true,finding_ids:[],review_ids:[],task_ids:[],open_findings:0,open_actions:0,overdue_reviews:0,overdue_actions:0,priority_records:[]});
-const record=id=>({client_id:'demo_brawndo',framework_key:'cis-ig1',framework_assessment_id:'focused-'+id,definition_id:id,title:'Synthetic lifecycle safeguard '+id,status:'not_assessed',verification:'not_verified',implementation:'',last_saved:token,assessment_history:[],work:work()});
+const record=id=>({client_id:'demo_brawndo',framework_key:'cis-ig1',framework_version:'8.1',framework_assessment_id:'focused-'+id,definition_id:id,title:'Synthetic lifecycle safeguard '+id,status:'not_assessed',verification:'not_verified',implementation:'',last_saved:token,assessment_history:[],work:work()});
 const interview=id=>({client_id:'demo_brawndo',assessment_id:'focused-'+id,user_id:'focused-actor',version:versionForSafeguard(id,true),revision:0,answers:{},step:0,completed:false,narrative:'',result:null,base_assessment_token:token,base_scope_fingerprint:fingerprint,current_scope_fingerprint:fingerprint,lineage_known:true});
 function completeAnswers(id){
   const version=versionForSafeguard(id,true),rootAnswer={[id==='1.1'?'inventory':'process']:'Yes'},today=new Date(),day=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
-  return Object.fromEntries(visibleQuestions(id,rootAnswer,version).map(question=>[question.id,question.type==='matrix'?Object.fromEntries(question.rows.map(row=>[row,'Yes'])):question.type==='text'?question.id==='system'?'OriginalTool':question.id==='owner'?'Synthetic IT team':'':question.type==='date'?day:question.type==='multi'?['Quarantine or isolate']:question.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):question.id==='sources'?'One source':question.id==='unresolved'?'No':'Yes']));
+  return Object.fromEntries(visibleQuestions(id,rootAnswer,version).map(question=>[question.id,question.optional?'No':question.type==='matrix'?Object.fromEntries(question.rows.map(row=>[row,'Yes'])):question.type==='text'?question.id==='system'?'OriginalTool':question.id==='owner'?'Synthetic IT team':'':question.type==='date'?day:question.type==='multi'?['Quarantine or isolate']:question.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):question.id==='sources'?'One source':question.id==='unresolved'?'No':'Yes']));
 }
 function completedSaved(id){
   const answers=completeAnswers(id),result=focusedResult(id,answers,versionForSafeguard(id,true));
@@ -36,6 +40,7 @@ async function confirmComparison(){const group=document.querySelector('[aria-lab
 
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();window.history.replaceState({},'', '/');
+  mockAuth={user:{user_id:'focused-actor',workspace_mode:'demo'}};mockOrg=null;mockTrustedDemo=false;
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   const current=record('1.1');stored=interview('1.1');history=[];scopeFingerprint=fingerprint;
   props={clientId:'demo_brawndo',framework:'cis-ig1',configuration:{implementation_group:1},record:current,current,form:copy(current),contextComplete:true,related:{},onApply:jest.fn(),onSaveAssessment:jest.fn(async()=>true),onDraftChange:jest.fn(),onUpdateImplementation:jest.fn(()=>true)};
@@ -176,7 +181,7 @@ test('first-time summary save calls the native save once with durable interview 
   readySummary();await render();await open();await click('Save assessment');
   expect(props.onApply).not.toHaveBeenCalled();expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);
   expect(props.onSaveAssessment).toHaveBeenCalledWith({implementation:stored.narrative,status:'addressed',guided_assessment_source:{version:stored.version,revision:stored.revision,generated_at:generated}},JSON.stringify(props.form));
-  expect(document.body.textContent).toContain('Assessment saved.');expect(props.current.verification).toBe('not_verified');
+  expect(document.querySelector('.omni-workspace-window')).toBeNull();expect(props.current.verification).toBe('not_verified');
 });
 
 test('one complete editable write-up and actual title are saved byte-for-byte',async()=>{
@@ -210,13 +215,14 @@ test('native failure retains the reviewed summary and safely retries without suc
   readySummary();props.onSaveAssessment.mockResolvedValueOnce(false);await render();await open();await click('Save assessment');
   expect(document.body.textContent).toContain('The assessment was not saved.');expect(document.body.textContent).not.toContain('Assessment saved.');
   expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Reviewed Brawndo inventory narrative');
-  await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(2);expect(document.body.textContent).toContain('Assessment saved.');
+  await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(2);expect(document.querySelector('.omni-workspace-window')).toBeNull();
 });
 
 test('duplicate clicks cannot submit two authoritative writes',async()=>{
   readySummary();let finish;props.onSaveAssessment.mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));await render();await open();
   const target=button('Save assessment');await act(async()=>{target.click();target.click();});expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);
-  await act(async()=>finish(true));expect(document.body.textContent).toContain('Assessment saved.');
+  expect(document.querySelector('.omni-workspace-window')).toBeTruthy();
+  await act(async()=>finish(true));expect(document.querySelector('.omni-workspace-window')).toBeNull();
 });
 
 test('read-only and unsaved native edits disable summary saving',async()=>{
@@ -231,4 +237,280 @@ test('changed answers refresh derived conclusions while explicitly preserving re
   expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Reviewed Brawndo inventory narrative');expect(button('Save assessment').disabled).toBe(true);
   await click('Refresh from answers');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toContain('not currently in place');expect(button('Save assessment').disabled).toBe(false);
   expect(stored.answers.system).toBe('OriginalTool');expect(stored.result.narrative).not.toContain('OriginalTool');expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('inline completion saves the reviewed multiline report without mounting an Omni window',async()=>{
+  stored={...interview('1.1'),revision:1,answers:completeAnswers('1.1')};
+  const onInlineClose=jest.fn();await render({inline:true,inlineOpen:true,onInlineClose});
+  expect(document.querySelector('.omni-launch-button')).toBeNull();expect(document.querySelector('.omni-workspace-window')).toBeNull();
+  for(let count=0;button('Save & next')&&count<12;count++)await click('Save & next');
+  expect(document.body.textContent).toContain('Review your assessment summary');
+  const summary=document.querySelector('[aria-label="Omnibot implementation summary"]');
+  expect(summary.value).toContain('\n\nControls in place\n• ');expect(summary.value).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();await click('Save & close');
+  expect(props.onSaveAssessment).toHaveBeenCalledWith(expect.objectContaining({implementation:summary.value,status:'addressed'}),expect.any(String));expect(onInlineClose).toHaveBeenCalledTimes(1);
+});
+
+test('inline reload retains reviewed wording, and changed-answer refresh keeps the approved format',async()=>{
+  readySummary();await render({inline:true,inlineOpen:true});
+  const section=document.querySelector('[aria-label="CIS assessment interview"]');
+  await render({inlineOpen:false});expect(document.querySelector('[aria-label="CIS assessment interview"]')).toBe(section);expect(section.hidden).toBe(true);
+  await render({inlineOpen:true});expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Reviewed Brawndo inventory narrative');
+  await click('Back to questions');for(let i=0;i<4;i++)await click('Back');await click('No');
+  for(let count=0;button('Save & next')&&count<12;count++)await click('Save & next');
+  expect(button('Save assessment').disabled).toBe(true);await click('Refresh from answers');
+  const text=document.querySelector('[aria-label="Omnibot implementation summary"]').value;
+  expect(text).toContain('not currently in place');expect(text).toContain('Establish or complete the enterprise asset inventory.');
+  expect(text).not.toContain('Controls in place');expect(text).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test.each([['additional_gap','gaps'],['additional_confirmation','unknowns']])('a resumed checkpoint can reach an unfinished later %s without bypassing final validation',async(parent,detail)=>{
+  enableBoundedDemoContext();
+  const answers=completeAnswers('1.1');
+  answers.coverage.Servers='Not sure';
+  Object.assign(answers,{[parent]:'Yes',[detail]:'',coverage_detail:'Retain the reported coverage context.'});
+  stored={...interview('1.1'),revision:2,answers};
+  const nativeBefore=copy(props.current),version=stored.version,answersBefore=copy(answers);
+  await render();await open();
+  expect(document.querySelector('[aria-label="Question group 2 of 5"]')).toBeTruthy();
+
+  await click('Save & next');
+  expect(document.querySelector('[aria-label="Question group 3 of 5"]')).toBeTruthy();
+  expect(api.put).toHaveBeenLastCalledWith('/framework_assessments/focused-1.1/guided-assessment',expect.objectContaining({
+    version,expected_revision:2,completed:false,result:null,answers:answersBefore,
+  }));
+  expect(stored.version).toBe(version);expect(stored.answers).toEqual(answersBefore);
+  await click('Save & next');await click('Save & next');
+  expect(document.querySelector('[aria-label="Question group 5 of 5"]')).toBeTruthy();
+  const checkpointWrites=api.put.mock.calls.length;
+  await click('Save & next');
+  expect(document.body.textContent).toContain('Describe the additional reported work before reviewing the summary.');
+  expect(api.put).toHaveBeenCalledTimes(checkpointWrites);
+  expect(stored.completed).toBe(false);
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]')).toBeNull();
+
+  await value('#omni-answer-'+detail,'   ');await click('Save & next');
+  expect(api.put).toHaveBeenCalledTimes(checkpointWrites);
+  expect(document.body.textContent).toContain('Describe the additional reported work before reviewing the summary.');
+
+  await value('#omni-answer-'+detail,'Synthetic requirement detail supplied after resuming.');
+  await click('Save & next');
+  expect(stored.completed).toBe(true);
+  expect(stored.answers[detail]).toBe('Synthetic requirement detail supplied after resuming.');
+  expect(stored.version).toBe(version);
+  expect(stored.answers.coverage_detail).toBe(answersBefore.coverage_detail);
+  expect(api.put.mock.calls.every(([,body])=>body.version===version)).toBe(true);
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]')).toBeTruthy();
+  expectNativeUnchanged(nativeBefore);
+});
+
+function expectNativeUnchanged(nativeBefore){
+  expect(props.current).toEqual(nativeBefore);expect(props.form).toEqual(nativeBefore);
+  expect(props.onApply).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(props.onUpdateImplementation).not.toHaveBeenCalled();
+}
+
+function enableBoundedDemoContext(){
+  mockTrustedDemo=true;mockAuth={user:{user_id:'focused-actor',role:'super_admin',workspace_mode:'demo'},workspaceMode:'demo',loading:false};
+  const client={client_id:'demo_brawndo',status:'active'};
+  mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
+  sessionStorage.setItem('grc_client_id',client.client_id);
+  window.history.replaceState({},'', '/compliance/cis-ig1?client_id=demo_brawndo');
+}
+
+const responseChoice=label=>[...document.querySelectorAll('.omni-response-choices label')]
+  .find(element=>element.textContent.trim()===label)?.querySelector('input');
+async function toggleResponse(label){
+  const target=responseChoice(label);expect(target).toBeTruthy();expect(target.disabled).toBe(false);
+  await act(async()=>target.click());
+}
+function expectResponses(labels){
+  expect([...document.querySelectorAll('.omni-response-choices input:checked')]
+    .map(input=>input.closest('label').textContent.trim())).toEqual(labels);
+  expect(document.querySelector('[aria-label="Question group 3 of 5"]')).toBeTruthy();
+}
+async function openResponseCheckpoint(version){
+  enableBoundedDemoContext();
+  const current=record('1.2'),answers={process:'Yes',frequency:'Weekly',actions:[],actions_detail:'Preserve the reported response context.'};
+  // Older question sets require earlier handling answers before resuming at response actions.
+  for(const question of visibleQuestions('1.2',{process:'Yes'},version))if(question.critical&&answers[question.id]===undefined){
+    answers[question.id]=question.type==='matrix'?Object.fromEntries(question.rows.map(row=>[row,'Yes']))
+      :question.id==='unresolved'?'No':question.choices.includes('Yes')?'Yes':question.choices[0];
+  }
+  if(catalogForVersion(version).safeguards['1.2'].some(question=>question.id==='additional_confirmation')){
+    Object.assign(answers,{additional_confirmation:'Yes',unknowns:''});
+  }
+  stored={...interview('1.2'),version,revision:2,answers};
+  props={...props,record:current,current,form:copy(current)};
+  await render();await open();
+}
+
+test.each([control1V4.version,control1V5.version])('%s response choices remain valid through ordinary clicks and checkpoint resume',async version=>{
+  await openResponseCheckpoint(version);
+  const nativeBefore=copy(props.current);
+  await toggleResponse('Remove from network');expectResponses(['Remove from network']);
+  await toggleResponse('Deny remote connection');expectResponses(['Remove from network','Deny remote connection']);
+  await toggleResponse('Remove from network');expectResponses(['Deny remote connection']);
+  await toggleResponse('None');expectResponses(['None']);
+  await toggleResponse('Not sure');expectResponses(['Not sure']);
+  await toggleResponse('None');expectResponses(['None']);
+  await toggleResponse('Quarantine or isolate');expectResponses(['Quarantine or isolate']);
+  await toggleResponse('Quarantine or isolate');expectResponses([]);
+  await toggleResponse('Not sure');expectResponses(['Not sure']);
+  await toggleResponse('Remove from network');expectResponses(['Remove from network']);
+  await toggleResponse('None');expectResponses(['None']);
+  expect(api.put).not.toHaveBeenCalled();
+
+  await click('Save & close');
+  expect(stored.completed).toBe(false);expect(stored.answers.actions).toEqual(['None']);
+  expect(stored.version).toBe(version);expect(stored.answers.frequency).toBe('Weekly');
+  expect(stored.answers.actions_detail).toBe('Preserve the reported response context.');
+  expect(api.put).toHaveBeenLastCalledWith('/framework_assessments/focused-1.2/guided-assessment',expect.objectContaining({version,expected_revision:2,completed:false}));
+  if(version===control1V5.version){
+    expect(stored.answers.additional_confirmation).toBe('Yes');expect(stored.answers.unknowns).toBe('');
+  }
+  await remount();await open();expectResponses(['None']);
+  expect(stored.version).toBe(version);expect(stored.answers.actions_detail).toBe('Preserve the reported response context.');
+  expectNativeUnchanged(nativeBefore);
+});
+
+test('legacy response combinations retain their saved-version semantics',async()=>{
+  const version=legacyVersionForSafeguard('1.2');await openResponseCheckpoint(version);
+  const nativeBefore=copy(props.current);
+  await toggleResponse('Remove from network');await toggleResponse('None');await toggleResponse('Not sure');
+  expectResponses(['Remove from network','None','Not sure']);
+  await click('Save & close');
+  expect(stored.completed).toBe(false);
+  expect(stored.answers.actions).toEqual(['Remove from network','None','Not sure']);
+  expect(stored.version).toBe(version);expect(stored.answers.frequency).toBe('Weekly');
+  expect(stored.answers.actions_detail).toBe('Preserve the reported response context.');
+  expect(api.put).toHaveBeenLastCalledWith('/framework_assessments/focused-1.2/guided-assessment',expect.objectContaining({version,expected_revision:2,completed:false}));
+  await remount();await open();expectResponses(['Remove from network','None','Not sure']);
+  expect(stored.version).toBe(version);expectNativeUnchanged(nativeBefore);
+});
+
+test('partial progress still requires the current group source explanation',async()=>{
+  enableBoundedDemoContext();
+  const answers={...completeAnswers('1.1'),sources:'Multiple reconciled sources',sources_detail:'',additional_confirmation:'Yes',unknowns:''};
+  stored={...interview('1.1'),revision:2,answers};
+  const nativeBefore=copy(props.current);
+  await render();await open();
+  for(let steps=0;!document.querySelector('[aria-label="Question group 1 of 5"]')&&steps<5;steps++)await click('Back');
+  expect(document.querySelector('[aria-label="Question group 1 of 5"]')).toBeTruthy();
+  await click('Save & next');
+  expect(document.body.textContent).toContain('List each source and what it covers, or record what still needs confirmation.');
+  expect(api.put).not.toHaveBeenCalled();expect(stored.answers).toEqual(answers);
+  expectNativeUnchanged(nativeBefore);
+});
+
+test('clearing and reselecting the enabled inventory frequency preserves a partial checkpoint',async()=>{
+  enableBoundedDemoContext();
+  const answers={...completeAnswers('1.1'),frequency:'Not sure',frequency_detail:'Retain the review timing explanation.'};
+  stored={...interview('1.1'),revision:2,answers};
+  const version=stored.version,nativeBefore=copy(props.current),expected=copy(answers);delete expected.frequency;
+  await render();await open();
+  expect(document.querySelector('#omni-answer-frequency').value).toBe('Not sure');
+  await value('#omni-answer-frequency','');
+  expect(document.querySelector('#omni-answer-frequency').value).toBe('');
+  expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(nativeBefore);
+  await click('Save & close');
+  expect(api.put).toHaveBeenLastCalledWith('/framework_assessments/focused-1.1/guided-assessment',expect.objectContaining({version,expected_revision:2,completed:false,answers:expected}));
+  expect(Object.prototype.hasOwnProperty.call(stored.answers,'frequency')).toBe(false);
+  expect(stored.version).toBe(version);expect(stored.answers).toEqual(expected);
+  await remount();await open();expect(document.querySelector('#omni-answer-frequency').value).toBe('');
+  await value('#omni-answer-frequency','Every six months');await click('Save & close');
+  expect(stored.answers).toEqual({...expected,frequency:'Every six months'});expect(stored.version).toBe(version);
+  expect(api.put.mock.calls.every(([,body])=>body.version===version&&body.completed===false)).toBe(true);
+  expectNativeUnchanged(nativeBefore);
+});
+
+test('clearing and reselecting a software requirement removes only that matrix row from progress',async()=>{
+  enableBoundedDemoContext();
+  const id='2.1',version=versionForSafeguard(id,true),questions=visibleQuestions(id,{practice:'Yes'},version);
+  const answers=Object.fromEntries(questions.map(question=>[question.id,question.optional?'No':question.type==='matrix'?Object.fromEntries(question.rows.map(row=>[row,'Yes'])):question.type==='text'?'':question.id==='practice'?'Yes':question.choices[0]]));
+  const matrix=questions.find(question=>question.type==='matrix'),row=matrix.rows.find(label=>label.includes('publisher'));
+  expect(row).toBeTruthy();answers[matrix.id][row]='Not sure';answers[matrix.id+'_detail']='Retain the software requirement context.';
+  const current=record(id);props={...props,record:current,current,form:copy(current)};
+  stored={...interview(id),revision:2,answers};
+  const nativeBefore=copy(current),expected=copy(answers);delete expected[matrix.id][row];
+  const selector='select[aria-label="'+row+'"]';
+  await render();await open();expect(document.querySelector(selector).value).toBe('Not sure');
+  await value(selector,'');expect(document.querySelector(selector).value).toBe('');
+  expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(nativeBefore);
+  await click('Save & close');
+  expect(api.put).toHaveBeenLastCalledWith('/framework_assessments/focused-2.1/guided-assessment',expect.objectContaining({version,expected_revision:2,completed:false,answers:expected}));
+  expect(Object.prototype.hasOwnProperty.call(stored.answers[matrix.id],row)).toBe(false);
+  expect(stored.answers).toEqual(expected);expect(stored.version).toBe(version);
+  await remount();await open();expect(document.querySelector(selector).value).toBe('');
+  await value(selector,'Yes');await click('Save & close');
+  expect(stored.answers).toEqual({...expected,[matrix.id]:{...expected[matrix.id],[row]:'Yes'}});
+  expect(stored.version).toBe(version);expect(api.put.mock.calls.every(([,body])=>body.version===version&&body.completed===false)).toBe(true);
+  expectNativeUnchanged(nativeBefore);
+});
+
+const boundedContextNegatives=[
+  ['untrusted preview',()=>{mockTrustedDemo=false;}],
+  ['ordinary authenticated mode',()=>{mockAuth.workspaceMode='standard';mockAuth.user.workspace_mode='standard';}],
+  ['auth mode mismatch',()=>{mockAuth.workspaceMode='standard';}],
+  ['other client',()=>{
+    const current={...props.current,client_id:'demo_dunder'};
+    props={...props,clientId:'demo_dunder',record:current,current,form:copy(current)};
+    const client={client_id:'demo_dunder',status:'active'};
+    mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
+    sessionStorage.setItem('grc_client_id',client.client_id);stored.client_id=client.client_id;
+  }],
+  ['IG2',()=>{props.configuration={implementation_group:2};}],
+  ['IG3',()=>{props.configuration={implementation_group:3};}],
+  ['other route',()=>{window.history.replaceState({},'', '/dashboard?client_id=demo_brawndo');}],
+  ['route client mismatch',()=>{window.history.replaceState({},'', '/compliance/cis-ig1?client_id=demo_dunder');}],
+  ['selection mismatch',()=>{sessionStorage.setItem('grc_client_id','demo_dunder');}],
+  ['archived client',()=>{mockOrg.currentClient.archived=true;}],
+  ['incomplete native context',()=>{props.contextComplete=false;}],
+  ['other framework version',()=>{props.record={...props.record,framework_version:'8.0'};}],
+];
+test.each(boundedContextNegatives)('the bounded progress correction does not change %s',async(_label,changeContext)=>{
+  enableBoundedDemoContext();
+  const answers={...completeAnswers('1.1'),additional_confirmation:'Yes',unknowns:''};answers.coverage.Servers='Not sure';
+  stored={...interview('1.1'),revision:2,answers};props.visualReference=true;changeContext();
+  const nativeBefore=copy(props.current);
+  await render();await open();expect(document.querySelector('[aria-label="Question group 2 of 5"]')).toBeTruthy();
+  await click('Save & next');
+  expect(document.body.textContent).toContain('Describe the additional reported work before reviewing the summary.');
+  expect(document.querySelector('[aria-label="Question group 2 of 5"]')).toBeTruthy();
+  expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(nativeBefore);
+});
+
+test.each(boundedContextNegatives)('fresh interview visibility does not widen %s',async(_label,changeContext)=>{
+  enableBoundedDemoContext();changeContext();
+  const reveal=jest.fn(),nativeBefore=copy(props.current);
+  await render({inline:true,visualReference:true,onFreshInterviewReady:reveal});
+  expect(reveal).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(nativeBefore);
+});
+
+test('fresh personal entry can reveal questions alongside a saved manual assessment only once',async()=>{
+  enableBoundedDemoContext();
+  const current={...record('1.1'),status:'needs_attention',verification:'gap_identified',implementation:'Retain this exact manual wording.',last_assessed:token,assessment_history:[{implementation:'Earlier manual wording.'}]};
+  const reveal=jest.fn();props={...props,record:current,current,form:copy(current)};
+  await render({inline:true,visualReference:true,onFreshInterviewReady:reveal});
+  expect(reveal).toHaveBeenCalledTimes(1);expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(current);
+  // A later callback identity or explicit close must not undo the user's choice.
+  const laterReveal=jest.fn();await render({inlineOpen:false,onFreshInterviewReady:laterReveal});
+  expect(laterReveal).not.toHaveBeenCalled();expectNativeUnchanged(current);
+});
+
+test.each([
+  ['saved checkpoint',()=>{stored={...stored,revision:1,answers:{inventory:'Not sure',inventory_detail:'Previously reported uncertainty.'}};}],
+  ['completed interview',()=>completedSaved('1.1')],
+  ['historical question version',()=>{stored.version=legacyVersionForSafeguard('1.1');}],
+  ['native dirty draft',()=>{props.assessmentDirty=true;props.form={...props.form,implementation:'Unsaved native wording.'};}],
+  ['read-only assessment',()=>{props.disabled=true;}],
+  ['recorded Not Applicable position',()=>{props.current={...props.current,status:'not_applicable',na_rationale:'Retain the recorded scope decision.'};}],
+  ['failed interview read',()=>{api.get.mockRejectedValueOnce(new Error('Synthetic read unavailable'));}],
+])('fresh entry preserves the existing %s',async(_label,prepare)=>{
+  enableBoundedDemoContext();prepare();
+  const reveal=jest.fn(),nativeBefore=copy(props.current),formBefore=copy(props.form),interviewBefore=copy(stored);
+  await render({inline:true,visualReference:true,onFreshInterviewReady:reveal});
+  expect(reveal).not.toHaveBeenCalled();expect(stored).toEqual(interviewBefore);
+  expect(api.put).not.toHaveBeenCalled();expect(props.current).toEqual(nativeBefore);expect(props.form).toEqual(formBefore);
+  expect(props.onApply).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onUpdateImplementation).not.toHaveBeenCalled();
 });

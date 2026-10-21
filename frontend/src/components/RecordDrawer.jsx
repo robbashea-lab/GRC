@@ -1,3 +1,5 @@
+import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
+import './BrawndoFullRecord.css';
 import {readEvidenceFile as fileToBase64} from '@/lib/evidenceFile';
 import {RiskCategoryField,RiskSummary} from './BrawndoRiskFields';
 import {RiskAssessmentPanel,RiskTreatmentPanel,RiskHistoryPanel} from './RiskRecordPanels';
@@ -8,8 +10,12 @@ import {policyStatus,nextPolicyReview} from '@/lib/brawndoPolicies';
 import BrawndoPolicyDetails,{PolicyStatusField,PolicySummary,PolicyRetainedApproval} from './BrawndoPolicyDetails';
 import VendorGovernancePanel from "./VendorGovernancePanel";
 import BrawndoVendorDetails from './BrawndoVendorDetails';
+import BrawndoRiskWorkflow from './BrawndoRiskWorkflow';
+import BrawndoPolicyWorkflow from './BrawndoPolicyWorkflow';
+import BrawndoRiskDecisionPanel from './BrawndoRiskDecisionPanel';
+import BrawndoVendorWorkflow,{BRAWNDO_VENDOR_WORKFLOW_TABS,BrawndoVendorWorkflowHeading,BrawndoVendorWorkflowSummary,BrawndoVendorWorkflowActivity} from './BrawndoVendorWorkflow';
 import AssigneeSelect from "./AssigneeSelect";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useId, useRef, useState } from "react";
 import {ClientPresentationContext} from './ClientSurface';
 import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -48,7 +54,7 @@ import CorrectiveActions from './CorrectiveActions';
 import EvidencePanel from './EvidencePanel';
 import ActionSourceChain from './ActionSourceChain';
 import RequirementBasis, {GovernanceContextFields} from './RequirementBasis';
-import {resolveEvidenceSource} from '@/lib/evidenceContext';
+import {resolveEvidenceSource,downloadEvidence as downloadEv} from '@/lib/evidenceContext';
 import ContactWorkspace from './ContactWorkspace';
 import AssignmentHelp from './AssignmentHelp';
 import RemediationTicketDrawer from './RemediationTicketDrawer';
@@ -110,7 +116,7 @@ export default function RecordDrawer(props) {
   return props.kind === "reviews" ? <ReviewDrawer {...props} /> : <EntityDrawer {...props} />;
 }
 
-function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, users: passedUsers = [], onSaved, initialValues }) {
+function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, users: passedUsers = [], onSaved, initialValues, aiRiskCreation = false }) {
   // Callers that already hold the client's people pass them; others (Calendar, deep links) load them here.
   const loadedPeople = useClientPeople(passedUsers.length ? '' : (record?.client_id || clientId));
   const users = passedUsers.length ? passedUsers : loadedPeople;
@@ -125,6 +131,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const [tab, setTab] = useState("overview");
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
+  const [commentPosting,setCommentPosting]=useState(false);
+  const commentLock=useRef(false);
   const [activity, setActivity] = useState([]);
   const [activityError, setActivityError] = useState('');
   const [related, setRelated] = useState({});
@@ -147,6 +155,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const [verifyForm, setVerifyForm] = useState({ version: "", owner_id: "", approver_id: "", approved_at: "", last_reviewed_at: "", next_review_date: "", status: "approved" });
   const inputRef = useRef(null);
   const loadGeneration = useRef(0);
+  const workflowId=useId();
+  const riskDecisionOrigin=useRef(null);
   const { user } = useAuth();
   const updateRecord = useCreateIntent((...args)=>api.patch(...args), `${user?.user_id}:${record?.client_id||clientId}:${kind}:${record?.[ID_FIELD[kind]]}:update`, true);
   const pilot=(['risks','policies'].includes(kind)||['tasks','findings','vendors'].includes(kind)&&isReferencePresentation(clientId,user))&&(!record||record.client_id===clientId);
@@ -155,14 +165,33 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const policyPilot=pilot&&kind==='policies';
   const [approvalDirty,setApprovalDirty]=useState(false);
   const actionLayout=['tasks','findings'].includes(kind);
+  const fullRecord=useBrawndoFullRecord(record,clientId);
+  // AI-origin creation has no existing-record tabs; keep its required assessment reachable.
+  const aiRiskAssessment=aiRiskCreation&&fullRecord&&window.location.pathname==='/ai-governance'&&kind==='risks'&&!record;
+  const riskWorkflow=fullRecord&&kind==='risks'&&window.location.pathname==='/risks'&&!!record;
+  const vendorWorkflow=fullRecord&&kind==='vendors'&&window.location.pathname==='/vendors';
+  const policyWorkflow=fullRecord&&kind==='policies'&&window.location.pathname==='/policies'&&!!record;
+  const riskSupportingLocked=riskWorkflow&&(saving||commentPosting||acceptOpen||!!closure);
+  // Pending decisions belong to the same record and actor across temporary presentation changes.
+  const decisionScope=JSON.stringify([user?.user_id,user?.role,user?.workspace_mode,clientId,kind,record?.risk_id]);
+  const decisionContext=useRef(null);
+  decisionContext.current={scope:decisionScope,open,eligible:riskWorkflow};
+  const ownsRiskDecision=riskDecisionOrigin.current===decisionScope;
+  useEffect(()=>{
+    if(riskDecisionOrigin.current&&(!open||riskDecisionOrigin.current!==decisionScope)){
+      riskDecisionOrigin.current=null;setAcceptOpen(false);setClosure(null);
+      setAcceptForm({rationale:'',expiry_date:'',approver_id:'',compensating_controls:''});
+    }
+  },[decisionScope,open]);
   const clientPresentation=useContext(ClientPresentationContext),dialogLayout=pilot||!!clientPresentation||actionLayout;
   const Root=dialogLayout?Dialog:Sheet,Content=dialogLayout?DialogContent:SheetContent;
   const initialForm=useRef({}),opener=useRef(null),heading=useRef(null);
   const [discardOpen,setDiscardOpen]=useState(false);
   const formDirty=JSON.stringify(form)!==JSON.stringify(initialForm.current);
   const dirty=(pilot||actionLayout)&&!taskCompletion&&(formDirty||!!newComment.trim()||approvalDirty);
-  const close=value=>{if(value)onOpenChange(true);else if(!saving){if(dirty)setDiscardOpen(true);else onOpenChange(false);}};
-  useEffect(()=>{if(!open||!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[open,dirty]);
+  const decisionDirty=ownsRiskDecision&&(acceptOpen&&Object.values(acceptForm).some(value=>typeof value==='string'&&value.trim())||closure&&(closure.reason!=='remediated'||!!closure.note.trim()));
+  const close=value=>{if(value)onOpenChange(true);else if(!saving&&!commentPosting){if(dirty||decisionDirty)setDiscardOpen(true);else onOpenChange(false);}};
+  useEffect(()=>{if(!open||!(dirty||decisionDirty))return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[open,dirty,decisionDirty]);
   const isEdit = !!record;
   const idField = ID_FIELD[kind];
   const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
@@ -172,9 +201,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const clientFields = editableFields(kind, user, record);
   const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);
   const evidenceKind = kind === "tasks" ? "task" : singular;
-  const tabList = vendorPilot?[...TABS_BY_KIND.vendors.map(t=>t.id==='assurance'?{...t,label:'Security Assurance Reviews'}:t),{id:'evidence',label:'Evidence'},{id:'comments',label:'Comments'}]:TABS_BY_KIND[kind];
+  const tabList = vendorWorkflow?BRAWNDO_VENDOR_WORKFLOW_TABS:vendorPilot?[...TABS_BY_KIND.vendors.map(t=>t.id==='assurance'?{...t,label:'Security Assurance Reviews'}:t),{id:'evidence',label:'Evidence'},{id:'comments',label:'Comments'}]:TABS_BY_KIND[kind];
   const vendorSession = useRef(null);
   const vendorEditVersion = useRef(null);
+  const vendorReviewRefresh = useRef(0);
   const vendorRecordId = record?.vendor_id;
   useEffect(() => {
     if(open&&kind==='vendors')setTab(tabList.some(t=>t.id===initialValues?.vendorTab)?initialValues.vendorTab:'overview');
@@ -309,16 +339,18 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   async function refreshVendorDates(){
     if(!vendorPilot||!record?.vendor_id)return;
-    const generation=loadGeneration.current;
-    try{const {data}=await api.get('/vendors/'+record.vendor_id);if(generation!==loadGeneration.current||data.client_id!==clientId)return;
-      Object.assign(record,{last_review:data.last_review,next_review:data.next_review,updated_at:data.updated_at});
+    const generation=loadGeneration.current,request=++vendorReviewRefresh.current;
+    try{const {data}=await api.get('/vendors/'+record.vendor_id);if(generation!==loadGeneration.current||request!==vendorReviewRefresh.current||data.client_id!==clientId||data.vendor_id!==record.vendor_id)return;
+      // Nested Reviews also change the saved Demo status; a local status draft must remain separate.
+      const statusPatch=user?.workspace_mode==='demo'&&clientId==='demo_brawndo'?{status:data.status}:{};
+      Object.assign(record,{last_review:data.last_review,next_review:data.next_review,updated_at:data.updated_at,...statusPatch});
       const dates={last_review:toDateInput(data.last_review),next_review:toDateInput(data.next_review)};
       const baseline=initialForm.current;
-      initialForm.current={...baseline,...dates};
+      initialForm.current={...baseline,...dates,...statusPatch};
       setForm(p=>{
         if(JSON.stringify(p)===JSON.stringify(baseline))vendorEditVersion.current=data.updated_at??null;
         const nextUnchanged=p.next_review===baseline.next_review;
-        return {...p,last_review:dates.last_review,...(nextUnchanged?{next_review:dates.next_review}:{})};
+        return {...p,last_review:dates.last_review,...(nextUnchanged?{next_review:dates.next_review}:{}),...(p.status===baseline.status?statusPatch:{})};
       });
     }catch(e){toast.error('Vendor schedule could not be refreshed: '+formatError(e));}
   }
@@ -414,10 +446,17 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     finally { setSaving(false); }
   }
 
+  async function submitWorkflowComment(){
+    if(commentLock.current)return;
+    commentLock.current=true;setCommentPosting(true);
+    try{await submitComment();}finally{commentLock.current=false;setCommentPosting(false);}
+  }
   async function submitComment() {
     if (!newComment.trim()) return;
+    const generation=loadGeneration.current;
     try {
       await api.post("/comments", { entity_type: kind, entity_id: record[idField], body: newComment });
+      if((riskWorkflow||vendorWorkflow||policyWorkflow)&&generation!==loadGeneration.current)return;
       setNewComment("");
       await loadComments();
     } catch (e) { toast.error(formatError(e)); }
@@ -503,7 +542,21 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     return()=>{active=false;clearInterval(timer);window.removeEventListener("focus",refresh);};
   },[open,kind,record?.risk_id,tab]);
 
-  function acceptRisk() { setAcceptOpen(true); }
+  async function submitRiskClosure(){
+    if(saving||!closure)return;
+    setSaving(true);
+    try{await api.post(`/risks/${record.risk_id}/close`,{...closure,expected_updated_at:record.updated_at??null});setClosure(null);await refreshRisk();onSaved?.();toast.success('Risk closed and retained');}
+    catch(error){toast.error(formatError(error));}finally{setSaving(false);}
+  }
+  function acceptRisk() { riskDecisionOrigin.current=decisionScope;setAcceptOpen(true); }
+  async function beginRiskClosure() {
+    const scope=decisionScope,startedInWorkflow=riskWorkflow;
+    if(dirty&&!await save(undefined,true))return;
+    // A pending Save must not open a withdrawn workflow or lock a replacement editor.
+    if(!decisionContext.current.open||decisionContext.current.scope!==scope||(startedInWorkflow&&!decisionContext.current.eligible))return;
+    riskDecisionOrigin.current=scope;
+    setClosure({reason:'remediated',note:''});
+  }
 
   async function submitAcceptRisk() {
     if(saving)return;
@@ -582,12 +635,6 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       } catch (e) { toast.error(formatError(e)); }
     }
     loadEvidence();
-  }
-  async function downloadEv(ev) {
-    const { data } = await api.get(`/evidence/${ev.evidence_id}/download`);
-    const a = document.createElement("a");
-    a.href = data.content_base64.startsWith("data:") ? data.content_base64 : `data:${data.mime_type};base64,${data.content_base64}`;
-    a.download = data.filename; a.click();
   }
   async function deleteEv(ev) {
     if (!window.confirm(`Delete "${ev.filename}" from the library? It has ${ev.references?.length||1} source/supporting references. This is not an unlink. Retained history and bytes are not erased; retention rules apply.`)) return;
@@ -679,8 +726,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   // -------- Vendor tab renderers --------
 
   function vendorPanel(section) {
-    const Panel=vendorPilot?BrawndoVendorDetails:VendorGovernancePanel;
-    return <Panel tab={section} record={vendorPilot?record:record||form} form={form} setForm={setForm} canWrite={canWrite} isAdmin={isPlatformAdmin} users={users} reviews={linkedReviews} tasks={related.tasks||[]} risks={linkedRisks} evidence={evidenceItems} focusAssurance={initialValues?.assuranceId} openRecord={value=>{if(vendorPilot&&value.initialValues?.assurance_id&&formDirty){toast.error('Save assurance changes before creating an Action Item for this document.');return;}setRelatedDrawer(value);}} uploadFiles={uploadFiles} downloadEv={downloadEv} onSaved={()=>{loadLinkedReviews();loadLinkedRisks();loadRelated();onSaved?.();}}/>;
+    const Panel=vendorWorkflow?BrawndoVendorWorkflow:vendorPilot?BrawndoVendorDetails:VendorGovernancePanel;
+    return <Panel onRecordChanged={data=>{if(data.vendor_id!==record?.vendor_id||data.client_id!==clientId)return;Object.assign(record,data);vendorEditVersion.current=data.updated_at??null;const accepted={related_risk_ids:data.related_risk_ids||[]};initialForm.current={...initialForm.current,...accepted};setForm(previous=>({...previous,...accepted}));}} saving={saving} setTab={setTab} tab={section} record={vendorPilot?record:record||form} form={form} setForm={setForm} canWrite={canWrite} isAdmin={isPlatformAdmin} users={users} reviews={linkedReviews} tasks={related.tasks||[]} risks={linkedRisks} evidence={evidenceItems} focusAssurance={initialValues?.assuranceId} openRecord={value=>{if(vendorPilot&&value.initialValues?.assurance_id&&formDirty){toast.error('Save assurance changes before creating an Action Item for this document.');return;}setRelatedDrawer(value);}} uploadFiles={uploadFiles} downloadEv={downloadEv} onSaved={()=>{loadLinkedReviews();loadLinkedRisks();loadRelated();onSaved?.();}}/>;
   }
 
   // -------- Overview renderers per kind --------
@@ -698,6 +745,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           {record?.acceptance_expires_at && <DateReadonly label="Acceptance expiry · unchanged by routine reviews" value={record.acceptance_expires_at} />}
           {!riskPilot&&<div className="text-xs font-mono">{record?.display_id || "ID assigned on creation"}</div>}
           <div className={riskPilot?"record-fields":"space-y-4"}>{renderFieldsByNames(["title", "category", "status", "owner_id", "description"])}</div>
+          {aiRiskAssessment&&<RiskAssessmentPanel form={form} setForm={setForm} riskPilot={riskPilot} canWrite={canWrite} isPlatformAdmin={isPlatformAdmin}/>}
           <div className="grid grid-cols-2 gap-3"><DateReadonly label="Created" value={record?.created_at}/><DateReadonly label="Last Reviewed" value={record?.last_reviewed}/></div>
           {riskPilot&&record?.framework_assessment_id&&(()=>{const assessment=related.framework_assessments?.find(r=>r.framework_assessment_id===record.framework_assessment_id);return assessment?<button className="text-link underline text-sm" onClick={()=>setRelatedDrawer({kind:'framework_assessments',record:assessment})}>Framework / Control Assessment · {assessment.framework_key} {assessment.definition_id}</button>:<p className="text-sm">Original framework assessment unavailable or inaccessible.</p>;})()}
           <RiskSourceFields pilot={riskPilot} onOpen={setRelatedDrawer} form={form} setForm={setForm} clientId={clientId} disabled={!canWrite||riskPilot&&!!clientFields&&!clientFields.has("source_type")}/>
@@ -766,11 +814,12 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   }
 
   // -------- Shared tab renderers --------
-  function renderRelated() {
+  function renderRelated({exclude=[]}={}) {
+    const entries=Object.entries(related).filter(([key])=>!exclude.includes(key)&&(kind!=='risks'||key!=='evidence'));
     return (
       <div className="space-y-5">
-        {relatedTotal === 0 && <div className="text-sm text-ink-muted">No related records yet.</div>}
-        {Object.entries(related).filter(([k])=>kind!=='risks'||k!=='evidence').map(([k, list]) => (
+        {(exclude.length?entries.every(([,list])=>!list?.length):relatedTotal===0) && <div className="text-sm text-ink-muted">No related records yet.</div>}
+        {entries.map(([k, list]) => (
           (list && list.length > 0) ? (
             <div key={k}>
               <>{k==='framework_assessments'?<h4 className="text-xs font-semibold text-ink-secondary">Framework Requirements</h4>:pilot?<h4 className="text-xs font-semibold text-ink-secondary">{k==='tasks'?'Action Items':k==='ai_systems'?'AI Governance':k}</h4>:<Link to={k==='ai_systems'?'/ai-governance':k==="tasks"?"/action-items":k==="assessments"?"/onboarding":`/${k}`} className="text-xs font-mono uppercase tracking-widest text-ink-muted hover:text-ink-primary flex items-center gap-1">{k==='ai_systems'?'AI Governance':k} <ArrowUpRight className="h-3 w-3" /></Link>}</>
@@ -803,18 +852,18 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         {canWrite && (
           <div
             data-testid="drawer-evidence-dropzone"
-            role="button" tabIndex={0} aria-label="Upload evidence files"
-            onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();inputRef.current?.click();}}}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            role="button" tabIndex={riskSupportingLocked?-1:0} aria-disabled={riskSupportingLocked||undefined} aria-label="Upload evidence files"
+            onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();if(!riskSupportingLocked)inputRef.current?.click();}}}
+            onDragOver={(e) => { e.preventDefault(); if(!riskSupportingLocked)setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={(e) => { e.preventDefault(); setDragOver(false); uploadFiles(Array.from(e.dataTransfer.files)); }}
-            onClick={() => inputRef.current?.click()}
+            onDrop={(e) => { e.preventDefault(); setDragOver(false); if(!riskSupportingLocked)uploadFiles(Array.from(e.dataTransfer.files)); }}
+            onClick={() => {if(!riskSupportingLocked)inputRef.current?.click();}}
             className={`rounded-lg border-2 border-dashed p-6 text-center cursor-pointer transition ${dragOver ? "border-line-strong bg-surface-subtle" : "border-line-strong hover:bg-surface-subtle"}`}
           >
             <UploadCloud className="h-6 w-6 mx-auto text-ink-muted mb-1" />
             <div className="text-sm font-medium text-ink-primary">Drop files here to attach</div>
             <div className="text-xs text-ink-muted mt-0.5">They will be linked to this {singular}.</div>
-            <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => uploadFiles(Array.from(e.target.files || []))} data-testid="drawer-evidence-input" />
+            <input ref={inputRef} type="file" multiple className="hidden" disabled={riskSupportingLocked} onChange={(e) => {if(!riskSupportingLocked)uploadFiles(Array.from(e.target.files || []));}} data-testid="drawer-evidence-input" />
           </div>
         )}
 
@@ -823,7 +872,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         onDelete={isPlatformAdmin&&!(kind==='tasks'&&record.status==='done')?deleteEv:undefined}/>
     </div>;
   }
-  function renderComments() {
+  function renderComments({workflow=false}={}) {
     return (
       <div className="space-y-4">
         <div className="space-y-3">
@@ -839,8 +888,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           ))}
         </div>
         <div className="space-y-2 pt-2 border-t border-line">
-          <Textarea disabled={!canWrite} value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment… use @email to mention" data-testid="comment-input" className="text-sm" />
-          <Button disabled={!canWrite} onClick={submitComment} data-testid="comment-submit" size="sm">Post comment</Button>
+          <Textarea disabled={!canWrite||workflow&&(saving||commentPosting||riskSupportingLocked)} value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment… use @email to mention" data-testid="comment-input" className="text-sm" />
+          <Button disabled={!canWrite||workflow&&(saving||commentPosting||riskSupportingLocked||!newComment.trim())} onClick={workflow?submitWorkflowComment:submitComment} data-testid="comment-submit" size="sm">Post comment</Button>
         </div>
       </div>
     );
@@ -867,6 +916,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     if (policyPilot&&tab==='requirements') return <div className="approved-policy-requirements"><BrawndoPolicyDetails record={record} related={related} users={users} onOpen={openLinkedRecord}/><div className="space-y-5"><RequirementBasis readable kind="policies" record={record} related={related} onOpen={openLinkedRecord} loading={relatedLoading} error={relatedError} users={users}/><GovernanceContextFields expanded value={form.governance_context} cadence disabled={!canWrite||record?.status==='in_review'||approvalDirty||!!clientFields&&!clientFields.has('governance_context')} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>{[record.onboarding_note,record.applicability_rationale,record.governance_context?.cadence_rationale].filter(Boolean).map((text,i)=><p className="text-sm whitespace-pre-wrap" key={i}>{text}</p>)}{relatedError?<p role="alert">{relatedError}</p>:renderRelated()}</div></div>;
     if (policyPilot&&tab==='evidence') return <div className="space-y-5">{renderPolicyPanel()}<PolicyRetainedApproval record={record}/>{renderEvidence()}</div>;
     if (tab === "overview") return <>{record && !pilot && <div className="mb-4"><RecordSummary kind={kind} record={taskCompletion?.task || record} clientId={clientId} related={related} users={users} /></div>}{pilot&&kind==='findings'&&record&&<p className="mb-4 text-sm">Finding status: <StatusBadge value={record.status}/></p>}{riskPilot&&record&&<RiskSummary risk={form} users={users} statusLabel={user?.workspace_mode==='demo'?pilotRiskStatus(form.status):riskStatus(form.status)}/>} {renderOverview()}</>;
+    if (vendorWorkflow&&tab==='activity') return <BrawndoVendorWorkflowActivity comments={comments} activity={activity} activityError={activityError} newComment={newComment} setNewComment={setNewComment} onSubmitComment={submitWorkflowComment} canWrite={canWrite} saving={saving||commentPosting} users={users}/>;
+    if (vendorWorkflow&&tab==='linked') return vendorPanel('linked');
     if (tab === "activity") return renderActivity();
     // Kind-specific
     if (kind === "risks") {
@@ -942,8 +993,29 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   return (
     <Root open={open} onOpenChange={pilot||actionLayout?close:onOpenChange}>
-      <Content aria-modal={clientPresentation?'true':undefined} {...(dialogLayout?{onPointerDownOutside:e=>e.preventDefault(),onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected&&(!clientPresentation||opener.current!==document.body)?opener.current:document.querySelector(vendorPilot||clientPresentation&&kind==='vendors'?'[data-testid="vendor-search"]':policyPilot||clientPresentation&&kind==='policies'?'[data-testid="policies-search"]':riskPilot||clientPresentation&&kind==='risks'?'[data-testid="risk-search"]':'[data-testid="ai-search"]');target?.focus({preventScroll:true});}}:{side:'right',description:isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`})} className={dialogLayout?('brawndo-cis-assessment bg-surface-card'+(actionLayout?' action-record-dialog':'')):'record-drawer w-full sm:max-w-2xl p-0 flex flex-col'} data-testid={`${kind}-drawer`}>
-        {dialogLayout&&<DialogDescription className="sr-only">{!pilot?`Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.`:vendorPilot?'Manage the vendor relationship, assurance documents and independent review and contract schedules.':policyPilot?'Manage this Policy, its document versions, framework alignment, review schedule and recorded approvals.':riskPilot?"Assess the risk, document treatment and review history, and record authorized acceptance or closure separately.":"Document assigned work and its original source, retain evidence, and complete work separately from Finding validation."}</DialogDescription>}
+      <Content aria-modal={clientPresentation?'true':undefined} {...(dialogLayout?{onPointerDownOutside:e=>e.preventDefault(),onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected&&(!clientPresentation||opener.current!==document.body)?opener.current:document.querySelector(vendorPilot||clientPresentation&&kind==='vendors'?'[data-testid="vendor-search"]':policyPilot||clientPresentation&&kind==='policies'?'[data-testid="policies-search"]':riskPilot||clientPresentation&&kind==='risks'?'[data-testid="risk-search"]':'[data-testid="ai-search"]');target?.focus({preventScroll:true});}}:{side:'right',description:isEdit ? `Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.` : `Create a ${singular.toLowerCase()} for the selected client. Complete the required fields, then choose Create.`})} className={(dialogLayout?('brawndo-cis-assessment bg-surface-card'+(actionLayout?' action-record-dialog':'')):'record-drawer w-full sm:max-w-2xl p-0 flex flex-col')+(fullRecord?' brawndo-full-record':'')+(riskWorkflow?' brawndo-risk-workflow':'')+(vendorWorkflow?' brawndo-vendor-workflow vw-shell':'')+(policyWorkflow?' brawndo-policy-workflow':'')}  {...(dialogLayout?{showCloseButton:!(riskWorkflow||vendorWorkflow||policyWorkflow)}:{})} data-testid={`${kind}-drawer`}>
+        {dialogLayout&&<DialogDescription className="sr-only">{!pilot?`Review this ${singular.toLowerCase()}, its supporting evidence, related work and activity. Changes require the relevant save or workflow action.`:kind==='vendors'?'Manage the vendor relationship, assurance documents and independent review and contract schedules.':policyPilot?'Manage this Policy, its document versions, framework alignment, review schedule and recorded approvals.':riskPilot?"Assess the risk, document treatment and review history, and record authorized acceptance or closure separately.":"Document assigned work and its original source, retain evidence, and complete work separately from Finding validation."}</DialogDescription>}
+        {riskWorkflow?<BrawndoRiskWorkflow record={record} form={form} setForm={setForm} users={users} clientId={clientId} tab={tab} setTab={value=>{if(newComment.trim()){toast.error('Post or discard the unfinished comment before switching tabs.');return;}setTab(value);}} heading={heading} canWrite={canWrite} isPlatformAdmin={isPlatformAdmin} clientFields={clientFields} related={related} tasks={related.tasks||[]} history={riskHistory} activity={activity} activityError={activityError} relatedError={relatedError} relatedLoading={relatedLoading} onOpen={setRelatedDrawer} onOpenOccurrence={openRiskOccurrence} onLinkAction={openRiskActionPicker} onClose={()=>close(false)} onSave={save} saving={saving||commentPosting} commandPending={acceptOpen||!!closure} dirty={dirty} saveError={saveError}
+          retryControl={updateRecord.unconfirmed()&&<Button disabled={saving||!canWrite} onClick={async()=>{setSaving(true);setSaveError('');try{const {data}=await updateRecord.retry();Object.assign(record,data);onSaved?.(data);onOpenChange(false);}catch(e){setSaveError(formatError(e));}finally{setSaving(false);}}}>Retry unconfirmed save</Button>}
+          supportingRecords={<details open={newComment.trim()?true:undefined}><summary>Supporting records</summary><section><h3>Evidence</h3>{renderEvidence()}</section><section><h3>Comments</h3>{renderComments({workflow:true})}</section><section><h3>Related records</h3>{relatedLoading?<p role="status">Loading related records…</p>:relatedError?<p role="alert">{relatedError}</p>:renderRelated({exclude:['tasks','evidence']})}</section></details>}
+          decisionControls={canWrite&&!['closed','retired'].includes(record.status)&&<><button type="button" className="rw-button" disabled={saving||acceptOpen||!!closure} onClick={markRiskReviewed}>Review risk</button>{isPlatformAdmin&&<><button type="button" className="rw-button" disabled={saving||acceptOpen||!!closure} onClick={acceptRisk}>{record.status==='accepted'?'Renew acceptance':'Accept risk'}</button><button type="button" className="rw-button" disabled={saving||acceptOpen||!!closure} onClick={beginRiskClosure}>Close risk</button></>}</>}
+          decisionBody={<BrawndoRiskDecisionPanel accepting={ownsRiskDecision&&acceptOpen} acceptance={acceptForm} closure={ownsRiskDecision?closure:null} user={user} saving={saving} canDecide={isPlatformAdmin} onAcceptanceChange={setAcceptForm} onClosureChange={setClosure} onAccept={submitAcceptRisk} onCloseRisk={submitRiskClosure} onCancelAcceptance={()=>setAcceptOpen(false)} onCancelClosure={()=>setClosure(null)}/>}
+        />:vendorWorkflow?<>
+          <SheetHeader className="brawndo-vendor-workflow vw-header"><div className="vw-shell-title"><SheetTitle ref={heading} tabIndex={-1} className="sr-only">{record?.name||'New vendor'}</SheetTitle><BrawndoVendorWorkflowHeading record={record} form={form} users={users} reviews={linkedReviews}/><button type="button" className="x" aria-label="Close vendor" disabled={saving} onClick={()=>close(false)}>×</button></div>{record&&<nav className="tabs" role="tablist" aria-label="Vendor sections">{BRAWNDO_VENDOR_WORKFLOW_TABS.map(item=><button type="button" className="tab" role="tab" key={item.id} id={`${workflowId}-${item.id}`} aria-controls={`${workflowId}-panel`} aria-selected={tab===item.id} tabIndex={tab===item.id?0:-1} onClick={()=>{if(newComment.trim()){toast.error('Post or discard the unfinished comment before switching tabs.');return;}setTab(item.id);}} onKeyDown={event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)||newComment.trim())return;event.preventDefault();const index=BRAWNDO_VENDOR_WORKFLOW_TABS.findIndex(tab=>tab.id===item.id),next=event.key==='Home'?0:event.key==='End'?BRAWNDO_VENDOR_WORKFLOW_TABS.length-1:(index+(event.key==='ArrowRight'?1:-1)+BRAWNDO_VENDOR_WORKFLOW_TABS.length)%BRAWNDO_VENDOR_WORKFLOW_TABS.length;setTab(BRAWNDO_VENDOR_WORKFLOW_TABS[next].id);event.currentTarget.parentElement.children[next].focus();}}>{item.label}{['data_access','assurance','linked'].includes(item.id)&&<span className="n">{item.id==='data_access'?(form.data_types||[]).length:item.id==='assurance'?(form.assurance_records||[]).filter(item=>!item.superseded_by).length:linkedReviews.length+(related.tasks||[]).length+linkedRisks.length}</span>}</button>)}</nav>}</SheetHeader>
+          <div className="vw-content" id={`${workflowId}-panel`} role={record?'tabpanel':undefined} aria-labelledby={record?`${workflowId}-${tab}`:undefined}>{renderTabContent()}</div>
+          <footer className="brawndo-vendor-workflow vw-footer">{saveError&&<p role="alert">{saveError}</p>}{isEdit?<span className="dirty">{dirty?'Unsaved changes':'No unsaved changes'}</span>:<BrawndoVendorWorkflowSummary form={form}/>}<span className="sp"/>{updateRecord.unconfirmed()&&<Button disabled={saving||!canWrite} onClick={async()=>{setSaving(true);setSaveError('');try{const {data}=await updateRecord.retry();Object.assign(record,data);onSaved?.(data);onOpenChange(false);}catch(e){setSaveError(formatError(e));}finally{setSaving(false);}}}>Retry unconfirmed save</Button>}<button type="button" className="btn" disabled={saving} onClick={()=>close(false)}>{isEdit?'Close':'Cancel'}</button>{canWrite&&<button type="button" className="btn pri" disabled={saving||commentPosting||['inactive','terminated'].includes(record?.status)||isEdit&&!dirty} onClick={save}>{saving?'Saving…':isEdit?'Save changes':'Add to register'}</button>}</footer>
+        </>:policyWorkflow?<BrawndoPolicyWorkflow
+          record={record} form={form} setForm={setForm} users={users} clientId={clientId} tab={tab}
+          setTab={value=>{if(approvalDirty||newComment.trim()){toast.error('Finish or discard the unfinished approval details or comment before switching tabs.');return;}setTab(value);}}
+          canWrite={canWrite} clientFields={clientFields} saving={saving||commentPosting} dirty={dirty} approvalDirty={approvalDirty} heading={heading}
+          onClose={()=>close(false)} onSave={save} relatedReviews={related.reviews||[]} commentCount={comments.length}
+          onOpenReview={review=>setRelatedDrawer({kind:'reviews',record:review,initialValues:relatedReviewInitialValues(review,record)})}
+          nativeApproval={<>{renderPolicyPanel()}<PolicyRetainedApproval record={record}/></>}
+          evidenceContent={renderEvidence()} alignmentContent={tab==='requirements'?renderTabContent():null}
+          commentsContent={renderComments({workflow:true})} activityContent={renderActivity()} saveError={saveError}
+          onOpenDocument={async subject=>{try{await downloadEv({evidence_id:subject.basis.evidence_id});}catch(error){toast.error(formatError(error));}}}
+          retryControl={updateRecord.unconfirmed()&&<Button disabled={saving||!canWrite} onClick={async()=>{setSaving(true);setSaveError('');try{const {data}=await updateRecord.retry();Object.assign(record,data);onSaved?.(data);onOpenChange(false);}catch(error){setSaveError(formatError(error));}finally{setSaving(false);}}}>Retry unconfirmed save</Button>}
+        />:<>
         <SheetHeader className={dialogLayout?'px-6 py-4 pr-12 border-b border-line shrink-0':'px-6 py-4 border-b border-line'}>
           <div className="flex items-start justify-between">
             <div>
@@ -963,13 +1035,14 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         <div className={`px-6 py-3 border-t border-line bg-surface-subtle flex justify-end gap-2${dialogLayout?' flex-wrap shrink-0':''}`}>
           {saveError&&<p role="alert" className="text-sm">{saveError}{updateRecord.unconfirmed()?' Save is unconfirmed; retry the original save before making another edit.':''}</p>}
           {isEdit&&updateRecord.unconfirmed()&&<Button size="sm" disabled={saving||!canWrite} onClick={async()=>{setSaving(true);setSaveError('');try{const {data}=await updateRecord.retry();Object.assign(record,data);onSaved?.(data);toast.success('Saved');onOpenChange(false);}catch(e){setSaveError(formatError(e));toast.error(formatError(e));}finally{setSaving(false);}}}>Retry unconfirmed save</Button>}
-          {riskPilot&&isEdit&&canWrite&&!['closed','retired'].includes(record.status)&&<><Button size="sm" variant="outline" disabled={saving} onClick={markRiskReviewed} data-testid="risk-mark-reviewed">Review Risk</Button>{isPlatformAdmin&&<><Button size="sm" variant="outline" disabled={saving} onClick={acceptRisk} data-testid="risk-accept">{record.status==='accepted'?'Renew Acceptance':'Accept Risk'}</Button><Button size="sm" variant="outline" disabled={saving} data-testid="risk-close" onClick={async()=>{if(dirty&&!await save(undefined,true))return;setClosure({reason:'remediated',note:''});}}>Close Risk</Button></>}</>}
+          {riskPilot&&isEdit&&canWrite&&!['closed','retired'].includes(record.status)&&<><Button size="sm" variant="outline" disabled={saving} onClick={markRiskReviewed} data-testid="risk-mark-reviewed">Review Risk</Button>{isPlatformAdmin&&<><Button size="sm" variant="outline" disabled={saving} onClick={acceptRisk} data-testid="risk-accept">{record.status==='accepted'?'Renew Acceptance':'Accept Risk'}</Button><Button size="sm" variant="outline" disabled={saving} data-testid="risk-close" onClick={beginRiskClosure}>Close Risk</Button></>}</>}
           <Button variant="outline" size="sm" onClick={() => (pilot||actionLayout)?close(false):onOpenChange(false)} data-testid="drawer-cancel">{taskCompletion||riskPilot||policyPilot?'Close':'Cancel'}</Button>
           {(tabIsFormEditable||pilot&&['tasks','risks'].includes(kind)) && !taskCompletion && (
             <Button size="sm" onClick={save} disabled={saving || !canWrite || kind==="vendors"&&record?.status==="inactive"} data-testid="drawer-save">{saving ? "Saving…" : isEdit ? "Save changes" : vendorPilot?'Add to Register':"Create"}</Button>
           )}
           {pilot&&kind==='tasks'&&isEdit&&canWrite&&!taskCompletion&&!['done','cancelled'].includes(record.status)&&<Button size="sm" disabled={saving} onClick={()=>save('done')} data-testid="complete-action">Complete Action Item</Button>}
         </div>
+        </>}
       </Content>
       {(pilot||actionLayout)&&<AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}><AlertDialogContent><AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved records remain unchanged. Keep editing to retain this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{setDiscardOpen(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
 
@@ -988,10 +1061,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       </Sheet>
 
 {linkTask&&<Sheet open onOpenChange={v=>!v&&setLinkTask(null)}><SheetContent description="Link an existing Action Item to this risk without changing the Action's original source."><SheetHeader><SheetTitle>Link Action Item</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><p className="text-sm">The original source and Action Item remain unchanged.</p><Select value={linkTask.task_id||"__none__"} onValueChange={task_id=>setLinkTask({...linkTask,task_id})}><SelectTrigger aria-label="Existing Action Item"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="__none__" disabled>Select a record</SelectItem>{linkTask.options.map(t=><SelectItem key={t.task_id} value={t.task_id}>{t.title}</SelectItem>)}</SelectContent></Select><Button disabled={!linkTask.task_id||saving} onClick={async()=>{setSaving(true);try{await api.post(`/risks/${record.risk_id}/link-action-item`,{task_id:linkTask.task_id});setLinkTask(null);loadRelated();onSaved?.();}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Link Action Item</Button></div></SheetContent></Sheet>}
-      {closure&&<Sheet open onOpenChange={value=>!value&&setClosure(null)}><SheetContent description="Record why this risk can be closed. Its history remains available; future linked Reviews will be cancelled." className="sm:max-w-md"><SheetHeader><SheetTitle>Close Risk</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><Label>Closure reason</Label><Select value={closure.reason} onValueChange={reason=>setClosure({...closure,reason})}><SelectTrigger aria-label="Closure reason"><SelectValue/></SelectTrigger><SelectContent>{Object.entries({remediated:"Remediated",no_longer_applicable:"No Longer Applicable",system_process_retired:"System / Process Retired",condition_removed:"Risk Condition Removed",other:"Other"}).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Label>Closure note</Label><Textarea aria-label="Closure note" value={closure.note} onChange={e=>setClosure({...closure,note:e.target.value})}/><p className="text-sm text-ink-secondary">The Risk and its history remain available. Future linked Reviews will be cancelled.</p><Button disabled={saving} onClick={async()=>{setSaving(true);try {await api.post(`/risks/${record.risk_id}/close`,{...closure,expected_updated_at:record.updated_at??null});setClosure(null);await refreshRisk();onSaved?.();toast.success("Risk closed and retained");}catch(e){toast.error(formatError(e));}finally{setSaving(false);}}}>Confirm closure</Button></div></SheetContent></Sheet>}
+      {closure&&!riskWorkflow&&(!riskDecisionOrigin.current||ownsRiskDecision)&&<Sheet open onOpenChange={value=>!value&&setClosure(null)}><SheetContent description="Record why this risk can be closed. Its history remains available; future linked Reviews will be cancelled." className="sm:max-w-md"><SheetHeader><SheetTitle>Close Risk</SheetTitle></SheetHeader><div className="space-y-4 mt-6"><Label>Closure reason</Label><Select value={closure.reason} onValueChange={reason=>setClosure({...closure,reason})}><SelectTrigger aria-label="Closure reason"><SelectValue/></SelectTrigger><SelectContent>{Object.entries({remediated:"Remediated",no_longer_applicable:"No Longer Applicable",system_process_retired:"System / Process Retired",condition_removed:"Risk Condition Removed",other:"Other"}).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Label>Closure note</Label><Textarea aria-label="Closure note" value={closure.note} onChange={e=>setClosure({...closure,note:e.target.value})}/><p className="text-sm text-ink-secondary">The Risk and its history remain available. Future linked Reviews will be cancelled.</p><Button disabled={saving} onClick={submitRiskClosure}>Confirm closure</Button></div></SheetContent></Sheet>}
       {/* Accept Risk dialog */}
       {kind === "risks" && (
-        <Sheet open={acceptOpen} onOpenChange={setAcceptOpen}>
+        <Sheet open={acceptOpen&&!riskWorkflow&&(!riskDecisionOrigin.current||ownsRiskDecision)} onOpenChange={setAcceptOpen}>
           <SheetContent side="right" description="Record why management accepts this risk, its acceptance expiry and any compensating controls." className="w-full sm:max-w-md p-0" data-testid="accept-risk-dialog">
             <SheetHeader className="px-6 py-4 border-b border-line">
               <SheetTitle>Accept risk</SheetTitle>

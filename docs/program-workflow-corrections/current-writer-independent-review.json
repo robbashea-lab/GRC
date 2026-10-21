@@ -1,0 +1,14 @@
+{
+  "reviewer":"/root/cis_ig1_review",
+  "role":"Independent non-author read-only review and runtime verification",
+  "integrated_source_commit":"87d37b67fde542710c337c238a5bc9833d1aeaa6",
+  "author_isolated_commit":"a069bb52991729c830b112972f22fa1293e4ccb5",
+  "reviewed_paths":["frontend/src/lib/inlineAssessment.js","frontend/src/lib/omniInventorySummary.js","frontend/src/lib/omniCisSummary.js","frontend/src/lib/socGuidedAssessment.js","frontend/src/lib/isoGuidedAssessment.js","frontend/src/lib/inlineContextSentences.test.js"],
+  "disposition":"No material defect found. The existing writer paths add a terminal period to current inline context/limitation fragments only when the fragment does not already end in period, exclamation mark or question mark. CIS gates are literal Control1-5/program5; SOC/ISO gates compare against the current catalog version. Old-version and structured output branches remain in use. The patch does not change questions, answered data, evaluation, status, native Items, save operations, or manually reviewed text persistence.",
+  "command":"CI=true node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand --runTestsByPath src/lib/inlineContextSentences.test.js src/lib/assessmentUnknowns.test.js src/lib/cisRolloutContentReview.test.js src/lib/cis175SourceCondition.test.js src/lib/cisRequiredUncertainty.test.js src/lib/inlineAssessment.test.js src/lib/omniInventorySummary.test.js",
+  "result":{"suites_passed":7,"tests_passed":4476,"tests_failed":0,"exit_code":0,"seconds":9.731},
+  "log":"work/program-review/cross-review/current-writer-independent-87d37b6.log",
+  "coverage":"New current CIS/SOC/ISO sentence-separation cases and old-writer checks; all 4,267 immutable authored historical CIS vectors; new explicit V5 unknown/known deficiency/retired-facet/intent cases; all 153 current inline definition checks; current shared unknown/Items assertions and historical pilot confirmation; optional inventory context and controlled local review-date boundary.",
+  "reviewer_source_or_test_edits":0,
+  "limitations":"Controlled local source/evaluator and Demo-related unit evidence; not hosted/browser/persistence/release proof and not a broad frontend/backend passing result. Counts overlap the four-suite receipt and must not be added as independent unique cases."
+}

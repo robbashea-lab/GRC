@@ -1,0 +1,92 @@
+/* Portfolio uses its own reviewed Inter palette, independently of the Brawndo pilots. */
+.governara-portfolio {
+ --gp-bg:#F4F6F9; --gp-surface:#FFFFFF; --gp-subtle:#F7F9FB; --gp-tablehead:#F9FAFC; --gp-hover:#F2F5F9; --gp-border:#E3E8EF; --gp-border-strong:#CDD5E0;
+ --gp-fg:#0F1B2D; --gp-fg2:#46566B; --gp-muted:#5A687B; --gp-link:#1F56C3; --gp-selected:#EDF2FC; --gp-focus:#215BC1; --gp-good:#05603A; --gp-bad:#B42318; --gp-warn:#93370D;
+ --chart-implemented:#0F8C69; --gp-part:#CC8B12; --gp-not:#CC4655; --gp-none:#D3DBE5;
+ --gp-shadow:0 1px 2px rgba(15,27,45,.05),0 1px 1px rgba(15,27,45,.02); --gp-seg-on:#FFFFFF; --gp-seg-shadow:0 1px 2px rgba(15,27,45,.10),0 0 0 1px rgba(15,27,45,.06);
+ color:var(--gp-fg); background:var(--gp-bg); padding:28px 24px 120px; min-height:calc(100dvh - 60px); font:13.5px/1.5 Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif; font-optical-sizing:auto; -webkit-font-smoothing:antialiased;
+}
+.governara-portfolio[data-theme=dark] {
+ --gp-bg:#0A0F16; --gp-surface:#111823; --gp-subtle:#151D29; --gp-tablehead:#131B26; --gp-hover:#19222F; --gp-border:#222C3A; --gp-border-strong:#34404F;
+ --gp-fg:#EDF1F7; --gp-fg2:#A7B3C4; --gp-muted:#8E9BAE; --gp-link:#8EC5FF; --gp-selected:#1B2738; --gp-focus:#8EC5FF; --gp-good:#3DC79F; --gp-bad:#F2828C; --gp-warn:#E9B65A;
+ --chart-implemented:#2BA688; --gp-part:#D4A13C; --gp-not:#E06A78; --gp-none:#2C3747; --gp-shadow:none; --gp-seg-on:#243042; --gp-seg-shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+}
+.governara-portfolio *, .governara-portfolio *::before { box-sizing:border-box; }
+.governara-portfolio :is(button,input,select) { font-family:inherit; }
+.gp-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px; max-width:1552px; }
+.gp-head h1 { margin:0; font:650 24px/1.5 Inter,'Segoe UI',sans-serif; letter-spacing:-.025em; }
+.gp-theme { display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 12px; border:1px solid var(--gp-border); border-radius:7px; background:var(--gp-surface); color:var(--gp-fg2); font-size:12.5px; font-weight:500; box-shadow:var(--gp-shadow); }
+.gp-theme svg { width:15px; height:15px; }
+.gp-register { max-width:1552px; border:1px solid var(--gp-border); border-radius:10px; background:var(--gp-surface); overflow:hidden; box-shadow:var(--gp-shadow); }
+.gp-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:12px 16px; border-bottom:1px solid var(--gp-border); }
+.gp-search { position:relative; flex:0 1 280px; min-width:200px; }
+.gp-search > svg { position:absolute; top:9.5px; left:11px; color:var(--gp-muted); }
+.governara-portfolio .gp-search input { width:100%; height:34px; padding:0 12px 0 34px; border:1px solid var(--gp-border-strong); border-radius:7px; background:var(--gp-surface); color:var(--gp-fg); font:inherit; box-shadow:none; }
+.gp-search input::placeholder { color:var(--gp-muted); }
+.gp-segmented { display:inline-flex; padding:3px; gap:2px; border:0; border-radius:8px; background:var(--gp-hover); box-shadow:inset 0 0 0 1px var(--gp-border); max-width:100%; overflow-x:auto; }
+.gp-segmented button { padding:4px 11px; border:0; border-radius:6px; color:var(--gp-fg2); font-size:12.5px; font-weight:500; white-space:nowrap; }
+.gp-segmented button[aria-pressed=true] { color:var(--gp-fg); background:var(--gp-seg-on); font-weight:600; box-shadow:var(--gp-seg-shadow); }
+.governara-portfolio .gp-field { display:flex; align-items:center; gap:8px; color:var(--gp-muted); font-size:12.5px; font-weight:400; }
+.gp-field select { height:34px; border:1px solid var(--gp-border-strong); border-radius:7px; background:var(--gp-surface); color:inherit; padding:0 10px; font-size:12.5px; font-weight:500; }
+.gp-sort { margin-left:auto; }
+.gp-countbar { display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px 16px; padding:8px 16px; border-bottom:1px solid var(--gp-border); color:var(--gp-muted); font-size:12px; font-variant-numeric:tabular-nums; }
+.gp-countbar strong { font-weight:400; }
+.gp-table-frame { container-type:inline-size; }
+/* Explicit tracks match the target while native rowspans group client programs. */
+.governara-portfolio .gp-table { display:block; width:100%; border-collapse:collapse; text-align:left; }
+.gp-table thead { display:block; background:var(--gp-tablehead); border-bottom:1px solid var(--gp-border); }
+.gp-table thead tr,.gp-table tbody { display:grid; grid-template-columns:minmax(150px,1.15fr) 112px 128px minmax(400px,3fr) 136px; column-gap:16px; padding-inline:16px; }
+.governara-portfolio .gp-table th { padding:9px 0; color:var(--gp-muted); font-size:12px; line-height:1.5; font-weight:500; }
+.gp-table tbody tr { display:contents; }
+/* Keep the row divider in layout; the pseudo-element draws it across the column gaps. */
+.gp-table td { position:relative; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; min-width:0; padding:14px 0; border-bottom:1px solid transparent; }
+.gp-table td::after { content:""; position:absolute; bottom:0; left:0; right:-16px; border-bottom:1px solid var(--gp-border); }
+.gp-table td[data-label=Client]::after { left:-16px; }
+.gp-table td[data-label=Client] { grid-column:1; }.gp-table td[data-label="GRC Lead"] { grid-column:2; }.gp-table td[data-label=Framework] { grid-column:3; }.gp-table td[data-label="Implementation progress"] { grid-column:4; }.gp-table td[data-label="Last activity"] { grid-column:5; }
+.gp-table td[colspan] { grid-column:1/-1; }
+.gp-table tbody tr:hover > td { background:var(--gp-subtle); }
+.gp-client { display:flex; align-items:center; gap:12px; min-width:0; }.gp-client > div { min-width:0; }
+.gp-client-initial { display:grid; place-items:center; flex:none; width:32px; height:32px; border-radius:8px; color:var(--gp-fg2); background:var(--gp-subtle); box-shadow:inset 0 0 0 1px var(--gp-border); font-size:13px; font-weight:600; }
+.gp-client-name { font-size:13.5px; font-weight:600; letter-spacing:-.005em; color:var(--gp-fg); text-align:left; }
+.gp-client-name:hover,.gp-framework:hover { text-decoration:underline; text-underline-offset:3px; }
+.gp-industry { display:block; font-size:12px; color:var(--gp-muted); }
+.gp-table td[data-label="GRC Lead"] { font-size:13px; }.gp-lead { font-size:13px; font-weight:500; }.gp-muted { color:var(--gp-muted); }.gp-table td[data-label="GRC Lead"] > .gp-muted { font-size:13px; font-style:italic; }
+.gp-framework { display:inline-flex; align-items:center; padding:2px 8px; border:1px solid var(--gp-border); border-radius:6px; background:var(--gp-subtle); color:var(--gp-fg2); font-size:11.5px; font-weight:600; letter-spacing:.01em; }
+.gp-progress { display:grid; grid-template-columns:132px minmax(90px,1fr) 150px 12px; align-items:center; gap:16px; width:calc(100% + 20px); margin:-8px -10px; padding:8px 10px; border:1px solid transparent; border-radius:8px; color:var(--gp-fg); text-align:left; }
+.gp-progress:hover { background:var(--gp-surface); border-color:var(--gp-border); box-shadow:var(--gp-shadow); }
+.gp-percent { display:block; font-size:22px; font-weight:550; letter-spacing:.005em; line-height:1.15; font-variant-numeric:tabular-nums; font-optical-sizing:none; font-variation-settings:"opsz" 14; }
+.gp-unit { font-size:.56em; font-weight:500; letter-spacing:0; color:var(--gp-fg2); margin-left:.02em; }
+.gp-percent.is-muted { color:var(--gp-fg2); font-size:15px; font-weight:500; letter-spacing:-.01em; line-height:1.6; }
+.gp-progress-count { display:block; color:var(--gp-muted); font-size:12px; margin-top:3px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.gp-progress-caption { display:block; margin-top:7px; color:var(--gp-muted); font-size:12px; font-variant-numeric:tabular-nums; }
+.gp-statusbar { display:flex; gap:2px; height:8px; border-radius:4px; overflow:hidden; }
+.gp-statusbar > span:not(.sr-only) { flex-basis:0; min-width:0; }
+.gp-statusbar .is-implemented { background:var(--chart-implemented); }.gp-statusbar .is-partial { background:var(--gp-part); }.gp-statusbar .is-not { background:var(--gp-not); }.gp-statusbar .is-unassessed { background:var(--gp-none); }
+.gp-trend { display:grid; gap:4px; }.gp-sparkline { width:136px; height:30px; display:block; overflow:visible; }
+.gp-spark-line { fill:none; stroke:var(--chart-implemented); stroke-width:1.75; stroke-linejoin:round; stroke-linecap:round; }.gp-spark-base { stroke:var(--gp-border); stroke-width:1; }.gp-spark-end { fill:var(--chart-implemented); stroke:var(--gp-surface); stroke-width:2; }
+.gp-delta { display:block; font-size:12px; font-weight:400; white-space:nowrap; color:var(--gp-muted); font-variant-numeric:tabular-nums; }.gp-delta.is-up { color:var(--gp-good); }.gp-delta.is-down { color:var(--gp-bad); }
+.gp-progress > svg { color:var(--gp-muted); width:12px; }
+.gp-activity { display:block; font-size:12.5px; font-variant-numeric:tabular-nums; }.gp-activity small { display:block; color:var(--gp-muted); font-size:12px; }
+.gp-inactive { display:inline-flex; gap:5px; align-items:center; color:var(--gp-warn); font-size:12px; font-weight:600; margin-top:2px; }
+.gp-empty { padding:32px 20px!important; color:var(--gp-fg2); }.gp-empty p { margin:0; }
+.gp-link { color:var(--gp-link); text-decoration:underline; text-underline-offset:3px; }
+.governara-portfolio :is(button,input,select,[tabindex]):focus-visible { outline:2px solid var(--gp-focus); outline-offset:2px; }
+@container (max-width:960px) {
+ .governara-portfolio .gp-table,.gp-table tbody { display:block; width:100%; padding:0; }
+ .gp-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+ .gp-table tbody tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-areas:"client act" "lead fw" "prog prog"; align-items:center; gap:10px 16px; padding:16px; border-bottom:1px solid var(--gp-border); }
+ .gp-table tr:last-child { border-bottom:0; }
+ .gp-table td { display:block; padding:0; border:0; min-width:0; grid-column:auto; }.gp-table td::after { display:none; }
+ /* Compact cards replace inline desktop row spans with their named row and column. */
+ .gp-table td[data-label=Client] { grid-area:client!important; }.gp-table td[data-label="Last activity"] { grid-area:act!important; text-align:right; }.gp-table td[data-label="GRC Lead"] { grid-area:lead!important; }.gp-table td[data-label=Framework] { grid-area:fw!important; text-align:right; }.gp-table td[data-label="Implementation progress"] { grid-area:prog!important; }
+ .gp-table td[data-label="GRC Lead"]::before { content:"GRC Lead · "; font-size:13px; color:var(--gp-muted); }
+ .gp-progress { grid-template-columns:minmax(0,1fr) minmax(0,1.4fr); }.gp-progress > .gp-trend { grid-column:1/-1; }.gp-progress > svg { display:none; }
+}
+@container (max-width:420px) { .gp-progress { grid-template-columns:1fr; }.gp-table td[data-label=Framework] { text-align:left; } }
+@media(max-width:860px) { .governara-portfolio { padding:28px 16px 120px; }.gp-sort { margin-left:0; }.gp-field { max-width:100%; }.gp-field select { min-width:0; max-width:100%; } }
+@media(prefers-reduced-motion:reduce) { .governara-portfolio * { scroll-behavior:auto; } }
+
+.gp-delta b { color:var(--gp-good); font-weight:600; }.gp-delta b.is-down { color:var(--gp-bad); }
+.gp-delta-arrow { display:inline-block; width:.9em; height:.9em; vertical-align:-.08em; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.gp-tracking { display:flex; gap:7px; align-items:center; font-size:12px; color:var(--gp-muted); }.gp-tracking svg { flex:none; }
+@container (max-width:960px) { .gp-progress > .gp-tracking { grid-column:1/-1; } }

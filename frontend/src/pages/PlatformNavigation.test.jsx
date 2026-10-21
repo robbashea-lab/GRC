@@ -5,8 +5,6 @@ import ClientManagement from "./ClientManagement";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import mockFixtures from "@/preview/fixtures.json";
-import {seedStore} from '@/preview/store';
-import {portfolio} from '@/preview/summaries';
 
 const mockNavigate = jest.fn(), mockSwitch = jest.fn(), mockRefresh = jest.fn();
 let mockUser;
@@ -17,17 +15,42 @@ jest.mock("@/components/NotificationBell", () => () => null);
 jest.mock("@/lib/api", () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn(), patch: jest.fn() }, PREVIEW_MODE: false, formatError: e => e.message }));
 jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate, useLocation: () => ({ pathname: "/clients" }), Outlet: () => null, Link: ({children,to,...props})=><a href={to} {...props}>{children}</a>, NavLink: ({ children, to }) => <a href={to}>{typeof children === "function" ? children({ isActive: false }) : children}</a> }), { virtual: true });
 
-let root, container;
+const AT = '2026-10-13T12:00:00Z';
+const position = (implemented, denominator) => ({availability: 'available', measure_version: 'native-implementation-v1', implemented, denominator,
+  included_counts: [{key: 'addressed', label: 'Implemented', count: implemented}, {key: 'in_progress', label: 'Partially Implemented', count: 0}, {key: 'needs_attention', label: 'Needs Attention', count: 0}, {key: 'not_assessed', label: 'Not Assessed', count: denominator - implemented}],
+  source_revision: `current-${implemented}`, scope_signature: `scope-${denominator}`, captured_at: AT, retrieved_at: AT});
+const program = (client, key, implemented, before) => {
+  const soc = key === 'soc-2', denominator = soc ? 38 : 153;
+  const baseline = {...position(before, denominator), effective_at: '2026-07-15T12:00:00Z'};
+  return {client_id: client.client_id, program_id: `${client.client_id}:${soc ? key : 'cis-ig1'}`, program_key: key, framework_key: soc ? key : 'cis-ig1',
+    program_label: soc ? 'SOC 2' : 'CIS IG3', scope_label: soc ? 'Security and Availability' : 'Cumulative IG3 safeguards', to: `/compliance/${soc ? key : 'cis-ig1'}`,
+    current: position(implemented, denominator), snapshots_90d: [], scope_changes_90d: [],
+    comparison_90d: {baseline, baseline_effective_at_start: true, comparable: true, change_pp: (implemented - before) / denominator * 100}};
+};
+let root, container, mockPortfolio;
 beforeAll(() => {Object.defineProperty(global, 'crypto', {configurable:true,value:require('crypto').webcrypto});});
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
+  sessionStorage.clear();
   window.scrollTo=jest.fn();
   mockUser = {...mockFixtures.responses["/auth/me"]};
   mockClients = mockFixtures.responses["/clients"];
-  api.get.mockImplementation(async path => ({ data: path==='/clients/directory'?portfolio(seedStore(),false):mockFixtures.responses[path] }));
+  const clients = mockClients.map((client, index) => ({...client, assigned_owner_id: index ? 'another-user' : mockUser.user_id,
+    grc_lead_id: index ? 'another-user' : mockUser.user_id, grc_lead: {name: index ? 'Another Lead' : mockUser.name},
+    last_activity: {at: index ? '2026-09-01T12:00:00Z' : '2026-10-12T12:00:00Z', label: 'Assessment updated'}}));
+  mockPortfolio = {as_of: AT, clients, programs: [program(clients[0], 'cis-ig3', 138, 80), program(clients[0], 'soc-2', 4, 10), program(clients[1], 'cis-ig3', 31, 28)]};
+  api.get.mockImplementation(async (path, options) => {
+    if(path==='/portfolio/reporting/overview') return {data:mockPortfolio};
+    if(path==='/clients/directory') return {data:{clients:mockPortfolio.clients.map(client=>({...client,metric_items:{past_due:[],due_30d:[],due_31_90d:[]}}))}};
+    if(path==='/portfolio/reporting/history') {
+      const selected=mockPortfolio.programs.find(value=>value.client_id===options.params.client_id&&value.program_key===options.params.program_key);
+      return {data:{...selected,as_of:AT,snapshots:[],forecast_snapshots:[],scope_changes:[],forecast_scope_changes:[],comparison:{comparable:false,reason:'No retained period boundary'}}};
+    }
+    return {data:mockFixtures.responses[path]};
+  });
   api.post.mockResolvedValue({ data: { client_id: "new", name: "Sample" } });
   api.patch.mockResolvedValue({ data: { ...mockFixtures.responses["/clients"][0] } });
-  mockNavigate.mockClear(); mockSwitch.mockClear(); api.post.mockClear(); api.patch.mockClear();
+  mockNavigate.mockClear(); mockSwitch.mockClear(); api.get.mockClear(); api.post.mockClear(); api.patch.mockClear();
   container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
@@ -39,60 +62,84 @@ const change = async (node, value) => {
   });
 };
 const click = async node => { expect(node).toBeTruthy(); await act(async () => node.click()); };
+const select = async (label,value) => { const node=[...container.querySelectorAll('select')].find(select=>select.getAttribute('aria-label')===label||[...select.labels].some(item=>[...item.childNodes].filter(node=>node.nodeType===Node.TEXT_NODE).map(node=>node.textContent).join('').trim()===label)); expect(node).toBeTruthy(); await act(async()=>{node.value=value;node.dispatchEvent(new Event('change',{bubbles:true}));}); };
+const scopeButton = label => [...container.querySelectorAll('[aria-label="Scope"] button')].find(node=>node.textContent===label);
+const visibleClients = () => [...container.querySelectorAll('.ep-row')].map(node=>node.dataset.clientId);
 
-test("portfolio is a compact triage index: one heading, one view bar, the table, and drill-downs", async () => {
-  await render(<ClientDirectory />);
+test("standard enhanced Portfolio preserves native All/Mine scope and its shared sidebar", async () => {
+  mockClients=mockPortfolio.clients;
+  await render(<><Layout/><ClientDirectory /></>);
   expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
-  expect(container.querySelector("h1").textContent).toBe("Client Portfolio");
-  // No eyebrow, explanatory subtitle or summary cards above the table.
-  expect(container.textContent).not.toMatch(/Platform|Where each client program needs attention/);
-  expect(container.querySelector(".register-signal, [data-testid=\"portfolio-cards\"]")).toBeNull();
-  const filters = container.querySelector('[data-testid="client-directory-filters"]');
-  expect([...filters.querySelectorAll(".portfolio-view")].map(b => b.textContent)).toEqual(["All Clients", "Assigned to Me", "Past Due", "Critical / High", "Significant Risks", "Unassigned"]);
-  const rows = portfolio(seedStore(),false).clients;
-  // The Client column identifies the client; status text is not repeated there.
-  expect(container.querySelector('[data-testid^="client-status-"]')).toBeNull();
-  expect(container.textContent).not.toMatch(/Action required|Needs attention|On track/);
-  const shown = () => container.querySelectorAll('[data-testid^="client-open-"]').length;
-  await click(container.querySelector('[data-testid="client-filter-assigned_to_me"]'));
-  const mine = rows.filter(r=>r.grc_lead_id===mockUser.user_id);
-  expect(shown()).toBe(mine.length);
-  // Assigned to Me combines with a work view; All Clients clears both.
-  await click(container.querySelector('[data-testid="client-filter-past_due"]'));
-  expect(shown()).toBe(mine.filter(r=>r.past_due>0).length);
-  await click(container.querySelector('[data-testid="client-filter-all"]'));
-  expect(shown()).toBe(rows.length);
-  for(const key of ['past_due','critical_high_issues','significant_risks','unassigned']){
-    await click(container.querySelector(`[data-testid="client-filter-${key}"]`));
-    expect(container.querySelector(`[data-testid="client-filter-${key}"]`).getAttribute('aria-pressed')).toBe('true');
-    expect(shown()).toBe(rows.filter(r=>r[key]>0).length);
-    await click(container.querySelector(`[data-testid="client-filter-${key}"]`));
-  }
-  // Numbers open the exact contributing records; Significant Risks opens the filtered Risk register.
-  const first = rows[0];
-  const metric = key => container.querySelector(`[data-client-id="${first.client_id}"] [data-metric="${key}"]`);
-  expect(metric('due_31_90d').textContent).toBe(String(first.due_31_90d));
-  await click(metric('due_31_90d'));
-  expect(document.querySelector('[data-testid="drill-dialog"]').textContent).toContain(`${first.due_31_90d} contributing items`);
-  expect(document.querySelectorAll('[data-testid^="drill-row-"]').length).toBe(first.due_31_90d);
-  await click(metric('significant_risks'));
-  expect(mockSwitch).toHaveBeenCalledWith(first.client_id);
-  expect(mockNavigate).toHaveBeenCalledWith("/risks?portfolio=significant");
-  await click(container.querySelector(`[data-testid="client-open-${first.client_id}"]`));
-  expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
-  expect(container.querySelector('button[aria-label="GRC Lead: sort and filter"]')).toBeTruthy();
-  await change(container.querySelector('[data-testid="client-directory-search"]'), first.name);
-  expect(shown()).toBe(1);
+  expect(container.querySelector('h1').textContent).toBe('Client portfolio');
+  expect([...container.querySelectorAll('[aria-label="Scope"] button')].map(node=>node.textContent)).toEqual(['All clients','Assigned to me']);
+  expect([...container.querySelectorAll('[role="columnheader"]')].map(node=>node.textContent)).toEqual(['Client','Attention','Programs','Trend · 90 days','GRC lead','Next key date','History preview']);
+  expect(container.querySelector('h1').parentElement.textContent).toContain('2 clients · 3 programs');
+  expect(container.querySelectorAll('.ep-program')).toHaveLength(3);
+  await click(scopeButton('Assigned to me'));
+  expect(visibleClients()).toEqual([mockClients[0].client_id]);
+  expect(container.querySelector('[aria-label="Client list scope"]')).toBeNull();
+  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]')).toHaveLength(2);
+  await click(scopeButton('All clients'));
+  expect(scopeButton('All clients').getAttribute('aria-pressed')).toBe('true');
+  expect(visibleClients().sort()).toEqual(mockClients.map(client=>client.client_id).sort());
+  await change(container.querySelector('[aria-label="Search clients"]'),' SOC 2 ');
+  await select('Framework','cis-ig3');
+  expect(visibleClients()).toEqual([mockClients[0].client_id]);
+  expect(container.querySelector('[aria-label^="Acme Corp SOC 2 implementation history;"]')).toBeNull();
+  expect(container.querySelectorAll('.ep-program')).toHaveLength(1);
+  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]')).toHaveLength(2);
 });
 
-test("sidebar removes favorites and preserves ALL/MINE and navigation", async () => {
+test.each(['attention','name','next'])('%s Portfolio sort preserves cohort, program filters and native Mine scope',async key=>{
+  await render(<ClientDirectory />);
+  expect([...container.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['attention','name','next']);
+  await select('Sort clients',key);
+  expect(visibleClients()).toEqual([...mockPortfolio.clients].sort((a,b)=>a.name.localeCompare(b.name)).map(client=>client.client_id));
+  expect(container.querySelectorAll('[data-client-id="'+mockPortfolio.clients[0].client_id+'"] .ep-program')).toHaveLength(2);
+  await click(scopeButton('Assigned to me'));await select('Framework','soc-2');
+  await change(container.querySelector('[aria-label="Search clients"]'),'missing-client');
+  expect(visibleClients()).toEqual([]);
+  await click([...container.querySelectorAll('button')].find(node=>node.textContent==='Clear filters'));
+  expect(container.querySelector('select[aria-label="Framework"]').value).toBe('');
+  expect(container.querySelector('select[aria-label="Sort clients"]').value).toBe(key);
+  expect(scopeButton('Assigned to me').getAttribute('aria-pressed')).toBe('true');
+  expect(visibleClients()).toEqual([mockPortfolio.clients[0].client_id]);
+  expect(container.querySelectorAll('.ep-program')).toHaveLength(2);
+});
+
+test('client names navigate separately while a whole exact program opens history and its explicit workspace control',async()=>{
+  await render(<ClientDirectory />);
+  const first=mockPortfolio.clients[0],selected=mockPortfolio.programs.find(value=>value.client_id===first.client_id&&value.program_key==='soc-2');
+  await click(container.querySelector('[data-client-id="'+first.client_id+'"] .ep-client-link'));
+  expect(mockSwitch).toHaveBeenCalledWith(first.client_id);
+  expect(mockNavigate).toHaveBeenLastCalledWith('/dashboard?client_id='+first.client_id);
+  const progress=container.querySelector('[aria-label^="'+first.name+' SOC 2 implementation history;"]');
+  progress.focus();await click(progress.querySelector('.ep-framework'));
+  expect(mockNavigate).toHaveBeenCalledTimes(1);
+  const dialog=document.querySelector('[data-testid="enhanced-portfolio-history"]');
+  expect(dialog).toBeTruthy();expect(dialog.querySelector('[aria-label="Select program"] [aria-pressed="true"]').textContent).toBe('SOC 2');
+  expect(api.get.mock.calls.filter(([path])=>path.endsWith('/history')).map(([,options])=>options.params)).toEqual(['1m','3m','6m','12m'].map(range=>({client_id:first.client_id,program_key:'soc-2',range,include_archived:false})));
+  expect(dialog.querySelector('.ep-current').textContent).toContain('4 of 38 implemented');
+  await click([...dialog.querySelectorAll('button')].find(node=>node.textContent==='Open SOC 2 workspace →'));
+  expect(mockSwitch).toHaveBeenLastCalledWith(first.client_id);
+  expect(mockNavigate).toHaveBeenLastCalledWith('/compliance/soc-2?client_id='+first.client_id);
+  await click([...dialog.querySelectorAll('button')].find(node=>node.textContent==='Open client portal'));
+  expect(mockNavigate).toHaveBeenLastCalledWith('/dashboard?client_id='+first.client_id);
+  expect(dialog.contains(document.activeElement)).toBe(true);
+  const focusReturned=new Promise(resolve=>progress.addEventListener('focus',resolve,{once:true}));
+  await click(dialog.querySelector('[aria-label="Close implementation preview"]'));
+  expect(document.querySelector('[data-testid="enhanced-portfolio-history"]')).toBeNull();
+  await focusReturned;expect(document.activeElement).toBe(progress);
+  await change(container.querySelector('[aria-label="Search clients"]'),first.name);
+  expect(visibleClients()).toEqual([first.client_id]);
+});
+
+test("sidebar removes favorites and keeps client navigation with scope filtering in the portfolio", async () => {
   await render(<Layout />);
   expect(container.textContent).not.toMatch(/Favorites|Fav/);
-  expect(container.querySelector('[data-testid="sidebar-filter-all"]').textContent).toBe("All");
-  await click(container.querySelector('[data-testid="sidebar-filter-assigned"]'));
-  const mine = mockFixtures.responses["/clients"].filter(c => c.assigned_owner_id === mockUser.user_id && c.status !== "archived");
-  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]').length).toBe(mine.length);
-  await click(container.querySelector('[data-testid="sidebar-filter-all"]'));
+  expect(container.querySelector('[aria-label="Client list scope"]')).toBeNull();
+  const active = mockFixtures.responses["/clients"].filter(c => c.status !== "archived");
+  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]').length).toBe(active.length);
   expect(container.querySelector('a[href="/admin/clients"]')).toBeTruthy();
   const client = mockFixtures.responses["/clients"][0];
   expect(container.querySelector('[data-testid="sidebar-client-search"]')).toBeNull(); // two clients: nothing to search

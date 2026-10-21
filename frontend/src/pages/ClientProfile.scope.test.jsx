@@ -1,0 +1,26 @@
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import ClientProfile from './ClientProfile';
+import api from '@/lib/api';
+let mockUser,mockMode;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:mockMode})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo'},refresh:jest.fn()})}));
+jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn()},formatError:error=>error.message}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false}));
+jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/client-profile',search:''}),useSearchParams:()=>require('react').useState(new URLSearchParams()),Link:({to,children,...props})=><a href={to} {...props}>{children}</a>,Navigate:()=>null}),{virtual:true});
+jest.mock('./Onboarding',()=>()=>null);
+jest.mock('./PlatformAdmin',()=>({UsersTable:()=>null}));
+jest.mock('@/components/ComplianceProfile',()=>()=>null);
+jest.mock('@/components/ProgramConfiguration',()=>()=>null);
+jest.mock('@/components/OnboardingHandoff',()=>()=>null);
+jest.mock('@/components/ClientDialog',()=>()=>null);
+let node,root;
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockUser={user_id:'actor',role:'super_admin',workspace_mode:'demo'};mockMode='demo';node=document.createElement('div');document.body.appendChild(node);root=createRoot(node);api.get.mockImplementation(async path=>({data:path.endsWith('/profile')?{client_id:'demo_brawndo',completed:true,profile:{},history:[]}:{client:{client_id:'demo_brawndo'},records:{requirements:[]}}}));});
+afterEach(async()=>{await act(async()=>root.unmount());node.remove();jest.clearAllMocks();});
+test('profile reloads source data on same-client actor, role or trusted workspace-mode changes',async()=>{
+  const loads=()=>api.get.mock.calls.filter(([path])=>path.endsWith('/profile')).length;
+  await act(async()=>root.render(<ClientProfile/>));expect(loads()).toBe(1);
+  mockUser={...mockUser,role:'client_readonly'};await act(async()=>root.render(<ClientProfile/>));expect(loads()).toBe(2);
+  mockUser={...mockUser,user_id:'other-actor'};await act(async()=>root.render(<ClientProfile/>));expect(loads()).toBe(3);
+  mockMode='live';await act(async()=>root.render(<ClientProfile/>));expect(loads()).toBe(4);
+});

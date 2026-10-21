@@ -6,6 +6,8 @@ import {clientProfileRequest} from './clientProfile';
 import {policyApprovalRequest} from './policyApproval';
 import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
 import {frameworkSummary} from './frameworkSummary';
+import {portfolioReportingRequest} from './portfolioReporting';
+import {createBrawndoScenarioDateSelector} from './brawndoReportingHistory';
 import {calendarBuckets,vendorCalendarItems} from '../lib/calendarView';
 import {handoffSnapshot, adjustProgram} from './onboardingHandoff';
 import { identityRequest } from './identityLifecycle';
@@ -29,8 +31,20 @@ import {evidenceKind} from '../lib/evidenceReferences';
 import {clearEvidenceFiles,demoDiagnostics} from './store';
 import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
 import {fileBytes} from './evidenceStorage';
+import {pendingPolicyCoverage} from './policyReviewCoverage';
 const CREATE_REPLAY_KINDS=['clients','reviews','findings','tasks','risks','vendors','policies','contacts','assets','exceptions','requirements','ai_systems'];
 const SESSION = 'grc_demo_entered';
+// Decorate copied Demo responses only; scenario dates never enter native rows or write payloads.
+function frameworkDateResponse(data,db){
+  const rows=data?.framework_assessment_id?[data]:data?.framework?.key==='cis-ig1'?data.assessments:null;
+  if(!Array.isArray(rows)||!rows.some(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1'))return data;
+  const dateForRecord=createBrawndoScenarioDateSelector(db);
+  const project=row=>{
+    const metadata=dateForRecord(row);
+    return metadata?{...row,demo_date_metadata:metadata}:row;
+  };
+  return data.framework_assessment_id?project(data):{...data,assessments:rows.map(project)};
+}
 // Loaded only by the explicit demo build. No request is forwarded to any server.
 export async function previewAdapter(config) {
   const url = new URL(config.url, 'https://demo.invalid'),
@@ -96,6 +110,7 @@ export async function previewAdapter(config) {
     }
     // Role limits mirror the server so persona QA in the Demo sees the same refusals.
     try { authorizeDemo(db, method, parts, body, config.headers?.['Idempotency-Key']); } catch (error) { return fail(error.status||403, error.message); }
+    if(method==='get' && path.startsWith('/portfolio/reporting/')) return respond(portfolioReportingRequest(db,path,params));
     if(kind==='evidence'){
       const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
       if(cid&&!evidenceAccess(db.user,cid))return fail(403,'Forbidden for this client');
@@ -145,7 +160,12 @@ export async function previewAdapter(config) {
         Object.assign(db,latest);
         authorizeDemo(db,method,parts,body,config.headers?.['Idempotency-Key']);
       }
-      return save(frameworkRequest(db,path,method,params,body,context));
+      const result=frameworkRequest(db,path,method,params,body,context);
+      // Ordinary reads stay pure; CIS export retains its existing audit write.
+      const auditedExport=kind==='frameworks'&&id==='cis-ig1'&&name==='export';
+      if(method==='get'&&!auditedExport)return respond(frameworkDateResponse(result,db));
+      const persisted=saveStore(db);
+      return respond(frameworkDateResponse(result,persisted));
     }
     if (path === '/demo/onboarding-draft') {
       record(db, 'clients', params.client_id || body.client_id);
@@ -216,10 +236,10 @@ export async function previewAdapter(config) {
           };
         for (const k of Object.keys(data)) data[k] = list(db, k, source.client_id).filter(r => k === params.entity_type
           ? k === 'reviews' && (r.parent_review_id === params.entity_id || r.review_id === source.parent_review_id || r.review_id === source.next_occurrence_id)
-          : (params.entity_type==='policies'&&k==='reviews'&&r.policy_ids?.includes(source.policy_id)) || (params.entity_type==='vendors'&&k==='risks'&&source.related_risk_ids?.includes(r.risk_id)) || (params.entity_type==='risks'&&k==='vendors'&&r.related_risk_ids?.includes(params.entity_id)) || (params.entity_type==='risks'&&k==='tasks'&&source.related_task_ids?.includes(r.task_id)) || (params.entity_type==='tasks'&&k==='risks'&&r.related_task_ids?.includes(params.entity_id)) || r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
+          : (params.entity_type==='policies'&&k==='reviews'&&(r.policy_ids?.includes(source.policy_id)||r.occurrences?.some(o=>o.policy_coverage?.some(member=>member.policy_id===source.policy_id)))) || (params.entity_type==='vendors'&&k==='risks'&&source.related_risk_ids?.includes(r.risk_id)) || (params.entity_type==='risks'&&k==='vendors'&&r.related_risk_ids?.includes(params.entity_id)) || (params.entity_type==='risks'&&k==='tasks'&&source.related_task_ids?.includes(r.task_id)) || (params.entity_type==='tasks'&&k==='risks'&&r.related_task_ids?.includes(params.entity_id)) || r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
         if (params.entity_type === 'policies') {
           // Findings raised in a Policy Review stay visible from the Policy, as in the backend.
-          const reviewIds = new Set(list(db, 'reviews', source.client_id).filter(r => r.policy_id === params.entity_id).map(r => r.review_id));
+          const reviewIds = new Set(data.reviews.map(r => r.review_id));
           for (const k of ['findings', 'tasks']) data[k] = [...data[k], ...list(db, k, source.client_id).filter(r => reviewIds.has(r.review_id) && !data[k].includes(r))];
         }
         if (params.entity_type === 'reviews' && params.occurrence_id)
@@ -229,6 +249,7 @@ export async function previewAdapter(config) {
           if(o) review.linked_occurrence={period:o.period,status:o.status};
           else if((review.current_occurrence_id||'occ_'+review.review_id)===source.occurrence_id) review.linked_occurrence={period:reviewView(review).period,status:review.status};
         }
+        data.reviews=data.reviews.map(review=>{const row={...review};delete row._policy_coverage_pending;return row;});
         return respond(frameworkReverse(db,params.entity_type,source,aiRelated(db,params.entity_type,source,data)));
       }
       if (kind === 'comments') return respond(db.comments.filter(r => r.entity_type === params.entity_type && r.entity_id === params.entity_id
@@ -274,6 +295,11 @@ export async function previewAdapter(config) {
         if (id) {
           const r = record(db, kind, id);
           if (params.client_id && r.client_id !== params.client_id) return fail(404, 'Record not found for this client.');
+          if (kind === 'reviews') {
+            const visible = { ...r };
+            delete visible._policy_coverage_pending;
+            return respond(visible);
+          }
           return respond(r);
         }
         let rows = list(db, kind, params.client_id).filter(r => (!r.client_id||evidenceAccess(db.user,r.client_id))&&Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v));
@@ -305,6 +331,7 @@ export async function previewAdapter(config) {
       if(body.kind==='framework_assessments')throw new Error('Use the framework workspace; assessment history is retained');
       if (!ids[body.kind] || !body.ids?.length) throw new Error('Select records first.');
       const rows = body.ids.map(i => record(db, body.kind, i));
+      if(body.action==='delete'&&rows.some(row=>pendingPolicyCoverage(db,body.kind,row)))throw new Error('Retry the pending annual Policy completion before deleting its records.');
       if(rows.some(row=>row.client_id&&!evidenceAccess(db.user,row.client_id)))return fail(403,'Forbidden for this client');
       if(body.expected_versions&&rows.some(row=>body.expected_versions[row[ids[body.kind]]] !== (row.updated_at??null)))throw Object.assign(new Error('Record changed since it was opened; reload before saving'), { status: 409 });
       if (body.kind === 'contacts' && body.action === 'delete' && db.clients.some(c => rows.some(r => r.client_id === c.client_id && r.contact_id === c.primary_contact_id))) throw new Error('A selected Contact is a Primary Contact. Archive it or change the client relationship before deleting it.');
@@ -420,6 +447,7 @@ export async function previewAdapter(config) {
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
+        if(pendingPolicyCoverage(db,kind,r))throw new Error('Retry the pending annual Policy completion before deleting its records.');
         if(kind==='findings')retainFinding(db,r);
         if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw Object.assign(new Error('Record changed; reload before deleting'), { status: 409 });
         if(kind==='policies'&&retainedPolicy(r))throw new Error('Policy approval history must be retained; retire the Policy instead');

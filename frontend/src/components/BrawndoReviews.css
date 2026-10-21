@@ -1,30 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
 
-/* Brawndo Reviews (light and dark). Remaps shared tokens inside .brawndo-reviews only; drawers render outside it. */
+/* Local aliases inherit the shared GoverNara palette; native layout and controls stay unchanged. */
 .brawndo-reviews {
-  --rv-bg: #f4f5f2; --rv-card: #ffffff; --rv-border: #e6e2dc; --rv-text: #1d232b; --rv-muted: #5d6670;
-  --rv-critical: #b91c1c; --rv-critical-bg: #fdecec; --rv-attention: #a15c07; --rv-attention-bg: #fef5e6;
-  --rv-neutral: #1d232b; --rv-accent: #4a6e0a; --rv-focus: #4172f4;
-  --color-bg-surface: var(--rv-card); --color-bg-subtle: #f7f6f3; --color-bg-tablehead: #f7f6f3; --color-border: var(--rv-border); --color-border-strong: #cfc9c0;
-  --color-text-primary: var(--rv-text); --color-text-secondary: var(--rv-muted); --color-text-muted: var(--rv-muted); --color-text-help: #7b848f;
-  --color-link: #2446b8; --color-link-hover: #16307f; --color-selected-bg: #eef1ec; --color-neutral-bg: #f1f1ec;
-  min-height: calc(100vh - 44px); padding-bottom: 32px; background: var(--rv-bg); color: var(--rv-text); font-family: 'IBM Plex Sans', var(--font-body);
+  --rv-bg: var(--color-bg-app); --rv-card: var(--color-bg-surface); --rv-border: var(--color-border); --rv-text: var(--color-text-primary); --rv-muted: var(--color-text-secondary);
+  --rv-critical: var(--color-critical); --rv-critical-bg: var(--color-critical-bg); --rv-attention: var(--color-moderate-text); --rv-attention-bg: var(--color-moderate-bg);
+  --rv-neutral: var(--color-text-primary); --rv-accent: var(--color-brand-accent); --rv-focus: var(--color-focus-ring);
+  min-height: calc(100vh - 44px); padding-bottom: 32px; background: var(--rv-bg); color: var(--rv-text); font-family: var(--font-body);
   transition: background-color var(--duration-drawer, 240ms) var(--ease-out, ease), color var(--duration-drawer, 240ms);
 }
-.brawndo-reviews[data-theme="dark"] {
-  --rv-bg: #12161c; --rv-card: #1a2028; --rv-border: #2a323d; --rv-text: #e6e9ee; --rv-muted: #9aa4b0;
-  --rv-critical: #f87171; --rv-critical-bg: #3b1d1d; --rv-attention: #fbbf24; --rv-attention-bg: #3a2a12;
-  --rv-neutral: #e6e9ee; --rv-accent: #a3db33; --rv-focus: #8fb0ff;
-  --color-bg-subtle: #151a21; --color-bg-tablehead: #151a21; --color-border-strong: #3a4450; --color-text-help: #7f8a96;
-  --color-link: #8fb0ff; --color-link-hover: #c2d3ff; --color-selected-bg: #232a33; --color-neutral-bg: #232a33;
-  --color-info: #8fb0ff; --color-info-bg: #1c2640; --color-info-border: #2f3f66; --color-duesoon-text: #fbbf24; --color-duesoon-bg: #3a2a12; --color-duesoon-border: #5c4318;
-  --color-neutral: #c3cad3; --color-neutral-border: #3a4450; --color-success: #4ade80; --color-success-bg: #15301f; --color-success-border: #1f5130;
-  color-scheme: dark;
-}
 .brev-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 24px var(--register-gutter, 20px) 16px; }
-.brev-head h1 { margin: 2px 0 0; font: 600 30px/1.2 'Space Grotesk', var(--font-heading); letter-spacing: -.01em; color: var(--rv-text); }
+.brev-head h1 { margin: 2px 0 0; font: 600 30px/1.2 var(--font-heading); letter-spacing: -.01em; color: var(--rv-text); }
 .brev-eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--rv-accent); }
-.brev-theme { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--rv-border); background: var(--rv-card); color: var(--rv-text); font: 500 13px 'IBM Plex Sans', var(--font-body); }
+.brev-theme { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--rv-border); background: var(--rv-card); color: var(--rv-text); font: 500 13px var(--font-body); }
 .brev-theme:hover { border-color: var(--rv-muted); }
 .brev-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding: 0 var(--register-gutter, 20px) 16px; }
 .brev-tile { --tone: var(--rv-neutral); --rail: var(--rv-neutral); text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--rv-border); border-top: 3px solid var(--rail); background: var(--rv-card); color: var(--rv-text); min-width: 0; }
@@ -34,7 +20,7 @@
 .brev-tile:not(:disabled):hover { border-color: var(--rv-muted); border-top-color: var(--rail); }
 .brev-tile[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--rail); }
 .brev-tile-label { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--rv-muted); }
-.brev-tile-value { font: 600 32px/1.15 'Space Grotesk', var(--font-heading); color: var(--tone); font-variant-numeric: tabular-nums; }
+.brev-tile-value { font: 600 32px/1.15 var(--font-heading); color: var(--tone); font-variant-numeric: tabular-nums; }
 .brev-tile-context { font-size: 13px; color: var(--rv-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .brawndo-reviews .register-toolbar { margin: 0 var(--register-gutter, 20px); padding: 12px 16px; background: var(--rv-card); border: 1px solid var(--rv-border); border-bottom: 0; border-radius: 12px 12px 0 0; flex-wrap: wrap; gap: 10px; }
 .brev-chips { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -195,7 +195,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         reviewer_id: users[(index + 1) % 3],
         status: index === 1 ? 'in_progress' : 'upcoming',
         due_date: date(withinCadence(index === 0 ? -8 : index === 1 ? 12 : index === 2 ? 24 : 45 + index * 3, p.default_cadence)),
-        recurrence: p.default_cadence,
+        recurrence: cid==='demo_brawndo'&&p.baseline_key==='policy-review'?'annual':p.default_cadence,
         governance_context: {
           category: 'organizational',
           rationale: 'Recurring operating verification with retained occurrence evidence and management follow-up.',

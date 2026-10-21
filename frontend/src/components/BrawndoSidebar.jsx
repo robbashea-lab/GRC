@@ -6,16 +6,20 @@ import {LayoutDashboard,CalendarDays,ClipboardCheck,ListChecks,ShieldAlert,FileT
 import api from '@/lib/api';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
+import {canExportReports} from '@/lib/permissions';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
+import {clientDestination} from '@/lib/clientSelection';
 import NotificationBell from './NotificationBell';
+import {BrandMark} from './Brand';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator} from './ui/dropdown-menu';
 import './BrawndoSidebar.css';
+import DemoNotice from '@/preview/DemoNotice';
 
 // Brawndo reference sidebar: grouped navigation, one theme with the workspace,
 // and counts that show where attention is needed from anywhere in the client.
 const GROUPS=[
   ['Work',[['/dashboard','Dashboard',LayoutDashboard,'nav-dashboard'],['/calendar','Calendar',CalendarDays,'nav-calendar'],['/reviews','Reviews',ClipboardCheck,'nav-reviews','reviews'],['/action-items','Action Items',ListChecks,'nav-action-items','actions']]],
-  ['Program',[['COMPLIANCE'],['/risks','Risks',ShieldAlert,'nav-risks','risks'],['/policies','Policies',FileText,'nav-policies'],['/vendors','Vendors',Building2,'nav-vendors','vendors'],['/evidence','Evidence Library',FolderArchive,'nav-evidence']]],
+  ['Program',[['COMPLIANCE'],['/risks','Risks',ShieldAlert,'nav-risks','risks'],['/policies','Policies',FileText,'nav-policies'],['/vendors','Vendors',Building2,'nav-vendors','vendors'],['/reports','Reports',FileText,'nav-reports'],['/evidence','Evidence Library',FolderArchive,'nav-evidence']]],
   ['Client',[['/contacts','Contacts',Users,'nav-contacts'],['/systems','Systems & Scope',Server,'nav-systems'],['/ai-governance','AI Governance',Sparkles,'nav-ai-governance'],['/client-profile','Client Profile',Settings2,'nav-client-profile']]],
 ];
 const BADGE_LABEL={reviews:'overdue reviews',actions:'overdue action items',risks:'significant risks',vendors:'vendors with assurance needing attention'};
@@ -26,12 +30,11 @@ export function sidebarCounts(summary){
   return {reviews:[k.overdue_reviews||0,'critical'],actions:[(k.overdue_actions||0),'critical'],risks:[k.significant_risks||0,'critical'],vendors:[v?.total??v?.items?.length??0,'attention']};
 }
 
-export function ProfileMenu({compact=false}){
+export function ProfileMenu({compact=false,storageTools=false}){
   const {user,logout}=useAuth(),nav=useNavigate();
-  return <div className={compact?'bwp-profile':'bsb-foot'}>
-      <DropdownMenu>
+  const menu=(openStorage,storageOpener)=><DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button type="button" data-testid="profile-menu-trigger" className="bsb-profile">
+          <button ref={storageOpener} type="button" data-testid="profile-menu-trigger" className="bsb-profile">
             <span className="bsb-avatar" aria-hidden="true">{user?.name?.trim().split(/\s+/).map(part=>part[0]).slice(0,2).join('').toUpperCase()||user?.email?.[0]?.toUpperCase()}</span>
             <span className={compact?'sr-only':'min-w-0 flex-1 text-left'}><span className="bsb-client-name">{user?.name||user?.email}</span><span className="bsb-group-label">{(user?.role||'').replace('_',' ')}</span></span>
             <ChevronsUpDown size={14} aria-hidden="true"/>
@@ -39,36 +42,37 @@ export function ProfileMenu({compact=false}){
         </DropdownMenuTrigger>
         <DropdownMenuContent align={compact?'end':'start'} side={compact?'bottom':'top'} className="w-56">
           <DropdownMenuItem onClick={()=>nav('/account')} data-testid="profile-menu-account" className="text-sm"><UserCircle2 className="h-3.5 w-3.5 mr-2"/> My Account</DropdownMenuItem>
+          {openStorage&&<><DropdownMenuSeparator/><DropdownMenuItem onSelect={openStorage} data-testid="profile-menu-storage">Demo storage &amp; recovery</DropdownMenuItem></>}
           {!compact&&<><DropdownMenuSeparator/><div className="px-2 py-1"><NotificationBell/></div></>}<DropdownMenuSeparator/>
           <DropdownMenuItem data-testid="logout-button" onClick={async()=>{if(await logout())nav('/login');}} className="text-sm text-semantic-critical focus:text-semantic-critical"><LogOut className="h-3.5 w-3.5 mr-2"/> Sign out</DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>
-    </div>;
+      </DropdownMenu>;
+  return <div className={compact?'bwp-profile':'bsb-foot'}>{storageTools?<DemoNotice renderTrigger={menu}/>:menu()}</div>;
 }
-const Brand=()=><div className="bsb-brand" aria-label="Omnisciente by Prestige Worldwide"><span className="bsb-mark" aria-hidden="true">O</span><span><span className="bsb-name">Omnisciente</span><span className="bsb-sub">By Prestige Worldwide</span></span></div>;
+const Brand=()=><div className="bsb-brand" aria-label="GoverNara by Prestige Worldwide"><BrandMark className="bsb-mark"/><span><span className="bsb-name">GoverNara</span><span className="bsb-sub">By Prestige Worldwide</span></span></div>;
 
 // Portfolio (platform) context in the reference theme: Portfolio, the client navigator, Administration.
 export function BrawndoPlatformSidebar({adminItems=[]}){
-  const {user}=useAuth(),{clients,switchClient,loading,error,refresh}=useOrg(),nav=useNavigate();
-  const [theme]=useBrawndoTheme(),[filter,setFilter]=useState('all'),[q,setQ]=useState('');
-  const active=useMemo(()=>(clients||[]).filter(c=>(c.status||'active')!=='archived'),[clients]);
-  const scoped=useMemo(()=>{let list=active;
-    if(filter==='assigned')list=list.filter(c=>(c.grc_lead_id||c.assigned_owner_id)===user?.user_id);
-    const s=q.trim().toLowerCase();if(s)list=list.filter(c=>(c.name||'').toLowerCase().includes(s));
-    return [...list].sort((a,b)=>(a.name||'').trim().localeCompare((b.name||'').trim()));},[active,filter,user?.user_id,q]);
-  const empty=loading?'Loading clients…':filter==='assigned'?'None assigned to you.':q?'No matches.':'No clients available.';
+  const {clients,switchClient,loading,error,refresh}=useOrg(),nav=useNavigate();
+  const [theme]=useBrawndoTheme(),[q,setQ]=useState('');
+  const active=useMemo(()=>[...new Map((clients||[]).filter(c=>(c.status||'active')!=='archived').map(c=>[c.client_id,c])).values()],[clients]);
+  const scoped=useMemo(()=>{
+    const search=q.trim().toLowerCase();
+    return active.filter(c=>!search||(c.name||'').toLowerCase().includes(search)).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  },[active,q]);
+  const empty=loading?'Loading clients…':q?'No matches.':'No clients available.';
   return <aside className="app-sidebar bsb w-64 shrink-0 hidden lg:flex flex-col h-screen sticky top-0" data-theme={theme}>
     <div className="bsb-head"><Brand/></div>
     <nav className="bsb-nav" data-testid="sidebar-platform" aria-label="Platform">
       <div className="bsb-group" data-testid="sidebar-clients-section">
         <NavLink to="/clients" end data-testid="nav-clients" className={({isActive})=>`bsb-link${isActive?' is-active':''}`}><Briefcase size={17} aria-hidden="true"/><span>Portfolio</span></NavLink>
         <div className="bsb-group-label bsb-sub-label">Clients</div>
-        <div className="bsb-seg" role="group" aria-label="Client list scope">{[['all','All'],['assigned','Mine']].map(([id,label])=><button key={id} type="button" data-testid={`sidebar-filter-${id}`} aria-pressed={filter===id} className={filter===id?'is-active':''} onClick={()=>setFilter(id)}>{label}</button>)}</div>
+
         {active.length>8&&<input className="bsb-search" value={q} onChange={e=>setQ(e.target.value)} placeholder="Search clients…" aria-label="Search clients" data-testid="sidebar-client-search"/>}
         <div data-testid="sidebar-client-list">
           {error?<div className="bsb-note" role="alert" data-testid="sidebar-client-error">Clients could not be loaded. <button type="button" onClick={refresh}>Retry</button></div>
           :scoped.length===0?<div className="bsb-note" data-testid="sidebar-client-empty">{empty}</div>
-          :scoped.map(c=><div key={c.client_id} data-testid={`sidebar-client-${c.client_id}`}><button type="button" className="bsb-link bsb-client-link" data-testid={`sidebar-open-${c.client_id}`} onClick={()=>{switchClient(c.client_id);nav('/dashboard');}}><span className="bsb-dot" aria-hidden="true">{c.name?.[0]}</span><span className="truncate">{c.name}</span></button></div>)}
+          :scoped.map(c=><div key={c.client_id} data-testid={`sidebar-client-${c.client_id}`}><button type="button" className="bsb-link bsb-client-link" data-testid={`sidebar-open-${c.client_id}`} onClick={()=>{switchClient(c.client_id);nav(clientDestination(c.client_id));}}><span className="bsb-dot" aria-hidden="true">{c.name?.[0]}</span><span className="truncate">{c.name}</span></button></div>)}
         </div>
       </div>
       {adminItems.length>0&&<div className="bsb-group" role="group" aria-labelledby="bsb-admin"><div id="bsb-admin" className="bsb-group-label">Administration</div>
@@ -81,6 +85,7 @@ export function BrawndoPlatformSidebar({adminItems=[]}){
 
 export default function BrawndoSidebar({complianceItems=[],isInternal,showFindings=false}){
   const {currentClient,currentClientId}=useOrg(),nav=useNavigate();
+  const {user}=useAuth();
   const location=useLocation();
   const [theme]=useBrawndoTheme(),[counts,setCounts]=useState({});
   useEffect(()=>{
@@ -100,12 +105,12 @@ export default function BrawndoSidebar({complianceItems=[],isInternal,showFindin
     <div className="bsb-head">
       <Brand/>
       {isInternal&&<button type="button" className="bsb-back" aria-label="Return to portfolio" title="Portfolio" onClick={()=>nav('/clients')} data-testid="return-to-portfolio"><ArrowLeft size={13} aria-hidden="true"/>Portfolio</button>}
-      <div className="bsb-client" data-testid="context-header-client"><span className="bsb-client-mark" aria-hidden="true">{currentClient?.name?.[0]||'•'}</span><span className="min-w-0"><span className="bsb-group-label">Client</span><span className="bsb-client-name">{currentClient?.name||'Select a client…'}</span></span></div>
+      <div className="bsb-client" data-testid="context-header-client"><span className="bsb-client-mark" aria-hidden="true">{currentClient?.name?.[0]||'•'}</span><span className="min-w-0"><span className="bsb-group-label">Client</span><span className="bsb-client-name">{currentClient?.name||'Select a client…'}</span><span className="bsb-client-industry">{currentClient?.industry||'Industry not recorded'}</span></span></div>
     </div>
     <nav className="bsb-nav" data-testid="sidebar-client" aria-label="Client workspace">
       {GROUPS.map(([group,items])=><div key={group} className="bsb-group" role="group" aria-labelledby={`bsb-${group}`}>
         <div id={`bsb-${group}`} className="bsb-group-label">{group}</div>
-        {items.flatMap(item=>item[0]==='COMPLIANCE'?complianceItems.map(c=>link([c.to,c.label,ShieldCheck,`nav-compliance-${c.key}`])):[link(item)])}
+        {items.filter(item=>item[0]!=='/reports'||canExportReports(user)).flatMap(item=>item[0]==='COMPLIANCE'?complianceItems.map(c=>link([c.to,c.label,ShieldCheck,`nav-compliance-${c.key}`])):[link(item)])}
         {group==='Work'&&showFindings&&link(['/findings','Findings',ShieldAlert,'nav-findings'])}
       </div>)}
     </nav>

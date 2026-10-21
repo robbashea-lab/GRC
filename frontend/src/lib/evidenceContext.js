@@ -15,11 +15,30 @@ export async function resolveEvidenceSource(ref,clientId){
   }
   return {kind:ref.kind,record:data,initialValues};
 }
+function decodeEvidenceContent(content){
+  if(typeof content!=='string')throw new Error('Evidence file content is invalid.');
+  let encoded=content;
+  if(/^data:/i.test(content)){
+    const header=content.match(/^data:[^,]*;base64,/i);
+    if(!header)throw new Error('Evidence file content is invalid.');
+    encoded=content.slice(header[0].length);
+  }
+  try{
+    const binary=atob(encoded),bytes=new Uint8Array(binary.length);
+    for(let index=0;index<binary.length;index++)bytes[index]=binary.charCodeAt(index);
+    return bytes;
+  }
+  catch{throw new Error('Evidence file content could not be decoded.');}
+}
 export async function downloadEvidence(row){
   const {data}=await api.get(`/evidence/${encodeURIComponent(row.evidence_id)}/download`);
-  const a=document.createElement('a');
-  a.href=data.content_base64.startsWith('data:')?data.content_base64:`data:${data.mime_type||'application/octet-stream'};base64,${data.content_base64}`;
-  a.download=data.filename;a.click();
+  // Standard responses contain raw base64; Explore uploads retain FileReader data URLs.
+  const bytes=decodeEvidenceContent(data?.content_base64);
+  // Treat attachments as bytes even if a browser ignores the download attribute.
+  const url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));
+  try{
+    const a=document.createElement('a');a.href=url;a.download=data.filename;a.click();
+  }finally{URL.revokeObjectURL(url);}
 }
 
 export function EvidenceSource({source,onOpen}){

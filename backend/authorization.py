@@ -76,6 +76,7 @@ CLIENT_OPERATIONS = {
     ('PATCH', '/api/reviews/{review_id}/iso-audit'),
     ('PATCH', '/api/reviews/{review_id}/iso-audit/{item_key}'),
     ('PATCH', '/api/framework_assessments/{aid}'),
+    ('PATCH', '/api/framework_assessments/{aid}/items/{item_id}'),
     ('POST', '/api/framework_assessments/{aid}/findings'),
     ('PUT', '/api/framework_assessments/{aid}/guided-assessment'),
 }

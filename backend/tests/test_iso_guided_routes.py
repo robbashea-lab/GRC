@@ -1,6 +1,9 @@
 """Real ISO HTTP/auth flows on isolated Mongo mocks, not hosted/Motor assurance."""
 import asyncio
 import copy
+import json
+from pathlib import Path
+import subprocess
 from datetime import datetime, timedelta, timezone
 import unittest
 from unittest.mock import patch
@@ -39,13 +42,15 @@ class IsoGuidedRoutes(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 200, response.text)
         return response.json()
 
-    async def finish(self, row, answers=None):
+    async def finish(self, row, answers=None, narrative=None):
         path = self.path(row) + '/guided-assessment'
         response = await self.client.get(path)
         self.assertEqual(response.status_code, 200, response.text)
         draft = response.json()
         answers = complete(row['definition_id']) if answers is None else answers
         text = 'OVERVIEW\nSynthetic reported practices for ' + row['definition_id'] + '\n\nIMPLEMENTATION BREAKDOWN\n- User reviewed wording.\n\nITEMS TO ADDRESS\n- Confirm reported limits.\n'
+        if narrative is not None:
+            text = narrative
         status = engine.result_status(row['definition_id'], answers)
         result = {'version': engine.VERSION, 'status': status, 'narrative': text, 'basis': [], 'gaps': [],
                   'unknowns': [], 'nextSteps': [], 'evidence': [], 'answers': [], 'signals': []}
@@ -75,9 +80,130 @@ class IsoGuidedRoutes(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(lease['until'], '')
         self.assertNotIn('token', lease)
 
+    async def test_unchanged_native_footer_does_not_materialize_empty_iso_defaults(self):
+        row, path, draft, _, write = await self.fixture('4.2')
+        saved_response = await self.client.patch(path, json=write)
+        self.assertEqual(saved_response.status_code, 200, saved_response.text)
+        saved = saved_response.json()
+        # Match the existing native footer after a guided-only assessment.
+        footer = {key: saved.get(key) or '' for key in (
+            'status', 'implementation', 'technology', 'notes', 'na_rationale',
+            'addressable_decision', 'addressable_rationale')}
+        footer.update(owner_id=saved.get('owner_id'), process_owner_id=saved.get('process_owner_id'),
+                      iso_assessment_checks=saved.get('iso_assessment_checks') or [],
+                      expected_last_assessed=self.token(saved))
+        audits = await server.db.audit_logs.count_documents({'entity_id': row['framework_assessment_id']})
+        for attempt in range(2):
+            with self.subTest(attempt=attempt):
+                response = await self.client.patch(path, json=footer)
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertEqual(response.json(), saved)
+                self.assertEqual(await server.db.audit_logs.count_documents(
+                    {'entity_id': row['framework_assessment_id']}), audits)
+        noted = await self.client.patch(path, json={**footer, 'notes': 'Actual additional note.'})
+        self.assertEqual(noted.status_code, 200, noted.text)
+        for key in ('addressable_decision', 'addressable_rationale', 'iso_assessment_checks'):
+            self.assertNotIn(key, noted.json())
+        self.assertEqual(noted.json()['guided_assessment_source'], saved['guided_assessment_source'])
+        saved = noted.json()
+        footer.update(notes=saved['notes'], expected_last_assessed=self.token(saved))
+        changed = await self.client.patch(path, json={**footer, 'implementation': saved['implementation'] + '\nActual manual change.'})
+        self.assertEqual(changed.status_code, 200, changed.text)
+        self.assertNotEqual(self.token(changed.json()), self.token(saved))
+        self.assertEqual(len(changed.json()['assessment_history']), len(saved['assessment_history']) + 1)
+        self.assertIsNone(changed.json()['guided_assessment_source'])
+        self.assertEqual((await self.client.patch(path, json=footer)).status_code, 409)
+
+    async def test_null_empty_iso_footer_defaults_preserve_real_checklist_clears(self):
+        from framework_governance import ISO_CRITERIA
+        row, path, draft, _, write = await self.fixture('4.2')
+        response = await self.client.patch(path, json=write)
+        self.assertEqual(response.status_code, 200, response.text)
+        await server.db.framework_assessments.update_one({'framework_assessment_id': row['framework_assessment_id']},
+            {'$set': {'addressable_decision': None, 'addressable_rationale': None, 'iso_assessment_checks': None}})
+        saved = (await self.client.get(path)).json()
+        empty = {'addressable_decision': '', 'addressable_rationale': '', 'iso_assessment_checks': [],
+                 'expected_last_assessed': self.token(saved)}
+        response = await self.client.patch(path, json=empty)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json(), saved)
+        criterion = ISO_CRITERIA['4.2']['criteria'][0]['id']
+        checked = await self.client.patch(path, json={**empty, 'iso_assessment_checks': [criterion]})
+        self.assertEqual(checked.status_code, 200, checked.text)
+        self.assertNotEqual(self.token(checked.json()), self.token(saved))
+        cleared = await self.client.patch(path, json={**empty, 'expected_last_assessed': self.token(checked.json())})
+        self.assertEqual(cleared.status_code, 200, cleared.text)
+        self.assertEqual(cleared.json()['iso_assessment_checks'], [])
+        self.assertNotEqual(self.token(cleared.json()), self.token(checked.json()))
+        self.assertEqual(len(cleared.json()['assessment_history']), len(checked.json()['assessment_history']) + 1)
+
     async def expire(self, row):
         await server.db.iso_guided_locks.update_one({'_id': row['framework_assessment_id']},
             {'$set': {'until': (datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat()}})
+
+    async def test_browser_inline_payload_matches_reviewed_text_and_native_save(self):
+        workspace = await self.setup_iso()
+        ids = ('4.1', 'A.5.1', 'A.8.13')
+        cases = [{'id': id, 'answers': complete(id)} for id in ids]
+        script = r"""
+import fs from 'node:fs';
+const root = process.argv[1];
+let source = fs.readFileSync(root + '/frontend/src/lib/isoGuidedAssessment.js', 'utf8');
+const inline = fs.readFileSync(root + '/frontend/src/lib/inlineAssessment.js', 'utf8');
+source = source.replace("from './inlineAssessment'", 'from ' + JSON.stringify('data:text/javascript;base64,' + Buffer.from(inline).toString('base64')));
+for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology'], ['currentCatalog', 'guidedIsoV2']]) {
+  source = source.replace(`import ${name} from '@catalogs/${file}.json';`, 'const ' + name + ' = ' + fs.readFileSync(root + '/shared/catalogs/' + file + '.json', 'utf8') + ';');
+}
+const frontend = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+const cases = JSON.parse(fs.readFileSync(0, 'utf8'));
+process.stdout.write(JSON.stringify(cases.map(({id, answers}) => ({
+  canonical: frontend.isoGuidedResult(id, answers, frontend.isoGuidedCatalog.version, 'SYNTHETIC ISO contract'),
+  narrative: frontend.isoInlineNarrative(id, answers, frontend.isoGuidedCatalog.version, 'SYNTHETIC ISO contract'),
+}))));
+"""
+        node = subprocess.run(['node', '--input-type=module', '-e', script, str(Path(__file__).resolve().parents[2])],
+            input=json.dumps(cases), text=True, encoding='utf-8', capture_output=True, timeout=30)
+        self.assertEqual(node.returncode, 0, node.stderr)
+        reports = json.loads(node.stdout)
+        for case, report in zip(cases, reports):
+            with self.subTest(id=case['id']):
+                row = next(row for row in workspace['assessments'] if row['definition_id'] == case['id'])
+                if case['id'].startswith('A.'):
+                    row = await self.decision(row)
+                path = self.path(row)
+                draft = (await self.client.get(path + '/guided-assessment')).json()
+                self.assertNotEqual(report['canonical']['narrative'], report['narrative'])
+                self.assertIn('\n\nControls in place\n', report['narrative'])
+                payload = {'version': engine.VERSION, 'answers': case['answers'], 'step': 0, 'completed': True,
+                    'expected_revision': draft['revision'], 'narrative': report['narrative'], 'result': report['canonical'],
+                    'summary_review': {'version': engine.VERSION, 'answers': case['answers']},
+                    **{key: draft[key] for key in ('base_assessment_token', 'base_scope_fingerprint')}}
+                # The former inline UI sent two different texts; the real route rejects it.
+                rejected = await self.client.put(path + '/guided-assessment', json=payload)
+                self.assertEqual(rejected.status_code, 422, rejected.text)
+                self.assertEqual((await self.client.get(path)).json(), row)
+                payload['result'] = {**report['canonical'], 'narrative': report['narrative']}
+                response = await self.client.put(path + '/guided-assessment', json=payload)
+                self.assertEqual(response.status_code, 200, response.text)
+                proposal = response.json()
+                self.assertEqual(proposal['result']['narrative'], proposal['narrative'])
+                self.assertEqual((await self.client.get(path)).json(), row)
+                reviewed = proposal['narrative'] + '\nExact reviewed wording remains editable.\n'
+                payload.update(expected_revision=proposal['revision'], narrative=reviewed,
+                    result={**proposal['result'], 'narrative': reviewed})
+                response = await self.client.put(path + '/guided-assessment', json=payload)
+                self.assertEqual(response.status_code, 200, response.text)
+                proposal = response.json()
+                saved = await self.client.patch(path, json=self.native(row, proposal))
+                self.assertEqual(saved.status_code, 200, saved.text)
+                saved = saved.json()
+                self.assertEqual(saved['implementation'], reviewed)
+                self.assertEqual(saved['status'], report['canonical']['status'])
+                for key in ('verification', 'soa_applicability', 'soa_justification', 'iso_assessment_checks',
+                        'owner_id', 'process_owner_id', 'notes', 'technology', 'related_links'):
+                    self.assertEqual(saved.get(key), row.get(key), key)
+                self.assertEqual(saved['assessment_history'][-1]['implementation'], reviewed)
+        self.assertEqual(await server.db.findings.count_documents({'client_id': 'a'}), 0)
 
     async def test_all_123_resume_exact_native_save_and_shared_soa_annex_record(self):
         workspace = await self.setup_iso()
@@ -234,7 +360,7 @@ class IsoGuidedRoutes(unittest.IsolatedAsyncioTestCase):
         collection = server.db.guided_assessment_pilot
         identity = row['framework_assessment_id'] + ':admin'
         await collection.update_one({'_id': identity}, {'$unset': {'base_assessment_token': '', 'base_scope_fingerprint': ''}})
-        draft, payload = await self.finish(row)
+        draft, payload = await self.finish(row, narrative='A genuinely changed reviewed summary after legacy lineage metadata was removed.')
         self.assertFalse(draft['lineage_known'])
         self.assertEqual((await self.client.patch(path, json=self.native(row, draft))).status_code, 409)
         restart = {'version': engine.VERSION, 'answers': {}, 'step': 0, 'restart': True, 'expected_revision': draft['revision'],
@@ -460,7 +586,10 @@ class IsoGuidedRoutes(unittest.IsolatedAsyncioTestCase):
             await locks.update_one({'_id': row['framework_assessment_id']}, {'$set': {'token': 'successor', 'until': future}})
             return result
         with patch.object(server.db, 'guided_assessment_history', history), patch.object(history, 'update_one', side_effect=takeover):
-            response = await self.client.put(path + '/guided-assessment', json={**payload, 'expected_revision': draft['revision']})
+            changed = copy.deepcopy(payload)
+            changed['narrative'] += '\nA genuine reviewed-wording change exercises archive-time lease takeover.'
+            changed['result']['narrative'] = changed['narrative']
+            response = await self.client.put(path + '/guided-assessment', json={**changed, 'expected_revision': draft['revision']})
         self.assertEqual(response.status_code, 409, response.text)
         self.assertEqual((await locks.find_one({'_id': row['framework_assessment_id']}))['token'], 'successor')
         self.assertEqual((await self.client.get(path + '/guided-assessment')).json()['revision'], draft['revision'])

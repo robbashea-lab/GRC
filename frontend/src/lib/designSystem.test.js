@@ -24,10 +24,12 @@ test.each(['text-primary','text-secondary','text-muted','text-help'])('%s remain
 test.each(['critical','high','moderate','duesoon','success','info','neutral','accepted'])('%s badge label contrast', tone => {
   expect(contrast(color(tone),color(tone+'-bg'))).toBeGreaterThanOrEqual(4.5);
 });
-test('native controls and portals inherit the approved light theme', () => {
+test('native controls and portals retain light defaults and the existing dark workspace preference', () => {
   expect(css).toContain('.light { color-scheme: light; }');
   expect(css).toContain('color-scheme: light');
-  expect(css).not.toContain('color-scheme: dark');
+  expect(css).toContain('color-scheme: dark');
+  expect(css).toContain('html[data-brawndo-workspace="dark"]');
+  expect(css).toContain('html[data-brawndo-portal="dark"]:not([data-brawndo-workspace])');
 });
 
 test('shared motion respects reduced motion and keyboard work without animating layout', () => {

@@ -11,47 +11,62 @@ import StatusBadge,{SeverityBadge} from '@/components/StatusBadge';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import AIDrawer from '@/components/AIDrawer';
-import AIIntake from '@/components/AIIntake';
+import {AIIntakeView,useAIIntake} from '@/components/AIIntake';
 import {ranks} from '@/lib/tableFilters';
 import {AI_RELATIONSHIP_NOTICE} from '@/lib/aiGovernance';
 import {isReferencePresentation,isBrawndoReference,isReferenceWorkflow} from '@/lib/reference';
-import {AI_VIEWS,aiMatches} from '@/lib/brawndoAI';
+import {AI_VIEWS,aiMatches,aiNeedsAttention} from '@/lib/brawndoAI';
 import BrawndoAICards from '@/components/BrawndoAICards';
 import {BrawndoSurface,BrawndoPageHeader,BrawndoChips} from '@/components/BrawndoPage';
+import {useAdditionalSectionsSurface} from '@/lib/brawndoAdditionalScope';
+import AdditionalAI from '@/components/AdditionalAI';
 
 const text=(key,label)=>({key,label,sortable:true});
 export default function AIGovernance(){
+  const {currentClientId}=useOrg(),{user,workspaceMode}=useAuth();
+  const identity=JSON.stringify([currentClientId,user?.user_id,user?.role,workspaceMode,user?.workspace_mode]);
+  return <AIWorkspace key={identity} identity={identity}/>;
+}
+function AIWorkspace({identity}){
   const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
   const reference=isReferencePresentation(currentClientId,user),approvalPilot=isBrawndoReference(currentClientId,user),referenceWorkflow=isReferenceWorkflow(currentClientId,user);
   const [showInactive,setShowInactive]=useState(false);
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[selected,setSelected]=useState(null),[search,setSearch]=useState(''),[quick,setQuick]=useState('active');
-  const key=`${currentClientId}:${revision}`;
-  useEffect(()=>{const c=new AbortController();setSelected(null);setError('');if(!currentClientId)return;Promise.all([api.get('/ai_systems',{params:{client_id:currentClientId},signal:c.signal}),api.get(`/clients/${currentClientId}/members`,{signal:c.signal}),api.get('/ai-intake',{params:{client_id:currentClientId},signal:c.signal})]).then(([rows,members,intake])=>{if(!c.signal.aborted){if(rows.data.some(r=>r.client_id!==currentClientId))throw new Error('Client data mismatch');setSnapshot({key,clientId:currentClientId,rows:rows.data,members:members.data,intake:intake.data});}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[currentClientId,key]);
+  const key=`${identity}:${revision}`;
+  useEffect(()=>{const c=new AbortController();setSelected(null);setError('');if(!currentClientId)return;Promise.all([api.get('/ai_systems',{params:{client_id:currentClientId},signal:c.signal}),api.get(`/clients/${currentClientId}/members`,{signal:c.signal}),api.get('/ai-intake',{params:{client_id:currentClientId},signal:c.signal})]).then(([rows,members,intake])=>{if(!c.signal.aborted){if(rows.data.some(r=>r.client_id!==currentClientId))throw new Error('Client data mismatch');setSnapshot({key,identity,clientId:currentClientId,rows:rows.data,members:members.data,intake:intake.data});}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[currentClientId,key,identity]);
   useEffect(()=>{setQuick('active');setSearch('');setShowInactive(false);},[currentClientId]);
-  const data=snapshot&&(reference?snapshot.clientId===currentClientId:snapshot.key===key)?snapshot:null,rows=data?.rows||[],members=data?.members||[];
+  const data=snapshot?.identity===identity&&(reference?snapshot.clientId===currentClientId:snapshot.key===key)?snapshot:null,rows=data?.rows||[],members=data?.members||[];
+  const additional=useAdditionalSectionsSurface('ai-governance',data&&!error&&data.identity===identity&&data.intake?.client_id===currentClientId?data.clientId:null);
   const columns=[text('display_id','ID'),text('name','AI System / Use Case'),{...text('owner_id','Owner'),filter:true,emptyLabel:'Unassigned',optionsOnly:true,options:members.map(u=>({value:u.user_id,label:u.name||u.email}))},text('provider','Provider'),{...text('purposes','Purpose / Use'),filter:true},{...text('risk_tier','Risk Tier'),filter:true,rank:ranks,emptyLabel:'Not Screened'},{...text('status','Status'),filter:true},{...text('last_review','Last Review'),filter:true,dateKind:'history',emptyLabel:'Never Reviewed'},{...text('next_review','Next Review'),filter:true,dateKind:'future',emptyLabel:'No Review Scheduled'}];
   const table=useTableControls({columns,rows,module:'ai-governance',scope:`${user?.user_id}:${currentClientId}`});
   const today=new Date().toISOString().slice(0,10),active=r=>!['suspended','retired'].includes(r.status);
   const presets=[['active','All Active',active],['due','Due for Review',r=>active(r)&&(!r.next_review||r.next_review.slice(0,10)<=today)],['high','High Risk',r=>active(r)&&r.risk_tier==='high'],['third','Third-Party',r=>active(r)&&(r.vendor_id||r.provider||r.screening?.third_party)],['customer','Customer-Facing',r=>active(r)&&(r.purposes?.includes('Customer-Facing')||r.screening?.customer_facing)],['inactive','Inactive',r=>!active(r)]];
   const searched=rows.filter(r=>[r.display_id,r.name,r.provider,r.description,...(reference?[r.product_model,r.environment]:[]),...(r.purposes||[])].join(' ').toLowerCase().includes(search.toLowerCase()));
-  const visible=referenceWorkflow?searched.filter(r=>aiMatches(r,quick,showInactive)):table.apply(searched.filter(presets.find(p=>p[0]===quick)?.[2]||active));
+  const visible=referenceWorkflow?searched.filter(r=>quick==='attention'?aiNeedsAttention(r):aiMatches(r,quick,showInactive)):table.apply(searched.filter(presets.find(p=>p[0]===quick)?.[2]||active));
   const writable=isInternal(user);
+  const [intakeEnabled,setIntakeEnabled]=useState(false);
+  // Activate only where native intake is displayed, then retain its draft during appearance refreshes.
+  useEffect(()=>{if(additional||data?.intake.usage==='no')setIntakeEnabled(true);},[additional,data?.intake.usage]);
+  const intakeEditor=useAIIntake({clientId:currentClientId,canWrite:writable,onSaved:()=>setRevision(n=>n+1),enabled:intakeEnabled});
   function clear(){table.clear();setSearch('');setQuick('active');setShowInactive(false);}
   if(!currentClientId)return <p className="page-content">Select a client.</p>;
   const counts=Object.fromEntries(presets.map(([id,,test])=>[id,rows.filter(test).length]));
   const canAdd=writable&&data?.intake.usage!=='no';
   const SUBTITLE='AI systems and use cases, screened for governance attention. Not a legal classification.';
   const addAction=canAdd?<PrimaryAction label="New AI System" onClick={()=>setSelected({})} testid="new-ai-system"/>:null;
-  // Brawndo: same surface, header and view chips as the rebuilt pages; cards, workflow and data unchanged.
+  // The complete native drawer stays outside the appearance branch so refreshes retain its draft.
   const Shell=reference?BrawndoSurface:'div';
-  return <Shell className="register-surface brawndo-ai-page">{reference?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · AI systems`} title="AI Governance" subtitle={SUBTITLE}>{addAction}</BrawndoPageHeader>:<PageHeader title="AI Governance" subtitle={SUBTITLE}
+  return <>{additional?<><AdditionalAI clientId={currentClientId} clientName={currentClient?.name||'Organization'} rows={rows} users={members} intake={data.intake} canCreate={canAdd} onOpen={setSelected} onCreate={template=>setSelected(template?{template}: {})} error={error} onRetry={()=>setRevision(n=>n+1)} query={search} view={quick} showInactive={showInactive} onSearch={setSearch} onView={setQuick} onShowInactive={setShowInactive} intakeEditor={intakeEditor}/>
+    {rows.some(row=>row.relationship_integrity_warning)&&<p role="status" className="register-notice">{AI_RELATIONSHIP_NOTICE}</p>}
+  </>:
+  <Shell className="register-surface brawndo-ai-page">{reference?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · AI systems`} title="AI Governance" subtitle={SUBTITLE}>{addAction}</BrawndoPageHeader>:<PageHeader title="AI Governance" subtitle={SUBTITLE}
       action={addAction?<HeaderActions>{addAction}</HeaderActions>:null}/>}
-    {data?.intake.usage==='no'&&<div className="register-notice">AI usage is marked No. Historical records remain accessible; update intake before adding new systems.<AIIntake clientId={currentClientId} canWrite={writable} onSaved={()=>setRevision(n=>n+1)}/></div>}
+    {data?.intake.usage==='no'&&<div className="register-notice">AI usage is marked No. Historical records remain accessible; update intake before adding new systems.<AIIntakeView state={intakeEditor}/></div>}
     {!approvalPilot&&data?.intake.usage==='unsure'&&<p className="register-notice">AI applicability is not yet confirmed. Record known use cases and confirm intake in Client Profile.</p>}
     {rows.some(r=>r.relationship_integrity_warning)&&<p role="status" className="register-notice">{AI_RELATIONSHIP_NOTICE}</p>}
     <div className="register-toolbar">
       <SearchField label="Search AI systems" placeholder="Search AI systems…" value={search} onChange={setSearch} testid="ai-system-search"/>
-      {referenceWorkflow?<BrawndoChips label="AI system views" chips={AI_VIEWS.filter(([id])=>approvalPilot||id!=='pending').map(([id,label])=>({id,label,pressed:quick===id,onClick:()=>setQuick(id),testid:`ai-system-view-${id}`}))}/>:<ViewTabs views={presets.map(([id,label])=>({id,label}))} active={quick} onPick={setQuick} counts={counts} label="AI system views" testid="ai-system-views" testIdPrefix="ai-system-view-"/>}
+      {referenceWorkflow?<BrawndoChips label="AI system views" chips={[...AI_VIEWS.filter(([id])=>approvalPilot||id!=='pending'),...(quick==='attention'?[['attention','Needing attention']]:[])].map(([id,label])=>({id,label,pressed:quick===id,onClick:()=>setQuick(id),testid:`ai-system-view-${id}`}))}/>:<ViewTabs views={presets.map(([id,label])=>({id,label}))} active={quick} onPick={setQuick} counts={counts} label="AI system views" testid="ai-system-views" testIdPrefix="ai-system-view-"/>}
       {referenceWorkflow&&<><label className="flex gap-2 text-sm"><input type="checkbox" checked={showInactive} onChange={e=>setShowInactive(e.target.checked)}/>Show Archived/Inactive</label>{(search||quick!=='active'||showInactive)&&<button className="text-sm text-link" onClick={clear}>Clear filters</button>}</>}
       <RegisterCount shown={visible.length} total={rows.length}/>
     </div>
@@ -78,5 +93,6 @@ export default function AIGovernance(){
         </tbody>
       </table></div>}
     </div>
-  {selected&&data&&<AIDrawer key={`${currentClientId}:${selected.ai_system_id||'new'}`} open record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</Shell>;
+  </Shell>}
+  {selected&&data&&<AIDrawer key={`${identity}:${selected.ai_system_id||'new'}`} open conceptPresentation={additional} template={selected.template} record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</>;
 }

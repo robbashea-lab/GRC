@@ -1,0 +1,43 @@
+FAIL src/components/PlatformCisMinimizedNativeGuide.test.jsx
+  × in-flight summary progress response cannot initiate native PATCH after context failure (210 ms)
+  ○ skipped immediate context refresh retains minimized fresh input and saves progress against native receipt B
+  ○ skipped pending context refresh must not leave the first minimized-guide progress write on superseded native token A
+  ○ skipped pending context refresh must retain persisted manual interview and require explicit comparison after native receipt B
+  ○ skipped failed context refresh after confirmed native save reports its error and retry without discarding minimized unsaved input
+  ○ skipped unavailable context never reuses cached guide eligibility after a client identity switch
+  ○ skipped unavailable context never reuses cached guide eligibility after a assessment identity switch
+  ○ skipped failed-context retry retains persisted manual wording and still requires explicit comparison
+  ○ skipped a successful context refresh omitting the selected assessment cannot reactivate earlier cached guide eligibility
+  ○ skipped in-flight first progress rechecks unavailable context before PUT and resumes only after retry
+  ○ skipped in-flight deliberate comparison rechecks unavailable context before rebase PUT
+  ○ skipped queued older joined context response cannot supersede the later confirmed native receipt
+
+  ● in-flight summary progress response cannot initiate native PATCH after context failure
+
+    expect(jest.fn()).not.toHaveBeenCalled()
+
+    Expected number of calls: 0
+    Received number of calls: 1
+
+    1: "/framework_assessments/timing-1.1", {"addressable_decision": "", "addressable_rationale": "", "cis_assessment_criteria": [], "expected_last_assessed": "2026-10-11T12:00:00Z", "guided_assessment_source": {"generated_at": "2026-10-11T12:00:30Z", "revision": 3, "version": "cis-v8.1-control1-3"}, "implementation": "OVERVIEW
+    Synthetic reviewer wording.·
+    IMPLEMENTATION BREAKDOWN
+    - Retain this exact bullet.·
+    ITEMS TO ADDRESS
+    - Confirm synthetic notes.", "na_rationale": "", "notes": "Retained native notes", "owner_id": null, "process_owner_id": null, "status": "addressed", "technology": "Retained technology", "verification": "not_verified"}
+
+      140 |   await act(async()=>pending.splice(0).forEach(response=>response.reject(new Error('Synthetic context failed while summary awaits'))));
+      141 |   expect(container.textContent).toContain('Synthetic context failed while summary awaits');expect([...workspace().querySelectorAll('button')].find(button=>button.textContent.trim()==='Save assessment').disabled).toBe(true);expect(native).toEqual(savedNative);
+    > 142 |   await act(async()=>finishProgress());expect(api.patch).not.toHaveBeenCalled();expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(0);expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(manual);expect(container.textContent).toContain('Synthetic context failed while summary awaits');expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+          |                                                              ^
+      143 | });
+      144 |
+      145 | test('queued older joined context response cannot supersede the later confirmed native receipt',async()=>{
+
+      at Object.<anonymous> (src/components/PlatformCisMinimizedNativeGuide.test.jsx:142:62)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 11 skipped, 12 total
+Snapshots:   0 total
+Time:        1.908 s, estimated 2 s
+Ran all test suites within paths "src/components/PlatformCisMinimizedNativeGuide.test.jsx".

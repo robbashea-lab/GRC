@@ -32,9 +32,20 @@ test('pilot distribution uses the same applicable counts without changing assess
   expect(container.querySelector('circle.bd-seg-addressed').getAttribute('pathLength')).toBe('100');
   expect(parseFloat(container.querySelector('circle.bd-seg-addressed').getAttribute('stroke-dasharray'))).toBeCloseTo(100/3-.9);
 });
+
+test('missing canonical records do not render zero implementation, assessed counts or no-scope claims',async()=>{
+  const implementation_position={availability:'partial',total:56,denominator:0,implemented:0,assessed:0,missing_records:56,
+    reason:'Expected native source records are unavailable.',included_counts:['addressed','in_progress','needs_attention','not_assessed'].map(key=>({key,count:0}))};
+  await act(async()=>root.render(<ClientWorkDashboard workspacePilot queue={queue} programs={[{key:'cis-ig1',label:'CIS IG1',implementation_position}]} cisRows={[]} filter="all" onFilter={()=>{}} onOpen={()=>{}}/>));
+  const card=container.querySelector('.bd-program');
+  expect(card.querySelector('.bd-donut-value').textContent).toBe('—');
+  expect(card.querySelector('.bd-donut').getAttribute('aria-label')).toBe('CIS IG1: implementation data unavailable');
+  expect(card.textContent).toContain('Expected native source records are unavailable.');
+  expect(card.textContent).not.toMatch(/0 of 0|0 safeguards|No applicable/);
+});
 test.each(['soc-2','hipaa','nist-csf-2'])('%s shared ring preserves its actual conclusion vocabulary',async key=>{
   await act(async()=>root.render(<ClientWorkDashboard workspacePilot queue={queue} programs={[{key,label:key}]} programRows={{[key]:cisRows}} filter="all" onFilter={()=>{}} onOpen={()=>{}}/>));
-  const expected=key==='soc-2'?'IMPLEMENTED':operatorStatuses(key).addressed.split(/[\s(]/)[0].toUpperCase();
+  const expected=operatorStatuses(key).addressed.split(/[\s(]/)[0].toUpperCase();
   expect(container.querySelector('.bwp-donut-caption').textContent).toBe(expected);
   expect(container.querySelector('.bd-donut-value').textContent).toBe('33.3%');
   if(key==='soc-2')expect(container.querySelector('.bd-program-note').textContent).toBe('Internal readiness, not an auditor opinion.');
@@ -56,10 +67,10 @@ test('SOC 2 uses the same card shell with SOC 2 vocabulary and workspace links',
   expect(container.querySelector('.bd-eyebrow').textContent).toBe('SOC 2 program');
   expect(card.querySelector('h2').textContent).toBe('SOC 2');
   expect(card.querySelector('.bd-donut')).not.toBeNull();
-  expect(card.textContent).toContain('Partially Implemented');
-  expect(card.textContent).toContain('Implemented33%2 of 6');
+  expect(card.textContent).toContain('Partially Addressed');
+  expect(card.textContent).toContain('Addressed33%2 of 6');
   expect(card.querySelector('.bd-program-note').textContent).toBe('Internal readiness, not an auditor opinion.');
-  expect(card.querySelector('.bd-gaps a[href="/compliance/soc-2?view=needs_attention"]').textContent).toContain('Not Implemented');
+  expect(card.querySelector('.bd-gaps a[href="/compliance/soc-2?view=needs_attention"]').textContent).toContain('Needs Remediation / Validation');
   // Same structure as the approved CIS card: class list of every element is identical.
   const shape=el=>[...el.querySelectorAll('*')].map(e=>e.tagName+'.'+(e.className.baseVal??e.className));
   const soc=shape(card);

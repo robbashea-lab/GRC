@@ -1,4 +1,7 @@
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import BrawndoAdditionalVendors from '@/components/BrawndoAdditionalVendors';
+import { useAdditionalSectionsSurface } from '@/lib/brawndoAdditionalScope';
+import { useBrawndoTheme } from '@/lib/brawndoTheme';
 import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from "@/components/Register";
 import { DueDate, HistoryDate, OwnerCell } from "@/components/RegisterCells";
 import StatusBadge, { SeverityBadge } from "@/components/StatusBadge";
@@ -23,7 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Download,AlertCircle,CalendarDays,ListChecks,UserRound,ArrowRight } from "lucide-react";
+import { Download,AlertCircle,CalendarDays,ListChecks,UserRound,ArrowRight,Sun } from "lucide-react";
 import { toast } from "sonner";
 import {BrawndoSurface,BrawndoPageHeader,BrawndoTiles,BrawndoChips,shortDate} from '@/components/BrawndoPage';
 import './BrawndoVendors.css';
@@ -79,8 +82,16 @@ export function vendorTiles(rows,now=new Date(),matches=vendorMatches){
 }
 
 export default function VendorRegister() {
-  const { user } = useAuth();
+  const auth = useAuth();
+  const { user } = auth;
   const { currentClient, currentClientId } = useOrg();
+  const navigate = useNavigate();
+  const [theme,setTheme] = useBrawndoTheme();
+  const [loadedClientId,setLoadedClientId] = useState(null);
+  const vendorReadScope = `${user?.user_id}:${user?.role}:${auth.workspaceMode}:${user?.workspace_mode}:${currentClientId}`;
+  const [loadedReadScope,setLoadedReadScope] = useState('');
+  const [acceptedRefresh,setAcceptedRefresh] = useState(null);
+  const additional = useAdditionalSectionsSurface('vendors',loadedReadScope===vendorReadScope?loadedClientId:null);
   const pilot=isReferencePresentation(currentClientId,user);
   const vendorWorkflow=isReferenceWorkflow(currentClientId,user);
   const matches=vendorWorkflow?vendorMatches:vendorMatchesView;
@@ -92,7 +103,8 @@ export default function VendorRegister() {
   const [q, setQ] = useState("");
   const [searchParams,setSearchParams] = useSearchParams();
   // ?view= deep links (dashboard signals) open the register already filtered.
-  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) ? searchParams.get("view") : "all_active";
+  const brawndoExtendedViews = vendorWorkflow && currentClientId==='demo_brawndo' && auth.workspaceMode==='demo' && user?.workspace_mode==='demo';
+  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) || (brawndoExtendedViews && ['all','unassigned'].includes(searchParams.get('view'))) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
   useEffect(() => setView(linkedView), [linkedView]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +133,7 @@ export default function VendorRegister() {
   async function load() {
     if (!currentClientId) return;
     const token=++generation.current;
-    setLoading(true); setLoadError('');
+    setLoading(true); setLoadError(''); setAcceptedRefresh(null);
     try {
       const [v, u, r] = await Promise.all([
         api.get("/vendors", { params: { client_id: currentClientId } }).then((r) => r.data),
@@ -129,13 +141,14 @@ export default function VendorRegister() {
         api.get("/reviews",{params:{client_id:currentClientId}}).then(r=>r.data),
       ]);
       if(token!==generation.current) return;
-      setRows(v || []); setUsers(u || []); setReviews(r||[]);
-    } catch (e) { if(token===generation.current){setRows([]);setLoadError(formatError(e));} }
+      setRows(v || []); setUsers(u || []); setReviews(r||[]);setLoadedClientId(currentClientId);setLoadedReadScope(vendorReadScope);
+      setAcceptedRefresh({scope:vendorReadScope,at:new Date().toISOString()});
+    } catch (e) { if(token===generation.current){setRows([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
     finally { if(token===generation.current)setLoading(false); }
   }
-  useEffect(() => { const activeGeneration=generation; setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
+  useEffect(() => { const activeGeneration=generation; setAcceptedRefresh(null);setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentClientId]);
+  }, [currentClientId,vendorReadScope]);
 
   const enriched = useMemo(() => rows.map(v=>{const value=vendorSignals(v,reviews);return {...value,_attention:vendorWorkflow?['review_overdue','review_due','contract_soon','renewal_soon','assurance'].some(view=>vendorMatches(value,view)):value._reviewDue||value._contractSoon||value._assuranceIssue};}),[rows,reviews,vendorWorkflow]);
 
@@ -174,10 +187,25 @@ export default function VendorRegister() {
     a.download = `vendor-register-${(currentClient?.name || "client").replace(/\s+/g, "-")}.csv`; a.click();
   }
 
-  if(pilot){
+  let surface;
+  if(additional){
+    const selectAdditionalView = id => {
+      selectView(id);
+      const next=new URLSearchParams(searchParams);
+      if(id==='all_active')next.delete('view');else next.set('view',id);
+      setSearchParams(next,{replace:true});
+    };
+    surface = <>
+      <BrawndoAdditionalVendors rows={tableSource} filteredRows={filtered} reviews={reviews} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
+        onOpen={(record,tab)=>setDrawer({open:true,record,tab})}
+        onOpenReview={review=>navigate(`/reviews?id=${encodeURIComponent(review.review_id)}&client_id=${encodeURIComponent(currentClientId)}`)}
+        actions={<><button type="button" onClick={()=>setTheme(theme==='light'?'dark':'light')}><Sun size={15} aria-hidden="true"/>{theme==='light'?'Dark':'Light'}</button><button type="button" onClick={exportCsv} data-testid="vendors-export"><Download size={15} aria-hidden="true"/>Export CSV</button>{canWrite&&<button type="button" onClick={()=>setAddOpen(true)} data-testid="new-vendor">+ New vendor</button>}</>}/>
+      {recordLinkError&&<p role="alert">{recordLinkError}</p>}
+    </>;
+  } else if(pilot){
     const chipDefs=[...PILOT_CHIPS,...(LINKED_VIEWS[view]?[[view,LINKED_VIEWS[view]]]:[])];
     const pick=id=>selectView(view===id?'all_active':id);
-    return (
+    surface = (
       <BrawndoSurface className="bvendors">
         <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Third parties`} title="Vendors">
           <button type="button" className="bpage-btn" onClick={exportCsv} data-testid="vendors-export"><Download size={16} aria-hidden="true"/>Export CSV</button>
@@ -235,12 +263,10 @@ export default function VendorRegister() {
           </div>
         </div>
         {recordLinkError&&<p role="alert">{recordLinkError}</p>}
-      {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
-        {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}}/>}
       </BrawndoSurface>
     );
-  }
-  return (
+  } else {
+    surface = (
     <div>
       {recordLinkError&&<p role="alert">{recordLinkError}</p>}
       <PageHeader
@@ -309,10 +335,15 @@ export default function VendorRegister() {
           </table>
         </div>
       </div>
-      {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
-      {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} />}
     </div>
-  );
+    );
+  }
+  // Appearance can withdraw during an organization refresh; native drafts keep the same mounted editors.
+  return <>
+    {surface}
+    {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
+    {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}}/>}
+  </>;
 }
 
 

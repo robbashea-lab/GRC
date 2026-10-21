@@ -1,0 +1,144 @@
+- banner:
+  - link "Omnisciente CLARITY FOR A STRONGER TOMORROW":
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - searchbox "Search workspace pages and active work"
+  - generic: Ctrl K
+  - button "Prestige Worldwide Open authorized client directory":
+    - text: Prestige Worldwide
+    - generic: Open authorized client directory
+  - button "Use light workspace theme":
+  - button "Your notifications":
+  - button "Staging Administrator super admin":
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button "Return to portfolio":
+    - text: Portfolio
+  - generic: P
+  - generic: Client
+  - generic: Prestige Worldwide
+  - navigation "Client workspace":
+    - group "Work":
+      - generic: Work
+      - link "Dashboard":
+        - /url: /dashboard
+        - generic: Dashboard
+      - link "Calendar":
+        - /url: /calendar
+        - generic: Calendar
+      - link "Reviews":
+        - /url: /reviews
+        - generic: Reviews
+      - link "Action Items":
+        - /url: /action-items
+        - generic: Action Items
+    - group "Program":
+      - generic: Program
+      - link "SOC 2" [active]:
+        - /url: /compliance/soc-2
+        - generic: SOC 2
+      - link "Risks":
+        - /url: /risks
+        - generic: Risks
+      - link "Policies":
+        - /url: /policies
+        - generic: Policies
+      - link "Vendors":
+        - /url: /vendors
+        - generic: Vendors
+      - link "Evidence Library":
+        - /url: /evidence
+        - generic: Evidence Library
+    - group "Client":
+      - generic: Client
+      - link "Contacts":
+        - /url: /contacts
+        - generic: Contacts
+      - link "Systems & Scope":
+        - /url: /systems
+        - generic: Systems & Scope
+      - link "AI Governance":
+        - /url: /ai-governance
+        - generic: AI Governance
+      - link "Client Profile":
+        - /url: /client-profile
+        - generic: Client Profile
+- main:
+  - button "Open Omnibot guide":
+  - complementary "Omnibot invitation":
+    - paragraph: Choose the next criterion in your configured SOC 2 scope.
+    - button "Close invitation": ×
+  - generic "Omnibot preferences"
+  - generic: Omnibot is available
+  - paragraph: SOC 2 readiness
+  - heading "SOC 2" [level=1]
+  - 'button "Continue assessment: CC1.1 Ethical conduct"': Continue with CC1.1
+  - region "Assessment progress":
+    - 'group "SOC 2: 0 Implemented (0.0%, 0 of 38), 0 Partially Implemented (0.0%, 0 of 38), 0 Not Implemented (0.0%, 0 of 38), 38 Not Assessed (100.0%, 38 of 38)"':
+      - img "Not Assessed · 100.0% · 38 of 38 criteria"
+      - generic: 0.0%
+      - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading "Assessment progress" [level=2]
+    - paragraph: 38 criteria in scope
+    - term: Implemented
+    - definition:
+      - text: "0"
+      - generic: of 38
+    - term: Assessed
+    - definition:
+      - text: "0"
+      - generic: of 38
+    - paragraph:
+      - strong: "38"
+      - text: still to assess · Continue with criterion CC1.1
+    - group "Assessment progress by status":
+      - 'img "Not Assessed: 38 of 38 criteria, 100%"'
+    - group "Filter by assessment status":
+      - button "Implemented 0":
+        - text: Implemented
+        - strong: "0"
+      - button "Partially Implemented 0":
+        - text: Partially Implemented
+        - strong: "0"
+      - button "Not Implemented 0":
+        - text: Not Implemented
+        - strong: "0"
+      - button "Not Assessed 38":
+        - text: Not Assessed
+        - strong: "38"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region "Trust Services Categories":
+    - navigation "SOC 2 location":
+      - list:
+        - listitem: SOC 2
+    - textbox "Search criteria":
+      - /placeholder: Search by number or title…
+    - table:
+      - rowgroup:
+        - row "Trust Services Category Criteria Assessed Needs attention":
+          - columnheader "Trust Services Category"
+          - columnheader "Criteria"
+          - columnheader "Assessed"
+          - columnheader "Needs attention"
+      - rowgroup:
+        - link "Open Security — Common Criteria":
+          - cell "Security — Common Criteria"
+          - cell "33"
+          - cell "0 of 33"
+          - cell "33 need attention"
+        - link "Open Availability":
+          - cell "Availability"
+          - cell "3"
+          - cell "0 of 3"
+          - cell "3 need attention"
+        - link "Open Confidentiality":
+          - cell "Confidentiality"
+          - cell "2"
+          - cell "0 of 2"
+          - cell "2 need attention"
+    - paragraph: 38 in-scope criteria across 3 Trust Services Categories.
+- region "Notifications alt+T"

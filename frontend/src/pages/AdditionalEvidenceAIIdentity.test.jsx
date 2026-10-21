@@ -1,0 +1,35 @@
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import AIGovernance from './AIGovernance';
+import Evidence from './Evidence';
+import api from '@/lib/api';
+let mockAuth,mockOrg;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
+jest.mock('@/context/ComplianceContext',()=>({useCompliance:()=>({items:[],loading:false,error:''})}));
+jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:error=>error.message}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:(surface,loadedClientId)=>loadedClientId==='demo_brawndo'}));
+jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/ai-governance',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
+jest.mock('@/components/AdditionalAI',()=>props=><div data-testid="additional-ai-view">{props.rows.map(row=><button key={row.ai_system_id} onClick={()=>props.onOpen(row)}>{row.name}</button>)}</div>);
+jest.mock('@/components/AdditionalEvidence',()=>({...jest.requireActual('@/components/AdditionalEvidence'),__esModule:true,default:()=> <div data-testid="additional-evidence-view"/>}));
+jest.mock('@/components/AIDrawer',()=>()=>null);
+jest.mock('@/components/RecordDrawer',()=>()=>null);
+let node,root;
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockOrg={currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}};mockAuth={workspaceMode:'demo',user:{user_id:'actor-one',workspace_mode:'demo',role:'super_admin'}};node=document.createElement('div');document.body.appendChild(node);root=createRoot(node);});
+afterEach(async()=>{await act(async()=>root.unmount());node.remove();jest.clearAllMocks();});
+test('AI identity changes withhold the old snapshot, abort its request and require a replacement matching client',async()=>{
+  let pendingResolve;
+  api.get.mockImplementation(async path=>({data:path==='/ai_systems'?[{ai_system_id:'a',client_id:'demo_brawndo',name:'Prior actor data',status:'active'}]:path==='/ai-intake'?{client_id:'demo_brawndo',usage:'yes'}:[]}));
+  await act(async()=>root.render(<AIGovernance/>));expect(node.querySelector('[data-testid="additional-ai-view"]').textContent).toBe('Prior actor data');
+  const firstSignal=api.get.mock.calls.find(([path])=>path==='/ai_systems')[1].signal;
+  api.get.mockImplementation(path=>path==='/ai_systems'?new Promise(resolve=>{pendingResolve=resolve;}):Promise.resolve({data:path==='/ai-intake'?{client_id:'demo_brawndo',usage:'yes'}:[]}));
+  mockAuth={...mockAuth,user:{...mockAuth.user,role:'client_viewer'}};await act(async()=>root.render(<AIGovernance/>));
+  expect(firstSignal.aborted).toBe(true);expect(node.querySelector('[data-testid="additional-ai-view"]')).toBeNull();expect(node.textContent).not.toContain('Prior actor data');
+  await act(async()=>pendingResolve({data:[{ai_system_id:'b',client_id:'other-client',name:'Wrong client data'}]}));expect(node.querySelector('[data-testid="additional-ai-view"]')).toBeNull();expect(node.textContent).not.toContain('Wrong client data');
+});
+test('Evidence mode changes remount its keyed native catalog and withhold the previously verified additional view',async()=>{
+  api.get.mockResolvedValue({data:{items:[{client_id:'demo_brawndo',evidence_id:'e',filename:'Evidence.pdf'}],total:1,page_size:5,program_counts:{}}});
+  await act(async()=>root.render(<Evidence/>));expect(node.querySelector('[data-testid="additional-evidence-view"]')).not.toBeNull();
+  api.get.mockImplementation(()=>new Promise(()=>{}));mockAuth={...mockAuth,workspaceMode:'signed-in'};await act(async()=>root.render(<Evidence/>));
+  expect(node.querySelector('[data-testid="additional-evidence-view"]')).toBeNull();expect(node.textContent).not.toContain('Evidence.pdf');
+});

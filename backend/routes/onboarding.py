@@ -19,6 +19,7 @@ from pydantic import BaseModel
 import onboarding_recovery
 import review_occurrences
 import assignment_eligibility
+import portfolio_activity
 
 # Late-binding imports from the main server module. Safe because server.py
 # imports this module at the bottom, after all these names are defined.
@@ -185,7 +186,7 @@ async def onboarding_state(
         {"_id": 0, "action": 1, "entity_type": 1, "entity_id": 1, "at": 1,
          "user_email": 1, "user_name": 1, "meta": 1}
     ).sort("at", -1).to_list(200)
-    return {"contacts": contacts, "assessments": assessments, "onboarding_history": history}
+    return portfolio_activity.public_source({"contacts": contacts, "assessments": assessments, "onboarding_history": history})
 
 
 @router.post("/onboarding/finalize")
@@ -663,6 +664,8 @@ async def _prepare_baseline(body, user, identity):
                     defaults = {id_field: stable_id, 'client_id': cid, 'title': item['name'], 'category': item['category'], 'created_at': _now(), 'created_by': user['user_id']}
                     if group == 'reviews':
                         defaults.update({'review_type': item['review_type'], 'source': 'GRC Program Onboarding', 'status': 'needs_scheduling', 'due_date': None, 'next_review_date': None, 'recurrence': None, 'owner_id': None})
+                        if cid == 'demo_brawndo' and item['key'] == 'policy-review':
+                            defaults['recurrence'] = 'annual'
                     plan.insert(group, id_field, {**defaults, **updates})
         plan.audit('onboarding-complete', 'client', cid, meta={'baseline_version': state['version'], 'selected_reviews': len(state['reviews'])})
     state['completed'] = bool(body.finalize or previous_baseline)
@@ -689,6 +692,13 @@ async def _finish_baseline(identity, plan, user):
         updates = {'onboarding_baseline': state}
         if plan['finalize']:
             updates['framework_settings.cis-ig1'] = state.get('framework_settings', {}).get('cis-ig1', {'implementation_group': 1})
+            source_client = await server.db.clients.find_one({'client_id': cid})
+            after_client = {**source_client, 'onboarding_baseline': state,
+                'framework_settings': {**(source_client.get('framework_settings') or {}),
+                    'cis-ig1': updates['framework_settings.cis-ig1']}}
+            portfolio_patch, _portfolio_event = server._portfolio_event_patch(
+                'client', cid, cid, user, source_client, after_client, state['updated_at'])
+            updates.update(portfolio_patch)
         if not plan['client'].get('initial_program_baseline'):
             if plan['previous_baseline']:
                 updates['initial_program_baseline'] = plan['previous_baseline']
@@ -712,6 +722,11 @@ async def _finish_baseline(identity, plan, user):
             {'client_id': cid, 'onboarding_baseline.updated_at': plan['expected_updated_at']}, {'$set': completion[0]['values']})
         if not changed.matched_count:
             raise HTTPException(409, 'Record changed since it was opened; reload before saving')
+    if plan['finalize']:
+        event_id = completion[0]['values'].get('_portfolio_activity_last_event_id')
+        for event in plan['audits']:
+            if event['action'] == 'onboarding-complete':
+                event['meta']['_portfolio_activity_event_id'] = event_id
 
 
 @router.get('/onboarding/handoff')
@@ -756,9 +771,9 @@ async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_us
         server.db.users.count_documents({'client_ids': client_id, 'status': 'active', 'role': {'$nin': ['super_admin', 'platform_admin']}}),
         assignment_eligibility.candidates(server.db, client_id, limit=1),
     )
-    return {'client': projected, 'completed': completed,
+    return portfolio_activity.public_source({'client': projected, 'completed': completed,
             'records': dict(zip(fields, values)),
-            'people': {'contacts': contacts, 'active_client_users': client_users, 'eligible_assignees_available': bool(candidates['items'])}}
+            'people': {'contacts': contacts, 'active_client_users': client_users, 'eligible_assignees_available': bool(candidates['items'])}})
 
 
 class ProgramApplicabilityChange(BaseModel):
@@ -802,23 +817,41 @@ async def adjust_program(key: str, body: ProgramApplicabilityChange, user: Dict 
         from framework_catalog import client_configuration
         if old and old.get('baseline_response')=='applies' and client_configuration(key,client)['implementation_group']!=body.implementation_group:
             raise HTTPException(409,'Use CIS scope settings to change an active implementation group')
-        await server.db.clients.update_one({'client_id':cid},{'$set':{'framework_settings.cis-ig1':{'implementation_group':body.implementation_group}}})
+        settings = {**(client.get('framework_settings') or {}), 'cis-ig1': {'implementation_group': body.implementation_group}}
+        capture, _event = server._portfolio_event_patch('clients', cid, cid, user, client,
+            {**client, 'framework_settings': settings}, _now())
+        await server.db.clients.update_one({'client_id':cid},{'$set':{
+            'framework_settings.cis-ig1': settings['cis-ig1'], **capture}})
     # Later enablement uses current scope, never the historical intake value.
     baseline={**baseline,'framework_settings':{}}
     if old and old.get('baseline_response')==body.applicability:
         if key in framework_governance.CATALOGS:
             await framework_governance.reconcile(server,cid,{**baseline,'requirements':{key:body.applicability}},user)
-            await audit(user,'program-applicability-updated','client',cid,cid,meta={'program':key,'previous_status':body.applicability,'applicability':body.applicability,'reconciled':True})
+            await audit(user,'program-applicability-updated','client',cid,cid,meta={'program':key,'previous_status':body.applicability,'applicability':body.applicability,'reconciled':True,'_portfolio_activity_noop':True})
         return {'ok':True}
     stable_id = 'baseline_' + uuid.uuid5(uuid.NAMESPACE_URL, f'grc:{cid}:requirements:{key}').hex
     query = {'client_id': cid, 'requirement_id': old['requirement_id'], 'updated_at':old.get('updated_at')} if old else {'_id': stable_id}
+    at = server._next_write_time((old or {}).get('updated_at'))
+    values = {'baseline_response': body.applicability,
+        'applicability': {'applies': 'applicable', 'does_not_apply': 'not_applicable', 'retired': 'not_applicable', 'unsure': 'needs_review'}[body.applicability],
+        'updated_at': at, 'program_change': {'previous_status': (old or {}).get('baseline_response'),
+            'new_status': body.applicability, 'reason': body.reason, 'effective_date': body.effective_date,
+            'changed_by': user['user_id'], 'changed_at': _now()}}
+    portfolio_patch, portfolio_event = server._portfolio_event_patch('requirement',
+        (old or {}).get('requirement_id', stable_id), cid, user, old,
+        {**(old or {}), **values, 'client_id': cid, 'baseline_key': key}, at)
+    values.update(portfolio_patch)
     changed = await server.db.requirements.update_one(query, {
-        '$set': {'baseline_response': body.applicability, 'applicability': {'applies': 'applicable', 'does_not_apply': 'not_applicable', 'retired':'not_applicable', 'unsure': 'needs_review'}[body.applicability], 'updated_at': server._next_write_time((old or {}).get('updated_at')),
-                 'program_change': {'previous_status':(old or {}).get('baseline_response'),'new_status':body.applicability,'reason':body.reason,'effective_date':body.effective_date,'changed_by':user['user_id'],'changed_at':_now()}},
+        '$set': values,
         '$setOnInsert': {'requirement_id': stable_id, 'client_id': cid, 'baseline_key': key, 'title': item['name'], 'category': item['category'], 'status': 'under_review', 'created_at': _now(), 'created_by': user['user_id']},
     }, upsert=not bool(old))
     if old and not changed.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
     if key in framework_governance.CATALOGS:
         await framework_governance.reconcile(server, cid, {**baseline, 'requirements': {key: body.applicability}}, user)
-    await audit(user, 'program-applicability-updated', 'client', cid, cid, meta={'program': key, 'previous_status':(old or {}).get('baseline_response'), 'applicability': body.applicability,'reason':body.reason,'effective_date':body.effective_date})
+    await audit(user, 'program-applicability-updated', 'client', cid, cid, meta={
+        'program': key, 'previous_status':(old or {}).get('baseline_response'), 'applicability': body.applicability,
+        'reason':body.reason,'effective_date':body.effective_date,
+        '_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None,
+        '_portfolio_activity_source_type':'requirements',
+        '_portfolio_activity_source_id':(old or {}).get('requirement_id',stable_id)})
     return {'ok': True}

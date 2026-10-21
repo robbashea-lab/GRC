@@ -1,0 +1,95 @@
+/* Policy PNG AFTER composition. Native controllers own every command and state. */
+@font-face{font-family:'GoverNara Policy Inter';font-style:normal;font-weight:400;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+@font-face{font-family:'GoverNara Policy Inter';font-style:normal;font-weight:500;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+@font-face{font-family:'GoverNara Policy Inter';font-style:normal;font-weight:600;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+@font-face{font-family:'GoverNara Policy Inter';font-style:normal;font-weight:700;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+.brawndo-policy-workflow{--pw-card:#fff;--pw-sunk:#f6f8fb;--pw-line:#e2e7ef;--pw-line2:#cfd7e3;--pw-ink:#0f1a2e;--pw-ink2:#46536a;--pw-muted:#6b7686;--pw-accent:#2f64e0;--pw-soft:#e8efff;--pw-accent-ink:#fff;--pw-good:#137a43;--pw-good-bg:#e5f5ec;--pw-warn:#8a4b05;--pw-warn-bg:#fdf3e1;--pw-info:#2f4fa8;--pw-info-bg:#eef3ff;display:flex;flex-direction:column;gap:0;background:var(--pw-card);color:var(--pw-ink);font:14px/1.5 'GoverNara Policy Inter',Inter,system-ui,sans-serif;overflow:hidden}
+:root[data-brawndo-portal='dark'] .brawndo-policy-workflow,:root[data-brawndo-workspace='dark'] .brawndo-policy-workflow,.dark .brawndo-policy-workflow{--pw-card:#0d1729;--pw-sunk:#0a1322;--pw-line:#1c2842;--pw-line2:#2a3858;--pw-ink:#eef3fb;--pw-ink2:#b7c2d3;--pw-muted:#8793a6;--pw-accent:#6f9bff;--pw-soft:#16264a;--pw-accent-ink:#06101f;--pw-good:#5fd394;--pw-good-bg:#0f2e20;--pw-warn:#f5c26b;--pw-warn-bg:#3a2a12;--pw-info:#a9c4ff;--pw-info-bg:#15254a}
+.brawndo-policy-workflow *{box-sizing:border-box}
+.brawndo-policy-workflow :is(button,input,select,textarea,h1,h2,h3,h4){font-family:inherit;color:inherit}
+.brawndo-policy-workflow button{cursor:pointer}
+.brawndo-policy-workflow :disabled{opacity:.45;cursor:not-allowed}
+.brawndo-policy-workflow :focus-visible{outline:2px solid var(--pw-accent);outline-offset:2px}
+.brawndo-policy-workflow .pw-header{padding:20px 24px 0;border-bottom:1px solid var(--pw-line);flex:none;text-align:left}
+.brawndo-policy-workflow .pw-heading{display:flex;align-items:flex-start;gap:14px}
+.brawndo-policy-workflow .pw-heading>div{min-width:0}
+.brawndo-policy-workflow .pw-heading-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;border:1px solid var(--pw-line);background:var(--pw-soft);color:var(--pw-accent);flex:none}
+.brawndo-policy-workflow .pw-category{text-transform:uppercase;font-size:12px;font-weight:600;color:var(--pw-muted);letter-spacing:.025em}
+.brawndo-policy-workflow .pw-heading h2{font-size:20px;font-weight:650;letter-spacing:-.01em;line-height:1.5;margin:0}
+.brawndo-policy-workflow .pw-badges{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.brawndo-policy-workflow .pw-chip{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.brawndo-policy-workflow .pw-good{color:var(--pw-good);background:var(--pw-good-bg)}
+.brawndo-policy-workflow .pw-info{color:var(--pw-info);background:var(--pw-info-bg)}
+.brawndo-policy-workflow .pw-warn{color:var(--pw-warn);background:var(--pw-warn-bg)}
+.brawndo-policy-workflow .pw-plain{color:var(--pw-ink2);background:var(--pw-sunk);border:1px solid var(--pw-line)}
+.brawndo-policy-workflow .pw-close{margin-left:auto;flex:none;border:0;background:none;width:32px;height:32px;border-radius:8px;color:var(--pw-muted);font-size:22px;line-height:1}
+.brawndo-policy-workflow .pw-close:hover{background:var(--pw-sunk);color:var(--pw-ink)}
+.brawndo-policy-workflow .pw-tabs{display:flex;gap:4px;margin-top:16px;overflow-x:auto;scrollbar-width:none}
+.brawndo-policy-workflow .pw-tabs>button{display:flex;align-items:center;gap:6px;border:0;background:none;border-bottom:2px solid transparent;padding:10px 12px;font-size:13.5px;color:var(--pw-muted);white-space:nowrap}
+.brawndo-policy-workflow .pw-tabs>button[aria-selected=true]{color:var(--pw-ink);font-weight:600;border-bottom-color:var(--pw-accent)}
+.brawndo-policy-workflow .pw-count{font-size:11px;line-height:1.4;padding:0 6px;border-radius:999px;border:1px solid var(--pw-line);background:var(--pw-sunk);color:var(--pw-muted)}
+.brawndo-policy-workflow .pw-body{flex:1;min-height:0;overflow:auto;padding:22px 24px 26px;overscroll-behavior:contain}
+.brawndo-policy-workflow .pw-strip{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--pw-line);border-radius:12px;background:var(--pw-sunk);overflow:hidden}
+.brawndo-policy-workflow .pw-strip>div{padding:12px 16px;min-width:0;border-left:1px solid var(--pw-line)}
+.brawndo-policy-workflow .pw-strip>div:first-child{border-left:0}
+.brawndo-policy-workflow .pw-strip b{display:block;font-size:15px;font-weight:600}
+.brawndo-policy-workflow .pw-label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--pw-muted);margin-bottom:4px}
+.brawndo-policy-workflow small{display:block;color:var(--pw-muted);font-size:12px;line-height:1.5}
+.brawndo-policy-workflow .pw-link{display:inline-block;background:none;border:0;padding:0;color:var(--pw-accent);font-size:12.5px;font-weight:600;text-align:left}
+.brawndo-policy-workflow .pw-card{border:1px solid var(--pw-line);border-radius:14px;padding:16px 18px}
+.brawndo-policy-workflow .pw-purpose{margin-top:16px}
+.brawndo-policy-workflow .pw-purpose p{margin:6px 0 0;color:var(--pw-ink2);white-space:pre-wrap;overflow-wrap:anywhere}
+.brawndo-policy-workflow h3{font-size:13.5px;font-weight:650;margin:0 0 10px;line-height:1.5}
+.brawndo-policy-workflow h3>span{font-size:12.5px;color:var(--pw-muted);font-weight:400;margin-left:5px}
+.brawndo-policy-workflow .pw-section{margin-top:22px}
+.brawndo-policy-workflow .pw-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px 16px}
+.brawndo-policy-workflow .pw-wide{grid-column:1/-1}
+.brawndo-policy-workflow .pw-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.brawndo-policy-workflow .pw-field>span{font-size:12.5px;font-weight:600;color:var(--pw-ink2)}
+.brawndo-policy-workflow :is(.pw-field input,.pw-field textarea,.pw-field>button,.pw-field button[aria-haspopup=dialog],.pw-native-approval input,.pw-native-approval select,.pw-native-approval textarea,.pw-native-approval [role=combobox]){width:100%;border:1px solid var(--pw-line2);background:var(--pw-card);border-radius:9px;padding:9px 11px;font-size:14px;min-height:40px}
+.brawndo-policy-workflow textarea{resize:vertical;line-height:1.5}
+.brawndo-policy-workflow :is(input,textarea,select):focus{outline:none;border-color:var(--pw-accent);box-shadow:0 0 0 3px var(--pw-soft)}
+.brawndo-policy-workflow .pw-footer{display:flex;gap:10px;align-items:center;padding:12px 24px;border-top:1px solid var(--pw-line);background:var(--pw-sunk);flex:none}
+.brawndo-policy-workflow .pw-dirty{font-size:12.5px;color:var(--pw-muted)}
+.brawndo-policy-workflow .pw-spacer{flex:1}
+.brawndo-policy-workflow .pw-button,.brawndo-policy-workflow .pw-native-approval button:not([role=combobox]){display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--pw-line2);background:var(--pw-card);padding:8px 14px;border-radius:9px;font-size:13.5px;font-weight:500;white-space:nowrap;text-decoration:none;line-height:1.5;height:auto}
+.brawndo-policy-workflow .pw-button:hover{border-color:var(--pw-accent)}
+.brawndo-policy-workflow .pw-primary,.brawndo-policy-workflow .pw-native-approval [data-testid=policy-approve]{background:var(--pw-accent);border-color:var(--pw-accent);color:var(--pw-accent-ink);font-weight:600}
+.brawndo-policy-workflow .pw-approved-document{border:1px solid var(--pw-line);border-radius:12px;overflow:hidden}
+.brawndo-policy-workflow .pw-document-heading{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.brawndo-policy-workflow .pw-document-heading>div{min-width:0}
+.brawndo-policy-workflow .pw-document-heading b{font-size:14px}
+.brawndo-policy-workflow .pw-document-icon{display:grid;place-items:center;width:34px;height:40px;border:1px solid var(--pw-line);border-radius:7px;background:var(--pw-info-bg);color:var(--pw-info);font-size:10px;font-weight:700;flex:none}
+.brawndo-policy-workflow .pw-document-meta{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--pw-sunk);border-top:1px solid var(--pw-line);font-size:12.5px}
+.brawndo-policy-workflow .pw-document-meta>div{padding:12px 16px;border-left:1px solid var(--pw-line)}
+.brawndo-policy-workflow .pw-document-meta>div:first-child{border-left:0}
+.brawndo-policy-workflow .pw-native-approval{margin-top:14px;border:1px solid var(--pw-line);border-radius:12px;padding:16px}
+.brawndo-policy-workflow .pw-native-approval.pw-pending-approval{border-color:color-mix(in srgb,var(--pw-accent) 45%,transparent);background:var(--pw-soft)}
+.brawndo-policy-workflow .pw-native-approval>div{border:0;background:transparent;padding:0}
+.brawndo-policy-workflow .pw-native-approval [aria-label='Policy approval authority']{border:0;padding-top:0}
+.brawndo-policy-workflow .pw-native-approval details{padding:9px 0;border-top:1px solid var(--pw-line);font-size:13px}
+.brawndo-policy-workflow .pw-native-approval summary{font-weight:600;color:var(--pw-ink2);cursor:pointer}
+.brawndo-policy-workflow .pw-native-approval :is(p,dl){font-size:12.5px;color:var(--pw-ink2);overflow-wrap:anywhere}
+.brawndo-policy-workflow .pw-native-approval label{font-size:12.5px;font-weight:600;color:var(--pw-ink2)}
+.brawndo-policy-workflow .pw-table-wrap{border:1px solid var(--pw-line);border-radius:12px;overflow:auto}
+.brawndo-policy-workflow .pw-table-wrap table{width:100%;min-width:600px;border-collapse:collapse;font-size:13px}
+.brawndo-policy-workflow .pw-table-wrap th{text-align:left;background:var(--pw-sunk);color:var(--pw-muted);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;padding:10px 14px;border-bottom:1px solid var(--pw-line)}
+.brawndo-policy-workflow .pw-table-wrap td{padding:11px 14px;border-bottom:1px solid var(--pw-line)}
+.brawndo-policy-workflow .pw-table-wrap tr:last-child td{border-bottom:0}
+.brawndo-policy-workflow .pw-supporting [data-testid=drawer-evidence-dropzone]{border:1px dashed var(--pw-line2);background:var(--pw-sunk);border-radius:12px;padding:24px}
+.brawndo-policy-workflow .pw-lock{display:flex;align-items:center;gap:6px;margin-top:16px;font-size:12px;color:var(--pw-muted)}
+@media(max-width:760px){.brawndo-policy-workflow .pw-header,.brawndo-policy-workflow .pw-body{padding-left:16px;padding-right:16px}.brawndo-policy-workflow .pw-footer{padding:12px 16px;flex-wrap:wrap}.brawndo-policy-workflow .pw-grid,.brawndo-policy-workflow .pw-strip,.brawndo-policy-workflow .pw-document-meta{grid-template-columns:minmax(0,1fr)}.brawndo-policy-workflow .pw-strip>div,.brawndo-policy-workflow .pw-document-meta>div{border-left:0;border-top:1px solid var(--pw-line)}.brawndo-policy-workflow .pw-strip>div:first-child,.brawndo-policy-workflow .pw-document-meta>div:first-child{border-top:0}.brawndo-policy-workflow .pw-document-heading{flex-wrap:wrap}}
+
+:root .ui-dialog.brawndo-policy-workflow[data-state][data-testid][role=dialog]{--font-body:'GoverNara Policy Inter',Inter,system-ui,sans-serif;--font:var(--font-body);--font-heading:var(--font-body);--fg:var(--pw-ink);--fg2:var(--pw-ink2);--fg3:var(--pw-muted);--muted:var(--pw-muted);--surface:var(--pw-card);--surface2:var(--pw-sunk);--subtle:var(--pw-sunk);--border:var(--pw-line);--border-strong:var(--pw-line2);--accent:var(--pw-accent);--link:var(--pw-accent);--focus:var(--pw-accent);--rail:var(--pw-accent);--selected:var(--pw-soft);background:var(--pw-card);color:var(--pw-ink);border-color:var(--pw-line);font:14px/1.5 var(--font-body)}
+:root .ui-dialog.brawndo-policy-workflow[data-state][data-testid][role=dialog] .pw-heading h2{font:650 20px/1.5 var(--font-body);letter-spacing:-.01em;color:var(--pw-ink);margin:0}
+:root .ui-dialog.brawndo-policy-workflow[data-state][data-testid][role=dialog] .pw-tabs>button{font:400 13.5px/1.5 var(--font-body);color:var(--pw-muted);background:none;border:0;border-bottom:2px solid transparent;border-radius:0;padding:10px 12px;height:auto}
+:root .ui-dialog.brawndo-policy-workflow[data-state][data-testid][role=dialog] .pw-tabs>button[aria-selected=true]{font-weight:600;color:var(--pw-ink);border-bottom-color:var(--pw-accent)}
+:root .ui-dialog.brawndo-policy-workflow[data-state][data-testid][role=dialog] :is(.pw-field input,.pw-field textarea,.pw-field>button,.pw-field button[aria-haspopup=dialog],.pw-native-approval input,.pw-native-approval select,.pw-native-approval textarea,.pw-native-approval [role=combobox]){font:400 14px/1.5 var(--font-body);color:var(--pw-ink);background:var(--pw-card);border:1px solid var(--pw-line2);border-radius:9px;padding:9px 11px;min-height:40px;height:auto}
+:root .ui-dialog.brawndo-policy-workflow[data-state][data-testid][role=dialog] :is(input,select,textarea):focus{border-color:var(--pw-accent);outline:none;box-shadow:0 0 0 3px var(--pw-soft)}
+:root .ui-dialog.brawndo-policy-workflow[data-state][data-testid][role=dialog] .pw-button{font:500 13.5px/1.5 var(--font-body);padding:8px 14px;border:1px solid var(--pw-line2);border-radius:9px;background:var(--pw-card);color:var(--pw-ink);height:auto}
+:root .ui-dialog.brawndo-policy-workflow[data-state][data-testid][role=dialog] .pw-primary{font-weight:600;background:var(--pw-accent);border-color:var(--pw-accent);color:var(--pw-accent-ink)}
+:root .ui-popover.pw-owner-portal[data-state]{--pw-card:#fff;--pw-sunk:#f6f8fb;--pw-line:#e2e7ef;--pw-line2:#cfd7e3;--pw-ink:#0f1a2e;--pw-ink2:#46536a;--pw-muted:#6b7686;--pw-accent:#2f64e0;--pw-soft:#e8efff;--font-body:'GoverNara Policy Inter',Inter,system-ui,sans-serif;--font:var(--font-body);--fg:var(--pw-ink);--fg2:var(--pw-ink2);--muted:var(--pw-muted);--surface:var(--pw-card);--subtle:var(--pw-sunk);--border:var(--pw-line2);--border-strong:var(--pw-line2);--hover:var(--pw-soft);font:14px/1.5 var(--font-body);background:var(--pw-card);color:var(--pw-ink);border:1px solid var(--pw-line2);border-radius:9px}
+:root:is([data-brawndo-portal='dark'],[data-brawndo-workspace='dark']) .ui-popover.pw-owner-portal[data-state],.dark .ui-popover.pw-owner-portal[data-state]{--pw-card:#0d1729;--pw-sunk:#0a1322;--pw-line:#1c2842;--pw-line2:#2a3858;--pw-ink:#eef3fb;--pw-ink2:#b7c2d3;--pw-muted:#8793a6;--pw-accent:#6f9bff;--pw-soft:#16264a}
+:root .ui-popover.pw-owner-portal[data-state]{--font-body:'GoverNara Policy Inter',Inter,system-ui,sans-serif;--font:var(--font-body);--font-heading:var(--font-body);font:14px/1.5 var(--font-body);background:var(--pw-card);color:var(--pw-ink);border-color:var(--pw-line2)}
+.pw-owner-portal :is(button,input){font:inherit;color:inherit;background:var(--pw-card);border-color:var(--pw-line2)}
+.pw-owner-portal button:hover{background:var(--pw-soft)}

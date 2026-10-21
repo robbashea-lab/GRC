@@ -9,7 +9,7 @@ import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/s
 import {Button} from './ui/button';
 import {Input} from './ui/input';
 import {Textarea} from './ui/textarea';
-import api,{formatError} from '@/lib/api';
+import api,{formatError,PREVIEW_MODE} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
 import {frameworkCatalog,frameworkDefinition,frameworkWorkspace} from '@/lib/frameworks';
 import {recordUuid} from '@/lib/recordUuid';
@@ -28,6 +28,7 @@ import FrameworkContext from './FrameworkContext';
 import {operatorStatuses,operatorProgram,STATUS_HELP} from '@/lib/frameworkOperator';
 import FrameworkReviewSetup from './FrameworkReviewSetup';
 import FrameworkAssessmentWorkspace from './FrameworkAssessmentWorkspace';
+import {cisVisualRecordMatches} from '@/lib/brawndoCisVisual';
 import BrawndoCisSafeguard from './BrawndoCisSafeguard';
 import PrestigeSocAssessment from './PrestigeSocAssessment';
 import FrameworkRecordAccess from './FrameworkRecordAccess';
@@ -35,8 +36,15 @@ import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,A
 
 const IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',evidence:'evidence_id',vendors:'vendor_id'};
 const SELECT='w-full border border-line bg-surface-card rounded p-2 text-sm';
-export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSaved,onPrevious,onNext,position,breadcrumb,recordManagement=false,reviewManagement=false,onReviews}){
-  const {user}=useAuth(),aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
+export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSaved,onPrevious,onNext,position,breadcrumb,recordManagement=false,reviewManagement=false,onReviews,visualReference=false,cisVisualOrigin,onManage}){
+  const auth=useAuth(),{user}=auth,aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
+  const actorOriginKey=JSON.stringify([user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,PREVIEW_MODE]);
+  const inheritedCisVisual=cisVisualOrigin?.key===actorOriginKey && cisVisualOrigin.clientId===clientId
+    && clientId==='demo_brawndo' && cisVisualOrigin.programId==='demo_brawndo:cis-ig1'
+    && cisVisualOrigin.assessmentId===aid && cisVisualOrigin.definitionId===record.definition_id && record.framework_key==='cis-ig1'
+    && PREVIEW_MODE===true && auth.workspaceMode==='demo' && user?.workspace_mode==='demo'
+    && !!user?.user_id && !!user?.role && !auth.loading && !auth.error;
+  const visualOriginKey=visualReference||inheritedCisVisual?actorOriginKey:null;
   const catalog=frameworkCatalog(record.framework_key),isCsf=record.framework_key==='nist-csf-2',isSoc=record.framework_key==='soc-2',isCis=record.framework_key==='cis-ig1',item=catalog?.labels?.item||(isCis?'Safeguard':'Requirement'),program=operatorProgram(record.framework_key);
   const statuses=operatorStatuses(record.framework_key);
   const workspace=record.client_id===clientId?frameworkWorkspace(record.framework_key):'generic';
@@ -48,21 +56,33 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   const [tab,setTab]=useState(recordManagement&&record.framework_key==='iso-27001'?'Related':''),[form,setForm]=useState(record),[ctx,setCtx]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[nested,setNested]=useState(null),[comment,setComment]=useState(''),[finding,setFinding]=useState(null),[link,setLink]=useState({kind:'risks',id:''});
   const [reviewDraft,setReviewDraft]=useState(false),[guidedDraft,setGuidedDraft]=useState(false);
   const [controlDraft,setControlDraft]=useState(false);
+  const [itemsDraft,setItemsDraft]=useState(false);
   const [stagedImplementationForm,setStagedImplementationForm]=useState(null);
   const [savedForm,setSavedForm]=useState(record),[feedback,setFeedback]=useState(''),[pending,setPending]=useState(null);
+  const guideConfiguration=useRef(null);
+  const liveGuideContext=prototype&&ctx?.current?.framework_assessment_id===aid&&ctx.current.client_id===clientId&&ctx.current.framework_key===record.framework_key?ctx:null;
+  const liveCisContext=brawndoCis?liveGuideContext:null;
+  const cisVisualReference=!!visualOriginKey&&cisVisualRecordMatches(record,liveCisContext,visualOriginKey);
+  // Appearance follows this live, verified opener only; it grants no native write permission.
+  const nestedCisVisualOrigin=cisVisualReference?{key:visualOriginKey,clientId,programId:liveCisContext.visualOrigin.programId,assessmentId:aid,definitionId:record.definition_id}:undefined;
+  if(!prototype||ctx!==null&&!liveGuideContext||guideConfiguration.current&&(guideConfiguration.current.assessment_id!==aid||guideConfiguration.current.client_id!==clientId||guideConfiguration.current.framework_key!==record.framework_key))guideConfiguration.current=null;
+  if(liveGuideContext)guideConfiguration.current={client_id:clientId,assessment_id:aid,framework_key:record.framework_key,configuration:liveGuideContext.configuration};
+  // Keep only this identity's guide mounted on context failure; saving still requires live context.
+  const guidedConfiguration=ctx===null?guideConfiguration.current?.configuration:null;
   const dirty=JSON.stringify(form)!==JSON.stringify(savedForm),linkDraft=recordManagement&&!!link.id;
-  const leave=fn=>{if(busy)return;if(dirty||guidedDraft||reviewDraft||controlDraft||finding||comment.trim()||linkDraft)setPending(()=>fn);else fn();};
-  useEffect(()=>{if(!dirty&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&!linkDraft)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty,guidedDraft,reviewDraft,controlDraft,finding,comment,linkDraft]);
+  const leave=fn=>{if(busy)return;if(dirty||guidedDraft||reviewDraft||controlDraft||itemsDraft||finding||comment.trim()||linkDraft)setPending(()=>fn);else fn();};
+  useEffect(()=>{if(!dirty&&!guidedDraft&&!reviewDraft&&!controlDraft&&!itemsDraft&&!finding&&!comment.trim()&&!linkDraft)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty,guidedDraft,reviewDraft,controlDraft,itemsDraft,finding,comment,linkDraft]);
   useEffect(()=>{
     const c=new AbortController();
-    // Keep the same prototype's linked rows mounted during refresh so closing a
-    // nested drawer can restore its opener and does not jump the reading position.
-    setCtx(old=>prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old:null);
+    // Keep native linked rows mounted during same-origin refreshes. Clear a
+    // changed visual origin so an away/back switch cannot reuse its old receipt.
+    setCtx(old=>prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId
+      &&(old.visualOrigin?.key??null)===visualOriginKey?old:null);
     setError('');const opts={params:{client_id:clientId},signal:c.signal};
     Promise.all([api.get(`/framework_assessments/${aid}/related`,{signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal}),api.get('/contacts',opts),api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal}),api.get('/frameworks/'+record.framework_key,opts)]).then(([related,users,contacts,comments,activity,workspace])=>{
-      if(!c.signal.aborted)setCtx(old=>({related:related.data,users:users.data,contacts:contacts.data,comments:comments.data,activity:activity.data,configuration:{...(workspace.data.configuration||{}),...(['soc-2','iso-27001'].includes(record.framework_key)?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid)),options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}));
+      if(!c.signal.aborted)setCtx(old=>({visualOrigin:visualOriginKey?{key:visualOriginKey,selected:workspace.data.selected,configured:workspace.data.configured,framework:workspace.data.framework,programId:workspace.data.implementation_position?.program_id}:null,related:related.data,users:users.data,contacts:contacts.data,comments:comments.data,activity:activity.data,configuration:{...(workspace.data.configuration||{}),...(['soc-2','iso-27001'].includes(record.framework_key)?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid)),options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}));
     }).catch(e=>{if(!c.signal.aborted){setCtx(null);setError(formatError(e));}});return()=>c.abort();
-  },[aid,clientId,record.framework_key,revision,prototype]);
+  },[aid,clientId,record.framework_key,revision,prototype,visualOriginKey]);
   const contextLoaded=!!ctx;
   useEffect(()=>{
     if(!contextLoaded)return;
@@ -85,13 +105,13 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     setFeedback('Omni answer is saved to the interview. Current implementation remains a draft until Save assessment. Status and verification are unchanged.');return true;
   };
   const guidedSavePending=useRef(false);
-  const nativeSnapshot=useRef(null);nativeSnapshot.current={form,savedForm,busy,writable,relatedDraft:reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft};
+  const nativeSnapshot=useRef(null);nativeSnapshot.current={form,savedForm,busy,writable,guidedContextAvailable:!!liveGuideContext,relatedDraft:itemsDraft||reviewDraft||controlDraft||itemsDraft||!!finding||!!comment.trim()||linkDraft};
   async function saveGuidedAssessment(values,expected){
     const latest=nativeSnapshot.current;
     const socEnabled=isSoc&&socGuidedEnabled(clientId,user,record.framework_key,ctx?.configuration,record.definition_id);
     const isoEnabled=isoGuidedEnabled(clientId,user,record.framework_key,ctx?.configuration,record.definition_id);
-    if((!isoEnabled&&!socEnabled&&!inventorySummaryEnabled(clientId,user,record.framework_key,ctx?.configuration,record))||!latest.writable||latest.busy||guidedSavePending.current)return false;
-    if((isoEnabled||socEnabled)&&latest.relatedDraft){setError('Finish or discard the related-record draft before saving this summary.');return false;}
+    if((!isoEnabled&&!socEnabled&&!inventorySummaryEnabled(clientId,user,record.framework_key,ctx?.configuration,record))||prototype&&!latest.guidedContextAvailable||!latest.writable||latest.busy||guidedSavePending.current)return false;
+    if(latest.relatedDraft){setError('Finish or discard the related-record draft before saving this summary.');return false;}
     if(JSON.stringify(latest.form)!==expected||JSON.stringify(latest.form)!==JSON.stringify(latest.savedForm)){
       setError('The native assessment has unsaved or changed content. Review it before saving this summary.');return false;
     }
@@ -117,19 +137,32 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     }finally{guidedSavePending.current=false;}
   }
   const who=id=>personLabel(ctx?.users,id,'Not recorded');
-  async function save({recordAssessment=false,assessment=form}={}){return run(async()=>{const body=Object.fromEntries(['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale',...(definition.specification==='annex_control'?['soa_applicability','soa_justification']:[]),...(isCsf?['csf_profile']:[]),...(record.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...(brawndoCis?['verification','cis_assessment_criteria']:prestigeSoc?['verification','soc_assessment_checks']:[])].map(k=>[k,assessment[k]??(k==='csf_profile'?EMPTY_CSF_PROFILE:k==='verification'?'not_verified':['cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks'].includes(k)?[]:k.endsWith('_id')?null:'')]));const {data}=await api.patch(`/framework_assessments/${aid}`,{...body,...(brawndoCis&&assessment.cis_operation?{cis_operation:assessment.cis_operation}:{}),...(assessment.guided_assessment_source&&JSON.stringify(assessment.guided_assessment_source)!==JSON.stringify(savedForm.guided_assessment_source)?{guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,assessment.guided_assessment_source[k]]))}:{}),...(isSoc&&recordAssessment?{record_assessment:true}:{}),expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null});setForm(data);setSavedForm(data);if(assessment!==form)setCtx(previous=>previous?{...previous,current:{...data,work:previous.current?.work}}:previous);setFeedback(isSoc?(recordAssessment||(data.assessment_recorded_at??null)!==(savedForm.assessment_recorded_at??null)?'Assessment recorded.':'Changes saved; assessment date unchanged.'):'Assessment saved.');});}
+  async function save({recordAssessment=false,assessment=form}={}){return run(async()=>{const body=Object.fromEntries(['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale',...(definition.specification==='annex_control'?['soa_applicability','soa_justification']:[]),...(isCsf?['csf_profile']:[]),...(record.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...(brawndoCis?['verification','cis_assessment_criteria']:prestigeSoc?['verification','soc_assessment_checks']:[])].map(k=>[k,assessment[k]??(k==='csf_profile'?EMPTY_CSF_PROFILE:k==='verification'?'not_verified':['cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks'].includes(k)?[]:k.endsWith('_id')?null:'')]));const {data}=await api.patch(`/framework_assessments/${aid}`,{...body,...(brawndoCis&&assessment.cis_operation?{cis_operation:assessment.cis_operation}:{}),...(assessment.guided_assessment_source&&JSON.stringify(assessment.guided_assessment_source)!==JSON.stringify(savedForm.guided_assessment_source)?{guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,assessment.guided_assessment_source[k]]))}:{}),...(isSoc&&recordAssessment?{record_assessment:true}:{}),expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null});setForm(data);setSavedForm(data);if(brawndoCis||assessment!==form)setCtx(previous=>previous?{...previous,current:{...data,work:previous.current?.work}}:previous);setFeedback(isSoc?(recordAssessment||(data.assessment_recorded_at??null)!==(savedForm.assessment_recorded_at??null)?'Assessment recorded.':'Changes saved; assessment date unchanged.'):'Assessment saved.');});}
   async function download(e){await run(async()=>{const {data}=await api.get(`/evidence/${e.evidence_id}/download`);const a=document.createElement('a');a.href=data.content_base64.startsWith('data:')?data.content_base64:`data:${data.mime_type};base64,${data.content_base64}`;a.download=data.filename;a.click();});}
-  const current=ctx?.current||record,related=ctx?.related||{};
+  const current=(prototype?liveGuideContext?.current:ctx?.current)||(prototype&&savedForm.client_id===clientId&&savedForm.framework_assessment_id===aid&&savedForm.framework_key===record.framework_key?savedForm:record),related=ctx?.related||{};
+  function itemsSaved(data){
+    if(data.framework_assessment_id!==aid||data.client_id!==clientId)return;
+    const fields={items_to_address:data.items_to_address,items_revision:data.items_revision};
+    setForm(previous=>({...previous,...fields}));setSavedForm(previous=>({...previous,...fields}));
+    setCtx(previous=>previous?{...previous,current:{...previous.current,...fields}}:previous);
+    onSaved?.();
+  }
+  function createItemFinding(item){
+    if(!writable||busy||!liveGuideContext||finding||item.finding_id)return;
+    // Match the API's code-point limit without splitting surrogate pairs.
+    const title=Array.from(item.text).slice(0,200).join('');
+    setFinding({request_id:recordUuid(),item_id:item.item_id,title,description:item.text+(item.resolution?'\n\nRecorded resolution: '+item.resolution:''),severity:'medium',owner_id:current.owner_id||'',due_date:'',remediation_title:title});
+  }
   async function saveOwner(){return run(async()=>{const {data}=await api.patch(`/framework_assessments/${aid}`,{owner_id:form.owner_id||null,...(record.framework_key==='iso-27001'?{process_owner_id:form.process_owner_id||null}:{}),expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null});setForm(data);setSavedForm(data);setFeedback('Changes saved.');});}
-  const overlays=<><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved assessment is unchanged. Continue editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</>;
+  const overlays=<><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved assessment is unchanged. Continue editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} cisVisualOrigin={nestedCisVisualOrigin} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>}</>;
   if(recordManagement||reviewManagement)return <><FrameworkRecordAccess reviewsOnly={reviewManagement} state={{open,current,definition,catalog,ctx,form,dirty,busy,error,feedback,writable,comment,link}} actions={{put,saveOwner,run,setComment,setLink,setNested,setReviewDraft,close:()=>leave(()=>onOpenChange(false)),openReviews:url=>leave(()=>onReviews?.(url)),reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}/>{overlays}</>;
-if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{open,record,definition,form,current,ctx,related,finding,error,busy,dirty,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),feedback,writable,position,otherDraft:guidedDraft||reviewDraft||!!finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{put,save,run,download,applyGuided,saveGuidedAssessment,stageGuidedImplementation,setGuidedDraft,setFinding,setNested,setFeedback,setReviewDraft,reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');},retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!guidedDraft&&!reviewDraft&&!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{open,record,definition,form,current,ctx,error,busy,dirty,relatedDraft:reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft,otherDraft:guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{put,save,saveGuidedAssessment,setGuidedDraft,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
-    state={{open,record,definition,catalog,form,current,ctx,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c),otherDraft:guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),relatedDraft:reviewDraft||controlDraft||!!finding||!!comment.trim()}}
-    actions={{put,save,saveGuidedAssessment,setGuidedDraft,run,download,setComment,setFinding,setTab,setNested,setFeedback,setReviewDraft,setLink,setControlDraft,
+if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{visualReference:cisVisualReference,manageRecord:onManage?()=>leave(onManage):undefined,open,record,definition,form,current,ctx:liveCisContext,guidedConfiguration,related,finding,error,busy,dirty,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),feedback,writable,position,otherDraft:itemsDraft||guidedDraft||reviewDraft||!!finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,run,download,applyGuided,saveGuidedAssessment,stageGuidedImplementation,setGuidedDraft,setFinding,setNested,setFeedback,setReviewDraft,reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');},retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{open,record,definition,form,current,ctx,guidedConfiguration,error,busy,dirty,relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft,otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,saveGuidedAssessment,setGuidedDraft,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
+    state={{open,record,definition,catalog,form,current,ctx,guidedConfiguration,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c),otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()}}
+    actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,saveGuidedAssessment,setGuidedDraft,run,download,setComment,setFinding,setTab,setNested,setFeedback,setReviewDraft,setLink,setControlDraft,
       controlSaved:()=>{setRevision(n=>n+1);onSaved?.();},
       retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),
       previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,
-      saveAndNext:onNext?async()=>{if(!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null,
+      saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null,
       reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}
   />}{overlays}</>;
   return <><Sheet open={open} onOpenChange={v=>{if(!v)leave(()=>onOpenChange(false));}}><SheetContent className="w-full sm:max-w-3xl overflow-y-auto bg-surface-card" data-testid="framework-drawer"><SheetHeader><SheetTitle>{program} {definition.id} · {definition.title}</SheetTitle><SheetDescription>Assess the scoped implementation, link evidence and follow remediation.</SheetDescription></SheetHeader>

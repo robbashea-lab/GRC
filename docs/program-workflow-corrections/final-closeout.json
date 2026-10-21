@@ -1,0 +1,439 @@
+{
+  "recorded_at_utc": "2026-10-14T18:09:38Z",
+  "scope": "Final authorized program-workflow closeout; no additional interface changes or features. Agent2 retains Portfolio and shared staging/session ownership.",
+  "current_closeout": "Pass for completed bounded authorized checks; historical failures retained; explicit Unverified dependencies remain.",
+  "runtime": {
+    "branch": "codex/governara-portfolio-programs-20261014",
+    "runtime_sha": "863e391280da6606e7e2972bfe1367d877dd757b",
+    "program_sha": "a8f2ecc998619ac95b89d435b487e2b6cffd42e8",
+    "pr": "https://github.com/robbashea-lab/GRC/pull/81",
+    "pr_last_observed": {
+      "head_sha": "863e391280da6606e7e2972bfe1367d877dd757b",
+      "state": "open",
+      "draft": true,
+      "merged": false
+    },
+    "ci_run": 38598158538,
+    "ci_number": 173,
+    "ci_url": "https://github.com/robbashea-lab/GRC/actions/runs/38598158538",
+    "deployment_url": "https://dashboard.render.com/web/srv-db1s0cugekts73f72reg/deploys/dep-db7rhs1srm7s7391n1dg",
+    "deployment_id": "dep-db7rhs1srm7s7391n1dg",
+    "service_id": "srv-db1s0cugekts73f72reg",
+    "service_url": "https://omnisciente-staging.onrender.com",
+    "startup_utc": "2026-10-14T17:17:57Z",
+    "live_utc": "2026-10-14T17:18:02Z",
+    "authenticated_assets": [
+      "main.710be7a7.js",
+      "main.24a244a6.css"
+    ]
+  },
+  "source": {
+    "program_application_correction": "f62a6ba1cb3ec44519922b0744d88709eaea4876",
+    "program_source": "a8f2ecc998619ac95b89d435b487e2b6cffd42e8",
+    "portfolio_owner_source": "badda5eb93aefa0403288ed1a68daa9fe168f2a5",
+    "combined_runtime": "863e391280da6606e7e2972bfe1367d877dd757b",
+    "combined_application_previous": "5941169e14fe8397ce477237615329d39b8e6ba6",
+    "main_read_only_last_observed": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "record_commit": "Discover via git log -- this docs-only append is later than deployed863; no documentation-only redeploy requested."
+  },
+  "change": "Normalize missing/null/empty only for three existing native footer defaults at early source acknowledgment and final validated write boundary; preserve real clears, changed notes/text/status and all authorization/CAS/lease/source validation. Demo parity. No Portfolio formula/capture/schema/history repair, CSS/interface, dependency/provider/account/grant change. Optional passive test-wrapper observer preserves all existing gates and exit policy.",
+  "ci": {
+    "id": 38598158538,
+    "number": 173,
+    "head": "863e391280da6606e7e2972bfe1367d877dd757b",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1,
+    "created_at": "2026-10-14T16:27:00Z",
+    "updated_at": "2026-10-14T17:13:46Z",
+    "url": "https://github.com/robbashea-lab/GRC/actions/runs/38598158538",
+    "jobs": [
+      {
+        "id": 115970154029,
+        "name": "backend",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 115970154232,
+        "name": "backend-mongo",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 115970154366,
+        "name": "frontend",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 115992960222,
+        "name": "Release gate",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "backend": {
+      "result": "Pass",
+      "tests": 1004,
+      "skipped": 3,
+      "warnings": 8,
+      "subtests": 16250,
+      "seconds": 1612.6,
+      "image": "ubuntu24/20261004.327.1",
+      "provisioner": "20261002.596",
+      "job_id": 115970154029,
+      "observer_marker_count": 0,
+      "node_down_count": 0
+    },
+    "frontend": {
+      "suites": 312,
+      "tests": 9314,
+      "snapshots": 1,
+      "seconds": 2676.918,
+      "normal": {
+        "js": "main.710be7a7.js",
+        "css": "main.24a244a6.css"
+      },
+      "demo": {
+        "js": "main.b513de06.js",
+        "css": "main.27347f46.css"
+      }
+    },
+    "mongo": {
+      "result": "Pass",
+      "counts": null,
+      "raw_log": "Transport closed; no repeated download or borrowed count"
+    },
+    "image_map": [
+      {
+        "run": "171",
+        "image": "20261004.327.1",
+        "result": "Pass"
+      },
+      {
+        "run": "172",
+        "attempt": 1,
+        "image": "20261004.327.1",
+        "result": "Backend cancelled; gate failed"
+      },
+      {
+        "run": "172",
+        "attempt": 2,
+        "image": "20261012.334.1",
+        "result": "Backend cancelled; gate failed"
+      },
+      {
+        "run": "173",
+        "image": "20261004.327.1",
+        "result": "All four gates Pass"
+      }
+    ],
+    "cause_of_prior_loss": "Unknown",
+    "backend_log_sha256": "b582de6b2afc9aec606a8c388f5dd75fb29c8a491e1db8ef4db800e84f2f895a",
+    "frontend_log_sha256": "2fc895dda6a4c1c4f45b33d47f49f109c8e790d612f7f90c1358215ec1b94a21"
+  },
+  "focused_checks": {
+    "exact_combined": "5941169e14fe8397ce477237615329d39b8e6ba6",
+    "backend": {
+      "modules": 4,
+      "passed": 82,
+      "subtests": 9021,
+      "warnings": 4,
+      "seconds": 189.52
+    },
+    "demo_footer": {
+      "selected_suites": 2,
+      "passed": 2,
+      "deselected": 36,
+      "seconds": 26.678
+    },
+    "qualification": "Overlapping focused receipts; final fullCI173 is separate exact863 proof. No repeats after final unchanged application gate."
+  },
+  "decisions": [
+    {
+      "check": "Exact combined candidate release gates",
+      "result": "Pass",
+      "evidence": "CI173 exact 863e391: backend, frontend, backend-mongo and Release gate all completed success; normal and Demo builds compiled."
+    },
+    {
+      "check": "Exact authorized staging release and fresh loaded assets",
+      "result": "Pass",
+      "evidence": "Agent 2 deployed 863e391 to existing service; Live 17:18:02Z; fresh authenticated normal assets match CI173."
+    },
+    {
+      "check": "Hosted ISO4.1 guide draft versus final native save",
+      "result": "Pass",
+      "evidence": "Untouched Not Assessed/empty/0 Items baseline; draft survives reload/group resume without native assessment change; reviewed final native apply is distinct."
+    },
+    {
+      "check": "Generated Current Implementation/status/Items",
+      "result": "Pass",
+      "evidence": "Internal Partially/external Not sure/climate Yes yield Partial/Not verified, one genuine gap and one confirmation; zero linked Findings."
+    },
+    {
+      "check": "Manual text and native persistence after reload",
+      "result": "Pass",
+      "evidence": "Exact literal analyst wording retained after final apply/reload and both ordinary footer reloads. Earlier ISO4.2 changed-answer review acknowledgment remains a separate valid fce receipt."
+    },
+    {
+      "check": "First and repeated unchanged footer visible native/history behavior",
+      "result": "Pass",
+      "evidence": "Fresh 4.1 first PATCH and repeat PATCH return selected HTTP200; native text/status/2 Items, 7 rendered history rows/latest-current label and existing 7 scope markers remain unchanged."
+    },
+    {
+      "check": "Finding closure/reopening and source preservation",
+      "result": "Pass (reused earlier hosted receipt)",
+      "tested_revision": "fce5e056567bd276a997f948296e6857a777f330",
+      "evidence": "Existing CIS1.1 Finding Open -> Pending validation -> legitimate administrator Completed -> Open, same Finding identity; two completed child resolutions retained and new Open child retains copied plan. Source Partial/Not verified after reload. Not an ISO-created Finding; not reexecuted on 863. Connected lifecycle routes were not changed by footer correction."
+    },
+    {
+      "check": "Dashboard/Portfolio current native update parity",
+      "result": "Pass",
+      "evidence": "Final exact hosted vectors in operator receipt; CIS153 [0,1,0,152], ISO31 [1,2,0,28], SOC33 [0,0,1,32]; diagnostic217 [1,3,1,212] / 5 assessed, not a cross-framework readiness score."
+    },
+    {
+      "check": "Bounded hosted console and selected server HTTP statuses",
+      "result": "Pass",
+      "evidence": "34 warning/error collections, limit100 each, all empty; 19 selected provider method/path/status rows all200. Not exhaustive browser network proof."
+    },
+    {
+      "check": "Owned fixture recovery/cleanup and visible protected posture",
+      "result": "Pass",
+      "evidence": "Own fixture rearchived and freshly reloaded with Restore available; active22 clients/27 programs, own absent; protected visible counts unchanged. Whole-database byte equality not claimed."
+    },
+    {
+      "check": "Old first-footer behavior",
+      "result": "Fail on superseded fce; corrected current behavior Pass",
+      "evidence": "Reproduced missing-to-empty defaults created false 12:54 history/scope entry; native/Demo normalization fixed as f62. Retain old failure and row; no history repair."
+    },
+    {
+      "check": "CI172 two offline backend attempts",
+      "result": "Fail/cancelled historical gates retained",
+      "evidence": "Both lost worker channel and hit original30-minute cancellation budget; both release gates failed. Current exact CI173 all four Pass supersedes pending current gate, not historical cause."
+    }
+  ],
+  "hosted_receipt": "hosted-closeout-863e391.json",
+  "reused_receipt": {
+    "file": "hosted-closeout-fce5e05.json",
+    "sha256": "32888901dac26e35a0917c5bfafa7782ac5ff9783f873937095c41e4eef42916",
+    "revision": "fce5e056567bd276a997f948296e6857a777f330",
+    "resources": {
+      "client_name": "Portfolio Workflow QA 20261014 fce5e05",
+      "client_id": "cli_3fe2af6a91e54ffffd5ac2415fd10de31397ed73dfa477d4f541743afb6fa10f",
+      "iso_definition": "4.2 — Stakeholder obligations",
+      "iso_assessment_id": "fw_aaa013f2c7205b129591082eee1518f5",
+      "cis_assessment_id": "fw_b18f2c661a825dd6a6623d0c59a5bf78",
+      "finding_id": "fw_f72d290696885697a5b7166ca70cdd94",
+      "child_action_ids": null
+    },
+    "scope": "Valid ISO4.2 changed-answer/manual-review guard, existing CISFinding closure/reopen, earlier selected console/HTTP and source-reload receipts. No new863 execution implied; old first-footer Fail retained."
+  },
+  "genuine_history": {
+    "source": "Owned disposable QA fixture; not customer historical improvement",
+    "fresh_inspected_range": "3m July14-October14 UTC",
+    "observed_rows": 7,
+    "earliest_ui": "2026-10-14 03:11 UTC",
+    "latest_ui": "2026-10-14 17:28 UTC",
+    "latest_matches_current": true,
+    "first_and_repeated_footer_additional_positions": 0,
+    "first_and_repeated_footer_additional_scope_markers": 0,
+    "known_false_row_retained": "2026-10-14 12:54 UTC old default-materialization bug",
+    "repair": false,
+    "requested_period_change": "Unavailable",
+    "forecast": "Not estimated",
+    "limitations": "Seven captured positions include context/archive/restoration observations and known old false point; not seven substantive improvements. Comparable lineage/epoch/raw available_from not inferred. New closeout did not repeat30d/6m/12m selectors or fabricate/backfill trends/activity."
+  },
+  "cleanup": {
+    "own_fixture_rearchived": true,
+    "archive_fresh_reload_utc": "2026-10-14T17:42:49.049Z",
+    "restore_available": true,
+    "active_clients": 22,
+    "active_programs": 27,
+    "own_fixture_absent_active": true,
+    "final_active_capture_utc": "2026-10-14T17:43:45.606Z",
+    "protected": {
+      "Brawndo": {
+        "implemented": 2,
+        "denominator": 56,
+        "assessed": 2
+      },
+      "Hooli": {
+        "implemented": 0,
+        "denominator": 153,
+        "assessed": 0
+      },
+      "Initech": {
+        "implemented": 0,
+        "denominator": 130,
+        "assessed": 0
+      },
+      "Prestige": {
+        "implemented": 0,
+        "denominator": 38,
+        "assessed": 0
+      },
+      "Dunder": "Absent only from active authorized view"
+    }
+  },
+  "independent_acceptance": [
+    {
+      "reviewer": "Actual Agent2",
+      "layer": "Independent hosted execution relative to program authors; Portfolio owner/sole authorized staging operator",
+      "result": "Pass for current bounded journeys",
+      "evidence": "hosted-closeout-863e391.json"
+    },
+    {
+      "reviewer": "/root/soc2_review",
+      "layer": "Non-author independent artifact review of actualAgent2 hosted execution; no independent browser/operator reexecution",
+      "result": "PASS bounded corrected hosted ISO4.1 draft/application/manual-preservation/visible first-and-repeat footer history no-op; precise unverified scopes remain",
+      "reviewed_at_utc": "2026-10-14T18:09:20.225787+00:00",
+      "artifact": "hosted-closeout-863-independent-review.json",
+      "sha256": "447d6e59a5693da26cf794fd9a1000ce6ec0ba0bd3dba1865711b85db9ad7e32",
+      "original_dom_rehashed": false,
+      "browser_reexecution": 0
+    },
+    {
+      "reviewer": "/root/soc2_review",
+      "layer": "Independent non-author actual-artifact inspection only; no new tests/builds/CIquery/network/stage/browser/sourcechanges",
+      "result": "PASS exactCI173 all4; authorized existingservice deployment and hostedpostfix acceptancePENDING; priorworkerlosses remainUnknown",
+      "artifact": "ci173-closeout-evidence-independent-review.json",
+      "sha256": "d39cf301a75a8d260b4fdb47e1c67ab4ad42d8c00b06719f6214b1d777cf7986",
+      "qualification": "Artifact/log/header/job metadata review, no independent CI execution. Its then-pending hosted layer is separately closed by the later actual Agent2 receipt and non-author hosted artifact review recorded above."
+    },
+    {
+      "reviewer": "/root/soc2_review",
+      "layer": "Passive observer non-author source/integration review",
+      "result": "Pass bounded source; its earlier pending full gate superseded by CI173 all4success",
+      "artifact": "passive-worker-observer-independent-review.json",
+      "sha256": "9d6e1faf98a3ddda4284554c0d60842447c9a51fd66645384a5034200df775b1",
+      "qualification": "No claimed repair of prior worker loss; observer produced zero worker-loss markers in CI173."
+    }
+  ],
+  "image_corrigendum": {
+    "supersedes_any_both_failed_attempts_new_image_implication": true,
+    "per_attempt": [
+      {
+        "run": "171",
+        "image": "20261004.327.1",
+        "result": "Pass"
+      },
+      {
+        "run": "172",
+        "attempt": 1,
+        "image": "20261004.327.1",
+        "result": "Backend cancelled; gate failed"
+      },
+      {
+        "run": "172",
+        "attempt": 2,
+        "image": "20261012.334.1",
+        "result": "Backend cancelled; gate failed"
+      },
+      {
+        "run": "173",
+        "image": "20261004.327.1",
+        "result": "All four gates Pass"
+      }
+    ],
+    "installed_displayed_package_versions": 41,
+    "versions_all_equal": true,
+    "python": "3.12.15",
+    "pytest": "9.1.1",
+    "xdist": "3.8.0",
+    "execnet": "2.1.2",
+    "mongomock_motor": "0.0.36",
+    "conclusion": "Runner image does not separate passing from failing receipts. Causal role Unverified; no image pin/config/dependency change."
+  },
+  "superseded_pending_statements": [
+    {
+      "pending_statement": "Early Portfolio010861 freeze",
+      "superseded_by": "Owner Portfolio badda5eb93aefa0403288ed1a68daa9fe168f2a5 plus exact combined863; owner retained."
+    },
+    {
+      "pending_statement": "Combined candidate / final exact gates pending",
+      "superseded_by": "CI173 all4success on863. Standalone program a8 full CI not claimed; earlier focused checks remain distinct."
+    },
+    {
+      "pending_statement": "Hosted ISO was manual assessment/applicability only",
+      "superseded_by": "Actual fce ISO4.2 guide plus corrected863 untouched ISO4.1 draft/review/final/manual/reload journey."
+    },
+    {
+      "pending_statement": "First-footer failure and corrected hosted acceptance pending",
+      "superseded_by": "f62 narrow native/Demo fix, reviewed integration, exact CI173 and first/repeated unchanged native footers on fresh863 ISO4.1 with no visible history/scope delta."
+    },
+    {
+      "pending_statement": "Hosted console/network observation pending",
+      "superseded_by": "Earlier qualified fce receipts plus new863 34finiteconsole/19selected200. Uninspected raw timings/bodies/statuses remain Unverified."
+    },
+    {
+      "pending_statement": "Combined Dashboard/Portfolio counts and fixture cleanup pending",
+      "superseded_by": "863 hosted native vectors agree; own recoverablearchive/reload22clients27programs/protectedvisiblepostures unchanged."
+    },
+    {
+      "pending_statement": "Earlier broad image-change implication",
+      "superseded_by": "Per-attempt official headers:CI171 old image Pass, CI172 attempt1 same old image Fail, CI172 attempt2 new image Fail, CI173 old image Pass. Image causality Unverified."
+    },
+    {
+      "pending_statement": "Earlier descriptions that no staging release occurred",
+      "superseded_by": "Authorized existing-service release dep-db7rhs1srm7s7391n1dg Live17:18:02Z, runtime863. Main/production/Sites remain untouched."
+    }
+  ],
+  "remaining_dependencies": [
+    {
+      "status": "Unverified",
+      "check": "111 ISO normative comparison units",
+      "dependency": "Licensed authoritative text unavailable:18 clauses7-10 plus93 Annex A controls. Only12 complete public units compared; all123 authored functional definitions reviewed separately."
+    },
+    {
+      "status": "Unverified",
+      "check": "3 unrelated FrameworkReportMongoSnapshotTests",
+      "dependency": "Owned isolated replica set and FRAMEWORK_REPORT_TEST_MONGO needed. CI backend-mongo success supplies no receipt for these explicitly skipped methods."
+    },
+    {
+      "status": "Unverified / held",
+      "check": "Protected security and session campaigns",
+      "dependency": "Original Tab5, Brawndo/17.5 restrictions, real login/logout/MFA/email, restricted-role/access/fault/tamper/worker application campaigns remain held. No waiver, account/grant/session changes."
+    },
+    {
+      "status": "Unverified",
+      "check": "329 other individual deep browser journeys",
+      "dependency": "Eight unique definitions deeply exercised across recorded local/hosted environments; all337 unique/523 placements source reviewed. No extrapolated whole-browser acceptance."
+    },
+    {
+      "status": "Unverified",
+      "check": "Raw hosted state and exhaustive network",
+      "dependency": "Actor UID, native save/CAS/revision/last_saved precision, current_epoch/comparable available_from, raw request/response bodies, response duration, baseline-history GET and restore PATCH statuses were not inspected. Finite status/console evidence remains qualified."
+    },
+    {
+      "status": "Unverified",
+      "check": "Whole-app accessibility/device/security assurance",
+      "dependency": "Selected native/keyboard/normal workflow receipts do not establish conformance or held campaign acceptance."
+    },
+    {
+      "status": "Unknown",
+      "check": "Prior CI172 worker-loss cause",
+      "dependency": "Actual OS worker exit/signal/core needed. Channel EOF is not OS exit proof; no OOM/flakiness/pre-existing/runner-image/upstream-race causality asserted. Passive observer is diagnostic only."
+    },
+    {
+      "status": "Blocked metadata",
+      "check": "PR81 description refresh",
+      "dependency": "Agent2's update required approval while its chat policy forbids approval; no bypass. Existing body retains older fce/CI171 text. Exact runtime/deployment/current CI in this record supersedes stale description; no additional release action needed."
+    }
+  ],
+  "release_boundaries": {
+    "existing_authorized_staging_only": true,
+    "main_merge": false,
+    "production_publication": false,
+    "new_hosting": false,
+    "sites_publication": false,
+    "provider_configuration_changes": false,
+    "account_grant_changes": false,
+    "held_tab5_touched": false,
+    "held_campaigns_run": false,
+    "record_head_is_runtime": false,
+    "documentation_only_redeploy_requested": false,
+    "operator_slot_released": true
+  },
+  "historical_evidence": "Earlier acceptance.md/coordination.md text, hostedfce failure/receipt, CI172 two cancelled attempts and log hashes remain intact. This final append changes current disposition, not historical facts."
+}

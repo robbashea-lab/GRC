@@ -1,0 +1,212 @@
+/* Same approved Inter bytes as Dashboard/Calendar; this family stays inside Reviews content. */
+@font-face {
+  font-family:'GoverNara Reviews Inter'; font-style:normal; font-weight:400 700; font-display:swap;
+  src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+.brawndo-demo-reviews {
+  --bg:#F4F6F9; --surface:#FFFFFF; --subtle:#F7F9FB; --tablehead:#F9FAFC; --hover:#F2F5F9; --border:#E3E8EF; --border-strong:#CDD5E0;
+  --fg:#0F1B2D; --fg2:#46566B; --muted:#5A687B; --link:#1F56C3; --selected:#EDF2FC; --rail:#215BC1; --focus:#215BC1;
+  --good:#05603A; --good-bg:#E7F6EF; --bad:#B42318; --bad-bg:#FDECEA; --warn:#93370D; --warn-bg:#FEF3E2;
+  --chrome:#FFFFFF; --banner:#F3F7FC; --brand:#EDF3FF; --avatar:#215BC1; --avatar-fg:#FFFFFF; --scrim:rgba(15,27,45,.38);
+  --c-part:#E2AA30; --c-due:#2A78D6; --c-late:#D64550; --c-done:#C3CCD8; --c-grid:#EDF1F5;
+  --seg-on:#FFFFFF; --tip-bg:#FFFFFF;
+  --shadow-sm:0 1px 2px rgba(15,27,45,.05), 0 1px 1px rgba(15,27,45,.02);
+  --shadow-seg:0 1px 2px rgba(15,27,45,.10), 0 0 0 1px rgba(15,27,45,.06);
+  --shadow-tip:0 0 0 1px rgba(15,27,45,.05), 0 12px 28px -8px rgba(15,27,45,.24);
+  --shadow:0 0 0 1px rgba(15,27,45,.06), 0 28px 64px -16px rgba(15,27,45,.34);
+  --font:'GoverNara Reviews Inter',Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  --font-body:var(--font); --font-heading:var(--font);
+  --bp-text:var(--fg); --bp-muted:var(--muted); --bp-border:var(--border); --bp-card:var(--surface);
+  --color-text-primary:var(--fg); --color-text-secondary:var(--fg2); --color-text-muted:var(--muted);
+  font:13.5px/1.5 var(--font);font-optical-sizing:auto;font-variation-settings:normal;font-variant-numeric:tabular-nums;
+  color:var(--fg);background:var(--bg);padding:28px max(24px,env(safe-area-inset-right,0px)) 120px max(24px,env(safe-area-inset-left,0px));display:grid;gap:20px;max-width:1600px;min-width:0;
+}
+.brawndo-demo-reviews[data-theme="dark"] {
+  --bg:#0A0F16; --surface:#111823; --subtle:#151D29; --tablehead:#131B26; --hover:#19222F; --border:#222C3A; --border-strong:#34404F;
+  --fg:#EDF1F7; --fg2:#A7B3C4; --muted:#8E9BAE; --link:#8EC5FF; --selected:#1B2738; --rail:#8EC5FF; --focus:#8EC5FF;
+  --good:#3DC79F; --good-bg:rgba(61,199,159,.13); --bad:#F2828C; --bad-bg:rgba(242,130,140,.13); --warn:#E9B65A; --warn-bg:rgba(233,182,90,.13);
+  --chrome:#0C1B30; --banner:#11243A; --brand:#EDF3FF; --avatar:#215BC1; --avatar-fg:#FFFFFF; --scrim:rgba(0,0,0,.6);
+  --c-part:#D4A13C; --c-due:#3987E5; --c-late:#E66767; --c-done:#3A4656; --c-grid:#1A2330;
+  --seg-on:#243042; --tip-bg:#161F2B;
+  --shadow-sm:none; --shadow-seg:0 1px 2px rgba(0,0,0,.4);
+  --shadow-tip:0 0 0 1px rgba(255,255,255,.05), 0 12px 32px -8px rgba(0,0,0,.65);
+  --shadow:0 0 0 1px rgba(255,255,255,.06), 0 28px 64px -16px rgba(0,0,0,.75);
+  color-scheme:dark;}
+/* Background only: never change inherited workspace/portal fonts or native popup tokens. */
+.brawndo-workspace-pilot[data-visual-surface="reviews"] :is(.app-workspace,.client-surface):has(.brawndo-demo-reviews[data-theme="light"]) {background:#F4F6F9;}
+.brawndo-workspace-pilot[data-visual-surface="reviews"] :is(.app-workspace,.client-surface):has(.brawndo-demo-reviews[data-theme="dark"]) {background:#0A0F16;}
+/* summary strip: one frame, hairline dividers, each figure filters the register */
+.brawndo-demo-reviews .bdr-kstrip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:10px; overflow:hidden; box-shadow:var(--shadow-sm); }
+.brawndo-demo-reviews .bdr-kcell { display:grid; gap:4px; align-content:start; padding:16px 20px 18px; background:var(--surface); text-align:left; transition:background .12s; }
+.brawndo-demo-reviews .bdr-kcell:hover { background:var(--subtle); }
+.brawndo-demo-reviews .bdr-kcell[aria-pressed="true"] { background:var(--selected); box-shadow:inset 0 -2px 0 var(--rail); }
+.brawndo-demo-reviews .bdr-kcell span { font-size:12.5px; font-weight:500; color:var(--muted); }
+.brawndo-demo-reviews .bdr-kcell strong { font-size:32px; font-weight:600; letter-spacing:-.02em; line-height:1.15; }
+.brawndo-demo-reviews .bdr-kcell strong.bdr-bad { color:var(--bad); }
+.brawndo-demo-reviews .bdr-kcell small { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.brawndo-demo-reviews .bdr-kcell small.bdr-bad { color:var(--bad); font-weight:500; }
+
+/* controls */
+.brawndo-demo-reviews .bdr-seg { display:inline-flex; gap:2px; padding:3px; border-radius:8px; background:var(--hover); box-shadow:inset 0 0 0 1px var(--border); max-width:100%; overflow-x:auto; min-width:0; }
+.brawndo-demo-reviews .bdr-seg button { padding:4px 11px; border-radius:6px; color:var(--fg2); font-size:12.5px; font-weight:500; white-space:nowrap; transition:background .12s, color .12s; }
+.brawndo-demo-reviews .bdr-seg button:hover { color:var(--fg); }
+.brawndo-demo-reviews .bdr-seg button[aria-pressed="true"] { background:var(--seg-on); color:var(--fg); font-weight:600; box-shadow:var(--shadow-seg); }
+.brawndo-demo-reviews .bdr-seg button .n { margin-left:6px; color:var(--muted); font-weight:500; font-variant-numeric:tabular-nums; }
+.brawndo-demo-reviews .bdr-seg button[aria-pressed="true"] .n { color:var(--fg2); }
+.brawndo-demo-reviews .f-field { display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); }
+.brawndo-demo-reviews select { height:34px; padding:0 10px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); font-size:12.5px; font-weight:500; }
+.brawndo-demo-reviews .btn { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); font-size:12.5px; font-weight:600; white-space:nowrap; box-shadow:var(--shadow-sm); }
+.brawndo-demo-reviews .btn:hover { background:var(--hover); }
+.brawndo-demo-reviews .btn.primary { background:var(--rail); border-color:var(--rail); color:var(--surface); }
+.brawndo-demo-reviews .btn.primary:hover { filter:brightness(1.08); }
+.brawndo-demo-reviews .btn:disabled { opacity:.5; cursor:default; }
+
+/* workload chart */
+.brawndo-demo-reviews .bdr-wl-body { display:grid; gap:8px; padding:10px 24px 16px; }
+.brawndo-demo-reviews .bdr-links { display:flex; gap:16px; }
+.brawndo-demo-reviews .bdr-wl-spacer { height:16px; }
+.brawndo-demo-reviews .bdr-wl-top { display:flex; justify-content:space-between; align-items:center; gap:8px 16px; flex-wrap:wrap; font-size:12.5px; color:var(--fg2); }
+.brawndo-demo-reviews .bdr-legend { display:flex; gap:16px; font-size:12px; color:var(--fg2); }
+.brawndo-demo-reviews .bdr-legend span { display:inline-flex; align-items:center; gap:7px; }
+.brawndo-demo-reviews .bdr-key { display:inline-block; width:10px; height:10px; border-radius:3px; flex:none; }
+.brawndo-demo-reviews .bdr-due { background:var(--c-due); } .brawndo-demo-reviews .bdr-late { background:var(--c-late); } .brawndo-demo-reviews .bdr-done { background:var(--c-done); }
+.brawndo-demo-reviews .bdr-chart { position:relative; min-width:0; }
+.brawndo-demo-reviews .bdr-chart svg { display:block; width:100%; height:auto; overflow:visible; }
+.brawndo-demo-reviews .bdr-chart svg:focus-visible { outline-offset:4px; border-radius:4px; }
+.brawndo-demo-reviews .bdr-chart text { fill:var(--muted); font:11.5px var(--font); font-variant-numeric:tabular-nums; }
+.brawndo-demo-reviews .bdr-chart text.bdr-value { fill:var(--fg); font-weight:600; font-size:12px; }
+.brawndo-demo-reviews .bdr-chart text.bdr-year { fill:var(--fg2); font-weight:600; }
+.brawndo-demo-reviews .bdr-grid { stroke:var(--c-grid); stroke-width:1; } .brawndo-demo-reviews .bdr-axis { stroke:var(--border-strong); stroke-width:1; }
+.brawndo-demo-reviews .bdr-fill-due { fill:var(--c-due); } .brawndo-demo-reviews .bdr-fill-late { fill:var(--c-late); } .brawndo-demo-reviews .bdr-fill-done { fill:var(--c-done); }
+.brawndo-demo-reviews .bar { transition:opacity .12s; } .brawndo-demo-reviews .bar.dim { opacity:.3; }
+.brawndo-demo-reviews .bdr-tip { position:fixed; z-index:30; display:grid; gap:4px; width:max-content; min-width:min(220px,calc(100vw - 16px)); max-width:min(300px,calc(100vw - 16px)); max-height:calc(100dvh - var(--bwp-top,60px) - 16px); overflow-y:auto; overscroll-behavior:contain; padding:12px 14px; border-radius:10px; background:var(--tip-bg); box-shadow:var(--shadow-tip); font-size:12px; color:var(--fg2); font-variant-numeric:tabular-nums; }
+.brawndo-demo-reviews .bdr-tip .tip-h { font-size:11.5px; font-weight:500; color:var(--muted); }
+.brawndo-demo-reviews .bdr-tip .v { font-size:20px; font-weight:600; color:var(--fg); line-height:1.2; }
+.brawndo-demo-reviews .bdr-tip .r { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.brawndo-demo-reviews .bdr-tip .r span { display:flex; align-items:center; gap:7px; }
+.brawndo-demo-reviews .bdr-tip .r b { color:var(--fg); font-weight:600; }
+.brawndo-demo-reviews .bdr-tip .rows { display:grid; gap:3px; margin-top:4px; padding-top:7px; border-top:1px solid var(--border); }
+.brawndo-demo-reviews .bdr-tip .li { display:grid; grid-template-columns:max-content minmax(0,1fr) max-content; gap:6px; align-items:baseline; }
+.brawndo-demo-reviews .bdr-tip-title {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.brawndo-demo-reviews .bdr-tip-kind {font-size:11.5px;color:var(--muted);}
+.brawndo-demo-reviews .bdr-tip-more {color:var(--muted);}
+.brawndo-demo-reviews .bdr-data { overflow:auto; max-height:260px; border:1px solid var(--border); border-radius:8px; }
+.brawndo-demo-reviews .bdr-data table { width:100%; min-width:420px; border-collapse:collapse; font-size:12.5px; }
+.brawndo-demo-reviews .bdr-data th { position:sticky; top:0; padding:8px 12px; text-align:left; background:var(--tablehead); color:var(--muted); font-weight:500; border-bottom:1px solid var(--border); }
+.brawndo-demo-reviews .bdr-data td { padding:8px 12px; border-top:1px solid var(--border); font-variant-numeric:tabular-nums; }
+.brawndo-demo-reviews .bdr-data tbody tr:first-child td { border-top:0; }
+.brawndo-demo-reviews .bdr-data td:not(:first-child), .brawndo-demo-reviews .bdr-data th:not(:first-child) { text-align:right; }
+
+/* register */
+.brawndo-demo-reviews .filters { display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; padding:14px 16px 12px; margin-top:14px; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.brawndo-demo-reviews .f-search, .brawndo-demo-reviews .register-toolbar .register-search { position:relative; flex:1 1 200px; max-width:300px; min-width:180px; }
+.brawndo-demo-reviews .f-search input, .brawndo-demo-reviews .register-toolbar .register-search input.ui-control { width:100%; min-width:0; height:34px; padding:0 12px 0 34px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); line-height:1.5; }
+.brawndo-demo-reviews .f-search input::placeholder, .brawndo-demo-reviews .register-toolbar .register-search input::placeholder { color:var(--muted); }
+.brawndo-demo-reviews .f-search svg, .brawndo-demo-reviews .register-toolbar .register-search svg { position:absolute; left:11px; top:9.5px; width:15px; height:15px; color:var(--muted); transform:none; }
+.brawndo-demo-reviews .f-right { margin-left:auto; display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; }
+.brawndo-demo-reviews .bdr-summary { display:flex; justify-content:space-between; align-items:center; gap:6px 16px; flex-wrap:wrap; min-height:43px; padding:8px 16px; font-size:12px; color:var(--muted); border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums; }
+.brawndo-demo-reviews .bdr-summary.bulk { background:var(--selected); color:var(--fg); }
+.brawndo-demo-reviews .bulk-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.brawndo-demo-reviews .bulk-actions select { height:28px; font-size:12px; }
+.brawndo-demo-reviews .bulk-actions .btn { height:28px; font-size:12px; }
+.brawndo-demo-reviews .pager { display:flex; align-items:center; gap:6px; }
+.brawndo-demo-reviews .pager button { height:26px; padding:0 9px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-weight:500; color:var(--fg2); background:var(--surface); }
+.brawndo-demo-reviews .pager button:hover:not(:disabled) { background:var(--hover); color:var(--fg); }
+.brawndo-demo-reviews .pager button:disabled { opacity:.45; cursor:default; }
+.brawndo-demo-reviews .bdr-table { container-type:inline-size; }
+.brawndo-demo-reviews .bdr-thead, .brawndo-demo-reviews .bdr-trow { display:grid; grid-template-columns:var(--bdr-columns,18px minmax(260px,3fr) minmax(150px,1.2fr) 140px 150px 170px 12px); gap:16px; align-items:center; padding-inline:16px; }
+.brawndo-demo-reviews .bdr-table.bdr-history .bdr-thead, .brawndo-demo-reviews .bdr-table.bdr-history .bdr-trow { grid-template-columns:minmax(260px,3fr) minmax(150px,1.2fr) 150px 150px 12px; }
+.brawndo-demo-reviews .bdr-thead { padding-block:9px; font-size:12px; font-weight:500; color:var(--muted); background:var(--tablehead); border-bottom:1px solid var(--border); }
+.brawndo-demo-reviews .bdr-trow { padding-block:13px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .12s; }
+.brawndo-demo-reviews .bdr-trow:hover { background:var(--subtle); }
+.brawndo-demo-reviews .bdr-trow.bdr-selected { background:var(--selected); }
+.brawndo-demo-reviews .bdr-trow:last-child { border-bottom:0; }
+.brawndo-demo-reviews .bdr-cb { width:16px; height:16px; margin:0; accent-color:var(--rail); cursor:pointer; }
+.brawndo-demo-reviews .bdr-name { font-weight:600; font-size:13.5px; letter-spacing:-.005em; line-height:1.35; text-align:left; }
+.brawndo-demo-reviews .bdr-name:hover { text-decoration:underline; text-underline-offset:3px; }
+.brawndo-demo-reviews .bdr-meta { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-top:4px; font-size:12px; color:var(--muted); }
+.brawndo-demo-reviews .bdr-fwchip { display:inline-flex; align-items:center; padding:1px 7px; border:1px solid var(--border); border-radius:6px; font-size:11px; font-weight:600; letter-spacing:.01em; background:var(--subtle); color:var(--fg2); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.brawndo-demo-reviews .bdr-owner { display:flex; align-items:center; gap:10px; min-width:0; font-weight:500; font-size:13px; }
+.brawndo-demo-reviews .bdr-owner.bdr-none { font-weight:400; font-style:italic; color:var(--warn); }
+.brawndo-demo-reviews .bdr-avatar { flex:none; display:grid; place-items:center; width:28px; height:28px; border-radius:8px; background:var(--subtle); box-shadow:inset 0 0 0 1px var(--border); color:var(--fg2); font-weight:600; font-size:11.5px; font-style:normal; }
+.brawndo-demo-reviews .bdr-two { display:grid; font-size:12.5px; font-variant-numeric:tabular-nums; }
+.brawndo-demo-reviews .bdr-two small { display:flex; align-items:center; gap:5px; color:var(--muted); font-size:12px; }
+.brawndo-demo-reviews .bdr-two small.bdr-bad { color:var(--bad); font-weight:600; }
+.brawndo-demo-reviews .bdr-two small svg { width:13px; height:13px; flex:none; }
+.brawndo-demo-reviews .bdr-st { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:var(--fg2); white-space:nowrap; }
+.brawndo-demo-reviews .bdr-st i { width:8px; height:8px; border-radius:50%; flex:none; }
+.brawndo-demo-reviews .bdr-st-up i { box-shadow:inset 0 0 0 1.5px var(--muted); } .brawndo-demo-reviews .bdr-st-prog i { background:var(--rail); } .brawndo-demo-reviews .bdr-st-need i { background:var(--c-part); } .brawndo-demo-reviews .bdr-st-done i { background:var(--good); }
+.brawndo-demo-reviews .bdr-row-menu { color:var(--muted); font-size:16px; line-height:1; }
+.brawndo-demo-reviews .bdr-empty { display:grid; gap:10px; justify-items:start; padding:28px 20px; color:var(--fg2); }
+.brawndo-demo-reviews .bdr-empty h3 { font-size:15px; color:var(--fg); }
+@container (max-width: 820px) {
+  .brawndo-demo-reviews .bdr-thead { display:none; }
+  .brawndo-demo-reviews .bdr-trow, .brawndo-demo-reviews .bdr-table.bdr-history .bdr-trow { grid-template-columns:18px minmax(0,1fr) auto; grid-template-areas:"cb item item" ". owner due" ". st cad"; row-gap:10px; padding-block:14px; }
+  .brawndo-demo-reviews .bdr-table.bdr-history .bdr-trow { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"item item" "owner due" "st st"; }
+  .brawndo-demo-reviews .bdr-c-cb { grid-area:cb; } .brawndo-demo-reviews .bdr-c-item { grid-area:item; } .brawndo-demo-reviews .bdr-c-owner { grid-area:owner; } .brawndo-demo-reviews .bdr-c-due { grid-area:due; text-align:right; } .brawndo-demo-reviews .bdr-c-st { grid-area:st; } .brawndo-demo-reviews .bdr-c-cad { grid-area:cad; text-align:right; }
+  .brawndo-demo-reviews .bdr-c-due small, .brawndo-demo-reviews .bdr-c-cad small { justify-content:flex-end; }
+  .brawndo-demo-reviews .bdr-table.bdr-history .bdr-c-cad {grid-area:st;}
+  /* Retain native row actions in an existing cell without creating an implicit track. */
+  .brawndo-demo-reviews .bdr-row-menu {grid-column:1;grid-row:3;justify-self:start;align-self:center;}
+  .brawndo-demo-reviews .bdr-table.bdr-history .bdr-row-menu {grid-column:2;justify-self:end;}
+  .brawndo-demo-reviews .bdr-table.bdr-history .bdr-c-cad {padding-right:32px;}
+  .brawndo-demo-reviews .bdr-row-menu button[aria-label="Row actions"] svg {display:block;}
+  .brawndo-demo-reviews .bdr-row-menu button[aria-label="Row actions"]::after {display:none;}
+}
+
+
+.brawndo-demo-reviews *, .brawndo-demo-reviews *::before, .brawndo-demo-reviews *::after { box-sizing:border-box; }
+.brawndo-demo-reviews :is(h1,h2,p) {margin:0;}
+.brawndo-demo-reviews button {font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit;}
+.brawndo-demo-reviews :is(input,select,textarea) {font-family:var(--font);}
+.brawndo-demo-reviews :is(button,input,select,[tabindex]):focus-visible {outline:2px solid var(--focus);outline-offset:2px;}
+.brawndo-demo-reviews .bdr-page-head {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.brawndo-demo-reviews .bdr-page-head h1 {font-size:24px;font-weight:650;letter-spacing:-.025em;line-height:1.5;}
+.brawndo-demo-reviews .bdr-page-head p {margin-top:3px;font-size:12.5px;color:var(--muted);}
+.brawndo-demo-reviews .bdr-head-actions {display:flex;flex-wrap:wrap;gap:8px;}
+.brawndo-demo-reviews .bdr-head-actions button {display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface);font-size:12.5px;font-weight:500;color:var(--fg2);box-shadow:var(--shadow-sm);}
+.brawndo-workspace-pilot .brawndo-demo-reviews .bdr-head-actions button[data-testid="create-reviews-button"] {background:var(--rail);border-color:var(--rail);color:var(--surface);font-weight:600;gap:6px;}
+.brawndo-demo-reviews .bdr-head-actions svg {width:15px;height:15px;}
+.brawndo-demo-reviews .bdr-card {background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-sm);min-width:0;}
+.brawndo-demo-reviews .bdr-workload {overflow:visible;}
+.brawndo-demo-reviews .bdr-card-head {display:flex;justify-content:space-between;align-items:baseline;gap:6px 16px;flex-wrap:wrap;padding:18px 24px 0;}
+.brawndo-demo-reviews .bdr-card-head h2 {font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.5;}
+.brawndo-demo-reviews .bdr-card-head p {font-size:12.5px;color:var(--muted);margin-top:2px;}
+.brawndo-demo-reviews .bdr-links button {color:var(--link);font-size:12.5px;font-weight:500;}
+.brawndo-demo-reviews .bdr-register .register-toolbar {display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;padding:14px 16px 12px;margin:14px 0 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);border-inline:0;border-radius:0;background:var(--surface);}
+.brawndo-demo-reviews .register-toolbar input {height:34px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);color:var(--fg);font-size:13.5px;}
+.brawndo-demo-reviews .review-view-row {display:contents;}
+.brawndo-demo-reviews [data-testid="reviews-history-link"],.brawndo-demo-reviews .register-count {display:none;}
+.brawndo-demo-reviews [data-testid="reviews-tabs"] {display:inline-flex;flex-wrap:nowrap;gap:2px;padding:3px;border-radius:8px;background:var(--hover);box-shadow:inset 0 0 0 1px var(--border);max-width:100%;overflow:auto;}
+.brawndo-demo-reviews [data-testid="reviews-tabs"] button {height:auto;border:0;padding:4px 11px;border-radius:6px;font-size:12.5px;font-weight:500;line-height:1.5;white-space:nowrap;color:var(--fg2);}
+.brawndo-demo-reviews [data-testid="reviews-tabs"] button > span {margin-left:6px;font-weight:500;}
+.brawndo-demo-reviews [data-testid="reviews-tabs"] button[aria-pressed="true"] {background:var(--seg-on);color:var(--fg);font-weight:600;box-shadow:var(--shadow-seg);}
+.brawndo-demo-reviews .register-body {padding:0;margin:0;}
+.brawndo-demo-reviews .bdr-more {position:relative;padding:0;border:0;font-size:12px;color:var(--muted);}
+.brawndo-demo-reviews .bdr-more summary {cursor:pointer;}
+.brawndo-demo-reviews .bdr-more table {width:100%;}
+.brawndo-demo-reviews .bdr-summary nav {display:flex;align-items:center;gap:6px;}
+.brawndo-demo-reviews .bdr-summary button {height:26px;padding:0 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:500;color:var(--fg2);background:var(--surface);}
+.brawndo-demo-reviews button:disabled {opacity:.5;cursor:default;}
+@media(max-width:1100px){.brawndo-demo-reviews .bdr-kstrip {grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:860px){.brawndo-demo-reviews{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));}.brawndo-demo-reviews :is(.bdr-card-head,.bdr-wl-body){padding-left:16px;padding-right:16px;}}
+.brawndo-demo-reviews .bdr-filter-right {margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;}
+@media(max-width:860px){.brawndo-demo-reviews .bdr-filter-right{margin-left:0;}}
+.brawndo-demo-reviews .bdr-filter-right label {display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);}
+.brawndo-demo-reviews .bdr-filter-right select {height:34px;padding:0 10px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);font-size:12.5px;font-weight:500;color:var(--fg);}
+.brawndo-demo-reviews .bdr-row-menu button[aria-label="Row actions"] svg {display:none;}
+.brawndo-demo-reviews .bdr-row-menu button[aria-label="Row actions"]::after {content:'›';font-size:16px;line-height:1;color:var(--muted);}
+.brawndo-demo-reviews :is(h1,h2,h3) {font-family:var(--font);}
+@container(max-width:820px){
+  .brawndo-demo-reviews .bdr-row-menu button[aria-label="Row actions"] svg {display:block;}
+  .brawndo-demo-reviews .bdr-row-menu button[aria-label="Row actions"]::after {display:none;}
+}
+.brawndo-demo-reviews .bdr-table {overflow-x:auto;}
+
+.brawndo-demo-reviews .bdr-summary > span {margin-right:auto;}
+.brawndo-demo-reviews .bdr-more-panel {position:absolute;right:0;top:calc(100% + 10px);z-index:15;width:max-content;max-width:calc(100vw - 64px);padding:12px 16px;overflow-x:auto;border:1px solid var(--border);border-radius:8px;background:var(--surface);box-shadow:var(--shadow-tip);}
+
+/* Extra native controls expand only on request and stay in flow so short results cannot clip them. */
+.brawndo-demo-reviews .bdr-more[open] {flex-basis:100%;width:100%;min-width:0;order:3}
+.brawndo-demo-reviews .bdr-more[open] .bdr-more-panel {position:static;width:100%;max-width:100%;margin-top:8px}

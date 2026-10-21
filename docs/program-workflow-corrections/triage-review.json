@@ -1,0 +1,71 @@
+{
+  "baseline": "3e43ce3b9385e860d32c0bba998468f0dcee3507",
+  "reviewer": "NONAUTHOR CIS reviewer, no product edits",
+  "scope": "SOC/ISO precise triage semantics and CIS current V5 metadata/source preservation; engine not yet frozen or runtime-tested here",
+  "hashes": {
+    "shared/catalogs/programTriage.json": "c4c281fc7333fd846e966a96caf44a82162bb6f727caa2f9ec2e55ed204fc94a",
+    "shared/catalogs/guidedCisProgramV5.json": "dc0dffd409ef6ba4cfd692ef03372f947c3e6c1228f7b237a2e7c78a0d9362cf",
+    "shared/catalogs/guidedControl1V5.json": "1e676859bf4097014b3dc828996c2c01dc9ce290bc47fa425f57f25639189266"
+  },
+  "stats": {
+    "soc-2": {
+      "definitions": 61,
+      "questions": 174,
+      "substantive": 166,
+      "context": 8,
+      "multipleSubstantiveTiers": 26,
+      "exactProposalsPreserved": true
+    },
+    "iso-27001": {
+      "definitions": 123,
+      "questions": 611,
+      "substantive": 583,
+      "context": 28,
+      "multipleSubstantiveTiers": 75,
+      "exactProposalsPreserved": true
+    }
+  },
+  "approvedCisChanges": [
+    {
+      "id": "11.1",
+      "removedCriterion": "11.1-guided-backup-procedures",
+      "otherSourceFieldsPreserved": true
+    },
+    {
+      "id": "17.5",
+      "removedCriterion": "17.5-guided-third-parties",
+      "otherSourceFieldsPreserved": true
+    }
+  ],
+  "historicalReadersUnchanged": 9,
+  "structuredChecks": "PASS",
+  "errors": [],
+  "semanticDisposition": "PASS - reviewed all SOC 61 and ISO 123 requirement declarations and precise question IDs/rationales as internal triage defaults, with evidence eligibility and actual client-native severity binding kept independent.",
+  "mappingEligibilityLimit": "Tier metadata must not make context/unknown/evidence-only records into remediation. Native record severity normalization and actual source binding are shared-engine responsibilities.",
+  "sourceLimitation": "ISO exact normative source availability remains limited as explicitly reported by ISO reviewer; this triage cross-review does not turn authored content into licensed source verification.",
+  "semanticChecks": {
+    "broadCriterionUniversalSeverity": "No blind title-derived runtime rating. Exact question IDs carry their own reviewed defaults; 26 SOC and75 ISO units have multiple substantive tiers. Narrow units legitimately share a tier across equally important facets.",
+    "governanceAndDocumentation": "No blanket documentation-low rule. SOC objective/authority/risk-response/deficiency/oversight gaps and ISO scope/SoA/required records/actual obligation/leadership gaps receive high where materially foundational.",
+    "identityPrivilegeRemote": "Precise access-lifecycle, privilege, authentication, external-path, remote-work and environment-boundary gaps map high; no MFA/control is inferred from a generic requirement title. Actual precise approved priority or linked severity can elevate to urgent.",
+    "recoveryDetectionData": "Specific monitoring/incident/recovery/backup/key-custody/data-boundary gaps reviewed as high according to authored question scope, with neutral detail/operation context kept separate.",
+    "sourceAndScoreClaims": "Both proposal builders and handoffs explicitly identify internal inherent importance rather than official standard criticality or measured client risk; no client severity field rewrite supplied by these metadata files.",
+    "discovery": "Lower-integer discovery dependency is an internal reviewed assessment ordering hint; supported client/program/category/applicability filtering and unknown-first policy remain engine responsibilities.",
+    "optionalGates": "All184 SOC/ISO definitions have explicit neutral2 additional_gap/additional_confirmation metadata. New Control1 gates retain Yes/No/Not sure choices and show free text only for explicit Yes; Not sure operational semantics require engine tests, not a guessed metadata verdict."
+  },
+  "mappingGaps": [],
+  "recommendedEngineChecks": [
+    "Exact approved-client priority and linked Finding/Risk severity must concern the specific source Item/structured question, not any record on the same requirement.",
+    "Context types including SOC explicit-context or ISO applicability confirmations cannot become an implementation deficiency because their metadata tier is high.",
+    "Highest real unresolved matrix row wins; settled, hidden, superseded and current-source-retired rows must not contribute. Preserve old history and linked records rather than delete or auto-close them.",
+    "Not sure on an optional additional-presence gate must remain a clarification signal; it must not fabricate a confirmed gap. Test text after changing Yes to No/Not sure is inactive.",
+    "Metadata checks do not verify normalization, permission/scope isolation, observed dashboard refresh or browser/native-save behavior."
+  ],
+  "cisCurrentVersionReview": "PASS source/metadata only:148 generic source definitions retain every field beyond exact11.1/17.5 removed supplements;5 specialized source definitions/critical prompts/types/choices/conditions/row scopes preserved;only unknown wording/status metadata and2 new optional presence gates per guide changed;group labels/order retained;9 old source files unchanged.",
+  "cisTriageCurrentMetadataCheck": {
+    "definitions": 153,
+    "projectedQuestionEntries": 1875,
+    "projectedMatrixRows": 462,
+    "source": "Static V5 data projection from exact frozen authored IDs; live runtime wiring not checked",
+    "missing": []
+  }
+}

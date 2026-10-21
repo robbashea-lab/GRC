@@ -79,6 +79,7 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
     </header>
     <div className="bd-grid">
       <aside className="bd-aside" aria-label="Program condition">
+        <div className="bd-program-intro"><p className="bd-eyebrow">Your client workspace</p><h2>A clearer view. <span>A stronger program.</span></h2><p className="bd-muted">Your program progress and priority work, together.</p></div>
         {carded.map(p=><FrameworkProgramCard key={p.key} program={p} rows={rowsFor[p.key]} workspacePilot={workspacePilot}/>)}
         {programs.filter(p=>!rowsFor[p.key]).map(p=><section key={p.key} className="bd-card"><h2>{p.label}</h2><p className="bd-muted bd-small">{p.explanation}</p><Link to={p.to}>Open workspace</Link></section>)}
         {!programs.length&&<section className="bd-card"><p className="bd-empty">No frameworks configured. <Link to="/client-profile">Review client configuration</Link></p></section>}

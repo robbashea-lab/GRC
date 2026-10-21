@@ -6,8 +6,11 @@ import { prepareTask } from './actionItems';
 import { validateAssignment } from './assignmentEligibility';
 import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
+import {demoDates} from './demoPortfolio';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
+import {captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting} from './portfolioReporting';
+import {enrichBrawndoReportingHistory} from './brawndoReportingHistory';
 import {finishDunder} from './programs/dunder';
 import {addInitech,finishInitech} from './programs/initech';
 import {removeRetiredDemoClients} from './retiredClients';
@@ -71,6 +74,8 @@ export function seedStore(clock=new Date()) {
   addInitech(finished,clock);
   reconcileFramework(finished,'demo_initech',finished.baselines.demo_initech);
   finishInitech(finished,clock);
+  // Raw seeds use the native UTC-day clock; persisted saves/reset events keep their exact time.
+  enrichBrawndoReportingHistory(finished,new Date(demoDates(clock)(0)+'T12:00:00.000Z'));
   return finished;
 }
 function installCanonicalDunder(db){
@@ -90,13 +95,14 @@ export function readStore() {
   let saved;
   try {saved=sessionStorage.getItem(STORE_KEY);}catch(error){throw demoStorageError(error,'read');}
   if (saved) {
-    let db;try{db=JSON.parse(saved);}catch(error){throw demoStorageError(error,'parse');}
+    let db;try{db=restorePortfolioReporting(JSON.parse(saved));}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
     const retired=removeRetiredDemoClients(db),installed=installCanonicalDunder(db);
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
     if(initech){reconcileFramework(db,'demo_initech',db.baselines.demo_initech);finishInitech(db);}
     const light=lightweightStore(db,db.evidence);
-    if(retired||installed||initech||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
+    const enriched=enrichBrawndoReportingHistory(db);
+    if(retired||installed||initech||enriched||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
     return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
   }
   clearFileCache();
@@ -107,10 +113,13 @@ export function readStore() {
 export function saveStore(db,{resetFiles=false}={}) {
   // Persist before responding: quota failures must never masquerade as saved changes.
   try {
-    const previous=resetFiles?null:JSON.parse(sessionStorage.getItem(STORE_KEY)||'null');
+    const previous=resetFiles?null:restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)||'null'));
     const persisted=lightweightStore(db,previous?.evidence||[]);
-    sessionStorage.setItem(STORE_KEY, JSON.stringify(persisted));
+    captureDemoReporting(persisted, previous, new Date().toISOString());
+    enrichBrawndoReportingHistory(persisted);
+    sessionStorage.setItem(STORE_KEY, JSON.stringify(compactPortfolioReporting(persisted)));
     rememberFiles(db,persisted);
+    return persisted;
   } catch (error) {
     throw demoStorageError(error);
   }
@@ -216,7 +225,8 @@ export function write(db, kind, body, id) {
     risks: {
       status: 'open',
       category: 'operational',
-      date_identified: now()
+      // Retained Risks may use created_at for Added; an edit must not invent identification history.
+      ...(!existing ? {date_identified: now()} : {})
     },
     policies: {
       status: 'draft'
