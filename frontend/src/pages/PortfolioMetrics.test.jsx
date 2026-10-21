@@ -2,13 +2,15 @@ import React, {act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ClientDirectory from './ClientDirectory';
 import api from '@/lib/api';
+// Retain the native fallback's metric contract; enhanced route coverage is separate.
+jest.mock('./EnhancedPortfolio', () => ({__esModule: true, default: ({children}) => children}));
 jest.mock('react-router-dom', () => ({useNavigate: () => jest.fn()}), {virtual: true});
 jest.mock('@/context/OrgContext', () => ({useOrg: () => ({switchClient: jest.fn()})}));
 const mockUser = {user_id: 'u', role: 'super_admin'};
 jest.mock('@/context/AuthContext', () => ({useAuth: () => ({user: mockUser})}));
 jest.mock('@/lib/api', () => ({__esModule: true, default: {get: jest.fn()}, formatError: error => error.message}));
 
-test('native counts distinguish an assessed zero, not-started lifecycle, no applicable scope, invalid source and independent verification', async () => {
+test('fallback native counts distinguish an assessed zero, not-started lifecycle, no applicable scope, invalid source and independent verification', async () => {
   global.IS_REACT_ACT_ENVIRONMENT = true; sessionStorage.clear(); window.scrollTo = jest.fn();
   const counts = values => ['addressed', 'in_progress', 'needs_attention', 'not_assessed'].map((key, index) => ({key, label: key, count: values[index]}));
   const current = (values, extra = {}) => ({availability: 'available', implemented: values[0], denominator: values.reduce((sum, value) => sum + value, 0), counts: counts(values), ...extra});

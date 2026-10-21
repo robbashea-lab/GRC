@@ -360,6 +360,40 @@ test('every program tile region opens only its exact client/program preview and 
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
+test('standard enhanced route preserves assessed zero, missing source and independent verification counts',async()=>{
+  mockAuth={user:{user_id:'operator',role:'platform_admin',workspace_mode:'standard'},workspaceMode:'standard'};
+  const counts=values=>['addressed','in_progress','needs_attention','not_assessed'].map((key,index)=>({key,label:key,count:values[index]}));
+  const native=(values,extra={})=>({availability:'available',implemented:values[0],denominator:values.reduce((sum,value)=>sum+value,0),counts:counts(values),...extra});
+  const cases=[
+    ['assessed-zero',native([0,2,3,5])],['new',native([0,0,0,10],{not_started:true})],
+    ['reset',native([0,0,0,10])],['empty-scope',native([0,0,0,0])],
+    ['invalid',native([0,0,0,10],{denominator:12})],
+    ['missing-native-source',native([0,0,0,0],{availability:'partial',assessed:0})],
+    ['unverified-implemented',native([10,0,0,0],{verification:'not_verified'})]
+  ];
+  const programs=cases.map(([key,current])=>({...program,program_id:CID+':'+key,program_key:key,program_label:key,current}));
+  api.get.mockImplementation(async path=>({data:path.endsWith('/overview')?{as_of:AT,clients:[client],programs}:{clients:[{...client,metric_items:{past_due:[],due_30d:[],due_31_90d:[]}}]}}));
+  await act(async()=>root.render(<EnhancedPortfolioBoundary><p>Legacy Portfolio</p></EnhancedPortfolioBoundary>));
+  const tile=key=>[...host.querySelectorAll('.ep-program')].find(node=>node.querySelector('.ep-framework').textContent===key);
+  expect(host.textContent).not.toContain('Legacy Portfolio');
+  expect(tile('assessed-zero').textContent).toContain('0.0%');
+  expect(tile('assessed-zero').textContent).toContain('Assessed 5 of 10');
+  for(const key of ['new','reset']){
+    expect(tile(key).textContent).toContain('0.0%');
+    expect(tile(key).textContent).toContain('Assessed 0 of 10');
+  }
+  expect(tile('empty-scope').querySelector('.ep-progress').textContent).not.toContain('%');
+  for(const key of ['invalid','missing-native-source']){
+    expect(tile(key).textContent).toContain('Implementation unavailable');
+    expect(tile(key).textContent).not.toContain('0.0%');
+    expect(tile(key).textContent).not.toContain('Assessed 0 of 0');
+    expect(tile(key).getAttribute('aria-label')).toContain('Assessment unavailable');
+  }
+  expect(tile('unverified-implemented').textContent).toContain('100.0%');
+  expect(host.querySelectorAll('.ep-program')).toHaveLength(7);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
 test('pending or failed authentication never fetches or falls back to legacy Portfolio',async()=>{
   for(const state of [{loading:true},{error:'Session unavailable'}]){
     mockAuth={user:{user_id:'operator',role:'platform_admin'},...state};

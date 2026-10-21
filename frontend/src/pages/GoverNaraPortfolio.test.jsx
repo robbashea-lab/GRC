@@ -6,6 +6,9 @@ import {PORTFOLIO_CHANGED} from '@/lib/usePortfolioRefresh';
 
 const mockNavigate = jest.fn(), mockSwitch = jest.fn();
 let mockUser, mockPreviewMode;
+// Unit coverage for the retained grouped fallback controller. Real /clients rollout
+// and boundary integration are exercised in EnhancedPortfolio and PlatformNavigation tests.
+jest.mock('./EnhancedPortfolio', () => ({__esModule: true, default: ({children}) => children}));
 jest.mock('react-router-dom', () => ({useNavigate: () => mockNavigate, useLocation:()=>({pathname:'/clients',search:''})}), {virtual: true});
 jest.mock('@/context/OrgContext', () => ({useOrg: () => ({switchClient: mockSwitch})}));
 jest.mock('@/context/AuthContext', () => ({useAuth: () => ({user: mockUser})}));
@@ -17,6 +20,7 @@ const program = (client_id, program_key, implemented = 2, extra = {}) => ({clien
   program_label: program_key === 'soc-2' ? 'SOC 2' : 'CIS IG3', to: program_key === 'soc-2' ? '/compliance/soc-2' : '/compliance/cis-ig1', current: position(implemented), snapshots_90d: [], comparison_90d: {comparable: false}, ...extra});
 const client = (id, extra = {}) => ({client_id: id, name: id, industry: 'Technology', status: 'active', assigned_owner_id: 'u', grc_lead: {name: 'Recorded Lead'}, ...extra});
 const overview = (extra = {}) => ({as_of: AT, clients: [client('Alpha'), client('Beta', {assigned_owner_id: 'other', grc_lead: {name: 'Recorded Lead'}})], programs: [program('Alpha', 'cis-ig3', 9), program('Alpha', 'soc-2', 1), program('Beta', 'cis-ig3', 2)], ...extra});
+describe('retained grouped Portfolio fallback controller (boundary stubbed, not rollout proof)', () => {
 let root, container;
 beforeEach(() => { global.IS_REACT_ACT_ENVIRONMENT = true; sessionStorage.clear(); window.scrollTo = jest.fn(); mockPreviewMode=false; mockUser = {user_id: 'u', role: 'super_admin'}; container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container); jest.clearAllMocks(); api.get.mockResolvedValue({data: overview()}); });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
@@ -144,4 +148,6 @@ test('disabling the selected program closes history and re-enabling cannot reope
   await act(async () => { window.dispatchEvent(new Event(PORTFOLIO_CHANGED)); await new Promise(resolve => setTimeout(resolve, 0)); });
   expect(container.querySelector('[aria-label="Open CIS IG3 for Alpha"]')).toBeTruthy();
   expect(document.querySelector('[data-testid="portfolio-history-dialog"]')).toBeNull();
+});
+
 });
