@@ -5,14 +5,16 @@ import { calendarDay, managementDay } from './managementDates';
 const liveReview = review => !['completed', 'cancelled'].includes(review.status) && !review.archived_at;
 const eventKindOrder = { rev: 0, asr: 1, ren: 2 };
 export const policyReviewIds = review => [...new Set([review.policy_id, ...(review.policy_ids || [])].filter(Boolean))];
+export const isPolicySetReview = review => review.client_id === 'demo_brawndo' && review.baseline_key === 'policy-review' && !review.policy_id;
 
 // These are presentation cohorts; the native approval and scheduling commands remain authoritative.
 export function policyOverview(rows, reviews = [], programs = [], assessments = [], cisGroup = 1) {
   const ids = new Set(rows.map(row => row.policy_id));
   const clientId = rows[0]?.client_id;
-  const linked = reviews.filter(review => review.client_id === clientId && policyReviewIds(review).some(id => ids.has(id)));
+  const linked = reviews.filter(review => review.client_id === clientId && (isPolicySetReview(review) || policyReviewIds(review).some(id => ids.has(id))));
   const scheduled = linked.filter(liveReview).sort((a, b) => String(a.due_date || '9999').localeCompare(String(b.due_date || '9999')));
-  const review = scheduled.find(item => item.recurrence === 'annual') || scheduled[0] || null;
+  const review = scheduled.find(item => isPolicySetReview(item) && item.recurrence === 'annual')
+    || scheduled.find(item => item.recurrence === 'annual') || scheduled[0] || null;
   const covered = review ? policyReviewIds(review).filter(id => ids.has(id)) : [];
   const completed = (review ? [review] : linked).flatMap(item => [
     ...(item.status === 'completed' && item.completion_date ? [item.completion_date] : []),

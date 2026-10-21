@@ -46,8 +46,7 @@ export default function ClientDirectory() {
   const {user} = useAuth();
 
   const portfolio = user ? <Portfolio key={JSON.stringify([user.user_id, user.role, !!user.all_clients, [...(user.client_ids || [])].sort()])} user={user} /> : null;
-  return user && PREVIEW_MODE === true && user.workspace_mode === 'demo'
-    ? <EnhancedPortfolioBoundary>{portfolio}</EnhancedPortfolioBoundary> : portfolio;
+  return user ? <EnhancedPortfolioBoundary>{portfolio}</EnhancedPortfolioBoundary> : portfolio;
 
 }
 

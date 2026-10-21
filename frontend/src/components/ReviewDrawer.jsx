@@ -80,6 +80,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const [comment,setComment] = useState(''), [finding,setFinding] = useState(null), [linked,setLinked] = useState(null);
   const riskBase=useRef(null);
   const generation = useRef(0);
+  const recurrenceEdited = useRef(false);
   const shown = selected || current;
   const cid = current?.client_id || record?.client_id || clientId;
   const fullRecord=useBrawndoFullRecord(record,clientId)&&(!current||current.client_id===clientId);
@@ -133,6 +134,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     const sequence = generation;
     sequence.current++;
     historyLinkedReturn.current=null;
+    recurrenceEdited.current=false;
     setCurrent(record ? reviewView(record) : null);
     setForm(record ? {...record,due_date:record.due_date?.slice(0,10) || ''} : {title:'',review_type:'',owner_id:'',due_date:'',recurrence:'none',notes:''});
     setTab('Overview'); setSelected(initialValues?.occurrence || null); setRiskDraft(null);setRiskNext("");setRiskOutcome("Reviewed — No Change"); riskBase.current=null; setHistory([]); setComments([]); setActivity([]); setRelated({});
@@ -145,6 +147,15 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     api.get('/policies',{params:{client_id:record?.client_id || clientId}}).then(({data})=>{if(generation.current===version)setPolicies(data);}).catch(e=>toast.error(formatError(e)));
     return () => { sequence.current++;historyLinkedReturn.current=null; };
   }, [open,record,clientId,initialValues?.occurrence,pilot]);
+
+  function changeConfiguration(key,value) {
+    if (key === 'recurrence') recurrenceEdited.current=true;
+    // A new Policy Review defaults annually; an explicit cadence or saved record wins.
+    const defaultPolicyCadence = !record && !current && clientId === 'demo_brawndo'
+      && user?.workspace_mode === 'demo' && key === 'review_type' && !recurrenceEdited.current;
+    setForm(previous => ({...previous,[key]:value,
+      ...(defaultPolicyCadence ? {recurrence:value === 'policy' ? 'annual' : 'none'} : {})}));
+  }
 
   const reload = useCallback(async () => {
     if (!open || !rid || !oid) return;
@@ -288,7 +299,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
               const disabled = frozen || !admin, value = configuration[f.name] || '';
               if (f.type === 'policy') return <div key={f.name}>{picker(f.label,value,v=>setForm(p=>({...p,[f.name]:v})),policies.map(p=>({value:p.policy_id,label:p.title})),disabled || !!current,`field-${f.name}`)}</div>;
               if (f.type === 'user') return <div key={f.name}><Label>{f.label}</Label><AssigneeSelect showManagePeople={false} clientId={cid} label={f.label} value={value} onChange={v=>setForm(p=>({...p,[f.name]:v}))} disabled={disabled} users={members} testId={`field-${f.name}`}/></div>;
-              if (f.type === 'select') return <div key={f.name}>{picker(f.label,value,v => setForm(p => ({...p,[f.name]:v})), [...f.options,...(value && !f.options.some(o => o.value === value) ? [{value,label:value}] : [])],disabled,`field-${f.name}`)}</div>;
+              if (f.type === 'select') return <div key={f.name}>{picker(f.label,value,v => changeConfiguration(f.name,v), [...f.options,...(value && !f.options.some(o => o.value === value) ? [{value,label:value}] : [])],disabled,`field-${f.name}`)}</div>;
               return <div key={f.name} className={f.name === 'title' ? 'sm:col-span-2' : ''}><Label htmlFor={`review-${f.name}`}>{f.label}</Label><Input id={`review-${f.name}`} type={f.type || 'text'} value={f.type === 'date' ? value.slice(0,10) : value} disabled={disabled} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} data-testid={`field-${f.name}`} /></div>;
             })}
             {workflowPresentation&&<div><Label>Origin</Label><p className="review-workflow-origin">{basisSummary(shown)}</p><p className="review-workflow-help">Source and configured cadence are explained in Requirements.</p></div>}

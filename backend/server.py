@@ -45,6 +45,7 @@ import client_relationships
 import remediation
 import risk_ids
 import policy_reviews
+import policy_review_coverage
 import policy_approval
 import policy_provenance
 import risk_lifecycle
@@ -223,6 +224,8 @@ def review_mutation(fn):
         if not review_id:
             return await fn(*args, **kwargs)
         linked_review = await _authorized_parent("reviews", review_id, values["user"], write=True)
+        if linked_review.get('_policy_coverage_pending') and fn.__name__ != 'complete_review':
+            raise HTTPException(409, 'Retry the pending annual Policy completion before editing this Review')
         token = uuid.uuid4().hex
         now = datetime.now(timezone.utc)
         acquired = await db.reviews.update_one({"review_id": review_id, "$or": [
@@ -3117,6 +3120,7 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         raise HTTPException(404, "Not found")
     if not _can_access_client(user, existing["client_id"]):
         raise HTTPException(403, "Forbidden")
+    await policy_review_coverage.assert_deletable(db, kind, existing)
     if existing.get('_save_command') and await db.create_requests.find_one({'_id':existing['_save_command'],'state':'pending'}):
         raise HTTPException(409, 'Recover the pending save before deleting this record')
     if kind == "contacts" and await db.clients.find_one({"client_id": existing["client_id"], "primary_contact_id": item_id}):
@@ -3136,6 +3140,8 @@ async def delete_entity(kind: str = Path(..., pattern=KIND_REGEX), item_id: str 
         await remediation_commands.retain_finding(sys.modules[__name__], existing)
     _require_snapshot(body or {}, existing)
     delete_query = {id_field: item_id, "updated_at": existing.get("updated_at")}
+    if kind == 'reviews':
+        delete_query['_policy_coverage_pending'] = None
     if kind == "policies":
         delete_query.update({"updated_at": existing.get("updated_at"), "status": existing.get("status"),
                              "approval_history": existing.get("approval_history"), "decision_history": existing.get("decision_history")})
@@ -4004,21 +4010,30 @@ async def complete_review(review_id: str, body: ReviewCompleteIn, user: Dict = D
         updates.update({"current_occurrence_id": body.occurrence_id, "status": "completed",
                         "completion_date": completed["completed_at"], "notes": completed.get("notes"),
                         "next_review_date": None})
+    coverage_plan = await policy_review_coverage.prepare(db, review, completed, updates,
+        body.model_dump(exclude_unset=True), user)
+    if coverage_plan:
+        await policy_review_coverage.reconcile(db, review, coverage_plan, user, _authorized_parent)
+        completed, updates = coverage_plan['completed'], dict(coverage_plan['updates'])
+        updates['policy_ids'] = [member['policy_id'] for member in coverage_plan['members']]
+    completion_actor = ({'user_id': completed['completed_by'], 'name': completed['completed_by_name']}
+                        if coverage_plan else user)
     # One atomic document update: history and advancement cannot become partially committed.
-    capture, event = _portfolio_event_patch('reviews', review_id, review['client_id'], user, review,
+    capture, event = _portfolio_event_patch('reviews', review_id, review['client_id'], completion_actor, review,
         {**review, **updates, 'occurrences': [*(review.get('occurrences') or []), completed]},
         completed['completed_at'], action='complete_review')
     updates.update(capture)
     result = await db.reviews.update_one({"review_id": review_id, "current_occurrence_id": review.get("current_occurrence_id"),
         "updated_at": review.get("updated_at"), "status": review.get("status")},
-        {"$set": updates, "$push": {"occurrences": completed}})
+        {"$set": updates, "$push": {"occurrences": completed},
+         **({'$unset': {'_policy_coverage_pending': ''}} if coverage_plan else {})})
     if not result.modified_count:
         raise HTTPException(409, "Review changed; reload before completing")
-    await _review_event(user, review, "Review completed", body.occurrence_id,
+    await _review_event(completion_actor, review, "Review completed", body.occurrence_id,
                         period=completed["period"], outcome=completed["outcome"], finding_count=findings,
                         _portfolio_activity_event_id=(event or {}).get('event_id'))
     if next_due:
-        await _review_event(user, review, "Next occurrence scheduled", body.occurrence_id, due_date=next_due)
+        await _review_event(completion_actor, review, "Next occurrence scheduled", body.occurrence_id, due_date=updates.get('due_date') or next_due)
     updated = await db.reviews.find_one({"review_id": review_id}, {"_id": 0})
     await risk_lifecycle.sync_completion(db, updated)
     await vendor_governance.sync_completion(db, updated)
@@ -4072,9 +4087,12 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
         return await framework_governance.related(sys.modules[__name__],source)
     ai_reviews = await db.reviews.find({'client_id':cid,'ai_system_id':entity_id},{'review_id':1}).to_list(None) if entity_type == 'ai_systems' else []
     # Findings raised in a Policy Review stay visible from the Policy without copying policy_id onto them.
-    policy_reviews = await db.reviews.find({'client_id':cid,'policy_id':entity_id},{'review_id':1}).to_list(None) if entity_type == 'policies' else []
+    policy_reviews = await db.reviews.find({'client_id':cid,'$or':[{'policy_id':entity_id}, {'policy_ids':entity_id},
+        {'occurrences.policy_coverage.policy_id':entity_id}]},{'review_id':1}).to_list(None) if entity_type == 'policies' else []
     for target, key in keys.items():
         relations = [{keys[entity_type]: entity_id}]
+        if entity_type == 'policies' and target == 'reviews':
+            relations.extend([{'policy_ids': entity_id}, {'occurrences.policy_coverage.policy_id': entity_id}])
         if source.get(key):
             relations.append({key: source[key]})
         if entity_type == 'ai_systems':

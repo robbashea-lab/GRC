@@ -163,20 +163,24 @@ export function PortfolioSparkline({program, asOf, span}) {
   </svg>;
 }
 
-export function useHistory(client, program, range, refreshToken, requireIdentity = false, demoScenario = false) {
-  const key = JSON.stringify([client.client_id, program.program_key, range, demoScenario]);
+export function useHistory(client, program, range, refreshToken, requireIdentity = false, demoScenario = false, expectedScope) {
+  const key = JSON.stringify([client.client_id, program.program_key, range, demoScenario, expectedScope]);
   const [state, setState] = useState({key: '', data: null, loading: true, error: ''}), [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
     setState(previous => ({key, data: previous.key === key ? previous.data : null, loading: true, error: ''}));
-    const [client_id, program_key, selectedRange, scenarioRequested] = JSON.parse(key);
+    const [client_id, program_key, selectedRange, scenarioRequested, selectedScope] = JSON.parse(key);
     api.get('/portfolio/reporting/history', {params: {client_id, program_key, range: selectedRange, include_archived: false,
       ...(scenarioRequested ? {demo_scenario:'brawndo-cis-ig1-history-v2'} : {})}, signal: controller.signal}).then(({data}) => {
       if (!Array.isArray(data?.snapshots) || !data.current || !Number.isFinite(Date.parse(data.as_of))) throw new Error('The history response is incomplete.');
       if (data.client_id && data.client_id !== client_id || data.program_key && data.program_key !== program_key) throw new Error('The history does not belong to the selected client program.');
       if(requireIdentity && (data.client_id !== client_id || data.program_key !== program_key)) throw new Error('The history program identity is unavailable.');
-      if(requireIdentity && client_id === 'demo_brawndo' && program_key === 'cis-ig1'
+      if (selectedScope && (['framework_key', 'catalog_version'].some(field => selectedScope[field] != null && data.current.scope?.[field] !== selectedScope[field])
+        || selectedScope.configuration?.implementation_group != null && data.current.scope?.configuration?.implementation_group !== selectedScope.configuration.implementation_group)) {
+        throw new Error('The history scope does not match the selected program.');
+      }
+      if(!selectedScope && requireIdentity && client_id === 'demo_brawndo' && program_key === 'cis-ig1'
         && (data.current.scope?.framework_key !== 'cis-ig1' || data.current.scope?.catalog_version !== '8.1'
           || data.current.scope?.configuration?.implementation_group !== 1)) throw new Error('The CIS history scope does not match the configured IG1 program.');
       if (active) setState({key, data, loading: false, error: ''});

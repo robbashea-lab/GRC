@@ -664,6 +664,8 @@ async def _prepare_baseline(body, user, identity):
                     defaults = {id_field: stable_id, 'client_id': cid, 'title': item['name'], 'category': item['category'], 'created_at': _now(), 'created_by': user['user_id']}
                     if group == 'reviews':
                         defaults.update({'review_type': item['review_type'], 'source': 'GRC Program Onboarding', 'status': 'needs_scheduling', 'due_date': None, 'next_review_date': None, 'recurrence': None, 'owner_id': None})
+                        if cid == 'demo_brawndo' and item['key'] == 'policy-review':
+                            defaults['recurrence'] = 'annual'
                     plan.insert(group, id_field, {**defaults, **updates})
         plan.audit('onboarding-complete', 'client', cid, meta={'baseline_version': state['version'], 'selected_reviews': len(state['reviews'])})
     state['completed'] = bool(body.finalize or previous_baseline)

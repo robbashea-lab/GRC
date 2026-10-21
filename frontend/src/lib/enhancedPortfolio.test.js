@@ -32,78 +32,23 @@ const state = changes => ({
   sort: 'name',
   ...changes
 });
-test('requires the complete trusted Explore client and exact route gate', () => {
-  expect(enhancedPortfolioEligible(gate())).toBe(true);
-  expect(enhancedPortfolioEligible({
-    ...gate(),
-    routeClientId: 'demo_brawndo'
-  })).toBe(true);
-  for (const changes of [{
-    preview: false
-  }, {
-    preview: 'true'
-  }, {
-    workspaceMode: 'signed_in'
-  }, {
-    pathname: '/clients/'
-  }, {
-    pathname: '/dashboard'
-  }, {
-    currentClientId: 'other'
-  }, {
-    selectedClientId: 'other'
-  }, {
-    routeClientId: 'other'
-  }, {
-    authLoading: true
-  }, {
-    orgLoading: true
-  }, {
-    authError: 'denied'
-  }, {
-    orgError: 'failed'
-  }, {
-    currentClient: {
-      client_id: 'demo_brawndo',
-      status: 'onboarding'
+test('Portfolio uses the authorized internal identity and route, independent of operational selection or mode', () => {
+  for (const mode of ['demo', 'standard']) {
+    for (const role of ['super_admin', 'platform_admin']) {
+      for (const selection of [null, 'new_client', 'other']) {
+        expect(enhancedPortfolioEligible({...gate(), preview:false, workspaceMode:mode,
+          user:{user_id:'lead1',role,workspace_mode:mode},currentClientId:selection,
+          selectedClientId:selection,currentClient:null,routeClientId:'unrelated',orgLoading:true})).toBe(true);
+      }
     }
-  }, {
-    currentClient: {
-      client_id: 'demo_brawndo',
-      status: 'active',
-      archived: true
-    }
-  }, {
-    currentClient: {
-      client_id: 'other',
-      status: 'active'
-    }
-  }, {
-    currentClient: null
-  }]) {
-    expect(enhancedPortfolioEligible({
-      ...gate(),
-      ...changes
-    })).toBe(false);
   }
-  for (const user of [{
-    role: 'super_admin',
-    workspace_mode: 'demo'
-  }, {
-    user_id: 'lead1',
-    role: 'client_viewer',
-    workspace_mode: 'demo'
-  }, {
-    user_id: 'lead1',
-    role: 'platform_admin',
-    workspace_mode: 'signed_in'
-  }]) {
-    expect(enhancedPortfolioEligible({
-      ...gate(),
-      user
-    })).toBe(false);
+  for (const changes of [{pathname:'/dashboard'},{pathname:'/clients/'},{authLoading:true},{authError:'denied'},
+    {user:null},{user:{role:'super_admin'}},{user:{user_id:'reader',role:'client_readonly'}},
+    {user:{user_id:'manager',role:'client_grc_manager'}}]) {
+    expect(enhancedPortfolioEligible({...gate(),...changes})).toBe(false);
   }
 });
+
 test('counts every native eligible item and rejects foreign, duplicate, invalid and wrong-window entries', () => {
   const overdue = Array.from({
     length: 31

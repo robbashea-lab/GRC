@@ -325,7 +325,16 @@
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 4px 10px;
-  align-items: center
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  padding: 0;
+}
+.ep-program:hover,.ep-program:focus-visible {
+  background: var(--info-bg);
 }
 .ep-framework {
   border: 0;
@@ -530,9 +539,14 @@
   --color-link: var(--accent);
   --color-success: var(--chart-implemented);
   --font-body: 'GoverNara Portfolio Inter',Inter,system-ui,sans-serif;
-  width: min(760px,calc(100vw - 32px));
-  max-width: 760px;
-  max-height: calc(100dvh - 32px);
+  /* Reuse native wide-record geometry only for this Portfolio preview. */
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: min(1440px, calc(100vw - 64px));
+  max-width: calc(100vw - 64px);
+  height: min(92dvh, 1000px);
+  max-height: calc(100dvh - 48px);
   padding: 0;
   gap: 0;
   background: var(--card);
@@ -976,10 +990,7 @@
 .ep-toolbar label {
   margin-left: 0
 }
-.portfolio-history-dialog.ep-history {
-  width: calc(100vw - 24px);
-  max-height: calc(100dvh - 24px)
-}
+
 .ep-dialog-heading {
   flex-wrap: wrap;
   padding: 14px 16px;
@@ -1171,5 +1182,14 @@
 @media (max-width: 760px) {
   :root .ui-dialog.ep-history .ep-history-body {
     padding: 14px 16px 22px;
+  }
+}
+
+@media (max-width: 600px) {
+  .portfolio-history-dialog.ep-history {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    height: calc(100dvh - 32px);
+    max-height: calc(100dvh - 32px);
   }
 }

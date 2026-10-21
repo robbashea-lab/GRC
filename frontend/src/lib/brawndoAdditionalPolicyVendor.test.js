@@ -24,6 +24,28 @@ test('annual card uses saved membership and same-client retained completion fact
   expect(result.scheduledCount).toBe(1);
 });
 
+test('canonical program card keeps its annual identity before membership is recorded', () => {
+  const program={review_id:'annual-set',client_id:policy.client_id,baseline_key:'policy-review',recurrence:'annual',status:'upcoming',due_date:'2026-10-13'};
+  const individual={...program,review_id:'single-policy',baseline_key:undefined,policy_id:policy.policy_id,due_date:'2026-02-12'};
+  const result=policyOverview([policy],[individual,program]);
+  expect(result.review).toBe(program);
+  expect(result.covered).toEqual([]);
+  expect(result.lastClosed).toBeNull();
+});
+
+test('completed annual set remains the card source above earlier independent draft obligations', () => {
+  const rows=[policy,{...policy,policy_id:'approved',status:'approved'}];
+  const program={review_id:'annual-set',client_id:policy.client_id,baseline_key:'policy-review',recurrence:'annual',status:'upcoming',due_date:'2027-10-13',policy_ids:['approved'],occurrences:[{status:'completed',completed_at:'2026-10-21'}]};
+  const draft={...program,review_id:'draft-obligation',baseline_key:undefined,policy_id:policy.policy_id,policy_ids:[],due_date:'2027-02-12',occurrences:[{status:'completed',completed_at:'2026-02-11'}]};
+  const foreign={...program,review_id:'foreign-program',client_id:'other-client',due_date:'2026-01-01'};
+  const result=policyOverview(rows,[draft,foreign,program]);
+  expect(result.review).toBe(program);
+  expect(result.review.due_date).toBe('2027-10-13');
+  expect(result.lastClosed).toBe('2026-10-21');
+  expect(result.covered).toEqual(['approved']);
+  expect(policyOverview(rows,[draft]).review).toBe(draft);
+});
+
 test('mapping figures use native catalog identity rather than a policy title', () => {
   const rows = [{ ...policy, baseline_key: 'policy-access-control-identity-management-policy' }, { ...policy, policy_id: 'p2', title: 'Access Control Policy', governance_context: { category: 'organizational' } }];
   const result = policyOverview(rows, [], ['cis-ig1']);

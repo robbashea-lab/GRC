@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import api, { formatError, PREVIEW_MODE } from '@/lib/api';
+import api, { formatError } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useOrg } from '@/context/OrgContext';
-import { selectedClient, clientDestination } from '@/lib/clientSelection';
+import { clientDestination } from '@/lib/clientSelection';
 import { usePortfolioRefresh } from '@/lib/usePortfolioRefresh';
 import { usePortfolioView } from '@/lib/usePortfolioView';
 import { useBrawndoTheme, useBrawndoPortalTheme } from '@/lib/brawndoTheme';
@@ -15,26 +15,20 @@ import { PortfolioSparkline, PortfolioStatusBar, sparklineSpan, formatPortfolioD
 import EnhancedPortfolioHistory from '@/components/EnhancedPortfolioHistory';
 import './EnhancedPortfolio.css';
 
-// Mount only after the trusted native context resolves the canonical Demo client.
+// Portfolio appearance is independent of the currently selected operational client.
 export default function EnhancedPortfolioBoundary({
   children
 }) {
-  const auth = useAuth(),
-    org = useOrg(),
-    location = useLocation();
+  const auth = useAuth(), location = useLocation();
   const eligible = enhancedPortfolioEligible({
-    preview: PREVIEW_MODE,
     user: auth.user,
-    workspaceMode: auth.workspaceMode,
-    ...org,
     pathname: location.pathname,
-    selectedClientId: selectedClient(),
-    routeClientId: new URLSearchParams(location.search).get('client_id'),
     authLoading: auth.loading,
-    authError: auth.error,
-    orgLoading: org.loading,
-    orgError: org.error
+    authError: auth.error
   });
+  if (location.pathname === '/clients' && (auth.loading || auth.error)) {
+    return <section className="enhanced-portfolio"><p className="ep-empty" role={auth.error ? 'alert' : 'status'}>{auth.error ? 'Portfolio unavailable' : 'Loading client portfolio…'}</p></section>;
+  }
   const identity = JSON.stringify([auth.user?.user_id, auth.user?.role, auth.user?.workspace_mode, !!auth.user?.all_clients, [...(auth.user?.client_ids || [])].sort()]);
   return eligible ? <EnhancedPortfolio key={identity} user={auth.user} /> : children;
 }
@@ -95,7 +89,6 @@ export function EnhancedPortfolio({
         ...client,
         ...byId.get(client.client_id)
       }));
-      if (!clients.some(client => client.client_id === 'demo_brawndo' && client.status === 'active' && !client.archived && !client.archived_at)) throw new Error('The authorized Brawndo portfolio is unavailable.');
       if (request === sequence.current) setReport(previous => ({
         data: {
           ...data,
@@ -134,9 +127,15 @@ export function EnhancedPortfolio({
   const span = data ? sparklineSpan(programs, asOf) : 8;
   const selected = clients.find(client => client.client_id === selection?.clientId);
   const selectedPrograms = programs.filter(program => program.client_id === selected?.client_id);
+  const selectionAvailable = selected && !selected.archived && !selected.archived_at
+    && !['archived', 'retired'].includes(selected.status)
+    && (!selection.programId || selectedPrograms.some(program => programIdentity(program) === selection.programId));
   useEffect(() => {
     if (state.framework && data && !programs.some(program => program.program_key === state.framework)) update({framework:''});
   }, [data, programs, state.framework, update]);
+  useEffect(() => {
+    if (selection && !report.loading && !selectionAvailable) setSelection(null);
+  }, [selection, selectionAvailable, report.loading]);
   const enter = (client, path = '/dashboard') => {
     if (switchClient(client.client_id) === false) return;
     navigate(clientDestination(client.client_id, path));
@@ -196,7 +195,7 @@ export function EnhancedPortfolio({
             return <div className="ep-row" role="row" key={client.client_id} data-client-id={client.client_id}>
         <div className="ep-client" role="cell"><ClientMark client={client} /><div><button type="button" className="ep-client-link" onClick={() => enter(client)}>{client.name}</button><small>{client.industry || 'Not set'}</small></div></div>
         <div role="cell"><Attention client={client} asOf={asOf} /></div>
-        <div className="ep-programs" role="cell">{visiblePrograms.map(program => <ProgramCell key={programIdentity(program)} client={client} program={program} onNavigate={() => enter(client, program.to)} onPreview={event => preview(client, program, event)} />)}{!visiblePrograms.length && <><small>No enabled programs</small><button type="button" className="ep-link" onClick={event => preview(client, null, event)}>View existing work</button></>}</div>
+        <div className="ep-programs" role="cell">{visiblePrograms.map(program => <ProgramCell key={programIdentity(program)} client={client} program={program} onPreview={event => preview(client, program, event)} />)}{!visiblePrograms.length && <><small>No enabled programs</small><button type="button" className="ep-link" onClick={event => preview(client, null, event)}>View existing work</button></>}</div>
         <div className="ep-trends" role="cell">{visiblePrograms.map(program => {
                   const change = trailingChange(program, asOf);
                   return <div key={programIdentity(program)}><PortfolioSparkline program={program} asOf={asOf} span={span} /><small>{change.comparable ? <><b>{signedPoints(change.change_pp)} pts</b> · 90 days{change.scope_changed ? ' · scope changed' : ''}</> : 'Insufficient history'}</small></div>;
@@ -212,7 +211,7 @@ export function EnhancedPortfolio({
       ? <>No clients are currently assigned to you. <button type="button" className="ep-button" onClick={() => update({mine:false})}>Show all clients</button></>
       : <>No clients match the selected filters. <button type="button" className="ep-button" onClick={clear}>Clear filters</button></>}</div>}
     <footer><span>Showing {visible.length} of {base.length} matching clients</span><span>Assessment progress, not a compliance determination. Percentages aren't comparable across frameworks, so there's no portfolio-wide ranking by %.</span></footer></div>
-    {selected && <EnhancedPortfolioHistory client={selected} programs={selectedPrograms} selected={selection.programId} onSelect={programId => setSelection(previous => ({
+    {selectionAvailable && <EnhancedPortfolioHistory client={selected} programs={selectedPrograms} selected={selection.programId} onSelect={programId => setSelection(previous => ({
       ...previous,
       programId
     }))} asOf={asOf} refreshToken={report.revision} onClose={() => setSelection(null)} onCloseAutoFocus={restoreFocus} onNavigate={path => enter(selected, path)} theme={theme} />}
@@ -221,12 +220,14 @@ export function EnhancedPortfolio({
 function ProgramCell({
   client,
   program,
-  onNavigate,
   onPreview
 }) {
   const current = program.current,
     percentage = currentPercentage(current),
     valid = validImplementationPosition(current);
   const assessed = valid ? current.denominator - (applicableCounts(current).find(value => value.key === 'not_assessed')?.count || 0) : null;
-  return <div className="ep-program"><button type="button" className="ep-framework" onClick={onNavigate}>{program.program_label}</button><button type="button" className="ep-progress" onClick={onPreview} aria-label={`${client.name} ${program.program_label} implementation history`}>{percentage == null ? '—' : `${percentage.toFixed(1)}%`} <small>{valid ? `${current.implemented}/${current.denominator}` : ''}</small></button><PortfolioStatusBar snapshot={current} /><small className="ep-assessed">{assessed == null ? 'Implementation unavailable' : `Assessed ${assessed} of ${current.denominator}`}</small></div>;
+  const progressLabel = percentage == null ? 'Implementation unavailable' : `${percentage.toFixed(1)}%, ${current.implemented} of ${current.denominator} implemented`;
+  const assessedLabel = assessed == null ? 'Assessment unavailable' : `Assessed ${assessed} of ${current.denominator}`;
+  const statusLabel = valid ? applicableCounts(current).map(value => `${value.count} ${value.label}`).join(', ') : 'Status counts unavailable';
+  return <button type="button" className="ep-program" onClick={onPreview} aria-haspopup="dialog" aria-label={`${client.name} ${program.program_label} implementation history; ${progressLabel}; ${assessedLabel}; ${statusLabel}`}><span className="ep-framework">{program.program_label}</span><span className="ep-progress">{percentage == null ? '—' : `${percentage.toFixed(1)}%`} <small>{valid ? `${current.implemented}/${current.denominator}` : ''}</small></span><PortfolioStatusBar snapshot={current} /><span className="ep-assessed">{assessed == null ? 'Implementation unavailable' : `Assessed ${assessed} of ${current.denominator}`}</span></button>;
 }

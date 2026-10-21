@@ -10,6 +10,10 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.cre
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
 jest.mock('sonner',()=>({toast:{error:jest.fn(),success:jest.fn()}}));
 beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
+const nativeScrollIntoView=Element.prototype.scrollIntoView;
+// JSDOM has no layout scrolling; keep the real Select and its change events.
+beforeAll(()=>{if(!nativeScrollIntoView)Element.prototype.scrollIntoView=jest.fn();});
+afterAll(()=>{if(!nativeScrollIntoView)delete Element.prototype.scrollIntoView;});
 
 let root,container,record,onOpenChange;
 const query=id=>document.querySelector(`[data-testid="${id}"]`);
@@ -226,4 +230,33 @@ test('same-auth Review appearance withdrawal preserves the open native Evidence 
   expect(query('tab-evidence').getAttribute('aria-pressed')).toBe('true');
   expect(document.querySelector('[aria-label="Find existing Evidence"]')).toBe(search);expect(search.value).toBe('Retained Review library query');
   expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
+});
+
+async function chooseConfiguration(field,label) {
+  await click(query(`field-${field}`));
+  const option=[...document.querySelectorAll('[role="option"]')].find(node=>node.textContent===label);
+  expect(option).toBeTruthy();await click(option);
+}
+
+test('new Brawndo Policy Review defaults annually without inventing a due date or writing a record',async()=>{
+  const post=jest.spyOn(api,'post');
+  await render({record:null,reviewsPilot:true});
+  await chooseConfiguration('review_type','Policy');
+  expect(query('field-recurrence').textContent).toContain('Annual');
+  expect(query('field-due_date').value).toBe('');
+  expect(post).not.toHaveBeenCalled();
+});
+
+test('new Policy type never replaces an explicitly chosen cadence',async()=>{
+  await render({record:null,reviewsPilot:true});
+  await chooseConfiguration('recurrence','Monthly');
+  await chooseConfiguration('review_type','Policy');
+  expect(query('field-recurrence').textContent).toContain('Monthly');
+});
+
+test.each(['other client','normal sign-in'])('Policy default does not change %s operational behavior',async mode=>{
+  if(mode==='normal sign-in')mockUser={...mockUser,workspace_mode:'standard'};
+  await render({record:null,clientId:mode==='other client'?'demo_dunder':'demo_brawndo'});
+  await chooseConfiguration('review_type','Policy');
+  expect(query('field-recurrence').textContent).toContain('One-time');
 });

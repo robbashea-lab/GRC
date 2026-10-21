@@ -3,22 +3,10 @@ import { calendarDay, managementDay } from './managementDates';
 export const ENHANCED_PORTFOLIO_ENABLED = true;
 export const PORTFOLIO_KPIS = [['attention', 'Needs attention', 'Clients with a red status'], ['overdue', 'Overdue items', 'Reviews and action items'], ['due30', 'Due in 30 days', 'Reviews, follow-ups, renewals'], ['notstarted', 'Not started', 'Onboarding has not started']];
 
-// Appearance only; neither a URL nor a matching display name grants eligibility.
-export function enhancedPortfolioEligible({
-  preview,
-  user,
-  workspaceMode,
-  pathname,
-  currentClientId,
-  currentClient,
-  selectedClientId,
-  routeClientId,
-  authLoading,
-  authError,
-  orgLoading,
-  orgError
-}) {
-  return ENHANCED_PORTFOLIO_ENABLED && preview === true && pathname === '/clients' && workspaceMode === 'demo' && user?.workspace_mode === 'demo' && !!user.user_id && ['platform_admin', 'super_admin'].includes(user.role) && !authLoading && !authError && !orgLoading && !orgError && currentClientId === 'demo_brawndo' && selectedClientId === currentClientId && (!routeClientId || routeClientId === currentClientId) && currentClient?.client_id === currentClientId && currentClient.status === 'active' && !currentClient.archived && !currentClient.archived_at;
+// Appearance only; the native endpoints still authorize the returned client cohort.
+export function enhancedPortfolioEligible({user, pathname, authLoading, authError}) {
+  return ENHANCED_PORTFOLIO_ENABLED && pathname === '/clients' && !!user?.user_id
+    && ['platform_admin', 'super_admin'].includes(user.role) && !authLoading && !authError;
 }
 export function operationalItems(client, asOf) {
   const today = managementDay(asOf);

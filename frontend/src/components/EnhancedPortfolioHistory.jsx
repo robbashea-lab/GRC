@@ -64,10 +64,11 @@ function ProgramHistory({
     [mode, setMode] = useState('line'),
     [showData, setShowData] = useState(false);
   // Fixed four native reads provide independent, evidenced calendar-boundary comparisons.
-  const one = useHistory(client, program, '1m', refreshToken, true);
-  const three = useHistory(client, program, '3m', refreshToken, true);
-  const six = useHistory(client, program, '6m', refreshToken, true);
-  const twelve = useHistory(client, program, '12m', refreshToken, true);
+  const expectedScope = program.current?.scope || {};
+  const one = useHistory(client, program, '1m', refreshToken, true, false, expectedScope);
+  const three = useHistory(client, program, '3m', refreshToken, true, false, expectedScope);
+  const six = useHistory(client, program, '6m', refreshToken, true, false, expectedScope);
+  const twelve = useHistory(client, program, '12m', refreshToken, true, false, expectedScope);
   const reports = {
       '1m': one,
       '3m': three,

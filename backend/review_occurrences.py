@@ -49,6 +49,7 @@ def schedule(review, reset_anchor=False):
 def view(review):
     result = {**review, **schedule(review), "current_occurrence_id": occurrence_id(review)}
     result.pop("_execution_lock", None)
+    result.pop("_policy_coverage_pending", None)
     if review.get("status") not in ("completed", "cancelled"):
         unscheduled = not scheduled_date(review.get("due_date")) or ("recurrence" in review and review["recurrence"] in (None, "")) or (
             review.get("recurrence") not in (None, "", "none") and not result["next_review_date"])

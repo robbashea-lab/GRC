@@ -41,6 +41,7 @@ beforeEach(() => {
   mockPortfolio = {as_of: AT, clients, programs: [program(clients[0], 'cis-ig3', 138, 80), program(clients[0], 'soc-2', 4, 10), program(clients[1], 'cis-ig3', 31, 28)]};
   api.get.mockImplementation(async (path, options) => {
     if(path==='/portfolio/reporting/overview') return {data:mockPortfolio};
+    if(path==='/clients/directory') return {data:{clients:mockPortfolio.clients.map(client=>({...client,metric_items:{past_due:[],due_30d:[],due_31_90d:[]}}))}};
     if(path==='/portfolio/reporting/history') {
       const selected=mockPortfolio.programs.find(value=>value.client_id===options.params.client_id&&value.program_key===options.params.program_key);
       return {data:{...selected,as_of:AT,snapshots:[],forecast_snapshots:[],scope_changes:[],forecast_scope_changes:[],comparison:{comparable:false,reason:'No retained period boundary'}}};
@@ -61,86 +62,75 @@ const change = async (node, value) => {
   });
 };
 const click = async node => { expect(node).toBeTruthy(); await act(async () => node.click()); };
-const select = async (label,value) => { const node=container.querySelector(`select[aria-label="${label}"]`); expect(node).toBeTruthy(); await act(async()=>{node.value=value;node.dispatchEvent(new Event('change',{bubbles:true}));}); };
-const scopeButton = label => [...container.querySelectorAll('[aria-label="Client scope"] button')].find(node=>node.textContent===label);
-const visibleClients = () => [...container.querySelectorAll('.gp-first-row')].map(node=>node.dataset.clientId);
+const select = async (label,value) => { const node=[...container.querySelectorAll('select')].find(select=>select.getAttribute('aria-label')===label||[...select.labels].some(item=>[...item.childNodes].filter(node=>node.nodeType===Node.TEXT_NODE).map(node=>node.textContent).join('').trim()===label)); expect(node).toBeTruthy(); await act(async()=>{node.value=value;node.dispatchEvent(new Event('change',{bubbles:true}));}); };
+const scopeButton = label => [...container.querySelectorAll('[aria-label="Scope"] button')].find(node=>node.textContent===label);
+const visibleClients = () => [...container.querySelectorAll('.ep-row')].map(node=>node.dataset.clientId);
 
-test("approved five-column portfolio preserves native All/Mine scope and its shared sidebar", async () => {
+test("standard enhanced Portfolio preserves native All/Mine scope and its shared sidebar", async () => {
   mockClients=mockPortfolio.clients;
   await render(<><Layout/><ClientDirectory /></>);
   expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
-  expect(container.querySelector("h1").textContent).toBe("Client Portfolio");
-  const filters = container.querySelector('[data-testid="client-directory-filters"]');
-  expect([...filters.querySelectorAll('[aria-label="Client scope"] button')].map(node=>node.textContent)).toEqual(['All Clients','Assigned to Me']);
-  expect([...container.querySelectorAll('.gp-table thead th')].map(node=>node.firstChild.textContent.trim())).toEqual(['Client','GRC Lead','Framework','Implementation progress','Last activity']);
-  expect(container.querySelector('[data-testid="portfolio-summary-cards"], .gp-work-views, .gp-hero')).toBeNull();
-  expect(container.querySelector('button[aria-label="Portfolio filters"]')).toBeNull();
-  expect(container.querySelector('[data-testid^="client-status-"]')).toBeNull();
-  expect(container.querySelector('.gp-countbar').textContent).toContain('2 clients · 3 programs');
-  expect(container.querySelector('.gp-first-row td').rowSpan).toBe(2);
-  await click(scopeButton('Assigned to Me'));
+  expect(container.querySelector('h1').textContent).toBe('Client portfolio');
+  expect([...container.querySelectorAll('[aria-label="Scope"] button')].map(node=>node.textContent)).toEqual(['All clients','Assigned to me']);
+  expect([...container.querySelectorAll('[role="columnheader"]')].map(node=>node.textContent)).toEqual(['Client','Attention','Programs','Trend · 90 days','GRC lead','Next key date','History preview']);
+  expect(container.querySelector('h1').parentElement.textContent).toContain('2 clients · 3 programs');
+  expect(container.querySelectorAll('.ep-program')).toHaveLength(3);
+  await click(scopeButton('Assigned to me'));
   expect(visibleClients()).toEqual([mockClients[0].client_id]);
-  expect(container.querySelector('.gp-countbar').textContent).toContain('1 client · 2 programs');
   expect(container.querySelector('[aria-label="Client list scope"]')).toBeNull();
   expect(container.querySelectorAll('[data-testid^="sidebar-open-"]')).toHaveLength(2);
-  await click(scopeButton('All Clients'));
-  expect(scopeButton('All Clients').getAttribute('aria-pressed')).toBe('true');
-  expect(visibleClients()).toEqual(mockClients.map(client=>client.client_id));
-  await change(container.querySelector('[data-testid="client-directory-search"]'),' SOC 2 ');
+  await click(scopeButton('All clients'));
+  expect(scopeButton('All clients').getAttribute('aria-pressed')).toBe('true');
+  expect(visibleClients().sort()).toEqual(mockClients.map(client=>client.client_id).sort());
+  await change(container.querySelector('[aria-label="Search clients"]'),' SOC 2 ');
   await select('Framework','cis-ig3');
   expect(visibleClients()).toEqual([mockClients[0].client_id]);
-  expect(container.querySelector('[aria-label="Open SOC 2 for Acme Corp"]')).toBeNull();
-  expect(container.querySelector('.gp-countbar').textContent).toContain('1 client · 1 program');
+  expect(container.querySelector('[aria-label^="Acme Corp SOC 2 implementation history;"]')).toBeNull();
+  expect(container.querySelectorAll('.ep-program')).toHaveLength(1);
   expect(container.querySelectorAll('[data-testid^="sidebar-open-"]')).toHaveLength(2);
 });
 
-test.each([['name',[0,1]],['name-desc',[1,0]],['change-desc',[0,1]],['progress',[0,1]],['progress-desc',[0,1]],['activity-desc',[0,1]]])('%s approved sort keeps client groups and uses the lowest visible program value',async (key,order)=>{
+test.each(['attention','name','next'])('%s Portfolio sort preserves cohort, program filters and native Mine scope',async key=>{
   await render(<ClientDirectory />);
-  expect([...container.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['name','name-desc','progress-desc','progress','change-desc','activity-desc']);
+  expect([...container.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['attention','name','next']);
   await select('Sort clients',key);
-  expect(visibleClients()).toEqual(order.map(index=>mockPortfolio.clients[index].client_id));
-  expect(container.querySelectorAll(`[data-client-id="${mockPortfolio.clients[0].client_id}"]`)).toHaveLength(2);
-  if(key==='progress') {
-    await select('Framework','cis-ig3');
-    expect(visibleClients()).toEqual([mockPortfolio.clients[1].client_id,mockPortfolio.clients[0].client_id]);
-  }
-  await click(scopeButton('Assigned to Me')); await select('Framework','soc-2');
-  await change(container.querySelector('[data-testid="client-directory-search"]'),'missing-client');
-  await click([...container.querySelectorAll('button')].find(node=>node.textContent==='Clear search and filter'));
-  expect(container.querySelector('select[aria-label="Framework"]').value).toBe('all');
+  expect(visibleClients()).toEqual([...mockPortfolio.clients].sort((a,b)=>a.name.localeCompare(b.name)).map(client=>client.client_id));
+  expect(container.querySelectorAll('[data-client-id="'+mockPortfolio.clients[0].client_id+'"] .ep-program')).toHaveLength(2);
+  await click(scopeButton('Assigned to me'));await select('Framework','soc-2');
+  await change(container.querySelector('[aria-label="Search clients"]'),'missing-client');
+  expect(visibleClients()).toEqual([]);
+  await click([...container.querySelectorAll('button')].find(node=>node.textContent==='Clear filters'));
+  expect(container.querySelector('select[aria-label="Framework"]').value).toBe('');
   expect(container.querySelector('select[aria-label="Sort clients"]').value).toBe(key);
-  expect(scopeButton('Assigned to Me').getAttribute('aria-pressed')).toBe('true');
+  expect(scopeButton('Assigned to me').getAttribute('aria-pressed')).toBe('true');
   expect(visibleClients()).toEqual([mockPortfolio.clients[0].client_id]);
-  expect(container.querySelector('.gp-countbar').textContent).toContain('1 client · 2 programs');
+  expect(container.querySelectorAll('.ep-program')).toHaveLength(2);
 });
 
-test('portfolio client/framework links and whole progress area open exact native destinations and selected-program history',async()=>{
+test('client names navigate separately while a whole exact program opens history and its explicit workspace control',async()=>{
   await render(<ClientDirectory />);
   const first=mockPortfolio.clients[0],selected=mockPortfolio.programs.find(value=>value.client_id===first.client_id&&value.program_key==='soc-2');
-  await click(container.querySelector(`[data-client-id="${first.client_id}"] .gp-client-name`));
+  await click(container.querySelector('[data-client-id="'+first.client_id+'"] .ep-client-link'));
   expect(mockSwitch).toHaveBeenCalledWith(first.client_id);
-  expect(mockNavigate).toHaveBeenLastCalledWith(`/dashboard?client_id=${first.client_id}`);
-  await click(container.querySelector(`[data-program-id="${selected.program_id}"] .gp-framework`));
-  expect(mockNavigate).toHaveBeenLastCalledWith(`/compliance/soc-2?client_id=${first.client_id}`);
-  const progress=container.querySelector(`[data-program-id="${selected.program_id}"] .gp-progress`);
-  await click(progress);
-  const dialog=document.querySelector('[data-testid="portfolio-history-dialog"]');
-  expect(dialog).toBeTruthy(); expect(dialog.querySelector('[role="tab"][data-state="active"]').textContent).toContain('SOC 2');
-  expect(api.get).toHaveBeenLastCalledWith('/portfolio/reporting/history',expect.objectContaining({params:{client_id:first.client_id,program_key:'soc-2',range:'6m',include_archived:false}}));
-  expect(dialog.querySelector('.ph-current-value').textContent).toContain('4 of 38');
+  expect(mockNavigate).toHaveBeenLastCalledWith('/dashboard?client_id='+first.client_id);
+  const progress=container.querySelector('[aria-label^="'+first.name+' SOC 2 implementation history;"]');
+  progress.focus();await click(progress.querySelector('.ep-framework'));
+  expect(mockNavigate).toHaveBeenCalledTimes(1);
+  const dialog=document.querySelector('[data-testid="enhanced-portfolio-history"]');
+  expect(dialog).toBeTruthy();expect(dialog.querySelector('[aria-label="Select program"] [aria-pressed="true"]').textContent).toBe('SOC 2');
+  expect(api.get.mock.calls.filter(([path])=>path.endsWith('/history')).map(([,options])=>options.params)).toEqual(['1m','3m','6m','12m'].map(range=>({client_id:first.client_id,program_key:'soc-2',range,include_archived:false})));
+  expect(dialog.querySelector('.ep-current').textContent).toContain('4 of 38 implemented');
   await click([...dialog.querySelectorAll('button')].find(node=>node.textContent==='Open SOC 2 workspace →'));
   expect(mockSwitch).toHaveBeenLastCalledWith(first.client_id);
-  expect(mockNavigate).toHaveBeenLastCalledWith(`/compliance/soc-2?client_id=${first.client_id}`);
+  expect(mockNavigate).toHaveBeenLastCalledWith('/compliance/soc-2?client_id='+first.client_id);
   await click([...dialog.querySelectorAll('button')].find(node=>node.textContent==='Open client portal'));
-  expect(mockNavigate).toHaveBeenLastCalledWith(`/dashboard?client_id=${first.client_id}`);
+  expect(mockNavigate).toHaveBeenLastCalledWith('/dashboard?client_id='+first.client_id);
   expect(dialog.contains(document.activeElement)).toBe(true);
-  // Radix schedules close autofocus on unmount; observe the real focus return.
   const focusReturned=new Promise(resolve=>progress.addEventListener('focus',resolve,{once:true}));
-  await click([...dialog.querySelectorAll('button')].find(node=>node.textContent==='Close'));
-  expect(document.querySelector('[data-testid="portfolio-history-dialog"]')).toBeNull();
-  await focusReturned;
-  expect(document.activeElement).toBe(progress);
-  await change(container.querySelector('[data-testid="client-directory-search"]'),first.name);
+  await click(dialog.querySelector('[aria-label="Close implementation preview"]'));
+  expect(document.querySelector('[data-testid="enhanced-portfolio-history"]')).toBeNull();
+  await focusReturned;expect(document.activeElement).toBe(progress);
+  await change(container.querySelector('[aria-label="Search clients"]'),first.name);
   expect(visibleClients()).toEqual([first.client_id]);
 });
 

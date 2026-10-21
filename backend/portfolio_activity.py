@@ -36,6 +36,7 @@ ALIASES.update({'policy': 'policies', 'framework_assessment': 'framework_assessm
                 'organizational_control': 'organizational_controls'})
 TYPES = frozenset(value[1] for value in SOURCES.values())
 SOURCE_INTERNAL_FIELDS = frozenset({
+    '_policy_coverage_pending',
     '_portfolio_activity_pending', '_portfolio_activity_last_event_id',
     '_portfolio_activity_creation_event_id', '_portfolio_activity_decision_event_ids',
     '_portfolio_delete_receipt', '_portfolio_delete_token',
