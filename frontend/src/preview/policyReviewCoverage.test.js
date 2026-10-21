@@ -18,7 +18,7 @@ test('only exact approved subjects qualify, including the effective version bene
   expect(coverage.map(member=>[member.policy_id,member.subject_id,member.version])).toEqual([['A','A-approved-1','1'],['C','C-approved-1','1']]);
   expect(JSON.stringify(pending)).toBe(original);
   expect(effectivePolicySubject({...policy('future'),effective_date:'2090-01-01'},at)).toBeNull();
-  expect(effectivePolicySubject({...policy('missing'),approval_subject:null,approval_history:[]},at)).toBeNull();
+  expect(()=>effectivePolicySubject({...policy('missing'),approval_subject:null,approval_history:[]},at)).toThrow(/coverage is incomplete/);
   expect(()=>effectivePolicySubject({...policy('bad'),approval_history:[{action:'approved',at:'2025-01-01',subject:{...subject('bad'),client_id:'demo_dunder'}}]},at)).toThrow(/another client/);
   expect(policySetCoverage({policies:[policy('A')]},{...annual,client_id:'demo_dunder'},at)).toBeNull();
   expect(()=>policySetCoverage({policies:[]},{...annual,recurrence:'quarterly'},at)).toThrow(/annual/);
@@ -53,12 +53,41 @@ test.each([{archived:true},{archived_at:'2026-01-01'},{presence:'not_applicable'
   expect(effectivePolicySubject({...policy('excluded'),...exclusion},at)).toBeNull();
 });
 
-test('zero identifiable eligible subjects is an explicit empty coverage list, never approval inferred from status',()=>{
+test('genuinely empty scope is distinct from missing approved identities, never approval inferred from status',()=>{
   const missing={...policy('missing'),approval_history:[],approval_subject:null};
-  expect(policySetCoverage({policies:[missing,policy('draft','draft')]},annual,at)).toEqual([]);
+  expect(()=>policySetCoverage({policies:[missing,policy('draft','draft')]},annual,at)).toThrow(/coverage is incomplete for missing/);
+  expect(policySetCoverage({policies:[policy('draft','draft'),policy('retired','retired')]},annual,at)).toEqual([]);
   const original=policy('external');original.approval_history=[];
   original.decision_history=[{action:'external_approval_recorded',recorded_at:'2090-01-01',subject:original.approval_subject}];
   expect(effectivePolicySubject(original,at)).toBeNull();
+});
+
+test.each([
+  {subject:null},
+  {subject:{...subject('broken'),subject_id:''}},
+  {subject:{...subject('broken'),version:''}},
+  {at:'invalid'},
+  {subject:null,at:'2026-01-01'},
+])('malformed latest approval %j cannot silently omit a Policy or fall back to an older version',fields=>{
+  const row=policy('broken');row.approval_history.push({action:'approved',at:'2026-01-01',subject:subject('broken'),...fields});
+  expect(()=>effectivePolicySubject(row,at)).toThrow(/coverage is incomplete for broken/);
+});
+
+test('retained incomplete approved records fail closed after reload without implicit reconciliation or partial writes',async()=>{
+  const db=readStore(),review=db.reviews.find(row=>row.client_id===cid&&row.baseline_key==='policy-review'&&!row.policy_id);
+  const approved=db.policies.find(row=>row.client_id===cid&&row.status==='approved');
+  expect(policySetCoverage(db,review,new Date().toISOString()).length).toBeGreaterThan(0);
+  // A previously retained record can predate immutable approval-subject capture.
+  approved.approval_history=[];approved.decision_history=[];delete approved.approval_subject;
+  saveStore(db);
+  const before=sessionStorage.getItem(STORE_KEY),loaded=readStore();
+  const loadedPolicy=loaded.policies.find(row=>row.policy_id===approved.policy_id);
+  expect(loadedPolicy.approved_at).toBe(approved.approved_at);
+  expect(loadedPolicy.approval_subject).toBeUndefined();
+  expect(loadedPolicy.decision_history).toEqual([]);
+  await expect(api.post('/reviews/'+review.review_id+'/complete',{occurrence_id:review.current_occurrence_id||undefined})).rejects.toThrow(/coverage is incomplete/);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+  expect(readStore().policies.find(row=>row.policy_id===approved.policy_id)).toEqual(loadedPolicy);
 });
 
 test('native annual completion persists exact membership, completes covered obligations once and retains approvals on reload/replay',async()=>{

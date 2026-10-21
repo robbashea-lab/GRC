@@ -39,27 +39,50 @@ def effective_subject(policy, at):
     if (policy.get('archived') or policy.get('archived_at') or policy.get('status') not in ('approved', 'draft', 'in_review')
             or policy.get('presence') in ('not_applicable', 'reported_missing')):
         return None
+    def incomplete(reason):
+        raise HTTPException(409, 'Annual Policy coverage is incomplete for ' + str(policy.get('policy_id')) + ': ' + reason
+                            + '; reconcile the existing approval record before annual completion')
+
     approvals = [(entry.get('at'), entry) for entry in policy.get('approval_history', []) if entry.get('action') == 'approved']
     approvals += [(entry.get('recorded_at'), entry) for entry in policy.get('decision_history', []) if entry.get('action') == 'external_approval_recorded']
     cutoff = _time(at)
-    approvals = [(date, entry) for date, entry in approvals
-                 if entry.get('subject') and _time(date) is not None and cutoff is not None and _time(date) <= cutoff
-                 and (not entry.get('reported_approved_at') or _time(entry['reported_approved_at']) is not None and _time(entry['reported_approved_at']) <= cutoff)]
+    if cutoff is None:
+        incomplete('the completion cutoff is invalid')
+    if policy.get('approved_at') and _time(policy['approved_at']) is None:
+        incomplete('the saved approval date is invalid')
+    has_approval_records = bool(approvals)
+    eligible = []
+    for date, entry in approvals:
+        if _time(date) is None or entry.get('reported_approved_at') and _time(entry['reported_approved_at']) is None:
+            incomplete('an approval date is missing or invalid')
+        if _time(date) <= cutoff and (not entry.get('reported_approved_at') or _time(entry['reported_approved_at']) <= cutoff):
+            eligible.append((date, entry))
+    approvals = eligible
     approvals.sort(key=lambda pair: _time(pair[0]), reverse=True)
     if approvals:
         recorded, approval = approvals[0]
-        subject = approval['subject']
-    elif (policy.get('status') == 'approved' and policy.get('approval_subject') and _time(policy.get('approved_at')) is not None
-          and cutoff is not None and _time(policy['approved_at']) <= cutoff):
-        subject, recorded, approval = policy['approval_subject'], policy['approved_at'], None
+        subject = approval.get('subject')
+    elif (policy.get('status') == 'approved' and _time(policy.get('approved_at')) is not None
+          and _time(policy['approved_at']) <= cutoff):
+        subject, recorded, approval = policy.get('approval_subject'), policy['approved_at'], None
     else:
+        # A status/date claiming approval is not proof of a version, but is not an empty scope either.
+        if policy.get('status') == 'approved' and _time(policy.get('approved_at')) is None and not has_approval_records:
+            incomplete('the approved version has no recorded approval identity')
+        if policy.get('approved_at') and _time(policy['approved_at']) is not None and _time(policy['approved_at']) <= cutoff:
+            incomplete('the earlier approved version has no recorded subject')
         return None
+    if not isinstance(subject, dict):
+        incomplete('the approved subject is missing')
     if subject.get('client_id') != policy.get('client_id') or subject.get('policy_id') != policy.get('policy_id'):
         raise HTTPException(409, 'The approved Policy subject identity is unavailable or belongs to another client')
-    if not subject.get('subject_id') or not isinstance(subject.get('version'), str) or not subject['version'].strip():
-        return None
-    if policy.get('status') == 'approved' and policy.get('version') == subject['version'] and policy.get('effective_date') and (_time(policy['effective_date']) is None or _time(policy['effective_date']) > cutoff):
-        return None
+    if not isinstance(subject.get('subject_id'), str) or not subject['subject_id'].strip() or not isinstance(subject.get('version'), str) or not subject['version'].strip():
+        incomplete('the approved subject or version identity is missing')
+    if policy.get('status') == 'approved' and policy.get('version') == subject['version'] and policy.get('effective_date'):
+        if _time(policy['effective_date']) is None:
+            incomplete('the effective date is invalid')
+        if _time(policy['effective_date']) > cutoff:
+            return None
     return deepcopy({'policy_id': policy['policy_id'], 'client_id': policy['client_id'], 'subject_id': subject['subject_id'],
                      'version': subject['version'], 'approval_recorded_at': recorded, 'approval': approval, 'subject': subject})
 
@@ -87,6 +110,8 @@ async def prepare(db, review, completed, updates, request, user):
         raise HTTPException(409, 'Configure the annual Policy Review anchor before completion')
     pending = review.get('_policy_coverage_pending')
     if pending:
+        if pending.get('identity_validation_version') != 1:
+            raise HTTPException(409, 'The pending annual Policy coverage predates approval identity validation; reconcile its saved plan before retrying')
         if pending['occurrence_id'] != completed['occurrence_id'] or pending['request'] != request:
             raise HTTPException(409, 'Annual Policy completion is pending; retry its original occurrence and request')
         return pending
@@ -137,7 +162,7 @@ async def prepare(db, review, completed, updates, request, user):
     completed['policy_coverage'] = [{key: value for key, value in member.items() if key != 'child'} for member in members]
     completed['covered_policy_reviews'] = [{'review_id': member['child']['review_id'], 'occurrence_id': member['child']['occurrence_id']}
                                           for member in members if member['child']]
-    plan = {'occurrence_id': completed['occurrence_id'], 'request': deepcopy(request), 'completed': completed,
+    plan = {'identity_validation_version': 1, 'occurrence_id': completed['occurrence_id'], 'request': deepcopy(request), 'completed': completed,
             'updates': deepcopy(updates), 'members': members}
     result = await db.reviews.update_one({'review_id': review['review_id'], 'client_id': review['client_id'],
         'updated_at': review.get('updated_at'), 'current_occurrence_id': review.get('current_occurrence_id'),

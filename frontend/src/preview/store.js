@@ -225,7 +225,8 @@ export function write(db, kind, body, id) {
     risks: {
       status: 'open',
       category: 'operational',
-      date_identified: now()
+      // Retained Risks may use created_at for Added; an edit must not invent identification history.
+      ...(!existing ? {date_identified: now()} : {})
     },
     policies: {
       status: 'draft'

@@ -25,6 +25,8 @@ def main():
     parser.add_argument('--include-cis-six-year', action='store_true', help='Also run fresh onboarding and 2027–2032 cumulative CIS simulation')
     parser.add_argument('--include-generic-saves', action='store_true', help='Also run generic record save audit/relationship recovery regressions')
     parser.add_argument('--include-portfolio-reporting', action='store_true', help='Also run reporting indexes, automatic snapshots and committed-event recovery')
+    parser.add_argument('--include-policy-coverage', action='store_true', help='Run annual Policy coverage interruption, retry, concurrency and identity checks')
+    parser.add_argument('--include-evidence-integrity', action='store_true', help='Run binary/Unicode Evidence persistence and tenant denial checks')
     args = parser.parse_args()
     parsed = urlsplit(args.mongo_url)
     if (parsed.scheme != 'mongodb' or parsed.hostname != '127.0.0.1' or not parsed.port
@@ -118,6 +120,39 @@ def main():
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     suite.addTest(ReconnectReceiptTests('test_receipt_survives_a_new_database_connection'))
     suite.addTest(ReconnectAssessmentItemTests('test_items_and_finding_receipt_survive_a_new_database_connection'))
+    if args.include_policy_coverage:
+        from test_policy_review_coverage import PolicyCoverageTests
+        class MongoPolicyCoverageTests(MongoStorage, PolicyCoverageTests):
+            async def test_interrupted_plan_survives_reconnect_and_preserves_concurrent_notes(self):
+                await self.policy('A')
+                with patch.object(harness.server.policy_review_coverage, 'reconcile', side_effect=RuntimeError('Synthetic interruption')):
+                    with self.assertRaises(RuntimeError):
+                        await self.complete()
+                database_name = harness.server.db.name
+                pending = await harness.server.db.reviews.find_one({'review_id': 'annual'})
+                self.assertIn('_policy_coverage_pending', pending)
+                self.mongo.close()
+                self.mongo = AsyncIOMotorClient(args.mongo_url, serverSelectionTimeoutMS=3000)
+                real_db = self.mongo[database_name]
+                # A separate writer updates the child while the parent's frozen execution is interrupted.
+                await real_db.reviews.update_one({'review_id': 'review-A'}, {'$set': {
+                    'notes': 'Concurrent synthetic note retained', 'updated_at': '2026-10-21T12:01:00+00:00'}})
+                with patch.object(harness.server, 'db', real_db):
+                    first = await self.complete()
+                    self.assertEqual(first.status_code, 200, first.text)
+                    replay = await self.complete()
+                    self.assertEqual(replay.status_code, 200, replay.text)
+                    self.assertEqual(first.json()['occurrence'], replay.json()['occurrence'])
+                    child = await real_db.reviews.find_one({'review_id': 'review-A'})
+                    self.assertEqual(child['notes'], 'Concurrent synthetic note retained')
+                    self.assertEqual(len(child['occurrences']), 1)
+                    self.assertEqual(len((await real_db.policies.find_one({'policy_id': 'A'}))['review_history']), 1)
+                    self.assertNotIn('_policy_coverage_pending', await real_db.reviews.find_one({'review_id': 'annual'}))
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(MongoPolicyCoverageTests))
+    if args.include_evidence_integrity:
+        from test_evidence_library import EvidenceLibraryTests
+        concrete = type('MongoEvidenceLibraryTests', (MongoStorage, EvidenceLibraryTests), {})
+        suite.addTest(concrete('test_binary_unicode_integrity_after_fresh_authenticated_client'))
     if args.include_portfolio_reporting:
         from test_portfolio_reporting import PortfolioReportingTests
         from test_portfolio_activity import PortfolioActivityTests, PortfolioDeletionReceiptTests

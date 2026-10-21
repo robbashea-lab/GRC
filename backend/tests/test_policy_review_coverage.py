@@ -272,8 +272,73 @@ class PolicyCoverageTests(ClientDashboardSourcesTests):
         self.assertNotIn('_policy_coverage_pending', await server.db.reviews.find_one({'review_id': 'annual'}))
         await server.db.policies.update_one({'policy_id': 'A'}, {'$set': {'approval_history': [], 'approval_subject': None}})
         response = await self.complete()
+        self.assertEqual(response.status_code, 409, response.text)
+        self.assertIn('coverage is incomplete for A', response.text)
+        self.assertNotIn('_policy_coverage_pending', await server.db.reviews.find_one({'review_id': 'annual'}))
+        self.assertNotIn('occurrences', await server.db.reviews.find_one({'review_id': 'annual'}))
+
+    async def test_incomplete_approval_blocks_whole_set_without_partial_child_or_policy_writes(self):
+        await self.policy('A')
+        original = await self.policy('Z')
+        cases = [
+            {'approval_history': [], 'approval_subject': None, 'approved_at': None},
+            {'approval_history': [{**original['approval_history'][0], 'subject': None}]},
+            {'approval_history': [{key: value for key, value in original['approval_history'][0].items() if key != 'subject'}]},
+            {'approval_history': [{**original['approval_history'][0], 'subject': {**original['approval_subject'], 'subject_id': ''}}]},
+            {'approval_history': [{**original['approval_history'][0], 'subject': {**original['approval_subject'], 'version': ''}}]},
+            {'approval_history': [{**original['approval_history'][0], 'at': 'invalid'}]},
+            {'approval_history': [original['approval_history'][0], {'action': 'approved', 'at': '2026-01-01', 'subject': None}]},
+            {'approval_history': [], 'approval_subject': None, 'status': 'in_review'},
+        ]
+        before_a = await server.db.policies.find_one({'policy_id': 'A'}, {'_id': 0})
+        before_child = await server.db.reviews.find_one({'review_id': 'review-A'}, {'_id': 0})
+        for fields in cases:
+            with self.subTest(fields=fields):
+                await server.db.policies.replace_one({'policy_id': 'Z'}, {**deepcopy(original), **fields})
+                before_z = await server.db.policies.find_one({'policy_id': 'Z'}, {'_id': 0})
+                response = await self.complete()
+                self.assertEqual(response.status_code, 409, response.text)
+                self.assertIn('coverage is incomplete for Z', response.text)
+                self.assertEqual(await server.db.policies.find_one({'policy_id': 'A'}, {'_id': 0}), before_a)
+                self.assertEqual(await server.db.policies.find_one({'policy_id': 'Z'}, {'_id': 0}), before_z)
+                self.assertEqual(await server.db.reviews.find_one({'review_id': 'review-A'}, {'_id': 0}), before_child)
+                annual = await server.db.reviews.find_one({'review_id': 'annual'})
+                self.assertNotIn('_policy_coverage_pending', annual)
+                self.assertNotIn('occurrences', annual)
+
+    async def test_genuinely_no_eligible_policies_is_not_incomplete_approval(self):
+        await self.policy('draft', 'draft')
+        await self.policy('retired', 'retired')
+        future = await self.policy('future')
+        future['approval_history'][0]['at'] = '2090-01-01'
+        future['approved_at'] = '2090-01-01'
+        await server.db.policies.replace_one({'policy_id': 'future'}, future)
+        response = await self.complete()
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.json()['occurrence']['policy_coverage'], [])
+
+    async def test_legacy_unchecked_pending_plan_is_preserved_and_requires_explicit_reconciliation(self):
+        await self.policy('A')
+        await self.freeze_pending()
+        saved = await server.db.reviews.find_one({'review_id': 'annual'}, {'_id': 0})
+        self.assertEqual(saved['_policy_coverage_pending']['identity_validation_version'], 1)
+        original = deepcopy(saved['_policy_coverage_pending'])
+        for members in [[], original['members']]:
+            with self.subTest(empty=not members):
+                legacy = {key: value for key, value in original.items() if key != 'identity_validation_version'}
+                legacy['members'] = members
+                await server.db.reviews.update_one({'review_id': 'annual'}, {'$set': {'_policy_coverage_pending': legacy}})
+                before = await server.db.reviews.find_one({'review_id': 'annual'}, {'_id': 0})
+                child = await server.db.reviews.find_one({'review_id': 'review-A'}, {'_id': 0})
+                response = await self.complete()
+                self.assertEqual(response.status_code, 409, response.text)
+                self.assertIn('predates approval identity validation', response.text)
+                self.assertEqual(await server.db.reviews.find_one({'review_id': 'annual'}, {'_id': 0}), before)
+                self.assertEqual(await server.db.reviews.find_one({'review_id': 'review-A'}, {'_id': 0}), child)
+        await server.db.reviews.update_one({'review_id': 'annual'}, {'$set': {'_policy_coverage_pending': original}})
+        response = await self.complete()
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual([member['policy_id'] for member in response.json()['occurrence']['policy_coverage']], ['A'])
 
     async def test_annual_catch_up_and_child_history_keep_one_real_completion_per_occurrence(self):
         await self.policy('A')

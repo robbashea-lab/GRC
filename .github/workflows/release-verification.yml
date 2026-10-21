@@ -80,6 +80,7 @@ jobs:
           --include-program-lifecycle --include-cis-ig2
           --include-remediation-tickets --include-cis-ig3-scope
           --include-cis-six-year --include-generic-saves --include-portfolio-reporting
+          --include-policy-coverage --include-evidence-integrity
 
   release-gate:
     name: Release gate

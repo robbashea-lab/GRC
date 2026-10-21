@@ -14,17 +14,30 @@ export function pendingPolicyCoverage(db,kind,row){
 
 export function effectivePolicySubject(policy,at){
   if(policy.archived||policy.archived_at||!['approved','draft','in_review'].includes(policy.status)||['not_applicable','reported_missing'].includes(policy.presence))return null;
+  const incomplete=reason=>{throw new Error(`Annual Policy coverage is incomplete for ${policy.policy_id}: ${reason}; reconcile the existing approval record before annual completion.`);};
   const cutoff=Date.parse(at);
+  if(!Number.isFinite(cutoff))incomplete('the completion cutoff is invalid');
+  if(policy.approved_at&&!Number.isFinite(Date.parse(policy.approved_at)))incomplete('the saved approval date is invalid');
   const approvals=[...(policy.approval_history||[]).filter(entry=>entry.action==='approved').map(entry=>({subject:entry.subject,at:entry.at,approval:entry})),
-    ...(policy.decision_history||[]).filter(entry=>entry.action==='external_approval_recorded').map(entry=>({subject:entry.subject,at:entry.recorded_at,approval:entry}))]
-    .filter(entry=>entry.subject&&Number.isFinite(Date.parse(entry.at))&&Date.parse(entry.at)<=cutoff&&(!entry.approval.reported_approved_at||Number.isFinite(Date.parse(entry.approval.reported_approved_at))&&Date.parse(entry.approval.reported_approved_at)<=cutoff))
+    ...(policy.decision_history||[]).filter(entry=>entry.action==='external_approval_recorded').map(entry=>({subject:entry.subject,at:entry.recorded_at,approval:entry}))];
+  for(const entry of approvals)if(!Number.isFinite(Date.parse(entry.at))||entry.approval.reported_approved_at&&!Number.isFinite(Date.parse(entry.approval.reported_approved_at)))incomplete('an approval date is missing or invalid');
+  const eligible=approvals.filter(entry=>Date.parse(entry.at)<=cutoff&&(!entry.approval.reported_approved_at||Date.parse(entry.approval.reported_approved_at)<=cutoff))
     .sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));
-  const saved=approvals[0]||((policy.status==='approved'&&policy.approval_subject&&Number.isFinite(Date.parse(policy.approved_at))&&Date.parse(policy.approved_at)<=cutoff)?{subject:policy.approval_subject,at:policy.approved_at}:null);
-  if(!saved)return null;
+  const saved=eligible[0]||((policy.status==='approved'&&Number.isFinite(Date.parse(policy.approved_at))&&Date.parse(policy.approved_at)<=cutoff)?{subject:policy.approval_subject,at:policy.approved_at}:null);
+  if(!saved){
+    // Missing provenance cannot turn a claimed approval into a successful empty scope.
+    if(policy.status==='approved'&&!Number.isFinite(Date.parse(policy.approved_at))&&!approvals.length)incomplete('the approved version has no recorded approval identity');
+    if(policy.approved_at&&Date.parse(policy.approved_at)<=cutoff)incomplete('the earlier approved version has no recorded subject');
+    return null;
+  }
   const subject=saved.subject;
+  if(!subject||typeof subject!=='object'||Array.isArray(subject))incomplete('the approved subject is missing');
   if(subject.client_id!==policy.client_id||subject.policy_id!==policy.policy_id)throw new Error('The approved Policy subject identity is unavailable or belongs to another client.');
-  if(!subject.subject_id||typeof subject.version!=='string'||!subject.version.trim())return null;
-  if(policy.status==='approved'&&policy.version===subject.version&&policy.effective_date&&(!Number.isFinite(Date.parse(policy.effective_date))||Date.parse(policy.effective_date)>cutoff))return null;
+  if(typeof subject.subject_id!=='string'||!subject.subject_id.trim()||typeof subject.version!=='string'||!subject.version.trim())incomplete('the approved subject or version identity is missing');
+  if(policy.status==='approved'&&policy.version===subject.version&&policy.effective_date){
+    if(!Number.isFinite(Date.parse(policy.effective_date)))incomplete('the effective date is invalid');
+    if(Date.parse(policy.effective_date)>cutoff)return null;
+  }
   return clone({policy_id:policy.policy_id,client_id:policy.client_id,subject_id:subject.subject_id,version:subject.version,approval_recorded_at:saved.at,approval:saved.approval||null,subject});
 }
 
