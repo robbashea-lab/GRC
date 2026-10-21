@@ -90,6 +90,46 @@ test('retained incomplete approved records fail closed after reload without impl
   expect(readStore().policies.find(row=>row.policy_id===approved.policy_id)).toEqual(loadedPolicy);
 });
 
+test.each([{}, {version:null}, {version:' '}, {version:'1'}])('current approved claim %j cannot silently borrow an older subject or actor',fields=>{
+  const row={...policy('lost-current'),version:'2',approved_at:'2026-10-20',approval_subject:null,...fields};
+  const before=JSON.stringify(row);
+  expect(()=>effectivePolicySubject(row,at)).toThrow(/coverage is incomplete/);
+  expect(JSON.stringify(row)).toBe(before);
+});
+
+test.each([
+  {status:'draft',approved_at:null},
+  {status:'in_review',approved_at:null},
+  {approved_at:'2090-01-01'},
+  {effective_date:'2090-01-01'},
+])('pending or future claim %j preserves the actual earlier approved version',fields=>{
+  const row={...policy('still-effective'),version:'2',approved_at:'2026-10-20',approval_subject:null,...fields};
+  const result=effectivePolicySubject(row,at);
+  expect([result.subject_id,result.version,result.approval.by]).toEqual(['still-effective-approved-1','1','original-approver']);
+});
+
+test('missing denormalized approval date retains the complete exact current approval event without fabricating metadata',()=>{
+  const row={...policy('history-exact'),approved_at:null,approval_subject:null},before=JSON.stringify(row);
+  expect(effectivePolicySubject(row,at).subject_id).toBe('history-exact-approved-1');
+  expect(JSON.stringify(row)).toBe(before);
+});
+
+test('external current approval uses its reported approval moment, not the later recording time',()=>{
+  const row={...policy('external-moment'),approved_at:'2025-01-01',approval_history:[],decision_history:[{action:'external_approval_recorded',
+    subject:subject('external-moment'),recorded_at:'2026-10-20',reported_approved_at:'2025-01-01'}]};
+  expect(effectivePolicySubject(row,at).subject_id).toBe('external-moment-approved-1');
+  for(const reported_approved_at of [null,'2024-01-01'])expect(()=>effectivePolicySubject({...row,decision_history:[{...row.decision_history[0],reported_approved_at}]},at)).toThrow(/current approval date/);
+  expect(effectivePolicySubject({...row,decision_history:[],approval_subject:subject('external-moment')},at).subject_id).toBe('external-moment-approved-1');
+});
+
+test('native retained current-version conflict refuses completion with no child or storage writes',async()=>{
+  const db=readStore();db.policies=[policy('A'),{...policy('Z'),version:'2',approved_at:'2026-10-20',approval_subject:null}];
+  db.reviews=[{...annual},child('A'),child('Z')];saveStore(db);
+  const before=sessionStorage.getItem(STORE_KEY);
+  await expect(api.post('/reviews/annual-set/complete',{occurrence_id:'annual-2026'})).rejects.toThrow(/current approved version/);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+});
+
 test('native annual completion persists exact membership, completes covered obligations once and retains approvals on reload/replay',async()=>{
   const db=readStore(),a=policy('A'),b=policy('B','draft'),c={...policy('C'),status:'draft',version:'2',approval_subject:null};
   db.policies=[a,b,c];db.reviews=[{...annual},child('A'),child('B'),child('C')];saveStore(db);

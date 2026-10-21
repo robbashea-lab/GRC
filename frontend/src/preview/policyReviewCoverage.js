@@ -34,8 +34,18 @@ export function effectivePolicySubject(policy,at){
   if(!subject||typeof subject!=='object'||Array.isArray(subject))incomplete('the approved subject is missing');
   if(subject.client_id!==policy.client_id||subject.policy_id!==policy.policy_id)throw new Error('The approved Policy subject identity is unavailable or belongs to another client.');
   if(typeof subject.subject_id!=='string'||!subject.subject_id.trim()||typeof subject.version!=='string'||!subject.version.trim())incomplete('the approved subject or version identity is missing');
+  if(policy.status==='approved'){
+    const effectiveAt=Date.parse(policy.effective_date),approvedAt=Date.parse(policy.approved_at);
+    if(policy.effective_date&&!Number.isFinite(effectiveAt))incomplete('the effective date is invalid');
+    const currentClaim=(!Number.isFinite(approvedAt)||approvedAt<=cutoff)&&(!Number.isFinite(effectiveAt)||effectiveAt<=cutoff);
+    if(currentClaim){
+      if(typeof policy.version!=='string'||!policy.version.trim()||policy.version!==subject.version)incomplete('the current approved version does not match its recorded subject');
+      // Same-version reapproval still needs its own exact approval moment, not an older actor's snapshot.
+      const actualApprovalAt=saved.approval?.action==='external_approval_recorded'?saved.approval.reported_approved_at:saved.at;
+      if(Number.isFinite(approvedAt)&&Date.parse(actualApprovalAt)!==approvedAt)incomplete('the current approval date does not match its recorded approval');
+    }
+  }
   if(policy.status==='approved'&&policy.version===subject.version&&policy.effective_date){
-    if(!Number.isFinite(Date.parse(policy.effective_date)))incomplete('the effective date is invalid');
     if(Date.parse(policy.effective_date)>cutoff)return null;
   }
   return clone({policy_id:policy.policy_id,client_id:policy.client_id,subject_id:subject.subject_id,version:subject.version,approval_recorded_at:saved.at,approval:saved.approval||null,subject});

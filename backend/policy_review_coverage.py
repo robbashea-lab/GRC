@@ -78,9 +78,20 @@ def effective_subject(policy, at):
         raise HTTPException(409, 'The approved Policy subject identity is unavailable or belongs to another client')
     if not isinstance(subject.get('subject_id'), str) or not subject['subject_id'].strip() or not isinstance(subject.get('version'), str) or not subject['version'].strip():
         incomplete('the approved subject or version identity is missing')
-    if policy.get('status') == 'approved' and policy.get('version') == subject['version'] and policy.get('effective_date'):
-        if _time(policy['effective_date']) is None:
+    if policy.get('status') == 'approved':
+        effective_at = _time(policy.get('effective_date'))
+        if policy.get('effective_date') and effective_at is None:
             incomplete('the effective date is invalid')
+        approved_at = _time(policy.get('approved_at'))
+        current_claim = (approved_at is None or approved_at <= cutoff) and (effective_at is None or effective_at <= cutoff)
+        if current_claim:
+            if not isinstance(policy.get('version'), str) or not policy['version'].strip() or policy['version'] != subject['version']:
+                incomplete('the current approved version does not match its recorded subject')
+            # A later approval claim cannot borrow an older version's actor or subject, even on reapproval of the same version.
+            actual_approval_at = approval.get('reported_approved_at') if approval and approval.get('action') == 'external_approval_recorded' else recorded
+            if approved_at is not None and _time(actual_approval_at) != approved_at:
+                incomplete('the current approval date does not match its recorded approval')
+    if policy.get('status') == 'approved' and policy.get('version') == subject['version'] and policy.get('effective_date'):
         if _time(policy['effective_date']) > cutoff:
             return None
     return deepcopy({'policy_id': policy['policy_id'], 'client_id': policy['client_id'], 'subject_id': subject['subject_id'],

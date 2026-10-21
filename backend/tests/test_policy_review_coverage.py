@@ -289,6 +289,10 @@ class PolicyCoverageTests(ClientDashboardSourcesTests):
             {'approval_history': [{**original['approval_history'][0], 'at': 'invalid'}]},
             {'approval_history': [original['approval_history'][0], {'action': 'approved', 'at': '2026-01-01', 'subject': None}]},
             {'approval_history': [], 'approval_subject': None, 'status': 'in_review'},
+            {'version': '2', 'approved_at': BEFORE, 'approval_subject': None},
+            {'version': None, 'approval_subject': None},
+            {'version': ' ', 'approval_subject': None},
+            {'approved_at': BEFORE, 'approval_subject': None},
         ]
         before_a = await server.db.policies.find_one({'policy_id': 'A'}, {'_id': 0})
         before_child = await server.db.reviews.find_one({'review_id': 'review-A'}, {'_id': 0})
@@ -316,6 +320,52 @@ class PolicyCoverageTests(ClientDashboardSourcesTests):
         response = await self.complete()
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.json()['occurrence']['policy_coverage'], [])
+
+    def test_current_approved_claim_cannot_borrow_older_identity_but_pending_and_future_claims_keep_prior_coverage(self):
+        from policy_review_coverage import effective_subject
+        from fastapi import HTTPException
+        subject = {'subject_id': 'prior-v1', 'client_id': CID, 'policy_id': 'versioned', 'version': '1'}
+        event = {'action': 'approved', 'at': '2025-01-01', 'subject': subject, 'by': 'original-approver'}
+        row = {'policy_id': 'versioned', 'client_id': CID, 'status': 'approved', 'version': '2',
+               'approved_at': BEFORE, 'approval_subject': None, 'approval_history': [event]}
+        for fields in [{}, {'version': None}, {'version': ' '}, {'version': '1'}]:
+            with self.subTest(incomplete=fields):
+                with self.assertRaises(HTTPException) as caught:
+                    effective_subject({**row, **fields}, AT)
+                self.assertEqual(caught.exception.status_code, 409)
+                self.assertIn('coverage is incomplete', caught.exception.detail)
+        for fields in [
+            {'status': 'draft', 'approved_at': None},
+            {'status': 'in_review', 'approved_at': None},
+            {'approved_at': '2090-01-01'},
+            {'effective_date': '2090-01-01'},
+        ]:
+            with self.subTest(prior_version=fields):
+                result = effective_subject({**row, **fields}, AT)
+                self.assertEqual((result['subject_id'], result['version']), ('prior-v1', '1'))
+                self.assertEqual(result['approval']['by'], 'original-approver')
+        # Missing denormalized date does not erase the complete, exact authoritative approval event.
+        exact = {**row, 'version': '1', 'approved_at': None}
+        original = deepcopy(exact)
+        self.assertEqual(effective_subject(exact, AT)['subject_id'], 'prior-v1')
+        self.assertEqual(exact, original)
+
+    def test_external_approval_compares_reported_approval_moment_not_later_recording_time(self):
+        from policy_review_coverage import effective_subject
+        from fastapi import HTTPException
+        subject = {'subject_id': 'external-v1', 'client_id': CID, 'policy_id': 'external', 'version': '1'}
+        event = {'action': 'external_approval_recorded', 'recorded_at': BEFORE,
+                 'reported_approved_at': '2025-01-01', 'subject': subject}
+        row = {'policy_id': 'external', 'client_id': CID, 'status': 'approved', 'version': '1',
+               'approved_at': '2025-01-01', 'decision_history': [event]}
+        self.assertEqual(effective_subject(row, AT)['subject_id'], 'external-v1')
+        for fields in [{'reported_approved_at': None}, {'reported_approved_at': '2024-01-01'}]:
+            with self.subTest(fields=fields):
+                with self.assertRaises(HTTPException) as caught:
+                    effective_subject({**row, 'decision_history': [{**event, **fields}]}, AT)
+                self.assertEqual(caught.exception.status_code, 409)
+        direct = {**row, 'decision_history': [], 'approval_subject': subject}
+        self.assertEqual(effective_subject(direct, AT)['subject_id'], 'external-v1')
 
     async def test_legacy_unchecked_pending_plan_is_preserved_and_requires_explicit_reconciliation(self):
         await self.policy('A')
