@@ -1,3 +1,4 @@
+import {cisClient} from '@/testUtils/cisExperience';
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordDrawer from './RecordDrawer';
@@ -27,7 +28,8 @@ beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;
   sessionStorage.clear();localStorage.clear();rememberClient('demo_brawndo');window.history.replaceState({},'','/policies');
   mockAuth={workspaceMode:'demo',loading:false,user:{user_id:'policy-owner',name:'Test administrator',email:'owner@example.test',role:'super_admin',workspace_mode:'demo'}};
-  mockOrg={currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'},loading:false};
+  const client={...cisClient('demo_brawndo'),name:'Brawndo'};
+  mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
   policy={policy_id:'policy-native',client_id:'demo_brawndo',display_id:'POL-105',title:'Risk Management Policy',category:'Core Governance',owner_id:null,status:'draft',presence:'verified_existing',version:'2.0',updated_at:'2026-10-20T08:00:00Z',summary:'Existing summary',governance_context:{category:'organizational',rationale:'Recorded native purpose',cadence_rationale:'Existing annual cadence reason'},approval_history:[],decision_history:[]};
   context={status:'draft',updated_at:policy.updated_at,can_configure:true,can_submit:true,can_decide:true,named_approver:null,authorized_account:null,linked_account:null,history:[],external_history:[],subject:null,source:{version:'2.0',external_reference:'Controlled policy register',external_version:'Revision 2.0'}};
   api.get.mockImplementation(async path=>({data:path.endsWith('/approval-context')?context:path==='/related'?{}:path==='/evidence/catalog'?{items:[],counts:{direct:0},total:0,page_size:25}:[]}));
@@ -38,6 +40,19 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
+test.each([1,2,3].flatMap(group=>['demo','standard'].map(mode=>[group,mode])))('configured IG%i %s client retains the approved native Policy workflow and original approval history',async(group,mode)=>{
+  const client=cisClient(`synthetic_policy_ig${group}_${mode}`,group);
+  mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
+  mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
+  policy={...policy,client_id:client.client_id};props={...props,record:policy,clientId:client.client_id};
+  const originalHistory=JSON.stringify([policy.approval_history,policy.decision_history]);
+  rememberClient(client.client_id);
+  await render();
+  expect(dialog().className).toContain('brawndo-policy-workflow');
+  expect(JSON.stringify([policy.approval_history,policy.decision_history])).toBe(originalHistory);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
 test('canonical active Explore Policy on the exact route uses the new interior without a command on open',async()=>{
   await render();
   expect(dialog().className).toContain('brawndo-policy-workflow');
@@ -46,8 +61,8 @@ test('canonical active Explore Policy on the exact route uses the new interior w
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
-test.each(['signed-in','other-client','wrong-route','loading','mismatch','archived'])('Policy presentation stays off for %s without replacing native controls',async condition=>{
-  if(condition==='signed-in'){mockAuth.workspaceMode='authenticated';mockAuth.user.workspace_mode='authenticated';}
+test.each(['unsupported-mode','other-client','wrong-route','loading','mismatch','archived'])('Policy presentation stays off for %s without replacing native controls',async condition=>{
+  if(condition==='unsupported-mode'){mockAuth.workspaceMode='authenticated';mockAuth.user.workspace_mode='authenticated';}
   if(condition==='other-client'){policy.client_id='demo_dunder';props.clientId='demo_dunder';mockOrg.currentClientId='demo_dunder';mockOrg.currentClient={client_id:'demo_dunder',name:'Brawndo',status:'active'};rememberClient('demo_dunder');}
   if(condition==='wrong-route')window.history.replaceState({},'','/dashboard');
   if(condition==='loading')mockOrg.loading=true;

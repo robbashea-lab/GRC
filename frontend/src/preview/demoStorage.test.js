@@ -114,12 +114,31 @@ test('full reset recovers corrupted data and restores canonical roles and framew
  jest.setSystemTime(new Date(RESET_AT));await api.post('/demo/reset');const restored=persisted();
  const {portfolio_reporting:originalReporting,...originalSources}=canonical;
  const {portfolio_reporting:reporting,...restoredSources}=restored;
- expect(restoredSources).toEqual(originalSources);
+ // Fresh native Reviews receive new command IDs and reset-time metadata.
+ // Normalize only those volatile identities (including references) and clock;
+ // keep the complete canonical content/roles/approvals/history comparison.
+ const canonicalSources=sources=>{
+   const runtimeIds=sources.reviews.filter(row=>/^reviews_demo_/.test(row.review_id)).map(row=>[row.review_id,
+     `native-review:${row.client_id}:${row.baseline_key||''}:${row.policy_id||row.vendor_id||row.risk_id||row.ai_system_id||row.title}`]);
+   runtimeIds.push(...sources.logs.filter(row=>/^audit_demo_/.test(row.audit_id)).map((row,index)=>[row.audit_id,`native-audit:${index}`]));
+   const visit=(value,field)=>{
+     if(typeof value==='string'){
+       let text=value.replaceAll(OPENED_AT,'<reset-clock>').replaceAll(RESET_AT,'<reset-clock>');
+       for(const [id,stableId] of runtimeIds)text=text.replaceAll(id,stableId);
+       return text;
+     }
+     if(Array.isArray(value))return value.map(item=>visit(item));
+     if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[visit(key),field==='seed_fingerprints'?'<fresh-record-digest>':visit(item,key)]));
+     return value;
+   };
+   return visit(sources);
+ };
+ expect(canonicalSources(restoredSources)).toEqual(canonicalSources(originalSources));
  expect(reporting).toMatchObject({started_at:RESET_AT,last_captured_at:RESET_AT,activity_proofs:{}});
  expect(reporting.activity_proofs).toEqual({});
  expect(reporting.snapshots).toHaveLength(originalReporting.snapshots.length);
  const currentSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind!=='demo_fixture');
- const fixtureSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture');
+ const fixtureSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture'&&snapshot.client_id==='demo_brawndo');
  expect(currentSnapshots.length).toBeGreaterThan(0);
  expect(currentSnapshots.every(snapshot=>snapshot.captured_at===RESET_AT&&snapshot.current.captured_at===RESET_AT)).toBe(true);
  // At this fixed anchor, V2 has eighteen historical positions and one exact terminal position.
@@ -135,7 +154,7 @@ test('full reset recovers corrupted data and restores canonical roles and framew
  expect(nativeRows).toHaveLength(56);
  expect(marker).toMatchObject({version:SCENARIO_VERSION,anchor:RESET_AT,count:19,terminal:nativeStates});
  expect(currentSnapshots.map(snapshot=>snapshot.snapshot_id)).toContain(marker.join_snapshot_id);
- const terminal=readStore().portfolio_reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture').at(-1);
+ const terminal=readStore().portfolio_reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture'&&snapshot.client_id==='demo_brawndo').at(-1);
  const references=terminal.current.provenance.source_references;
  expect(references.map(row=>row.id).sort()).toEqual(nativeRows.map(row=>row.framework_assessment_id).sort());
  expect(Object.fromEntries(references.map(row=>[row.definition_id,row.status]))).toEqual(nativeStates);
@@ -183,11 +202,11 @@ test('cache cannot hydrate another client and deleted files are pruned',()=>{
  expect(restoreFiles(other).evidence[0].content_base64).toBeUndefined();
  rememberFiles({evidence:[]});expect(storageDiagnostics('',{}).memory_file_count).toBe(0);
 });
-test('a retired seven-client store is discarded, never read back, and never recreated',()=>{
+test('a prior-version store remains recoverable without silently importing or deleting its records',()=>{
  sessionStorage.clear();
  sessionStorage.setItem('grc_interactive_demo_v2',JSON.stringify({clients:[{client_id:'demo_globo',name:'Globo Gym'}],evidence:[]}));
  const db=readStore();
- expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide','Initech']);
- expect(sessionStorage.getItem('grc_interactive_demo_v2')).toBeNull();
- expect(readStore().clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_dunder','demo_prestige','demo_initech']);
+ expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide','Initech','The Krusty Krab']);
+ expect(JSON.parse(sessionStorage.getItem('grc_interactive_demo_v2'))).toEqual({clients:[{client_id:'demo_globo',name:'Globo Gym'}],evidence:[]});
+ expect(readStore().clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_dunder','demo_prestige','demo_initech','demo_krusty_krab']);
 });

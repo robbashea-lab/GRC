@@ -89,7 +89,8 @@
     "test_workflow_integrity.py",
     "test_workspace_work_context.py",
     "test_recovery_retirement.py",
-    "test_bulk_outcomes.py"
+    "test_bulk_outcomes.py",
+    "test_onboarding_policy_selection.py"
   ],
   "environment": [
     "test_platform_iso_inventory.py",

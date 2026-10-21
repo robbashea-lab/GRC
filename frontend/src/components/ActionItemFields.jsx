@@ -1,3 +1,4 @@
+import {useOrg} from '@/context/OrgContext';
 import { useEffect, useState } from 'react';
 import api, { formatError } from '@/lib/api';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ import {useAuth} from '@/context/AuthContext';
 
 // Task-specific fields; the existing drawer owns Evidence, Comments and Related.
 export default function ActionItemFields({form,setForm,record,clientId,canWrite,onTransition,saving,sourceLocked=false,related={},onOpen,pilot=false,canEditContext=canWrite}) {
-  const {user}=useAuth(),referenceWorkflow=isReferenceWorkflow(clientId,user);
+  const {user}=useAuth(),{currentClient}=useOrg()||{},referenceWorkflow=isReferenceWorkflow(clientId,user,currentClient);
   const [data,setData]=useState({users:[],records:{},error:'',loading:true});
   useEffect(()=>{
     let active=true; setData({users:[],records:{},error:'',loading:true});

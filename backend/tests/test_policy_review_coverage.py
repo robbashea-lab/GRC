@@ -15,7 +15,12 @@ class PolicyCoverageTests(ClientDashboardSourcesTests):
         self.clock = patch.object(server, '_now', return_value=AT)
         self.clock.start()
         self.addCleanup(self.clock.stop)
-        await server.db.clients.insert_one({'client_id': CID, 'name': 'Synthetic Policy coverage', 'status': 'active'})
+        await server.db.clients.insert_one({'client_id': CID, 'name': 'Synthetic Policy coverage', 'status': 'active',
+            'framework_settings': {'cis-ig1': {'implementation_group': 1}},
+            'onboarding_baseline': {'completed': True, 'requirements': {'cis-ig1': 'applies'},
+                                    'framework_settings': {'cis-ig1': {'implementation_group': 1}}}})
+        await server.db.requirements.insert_one({'requirement_id': CID + '-cis', 'client_id': CID,
+            'baseline_key': 'cis-ig1', 'baseline_response': 'applies'})
         self.sign_in('admin')
         self.annual = {'review_id': 'annual', 'client_id': CID, 'baseline_key': 'policy-review', 'review_type': 'policy',
                        'title': 'Synthetic annual scope', 'status': 'upcoming', 'recurrence': 'annual',
@@ -45,6 +50,81 @@ class PolicyCoverageTests(ClientDashboardSourcesTests):
 
     async def complete(self, **extra):
         return await self.client.post('/api/reviews/annual/complete', json={'occurrence_id': 'annual-2026', **extra})
+
+    async def test_selected_cis_groups_cover_real_client_identities_without_demo_name(self):
+        for group in (1, 2, 3):
+            with self.subTest(group=group):
+                cid = 'synthetic-cis-ig' + str(group)
+                await server.db.clients.insert_one({'client_id': cid, 'name': 'Synthetic configured client', 'status': 'active',
+                    'framework_settings': {'cis-ig1': {'implementation_group': group}},
+                    'onboarding_baseline': {'completed': True, 'requirements': {'cis-ig1': 'applies'},
+                        'framework_settings': {'cis-ig1': {'implementation_group': group}}}})
+                await server.db.requirements.insert_one({'requirement_id': cid + '-cis', 'client_id': cid,
+                    'baseline_key': 'cis-ig1', 'baseline_response': 'applies'})
+                await server.db.reviews.update_one({'review_id': 'annual'}, {'$set': {'client_id': cid}})
+                await self.policy('group-' + str(group), client_id=cid)
+                response = await self.complete()
+                self.assertEqual(response.status_code, 200, response.text)
+                covered = response.json()['occurrence']['policy_coverage']
+                self.assertEqual([(m['client_id'], m['policy_id'], m['version']) for m in covered],
+                                 [(cid, 'group-' + str(group), '1')])
+                # Restore the same synthetic annual fixture for the next independent group.
+                await server.db.reviews.delete_one({'review_id': 'annual'})
+                await server.db.reviews.insert_one(deepcopy(self.annual))
+
+    async def test_incomplete_selected_cis_configuration_cannot_silently_skip_coverage(self):
+        await self.policy('A')
+        before = await server.db.policies.find_one({'policy_id': 'A'}, {'_id': 0})
+        for invalid in (None, 0, 4, True, '2'):
+            with self.subTest(group=invalid):
+                await server.db.clients.update_one({'client_id': CID}, {'$set': {
+                    'framework_settings.cis-ig1.implementation_group': invalid}})
+                response = await self.complete()
+                self.assertEqual(response.status_code, 409, response.text)
+                self.assertEqual(await server.db.policies.find_one({'policy_id': 'A'}, {'_id': 0}), before)
+                self.assertNotIn('_policy_coverage_pending', await server.db.reviews.find_one({'review_id': 'annual'}))
+
+    async def test_non_cis_generic_review_does_not_enable_policy_set_feature(self):
+        await self.policy('A')
+        await server.db.clients.update_one({'client_id': CID}, {'$set': {
+            'onboarding_baseline.requirements.cis-ig1': 'does_not_apply'}})
+        await server.db.requirements.update_one({'client_id': CID, 'baseline_key': 'cis-ig1'},
+                                               {'$set': {'baseline_response': 'does_not_apply'}})
+        response = await self.complete()
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertNotIn('policy_coverage', response.json()['occurrence'])
+        self.assertNotIn('last_reviewed_at', await server.db.policies.find_one({'policy_id': 'A'}))
+
+    async def test_malformed_stored_program_or_foreign_annual_kind_cannot_silently_complete(self):
+        await self.policy('A')
+        for settings in (None, [], 'invalid', {'cis-ig1': None}, {'cis-ig1': []}):
+            with self.subTest(settings=settings):
+                await server.db.clients.update_one({'client_id': CID}, {'$set': {'framework_settings': settings}})
+                response = await self.complete()
+                self.assertEqual(response.status_code, 409, response.text)
+        await server.db.clients.update_one({'client_id': CID}, {'$set': {'framework_settings': {'cis-ig1': {'implementation_group': 2}}}})
+        await server.db.reviews.update_one({'review_id': 'annual'}, {'$set': {'review_type': 'access'}})
+        response = await self.complete()
+        self.assertEqual(response.status_code, 409, response.text)
+        self.assertNotIn('last_reviewed_at', await server.db.policies.find_one({'policy_id': 'A'}))
+        self.assertNotIn('occurrences', await server.db.reviews.find_one({'review_id': 'annual'}))
+
+    async def test_saved_setup_draft_cannot_change_committed_client_projection_or_annual_coverage(self):
+        await self.policy('A')
+        setup = (await self.client.get('/api/onboarding/baseline?client_id=' + CID)).json()
+        draft = {**setup['state'], 'version': 3, 'selected_policy_keys': [], 'policies': {}, 'reviews': [],
+                 'requirements': {'cis-ig1': 'does_not_apply'}}
+        saved = await self.client.post('/api/onboarding/baseline', json={'client_id': CID, 'finalize': False,
+            'state': draft, 'expected_updated_at': setup['state'].get('updated_at')})
+        self.assertEqual(saved.status_code, 200, saved.text)
+        clients = (await self.client.get('/api/clients')).json()
+        client = next(row for row in clients if row['client_id'] == CID)
+        self.assertEqual(client['onboarding_baseline']['requirements']['cis-ig1'], 'does_not_apply')
+        self.assertTrue(client['cis_program']['selected'])
+        self.assertEqual(client['cis_program']['implementation_group'], 1)
+        response = await self.complete()
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual([member['policy_id'] for member in response.json()['occurrence']['policy_coverage']], ['A'])
 
     async def test_approved_members_pending_replacement_and_single_policy_are_independent(self):
         original_a = await self.policy('A')

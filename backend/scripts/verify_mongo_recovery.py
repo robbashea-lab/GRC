@@ -172,6 +172,9 @@ def main():
         from test_cis_ig2 import CisIG2Tests
         concrete = type('MongoCisIG2Tests', (MongoStorage, CisIG2Tests), {})
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
+        from test_onboarding_policy_selection import PolicySelectionTests
+        concrete = type('MongoCisPolicySelectionTests', (MongoStorage, PolicySelectionTests), {})
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     if args.include_remediation_tickets:
         from test_remediation_tickets import TicketIntegrityTests
         from test_iso_audit_program import IsoAuditTests

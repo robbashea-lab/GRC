@@ -3,7 +3,8 @@ import {NavLink,useNavigate,useLocation} from 'react-router-dom';
 import {ticketRecords} from '@/lib/remediationTickets';
 import {pilotActionMatches} from '@/lib/brawndoActions';
 import {LayoutDashboard,CalendarDays,ClipboardCheck,ListChecks,ShieldAlert,FileText,Building2,FolderArchive,Users,Server,Sparkles,Settings2,ShieldCheck,ArrowLeft,ChevronsUpDown,UserCircle2,LogOut,Briefcase} from 'lucide-react';
-import api from '@/lib/api';
+import api,{PREVIEW_MODE} from '@/lib/api';
+import {orderNamedDemoClients} from '@/lib/demoClientOrder';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import {canExportReports} from '@/lib/permissions';
@@ -14,6 +15,7 @@ import {BrandMark} from './Brand';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator} from './ui/dropdown-menu';
 import './BrawndoSidebar.css';
 import DemoNotice from '@/preview/DemoNotice';
+import ClientIdentityMark from './ClientIdentityMark';
 
 // Brawndo reference sidebar: grouped navigation, one theme with the workspace,
 // and counts that show where attention is needed from anywhere in the client.
@@ -53,13 +55,14 @@ const Brand=()=><div className="bsb-brand" aria-label="GoverNara by Prestige Wor
 
 // Portfolio (platform) context in the reference theme: Portfolio, the client navigator, Administration.
 export function BrawndoPlatformSidebar({adminItems=[]}){
+  const auth=useAuth();
   const {clients,switchClient,loading,error,refresh}=useOrg(),nav=useNavigate();
   const [theme]=useBrawndoTheme(),[q,setQ]=useState('');
   const active=useMemo(()=>[...new Map((clients||[]).filter(c=>(c.status||'active')!=='archived').map(c=>[c.client_id,c])).values()],[clients]);
   const scoped=useMemo(()=>{
     const search=q.trim().toLowerCase();
-    return active.filter(c=>!search||(c.name||'').toLowerCase().includes(search)).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  },[active,q]);
+    return orderNamedDemoClients(active.filter(c=>!search||(c.name||'').toLowerCase().includes(search)).sort((a,b)=>(a.name||'').localeCompare(b.name||'')),{trustedDemo:PREVIEW_MODE,workspaceMode:auth.workspaceMode,user:auth.user});
+  },[active,q,auth.workspaceMode,auth.user]);
   const empty=loading?'Loading clients…':q?'No matches.':'No clients available.';
   return <aside className="app-sidebar bsb w-64 shrink-0 hidden lg:flex flex-col h-screen sticky top-0" data-theme={theme}>
     <div className="bsb-head"><Brand/></div>
@@ -72,7 +75,7 @@ export function BrawndoPlatformSidebar({adminItems=[]}){
         <div data-testid="sidebar-client-list">
           {error?<div className="bsb-note" role="alert" data-testid="sidebar-client-error">Clients could not be loaded. <button type="button" onClick={refresh}>Retry</button></div>
           :scoped.length===0?<div className="bsb-note" data-testid="sidebar-client-empty">{empty}</div>
-          :scoped.map(c=><div key={c.client_id} data-testid={`sidebar-client-${c.client_id}`}><button type="button" className="bsb-link bsb-client-link" data-testid={`sidebar-open-${c.client_id}`} onClick={()=>{switchClient(c.client_id);nav(clientDestination(c.client_id));}}><span className="bsb-dot" aria-hidden="true">{c.name?.[0]}</span><span className="truncate">{c.name}</span></button></div>)}
+          :scoped.map(c=><div key={c.client_id} data-testid={`sidebar-client-${c.client_id}`}><button type="button" className="bsb-link bsb-client-link" data-testid={`sidebar-open-${c.client_id}`} onClick={()=>{switchClient(c.client_id);nav(clientDestination(c.client_id));}}><span className="bsb-dot" aria-hidden="true"><ClientIdentityMark client={c}/></span><span className="truncate">{c.name}</span></button></div>)}
         </div>
       </div>
       {adminItems.length>0&&<div className="bsb-group" role="group" aria-labelledby="bsb-admin"><div id="bsb-admin" className="bsb-group-label">Administration</div>
@@ -105,7 +108,7 @@ export default function BrawndoSidebar({complianceItems=[],isInternal,showFindin
     <div className="bsb-head">
       <Brand/>
       {isInternal&&<button type="button" className="bsb-back" aria-label="Return to portfolio" title="Portfolio" onClick={()=>nav('/clients')} data-testid="return-to-portfolio"><ArrowLeft size={13} aria-hidden="true"/>Portfolio</button>}
-      <div className="bsb-client" data-testid="context-header-client"><span className="bsb-client-mark" aria-hidden="true">{currentClient?.name?.[0]||'•'}</span><span className="min-w-0"><span className="bsb-group-label">Client</span><span className="bsb-client-name">{currentClient?.name||'Select a client…'}</span><span className="bsb-client-industry">{currentClient?.industry||'Industry not recorded'}</span></span></div>
+      <div className="bsb-client" data-testid="context-header-client"><span className="bsb-client-mark" aria-hidden="true"><ClientIdentityMark client={currentClient} fallback="•"/></span><span className="min-w-0"><span className="bsb-group-label">Client</span><span className="bsb-client-name">{currentClient?.name||'Select a client…'}</span><span className="bsb-client-industry">{currentClient?.industry||'Industry not recorded'}</span></span></div>
     </div>
     <nav className="bsb-nav" data-testid="sidebar-client" aria-label="Client workspace">
       {GROUPS.map(([group,items])=><div key={group} className="bsb-group" role="group" aria-labelledby={`bsb-${group}`}>

@@ -1,15 +1,12 @@
+import {cisExperienceEligible} from './cisExperience';
 import {calendarDay,managementDay} from './managementDates';
 import {riskIsClosed} from './riskRegister';
 import {isOpen} from './grcWork';
 
 // Presentation only; rollback leaves native records, commands and history intact.
 export const BRAWNDO_DEMO_RISKS_ENABLED=true;
-export function brawndoDemoRisksGate({workspaceMode,user,currentClientId,currentClient,pathname,authLoading,authError,orgLoading,orgError}) {
-  return BRAWNDO_DEMO_RISKS_ENABLED&&!authLoading&&!authError&&!orgLoading&&!orgError
-    &&workspaceMode==='demo'&&user?.workspace_mode==='demo'&&!!user.user_id
-    &&currentClientId==='demo_brawndo'&&currentClient?.client_id===currentClientId
-    &&currentClient.status==='active'&&!currentClient.archived&&!currentClient.archived_at
-    &&pathname==='/risks';
+export function brawndoDemoRisksGate(context) {
+  return BRAWNDO_DEMO_RISKS_ENABLED && cisExperienceEligible(context) && context.pathname === '/risks';
 }
 
 export function riskHorizon(now=new Date()) {

@@ -1,3 +1,4 @@
+import {namedDemoClient} from './demoClients';
 const DAY = 86400000;
 const STATUS_KEYS = ['addressed', 'in_progress', 'needs_attention', 'not_assessed'];
 const position = value => value?.current ? {...value.current, ...Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'current'))} : value;
@@ -10,8 +11,9 @@ export const snapshotTime = snapshot => position(snapshot)?.effective_at || posi
 // adapter. Default consumers continue to require genuine committed positions.
 export function isDemoScenarioPosition(snapshot, context){
   const value=position(snapshot);
-  return !!context&&context.version==='brawndo-cis-ig1-history-v2'&&context.client_id==='demo_brawndo'
-    &&context.program_id==='demo_brawndo:cis-ig1'&&value?.program_id===context.program_id
+  return !!context&&!!namedDemoClient(context.client_id)?.historyVersion
+    && context.version===namedDemoClient(context.client_id).historyVersion
+    &&context.program_id===`${context.client_id}:cis-ig1`&&value?.program_id===context.program_id
     &&value.observation_kind==='demo_fixture'&&value.provenance?.kind==='demo_fixture'
     &&value.scenario_version===context.version&&value.scenario_anchor===context.anchor
     &&typeof context.fingerprint==='string'&&value.scenario_fingerprint===context.fingerprint

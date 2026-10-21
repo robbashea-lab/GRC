@@ -5,6 +5,9 @@ import { applicableCounts, calendarRangeStart, currentPercentage, forecastImplem
 import { grcLead } from '@/lib/clientRelationships';
 import { clientAttention, operationalItems } from '@/lib/enhancedPortfolio';
 import { Attention, ClientMark, WorkFacts, WorkList, signedPoints } from './EnhancedPortfolioShared';
+import {useAuth} from '@/context/AuthContext';
+import {PREVIEW_MODE} from '@/lib/api';
+import {namedDemoClient} from '@/lib/demoClients';
 const PERIODS = [['1m', 1], ['3m', 3], ['6m', 6], ['12m', 12]];
 const recordedAt = value => Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString(undefined, {
   month: 'short',
@@ -60,15 +63,18 @@ function ProgramHistory({
   theme
 }) {
   const program = programs.find(value => programIdentity(value) === selected) || programs[0];
+  const auth=useAuth();
+  const demoScenario=PREVIEW_MODE && auth.user?.workspace_mode==='demo' && client.environment==='Demo'
+    && !!namedDemoClient(client.client_id)?.historyVersion && program.framework_key==='cis-ig1';
   const [range, setRange] = useState('3m'),
     [mode, setMode] = useState('line'),
     [showData, setShowData] = useState(false);
   // Fixed four native reads provide independent, evidenced calendar-boundary comparisons.
   const expectedScope = program.current?.scope || {};
-  const one = useHistory(client, program, '1m', refreshToken, true, false, expectedScope);
-  const three = useHistory(client, program, '3m', refreshToken, true, false, expectedScope);
-  const six = useHistory(client, program, '6m', refreshToken, true, false, expectedScope);
-  const twelve = useHistory(client, program, '12m', refreshToken, true, false, expectedScope);
+  const one = useHistory(client, program, '1m', refreshToken, true, demoScenario, expectedScope);
+  const three = useHistory(client, program, '3m', refreshToken, true, demoScenario, expectedScope);
+  const six = useHistory(client, program, '6m', refreshToken, true, demoScenario, expectedScope);
+  const twelve = useHistory(client, program, '12m', refreshToken, true, demoScenario, expectedScope);
   const reports = {
       '1m': one,
       '3m': three,
@@ -86,7 +92,7 @@ function ProgramHistory({
     changes = report.data?.scope_changes || [];
   const forecast = forecastImplementation(report.data?.forecast_snapshots, current, cutoff, {
     scopeChanges: report.data?.forecast_scope_changes,
-    verb: language.verb
+    verb: language.verb, demoScenario:report.data?.scenario_context
   });
   const work = operationalItems(client, cutoff),
     counts = applicableCounts(current);
@@ -109,7 +115,7 @@ function ProgramHistory({
               data = saved.data;
             const comparison = data && periodChange(data.snapshots, data.current, calendarRangeStart(data.as_of, months), {
               comparison: data.comparison,
-              scopeChanges: data.scope_changes
+              scopeChanges: data.scope_changes, demoScenario:data.scenario_context
             });
             return <button key={key} type="button" aria-pressed={range === key} onClick={() => setRange(key)}><span>{months} month{months === 1 ? '' : 's'}</span><strong className={comparison?.comparable ? comparison.change_pp < 0 ? 'ep-red' : 'ep-green' : ''}>{comparison?.comparable ? <>{signedPoints(comparison.change_pp)} <small>pts</small></> : '—'}</strong><small>{saved.error ? 'History unavailable' : saved.loading ? 'Loading saved history…' : comparison?.comparable ? `${formatPortfolioDate(calendarRangeStart(data.as_of, months), {
                   year: undefined
@@ -127,7 +133,7 @@ function ProgramHistory({
                 width: `${value}%`
               }} /></div>}</div>}</section>
       <section className="ep-history-card"><div className="ep-chart-heading"><h3>{mode === 'line' ? 'Implementation history' : 'All implementation statuses'}</h3><div className="ep-segment" role="group" aria-label="History range">{PERIODS.map(([key, months]) => <button key={key} type="button" aria-pressed={range === key} onClick={() => setRange(key)}>{months} month{months === 1 ? '' : 's'}</button>)}</div></div>
-        {report.error ? <div role="alert"><p>{report.error}</p><button type="button" className="ep-button" onClick={report.retry}>Retry</button></div> : report.loading && !report.data ? <p role="status">Loading saved history…</p> : <PortfolioHistoryChart key={programIdentity(program) + range} points={points} start={start} asOf={cutoff} view={mode} current={current} scopeChanges={changes} unit={language.unit} showProvenance={showProvenance} stackedHistory />}
+        {report.error ? <div role="alert"><p>{report.error}</p><button type="button" className="ep-button" onClick={report.retry}>Retry</button></div> : report.loading && !report.data ? <p role="status">Loading saved history…</p> : <PortfolioHistoryChart key={programIdentity(program) + range} points={points} start={start} asOf={cutoff} view={mode} current={current} scopeChanges={changes} unit={language.unit} showProvenance={showProvenance} demoScenario={report.data?.scenario_context} stackedHistory />}
         <div className="ep-chart-legend">{(mode === 'line' ? counts.slice(0, 1) : counts).map((count, index) => <span key={count.key}><i className={`ep-status-${mode === 'line' ? 0 : index}`} />{count.key === 'needs_attention' ? 'Not implemented' : count.label}</span>)}</div>
         <div className="ep-history-actions"><button type="button" className="ep-button" aria-expanded={showData} aria-controls="enhanced-history-data" onClick={() => setShowData(previous => !previous)}>{showData ? 'Hide data' : 'View data'}</button><button type="button" className="ep-button" aria-pressed={mode === 'mix'} onClick={() => setMode(previous => previous === 'line' ? 'mix' : 'line')}>{mode === 'line' ? 'All statuses' : 'Implemented only'}</button></div>
         <p className="ep-history-caption">{PERIODS.find(([key]) => key === range)[1]} calendar month{range === '1m' ? '' : 's'} · percentage of applicable {language.unit} · saved positions</p>

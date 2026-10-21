@@ -1,6 +1,7 @@
 import {clone} from './store';
 import {reviewView,reviewSchedule} from '../lib/reviewOccurrences';
 import {isPolicySetReview} from '../lib/brawndoAdditionalPolicyVendor';
+import {cisProgramProjection} from './cisCapability';
 
 // Only the existing canonical program definition owns annual set completion.
 export {isPolicySetReview};
@@ -52,7 +53,14 @@ export function effectivePolicySubject(policy,at){
 }
 
 export function policySetCoverage(db,review,at){
-  if(!isPolicySetReview(review))return null;
+  if(!review.client_id||review.baseline_key!=='policy-review'||review.policy_id)return null;
+  const client=db.clients?.find(row=>row.client_id===review.client_id);
+  if(!client)return null;
+  const program=cisProgramProjection(db,client);
+  if(!program.selected)return null;
+  // Invalid configuration must not turn committed coverage into an ordinary completion.
+  if(program.implementation_group===null)throw new Error('Resolve the selected CIS implementation group before annual Policy completion.');
+  if(review.review_type!=null&&review.review_type!=='policy')throw new Error('Resolve the canonical annual Policy Review type before completion.');
   if(review.recurrence!=='annual')throw new Error('Configure the annual Policy Review anchor before completion.');
   return db.policies.filter(policy=>policy.client_id===review.client_id).map(policy=>effectivePolicySubject(policy,at)).filter(Boolean)
     .sort((a,b)=>a.policy_id.localeCompare(b.policy_id));

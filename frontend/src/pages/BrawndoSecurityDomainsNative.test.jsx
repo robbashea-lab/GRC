@@ -38,12 +38,21 @@ function useSyntheticClient(clientId){
   records=records.map(value=>({...value,client_id:clientId,framework_assessment_id:'fixture-native-'+value.definition_id}));
   interviews=Object.fromEntries(definitions.map(definition=>[definition.id,interview(definition.id)]));
 }
+function configureGroup(implementationGroup){
+  group=implementationGroup;
+  const template=records[0];
+  for(const definition of cis.requirements.filter(row=>row.implementation_group<=group))if(!record(definition.id)){
+    records.push({...clone(template),definition_id:definition.id,framework_assessment_id:'native-'+definition.id,implementation:'Original native '+definition.id});
+    interviews[definition.id]=interview(definition.id);
+  }
+}
 function workspace(){
+  const activeDefinitions=cis.requirements.filter(row=>row.implementation_group<=group);
   const keys=['addressed','in_progress','needs_attention','not_assessed'];
   const counts=keys.map(key=>({key,count:records.filter(value=>value.status===key).length}));
   const excluded=records.filter(value=>value.status==='not_applicable').length;
-  return {framework:{key:'cis-ig1',version:'8.1'},selected:true,configured:true,configuration:{implementation_group:group},definitions,
-    assessments:clone(records),active_definition_ids:definitions.map(value=>value.id),guided_assessment_drafts:{},organizational_controls:[],
+  return {framework:{key:'cis-ig1',version:'8.1'},selected:true,configured:true,configuration:{implementation_group:group},definitions:activeDefinitions,
+    assessments:clone(records),active_definition_ids:activeDefinitions.map(value=>value.id),guided_assessment_drafts:{},organizational_controls:[],
     work:Object.fromEntries(records.map(value=>[value.framework_assessment_id,{context_complete:true,evidence_count:(related[value.definition_id]?.evidence||[]).length,review_ids:[],finding_ids:[],task_ids:[],priority_records:[]}])),
     implementation_position:{program_id:contextClient+':cis-ig1',availability:'available',total:records.length,denominator:records.length-excluded,excluded,implemented:counts[0].count,counts,missing_records:0,unrecognized_status_count:0}};
 }
@@ -292,10 +301,10 @@ test.each(['1.1','1.2'])('Demo Brawndo keeps %s on its native Omnibot checkpoint
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
-test('a same-name Demo client with a complete native IG1 program stays outside the exact pilot identity',async()=>{
+test('a same-name Demo client with a complete native IG1 program receives the authorized CIS domains',async()=>{
   useSyntheticClient('unlisted-synthetic-client');mockUser.client_name='Brawndo';
   const before=clone(records);await mount('unlisted-synthetic-client');
-  expect(query('.bcis-domains')).toBeNull();expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
+  expect(query('.bcis-domains')).toBeTruthy();expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
   await openControl('1.1');expect(new URLSearchParams(route().search).get('assessment')).toBe('fixture-native-1.1');
   expect(editorSnapshot().implementation).toBe('Original native 1.1');expect(records).toEqual(before);
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
@@ -303,25 +312,26 @@ test('a same-name Demo client with a complete native IG1 program stays outside t
 
 test('mixed-client records cannot produce counts or shortcuts inside Demo Brawndo',async()=>{
   record('1.2').client_id=AUTHENTICATED_CLIENT;
-  const before=clone(records);await mount();await expandDomain('assets');
-  expect(query('.bcis-domains')).toBeTruthy();expect(query('[data-testid="security-domain-assets"]').textContent).toContain('Counts unavailable');
-  expect(query('[aria-label="View mapped controls for Asset & Software Management"]').disabled).toBe(true);
+  const before=clone(records);await mount();
+  expect(query('.bcis-domains')).toBeNull();
+  expect(query('[data-testid="security-domain-assets"]')).toBeNull();
   expect(container.querySelectorAll('[data-testid^="domain-safeguard-"]')).toHaveLength(0);
   expect(records).toEqual(before);expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
 
-test.each([AUTHENTICATED_CLIENT,FORMER_FIXTURE_CLIENT])('authenticated client %s no longer activates domains or changes its native save path',async clientId=>{
+test.each([AUTHENTICATED_CLIENT,FORMER_FIXTURE_CLIENT])('authenticated client %s receives CIS domains without changing its native save path',async clientId=>{
   useSyntheticClient(clientId);delete mockUser.workspace_mode;
   const before=clone(records);await mount(clientId);
-  expect(query('.bcis-domains')).toBeNull();expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
+  expect(query('.bcis-domains')).toBeTruthy();expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
   await openControl('1.1');expect(new URLSearchParams(route().search).get('assessment')).toBe('fixture-native-1.1');
   expect(editorSnapshot().implementation).toBe('Original native 1.1');expect(records).toEqual(before);
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
 
-test.each([2,3])('Demo Brawndo configured as IG%s still cannot activate domains',async implementationGroup=>{
-  useSyntheticClient(CLIENT);group=implementationGroup;await mount();
-  expect(query('.bcis-domains')).toBeNull();await openControl('1.1');
+test.each([2,3])('Demo Brawndo configured as IG%s uses the complete native CIS domain scope',async implementationGroup=>{
+  configureGroup(implementationGroup);useSyntheticClient(CLIENT);const before=clone(records);await mount();
+  expect(query('.bcis-domains')).toBeTruthy();expect(records).toHaveLength(implementationGroup===2?130:153);await openControl('1.1');
+  expect(records).toEqual(before);
   expect(native().querySelector('.bcis-crumbs').textContent).toContain('CIS IG'+implementationGroup);
   expect(new URLSearchParams(route().search).get('assessment')).toBe('fixture-native-1.1');
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
@@ -334,8 +344,9 @@ test('another client cannot receive pilot shortcuts or resolve a foreign assessm
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
 
-test.each([2,3])('Brawndo IG%s does not activate domains or substitute native group context',async implementationGroup=>{
-  group=implementationGroup;await mount();expect(query('.bcis-domains')).toBeNull();
+test.each([2,3])('Brawndo IG%s activates domains while preserving native group context',async implementationGroup=>{
+  configureGroup(implementationGroup);const before=clone(records);await mount();expect(query('.bcis-domains')).toBeTruthy();
+  expect(records).toHaveLength(implementationGroup===2?130:153);expect(records).toEqual(before);
   await openControl('1.1');expect(native().querySelector('.bcis-crumbs').textContent).toContain('CIS IG'+implementationGroup);
   expect(api.patch).not.toHaveBeenCalled();
 });

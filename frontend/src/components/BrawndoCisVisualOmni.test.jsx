@@ -72,10 +72,23 @@ test('target launcher retains the native saved position and arrow-key preference
 
 test.each([
   {visualReference:false},
-  {configuration:{implementation_group:2}},
   {clientId:'other-client',record:undefined,current:undefined},
 ])('appearance stays native outside the explicit canonical IG1 variant: %j',async extra=>{
   await render(extra);await open();
   expect(document.querySelector('.brawndo-cis-visual-omni')).toBeNull();expect(document.querySelector('.cis-omni-owl')).toBeNull();expect(document.querySelector('.cis-omni-question-card')).toBeNull();
   expect(document.querySelector('.omni-approved')).toBeTruthy();expect(api.put).not.toHaveBeenCalled();
+});
+
+
+test('unsupported group does not mount an interview or issue native writes',async()=>{
+  await render({configuration:{implementation_group:4}});
+  expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
+  expect(api.put).not.toHaveBeenCalled();
+});
+
+
+test.each([2,3])('approved interview appearance follows the verified IG%i record without changing native answers',async group=>{
+  await render({configuration:{implementation_group:group}});await open();
+  expect(document.querySelector('.brawndo-cis-visual-omni')).toBeTruthy();
+  expect(api.put).not.toHaveBeenCalled();
 });

@@ -1,3 +1,4 @@
+import {cisClientProgram} from '@/lib/cisExperience';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {selectedClient} from '@/lib/clientSelection';
 import {useEffect,useRef,useState} from 'react';
@@ -25,7 +26,7 @@ const SCOPE={kind:'org'};
 export default function Dashboard(){
   const org=useOrg(),auth=useAuth(),{currentClient,currentClientId}=org,{user,workspaceMode}=auth,[params,setParams]=useSearchParams();
   const {pathname,search}=useLocation();
-  const demoDashboard=brawndoDemoDashboard({workspaceMode,user,currentClientId,currentClient,pathname});
+  const demoDashboard=brawndoDemoDashboard({...org,...auth,pathname,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')});
   // Appearance rechecks must not change the native data scope or discard open editor drafts.
   const demoPresentation=demoDashboard&&visualCorrectionSurface({...org,...auth,pathname,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')})==='dashboard';
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(null),[revision,setRevision]=useState(0),[selection,setSelection]=useState(null);
@@ -82,10 +83,10 @@ export default function Dashboard(){
       }
     }catch(e){if(!controller.signal.aborted&&activeRequest.current===requestKey)setRefreshError((saved?'The record was saved, but dashboard refresh failed: ':'Dashboard refresh failed: ')+formatError(e));}
   }
-  const program=demoDashboard?brawndoDemoProgram(data.programs,data.programMetadata):null;
+  const program=demoDashboard?brawndoDemoProgram(data.programs,data.programMetadata,currentClientId):null;
   return <>{demoPresentation?<BrawndoDemoDashboard key={requestKey} queue={data.queue} programs={data.programs} client={currentClient} members={data.members}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion}>
-      {program?<BrawndoDemoProgram client={currentClient} program={program} refreshToken={refreshVersion}/>:<section className="bdd-card" aria-label="CIS IG1 Status"><header><h2>CIS IG1 Status</h2></header><p className="bdd-empty" role="status">The configured Brawndo CIS v8.1 IG1 program is unavailable. Review its native configuration.</p></section>}
+      {program?<BrawndoDemoProgram client={currentClient} program={program} refreshToken={refreshVersion}/>:<section className="bdd-card" aria-label={`CIS IG${cisClientProgram(currentClient)?.implementationGroup} Status`}><header><h2>CIS IG{cisClientProgram(currentClient)?.implementationGroup} Status</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} CIS v8.1 IG{cisClientProgram(currentClient)?.implementationGroup} program is unavailable. Review its native configuration.</p></section>}
     </BrawndoDemoDashboard>:<ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} workspacePilot={pilot}/>}
     {refreshError&&<p role="alert">{refreshError} <button onClick={()=>refreshDashboard(false)}>Retry dashboard refresh</button></p>}

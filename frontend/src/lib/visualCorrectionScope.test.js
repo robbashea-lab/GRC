@@ -1,8 +1,9 @@
+import {cisClient, cisContext} from '../testUtils/cisExperience';
 import {visualCorrectionSurface} from './visualCorrectionScope';
 
-const context = {pathname: '/calendar', workspaceMode: 'demo',
+const context = {...cisContext(),pathname: '/calendar', workspaceMode: 'demo',
   user: {user_id: 'demo_actor', workspace_mode: 'demo', role: 'super_admin'},
-  selectedClientId: 'demo_brawndo', currentClientId: 'demo_brawndo', currentClient: {client_id: 'demo_brawndo', status: 'active'}};
+  selectedClientId: 'demo_brawndo', currentClientId: 'demo_brawndo', currentClient:cisClient()};
 
 test('five appearance routes require resolved canonical trusted Demo context', () => {
   for (const pathname of ['/dashboard', '/calendar', '/reviews', '/action-items', '/risks']) {

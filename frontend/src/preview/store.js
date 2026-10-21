@@ -1,6 +1,7 @@
 import {validateVendor,ensureVendorReviews,syncVendorReview} from './vendors';
 import { ensureRiskReview } from './risks';
 import { syncPolicyReview, ensurePolicyReview } from './policyReviews';
+import {isCisClient} from './cisCapability';
 import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
 import { validateAssignment } from './assignmentEligibility';
@@ -14,6 +15,7 @@ import {enrichBrawndoReportingHistory} from './brawndoReportingHistory';
 import {finishDunder} from './programs/dunder';
 import {addInitech,finishInitech} from './programs/initech';
 import {removeRetiredDemoClients} from './retiredClients';
+import {applyCisDemoRollout} from './cisDemoRollout';
 import {action} from './workflows';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
@@ -24,12 +26,7 @@ import {normalizeRecordWrite} from '../lib/recordContracts';
 import {demoStorageError} from '../lib/demoStorageErrors';
 import {lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
 export const STORE_KEY = 'grc_interactive_demo_v3';
-// v2 held the retired seven-client portfolio. Drop it so those clients never reappear
-// and two full stores never compete for the session quota.
-const LEGACY_STORE_KEYS = ['grc_interactive_demo_v2'];
-function dropLegacyStores() {
-  for (const key of LEGACY_STORE_KEYS) { try { sessionStorage.removeItem(key); } catch { /* unavailable storage is reported by the read below */ } }
-}
+// Older Demo stores remain recoverable; a rollout never deletes a prior session key.
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const ids = {
   organizational_controls:'control_id',
@@ -70,39 +67,28 @@ export function seedStore(clock=new Date()) {
   for(const client of db.clients)reconcileFramework(db,client.client_id,db.baselines[client.client_id]);
   const finished=finishDunder(finishDemoStore(db,clock,{action,write,frameworkRequest}),clock);
   // Policy dates derive from their Review history once that history exists.
-  finished.reviews.filter(r=>r.client_id==='demo_brawndo'&&r.policy_id).forEach(r=>syncPolicyReview(finished,r));
+  finished.reviews.filter(r=>isCisClient(finished,r.client_id)&&r.policy_id).forEach(r=>syncPolicyReview(finished,r));
   addInitech(finished,clock);
   reconcileFramework(finished,'demo_initech',finished.baselines.demo_initech);
   finishInitech(finished,clock);
   // Raw seeds use the native UTC-day clock; persisted saves/reset events keep their exact time.
   enrichBrawndoReportingHistory(finished,new Date(demoDates(clock)(0)+'T12:00:00.000Z'));
+  applyCisDemoRollout(finished,{clock,fresh:true});
   return finished;
 }
-function installCanonicalDunder(db){
-  if(db.clients.some(c=>c.client_id==='demo_dunder'&&c.demo_program_version==='iso27001-year2-v1'))return false;
-  // Upgrades existing Demo-seeded stores only; a store without the seeded Demo clients
-  // (e.g. imported backend fixtures) is left exactly as saved.
-  if(!db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id)))return false;
-  const canonical=seedStore(),cid='demo_dunder';
-  for(const [key,value] of Object.entries(canonical))if(Array.isArray(value)&&key!=='users')(db[key]||=[]).push(...value.filter(row=>row.client_id===cid));
-  db.users.push(...canonical.users.filter(user=>user.user_id.startsWith(cid+'_')));
-  for(const user of [...db.users,db.user].filter(Boolean)){const source=canonical.users.find(candidate=>candidate.user_id===user.user_id);if(source?.client_ids.includes(cid)&&!(user.client_ids||[]).includes(cid))(user.client_ids||=[]).push(cid);}
-  for(const field of ['baselines','drafts','riskSequences','ai_intake','ai_counters'])if(canonical[field]?.[cid]!==undefined){db[field]||={};db[field][cid]=canonical[field][cid];}
-  return true;
-}
 export function readStore() {
-  dropLegacyStores();
   let saved;
   try {saved=sessionStorage.getItem(STORE_KEY);}catch(error){throw demoStorageError(error,'read');}
   if (saved) {
     let db;try{db=restorePortfolioReporting(JSON.parse(saved));}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
-    const retired=removeRetiredDemoClients(db),installed=installCanonicalDunder(db);
+    const retired=removeRetiredDemoClients(db);
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
     if(initech){reconcileFramework(db,'demo_initech',db.baselines.demo_initech);finishInitech(db);}
+    const cisRollout=applyCisDemoRollout(db,{fresh:false});
     const light=lightweightStore(db,db.evidence);
     const enriched=enrichBrawndoReportingHistory(db);
-    if(retired||installed||initech||enriched||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
+    if(retired||initech||cisRollout||enriched||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
     return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
   }
   clearFileCache();
@@ -172,7 +158,7 @@ export function validate(db, kind, body, existing) {
   if (field && !String(body[field] || '').trim()) throw new Error(`${field === 'name' ? 'Name' : 'Title'} is required.`);
   if (kind === 'reviews' && !body.review_type) throw new Error('Review type is required.');
   // Brawndo: one active recurring Review per Policy; completed history is retained, never duplicated.
-  if (kind === 'reviews' && body.client_id === 'demo_brawndo' && body.policy_id && !['completed','cancelled'].includes(body.status)
+  if (kind === 'reviews' && isCisClient(db,body.client_id) && body.policy_id && !['completed','cancelled'].includes(body.status)
     && db.reviews.some(r => r.client_id === body.client_id && r.policy_id === body.policy_id && r.review_id !== body.review_id && !['completed','cancelled'].includes(r.status)))
     throw new Error('This Policy already has an active Review; open it instead.');
   if (kind === 'contacts' && !body.not_applicable && !body.name && !body.email && !body.role) throw new Error('Enter a contact name, email, or role.');

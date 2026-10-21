@@ -9,6 +9,8 @@ import {evidenceAccess} from './evidence';
 import {stable} from './commandRequests';
 import {latestPortfolioActivity} from '../lib/portfolioOverview';
 import {getBrawndoScenarioContext} from './brawndoReportingHistory';
+import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
+import {namedDemoClient} from '../lib/demoClients';
 import {isDemoScenarioPosition} from '../lib/portfolioProgress';
 
 const VERSION='native-implementation-v1',DAY=86400000;
@@ -61,11 +63,12 @@ function thinCurrent(current){
 
 // Serialization only: retain every observation and exact historical vector,
 // but store repeated whole-program scope/source arrays once. Native records
-// and their histories never enter this pool. Decoding allocates separate copies.
+// and their histories never enter this pool. Exact source rows are pooled across
+// changing vectors; decoding allocates separate copies and retains every observation.
 export function compactPortfolioReporting(db){
   const history=db?.portfolio_reporting;if(!history)return db;
   const identities=(history.identities||[]).map(row=>({...row,scopes:[...row.scopes]}));
-  const source_vectors=[...(history.source_vectors||[])],sources=new Map(source_vectors.map((value,index)=>[value,index]));
+  const source_vectors=[],sources=new Map(),source_records=[],records=new Map();
   const current=(value,identity)=>{
     if(!value)return value;
     const result={...value};
@@ -79,19 +82,27 @@ export function compactPortfolioReporting(db){
     }
     if(Array.isArray(value.provenance?.source_references)){
       const vector=stable(value.provenance.source_references);let index=sources.get(vector);
-      if(index===undefined){index=source_vectors.length;source_vectors.push(vector);sources.set(vector,index);}
+      if(index===undefined){
+        index=source_vectors.length;
+        source_vectors.push(value.provenance.source_references.map(reference=>{
+          const serialized=stable(reference);let recordIndex=records.get(serialized);
+          if(recordIndex===undefined){recordIndex=source_records.length;source_records.push(serialized);records.set(serialized,recordIndex);}
+          return recordIndex;
+        }));
+        sources.set(vector,index);
+      }
       result.provenance={...value.provenance,_portfolio_source_index:index};delete result.provenance.source_references;
     }
     return result;
   };
-  return {...db,portfolio_reporting:{...history,storage_version:1,identities,source_vectors,
+  return {...db,portfolio_reporting:{...history,storage_version:2,identities,source_vectors,source_records,
     snapshots:(history.snapshots||[]).map(snapshot=>({...snapshot,current:current(snapshot.current,programIdentity(snapshot))})),
     scope_events:(history.scope_events||[]).map(event=>({...event,before:current(event.before,event.client_id+':'+event.framework_key),after:current(event.after,event.client_id+':'+event.framework_key)}))}};
 }
 
 export function restorePortfolioReporting(db){
   const history=db?.portfolio_reporting;if(!history?.storage_version)return db;
-  if(history.storage_version!==1)throw new Error('The saved Demo implementation history format is unavailable.');
+  if(![1,2].includes(history.storage_version))throw new Error('The saved Demo implementation history format is unavailable.');
   const current=(value,identity)=>{
     if(!value)return value;
     const result={...value};
@@ -104,8 +115,15 @@ export function restorePortfolioReporting(db){
     }
     if(Object.hasOwn(value.provenance||{},'_portfolio_source_index')){
       const vector=history.source_vectors?.[value.provenance._portfolio_source_index];
-      if(typeof vector!=='string')throw new Error('The saved Demo implementation source reference is unavailable.');
-      result.provenance={...value.provenance,source_references:JSON.parse(vector)};delete result.provenance._portfolio_source_index;
+      let references;
+      if(history.storage_version===1&&typeof vector==='string')references=JSON.parse(vector);
+      else if(history.storage_version===2&&Array.isArray(vector))references=vector.map(index=>{
+        const serialized=Number.isInteger(index)&&index>=0?history.source_records?.[index]:null;
+        if(typeof serialized!=='string')throw new Error('The saved Demo implementation source reference is unavailable.');
+        return JSON.parse(serialized);
+      });
+      else throw new Error('The saved Demo implementation source reference is unavailable.');
+      result.provenance={...value.provenance,source_references:references};delete result.provenance._portfolio_source_index;
     }
     return result;
   };
@@ -183,7 +201,23 @@ const positionState=position=>stable({scope:exactScope(position.current)||positi
 // Hook this into saveStore before its single setItem. A failed commit persists
 // neither source changes nor these derived observations. Report GETs never call it.
 export function captureDemoReporting(db,previous,at=new Date().toISOString()){
-  const prior=previous?.portfolio_reporting||{},snapshots=(prior.snapshots||[]).map(snapshot=>({...snapshot,current:{...snapshot.current}}));
+  // Capture owns native changes; explicit new scenario imports must survive the
+  // first persistence boundary too. Existing committed points stay authoritative.
+  const prior={...(previous?.portfolio_reporting||{})};
+  const imported=[],retainedIds=new Set((prior.snapshots||[]).map(point=>point.snapshot_id));
+  for(const client of db.clients||[]){
+    const candidate=db.cis_demo_scenario_history?.[client.client_id];
+    if(!Array.isArray(candidate?.point_ids)||candidate.point_ids.every(id=>retainedIds.has(id)))continue;
+    const context=getCisDemoScenarioContext(db,client.client_id,at);
+    if(!context)continue;
+    imported.push(...(db.portfolio_reporting?.snapshots||[]).filter(point=>context.point_ids.includes(point.snapshot_id)&&!retainedIds.has(point.snapshot_id)));
+  }
+  if(imported.length){
+    prior.snapshots=[...(prior.snapshots||[]),...imported];
+    const programs=new Set(imported.map(point=>point.program_id));
+    prior.identities=[...(prior.identities||[]),...(db.portfolio_reporting?.identities||[]).filter(identity=>programs.has(identity.program_id)&&!(prior.identities||[]).some(existing=>existing.program_id===identity.program_id))];
+  }
+  const snapshots=(prior.snapshots||[]).map(snapshot=>({...snapshot,current:{...snapshot.current}}));
   const identities=(prior.identities||[]).map(row=>({...row,scopes:row.scopes.map(scopeText),head:row.head?{...row.head}:null}));
   const projection={...db,portfolio_reporting:{...prior,identities}},scope_events=[...(prior.scope_events||[])];
   const initialPositions=demoCurrentPositions(projection,db.clients||[],at),changedIdentityPrograms=new Set();
@@ -459,7 +493,9 @@ export function portfolioReportingRequest(db,path,params={}){
     const position=programs.find(p=>p.client_id===params.client_id&&p.program_key===params.program_key);if(!position)return fail(404,'Enabled Demo program not found');
     const available=snapshots.filter(s=>s.client_id===position.client_id&&s.framework_key===position.framework_key);
     const scenario_context=params.demo_scenario==='brawndo-cis-ig1-history-v2'&&position.program_id==='demo_brawndo:cis-ig1'
-      ?getBrawndoScenarioContext(db,new Date(asOf)):null;
+      ?getBrawndoScenarioContext(db,new Date(asOf))
+      : params.demo_scenario===namedDemoClient(position.client_id)?.historyVersion && position.framework_key==='cis-ig1'
+        ?getCisDemoScenarioContext(db,position.client_id,asOf):null;
     return {...position,as_of:asOf,...demoHistory(db,position,available,range,asOf,scenario_context),coverage:coverage(db,available),...(scenario_context?{scenario_context}:{})};
   }
   if(path.endsWith('/activity')){

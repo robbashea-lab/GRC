@@ -2,16 +2,19 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordDrawer from './RecordDrawer';
 import api from '@/lib/api';
-import pilot from '@catalogs/omniWorkspacePilot.json';
+import {cisClient} from '@/testUtils/cisExperience';
+const mockCisClients=[cisClient('demo_brawndo'),cisClient('synthetic_normal_cis',2)];
+let mockOrg;
 let mockUser={user_id:'admin',role:'super_admin',workspace_mode:'standard'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:false}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>}),{virtual:true});
 jest.mock('./EvidencePanel',()=>()=>null);
 jest.mock('./ReviewDrawer',()=>({__esModule:true,default:({onSaved,onOpenChange})=><div data-testid="linked-review"><button onClick={onSaved}>Save linked Vendor Review</button><button onClick={()=>onOpenChange(false)}>Close linked Vendor Review</button></div>}));
 let root,container,mockStrict=false;
 const vendor={vendor_id:'v1',client_id:'future-client',name:'Generic vendor',service:'Hosting',status:'active',assurance_records:[]};
-const render=props=>act(async()=>{const drawer=<RecordDrawer open kind="vendors" clientId="future-client" record={vendor} onOpenChange={jest.fn()} {...props}/>;root.render(mockStrict?<React.StrictMode>{drawer}</React.StrictMode>:drawer);});
+const render=props=>act(async()=>{const cid=props?.clientId||'future-client';const client=mockCisClients.find(row=>row.client_id===cid)||{client_id:cid,name:'Generic client',status:'active'};mockOrg={currentClientId:cid,currentClient:client,clients:[client]};const drawer=<RecordDrawer open kind="vendors" clientId="future-client" record={vendor} onOpenChange={jest.fn()} {...props}/>;root.render(mockStrict?<React.StrictMode>{drawer}</React.StrictMode>:drawer);});
 const click=node=>act(async()=>node.click());
 const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(node.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
 const active=id=>expect(document.querySelector('[data-testid="tab-'+id+'"]').className).toContain('active');
@@ -113,11 +116,12 @@ test('nested Vendor Review preserves a genuine status draft and its original con
 });
 
 test.each([
-  ['demo_prestige','demo'],
-  ['demo_brawndo_lookalike','demo'],
-  ['demo_brawndo','standard'],
-  [pilot.stagingClientIds[0],'standard'],
-])('added nested Review status reconciliation stays outside client=%s mode=%s',async(clientId,mode)=>{
+  ['demo_prestige','demo',false],
+  ['demo_brawndo_lookalike','demo',false],
+  ['future-client','standard',false],
+  ['demo_brawndo','standard',true],
+  ['synthetic_normal_cis','standard',true],
+])('nested Review status reconciliation follows actual CIS enrollment for client=%s mode=%s',async(clientId,mode,configuredCis)=>{
   mockUser.workspace_mode=mode;
   const record={...vendor,client_id:clientId,status:'onboarding',updated_at:'version1'};
   const review={review_id:'review1',vendor_id:record.vendor_id,client_id:clientId,title:'Linked vendor Review'};
@@ -128,8 +132,8 @@ test.each([
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save linked Vendor Review'));
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close linked Vendor Review'));
   await click(document.querySelector('[data-testid="tab-overview"]'));
-  expect(record.status).toBe('onboarding');
-  expect(document.body.textContent).toContain('Onboarding');
+  expect(record.status).toBe(configuredCis?'under_review':'onboarding');
+  expect(document.body.textContent).toContain(configuredCis?'Under review':'Onboarding');
   expect(api.patch).not.toHaveBeenCalled();
 });
 

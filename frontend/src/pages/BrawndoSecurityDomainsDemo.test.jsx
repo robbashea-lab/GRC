@@ -133,8 +133,20 @@ test('actual Demo stale writes are rejected and interview checkpoint reads do no
   const reopened=(await api.get(path+'/guided-assessment')).data;expect(reopened.answers).toEqual(checkpoint.answers);expect(reopened.revision).toBe(checkpoint.revision);expect(reopened.lineage_stale).toBe(true);
 });
 
-test.each([['demo_initech','cis-ig1'],['demo_prestige','soc-2'],['demo_dunder','iso-27001']])('actual Demo client %s / %s retains its native workspace without pilot domains',async(clientId,framework)=>{
+test.each([['demo_prestige','soc-2'],['demo_dunder','iso-27001']])('actual Demo client %s / %s retains its native workspace without pilot domains',async(clientId,framework)=>{
   const before=readStore().framework_assessments;await mount(clientId,framework);
   expect(container.querySelectorAll('.bcis-domains')).toHaveLength(0);expect(container.textContent).not.toContain('Loading program workspace.');
   expect(readStore().framework_assessments).toEqual(before);
+});
+
+
+test('actual Initech IG2 retains its complete native CIS domains without mutations',async()=>{
+ const before=readStore().framework_assessments;
+ await mount('demo_initech','cis-ig1');
+ expect(container.querySelector('.bcis-domains')).toBeTruthy();
+ expect(container.textContent).toContain('CIS IG2');
+ const data=await workspace('demo_initech');
+ expect(data.configuration.implementation_group).toBe(2);
+ expect(data.active_definition_ids).toHaveLength(130);
+ expect(readStore().framework_assessments).toEqual(before);
 });

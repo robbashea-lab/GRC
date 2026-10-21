@@ -1,3 +1,4 @@
+import {useOrg} from '@/context/OrgContext';
 import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
 import './BrawndoFullRecord.css';
 import {readEvidenceFile} from '@/lib/evidenceFile';
@@ -16,7 +17,7 @@ import RecordDrawer from './RecordDrawer';
 import AssigneeSelect from './AssigneeSelect';
 import {SCHEMAS} from '@/lib/schemas';
 
-import {isReferencePresentation,isBrawndoReference} from '@/lib/reference';
+import {isReferencePresentation,isCisReference} from '@/lib/reference';
 import {AI_PILOT_DEFAULTS,AI_PILOT_KEYS,AI_APPROVAL_LABELS,aiApproval} from '@/lib/brawndoAI';
 import BrawndoAIFields from './BrawndoAIFields';
 import BrawndoAIConceptFields from './BrawndoAIConceptFields';
@@ -35,7 +36,8 @@ function Choices({label,values,selected=[],onChange,disabled}){return <fieldset 
 
 export default function AIDrawer({open,onOpenChange,record,clientId,users=[],onSaved,template,conceptPresentation=false}){
   const {user}=useAuth(),id=record?.ai_system_id;
-  const reference=isReferencePresentation(clientId,user),approvalPilot=isBrawndoReference(clientId,user);
+  const {currentClient}=useOrg()||{};
+  const reference=isReferencePresentation(clientId,user),approvalPilot=isCisReference(clientId,user,currentClient);
   const keys=approvalPilot?[...AI_KEYS,...AI_PILOT_KEYS]:AI_KEYS;
   const initial={...AI_DEFAULTS,...(approvalPilot?AI_PILOT_DEFAULTS:{}),...(template?aiTemplateDraft(template):{}),...record};
   const opener=useRef(null),heading=useRef(null);

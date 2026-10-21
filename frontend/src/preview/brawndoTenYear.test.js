@@ -380,7 +380,7 @@ const EVENTS = [
   {on: START, name: 'boundary reviews', run: createBoundaryReviews},
   // Year 0: stabilizing. CIS gaps without Findings are tracked; Risk acceptance lapses briefly.
   {on: '2026-10-05', name: 'CIS 3.5 assessed partial, no Finding yet', run: () => assess('3.5', {status: 'in_progress', technology: 'Disposal vendor (no certificates)', implementation: narrative('3.5', 'Retired laptops collected by a recycling vendor. No certificates of destruction retained.')})},
-  {on: '2027-01-04', name: 'Acceptable Use Policy revised and approved', run: () => revisePolicy('demo_brawndo_policy-acceptable-use-policy', '2.1')},
+  {on: '2027-01-04', name: 'Acceptable Use Policy revised and approved', run: async () => revisePolicy((await policyForBaseline('acceptable-use-policy')).policy_id, '2.1')},
   {on: '2027-01-11', name: 'linked annual Policy Reviews established', run: establishPolicyReviews},
   {on: '2027-02-01', name: 'CIS 17.2 Finding raised', run: () => cisFinding('17.2', {title: 'Incident contact list names former insurer and MSP numbers', severity: 'medium', remediation: 'Update incident contact list and publish', due: '2027-03-01', syncFindingDue: true})},
   {on: '2027-02-22', name: 'RISK-003 acceptance lapsed checkpoint', run: () => checkpoint('acceptance lapsed')},
@@ -477,6 +477,13 @@ async function snapshotYearOne() {
     fritoCompleted: mine('reviews').flatMap(r => (r.occurrences || []).filter(o => o.completed_by === FRITO).map(o => o.occurrence_id)),
   };
 }
+async function policyForBaseline(key) {
+  const policies = await get('/policies', {client_id: CID});
+  const matches = policies.filter(policy => policy.baseline_key === `policy-${key}`);
+  expect(matches).toHaveLength(1);
+  expect(matches[0].client_id).toBe(CID);
+  return matches[0];
+}
 async function revisePolicy(id, version) {
   const p = await get(`/policies/${id}`);
   const subject = await call('post', `/policies/${id}/approval-subject`, {version, external_reference: `Brawndo controlled policy register / ${p.title}`, external_version: `Revision ${version}`, expected_updated_at: p.updated_at}, null, {label: 'policy approval basis'});
@@ -489,7 +496,7 @@ async function revisePolicy(id, version) {
 const KEY_POLICIES = ['information-security-policy', 'access-control-identity-management-policy', 'incident-response-policy', 'backup-restoration-policy', 'vendor-third-party-risk-management-policy', 'acceptable-use-policy'];
 async function establishPolicyReviews() {
   for (const key of KEY_POLICIES) {
-    const p = await get(`/policies/demo_brawndo_policy-${key}`);
+    const p = await policyForBaseline(key);
     // Brawndo Policies already schedule through one linked recurring Review; reuse it instead of adding another.
     const existing = raw().reviews.find(r => r.client_id === CID && r.policy_id === p.policy_id && !['completed', 'cancelled'].includes(r.status));
     if (existing) {report.policies.events.push({today, policy: p.title, event: 'linked annual Review already established', review_id: existing.review_id});continue;}
@@ -931,6 +938,17 @@ async function runSimulation() {
   setClock(START);
   storage.clear(); localStorage.clear();
   await api.post('/demo/enter');
+  // This operating campaign explicitly exercises an optional Acceptable Use
+  // Policy. Strict CIS Demo onboarding excludes it until an organization opts in.
+  const baseline = (await api.get('/onboarding/baseline', {params: {client_id: CID}})).data.state;
+  const optionalPolicy = 'policy-acceptable-use-policy';
+  await api.post('/onboarding/baseline', {client_id: CID, finalize: true, state: {
+    ...baseline,
+    selected_policy_keys: [...new Set([...baseline.selected_policy_keys, optionalPolicy])],
+    policies: {...baseline.policies, [optionalPolicy]: 'yes'},
+  }});
+  const optedIn = await policyForBaseline('acceptable-use-policy');
+  expect(optedIn).toMatchObject({client_id: CID, baseline_key: optionalPolicy});
   const others = raw().clients.map(c => c.client_id).filter(c => c !== CID);
   const before = Object.fromEntries(others.map(c => [c, clientFingerprint(c)]));
   volumeSample('seed');

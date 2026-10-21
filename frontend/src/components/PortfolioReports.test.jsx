@@ -10,7 +10,7 @@ const counts = implemented => [{key: 'addressed', label: 'Implemented', count: i
 const snapshot = (days, implemented, extra = {}) => {
   const at = new Date(Date.parse(AT) + days * DAY).toISOString();
   return {snapshot_id: 'position-' + days, effective_at: at, captured_at: at, source_revision: days === 0 ? 'current' : 'revision-' + days,
-    observation_kind: 'committed_event', scope_signature: 'scope', measure_version: 'native-implementation-v1', availability: 'available', denominator: 56, implemented, counts: counts(implemented), ...extra};
+    observation_kind: 'committed_event', scope:{framework_key:'cis-ig1',catalog_version:'8.1',configuration:{implementation_group:3}}, scope_signature: 'scope', measure_version: 'native-implementation-v1', availability: 'available', denominator: 56, implemented, counts: counts(implemented), ...extra};
 };
 const client = {client_id: 'isolated', name: 'Isolated Client', industry: 'Technology', assigned_owner_id: 'owner', grc_lead: {name: 'Recorded Lead'}};
 const programs = [{client_id: client.client_id, program_id: 'isolated:cis', program_key: 'cis-ig3', framework_key: 'cis-ig1', program_label: 'CIS IG3', scope_label: 'Cumulative IG3 safeguards', to: '/compliance/cis-ig1', current: snapshot(0, 32)},
@@ -655,7 +655,8 @@ test('inline program reuses canonical reporting and navigates all native statuse
   await act(async () => render(1));
   expect(document.querySelector('[role="dialog"]')).toBeNull();
   const inline = document.querySelector('.brawndo-demo-program');
-  expect(inline.querySelector('h3').textContent).toBe('CIS IG1 Status');
+  expect(inline.querySelector('h3').textContent).toBe('CIS IG3 Status');
+  expect(inline.getAttribute('aria-label')).toBe('CIS IG3 Status');
   expect(inline.querySelector('.ph-current-value').textContent).toContain('32 of 56');
   for (const [index, key] of ['addressed', 'in_progress', 'needs_attention', 'not_assessed'].entries()) {
     await act(async () => inline.querySelectorAll('.ph-breakdown-row')[index].click());
@@ -754,4 +755,15 @@ test('scope change without a period baseline never prints an unknown before-coun
   expect(changeCard.textContent).toContain('Scope changed.');
   expect(changeCard.textContent).not.toContain('→');
   expect(dialog().querySelector('.ph-scope-notes').textContent).toContain('2 safeguards added to scope. Applicable went from 54 to 56.');
+});
+
+
+test.each([[1,56],[2,130],[3,153]])('inline native program IG%i retains its actual label and denominator %i',async(group,total)=>{
+  const current=chartPosition(20,total,{scope:{framework_key:'cis-ig1',catalog_version:'8.1',configuration:{implementation_group:group}}}),program={...programs[0],program_label:`CIS IG${group}`,current};
+  api.get.mockResolvedValue({data:history({current,snapshots:[current],forecast_snapshots:[current]})});
+  await act(async()=>root.render(<PortfolioHistoryDialog inline client={client} programs={[program]} selected={programIdentity(program)} onNavigate={navigate} asOf={AT}/>));
+  const panel=container.querySelector('.brawndo-demo-program');
+  expect(panel.getAttribute('aria-label')).toBe(`CIS IG${group} Status`);
+  expect(panel.querySelector('h3').textContent).toBe(`CIS IG${group} Status`);
+  expect(panel.querySelector('.ph-current-value').textContent).toContain(`20 of ${total}`);
 });

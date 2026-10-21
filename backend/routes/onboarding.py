@@ -516,6 +516,7 @@ class BaselineState(BaseModel):
     version: int = 2
     step: int = Field(default=0, ge=0, le=3)
     policies: Dict[str, str] = Field(default_factory=dict)
+    selected_policy_keys: Optional[List[str]] = Field(default=None, max_length=100)
     requirements: Dict[str, str] = Field(default_factory=dict)
     reviews: List[str] = Field(default_factory=list)
     completed: bool = False
@@ -603,6 +604,14 @@ async def _prepare_baseline(body, user, identity):
     previous_baseline=await recorded_baseline(server,client)
     server._require_snapshot(body.model_dump(exclude_unset=True),client.get('onboarding_baseline') or {})
     state = body.state.model_dump()
+    # Older clients cannot implicitly erase a previously explicit generation set.
+    previous_selection = (client.get('onboarding_baseline') or {}).get('selected_policy_keys')
+    if state.get('selected_policy_keys') is None and previous_selection is not None:
+        state['selected_policy_keys'] = list(previous_selection)
+    allowed_policy_keys = {item['key'] for item in BASELINE_CATALOG['policies']}
+    selected_policy_keys = state.get('selected_policy_keys')
+    if selected_policy_keys is not None and (len(selected_policy_keys) != len(set(selected_policy_keys)) or any(key not in allowed_policy_keys for key in selected_policy_keys)):
+        raise HTTPException(400, 'Invalid policy selection')
     framework_governance.validate_configuration(state)
     if previous_baseline:
         state['framework_settings']={'cis-ig1':client.get('framework_settings',{}).get('cis-ig1',{'implementation_group':1})}
@@ -615,8 +624,9 @@ async def _prepare_baseline(body, user, identity):
         allowed = {i['key'] for i in BASELINE_CATALOG[group]}
         if any(k not in allowed or v not in options for k, v in state[group].items()):
             raise HTTPException(400, 'Invalid baseline response')
-        if body.finalize and any(not state[group].get(k) for k in allowed):
-            raise HTTPException(400, 'Please answer every policy and requirement before completing onboarding.')
+        required = set(selected_policy_keys) if group == 'policies' and selected_policy_keys is not None else allowed
+        if body.finalize and any(not state[group].get(k) for k in required):
+            raise HTTPException(400, 'Please answer every selected policy and requirement before completing onboarding.')
     if any(k not in {r['key'] for r in BASELINE_CATALOG['reviews']} for k in state['reviews']):
         raise HTTPException(400, 'Invalid review selection')
     state['reviews'] = list(dict.fromkeys(state['reviews']))
@@ -637,6 +647,8 @@ async def _prepare_baseline(body, user, identity):
         for group, id_field in [('policies', 'policy_id'), ('requirements', 'requirement_id'), ('reviews', 'review_id')]:
             rows = await server.db[group].find({'client_id': cid}, {'_id': 0}).to_list(2000)
             for item in BASELINE_CATALOG[group]:
+                if group == 'policies' and selected_policy_keys is not None and item['key'] not in selected_policy_keys:
+                    continue
                 if group == 'reviews' and item['key'] not in state['reviews']:
                     continue
                 old = _baseline_match(rows, item)

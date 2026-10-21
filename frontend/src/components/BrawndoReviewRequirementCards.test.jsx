@@ -63,3 +63,14 @@ test('a supporting CIS relationship cannot prove absence of a framework frequenc
   expect(container.textContent).not.toContain('CIS IG1 safeguards');
   expect(container.textContent).toContain('CIS safeguards');
 });
+
+
+test.each(['Brawndo','Initech','Krusty Krab'])('organizational cadence identifies the loaded %s client without borrowing another company',async name=>{
+  const record={client_id:client.client_id,recurrence:'annual',governance_context:{category:'organizational',rationale:'Recorded management decision'}};
+  const before=JSON.stringify(record);
+  await render(record,{client:{...client,name}});
+  expect(container.querySelector('.review-source-frequency').textContent).toContain(`${name}'s recurrence`);
+  expect(container.querySelector('.review-source-frequency').textContent).toContain(`${name} management`);
+  if(name!=='Brawndo')expect(container.textContent).not.toContain('Brawndo');
+  expect(JSON.stringify(record)).toBe(before);
+});

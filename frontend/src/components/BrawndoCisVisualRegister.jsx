@@ -19,8 +19,8 @@ function StatusBar({summary,filter}) {
       className={`s-${tone}${key===filter?' on':''}`} style={{flex:summary[count]}} title={`${label}: ${summary[count]} of ${summary.applicable}`}/>)}</span>;
 }
 
-export function CisVisualHeader({rows,summary,asOf,resume,onContinue,theme,onTheme}) {
-  return <header className="page-head"><div><h1>CIS IG1</h1><p>CIS Controls v8.1 · Implementation Group 1 · {groupRequirements('cis-ig1',rows).length} controls · {summary.total} safeguards{asOf?` · As of ${asOf}`:''}</p></div>
+export function CisVisualHeader({rows,summary,asOf,resume,onContinue,theme,onTheme,implementationGroup}) {
+  return <header className="page-head"><div><h1>CIS IG{implementationGroup}</h1><p>CIS Controls v8.1 · Implementation Group {implementationGroup} · {groupRequirements('cis-ig1',rows).length} controls · {summary.total} safeguards{asOf?` · As of ${asOf}`:''}</p></div>
     <div className="head-actions"><button type="button" className="ghost" aria-label={`Switch to ${theme==='dark'?'light':'dark'} theme`} onClick={onTheme}><svg viewBox="0 0 16 16" aria-hidden="true"><circle className="ic" cx="8" cy="8" r="3"/><path className="ic" d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15"/></svg>{theme==='dark'?'Light':'Dark'}</button>
       {resume&&<button type="button" className="btn primary" onClick={onContinue}>Continue: {resume.definition_id} {resume.title}</button>}</div></header>;
 }
@@ -54,7 +54,7 @@ function SafeguardRow({row,onOpen}) {
     <span className={`ver v-${verification}`}><Icon size={14} aria-hidden="true"/><span>{VERIFICATION_LABELS[verification]}<small>{fresh.label}</small></span></span><span className="chev" aria-hidden="true">›</span></button>;
 }
 
-export default function CisVisualRegister({rows,visible,domains,filter,search,onFilter,onSearch,onClear,onOpen,controlKey='',onResetControl}) {
+export default function CisVisualRegister({rows,visible,domains,filter,search,onFilter,onSearch,onClear,onOpen,controlKey='',onResetControl,implementationGroup}) {
   const [grouping,setGrouping]=useState('domain'),[order,setOrder]=useState('program'),[expanded,setExpanded]=useState([]);
   const register=useRef(null);
   useEffect(()=>{if(controlKey){setGrouping('control');setExpanded([controlKey]);}},[controlKey]);
@@ -67,7 +67,7 @@ export default function CisVisualRegister({rows,visible,domains,filter,search,on
   const allOpen=shown.length>0&&shown.every(group=>expanded.includes(group.key));
   const selectGrouping=value=>{setGrouping(value);setExpanded([]);onResetControl?.();};
   const counts=Object.fromEntries(['all','attention','not_assessed','stale'].map(key=>[key,rows.filter(row=>matchesAssessment(row,key)).length]));
-  return <section ref={register} className="pcard" aria-labelledby="cis-visual-register"><div className="card-head"><div><h2 id="cis-visual-register" tabIndex={-1}>Safeguards</h2><p>All {rows.length} IG1 safeguards in one register. Group them by security domain or by CIS control.</p></div>
+  return <section ref={register} className="pcard" aria-labelledby="cis-visual-register"><div className="card-head"><div><h2 id="cis-visual-register" tabIndex={-1}>Safeguards</h2><p>All {rows.length} IG{implementationGroup} safeguards in one register. Group them by security domain or by CIS control.</p></div>
     <div className="seg" role="group" aria-label="Group by">{[['domain','Security domain'],['control','CIS control']].map(([key,label])=><button type="button" key={key} aria-pressed={grouping===key} onClick={()=>selectGrouping(key)}>{label}</button>)}</div></div>
     <div className="filters"><label className="f-search"><span className="sr-only">Search safeguards</span><Search aria-hidden="true"/><input type="search" placeholder="Search safeguards…" value={search} onChange={event=>onSearch(event.target.value)}/></label>
       <div className="seg" role="group" aria-label="Show safeguards">{['all','attention','not_assessed','stale'].map(key=><button type="button" key={key} aria-pressed={filter===key} onClick={()=>onFilter(key)}>{filterLabels[key]}<span className="n">{counts[key]}</span></button>)}</div>

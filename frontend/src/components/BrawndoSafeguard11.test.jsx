@@ -39,11 +39,11 @@ test('the accepted pilot presents the complete native requirement and passes exi
   expect(container.textContent).not.toContain('Assessed today');
 });
 
-test.each(['visual','fullRecord','context','assessment','client','version','definition','ig2'])('pilot appearance fails closed on %s while native draft survives',async mismatch=>{
+test.each(['visual','fullRecord','context','assessment','client','version','definition','invalidGroup'])('pilot appearance fails closed on %s while native draft survives',async mismatch=>{
   if(mismatch==='visual')state.visualReference=false;
   if(mismatch==='fullRecord')mockBrawndo=false;
   if(mismatch==='context')state.ctx=null;
-  if(mismatch==='ig2')state.ctx.configuration.implementation_group=2;
+  if(mismatch==='invalidGroup')state.ctx.configuration.implementation_group=4;
   const key={assessment:'framework_assessment_id',client:'client_id',version:'framework_version',definition:'definition_id'}[mismatch];
   if(key)state.current={...state.current,[key]:'different'};
   await render();
@@ -69,4 +69,20 @@ test('pilot breadcrumb uses the catalog control name and retains the guarded nat
   expect(control).toBeDefined();await act(async()=>control.click());expect(openControl).toHaveBeenCalledTimes(1);
   state.visualReference=false;await render();
   expect([...container.querySelectorAll('button')].some(node=>node.textContent==='Control 1')).toBe(true);
+});
+
+
+test.each([2,3])('configured IG%s retains native safeguard 1.1 appearance and unsaved draft',async implementationGroup=>{
+  state.ctx.configuration.implementation_group=implementationGroup;
+  state.form={...state.form,implementation:'Unsaved client-specific implementation',notes:'Unsaved native notes'};
+  const before=JSON.stringify(state.form);
+  await render();
+  expect(mockShell.className).toContain('brawndo-safeguard11');
+  expect(container.querySelector('.sg11-requirement blockquote').textContent).toBe(state.definition.official_text);
+  expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(state.form.implementation);
+  expect(container.querySelector('[aria-label="Previously recorded notes"]').value).toBe(state.form.notes);
+  expect(mockItems.safeguard11).toBe(true);expect(mockFindings.safeguard11).toBe(true);
+  expect(mockGuide.onSaveAssessment).toBe(actions.saveGuidedAssessment);
+  expect(JSON.stringify(state.form)).toBe(before);
+  Object.values(actions).forEach(action=>expect(action).not.toHaveBeenCalled());
 });

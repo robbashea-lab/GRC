@@ -10,11 +10,23 @@ import evidence_context
 import review_occurrences
 import policy_reviews
 import portfolio_activity
+import cis_scope
 
 
 def is_policy_set(review):
-    return (review.get('client_id') == 'demo_brawndo' and review.get('baseline_key') == 'policy-review'
-            and not review.get('policy_id'))
+    return bool(review.get('client_id') and review.get('baseline_key') == 'policy-review'
+                and not review.get('policy_id'))
+
+
+async def selected_cis_program(db, client_id):
+    """Resolve enrollment from stored configuration, never from a completion payload."""
+    client = await db.clients.find_one({'client_id': client_id})
+    selected = await db.requirements.find_one({'client_id': client_id, 'baseline_key': 'cis-ig1', 'baseline_response': 'applies'})
+    if not selected:
+        return False
+    if not client or cis_scope.experience_program(client, True)['implementation_group'] is None:
+        raise HTTPException(409, 'Resolve the selected CIS program configuration before annual Policy completion')
+    return True
 
 
 async def assert_deletable(db, kind, row):
@@ -117,6 +129,12 @@ async def prepare(db, review, completed, updates, request, user):
     """Persist the membership cut-off before any child write; retries reuse it."""
     if not is_policy_set(review):
         return None
+    # An existing journal must finish its frozen membership even if enrollment changed.
+    if not review.get('_policy_coverage_pending'):
+        if not await selected_cis_program(db, review['client_id']):
+            return None
+        if review.get('review_type') not in (None, 'policy'):
+            raise HTTPException(409, 'Resolve the canonical annual Policy Review type before completion')
     if review.get('recurrence') != 'annual':
         raise HTTPException(409, 'Configure the annual Policy Review anchor before completion')
     pending = review.get('_policy_coverage_pending')

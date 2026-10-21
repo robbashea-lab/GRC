@@ -7,19 +7,19 @@ import {calendarDay} from '@/lib/tableFilters';
 const SEVERITIES=[['low','Low','Minor gap, little exposure'],['medium','Medium','Limited exposure'],['high','High','Material gap, fix soon'],['critical','Critical','Active exposure, fix now']];
 
 // Presentation only: the assessment controller retains draft identity, validation and submission.
-export default function BrawndoSafeguard11FindingFields({finding,onChange,record,definition,current,users=[],disabled=false,clientId,onCancel,onSubmit}){
+export default function BrawndoSafeguard11FindingFields({finding,onChange,record,definition,current,users=[],disabled=false,clientId,implementationGroup,onCancel,onSubmit}){
   const id=useId();
   const ownerLabel=personLabel(users,finding.owner_id);
   const inheritsOwner=!!finding.owner_id&&finding.owner_id===(current.owner_id||'');
   const severity=SEVERITIES.find(([value])=>value===finding.severity)?.[1]||finding.severity;
   const dueDay=calendarDay(finding.due_date);
   const dueLabel=dueDay===null?finding.due_date:new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'}).format(new Date(dueDay));
-  const sourceAccepted=clientId==='demo_brawndo'&&definition.id==='1.1'
+  const sourceAccepted=!!clientId&&[1,2,3].includes(implementationGroup)&&definition.id==='1.1'
     &&typeof record.framework_assessment_id==='string'&&!!record.framework_assessment_id.trim()
     &&[record,current].every(row=>row?.client_id===clientId&&row.framework_key==='cis-ig1'
       &&row.framework_version==='8.1'&&row.definition_id==='1.1'&&row.framework_assessment_id===record.framework_assessment_id);
   return <div className="sg11-finding-fields">
-    <div className="sg11-finding-context">{sourceAccepted?<><span className="sg11-chip sg11-chip-plain">From CIS IG1 assessment</span><span className="sg11-chip sg11-chip-info" title={definition.title}>Safeguard {definition.id}</span></>:'Assessment context unavailable'}</div>
+    <div className="sg11-finding-context">{sourceAccepted?<><span className="sg11-chip sg11-chip-plain">From CIS IG{implementationGroup} assessment</span><span className="sg11-chip sg11-chip-info" title={definition.title}>Safeguard {definition.id}</span></>:'Assessment context unavailable'}</div>
     <fieldset disabled={disabled} className="sg11-finding-inputs">
       <section className="sg11-finding-card" aria-labelledby={`${id}-wrong`}>
         <div className="sg11-finding-card-heading"><span className="sg11-finding-number">1</span><h3 id={`${id}-wrong`}>What's wrong</h3><span>Creates the finding</span></div>

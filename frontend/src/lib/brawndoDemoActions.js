@@ -1,3 +1,4 @@
+import {cisExperienceEligible} from './cisExperience';
 import {daysDue} from './actionItems';
 import {ticketStage} from './remediationTickets';
 import {calendarDay} from './tableFilters';
@@ -5,10 +6,8 @@ import {isInternal} from './permissions';
 
 // Presentation only; every read and command retains native server authorization.
 export const BRAWNDO_DEMO_ACTIONS_ENABLED=true;
-export function brawndoDemoActionsGate({workspaceMode,user,authLoading=false,authError,orgLoading=false,orgError,currentClientId,currentClient,pathname}) {
-  return BRAWNDO_DEMO_ACTIONS_ENABLED&&!authLoading&&!authError&&!orgLoading&&!orgError&&workspaceMode==='demo'&&user?.workspace_mode==='demo'&&!!user.user_id&&isInternal(user)&&
-    currentClientId==='demo_brawndo'&&currentClient?.client_id==='demo_brawndo'&&
-    (currentClient.status||'active')==='active'&&!currentClient.archived&&!currentClient.archived_at&&pathname==='/action-items';
+export function brawndoDemoActionsGate(context) {
+  return BRAWNDO_DEMO_ACTIONS_ENABLED && cisExperienceEligible(context) && context.pathname === '/action-items' && isInternal(context.user);
 }
 
 export const brawndoTicketActive=row=>!['completed','accepted','cancelled'].includes(ticketStage(row));

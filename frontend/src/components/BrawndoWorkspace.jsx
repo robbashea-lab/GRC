@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Link,useNavigate,useLocation} from 'react-router-dom';
 import {Menu,Moon,Sun,Search,ChevronDown} from 'lucide-react';
 import api,{formatError,PREVIEW_MODE} from '@/lib/api';
@@ -61,7 +61,7 @@ export default function BrawndoWorkspace({children}){
   const [cisPublication,setCisPublication]=useState(null);
   const publishCis=useCallback(enabled=>setCisPublication(old=>enabled?cisScopeKey:old===cisScopeKey?null:old),[cisScopeKey]);
   const cisVisual=cisPublication===cisScopeKey;
-  const risksPresentation=brawndoDemoRisksGate({...org,...auth,pathname,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
+  const risksPresentation=brawndoDemoRisksGate({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
   const visualSurface=visualCorrectionSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
   const additionalAppearance=useAdditionalSectionsAppearance();
   const additionalSurface=additionalAppearanceSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error},additionalAppearance);
@@ -72,12 +72,12 @@ export default function BrawndoWorkspace({children}){
     const root=document.documentElement;root.dataset.brawndoWorkspace=theme;
     return()=>{delete root.dataset.brawndoWorkspace;};
   },[theme]);
-  useEffect(()=>{
+  useLayoutEffect(()=>{
     const root=document.documentElement;
     if(visualSurface){root.dataset.visualSurface=visualSurface;root.dataset.visualTheme=theme;}
     return()=>{delete root.dataset.visualSurface;delete root.dataset.visualTheme;};
   },[visualSurface,theme]);
-  useEffect(()=>{
+  useLayoutEffect(()=>{
     const root=document.documentElement;
     if(additionalSurface){root.dataset.additionalSurface=additionalSurface;root.dataset.additionalTheme=theme;}
     return()=>{delete root.dataset.additionalSurface;delete root.dataset.additionalTheme;};

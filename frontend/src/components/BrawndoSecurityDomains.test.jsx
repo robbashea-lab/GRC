@@ -7,7 +7,7 @@ const domain=(overrides={})=>({id:'assets',label:'Asset & Software Management',c
 let container,root;
 beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
-const render=async(props={})=>{const callbacks={onOpen:props.onOpen||jest.fn(),onSelectDomain:props.onSelectDomain||jest.fn(),onClearDomain:props.onClearDomain||jest.fn()};await act(async()=>root.render(<BrawndoSecurityDomains domains={[domain()]} {...props} {...callbacks}/>));return callbacks;};
+const render=async(props={})=>{const callbacks={onOpen:props.onOpen||jest.fn(),onSelectDomain:props.onSelectDomain||jest.fn(),onClearDomain:props.onClearDomain||jest.fn()};await act(async()=>root.render(<BrawndoSecurityDomains implementationGroup={1} domains={[domain()]} {...props} {...callbacks}/>));return callbacks;};
 
 test('compares implemented share without partial credit and keeps assessment coverage separate',async()=>{
   await render();

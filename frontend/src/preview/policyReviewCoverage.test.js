@@ -1,3 +1,4 @@
+import {cisClient} from '../testUtils/cisExperience';
 import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {readStore,saveStore,STORE_KEY} from './store';
@@ -8,20 +9,25 @@ const policy=(id,status='approved')=>({policy_id:id,client_id:cid,title:id,statu
   approval_history:status==='approved'?[{action:'approved',at:'2025-01-01T00:00:00.000Z',by:'original-approver',subject:subject(id)}]:[],decision_history:[]});
 const annual={review_id:'annual-set',client_id:cid,title:'Native annual set',baseline_key:'policy-review',review_type:'policy',recurrence:'annual',due_date:'2026-10-01',status:'upcoming',current_occurrence_id:'annual-2026'};
 const child=id=>({review_id:'child-'+id,client_id:cid,policy_id:id,title:'Native '+id,review_type:'policy',recurrence:'annual',due_date:'2024-01-31',status:'upcoming',current_occurrence_id:id+'-2024'});
-beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
+const committed={clients:[cisClient()],requirements:[{client_id:cid,baseline_key:'cis-ig1',baseline_response:'applies'}]};
+beforeEach(async()=>{
+  localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');
+  // Annual governance is optional in the strict CIS Demo preset. Select an explicit synthetic obligation for this campaign.
+  const db=readStore();db.reviews.push({...annual});saveStore(db);
+});
 
 test('only exact approved subjects qualify, including the effective version beneath a pending replacement',()=>{
   const pending={...policy('C'),status:'in_review',version:'2',approval_subject:{...subject('C'),version:'2',subject_id:'C-pending'},approval_request_id:'pending-v2'};
   pending.approval_history.push({action:'submitted',at:'2026-10-01',subject:pending.approval_subject});
   const original=JSON.stringify(pending);
-  const coverage=policySetCoverage({policies:[policy('A'),policy('B','draft'),pending,policy('retired','retired'),{...policy('foreign'),client_id:'demo_dunder'}]},annual,at);
+  const coverage=policySetCoverage({...committed,policies:[policy('A'),policy('B','draft'),pending,policy('retired','retired'),{...policy('foreign'),client_id:'demo_dunder'}]},annual,at);
   expect(coverage.map(member=>[member.policy_id,member.subject_id,member.version])).toEqual([['A','A-approved-1','1'],['C','C-approved-1','1']]);
   expect(JSON.stringify(pending)).toBe(original);
   expect(effectivePolicySubject({...policy('future'),effective_date:'2090-01-01'},at)).toBeNull();
   expect(()=>effectivePolicySubject({...policy('missing'),approval_subject:null,approval_history:[]},at)).toThrow(/coverage is incomplete/);
   expect(()=>effectivePolicySubject({...policy('bad'),approval_history:[{action:'approved',at:'2025-01-01',subject:{...subject('bad'),client_id:'demo_dunder'}}]},at)).toThrow(/another client/);
-  expect(policySetCoverage({policies:[policy('A')]},{...annual,client_id:'demo_dunder'},at)).toBeNull();
-  expect(()=>policySetCoverage({policies:[]},{...annual,recurrence:'quarterly'},at)).toThrow(/annual/);
+  expect(policySetCoverage({...committed,policies:[policy('A')]},{...annual,client_id:'demo_dunder'},at)).toBeNull();
+  expect(()=>policySetCoverage({...committed,policies:[]},{...annual,recurrence:'quarterly'},at)).toThrow(/annual/);
 });
 
 test('annual catch-up retains calendar anchors and records missed schedules without fake completions',()=>{
@@ -55,8 +61,8 @@ test.each([{archived:true},{archived_at:'2026-01-01'},{presence:'not_applicable'
 
 test('genuinely empty scope is distinct from missing approved identities, never approval inferred from status',()=>{
   const missing={...policy('missing'),approval_history:[],approval_subject:null};
-  expect(()=>policySetCoverage({policies:[missing,policy('draft','draft')]},annual,at)).toThrow(/coverage is incomplete for missing/);
-  expect(policySetCoverage({policies:[policy('draft','draft'),policy('retired','retired')]},annual,at)).toEqual([]);
+  expect(()=>policySetCoverage({...committed,policies:[missing,policy('draft','draft')]},annual,at)).toThrow(/coverage is incomplete for missing/);
+  expect(policySetCoverage({...committed,policies:[policy('draft','draft'),policy('retired','retired')]},annual,at)).toEqual([]);
   const original=policy('external');original.approval_history=[];
   original.decision_history=[{action:'external_approval_recorded',recorded_at:'2090-01-01',subject:original.approval_subject}];
   expect(effectivePolicySubject(original,at)).toBeNull();
@@ -74,7 +80,7 @@ test.each([
 });
 
 test('retained incomplete approved records fail closed after reload without implicit reconciliation or partial writes',async()=>{
-  const db=readStore(),review=db.reviews.find(row=>row.client_id===cid&&row.baseline_key==='policy-review'&&!row.policy_id);
+  const db=readStore(),review=db.reviews.find(row=>row.review_id===annual.review_id);
   const approved=db.policies.find(row=>row.client_id===cid&&row.status==='approved');
   expect(policySetCoverage(db,review,new Date().toISOString()).length).toBeGreaterThan(0);
   // A previously retained record can predate immutable approval-subject capture.
@@ -196,4 +202,16 @@ test('eligible policy with no child uses the annual catch-up date, not another o
   expect(saved.next_review_date).toBe(response.review.due_date);
   expect(Date.parse(saved.next_review_date)).toBeGreaterThan(Date.parse(response.occurrence.completed_at));
   expect(response.occurrence.covered_policy_reviews).toEqual([]);
+});
+
+
+test.each([null,[],{'cis-ig1':null},{'cis-ig1':[]},
+  {'cis-ig1':{implementation_group:null}},{'cis-ig1':{implementation_group:'2'}},
+  {'cis-ig1':{implementation_group:4}}])('committed CIS with malformed settings %j denies annual completion without partial writes',async settings=>{
+  const db=readStore();
+  db.clients.find(row=>row.client_id===cid).framework_settings=settings;
+  saveStore(db);
+  const before=sessionStorage.getItem(STORE_KEY);
+  await expect(api.post('/reviews/'+annual.review_id+'/complete',{occurrence_id:annual.current_occurrence_id})).rejects.toThrow(/selected CIS implementation group/);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
 });

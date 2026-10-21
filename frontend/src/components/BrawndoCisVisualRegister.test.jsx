@@ -54,7 +54,7 @@ const groups = () => [...container.querySelectorAll('.grp')];
 const groupNames = () => groups().map(group => group.querySelector('.gname b').textContent);
 const ids = () => [...container.querySelectorAll('.sg-id')].map(element => element.textContent);
 async function render(source, overrides = {}) {
-  const props = {rows: source.rows, visible: source.rows, domains: source.domains, filter: 'all', search: '',
+  const props = {implementationGroup:1,rows: source.rows, visible: source.rows, domains: source.domains, filter: 'all', search: '',
     onOpen: jest.fn(), onFilter: jest.fn(), onSearch: jest.fn(), onClear: jest.fn(), ...overrides};
   await act(async () => root.render(<CisVisualRegister {...props}/>));
   return props;
@@ -152,7 +152,7 @@ test('native read-only search and filters preserve data and never open records',
   const source = freeze(fixture()), before = JSON.stringify(source), onOpen = jest.fn();
   function NativeView() {
     const [filter, setFilter] = useState('all'), [search, setSearch] = useState('');
-    return <CisVisualRegister rows={source.rows} domains={source.domains} filter={filter} search={search}
+    return <CisVisualRegister implementationGroup={1} rows={source.rows} domains={source.domains} filter={filter} search={search}
       visible={source.rows.filter(row => matchesAssessment(row, filter, search))} onOpen={onOpen}
       onFilter={setFilter} onSearch={setSearch} onClear={() => {setFilter('all'); setSearch('');}}/>;
   }
@@ -234,7 +234,7 @@ test('unavailable and zero-applicable snapshots do not fabricate a percentage or
 test('snapshot status selection remains a read-only filter and native Continue preserves its destination', async () => {
   const source = fixture(), summary = cisSummary(source.rows), onFilter = jest.fn(), onContinue = jest.fn(), onTheme = jest.fn();
   const resume = source.rows.find(row => row.definition_id === '1.2');
-  const view = filter => <><CisVisualHeader rows={source.rows} summary={summary} asOf="Native saved date" resume={resume}
+  const view = filter => <><CisVisualHeader implementationGroup={1} rows={source.rows} summary={summary} asOf="Native saved date" resume={resume}
     onContinue={onContinue} theme="light" onTheme={onTheme}/><CisVisualSnapshot summary={summary} filter={filter} onFilter={onFilter} asOf="Native saved date"/></>;
   await act(async () => root.render(view('all')));
   expect(container.querySelector('.page-head p').textContent).toContain('15 controls · 56 safeguards · As of Native saved date');
@@ -292,4 +292,17 @@ test.each([
   expect(title.firstChild.textContent).toBe(row.title);
   expect(title.querySelector('small').textContent).toBe('Linked work unavailable');
   expect(title.textContent).not.toMatch(/0 open|0 overdue|2 open Findings|undefined|NaN|Infinity/);
+});
+
+
+test.each([[2, 130, 18], [3, 153, 18]])('IG%s header reports its actual cumulative native scope', async (implementationGroup, safeguards, controls) => {
+  const rows = freeze(cis.requirements.filter(row => row.implementation_group <= implementationGroup));
+  const before = JSON.stringify(rows);
+  await act(async () => root.render(<CisVisualHeader implementationGroup={implementationGroup} rows={rows}
+    summary={{total: rows.length}} asOf="Native saved date" theme="light" onTheme={jest.fn()}/>));
+  expect(container.querySelector('h1').textContent).toBe(`CIS IG${implementationGroup}`);
+  expect(container.querySelector('.page-head p').textContent).toBe(`CIS Controls v8.1 · Implementation Group ${implementationGroup} · ${controls} controls · ${safeguards} safeguards · As of Native saved date`);
+  expect(container.querySelector('.head-actions .primary')).toBeNull();
+  expect(JSON.stringify(rows)).toBe(before);
+  Object.values(api).forEach(method => expect(method).not.toHaveBeenCalled());
 });

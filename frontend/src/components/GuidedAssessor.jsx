@@ -2,7 +2,7 @@ import {useEffect,useId,useRef,useState} from 'react';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import api,{formatError,PREVIEW_MODE} from '@/lib/api';
-import {brawndoWorkspacePilot} from '@/lib/brawndoWorkspacePilot';
+import {cisExperienceEligible, cisDefinitions} from '@/lib/cisExperience';
 import {selectedClient} from '@/lib/clientSelection';
 import {guidedCatalog,catalogForPilot,versionForSafeguard,catalogForVersion,pilotEnabled,prioritizeGuidedRows,visibleQuestions,generateResult,validateAnswers,validateGuidedCompletion,compatibleInterviewAnswers,updateGuidedAnswer,updateGuidedMultiAnswer} from '@/lib/guidedAssessment';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
@@ -39,15 +39,19 @@ export default function GuidedAssessor(props){
 function Pilot({clientId,framework,configuration,invitationContext,inventoryContext,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onSaveAssessment,onDraftChange,onUpdateImplementation,disabled=false,current=record,related={},contextComplete=false,assessmentDirty=false,onOpenNative,people=EMPTY_ROWS,inline=false,inlineOpen=false,onInlineClose,onFreshInterviewReady,visualReference=false,safeguard11=false}){
   const auth=useAuth(),{user}=auth,org=useOrg(),key='guided-pilot-ui:'+user?.user_id+':'+clientId,initial=readPreference(key);
   const focused=focusedOmniEnabled(clientId,user,framework,configuration,record?.definition_id);
-  const visualOmni=visualReference===true&&focused&&clientId==='demo_brawndo'&&framework==='cis-ig1'&&configuration?.implementation_group===1;
+  const visualRecordMatches=record ? record.client_id===clientId&&current?.client_id===clientId&&!!record.framework_assessment_id
+    &&record.framework_assessment_id===current.framework_assessment_id&&record.definition_id===current.definition_id
+    : rows.length>0&&rows.every(row=>row.client_id===clientId&&row.framework_key===framework);
+  const visualOmni=visualReference===true&&focused&&framework==='cis-ig1'&&[1,2,3].includes(configuration?.implementation_group)
+    &&visualRecordMatches;
   const routeClientId=new URLSearchParams(window.location.search).get('client_id');
-  // These workflow corrections are confined to the trusted, loaded Brawndo Demo IG1 record.
-  const boundedGuideCorrections=PREVIEW_MODE===true&&auth.workspaceMode==='demo'&&user?.workspace_mode==='demo'
-    &&!!user.user_id&&!!user.role&&!auth.loading&&!auth.error&&!org?.loading&&!org?.error
-    &&brawndoWorkspacePilot(clientId,user)&&clientId==='demo_brawndo'&&framework==='cis-ig1'&&configuration?.implementation_group===1
+  // Workflow corrections use the same authorized CIS scope as the native loaded assessment.
+  const boundedGuideCorrections=cisExperienceEligible({...org,...auth,authLoading:auth.loading,authError:auth.error,
+    orgLoading:org?.loading,orgError:org?.error,selectedClientId:selectedClient(),routeClientId})
+    &&framework==='cis-ig1'&&cisDefinitions(configuration?.implementation_group).some(definition=>definition.id===record?.definition_id)
     &&window.location.pathname==='/compliance/cis-ig1'&&(!routeClientId||routeClientId===clientId)
     &&selectedClient()===clientId&&org?.currentClientId===clientId&&org.currentClient?.client_id===clientId
-    &&org.currentClient.status==='active'&&!org.currentClient.archived&&!org.currentClient.archived_at
+    &&['active','onboarding'].includes(org.currentClient.status)&&!org.currentClient.archived&&!org.currentClient.archived_at
     &&org.clients?.some(client=>client.client_id===clientId)&&contextComplete===true
     &&record?.client_id===clientId&&record.framework_key===framework&&record.framework_version==='8.1'
     &&typeof record.framework_assessment_id==='string'&&!!record.framework_assessment_id

@@ -14,7 +14,7 @@ import AIDrawer from '@/components/AIDrawer';
 import {AIIntakeView,useAIIntake} from '@/components/AIIntake';
 import {ranks} from '@/lib/tableFilters';
 import {AI_RELATIONSHIP_NOTICE} from '@/lib/aiGovernance';
-import {isReferencePresentation,isBrawndoReference,isReferenceWorkflow} from '@/lib/reference';
+import {isReferencePresentation,isCisReference,isReferenceWorkflow} from '@/lib/reference';
 import {AI_VIEWS,aiMatches,aiNeedsAttention} from '@/lib/brawndoAI';
 import BrawndoAICards from '@/components/BrawndoAICards';
 import {BrawndoSurface,BrawndoPageHeader,BrawndoChips} from '@/components/BrawndoPage';
@@ -29,7 +29,7 @@ export default function AIGovernance(){
 }
 function AIWorkspace({identity}){
   const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
-  const reference=isReferencePresentation(currentClientId,user),approvalPilot=isBrawndoReference(currentClientId,user),referenceWorkflow=isReferenceWorkflow(currentClientId,user);
+  const reference=isReferencePresentation(currentClientId,user),approvalPilot=isCisReference(currentClientId,user,currentClient),referenceWorkflow=isReferenceWorkflow(currentClientId,user,currentClient);
   const [showInactive,setShowInactive]=useState(false);
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[selected,setSelected]=useState(null),[search,setSearch]=useState(''),[quick,setQuick]=useState('active');
   const key=`${identity}:${revision}`;

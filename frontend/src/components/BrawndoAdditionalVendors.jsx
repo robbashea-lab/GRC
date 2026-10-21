@@ -60,7 +60,7 @@ function VendorTimeline({ rows, reviews, onOpen, onOpenReview, theme }) {
   </div></Tooltip.Provider>;
 }
 
-export default function BrawndoAdditionalVendors({ rows = [], filteredRows = rows, reviews = [], users = [], loading = false, error = '', onRetry, q = '', onSearch, view = 'all_active', onView, table, onOpen, onOpenReview, actions, theme = 'light', acceptedRefresh = null }) {
+export default function BrawndoAdditionalVendors({ clientName = 'Client', rows = [], filteredRows = rows, reviews = [], users = [], loading = false, error = '', onRetry, q = '', onSearch, view = 'all_active', onView, table, onOpen, onOpenReview, actions, theme = 'light', acceptedRefresh = null }) {
   const refreshLabel = !loading && !error ? formatAcceptedRefresh(acceptedRefresh) : '';
   const metrics = vendorOverview(rows);
   const figures = [['critical_high', 'Critical / High'], ['review_due', 'Reviews due in 30 days'], ['assurance', 'Assurance follow-up due'], ['renewal_soon', 'Renewal / notice actions in 30 days']];
@@ -72,7 +72,7 @@ export default function BrawndoAdditionalVendors({ rows = [], filteredRows = row
   const cohortLabel = cohort === 'inactive' ? 'inactive ' : cohort === 'all_active' ? 'active ' : '';
   const summary = countsAvailable ? `Showing ${filteredRows.length} of ${counts[cohort]} ${cohortLabel}${counts[cohort] === 1 ? 'vendor' : 'vendors'}` : error ? 'Vendor counts unavailable.' : 'Loading vendors…';
   return <div className="brawndo-additional bav-page" data-theme={theme} data-testid="additional-vendors">
-    <div className="bapv-page-head"><div><h1>Brawndo Vendors</h1><p>{countsAvailable ? `Third-party register · ${counts.all_active} active ${counts.all_active === 1 ? 'vendor' : 'vendors'}` : 'Third-party register'}{refreshLabel && ` · As of ${refreshLabel}`}</p></div><div className="bapv-head-actions">{actions}</div></div>
+    <div className="bapv-page-head"><div><h1>{clientName} Vendors</h1><p>{countsAvailable ? `Third-party register · ${counts.all_active} active ${counts.all_active === 1 ? 'vendor' : 'vendors'}` : 'Third-party register'}{refreshLabel && ` · As of ${refreshLabel}`}</p></div><div className="bapv-head-actions">{actions}</div></div>
     <section className="bapv-card bav-overview" aria-label="Vendor overview">
       <div className="bapv-kstrip" aria-label="Vendor summary. Select a figure to filter the register.">{figures.map(([id, label], index) => <button type="button" className="bapv-kcell" key={id} aria-pressed={view === id} disabled={!countsAvailable} onClick={() => onView(view === id ? 'all_active' : id)} data-testid={`additional-vendor-metric-${id}`}><span>{label}</span><strong>{countsAvailable ? metrics[index] : '—'}</strong></button>)}</div>
       <div><div className="bav-timeline-head"><div><h3>Next 12 months</h3><p className="bapv-sub">Reviews, assurance follow-ups and contract renewals for each vendor.</p></div><div className="bav-legend" aria-label="Timeline markers"><span><i className="bav-marker rev" />Review</span><span><i className="bav-marker asr" />Assurance follow-up</span><span><i className="bav-marker ren" />Contract renewal</span></div></div>{!loading && !error && <VendorTimeline key={acceptedRefresh || 'unacknowledged'} rows={rows} reviews={reviews} onOpen={onOpen} onOpenReview={onOpenReview} theme={theme} />}</div>

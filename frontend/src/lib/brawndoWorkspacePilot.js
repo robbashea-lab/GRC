@@ -1,7 +1,8 @@
 import configuration from '@catalogs/omniWorkspacePilot.json';
 
 // Approved Omni artwork/window/free-drag boundary. Shared workspace presentation
-// uses reference.js instead; neither predicate grants API authorization.
+// uses reference.js instead; CIS native behavior uses its actual-client capability.
+// Neither predicate grants API authorization.
 export function brawndoWorkspacePilot(clientId,user,config=configuration){
   if(!user||!clientId)return false;
   return user.workspace_mode==='demo'

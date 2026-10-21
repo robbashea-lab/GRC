@@ -2,10 +2,11 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordDrawer from './RecordDrawer';
 import api from '@/lib/api';
-import pilot from '@catalogs/omniWorkspacePilot.json';
+import {cisClient} from '@/testUtils/cisExperience';
 
-let mockUser;
+let mockUser,mockOrg;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:false}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useNavigate:()=>jest.fn()}),{virtual:true});
 jest.mock('./EvidencePanel',()=>()=>null);
@@ -16,7 +17,7 @@ let root,container;
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;
   sessionStorage.clear();localStorage.clear();
-  mockUser={user_id:'synthetic_admin',role:'super_admin',workspace_mode:'standard'};
+  mockUser={user_id:'synthetic_admin',role:'super_admin',workspace_mode:'standard'};mockOrg={};
   api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/onboarding/state'?{assessments:[]}:[]}));
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
@@ -34,9 +35,12 @@ test.each([
   ['nonreference normal client','synthetic_vendor_client','standard',false],
   ['Brawndo Demo','demo_brawndo','demo',true],
   ['Prestige Demo','demo_prestige','demo',true],
-  ['configured normal reference',pilot.stagingClientIds[0],'standard',true],
-])('%s announces Vendor purpose without changing workflow tabs',async(name,clientId,mode,reference)=>{
+  ['configured normal CIS IG2','synthetic_cis_ig2','standard',true,2],
+  ['configured Demo CIS IG3','synthetic_cis_ig3','demo',true,3],
+])('%s announces Vendor purpose without changing workflow tabs',async(name,clientId,mode,reference,group=1)=>{
   mockUser.workspace_mode=mode;
+  const client=reference&&clientId!=='demo_prestige'?cisClient(clientId,group):{client_id:clientId,name,status:'active'};
+  mockOrg={currentClientId:clientId,currentClient:client,clients:[client]};
   const vendor={vendor_id:'synthetic_vendor',client_id:clientId,name:'Fixture Vendor',service:'Hosting',status:'active',assurance_records:[]};
   await render({kind:'vendors',clientId,record:vendor});
   const dialog=document.querySelector('[data-testid="vendors-drawer"]');

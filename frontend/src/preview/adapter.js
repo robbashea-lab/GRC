@@ -1,3 +1,4 @@
+import {cisDemoOperationalView,visibleCisDemoRows} from './cisDemoVisibility';
 import catalog from '@catalogs/onboardingCatalog.json';
 import {isoAuditRequest} from './isoAudit';
 import { authorizeDemo } from './authorization';
@@ -110,7 +111,7 @@ export async function previewAdapter(config) {
     }
     // Role limits mirror the server so persona QA in the Demo sees the same refusals.
     try { authorizeDemo(db, method, parts, body, config.headers?.['Idempotency-Key']); } catch (error) { return fail(error.status||403, error.message); }
-    if(method==='get' && path.startsWith('/portfolio/reporting/')) return respond(portfolioReportingRequest(db,path,params));
+    if(method==='get' && path.startsWith('/portfolio/reporting/')) return respond(portfolioReportingRequest(cisDemoOperationalView(db),path,params));
     if(kind==='evidence'){
       const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
       if(cid&&!evidenceAccess(db.user,cid))return fail(403,'Forbidden for this client');
@@ -193,7 +194,7 @@ export async function previewAdapter(config) {
           && (!params.occurrence_id || belongsToOccurrence({occurrence_id:l.meta?.occurrence_id}, review, params.occurrence_id)))
           .map(l => ({...l,log_id:l.log_id || l.audit_id})));
       }
-      if (path === '/clients/directory') return respond(portfolio(db, params.include_archived === true || params.include_archived === 'true'));
+      if (path === '/clients/directory') return respond(portfolio(cisDemoOperationalView(db), params.include_archived === true || params.include_archived === 'true'));
       if (path === '/clients') return respond(db.clients.filter(c => evidenceAccess(db.user,c.client_id)&&(params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived')).map(c => clientProjection(db, c)));
       if (path === '/clients/grc-leads') return respond(leadCandidates(db, params.client_id));
       if (kind === 'risks' && name === 'review-history') return respond(db.reviews.filter(r=>r.risk_id===id&&r.client_id===record(db,'risks',id).client_id).flatMap(r=>(r.occurrences||[]).map(o=>({...o,review_id:r.review_id}))));
@@ -206,7 +207,7 @@ export async function previewAdapter(config) {
         record(db, 'clients', id);
         return respond(assignmentCandidates(db, id, params, db.user));
       }
-      if (path === '/dashboard') return respond(dashboard(db, params));
+      if (path === '/dashboard') return respond(dashboard(cisDemoOperationalView(db), params));
       if (path === '/onboarding/policy-library') return respond(library(db, 'policy', params.client_id));
       if (path === '/onboarding/requirements-library') return respond(library(db, 'requirements', params.client_id));
       if (path === '/onboarding/state') return respond({
@@ -217,7 +218,7 @@ export async function previewAdapter(config) {
       if (path === '/baseline/templates') return respond(fixtures.responses[path]);
       if (path === '/calendar') {
         frameworkScope(db,params.client_id);
-        const buckets=calendarBuckets(Object.fromEntries(['reviews','findings','tasks'].map(k=>[k,list(db,k,params.client_id)])),db.user,params);
+        const buckets=calendarBuckets(Object.fromEntries(['reviews','findings','tasks'].map(k=>[k,visibleCisDemoRows(db,k,list(db,k,params.client_id))])),db.user,params);
         buckets.vendor_dates=vendorCalendarItems(list(db,'vendors',params.client_id),list(db,'reviews',params.client_id),params);
         return respond(buckets);
       }
@@ -302,7 +303,7 @@ export async function previewAdapter(config) {
           }
           return respond(r);
         }
-        let rows = list(db, kind, params.client_id).filter(r => (!r.client_id||evidenceAccess(db.user,r.client_id))&&Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v));
+        let rows = visibleCisDemoRows(db,kind,list(db, kind, params.client_id)).filter(r => (!r.client_id||evidenceAccess(db.user,r.client_id))&&Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v));
         if(kind==='evidence')rows=list(db,kind,params.client_id).filter(r=>!params.linked_id ||
           (r.linked_id===params.linked_id&&evidenceKind(r.linked_type)===evidenceKind(params.linked_type)) ||
           r.relationships?.some(l=>l.kind===evidenceKind(params.linked_type)&&l.id===params.linked_id));
@@ -372,7 +373,7 @@ export async function previewAdapter(config) {
             due_date: payload.due_date
           };
         } else if (body.action === 'update') patch = payload;else throw new Error('Unknown bulk action');
-        guardEdit(body.kind, patch, r, db.user);
+        guardEdit(body.kind, patch, r, db.user, db);
         if(body.kind==='policies')patch=invalidatePolicyApproval(patch,r);
         if (body.kind === 'reviews' && patch.status === 'completed' && r.status !== 'completed') {
           const { status, ...fields } = patch;
@@ -454,7 +455,7 @@ export async function previewAdapter(config) {
         if (kind === 'contacts' && db.clients.some(c => c.client_id === r.client_id && c.primary_contact_id === id)) throw new Error('This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.');
         if(kind==='evidence'&&db.reviews.some(c=>c.client_id===r.client_id&&auditEvidenceLinks(c).some(l=>l.id===id)))throw new Error('Audit workpaper evidence must be retained.');
         if(kind==='evidence'&&(db.organizational_controls||[]).some(c=>c.client_id===r.client_id&&controlEvidenceLinks(c).some(l=>l.id===id)))throw new Error('Control design and operation evidence must be retained.');
-        if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id)||v.client_id==='demo_brawndo'&&a.history?.some(h=>h.evidence_ids?.includes(id)))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
+        if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id)||a.history?.some(h=>h.evidence_ids?.includes(id)))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
         if(kind==='evidence'&&['risk','risks'].includes(r.linked_type)&&db.risks.some(x=>x.risk_id===r.linked_id&&['closed','retired'].includes(x.status))) throw new Error('Closed Risk evidence must be retained.');
         if(kind==='evidence'&&['ai_system','ai_systems'].includes(r.linked_type)&&(db.ai_systems||[]).some(x=>x.ai_system_id===r.linked_id&&x.status==='retired'))throw new Error('Retired AI evidence must be retained');
         if(['risks','vendors'].includes(kind)||kind==='reviews'&&(r.risk_id||r.vendor_id||r.ai_system_id)) throw new Error('Governance records and their Review obligations must be retained.');
@@ -507,10 +508,10 @@ export async function previewAdapter(config) {
       }
       const updateKey=CREATE_REPLAY_KINDS.includes(kind)&&id&&method==='patch'&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
       if(updateKey)return save(commandRequest(db,path,record(db,kind,id).client_id,updateKey,body,()=>{
-        guardEdit(kind,body,record(db,kind,id),db.user);
+        guardEdit(kind,body,record(db,kind,id),db.user,db);
         return write(db,kind,body,id);
       }));
-      if (!['evidence','users','clients','comments'].includes(kind)) guardEdit(kind, body, id ? record(db, kind, id) : {}, db.user);
+      if (!['evidence','users','clients','comments'].includes(kind)) guardEdit(kind, body, id ? record(db, kind, id) : {}, db.user, db);
       if (kind === 'reviews' && id && body.status === 'completed' && record(db, kind, id).status !== 'completed') {
         const { status, ...fields } = body;
         write(db, kind, fields, id);

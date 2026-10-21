@@ -1,3 +1,4 @@
+import {useOrg} from '@/context/OrgContext';
 import {aiApproval,aiApproved} from '@/lib/brawndoAI';
 import {catalog} from '@/lib/aiGovernance';
 import {DueDate} from './RegisterCells';
@@ -5,7 +6,7 @@ import {useAuth} from '@/context/AuthContext';
 import {isReferenceWorkflow} from '@/lib/reference';
 
 export default function BrawndoAIFields({tab,form,current,input,person,boolean,put,Choices,vendors,admin,isNew,dirty,approvalPilot,clientId}){
-  const {user}=useAuth(),referenceWorkflow=isReferenceWorkflow(clientId,user);
+  const {user}=useAuth(),{currentClient}=useOrg()||{},referenceWorkflow=isReferenceWorkflow(clientId,user,currentClient);
   if(tab==='Data & Access')return <>
     <Choices label="Known data processed (not permission to use)" values={catalog.data_types} selected={form.data_types} onChange={v=>put('data_types',v)}/>
     <Choices label="System access" values={catalog.access} selected={form.access} onChange={v=>put('access',v)}/>

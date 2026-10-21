@@ -3,6 +3,8 @@ import {createRoot} from 'react-dom/client';
 import Onboarding from './Onboarding';
 import ClientProfile from './ClientProfile';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
+import {rememberClient} from '@/lib/clientSelection';
 import catalog from '@catalogs/onboardingCatalog.json';
 import {catalog as aiCatalog} from '@/lib/aiGovernance';
 
@@ -38,10 +40,10 @@ const handoff = () => ({client: {client_id: mockOrg.currentClientId, name: 'Braw
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   Object.defineProperty(global, 'crypto', {configurable: true, value: require('crypto').webcrypto});
-  sessionStorage.clear(); localStorage.clear(); sessionStorage.setItem('grc_client_id', 'demo_brawndo');
+  sessionStorage.clear(); localStorage.clear(); rememberClient('demo_brawndo');
   mockAuth = {workspaceMode: 'demo', user: {user_id: 'demo_actor', role: 'super_admin', workspace_mode: 'demo'}, loading: false, error: ''};
-  mockOrg = {currentClientId: 'demo_brawndo', currentClient: {client_id: 'demo_brawndo', name: 'Brawndo', status: 'active'},
-    clients: [{client_id: 'demo_brawndo'}], loading: false, error: '', refresh: jest.fn()};
+  mockOrg = {currentClientId: 'demo_brawndo', currentClient: {...cisClient(), name: 'Brawndo'},
+    clients: [{...cisClient(), name: 'Brawndo'}], loading: false, error: '', refresh: jest.fn()};
   mockLocation = {pathname: '/client-profile', search: ''};
   mockState = {version: 3, step: 0, completed: false, policies: {}, reviews: [], framework_reviews: {},
     requirements: Object.fromEntries(catalog.requirements.map(program => [program.key, 'does_not_apply'])), updated_at: 'draft-initial'};
@@ -90,7 +92,7 @@ test('mounted presentation withdraws immediately on mode, route, selection, auth
     alter(); await act(async () => renderWizard());
     expect(container.querySelector('.brawndo-onboarding')).toBeNull();
     mockAuth = originalAuth; mockOrg = originalOrg; mockLocation = originalLocation;
-    sessionStorage.setItem('grc_client_id', 'demo_brawndo');
+    rememberClient('demo_brawndo');
     await act(async () => renderWizard());
     expect(container.querySelector('.brawndo-onboarding')).toBeTruthy();
   }

@@ -672,3 +672,24 @@ test('ISO record stamps and repeated archive stamps are technical changes while 
   db.logs.unshift({audit_id:'business',entity_type:'reviews',entity_id:'r1',action:'Audit work updated',client_id:'isolated',at:AS_OF});
   captureDemoReporting(db,previous,AS_OF);expect(request(db,'activity').total).toBe(1);expect(request(db,'activity').events[0].event_id).toBe('demo:business');
 });
+
+
+test('source-row pooling is lossless, reads retained v1, rejects broken references and decodes independent objects',()=>{
+  const db=fixture();captureDemoReporting(db,null,AS_OF);
+  const previous=copy(db);db.framework_assessments[0].status='in_progress';
+  captureDemoReporting(db,previous,'2026-10-14T18:00:00.000Z');
+  db.portfolio_reporting.snapshots[0].current.provenance.source_references[0].future_field={exact:['Unicode ✓',{retained:true}]};
+  const packed=compactPortfolioReporting(db),restored=restorePortfolioReporting(copy(packed));
+  expect(packed.portfolio_reporting.storage_version).toBe(2);
+  expect(restored.portfolio_reporting.snapshots).toEqual(db.portfolio_reporting.snapshots);
+  expect(packed.portfolio_reporting.source_records.length).toBeLessThan(db.framework_assessments.length*2);
+  const legacy=copy(packed);legacy.portfolio_reporting.storage_version=1;
+  legacy.portfolio_reporting.source_vectors=packed.portfolio_reporting.source_vectors.map(vector=>JSON.stringify(vector.map(index=>JSON.parse(packed.portfolio_reporting.source_records[index]))));
+  delete legacy.portfolio_reporting.source_records;
+  expect(restorePortfolioReporting(legacy).portfolio_reporting.snapshots).toEqual(db.portfolio_reporting.snapshots);
+  const vectors=restored.portfolio_reporting.snapshots.map(snapshot=>snapshot.current.provenance.source_references);
+  vectors[0][0].status='changed only in this decoded copy';
+  expect(vectors[1][0].status).not.toBe('changed only in this decoded copy');
+  const broken=copy(packed);broken.portfolio_reporting.source_records=[];
+  expect(()=>restorePortfolioReporting(broken)).toThrow(/source reference is unavailable/);
+});

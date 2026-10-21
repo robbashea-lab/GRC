@@ -1,22 +1,16 @@
+import {cisExperienceEligible, cisIdentityEligible, cisImplementationGroup} from './cisExperience';
 import {CADENCES, FRAMEWORKS, existingFrameworkReview, genericReviews, reviewConfig, sharedFrameworkPlans} from '@/lib/frameworks';
 import {cisProgramName} from '@/lib/cisScope';
 import {existingBaseline} from '@/lib/onboardingHandoff';
-import {OPERATOR_ROLES} from '@/lib/permissions';
 import {reviewSchedule, scheduledDate} from '@/lib/reviewOccurrences';
 
 // Presentation only. Native controllers and API authorization own every operation.
-export function brawndoOnboardingGate({workspaceMode, user, currentClientId, currentClient,
-  clients, selectedClientId, loadedClientId, profileClientId, handoffClientId, routeClientId,
-  pathname, authLoading, authError, orgLoading, orgError, hasError}) {
-  return !authLoading && !authError && !orgLoading && !orgError && !hasError
-    && workspaceMode === 'demo' && user?.workspace_mode === 'demo' && !!user.user_id
-    && [...OPERATOR_ROLES, 'client_readonly', 'client_viewer'].includes(user.role)
-    && currentClientId === 'demo_brawndo' && currentClient?.client_id === currentClientId
-    && clients?.some(client => client.client_id === currentClientId) === true
-    && [selectedClientId, loadedClientId, profileClientId, handoffClientId].every(id => id === currentClientId)
-    && (!routeClientId || routeClientId === currentClientId)
-    && currentClient.status === 'active' && !currentClient.archived && !currentClient.archived_at
-    && pathname === '/client-profile';
+export function brawndoOnboardingGate(context) {
+  const draft = context.nativeDraft;
+  const selectedDraft = draft?.requirements?.['cis-ig1'] === 'applies'
+    && cisImplementationGroup({framework_settings:draft.framework_settings}) !== null;
+  return (cisExperienceEligible(context) || cisIdentityEligible(context) && selectedDraft) && !context.hasError && context.pathname === '/client-profile'
+    && [context.loadedClientId, context.profileClientId, context.handoffClientId].every(id => id === context.currentClientId);
 }
 
 // Table rows mirror the native create/retain choices. Handoff records are minimal,

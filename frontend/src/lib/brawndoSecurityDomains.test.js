@@ -55,29 +55,16 @@ test('approved mapping is a disjoint complete native IG1 partition and remains p
   expect(mapping.metadata.taxonomyType).toBe('Custom presentation taxonomy');
 });
 
-test('only the verified selected demo Brawndo CIS v8.1 IG1 context enables the pilot', () => {
-  const {data} = fixture();
-  expect(enabled(data)).toBe(true);
-  for (const clientId of ['Brawndo', 'demo_dunder', 'demo_prestige', 'demo_Brawndo', 'new-client', realClientId, formerFixtureClientId, '', null]) {
-    expect(enabled(fixture(clientId).data, clientId, 'cis-ig1', {...user, name: 'Brawndo'})).toBe(false);
+test('verified selected CIS programs support both modes without a client-name allowlist', () => {
+  for (const clientId of ['demo_brawndo', 'new-client', realClientId, formerFixtureClientId]) {
+    const {data} = fixture(clientId);
+    for (const workspace_mode of ['demo','standard',undefined]) expect(enabled(data,clientId,'cis-ig1',{...user,workspace_mode})).toBe(true);
   }
-  for (const framework of ['cis-ig2', 'cis-ig3', 'iso-27001', 'soc-2']) expect(enabled(data, pilot.clientId, framework)).toBe(false);
-  for (const workspace_mode of ['standard', 'authenticated', 'live', 'Demo', '', undefined, null]) {
-    expect(enabled(data, pilot.clientId, 'cis-ig1', {...user, workspace_mode})).toBe(false);
-  }
-  expect(enabled(data, pilot.clientId, 'cis-ig1', null)).toBe(false);
-  expect(securityDomainsEnabled(pilot.clientId, 'cis-ig1', data, user, {...pilot, enabled: false})).toBe(false);
-});
-
-test('former authenticated and fixture targets remain excluded even with a leftover fixture allowlist', () => {
-  const config = {...pilot, enabled: true, fixtureClientIds: [realClientId, formerFixtureClientId]};
-  for (const clientId of [realClientId, formerFixtureClientId]) {
-    const {data, rows} = fixture(clientId);
-    for (const workspace_mode of ['demo', 'standard']) {
-      expect(enabled(data, clientId, 'cis-ig1', {...user, workspace_mode}, config)).toBe(false);
-    }
-    expect(securityDomainModel(data, rows, clientId, config).every(domain => !domain.available && !domain.rows.length)).toBe(true);
-  }
+  const {data}=fixture();
+  for (const framework of ['cis-ig2','cis-ig3','iso-27001','soc-2']) expect(enabled(data,pilot.clientId,framework)).toBe(false);
+  for (const workspace_mode of ['authenticated','live','Demo','']) expect(enabled(data,pilot.clientId,'cis-ig1',{...user,workspace_mode})).toBe(false);
+  expect(enabled(data,pilot.clientId,'cis-ig1',null)).toBe(false);
+  expect(securityDomainsEnabled(pilot.clientId,'cis-ig1',data,user,{...pilot,enabled:false})).toBe(false);
 });
 
 test.each([

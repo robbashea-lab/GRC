@@ -1,7 +1,8 @@
+import {cisClient, cisContext} from '../testUtils/cisExperience';
 import {brawndoFullRecordEligible} from './brawndoFullRecord';
 
-const allowed={workspaceMode:'demo',user:{user_id:'explorer',workspace_mode:'demo'},
-  currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',status:'active'},
+const allowed={...cisContext(),workspaceMode:'demo',user:{user_id:'explorer',role:'super_admin',workspace_mode:'demo'},
+  currentClientId:'demo_brawndo',currentClient:cisClient(),
   selectedClientId:'demo_brawndo',clientId:'demo_brawndo',record:{client_id:'demo_brawndo'}};
 
 test('the authorized canonical demo record and its native create flow receive the full editor',()=>{

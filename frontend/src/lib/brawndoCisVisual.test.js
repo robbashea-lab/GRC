@@ -1,3 +1,4 @@
+import {cisClient} from '../testUtils/cisExperience';
 import {cis, FRAMEWORKS} from './frameworks';
 import {brawndoCisVisualGate, cisVisualRecordMatches} from './brawndoCisVisual';
 
@@ -10,7 +11,7 @@ function context() {
     authLoading: false, authError: null, orgLoading: false, orgError: null, error: null,
     pathname: '/compliance/cis-ig1', frameworkKey: 'cis-ig1', clientId: 'demo_brawndo',
     currentClientId: 'demo_brawndo', selectedClientId: 'demo_brawndo', routeClientId: 'demo_brawndo',
-    currentClient: {client_id: 'demo_brawndo', name: 'Brawndo', status: 'active'}, clients: [{client_id: 'demo_brawndo'}],
+    currentClient: cisClient(), clients: [{client_id: 'demo_brawndo'}],
     loadedScope: {clientId: 'demo_brawndo', frameworkKey: 'cis-ig1', userId: 'demo_admin',
       role: 'super_admin', workspaceMode: 'demo', userWorkspaceMode: 'demo', trustedDemo: true},
     data: {framework: {...FRAMEWORKS.find(row => row.key === 'cis-ig1')}, selected: true, configured: true,
@@ -157,7 +158,7 @@ test.each([
   ['different current record', (_record, live) => { live.current.framework_assessment_id = 'other-native-record'; }],
   ['missing current record', (_record, live) => { live.current = null; }],
   ['missing configuration', (_record, live) => { live.configuration = null; }],
-  ['higher implementation group', (_record, live) => { live.configuration.implementation_group = 2; }],
+  ['invalid implementation group', (_record, live) => { live.configuration.implementation_group = 4; }],
   ['missing both record ids', (record, live) => { delete record.framework_assessment_id; delete live.current.framework_assessment_id; }],
   ['invalid both record id types', (record, live) => { record.framework_assessment_id = live.current.framework_assessment_id = 7; }],
   ['foreign safeguard catalog identity', (record, live) => { record.definition_id = live.current.definition_id = '99.9'; }],

@@ -14,7 +14,7 @@ const statusTone = status => status === 'approved' ? 'approved' : status === 'ne
 const STATUS_BAR_ORDER = { approved: 0, awaiting: 1, missing: 2, other: 3 };
 
 export default function BrawndoAdditionalPolicies({
-  rows = [], filteredRows = rows, reviews = [], users = [], programs = [], assessments = [], cisGroup = 1,
+  clientName = 'Client', rows = [], filteredRows = rows, reviews = [], users = [], programs = [], assessments = [], cisGroup = 1,
   alignmentError = '', loading = false, error = '', onRetry, q = '', onSearch, view = '', onView,
   category = '', onCategory, onClear, table, onOpen, onOpenReview, onAlignment, actions, pendingDecisions, nativeControls,
   selectedIds, onToggle, onSelectAll, rowActions,
@@ -36,10 +36,10 @@ export default function BrawndoAdditionalPolicies({
   const clear = onClear || (() => { onSearch?.(''); onView?.(''); onCategory?.(''); table?.clear(); });
 
   return <div className="brawndo-additional bap-page" data-theme={theme} data-testid="additional-policies">
-    <div className="bapv-page-head"><div><h1>Brawndo Policies</h1><p>Policy register · {refreshing ? 'Loading policies…' : error ? 'Policies unavailable' : `${rows.length} ${rows.length === 1 ? 'policy' : 'policies'}`}{refreshLabel && ` · As of ${refreshLabel}`}</p></div><div className="bapv-head-actions">{actions}</div></div>
+    <div className="bapv-page-head"><div><h1>{clientName} Policies</h1><p>Policy register · {refreshing ? 'Loading policies…' : error ? 'Policies unavailable' : `${rows.length} ${rows.length === 1 ? 'policy' : 'policies'}`}{refreshLabel && ` · As of ${refreshLabel}`}</p></div><div className="bapv-head-actions">{actions}</div></div>
     <section className="bapv-card bap-overview" aria-labelledby="bap-status-heading">
       <div className="bap-status">
-        <div><h2 id="bap-status-heading">Policy status</h2><p className="bapv-sub">{rows.length} {rows.length === 1 ? 'policy' : 'policies'} in the Brawndo register. Select a figure to filter.</p></div>
+        <div><h2 id="bap-status-heading">Policy status</h2><p className="bapv-sub">{rows.length} {rows.length === 1 ? 'policy' : 'policies'} in the {clientName} register. Select a figure to filter.</p></div>
         <div className="bap-status-bar" role="img" aria-label={loading ? 'Loading policy status' : `${overview.approved} approved, ${overview.awaiting} awaiting approval, ${overview.missing} missing, ${rows.length - overview.approved - overview.awaiting - overview.missing} other recorded states`}>
           {!loading && statusRows.map(row => <i key={row.policy_id} className={statusTone(policyStatus(row))} title={`${row.title}: ${policyStatusLabel(policyStatus(row))}`} />)}
         </div>

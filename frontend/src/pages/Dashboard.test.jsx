@@ -1,3 +1,4 @@
+import {cisClient,cisContext} from '../testUtils/cisExperience';
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import Dashboard from './Dashboard';
@@ -57,7 +58,7 @@ test.each(['dismiss','replace'])('late dashboard refresh cannot %s the current s
 
 test('canonical demo alone uses the new dashboard and retains native save and refresh',async()=>{
  mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
- useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}});
+ useOrg.mockReturnValue({...cisContext(),currentClient:{...cisClient(),name:'Brawndo'}});
  const items=[row('native')];loadClientDashboard.mockResolvedValue(snapshot(items));
  api.get.mockImplementation(async(path,options)=>({data:path==='/dashboard'?{client_id:'demo_brawndo',items,total:1,offset:options.params.offset,limit:options.params.limit,has_more:false}:{client_id:'demo_brawndo',task_id:'native',title:items[0].title,description:'Stored native purpose',source_type:'manual'}}));
  await act(async()=>root.render(<Dashboard/>));
@@ -71,21 +72,21 @@ test('canonical demo alone uses the new dashboard and retains native save and re
  expect(loadClientDashboard).toHaveBeenCalledTimes(2);
 });
 
-test('switching mode immediately hides pilot and ignores an outstanding demo response',async()=>{
+test('switching mode retains configured CIS appearance and ignores an outstanding demo response',async()=>{
  mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
- useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}});
+ useOrg.mockReturnValue({...cisContext(),currentClient:{...cisClient(),name:'Brawndo'}});
  let resolveDemo;loadClientDashboard.mockImplementationOnce(()=>new Promise(resolve=>{resolveDemo=resolve;}));
  await act(async()=>root.render(<Dashboard/>));const signal=loadClientDashboard.mock.calls[0][1].signal;
  mockWorkspaceMode='standard';mockDashboardUser={...mockDashboardUser,workspace_mode:'standard'};loadClientDashboard.mockResolvedValue(snapshot([]));
  await act(async()=>root.render(<Dashboard/>));
  await act(async()=>resolveDemo(snapshot([row('stale-demo')])));
- expect(signal.aborted).toBe(true);expect(container.querySelector('.brawndo-demo-dashboard')).toBeNull();
- expect(container.textContent).not.toContain('stale-demo');expect(container.textContent).toContain('Priority overview');
+ expect(signal.aborted).toBe(true);expect(container.querySelector('.brawndo-demo-dashboard')).not.toBeNull();
+ expect(container.textContent).not.toContain('stale-demo');expect(container.querySelector('[aria-label="Work summary"]')).not.toBeNull();
 });
 
 test('pilot refresh replaces queue fields and dismisses work removed by native completion',async()=>{
  mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
- useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}});
+ useOrg.mockReturnValue({...cisContext(),currentClient:{...cisClient(),name:'Brawndo'}});
  let items=[row('saved')];loadClientDashboard.mockImplementation(async()=>snapshot(items));
  api.get.mockImplementation(async(path,options)=>({data:path==='/dashboard'?{client_id:'demo_brawndo',items,total:items.length,offset:options.params.offset,limit:options.params.limit,has_more:false}:{client_id:'demo_brawndo',task_id:'saved',title:'Synthetic work saved',source_type:'manual'}}));
  await act(async()=>root.render(<Dashboard/>));await click('Synthetic work saved');await click('Open Action Item');
@@ -98,7 +99,7 @@ test('pilot refresh replaces queue fields and dismisses work removed by native c
 
  test.each(['selection','route'])('shared appearance boundary excludes a mismatched %s identity',async mismatch=>{
  mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
- useOrg.mockReturnValue({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}});
+ useOrg.mockReturnValue({...cisContext(),currentClient:{...cisClient(),name:'Brawndo'}});
  if(mismatch==='selection')localStorage.setItem('grc_client_id','another-client');else mockDashboardSearch='?client_id=another-client';
  loadClientDashboard.mockResolvedValue(snapshot([]));
  await act(async()=>root.render(<Dashboard/>));

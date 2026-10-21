@@ -80,7 +80,7 @@ export default function BrawndoCisSafeguard({state,actions}){
   const requirement=safeguard11?<><section className="sg11-requirement">
     <header className="sg11-requirement-head"><h3>What CIS requires</h3><span>Official requirement · CIS Controls v8.1 · Safeguard {id} · verbatim</span></header>
     <div className="sg11-requirement-body"><blockquote data-source-kind="official">{source.text}</blockquote></div>
-    <footer className="sg11-requirement-foot">{presentation?.trigger&&<span>{presentation.trigger}</span>}<span>IG1</span>{source.url&&<a href={source.url} target="_blank" rel="noopener noreferrer">Official CIS source ↗</a>}</footer>
+    <footer className="sg11-requirement-foot">{presentation?.trigger&&<span>{presentation.trigger}</span>}<span>IG{ctx.configuration.implementation_group}</span>{source.url&&<a href={source.url} target="_blank" rel="noopener noreferrer">Official CIS source ↗</a>}</footer>
   </section>{nativeGuidance}</>:visualReference?<section className="brawndo-cis-visual-requirement">
     <h3>Requirement summary</h3>{summary?.plain&&<p>{summary.plain}</p>}
     {presentation?.trigger&&<p className="brawndo-cis-required-trigger"><strong>Required operation / trigger:</strong> {presentation.trigger}</p>}

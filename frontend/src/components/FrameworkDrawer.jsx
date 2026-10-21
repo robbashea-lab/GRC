@@ -11,6 +11,9 @@ import {Input} from './ui/input';
 import {Textarea} from './ui/textarea';
 import api,{formatError,PREVIEW_MODE} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
+import {useOrg} from '@/context/OrgContext';
+import {cisExperienceEligible} from '@/lib/cisExperience';
+import {selectedClient} from '@/lib/clientSelection';
 import {frameworkCatalog,frameworkDefinition,frameworkWorkspace} from '@/lib/frameworks';
 import {recordUuid} from '@/lib/recordUuid';
 import policyCatalog from '@catalogs/onboardingCatalog.json';
@@ -37,13 +40,13 @@ import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,A
 const IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',evidence:'evidence_id',vendors:'vendor_id'};
 const SELECT='w-full border border-line bg-surface-card rounded p-2 text-sm';
 export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSaved,onPrevious,onNext,position,breadcrumb,recordManagement=false,reviewManagement=false,onReviews,visualReference=false,cisVisualOrigin,onManage}){
-  const auth=useAuth(),{user}=auth,aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
+  const auth=useAuth(),org=useOrg()||{},{user}=auth,aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
   const actorOriginKey=JSON.stringify([user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,PREVIEW_MODE]);
   const inheritedCisVisual=cisVisualOrigin?.key===actorOriginKey && cisVisualOrigin.clientId===clientId
-    && clientId==='demo_brawndo' && cisVisualOrigin.programId==='demo_brawndo:cis-ig1'
+    && cisVisualOrigin.programId===`${clientId}:cis-ig1`
     && cisVisualOrigin.assessmentId===aid && cisVisualOrigin.definitionId===record.definition_id && record.framework_key==='cis-ig1'
-    && PREVIEW_MODE===true && auth.workspaceMode==='demo' && user?.workspace_mode==='demo'
-    && !!user?.user_id && !!user?.role && !auth.loading && !auth.error;
+    && cisExperienceEligible({...org,...auth,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,
+      selectedClientId:selectedClient(),routeClientId:new URLSearchParams(window.location.search).get('client_id')});
   const visualOriginKey=visualReference||inheritedCisVisual?actorOriginKey:null;
   const catalog=frameworkCatalog(record.framework_key),isCsf=record.framework_key==='nist-csf-2',isSoc=record.framework_key==='soc-2',isCis=record.framework_key==='cis-ig1',item=catalog?.labels?.item||(isCis?'Safeguard':'Requirement'),program=operatorProgram(record.framework_key);
   const statuses=operatorStatuses(record.framework_key);

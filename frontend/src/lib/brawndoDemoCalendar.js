@@ -1,8 +1,6 @@
-export function brawndoDemoCalendar({workspaceMode,user,currentClientId,currentClient,selectedClientId,pathname,routeClientId,authLoading,authError,orgLoading,orgError}) {
-  return !authLoading&&!authError&&!orgLoading&&!orgError&&workspaceMode==='demo'&&user?.workspace_mode==='demo'&&!!user.user_id
-    &&currentClientId==='demo_brawndo'&&currentClient?.client_id===currentClientId&&selectedClientId===currentClientId
-    &&(!routeClientId||routeClientId===currentClientId)&&!currentClient.archived&&!currentClient.archived_at
-    &&(currentClient.status||'active')==='active'&&pathname==='/calendar';
+import {cisExperienceEligible} from './cisExperience';
+export function brawndoDemoCalendar(context) {
+  return cisExperienceEligible(context) && context.pathname === '/calendar';
 }
 export const calendarKind=item=>item.kind.startsWith('vendor_')?'vendor':item.kind;
 export const calendarOwner=(item,members)=>members.find(person=>person.user_id===item.owner_id)?.name||(item.owner_id?'Owner unavailable':'Unassigned');

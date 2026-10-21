@@ -5,9 +5,9 @@ import {selectedClient} from './clientSelection';
 import {brawndoOnboardingGate} from './brawndoOnboarding';
 
 // This controls appearance only. Native controllers retain every permission and write.
-export function useBrawndoOnboardingAppearance({profileClientId, loadedClientId, handoffClientId, hasError=false}) {
+export function useBrawndoOnboardingAppearance({profileClientId, loadedClientId, handoffClientId, nativeDraft, hasError=false}) {
   const auth=useAuth(), org=useOrg(), {pathname,search}=useLocation();
-  return brawndoOnboardingGate({...auth,...org,pathname,profileClientId,loadedClientId,handoffClientId,
+  return brawndoOnboardingGate({...auth,...org,pathname,profileClientId,loadedClientId,handoffClientId,nativeDraft,
     selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),
     authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,hasError});
 }

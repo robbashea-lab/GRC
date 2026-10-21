@@ -13,7 +13,7 @@ beforeEach(()=>{
   props={finding:{request_id:'request-original',item_id:'item-original',title:'Inventory gap',description:'Observed gap',severity:'medium',owner_id:'u1',due_date:'',remediation_title:'Reconcile inventory'},onChange:jest.fn(),record:{client_id:'demo_brawndo',framework_key:'cis-ig1',framework_version:'8.1',definition_id:'1.1',framework_assessment_id:'a1'},current:{client_id:'demo_brawndo',framework_key:'cis-ig1',framework_version:'8.1',definition_id:'1.1',framework_assessment_id:'a1',owner_id:'u1'},definition:{id:'1.1',title:'Native requirement'},users:[{user_id:'u1',name:'Recorded owner'}],disabled:false,clientId:'demo_brawndo',onCancel:jest.fn(),onSubmit:jest.fn()};
 });
 afterEach(()=>{act(()=>root.unmount());jest.useRealTimers();});
-const render=()=>act(()=>root.render(<BrawndoSafeguard11FindingFields {...props}/>));
+const render=()=>act(()=>root.render(<BrawndoSafeguard11FindingFields implementationGroup={1} {...props}/>));
 const button=text=>Array.from(container.querySelectorAll('button')).find(element=>element.textContent===text);
 const change=(element,value)=>act(()=>{
   const prototype=element.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;

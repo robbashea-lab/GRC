@@ -1,12 +1,9 @@
+import {cisExperienceEligible} from './cisExperience';
 import {occurrenceId,reviewSchedule,scheduledDate} from './reviewOccurrences';
 import {calendarDay,reviewMatches} from './tableFilters';
-import {OPERATOR_ROLES} from './permissions';
 
-export function brawndoDemoReviewsGate({workspaceMode,user,loading,authLoading,error,authError,currentClientId,currentClient,clients,pathname}) {
-  return !loading&&!authLoading&&!error&&!authError&&workspaceMode==='demo'&&user?.workspace_mode==='demo'&&!!user.user_id&&
-    [...OPERATOR_ROLES,'client_readonly','client_viewer'].includes(user.role)&&
-    currentClientId==='demo_brawndo'&&currentClient?.client_id===currentClientId&&clients?.some(client=>client.client_id===currentClientId)&&
-    (currentClient.status||'active')==='active'&&!currentClient.archived&&!currentClient.archived_at&&pathname==='/reviews';
+export function brawndoDemoReviewsGate(context) {
+  return cisExperienceEligible(context) && context.pathname === '/reviews' && !context.loading && !context.error;
 }
 
 export function reviewExecutions(reviews) {

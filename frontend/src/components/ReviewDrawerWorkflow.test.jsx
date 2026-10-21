@@ -1,10 +1,12 @@
+import {cisClient} from '@/testUtils/cisExperience';
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ReviewDrawer from './ReviewDrawer';
 import api from '@/lib/api';
 
-let mockUser,mockFullRecord;
+let mockUser,mockFullRecord,mockClient;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient.client_id,currentClient:mockClient,clients:[mockClient]})}));
 jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>mockFullRecord}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/adapter').previewAdapter}),formatError:e=>e.response?.data?.detail||e.message,API:'/api'}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
@@ -26,7 +28,7 @@ const input=(node,value)=>act(async()=>{
 const render=props=>act(async()=>root.render(<ReviewDrawer open record={record} clientId={record.client_id} onOpenChange={onOpenChange} {...props}/>));
 beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;
-  sessionStorage.clear();localStorage.clear();mockFullRecord=true;
+  sessionStorage.clear();localStorage.clear();mockFullRecord=true;mockClient=cisClient('demo_brawndo');
   mockUser=(await api.post('/demo/enter')).data.user;
   record=(await api.post('/reviews',{client_id:'demo_brawndo',title:'Workflow regression review',review_type:'access',recurrence:'quarterly',due_date:'2099-09-30'})).data;
   onOpenChange=jest.fn();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
@@ -254,9 +256,19 @@ test('new Policy type never replaces an explicitly chosen cadence',async()=>{
   expect(query('field-recurrence').textContent).toContain('Monthly');
 });
 
-test.each(['other client','normal sign-in'])('Policy default does not change %s operational behavior',async mode=>{
-  if(mode==='normal sign-in')mockUser={...mockUser,workspace_mode:'standard'};
-  await render({record:null,clientId:mode==='other client'?'demo_dunder':'demo_brawndo'});
+test('Policy default does not change a non-CIS client operational behavior',async()=>{
+  mockClient={client_id:'demo_dunder',status:'active',onboarding_baseline:{completed:true,requirements:{'iso-27001':'applies'}}};
+  await render({record:null,clientId:mockClient.client_id});
   await chooseConfiguration('review_type','Policy');
   expect(query('field-recurrence').textContent).toContain('One-time');
+});
+
+test('normal sign-in configured CIS Policy Review defaults annually without inventing a date or writing on open',async()=>{
+  mockUser={...mockUser,workspace_mode:'standard'};
+  const post=jest.spyOn(api,'post');
+  await render({record:null,reviewsPilot:true});
+  await chooseConfiguration('review_type','Policy');
+  expect(query('field-recurrence').textContent).toContain('Annual');
+  expect(query('field-due_date').value).toBe('');
+  expect(post).not.toHaveBeenCalled();
 });

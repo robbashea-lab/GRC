@@ -236,7 +236,7 @@ export default function RiskRegister() {
   }
 
   return <BrawndoSurface className={`approved-risk-register${demoPresentation?' brawndo-demo-risks':''}`}>
-      <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Risk register`} title={demoPresentation?'Brawndo Risks':'Risks'} subtitle={demoPresentation?`Risk register · current assessed likelihood × impact${refreshLabel?` · As of ${refreshLabel}`:''}`:undefined}
+      <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Risk register`} title={demoPresentation?`${currentClient?.name||'Client'} Risks`:'Risks'} subtitle={demoPresentation?`Risk register · current assessed likelihood × impact${refreshLabel?` · As of ${refreshLabel}`:''}`:undefined}
         renderThemeAction={demoPresentation?props=><SurfaceThemeAction {...props} className="bpage-btn"/>:undefined}>
         <button type="button" className="bpage-btn" onClick={openMatrix} data-testid="risk-matrix-btn"><Grid3x3 size={16} aria-hidden="true"/>{demoPresentation?'Risk scale':'Risk Scale & Matrix'}</button>
         <button type="button" className="bpage-btn" onClick={exportCsv} data-testid="risks-export"><Download size={16} aria-hidden="true"/>Export CSV</button>

@@ -1,3 +1,4 @@
+import {cisClient} from '@/testUtils/cisExperience';
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordDrawer from './RecordDrawer';
@@ -30,7 +31,8 @@ beforeEach(()=>{
   sessionStorage.clear();localStorage.clear();rememberClient('demo_brawndo');
   window.history.replaceState({},'','/risks');
   mockAuth={workspaceMode:'demo',loading:false,user:{user_id:'scope-owner',name:'Test approver',email:'approver@example.test',role:'super_admin',workspace_mode:'demo'}};
-  mockOrg={currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'},loading:false};
+  const client={...cisClient('demo_brawndo'),name:'Brawndo'};
+  mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
   risk={risk_id:'risk-a',client_id:'demo_brawndo',display_id:'RISK-105',title:'Current risk',description:'A synthetic recovery risk.',category:'operational',status:'open',likelihood_score:3,impact_score:4,source_type:'manual',treatment:'mitigate',review_cadence:'annual',next_review:'2099-01-01',updated_at:'2026-10-01T12:00:00Z'};
   rows=[risk];
   api.get.mockImplementation(async path=>({data:path==='/risks'?rows:path==='/related'?{}:path==='/evidence/catalog'?{items:[],counts:{direct:0},total:0,page_size:25}:[]}));
@@ -40,6 +42,18 @@ beforeEach(()=>{
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+
+test.each([1,2,3].flatMap(group=>['demo','standard'].map(mode=>[group,mode])))('configured IG%i %s client retains the approved native Risk workflow without a write on open',async(group,mode)=>{
+  const client=cisClient(`synthetic_ig${group}_${mode}`,group);
+  mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
+  mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
+  risk={...risk,client_id:client.client_id};rows=[risk];props={...props,record:risk,clientId:client.client_id};
+  rememberClient(client.client_id);
+  await render();
+  expect(dialog().className).toContain('brawndo-risk-workflow');
+  expect(dialog().textContent).toContain(risk.title);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
 
 test('AI-origin creation exposes native required assessment without inventing ratings',async()=>{
   window.history.replaceState({},'','/ai-governance');
@@ -62,9 +76,9 @@ test.each(['caller','route','authority'])('AI assessment remains scoped by %s',a
   expect(api.post).not.toHaveBeenCalled();
 });
 
-test.each(['signed-in','other-client'])('ineligible %s Risk keeps its actual native Close panel',async condition=>{
+test.each(['unsupported-mode','other-client'])('ineligible %s Risk keeps its actual native Close panel',async condition=>{
   const trace=phase=>{if(process.env.WORKFLOW_TEST_TRACE==='1')console.info(`Risk native Close ${condition}: ${phase} at ${Date.now()}`);};
-  if(condition==='signed-in'){mockAuth.workspaceMode='authenticated';mockAuth.user.workspace_mode='authenticated';}
+  if(condition==='unsupported-mode'){mockAuth.workspaceMode='authenticated';mockAuth.user.workspace_mode='authenticated';}
   if(condition==='other-client'){
     risk.client_id='demo_dunder';props.clientId='demo_dunder';mockOrg={...mockOrg,currentClientId:'demo_dunder',currentClient:{client_id:'demo_dunder',name:'Dunder Mifflin',status:'active'}};
     rememberClient('demo_dunder');

@@ -2,8 +2,9 @@ import { ComplianceProvider, useCompliance } from "@/context/ComplianceContext";
 import DemoNotice from "@/preview/DemoNotice";
 import {PREVIEW_MODE} from '@/lib/api';
 import {dashboardPilot} from '@/lib/dashboardWorkQueue';
-import {isReferenceRegister,isBrawndoReference,isReferencePortfolio} from '@/lib/reference';
+import {isReferenceRegister,isCisReference,isReferencePortfolio} from '@/lib/reference';
 import ClientSurface from './ClientSurface';
+import ClientIdentityMark from './ClientIdentityMark';
 import BrawndoWorkspace from './BrawndoWorkspace';
 import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
@@ -72,7 +73,6 @@ function ContextHeader({ isInternal, atPlatform }) {
   const navigate = useNavigate();
   if (atPlatform) return null;
 
-  const initial = currentClient?.name?.[0] || "•";
   return (
     <div className="space-y-2">
       {isInternal && (
@@ -90,7 +90,7 @@ function ContextHeader({ isInternal, atPlatform }) {
         className="w-full flex items-center gap-2 rounded-md border border-brand-metallic-3 bg-brand-metallic-2 px-3 py-2.5"
       >
         <div className="h-7 w-7 rounded-md bg-brand-metallic text-ink-onDark flex items-center justify-center text-xs font-bold border border-brand-metallic-3">
-          {initial}
+          <ClientIdentityMark client={currentClient} fallback="•"/>
         </div>
         <div className="min-w-0">
           <div className="text-xs uppercase tracking-wider text-ink-onDark2 font-mono">Client{currentClient?.status === "archived" && <span className="ml-1.5 normal-case tracking-normal font-sans text-semantic-duesoon-bg" data-testid="context-client-archived">· Archived</span>}</div>
@@ -308,7 +308,7 @@ export default function Layout() {
 
 function LayoutContents() {
   const org=useOrg(),auth=useAuth();
-  const {currentClientId}=org;
+  const {currentClientId,currentClient}=org;
   const {user}=auth;
   const {pathname,search}=useLocation();
   const visualSurface=visualCorrectionSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
@@ -319,7 +319,7 @@ function LayoutContents() {
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
         {!visualSurface && !additionalSurface && pathname !== '/clients' && !(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
-        {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
+        {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'||!isCisReference(currentClientId,user,currentClient))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
       </main>
     </div>;
   return <ComplianceProvider>{pilot?<BrawndoWorkspace>{content}</BrawndoWorkspace>:content}</ComplianceProvider>;

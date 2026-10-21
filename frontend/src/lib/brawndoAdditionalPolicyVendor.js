@@ -5,7 +5,7 @@ import { calendarDay, managementDay } from './managementDates';
 const liveReview = review => !['completed', 'cancelled'].includes(review.status) && !review.archived_at;
 const eventKindOrder = { rev: 0, asr: 1, ren: 2 };
 export const policyReviewIds = review => [...new Set([review.policy_id, ...(review.policy_ids || [])].filter(Boolean))];
-export const isPolicySetReview = review => review.client_id === 'demo_brawndo' && review.baseline_key === 'policy-review' && !review.policy_id;
+export const isPolicySetReview = review => !!review.client_id && review.baseline_key === 'policy-review' && (review.review_type == null || review.review_type === 'policy') && !review.policy_id;
 
 // These are presentation cohorts; the native approval and scheduling commands remain authoritative.
 export function policyOverview(rows, reviews = [], programs = [], assessments = [], cisGroup = 1) {

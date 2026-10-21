@@ -21,7 +21,7 @@ import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
-import {isReferencePresentation,isBrawndoReference,isReferenceWorkflow} from '@/lib/reference';
+import {isReferencePresentation,isCisReference,isReferenceWorkflow} from '@/lib/reference';
 import './BrawndoCisAssessment.css';
 import './RiskPolicyDialog.css';
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import api, { formatError } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
 import { useAuth } from "@/context/AuthContext";
+import {useOrg} from "@/context/OrgContext";
 import { X, ArrowUpRight, Zap, UploadCloud, ShieldCheck } from "lucide-react";
 import PolicyWorkflowPanel from './PolicyWorkflowPanel';
 import { Link } from "react-router-dom";
@@ -158,9 +159,10 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const workflowId=useId();
   const riskDecisionOrigin=useRef(null);
   const { user } = useAuth();
+  const {currentClient}=useOrg()||{};
   const updateRecord = useCreateIntent((...args)=>api.patch(...args), `${user?.user_id}:${record?.client_id||clientId}:${kind}:${record?.[ID_FIELD[kind]]}:update`, true);
   const pilot=(['risks','policies'].includes(kind)||['tasks','findings','vendors'].includes(kind)&&isReferencePresentation(clientId,user))&&(!record||record.client_id===clientId);
-  const vendorPilot=pilot&&kind==='vendors'&&isReferenceWorkflow(clientId,user);
+  const vendorPilot=pilot&&kind==='vendors'&&isReferenceWorkflow(clientId,user,currentClient);
   const riskPilot=pilot&&kind==='risks';
   const policyPilot=pilot&&kind==='policies';
   const [approvalDirty,setApprovalDirty]=useState(false);
@@ -196,7 +198,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const idField = ID_FIELD[kind];
   const isPlatformAdmin = ["super_admin", "platform_admin"].includes(user?.role);
   const clientMayWork = user?.role === 'client_grc_manager' || user?.role === 'client_contributor' &&
-    (!record && kind === 'tasks' || [record?.owner_id,record?.assignee_id,record?.business_owner_id].includes(user?.user_id) || isBrawndoReference(clientId,user)&&kind==='tasks'&&!record?.assignee_id&&!record?.owner_id&&record?.created_by===user?.user_id);
+    (!record && kind === 'tasks' || [record?.owner_id,record?.assignee_id,record?.business_owner_id].includes(user?.user_id) || isCisReference(clientId,user,currentClient)&&kind==='tasks'&&!record?.assignee_id&&!record?.owner_id&&record?.created_by===user?.user_id);
   const canWrite = (isPlatformAdmin || clientMayWork && (isEdit || kind === 'tasks')) && !(kind==="risks" && ["closed","retired"].includes(record?.status));
   const clientFields = editableFields(kind, user, record);
   const singular = kind === "tasks" ? "Action Item" : kind === "policies" ? "policy" : kind.slice(0, -1);
@@ -341,8 +343,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     if(!vendorPilot||!record?.vendor_id)return;
     const generation=loadGeneration.current,request=++vendorReviewRefresh.current;
     try{const {data}=await api.get('/vendors/'+record.vendor_id);if(generation!==loadGeneration.current||request!==vendorReviewRefresh.current||data.client_id!==clientId||data.vendor_id!==record.vendor_id)return;
-      // Nested Reviews also change the saved Demo status; a local status draft must remain separate.
-      const statusPatch=user?.workspace_mode==='demo'&&clientId==='demo_brawndo'?{status:data.status}:{};
+      // Nested Reviews also change the saved CIS Vendor status; a local status draft must remain separate.
+      const statusPatch=isCisReference(clientId,user,currentClient)?{status:data.status}:{};
       Object.assign(record,{last_review:data.last_review,next_review:data.next_review,updated_at:data.updated_at,...statusPatch});
       const dates={last_review:toDateInput(data.last_review),next_review:toDateInput(data.next_review)};
       const baseline=initialForm.current;

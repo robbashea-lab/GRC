@@ -1,3 +1,4 @@
+import {cisClient} from '../testUtils/cisExperience';
 import React, {act, useEffect, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {useLocation} from 'react-router-dom';
@@ -64,12 +65,13 @@ function NativePageOrigin() {
 
 let root, host;
 beforeEach(() => {
+  require('@/lib/api').PREVIEW_MODE = true;
   global.IS_REACT_ACT_ENVIRONMENT = true;
   localStorage.clear(); sessionStorage.clear();
   sessionStorage.setItem('grc_client_id', 'demo_brawndo');
   mockAuth = {workspaceMode: 'demo', loading: false,
     user: {user_id: 'actor-one', role: 'super_admin', workspace_mode: 'demo', name: 'Demo owner'}};
-  const client = {client_id: 'demo_brawndo', name: 'Brawndo', status: 'active'};
+  const client = {...cisClient(), name: 'Brawndo'};
   mockOrg = {currentClientId: client.client_id, currentClient: client, clients: [client], loading: false};
   mockLocation = {pathname: '/dashboard', search: ''};
   mockLoadedOrigin = currentOrigin(); mockMounts = 0; mockUnmounts = 0;
@@ -140,8 +142,11 @@ test('combined appearance transitions retain the mounted native draft and reject
     mockLoadedOrigin = currentOrigin(); await render(); expectAppearance(surface); expectDraft();
 
     mockAuth = {...mockAuth, workspaceMode: 'standard', user: {...mockAuth.user, workspace_mode: 'standard'}};
-    mockLoadedOrigin = currentOrigin(); await render(); expectAppearance(null); expectDraft();
+    require('@/lib/api').PREVIEW_MODE = false;
+    localStorage.setItem('grc_client_id', 'demo_brawndo');
+    mockLoadedOrigin = currentOrigin(); await render(); expectAppearance(surface); expectDraft();
     mockAuth = {...mockAuth, workspaceMode: 'demo', user: {...mockAuth.user, workspace_mode: 'demo'}};
+    require('@/lib/api').PREVIEW_MODE = true;
     mockLoadedOrigin = currentOrigin(); await render(); expectAppearance(surface); expectDraft();
 
     mockLocation = {pathname, search: '?client_id=other-client'};

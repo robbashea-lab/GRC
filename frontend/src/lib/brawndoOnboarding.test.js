@@ -1,8 +1,9 @@
+import {cisClient, cisContext} from '../testUtils/cisExperience';
 import {brawndoOnboardingGate, onboardingReviewRows, onboardingReviewForecast} from './brawndoOnboarding';
 import catalog from '@catalogs/onboardingCatalog.json';
 
-const context = {workspaceMode: 'demo', user: {user_id: 'actor', role: 'super_admin', workspace_mode: 'demo'},
-  currentClientId: 'demo_brawndo', currentClient: {client_id: 'demo_brawndo', name: 'Brawndo', status: 'active'},
+const context = {...cisContext(),workspaceMode: 'demo', user: {user_id: 'actor', role: 'super_admin', workspace_mode: 'demo'},
+  currentClientId: 'demo_brawndo', currentClient:cisClient(),
   clients: [{client_id: 'demo_brawndo'}], selectedClientId: 'demo_brawndo', loadedClientId: 'demo_brawndo',
   profileClientId: 'demo_brawndo', handoffClientId: 'demo_brawndo', pathname: '/client-profile'};
 const now = new Date(2028, 0, 1, 12);

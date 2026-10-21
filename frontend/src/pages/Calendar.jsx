@@ -18,9 +18,10 @@ import BrawndoCalendarView,{calendarEntries} from './BrawndoCalendar';
 
 const emptyBuckets=()=>({reviews:{},findings:{},tasks:{}});
 export default function Calendar() {
-  const {currentClientId,currentClient,loading:orgLoading,error:orgError}=useOrg(),{user,workspaceMode,loading:authLoading,error:authError}=useAuth();
+  const org=useOrg(),auth=useAuth();
+  const {currentClientId,currentClient,loading:orgLoading,error:orgError}=org,{user,workspaceMode,loading:authLoading,error:authError}=auth;
   const location=useLocation();
-  const demoCalendar=brawndoDemoCalendar({workspaceMode,user,currentClientId,currentClient,selectedClientId:selectedClient(),pathname:location.pathname,routeClientId:new URLSearchParams(location.search).get('client_id'),authLoading,authError,orgLoading,orgError});
+  const demoCalendar=brawndoDemoCalendar({...org,...auth,workspaceMode,user,currentClientId,currentClient,selectedClientId:selectedClient(),pathname:location.pathname,routeClientId:new URLSearchParams(location.search).get('client_id'),authLoading,authError,orgLoading,orgError});
   const [memberResult,setMemberResult]=useState(null),[summaryResult,setSummaryResult]=useState(null);
   const memberKey=`${user?.user_id}:${user?.role}:${workspaceMode}:${currentClientId}`;
   useEffect(()=>{

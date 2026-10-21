@@ -1,8 +1,9 @@
+import {cisClient, cisContext} from '../testUtils/cisExperience';
 import {brawndoDemoRisksGate,riskHorizon,loadRiskRelations,upcomingRiskEvents} from './brawndoDemoRisks';
 import {calendarDay} from './managementDates';
 import {riskMatches} from './brawndoRisks';
 
-const context={workspaceMode:'demo',user:{workspace_mode:'demo',user_id:'demo-user'},currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',status:'active'},pathname:'/risks'};
+const context={...cisContext(),workspaceMode:'demo',user:{workspace_mode:'demo',role:'super_admin',user_id:'demo-user'},currentClientId:'demo_brawndo',currentClient:cisClient(),pathname:'/risks'};
 test('presentation gate requires the complete trusted demo scope and resolved providers',()=>{
   expect(brawndoDemoRisksGate(context)).toBe(true);
   for(const change of [{workspaceMode:'standard'},{user:null},{user:{}},{user:{workspace_mode:'standard',user_id:'demo-user'}},{currentClientId:'other'},{currentClient:null},{currentClient:{client_id:'other',status:'active'}},{currentClient:{...context.currentClient,status:'inactive'}},{currentClient:{...context.currentClient,archived:true}},{currentClient:{...context.currentClient,archived_at:'2026-10-15'}},{pathname:'/risks/one'},{pathname:'/actions'},{authLoading:true},{orgLoading:true},{authError:new Error('auth')},{orgError:new Error('org')}])expect(brawndoDemoRisksGate({...context,...change})).toBe(false);

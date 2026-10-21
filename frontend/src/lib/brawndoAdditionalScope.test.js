@@ -1,10 +1,11 @@
+import {cisContext} from '../testUtils/cisExperience';
 import {additionalSectionSurface, additionalAppearanceSurface, ADDITIONAL_SECTION_ROUTES} from './brawndoAdditionalScope';
 import {visualCorrectionSurface} from './visualCorrectionScope';
 
-const context = {workspaceMode: 'demo',
+const context = {...cisContext(), workspaceMode: 'demo',
   user: {user_id: 'demo_actor', workspace_mode: 'demo', role: 'super_admin'},
   currentClientId: 'demo_brawndo', selectedClientId: 'demo_brawndo', loadedClientId: 'demo_brawndo',
-  currentClient: {client_id: 'demo_brawndo', name: 'Brawndo', status: 'active'}};
+  currentClient: {...cisContext().currentClient, name: 'Brawndo'}};
 
 test.each(Object.entries(ADDITIONAL_SECTION_ROUTES))('%s requires resolved authorized demo and matching loaded scope', (pathname, surface) => {
   expect(additionalSectionSurface({...context, pathname})).toBe(surface);
@@ -40,4 +41,12 @@ test('shell rejects prior route or actor publication before effect cleanup', () 
   }
   expect(additionalAppearanceSurface(active, {...appearance, surface: 'vendors'})).toBeNull();
   expect(additionalAppearanceSurface(active, null)).toBeNull();
+});
+
+test.each([1,2,3])('configured IG%i receives additional surfaces in both modes',group=>{
+  for(const mode of ['demo','standard'])for(const [pathname,surface] of Object.entries(ADDITIONAL_SECTION_ROUTES)){
+    const selected=cisContext('synthetic-'+group,group,mode);
+    expect(additionalSectionSurface({...selected,pathname,loadedClientId:selected.currentClientId})).toBe(surface);
+    expect(additionalSectionSurface({...selected,pathname,loadedClientId:'previous-client'})).toBeNull();
+  }
 });

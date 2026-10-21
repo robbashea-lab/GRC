@@ -1,65 +1,24 @@
 import {removeRetiredDemoClients} from './retiredClients';
-import {seedStore,saveStore,readStore,STORE_KEY} from './store';
-
-beforeEach(()=>jest.useFakeTimers().setSystemTime(new Date('2026-10-13T17:00:00.000Z')));
+import {seedStore,saveStore,readStore} from './store';
+beforeEach(()=>{sessionStorage.clear();jest.useFakeTimers().setSystemTime(new Date('2026-10-21T12:00:00.000Z'));});
 afterEach(()=>jest.useRealTimers());
-
-test('removing a provider client does not change Brawndo internal-owner rotation',()=>{
+test('older fixture versions preserve Dunder and Initech identities and user work',()=>{
   const db=seedStore();
-  const assessments=db.framework_assessments.filter(a=>a.client_id==='demo_brawndo');
-  expect(assessments).toHaveLength(56);
-  expect(new Set(assessments.map(a=>a.owner_id))).toEqual(new Set(['demo_brawndo_user_0','demo_brawndo_user_1','demo_brawndo_user_2']));
-  expect(assessments.filter(a=>a.owner_id==='demo_brawndo_user_2')).toHaveLength(18);
-});
-
-test('stale Dunder is replaced by the canonical ISO client without resetting surviving work',()=>{
-  sessionStorage.clear();
-  const db=seedStore();
-  const preserved=JSON.stringify(db.framework_assessments.filter(a=>a.client_id!=='demo_dunder'&&a.client_id!=='demo_initech'));
-  const custom={client_id:'custom',name:'User-created demo client'};
-  db.clients.push(custom,{client_id:'demo_dunder'},{client_id:'demo_initech'});
-  db.users.push({user_id:'demo_dunder_user_0',client_ids:['demo_dunder']});
-  db.user.client_ids.push('demo_dunder');
-  db.user.favorite_client_ids=['demo_dunder','demo_prestige'];
-  db.reviews.push({client_id:'demo_dunder',review_id:'retired'});
-  db.evidence.push({client_id:'demo_dunder',evidence_id:'retired-file',linked_id:'retired'});
-  db.baselines.demo_dunder={retired:true};db.drafts.demo_initech={retired:true};
-  db.riskSequences.demo_dunder=7;
-  db.ai_intake={demo_dunder:{usage:'yes'},custom:{usage:'no'}};
-  db.ai_counters={demo_initech:2};
-  db.logs.push({entity_type:'users',entity_id:'demo_dunder_user_0'});
-  saveStore(db);
-  const migrated=readStore();
-  expect(migrated.clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_prestige','custom','demo_dunder','demo_initech']);
-  expect(JSON.stringify(migrated.framework_assessments.filter(a=>a.client_id!=='demo_dunder'&&a.client_id!=='demo_initech'))).toBe(preserved);
-  expect(migrated.reviews.some(r=>r.review_id==='retired')).toBe(false);
-  expect(migrated.evidence.some(r=>r.evidence_id==='retired-file')).toBe(false);
-  expect(migrated.clients.find(c=>c.client_id==='demo_dunder').demo_program_version).toBe('iso27001-year2-v1');
-  expect(migrated.users.some(u=>u.user_id==='demo_dunder_user_0')).toBe(true);
-  expect(migrated.user.favorite_client_ids).toEqual(['demo_prestige']);
-  expect(migrated.baselines.demo_dunder).toBeDefined();
-  expect(migrated.drafts.demo_initech).toBeUndefined();
-  expect(migrated.riskSequences.demo_dunder).toBeDefined();
-  expect(migrated.ai_intake.custom).toEqual({usage:'no'});
-  expect(migrated.ai_counters).toEqual({});
-  expect(migrated.logs.some(r=>r.entity_id==='demo_dunder_user_0')).toBe(false);
-  expect(removeRetiredDemoClients(migrated)).toBe(false);
-  const persisted=sessionStorage.getItem(STORE_KEY),reread=readStore();
-  const {portfolio_reporting:previousReporting,...previousSources}=JSON.parse(JSON.stringify(migrated));
-  const {portfolio_reporting:reporting,...rereadSources}=JSON.parse(JSON.stringify(reread));
-  expect(rereadSources).toEqual(previousSources);
-  expect(reporting.snapshots.filter(snapshot=>['demo_dunder','demo_initech'].includes(snapshot.client_id)).every(snapshot=>snapshot.captured_at==='2026-10-13T17:00:00.000Z')).toBe(true);
-  expect(reporting.snapshots.some(snapshot=>snapshot.client_id==='demo_dunder')).toBe(true);
-  expect(reporting.snapshots.some(snapshot=>snapshot.client_id==='demo_initech')).toBe(true);
-  expect(previousReporting.started_at).toBe(reporting.started_at);
-  expect(sessionStorage.getItem(STORE_KEY)).toBe(persisted);
-});
-
-test('a retired simulated identity returns to the existing explorer; missing explorer fails closed',()=>{
-  for(const users of [[{user_id:'demo_admin',role:'super_admin'}],[]]){
-    const db={users,user:{user_id:'demo_initech_user_0'}};
-    expect(removeRetiredDemoClients(db)).toBe(true);
-    expect(db.user).toEqual(users[0]||null);
-    expect(removeRetiredDemoClients(db)).toBe(false);
+  for(const cid of ['demo_dunder','demo_initech']){
+    const client=db.clients.find(c=>c.client_id===cid);client.demo_program_version='older';client.notes='User-authored organization context';
+    db.drafts[cid]={notes:'Preserve unsaved draft'};
+    db.reviews.push({client_id:cid,review_id:cid+'_custom',notes:'Preserve custom work',status:'in_progress',occurrences:[]});
   }
+  const before=JSON.stringify(db);expect(removeRetiredDemoClients(db)).toBe(false);expect(JSON.stringify(db)).toBe(before);
+  const retained=JSON.parse(JSON.stringify(Object.fromEntries(['demo_dunder','demo_initech'].map(cid=>[cid,{client:db.clients.find(c=>c.client_id===cid),reviews:db.reviews.filter(r=>r.client_id===cid),draft:db.drafts[cid]}]))));
+  saveStore(db);const reloaded=readStore();
+  for(const [cid,original] of Object.entries(retained)){
+    expect(reloaded.clients.find(c=>c.client_id===cid)).toEqual(original.client);
+    expect(reloaded.reviews.filter(r=>r.client_id===cid)).toEqual(original.reviews);
+    expect(reloaded.drafts[cid]).toEqual(original.draft);
+  }
+});
+test('unrelated simulated identities, permissions and records are not silently removed',()=>{
+  const db={clients:[{client_id:'demo_dunder',demo_program_version:'older'},{client_id:'demo_initech',demo_program_version:'older'},{client_id:'demo_hooli'}],users:[],user:{user_id:'demo_initech_user_0',client_ids:['demo_initech'],favorite_client_ids:['demo_dunder']},policies:[{client_id:'demo_initech',policy_id:'keep',notes:'User-authored'}],drafts:{demo_initech:{notes:'Keep draft'}}};
+  const before=JSON.stringify(db);expect(removeRetiredDemoClients(db)).toBe(false);expect(JSON.stringify(db)).toBe(before);
 });

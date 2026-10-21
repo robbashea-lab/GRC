@@ -60,6 +60,9 @@ export function finishDemoStore(db, clock, {
     const reviews = db.reviews.filter(r => r.client_id === cid),
       policies = db.policies.filter(p => p.client_id === cid),
       risks = db.risks.filter(r => r.client_id === cid);
+    // Fresh CIS-only presets use canonical mapped work, not optional generic rows.
+    const reviewFor=key=>reviews.find(r=>r.baseline_key===key)||
+      (cid==='demo_brawndo'?reviews.find(r=>r.framework_plan_key===({restore:'data-recovery',vendor:'provider-inventory'})[key]):null);
     for (const [i, r] of reviews.entries()) {
       r.owner_id ||= users[i % 3].user_id;
       r.reviewer_id = users[(i + 1) % 3].user_id;
@@ -121,7 +124,7 @@ export function finishDemoStore(db, clock, {
         version: 1
       });
     }
-    for (const [i, r] of ['restore', 'vendor'].map(key => reviews.find(r => r.baseline_key === key)).entries()) {
+    for (const [i, r] of ['restore', 'vendor'].map(reviewFor).entries()) {
       const o = r.occurrences.at(-1);
       if (!o) continue;
       const e = evidence(db, client, 'operation-' + i, r.title + ' - ' + o.period, 'review', r.review_id, o.completed_at, o.completed_by, {
@@ -188,8 +191,8 @@ export function finishDemoStore(db, clock, {
     const findingTitles = program?.review_findings.map(f => f.title) || ['Access termination evidence was incomplete', 'Backup restoration test omitted a critical application dependency', 'Supplier review documentation lacked approval', 'Asset inventory contained stale ownership records'];
     const actionTitles = program?.review_findings.map(f => f.action) || ['Complete access termination evidence', 'Validate backup restoration dependencies', 'Record supplier review approval', 'Update asset ownership records'];
     for (let i = 0; i < 4; i++) {
-      const r = reviews.find(r => r.baseline_key === ['user-access', 'restore', 'vendor', 'inventory'][i]),
-        o = r.occurrences.at(i >= 2 ? -2 : -1),
+      const r = reviewFor(['user-access', 'restore', 'vendor', 'inventory'][i]),
+        o = r.occurrences.at(i >= 2 ? -2 : -1)||r.occurrences.at(-1),
         fid = cid + '_finding_' + i;
       const f = {
         finding_id: fid,
@@ -435,7 +438,7 @@ export function finishDemoStore(db, clock, {
         kind: 'evidence',
         id: e.evidence_id
       });
-      const restore = reviews.find(r => r.baseline_key === 'restore');
+      const restore = reviewFor('restore');
       if (restore && linked.includes(restore.review_id)) a.related_links.push({
         kind: 'risks',
         id: risks[0].risk_id

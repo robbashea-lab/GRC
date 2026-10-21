@@ -1,11 +1,13 @@
+import {cisContext} from '../testUtils/cisExperience';
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
 
-let mockAuth,mockGuideProps;
+let mockAuth,mockOrg,mockGuideProps;
 jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>true}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:true,default:{get:jest.fn(),patch:jest.fn(),put:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:error=>error.message}));
 jest.mock('./GuidedAssessor',()=>props=>{mockGuideProps=props;return null;});
 jest.mock('./AssigneeSelect',()=>()=>null);
@@ -38,7 +40,8 @@ const visual=()=>host.querySelector('.brawndo-cis-visual-safeguard');
 
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();
-  onClose=jest.fn();mockGuideProps=null;
+  onClose=jest.fn();mockGuideProps=null;mockOrg=cisContext();
+  sessionStorage.setItem('grc_client_id','demo_brawndo');window.history.replaceState({},'','/compliance/cis-ig1');
   mockAuth={user:{user_id:'native-visual-actor',role:'super_admin',workspace_mode:'demo'},workspaceMode:'demo'};
   native={framework_assessment_id:'native-visual-1.1',definition_id:'1.1',client_id:'demo_brawndo',framework_key:'cis-ig1',framework_version:'8.1',
     status:'not_assessed',verification:'needs_validation',implementation:'Saved native implementation',technology:'Retained native platform',notes:'Retained native notes',
@@ -216,4 +219,21 @@ test('Last saved follows native failed, no-op and successful save responses',asy
   await clickNative(nativeButton('Save assessment'));
   expect(savedTime()).toBe('2026-10-02T12:00:00.000Z');expect(native.last_saved).toBe(savedToken);
   expect(host.textContent).not.toContain('Unsaved assessment changes');
+});
+
+
+test.each([1,2,3])('an authenticated CIS IG%i inherited opener preserves exact native save and client identity',async group=>{
+  const clientId=`authenticated-cis-${group}`;
+  mockOrg=cisContext(clientId,group,'standard');mockAuth={workspaceMode:'standard',user:{user_id:'native-visual-actor',role:'super_admin'}};
+  sessionStorage.setItem('grc_client_id',clientId);
+  native={...native,client_id:clientId,framework_assessment_id:`${clientId}:1.1`};record={...native};
+  frameworkRead=()=>Promise.resolve({data:{...workspace(),configuration:{implementation_group:group},implementation_position:{program_id:`${clientId}:cis-ig1`}}});
+  const receipt={key:JSON.stringify([mockAuth.user.user_id,mockAuth.user.role,undefined,'standard',true]),clientId,
+    programId:`${clientId}:cis-ig1`,assessmentId:record.framework_assessment_id,definitionId:'1.1'};
+  await render(false,{clientId,cisVisualOrigin:receipt});expect(visual()).toBeTruthy();
+  await editNativeImplementation('A saved native authenticated implementation.');
+  await clickNative(nativeButton('Save assessment'));
+  expect(api.patch).toHaveBeenCalledWith(`/framework_assessments/${clientId}:1.1`,expect.objectContaining({expected_last_assessed:token,implementation:'A saved native authenticated implementation.'}));
+  expect(native.client_id).toBe(clientId);expect(native.framework_key).toBe('cis-ig1');
+  expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });

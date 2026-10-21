@@ -2,6 +2,7 @@ import React, {act} from 'react';
 import {createRoot} from 'react-dom/client';
 import BrawndoDemoProgram from './BrawndoDemoProgram';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
 
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({useNavigate: () => mockNavigate}));
@@ -30,7 +31,7 @@ test('status cells and composition segments open exact native client workspace f
 
 test('inline history rejects a mismatched canonical CIS scope',async()=>{
  global.IS_REACT_ACT_ENVIRONMENT=true;
- const client={client_id:'demo_brawndo',name:'Brawndo'};
+ const client={...cisClient('demo_brawndo',1),name:'Brawndo'};
  const current={captured_at:'2026-10-15T12:00:00Z',scope:{framework_key:'cis-ig1',catalog_version:'8.1',configuration:{implementation_group:2}}};
  const program={program_id:'demo_brawndo:cis-ig1',program_key:'cis-ig1',framework_key:'cis-ig1',program_label:'CIS IG1',to:'/compliance/cis-ig1?client_id=demo_brawndo',current:null};
  api.get.mockResolvedValue({data:{client_id:client.client_id,program_key:'cis-ig1',current,as_of:current.captured_at,snapshots:[]}});

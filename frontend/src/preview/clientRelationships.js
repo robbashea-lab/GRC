@@ -1,4 +1,5 @@
 import { clientAccess } from './assignmentEligibility';
+import {cisProgramProjection} from './cisCapability';
 
 const internal = user => ['super_admin', 'platform_admin'].includes(user?.role);
 export const leadEligible = (user, cid) => internal(user) && user.status === 'active' && clientAccess(user, cid);
@@ -7,6 +8,8 @@ export function clientProjection(db, client) {
   const lead = db.users.find(u => u.user_id === client.assigned_owner_id);
   const pick = (row, fields) => row ? Object.fromEntries(fields.map(key => [key, row[key]])) : null;
   return { ...client,
+    cis_program:cisProgramProjection(db,client),
+    ...(db.baselines?.[client.client_id] ? {onboarding_baseline:JSON.parse(JSON.stringify(db.baselines[client.client_id]))} : {}),
     primary_contact_record: pick(contact, ['contact_id', 'client_id', 'name', 'email', 'title', 'status']),
     grc_lead_id: client.assigned_owner_id,
     grc_lead: pick(lead, ['user_id', 'name', 'email', 'role', 'status']),

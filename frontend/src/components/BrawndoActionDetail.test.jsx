@@ -101,7 +101,7 @@ test('approved detail labels and prompt keep nullable native field identities wi
   await render();
   const owner=document.querySelector('[aria-label="Responsible owner"]'),due=document.querySelector('[aria-label="Due date"]');
   expect(owner.parentElement.textContent).toContain('Owner');
-  expect(owner.parentElement.textContent).toContain('Active platform users with access to Brawndo.');
+  expect(owner.parentElement.textContent).toContain('Active platform users with access to this client.');
   expect(due.closest('label').textContent).toBe('Due date');
   expect(due.required).toBe(false);expect(owner.required).toBe(false);
   expect(document.querySelector('[aria-label="Planned action"]').placeholder).toBe('What will be done, and by whom.');

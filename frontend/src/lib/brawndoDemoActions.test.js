@@ -1,9 +1,10 @@
+import {cisClient, cisContext} from '../testUtils/cisExperience';
 import {unifiedActions} from './brawndoActions';
 import {brawndoDemoActionsGate,brawndoTicketMetrics,brawndoDueWindow,brawndoTicketMatches,brawndoEligibleOwnerIds} from './brawndoDemoActions';
 
 const clientId='demo_brawndo';
 const user={user_id:'actor',role:'super_admin',workspace_mode:'demo'};
-const gate={workspaceMode:'demo',user,currentClientId:clientId,currentClient:{client_id:clientId,status:'active'},pathname:'/action-items'};
+const gate={...cisContext(),workspaceMode:'demo',user,currentClientId:clientId,currentClient:cisClient(),pathname:'/action-items'};
 const now=new Date(2026,9,15,23,30);
 const task=(id,extra={})=>({client_id:clientId,task_id:id,title:id,status:'open',...extra});
 const finding=(id,extra={})=>({client_id:clientId,finding_id:id,title:id,status:'open',...extra});

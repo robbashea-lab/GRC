@@ -1,5 +1,6 @@
+import {cisClient, cisContext} from '../testUtils/cisExperience';
 import {brawndoDemoCalendar,filterCalendarItems} from './brawndoDemoCalendar';
-const context={workspaceMode:'demo',user:{user_id:'u',role:'client_viewer',workspace_mode:'demo'},currentClientId:'demo_brawndo',selectedClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',status:'active'},pathname:'/calendar'};
+const context={...cisContext(),workspaceMode:'demo',user:{user_id:'u',role:'client_viewer',workspace_mode:'demo'},currentClientId:'demo_brawndo',selectedClientId:'demo_brawndo',currentClient:cisClient(),pathname:'/calendar'};
 test('Calendar appearance requires canonical trusted resolved, selected, current and route agreement',()=>{
   expect(brawndoDemoCalendar(context)).toBe(true);
   for(const patch of [{workspaceMode:'standard'},{user:{...context.user,workspace_mode:'standard'}},{user:null},{currentClientId:'duplicate'},{selectedClientId:'other'},{currentClient:{client_id:'duplicate',name:'Brawndo'}},{currentClient:{client_id:'demo_brawndo',archived:true}},{routeClientId:'other'},{pathname:'/reviews'},{authLoading:true},{authError:'denied'},{orgLoading:true},{orgError:'denied'}])expect(brawndoDemoCalendar({...context,...patch})).toBe(false);

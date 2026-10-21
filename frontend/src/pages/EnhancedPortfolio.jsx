@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import api, { formatError } from '@/lib/api';
+import api, { formatError, PREVIEW_MODE } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useOrg } from '@/context/OrgContext';
 import { clientDestination } from '@/lib/clientSelection';
@@ -122,8 +122,9 @@ export function EnhancedPortfolio({
   const authorized = new Set(clients.map(client => client.client_id));
   const programs = (data?.programs || []).filter(program => authorized.has(program.client_id));
   const frameworks = [...new Map(programs.map(program => [program.program_key, program.program_label]))];
-  const base = data ? filterPortfolio(clients, programs, state, user.user_id, asOf, false) : [];
-  const visible = data ? filterPortfolio(clients, programs, state, user.user_id, asOf) : [];
+  const demoContext = {trustedDemo: PREVIEW_MODE, workspaceMode: useAuth().workspaceMode, user};
+  const base = data ? filterPortfolio(clients, programs, state, user.user_id, asOf, false, demoContext) : [];
+  const visible = data ? filterPortfolio(clients, programs, state, user.user_id, asOf, true, demoContext) : [];
   const span = data ? sparklineSpan(programs, asOf) : 8;
   const selected = clients.find(client => client.client_id === selection?.clientId);
   const selectedPrograms = programs.filter(program => program.client_id === selected?.client_id);

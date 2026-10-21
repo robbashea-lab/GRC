@@ -18,6 +18,8 @@ test('the pilot additionally requires the accepted exact native assessment ident
   const missing=eligible();missing.record.framework_assessment_id='';
   expect(safeguard11Eligible(missing)).toBe(false);
   const ig2=eligible();ig2.ctx.configuration.implementation_group=2;
+  expect(safeguard11Eligible(ig2)).toBe(true);
+  ig2.ctx.configuration.implementation_group=4;
   expect(safeguard11Eligible(ig2)).toBe(false);
   const stale=eligible();stale.ctx.current.framework_assessment_id='old';
   expect(safeguard11Eligible(stale)).toBe(false);

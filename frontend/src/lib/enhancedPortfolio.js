@@ -1,4 +1,5 @@
 import { assignedToUser, periodChange } from './portfolioProgress';
+import {orderNamedDemoClients} from './demoClientOrder';
 import { calendarDay, managementDay } from './managementDates';
 export const ENHANCED_PORTFOLIO_ENABLED = true;
 export const PORTFOLIO_KPIS = [['attention', 'Needs attention', 'Clients with a red status'], ['overdue', 'Overdue items', 'Reviews and action items'], ['due30', 'Due in 30 days', 'Reviews, follow-ups, renewals'], ['notstarted', 'Not started', 'Onboarding has not started']];
@@ -77,10 +78,10 @@ export function portfolioKpiValue(key, clients, asOf) {
   if (key === 'notstarted' && clients.some(client => !['complete', 'in_progress', 'not_started'].includes(client.monitoring?.onboarding))) return null;
   return clients.filter(client => key === 'attention' ? clientAttention(client, asOf).tone === 'red' : client.monitoring?.onboarding === 'not_started').length;
 }
-export function filterPortfolio(clients, programs, state, userId, asOf, includeKpi = true) {
+export function filterPortfolio(clients, programs, state, userId, asOf, includeKpi = true, demoContext) {
   const query = state.search.trim().toLowerCase();
   const rows = clients.filter(client => (!state.mine || assignedToUser(client, userId)) && (!state.framework || programs.some(program => program.client_id === client.client_id && program.program_key === state.framework)) && (!query || [client.name, client.grc_lead?.name || 'Unassigned', ...programs.filter(program => program.client_id === client.client_id).map(program => program.program_label)].join(' ').toLowerCase().includes(query)) && (!includeKpi || !state.kpi || (state.kpi === 'overdue' || state.kpi === 'due30' ? operationalItems(client, asOf)[state.kpi].length > 0 : state.kpi === 'attention' ? clientAttention(client, asOf).tone === 'red' : state.kpi === 'notstarted' && client.monitoring?.onboarding === 'not_started')));
-  return rows.sort((a, b) => (state.sort === 'attention' ? clientAttention(a, asOf).level - clientAttention(b, asOf).level : state.sort === 'next' ? (operationalItems(a, asOf).next?.due_date || '9999').localeCompare(operationalItems(b, asOf).next?.due_date || '9999') : 0) || a.name.localeCompare(b.name) || a.client_id.localeCompare(b.client_id));
+  return orderNamedDemoClients(rows.sort((a, b) => (state.sort === 'attention' ? clientAttention(a, asOf).level - clientAttention(b, asOf).level : state.sort === 'next' ? (operationalItems(a, asOf).next?.due_date || '9999').localeCompare(operationalItems(b, asOf).next?.due_date || '9999') : 0) || a.name.localeCompare(b.name) || a.client_id.localeCompare(b.client_id)), demoContext);
 }
 export function trailingChange(program, asOf) {
   return periodChange(program.snapshots_90d, program.current, new Date(Date.parse(asOf) - 90 * 86400000).toISOString(), {

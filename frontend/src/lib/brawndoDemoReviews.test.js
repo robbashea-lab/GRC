@@ -1,6 +1,7 @@
+import {cisClient, cisContext} from '../testUtils/cisExperience';
 import {brawndoDemoReviewsGate,reviewWorkload,reviewSummary,reviewExecutions} from './brawndoDemoReviews';
 
-const scope={workspaceMode:'demo',user:{user_id:'viewer',role:'client_readonly',workspace_mode:'demo'},currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',status:'active'},clients:[{client_id:'demo_brawndo'}],pathname:'/reviews'};
+const scope={...cisContext(),workspaceMode:'demo',user:{user_id:'viewer',role:'client_readonly',workspace_mode:'demo'},currentClientId:'demo_brawndo',currentClient:cisClient(),clients:[{client_id:'demo_brawndo'}],pathname:'/reviews'};
 const now=new Date(2026,9,16,12);
 test('Reviews presentation requires exact active authorized Explore demo context',()=>{
   expect(brawndoDemoReviewsGate(scope)).toBe(true);

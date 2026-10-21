@@ -10,7 +10,7 @@ import AssigneeSelect from '@/components/AssigneeSelect';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import {vendorSignals,VENDOR_DATA_TYPES,ASSURANCE_TYPES} from '@/lib/vendorGovernance';
-import {isReferencePresentation,isReferenceWorkflow} from '@/lib/reference';
+import {isReferencePresentation,isReferenceWorkflow,isCisReference} from '@/lib/reference';
 import {vendorViews,vendorMatches,vendorColumns,assuranceSummary,renewalAction} from '@/lib/brawndoVendors';
 import { tableColumns } from '@/lib/tableColumns';
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -93,7 +93,7 @@ export default function VendorRegister() {
   const [acceptedRefresh,setAcceptedRefresh] = useState(null);
   const additional = useAdditionalSectionsSurface('vendors',loadedReadScope===vendorReadScope?loadedClientId:null);
   const pilot=isReferencePresentation(currentClientId,user);
-  const vendorWorkflow=isReferenceWorkflow(currentClientId,user);
+  const vendorWorkflow=isReferenceWorkflow(currentClientId,user,currentClient);
   const matches=vendorWorkflow?vendorMatches:vendorMatchesView;
   const contractDate=v=>vendorWorkflow?v.contract_renewal:v.contract_renewal||v.contract_expiration||v.contract_end;
   const [rows, setRows] = useState([]);
@@ -103,7 +103,7 @@ export default function VendorRegister() {
   const [q, setQ] = useState("");
   const [searchParams,setSearchParams] = useSearchParams();
   // ?view= deep links (dashboard signals) open the register already filtered.
-  const brawndoExtendedViews = vendorWorkflow && currentClientId==='demo_brawndo' && auth.workspaceMode==='demo' && user?.workspace_mode==='demo';
+  const brawndoExtendedViews = isCisReference(currentClientId,user,currentClient);
   const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) || (brawndoExtendedViews && ['all','unassigned'].includes(searchParams.get('view'))) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
   useEffect(() => setView(linkedView), [linkedView]);
@@ -196,7 +196,7 @@ export default function VendorRegister() {
       setSearchParams(next,{replace:true});
     };
     surface = <>
-      <BrawndoAdditionalVendors rows={tableSource} filteredRows={filtered} reviews={reviews} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
+      <BrawndoAdditionalVendors clientName={currentClient?.name||'Client'} rows={tableSource} filteredRows={filtered} reviews={reviews} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
         onOpen={(record,tab)=>setDrawer({open:true,record,tab})}
         onOpenReview={review=>navigate(`/reviews?id=${encodeURIComponent(review.review_id)}&client_id=${encodeURIComponent(currentClientId)}`)}
         actions={<><button type="button" onClick={()=>setTheme(theme==='light'?'dark':'light')}><Sun size={15} aria-hidden="true"/>{theme==='light'?'Dark':'Light'}</button><button type="button" onClick={exportCsv} data-testid="vendors-export"><Download size={15} aria-hidden="true"/>Export CSV</button>{canWrite&&<button type="button" onClick={()=>setAddOpen(true)} data-testid="new-vendor">+ New vendor</button>}</>}/>

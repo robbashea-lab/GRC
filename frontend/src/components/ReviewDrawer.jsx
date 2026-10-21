@@ -20,7 +20,7 @@ import {useCreateIntent} from '@/lib/createIntent';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
-import {isReferenceWorkflow,isPrestigeReference} from '@/lib/reference';
+import {isReferenceWorkflow,isPrestigeReference,isCisReference} from '@/lib/reference';
 import ReviewExpectations,{ReviewFacts} from './BrawndoReviewDetails';
 import IsoManagementReviewGuide from './IsoManagementReviewGuide';
 import './BrawndoCisAssessment.css';
@@ -57,7 +57,7 @@ const evaluationFields=[['conclusion','Reviewer conclusion',20000],['tested_scop
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues,reviewsPilot=false}) {
   const {user,workspaceMode,error:authError} = useAuth();
   const {currentClient,currentClientId,error:orgError}=useOrg()||{};
-  const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferenceWorkflow(clientId,user) && (!record || record.client_id===clientId);
+  const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferenceWorkflow(clientId,user,currentClient) && (!record || record.client_id===clientId);
   const opener=useRef(null),heading=useRef(null),cisBriefOpener=useRef(null),historyLinkedReturn=useRef(null);
   const [pending,setPending]=useState(null);
   const admin = ['super_admin','platform_admin'].includes(user?.role);
@@ -151,8 +151,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   function changeConfiguration(key,value) {
     if (key === 'recurrence') recurrenceEdited.current=true;
     // A new Policy Review defaults annually; an explicit cadence or saved record wins.
-    const defaultPolicyCadence = !record && !current && clientId === 'demo_brawndo'
-      && user?.workspace_mode === 'demo' && key === 'review_type' && !recurrenceEdited.current;
+    const defaultPolicyCadence = !record && !current && isCisReference(clientId,user,currentClient) && key === 'review_type' && !recurrenceEdited.current;
     setForm(previous => ({...previous,[key]:value,
       ...(defaultPolicyCadence ? {recurrence:value === 'policy' ? 'annual' : 'none'} : {})}));
   }
@@ -292,7 +291,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             {selected?.risk_review_recommendation&&<p className="text-sm">{selected.risk_review_recommendation}</p>}
             {related.risks?.filter(r=>r.risk_id===current.risk_id).map(r=><Button key={r.risk_id} size="sm" variant="outline" onClick={()=>setLinked({kind:'risks',record:r})}>Open Risk · {r.display_id||r.title}</Button>)}
           </section>}
-          {workflowPresentation?<BrawndoReviewWorkflowDetails record={configuration} source={presentationSource} clientId={cid} users={members} admin={admin} writable={writable} frozen={frozen} busy={busy} onChange={(key,value)=>setForm(previous=>({...previous,[key]:value}))} onOrigin={()=>setTab('Requirements')} picker={picker}/>:<>
+          {workflowPresentation?<BrawndoReviewWorkflowDetails clientName={currentClient?.name} record={configuration} source={presentationSource} clientId={cid} users={members} admin={admin} writable={writable} frozen={frozen} busy={busy} onChange={(key,value)=>setForm(previous=>({...previous,[key]:value}))} onOrigin={()=>setTab('Requirements')} picker={picker}/>:<>
           <div className="review-workflow-details grid grid-cols-1 sm:grid-cols-2 gap-4">
             {configFields.filter(f => (f.name !== 'custom_recurrence_days' || configuration.recurrence === 'custom') && (f.name !== 'policy_id' || !pilot && (configuration.review_type === 'policy' || configuration.policy_id))).map(field => {
               const f=field.name==='owner_id'?{...field,label:'Assigned Reviewer'}:field;
@@ -329,7 +328,11 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           </section>}
         </>}
         {tab === 'Requirements' && <>
-          {workflowPresentation?<BrawndoReviewRequirementCards record={{...(selected||form),client_id:cid}} client={currentClient} source={presentationSource} related={related} historical={!!selected} loading={basisLoading} error={basisError} onOpen={setLinked}/>:<>
+          {workflowPresentation?<>
+          <BrawndoReviewRequirementCards record={{...(selected||form),client_id:cid}} client={currentClient} source={presentationSource} related={related} historical={!!selected} loading={basisLoading} error={basisError} onOpen={setLinked}/>
+          {policies.filter(policy=>policy.client_id===cid&&policy.policy_id===(selected||form).policy_id).map(policy=><button key={policy.policy_id} type="button" className="text-link underline" onClick={()=>setLinked({kind:'policies',record:policy})}>{policy.title}</button>)}
+          <GovernanceContextFields expanded reviewExpectations value={(selected||form).governance_context} cadence disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>
+          </>:<>
           {pilot?<ReviewExpectations reviewLayout record={{...(selected||form),client_id:cid}} related={related} policies={policies} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} disabled={frozen||!admin} onChange={governance_context=>setForm(p=>({...p,governance_context}))}
             policyPicker={!current&&form.review_type==='policy'?picker('Supporting policy',form.policy_id,v=>setForm(p=>({...p,policy_id:v})),policies.filter(p=>!(p.schedule_from_reviews&&p.next_review_date)).map(p=>({value:p.policy_id,label:p.title})),!admin):null}/>:
           <RequirementBasis kind="reviews" record={shown} related={related} onOpen={setLinked} historical={!!selected} loading={basisLoading} error={basisError} users={members} readable reviewLayout/>}

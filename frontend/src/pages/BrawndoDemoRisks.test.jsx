@@ -1,3 +1,5 @@
+import {cisClient} from '@/testUtils/cisExperience';
+import {rememberClient} from '@/lib/clientSelection';
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RiskRegister from './RiskRegister';
@@ -19,9 +21,10 @@ beforeEach(()=>{
   // Freeze only the clock; Radix's native scheduling and focus timers remain real.
   jest.useFakeTimers({doNotFake:['nextTick','setImmediate','clearImmediate','setTimeout','clearTimeout','setInterval','clearInterval','requestAnimationFrame','cancelAnimationFrame','queueMicrotask','performance']});
   jest.setSystemTime(new Date('2026-10-18T18:00:00.000Z'));
-  global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();localStorage.setItem('grc_client_id','demo_brawndo');mockSearch='';mockPath='/risks';
+  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();rememberClient('demo_brawndo');mockSearch='';mockPath='/risks';
   mockAuth={workspaceMode:'demo',loading:false,user:{user_id:`admin-${++mockActorSequence}`,role:'super_admin',workspace_mode:'demo'}};
-  mockOrg={currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'},loading:false};
+  const client={...cisClient('demo_brawndo'),name:'Brawndo'};
+  mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
   rows=[{risk_id:'risk-high',client_id:'demo_brawndo',display_id:'RISK-101',title:'Native high risk',status:'assessed',likelihood_score:3,impact_score:4,next_review:'2099-01-01'},
     {risk_id:'unrated',client_id:'demo_brawndo',title:'Native unrated',status:'open'},
     {risk_id:'closed',client_id:'demo_brawndo',title:'Native closed',status:'closed',likelihood_score:1,impact_score:2}];
@@ -29,6 +32,18 @@ beforeEach(()=>{
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();jest.useRealTimers();});
+
+test.each([1,2,3].flatMap(group=>['demo','standard'].map(mode=>[group,mode])))('configured IG%i %s client receives the approved overview through its client-scoped request without writes',async(group,mode)=>{
+  const client=cisClient(`synthetic_risks_ig${group}_${mode}`,group);
+  mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
+  mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
+  rows=rows.map(row=>({...row,client_id:client.client_id}));rememberClient(client.client_id);
+  await render();
+  expect(container.querySelector('[data-testid="demo-risks-overview"]')).not.toBeNull();
+  expect(container.querySelector('tbody').textContent).toContain('Native high risk');
+  expect(api.get).toHaveBeenCalledWith('/risks',expect.objectContaining({params:expect.objectContaining({client_id:client.client_id})}));
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
 
 test('exact demo overview preserves current search, cell clear, unrated access and direct native opening',async()=>{
   await render();expect(container.querySelector('[data-testid="demo-risks-overview"]')).not.toBeNull();
@@ -46,8 +61,8 @@ test('exact demo overview preserves current search, cell clear, unrated access a
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
-test.each(['standard','other-demo','wrong-route','unresolved','archived','mismatch','denied'])('new presentation stays off for %s',async condition=>{
-  if(condition==='standard')mockAuth.workspaceMode='standard';
+test.each(['mode-mismatch','other-demo','wrong-route','unresolved','archived','mismatch','denied'])('new presentation stays off for %s',async condition=>{
+  if(condition==='mode-mismatch')mockAuth.workspaceMode='standard';
   if(condition==='other-demo'){mockOrg.currentClientId='demo_dunder';mockOrg.currentClient={client_id:'demo_dunder',name:'Brawndo',status:'active'};rows=rows.map(r=>({...r,client_id:'demo_dunder'}));}
   if(condition==='wrong-route')mockPath='/dashboard';
   if(condition==='unresolved')mockOrg.loading=true;
@@ -141,7 +156,7 @@ test('presentation-only treatment filter preserves native column controls and cl
 });
 
  test.each(['selection','route'])('shared appearance boundary excludes mismatched %s identity',async mismatch=>{
- if(mismatch==='selection')localStorage.setItem('grc_client_id','another-client');else mockSearch='?client_id=another-client';
+ if(mismatch==='selection')rememberClient('another-client');else mockSearch='?client_id=another-client';
  await render();expect(container.querySelector('[data-testid="demo-risks-overview"]')).toBeNull();
  expect(container.querySelector('.approved-risk-register')).not.toBeNull();
  });

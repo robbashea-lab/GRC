@@ -20,8 +20,8 @@ export default function BrawndoReviewRequirementCards({record,client,source:reso
       </div>
       <div className="review-source-frequency">
         <div><span className="review-workflow-label">Required frequency</span><div className="review-source-value">{primary?.frequencyLabel||source.minimumCadence||'Not recorded'}</div></div>
-        <div><span className="review-workflow-label">Brawndo's recurrence</span><div className="review-source-value">{source.configuredCadence}</div></div>
-        <div><span className="review-workflow-label">{classification==='organizational'?'Set by':'Check'}</span><div className="review-source-value">{classification==='organizational'?(organizationDefined?'Brawndo management':source.label):<span className={`review-workflow-chip is-${comparison.state==='meets'?'success':comparison.state==='below'?'warning':'plain'}`}>{comparison.state==='meets'?'✓ ':''}{comparison.label}</span>}</div></div>
+        <div><span className="review-workflow-label">{client?.name ? `${client.name}'s recurrence` : 'Client recurrence'}</span><div className="review-source-value">{source.configuredCadence}</div></div>
+        <div><span className="review-workflow-label">{classification==='organizational'?'Set by':'Check'}</span><div className="review-source-value">{classification==='organizational'?(organizationDefined?`${client?.name||'Client'} management`:source.label):<span className={`review-workflow-chip is-${comparison.state==='meets'?'success':comparison.state==='below'?'warning':'plain'}`}>{comparison.state==='meets'?'✓ ':''}{comparison.label}</span>}</div></div>
       </div>
     </section>
     {!!supportCount&&<section className="review-source-supports" aria-label="Supporting framework references">

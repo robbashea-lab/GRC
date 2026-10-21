@@ -128,7 +128,7 @@ function EntityListPage({ kind }) {
   const { currentClient, currentClientId } = org;
   const { user } = auth;
   // Preserve the existing drawer's guarded completion workflow independently of list presentation.
-  const guardedReviewDrawer = kind==='reviews' && isReferenceWorkflow(currentClientId,user);
+  const guardedReviewDrawer = kind==='reviews' && isReferenceWorkflow(currentClientId,user,currentClient);
   const policiesPilot = kind==='policies';
   const POLICY_HIDDEN=['version'];
   const displayColumns = policiesPilot ? schema.columns.filter(c=>!POLICY_HIDDEN.includes(c.key)).map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c).sort((a,b)=>POLICY_COLUMN_ORDER.indexOf(a.key)-POLICY_COLUMN_ORDER.indexOf(b.key)) : schema.columns;
@@ -345,14 +345,14 @@ function EntityListPage({ kind }) {
   const carriedClientChanged = filterClient.current !== currentClientId;
   useEffect(() => {
     if (filterClient.current === currentClientId) return;
-    const resetView=kind==='reviews'||policiesPilot||isReferenceWorkflow(filterClient.current,user);
+    const resetView=kind==='reviews'||policiesPilot||isReferenceWorkflow(filterClient.current,user,org.clients?.find(client=>client.client_id===filterClient.current));
     filterClient.current = currentClientId;
     const next = new URLSearchParams(params);
     next.delete('owner'); next.delete('unassigned'); next.delete('reviewView');
     if(['reviews','policies'].includes(kind)&&resetView) ['q','tab','status','signal','sortBy','sortDir','setup','policyView','basis'].forEach(key=>next.delete(key));
     setAlignmentTarget(null);
     setParams(next, { replace: true });
-  }, [currentClientId, params, setParams, kind, policiesPilot, user]);
+  }, [currentClientId, params, setParams, kind, policiesPilot, user, org.clients]);
 
   // Carried-scope filters from URL (?owner=<uid>|__me__ &unassigned=1 &severity=critical,high &status=open)
   const urlFilters = useMemo(() => {
@@ -691,7 +691,7 @@ function EntityListPage({ kind }) {
 
 
   return (<>
-    {additionalPolicies ? <BrawndoAdditionalPolicies
+    {additionalPolicies ? <BrawndoAdditionalPolicies clientName={currentClient?.name||'Client'}
       rows={tableSource} filteredRows={filtered} reviews={policyReviews} users={users} theme={theme}
       programs={programs} assessments={policyAssessments} cisGroup={cisGroup} alignmentError={alignmentError}
       loading={showLoading} error={loadError} onRetry={load} q={q} onSearch={setQ}
@@ -709,7 +709,7 @@ function EntityListPage({ kind }) {
       pendingDecisions={<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       nativeControls={<>{hasUrlFilters&&<div className="bap-native-scope" data-testid="carried-scope-chip">{carriedScopeLabel}<button type="button" aria-label="Clear filter" data-testid="clear-carried-scope" onClick={()=>navigate(location.pathname,{replace:true})}>Clear filter</button></div>}
         <div className="bap-native-columns" aria-label="Additional native policy filters"><label>Review timing <select aria-label="Policy review timing" value={['due30','overdue'].includes(policyView)?policyView:''} onChange={event=>setParam('policyView',event.target.value)}><option value="">All review dates</option><option value="due30">Review due in 30 days</option><option value="overdue">Overdue reviews</option></select></label>{columns.filter(column=>['next_review_date','version'].includes(column.key)).map(column=><ColumnControl key={column.key} table={table} column={column}/>)}</div>{nativeBulkControls}</>}
-    /> : <Surface {...(reviewsPilot?{rows:loading||loadError?[]:tableSource,available:!loading&&!loadError&&loadedReviewScope.current===reviewScope,recordOpen:open,theme,view:reviewTab,onView:setReviewTab,actions:<><SurfaceThemeAction theme={theme} onTheme={()=>setTheme(theme==='light'?'dark':'light')}/><SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId||!rows.length} testid="export-reviews-button"/>{canWrite&&<PrimaryAction label="New review" testid="create-reviews-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}</>}: {className:`register-surface${policiesPilot?' bpage':''}`, 'data-layout':isReviews?'reviews':undefined,'data-theme':policiesPilot?theme:undefined})}>
+    /> : <Surface {...(reviewsPilot?{clientName:currentClient?.name||'Client',rows:loading||loadError?[]:tableSource,available:!loading&&!loadError&&loadedReviewScope.current===reviewScope,recordOpen:open,theme,view:reviewTab,onView:setReviewTab,actions:<><SurfaceThemeAction theme={theme} onTheme={()=>setTheme(theme==='light'?'dark':'light')}/><SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId||!rows.length} testid="export-reviews-button"/>{canWrite&&<PrimaryAction label="New review" testid="create-reviews-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}</>}: {className:`register-surface${policiesPilot?' bpage':''}`, 'data-layout':isReviews?'reviews':undefined,'data-theme':policiesPilot?theme:undefined})}>
       {!reviewsPilot&&(policiesPilot ? <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Policy library`} title="Policies">
           <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId || rows.length === 0} testid="export-policies-button" />
           {canWrite && <PrimaryAction label="New Policy" testid="create-policies-button" onClick={() => { setSelected(null); setOpen(true); }} />}

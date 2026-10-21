@@ -1,13 +1,14 @@
+import {cisClient} from '@/testUtils/cisExperience';
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import VendorRegister from './VendorRegister';
 import api from '@/lib/api';
 import {managementDay} from '@/lib/managementDates';
 
-let mockClient, mockSearch, mockSetSearch;
+let mockClient, mockClientData, mockSearch, mockSetSearch;
 const mockUser={user_id:'vendor-filter-admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Filter QA'}})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:mockClientData})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/vendors',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>{const state=require('react').useState(new URLSearchParams(mockSearch));mockSetSearch=state[1];return state;}}),{virtual:true});
 jest.mock('@/components/EvidencePanel',()=>()=> <div>Existing evidence panel</div>);
@@ -19,7 +20,7 @@ const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInpu
 const names=()=>[...container.querySelectorAll('[data-testid^="vendor-row-"] .register-record-link')].map(node=>node.textContent);
 const chip=id=>container.querySelector(`[data-testid="vendor-view-${id}"]`);
 beforeEach(()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_dunder';mockSearch='';localStorage.clear();
+  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_dunder';mockClientData={client_id:mockClient,name:'Filter QA',status:'active'};mockSearch='';localStorage.clear();
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   const vendor=(vendor_id,name,extra={})=>({vendor_id,client_id:mockClient,name,service:'Hosting',criticality:'low',status:'active',assurance_records:[],...extra});
   fixtures=[vendor('today','Alpha today',{contract_renewal:day(0)}),vendor('boundary','Zulu boundary',{contract_renewal:day(30),assurance_required:true,assurance_records:[{type:'SOC 2',required:true}]}),
@@ -31,8 +32,8 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
-test.each(['demo_brawndo','demo_dunder','future-client'])('%s renewal subset, count, search, sort and clearing agree',async client=>{
-  mockClient=client;fixtures=fixtures.map(v=>({...v,client_id:v.client_id==='other-client'?v.client_id:client}));
+test.each([['demo_brawndo',1],['demo_dunder',null],['future-client',null],['synthetic-ig2',2],['synthetic-ig3',3]])('%s renewal subset, count, search, sort and clearing agree',async(client,group)=>{
+  mockClient=client;mockClientData=group?cisClient(client,group):{client_id:client,name:'Filter QA',status:'active'};fixtures=fixtures.map(v=>({...v,client_id:v.client_id==='other-client'?v.client_id:client}));
   await act(async()=>root.render(<VendorRegister/>));await click(chip('renewal_soon'));
   expect(chip('renewal_soon').getAttribute('aria-pressed')).toBe('true');expect(chip('renewal_soon').textContent).toContain('2');
   expect(names()).toHaveLength(2);expect(names()).toEqual(expect.arrayContaining(['Zulu boundary','Alpha today']));expect(container.querySelector('[data-testid="vendor-foot"]').textContent).toBe('Showing 2 of 6 active vendors');
@@ -46,12 +47,12 @@ test.each(['demo_brawndo','demo_dunder','future-client'])('%s renewal subset, co
   await click([...container.querySelectorAll('button')].find(n=>n.textContent==='Clear filters'));expect(names()).toHaveLength(6);expect(chip('all_active').getAttribute('aria-pressed')).toBe('true');
   // Generic contract display retains its expiration fallback; reference workflow retains renewal-only display.
   const expirationRow=[...container.querySelectorAll('[data-testid^="vendor-row-"]')].find(n=>n.textContent.includes('Expiration only'));
-  if(client==='demo_brawndo')expect(expirationRow.textContent).toContain('No renewal date');
+  if(group)expect(expirationRow.textContent).toContain('No renewal date');
   else expect(expirationRow.textContent).not.toContain('No renewal date');
 });
 
-test.each(['demo_brawndo','demo_dunder','future-client'])('%s Dashboard attention link selects only matching vendors and exposes selected view',async client=>{
-  mockClient=client;mockSearch='view=assurance_attention';fixtures=fixtures.map(v=>({...v,client_id:v.client_id==='other-client'?v.client_id:client}));
+test.each([['demo_brawndo',1],['demo_dunder',null],['future-client',null],['synthetic-ig2',2],['synthetic-ig3',3]])('%s Dashboard attention link selects only matching vendors and exposes selected view',async(client,group)=>{
+  mockClient=client;mockClientData=group?cisClient(client,group):{client_id:client,name:'Filter QA',status:'active'};mockSearch='view=assurance_attention';fixtures=fixtures.map(v=>({...v,client_id:v.client_id==='other-client'?v.client_id:client}));
   await act(async()=>root.render(<VendorRegister/>));expect(names()).toEqual(['Zulu boundary']);
   expect(chip('assurance_attention').getAttribute('aria-pressed')).toBe('true');expect(chip('assurance_attention').textContent).toContain('1');
   expect(container.querySelector('[data-testid="vendor-foot"]').textContent).toBe('Showing 1 of 6 active vendors');

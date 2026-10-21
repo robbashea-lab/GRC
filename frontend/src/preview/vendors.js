@@ -1,14 +1,18 @@
+import {isCisClient} from './cisCapability';
 import {vendorPlans,VENDOR_PURPOSES} from '../lib/vendorGovernance';
 import {reviewView,reviewSchedule} from '../lib/reviewOccurrences';
 import {recordUuid} from '../lib/recordUuid';
 import {validateAssignment} from './assignmentEligibility';
 import {calendarDay} from '../lib/managementDates';
 import {assuranceKey,assuranceStates} from '../lib/brawndoVendors';
+const hasNativeAssurance = vendor => vendor?.assurance_records?.some(row=>
+  row.assurance_id || row.review_status || row.superseded_by || Object.hasOwn(row,'history'));
 export function validateVendor(db,v,previous) {
   if(!v.name?.trim()||!(v.service||v.services)?.trim()) throw new Error('Vendor name and Service / Product are required.');
   if(!['critical','high','medium','moderate','low'].includes(v.criticality)) throw new Error('Invalid Vendor criticality.');
   const stages={onboarding:['under_review','offboarding'],under_review:['active','offboarding'],active:['under_review','offboarding'],offboarding:['inactive'],inactive:[]};
-  if(v.client_id==='demo_brawndo'){stages.onboarding=['active','offboarding'];stages.active=['offboarding'];validatePilotVendor(db,v,previous);}
+  if(isCisClient(db,v.client_id)){stages.onboarding=['active','offboarding'];stages.active=['offboarding'];validatePilotVendor(db,v,previous);}
+  else if(hasNativeAssurance(previous))validateAssuranceRecords(db,v,previous);
   if(!previous&&v.status!=='onboarding') throw new Error('New Vendors start Onboarding.');
   if(previous&&previous.status!==v.status&&!stages[previous.status]?.includes(v.status)) throw new Error('Use the next Vendor lifecycle stage.');
   validateAssignment(db,'vendors',v,previous);
@@ -28,6 +32,10 @@ function validatePilotVendor(db,v,previous){
   for(const key of ['next_review','contract_renewal','contract_expiration','contract_notice_deadline'])if(v[key]&&calendarDay(v[key])===null)throw new Error('Enter a valid '+key.replaceAll('_',' ')+' date.');
   if(v.contact_email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.contact_email))throw new Error('Enter a valid Vendor Contact Email.');
   for(const id of v.connected_system_ids||[])if(!(previous?.connected_system_ids||[]).includes(id)&&!db.assets.some(a=>a.asset_id===id&&a.client_id===v.client_id))throw new Error('Connected Systems must belong to this client.');
+  validateAssuranceRecords(db,v,previous);
+}
+// Assurance identity/history belongs to saved records, independently of the current program.
+function validateAssuranceRecords(db,v,previous){
   const old=previous?.assurance_records||[],records=v.assurance_records||[];
   if(!Array.isArray(records)||records.length>100)throw new Error('Use at most 100 assurance documents per Vendor.');
   old.forEach((a,i)=>{if(!records.some((r,j)=>assuranceKey(r,j)===assuranceKey(a,i)))throw new Error('Assurance history must be retained.');});
@@ -78,5 +86,5 @@ export function syncVendorReview(db,r) {
   const v=db.vendors.find(v=>v.vendor_id===r.vendor_id&&v.client_id===r.client_id);if(!v) return;
   const last=r.occurrences?.at(-1),purpose=r.vendor_purpose||'vendor';
   if(purpose==='vendor') {v.review_frequency=r.recurrence==='none'?'as_needed':r.recurrence;v.custom_recurrence_days=r.custom_recurrence_days;v.next_review=['completed','cancelled'].includes(r.status)?null:r.due_date;if(last)v.last_review=last.completed_at;}
-  else if(last) {if(purpose==='assurance'&&v.client_id!=='demo_brawndo'&&v.assurance_sync_occurrence_id!==last.occurrence_id){v.assurance_sync_occurrence_id=last.occurrence_id;v.assurance_records=(v.assurance_records||[]).map(a=>a.required===false?a:{...a,last_reviewed:last.completed_at,review_occurrence_id:last.occurrence_id});}v[purpose+'_last_reviewed']=last.completed_at;if(purpose==='assurance')v.assurance_review_date=['completed','cancelled'].includes(r.status)?null:r.due_date;}
+  else if(last) {if(purpose==='assurance'&&!isCisClient(db,v.client_id)&&!hasNativeAssurance(v)&&v.assurance_sync_occurrence_id!==last.occurrence_id){v.assurance_sync_occurrence_id=last.occurrence_id;v.assurance_records=(v.assurance_records||[]).map(a=>a.required===false?a:{...a,last_reviewed:last.completed_at,review_occurrence_id:last.occurrence_id});}v[purpose+'_last_reviewed']=last.completed_at;if(purpose==='assurance')v.assurance_review_date=['completed','cancelled'].includes(r.status)?null:r.due_date;}
 }

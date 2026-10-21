@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import ClientIdentityMark from './ClientIdentityMark';
 import { clientAttention } from '@/lib/enhancedPortfolio';
 import { calendarDay, managementDay } from '@/lib/managementDates';
 import { dashboardRecordHref } from '@/lib/dashboardItemSummary';
@@ -7,8 +7,7 @@ export const signedPoints = value => `${value > 0 ? '+' : value < 0 ? '−' : ''
 export function ClientMark({
   client
 }) {
-  const gradient = useId().replace(/:/g, '');
-  return <span className="ep-avatar" aria-hidden="true">{client.client_id === 'demo_brawndo' ? <svg viewBox="0 0 40 40"><defs><linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2fbf3a" /><stop offset="1" stopColor="#0d6b1f" /></linearGradient></defs><rect width="40" height="40" rx="9" fill={`url(#${gradient})`} /><path d="M23.5 5 11 22.5h8.2L15.8 35 29 16.6h-8.4L23.5 5z" fill="#f5f50f" stroke="#0b3d12" strokeWidth="1.2" strokeLinejoin="round" /></svg> : client.name?.trim().slice(0, 1) || '—'}</span>;
+  return <span className="ep-avatar" aria-hidden="true"><ClientIdentityMark client={client}/></span>;
 }
 export function Attention({
   client,

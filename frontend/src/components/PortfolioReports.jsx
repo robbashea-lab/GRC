@@ -5,6 +5,8 @@ import {Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription} from
 import {X} from 'lucide-react';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/components/ui/tabs';
 import {grcLead} from '@/lib/clientRelationships';
+import {namedDemoClient} from '@/lib/demoClients';
+import {cisClientProgram} from '@/lib/cisExperience';
 import {applicableCounts, calendarRangeStart, canConnectHistoryPositions, currentPercentage, forecastImplementation, historyWindow, periodChange, programIdentity, snapshotTime, validImplementationPosition} from '@/lib/portfolioProgress';
 import './PortfolioReports.css';
 
@@ -164,7 +166,12 @@ export function PortfolioSparkline({program, asOf, span}) {
 }
 
 export function useHistory(client, program, range, refreshToken, requireIdentity = false, demoScenario = false, expectedScope) {
-  const key = JSON.stringify([client.client_id, program.program_key, range, demoScenario, expectedScope]);
+  const cisProgram = program.framework_key === 'cis-ig1' ? cisClientProgram(client) : null;
+  const scope = (expectedScope && Object.keys(expectedScope).length ? expectedScope : undefined)
+    || (program.framework_key === 'cis-ig1' ? program.current?.scope : undefined)
+    || (cisProgram ? {framework_key:cisProgram.frameworkKey,catalog_version:cisProgram.version,
+      configuration:{implementation_group:cisProgram.implementationGroup}} : undefined);
+  const key = JSON.stringify([client.client_id, program.program_key, range, demoScenario, scope]);
   const [state, setState] = useState({key: '', data: null, loading: true, error: ''}), [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
@@ -172,7 +179,7 @@ export function useHistory(client, program, range, refreshToken, requireIdentity
     setState(previous => ({key, data: previous.key === key ? previous.data : null, loading: true, error: ''}));
     const [client_id, program_key, selectedRange, scenarioRequested, selectedScope] = JSON.parse(key);
     api.get('/portfolio/reporting/history', {params: {client_id, program_key, range: selectedRange, include_archived: false,
-      ...(scenarioRequested ? {demo_scenario:'brawndo-cis-ig1-history-v2'} : {})}, signal: controller.signal}).then(({data}) => {
+      ...(scenarioRequested && namedDemoClient(client_id)?.historyVersion ? {demo_scenario:namedDemoClient(client_id).historyVersion} : {})}, signal: controller.signal}).then(({data}) => {
       if (!Array.isArray(data?.snapshots) || !data.current || !Number.isFinite(Date.parse(data.as_of))) throw new Error('The history response is incomplete.');
       if (data.client_id && data.client_id !== client_id || data.program_key && data.program_key !== program_key) throw new Error('The history does not belong to the selected client program.');
       if(requireIdentity && (data.client_id !== client_id || data.program_key !== program_key)) throw new Error('The history program identity is unavailable.');
@@ -180,9 +187,10 @@ export function useHistory(client, program, range, refreshToken, requireIdentity
         || selectedScope.configuration?.implementation_group != null && data.current.scope?.configuration?.implementation_group !== selectedScope.configuration.implementation_group)) {
         throw new Error('The history scope does not match the selected program.');
       }
-      if(!selectedScope && requireIdentity && client_id === 'demo_brawndo' && program_key === 'cis-ig1'
-        && (data.current.scope?.framework_key !== 'cis-ig1' || data.current.scope?.catalog_version !== '8.1'
-          || data.current.scope?.configuration?.implementation_group !== 1)) throw new Error('The CIS history scope does not match the configured IG1 program.');
+      if(requireIdentity && ['cis-ig1','cis-ig2','cis-ig3'].includes(program_key) && (selectedScope?.framework_key!=='cis-ig1'
+        || selectedScope.catalog_version!=='8.1' || ![1,2,3].includes(selectedScope.configuration?.implementation_group))) {
+        throw new Error('The selected CIS history scope is unavailable.');
+      }
       if (active) setState({key, data, loading: false, error: ''});
     }).catch(failure => { if (active) setState({key, data: null, loading: false, error: formatError(failure)}); });
     return () => { active = false; controller.abort(); };
@@ -265,8 +273,8 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
   const [range, setRange] = useState('6m'), [showData, setShowData] = useState(false);
   const [referenceView, setReferenceView] = useState('line');
   const program = programs.find(value => programIdentity(value) === selected);
-  const scopedScenario = demoScenario && inline && referenceHistory && client.client_id === 'demo_brawndo'
-    && program.program_id === 'demo_brawndo:cis-ig1' && program.program_key === 'cis-ig1' && program.framework_key === 'cis-ig1';
+  const scopedScenario = demoScenario && inline && referenceHistory && !!namedDemoClient(client.client_id)?.historyVersion
+    && program.program_id === `${client.client_id}:cis-ig1` && program.framework_key === 'cis-ig1' && program.framework_key === 'cis-ig1';
   const historyView = referenceHistory ? scopedScenario ? referenceView : 'line' : chartView;
   const report = useHistory(client, program, range, refreshToken, inline, scopedScenario);
   const scenarioContext = scopedScenario ? report.data?.scenario_context : null;
@@ -290,7 +298,7 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
     {!inline && program.framework_key === 'soc-2' ? 'Internal readiness, not an auditor opinion.' : 'Assessment progress, not a compliance determination.'} Estimated completion is based on implementation progress over the latest 90 days.
   </div>;
   const details = <>
-    <div className="ph-program-head"><div><h3>{inline ? 'CIS IG1 Status' : `${program.program_label} Status`}</h3><span className="sr-only">{program.scope_label}</span></div><button type="button" className="ph-link" onClick={() => onNavigate(program.to)}>Open {program.program_label} workspace →</button></div>
+    <div className="ph-program-head"><div><h3>{`${program.program_label} Status`}</h3><span className="sr-only">{program.scope_label}</span></div><button type="button" className="ph-link" onClick={() => onNavigate(program.to)}>Open {program.program_label} workspace →</button></div>
     <div className="ph-current-overview">
       <div className="ph-current-value"><span>Current implementation</span><strong className={percentage == null || current.not_started ? 'is-text' : ''}>{percentage != null ? current.not_started ? 'Not started' : <>{percentage.toFixed(1)}<span className="ph-unit">%</span></> : noScope ? 'No applicable scope' : 'Unavailable'}</strong><p>{percentage != null ? current.not_started ? `0 of ${current.denominator} ${language.unit} assessed` : `${current.implemented} of ${current.denominator} ${language.unit} ${language.verb}` : current.reason || current.notice || 'No applicable implementation units.'}</p><small>As of {dateTime(current.effective_at || current.captured_at || asOf)}</small></div>
       <CurrentStatusBreakdown key={selected} current={current} onStatusNavigate={onStatusNavigate} inline={inline} />
@@ -328,7 +336,7 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
 
     </div></div>
   </>;
-  if (inline) return <section className="brawndo-demo-program" data-reference-history={referenceHistory ? 'true' : undefined} aria-label="CIS IG1 Status">
+  if (inline) return <section className="brawndo-demo-program" data-reference-history={referenceHistory ? 'true' : undefined} aria-label={`${program.program_label} Status`}>
     {details}
     {referenceFooter}
   </section>;
