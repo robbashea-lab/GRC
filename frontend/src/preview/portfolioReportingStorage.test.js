@@ -1,6 +1,7 @@
-import {compactPortfolioReporting,restorePortfolioReporting,readPortfolioStore,writePortfolioStore} from './portfolioReporting';
+import {captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting,readPortfolioStore,writePortfolioStore} from './portfolioReporting';
 import * as codec from './demoStorageCodec';
 import * as canonical from './commandRequests';
+import {activeDefinitions,frameworkCatalog} from '../lib/frameworks';
 
 
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -465,6 +466,92 @@ test('prototype hooks installed after a read cannot reuse earlier canonical proo
     const expected=restorePortfolioReporting(codec.decodeDemoStore(saved));
     expect(JSON.stringify(readPortfolioStore(saved))).toBe(JSON.stringify(expected));
     expect(JSON.stringify(compactPortfolioReporting(priorRead))).toBe(JSON.stringify(compactPortfolioReporting(expected)));
+  }finally{
+    if(descriptor)Object.defineProperty(Object.prototype,'toJSON',descriptor);else delete Object.prototype.toJSON;
+  }
+});
+
+
+function comparisonFixture(){
+  const client={client_id:'comparison_client',status:'active',framework_settings:{'cis-ig1':{implementation_group:1}}};
+  const db={clients:[client],baselines:{comparison_client:{completed:true}},requirements:[{requirement_id:'comparison-enrollment',client_id:client.client_id,baseline_key:'cis-ig1',baseline_response:'applies',status:'active'}],
+    framework_assessments:activeDefinitions('cis-ig1',{implementation_group:1}).map(row=>({...row,definition_id:row.id,framework_assessment_id:'comparison:'+row.id,client_id:client.client_id,framework_key:'cis-ig1',framework_version:frameworkCatalog('cis-ig1').version,status:'not_assessed',created_at:'2026-07-01T00:00:00.000Z'})),
+    findings:[],risks:[],policies:[],evidence:[],logs:[],tasks:[],reviews:[],vendors:[]};
+  captureDemoReporting(db,null,'2026-09-01T00:00:00.000Z');
+  const refs=db.portfolio_reporting.snapshots[0].current.provenance.source_references;
+  refs[0].unknown=JSON.parse('{"__proto__":{"retained":true},"Unicode":"✓","nested":[1,{"future":true}]}');
+  return db;
+}
+
+test.each(['unchanged','changed legacy fallback'])('read-only comparison preserves opaque history and complete capture output: %s',variant=>{
+  const original=comparisonFixture();
+  if(variant==='changed legacy fallback')original.portfolio_reporting.identities[0].head=null;
+  const saved=JSON.stringify(compactPortfolioReporting(original));
+  const actual=readPortfolioStore(saved),previous=readPortfolioStore(saved),expected=copy(readPortfolioStore(saved)),expectedPrevious=copy(readPortfolioStore(saved));
+  const historical=actual.portfolio_reporting.snapshots[0].current.provenance;
+  const previousHistorical=previous.portfolio_reporting.snapshots[0].current.provenance;
+  const descriptor=Object.getOwnPropertyDescriptor(previousHistorical,'source_references');
+  const currentDescriptor=Object.getOwnPropertyDescriptor(historical,'source_references');
+  if(variant==='changed legacy fallback'){
+    for(const db of [actual,expected])Object.assign(db.framework_assessments[0],{status:'addressed',last_saved:'2026-10-01T00:00:00.000Z'});
+  }
+  captureDemoReporting(actual,previous,'2026-10-01T00:00:00.000Z');
+  captureDemoReporting(expected,expectedPrevious,'2026-10-01T00:00:00.000Z');
+  expect(Object.getOwnPropertyDescriptor(previousHistorical,'source_references').get).toBe(descriptor.get);
+  expect(Object.getOwnPropertyDescriptor(historical,'source_references').get).toBe(currentDescriptor.get);
+  expect(JSON.stringify(compactPortfolioReporting(actual))).toBe(JSON.stringify(compactPortfolioReporting(expected)));
+  expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+  const references=previousHistorical.source_references;
+  references[0].unknown.nested[1].future='public mutation';
+  expect(Object.getOwnPropertyDescriptor(previousHistorical,'source_references').get).toBeUndefined();
+  expect(provenance(readPortfolioStore(saved)).source_references[0].unknown.nested[1].future).toBe(true);
+  expect(provenance(restorePortfolioReporting(compactPortfolioReporting(previous))).source_references[0].unknown.nested[1].future).toBe('public mutation');
+});
+
+test.each(['deleted','redefined','prototype hook'])('read-only comparison honors current %s source semantics',variant=>{
+  const original=comparisonFixture();original.portfolio_reporting.identities[0].head=null;
+  const saved=JSON.stringify(compactPortfolioReporting(original)),actual=readPortfolioStore(saved),previous=readPortfolioStore(saved);
+  const expected=copy(readPortfolioStore(saved)),expectedPrevious=copy(readPortfolioStore(saved));
+  for(const db of [actual,expected]){
+    const historical=db.portfolio_reporting.snapshots[0].current.provenance;
+    if(variant==='deleted')delete historical.source_references;
+    if(variant==='redefined')Object.defineProperty(historical,'source_references',{enumerable:true,configurable:true,writable:true,value:[{id:'replacement',status:'addressed',unknown:{retained:true}}]});
+  }
+  const descriptor=Object.getOwnPropertyDescriptor(Object.prototype,'toJSON');
+  try{
+    if(variant==='prototype hook')Object.defineProperty(Object.prototype,'toJSON',{configurable:true,value:function(){return this.kind==='framework_assessments'?{...this,current_hook:'preserved'}:this;}});
+    captureDemoReporting(actual,previous,'2026-10-01T00:00:00.000Z');
+    captureDemoReporting(expected,expectedPrevious,'2026-10-01T00:00:00.000Z');
+    expect(JSON.stringify(compactPortfolioReporting(actual))).toBe(JSON.stringify(compactPortfolioReporting(expected)));
+    expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+  }finally{
+    if(descriptor)Object.defineProperty(Object.prototype,'toJSON',descriptor);else delete Object.prototype.toJSON;
+  }
+});
+
+
+test('parser-owned proof preserves normalized scalars and noncallable serializer data',()=>{
+  const fixture=packed();fixture.case_marker='parsed-json-normalization-boundary';
+  fixture.portfolio_reporting.source_records=['{"__proto__":{"safe":true},"a":-0,"b":1e999,"nested":[{"a":1,"toJSON":"retained data","z":2}],"toJSON":false,"z":3}'];
+  fixture.portfolio_reporting.source_vectors=[[0],[0],[]];
+  const saved=JSON.stringify(fixture),actual=readPortfolioStore(saved),expected=restorePortfolioReporting(codec.decodeDemoStore(saved));
+  expect(JSON.stringify(compactPortfolioReporting(actual))).toBe(JSON.stringify(compactPortfolioReporting(expected)));
+  expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+  expect(provenance(actual).source_references[0]).toMatchObject({a:0,b:null,toJSON:false,nested:[{toJSON:'retained data'}]});
+});
+
+test('public restore retains custom serializer validation and hook-active reads normalize actual serializer output',()=>{
+  const invalid=packed();invalid.portfolio_reporting.source_records[0]={toJSON(){return undefined;}};
+  expect(()=>restorePortfolioReporting(invalid)).toThrow(SyntaxError);
+  const fixture=packed();fixture.case_marker='hook-active-normalization-boundary';
+  const saved=JSON.stringify(fixture),descriptor=Object.getOwnPropertyDescriptor(Object.prototype,'toJSON');
+  try{
+    Object.defineProperty(Object.prototype,'toJSON',{configurable:true,value:function(){
+      return this.id==='a'?{id:'hook-normalized-a',value:Infinity}:this;
+    }});
+    const actual=readPortfolioStore(saved),expected=restorePortfolioReporting(codec.decodeDemoStore(saved));
+    expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+    expect(provenance(actual).source_references[0]).toEqual({id:'hook-normalized-a',value:null});
   }finally{
     if(descriptor)Object.defineProperty(Object.prototype,'toJSON',descriptor);else delete Object.prototype.toJSON;
   }

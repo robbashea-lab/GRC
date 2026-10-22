@@ -33,7 +33,7 @@ function scopeText(signature){
   return stable(implementationScope(JSON.parse(signature)));
 }
 const exactScope=current=>current.scope?stable(implementationScope(current.scope)):scopeText(current.scope_signature);
-const exactSource=current=>current.scope?stable({scope:current.scope,references:current.provenance?.source_references||[]}):null;
+const exactSource=current=>current.scope?stable({scope:current.scope,references:comparisonReferences(current.provenance)||[]}):null;
 function knownScopes(db,identity){
   const recorded=db.portfolio_reporting?.identities?.find(row=>row.program_id===identity);
   if(recorded)return recorded.scopes.map(scopeText);
@@ -70,6 +70,14 @@ function thinCurrent(current){
 // Only untouched restored provenance can reuse its validated immutable source
 // text. Access or replacement materializes ordinary independent native values.
 const restoredSourceVectors=new WeakMap();
+// Internal comparisons need complete native values, but do not expose mutable
+// history. Keep untouched pooled provenance opaque for the next compaction.
+function comparisonReferences(provenance){
+  const lazy=provenance&&restoredSourceVectors.get(provenance);
+  if(lazy&&Object.getOwnPropertyDescriptor(provenance,'source_references')?.get===lazy.get
+    &&!customJSON({})&&!customJSON([]))return JSON.parse(lazy.vector.json);
+  return provenance?.source_references;
+}
 function sourceProvenanceWithoutReferences(provenance){
   const result={};
   for(const key of Reflect.ownKeys(provenance)){
@@ -158,7 +166,6 @@ function canonicalJSONOrder(value){
   while(pending.length){
     const current=pending.pop();
     if(!current||typeof current!=='object')continue;
-    if(customJSON(current))return false;
     const keys=Object.keys(current);
     if(!Array.isArray(current)){
       let previous=null;
@@ -188,8 +195,10 @@ function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null)
     let metadata=validatedRows&&Object.hasOwn(validatedRows,index)?validatedRows[index]:null;
     if(!metadata){
       const json=JSON.stringify(reference);
-      const normalized=JSON.parse(json); // Preserve eager legacy-row normalization/validation errors.
-      metadata=Object.freeze({json,canonicalKnown:!!collectedRows&&canonicalJSONOrder(normalized)});
+      // The private collector exists only for freshly decoded JSON without
+      // prototype serializers; normalization cannot change its key order.
+      if(!collectedRows)JSON.parse(json); // Preserve public/hook-active validation errors.
+      metadata=Object.freeze({json,canonicalKnown:!!collectedRows&&canonicalJSONOrder(reference)});
     }
     rows.set(index,metadata);
     if(collectedRows)collectedRows.add(index,metadata);
@@ -265,8 +274,8 @@ export function readPortfolioStore(saved){
   const db=decodeDemoStore(saved);
   const prototypeHooks=customJSON({})||customJSON([]);
   if(!prototypeHooks&&typeof saved==='string'&&saved===validatedSavedValue)return restorePortfolioReportingCore(db,validatedSavedRows);
-  const collected=rowTable(),restored=restorePortfolioReportingCore(db,null,collected);
-  const prepared=collected.finish();
+  const collected=prototypeHooks?null:rowTable(),restored=restorePortfolioReportingCore(db,null,collected);
+  const prepared=collected?.finish();
   publishSavedRows(saved,prototypeHooks?null:prepared);
   return restored;
 }
@@ -350,7 +359,7 @@ export function demoCurrentPositions(db,clients,asOf=new Date().toISOString()){
   });
 }
 
-const positionState=position=>stable({scope:exactScope(position.current)||position.current.scope_signature,counts:position.current.counts,availability:position.current.availability,sources:position.current.provenance?.source_references?.map(({id,status})=>({id,status}))});
+const positionState=position=>stable({scope:exactScope(position.current)||position.current.scope_signature,counts:position.current.counts,availability:position.current.availability,sources:comparisonReferences(position.current.provenance)?.map(({id,status})=>({id,status}))});
 
 // Hook this into saveStore before its single setItem. A failed commit persists
 // neither source changes nor these derived observations. Report GETs never call it.
