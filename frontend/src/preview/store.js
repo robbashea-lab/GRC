@@ -10,7 +10,7 @@ import { buildDemoStore } from './demoSeed';
 import {demoDates} from './demoPortfolio';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
-import {captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting} from './portfolioReporting';
+import {captureDemoReporting,readPortfolioStore,writePortfolioStore} from './portfolioReporting';
 import {enrichBrawndoReportingHistory} from './brawndoReportingHistory';
 import {finishDunder} from './programs/dunder';
 import {addInitech,finishInitech} from './programs/initech';
@@ -25,7 +25,7 @@ import {actionTitle} from '../lib/actionItems';
 import {normalizeRecordWrite} from '../lib/recordContracts';
 import {demoStorageError} from '../lib/demoStorageErrors';
 import {lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
-import {decodeDemoStore,writeDemoStore} from './demoStorageCodec';
+import {decodeDemoStore} from './demoStorageCodec';
 export const STORE_KEY = 'grc_interactive_demo_v3';
 // Older Demo stores remain recoverable; a rollout never deletes a prior session key.
 export const clone = value => JSON.parse(JSON.stringify(value));
@@ -82,7 +82,7 @@ export function readStore() {
   let saved;
   try {saved=sessionStorage.getItem(STORE_KEY);}catch(error){throw demoStorageError(error,'read');}
   if (saved) {
-    let db;try{db=restorePortfolioReporting(decodeDemoStore(saved));}catch(error){throw demoStorageError(error,'parse');}
+    let db;try{db=readPortfolioStore(saved);}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
     const retired=removeRetiredDemoClients(db);
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
@@ -101,11 +101,11 @@ export function readStore() {
 export function saveStore(db,{resetFiles=false}={}) {
   // Persist before responding: quota failures must never masquerade as saved changes.
   try {
-    const previous=resetFiles?null:restorePortfolioReporting(decodeDemoStore(sessionStorage.getItem(STORE_KEY)||'null'));
+    const previous=resetFiles?null:readPortfolioStore(sessionStorage.getItem(STORE_KEY)||'null');
     const persisted=lightweightStore(db,previous?.evidence||[]);
     captureDemoReporting(persisted, previous, new Date().toISOString());
     enrichBrawndoReportingHistory(persisted);
-    writeDemoStore(sessionStorage,STORE_KEY,JSON.stringify(compactPortfolioReporting(persisted)));
+    writePortfolioStore(sessionStorage,STORE_KEY,persisted);
     rememberFiles(db,persisted);
     return persisted;
   } catch (error) {

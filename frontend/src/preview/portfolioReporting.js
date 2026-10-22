@@ -7,6 +7,7 @@ import {isoProgramMetrics} from '../lib/isoProgramMetrics';
 import {operatorStatuses} from '../lib/frameworkOperator';
 import {evidenceAccess} from './evidence';
 import {stable} from './commandRequests';
+import {decodeDemoStore,writeDemoStore,MAX_DEMO_DECODE_BYTES} from './demoStorageCodec';
 import {latestPortfolioActivity} from '../lib/portfolioOverview';
 import {getBrawndoScenarioContext} from './brawndoReportingHistory';
 import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
@@ -66,14 +67,58 @@ function thinCurrent(current){
     provenance:Object.fromEntries(['kind','label','source_as_of','cutoff_consistent','event_time_bound','source_event'].filter(field=>Object.hasOwn(current.provenance||{},field)).map(field=>[field,current.provenance[field]]))};
 }
 
-// Serialization only: retain every observation and exact historical vector,
-// but store repeated whole-program scope/source arrays once. Native records
-// and their histories never enter this pool. Exact source rows are pooled across
-// changing vectors; decoding allocates separate copies and retains every observation.
-export function compactPortfolioReporting(db){
+// Only untouched restored provenance can reuse its validated immutable source
+// text. Access or replacement materializes ordinary independent native values.
+const restoredSourceVectors=new WeakMap();
+function sourceProvenanceWithoutReferences(provenance){
+  const result={};
+  for(const key of Reflect.ownKeys(provenance)){
+    if(key==='source_references'||!Object.prototype.propertyIsEnumerable.call(provenance,key))continue;
+    Object.defineProperty(result,key,{value:provenance[key],enumerable:true,configurable:true,writable:true});
+  }
+  return result;
+}
+function attachRestoredReferences(provenance,vector){
+  let materialized=false,references;
+  const replace=value=>{
+    references=value;materialized=true;restoredSourceVectors.delete(provenance);
+    if(Object.getOwnPropertyDescriptor(provenance,'source_references')?.configurable){
+      Object.defineProperty(provenance,'source_references',{value,enumerable:true,configurable:true,writable:true});
+    }
+  };
+  const get=()=>{
+    if(!materialized)replace(JSON.parse(vector.json));
+    return references;
+  };
+  Object.defineProperty(provenance,'source_references',{enumerable:true,configurable:true,get,set(value){
+    if(Object.isFrozen(provenance))throw new TypeError('Cannot assign frozen source references');
+    replace(value);
+  }});
+  restoredSourceVectors.set(provenance,{get,vector});
+}
+
+// Serialization only: retain every observation and complete source row. Untouched
+// pooled history reuses validated text without expanding every historical vector.
+function compactPortfolioReportingCore(db){
   const history=db?.portfolio_reporting;if(!history)return db;
   const identities=(history.identities||[]).map(row=>({...row,scopes:[...row.scopes]}));
-  const source_vectors=[],sources=new Map(),source_records=[],records=new Map();
+  const source_vectors=[],sources=new Map(),source_records=[],records=new Map(),restoredVectors=new Map(),canonicalRows=new Map();
+  const internRow=text=>{
+    let index=records.get(text);
+    if(index===undefined){index=source_records.length;source_records.push(JSON.parse(text));records.set(text,index);}
+    return index;
+  };
+  const canonicalRow=metadata=>{
+    if(metadata.canonicalKnown&&!customJSON({})&&!customJSON([]))return metadata.json;
+    if(!canonicalRows.has(metadata.json))canonicalRows.set(metadata.json,stable(JSON.parse(metadata.json)));
+    return canonicalRows.get(metadata.json);
+  };
+  const internVector=rows=>{
+    const indices=rows.map(internRow),signature=JSON.stringify(indices);
+    let index=sources.get(signature);
+    if(index===undefined){index=source_vectors.length;source_vectors.push(indices);sources.set(signature,index);}
+    return index;
+  };
   const current=(value,identity)=>{
     if(!value)return value;
     const result={...value};
@@ -85,15 +130,19 @@ export function compactPortfolioReporting(db){
       delete result.scope;result._portfolio_scope_index=index;
       if(Object.hasOwn(value.scope,'enrollment_ids'))result._portfolio_enrollment_ids=[...value.scope.enrollment_ids];
     }
-    if(Array.isArray(value.provenance?.source_references)){
-      const indices=value.provenance.source_references.map(reference=>{
-        const serialized=stable(reference);let recordIndex=records.get(serialized);
-        if(recordIndex===undefined){recordIndex=source_records.length;source_records.push(JSON.parse(serialized));records.set(serialized,recordIndex);}
-        return recordIndex;
-      });
-      const vector=JSON.stringify(indices);let index=sources.get(vector);
-      if(index===undefined){index=source_vectors.length;source_vectors.push(indices);sources.set(vector,index);}
-      result.provenance={...value.provenance,_portfolio_source_index:index};delete result.provenance.source_references;
+    const provenance=value.provenance,lazy=provenance&&restoredSourceVectors.get(provenance);
+    let index;
+    if(lazy&&Object.getOwnPropertyDescriptor(provenance,'source_references')?.get===lazy.get){
+      index=restoredVectors.get(lazy.vector);
+      if(index===undefined){index=internVector(lazy.vector.rows.map(canonicalRow));restoredVectors.set(lazy.vector,index);}
+    }else{
+      if(lazy)restoredSourceVectors.delete(provenance);
+      const references=provenance?.source_references;
+      if(Array.isArray(references))index=internVector(references.map(reference=>stable(reference)));
+    }
+    if(index!==undefined){
+      result.provenance=sourceProvenanceWithoutReferences(provenance);
+      result.provenance._portfolio_source_index=index;
     }
     return result;
   };
@@ -102,47 +151,138 @@ export function compactPortfolioReporting(db){
     scope_events:(history.scope_events||[]).map(event=>({...event,before:current(event.before,event.client_id+':'+event.framework_key),after:current(event.after,event.client_id+':'+event.framework_key)}))}};
 }
 
-export function restorePortfolioReporting(db){
+// JSON.parse supplies plain JSON values. Numeric array-index keys keep JavaScript's
+// required numeric order; all other object keys must already be lexical.
+function canonicalJSONOrder(value){
+  const pending=[value];
+  while(pending.length){
+    const current=pending.pop();
+    if(!current||typeof current!=='object')continue;
+    if(customJSON(current))return false;
+    const keys=Object.keys(current);
+    if(!Array.isArray(current)){
+      let previous=null;
+      for(const key of keys){
+        const numeric=Number(key);
+        if(Number.isInteger(numeric)&&numeric>=0&&numeric<4294967295&&String(numeric)===key)continue;
+        if(previous!==null&&previous>key)return false;
+        previous=key;
+      }
+    }
+    for(const key of keys)pending.push(current[key]);
+  }
+  return true;
+}
+
+function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null){
   const history=db?.portfolio_reporting;if(!history?.storage_version)return db;
   if(![1,2].includes(history.storage_version))throw new Error('The saved Demo implementation history format is unavailable.');
-  // These text caches last only for this restoration. Every occurrence still
-  // parses a fresh array, so repeated references never share nested objects.
-  const rowTexts=new Map(),vectorTexts=new Map();
-  const rowText=index=>{
-    if(rowTexts.has(index))return rowTexts.get(index);
-    const encoded=Number.isInteger(index)&&index>=0?history.source_records?.[index]:null;
+  const rows=new Map(),vectors=new Map();
+  const row=index=>{
+    if(!Number.isInteger(index)||index<0)throw new Error('The saved Demo implementation source reference is unavailable.');
+    if(rows.has(index))return rows.get(index);
+    const encoded=history.source_records?.[index];
     const reference=typeof encoded==='string'?JSON.parse(encoded):encoded;
     if(!reference||typeof reference!=='object'||Array.isArray(reference))throw new Error('The saved Demo implementation source reference is unavailable.');
-    // Normalize legacy string rows exactly as the old per-row JSON roundtrip,
-    // including overflow numbers and duplicate JSON properties.
-    const text=JSON.stringify(reference);rowTexts.set(index,text);return text;
+    // Keep normalized native property order separate from sorted pool identity.
+    let metadata=validatedRows&&Object.hasOwn(validatedRows,index)?validatedRows[index]:null;
+    if(!metadata){
+      const json=JSON.stringify(reference);
+      const normalized=JSON.parse(json); // Preserve eager legacy-row normalization/validation errors.
+      metadata=Object.freeze({json,canonicalKnown:!!collectedRows&&canonicalJSONOrder(normalized)});
+    }
+    rows.set(index,metadata);
+    if(collectedRows)collectedRows.add(index,metadata);
+    return metadata;
+  };
+  const vector=encoded=>{
+    if(vectors.has(encoded))return vectors.get(encoded);
+    let result;
+    if(history.storage_version===1&&typeof encoded==='string'){
+      const references=JSON.parse(encoded);
+      // Preserve the older decoder's non-array behavior rather than imposing a
+      // new schema on retained V1 stores. Proper vectors use the same lazy path.
+      if(!Array.isArray(references))return {legacyValue:references};
+      result={json:encoded,rows:references.map(reference=>Object.freeze({json:JSON.stringify(reference),canonicalKnown:false}))};
+    }else if(history.storage_version===2&&Array.isArray(encoded)){
+      const references=[];
+      for(let i=0;i<encoded.length;i++)references.push(row(encoded[i]));
+      let json;
+      result={rows:references,get json(){
+        if(json===undefined)json='['+references.map(value=>value.json).join(',')+']';
+        return json;
+      }};
+    }else throw new Error('The saved Demo implementation source reference is unavailable.');
+    Object.freeze(result.rows);Object.freeze(result);vectors.set(encoded,result);return result;
   };
   const current=(value,identity)=>{
     if(!value)return value;
     const result={...value};
     if(Object.hasOwn(value,'_portfolio_scope_index')){
-      const vector=history.identities?.find(row=>row.program_id===identity)?.scopes[value._portfolio_scope_index];
-      if(typeof vector!=='string')throw new Error('The saved Demo implementation scope reference is unavailable.');
-      result.scope=JSON.parse(vector);delete result._portfolio_scope_index;
+      const scope=history.identities?.find(row=>row.program_id===identity)?.scopes[value._portfolio_scope_index];
+      if(typeof scope!=='string')throw new Error('The saved Demo implementation scope reference is unavailable.');
+      result.scope=JSON.parse(scope);delete result._portfolio_scope_index;
       if(Object.hasOwn(value,'_portfolio_enrollment_ids'))result.scope.enrollment_ids=[...value._portfolio_enrollment_ids];
       delete result._portfolio_enrollment_ids;
     }
     if(Object.hasOwn(value.provenance||{},'_portfolio_source_index')){
-      const vector=history.source_vectors?.[value.provenance._portfolio_source_index];
-      let references;
-      if(history.storage_version===1&&typeof vector==='string')references=JSON.parse(vector);
-      else if(history.storage_version===2&&Array.isArray(vector)){
-        if(!vectorTexts.has(vector))vectorTexts.set(vector,'['+vector.map(rowText).join(',')+']');
-        references=JSON.parse(vectorTexts.get(vector));
-      }
-      else throw new Error('The saved Demo implementation source reference is unavailable.');
-      result.provenance={...value.provenance,source_references:references};delete result.provenance._portfolio_source_index;
+      const sources=vector(history.source_vectors?.[value.provenance._portfolio_source_index]);
+      const provenance={...value.provenance};
+      if(Object.hasOwn(sources,'legacyValue'))provenance.source_references=sources.legacyValue;
+      else attachRestoredReferences(provenance,sources);
+      delete provenance._portfolio_source_index;result.provenance=provenance;
     }
     return result;
   };
   return {...db,portfolio_reporting:{...history,
     snapshots:(history.snapshots||[]).map(snapshot=>({...snapshot,current:current(snapshot.current,programIdentity(snapshot))})),
     scope_events:(history.scope_events||[]).map(event=>({...event,before:current(event.before,event.client_id+':'+event.framework_key),after:current(event.after,event.client_id+':'+event.framework_key)}))}};
+}
+
+export function compactPortfolioReporting(db){return compactPortfolioReportingCore(db);}
+export function restorePortfolioReporting(db){return restorePortfolioReportingCore(db);}
+
+// One exact saved primitive plus immutable row text, never returned native objects
+// or expanded vectors. The existing decoder cap bounds optimization memory only.
+let validatedSavedValue=null,validatedSavedRows=null;
+function rowTable(){
+  let table=Object.create(null),bytes=128;
+  return {add(index,metadata){
+    if(!table||Object.hasOwn(table,index))return;
+    bytes+=metadata.json.length*2+160; // text plus conservative object/index/flag overhead
+    if(bytes>MAX_DEMO_DECODE_BYTES){table=null;return;}
+    table[index]=metadata;
+  },finish(){return table?{rows:Object.freeze(table),bytes}:null;}};
+}
+function publishSavedRows(saved,prepared){
+  // Publish only reader-validated text, or clear after a changed successful write.
+  // This helper performs no parsing, serialization or other fallible preparation.
+  if(prepared&&typeof saved==='string'&&saved.length*2+prepared.bytes<=MAX_DEMO_DECODE_BYTES){
+    validatedSavedValue=saved;validatedSavedRows=prepared.rows;
+  }else{validatedSavedValue=null;validatedSavedRows=null;}
+}
+export function readPortfolioStore(saved){
+  const db=decodeDemoStore(saved);
+  const prototypeHooks=customJSON({})||customJSON([]);
+  if(!prototypeHooks&&typeof saved==='string'&&saved===validatedSavedValue)return restorePortfolioReportingCore(db,validatedSavedRows);
+  const collected=rowTable(),restored=restorePortfolioReportingCore(db,null,collected);
+  const prepared=collected.finish();
+  publishSavedRows(saved,prototypeHooks?null:prepared);
+  return restored;
+}
+function customJSON(value){
+  for(let owner=value;owner;owner=Object.getPrototypeOf(owner)){
+    const descriptor=Object.getOwnPropertyDescriptor(owner,'toJSON');
+    if(descriptor)return !Object.hasOwn(descriptor,'value')||typeof descriptor.value==='function';
+  }
+  return false;
+}
+export function writePortfolioStore(storage,key,db){
+  const json=JSON.stringify(compactPortfolioReportingCore(db));
+  const saved=writeDemoStore(storage,key,json);
+  // Reader-owned metadata is established only from the actual saved bytes.
+  if(saved!==validatedSavedValue)publishSavedRows(saved,null);
+  return saved;
 }
 
 export function demoRangeStart(asOf,range){

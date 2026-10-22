@@ -43,17 +43,18 @@ export function compressDemoStore(json,level=6){
 }
 
 export function writeDemoStore(storage,key,json){
-  try{storage.setItem(key,json);validatedEnvelope=null;validatedJson=null;}catch(error){
+  try{storage.setItem(key,json);validatedEnvelope=null;validatedJson=null;return json;}catch(error){
     if(!['QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(error?.name))throw error;
     // UTF-8 uses at most three bytes per UTF-16 code unit. Leave 1 MiB
     // headroom so the faster DEFLATE stream cannot exceed the envelope bound.
     // This limits optimization eligibility, not the existing logical budget.
     if(json.length*3<=MAX_DEMO_DECODE_BYTES-1024*1024){
       const fast=compressDemoStore(json,1);
-      try{storage.setItem(key,fast);return;}catch(fastError){
+      try{storage.setItem(key,fast);validatedEnvelope=fast;validatedJson=json;return fast;}catch(fastError){
         if(!['QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(fastError?.name))throw fastError;
       }
     }
-    storage.setItem(key,compressDemoStore(json));
+    const compressed=compressDemoStore(json);
+    storage.setItem(key,compressed);validatedEnvelope=compressed;validatedJson=json;return compressed;
   }
 }

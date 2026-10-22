@@ -448,3 +448,27 @@ test.each(['standard','lookalike','archived','invalid-scope','missing-provenance
   if(variant==='imported-id')db.framework_assessments.find(row=>row.client_id==='demo_brawndo').framework_assessment_id='arbitrary-imported-id';
   const before=clone(db);expect(enrichBrawndoReportingHistory(db)).toBe(false);expect(db).toEqual(before);
 });
+
+
+test.each(['scenario context','date selector'])('%s rejects unrelated history identity before reading its source payload',async consumer=>{
+  await axios.create({adapter:previewAdapter}).post('/demo/enter');
+  const db=readStore(),context=getBrawndoScenarioContext(db,new Date(AT));
+  expect(context).not.toBeNull();
+  const record=db.framework_assessments.find(row=>row.client_id==='demo_brawndo'&&row.definition_id==='2.1');
+  const expected=createBrawndoScenarioDateSelector(db,context,new Date(AT))(record);
+  expect(expected).not.toBeNull();
+  const join=db.portfolio_reporting.snapshots.find(row=>row.snapshot_id===context.join_snapshot_id);
+  expect(join).toBeDefined();
+  const reads=jest.fn(()=>{throw new Error('Unrelated historical source payload was accessed');});
+  for(const identity of [
+    {client_id:'synthetic_other_client',program_id:'synthetic_other_client:cis-ig1',framework_key:'cis-ig1'},
+    {client_id:'demo_brawndo',program_id:'demo_brawndo:iso-27001',framework_key:'iso-27001'},
+  ]){
+    const unrelated={...clone(join),...identity,snapshot_id:'unrelated-'+identity.program_id};
+    Object.defineProperty(unrelated.current.provenance,'source_references',{enumerable:true,configurable:true,get:reads});
+    db.portfolio_reporting.snapshots.push(unrelated);
+  }
+  if(consumer==='scenario context')expect(getBrawndoScenarioContext(db,new Date(AT))).toEqual(context);
+  else expect(createBrawndoScenarioDateSelector(db,context,new Date(AT))(record)).toEqual(expected);
+  expect(reads).not.toHaveBeenCalled();
+});

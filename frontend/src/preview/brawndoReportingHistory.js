@@ -66,9 +66,10 @@ const NATIVE_KINDS=['current_baseline','sampled','committed_event'];
 const validInstant=validScenarioInstant;
 function validNativePosition(snapshot,source,clock=new Date()){
   const current=snapshot?.current,scope=current?.scope,kind=snapshot?.observation_kind;
+  // Reject unrelated history before reading its potentially pooled source payload.
+  if(snapshot?.program_id!==PROGRAM||snapshot.client_id!==CLIENT||snapshot.framework_key!=='cis-ig1')return false;
   const references=current?.provenance?.source_references;
-  return snapshot?.program_id===PROGRAM&&snapshot.client_id===CLIENT&&snapshot.framework_key==='cis-ig1'
-    &&validInstant(snapshot.effective_at||snapshot.captured_at)&&validInstant(snapshot.captured_at)
+  return validInstant(snapshot.effective_at||snapshot.captured_at)&&validInstant(snapshot.captured_at)
     &&Date.parse(snapshot.effective_at||snapshot.captured_at)<=Date.parse(snapshot.captured_at)&&Date.parse(snapshot.captured_at)<=+clock
     &&NATIVE_KINDS.includes(kind)&&current?.observation_kind===kind&&current.provenance?.kind===kind
     &&typeof snapshot.snapshot_id==='string'&&snapshot.source_event===snapshot.snapshot_id
