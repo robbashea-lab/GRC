@@ -33,11 +33,11 @@ export function decodeDemoStore(saved){
   return decoded;
 }
 
-export function compressDemoStore(json){
+export function compressDemoStore(json,level=6){
   const bytes=new TextEncoder().encode(json);
   if(bytes.length>MAX_DEMO_DECODE_BYTES)throw invalid();
   const envelope={demo_storage_codec:CODEC,version:VERSION,utf8_bytes:bytes.length,
-    payload:btoa(strFromU8(deflateSync(bytes),true))};
+    payload:btoa(strFromU8(deflateSync(bytes,{level}),true))};
   if(unpack(envelope)!==json)throw invalid();
   return JSON.stringify(envelope);
 }
@@ -45,6 +45,15 @@ export function compressDemoStore(json){
 export function writeDemoStore(storage,key,json){
   try{storage.setItem(key,json);validatedEnvelope=null;validatedJson=null;}catch(error){
     if(!['QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(error?.name))throw error;
+    // UTF-8 uses at most three bytes per UTF-16 code unit. Leave 1 MiB
+    // headroom so the faster DEFLATE stream cannot exceed the envelope bound.
+    // This limits optimization eligibility, not the existing logical budget.
+    if(json.length*3<=MAX_DEMO_DECODE_BYTES-1024*1024){
+      const fast=compressDemoStore(json,1);
+      try{storage.setItem(key,fast);return;}catch(fastError){
+        if(!['QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(fastError?.name))throw fastError;
+      }
+    }
     storage.setItem(key,compressDemoStore(json));
   }
 }

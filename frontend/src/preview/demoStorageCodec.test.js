@@ -79,7 +79,7 @@ test('a failed compressed retry retains the old valid stored envelope and its re
   expect(decodeDemoStore(values.get('demo'))).toEqual(original);
   const next={...sample(),new_rows:Array.from({length:500},(_,i)=>'new-distinct-row-'+i)};
   expect(()=>writeDemoStore(storage,'demo',JSON.stringify(next))).toThrow('Synthetic storage full');
-  expect(storage.setItem).toHaveBeenCalledTimes(2);
+  expect(storage.setItem).toHaveBeenCalledTimes(3);
   expect(values.get('demo')).toBe(previous);
   expect(decodeDemoStore(values.get('demo'))).toEqual(original);
 });
@@ -94,7 +94,7 @@ test('failed compressed retry preserves the prior storage value and reports the 
   expect(values.get('demo')).toBe(previous);
   storage.setItem.mockClear();
   expect(()=>writeDemoStore(storage,'demo',JSON.stringify(sample()))).toThrow('Synthetic storage full');
-  expect(storage.setItem).toHaveBeenCalledTimes(2);
+  expect(storage.setItem).toHaveBeenCalledTimes(3);
   expect(values.get('demo')).toBe(previous);
 });
 
@@ -137,4 +137,46 @@ test('truncated/corrupt DEFLATE and invalid UTF8/JSON fail closed',()=>{
   expect(()=>decodeDemoStore(JSON.stringify({...valid,payload:btoa('invalid deflate')}))).toThrow();
   expect(()=>decodeDemoStore(envelope(new Uint8Array([255,255])))).toThrow();
   expect(()=>decodeDemoStore(envelope(new TextEncoder().encode('not json')))).toThrow();
+});
+
+test('a physical threshold that rejects the fast envelope still accepts the original level-six envelope',()=>{
+  const json=JSON.stringify({...sample(),rows:Array.from({length:2000},(_,i)=>`inventory repeated synthetic record ${i%200} owner ${i%7}`)});
+  const fast=compressDemoStore(json,1),original=compressDemoStore(json);
+  expect(fast.length).toBeGreaterThan(original.length);
+  const values=new Map([['demo','prior']]);
+  const storage={setItem:jest.fn((key,value)=>{if(value.length>original.length)throw quota();values.set(key,value);})};
+  writeDemoStore(storage,'demo',json);
+  expect(storage.setItem.mock.calls).toEqual([['demo',json],['demo',fast],['demo',original]]);
+  expect(JSON.stringify(decodeDemoStore(values.get('demo')))).toBe(json);
+});
+
+test.each(['SecurityError','NotAllowedError','Error'])('%s on the fast write propagates without a level-six retry',name=>{
+  const unavailable=new DOMException('Fast write unavailable',name);
+  const storage={setItem:jest.fn().mockImplementationOnce(()=>{throw quota();}).mockImplementationOnce(()=>{throw unavailable;})};
+  expect(()=>writeDemoStore(storage,'demo',JSON.stringify(sample()))).toThrow(unavailable);
+  expect(storage.setItem).toHaveBeenCalledTimes(2);
+});
+
+test('above conservative fast eligibility the writer uses only the original level-six retry',()=>{
+  const json=JSON.stringify({text:'x'.repeat(Math.floor((MAX_DEMO_DECODE_BYTES-1024*1024)/3)+1)});
+  const deflater=jest.spyOn(jest.requireActual('fflate'),'deflateSync');
+  const storage={setItem:jest.fn().mockImplementationOnce(()=>{throw quota();})};
+  try{
+    writeDemoStore(storage,'demo',json);
+    expect(storage.setItem).toHaveBeenCalledTimes(2);
+    expect(deflater).toHaveBeenCalledTimes(1);
+    expect(deflater.mock.calls[0][1]).toEqual({level:6});
+    expect(JSON.stringify(decodeDemoStore(storage.setItem.mock.calls[1][1]))).toBe(json);
+  }finally{deflater.mockRestore();}
+});
+
+test('fast codec failures propagate without swallowing them or attempting a stronger retry',()=>{
+  const failure=new Error('Synthetic compression failure');
+  const deflater=jest.spyOn(jest.requireActual('fflate'),'deflateSync').mockImplementationOnce(()=>{throw failure;});
+  const storage={setItem:jest.fn(()=>{throw quota();})};
+  try{
+    expect(()=>writeDemoStore(storage,'demo',JSON.stringify(sample()))).toThrow(failure);
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+    expect(deflater).toHaveBeenCalledTimes(1);
+  }finally{deflater.mockRestore();}
 });

@@ -1,7 +1,12 @@
 // One session-storage commit persists both command effects and their replay receipt.
 // This models Demo persistence only; it does not stand in for Mongo recovery tests.
-export const stable = value => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
-  ? Object.fromEntries(Object.keys(item).sort().map(key => [key,item[key]])) : item);
+export const stable = value => JSON.stringify(value, (_key, item) => {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return item;
+  // Null-prototype assignment retains own __proto__ keys without invoking a setter.
+  const ordered = Object.create(null);
+  for (const key of Object.keys(item).sort()) ordered[key] = item[key];
+  return ordered;
+});
 export function commandRequest(db, path, clientId, key, body, execute) {
   if (typeof key !== 'string' || key.length < 1 || key.length > 128)
     throw Object.assign(new Error('A request ID is required for this command'), {status:422,create_rejected:true});

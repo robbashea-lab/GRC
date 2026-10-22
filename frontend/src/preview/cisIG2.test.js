@@ -104,8 +104,7 @@ test('new IG2, later enablement, persisted save failure and authorization bounda
   for(const group of [0,4,true,'2',null])await expect(scope(group)).rejects.toBeTruthy();
   const db=readStore(),old=db.clients.find(r=>r.client_id===cid).cis_configuration_updated_at;
   const storage=jest.spyOn(Storage.prototype,'setItem')
-    .mockImplementationOnce(()=>{throw new DOMException('Quota exceeded','QuotaExceededError');})
-    .mockImplementationOnce(()=>{throw new DOMException('Quota exceeded','QuotaExceededError');});
+    .mockImplementation(()=>{throw new DOMException('Quota exceeded','QuotaExceededError');});
   await expect(scope(2)).rejects.toBeTruthy();storage.mockRestore();expect(readStore().clients.find(r=>r.client_id===cid).cis_configuration_updated_at).toBe(old);
   db.user={...db.user,role:'client_grc_manager',client_ids:[cid]};sessionStorage.setItem(STORE_KEY,JSON.stringify(db));await expect(scope(2)).rejects.toMatchObject({response:{status:403}});
   db.user={...db.user,role:'platform_admin',client_ids:['demo_brawndo']};sessionStorage.setItem(STORE_KEY,JSON.stringify(db));await expect(workspace()).rejects.toMatchObject({response:{status:403}});
