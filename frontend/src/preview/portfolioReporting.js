@@ -195,7 +195,7 @@ function canonicalJSONOrder(value){
   return true;
 }
 
-function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null){
+function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null,contentProofs=null){
   const history=db?.portfolio_reporting;if(!history?.storage_version)return db;
   if(![1,2].includes(history.storage_version))throw new Error('The saved Demo implementation history format is unavailable.');
   const rows=new Map(),vectors=new Map();
@@ -212,7 +212,7 @@ function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null)
       // The private collector exists only for freshly decoded JSON without
       // prototype serializers; normalization cannot change its key order.
       if(!collectedRows)JSON.parse(json); // Preserve public/hook-active validation errors.
-      metadata=Object.freeze({json,canonicalKnown:!!collectedRows&&canonicalJSONOrder(reference)});
+      metadata=contentProofs?.get(json)||Object.freeze({json,canonicalKnown:!!collectedRows&&canonicalJSONOrder(reference)});
     }
     rows.set(index,metadata);
     if(collectedRows)collectedRows.add(index,metadata);
@@ -267,28 +267,44 @@ export function restorePortfolioReporting(db){return restorePortfolioReportingCo
 
 // One exact saved primitive plus immutable row text, never returned native objects
 // or expanded vectors. The existing decoder cap bounds optimization memory only.
-let validatedSavedValue=null,validatedSavedRows=null;
-function rowTable(){
+let validatedSavedValue=null,validatedSavedRows=null,validatedSavedRowBytes=0;
+function rowTable(limit=MAX_DEMO_DECODE_BYTES){
   let table=Object.create(null),bytes=128;
   return {add(index,metadata){
     if(!table||Object.hasOwn(table,index))return;
     bytes+=metadata.json.length*2+160; // text plus conservative object/index/flag overhead
-    if(bytes>MAX_DEMO_DECODE_BYTES){table=null;return;}
+    if(bytes>limit){table=null;return;}
     table[index]=metadata;
   },finish(){return table?{rows:Object.freeze(table),bytes}:null;}};
 }
 function publishSavedRows(saved,prepared){
-  // Publish only reader-validated text, or clear after a changed successful write.
+  // Publish only reader-validated text; indices are bound to these exact bytes.
   // This helper performs no parsing, serialization or other fallible preparation.
   if(prepared&&typeof saved==='string'&&saved.length*2+prepared.bytes<=MAX_DEMO_DECODE_BYTES){
-    validatedSavedValue=saved;validatedSavedRows=prepared.rows;
-  }else{validatedSavedValue=null;validatedSavedRows=null;}
+    validatedSavedValue=saved;validatedSavedRows=prepared.rows;validatedSavedRowBytes=prepared.bytes;
+  }else{validatedSavedValue=null;validatedSavedRows=null;validatedSavedRowBytes=0;}
+}
+// A changed store can reuse only a full-content proof, never the old pool index.
+// This map exists for one restore; conservative combined estimates skip reuse
+// rather than increasing the existing serialization-metadata resource bound.
+function priorContentProofs(saved){
+  if(!validatedSavedRows||typeof saved!=='string')return null;
+  let bytes=validatedSavedRowBytes+saved.length*2+(validatedSavedValue?.length||0)*2+128;
+  const proofs=new Map();
+  for(const metadata of Object.values(validatedSavedRows)){
+    bytes+=160;
+    if(bytes>=MAX_DEMO_DECODE_BYTES)return null;
+    proofs.set(metadata.json,metadata);
+  }
+  return {proofs,remaining:MAX_DEMO_DECODE_BYTES-bytes};
 }
 export function readPortfolioStore(saved){
   const db=decodeDemoStore(saved);
   const prototypeHooks=customJSON({})||customJSON([]);
   if(!prototypeHooks&&typeof saved==='string'&&saved===validatedSavedValue)return restorePortfolioReportingCore(db,validatedSavedRows);
-  const collected=prototypeHooks?null:rowTable(),restored=restorePortfolioReportingCore(db,null,collected);
+  const prior=prototypeHooks?null:priorContentProofs(saved);
+  const collected=prototypeHooks?null:rowTable(prior?.remaining);
+  const restored=restorePortfolioReportingCore(db,null,collected,prior?.proofs);
   const prepared=collected?.finish();
   publishSavedRows(saved,prototypeHooks?null:prepared);
   return restored;
@@ -303,8 +319,9 @@ function customJSON(value){
 export function writePortfolioStore(storage,key,db){
   const json=JSON.stringify(compactPortfolioReportingCore(db));
   const saved=writeDemoStore(storage,key,json);
-  // Reader-owned metadata is established only from the actual saved bytes.
-  if(saved!==validatedSavedValue)publishSavedRows(saved,null);
+  // Changed bytes revoke index authority; immutable content proof survives until
+  // the next reader validates every current row and publishes its own indices.
+  if(saved!==validatedSavedValue)validatedSavedValue=null;
   return saved;
 }
 

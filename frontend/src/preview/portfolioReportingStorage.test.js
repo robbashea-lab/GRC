@@ -594,3 +594,46 @@ test.each(['normal','omitted','throws','second read null','getter installs hook'
   if(variant==='omitted'||variant==='second read null')expect(actual.result[0].current.source_revision).toBeNull();
   if(variant==='throws')expect(actual.error).toBe('Synthetic scope serializer failure');
 });
+
+
+test('changed successful writes reuse exact content proof but still validate and serialize current rows',()=>{
+  const db=restorePortfolioReporting(packed());
+  provenance(db).source_references[0].proof={proof_probe:'unchanged',nested:[{a:1,z:'✓'}]};
+  const storage=memoryStorage(),first=writePortfolioStore(storage,'demo',db),current=readPortfolioStore(first);
+  current.case_marker='changed saved bytes';
+  const next=writePortfolioStore(storage,'demo',current);
+  expect(next).not.toBe(first);
+  const nativeKeys=Object.keys,keys=jest.spyOn(Object,'keys').mockImplementation(value=>nativeKeys(value));
+  const stringify=jest.spyOn(JSON,'stringify');
+  let restored;
+  try{
+    restored=readPortfolioStore(next);
+    expect(rowSerializations(stringify).length).toBeGreaterThan(0);
+    expect(keys.mock.calls.filter(([value])=>value?.proof_probe==='unchanged')).toHaveLength(0);
+  }finally{keys.mockRestore();stringify.mockRestore();}
+  expect(JSON.stringify(restored)).toBe(JSON.stringify(restorePortfolioReporting(codec.decodeDemoStore(next))));
+  const external=codec.decodeDemoStore(next);
+  external.portfolio_reporting.source_records.find(row=>row.id==='a').proof.nested[0].z='changed content';
+  external.case_marker='new full row content';
+  const altered=JSON.stringify(external),keySpy=jest.spyOn(Object,'keys').mockImplementation(value=>nativeKeys(value));
+  try{
+    const changed=readPortfolioStore(altered);
+    expect(keySpy.mock.calls.filter(([value])=>value?.proof_probe==='unchanged').length).toBeGreaterThan(0);
+    expect(provenance(changed).source_references[0].proof.nested[0].z).toBe('changed content');
+  }finally{keySpy.mockRestore();}
+});
+
+test('content proof follows complete row text through reordered pools and never authorizes corrupt indices',()=>{
+  const storage=memoryStorage(),first=writePortfolioStore(storage,'demo',restorePortfolioReporting(packed()));
+  readPortfolioStore(first);
+  const reordered=codec.decodeDemoStore(first),history=reordered.portfolio_reporting;
+  history.source_records.reverse();
+  history.source_vectors=history.source_vectors.map(vector=>vector.map(index=>1-index));
+  reordered.case_marker='reordered valid pool';
+  const saved=JSON.stringify(reordered),actual=readPortfolioStore(saved);
+  expect(JSON.stringify(actual)).toBe(JSON.stringify(restorePortfolioReporting(codec.decodeDemoStore(saved))));
+  expect(provenance(actual).source_references.map(row=>row.id)).toEqual(['a','b','a']);
+  const invalid=codec.decodeDemoStore(saved);invalid.portfolio_reporting.source_vectors[0][0]=99;
+  expect(()=>readPortfolioStore(JSON.stringify(invalid))).toThrow(/source reference is unavailable/);
+  expect(provenance(readPortfolioStore(saved)).source_references.map(row=>row.id)).toEqual(['a','b','a']);
+});
