@@ -18,13 +18,26 @@ jest.mock('sonner',()=>({toast:{error:jest.fn(),success:jest.fn()}}));
 const clientId='demo_brawndo';
 const copy=value=>JSON.parse(JSON.stringify(value));
 const today=()=>{const date=new Date();return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');};
-let root,host,record,baseline,relatedBefore,base,version,putSpy,patchSpy,postSpy;
+let root,host,record,baseline,relatedBefore,base,version,getSpy,putSpy,patchSpy,postSpy;
 // The real native shell renders in a Radix portal, outside React's mount container.
 const surface=()=>document.querySelector('[data-testid="brawndo-cis-assessment"]');
 const guide=()=>surface().querySelector('[aria-label="CIS assessment interview"]');
 const disclosure=()=>surface().querySelector('.assessment-summary');
 const button=(scope,name)=>[...scope.querySelectorAll('button')].find(node=>node.textContent.trim()===name);
-async function click(scope,name){const target=button(scope,name);expect(target).toBeTruthy();expect(target.disabled).toBe(false);await act(async()=>target.click());}
+async function click(scope,name){
+  const target=button(scope,name);expect(target).toBeTruthy();expect(target.disabled).toBe(false);
+  const requests=[getSpy,putSpy,patchSpy,postSpy].filter(Boolean),starts=requests.map(spy=>spy.mock.results.length);
+  await act(async()=>{
+    target.click();
+    // DOM click does not return the async handler. Wait for the actual native
+    // writes started by this action before asserting its rendered outcome.
+    while(true){
+      const pending=requests.flatMap((spy,index)=>{const results=spy.mock.results.slice(starts[index]);starts[index]=spy.mock.results.length;return results.map(result=>result.value);});
+      if(!pending.length)break;
+      await Promise.allSettled(pending);
+    }
+  });
+}
 async function edit(node,value){
   expect(node).toBeTruthy();
   const prototype=node.tagName==='SELECT'?HTMLSelectElement.prototype:node.tagName==='INPUT'?HTMLInputElement.prototype:HTMLTextAreaElement.prototype;
@@ -77,7 +90,7 @@ async function loadSafeguard(id){
   baseline=copy((await api.get(base)).data);relatedBefore=copy((await api.get(base+'/related')).data);
   const initial=(await api.get(base+'/guided-assessment')).data;
   version=initial.version;expect(version).toBe(versionForSafeguard(id,true));expect(initial).toMatchObject({revision:0,answers:{},completed:false});
-  putSpy=jest.spyOn(api,'put');patchSpy=jest.spyOn(api,'patch');postSpy=jest.spyOn(api,'post');
+  getSpy=jest.spyOn(api,'get');putSpy=jest.spyOn(api,'put');patchSpy=jest.spyOn(api,'patch');postSpy=jest.spyOn(api,'post');
   return initial;
 }
 async function checkpoint(answers,{completed=false,narrative='',result=null}={}){
@@ -223,7 +236,7 @@ test.each(['read-only','visual-disabled','unavailable'])('%s entry does not reve
   await loadSafeguard('1.1');
   if(state==='read-only')mockAuth={...mockAuth,user:{...mockAuth.user,role:'client_viewer'}};
   if(state==='unavailable'){
-    const get=api.get.bind(api);jest.spyOn(api,'get').mockImplementation((url,config)=>url===base+'/guided-assessment'?Promise.reject(new Error('Owned fixture interview unavailable')):get(url,config));
+    const get=getSpy.getMockImplementation().bind(api);getSpy.mockImplementation((url,config)=>url===base+'/guided-assessment'?Promise.reject(new Error('Owned fixture interview unavailable')):get(url,config));
   }
   await render(state!=='visual-disabled');expect(disclosure().open).toBe(false);expect(putSpy).not.toHaveBeenCalled();expect(patchSpy).not.toHaveBeenCalled();expect(postSpy).not.toHaveBeenCalled();
   await assertNativeUnchanged();
@@ -234,9 +247,9 @@ test.each(['read-only','visual-disabled','unavailable'])('%s entry does not reve
 
 test('a delayed fresh personal read cannot reopen an interview explicitly opened and closed while loading',async()=>{
   await loadSafeguard('1.1');
-  const get=api.get.bind(api);let release,intercepted=false;
+  const get=getSpy.getMockImplementation().bind(api);let release,intercepted=false;
   const pending=new Promise(resolve=>{release=resolve;});
-  jest.spyOn(api,'get').mockImplementation((url,config)=>{
+  getSpy.mockImplementation((url,config)=>{
     if(url===base+'/guided-assessment'&&!intercepted){intercepted=true;return pending;}
     return get(url,config);
   });
