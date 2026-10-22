@@ -38,6 +38,8 @@ const scopeFilter=Array.prototype.filter,scopeFromEntries=Object.fromEntries,sco
 const scopeIsArray=Array.isArray,scopeIterator=Array.prototype[Symbol.iterator];
 const scopeConstructor=Object.getOwnPropertyDescriptor(Array.prototype,'constructor').value;
 const scopeSpecies=Object.getOwnPropertyDescriptor(Array,Symbol.species).get;
+const sourceMap=Array.prototype.map,sourceFind=Array.prototype.find;
+const sourcePush=Array.prototype.push,sourceFreeze=Object.freeze,sourceInteger=Number.isInteger;
 const restoredScopes=new WeakMap();
 const scopeSerializationUnchanged=()=>stable===scopeStable
   &&Object.getOwnPropertyDescriptor(JSON,'parse')?.value===scopeParse
@@ -205,6 +207,18 @@ function compactPortfolioReportingCore(db){
     if(!canonicalRows.has(metadata.json))canonicalRows.set(metadata.json,stable(JSON.parse(metadata.json)));
     return canonicalRows.get(metadata.json);
   };
+  const canonicalVector=vector=>{
+    const rows=vector.rows;
+    // Only private frozen metadata can bypass per-row serializer checks. Native
+    // map/species perform no caller work between this check and reading strings.
+    if(Object.getPrototypeOf(rows)!==Array.prototype
+      ||Object.getOwnPropertyDescriptor(Array.prototype,'map')?.value!==sourceMap
+      ||Object.getOwnPropertyDescriptor(Array.prototype,'constructor')?.value!==scopeConstructor
+      ||Object.getOwnPropertyDescriptor(Array,Symbol.species)?.get!==scopeSpecies
+      ||customJSON({})||customJSON([]))return null;
+    for(let i=0;i<rows.length;i++)if(!rows[i].canonicalKnown)return null;
+    return rows.map(metadata=>metadata.json);
+  };
   const internVector=rows=>{
     const indices=rows.map(internRow),signature=JSON.stringify(indices);
     let index=sources.get(signature);
@@ -227,7 +241,7 @@ function compactPortfolioReportingCore(db){
     let index;
     if(lazy&&Object.getOwnPropertyDescriptor(provenance,'source_references')?.get===lazy.get){
       index=restoredVectors.get(lazy.vector);
-      if(index===undefined){index=internVector(lazy.vector.rows.map(canonicalRow));restoredVectors.set(lazy.vector,index);}
+      if(index===undefined){index=internVector(canonicalVector(lazy.vector)||lazy.vector.rows.map(canonicalRow));restoredVectors.set(lazy.vector,index);}
     }else{
       if(lazy)restoredSourceVectors.delete(provenance);
       const references=provenance?.source_references;
@@ -266,7 +280,15 @@ function canonicalJSONOrder(value){
   return true;
 }
 
-function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null,contentProofs=null,scopeBudget=collectedRows){
+function referenceVector(rows,text){
+  Object.freeze(rows);
+  // Row metadata is immutable, but each native view owns its lazy text cache.
+  return Object.freeze({rows,get json(){
+    if(text===undefined)text='['+rows.map(value=>value.json).join(',')+']';
+    return text;
+  }});
+}
+function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null,contentProofs=null,scopeBudget=collectedRows,pairVectors=null){
   const history=db?.portfolio_reporting;if(!history?.storage_version)return db;
   if(![1,2].includes(history.storage_version))throw new Error('The saved Demo implementation history format is unavailable.');
   const rows=new Map(),vectors=new Map(),scopes=new Map();
@@ -289,25 +311,29 @@ function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null,
     if(collectedRows)collectedRows.add(index,metadata);
     return metadata;
   };
-  const vector=encoded=>{
+  const vector=(encoded,index)=>{
     if(vectors.has(encoded))return vectors.get(encoded);
+    // Only the second native pair restore can reuse fully validated immutable
+    // metadata; a collecting restore must still account for every source row.
+    if(!collectedRows&&validatedRows&&pairVectors?.has(index)&&canForkPortfolioStore()){
+      const shared=pairVectors.get(index),result=referenceVector(shared.rows,shared.text);
+      vectors.set(encoded,result);return result;
+    }
     let result;
     if(history.storage_version===1&&typeof encoded==='string'){
       const references=JSON.parse(encoded);
       // Preserve the older decoder's non-array behavior rather than imposing a
       // new schema on retained V1 stores. Proper vectors use the same lazy path.
       if(!Array.isArray(references))return {legacyValue:references};
-      result={json:encoded,rows:references.map(reference=>Object.freeze({json:JSON.stringify(reference),canonicalKnown:false}))};
+      result=referenceVector(references.map(reference=>Object.freeze({json:JSON.stringify(reference),canonicalKnown:false})),encoded);
     }else if(history.storage_version===2&&Array.isArray(encoded)){
       const references=[];
       for(let i=0;i<encoded.length;i++)references.push(row(encoded[i]));
-      let json;
-      result={rows:references,get json(){
-        if(json===undefined)json='['+references.map(value=>value.json).join(',')+']';
-        return json;
-      }};
+      result=referenceVector(references);
     }else throw new Error('The saved Demo implementation source reference is unavailable.');
-    Object.freeze(result.rows);Object.freeze(result);vectors.set(encoded,result);return result;
+    vectors.set(encoded,result);
+    pairVectors?.set(index,Object.freeze({rows:result.rows,text:history.storage_version===1?encoded:undefined}));
+    return result;
   };
   const current=(value,identity)=>{
     if(!value)return value;
@@ -357,7 +383,8 @@ function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null,
       delete result._portfolio_scope_index;delete result._portfolio_enrollment_ids;
     }
     if(Object.hasOwn(value.provenance||{},'_portfolio_source_index')){
-      const sources=vector(history.source_vectors?.[value.provenance._portfolio_source_index]);
+      const index=value.provenance._portfolio_source_index;
+      const sources=vector(history.source_vectors?.[index],index);
       const provenance={...value.provenance};
       if(Object.hasOwn(sources,'legacyValue'))provenance.source_references=sources.legacyValue;
       else attachRestoredReferences(provenance,sources);
@@ -406,19 +433,57 @@ function priorContentProofs(saved){
   }
   return {proofs,remaining:MAX_DEMO_DECODE_BYTES-bytes};
 }
-export function readPortfolioStore(saved){
-  const db=decodeDemoStore(saved);
+function restoreDecodedStore(db,saved,pairVectors=null){
   const prototypeHooks=customJSON({})||customJSON([]);
   if(!prototypeHooks&&typeof saved==='string'&&saved===validatedSavedValue){
     const scopeBudget=rowTable(Math.max(0,MAX_DEMO_DECODE_BYTES-saved.length*2-validatedSavedRowBytes));
-    return restorePortfolioReportingCore(db,validatedSavedRows,null,null,scopeBudget);
+    return restorePortfolioReportingCore(db,validatedSavedRows,null,null,scopeBudget,pairVectors);
   }
   const prior=prototypeHooks?null:priorContentProofs(saved);
   const collected=prototypeHooks?null:rowTable(prior?.remaining);
-  const restored=restorePortfolioReportingCore(db,null,collected,prior?.proofs);
+  const restored=restorePortfolioReportingCore(db,null,collected,prior?.proofs,collected,pairVectors);
   const prepared=collected?.finish();
   publishSavedRows(saved,prototypeHooks?null:prepared);
   return restored;
+}
+export function readPortfolioStore(saved){return restoreDecodedStore(decodeDemoStore(saved),saved);}
+
+const jsonOwnKeys=Object.keys,jsonSlice=Array.prototype.slice;
+export const canForkPortfolioStore=()=>scopeSerializationUnchanged()
+  &&Object.getOwnPropertyDescriptor(Array.prototype,'slice')?.value===jsonSlice
+  &&Object.getOwnPropertyDescriptor(Array.prototype,'map')?.value===sourceMap
+  &&Object.getOwnPropertyDescriptor(Array.prototype,'find')?.value===sourceFind
+  &&Object.getOwnPropertyDescriptor(Array.prototype,'push')?.value===sourcePush
+  &&Object.getOwnPropertyDescriptor(Object,'freeze')?.value===sourceFreeze
+  &&Object.getOwnPropertyDescriptor(Number,'isInteger')?.value===sourceInteger;
+// This fork receives only native JSON.parse output, never caller-owned graphs.
+// Both branches are restored separately and retain no shared mutable containers.
+export function readPortfolioStorePair(saved){
+  if(!canForkPortfolioStore())
+    return {current:readPortfolioStore(saved),before:null};
+  const decoded=decodeDemoStore(saved);
+  const container=value=>scopeIsArray(value)?jsonSlice.call(value):{...value};
+  let before=decoded;
+  if(decoded&&typeof decoded==='object'){
+    before=container(decoded);let pending={source:decoded,target:before,next:null};
+    while(pending){
+      const {source,target}=pending;pending=pending.next;
+      const keys=jsonOwnKeys(source);
+      for(let i=0;i<keys.length;i++){
+        const key=keys[i];
+        const value=source[key];
+        if(value!==null&&typeof value==='object'){
+          const copy=container(value);
+          // Spread/slice already created this own writable data key, including
+          // __proto__; replacing it cannot invoke an inherited prototype setter.
+          target[key]=copy;pending={source:value,target:copy,next:pending};
+        }
+      }
+    }
+  }
+  const pairVectors=new Map();
+  const current=restoreDecodedStore(decoded,saved,pairVectors);
+  return {current,before:restoreDecodedStore(before,saved,canForkPortfolioStore()?pairVectors:null)};
 }
 function customJSON(value){
   for(let owner=value;owner;owner=Object.getPrototypeOf(owner)){

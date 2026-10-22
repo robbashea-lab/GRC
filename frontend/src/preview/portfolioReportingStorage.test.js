@@ -1,4 +1,4 @@
-import {demoCurrentPositions,captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting,readPortfolioStore,writePortfolioStore} from './portfolioReporting';
+import {demoCurrentPositions,captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting,readPortfolioStore,readPortfolioStorePair,writePortfolioStore} from './portfolioReporting';
 import * as codec from './demoStorageCodec';
 import * as canonical from './commandRequests';
 import {activeDefinitions,frameworkCatalog} from '../lib/frameworks';
@@ -771,4 +771,160 @@ test('valid deeply nested pooled scope remains readable when optional canonical 
     // Canonicalization is still required when actually compacting this scope.
     expect(()=>compactPortfolioReporting(db)).toThrow(RangeError);
   }
+});
+
+test('private canonical vectors preserve repeated rows and full native output without consuming their accessor',()=>{
+  const source=packed();source.portfolio_reporting.source_records=source.portfolio_reporting.source_records.map(row=>JSON.parse(canonical.stable(row)));
+  const json=JSON.stringify(source),owned=readPortfolioStore(json),plain=restorePortfolioReporting(JSON.parse(json));
+  const getter=Object.getOwnPropertyDescriptor(provenance(owned),'source_references').get;
+  expect(JSON.stringify(compactPortfolioReporting(owned))).toBe(JSON.stringify(compactPortfolioReporting(plain)));
+  expect(Object.getOwnPropertyDescriptor(provenance(owned),'source_references').get).toBe(getter);
+  expect(provenance(owned).source_references.map(row=>row.id)).toEqual(['a','b','a']);
+});
+
+test.each(['map','species','serializer'])('canonical vector admission preserves modified %s callbacks and complete output',kind=>{
+  const source=packed();source.portfolio_reporting.source_records=source.portfolio_reporting.source_records.map(row=>JSON.parse(canonical.stable(row)));
+  const json=JSON.stringify(source),owned=readPortfolioStore(json),plain=restorePortfolioReporting(JSON.parse(json));
+  const owner=kind==='map'?Array.prototype:kind==='species'?Array:Object.prototype;
+  const key=kind==='map'?'map':kind==='species'?Symbol.species:'toJSON';
+  const descriptor=Object.getOwnPropertyDescriptor(owner,key),nativeMap=Array.prototype.map;
+  let calls=0;
+  try{
+    if(kind==='map')Object.defineProperty(owner,key,{configurable:true,writable:true,value:function(callback,thisArg){calls++;return nativeMap.call(this,callback,thisArg);}});
+    else if(kind==='species')Object.defineProperty(owner,key,{configurable:true,get(){calls++;return Array;}});
+    else Object.defineProperty(owner,key,{configurable:true,value:function(){calls++;return this;}});
+    const expected=JSON.stringify(compactPortfolioReporting(plain)),expectedCalls=calls;calls=0;
+    expect(JSON.stringify(compactPortfolioReporting(owned))).toBe(expected);
+    expect(calls).toBe(expectedCalls);expect(calls).toBeGreaterThan(0);
+  }finally{if(descriptor)Object.defineProperty(owner,key,descriptor);else delete owner[key];}
+});
+
+test('mixed private vectors retain noncanonical unknown fields and repeated row multiplicity through the fallback',()=>{
+  const source=packed();
+  source.portfolio_reporting.source_records[0]=JSON.parse(canonical.stable(source.portfolio_reporting.source_records[0]));
+  source.portfolio_reporting.source_records[1]=JSON.parse('{"z":{"unknown":"日本語","__proto__":{"retained":true}},"id":"b","a":[null,{"z":2,"a":1}]}');
+  const json=JSON.stringify(source),owned=readPortfolioStore(json),plain=restorePortfolioReporting(JSON.parse(json));
+  const expected=compactPortfolioReporting(plain),actual=compactPortfolioReporting(owned);
+  expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+  const restored=restorePortfolioReporting(actual),expectedNative=restorePortfolioReporting(expected);
+  expect(JSON.stringify(restored)).toBe(JSON.stringify(expectedNative));
+  const rows=provenance(restored).source_references;
+  expect(rows.map(row=>row.id)).toEqual(['a','b','a']);
+  expect(rows[1].z.unknown).toBe('日本語');expect(Object.hasOwn(rows[1].z,'__proto__')).toBe(true);
+  expect(rows[1].z.__proto__).toEqual({retained:true});expect(rows[1].a).toEqual([null,{a:1,z:2}]);
+  rows[0].extra.text='independent edit';expect(rows[2].extra.text).toBe('Unicode ✓');
+});
+
+
+test('request-owned reader pair retains complete independent parsed values and historical multiplicity',()=>{
+  const source=packed();source.unknown=JSON.parse('{"__proto__":{"safe":true},"array":[{"nested":[1,null,"日本語"]},{"nested":[1,null,"日本語"]}]}');
+  const saved=JSON.stringify(source),pair=readPortfolioStorePair(saved),expected=readPortfolioStore(saved);
+  expect(JSON.stringify(pair.current)).toBe(JSON.stringify(expected));expect(JSON.stringify(pair.before)).toBe(JSON.stringify(expected));
+  pair.current.unknown.__proto__.safe=false;pair.current.unknown.array[0].nested[0]=99;
+  provenance(pair.current).source_references[0].extra.text='current edit';
+  expect(pair.before.unknown.__proto__.safe).toBe(true);expect(pair.before.unknown.array[0].nested[0]).toBe(1);
+  expect(pair.current.unknown.array[1].nested[0]).toBe(1);
+  expect(provenance(pair.before).source_references.map(row=>row.id)).toEqual(['a','b','a']);
+  expect(provenance(pair.before).source_references[0].extra.text).toBe('Unicode ✓');
+});
+
+test('request reader pair preserves parsed overflow/negative zero and falls back for parser hooks',()=>{
+  const saved='{"clients":[],"evidence":[],"unknown":{"overflow":1e999,"negative":-0}}';
+  const pair=readPortfolioStorePair(saved);
+  expect(pair.before.unknown.overflow).toBe(Infinity);expect(Object.is(pair.before.unknown.negative,-0)).toBe(true);
+  const parse=JSON.parse,spy=jest.spyOn(JSON,'parse').mockImplementation(text=>parse(text));
+  try{const fallback=readPortfolioStorePair(saved);expect(fallback.before).toBeNull();expect(fallback.current.unknown.overflow).toBe(Infinity);expect(spy).toHaveBeenCalled();}
+  finally{spy.mockRestore();}
+});
+
+test('request reader fork handles deeply nested native JSON without recursive copying',()=>{
+  const depth=6000,saved='{"clients":[],"evidence":[],"unknown":'+'{"child":'.repeat(depth)+'1'+'}'.repeat(depth)+'}';
+  const pair=readPortfolioStorePair(saved);
+  let current=pair.current.unknown,before=pair.before.unknown;
+  for(let i=0;i<depth;i++){
+    expect(current).not.toBe(before);current=current.child;before=before.child;
+  }
+  expect(current).toBe(1);expect(before).toBe(1);
+});
+
+test.each(['v1','v2-string','v2-object'])('request pair preserves %s vector order, multiplicity and independent native materialization',shape=>{
+  const source=packed(shape==='v1'?1:2);
+  if(shape==='v2-string')source.portfolio_reporting.source_records=source.portfolio_reporting.source_records.map(row=>JSON.stringify(row));
+  const saved=JSON.stringify(source),expected=JSON.stringify(readPortfolioStore(saved)),pair=readPortfolioStorePair(saved);
+  expect(JSON.stringify(pair.current)).toBe(expected);expect(JSON.stringify(pair.before)).toBe(expected);
+  const after=pair.current.portfolio_reporting.scope_events[0].after.provenance.source_references;
+  expect(after.map(row=>row.id)).toEqual(['b','a']);after[1].extra.__proto__.safe=false;
+  expect(pair.before.portfolio_reporting.scope_events[0].after.provenance.source_references[1].extra.__proto__.safe).toBe(true);
+  expect(provenance(pair.current).source_references[0].extra.__proto__.safe).toBe(true);
+  provenance(pair.current).source_references[0].extra.text='current-only';
+  expect(provenance(pair.before).source_references[0].extra.text).toBe('Unicode ✓');
+});
+
+test.each(['missing-vector','missing-row','invalid-row'])('request pair retains the native %s validation failure',kind=>{
+  const source=packed();
+  if(kind==='missing-vector')source.portfolio_reporting.source_vectors[1]=null;
+  else if(kind==='missing-row')source.portfolio_reporting.source_vectors[1]=[99];
+  else source.portfolio_reporting.source_records[1]=null;
+  const saved=JSON.stringify(source);let expected;
+  try{readPortfolioStore(saved);}catch(error){expected=error.message;}
+  expect(expected).toMatch(/source reference is unavailable/);
+  expect(()=>readPortfolioStorePair(saved)).toThrow(expected);
+});
+
+test('request pair keeps legacy non-array values independent and retains metadata-cap fallback',()=>{
+  const legacy=packed(1);legacy.portfolio_reporting.source_vectors[0]='{"unknown":{"retained":true}}';
+  const pair=readPortfolioStorePair(JSON.stringify(legacy));
+  provenance(pair.current).source_references.unknown.retained=false;
+  expect(provenance(pair.before).source_references.unknown.retained).toBe(true);
+  const large=packed();large.padding='x'.repeat(Math.floor(codec.MAX_DEMO_DECODE_BYTES/2)+100);
+  const saved=JSON.stringify(large),expected=JSON.stringify(readPortfolioStore(saved)),bounded=readPortfolioStorePair(saved);
+  expect(JSON.stringify(bounded.current)).toBe(expected);expect(JSON.stringify(bounded.before)).toBe(expected);
+});
+
+test('request pair retains independent lazy text materialization after a map callback is installed',()=>{
+  const saved=JSON.stringify(packed());
+  const run=pair=>{
+    const nativeMap=Array.prototype.map;let calls=0;
+    const hook=jest.spyOn(Array.prototype,'map').mockImplementation(function(callback,thisArg){
+      if(this[0]&&Object.hasOwn(this[0],'canonicalKnown')){
+        const suffix='mapped-'+(++calls);
+        return nativeMap.call(this,(value,index,rows)=>callback.call(thisArg,value,index,rows).replace('Unicode ✓',suffix));
+      }
+      return nativeMap.call(this,callback,thisArg);
+    });
+    try{return {current:provenance(pair.current).source_references,currentAgain:provenance(pair.current,1).source_references,
+      before:provenance(pair.before).source_references,beforeAgain:provenance(pair.before,1).source_references,calls};}
+    finally{hook.mockRestore();}
+  };
+  const expected=run({current:readPortfolioStore(saved),before:readPortfolioStore(saved)});
+  const actual=run(readPortfolioStorePair(saved));
+  expect(actual).toEqual(expected);expect(actual.calls).toBe(2);
+  expect(actual.current[0].extra.text).toBe('mapped-1');expect(actual.before[0].extra.text).toBe('mapped-2');
+});
+
+test.each(['integer','push','freeze'])('request pair falls back before skipping modified %s validation',kind=>{
+  const saved=JSON.stringify(packed()),owner=kind==='integer'?Number:kind==='push'?Array.prototype:Object;
+  const key=kind==='integer'?'isInteger':kind,descriptor=Object.getOwnPropertyDescriptor(owner,key),native=owner[key];let calls=0;
+  Object.defineProperty(owner,key,{...descriptor,value:function(...args){calls++;return native.apply(this,args);}});
+  try{
+    const expected=readPortfolioStore(saved),ordinaryCalls=calls;calls=0;
+    const actual=readPortfolioStorePair(saved),pairCalls=calls;
+    expect(actual.before).toBeNull();expect(JSON.stringify(actual.current)).toBe(JSON.stringify(expected));
+    expect(pairCalls).toBe(ordinaryCalls);expect(pairCalls).toBeGreaterThan(0);
+  }finally{Object.defineProperty(owner,key,descriptor);}
+});
+
+test.each(['map','find'])('request fork retains one ordinary restore when %s callbacks are installed',method=>{
+  const source=packed();
+  source.portfolio_reporting.identities=[{program_id:'c:cis-ig1',scopes:[canonical.stable({framework_key:'cis-ig1',definition_ids:['1.1'],enrollment_ids:[]})],head:null}];
+  for(const row of source.portfolio_reporting.snapshots)row.current._portfolio_scope_index=0;
+  for(const row of source.portfolio_reporting.scope_events){row.before._portfolio_scope_index=0;row.after._portfolio_scope_index=0;}
+  const saved=JSON.stringify(source),native=Array.prototype[method];let calls=0;
+  const hook=jest.spyOn(Array.prototype,method).mockImplementation(function(...args){calls++;return native.apply(this,args);});
+  try{
+    const ordinary=readPortfolioStore(saved),ordinaryCalls=calls;calls=0;
+    const pair=readPortfolioStorePair(saved),pairCalls=calls;
+    expect(pair.before).toBeNull();expect(JSON.stringify(pair.current)).toBe(JSON.stringify(ordinary));
+    expect(pairCalls).toBe(ordinaryCalls);expect(pairCalls).toBeGreaterThan(0);
+  }finally{hook.mockRestore();}
 });

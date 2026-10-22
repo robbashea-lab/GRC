@@ -10,7 +10,7 @@ import { buildDemoStore } from './demoSeed';
 import {demoDates} from './demoPortfolio';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
-import {captureDemoReporting,readPortfolioStore,writePortfolioStore,writePortfolioStoreAsync} from './portfolioReporting';
+import {captureDemoReporting,canForkPortfolioStore,readPortfolioStore,readPortfolioStorePair,writePortfolioStore,writePortfolioStoreAsync} from './portfolioReporting';
 import {enrichBrawndoReportingHistory} from './brawndoReportingHistory';
 import {finishDunder} from './programs/dunder';
 import {addInitech,finishInitech} from './programs/initech';
@@ -78,11 +78,17 @@ export function seedStore(clock=new Date()) {
   applyCisDemoRollout(finished,{clock:new Date(demoDates(clock)(0)+'T00:00:00.000Z'),fresh:true});
   return finished;
 }
-export function readStore() {
+const requestBaselines=new WeakMap();
+export const releaseStoreBaseline=db=>{if(db)requestBaselines.delete(db);};
+export function transferStoreBaseline(from,to){
+  const prepared=requestBaselines.get(from);requestBaselines.delete(from);
+  if(prepared)requestBaselines.set(to,prepared);
+}
+export function readStore({comparisonBaseline=false}={}) {
   let saved;
   try {saved=sessionStorage.getItem(STORE_KEY);}catch(error){throw demoStorageError(error,'read');}
   if (saved) {
-    let db;try{db=readPortfolioStore(saved);}catch(error){throw demoStorageError(error,'parse');}
+    let db,pair;try{pair=comparisonBaseline?readPortfolioStorePair(saved):null;db=pair?pair.current:readPortfolioStore(saved);}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
     const retired=removeRetiredDemoClients(db);
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
@@ -90,8 +96,11 @@ export function readStore() {
     const cisRollout=applyCisDemoRollout(db,{fresh:false});
     const lightEvidence=lightweightEvidence(db.evidence,db.evidence);
     const enriched=enrichBrawndoReportingHistory(db);
-    if(retired||initech||cisRollout||enriched||lightEvidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
-    return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
+    const reconciled=retired||initech||cisRollout||enriched||lightEvidence.some((e,i)=>e!==db.evidence[i]);
+    if(reconciled)saveStore(db);
+    const result=restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
+    if(pair?.before&&!reconciled&&sessionStorage.getItem(STORE_KEY)===saved)requestBaselines.set(result,{saved,before:pair.before});
+    return result;
   }
   clearFileCache();
   const db = seedStore();
@@ -105,6 +114,7 @@ function prepareSavedStore(db,previous){
   return persisted;
 }
 export function saveStore(db,{resetFiles=false}={}) {
+  releaseStoreBaseline(db);
   // Persist before responding: quota failures must never masquerade as saved changes.
   try {
     const previous=resetFiles?null:readPortfolioStore(sessionStorage.getItem(STORE_KEY)||'null');
@@ -121,7 +131,8 @@ export async function saveStoreAsync(db,{expectedSaved,beforeCommit,signal}={}){
   try{
     if(sessionStorage.getItem(STORE_KEY)!==expectedSaved)
       throw Object.assign(new Error('Demo data changed; reload before retrying. Changes were not saved.'),{status:409});
-    const previous=readPortfolioStore(expectedSaved||'null');
+    const prepared=requestBaselines.get(db);releaseStoreBaseline(db);
+    const previous=prepared?.saved===expectedSaved&&canForkPortfolioStore()?prepared.before:readPortfolioStore(expectedSaved||'null');
     const persisted=prepareSavedStore(db,previous);
     await writePortfolioStoreAsync(sessionStorage,STORE_KEY,persisted,{beforeCommit,signal,
       afterCommit(){rememberFiles(db,persisted);}});
@@ -129,7 +140,7 @@ export async function saveStoreAsync(db,{expectedSaved,beforeCommit,signal}={}){
   }catch(error){
     if(error.status||error.name==='AbortError'||signal?.aborted)throw error;
     throw demoStorageError(error);
-  }
+  }finally{releaseStoreBaseline(db);}
 }
 export function resetStore() {
   saveStore(seedStore(),{resetFiles:true});

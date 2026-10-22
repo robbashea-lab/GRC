@@ -192,3 +192,49 @@ test('native compressed Evidence commit preserves exact binary and Unicode bytes
   expect(readStore().evidence.find(row=>row.evidence_id===uploaded[index].evidence_id).filename).toBe(samples[index].filename);
  }
 });
+
+
+test('request-owned comparison baseline is independent, consumed once and never hides changed storage',async()=>{
+  const before=readStore(),row=before.tasks.find(item=>item.client_id===cid);expect(row).toBeTruthy();
+  const db=readStore({comparisonBaseline:true}),saved=sessionStorage.getItem(STORE_KEY),priorHistory=JSON.stringify(before.portfolio_reporting);
+  db.tasks.find(item=>item.task_id===row.task_id).title='SYNTHETIC request-owned comparison';
+  await saveStoreAsync(db,{expectedSaved:saved});
+  expect(readStore().tasks.find(item=>item.task_id===row.task_id).title).toBe('SYNTHETIC request-owned comparison');
+  expect(JSON.stringify(before.portfolio_reporting)).toBe(priorHistory);
+  const stale=readStore({comparisonBaseline:true}),staleSaved=sessionStorage.getItem(STORE_KEY),external=readStore();
+  external.tasks.find(item=>item.task_id===row.task_id).title='SYNTHETIC external native save';saveStore(external);
+  await expect(saveStoreAsync(stale,{expectedSaved:staleSaved})).rejects.toMatchObject({status:409});
+  expect(readStore().tasks.find(item=>item.task_id===row.task_id).title).toBe('SYNTHETIC external native save');
+});
+
+test.each([false,true])('late parser errors retain the original save failure and bytes (request baseline %s)',async comparisonBaseline=>{
+  const db=readStore({comparisonBaseline}),saved=sessionStorage.getItem(STORE_KEY),parse=JSON.parse;
+  expect(saved.length).toBeGreaterThan(100000);
+  db.tasks.find(item=>item.client_id===cid).title='SYNTHETIC late parser failure';
+  let wholeReads=0;
+  const parser=jest.spyOn(JSON,'parse').mockImplementation(text=>{
+    if(typeof text==='string'&&text.length>100000){wholeReads++;throw new Error('Synthetic previous-store parser failure');}
+    return parse(text);
+  });
+  try{
+    await expect(saveStoreAsync(db,{expectedSaved:saved})).rejects.toMatchObject({storage_code:'WRITE_FAILED'});
+    expect(wholeReads).toBe(1);expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  }finally{parser.mockRestore();}
+});
+
+test.each([false,true])('late restoration callbacks retain their failure before commit (request baseline %s)',async comparisonBaseline=>{
+  const db=readStore({comparisonBaseline}),saved=sessionStorage.getItem(STORE_KEY),nativeMap=Array.prototype.map;
+  expect(decodeDemoStore(saved).portfolio_reporting.snapshots.some(row=>Object.hasOwn(row.current,'_portfolio_scope_index'))).toBe(true);
+  db.tasks.find(item=>item.client_id===cid).title='SYNTHETIC late restore failure';
+  let restoredArrays=0;
+  const mapping=jest.spyOn(Array.prototype,'map').mockImplementation(function(callback,thisArg){
+    if(this.some(row=>row?.current&&Object.hasOwn(row.current,'_portfolio_scope_index'))){
+      restoredArrays++;throw new Error('Synthetic restore callback failure');
+    }
+    return nativeMap.call(this,callback,thisArg);
+  });
+  try{
+    await expect(saveStoreAsync(db,{expectedSaved:saved})).rejects.toMatchObject({storage_code:'WRITE_FAILED'});
+    expect(restoredArrays).toBe(1);expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  }finally{mapping.mockRestore();}
+});

@@ -1,4 +1,5 @@
-"""Real native completion routes; only the established isolated mocked Motor DB."""
+"""Native completion routes in the isolated mocked and real-Mongo harnesses."""
+import asyncio
 from copy import deepcopy
 from unittest.mock import patch
 from test_client_dashboard_sources import ClientDashboardSourcesTests, server
@@ -191,6 +192,104 @@ class PolicyCoverageTests(ClientDashboardSourcesTests):
             self.assertEqual(len((await server.db.reviews.find_one({'review_id': 'review-'+key}))['occurrences']), 1)
             self.assertEqual(len((await server.db.policies.find_one({'policy_id': key}))['review_history']), 1)
         self.assertNotIn('_policy_coverage_pending', await server.db.reviews.find_one({'review_id': 'annual'}))
+
+    async def test_overlapping_annual_requests_conflict_then_replay_exactly_once(self):
+        originals = [await self.policy('A'), await self.policy('C', pending=True)]
+        draft = await self.policy('B', 'draft')
+        await server.db.reviews.update_one({'review_id': 'review-A'}, {'$set': {'notes': 'Original child notes'}})
+        entered, release = asyncio.Event(), asyncio.Event()
+        plans = []
+        original_reconcile = server.policy_review_coverage.reconcile
+
+        async def hold_first_reconcile(db, review, plan, user, authorize):
+            # The native request already owns its lease and durable frozen plan.
+            # Hold only this test boundary, never production code or the database.
+            plans.append(deepcopy(plan))
+            if len(plans) == 1:
+                entered.set()
+                await release.wait()
+            return await original_reconcile(db, review, plan, user, authorize)
+
+        intent = {'conclusion': 'Synthetic overlapping annual completion'}
+        with patch.object(server.policy_review_coverage, 'reconcile', side_effect=hold_first_reconcile):
+            first = asyncio.create_task(self.complete(**intent))
+            try:
+                await asyncio.wait_for(entered.wait(), timeout=10)
+                held = await server.db.reviews.find_one({'review_id': 'annual'}, {'_id': 0})
+                self.assertTrue(held['_execution_lock']['token'])
+                self.assertEqual(held['_policy_coverage_pending'], plans[0])
+                self.assertNotIn('occurrences', held)
+                self.assertFalse(first.done())
+
+                # A second authenticated HTTP request actually runs while the
+                # first is suspended inside completion, rather than after it.
+                second = await asyncio.wait_for(self.complete(**intent), timeout=10)
+                self.assertEqual(second.status_code, 409, second.text)
+                self.assertEqual(second.json()['detail'], 'Another occurrence action is being saved; please retry')
+                self.assertFalse(first.done())
+                self.assertEqual(len(plans), 1)
+                self.assertEqual(await server.db.reviews.find_one({'review_id': 'annual'}, {'_id': 0}), held)
+                for key in ('A', 'C'):
+                    self.assertNotIn('occurrences', await server.db.reviews.find_one({'review_id': 'review-' + key}))
+                    self.assertNotIn('review_history', await server.db.policies.find_one({'policy_id': key}))
+
+                edited = await self.client.patch('/api/reviews/review-A', json={
+                    'notes': 'Saved while annual completion is in flight',
+                    'expected_updated_at': BEFORE, 'expected_occurrence_id': 'A-2026'})
+                self.assertEqual(edited.status_code, 200, edited.text)
+                release.set()
+                response = await asyncio.wait_for(asyncio.shield(first), timeout=10)
+            finally:
+                release.set()
+                if not first.done():
+                    first.cancel()
+                await asyncio.gather(first, return_exceptions=True)
+
+        self.assertEqual(response.status_code, 200, response.text)
+        occurrence = response.json()['occurrence']
+        self.assertEqual(occurrence['policy_coverage'], plans[0]['completed']['policy_coverage'])
+        self.assertEqual([(m['policy_id'], m['version'], m['subject_id']) for m in occurrence['policy_coverage']],
+                         [('A', '1', 'A-subject-1'), ('C', '1', 'C-subject-1')])
+        for original in originals:
+            key = original['policy_id']
+            stored = await server.db.policies.find_one({'policy_id': key}, {'_id': 0})
+            for field in ('status', 'version', 'approval_subject', 'approval_source', 'approval_request_id',
+                          'approved_at', 'approval_history', 'decision_history'):
+                self.assertEqual(stored.get(field), original.get(field), field)
+            self.assertEqual(len(stored['review_history']), 1)
+            self.assertEqual(stored['review_history'][0], {
+                'review_id': 'annual', 'occurrence_id': 'annual-2026',
+                'completed_at': AT, 'completed_by': 'admin',
+                'subject_id': key + '-subject-1', 'version': '1'})
+            child = await server.db.reviews.find_one({'review_id': 'review-' + key}, {'_id': 0})
+            self.assertEqual(len(child['occurrences']), 1)
+            self.assertEqual(child['occurrences'][0]['occurrence_id'], key + '-2026')
+            self.assertEqual(child['occurrences'][0]['covered_by'],
+                             {'review_id': 'annual', 'occurrence_id': 'annual-2026'})
+            self.assertEqual(child['occurrences'][0]['policy_coverage'],
+                             [next(member for member in occurrence['policy_coverage'] if member['policy_id'] == key)])
+            self.assertEqual(child['due_date'][:10], '2027-01-31')
+            if key == 'A':
+                self.assertEqual(child['notes'], 'Saved while annual completion is in flight')
+                self.assertEqual(child['occurrences'][0]['notes'], 'Original child notes')
+        self.assertEqual(await server.db.policies.find_one({'policy_id': 'B'}, {'_id': 0}), draft)
+        annual = await server.db.reviews.find_one({'review_id': 'annual'}, {'_id': 0})
+        self.assertEqual(annual['occurrences'], [occurrence])
+        self.assertEqual(annual['due_date'][:10], '2027-10-01')
+        self.assertNotIn('_execution_lock', annual)
+        self.assertNotIn('_policy_coverage_pending', annual)
+
+        # Retry the losing request after the winner commits. Compare complete
+        # synthetic records, not merely a successful response or history counts.
+        before_retry = {
+            'reviews': await server.db.reviews.find({}, {'_id': 0}).to_list(100),
+            'policies': await server.db.policies.find({}, {'_id': 0}).to_list(100),
+        }
+        retry = await self.complete(**intent)
+        self.assertEqual(retry.status_code, 200, retry.text)
+        self.assertEqual(retry.json()['occurrence'], occurrence)
+        self.assertEqual(await server.db.reviews.find({}, {'_id': 0}).to_list(100), before_retry['reviews'])
+        self.assertEqual(await server.db.policies.find({}, {'_id': 0}).to_list(100), before_retry['policies'])
 
     async def test_busy_child_missing_child_and_foreign_subject_fail_closed(self):
         await self.policy('A')

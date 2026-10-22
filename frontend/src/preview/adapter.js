@@ -19,7 +19,7 @@ import {frameworkRequest,frameworkReverse,frameworkScope,prepareGuidedContext} f
 import { baselineState, baselineRecordVersions, saveBaseline } from './baseline';
 import axios from 'axios';
 import fixtures from './demoConfiguration.json';
-import { clone, readStore, saveStoreAsync, resetStore, STORE_KEY, ids, list, record, write, library, audit, uid, now } from './store';
+import { clone, readStore, releaseStoreBaseline, transferStoreBaseline, saveStoreAsync, resetStore, STORE_KEY, ids, list, record, write, library, audit, uid, now } from './store';
 import { portfolio, dashboard } from './summaries';
 import { onboard, action } from './workflows';
 import {commandRequest} from './commandRequests';
@@ -107,6 +107,7 @@ async function executePreviewAdapter(config,generation) {
       config
     });
   };
+  let requestDb;
   try {
     if(config.signal?.aborted)throw new axios.CanceledError('Demo request cancelled',config);
     if(generation!==sessionGeneration)return fail(401,'Demo session changed; retry from the current session.');
@@ -119,7 +120,7 @@ async function executePreviewAdapter(config,generation) {
       if(path==='/demo/storage'&&method==='get')return respond(demoDiagnostics());
       if(method==='post'&&path!=='/demo/storage'){if(path==='/demo/reset')resetStore();else clearEvidenceFiles();return respond({ok:true});}
     }
-    const db = readStore();
+    const db = readStore({comparisonBaseline:method!=='get'});requestDb=db;
     let expectedSaved=sessionStorage.getItem(STORE_KEY),authorizedSaved;
     const actorId=db.user.user_id;
     if (path === '/auth/login') return fail(401, 'Use standard sign-in for email and password authentication.');
@@ -196,10 +197,12 @@ async function executePreviewAdapter(config,generation) {
         if(generation!==sessionGeneration||sessionStorage.getItem(SESSION)!=='true')return fail(401,'Choose Explore Demo to enter the sample workspace.');
         // Web Crypto yields. Re-read before authorization, native-token and
         // interview revision checks so this snapshot cannot erase newer writes.
-        const latest=readStore();
+        releaseStoreBaseline(db);
+        const latest=readStore({comparisonBaseline:method!=='get'});
         expectedSaved=sessionStorage.getItem(STORE_KEY);
         for(const key of Object.keys(db))delete db[key];
         Object.assign(db,latest);
+        transferStoreBaseline(latest,db);
         if(db.user.user_id!==actorId)return fail(401,'Demo actor changed; retry from the current session.');
         if(params.client_id&&!db.clients.some(client=>client.client_id===params.client_id))return fail(404,'Demo client not found.');
         assertClientBoundary(db,parts,params,authorizationBody);
@@ -582,5 +585,5 @@ async function executePreviewAdapter(config,generation) {
     if (error.isAxiosError) throw error;
     if(['SecurityError','NotAllowedError','QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(error.name))error=demoStorageError(error);
     return fail(error.status || 400, error.message || 'Demo action failed. No changes were saved.',error.storage_code,error.create_rejected===true);
-  }
+  }finally{releaseStoreBaseline(requestDb);}
 }
