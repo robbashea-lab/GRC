@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
-import {readStore,saveStore} from './store';
+import {readStore,saveStore,ids} from './store';
 import {FRAMEWORKS,CATALOGS} from '../lib/frameworks';
 import {socGuidedCatalog,socQuestions,socGuidedResult,socGuidedEnabled} from '../lib/socGuidedAssessment';
 import baseline from '@catalogs/onboardingCatalog.json';
@@ -30,6 +30,17 @@ test('new SOC onboarding defaults to33 clean Common Criteria and add-program pre
   await api.patch('/onboarding/programs/soc-2',{client_id:existing,applicability:'applies'});expect((await workspace(existing)).assessments).toHaveLength(33);
 });
 test('every61criterion saves only progress then exact text/status with native history and no collateral mutation',async()=>{
+  // This exhaustive new-client contract does not exercise the unrelated seeded portfolio.
+  // Remove its records and reporting proof together; all other tests retain full Demo context.
+  const isolated=readStore(),client=isolated.clients.find(row=>row.client_id===cid),users=isolated.users;
+  for(const key of Object.keys(ids))if(key!=='users')isolated[key]=key==='clients'?[client]:[];
+  for(const key of ['baselines','drafts','riskSequences','ai_intake','ai_counters','guided_assessment_pilot'])isolated[key]={};
+  isolated.logs=[];isolated.notifications=[];
+  delete isolated.portfolio_reporting;delete isolated.cis_demo_scenario_history;delete isolated.cis_demo_rollout;
+  saveStore(isolated,{resetFiles:true});
+  const fresh=readStore();expect(fresh.clients).toEqual([client]);expect(fresh.users).toEqual(users);
+  expect(fresh.portfolio_reporting.snapshots).toEqual([]);expect(fresh.portfolio_reporting.scope_events).toEqual([]);
+  expect(fresh.cis_demo_scenario_history).toBeUndefined();
   await configure();const all=await scope(categories);expect(all.active_definition_ids).toHaveLength(61);
   for(const row of all.assessments){
     const before=JSON.parse(JSON.stringify(row)),draft=await completed(row),path='/framework_assessments/'+row.framework_assessment_id;

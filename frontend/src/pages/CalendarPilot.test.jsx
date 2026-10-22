@@ -5,7 +5,7 @@ import api from '@/lib/api';
 import {calendarBuckets,localCalendarDate} from '@/lib/calendarView';
 const cid='demo_brawndo',user={role:'super_admin',user_id:'demo-user',workspace_mode:'demo'};
 jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/calendar',search:'?client_id=demo_brawndo'})}),{virtual:true});
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'demo_brawndo',currentClient:{...require('@/testUtils/cisExperience').cisClient('demo_brawndo',1),name:'Brawndo'},clients:[require('@/testUtils/cisExperience').cisClient('demo_brawndo',1)]})}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({workspaceMode:'demo',user:{role:'super_admin',user_id:'demo-user',workspace_mode:'demo'}})}));
 jest.mock('@/lib/clientSelection',()=>({selectedClient:()=> 'demo_brawndo'}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn()},formatError:e=>e.message}));

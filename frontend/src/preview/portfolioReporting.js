@@ -81,16 +81,13 @@ export function compactPortfolioReporting(db){
       if(Object.hasOwn(value.scope,'enrollment_ids'))result._portfolio_enrollment_ids=[...value.scope.enrollment_ids];
     }
     if(Array.isArray(value.provenance?.source_references)){
-      const vector=stable(value.provenance.source_references);let index=sources.get(vector);
-      if(index===undefined){
-        index=source_vectors.length;
-        source_vectors.push(value.provenance.source_references.map(reference=>{
-          const serialized=stable(reference);let recordIndex=records.get(serialized);
-          if(recordIndex===undefined){recordIndex=source_records.length;source_records.push(serialized);records.set(serialized,recordIndex);}
-          return recordIndex;
-        }));
-        sources.set(vector,index);
-      }
+      const indices=value.provenance.source_references.map(reference=>{
+        const serialized=stable(reference);let recordIndex=records.get(serialized);
+        if(recordIndex===undefined){recordIndex=source_records.length;source_records.push(JSON.parse(serialized));records.set(serialized,recordIndex);}
+        return recordIndex;
+      });
+      const vector=JSON.stringify(indices);let index=sources.get(vector);
+      if(index===undefined){index=source_vectors.length;source_vectors.push(indices);sources.set(vector,index);}
       result.provenance={...value.provenance,_portfolio_source_index:index};delete result.provenance.source_references;
     }
     return result;
@@ -103,6 +100,18 @@ export function compactPortfolioReporting(db){
 export function restorePortfolioReporting(db){
   const history=db?.portfolio_reporting;if(!history?.storage_version)return db;
   if(![1,2].includes(history.storage_version))throw new Error('The saved Demo implementation history format is unavailable.');
+  // These text caches last only for this restoration. Every occurrence still
+  // parses a fresh array, so repeated references never share nested objects.
+  const rowTexts=new Map(),vectorTexts=new Map();
+  const rowText=index=>{
+    if(rowTexts.has(index))return rowTexts.get(index);
+    const encoded=Number.isInteger(index)&&index>=0?history.source_records?.[index]:null;
+    const reference=typeof encoded==='string'?JSON.parse(encoded):encoded;
+    if(!reference||typeof reference!=='object'||Array.isArray(reference))throw new Error('The saved Demo implementation source reference is unavailable.');
+    // Normalize legacy string rows exactly as the old per-row JSON roundtrip,
+    // including overflow numbers and duplicate JSON properties.
+    const text=JSON.stringify(reference);rowTexts.set(index,text);return text;
+  };
   const current=(value,identity)=>{
     if(!value)return value;
     const result={...value};
@@ -117,11 +126,10 @@ export function restorePortfolioReporting(db){
       const vector=history.source_vectors?.[value.provenance._portfolio_source_index];
       let references;
       if(history.storage_version===1&&typeof vector==='string')references=JSON.parse(vector);
-      else if(history.storage_version===2&&Array.isArray(vector))references=vector.map(index=>{
-        const serialized=Number.isInteger(index)&&index>=0?history.source_records?.[index]:null;
-        if(typeof serialized!=='string')throw new Error('The saved Demo implementation source reference is unavailable.');
-        return JSON.parse(serialized);
-      });
+      else if(history.storage_version===2&&Array.isArray(vector)){
+        if(!vectorTexts.has(vector))vectorTexts.set(vector,'['+vector.map(rowText).join(',')+']');
+        references=JSON.parse(vectorTexts.get(vector));
+      }
       else throw new Error('The saved Demo implementation source reference is unavailable.');
       result.provenance={...value.provenance,source_references:references};delete result.provenance._portfolio_source_index;
     }

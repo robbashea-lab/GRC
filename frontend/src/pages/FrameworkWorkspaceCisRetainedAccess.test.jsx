@@ -5,6 +5,7 @@ import FrameworkWorkspace from './FrameworkWorkspace';
 import CisResultTable from '@/components/CisResultTable';
 import {cis,FRAMEWORKS} from '@/lib/frameworks';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
 
 let mockAuth,mockOrg,mockOmniProps;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -74,7 +75,7 @@ function expectActiveScope(){
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();sessionStorage.setItem('grc_client_id','demo_brawndo');
   mockAuth={user:{user_id:'retained-access-actor',role:'super_admin',workspace_mode:'demo'},workspaceMode:'demo',loading:false};
-  const client={client_id:'demo_brawndo',name:'Brawndo',status:'active'};
+  const client={...cisClient('demo_brawndo',1),name:'Brawndo'};
   mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};mockOmniProps=null;data=fixture();
   api.get.mockImplementation(async path=>{
     if(path==='/frameworks/cis-ig1')return {data};

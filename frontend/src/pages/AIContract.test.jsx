@@ -7,9 +7,9 @@ import api from '@/lib/api';
 import {AI_KEYS,AI_RELATIONSHIP_NOTICE} from '@/lib/aiGovernance';
 import {AI_PILOT_KEYS} from '@/lib/brawndoAI';
 
-let mockUser,mockClient;
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient})}));
+let mockUser,mockClient,mockClients;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:mockUser?.workspace_mode==='demo'?'demo':'standard',loading:false})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:mockClients.find(client=>client.client_id===mockClient),clients:mockClients,loading:false})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/adapter').previewAdapter}),formatError:e=>e.response?.data?.detail||e.message,API:'/api'}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
 jest.mock('@/lib/recordUuid',()=>({recordUuid:()=>require('crypto').randomUUID()}));
@@ -26,6 +26,7 @@ const mine=async()=>(await api.get('/ai_systems',{params:{client_id:mockClient}}
 beforeEach(async()=>{
  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();mockClient='demo_prestige';
  mockUser=(await api.post('/demo/enter')).data.user;
+ mockClients=(await api.get('/clients')).data;
  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.restoreAllMocks();});
@@ -66,7 +67,7 @@ test('Prestige does not advertise unsupported approval or pilot fields and direc
  expect(buttons('Schedule Review')).toHaveLength(1);expect(buttons('Record Decision')).toHaveLength(0);
  expect(document.querySelector('[aria-label="Decision"]')).toBeNull();
  await expect(api.patch('/ai_systems/'+row.ai_system_id,{environment:'Unsupported',expected_updated_at:row.updated_at})).rejects.toThrow('Unknown or read-only AI fields');
- await expect(api.post('/ai_systems/'+row.ai_system_id+'/approval',{status:'approved',note:'Unsupported',expected_updated_at:row.updated_at})).rejects.toThrow('Approval pilot is available only for Brawndo Demo');
+ await expect(api.post('/ai_systems/'+row.ai_system_id+'/approval',{status:'approved',note:'Unsupported',expected_updated_at:row.updated_at})).rejects.toThrow('Approval decisions require a configured CIS program');
 });
 
 test('Brawndo keeps its explicit pilot fields, pending view and administrator approval workflow',async()=>{

@@ -10,7 +10,8 @@ import {adjustProgram} from './onboardingHandoff';
 
 const AT='2026-10-18T18:00:00.000Z',PROGRAM='demo_brawndo:cis-ig1';
 const report=(db,range='3m')=>portfolioReportingRequest(db,'/portfolio/reporting/history',{client_id:'demo_brawndo',program_key:'cis-ig1',range});
-const fixtures=db=>db.portfolio_reporting.snapshots.filter(row=>row.observation_kind==='demo_fixture');
+const fixtures=db=>db.portfolio_reporting.snapshots.filter(row=>row.observation_kind==='demo_fixture'&&row.client_id==='demo_brawndo'&&row.program_id===PROGRAM);
+const otherFixtures=db=>db.portfolio_reporting.snapshots.filter(row=>row.observation_kind==='demo_fixture'&&row.client_id!=='demo_brawndo');
 beforeEach(()=>{jest.useFakeTimers().setSystemTime(new Date(AT));sessionStorage.clear();});
 afterEach(()=>jest.useRealTimers());
 
@@ -87,6 +88,7 @@ test('native saved status reloads into current summaries and appends history wit
   const reopened=readStore();
   expect(reopened.framework_assessments.find(value=>value.framework_assessment_id===row.framework_assessment_id)).toMatchObject({status:'addressed',last_saved:saved.last_saved});
   expect(fixtures(reopened)).toEqual(original);
+  expect(otherFixtures(reopened)).toEqual(otherFixtures(before));
   const history=(await api.get('/portfolio/reporting/history',{params:{client_id:'demo_brawndo',program_key:'cis-ig1',range:'12m'}})).data;
   expect(history.current.implemented).toBe(33);
   expect(history.current.denominator).toBe(56);

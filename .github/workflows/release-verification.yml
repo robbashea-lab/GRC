@@ -11,9 +11,41 @@ permissions:
   contents: read
 
 jobs:
-  frontend:
+  frontend-tests:
+    name: Frontend tests (${{ matrix.shard }})
     runs-on: ubuntu-24.04
-    # Existing ten-year simulation has a 30-minute hook budget, plus other tests/builds.
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [ten-year, '1', '2', '3']
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile
+      - name: Validate campaign accounting regressions
+        run: node --test scripts/frontend-campaign.test.cjs
+      - name: Discover and execute exact assigned suites
+        run: node scripts/frontend-campaign.cjs run '${{ matrix.shard }}' 'campaign/${{ matrix.shard }}'
+        env:
+          CI: 'true'
+      - name: Preserve inventory and Jest results even on failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: frontend-campaign-${{ matrix.shard }}
+          path: frontend/campaign/${{ matrix.shard }}/
+          if-no-files-found: error
+          retention-days: 7
+
+  frontend-builds:
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     defaults:
       run:
@@ -25,9 +57,6 @@ jobs:
           node-version: '22'
       - run: corepack enable
       - run: yarn install --frozen-lockfile
-      - run: yarn test --watchAll=false --runInBand
-        env:
-          CI: 'true'
       - name: Build authenticated Render application
         run: node scripts/staging.cjs
         env:
@@ -36,6 +65,38 @@ jobs:
         run: yarn build:preview
         env:
           CI: 'true'
+
+  frontend-coverage:
+    if: ${{ always() }}
+    needs: [frontend-tests]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: frontend-campaign-*
+          path: frontend/campaign-artifacts
+      - name: Require complete successful exact-source campaign
+        working-directory: frontend
+        run: node scripts/frontend-campaign.cjs audit campaign-artifacts
+
+  frontend:
+    # Preserve the existing required check identity as a fail-closed aggregate.
+    if: ${{ always() }}
+    needs: [frontend-tests, frontend-builds, frontend-coverage]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require every shard, exhaustive accounting and both builds
+        env:
+          TEST_RESULT: ${{ needs.frontend-tests.result }}
+          BUILD_RESULT: ${{ needs.frontend-builds.result }}
+          COVERAGE_RESULT: ${{ needs.frontend-coverage.result }}
+        run: test "$TEST_RESULT" = success && test "$BUILD_RESULT" = success && test "$COVERAGE_RESULT" = success
 
   backend:
     runs-on: ubuntu-24.04

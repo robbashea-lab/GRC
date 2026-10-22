@@ -2,6 +2,7 @@
 // Uses jsdom's quota-limited sessionStorage; the ten-year characterization suite
 // intentionally uses unbounded storage and cannot establish browser capacity.
 import axios from 'axios';
+import {decodeDemoStore} from './demoStorageCodec';
 import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
 import baseline from '@catalogs/onboardingCatalog.json';
@@ -282,7 +283,7 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
     checkpoints.push(counts);
     if(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR){
       const fs=jest.requireActual('fs'),nodePath=jest.requireActual('path');fs.mkdirSync(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,{recursive:true});
-      fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'-'+year+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,checkpoint:counts,store:JSON.parse(sessionStorage.getItem(STORE_KEY))}));
+      fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'-'+year+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,checkpoint:counts,store:decodeDemoStore(sessionStorage.getItem(STORE_KEY))}));
     }
   }
   clock(endYear+'-12-31');
@@ -316,7 +317,7 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   const oldFile = await get('/evidence-library/items/'+firstEvidence.evidence_id);
   expect(oldFile.created_at).toBe(firstEvidence.created_at);
   expect(oldFile.references.filter(r=>r.kind==='framework_assessments')).toHaveLength(2);
-  const snapshot = JSON.parse(sessionStorage.getItem(STORE_KEY));
+  const snapshot = decodeDemoStore(sessionStorage.getItem(STORE_KEY));
   expect(snapshot.evidence.filter(e=>e.evidence_id===firstEvidence.evidence_id)).toHaveLength(1);
   expect(snapshot.evidence.reduce((bytes,e)=>bytes+(e.content_base64?.length||0)*2,0)).toBeLessThanOrEqual(64*1024);
   // Read through a new client instance to ensure results are persisted, not API-local state.
@@ -331,7 +332,7 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   if(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR){
     const fs=jest.requireActual('fs'),nodePath=jest.requireActual('path');
     fs.mkdirSync(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,{recursive:true});
-    fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,events,store:JSON.parse(sessionStorage.getItem(STORE_KEY))}));
+    fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,events,store:decodeDemoStore(sessionStorage.getItem(STORE_KEY))}));
   }
   const finalProbe=finalReviews.find(r=>r.review_id===probe.review_id);
   expect(finalProbe.occurrences[0].completed_at.slice(0,10)).toBe(timeline.month_end_probe.early_completion);

@@ -9,7 +9,7 @@ const active=r=>!['completed','cancelled'].includes(r.status);
 const policyReviews=()=>readStore().reviews.filter(r=>r.client_id===cid&&r.policy_id);
 test('every seeded Brawndo Policy has exactly one active annual Review that keeps its next-review date',()=>{
   const policies=readStore().policies.filter(p=>p.client_id===cid),seeded=buildDemoStore(Object.keys(ids),new Date()).policies.filter(p=>p.client_id===cid);
-  expect(policies).toHaveLength(17);
+  expect(policies).toHaveLength(10);
   for(const p of policies){
     const linked=policyReviews().filter(r=>r.policy_id===p.policy_id&&active(r));
     expect(linked).toHaveLength(1);
@@ -20,8 +20,8 @@ test('every seeded Brawndo Policy has exactly one active annual Review that keep
     expect(review.due_date.slice(0,10)).toBe(seeded.find(s=>s.policy_id===p.policy_id).next_review_date.slice(0,10));
     if(review.occurrences?.length)expect(p.last_reviewed_at).toBe(review.occurrences.at(-1).completed_at);
   }
-  // The program-level Policy Review and Approval Review is retained.
-  expect(readStore().reviews.some(r=>r.review_id==='demo_brawndo_review_policy-review'&&!r.policy_id)).toBe(true);
+  // Strict fresh CIS scenarios omit the optional consolidated Review preset.
+  expect(readStore().reviews.some(r=>r.review_id==='demo_brawndo_review_policy-review'&&!r.policy_id)).toBe(false);
 });
 test('a second active Review for a Policy is rejected on create and on relink',async()=>{
   const p=readStore().policies.find(x=>x.client_id===cid);
@@ -30,8 +30,10 @@ test('a second active Review for a Policy is rejected on create and on relink',a
   await expect(api.patch('/reviews/'+other.review_id,{policy_id:p.policy_id})).rejects.toBeTruthy();
 });
 test('policy Review completion keeps its cycle, records history and leaves approval alone; its Finding stays visible',async()=>{
-  const draft=readStore().policies.find(x=>x.client_id===cid&&x.status==='draft');
-  const review=policyReviews().find(r=>r.policy_id===draft.policy_id&&active(r));
+  // Fresh CIS seed intentionally contains ten required approved policies. Create a disposable
+  // optional draft and its native annual Review rather than depending on removed seed extras.
+  const draft=(await api.post('/policies',{client_id:cid,title:'Synthetic Optional BYOD Policy',status:'draft',presence:'needs_confirmation',version:'1'})).data;
+  const review=(await api.post('/reviews',{client_id:cid,policy_id:draft.policy_id,title:'Synthetic Optional BYOD Policy Review',review_type:'policy',recurrence:'annual',due_date:'2026-12-01'})).data;
   const due=review.due_date.slice(0,10);
   const finding=(await api.post(`/reviews/${review.review_id}/create-finding`,{occurrence_id:review.current_occurrence_id,request_id:'pol-qa',title:'Policy omits BYOD',remediation_title:'Add BYOD section'})).data;
   const task=readStore().tasks.find(t=>t.finding_id===finding.finding_id);

@@ -7,7 +7,8 @@ export const payloadBytes=value=>typeof value==='string'?value.length*2:0;
 export const fileBytes=value=>{const raw=(value||'').split(',').pop();return Math.floor(raw.length*3/4)-(raw.endsWith('==')?2:raw.endsWith('=')?1:0);};
 const SNAPSHOT_FIELDS=['title','review_type','recurrence','owner_id','reviewer_id','scope','framework_drivers','baseline_key','framework_key','framework_safeguards','framework_plan_key','governance_context','policy_id'];
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-const copy=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value));
+// Immutable primitives need no clone; numbers retain JSON normalization (including -0).
+const copy=value=>(value===undefined||value===null||typeof value==='string'||typeof value==='boolean')?value:JSON.parse(JSON.stringify(value));
 const compactReviews=reviews=>(reviews||[]).map(review=>({...review,occurrences:(review.occurrences||[]).map(occurrence=>{
   const inherited=SNAPSHOT_FIELDS.filter(field=>Object.hasOwn(occurrence,field)&&same(occurrence[field],review[field]));
   if(!inherited.length)return occurrence;

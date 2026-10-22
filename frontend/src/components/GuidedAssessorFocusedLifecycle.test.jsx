@@ -6,6 +6,7 @@ import control1V4 from '@catalogs/guidedControl1V4.json';
 import control1V5 from '@catalogs/guidedControl1V5.json';
 import {focusedResult} from '@/lib/focusedOmni';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
 
 let mockAuth,mockOrg,mockTrustedDemo;
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:error=>error.message,get PREVIEW_MODE(){return mockTrustedDemo;}}));
@@ -312,7 +313,7 @@ function expectNativeUnchanged(nativeBefore){
 
 function enableBoundedDemoContext(){
   mockTrustedDemo=true;mockAuth={user:{user_id:'focused-actor',role:'super_admin',workspace_mode:'demo'},workspaceMode:'demo',loading:false};
-  const client={client_id:'demo_brawndo',status:'active'};
+  const client=cisClient('demo_brawndo',1);
   mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
   sessionStorage.setItem('grc_client_id',client.client_id);
   window.history.replaceState({},'', '/compliance/cis-ig1?client_id=demo_brawndo');
@@ -450,7 +451,6 @@ test('clearing and reselecting a software requirement removes only that matrix r
 
 const boundedContextNegatives=[
   ['untrusted preview',()=>{mockTrustedDemo=false;}],
-  ['ordinary authenticated mode',()=>{mockAuth.workspaceMode='standard';mockAuth.user.workspace_mode='standard';}],
   ['auth mode mismatch',()=>{mockAuth.workspaceMode='standard';}],
   ['other client',()=>{
     const current={...props.current,client_id:'demo_dunder'};
@@ -459,8 +459,7 @@ const boundedContextNegatives=[
     mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
     sessionStorage.setItem('grc_client_id',client.client_id);stored.client_id=client.client_id;
   }],
-  ['IG2',()=>{props.configuration={implementation_group:2};}],
-  ['IG3',()=>{props.configuration={implementation_group:3};}],
+  ['invalid IG',()=>{props.configuration={implementation_group:4};}],
   ['other route',()=>{window.history.replaceState({},'', '/dashboard?client_id=demo_brawndo');}],
   ['route client mismatch',()=>{window.history.replaceState({},'', '/compliance/cis-ig1?client_id=demo_dunder');}],
   ['selection mismatch',()=>{sessionStorage.setItem('grc_client_id','demo_dunder');}],
@@ -473,7 +472,13 @@ test.each(boundedContextNegatives)('the bounded progress correction does not cha
   const answers={...completeAnswers('1.1'),additional_confirmation:'Yes',unknowns:''};answers.coverage.Servers='Not sure';
   stored={...interview('1.1'),revision:2,answers};props.visualReference=true;changeContext();
   const nativeBefore=copy(props.current);
-  await render();await open();expect(document.querySelector('[aria-label="Question group 2 of 5"]')).toBeTruthy();
+  await render();
+  if(_label==='invalid IG'){
+    expect(document.querySelector('.omni-launch-button')).toBeNull();
+    expect(document.querySelector('[aria-label="CIS assessment interview"]')).toBeNull();
+    expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(nativeBefore);return;
+  }
+  await open();expect(document.querySelector('[aria-label="Question group 2 of 5"]')).toBeTruthy();
   await click('Save & next');
   expect(document.body.textContent).toContain('Describe the additional reported work before reviewing the summary.');
   expect(document.querySelector('[aria-label="Question group 2 of 5"]')).toBeTruthy();
@@ -513,4 +518,33 @@ test.each([
   expect(reveal).not.toHaveBeenCalled();expect(stored).toEqual(interviewBefore);
   expect(api.put).not.toHaveBeenCalled();expect(props.current).toEqual(nativeBefore);expect(props.form).toEqual(formBefore);
   expect(props.onApply).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onUpdateImplementation).not.toHaveBeenCalled();
+});
+
+
+test.each([['standard',1],['demo',2],['demo',3]])('configured %s IG%s can save bounded progress without bypassing final validation',async(mode,group)=>{
+ enableBoundedDemoContext();
+ mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
+ const client=cisClient('demo_brawndo',group);mockOrg={...mockOrg,currentClient:client,clients:[client]};
+ props.configuration={implementation_group:group};
+ const answers={...completeAnswers('1.1'),additional_confirmation:'Yes',unknowns:''};answers.coverage.Servers='Not sure';
+ stored={...interview('1.1'),revision:2,answers};
+ const nativeBefore=copy(props.current),version=stored.version;
+ await render();await open();
+ expect(document.querySelector('[aria-label="Question group 2 of 5"]')).toBeTruthy();
+ await click('Save & next');
+ expect(document.querySelector('[aria-label="Question group 3 of 5"]')).toBeTruthy();
+ expect(api.put).toHaveBeenLastCalledWith('/framework_assessments/focused-1.1/guided-assessment',expect.objectContaining({version,expected_revision:2,completed:false,answers}));
+ await click('Save & next');await click('Save & next');
+ const writes=api.put.mock.calls.length;await click('Save & next');
+ expect(document.body.textContent).toContain('Describe the additional reported work before reviewing the summary.');
+ expect(api.put).toHaveBeenCalledTimes(writes);expect(stored.completed).toBe(false);expectNativeUnchanged(nativeBefore);
+});
+
+
+test.each([['standard',1],['demo',2],['demo',3]])('configured %s IG%s reveals a fresh interview without a native write',async(mode,group)=>{
+ enableBoundedDemoContext();mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
+ const client=cisClient('demo_brawndo',group);mockOrg={...mockOrg,currentClient:client,clients:[client]};props.configuration={implementation_group:group};
+ const reveal=jest.fn(),before=copy(props.current);
+ await render({inline:true,visualReference:true,onFreshInterviewReady:reveal});
+ expect(reveal).toHaveBeenCalledTimes(1);expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(before);
 });

@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {MemoryRouter,useLocation,useNavigate} from 'react-router-dom';
 import ActionItems from './ActionItems';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
 
 let mockAuth,mockOrg,mockDrawer,mockForm;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -32,18 +33,20 @@ const summary=key=>container.querySelector('.bda-cell.bda-'+key+' strong').textC
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();sessionStorage.setItem('grc_client_id','demo_brawndo');mockDrawer=null;mockForm=null;
   mockAuth={workspaceMode:'demo',loading:false,user:{user_id:'actor',role:'super_admin',workspace_mode:'demo'}};
-  mockOrg={currentClientId:cid,currentClient:{client_id:cid,name:'Brawndo',status:'active'},loading:false,error:''};
+  mockOrg={currentClientId:cid,currentClient:{...cisClient(cid,1),name:'Brawndo'},clients:[cisClient(cid,1)],loading:false,error:''};
   records={tasks:Array.from({length:12},(_,i)=>task(String(i).padStart(2,'0'),{assignee_id:i===0?'eligible':'removed'})),findings:[]};
   api.get.mockImplementation(async(path)=>({data:path.startsWith('/framework_assessments/')?(records.framework_assessments||[]).find(row=>row.framework_assessment_id===path.split('/').pop()):path==='/onboarding/state'?{assessments:records.framework_assessments||[]}:path.endsWith('/members')?[{user_id:'eligible',name:'Eligible owner',assignment_eligible:true},{user_id:'removed',name:'Historical owner',assignment_eligible:false}]:records[path.slice(1)]||[]}));
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
-test('actual route gate accepts only resolved active Brawndo Demo with consistent authentication',async()=>{
+test('actual route gate accepts resolved CIS clients and denies inconsistent identity or authentication',async()=>{
   await render();expect(container.querySelector('[aria-label="Action summaries"]')).not.toBeNull();
   const originalAuth=mockAuth,originalOrg=mockOrg;
   const cases=[()=>{mockAuth={...originalAuth,user:{...originalAuth.user,role:'client_readonly'}};},()=>{mockAuth={...originalAuth,workspaceMode:'standard'};},()=>{mockAuth={...originalAuth,user:{...originalAuth.user,workspace_mode:'standard'}};},()=>{mockOrg={...originalOrg,error:'Denied'};},()=>{mockOrg={...originalOrg,currentClient:null};},()=>{mockOrg={...originalOrg,currentClientId:'other'};},()=>{mockOrg={...originalOrg,currentClient:{client_id:'other',name:'Brawndo'}};},()=>{mockOrg={...originalOrg,currentClient:{...originalOrg.currentClient,status:'archived'}};}];
   for(const apply of cases){mockAuth=originalAuth;mockOrg=originalOrg;apply();await rerender();expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();expect(container.querySelector('[aria-label="Action summaries"]')).toBeNull();expect(container.querySelector('.surface-theme-action')).toBeNull();}
+  mockAuth={...originalAuth,workspaceMode:'standard',user:{...originalAuth.user,workspace_mode:'standard'}};mockOrg=originalOrg;await rerender();expect(container.querySelector('[aria-label="Action summaries"]')).not.toBeNull();
+  mockAuth=originalAuth;mockOrg={...originalOrg,currentClient:cisClient(cid,4)};await rerender();expect(container.querySelector('[aria-label="Action summaries"]')).toBeNull();
   mockAuth=originalAuth;mockOrg=originalOrg;await rerender();await act(async()=>navigate('/findings'));expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();
 });
 
@@ -92,7 +95,7 @@ test('presentation preserves native creation forms and adds no selection, bulk o
 });
 
 test('native origin opens the exact source and retained assurance context without opening its ticket',async()=>{
-  const vendor={vendor_id:'original-vendor',client_id:cid,name:'Original vendor'};
+  const vendor={vendor_id:'original-vendor',client_id:cid,name:'Original vendor',assurance_records:[{assurance_id:'original-document',type:'SOC 2',evidence_ids:[]}]};
   records={tasks:[task('source-task',{source_type:'vendor',vendor_id:vendor.vendor_id,assurance_id:'original-document'})],findings:[],vendors:[vendor]};
   await render();await click(container.querySelector('.bda-origin button'));
   expect(mockForm).toMatchObject({kind:'vendors',record:vendor,clientId:cid,initialValues:{vendorTab:'assurance',assuranceId:'original-document'}});

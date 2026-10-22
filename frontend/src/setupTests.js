@@ -3,6 +3,12 @@ const {TextEncoder, TextDecoder} = require('node:util');
 if (!globalThis.TextEncoder) globalThis.TextEncoder = TextEncoder;
 if (!globalThis.TextDecoder) globalThis.TextDecoder = TextDecoder;
 
+// Use native browser-compatible encoding APIs instead of JSDOM 16's slow JS
+// emulator. Native APIs also enforce the standard required-argument contract.
+const {atob, btoa} = require('node:buffer');
+globalThis.atob = atob;
+globalThis.btoa = btoa;
+
 // JSDOM lacks the browser Web Crypto API used by real save/request identities.
 Object.defineProperty(globalThis, 'crypto', {
   configurable: true,

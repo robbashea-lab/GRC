@@ -2,6 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import AIGovernance from './AIGovernance';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
 import {AdditionalSectionsProvider,useAdditionalSectionsAppearance} from '@/lib/brawndoAdditionalScope';
 
 let mockAuth,mockOrg,container,root;
@@ -35,7 +36,7 @@ async function openDirtyDrawer(){
 
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();
-  mockOrg={currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'},loading:false};
+  mockOrg={currentClientId:'demo_brawndo',currentClient:{...cisClient(),name:'Brawndo'},clients:[cisClient()],loading:false};
   mockAuth={workspaceMode:'demo',user:{user_id:'actor-one',workspace_mode:'demo',role:'super_admin'}};
   api.get.mockImplementation(async path=>({data:path==='/ai_systems'?[{ai_system_id:'ai-one',client_id:mockOrg.currentClientId,name:'AI continuity record',status:'active',data_types:['Public']}]:path==='/ai-intake'?{client_id:mockOrg.currentClientId,usage:'yes',indicators:[],updated_at:'intake-v1'}:path==='/related'?{}:[]}));
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);

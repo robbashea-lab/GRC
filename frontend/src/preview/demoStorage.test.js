@@ -1,6 +1,8 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
-import {STORE_KEY,readStore,saveStore} from './store';
+import {STORE_KEY,readStore,saveStore,seedStore,clearEvidenceFiles,demoDiagnostics} from './store';
+import {compressDemoStore,decodeDemoStore} from './demoStorageCodec';
+import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
 import {clearFileCache,lightweightStore,rememberFiles,restoreFiles,storageDiagnostics} from './evidenceStorage';
 const api=axios.create({adapter:previewAdapter});
 const persisted=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
@@ -10,6 +12,24 @@ beforeEach(async()=>{jest.useFakeTimers().setSystemTime(new Date(OPENED_AT));ses
 afterEach(()=>jest.useRealTimers());
 const upload=async(bytes,name='sample.txt')=>(await api.post('/evidence',{client_id:persisted().clients[0].client_id,filename:name,mime_type:'text/plain',content_base64:btoa('x'.repeat(bytes))})).data;
 const utf8Base64=text=>btoa(encodeURIComponent(text).replace(/%([0-9A-F]{2})/g,(_,hex)=>String.fromCharCode(parseInt(hex,16))));
+
+test('compressed storage remains readable by native read, previous-save, clear and diagnostics paths',async()=>{
+ const file=await upload(10,'compressed-retained.bin');
+ const before=readStore(),serialized=sessionStorage.getItem(STORE_KEY);
+ const payloadCount=decodeDemoStore(serialized).evidence.filter(e=>e.content_base64).length;
+ sessionStorage.setItem(STORE_KEY,compressDemoStore(serialized));
+ expect(readStore()).toEqual(before);
+ expect(demoDiagnostics()).toMatchObject({storage:'sessionStorage',persisted_payload_count:payloadCount});
+ expect(demoDiagnostics().uncompressed_json_bytes).toBeGreaterThan(demoDiagnostics().approximate_bytes);
+ const current=readStore();current.clients[0].name='Synthetic compressed prior snapshot';saveStore(current);
+ expect(readStore().clients[0].name).toBe('Synthetic compressed prior snapshot');
+ expect((await api.get(`/evidence/${file.evidence_id}/download`)).data.content_base64).toBe(btoa('x'.repeat(10)));
+ sessionStorage.setItem(STORE_KEY,compressDemoStore(sessionStorage.getItem(STORE_KEY)));
+ clearEvidenceFiles();
+ const cleared=decodeDemoStore(sessionStorage.getItem(STORE_KEY));
+ expect(cleared.evidence.find(e=>e.evidence_id===file.evidence_id)).toMatchObject({demo_file_storage:'cleared'});
+ expect(cleared.evidence.every(e=>!e.content_base64)).toBe(true);
+});
 
 test('binary and Unicode payloads survive document-cache loss when inline space is available',async()=>{
  const db=readStore();db.evidence=[];saveStore(db);
@@ -159,7 +179,19 @@ test('full reset recovers corrupted data and restores canonical roles and framew
  expect(references.map(row=>row.id).sort()).toEqual(nativeRows.map(row=>row.framework_assessment_id).sort());
  expect(Object.fromEntries(references.map(row=>[row.definition_id,row.status]))).toEqual(nativeStates);
  const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
- expect(reporting.snapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
+ const fresh=seedStore(),decoded=readStore(),canonicalIds=new Set();
+ for(const clientId of ['demo_initech','demo_krusty_krab']){
+   const context=getCisDemoScenarioContext(decoded,clientId,RESET_AT);
+   const expected=getCisDemoScenarioContext(fresh,clientId,RESET_AT);
+   expect(context).toBeTruthy();
+   expect(context).toEqual(expected);
+   expect(context.point_ids).toHaveLength(5);
+   expect(decoded.portfolio_reporting.snapshots.filter(point=>context.point_ids.includes(point.snapshot_id)))
+     .toEqual(fresh.portfolio_reporting.snapshots.filter(point=>expected.point_ids.includes(point.snapshot_id)));
+   context.point_ids.forEach(id=>canonicalIds.add(id));
+ }
+ expect(reporting.snapshots.filter(snapshot=>oldIds.has(snapshot.snapshot_id)).every(snapshot=>canonicalIds.has(snapshot.snapshot_id))).toBe(true);
+ expect(currentSnapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
  expect(new Set(restored.users.map(u=>u.role))).toEqual(new Set(canonical.users.map(u=>u.role)));
  expect((await api.get('/demo/storage')).data.memory_file_count).toBe(0);
 });
@@ -185,6 +217,34 @@ test('repeated Review snapshot fields compact without changing history',()=>{
  const persisted=JSON.parse(JSON.stringify(lightweightStore(db)));
  expect(persisted.reviews[0].occurrences[1]).not.toHaveProperty('framework_drivers');
  expect(restoreFiles(persisted)).toEqual(db);
+});
+
+test('inherited Review snapshots preserve primitive normalization and independent structured history',()=>{
+ const scope=JSON.parse('{"nested":{"items":["original"]},"__proto__":{"retained":true}}');
+ const parent={scope,framework_drivers:[{unknown:{items:['original']}}],title:'café 日本語 🔐\ud800',reviewer_id:undefined,owner_id:null,recurrence:false,baseline_key:-0,framework_key:NaN,framework_plan_key:Infinity,governance_context:new Date('2026-10-21T00:00:00Z')};
+ const fields=Object.keys(parent),occurrences=[{_review_inherited:fields},{_review_inherited:fields}];
+ const review={...parent,occurrences},before=JSON.stringify(review);
+ const restored=restoreFiles({evidence:[],reviews:[review]}).reviews[0];
+ const [first,second]=restored.occurrences;
+ expect(JSON.stringify(review)).toBe(before);
+ expect(first.title).toBe(parent.title);expect(first.reviewer_id).toBeUndefined();
+ expect(Object.hasOwn(first,'reviewer_id')).toBe(true);
+ expect(first.owner_id).toBeNull();expect(first.recurrence).toBe(false);
+ expect(first.baseline_key).toBe(0);expect(Object.is(first.baseline_key,-0)).toBe(false);
+ expect(first.framework_key).toBeNull();expect(first.framework_plan_key).toBeNull();
+ expect(first.governance_context).toBe('2026-10-21T00:00:00.000Z');
+ expect(Object.hasOwn(first.scope,'__proto__')).toBe(true);
+ expect(first.scope.__proto__).toEqual({retained:true});
+ expect(first.scope).not.toBe(scope);expect(first.scope).not.toBe(second.scope);
+ expect(first.framework_drivers).not.toBe(parent.framework_drivers);
+ expect(first.framework_drivers).not.toBe(second.framework_drivers);
+ first.scope.nested.items.push('changed');first.scope.__proto__.retained=false;
+ first.framework_drivers[0].unknown.items.push('changed');
+ expect(scope.nested.items).toEqual(['original']);expect(scope.__proto__.retained).toBe(true);
+ expect(second.scope.nested.items).toEqual(['original']);expect(second.scope.__proto__.retained).toBe(true);
+ expect(parent.framework_drivers[0].unknown.items).toEqual(['original']);
+ expect(second.framework_drivers[0].unknown.items).toEqual(['original']);
+ expect(Object.getPrototypeOf(first.scope)).toBe(Object.prototype);
 });
 
 test('failed clear leaves files and records recoverable; retry succeeds',async()=>{

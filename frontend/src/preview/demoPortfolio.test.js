@@ -9,6 +9,9 @@ import { lightweightStore } from './evidenceStorage';
 import { validateAssignment } from './assignmentEligibility';
 import { validateClientRelationships } from './clientRelationships';
 import { portfolio } from './summaries';
+import {latestPortfolioActivity} from '../lib/portfolioOverview';
+import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
+import {CIS_DEMO_REVISION} from './cisDemoSelection';
 const api = axios.create({
   adapter: previewAdapter
 });
@@ -25,7 +28,9 @@ test('same day produces byte-identical seed and dates advance with the clock', (
   expect(b).toEqual(a);
   const c = seedStore(new Date('2030-01-01T12:00:00Z'));
   expect(c.clients.map(c => c.client_id)).toEqual(a.clients.map(c => c.client_id));
-  expect(c.reviews.find(r=>r.client_id!=='demo_initech').due_date).toBe(demoDates(new Date('2030-01-01'))(-8));
+  const reference=c.reviews.find(r=>r.client_id==='demo_prestige'&&r.baseline_key==='policy-review');
+  expect(reference).toBeTruthy();
+  expect(reference.due_date).toBe(demoDates(new Date('2030-01-01'))(-8));
   expect(JSON.stringify(a).length).toBeLessThan(4000000);
 });
 test('canonical framework programs, real profiles, scoped people and valid assessments', () => {
@@ -91,8 +96,21 @@ test('historical occurrences, remediation chronology and downloadable evidence r
     expect(atob(e.content_base64)).toContain('Collected: ' + e.evidence_date);
   }
   for (const risk of db.risks.filter(r => r.status === 'closed')) expect(risk.last_reviewed <= risk.closed_at).toBe(true);
-  for (const c of db.clients.filter(c=>c.client_id!=='demo_initech')) expect(db.evidence.filter(e => e.client_id === c.client_id).length).toBeGreaterThanOrEqual(8);
-  expect(db.evidence.filter(e=>e.client_id==='demo_initech')).toEqual([]);
+  for (const c of db.clients.filter(c=>['demo_brawndo','demo_dunder','demo_prestige'].includes(c.client_id))) expect(db.evidence.filter(e => e.client_id === c.client_id).length).toBeGreaterThanOrEqual(8);
+  for(const clientId of ['demo_initech','demo_krusty_krab']){
+    const samples=db.evidence.filter(e=>e.client_id===clientId);
+    expect(samples).toHaveLength(1);
+    const sample=samples[0];
+    expect(sample).toMatchObject({evidence_id:clientId+'_evidence_inventory',filename:'inventory-sample.txt',mime_type:'text/plain',linked_type:'framework_assessment'});
+    const assessment=db.framework_assessments.find(row=>row.framework_assessment_id===sample.linked_id);
+    expect(assessment.client_id).toBe(clientId);
+    expect(assessment.related_links).toContainEqual({kind:'evidence',id:sample.evidence_id});
+    expect(sample.relationships.some(link=>link.kind==='findings'&&link.id===clientId+'_finding_inventory')).toBe(true);
+    const reviewLink=sample.relationships.find(link=>link.kind==='reviews');
+    const occurrence=db.reviews.find(row=>row.review_id===reviewLink.id).occurrences.find(row=>row.occurrence_id===reviewLink.occurrence_id);
+    expect(sample.evidence_date).toBe(occurrence.completed_at.slice(0,10));
+    expect(atob(sample.content_base64)).toContain('unresolved owner tracked in '+clientId+'_finding_inventory');
+  }
 });
 test('reset recovers creations edits deletions completions and baseline without touching standard storage', async () => {
   await api.post('/demo/enter');
@@ -121,17 +139,18 @@ test('reset recovers creations edits deletions completions and baseline without 
   // Canonical source records remain exact; prospective reports begin at the new reset commit.
   const {portfolio_reporting:reporting,...restoredSources}=JSON.parse(JSON.stringify(lightweightStore(restored)));
   const {portfolio_reporting:seedReporting,...canonicalSources}=JSON.parse(JSON.stringify(lightweightStore(seedStore())));
-  // Raw source construction has no accepted reporting baseline; normal entry/reset installs it atomically.
-  expect(seedReporting).toBeUndefined();
+  // Raw construction includes explicit new-scenario imports, not a native accepted baseline.
+  expect(seedReporting.snapshots.every(point=>point.observation_kind==='demo_fixture')).toBe(true);
   expect(restoredSources).toEqual(canonicalSources);
   expect(reporting).toMatchObject({started_at:resetAt,last_captured_at:resetAt,activity_proofs:{}});
   expect(reporting.activity_proofs).toEqual({});
   expect(reporting.snapshots).toHaveLength(original.portfolio_reporting.snapshots.length);
   const currentSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind!=='demo_fixture');
-  const fixtureSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture');
+  const allFixtures=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture');
+  const fixtureSnapshots=allFixtures.filter(snapshot=>snapshot.client_id==='demo_brawndo'&&snapshot.program_id==='demo_brawndo:cis-ig1');
   expect(currentSnapshots.length).toBeGreaterThan(0);
   expect(currentSnapshots.every(snapshot=>snapshot.captured_at===resetAt&&snapshot.current.captured_at===resetAt)).toBe(true);
-  expect(fixtureSnapshots).toHaveLength(original.portfolio_reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture').length);
+  expect(allFixtures).toHaveLength(original.portfolio_reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture').length);
   // At this fixed anchor, V2 has eighteen historical positions and one exact terminal position.
   expect(fixtureSnapshots).toHaveLength(19);
   expect(fixtureSnapshots.every(snapshot=>snapshot.program_id==='demo_brawndo:cis-ig1'
@@ -149,12 +168,31 @@ test('reset recovers creations edits deletions completions and baseline without 
   expect(references.map(row=>row.id).sort()).toEqual(nativeRows.map(row=>row.framework_assessment_id).sort());
   expect(Object.fromEntries(references.map(row=>[row.definition_id,row.status]))).toEqual(nativeStates);
   const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
-  expect(reporting.snapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
+  const canonicalIds=new Set();
+  const canonical=seedStore();
+  for(const clientId of ['demo_initech','demo_krusty_krab']){
+    const context=getCisDemoScenarioContext(restored,clientId,resetAt);
+    expect(context).toBeTruthy();
+    expect(context.version).toBe(CIS_DEMO_REVISION);
+    expect(context.point_ids).toHaveLength(5);
+    const expected=getCisDemoScenarioContext(canonical,clientId,resetAt);
+    expect(context).toEqual(expected);
+    const points=reporting.snapshots.filter(point=>context.point_ids.includes(point.snapshot_id));
+    expect(points).toEqual(canonical.portfolio_reporting.snapshots.filter(point=>expected.point_ids.includes(point.snapshot_id)));
+    context.point_ids.forEach(id=>canonicalIds.add(id));
+  }
+  expect(reporting.snapshots.filter(snapshot=>oldIds.has(snapshot.snapshot_id)).every(snapshot=>canonicalIds.has(snapshot.snapshot_id))).toBe(true);
+  expect(currentSnapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
   expect(restored.tasks.some(t => t.task_id === created.task_id)).toBe(false);
   expect(localStorage.getItem('standard-sentinel')).toBe('unchanged');
   const metrics = portfolio(restored, false);
-  expect(metrics.clients.filter(c=>c.client_id!=='demo_initech').every(c => c.last_activity)).toBe(true);
-  expect(metrics.clients.find(c=>c.client_id==='demo_initech').last_activity).toBeFalsy();
+  expect(metrics.clients.filter(c=>['demo_brawndo','demo_dunder','demo_prestige'].includes(c.client_id)).every(c=>c.last_activity)).toBe(true);
+  const nativeActivity=latestPortfolioActivity(restored.logs,new Date(resetAt),reporting.activity_proofs);
+  for(const clientId of ['demo_initech','demo_krusty_krab']){
+    const activity=metrics.clients.find(client=>client.client_id===clientId).last_activity;
+    expect(activity).toEqual(nativeActivity.get(clientId)||null);
+    if(activity)expect(restored.logs.some(log=>log.client_id===clientId&&log.at===activity.at&&log.meta?.simulated===true&&log.meta?.fixture_revision===CIS_DEMO_REVISION)).toBe(true);
+  }
 });
 test('scoped demo actors cannot read or mutate another client or evidence', async () => {
   await api.post('/demo/enter');

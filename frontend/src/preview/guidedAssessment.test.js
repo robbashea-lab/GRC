@@ -30,7 +30,17 @@ function isolateNewClientFixture(){
   for(const key of Object.keys(ids))if(key!=='users')db[key]=[];
   for(const key of ['baselines','drafts','riskSequences','ai_intake','ai_counters','guided_assessment_pilot'])db[key]={};
   db.logs=[];db.notifications=[];
-  saveStore(db);
+  // This fixture discards the portfolio itself, so its imported reporting proof
+  // must go too. Existing-client tests never take this explicit reset path.
+  delete db.portfolio_reporting;
+  delete db.cis_demo_scenario_history;
+  delete db.cis_demo_rollout;
+  saveStore(db,{resetFiles:true});
+  const isolated=readStore();
+  expect(isolated.clients).toEqual([]);
+  expect(isolated.portfolio_reporting.snapshots).toEqual([]);
+  expect(isolated.portfolio_reporting.scope_events).toEqual([]);
+  expect(isolated.cis_demo_scenario_history).toBeUndefined();
 }
 test('save and resume leave native assessment evidence and history unchanged',async()=>{
   const first=(await api.put(path,pilotBody)).data;expect(first.revision).toBe(1);

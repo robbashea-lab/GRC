@@ -2,6 +2,7 @@ import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import VendorRegister from './VendorRegister';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
 
 jest.setTimeout(15000);
 
@@ -26,7 +27,7 @@ const vendor = { vendor_id: 'v1', client_id: 'demo_brawndo', name: 'Recorded ven
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true; sessionStorage.clear(); localStorage.clear(); sessionStorage.setItem('grc_client_id', 'demo_brawndo');
   mockPath = '/vendors'; mockSearch = ''; mockAuth = { workspaceMode: 'demo', user: { user_id: 'demo-actor', role: 'super_admin', workspace_mode: 'demo' } };
-  mockOrg = { currentClientId: 'demo_brawndo', currentClient: { client_id: 'demo_brawndo', name: 'Brawndo', status: 'active' } };
+  mockOrg = { currentClientId: 'demo_brawndo', currentClient: { ...cisClient('demo_brawndo',1), name: 'Brawndo' }, clients: [cisClient('demo_brawndo',1)] };
   api.get.mockImplementation(async path => ({ data: path === '/vendors' ? [{ ...vendor, client_id: mockOrg.currentClientId }] : [] }));
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
 });
@@ -214,4 +215,15 @@ test('new actor waits for its own refresh and ignores late former-actor success'
   const accepted = subtitle();
   expect(accepted).toMatch(/^Third-party register · 1 active vendor · As of .+ ET$/);
   expectNoWrites();
+});
+
+
+test('configured CIS standard client retains appearance while invalid group is denied',async()=>{
+  mockAuth={...mockAuth,workspaceMode:'standard',user:{...mockAuth.user,workspace_mode:'standard'}};
+  await act(async()=>root.render(<VendorRegister/>));
+  expect(container.querySelector('[data-testid="additional-vendors"]')).toBeTruthy();
+  mockOrg={...mockOrg,currentClient:cisClient('demo_brawndo',4)};
+  await act(async()=>root.render(<VendorRegister/>));
+  expect(container.querySelector('[data-testid="additional-vendors"]')).toBeNull();
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

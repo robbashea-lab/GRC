@@ -5,8 +5,9 @@ import RemediationTicketDrawer from './RemediationTicketDrawer';
 import api from '@/lib/api';
 import {readStore} from '../preview/store';
 
-let mockUser;
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
+let mockUser,mockOrg;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:'demo',loading:false})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>true}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/adapter').previewAdapter}),formatError:e=>e.response?.data?.detail||e.message,API:'/api'}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
@@ -35,6 +36,8 @@ beforeEach(async()=>{
   root=null;container=null;background=null;
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
   mockUser=(await api.post('/demo/enter')).data.user;
+  const clients=(await api.get('/clients')).data;
+  mockOrg={currentClientId:'demo_brawndo',currentClient:clients.find(client=>client.client_id==='demo_brawndo'),clients,loading:false};
   record=(await api.post('/reviews',{client_id:'demo_brawndo',title:'Linked return focus review',review_type:'access',recurrence:'quarterly',due_date:'2099-09-30'})).data;
   linkedFinding=(await api.post(`/reviews/${record.review_id}/create-finding`,{request_id:crypto.randomUUID(),title:'Recorded access exception',remediation_title:'Restore reviewed access',occurrence_id:record.current_occurrence_id})).data;
   background=document.createElement('main');background.innerHTML='<h1 tabindex="-1">Brawndo Reviews</h1>';document.body.appendChild(background);
@@ -89,11 +92,11 @@ test('native ticket without an explicit parent return still restores its connect
   expect(ticket()).toBeNull();expect(document.activeElement).toBe(opener);
   expect(patch).not.toHaveBeenCalled();expect(post).not.toHaveBeenCalled();
 });
-test('seeded User Access Review Q3 ticket Cancel returns to its open Q4 parent Review heading',async()=>{
+test('seeded Account Authorization & Access Review Q3 ticket Cancel returns to its open Q4 parent Review heading',async()=>{
   const historicalFinding=readStore().findings.find(row=>row.finding_id==='demo_brawndo_finding_0');
   expect(historicalFinding?.review_id).toBeTruthy();
   record=(await api.get('/reviews/'+historicalFinding.review_id)).data;
-  expect(record.client_id).toBe('demo_brawndo');expect(record.title).toBe('User Access Review');
+  expect(record.client_id).toBe('demo_brawndo');expect(record.title).toBe('Account Authorization & Access Review');
   await render();
   const history=drawer().querySelector('[data-testid="review-history"]');expect(history).toBeTruthy();
   expect(history.querySelector('.is-current td').textContent).toBe('Q4 2026');

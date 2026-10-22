@@ -48,7 +48,8 @@ test('saveStore returns the captured committed projection; storage and capture f
   expect(()=>saveStore(db)).toThrow();
   expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
   capture.mockRestore();
-  jest.spyOn(Storage.prototype,'setItem').mockImplementationOnce(()=>{throw new DOMException('Synthetic quota failure','QuotaExceededError');});
+  // Both the raw write and its compressed retry must fail to model unavailable storage.
+  jest.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw new DOMException('Synthetic quota failure','QuotaExceededError');});
   expect(()=>saveStore(db)).toThrow();
   expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
 });

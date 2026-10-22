@@ -678,18 +678,83 @@ test('source-row pooling is lossless, reads retained v1, rejects broken referenc
   const db=fixture();captureDemoReporting(db,null,AS_OF);
   const previous=copy(db);db.framework_assessments[0].status='in_progress';
   captureDemoReporting(db,previous,'2026-10-14T18:00:00.000Z');
-  db.portfolio_reporting.snapshots[0].current.provenance.source_references[0].future_field={exact:['Unicode ✓',{retained:true}]};
+  for(const snapshot of db.portfolio_reporting.snapshots)snapshot.current.provenance.source_references[0].future_field=JSON.parse('{"exact":["Unicode ✓",{"retained":true}],"__proto__":{"preserved":true}}');
   const packed=compactPortfolioReporting(db),restored=restorePortfolioReporting(copy(packed));
   expect(packed.portfolio_reporting.storage_version).toBe(2);
   expect(restored.portfolio_reporting.snapshots).toEqual(db.portfolio_reporting.snapshots);
   expect(packed.portfolio_reporting.source_records.length).toBeLessThan(db.framework_assessments.length*2);
   const legacy=copy(packed);legacy.portfolio_reporting.storage_version=1;
-  legacy.portfolio_reporting.source_vectors=packed.portfolio_reporting.source_vectors.map(vector=>JSON.stringify(vector.map(index=>JSON.parse(packed.portfolio_reporting.source_records[index]))));
+  legacy.portfolio_reporting.source_vectors=packed.portfolio_reporting.source_vectors.map(vector=>JSON.stringify(vector.map(index=>packed.portfolio_reporting.source_records[index])));
   delete legacy.portfolio_reporting.source_records;
   expect(restorePortfolioReporting(legacy).portfolio_reporting.snapshots).toEqual(db.portfolio_reporting.snapshots);
+  expect(packed.portfolio_reporting.source_records.every(row=>row&&typeof row==='object'&&!Array.isArray(row))).toBe(true);
+  const stringV2=copy(packed);
+  stringV2.portfolio_reporting.source_records=stringV2.portfolio_reporting.source_records.map(row=>JSON.stringify(row));
+  expect(restorePortfolioReporting(stringV2).portfolio_reporting.snapshots).toEqual(db.portfolio_reporting.snapshots);
+  expect(JSON.stringify(packed).length).toBeLessThan(JSON.stringify({...packed,portfolio_reporting:{...packed.portfolio_reporting,source_records:packed.portfolio_reporting.source_records.map(row=>JSON.stringify(row))}}).length);
   const vectors=restored.portfolio_reporting.snapshots.map(snapshot=>snapshot.current.provenance.source_references);
+  expect(Object.hasOwn(vectors[0][0].future_field,'__proto__')).toBe(true);
+  expect(Object.getPrototypeOf(vectors[0][0].future_field)).toBe(Object.prototype);
+  vectors[0][0].future_field.exact[1].retained=false;
+  expect(vectors[1][0].future_field.exact[1].retained).toBe(true);
+  expect(packed.portfolio_reporting.source_records[packed.portfolio_reporting.source_vectors[0][0]].future_field.exact[1].retained).toBe(true);
   vectors[0][0].status='changed only in this decoded copy';
   expect(vectors[1][0].status).not.toBe('changed only in this decoded copy');
+  for(const invalid of [null,[],17,'null','[]']){
+    const corrupt=copy(packed);corrupt.portfolio_reporting.source_records[0]=invalid;
+    expect(()=>restorePortfolioReporting(corrupt)).toThrow(/source reference is unavailable/);
+  }
+  for(const invalid of [-1,0.5,'0',999999]){
+    const corrupt=copy(packed);corrupt.portfolio_reporting.source_vectors[0][0]=invalid;
+    expect(()=>restorePortfolioReporting(corrupt)).toThrow(/source reference is unavailable/);
+  }
   const broken=copy(packed);broken.portfolio_reporting.source_records=[];
   expect(()=>restorePortfolioReporting(broken)).toThrow(/source reference is unavailable/);
+});
+
+test('complete canonical source rows preserve ordered vectors and scope-event reuse',()=>{
+  const a=JSON.parse('{"id":"a","extra":{"__proto__":{"safe":true},"text":"Unicode ✓"}}');
+  const reordered=JSON.parse('{"extra":{"text":"Unicode ✓","__proto__":{"safe":true}},"id":"a"}');
+  const b={id:'b',extra:{nested:[1,{retained:true}]}};
+  const point=references=>({provenance:{kind:'fixture',source_references:references}});
+  const db={portfolio_reporting:{identities:[],snapshots:[
+    {client_id:'c',framework_key:'cis-ig1',current:point([a,b,a])},
+    {client_id:'c',framework_key:'cis-ig1',current:point([reordered,b,reordered])},
+    {client_id:'c',framework_key:'cis-ig1',current:point([b,a])},
+    {client_id:'c',framework_key:'cis-ig1',current:point([])}
+  ],scope_events:[{client_id:'c',framework_key:'cis-ig1',before:point([a,b,a]),after:point([b,a])}]}};
+  const original=JSON.stringify(db),packed=compactPortfolioReporting(db);
+  expect(JSON.stringify(db)).toBe(original);
+  expect(packed.portfolio_reporting.source_records).toHaveLength(2);
+  expect(packed.portfolio_reporting.source_records).toEqual([a,b]);
+  expect(packed.portfolio_reporting.source_vectors).toEqual([[0,1,0],[1,0],[]]);
+  expect(packed.portfolio_reporting.snapshots.map(row=>row.current.provenance._portfolio_source_index)).toEqual([0,0,1,2]);
+  expect(packed.portfolio_reporting.scope_events[0].before.provenance._portfolio_source_index).toBe(0);
+  expect(packed.portfolio_reporting.scope_events[0].after.provenance._portfolio_source_index).toBe(1);
+  const restored=restorePortfolioReporting(copy(packed));
+  expect(restored.portfolio_reporting.snapshots).toEqual(db.portfolio_reporting.snapshots);
+  expect(restored.portfolio_reporting.scope_events).toEqual(db.portfolio_reporting.scope_events);
+  restored.portfolio_reporting.snapshots[0].current.provenance.source_references[0].extra.__proto__.safe=false;
+  expect(restored.portfolio_reporting.snapshots[1].current.provenance.source_references[0].extra.__proto__.safe).toBe(true);
+  expect(packed.portfolio_reporting.source_records[0].extra.__proto__.safe).toBe(true);
+  expect(JSON.stringify(db)).toBe(original);
+});
+
+test('restore normalizes legacy rows lazily and allocates repeated references independently',()=>{
+  const row='{"id":"a","overflow":1e999,"duplicate":1,"duplicate":2,"extra":{"__proto__":{"safe":true},"text":"Unicode ✓"}}';
+  const value={provenance:{_portfolio_source_index:0}};
+  const db={portfolio_reporting:{storage_version:2,source_records:[row,'unused malformed JSON'],source_vectors:[[0,0]],
+    snapshots:[{client_id:'c',framework_key:'cis-ig1',current:value},{client_id:'c',framework_key:'cis-ig1',current:value}],scope_events:[]}};
+  const original=JSON.stringify(db),restored=restorePortfolioReporting(db);
+  const first=restored.portfolio_reporting.snapshots[0].current.provenance.source_references;
+  const second=restored.portfolio_reporting.snapshots[1].current.provenance.source_references;
+  expect(first[0]).toMatchObject({id:'a',overflow:null,duplicate:2,extra:{text:'Unicode ✓'}});
+  expect(Object.hasOwn(first[0].extra,'__proto__')).toBe(true);
+  expect(Object.getPrototypeOf(first[0].extra)).toBe(Object.prototype);
+  first[0].extra.__proto__.safe=false;
+  expect(first[1].extra.__proto__.safe).toBe(true);
+  expect(second[0].extra.__proto__.safe).toBe(true);
+  expect(JSON.stringify(db)).toBe(original);
+  const usedBad=copy(db);usedBad.portfolio_reporting.source_vectors[0].push(1);
+  expect(()=>restorePortfolioReporting(usedBad)).toThrow();
 });

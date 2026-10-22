@@ -2,10 +2,11 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordListPage from './RecordListPage';
 import api from '@/lib/api';
+import {cisClient as mockCisClient} from '@/testUtils/cisExperience';
 let mockReviewSearch='',mockOrgLoading=false,mockWorkspaceMode='demo',mockDrawerMounts=0,mockNativeProps,mockRows;
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:mockWorkspaceMode,loading:false})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'},clients:[{client_id:'demo_brawndo'}],loading:mockOrgLoading})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'demo_brawndo',currentClient:{...mockCisClient(),name:'Brawndo'},clients:[mockCisClient()],loading:mockOrgLoading})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn(),delete:jest.fn()},formatError:error=>error.message,API:'/api',PREVIEW_MODE:true}));
 jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/reviews',search:mockReviewSearch}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 jest.mock('@/components/RecordDrawer',()=>function NativeDrawer(props){mockNativeProps=props;const React=require('react');const [value,setValue]=React.useState('Native unsaved draft');React.useEffect(()=>{mockDrawerMounts++;},[]);return props.open?<textarea aria-label="Native draft" value={value} onChange={event=>setValue(event.target.value)}/>:null;});
@@ -27,7 +28,7 @@ test('same-client authorization recheck preserves the native drawer instance and
   expect(container.querySelector('[aria-label="Native draft"]')).toBe(draft);expect(mockDrawerMounts).toBe(mounts);
   expect(draft.value).toBe('Native unsaved draft');expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
-test('standard sign-in keeps the original register presentation',async()=>{
+test('mismatched standard mode with Demo actor keeps the original register presentation',async()=>{
   mockWorkspaceMode='standard';await act(async()=>root.render(<RecordListPage kind="reviews"/>));
   expect(container.querySelector('[data-visual-surface="reviews"]')).toBeNull();expect(container.querySelector('.register-surface')).toBeTruthy();
 });

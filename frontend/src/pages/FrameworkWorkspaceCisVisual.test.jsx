@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import FrameworkWorkspace from './FrameworkWorkspace';
 import {cis,FRAMEWORKS} from '@/lib/frameworks';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
 
 let mockAuth,mockOrg,mockLocation,mockMounts,mockUnmounts,mockOmniProps,mockRegisterProps;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -56,7 +57,7 @@ const expectVisual=()=>{expect(host.querySelector('.brawndo-cis-visual')).toBeTr
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();sessionStorage.setItem('grc_client_id','demo_brawndo');
   mockAuth={user:{user_id:'visual-refresh-actor',workspace_mode:'demo',role:'super_admin'},workspaceMode:'demo',loading:false};
-  const client={client_id:'demo_brawndo',name:'Brawndo',status:'active'};
+  const client={...cisClient('demo_brawndo',1),name:'Brawndo'};
   mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
   mockLocation={pathname:'/compliance/cis-ig1',search:'?assessment=native-1.1',params:new URLSearchParams('assessment=native-1.1'),state:null};
   mockMounts=[];mockUnmounts=[];mockOmniProps=null;mockRegisterProps=null;data=fixture();api.get.mockResolvedValue({data});

@@ -135,7 +135,9 @@ test('retained untouched Initech keeps original creation metadata during explici
   db.portfolio_reporting.identities=db.portfolio_reporting.identities.filter(row=>row.program_id!==cid+':cis-ig1');
   const oldClock=new Date('2026-10-15T12:00:00.000Z');addInitech(db,oldClock);reconcileFramework(db,cid,db.baselines[cid]);finishInitech(db,oldClock);
   const original=new Map(['clients','contacts','reviews','framework_assessments'].flatMap(kind=>db[kind].filter(row=>row.client_id===cid).map(row=>[row.client_id+':'+(row.contact_id||row.review_id||row.framework_assessment_id||'client'),row.created_at])));
+  const originalReviewIds=db.reviews.filter(row=>row.client_id===cid).map(row=>row.review_id);
   applyCisDemoRollout(db,{clock});
+  expect(db.reviews.filter(row=>row.client_id===cid).map(row=>row.review_id)).toEqual(expect.arrayContaining(originalReviewIds));
   for(const kind of ['clients','contacts','reviews','framework_assessments'])for(const row of db[kind].filter(row=>row.client_id===cid)){
     const key=row.client_id+':'+(row.contact_id||row.review_id||row.framework_assessment_id||'client');
     if(original.has(key))expect(row.created_at).toBe(original.get(key));
@@ -160,5 +162,16 @@ test('before-noon UTC creation never writes a future current scenario observatio
       expect(Date.parse(occurrence.completed_at)).toBeLessThanOrEqual(+early);
     for(const row of db.framework_assessments.filter(row=>row.client_id===cid))for(const event of row.assessment_history||[])
       expect(Date.parse(event.at)).toBeLessThanOrEqual(+early);
+  }
+});
+
+test('two fresh constructions retain exact fictional Review occurrence and linked identities',()=>{
+  const first=make(),second=make(),cid='demo_krusty_krab';
+  const relevant=db=>Object.fromEntries(['reviews','findings','tasks','evidence','framework_assessments','logs'].map(kind=>[kind,db[kind].filter(row=>row.client_id===cid)]));
+  expect(relevant(second)).toEqual(relevant(first));
+  for(const review of first.reviews.filter(row=>row.client_id===cid&&row.framework_plan_key)){
+    expect(review.review_id).toBe(`${cid}_framework_${review.framework_plan_key}`);
+    expect(review.current_occurrence_id).toBe('occ_'+review.review_id);
+    for(const occurrence of review.occurrences||[])expect(occurrence.occurrence_id.startsWith(review.review_id+'_')||occurrence.occurrence_id==='occ_'+review.review_id).toBe(true);
   }
 });

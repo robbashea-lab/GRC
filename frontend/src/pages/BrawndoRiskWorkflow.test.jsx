@@ -2,6 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RiskRegister from './RiskRegister';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
 import {rememberClient} from '@/lib/clientSelection';
 
 let mockAuth,mockOrg,mockPath;
@@ -35,7 +36,7 @@ beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;mockPath='/risks';window.history.replaceState({},'', '/risks');
   sessionStorage.clear();localStorage.clear();rememberClient('demo_brawndo');
   mockAuth={workspaceMode:'demo',loading:false,user:{user_id:'risk-workflow-admin',role:'super_admin',workspace_mode:'demo'}};
-  mockOrg={currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'},loading:false};
+  mockOrg={currentClientId:'demo_brawndo',currentClient:{...cisClient(),name:'Brawndo'},clients:[cisClient()],loading:false};
   api.get.mockImplementation(async()=>({data:[]}));
   api.post.mockResolvedValue({data:{risk_id:'server-risk',display_id:'RISK-105'}});
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
@@ -84,9 +85,9 @@ test('create lock prevents duplicate submission and cancel keeps an unfinished d
   await act(async()=>resolve({data:{risk_id:'server-risk'}}));
 });
 
-test.each(['signed-in','other-client','loading','mismatch','wrong-route'])('creation presentation stays off for %s',async condition=>{
+test.each(['unsupported-mode','other-client','loading','mismatch','wrong-route'])('creation presentation stays off for %s',async condition=>{
   if(condition==='wrong-route'){mockPath='/dashboard';window.history.replaceState({},'','/dashboard');}
-  if(condition==='signed-in'){mockAuth.workspaceMode='authenticated';mockAuth.user.workspace_mode='authenticated';}
+  if(condition==='unsupported-mode'){mockAuth.workspaceMode='authenticated';mockAuth.user.workspace_mode='authenticated';}
   if(condition==='other-client'){mockOrg.currentClientId='demo_dunder';mockOrg.currentClient={client_id:'demo_dunder',name:'Brawndo',status:'active'};rememberClient('demo_dunder');}
   if(condition==='loading')mockOrg.loading=true;
   if(condition==='mismatch')rememberClient('different-client');

@@ -2,6 +2,7 @@ import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import RecordListPage from './RecordListPage';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
 import BrawndoAdditionalPolicies from '@/components/BrawndoAdditionalPolicies';
 import { savedDate } from '@/components/BrawndoAdditionalPolicyVendorCells';
 
@@ -36,7 +37,7 @@ beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true; sessionStorage.clear(); localStorage.clear(); sessionStorage.setItem('grc_client_id', 'demo_brawndo');
   mockLocationSearch = '';
   mockAuth = { workspaceMode: 'demo', user: { user_id: 'demo-actor', role: 'super_admin', workspace_mode: 'demo' } };
-  mockOrg = { currentClientId: 'demo_brawndo', currentClient: { client_id: 'demo_brawndo', name: 'Brawndo', status: 'active' } };
+  mockOrg = { currentClientId: 'demo_brawndo', currentClient: { ...cisClient('demo_brawndo',1), name: 'Brawndo' }, clients: [cisClient('demo_brawndo',1)] };
   api.get.mockImplementation(async path => ({ data: path === '/policies' ? rows.map(row => ({ ...row, client_id: mockOrg.currentClientId })) : path === '/policies/p1' ? { ...rows[0], client_id: mockOrg.currentClientId } : path === '/reviews' ? [review] : path === '/frameworks/summary' ? { client_id: mockOrg.currentClientId, items: [] } : [] }));
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
 });
@@ -220,4 +221,15 @@ test.each([[true, '', 'Loading policies…'], [false, 'Unavailable', 'Policies u
   await act(async () => root.render(<BrawndoAdditionalPolicies rows={[rows[0]]} filteredRows={[]} loading={loading} error={error} acceptedRefresh="2026-10-18T18:00:00Z" />));
   expect(policySubtitle()).toContain(`Policy register · ${text}`);
   expect(policySubtitle().includes('As of')).toBe(!loading && !error);
+});
+
+
+test('configured CIS standard client retains appearance while invalid group is denied',async()=>{
+  mockAuth={...mockAuth,workspaceMode:'standard',user:{...mockAuth.user,workspace_mode:'standard'}};
+  await act(async()=>root.render(<RecordListPage kind="policies"/>));
+  expect(container.querySelector('[data-testid="additional-policies"]')).toBeTruthy();
+  mockOrg={...mockOrg,currentClient:cisClient('demo_brawndo',4)};
+  await act(async()=>root.render(<RecordListPage kind="policies"/>));
+  expect(container.querySelector('[data-testid="additional-policies"]')).toBeNull();
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

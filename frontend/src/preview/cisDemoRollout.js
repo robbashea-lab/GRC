@@ -49,7 +49,32 @@ function populateScenario(db,client,scenario,clock,{preserveCreation=false}={}){
   scenario.people.forEach((name,i)=>{const id=cid+'_contact_'+i;if(!db.contacts.some(c=>c.contact_id===id))db.contacts.push({contact_id:id,client_id:cid,name,title:['Program coordinator','Executive sponsor','Technology owner'][i],role:['Program coordinator','Executive sponsor','Technology owner'][i],status:'active',created_at:at,updated_at:at});});
   const processOwner=db.contacts.find(contact=>contact.client_id===cid&&contact.name===scenario.people[2]);
   client.primary_contact_id||=cid+'_contact_0';
+  const existingReviews=new Set(db.reviews),existingLogs=new Set(db.logs);
   reconcileFramework(db,cid,state);
+  // These new fictional rows have never been persisted or exposed. Stable seed
+  // identities keep repeated same-day construction identical; native saves keep UIDs.
+  const renamed=new Map();
+  for(const review of db.reviews.filter(row=>row.client_id===cid&&!existingReviews.has(row))){
+    const target=`${cid}_framework_${review.framework_plan_key}`;
+    if(!review.framework_plan_key||db.reviews.some(row=>row!==review&&row.review_id===target))throw new Error('Fictional Review identity collision');
+    renamed.set(review.review_id,target);
+    const oldId=review.review_id;review.review_id=target;
+    if(review.current_occurrence_id==='occ_'+oldId)review.current_occurrence_id='occ_'+target;
+    else if(review.current_occurrence_id?.startsWith(oldId+'_'))review.current_occurrence_id=target+review.current_occurrence_id.slice(oldId.length);
+    for(const occurrence of review.occurrences||[]){
+      if(occurrence.review_id===oldId)occurrence.review_id=target;
+      if(occurrence.occurrence_id==='occ_'+oldId)occurrence.occurrence_id='occ_'+target;
+      else if(occurrence.occurrence_id?.startsWith(oldId+'_'))occurrence.occurrence_id=target+occurrence.occurrence_id.slice(oldId.length);
+    }
+  }
+  for(const assessment of db.framework_assessments.filter(row=>row.client_id===cid))for(const link of assessment.related_links||[])if(link.kind==='reviews'&&renamed.has(link.id))link.id=renamed.get(link.id);
+  const generatedLogs=db.logs.filter(row=>row.client_id===cid&&!existingLogs.has(row));
+  for(const [index,log] of generatedLogs.entries()){
+    if(log.entity_type==='reviews'&&renamed.has(log.entity_id))log.entity_id=renamed.get(log.entity_id);
+    const target=`${cid}_fixture_audit_${log.entity_id}_${log.action}_${index}`;
+    if(db.logs.some(row=>row!==log&&row.audit_id===target))throw new Error('Fictional audit identity collision');
+    log.audit_id=target;
+  }
   const plans=activePlans('cis-ig1',{implementation_group:scenario.implementation_group}).filter(p=>p.default_enabled!==false);
   for(const [i,plan] of plans.entries()){
     const row=db.reviews.find(r=>r.client_id===cid&&r.framework_plan_key===plan.key);
@@ -57,8 +82,12 @@ function populateScenario(db,client,scenario,clock,{preserveCreation=false}={}){
     const due=day(i===0?-5:i===1?10:35+i*3),months={monthly:1,quarterly:3,semiannual:6,annual:12}[plan.default_cadence];
     Object.assign(row,{title:plan.title,owner_id:owner,reviewer_id:owner,recurrence:plan.default_cadence,custom_recurrence_days:plan.default_custom_recurrence_days,due_date:due,created_at:preserveCreation?row.created_at:at,updated_at:preserveCreation?clock.toISOString():atDay(day(-3)),status:i===1?'in_progress':'upcoming',occurrences:[]});
     for(let n=Math.ceil(24/months);n>=1;n--){const scheduled=priorMonth(due,n*months);if(Date.parse(atDay(scheduled))>+clock||scheduled<priorMonth(day(0),12))continue;row.occurrences.push({...reviewView({...row,due_date:scheduled,occurrences:[]}),occurrences:undefined,
-      occurrence_id:row.review_id+'_'+scheduled,status:'completed',due_date:scheduled,completed_at:atDay(scheduled),completion_date:atDay(scheduled),completed_by:owner,completed_by_name:'Demo administrator',outcome:'no_findings',finding_count:0,evidence:[],conclusion:'Fictional operating review completed; mapped duties and exceptions were inspected.',tested_scope:scenario.service,checklist_confirmed:true,no_evidence_reason:'Synthetic fixture summary; linked operating samples are illustrative.'});}
-    Object.assign(row,reviewSchedule(row,true),reviewView(row));state.framework_reviews[plan.key]={enabled:true,recurrence:row.recurrence,due_date:due};
+      occurrence_id:row.review_id+'_'+scheduled,status:'completed',due_date:atDay(scheduled),completed_at:atDay(scheduled),completion_date:atDay(scheduled),completed_by:owner,completed_by_name:'Demo administrator',outcome:'no_findings',finding_count:0,evidence:[],conclusion:'Fictional operating review completed; mapped duties and exceptions were inspected.',tested_scope:scenario.service,checklist_confirmed:true,no_evidence_reason:'Synthetic fixture summary; linked operating samples are illustrative.'});}
+    const anchor=reviewSchedule(row,true).schedule_anchor;
+    const last=row.occurrences.at(-1);
+    if(last)row.due_date=reviewSchedule({...row,due_date:last.due_date,recurrence_due_date:null,schedule_anchor:anchor}).next_review_date.slice(0,10);
+    Object.assign(row,{schedule_anchor:anchor},reviewSchedule({...row,schedule_anchor:anchor}),reviewView({...row,schedule_anchor:anchor}));
+    state.framework_reviews[plan.key]={enabled:true,recurrence:row.recurrence,due_date:row.due_date};
   }
   const assessments=db.framework_assessments.filter(a=>a.client_id===cid&&a.framework_key==='cis-ig1');
   for(const [i,row] of assessments.entries()){
@@ -82,7 +111,7 @@ function populateScenario(db,client,scenario,clock,{preserveCreation=false}={}){
   const observed=review.occurrences.at(-1);observed.outcome='findings_raised';observed.finding_count=1;
   const finding={finding_id:findingId,client_id:cid,title:`${scenario.name} inventory ownership is incomplete`,description:'The latest mapped inventory review found an unassigned service component; correcting the Action does not validate this Finding.',severity:'medium',status:'open',owner_id:owner,review_id:review.review_id,occurrence_id:observed.occurrence_id,framework_assessment_id:assessment.framework_assessment_id,definition_id:'1.1',primary_task_id:taskId,due_date:day(18),created_at:observed.completed_at,updated_at:atDay(day(-3)),created_by:owner};db.findings.push(finding);
   db.tasks.push({task_id:taskId,client_id:cid,title:'Confirm inventory owner and reconcile the service component',description:'Retain reconciliation evidence for independent Finding validation.',status:'in_progress',priority:'medium',finding_id:findingId,framework_assessment_id:assessment.framework_assessment_id,owner_id:owner,assignee_id:owner,due_date:day(12),created_at:finding.created_at,updated_at:finding.updated_at,created_by:owner});assessment.related_links.push({kind:'findings',id:findingId},{kind:'tasks',id:taskId});
-  const text=`SYNTHETIC ${scenario.name}: inventory reconciliation sample; unresolved owner tracked in ${findingId}.`,bytes=encodeURIComponent(text).replace(/%([0-9A-F]{2})/g,(_,hex)=>String.fromCharCode(parseInt(hex,16))),evidence={evidence_id:cid+'_evidence_inventory',client_id:cid,filename:'inventory-sample.txt',display_name:'Inventory reconciliation sample',mime_type:'text/plain',size:bytes.length,content_base64:btoa(bytes),evidence_type:'Report',linked_type:'framework_assessment',linked_id:assessment.framework_assessment_id,relationships:[{kind:'findings',id:findingId},{kind:'reviews',id:review.review_id,occurrence_id:finding.occurrence_id}],uploaded_by:owner,created_at:finding.created_at,evidence_date:observed.completed_at.slice(0,10),version:1,notes:'Explicit small fictional evidence sample; Demo lifetime and budget apply.'};db.evidence.push(evidence);assessment.related_links.push({kind:'evidence',id:evidence.evidence_id});
+  const text=`DEMO - SYNTHETIC DATA\n${scenario.name}: inventory reconciliation sample; unresolved owner tracked in ${findingId}.\nCollected: ${observed.completed_at.slice(0,10)}`,bytes=encodeURIComponent(text).replace(/%([0-9A-F]{2})/g,(_,hex)=>String.fromCharCode(parseInt(hex,16))),evidence={evidence_id:cid+'_evidence_inventory',client_id:cid,filename:'inventory-sample.txt',display_name:'Inventory reconciliation sample',mime_type:'text/plain',size:bytes.length,content_base64:btoa(bytes),evidence_type:'Report',linked_type:'framework_assessment',linked_id:assessment.framework_assessment_id,relationships:[{kind:'findings',id:findingId},{kind:'reviews',id:review.review_id,occurrence_id:finding.occurrence_id}],uploaded_by:owner,created_at:finding.created_at,evidence_date:observed.completed_at.slice(0,10),version:1,notes:'Explicit small fictional evidence sample; Demo lifetime and budget apply.'};db.evidence.push(evidence);assessment.related_links.push({kind:'evidence',id:evidence.evidence_id});
   seedAI(db,scenario,risk,vendor,owner,clock);
   for(const review of db.reviews.filter(row=>row.client_id===cid))review.occurrences||=[];
   for(const log of db.logs.filter(row=>row.client_id===cid)){log.at=clock.toISOString();log.meta={...log.meta,simulated:true,fixture_revision:CIS_DEMO_REVISION};}

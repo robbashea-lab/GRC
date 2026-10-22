@@ -25,6 +25,7 @@ import {actionTitle} from '../lib/actionItems';
 import {normalizeRecordWrite} from '../lib/recordContracts';
 import {demoStorageError} from '../lib/demoStorageErrors';
 import {lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
+import {decodeDemoStore,writeDemoStore} from './demoStorageCodec';
 export const STORE_KEY = 'grc_interactive_demo_v3';
 // Older Demo stores remain recoverable; a rollout never deletes a prior session key.
 export const clone = value => JSON.parse(JSON.stringify(value));
@@ -73,14 +74,15 @@ export function seedStore(clock=new Date()) {
   finishInitech(finished,clock);
   // Raw seeds use the native UTC-day clock; persisted saves/reset events keep their exact time.
   enrichBrawndoReportingHistory(finished,new Date(demoDates(clock)(0)+'T12:00:00.000Z'));
-  applyCisDemoRollout(finished,{clock,fresh:true});
+  // Fresh fictional data is deterministic per UTC day; retained upgrades use their actual clock.
+  applyCisDemoRollout(finished,{clock:new Date(demoDates(clock)(0)+'T00:00:00.000Z'),fresh:true});
   return finished;
 }
 export function readStore() {
   let saved;
   try {saved=sessionStorage.getItem(STORE_KEY);}catch(error){throw demoStorageError(error,'read');}
   if (saved) {
-    let db;try{db=restorePortfolioReporting(JSON.parse(saved));}catch(error){throw demoStorageError(error,'parse');}
+    let db;try{db=restorePortfolioReporting(decodeDemoStore(saved));}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
     const retired=removeRetiredDemoClients(db);
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
@@ -99,11 +101,11 @@ export function readStore() {
 export function saveStore(db,{resetFiles=false}={}) {
   // Persist before responding: quota failures must never masquerade as saved changes.
   try {
-    const previous=resetFiles?null:restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)||'null'));
+    const previous=resetFiles?null:restorePortfolioReporting(decodeDemoStore(sessionStorage.getItem(STORE_KEY)||'null'));
     const persisted=lightweightStore(db,previous?.evidence||[]);
     captureDemoReporting(persisted, previous, new Date().toISOString());
     enrichBrawndoReportingHistory(persisted);
-    sessionStorage.setItem(STORE_KEY, JSON.stringify(compactPortfolioReporting(persisted)));
+    writeDemoStore(sessionStorage,STORE_KEY,JSON.stringify(compactPortfolioReporting(persisted)));
     rememberFiles(db,persisted);
     return persisted;
   } catch (error) {
@@ -116,13 +118,16 @@ export function resetStore() {
 }
 export function clearEvidenceFiles(){
   let db;
-  try{db=JSON.parse(sessionStorage.getItem(STORE_KEY));}catch(error){throw demoStorageError(error,'read');}
+  try{db=decodeDemoStore(sessionStorage.getItem(STORE_KEY));}catch(error){throw demoStorageError(error,'read');}
   if(!db)throw demoStorageError(null,'read');
   db.evidence=(db.evidence||[]).map(({content_base64,...metadata})=>({...metadata,demo_file_storage:'cleared'}));
   saveStore(db);clearFileCache();
 }
 export function demoDiagnostics(){
-  try{const saved=sessionStorage.getItem(STORE_KEY)||'{}';return storageDiagnostics(saved,JSON.parse(saved));}
+  try{
+    const saved=sessionStorage.getItem(STORE_KEY)||'{}',decoded=decodeDemoStore(saved);
+    return {...storageDiagnostics(saved,decoded),uncompressed_json_bytes:JSON.stringify(decoded).length*2};
+  }
   catch(error){const failure=demoStorageError(error,'read');return {storage:'sessionStorage',last_error:failure.storage_code};}
 }
 export const list = (db, kind, cid) => (db[kind] || []).filter(r => !cid || r.client_id === cid);
