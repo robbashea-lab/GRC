@@ -144,7 +144,7 @@ test.each([
   const affected=matrixControl(rowText);expect(affected).toBeTruthy();
   const affectedLabel=affected.getAttribute('aria-label');await matrixAnswer(affected,id==='2.1'?'':'Not sure');
   await edit(guide().querySelector('[aria-label="Known gaps or uncertainties"]'),'Retain this local matrix context.');
-  await click(guide(),'Pause & return');await click(document.body,'Save & close');expect(disclosure().open).toBe(false);
+  await click(guide(),'Save & close');expect(disclosure().open).toBe(false);
   const partial=(await api.get(base+'/guided-assessment')).data;
   expect(partial.completed).toBe(false);expect(partial.answers[matrixId+'_detail']).toBe('Retain this local matrix context.');
   if(id==='2.1')expect(partial.answers[matrixId]).not.toHaveProperty(affectedLabel);else expect(partial.answers[matrixId][affectedLabel]).toBe('Not sure');
