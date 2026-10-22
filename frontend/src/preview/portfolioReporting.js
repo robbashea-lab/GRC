@@ -46,11 +46,16 @@ function normalizedCurrent(db,identity,current,document=null){
   const exact=exactScope(current),scopes=knownScopes(db,identity),index=scopes.indexOf(exact);
   const scope_signature=exact?`demo-scope:${identity}:${index<0?scopes.length:index}`:current.scope_signature;
   const head=db.portfolio_reporting?.identities?.find(row=>row.program_id===identity)?.head;
-  const source=exactSource(current);
-  const legacy=document||[...(db.portfolio_reporting?.snapshots||[])].reverse().find(snapshot=>programIdentity(snapshot)===identity&&exactSource(snapshot.current)===source);
-  const source_revision=document?document.source_revision?.startsWith('demo-source:')?document.source_revision:`demo-source:${identity}:legacy:${document.snapshot_id}`:
-    head&&source===head.signature?`demo-source:${identity}:${head.revision}`:
-    legacy?`demo-source:${identity}:legacy:${legacy.snapshot_id}`:null;
+  let source_revision;
+  if(document)source_revision=document.source_revision?.startsWith('demo-source:')?document.source_revision:`demo-source:${identity}:legacy:${document.snapshot_id}`;
+  else {
+    const source=exactSource(current);
+    if(head&&source===head.signature)source_revision=`demo-source:${identity}:${head.revision}`;
+    else {
+      const legacy=[...(db.portfolio_reporting?.snapshots||[])].reverse().find(snapshot=>programIdentity(snapshot)===identity&&exactSource(snapshot.current)===source);
+      source_revision=legacy?`demo-source:${identity}:legacy:${legacy.snapshot_id}`:null;
+    }
+  }
   const included_counts=current.included_counts||current.counts?.filter(value=>STATUS.includes(value.key))||[];
   return {...current,scope_signature,source_revision,status_signature:scope_signature?stable({scope_signature,included_counts,implemented:current.implemented,denominator:current.denominator,availability:current.availability}):null};
 }
@@ -197,8 +202,9 @@ export function demoCurrentPositions(db,clients,asOf=new Date().toISOString()){
       const references=sources.map(row=>({kind:'framework_assessments',id:row.framework_assessment_id,definition_id:row.definition_id,framework_version:row.framework_version??null,status:row.status,version:row.last_saved||row.last_assessed||row.created_at||null})).sort((a,b)=>a.id.localeCompare(b.id));
       const sourceDates=references.map(reference=>Date.parse(reference.version)).filter(Number.isFinite),afterCutoff=sourceDates.some(date=>date>timestamp(asOf));
       const complete=!missing&&!duplicates&&!unknown&&!invalid&&!afterCutoff;
-      const status_signature=stable({scope_signature:stable(scope),counts:included_counts,availability:complete?'available':'partial'});
-      return {...position,current:normalizedCurrent(db,position.program_id,{...unavailable,availability:complete?'available':'partial',counts:values,included_counts,assessed:included_counts.filter(value=>value.key!=='not_assessed').reduce((sum,value)=>sum+value.count,0),not_started:!!(complete&&included.length&&included.every(row=>row.status==='not_assessed')&&!rows.some(row=>row.last_saved||row.last_assessed)),status_signature,source_revision:stable({scope,references}),provenance:{...unavailable.provenance,source_references:references,cutoff_consistent:!afterCutoff,source_as_of:sourceDates.length?iso(Math.max(...sourceDates)):null},implemented,denominator:included.length,total:definitions.length,excluded:excluded.length,percentage:complete&&included.length?implemented/included.length*100:null,components,scope,scope_signature:stable(scope),scope_undetermined:undetermined.length,missing_records:missing,duplicate_records:duplicates,unrecognized_status_count:unknown,invalid_applicability_count:invalid,
+      // normalizedCurrent supplies all three identities; preserve property order
+      // without first calculating canonical values that it immediately replaces.
+      return {...position,current:normalizedCurrent(db,position.program_id,{...unavailable,availability:complete?'available':'partial',counts:values,included_counts,assessed:included_counts.filter(value=>value.key!=='not_assessed').reduce((sum,value)=>sum+value.count,0),not_started:!!(complete&&included.length&&included.every(row=>row.status==='not_assessed')&&!rows.some(row=>row.last_saved||row.last_assessed)),status_signature:null,source_revision:null,provenance:{...unavailable.provenance,source_references:references,cutoff_consistent:!afterCutoff,source_as_of:sourceDates.length?iso(Math.max(...sourceDates)):null},implemented,denominator:included.length,total:definitions.length,excluded:excluded.length,percentage:complete&&included.length?implemented/included.length*100:null,components,scope,scope_signature:null,scope_undetermined:undetermined.length,missing_records:missing,duplicate_records:duplicates,unrecognized_status_count:unknown,invalid_applicability_count:invalid,
         reason:afterCutoff?'Native source changed after this cutoff; reload the current position.':!complete?'Some native Demo records or decisions are unavailable or invalid.':undetermined.length?'Percentages describe ISMS and included Annex A; unresolved SoA decisions remain separate.':!included.length?'No applicable implementation items.':null})};
     });
   });

@@ -758,3 +758,29 @@ test('restore normalizes legacy rows lazily and allocates repeated references in
   const usedBad=copy(db);usedBad.portfolio_reporting.source_vectors[0].push(1);
   expect(()=>restorePortfolioReporting(usedBad)).toThrow();
 });
+
+test('native reporting revisions preserve document, committed-head and latest legacy precedence',()=>{
+  const db=fixture();captureDemoReporting(db,null,AS_OF);
+  const identity=db.portfolio_reporting.identities[0],program='isolated:cis-ig1';
+  const current=()=>demoCurrentPositions(db,db.clients,AS_OF)[0].current;
+  expect(current().source_revision).toBe(`demo-source:${program}:${identity.head.revision}`);
+  expect(current().scope_signature).toBe('demo-scope:isolated:cis-ig1:0');
+  expect(JSON.parse(current().status_signature)).toMatchObject({scope_signature:'demo-scope:isolated:cis-ig1:0',implemented:0,denominator:56,availability:'available'});
+  const first=db.portfolio_reporting.snapshots[0];
+  const latest={...copy(first),snapshot_id:'latest-legacy',source_revision:'demo-source:document-proof'};
+  db.portfolio_reporting.snapshots.push(latest);
+  // An exact committed head takes precedence even when a newer legacy match exists.
+  expect(current().source_revision).toBe(`demo-source:${program}:${identity.head.revision}`);
+  identity.head=null;
+  expect(current().source_revision).toBe(`demo-source:${program}:legacy:latest-legacy`);
+  const unchanged=copy(db);
+  const history=request(db,'history',{client_id:'isolated',program_key:'cis-ig1',range:'3m'});
+  expect(history.snapshots.find(row=>row.snapshot_id==='latest-legacy').source_revision).toBe('demo-source:document-proof');
+  expect(db).toEqual(unchanged);
+  db.portfolio_reporting.snapshots=[];
+  expect(current().source_revision).toBeNull();
+  const previous=copy(db),changed=copy(db);changed.framework_assessments[0].status='addressed';
+  captureDemoReporting(changed,previous,AS_OF);
+  expect(previous).toEqual(db);
+  expect(changed.portfolio_reporting.snapshots.at(-1).current.implemented).toBe(1);
+});
