@@ -1,4 +1,4 @@
-import {captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting,readPortfolioStore,writePortfolioStore} from './portfolioReporting';
+import {demoCurrentPositions,captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting,readPortfolioStore,writePortfolioStore} from './portfolioReporting';
 import * as codec from './demoStorageCodec';
 import * as canonical from './commandRequests';
 import {activeDefinitions,frameworkCatalog} from '../lib/frameworks';
@@ -555,4 +555,42 @@ test('public restore retains custom serializer validation and hook-active reads 
   }finally{
     if(descriptor)Object.defineProperty(Object.prototype,'toJSON',descriptor);else delete Object.prototype.toJSON;
   }
+});
+
+
+test.each(['normal','omitted','throws','second read null','getter installs hook','serializer installs hook'])('canonical source comparison preserves complete output and serializer ordering: %s',variant=>{
+  const fixture=comparisonFixture();
+  delete fixture.portfolio_reporting.snapshots[0].current.provenance.source_references[0].unknown;
+  fixture.portfolio_reporting.identities[0].head=null;
+  const saved=JSON.stringify(compactPortfolioReporting(fixture));
+  const run=opaque=>{
+    const db=opaque?readPortfolioStore(saved):copy(readPortfolioStore(saved));
+    const historical=db.portfolio_reporting.snapshots[0].current,scope=historical.scope,events=[];
+    const prototype=Object.getOwnPropertyDescriptor(Object.prototype,'toJSON');
+    let reads=0;
+    const install=()=>Object.defineProperty(Object.prototype,'toJSON',{configurable:true,value:function(){return this;}});
+    const serializedScope={...scope,toJSON(key){
+      events.push('serialize:'+key);
+      if(variant==='throws')throw new Error('Synthetic scope serializer failure');
+      if(variant==='omitted')return undefined;
+      if(variant==='serializer installs hook')install();
+      return scope;
+    }};
+    Object.defineProperty(historical,'scope',{enumerable:true,configurable:true,get(){
+      events.push('scope:'+ ++reads);
+      if(variant==='getter installs hook'&&reads===2)install();
+      return variant==='second read null'&&reads===2?null:serializedScope;
+    }});
+    let result,error;
+    try{result=demoCurrentPositions(db,db.clients,'2026-10-01T00:00:00.000Z');}
+    catch(caught){error=caught.message;}
+    finally{if(prototype)Object.defineProperty(Object.prototype,'toJSON',prototype);else delete Object.prototype.toJSON;}
+    return {result,error,events};
+  };
+  const expected=run(false),actual=run(true);
+  expect(actual).toEqual(expected);
+  expect(actual.events.slice(0,2)).toEqual(['scope:1','scope:2']);
+  if(variant==='normal'||variant==='serializer installs hook')expect(actual.result[0].current.source_revision).toContain(':legacy:');
+  if(variant==='omitted'||variant==='second read null')expect(actual.result[0].current.source_revision).toBeNull();
+  if(variant==='throws')expect(actual.error).toBe('Synthetic scope serializer failure');
 });

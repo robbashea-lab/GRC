@@ -24,7 +24,7 @@ import {validateGovernanceContext} from '../lib/requirementBasis';
 import {actionTitle} from '../lib/actionItems';
 import {normalizeRecordWrite} from '../lib/recordContracts';
 import {demoStorageError} from '../lib/demoStorageErrors';
-import {lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
+import {lightweightEvidence,lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
 import {decodeDemoStore} from './demoStorageCodec';
 export const STORE_KEY = 'grc_interactive_demo_v3';
 // Older Demo stores remain recoverable; a rollout never deletes a prior session key.
@@ -88,9 +88,9 @@ export function readStore() {
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
     if(initech){reconcileFramework(db,'demo_initech',db.baselines.demo_initech);finishInitech(db);}
     const cisRollout=applyCisDemoRollout(db,{fresh:false});
-    const light=lightweightStore(db,db.evidence);
+    const lightEvidence=lightweightEvidence(db.evidence,db.evidence);
     const enriched=enrichBrawndoReportingHistory(db);
-    if(retired||initech||cisRollout||enriched||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
+    if(retired||initech||cisRollout||enriched||lightEvidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
     return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
   }
   clearFileCache();

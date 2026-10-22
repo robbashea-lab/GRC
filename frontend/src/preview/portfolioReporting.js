@@ -33,7 +33,21 @@ function scopeText(signature){
   return stable(implementationScope(JSON.parse(signature)));
 }
 const exactScope=current=>current.scope?stable(implementationScope(current.scope)):scopeText(current.scope_signature);
-const exactSource=current=>current.scope?stable({scope:current.scope,references:comparisonReferences(current.provenance)||[]}):null;
+function exactSource(current){
+  if(!current.scope)return null;
+  // Keep the original two scope reads and provenance access order: these may
+  // execute native getters before the immutable-reference guard is evaluated.
+  const scope=current.scope,provenance=current.provenance;
+  const lazy=provenance&&restoredSourceVectors.get(provenance);
+  if(lazy&&Object.getOwnPropertyDescriptor(provenance,'source_references')?.get===lazy.get
+    &&lazy.vector.rows.every(row=>row.canonicalKnown)&&!customJSON({})&&!customJSON([])){
+    // stable orders references before scope. Snapshot the complete references
+    // first, then retain the scope serializer's key and omission/error behavior.
+    const references=lazy.vector.json,scopeFields=stable({scope}).slice(1,-1);
+    return '{"references":'+references+(scopeFields?','+scopeFields:'')+'}';
+  }
+  return stable({scope,references:comparisonReferences(provenance)||[]});
+}
 function knownScopes(db,identity){
   const recorded=db.portfolio_reporting?.identities?.find(row=>row.program_id===identity);
   if(recorded)return recorded.scopes.map(scopeText);

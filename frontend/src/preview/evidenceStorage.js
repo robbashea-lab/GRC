@@ -6,9 +6,10 @@ const INLINE_BUDGET_BYTES=64*1024;
 export const payloadBytes=value=>typeof value==='string'?value.length*2:0;
 export const fileBytes=value=>{const raw=(value||'').split(',').pop();return Math.floor(raw.length*3/4)-(raw.endsWith('==')?2:raw.endsWith('=')?1:0);};
 const SNAPSHOT_FIELDS=['title','review_type','recurrence','owner_id','reviewer_id','scope','framework_drivers','baseline_key','framework_key','framework_safeguards','framework_plan_key','governance_context','policy_id'];
-const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const immutableJSONPrimitive=value=>value===undefined||value===null||typeof value==='string'||typeof value==='boolean';
+const same=(a,b)=>immutableJSONPrimitive(a)&&immutableJSONPrimitive(b)?a===b:JSON.stringify(a)===JSON.stringify(b);
 // Immutable primitives need no clone; numbers retain JSON normalization (including -0).
-const copy=value=>(value===undefined||value===null||typeof value==='string'||typeof value==='boolean')?value:JSON.parse(JSON.stringify(value));
+const copy=value=>immutableJSONPrimitive(value)?value:JSON.parse(JSON.stringify(value));
 const compactReviews=reviews=>(reviews||[]).map(review=>({...review,occurrences:(review.occurrences||[]).map(occurrence=>{
   const inherited=SNAPSHOT_FIELDS.filter(field=>Object.hasOwn(occurrence,field)&&same(occurrence[field],review[field]));
   if(!inherited.length)return occurrence;
@@ -18,9 +19,9 @@ const expandReviews=reviews=>(reviews||[]).map(review=>({...review,occurrences:(
   if(!occurrence._review_inherited)return occurrence;
   const expanded={...occurrence};for(const field of expanded._review_inherited)expanded[field]=copy(review[field]);delete expanded._review_inherited;return expanded;
 })}));
-export function lightweightStore(db,previousEvidence=[]){
+function inlineEvidence(evidence,previousEvidence){
   let remaining=INLINE_BUDGET_BYTES; // Aggregate UTF-16 payload budget, independent of metadata.
-  const evidence=db.evidence||[],previous=new Map(previousEvidence.map(e=>[e.evidence_id,e]));
+  const previous=new Map(previousEvidence.map(e=>[e.evidence_id,e]));
   // Reserve already-persisted bytes first: prepending another client's upload must
   // not demote a durable file to the reload-sensitive memory cache.
   const retained=new Set(evidence.filter(e=>e.content_base64&&previous.get(e.evidence_id)?.client_id===e.client_id&&previous.get(e.evidence_id).content_base64===e.content_base64));
@@ -29,10 +30,18 @@ export function lightweightStore(db,previousEvidence=[]){
     const bytes=payloadBytes(e.content_base64);
     if(e.content_base64&&fileBytes(e.content_base64)<=DEMO_INLINE_LIMIT&&bytes<=remaining){inline.add(e);remaining-=bytes;}
   }
-  return {...db,reviews:compactReviews(db.reviews),evidence:evidence.map(e=>{
+  return inline;
+}
+const evidenceMetadata=(evidence,inline)=>evidence.map(e=>{
     const {content_base64,...metadata}=e;
     return content_base64&&!inline.has(e)?{...metadata,demo_file_storage:'session_only'}:e;
-  })};
+  });
+export function lightweightEvidence(evidence=[],previousEvidence=[]){
+  return evidenceMetadata(evidence,inlineEvidence(evidence,previousEvidence));
+}
+export function lightweightStore(db,previousEvidence=[]){
+  const evidence=db.evidence||[],inline=inlineEvidence(evidence,previousEvidence);
+  return {...db,reviews:compactReviews(db.reviews),evidence:evidenceMetadata(evidence,inline)};
 }
 export function rememberFiles(db,persisted=lightweightStore(db)){
   const ids=new Set((db.evidence||[]).map(e=>e.evidence_id));

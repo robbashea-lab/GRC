@@ -3,7 +3,7 @@ import {previewAdapter} from './adapter';
 import {STORE_KEY,readStore,saveStore,seedStore,clearEvidenceFiles,demoDiagnostics} from './store';
 import {compressDemoStore,decodeDemoStore} from './demoStorageCodec';
 import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
-import {clearFileCache,lightweightStore,rememberFiles,restoreFiles,storageDiagnostics} from './evidenceStorage';
+import {clearFileCache,lightweightEvidence,lightweightStore,rememberFiles,restoreFiles,storageDiagnostics} from './evidenceStorage';
 const api=axios.create({adapter:previewAdapter});
 const persisted=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
 const OPENED_AT='2026-10-13T17:00:00.000Z',RESET_AT='2026-10-13T18:00:00.000Z';
@@ -269,4 +269,74 @@ test('a prior-version store remains recoverable without silently importing or de
  expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide','Initech','The Krusty Krab']);
  expect(JSON.parse(sessionStorage.getItem('grc_interactive_demo_v2'))).toEqual({clients:[{client_id:'demo_globo',name:'Globo Gym'}],evidence:[]});
  expect(readStore().clients.map(c=>c.client_id)).toEqual(['demo_brawndo','demo_dunder','demo_prestige','demo_initech','demo_krusty_krab']);
+});
+
+
+test('read-time evidence checks do not compact discarded Review snapshots while saves still pack and expand them',()=>{
+ const raw=decodeDemoStore(sessionStorage.getItem(STORE_KEY));
+ const review=raw.reviews.find(row=>row.occurrences?.length);
+ expect(review).toBeDefined();
+ const marker='Synthetic read-compaction probe unique title';
+ review.title=marker;review.occurrences[0].title=marker;
+ review.scope={read_probe:marker,position:'parent'};
+ review.occurrences[0].scope={read_probe:marker,position:'occurrence'};
+ if(review.occurrences[0]._review_inherited)review.occurrences[0]._review_inherited=review.occurrences[0]._review_inherited.filter(field=>field!=='scope');
+ sessionStorage.setItem(STORE_KEY,JSON.stringify(raw));
+ const stringify=jest.spyOn(JSON,'stringify');
+ let loaded;
+ try{
+   loaded=readStore();
+   expect(stringify.mock.calls.filter(([value])=>value&&typeof value==='object'&&Object.hasOwn(value,'read_probe')&&value.read_probe===marker)).toHaveLength(0);
+   expect(loaded.reviews.find(row=>row.review_id===review.review_id).occurrences[0].title).toBe(marker);
+   stringify.mockClear();
+   saveStore(loaded);
+   expect(stringify.mock.calls.filter(([value])=>value&&typeof value==='object'&&Object.hasOwn(value,'read_probe')&&value.read_probe===marker).length).toBeGreaterThan(0);
+ }finally{stringify.mockRestore();}
+ const stored=decodeDemoStore(sessionStorage.getItem(STORE_KEY)).reviews.find(row=>row.review_id===review.review_id);
+ expect(stored.occurrences[0]._review_inherited).toContain('title');
+ expect(Object.hasOwn(stored.occurrences[0],'title')).toBe(false);
+ expect(readStore().reviews.find(row=>row.review_id===review.review_id).occurrences[0].title).toBe(marker);
+});
+
+test('evidence-only preparation retains the same persisted-byte reservation and metadata as a full save',()=>{
+ const durable={evidence_id:'durable',client_id:'a',content_base64:btoa('x'.repeat(14000))};
+ const added={evidence_id:'added',client_id:'b',content_base64:btoa('y'.repeat(14000))};
+ const evidence=[added,durable],previous=[durable];
+ const evidenceOnly=lightweightEvidence(evidence,previous),full=lightweightStore({reviews:[],evidence},previous).evidence;
+ expect(evidenceOnly).toEqual(full);
+ expect(evidenceOnly[1].content_base64).toBe(durable.content_base64);
+ expect(evidenceOnly[0]).toMatchObject({evidence_id:'added',demo_file_storage:'session_only'});
+ expect(Object.hasOwn(evidenceOnly[0],'content_base64')).toBe(false);
+ expect(evidence[0].content_base64).toBe(added.content_base64);
+});
+
+
+test.each([
+ ['negative zero',-0,0,true],['NaN and null',NaN,null,true],['Infinity and null',Infinity,null,true],
+ ['undefined and null',undefined,null,false],['undefined pair',undefined,undefined,true],
+ ['string and boolean','true',true,false],['boolean pair',false,false,true],
+])('Review inheritance retains JSON equality semantics for %s',(_label,parentValue,occurrenceValue,inherited)=>{
+ const original={reviews:[{review_id:'synthetic-json-review',scope:parentValue,occurrences:[{occurrence_id:'synthetic-json-occurrence',scope:occurrenceValue}]}],evidence:[]};
+ const packed=lightweightStore(original),occurrence=packed.reviews[0].occurrences[0];
+ expect(occurrence._review_inherited?.includes('scope')||false).toBe(inherited);
+ const expanded=restoreFiles(packed).reviews[0].occurrences[0];
+ if(inherited&&typeof parentValue==='number')expect(expanded.scope).toBe(JSON.parse(JSON.stringify(parentValue)));
+ else expect(expanded.scope).toBe(occurrenceValue);
+ expect(Object.hasOwn(original.reviews[0].occurrences[0],'scope')).toBe(true);
+});
+
+test('Review object serializers retain callback ordering, failures and independently expanded values',()=>{
+ const calls=[];
+ const object=label=>({toJSON(key){calls.push([label,key]);return {nested:[{value:'retained Unicode ✓'}]};}});
+ const review={review_id:'synthetic-serializer-review',scope:object('parent'),occurrences:[{occurrence_id:'first',scope:object('first')},{occurrence_id:'second',scope:object('second')}]};
+ const packed=lightweightStore({reviews:[review],evidence:[]});
+ expect(calls).toEqual([['first',''],['parent',''],['second',''],['parent','']]);
+ expect(packed.reviews[0].occurrences.every(row=>row._review_inherited.includes('scope'))).toBe(true);
+ calls.length=0;
+ const expanded=restoreFiles(packed).reviews[0].occurrences;
+ expect(calls).toEqual([['parent',''],['parent','']]);
+ expanded[0].scope.nested[0].value='local change';
+ expect(expanded[1].scope.nested[0].value).toBe('retained Unicode ✓');
+ const broken={reviews:[{scope:{toJSON(){throw new Error('Synthetic serializer failure');}},occurrences:[{scope:{}}]}],evidence:[]};
+ expect(()=>lightweightStore(broken)).toThrow('Synthetic serializer failure');
 });
