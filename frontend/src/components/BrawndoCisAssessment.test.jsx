@@ -4,7 +4,6 @@ import FrameworkDrawer from './FrameworkDrawer';
 import {frameworkWorkspace} from '@/lib/frameworks';
 import api from '@/lib/api';
 import {BrawndoCisHeader} from './BrawndoCisOverview';
-import guide from '@catalogs/operatorGuidance/cisRequirementGuide.json';
 import catalog from '@catalogs/cisIG1.json';
 
 let mockUser,mockOfficial=null;
@@ -94,13 +93,13 @@ test('Brawndo inline workflow orders Items between native implementation and Fin
  expect(container.querySelector('[data-testid="cis-supporting-records"]')).toBeNull();expect(container.querySelector('[data-testid="cis-operation"]')).toBeNull();
  expect(container.querySelector('h2').textContent).toBe('Establish and Maintain Detailed Enterprise Asset Inventory');
  expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Not verified');
- expect(container.querySelector('.assessment-summary').open).toBe(false);
+ expect(container.querySelector('.cis-collapsible-requirement').open).toBe(false);
  expect(container.querySelector('.assessment-implementation').children).toHaveLength(2);
  expect(container.querySelector('.bcsg-findings').closest('[role=tabpanel]').id).toMatch(/findings$/);
 
 });
 test('What CIS Requires labels the summary and links the official reference; official_text renders verbatim when supplied',async()=>{
- await render();expect(container.textContent).toContain('Requirement summary');
+ await render();expect(container.textContent).toContain('What CIS requires');
  expect(container.querySelector('[data-source-kind="official"]').textContent).toBe(catalog.requirements.find(d=>d.id===record.definition_id).official_text);
  const ref=[...container.querySelectorAll('a')].find(a=>a.textContent==='Official CIS source');expect(ref.href).toMatch(/^https:\/\/cas\.docs\.cisecurity\.org\//);
  expect(ref.nextSibling).toBeNull();mockOfficial='Authorized verbatim text.';
@@ -127,19 +126,19 @@ test('status, narrative and verification save while retaining prior criteria and
 });
 
 test('single requirement summary opens without writes and resets on safeguard/client changes',async()=>{
- await render();const before=JSON.stringify(record);const disclosure=container.querySelector('.assessment-summary');await tick(disclosure.querySelector('summary'));
- expect(disclosure.querySelector('p').textContent).toBe(guide.requirements['1.1'].plain);expect(disclosure.querySelector('.assessment-interview')).toBeTruthy();expect(disclosure.querySelector('.omni-launch-button')).toBeNull();
+ await render();const before=JSON.stringify(record);const disclosure=container.querySelector('.cis-collapsible-requirement');await tick(disclosure.querySelector('summary'));
+ expect(disclosure.querySelector('[data-source-kind="official"]').textContent).toBe(catalog.requirements.find(item=>item.id==='1.1').official_text);expect(container.querySelector('.assessment-interview')).toBeTruthy();expect(container.querySelector('.omni-launch-button')).toBeNull();
  expect(JSON.stringify(record)).toBe(before);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
- record={...record,framework_assessment_id:'b',definition_id:'14.1'};await render();expect(container.querySelector('.assessment-summary').open).toBe(false);expect(container.querySelector('.assessment-summary p').textContent).toBe(guide.requirements['14.1'].plain);
+ record={...record,framework_assessment_id:'b',definition_id:'14.1'};await render();expect(container.querySelector('.cis-collapsible-requirement').open).toBe(false);expect(container.querySelector('.cis-collapsible-requirement [data-source-kind="official"]').textContent).toBe(catalog.requirements.find(item=>item.id==='14.1').official_text);
  record={...record,client_id:'new-cis-client',framework_assessment_id:'c'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="new-cis-client" onOpenChange={close}/>));
- expect(container.querySelector('.assessment-summary').open).toBe(false);expect(container.querySelector('.assessment-summary p').textContent).toBe(guide.requirements['14.1'].plain);
+ expect(container.querySelector('.cis-collapsible-requirement').open).toBe(false);expect(container.querySelector('.cis-collapsible-requirement [data-source-kind="official"]').textContent).toBe(catalog.requirements.find(item=>item.id==='14.1').official_text);
 
 });
 
 test.each(catalog.requirements)('approved layout applies to safeguard $id for a non-Brawndo CIS client',async definition=>{
  record={...record,client_id:'new-cis-client',definition_id:definition.id,framework_assessment_id:'new-'+definition.id};await render('new-cis-client');
  expect(container.querySelector('.assessment-layout')).toBeTruthy();expect(container.querySelector('[data-source-kind="official"]').textContent).toBe(definition.official_text);
- expect(container.querySelector('.assessment-summary p').textContent).toBe(guide.requirements[definition.id].plain);expect(container.querySelector('.assessment-summary').open).toBe(false);
+ expect(container.querySelector('.cis-collapsible-requirement [data-source-kind="official"]').textContent).toBe(definition.official_text);expect(container.querySelector('.cis-collapsible-requirement').open).toBe(false);
  await criteriaTab();expect(container.querySelector('.assessment-criteria-columns')).toBeNull();
  expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
  expect(container.querySelector('.bcsg-findings').closest('[role=tabpanel]').id).toMatch(/findings$/);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
@@ -147,14 +146,14 @@ test.each(catalog.requirements)('approved layout applies to safeguard $id for a 
 });
 
 test('static guide remains usable while an assessment draft is being edited',async()=>{
- await render();await input('Current implementation','Retain this unsaved draft');await tick(container.querySelector('.assessment-summary summary'));await criteriaTab();
+ await render();await input('Current implementation','Retain this unsaved draft');await tick(container.querySelector('.cis-collapsible-requirement summary'));await criteriaTab();
  expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Retain this unsaved draft');expect(container.textContent).toContain('Unsaved assessment changes');expect(api.patch).not.toHaveBeenCalled();
  await implementationTab();expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Retain this unsaved draft');
 
 });
 test('status labels and N/A are preserved; legacy notes remain in a collapsed disclosure',async()=>{
  await render();expect([...container.querySelectorAll('input[name="bcsg-status"]')].map(i=>i.parentElement.textContent)).toEqual(['Implemented','Partially Implemented','Not Implemented','Not Assessed','Not Applicable']);
- expect(container.querySelector('.assessment-summary')).toBeTruthy();
+ expect(container.querySelector('.cis-collapsible-requirement')).toBeTruthy();
  expect(container.querySelector('[aria-label="Current implementation"]')).toBeTruthy();
  expect(container.querySelector('[aria-label="N/A Rationale"]')).toBeNull();await tick(container.querySelector('input[value="not_applicable"]'));expect(container.querySelector('[aria-label="N/A Rationale"]')).toBeTruthy();
  expect(container.querySelector('.bcsg-legacy')).toBeNull();
@@ -177,7 +176,7 @@ test.each(['client_readonly','client_contributor'])('unassigned %s cannot edit',
  mockUser.role=role;await render();await criteriaTab();expect(button('Save assessment')).toBeUndefined();expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
  expect(container.querySelector('.assessment-criteria-columns')).toBeNull();
  expect([...container.querySelectorAll('.assessment-check input')].every(input=>input.matches(':disabled'))).toBe(true);
- expect(container.querySelector('.assessment-summary summary')).toBeTruthy();
+ expect(container.querySelector('.cis-collapsible-requirement summary')).toBeTruthy();
 
 });
 test('load failure disables writes and offers retry',async()=>{
@@ -185,7 +184,7 @@ test('load failure disables writes and offers retry',async()=>{
 });
 test('other clients retain their assessment content with explicit modal semantics',async()=>{
  record={...record,client_id:'demo_dunder'};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} onNext={next} position="1 of 56"/>));
- expect(container.textContent).toContain('Implementation status');expect(container.querySelector('.assessment-summary p').textContent).toBe(guide.requirements['1.1'].plain);expect(container.querySelector('.assessment-inline-criteria')).toBeNull();expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
+ expect(container.textContent).toContain('Implementation status');expect(container.querySelector('.cis-collapsible-requirement [data-source-kind="official"]').textContent).toBe(catalog.requirements.find(item=>item.id==='1.1').official_text);expect(container.querySelector('.assessment-inline-criteria')).toBeNull();expect(container.querySelector('[aria-modal="true"]')).not.toBeNull();
 });
 test('ISO assessments omit supplemental organizational controls without changing stored records',async()=>{
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};
@@ -214,8 +213,8 @@ test('readable guidance preserves previous criteria, legacy checks and historica
 });
 
 test.each(['new-cis-client','existing-iso-client'])('shared guidance is identical for %s without client-specific content',async clientId=>{
- await render();const expected=container.querySelector('.assessment-summary p').textContent;record={...record,client_id:clientId};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={close}/>));
- expect(container.querySelector('.assessment-summary p').textContent).toBe(expected);expect(expected).not.toContain('Brawndo');
+ await render();const expected=container.querySelector('.cis-collapsible-requirement [data-source-kind="official"]').textContent;record={...record,client_id:clientId};await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={close}/>));
+ expect(container.querySelector('.cis-collapsible-requirement [data-source-kind="official"]').textContent).toBe(expected);expect(expected).not.toContain('Brawndo');
 
 });
 test('a never-assessed safeguard does not name an assessor',async()=>{

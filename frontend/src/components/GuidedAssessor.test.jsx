@@ -1,6 +1,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import GuidedAssessor from './GuidedAssessor';
+import {nativeCisQuestionTitle} from './RefinedOmniInterview';
 import {guidedCatalog,control1Catalog,versionForSafeguard} from '@/lib/guidedAssessment';
 import {omniCisSummary} from '@/lib/omniCisSummary';
 import api from '@/lib/api';
@@ -147,4 +148,35 @@ test.each(['1.1','1.2'])('original v1 safeguard %s opens the approved window and
   draft={...interview(id),version:'brawndo-cis-pilot-1',answers:{[id==='1.1'?'inventory':'process']:'Not sure',gaps:'Mixed missing-or-unknown historical notes'},narrative:'Retained manual interview text.\nExact second line.',revision:4};
   const original={...draft};await render();await open();expect(document.querySelector('.omni-workspace-window')).toBeTruthy();expect(button('Not sure').getAttribute('aria-pressed')).toBe('true');
   expect(api.put).not.toHaveBeenCalled();await click('Save & close');expect(draft.version).toBe(original.version);expect(draft.answers).toEqual(original.answers);expect(draft.narrative).toBe(original.narrative);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test.each([['demo_brawndo','demo'],['existing-authenticated-client','standard']])('sequential presentation for %s retains explicit checkpoints, pause/resume and native summary save boundary',async(clientId,mode)=>{
+  mockWorkspaceMode=mode;const current=record('1.1',clientId);props={...props,clientId,record:current,current,form:{...current}};draft=interview('1.1');
+  await render({inline:true,inlineOpen:true,sequential:true});
+  expect(container.querySelector('[aria-label="CIS assessment interview"]').hidden).toBe(true);expect(api.put).not.toHaveBeenCalled();
+  await click('Begin guided assessment');const first=guidedCatalog.safeguards['1.1'][0];
+  expect(container.querySelector('legend').textContent).toBe(nativeCisQuestionTitle('1.1',first));
+  await act(async()=>{const select=container.querySelector('.cis-sequential-interview select');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(select,'No');select.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await click('Continue');expect(api.put).not.toHaveBeenCalled();
+  await click('Pause & return');await click('Save & close');expect(api.put).toHaveBeenCalledWith('/framework_assessments/pilot-1.1/guided-assessment',expect.objectContaining({answers:{inventory:'No'},completed:false}));expect(container.querySelector('[aria-label="CIS assessment interview"]').hidden).toBe(true);await click('Resume guided assessment');
+  expect(container.querySelector('[aria-label="CIS assessment interview"]').hidden).toBe(false);
+  for(let count=0;count<50&&button('Continue');count++)await click('Continue');
+  await click('Review answers');expect(container.querySelector('.cis-answer-review').textContent).toContain(nativeCisQuestionTitle('1.1',first));
+  await click('Edit answer 1');expect(container.querySelector('legend').textContent).toBe(nativeCisQuestionTitle('1.1',first));expect(container.querySelector('select').value).toBe('No');
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(current.status).toBe('not_assessed');expect(current.implementation).toBe('');
+});
+
+test('sequential empty root cannot checkpoint; pause/discard and summary review keep manual assessment unchanged until explicit replacement confirmation',async()=>{
+  const current={...record(),implementation:'Retain the original manual assessment.'};props={...props,record:current,current,form:{...current}};draft=interview('1.1');
+  await render({inline:true,inlineOpen:true,sequential:true});await click('Begin guided assessment');await click('Continue');
+  expect(document.body.textContent).toContain('Choose an answer before continuing. Not sure is a valid response.');expect(api.put).not.toHaveBeenCalled();
+  const answer=async value=>act(async()=>{const select=container.querySelector('.cis-sequential-interview select');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(select,value);select.dispatchEvent(new Event('change',{bubbles:true}));});
+  await answer('No');await click('Pause & return');expect(document.body.textContent).toContain('Save your progress?');expect(api.put).not.toHaveBeenCalled();
+  await click('Keep editing');expect(container.querySelector('.cis-sequential-interview select').value).toBe('No');await click('Pause & return');await click('Discard changes');
+  expect(api.put).not.toHaveBeenCalled();expect(current.implementation).toBe('Retain the original manual assessment.');
+  await click('Begin guided assessment');expect(container.querySelector('.cis-sequential-interview select').value).toBe('');await answer('No');
+  for(let count=0;count<50&&button('Continue');count++)await click('Continue');await click('Review answers');await click('Review summary');
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(current.implementation).toBe('Retain the original manual assessment.');expect(current.status).toBe('not_assessed');
+  await click('Update assessment');expect(document.body.textContent).toContain('Update this assessment?');await click('Cancel');expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });

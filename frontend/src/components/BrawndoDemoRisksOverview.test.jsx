@@ -107,10 +107,55 @@ test('same-day visual grouping keeps every distinct Action and Risk opener',asyn
   api.get.mockImplementation((url,{params})=>Promise.resolve({data:{tasks:params.entity_id==='r1'?actions:[]}}));
   const onOpen=jest.fn();
   await render({rows:risks,matrixRows:risks,view:'all_active',onSelect:jest.fn(),onView:jest.fn(),matches:riskMatches,onOpen,scope:'demo_brawndo'});
-  expect(container.querySelectorAll('.bdr-event')).toHaveLength(2);
-  expect(container.textContent).toContain('2 risk reviews');
-  expect(container.querySelectorAll('.bdr-event-source button')).toHaveLength(4);
-  for(const risk of risks){const link=[...container.querySelectorAll('.bdr-event-source button')].find(el=>el.getAttribute('aria-label').includes(risk.title));await act(async()=>link.click());expect(onOpen).toHaveBeenLastCalledWith('risks',risk);}
-  for(const action of actions){await act(async()=>button(action.title).click());expect(onOpen).toHaveBeenLastCalledWith('tasks',action);}
+  expect(container.querySelectorAll('.cpt-lane')).toHaveLength(4);
+  expect(container.querySelectorAll('.compact-program-coming button')).toHaveLength(4);
+  await act(async()=>button('View data').click());
+  expect(container.querySelectorAll('.cpt-data tbody tr')).toHaveLength(4);
+  for(const risk of risks){const link=[...container.querySelectorAll('.cpt-data button')].find(el=>el.textContent===risk.title);await act(async()=>link.click());expect(onOpen).toHaveBeenLastCalledWith('risks',risk);}
+  for(const action of actions){const link=[...container.querySelectorAll('.cpt-data button')].find(el=>el.textContent===action.title);await act(async()=>link.click());expect(onOpen).toHaveBeenLastCalledWith('tasks',action);}
+  for(const verb of ['post','put','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
+});
+
+
+test('four cards precede the untouched matrix and dense schedules stay bounded with exact native openers',async()=>{
+  const rows=Array.from({length:12},(_,i)=>({...base,risk_id:`risk-${i}`,title:`Risk ${i}`,next_review:'2027-07-15'}));
+  const snapshot=JSON.stringify(rows),onOpen=jest.fn();
+  await render({rows,matrixRows:rows,onSelect:jest.fn(),onView:jest.fn(),matches:riskMatches,onOpen,scope:'synthetic'});
+  const overview=container.querySelector('.bdr-overview');
+  expect(overview.firstElementChild.getAttribute('aria-label')).toBe('Risk summaries');
+  expect([...overview.firstElementChild.querySelectorAll('button > span')].map(el=>el.textContent)).toEqual(['Active risks','High or critical','Review due in 30 days','Accepted']);
+  expect(container.querySelectorAll('.bdr-cell')).toHaveLength(25);
+  expect(container.querySelectorAll('.cpt-lane')).toHaveLength(4);
+  expect(container.querySelectorAll('.compact-program-coming button')).toHaveLength(4);
+  expect(container.querySelectorAll('.cpt-legend > span')).toHaveLength(3);
+  await act(async()=>button('View data').click());
+  expect(container.querySelectorAll('.cpt-data tbody tr')).toHaveLength(12);
+  await act(async()=>container.querySelector('.cpt-data button').click());
+  expect(onOpen).toHaveBeenCalledWith('risks',expect.objectContaining({risk_id:'risk-0'}));
+  expect(JSON.stringify(rows)).toBe(snapshot);
+  for(const verb of ['post','put','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
+});
+
+test('changing actor scope with the same Risk array hides prior linked Actions while fresh authorized reads are pending',async()=>{
+  const rows=[{...base,risk_id:'r1',title:'Saved Risk'}];
+  const action={client_id:base.client_id,task_id:'old',title:'Prior actor Action',status:'open',due_date:'2026-11-01'};
+  api.get.mockResolvedValueOnce({data:{tasks:[action]}});
+  const props={rows,matrixRows:rows,onSelect:jest.fn(),onView:jest.fn(),matches:riskMatches,onOpen:jest.fn(),scope:'first-actor'};
+  await render(props);expect(container.textContent).toContain('Prior actor Action');
+  let resolveNext;api.get.mockImplementationOnce(()=>new Promise(resolve=>{resolveNext=resolve;}));
+  await render({...props,scope:'next-actor'});
+  expect(container.textContent).not.toContain('Prior actor Action');
+  expect(container.textContent).toContain('Loading linked Action deadlines');
+  await act(async()=>resolveNext({data:{tasks:[]}}));
+  expect(container.textContent).not.toContain('Prior actor Action');
+});
+
+test('conflicting saved treatment dates are visibly unavailable and never offered as duplicate obligations',async()=>{
+  const rows=['r1','r2'].map(risk_id=>({...base,risk_id}));
+  api.get.mockImplementation((url,{params})=>Promise.resolve({data:{tasks:[{task_id:'shared',client_id:base.client_id,status:'open',title:'Conflicting treatment',due_date:params.entity_id==='r1'?'2026-11-01':'2026-12-01'}]}}));
+  await render({rows,matrixRows:rows,onSelect:jest.fn(),onView:jest.fn(),matches:riskMatches,onOpen:jest.fn(),scope:'synthetic'});
+  expect(container.textContent).toContain('Linked Action dates conflict for 1 Action. Refresh to load current dates.');
+  expect(container.textContent).not.toContain('Conflicting treatment');
+  expect(container.textContent).not.toContain('No linked Action deadlines.');
   for(const verb of ['post','put','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
 });

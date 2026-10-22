@@ -1,3 +1,6 @@
+import {useBrawndoTheme} from '@/lib/brawndoTheme';
+import CompactProgramTimeline from '@/components/CompactProgramTimeline';
+import {actionTimelineEvents} from '@/lib/compactProgramTimeline';
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Search,Plus,Clock} from 'lucide-react';
 import {useLocation,useNavigationType,useSearchParams} from 'react-router-dom';
@@ -26,10 +29,10 @@ const priorities={critical:4,immediate:4,high:3,medium:2,moderate:2,low:1,inform
 
 // Mounted only by the narrow route gate, keyed to authenticated actor, mode and client.
 export default function BrawndoDemoActionItems({suspended=false}){
+  const [theme]=useBrawndoTheme();
   const {user}=useAuth(),{currentClientId,currentClient}=useOrg();
   const {data,users,loading,error,load}=useActionRegisterData(currentClientId,{retainOnRefreshError:true});
   const [params,setParams]=useSearchParams(),location=useLocation(),navigationType=useNavigationType();
-  const [hoveredWindow,setHoveredWindow]=useState(null),[focusedWindow,setFocusedWindow]=useState(null);
   const [drawer,setDrawer]=useState(null),[linkError,setLinkError]=useState(''),[refreshError,setRefreshError]=useState('');
   const [pendingNavigation,setPendingNavigation]=useState(null),[closeRequest,setCloseRequest]=useState(0);
   const urlQuery=params.get('q')||'',[query,setQuery]=useState(urlQuery);
@@ -46,8 +49,6 @@ export default function BrawndoDemoActionItems({suspended=false}){
   const view=params.get('view')||(params.get('signal')==='material'?'high_critical':'active'),quick=params.get('quick')||'',source=params.get('source')||'',sort=params.get('sort')||'due';
   const owner=params.get('owner')==='__me__'?user.user_id:params.get('owner')||'',unassigned=params.get('unassigned')==='1';
   const effectiveQuick=quick||(!['active','completed','all'].includes(view)?view:'');
-  const selectedWindow=!['completed','all'].includes(view)&&windows.some(([key])=>key===effectiveQuick)?effectiveQuick:null;
-  const emphasizedWindow=hoveredWindow||focusedWindow||selectedWindow;
   const filtered=rows.filter(row=>brawndoTicketMatches({...row,actionSearchText:[row.actionSearchText,personLabel(users,row.owner_id)].join(' ')},{view,q:query,source,owner,unassigned,quick},eligible));
   filtered.sort((a,b)=>{
     const date=row=>brawndoDueWindow(row)==='unscheduled'?null:daysDue(row);
@@ -97,8 +98,6 @@ export default function BrawndoDemoActionItems({suspended=false}){
   async function saved(){const result=await load();if(mounted.current&&result?.ok===false)throw new Error('The record was saved, but the register could not refresh. '+result.error);}
   async function creationSaved(){try{await saved();if(mounted.current)setRefreshError('');}catch(failure){if(mounted.current)setRefreshError(failure.message);}}
   const oldestOverdue=metrics.overdue.reduce((oldest,row)=>Math.max(oldest,-daysDue(row)),0);
-  const highOverdue=metrics.highSeverity.filter(row=>brawndoDueWindow(row)==='overdue').length;
-  const highPending=metrics.highSeverity.filter(row=>ticketStage(row)==='pending_validation').length;
   const total=metrics.active.length,quickLabels={active:'Active tickets',overdue:'Overdue',unassigned:'Needs an owner',high_critical:'High-severity findings',unscheduled:'Unscheduled',...Object.fromEntries(windows)};
   return <BrawndoSurface className="brawndo-demo-actions" data-visual-surface="action-items">
     <BrawndoPageHeader title={`${currentClient.name} Action Items`} subtitle="Corrective actions from findings, risks, reviews and manual entries"
@@ -110,16 +109,13 @@ export default function BrawndoDemoActionItems({suspended=false}){
       {[
         ['active','Active',total,`${metrics.active.filter(row=>ticketStage(row)==='in_progress').length} in progress · ${metrics.active.filter(row=>ticketStage(row)==='pending_validation').length} awaiting validation`],
         ['overdue','Overdue',metrics.overdue.length,oldestOverdue?`Oldest ${oldestOverdue} ${oldestOverdue===1?'day':'days'} past due`:'Nothing past due','bda-late'],
+        ['upcoming','Due in 30 days',metrics.windows.next14.length+metrics.windows['15_30'].length,'Saved active Action deadlines'],
         ['unassigned','Needs an owner',metrics.needsOwner.length,metrics.needsOwner.length?'Missing or ineligible owner':'Every action has an active owner','bda-attention'],
-        ['high_critical','From high-severity findings',metrics.highSeverity.length,!metrics.highSeverity.length?'None open':highOverdue||highPending?`${highOverdue} overdue · ${highPending} awaiting validation`:'None overdue or awaiting validation'],
+
       ].map(([key,label,count,detail,tone])=><button type="button" key={key} disabled={!ready} aria-pressed={!['completed','all'].includes(view)&&(effectiveQuick||'active')===key} className={`bda-cell bda-${key}`} onClick={()=>key==='active'?change({view:'active',quick:null,owner:null,unassigned:null}):chooseQuick(key)}><span>{label}</span><strong>{ready?count:'—'}</strong><small className={ready&&count>0?tone:undefined}>{ready?detail:'—'}</small></button>)}
-      <div className="bda-runway"><div><small>Due runway</small><b>{ready?total:'—'} active actions</b></div>
-        <div className="bda-runway-body">
-          <div className="bda-runway-bar" aria-hidden="true">{windows.map(([key,label])=><span key={key} className={`bda-window bda-window-${key}`} hidden={!ready||!metrics.windows[key].length} title={`${label}: ${ready?metrics.windows[key].length:'—'}`} data-dimmed={Boolean(emphasizedWindow&&emphasizedWindow!==key)} onMouseEnter={()=>setHoveredWindow(key)} onMouseLeave={()=>setHoveredWindow(null)} onClick={()=>chooseQuick(key)} style={{flex:ready?metrics.windows[key].length:0}} />)}</div>
-          <div className="bda-runway-keys">{windows.map(([key,label])=><button key={key} disabled={!ready} aria-pressed={!['completed','all'].includes(view)&&effectiveQuick===key} onMouseEnter={()=>setHoveredWindow(key)} onMouseLeave={()=>setHoveredWindow(null)} onFocus={()=>setFocusedWindow(key)} onBlur={()=>setFocusedWindow(null)} onClick={()=>chooseQuick(key)}><i className={`bda-window bda-window-${key}`}/>{label} <b>{ready?metrics.windows[key].length:'—'}</b></button>)}{ready&&metrics.windows.unscheduled.length>0&&<button aria-pressed={effectiveQuick==='unscheduled'} onClick={()=>chooseQuick('unscheduled')}>Unscheduled <b>{metrics.windows.unscheduled.length}</b></button>}</div>
-        </div>
-      </div>
+
     </section>
+    <CompactProgramTimeline theme={theme} recordOpen={!!drawer} events={actionTimelineEvents(rows)} available={ready} onOpen={event=>open(event.record)} legend={[{kind:'high',label:'High / Critical priority'},{kind:'other',label:'Other priority'},{kind:'low',label:'Low priority'}]} description="Saved Action due dates, grouped by Action priority."/>
     <section className="bda-register" aria-labelledby="bda-register-title"><header><div><h2 id="bda-register-title">Register</h2>{view==='completed'&&<p>Finished actions, with native completion and Finding validation.</p>}</div><div className="bda-tabs" role="group" aria-label="Ticket population">{[['active','Active',metrics.active.length],['completed','Completed',metrics.completed.length]].map(([key,label])=><button key={key} aria-pressed={view===key||key==='active'&&!['completed','all'].includes(view)} onClick={()=>change({view:key,quick:null,owner:null,unassigned:null})}>{label}</button>)}</div></header>
       <div className="bda-controls"><label className="bda-search"><span className="sr-only">Search action items</span><Search size={15} aria-hidden="true"/><input type="search" placeholder="Search actions and findings…" maxLength={200} value={query} onChange={event=>changeQuery(event.target.value)} data-testid="ai-search"/></label>{view!=='completed'&&<div className="bda-tabs bda-show" role="group" aria-label="Show actions">{[['','All'],['overdue','Overdue'],['in_progress','In progress'],['open','Open'],['pending_validation','Pending validation']].map(([key,label])=><button key={key} aria-pressed={view!=='all'&&effectiveQuick===key} onClick={()=>change({view:'active',quick:key,owner:null,unassigned:null})}>{label}<span>{key?metrics.active.filter(row=>brawndoTicketMatches(row,{quick:key},eligible)).length:total}</span></button>)}</div>}<div className="bda-more-controls"><label>Source <select value={source} onChange={event=>change({source:event.target.value})}><option value="">All sources</option>{[...new Set(rows.map(sourceKey))].sort().map(key=><option key={key} value={key}>{sourceLabel(key)}</option>)}</select></label><label>Sort <select value={sort} onChange={event=>change({sort:event.target.value})}><option value="due">Due date, soonest</option><option value="due-desc">Due date, latest</option><option value="priority">Priority</option><option value="title">Action A–Z</option><option value="owner">Owner A–Z</option><option value="status">Status</option></select></label><label>Status <select value={view==='all'&&!effectiveQuick?'__all__':effectiveQuick} onChange={event=>change({view:'all',quick:event.target.value==='__all__'?'':event.target.value})}><option value="">All in this view</option><option value="__all__">All records</option>{effectiveQuick&&!labels[effectiveQuick]&&<option value={effectiveQuick}>{quickLabels[effectiveQuick]||effectiveQuick}</option>}{Object.entries(labels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label></div></div>
       <div className="bda-results"><span role="status" aria-live="polite">{loading?'Loading authorized tickets…':error?'Tickets unavailable':`${filtered.length} matching ticket${filtered.length===1?'':'s'}${filtered.length?` · ${start+1}–${Math.min(start+10,filtered.length)}`:''}`}</span>{(effectiveQuick||owner||unassigned||source||query)&&<button className="bda-chip" onClick={()=>change({view:['all','completed'].includes(view)?view:'active',quick:null,owner:null,unassigned:null,source:null,q:null})}>{quickLabels[effectiveQuick]||labels[effectiveQuick]|| (owner?`Owner: ${personLabel(users,owner)}`:unassigned?'Needs an owner':'Filtered')} · Clear filters ×</button>}<nav aria-label="Action register pages"><span>Page {page} of {lastPage}</span><button disabled={!ready||page===1} onClick={()=>change({page:page-1})}>Previous</button><button disabled={!ready||page===lastPage} onClick={()=>change({page:page+1})}>Next</button></nav></div>

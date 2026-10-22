@@ -2,6 +2,7 @@ import {cisExperienceEligible} from './cisExperience';
 import {calendarDay,managementDay} from './managementDates';
 import {riskIsClosed} from './riskRegister';
 import {isOpen} from './grcWork';
+import {timelineBounds} from './brawndoAdditionalPolicyVendor';
 
 // Presentation only; rollback leaves native records, commands and history intact.
 export const BRAWNDO_DEMO_RISKS_ENABLED=true;
@@ -36,8 +37,9 @@ export async function loadRiskRelations(rows,loadRelated,signal) {
   return {relations,unavailable};
 }
 
-export function upcomingRiskEvents(rows,relations,now=new Date()) {
-  const {today,until}=riskHorizon(now),events=[];
+export function upcomingRiskEvents(rows,relations,now=new Date(),{twelveMonths=false}={}) {
+  const bounds=twelveMonths?timelineBounds(now):null;
+  const {today,until}=bounds?{today:bounds.start,until:bounds.end}:riskHorizon(now),events=[];
   function add(risk,kind,record,date) {
     const day=calendarDay(date);
     if(day===null||day<today||day>until)return;
@@ -53,4 +55,28 @@ export function upcomingRiskEvents(rows,relations,now=new Date()) {
     }
   }
   return events.sort((a,b)=>a.day-b.day||a.key.localeCompare(b.key));
+}
+
+// A saved treatment Action may be linked to several Risks; it remains one dated obligation.
+export function riskOverviewEvents(rows,relations,now=new Date()) {
+  const seen=new Set(),actionDates=new Map(),conflictingActions=new Set();
+  const actionId=(clientId,taskId)=>`${clientId}:action:${taskId}`;
+  // Related reads are independent snapshots. Conflicting dates cannot establish one current obligation.
+  for(const risk of rows.filter(row=>!riskIsClosed(row)))for(const task of relations[risk.risk_id]||[]) {
+    if(task.client_id!==risk.client_id||!task.task_id||!isOpen('tasks',task))continue;
+    const id=actionId(risk.client_id,task.task_id),day=calendarDay(task.due_date);
+    if(actionDates.has(id)&&actionDates.get(id)!==day)conflictingActions.add(id);
+    else actionDates.set(id,day);
+  }
+  const events=upcomingRiskEvents(rows,relations,now,{twelveMonths:true}).filter(event=>{
+    const id=event.kind==='action'?actionId(event.risk.client_id,event.record.task_id):event.key;
+    if(conflictingActions.has(id))return false;
+    if(seen.has(id))return false;
+    seen.add(id);return true;
+  }).map(event=>({...event,id:event.kind==='action'?actionId(event.risk.client_id,event.record.task_id):event.key,
+    title:event.record.title||event.record.display_id||'ID pending',
+    label:event.kind==='review'?'Risk review':event.kind==='action'?'Treatment action due':'Acceptance expires',
+    detail:event.kind==='action'?`Linked Risk: ${event.risk.display_id||event.risk.risk_id}`:event.risk.display_id||event.risk.risk_id,
+  }));
+  return {events,conflictingActions:[...conflictingActions].sort()};
 }

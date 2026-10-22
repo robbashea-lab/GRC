@@ -13,6 +13,8 @@ const wording={
   reconciled:'Do you compare the inventory with other device records?'
 };
 
+export const nativeCisQuestionTitle=(id,question)=>id==='1.1'?(wording[question.id]||question.prompt):question.prompt;
+
 function SafeguardMatrix({question,value={},onChange}) {
   return <div className="sg11-matrix" data-question-id={question.id}>{question.rows.map(row=><div className="sg11-matrix-row" key={row}>
     <span>{row}</span><div className="sg11-matrix-options" role="group" aria-label={row}>
@@ -93,7 +95,7 @@ export default function RefinedOmniInterview({id,answers,version,step,setStep,pu
     {id==='1.2'&&index===1&&inventoryContext&&<section aria-label="Saved safeguard 1.1 inventory context" className="omni-context-note"><h3>Saved inventory context · Safeguard 1.1</h3><p>{inventoryContext.implementation||'No inventory narrative recorded.'}</p><p>This saved context is not proof of completeness and does not change either assessment.</p></section>}
     <fieldset ref={retainQuestionFocus} disabled={blocked} className="omni-question-group"><legend className="sr-only">{group.name}</legend>
       {group.questions.map((q,i)=>{
-        const title=id==='1.1'?(wording[q.id]||q.prompt):q.prompt;
+        const title=nativeCisQuestionTitle(id,q);
         const choices=q.type==='select'&&q.choices.length<=5&&q.choices.includes('Yes');
         const criterion=visualReference&&q.critical&&!['text','date'].includes(q.type)?<span className="cis-omni-criterion">Required for Implemented</span>:null;
         return <section className="omni-question" key={q.id} data-question-id={safeguard11?q.id:undefined}>

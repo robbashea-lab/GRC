@@ -229,3 +229,9 @@ html[data-visual-surface="risks"][data-visual-theme="dark"] .bdr-filter-views,
 html[data-visual-surface="risks"][data-visual-theme="dark"] .bdr-filter-views button { border-color:#222C3A; }
 html[data-visual-surface="risks"][data-visual-theme="dark"] .bdr-filter-views button[aria-pressed="true"] { background:#1B2738; }
 @media(max-width:860px) { .bpage.brawndo-demo-risks .bdr-record-controls { margin-left:0; } }
+
+/* Overview-only rearrangement: retain every existing matrix dimension and register rule. */
+.bpage.brawndo-demo-risks .bdr-overview > .bdr-figures { grid-column:1 / -1; }
+.bpage.brawndo-demo-risks .bdr-overview-right > .compact-program-timeline { padding:0; border:0; border-radius:0; }
+@media(min-width:861px) { .bpage.brawndo-demo-risks .bdr-overview { grid-template-columns:auto minmax(0,1fr); } }
+@media(max-width:860px) { .bpage.brawndo-demo-risks .bdr-overview { grid-template-columns:minmax(0,1fr); } }

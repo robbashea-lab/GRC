@@ -25,8 +25,8 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 test('the accepted pilot presents the complete native requirement and passes existing draft and command bindings',async()=>{
   await render();
   expect(mockShell.className).toBe('brawndo-cis-visual-safeguard brawndo-safeguard11');
-  expect(container.querySelector('.sg11-requirement blockquote').textContent).toBe(state.definition.official_text);
-  expect(container.querySelector('.sg11-native-guidance').textContent).toContain('working checklist');
+  expect(container.querySelector('[data-source-kind="official"]').textContent).toBe(state.definition.official_text);
+  expect(container.querySelector('.cis-collapsible-requirement').open).toBe(false);expect(container.textContent).not.toContain('Assessment guidance & working checklist');expect(mockGuide.sequential).toBe(true);
   expect(container.querySelector('[role=tab][data-state=active]').textContent).toBe('Assessment');
   expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Preserved manual narrative');
   expect(container.querySelector('[aria-label="Previously recorded notes"]').value).toBe('Retained notes');
@@ -56,7 +56,7 @@ test.each(['visual','fullRecord','context','assessment','client','version','defi
 test('another native safeguard retains its existing presentation and exact callbacks',async()=>{
   state.record={...state.record,definition_id:'1.2'};state.current=state.record;state.form={...state.record};state.ctx.current=state.record;state.definition=catalog.requirements.find(row=>row.id==='1.2');
   await render();expect(mockShell.className).toBe('brawndo-cis-visual-safeguard');
-  expect(container.querySelector('.brawndo-cis-visual-requirement')).toBeTruthy();
+  expect(container.querySelector('.cis-collapsible-requirement')).toBeTruthy();
   expect(container.querySelector('[role=tab][data-state=active]').textContent).toBe('Requirement & implementation');
   expect(mockGuide.safeguard11).toBe(false);expect(mockShell.next).toBe(actions.next);
 });
@@ -78,7 +78,7 @@ test.each([2,3])('configured IG%s retains native safeguard 1.1 appearance and un
   const before=JSON.stringify(state.form);
   await render();
   expect(mockShell.className).toContain('brawndo-safeguard11');
-  expect(container.querySelector('.sg11-requirement blockquote').textContent).toBe(state.definition.official_text);
+  expect(container.querySelector('[data-source-kind="official"]').textContent).toBe(state.definition.official_text);
   expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(state.form.implementation);
   expect(container.querySelector('[aria-label="Previously recorded notes"]').value).toBe(state.form.notes);
   expect(mockItems.safeguard11).toBe(true);expect(mockFindings.safeguard11).toBe(true);
