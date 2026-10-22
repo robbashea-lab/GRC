@@ -637,3 +637,138 @@ test('content proof follows complete row text through reordered pools and never 
   expect(()=>readPortfolioStore(JSON.stringify(invalid))).toThrow(/source reference is unavailable/);
   expect(provenance(readPortfolioStore(saved)).source_references.map(row=>row.id)).toEqual(['a','b','a']);
 });
+
+
+function pooledScopeFixture(version=2,text='{"z":1e999,"a":-0,"__proto__":{"safe":"✓"},"nested":[{"future":true}],"enrollment_ids":["base"]}'){
+  const db=packed(version),history=db.portfolio_reporting;
+  history.identities=[{program_id:'c:cis-ig1',scopes:[text],head:null}];
+  const currents=[...history.snapshots.map(row=>row.current),...history.scope_events.flatMap(row=>[row.before,row.after])];
+  for(const current of currents)current._portfolio_scope_index=0;
+  currents[0]._portfolio_enrollment_ids=['second','first'];currents[1]._portfolio_enrollment_ids=['other'];
+  return db;
+}
+
+test.each([1,2])('V%s lazy pooled scopes preserve complete native values, enrollment order and packed bytes',version=>{
+  const fixture=pooledScopeFixture(version),saved=JSON.stringify(fixture);
+  const actual=readPortfolioStore(saved),expected=restorePortfolioReporting(copy(fixture));
+  const current=actual.portfolio_reporting.snapshots[0].current,descriptor=Object.getOwnPropertyDescriptor(current,'scope');
+  expect(typeof descriptor.get).toBe('function');
+  expect(JSON.stringify(compactPortfolioReporting(actual))).toBe(JSON.stringify(compactPortfolioReporting(expected)));
+  expect(Object.getOwnPropertyDescriptor(current,'scope').get).toBe(descriptor.get);
+  expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+  expect(Object.is(current.scope.a,-0)).toBe(true);expect(current.scope.z).toBe(Infinity);
+  expect(Object.hasOwn(current.scope,'__proto__')).toBe(true);expect(current.scope.__proto__).toEqual({safe:'✓'});
+  expect(current.scope.enrollment_ids).toEqual(['second','first']);
+  current.scope.nested[0].future='public edit';current.scope.enrollment_ids.push('local');
+  const second=actual.portfolio_reporting.snapshots[1].current.scope;
+  expect(second.nested[0].future).toBe(true);expect(second.enrollment_ids).toEqual(['other']);
+  expect(readPortfolioStore(saved).portfolio_reporting.snapshots[0].current.scope.nested[0].future).toBe(true);
+});
+
+test.each(['delete','redefine','set','freeze','seal','observer getter'])('lazy scope %s preserves ordinary native behavior',variant=>{
+  const saved=JSON.stringify(pooledScopeFixture()),actual=readPortfolioStore(saved),expected=restorePortfolioReporting(codec.decodeDemoStore(saved));
+  for(const db of [actual,expected]){
+    const current=db.portfolio_reporting.snapshots[0].current;
+    if(variant==='delete')delete current.scope;
+    if(variant==='redefine')Object.defineProperty(current,'scope',{value:{replacement:{unknown:'✓'}},enumerable:true,configurable:true,writable:true});
+    if(variant==='set')current.scope={replacement:{unknown:'✓'}};
+    if(variant==='freeze'){Object.freeze(current);expect(()=>{current.scope={};}).toThrow(TypeError);expect(current.scope.enrollment_ids).toEqual(['second','first']);}
+    if(variant==='seal'){Object.seal(current);current.scope={sealed_write:'retained'};}
+    if(variant==='observer getter')Object.defineProperty(current,'observer',{enumerable:true,get(){return Object.getOwnPropertyDescriptor(current,'scope')?.get?'lazy':'materialized';}});
+  }
+  expect(JSON.stringify(compactPortfolioReporting(actual))).toBe(JSON.stringify(compactPortfolioReporting(expected)));
+  expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+});
+
+test.each(['null','0','true','[]','{"enrollment_ids":null}','{invalid'])('legacy or corrupt pooled scope retains original handling: %s',text=>{
+  const fixture=pooledScopeFixture(2,text);
+  // Exercise the original shape rather than an enrollment override.
+  for(const row of fixture.portfolio_reporting.snapshots)delete row.current._portfolio_enrollment_ids;
+  const run=fn=>{try{return {value:JSON.stringify(fn())};}catch(error){return {error:error.name,message:error.message};}};
+  expect(run(()=>readPortfolioStore(JSON.stringify(fixture)))).toEqual(run(()=>restorePortfolioReporting(copy(fixture))));
+});
+
+test('pooled scope corruption fails eagerly and current serializer hooks keep the public fallback',()=>{
+  const invalid=pooledScopeFixture();invalid.portfolio_reporting.snapshots[1].current._portfolio_scope_index=99;
+  expect(()=>readPortfolioStore(JSON.stringify(invalid))).toThrow(/scope reference is unavailable/);
+  const saved=JSON.stringify(pooledScopeFixture()),actual=readPortfolioStore(saved),expected=restorePortfolioReporting(codec.decodeDemoStore(saved));
+  const descriptor=Object.getOwnPropertyDescriptor(Object.prototype,'toJSON');
+  try{
+    Object.defineProperty(Object.prototype,'toJSON',{configurable:true,value:function(){return this.nested?{...this,hook_added:'preserved'}:this;}});
+    expect(JSON.stringify(compactPortfolioReporting(actual))).toBe(JSON.stringify(compactPortfolioReporting(expected)));
+    expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+    const hookActive=readPortfolioStore(saved);
+    expect(Object.getOwnPropertyDescriptor(hookActive.portfolio_reporting.snapshots[0].current,'scope').get).toBeUndefined();
+  }finally{
+    if(descriptor)Object.defineProperty(Object.prototype,'toJSON',descriptor);else delete Object.prototype.toJSON;
+  }
+});
+
+
+test('exact-saved reads retain independent lazy scope validation and external replacements are revalidated',()=>{
+  const saved=JSON.stringify(pooledScopeFixture());
+  readPortfolioStore(saved);
+  const hit=readPortfolioStore(saved),current=hit.portfolio_reporting.snapshots[0].current;
+  expect(typeof Object.getOwnPropertyDescriptor(current,'scope').get).toBe('function');
+  current.scope.nested[0].future='hit-local';
+  expect(readPortfolioStore(saved).portfolio_reporting.snapshots[0].current.scope.nested[0].future).toBe(true);
+  const changed=codec.decodeDemoStore(saved);changed.portfolio_reporting.identities[0].scopes[0]='{"replacement":{"unknown":"✓"}}';
+  expect(readPortfolioStore(JSON.stringify(changed)).portfolio_reporting.snapshots[0].current.scope).toMatchObject({replacement:{unknown:'✓'},enrollment_ids:['second','first']});
+  const corrupt=codec.decodeDemoStore(saved);corrupt.portfolio_reporting.identities[0].scopes[0]='{invalid';
+  expect(()=>readPortfolioStore(JSON.stringify(corrupt))).toThrow(SyntaxError);
+  expect(readPortfolioStore(saved).portfolio_reporting.snapshots[0].current.scope.nested[0].future).toBe(true);
+});
+
+test.each(['species','constructor','iterator'])('post-read %s changes preserve original scope callback/output behavior',variant=>{
+  const saved=JSON.stringify(pooledScopeFixture());
+  const run=lazy=>{
+    const db=lazy?readPortfolioStore(saved):restorePortfolioReporting(codec.decodeDemoStore(saved));
+    const species=Object.getOwnPropertyDescriptor(Array,Symbol.species),constructor=Object.getOwnPropertyDescriptor(Array.prototype,'constructor'),iterator=Object.getOwnPropertyDescriptor(Array.prototype,Symbol.iterator);
+    let calls=0,result;
+    try{
+      if(variant==='species')Object.defineProperty(Array,Symbol.species,{configurable:true,get(){calls++;return Array;}});
+      if(variant==='constructor'){
+        const replacement={};Object.defineProperty(replacement,Symbol.species,{get(){calls++;return Array;}});
+        Object.defineProperty(Array.prototype,'constructor',{...constructor,value:replacement});
+      }
+      if(variant==='iterator')Object.defineProperty(Array.prototype,Symbol.iterator,{...iterator,value:function*(){
+        for(let i=0;i<this.length;i++){calls++;yield typeof this[i]==='string'&&['second','first','base','other'].includes(this[i])?this[i]+'-current-iterator':this[i];}
+      }});
+      result=JSON.stringify(compactPortfolioReporting(db));
+    }finally{
+      Object.defineProperty(Array,Symbol.species,species);Object.defineProperty(Array.prototype,'constructor',constructor);Object.defineProperty(Array.prototype,Symbol.iterator,iterator);
+    }
+    return {result,calls};
+  };
+  const expected=run(false),actual=run(true);
+  expect(actual).toEqual(expected);expect(actual.calls).toBeGreaterThan(0);
+});
+
+test('many distinct enrollment variants fall back eagerly when scope metadata eligibility is exhausted',()=>{
+  const fixture=pooledScopeFixture(2,JSON.stringify({padding:'x'.repeat(180000),unknown:{retained:'✓'}}));
+  const template=fixture.portfolio_reporting.snapshots[0];
+  fixture.portfolio_reporting.snapshots=Array.from({length:32},(_,index)=>({...copy(template),snapshot_id:'bounded-scope-'+index,current:{...copy(template.current),_portfolio_enrollment_ids:['variant-'+index]}}));
+  const saved=JSON.stringify(fixture),actual=readPortfolioStore(saved),expected=restorePortfolioReporting(codec.decodeDemoStore(saved));
+  expect(typeof Object.getOwnPropertyDescriptor(actual.portfolio_reporting.snapshots[0].current,'scope').get).toBe('function');
+  expect(Object.getOwnPropertyDescriptor(actual.portfolio_reporting.snapshots.at(-1).current,'scope').get).toBeUndefined();
+  expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+});
+
+
+test('valid deeply nested pooled scope remains readable when optional canonical preparation exceeds the stack',()=>{
+  const depth=16000,text='{"a":'.repeat(depth)+'0'+'}'.repeat(depth);
+  const fixture=pooledScopeFixture(2,text),saved=JSON.stringify(fixture);
+  let publicRead,privateRead;
+  expect(()=>{publicRead=restorePortfolioReporting(fixture);}).not.toThrow();
+  expect(()=>{privateRead=readPortfolioStore(saved);}).not.toThrow();
+  for(const db of [publicRead,privateRead]){
+    const current=db.portfolio_reporting.snapshots[0].current;
+    expect(Object.getOwnPropertyDescriptor(current,'scope').get).toBeUndefined();
+    let value=current.scope;
+    for(let i=0;i<depth;i++)value=value.a;
+    expect(value).toBe(0);
+    expect(current.scope.enrollment_ids).toEqual(['second','first']);
+    // Canonicalization is still required when actually compacting this scope.
+    expect(()=>compactPortfolioReporting(db)).toThrow(RangeError);
+  }
+});

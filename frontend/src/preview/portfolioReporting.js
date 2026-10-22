@@ -32,8 +32,78 @@ function scopeText(signature){
   if(!signature?.startsWith('{'))return signature;
   return stable(implementationScope(JSON.parse(signature)));
 }
-const exactScope=current=>current.scope?stable(implementationScope(current.scope)):scopeText(current.scope_signature);
+const scopeParse=JSON.parse,scopeStringify=JSON.stringify,scopeStable=stable;
+const scopeKeys=Object.keys,scopeSort=Array.prototype.sort,scopeEntries=Object.entries;
+const scopeFilter=Array.prototype.filter,scopeFromEntries=Object.fromEntries,scopeCreate=Object.create;
+const scopeIsArray=Array.isArray,scopeIterator=Array.prototype[Symbol.iterator];
+const scopeConstructor=Object.getOwnPropertyDescriptor(Array.prototype,'constructor').value;
+const scopeSpecies=Object.getOwnPropertyDescriptor(Array,Symbol.species).get;
+const restoredScopes=new WeakMap();
+const scopeSerializationUnchanged=()=>stable===scopeStable
+  &&Object.getOwnPropertyDescriptor(JSON,'parse')?.value===scopeParse
+  &&Object.getOwnPropertyDescriptor(JSON,'stringify')?.value===scopeStringify
+  &&Object.getOwnPropertyDescriptor(Object,'keys')?.value===scopeKeys
+  &&Object.getOwnPropertyDescriptor(Array.prototype,'sort')?.value===scopeSort
+  &&Object.getOwnPropertyDescriptor(Object,'entries')?.value===scopeEntries
+  &&Object.getOwnPropertyDescriptor(Array.prototype,'filter')?.value===scopeFilter
+  &&Object.getOwnPropertyDescriptor(Object,'fromEntries')?.value===scopeFromEntries
+  &&Object.getOwnPropertyDescriptor(Object,'create')?.value===scopeCreate
+  &&Object.getOwnPropertyDescriptor(Array,'isArray')?.value===scopeIsArray
+  &&Object.getOwnPropertyDescriptor(Array.prototype,Symbol.iterator)?.value===scopeIterator
+  &&Object.getOwnPropertyDescriptor(Array.prototype,'constructor')?.value===scopeConstructor
+  &&Object.getOwnPropertyDescriptor(Array,Symbol.species)?.get===scopeSpecies
+  &&!customJSON({})&&!customJSON([]);
+function registeredScope(current){
+  const record=current&&restoredScopes.get(current);
+  return record&&Object.getOwnPropertyDescriptor(current,'scope')?.get===record.get
+    &&scopeSerializationUnchanged()?record.metadata:null;
+}
+function attachRestoredScope(current,metadata){
+  let ready=false,value;
+  const replace=next=>{
+    value=next;ready=true;restoredScopes.delete(current);
+    if(Object.getOwnPropertyDescriptor(current,'scope')?.configurable)
+      Object.defineProperty(current,'scope',{value,enumerable:true,configurable:true,writable:true});
+  };
+  const get=()=>{
+    if(!ready){
+      const parsed=scopeParse(metadata.text);
+      if(metadata.override){
+        const ids=[];
+        for(let i=0;i<metadata.enrollment.length;i++)Object.defineProperty(ids,String(i),{value:metadata.enrollment[i],enumerable:true,configurable:true,writable:true});
+        parsed.enrollment_ids=ids;
+      }
+      replace(parsed);
+    }
+    return value;
+  };
+  Object.defineProperty(current,'scope',{enumerable:true,configurable:true,get,set(next){
+    if(Object.isFrozen(current))throw new TypeError('Cannot assign frozen scope');
+    replace(next);
+  }});
+  restoredScopes.set(current,{get,metadata});
+}
+function copyCurrent(current){
+  const metadata=registeredScope(current);if(!metadata)return {...current};
+  // Other user-defined accessors can observe scope: retain ordinary spread order.
+  const keys=Reflect.ownKeys(current);
+  for(const key of keys)if(key!=='scope'&&Object.prototype.propertyIsEnumerable.call(current,key)
+    &&!Object.hasOwn(Object.getOwnPropertyDescriptor(current,key),'value'))return {...current};
+  const result={};
+  for(const key of keys)if(Object.prototype.propertyIsEnumerable.call(current,key)){
+    if(key==='scope')attachRestoredScope(result,metadata);
+    else Object.defineProperty(result,key,{value:current[key],enumerable:true,configurable:true,writable:true});
+  }
+  return result;
+}
+const exactScope=current=>registeredScope(current)?.signature
+  ||(current.scope?stable(implementationScope(current.scope)):scopeText(current.scope_signature));
 function exactSource(current){
+  const privateScope=registeredScope(current),provenanceField=privateScope&&Object.getOwnPropertyDescriptor(current,'provenance');
+  const privateSource=provenanceField&&Object.hasOwn(provenanceField,'value')&&restoredSourceVectors.get(provenanceField.value);
+  if(privateScope&&privateSource&&Object.getOwnPropertyDescriptor(provenanceField.value,'source_references')?.get===privateSource.get
+    &&privateSource.vector.rows.every(row=>row.canonicalKnown))
+    return '{"references":'+privateSource.vector.json+',"scope":'+privateScope.fullSignature+'}';
   if(!current.scope)return null;
   // Keep the original two scope reads and provenance access order: these may
   // execute native getters before the immutable-reference guard is evaluated.
@@ -143,14 +213,15 @@ function compactPortfolioReportingCore(db){
   };
   const current=(value,identity)=>{
     if(!value)return value;
-    const result={...value};
-    if(value.scope){
+    const result=copyCurrent(value),privateScope=registeredScope(value);
+    if(privateScope||value.scope){
       let recorded=identities.find(row=>row.program_id===identity);
       if(!recorded){recorded={program_id:identity,scopes:[],head:null};identities.push(recorded);}
-      const signature=exactScope(value);let index=recorded.scopes.indexOf(signature);
+      const signature=privateScope?.signature||exactScope(value);let index=recorded.scopes.indexOf(signature);
       if(index<0){index=recorded.scopes.length;recorded.scopes.push(signature);}
       delete result.scope;result._portfolio_scope_index=index;
-      if(Object.hasOwn(value.scope,'enrollment_ids'))result._portfolio_enrollment_ids=[...value.scope.enrollment_ids];
+      if(privateScope){if(privateScope.enrollment)result._portfolio_enrollment_ids=[...privateScope.enrollment];}
+      else if(Object.hasOwn(value.scope,'enrollment_ids'))result._portfolio_enrollment_ids=[...value.scope.enrollment_ids];
     }
     const provenance=value.provenance,lazy=provenance&&restoredSourceVectors.get(provenance);
     let index;
@@ -195,10 +266,10 @@ function canonicalJSONOrder(value){
   return true;
 }
 
-function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null,contentProofs=null){
+function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null,contentProofs=null,scopeBudget=collectedRows){
   const history=db?.portfolio_reporting;if(!history?.storage_version)return db;
   if(![1,2].includes(history.storage_version))throw new Error('The saved Demo implementation history format is unavailable.');
-  const rows=new Map(),vectors=new Map();
+  const rows=new Map(),vectors=new Map(),scopes=new Map();
   const row=index=>{
     if(!Number.isInteger(index)||index<0)throw new Error('The saved Demo implementation source reference is unavailable.');
     if(rows.has(index))return rows.get(index);
@@ -244,9 +315,46 @@ function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null,
     if(Object.hasOwn(value,'_portfolio_scope_index')){
       const scope=history.identities?.find(row=>row.program_id===identity)?.scopes[value._portfolio_scope_index];
       if(typeof scope!=='string')throw new Error('The saved Demo implementation scope reference is unavailable.');
-      result.scope=JSON.parse(scope);delete result._portfolio_scope_index;
-      if(Object.hasOwn(value,'_portfolio_enrollment_ids'))result.scope.enrollment_ids=[...value._portfolio_enrollment_ids];
-      delete result._portfolio_enrollment_ids;
+      const trusted=!!scopeBudget?.enabled()&&scopeSerializationUnchanged();
+      let entry=trusted?scopes.get(scope):null;
+      if(!entry){entry={parsed:JSON.parse(scope),variants:new Map()};if(trusted)scopes.set(scope,entry);}
+      const parsed=entry.parsed;
+      const override=Object.hasOwn(value,'_portfolio_enrollment_ids');
+      const hasEnrollment=override||parsed&&Object.hasOwn(parsed,'enrollment_ids');
+      const enrollment=override?value._portfolio_enrollment_ids:hasEnrollment?parsed.enrollment_ids:null;
+      let stringEnrollment=trusted&&Array.isArray(enrollment);
+      if(stringEnrollment)for(let i=0;i<enrollment.length;i++)if(typeof enrollment[i]!=='string'){stringEnrollment=false;break;}
+      const eligible=trusted&&!entry.skip&&parsed&&typeof parsed==='object'&&!Array.isArray(parsed)&&(!hasEnrollment||stringEnrollment);
+      let metadata,variant,minimum=256+scope.length*2;
+      if(eligible&&hasEnrollment)for(let i=0;i<enrollment.length;i++)minimum+=enrollment[i].length*2+16;
+      // Reserve the unavoidable raw text/closure before canonical work. Once
+      // exhausted, later currents retain the eager path and no variants accrue.
+      if(eligible&&scopeBudget.reserve(minimum)){
+        variant=override?JSON.stringify(enrollment):'original';
+        metadata=entry.variants.get(variant);
+        if(!metadata){
+          const effective=override?{...parsed,enrollment_ids:[...enrollment]}:parsed;
+          try{
+            const signature=entry.signature??stable(implementationScope(parsed));
+            metadata=Object.freeze({text:scope,signature,fullSignature:stable(effective),
+              override,enrollment:hasEnrollment?Object.freeze([...enrollment]):null});
+          }catch(error){
+            // Optional canonical metadata must not reject a valid deep JSON read.
+            if(!(error instanceof RangeError))throw error;
+            entry.skip=true;metadata=null;
+          }
+        }
+        if(metadata&&scopeBudget.reserve(2*(metadata.signature.length+metadata.fullSignature.length))){
+          entry.signature=metadata.signature;entry.variants.set(variant,metadata);
+        }else metadata=null;
+      }
+      if(metadata)attachRestoredScope(result,metadata);
+      else {
+        // Non-object/legacy enrollment shapes keep their original eager behavior.
+        result.scope=trusted?JSON.parse(scope):parsed;
+        if(override)result.scope.enrollment_ids=[...value._portfolio_enrollment_ids];
+      }
+      delete result._portfolio_scope_index;delete result._portfolio_enrollment_ids;
     }
     if(Object.hasOwn(value.provenance||{},'_portfolio_source_index')){
       const sources=vector(history.source_vectors?.[value.provenance._portfolio_source_index]);
@@ -270,7 +378,7 @@ export function restorePortfolioReporting(db){return restorePortfolioReportingCo
 let validatedSavedValue=null,validatedSavedRows=null,validatedSavedRowBytes=0;
 function rowTable(limit=MAX_DEMO_DECODE_BYTES){
   let table=Object.create(null),bytes=128;
-  return {add(index,metadata){
+  return {enabled(){return !!table;},reserve(size){bytes+=size;if(bytes>limit)table=null;return !!table;},add(index,metadata){
     if(!table||Object.hasOwn(table,index))return;
     bytes+=metadata.json.length*2+160; // text plus conservative object/index/flag overhead
     if(bytes>limit){table=null;return;}
@@ -301,7 +409,10 @@ function priorContentProofs(saved){
 export function readPortfolioStore(saved){
   const db=decodeDemoStore(saved);
   const prototypeHooks=customJSON({})||customJSON([]);
-  if(!prototypeHooks&&typeof saved==='string'&&saved===validatedSavedValue)return restorePortfolioReportingCore(db,validatedSavedRows);
+  if(!prototypeHooks&&typeof saved==='string'&&saved===validatedSavedValue){
+    const scopeBudget=rowTable(Math.max(0,MAX_DEMO_DECODE_BYTES-saved.length*2-validatedSavedRowBytes));
+    return restorePortfolioReportingCore(db,validatedSavedRows,null,null,scopeBudget);
+  }
   const prior=prototypeHooks?null:priorContentProofs(saved);
   const collected=prototypeHooks?null:rowTable(prior?.remaining);
   const restored=restorePortfolioReportingCore(db,null,collected,prior?.proofs);
@@ -411,7 +522,7 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
     const programs=new Set(imported.map(point=>point.program_id));
     prior.identities=[...(prior.identities||[]),...(db.portfolio_reporting?.identities||[]).filter(identity=>programs.has(identity.program_id)&&!(prior.identities||[]).some(existing=>existing.program_id===identity.program_id))];
   }
-  const snapshots=(prior.snapshots||[]).map(snapshot=>({...snapshot,current:{...snapshot.current}}));
+  const snapshots=(prior.snapshots||[]).map(snapshot=>({...snapshot,current:copyCurrent(snapshot.current)}));
   const identities=(prior.identities||[]).map(row=>({...row,scopes:row.scopes.map(scopeText),head:row.head?{...row.head}:null}));
   const projection={...db,portfolio_reporting:{...prior,identities}},scope_events=[...(prior.scope_events||[])];
   const initialPositions=demoCurrentPositions(projection,db.clients||[],at),changedIdentityPrograms=new Set();
@@ -437,7 +548,7 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
     const membershipChanged=before&&stable(before.current.scope)!==stable(position.current.scope);
     if(!latest||positionState(latest)!==positionState(position)||previous&&!before||membershipChanged){
       const snapshot_id=`demo:${position.program_id}:${at}:${snapshots.length}`,kind=previous&&(!before||membershipChanged||positionState(before)!==positionState(position))?'committed_event':previous?'sampled':'current_baseline';
-      if(latest&&beforePositions.some(before=>before.program_id===position.program_id&&positionState(before)===positionState(latest)))latest.current={...latest.current,effective_until:at,continuity_proven:true,continuity_source_event:snapshot_id};
+      if(latest&&beforePositions.some(before=>before.program_id===position.program_id&&positionState(before)===positionState(latest)))latest.current=Object.assign(copyCurrent(latest.current),{effective_until:at,continuity_proven:true,continuity_source_event:snapshot_id});
       snapshots.push({...position,snapshot_id,captured_at:at,effective_at:at,observation_sequence:snapshots.length+1,observation_kind:kind,source_revision:position.current.source_revision,source_event:snapshot_id,current:{...position.current,effective_at:at,source_event:snapshot_id,observation_kind:kind,provenance:{...position.current.provenance,kind,source_event:snapshot_id}}});
     }
   }
