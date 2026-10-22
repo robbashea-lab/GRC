@@ -58,3 +58,73 @@ export function writeDemoStore(storage,key,json){
     storage.setItem(key,compressed);validatedEnvelope=compressed;validatedJson=json;return compressed;
   }
 }
+
+const isQuota=error=>['QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(error?.name);
+const checkAbort=signal=>{if(signal?.aborted)throw signal.reason??new DOMException('Demo save cancelled','AbortError');};
+
+async function nativeEnvelope(stream,json,signal){
+  const bytes=new TextEncoder().encode(json);
+  if(bytes.length>MAX_DEMO_DECODE_BYTES)throw invalid();
+  const reader=stream.readable.getReader(),writer=stream.writable.getWriter();
+  const cancel=()=>{reader.cancel(signal?.reason).catch(()=>{});writer.abort(signal?.reason).catch(()=>{});};
+  signal?.addEventListener('abort',cancel,{once:true});
+  try{
+    checkAbort(signal);
+    const collect=(async()=>{
+      const chunks=[];let length=0;
+      while(true){
+        const {done,value}=await reader.read();
+        if(done)break;
+        if(!ArrayBuffer.isView(value)||Object.prototype.toString.call(value)!=='[object Uint8Array]'
+          ||length+value.length>MAX_DEMO_DECODE_BYTES)throw invalid();
+        chunks.push(value);length+=value.length;
+      }
+      const packed=new Uint8Array(length);let offset=0;
+      for(let i=0;i<chunks.length;i++){packed.set(chunks[i],offset);offset+=chunks[i].length;}
+      return packed;
+    })();
+    const send=(async()=>{await writer.write(bytes);await writer.close();})();
+    const [packed]=await Promise.all([collect,send]);
+    checkAbort(signal);
+    const envelope={demo_storage_codec:CODEC,version:VERSION,utf8_bytes:bytes.length,
+      payload:btoa(strFromU8(packed,true))};
+    if(unpack(envelope)!==json)throw invalid();
+    return JSON.stringify(envelope);
+  }catch(error){
+    await Promise.allSettled([reader.cancel(error),writer.abort(error)]);
+    checkAbort(signal);throw error;
+  }finally{
+    signal?.removeEventListener('abort',cancel);
+    reader.releaseLock();writer.releaseLock();
+  }
+}
+
+// The caller rechecks its transaction immediately before each physical write.
+// Compression is asynchronous; committing and publishing validated text are not.
+export async function writeDemoStoreAsync(storage,key,json,{beforeCommit,afterCommit,signal}={}){
+  const commit=(value,compressed,finalAttempt=false)=>{
+    checkAbort(signal);beforeCommit?.();checkAbort(signal);
+    try{storage.setItem(key,value);}catch(error){if(isQuota(error)&&!finalAttempt)return null;throw error;}
+    validatedEnvelope=compressed?value:null;validatedJson=compressed?json:null;
+    afterCommit?.(value);
+    return value;
+  };
+  const raw=commit(json,false);if(raw!==null)return raw;
+  checkAbort(signal);
+  let stream;
+  if(typeof globalThis.CompressionStream==='function'){
+    try{stream=new globalThis.CompressionStream('deflate-raw');}
+    catch(error){if(!(error instanceof TypeError))throw error;}
+  }
+  if(stream){
+    const native=await nativeEnvelope(stream,json,signal);
+    const committed=commit(native,true);if(committed!==null)return committed;
+  }
+  if(json.length*3<=MAX_DEMO_DECODE_BYTES-1024*1024){
+    checkAbort(signal);
+    const fast=compressDemoStore(json,1);
+    const committed=commit(fast,true);if(committed!==null)return committed;
+  }
+  checkAbort(signal);
+  return commit(compressDemoStore(json),true,true);
+}

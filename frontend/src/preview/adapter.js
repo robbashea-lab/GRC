@@ -19,7 +19,7 @@ import {frameworkRequest,frameworkReverse,frameworkScope,prepareGuidedContext} f
 import { baselineState, baselineRecordVersions, saveBaseline } from './baseline';
 import axios from 'axios';
 import fixtures from './demoConfiguration.json';
-import { clone, readStore, saveStore, resetStore, ids, list, record, write, library, audit, uid, now } from './store';
+import { clone, readStore, saveStoreAsync, resetStore, STORE_KEY, ids, list, record, write, library, audit, uid, now } from './store';
 import { portfolio, dashboard } from './summaries';
 import { onboard, action } from './workflows';
 import {commandRequest} from './commandRequests';
@@ -35,6 +35,41 @@ import {fileBytes} from './evidenceStorage';
 import {pendingPolicyCoverage} from './policyReviewCoverage';
 const CREATE_REPLAY_KINDS=['clients','reviews','findings','tasks','risks','vendors','policies','contacts','assets','exceptions','requirements','ai_systems'];
 const SESSION = 'grc_demo_entered';
+let requestQueue=Promise.resolve(),sessionGeneration=0;
+// Even GETs may reconcile retained Demo data. Queue before reading any snapshot;
+// session controls stay immediate so sign-out can invalidate a pending save.
+export async function previewAdapter(config){
+  const generation=sessionGeneration,request={...config};
+  const path=new URL(request.url,'https://demo.invalid').pathname;
+  if(path==='/auth/logout'||path==='/demo/enter'&&(request.method||'get').toLowerCase()==='post'){
+    sessionGeneration++;
+    return executePreviewAdapter(request,sessionGeneration);
+  }
+  // Own command intent before queuing or hashing can yield to the caller.
+  request.params=clone(request.params||{});
+  if(request.data&&typeof request.data==='object')request.data=clone(request.data);
+  request.headers=new axios.AxiosHeaders(request.headers);
+  const pending=requestQueue.then(()=>executePreviewAdapter(request,generation));
+  requestQueue=pending.then(()=>undefined,()=>undefined);
+  return pending;
+}
+function assertClientBoundary(db,parts,params,body){
+  const [kind,id]=parts;
+  for(const clientId of [params.client_id,body.client_id])if(clientId&&!evidenceAccess(db.user,clientId))
+    throw Object.assign(new Error('Forbidden for this client'),{status:403});
+  const target=ids[kind]&&id&&(db[kind]||[]).find(row=>row[ids[kind]]===id);
+  if(target?.client_id&&!evidenceAccess(db.user,target.client_id))throw Object.assign(new Error('Forbidden for this client'),{status:403});
+  const relationKind=evidenceKind(params.entity_type||body.entity_type),relationId=params.entity_id||body.entity_id;
+  if(relationKind&&relationId){const parent=record(db,relationKind,relationId);if(!evidenceAccess(db.user,parent.client_id))throw Object.assign(new Error('Forbidden for this client'),{status:403});}
+}
+function assertFrameworkParentBoundary(db,method,params,body){
+  const parentType=params.entity_type||body.entity_type||params.linked_type||body.linked_type;
+  if(['framework_assessment','framework_assessments'].includes(parentType)){
+    const parent=record(db,'framework_assessments',params.entity_id||body.entity_id||params.linked_id||body.linked_id);
+    frameworkScope(db,parent.client_id);
+    if(method!=='get'&&!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');
+  }
+}
 // Decorate copied Demo responses only; scenario dates never enter native rows or write payloads.
 function frameworkDateResponse(data,db){
   const rows=data?.framework_assessment_id?[data]:data?.framework?.key==='cis-ig1'?data.assessments:null;
@@ -47,7 +82,7 @@ function frameworkDateResponse(data,db){
   return data.framework_assessment_id?project(data):{...data,assessments:rows.map(project)};
 }
 // Loaded only by the explicit demo build. No request is forwarded to any server.
-export async function previewAdapter(config) {
+async function executePreviewAdapter(config,generation) {
   const url = new URL(config.url, 'https://demo.invalid'),
     path = url.pathname;
   const params = {
@@ -73,12 +108,20 @@ export async function previewAdapter(config) {
     });
   };
   try {
+    if(config.signal?.aborted)throw new axios.CanceledError('Demo request cancelled',config);
+    if(generation!==sessionGeneration)return fail(401,'Demo session changed; retry from the current session.');
+    if(path==='/auth/logout'){
+      sessionStorage.removeItem(SESSION);
+      return respond({ok:true});
+    }
     if(['/demo/reset','/demo/clear-evidence-files','/demo/storage'].includes(path)){
       if(sessionStorage.getItem(SESSION)!=='true')return fail(401,'Choose Explore Demo before managing Demo storage.');
       if(path==='/demo/storage'&&method==='get')return respond(demoDiagnostics());
       if(method==='post'&&path!=='/demo/storage'){if(path==='/demo/reset')resetStore();else clearEvidenceFiles();return respond({ok:true});}
     }
     const db = readStore();
+    let expectedSaved=sessionStorage.getItem(STORE_KEY),authorizedSaved;
+    const actorId=db.user.user_id;
     if (path === '/auth/login') return fail(401, 'Use standard sign-in for email and password authentication.');
     if (path === '/demo/enter' && method === 'post') {
       localStorage.removeItem('grc_token');
@@ -87,28 +130,29 @@ export async function previewAdapter(config) {
         user: db.user
       });
     }
-    if (path === '/auth/logout') {
-      sessionStorage.removeItem(SESSION);
-      return respond({
-        ok: true
-      });
-    }
     if (sessionStorage.getItem(SESSION) !== 'true') return fail(401, 'Choose Explore Demo to enter the sample workspace.');
     if (params.client_id && !db.clients.some(c => c.client_id === params.client_id)) return fail(404, 'Demo client not found.');
     // Decode route parameters as the real router does (framework Finding IDs contain colons).
     const parts = path.split('/').filter(Boolean).map(decodeURIComponent),
       [kind, id, name] = parts;
     const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data || {};
-    if(kind==='evidence-library'){const data=evidenceLibraryRequest(db,method,parts,params,body);if(method!=='get')saveStore(db);return respond(data);}
-    // Portfolio drill-ins use the same authorized client boundary as the server.
-    // This remains a Demo simulation, never an authorization mechanism for real data.
-    {
-      for(const clientId of [params.client_id,body.client_id])if(clientId&&!evidenceAccess(db.user,clientId))return fail(403,'Forbidden for this client');
-      const target=ids[kind]&&id&&(db[kind]||[]).find(r=>r[ids[kind]]===id);
-      if(target?.client_id&&!evidenceAccess(db.user,target.client_id))return fail(403,'Forbidden for this client');
-      const relationKind=evidenceKind(params.entity_type||body.entity_type),relationId=params.entity_id||body.entity_id;
-      if(relationKind&&relationId){const parent=record(db,relationKind,relationId);if(!evidenceAccess(db.user,parent.client_id))return fail(403,'Forbidden for this client');}
-    }
+    // Native handlers may normalize their body; authorization retains the intent.
+    const authorizationBody=clone(body);
+    const commitStore=()=>saveStoreAsync(db,{expectedSaved,signal:config.signal,beforeCommit(){
+      const assertCurrent=()=>{
+        if(generation!==sessionGeneration||sessionStorage.getItem(SESSION)!=='true')
+          throw Object.assign(new Error('Demo session changed; changes were not saved.'),{status:401});
+        if(sessionStorage.getItem(STORE_KEY)!==expectedSaved)
+          throw Object.assign(new Error('Demo data changed; reload before retrying. Changes were not saved.'),{status:409});
+      };
+      // Exact unchanged authoritative bytes and session revalidate the original
+      // native permission decision for this owned intent; no second parse needed.
+      if(authorizedSaved!==expectedSaved)throw Object.assign(new Error('Demo authorization changed; changes were not saved.'),{status:409});
+      assertCurrent();
+    }});
+    if(kind==='evidence-library'){const data=evidenceLibraryRequest(db,method,parts,params,body);if(method!=='get'){authorizedSaved=expectedSaved;await commitStore();}return respond(data);}
+    // Portfolio drill-ins retain the native authorized client boundary.
+    assertClientBoundary(db,parts,params,body);
     // Role limits mirror the server so persona QA in the Demo sees the same refusals.
     try { authorizeDemo(db, method, parts, body, config.headers?.['Idempotency-Key']); } catch (error) { return fail(error.status||403, error.message); }
     if(method==='get' && path.startsWith('/portfolio/reporting/')) return respond(portfolioReportingRequest(cisDemoOperationalView(db),path,params));
@@ -120,70 +164,72 @@ export async function previewAdapter(config) {
       if(path==='/evidence/catalog'&&method==='get')return respond(evidencePage(db,params));
     }
     // Existing Evidence/comments/related endpoints keep the assessment's tenant boundary.
-    const parentType=params.entity_type||body.entity_type||params.linked_type||body.linked_type;
-    if(['framework_assessment','framework_assessments'].includes(parentType)){
-      const parent=record(db,'framework_assessments',params.entity_id||body.entity_id||params.linked_id||body.linked_id);
-      frameworkScope(db,parent.client_id);
-      if(method!=='get'&&!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');
-    }
-    const save = data => {
-      saveStore(db);
+    assertFrameworkParentBoundary(db,method,params,body);
+    authorizedSaved=expectedSaved;
+    const save = async data => {
+      await commitStore();
       return respond(data);
     };
     if(kind==='iso-audit'||kind==='reviews'&&name==='iso-audit'){
       const result=isoAuditRequest(db,parts,method,params,body);
-      return method==='get'?respond(result):save(result);
+      return method==='get'?respond(result):await save(result);
     }
     if(kind==='organizational-controls'){
       const data=organizationalControlRequest(db,parts,method,params,body);
-      return method==='get'?respond(data):save(data);
+      return method==='get'?respond(data):await save(data);
     }
     const identity = identityRequest(db, path, method, params, body);
-    if(kind==='clients'&&id&&name==='profile')return method==='get'?respond(clientProfileRequest(db,id,method,body)):save(clientProfileRequest(db,id,method,body));
+    if(kind==='clients'&&id&&name==='profile')return method==='get'?respond(clientProfileRequest(db,id,method,body)):await save(clientProfileRequest(db,id,method,body));
     if(kind==='clients'&&method!=='get'&&['profile','initial_program_baseline','onboarding_baseline'].some(k=>k in body))return fail(422,'Use the dedicated profile or onboarding workflow');
-    if (identity !== undefined) return method === 'get' ? respond(identity) : save(identity);
+    if (identity !== undefined) return method === 'get' ? respond(identity) : await save(identity);
     const approval = policyApprovalRequest(db, path, method, params, body);
-    if (approval !== undefined) return method === 'get' ? respond(approval) : save(approval);
-    if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
+    if (approval !== undefined) return method === 'get' ? respond(approval) : await save(approval);
+    if(path==='/ai-intake'||kind==='ai_systems')return await save(aiRequest(db,path,method,params,body));
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
-    if(kind==='framework_assessments'&&method==='post'&&name==='findings')return save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
-    if(path==='/frameworks/cis-ig1/configuration'&&method==='patch')return save(commandRequest(db,path,body.client_id,config.headers?.['Idempotency-Key'],body,()=>frameworkRequest(db,path,method,params,body)));
+    if(kind==='framework_assessments'&&method==='post'&&name==='findings')return await save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
+    if(path==='/frameworks/cis-ig1/configuration'&&method==='patch')return await save(commandRequest(db,path,body.client_id,config.headers?.['Idempotency-Key'],body,()=>frameworkRequest(db,path,method,params,body)));
     if(kind==='frameworks'||kind==='framework_assessments'){
       const pendingContext=prepareGuidedContext(db,path,method,body);
       let context=null;
       if(pendingContext){
         context=await pendingContext;
-        if(sessionStorage.getItem(SESSION)!=='true')return fail(401,'Choose Explore Demo to enter the sample workspace.');
+        if(generation!==sessionGeneration||sessionStorage.getItem(SESSION)!=='true')return fail(401,'Choose Explore Demo to enter the sample workspace.');
         // Web Crypto yields. Re-read before authorization, native-token and
         // interview revision checks so this snapshot cannot erase newer writes.
         const latest=readStore();
+        expectedSaved=sessionStorage.getItem(STORE_KEY);
         for(const key of Object.keys(db))delete db[key];
         Object.assign(db,latest);
-        authorizeDemo(db,method,parts,body,config.headers?.['Idempotency-Key']);
+        if(db.user.user_id!==actorId)return fail(401,'Demo actor changed; retry from the current session.');
+        if(params.client_id&&!db.clients.some(client=>client.client_id===params.client_id))return fail(404,'Demo client not found.');
+        assertClientBoundary(db,parts,params,authorizationBody);
+        authorizeDemo(db,method,parts,authorizationBody,config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+        assertFrameworkParentBoundary(db,method,params,authorizationBody);
+        authorizedSaved=expectedSaved;
       }
       const result=frameworkRequest(db,path,method,params,body,context);
       // Ordinary reads stay pure; CIS export retains its existing audit write.
       const auditedExport=kind==='frameworks'&&id==='cis-ig1'&&name==='export';
       if(method==='get'&&!auditedExport)return respond(frameworkDateResponse(result,db));
-      const persisted=saveStore(db);
+      const persisted=await commitStore();
       return respond(frameworkDateResponse(result,persisted));
     }
     if (path === '/demo/onboarding-draft') {
       record(db, 'clients', params.client_id || body.client_id);
       if (method === 'get') return respond(db.drafts[params.client_id] || null);
       db.drafts[body.client_id] = body.draft;
-      return save({
+      return await save({
         ok: true
       });
     }
     if (path === '/onboarding/handoff' && method === 'get') return respond(handoffSnapshot(db, params.client_id));
-    if (path.startsWith('/onboarding/programs/') && method === 'patch') return save(adjustProgram(db, body.client_id, path.split('/').pop(), body));
+    if (path.startsWith('/onboarding/programs/') && method === 'patch') return await save(adjustProgram(db, body.client_id, path.split('/').pop(), body));
     if (path === '/onboarding/baseline') {
       const cid = params.client_id || body.client_id;
       if (method === 'get') return respond({catalog,framework_settings:record(db,'clients',cid).framework_settings||{}, state:baselineState(db,cid), record_versions:baselineRecordVersions(db,cid)});
       const execute=()=>saveBaseline(db,cid,body.state,body.finalize,body);
       const key=config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key'];
-      return save(body.finalize?commandRequest(db,path,cid,key,body,execute):execute());
+      return await save(body.finalize?commandRequest(db,path,cid,key,body,execute):execute());
     }
     if (path === '/auth/me') return respond(db.user);
     if (method === 'get') {
@@ -322,9 +368,9 @@ export async function previewAdapter(config) {
         delete db.drafts[body.client_id];
         return completed;
       });
-      return save(result);
+      return await save(result);
     }
-    if (path === '/onboarding/policy-responses') return save(onboard(db, {
+    if (path === '/onboarding/policy-responses') return await save(onboard(db, {
       client_id: body.client_id,
       policy_responses: body.responses
     }));
@@ -381,7 +427,7 @@ export async function previewAdapter(config) {
           action(db, 'reviews', r.review_id, 'complete', { spawn_next: true });
         } else write(db, body.kind, patch, r[ids[body.kind]]);
       }
-      return save({
+      return await save({
         ok: true,
         count: rows.length
       });
@@ -391,7 +437,7 @@ export async function previewAdapter(config) {
         n.read_at = now();
         n.read = true;
       }
-      return save({
+      return await save({
         ok: true
       });
     }
@@ -400,18 +446,18 @@ export async function previewAdapter(config) {
       Object.assign(db.user, body);
       const userRecord = db.users.find(u => u.user_id === db.user.user_id);
       if (userRecord) Object.assign(userRecord, body);
-      return save(db.user);
+      return await save(db.user);
     }
     if (ids[kind] && name) {
       if(kind==='findings'&&['validate','reopen','accept'].includes(name)&&body.request_id){
         const finding=record(db,kind,id);
-        return save(commandRequest(db,path,finding.client_id,body.request_id,body,()=>{
+        return await save(commandRequest(db,path,finding.client_id,body.request_id,body,()=>{
           const result=action(db,kind,id,name,body);audit(db,name,kind,result);return result;
         }));
       }
       if(kind==='reviews' && name==='create-finding') {
         const review=record(db,kind,id);
-        return save(commandRequest(db,path,review.client_id,body.request_id,body,()=>action(db,kind,id,name,body)));
+        return await save(commandRequest(db,path,review.client_id,body.request_id,body,()=>action(db,kind,id,name,body)));
       }
       const result = action(db, kind, id, name, body);
       const r = record(db, kind, id);
@@ -427,7 +473,7 @@ export async function previewAdapter(config) {
         read_at: null,
         simulated: true
       });
-      return save(result);
+      return await save(result);
     }
     if (kind === 'comments') {
       const source = record(db, body.entity_type, body.entity_id);
@@ -443,7 +489,7 @@ export async function previewAdapter(config) {
         user_email: db.user.email
       };
       db.comments.push(comment);
-      return save(comment);
+      return await save(comment);
     }
     if (ids[kind]) {
       if (method === 'delete') {
@@ -477,7 +523,7 @@ export async function previewAdapter(config) {
             if(next!==finding.status){finding.status=next;finding.updated_at=now();audit(db,next==='open'?'Finding returned to Open; its remediation Action Item was deleted':next==='remediated'?'Finding moved to Pending Validation':'Finding moved to In Remediation','findings',finding,{task_id:r.task_id});}
           }
         }
-        return save({
+        return await save({
           ok: true
         });
       }
@@ -496,7 +542,7 @@ export async function previewAdapter(config) {
         body.version = 1;
         const bytes=Uint8Array.from(atob(body.content_base64.split(',').pop()),c=>c.charCodeAt(0));
         body.size = bytes.length;
-        if(globalThis.crypto?.subtle)body.sha256=Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+        if(globalThis.crypto?.subtle){body.sha256=Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');}
         else delete body.sha256; // Never invent a digest where Web Crypto is unavailable.
         body.uploaded_at = now();
         body.uploaded_by = db.user.user_id;
@@ -507,7 +553,7 @@ export async function previewAdapter(config) {
         delete body.expected_occurrence_id;
       }
       const updateKey=CREATE_REPLAY_KINDS.includes(kind)&&id&&method==='patch'&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
-      if(updateKey)return save(commandRequest(db,path,record(db,kind,id).client_id,updateKey,body,()=>{
+      if(updateKey)return await save(commandRequest(db,path,record(db,kind,id).client_id,updateKey,body,()=>{
         guardEdit(kind,body,record(db,kind,id),db.user,db);
         return write(db,kind,body,id);
       }));
@@ -515,21 +561,21 @@ export async function previewAdapter(config) {
       if (kind === 'reviews' && id && body.status === 'completed' && record(db, kind, id).status !== 'completed') {
         const { status, ...fields } = body;
         write(db, kind, fields, id);
-        return save(action(db, kind, id, 'complete', { spawn_next: true }).review);
+        return await save(action(db, kind, id, 'complete', { spawn_next: true }).review);
       }
       // Create retries reuse their Idempotency-Key (lib/api.js); replay the original record, as the backend does.
       const requestKey=!id&&CREATE_REPLAY_KINDS.includes(kind)&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
       const requestScope=requestKey?JSON.stringify([db.user.user_id,body.client_id,requestKey]):null;
       const priorRequest=requestScope&&(db.create_requests?.[requestScope]||db.vendor_action_requests?.[requestScope]);
-      if(priorRequest){if(priorRequest.body!==JSON.stringify(body))throw new Error('This create request was already used with different values.');const prior=record(db,priorRequest.kind||'tasks',priorRequest.record_id||priorRequest.task_id);return kind==='clients'?save(clientProjection(db,prior)):respond(prior);}
+      if(priorRequest){if(priorRequest.body!==JSON.stringify(body))throw new Error('This create request was already used with different values.');const prior=record(db,priorRequest.kind||'tasks',priorRequest.record_id||priorRequest.task_id);return kind==='clients'?await save(clientProjection(db,prior)):respond(prior);}
       const result = write(db, kind, kind==='policies'&&id?invalidatePolicyApproval(body,record(db,kind,id)):body, id);
       if(requestScope){db.create_requests||={};db.create_requests[requestScope]={kind,body:JSON.stringify(body),record_id:result[ids[kind]]};}
-      if (kind === 'clients') return save(clientProjection(db, result));
+      if (kind === 'clients') return await save(clientProjection(db, result));
       if (kind === 'evidence' && ['review','reviews'].includes(body.linked_type))
         reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});
       if (kind === 'evidence' && body.linked_type === 'task') audit(db,'Evidence uploaded','tasks',record(db,'tasks',body.linked_id),{filename:body.filename,evidence_id:result.evidence_id});
       if (kind === 'evidence' && ['framework_assessment','framework_assessments'].includes(body.linked_type)) audit(db,'Evidence linked','framework_assessments',record(db,'framework_assessments',body.linked_id),{filename:body.filename,evidence_id:result.evidence_id});
-      return save(result);
+      return await save(result);
     }
     return fail(501, 'This action is not implemented in the demo. No changes were saved.');
   } catch (error) {

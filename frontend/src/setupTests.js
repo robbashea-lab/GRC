@@ -3,6 +3,10 @@ const {TextEncoder, TextDecoder} = require('node:util');
 if (!globalThis.TextEncoder) globalThis.TextEncoder = TextEncoder;
 if (!globalThis.TextDecoder) globalThis.TextDecoder = TextDecoder;
 
+// JSDOM omits the standard browser compression API. Exercise the actual Node
+// implementation, including real stream scheduling, rather than a test mock.
+if (!globalThis.CompressionStream) globalThis.CompressionStream = require('node:stream/web').CompressionStream;
+
 // Use native browser-compatible encoding APIs instead of JSDOM 16's slow JS
 // emulator. Native APIs also enforce the standard required-argument contract.
 const {atob, btoa} = require('node:buffer');

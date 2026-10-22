@@ -7,7 +7,7 @@ import {isoProgramMetrics} from '../lib/isoProgramMetrics';
 import {operatorStatuses} from '../lib/frameworkOperator';
 import {evidenceAccess} from './evidence';
 import {stable} from './commandRequests';
-import {decodeDemoStore,writeDemoStore,MAX_DEMO_DECODE_BYTES} from './demoStorageCodec';
+import {decodeDemoStore,writeDemoStore,writeDemoStoreAsync,MAX_DEMO_DECODE_BYTES} from './demoStorageCodec';
 import {latestPortfolioActivity} from '../lib/portfolioOverview';
 import {getBrawndoScenarioContext} from './brawndoReportingHistory';
 import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
@@ -434,6 +434,13 @@ export function writePortfolioStore(storage,key,db){
   // the next reader validates every current row and publishes its own indices.
   if(saved!==validatedSavedValue)validatedSavedValue=null;
   return saved;
+}
+export function writePortfolioStoreAsync(storage,key,db,{afterCommit,...options}={}){
+  const json=JSON.stringify(compactPortfolioReportingCore(db));
+  return writeDemoStoreAsync(storage,key,json,{...options,afterCommit(saved){
+    if(saved!==validatedSavedValue)validatedSavedValue=null;
+    afterCommit?.(saved);
+  }});
 }
 
 export function demoRangeStart(asOf,range){

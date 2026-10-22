@@ -10,7 +10,7 @@ import { buildDemoStore } from './demoSeed';
 import {demoDates} from './demoPortfolio';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
-import {captureDemoReporting,readPortfolioStore,writePortfolioStore} from './portfolioReporting';
+import {captureDemoReporting,readPortfolioStore,writePortfolioStore,writePortfolioStoreAsync} from './portfolioReporting';
 import {enrichBrawndoReportingHistory} from './brawndoReportingHistory';
 import {finishDunder} from './programs/dunder';
 import {addInitech,finishInitech} from './programs/initech';
@@ -98,17 +98,36 @@ export function readStore() {
   saveStore(db);
   return db;
 }
+function prepareSavedStore(db,previous){
+  const persisted=lightweightStore(db,previous?.evidence||[]);
+  captureDemoReporting(persisted,previous,new Date().toISOString());
+  enrichBrawndoReportingHistory(persisted);
+  return persisted;
+}
 export function saveStore(db,{resetFiles=false}={}) {
   // Persist before responding: quota failures must never masquerade as saved changes.
   try {
     const previous=resetFiles?null:readPortfolioStore(sessionStorage.getItem(STORE_KEY)||'null');
-    const persisted=lightweightStore(db,previous?.evidence||[]);
-    captureDemoReporting(persisted, previous, new Date().toISOString());
-    enrichBrawndoReportingHistory(persisted);
+    const persisted=prepareSavedStore(db,previous);
     writePortfolioStore(sessionStorage,STORE_KEY,persisted);
     rememberFiles(db,persisted);
     return persisted;
   } catch (error) {
+    throw demoStorageError(error);
+  }
+}
+// Adapter commands await this path; startup/reset/clear retain synchronous saves.
+export async function saveStoreAsync(db,{expectedSaved,beforeCommit,signal}={}){
+  try{
+    if(sessionStorage.getItem(STORE_KEY)!==expectedSaved)
+      throw Object.assign(new Error('Demo data changed; reload before retrying. Changes were not saved.'),{status:409});
+    const previous=readPortfolioStore(expectedSaved||'null');
+    const persisted=prepareSavedStore(db,previous);
+    await writePortfolioStoreAsync(sessionStorage,STORE_KEY,persisted,{beforeCommit,signal,
+      afterCommit(){rememberFiles(db,persisted);}});
+    return persisted;
+  }catch(error){
+    if(error.status||error.name==='AbortError'||signal?.aborted)throw error;
     throw demoStorageError(error);
   }
 }
