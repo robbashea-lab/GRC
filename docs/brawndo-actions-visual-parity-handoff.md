@@ -1,0 +1,11 @@
+# Action Items visual parity — October 18, 2026
+
+User authorized implementation and deployed verification through Agent 007's existing release process. Base: 25108888c08b7d5bf3f1b2731bc76e32e4bdbc98. Root 007 owns integration, browser and release; Agent 69 owns only isolated Action Items JSX/CSS/test and this handoff.
+
+Reference: supplied actions-original.html, 76,246 bytes, SHA256 78632920ab608b781efaf8266c35845a19163fc7dce4d23c1e6e0ea6fe4be9b4. Video 96,824,080 bytes, SHA256 1aa5f64961a66fe071ebb6da3d8e50b464b0b2b4ba4965e59febfc9f8d0de559. Both hashes verified. Complete HTML/documents independently reviewed; root browser owner must sample original video and perform compiled/deployed comparison.
+
+Changed: Actions-only bundled variable Inter family; local neutral light/dark tokens, exact eligible canvas background, control/type/spacing/safe-area details; runway selected/hover/keyboard emphasis and truthful count hints. Factual summary contexts reuse existing native metrics. Native model, cohorts, dates, URL/filter/toggle/paging and all writers unchanged. Both eligibility predicates and suspended-editor protections unchanged. No shared root/portal aliases or editor files edited.
+
+Verification: six existing/changed suites passed (45 tests), including native creation, guards, ticket presentation and models. After final context/CSS refinements and five new window cases, changed suite passed25 tests. First broader invocation had nonexistent test path; corrected. Initial new cases assumed a CSS shorthand serialization, corrected to assert numeric proportional flex instead; all25 pass. No work-record writes, browser/server, push, CI or deployment by Agent69. Root will build/test cumulative candidate and compare existing/New native editors before/after. Source-only review cannot prove visual parity or actual font rendering.
+
+Pending root-owned verification: matched reference/compiled light/dark/responsive and runway interactions; native existing/create editor appearance/content/opener/Cancel equivalence; actual font evidence; cumulative exact-head CI; deployed revision/assets and hosted behavior. Preserve previous Dashboard/Calendar/Reviews/history/CIS Last saved work. Report inaccessible checks honestly. No merge/production or rollout to other clients.

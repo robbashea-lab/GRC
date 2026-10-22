@@ -1,0 +1,170 @@
+/* Exact-demo presentation only. The native workspace still owns drafts and commands. */
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-assessment.brawndo-cis-visual-safeguard[data-state] {
+  /* Override the shared workspace modal's 5vw / 5dvh inset. */
+  inset: auto;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1180px, calc(100vw - 48px));
+  max-width: none;
+  height: min(860px, calc(100dvh - 48px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  gap: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow);
+  font: 400 13.5px/1.5 var(--font);
+}
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: start;
+  padding: 16px 20px 12px 24px;
+  border-bottom: 0;
+}
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .brawndo-assessment-header h2 {
+  margin: 3px 0 0;
+  font: 650 18px/1.3 var(--font);
+  letter-spacing: -.02em;
+}
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-header > div > p { margin: 0; line-height: 0; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .bcis-crumbs { margin: 0; color: var(--muted); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .bcis-crumbs :is(ol, button) { font: 400 12px/1.5 var(--font); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .bcis-crumbs button { color: var(--link); font-weight: 500; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .bcis-crumbs [aria-current] { color: var(--muted); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-header-status { gap: 6px; margin-top: 8px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .cis-tone-success { --tone: var(--good); --tone-bg: var(--good-bg); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .cis-tone-moderate { --tone: var(--warn); --tone-bg: var(--warn-bg); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .cis-tone-critical { --tone: var(--bad); --tone-bg: var(--bad-bg); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .cis-tone-neutral { --tone: var(--fg2); --tone-bg: var(--subtle); }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .brawndo-header-status :is(.cis-pill, .cis-flag) {
+  padding: 2px 9px;
+  border: 0;
+  border-radius: 999px;
+  font: 600 11.5px/1.5 var(--font);
+}
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .cis-dot { border-radius: 2px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-header-status .cis-tone-neutral { box-shadow: inset 0 0 0 1px var(--border); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-header nav { gap: 8px; color: var(--muted); font-size: 12.5px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-header nav > span { font-size: 12.5px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-navigation-close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg2);
+}
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-navigation-close:hover { background: var(--hover); color: var(--fg); }
+/* The native 24-unit X maps to the reference's 16px glyph and 1.7px painted stroke. */
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-navigation-close > svg { width: 16px; height: 16px; stroke-width: 2.55; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-main { padding: 0; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-layout > [role="tablist"] {
+  /* Wrap labels within one tab row, as in the reference workspace. */
+  flex-wrap: nowrap;
+  align-items: stretch;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  width: 100%;
+  max-width: 100%;
+  gap: 2px;
+  margin: 0;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-layout > [role="tablist"] > [role="tab"] {
+  white-space: normal;
+  gap: 7px;
+  height: auto;
+  margin-bottom: -1px;
+  padding: 10px 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--fg2);
+  font: 500 13px/1.5 var(--font);
+}
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-layout > [role="tablist"] > [role="tab"][data-state="active"] {
+  border-bottom-color: var(--rail);
+  color: var(--fg);
+  font-weight: 600;
+}
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .assessment-tab-count { min-width: 18px; padding: 0 6px; border-radius: 999px; background: var(--subtle); box-shadow: inset 0 0 0 1px var(--border); font-size: 11px; font-weight: 600; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .assessment-tab-count.has-items { background: var(--warn-bg); color: var(--warn); box-shadow: none; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-layout > [role="tabpanel"] { margin: 0; padding: 18px 24px 22px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .assessment-layout > [role="tabpanel"][data-state="active"] { display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-visual-requirement {
+  order: -1;
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--subtle);
+}
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-visual-requirement > h3 { margin: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-visual-requirement > p { margin: 0; font-size: 13.5px; line-height: 1.55; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-visual-requirement > .brawndo-cis-required-trigger { color: var(--fg2); font-size: 12.5px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-visual-requirement summary { width: fit-content; max-width: 100%; padding: 0; color: var(--link); font-size: 12.5px; font-weight: 500; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-official-requirement .assessment-requirement { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--border); color: var(--fg2); font-size: 12.5px; line-height: 1.55; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-official-requirement .assessment-requirement h3 { font-size: 12.5px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .assessment-requirement a { color: var(--link); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-native-guidance > p { margin-top: 8px; color: var(--muted); font-size: 12px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-native-guidance-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-native-guidance-grid > section { min-width: 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-native-guidance-grid h3 { margin: 0 0 8px; font-size: 12.5px; font-weight: 600; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-native-guidance-grid p { margin: 8px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--fg2); }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-check { color: var(--fg2); font-size: 12.5px; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-summary { margin: 0; padding: 16px 18px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-summary[open] { padding: 0; border: 0; border-radius: 0; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-summary > summary { padding: 0; color: var(--fg); font-size: 13px; font-weight: 600; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .assessment-summary > p:empty { display: none; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-implementation { grid-template-columns: 240px minmax(0, 1fr); align-items: start; gap: 16px; border-top: 0; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-implementation .brawndo-step { padding: 0; border: 0; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-implementation .brawndo-step h3 { margin: 0 0 8px; font: 600 12.5px/1.5 var(--font); }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-implementation .brawndo-step-body { margin: 0; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-implementation .brawndo-status-options { gap: 6px; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-implementation .brawndo-status-options label { gap: 9px; margin: 0; padding: 8px 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg2); font: 400 12.5px/1.5 var(--font); }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-implementation .brawndo-status-options label.is-selected { border-color: var(--rail); background: var(--selected); color: var(--fg); font-weight: 600; box-shadow: none; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .assessment-implementation .cis-dot { display: none; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard input:is([type="radio"], [type="checkbox"]) { accent-color: var(--rail); }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-implementation textarea { min-height: 188px; margin-top: 0; padding: 9px 11px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--fg); font: 400 13px/1.5 var(--font); resize: vertical; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard textarea[aria-label="N/A Rationale"] { min-height: 96px; margin-top: 6px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-disclosure { padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 12.5px; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-items { gap: 8px; padding: 0; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .assessment-item { padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .assessment-item > label:first-child { display: flex; align-items: start; gap: 9px; margin-top: 0; color: var(--fg); font-size: 13px; font-weight: 600; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .assessment-item > label:first-child input { flex: none; margin-top: 3px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .assessment-item > p { color: var(--muted); font-size: 12px; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-item textarea { min-height: 72px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); font: 400 13px/1.5 var(--font); }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard[data-state] .assessment-layout .bcsg-findings { margin: 0; padding: 0; border: 0; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-layout [data-ticket-id] { padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font-size: 13px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard [data-ticket-id] > button { color: var(--link); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard [data-ticket-id] > p { color: var(--fg2); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .bcsg-finding-form { padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .bcsg-finding-form :is(input, select, textarea) { border-color: var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--fg); font: 400 13px/1.5 var(--font); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .bcsg-finding-form :is(input, select) { height: 34px; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .brawndo-assessment-footer { gap: 10px; padding: 12px 20px 12px 24px; border-top: 1px solid var(--border); background: var(--subtle); color: var(--muted); font: 400 12.5px/1.5 var(--font); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-footer [role="status"] { color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard :is(.brawndo-assessment-header, .brawndo-assessment-footer, .assessment-item-actions, .bcsg-findings) .ui-button { min-height: 32px; height: 32px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 7px; background: var(--surface); color: var(--fg2); font: 600 12.5px/1.5 var(--font); }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .brawndo-assessment-footer .ui-button.bg-primary { border-color: var(--rail); background: var(--rail); color: var(--surface); }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard :is(.brawndo-assessment-header, .brawndo-assessment-footer, .assessment-item-actions, .bcsg-findings) .ui-button:hover { background: var(--hover); }
+body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .brawndo-assessment-footer .ui-button.bg-primary:hover { background: var(--rail); filter: brightness(1.08); }
+body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard :is(button, summary, input, select, textarea):focus-visible { outline: 2px solid var(--rail); outline-offset: 2px; }
+@media (max-width: 860px) {
+  body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-assessment.brawndo-cis-visual-safeguard[data-state] { inset: 0; transform: none; width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-header { grid-template-columns: minmax(0, 1fr); }
+  body[data-brawndo-cis-visual="true"] .ui-dialog.brawndo-cis-visual-safeguard .assessment-implementation { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 620px) {
+  body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-assessment-footer > div { flex-basis: 100%; }
+  body[data-brawndo-cis-visual="true"] .brawndo-cis-visual-safeguard .brawndo-cis-native-guidance-grid { grid-template-columns: minmax(0, 1fr); }
+}

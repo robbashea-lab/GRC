@@ -1,0 +1,361 @@
+- banner:
+  - link:
+    - /url: /dashboard
+    - text: Omnisciente
+    - generic: CLARITY FOR A STRONGER TOMORROW
+  - searchbox
+  - generic: Ctrl K
+  - button:
+    - text: Platform Acceptance QA 20261011 — CIS IG2
+    - generic: Open authorized client directory
+  - button:
+  - button:
+  - button:
+    - generic: SA
+    - generic: Staging Administrator
+    - generic: super admin
+- complementary:
+  - button:
+    - text: Portfolio
+  - generic: P
+  - generic: Client
+  - generic: Platform Acceptance QA 20261011 — CIS IG2
+  - navigation:
+    - generic: Work
+    - link:
+      - /url: /dashboard
+      - generic: Dashboard
+    - link:
+      - /url: /calendar
+      - generic: Calendar
+    - link:
+      - /url: /reviews
+      - generic: Reviews
+    - link:
+      - /url: /action-items
+      - generic: Action Items
+    - generic: Program
+    - link:
+      - /url: /compliance/cis-ig1
+      - generic: CIS IG2
+    - link:
+      - /url: /risks
+      - generic: Risks
+    - link:
+      - /url: /policies
+      - generic: Policies
+    - link:
+      - /url: /vendors
+      - generic: Vendors
+    - link:
+      - /url: /evidence
+      - generic: Evidence Library
+    - generic: Client
+    - link:
+      - /url: /contacts
+      - generic: Contacts
+    - link:
+      - /url: /systems
+      - generic: Systems & Scope
+    - link:
+      - /url: /ai-governance
+      - generic: AI Governance
+    - link:
+      - /url: /client-profile
+      - generic: Client Profile
+- main:
+  - paragraph: CIS Controls v8.1 IG2
+  - heading [level=1]: CIS IG2
+  - button: Continue with 1.1
+  - region:
+    - generic: 0.8%
+    - generic: IMPLEMENTED
+    - paragraph: Program snapshot
+    - heading [level=2]: Assessment progress
+    - paragraph: 18 controls · 130 IG2 safeguards
+    - term: Implemented
+    - definition:
+      - text: "1"
+      - generic: of 130
+    - term: Assessed
+    - definition:
+      - text: "1"
+      - generic: of 130
+    - button:
+      - text: Implemented
+      - strong: "1"
+    - button:
+      - text: Partial
+      - strong: "0"
+    - button:
+      - text: Not implemented
+      - strong: "0"
+    - button:
+      - text: Not assessed
+      - strong: "129"
+    - paragraph: These figures show assessment progress, not a compliance percentage, certification or audit opinion.
+  - region:
+    - navigation:
+      - list:
+        - button: CIS IG2
+        - text: ›
+        - button: Control 3
+        - listitem: ›Safeguard 1.1
+    - textbox:
+      - /placeholder: Search by number or title…
+    - checkbox
+    - text: Added in IG2 only · display filter; full program totals unchanged
+    - paragraph: Data Protection
+    - table:
+      - rowgroup:
+        - row:
+          - columnheader: Safeguard
+          - columnheader: Implementation status
+          - columnheader: Verification
+          - columnheader: Owner
+          - columnheader: Last assessed
+      - rowgroup:
+        - link:
+          - cell:
+            - generic: "3.1"
+            - text: Establish and Maintain a Data Management Process
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "3.2"
+            - text: Establish and Maintain a Data Inventory
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "3.3"
+            - text: Configure Data Access Control Lists
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "3.4"
+            - text: Enforce Data Retention
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "3.5"
+            - text: Securely Dispose of Data
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "3.6"
+            - text: Encrypt Data on End-User Devices
+            - generic: IG1 baseline
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "3.7"
+            - text: Establish and Maintain a Data Classification Scheme
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "3.8"
+            - text: Document Data Flows
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "3.9"
+            - text: Encrypt Data on Removable Media
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "3.10"
+            - text: Encrypt Sensitive Data in Transit
+            - generic: Added in IG2
+          - cell:
+            - generic: Implemented
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Oct 11, 2026
+        - link:
+          - cell:
+            - generic: "3.11"
+            - text: Encrypt Sensitive Data at Rest
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+        - link:
+          - cell:
+            - generic: "3.12"
+            - text: Segment Data Processing and Storage Based on Sensitivity
+            - generic: Added in IG2
+          - cell:
+            - generic: Not Assessed
+          - cell:
+            - generic: Not verified
+          - cell:
+            - text: Unassigned
+            - button: Manage
+          - cell: Never
+- region "Notifications alt+T"
+- dialog "Establish and Maintain Detailed Enterprise Asset Inventory":
+  - banner:
+    - navigation "CIS IG2 location":
+      - list:
+        - button "CIS IG2"
+        - text: ›
+        - button "Control 1"
+        - listitem: ›Safeguard 1.1
+    - heading "Establish and Maintain Detailed Enterprise Asset Inventory" [level=2]
+    - paragraph:
+      - generic: Safeguard assessment workspace
+    - generic "Saved implementation status":
+      - generic: Not Assessed
+    - generic "Saved verification": Not verified
+    - navigation "Assessment navigation":
+      - button "Previous" [disabled]
+      - generic: 1 of 130
+      - button "Next"
+  - tablist "Assessment sections":
+    - tab "Requirement & implementation" [selected]
+    - tab "Findings"
+  - tabpanel "Requirement & implementation":
+    - generic "Requirement summary"
+    - heading "What CIS requires" [level=3]
+    - paragraph: Official requirement · CIS v8.1 · Safeguard 1.1
+    - paragraph: "Establish and maintain an accurate, detailed, and up-to-date inventory of all enterprise assets with the potential to store or process data, to include: end-user devices (including portable and mobile), network devices, non-computing/IoT devices, and servers. Ensure the inventory records the network address (if static), hardware address, machine name, enterprise asset owner, department for each asset, and whether the asset has been approved to connect to the network. For mobile end-user devices, MDM type tools can support this process, where appropriate. This inventory includes assets connected to the infrastructure physically, virtually, remotely, and those within cloud environments. Additionally, it includes assets that are regularly connected to the enterprise’s network infrastructure, even if they are not under control of the enterprise. Review and update the inventory of all enterprise assets bi-annually, or more frequently."
+    - paragraph:
+      - strong: "Required operation / trigger:"
+      - text: Review and update the inventory at least every six months.
+    - link "Official CIS source":
+      - /url: https://cas.docs.cisecurity.org/en/latest/source/Controls1/#11-establish-and-maintain-detailed-enterprise-asset-inventory
+    - region "Implementation status section":
+      - heading "Implementation status" [level=3]
+      - group "Implementation status":
+        - generic: Implementation status
+        - radio "Implemented"
+        - generic: Implemented
+        - radio "Partially Implemented"
+        - generic: Partially Implemented
+        - radio "Not Implemented"
+        - generic: Not Implemented
+        - radio "Not Assessed" [checked]
+        - generic: Not Assessed
+        - radio "Not Applicable"
+        - generic: Not Applicable
+    - region "Current implementation section":
+      - heading "Current implementation" [level=3]
+      - generic: Current implementation
+      - textbox "Current implementation": SYNTHETIC PFA-001 IG2 native marker No reported implementation. Preserve this exact manual text and Not Assessed status while saving interview progress.
+    - generic "Assessment guidance & working checklist"
+  - button "Open Omnibot guide" [expanded]:
+  - generic: Needs verification
+  - dialog "Omnibot guide · Safeguard 1.1":
+    - button "Minimize Omnibot Guide":
+    - button "Expand Omnibot Guide":
+    - button "Close Omnibot Guide":
+    - heading "Omnibot guide · Safeguard 1.1" [active] [level=2]
+    - paragraph: Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.
+    - generic "Question group 1 of 5":
+      - paragraph:
+        - strong: Question group 1 of 5
+        - generic: Inventory
+    - group "Inventory":
+      - generic: Inventory
+      - heading "Does an enterprise asset inventory exist?" [level=3]
+      - paragraph: Answer from current practice. Choose Not sure when this has not been confirmed.
+      - group "Does an enterprise asset inventory exist?":
+        - button "Yes"
+        - button "Partially"
+        - button "No"
+        - button "✓ Not sure" [pressed]
+      - generic: What asset information currently exists, and who can verify it?
+      - paragraph: Answer from current practice. Choose Not sure when this has not been confirmed.
+      - textbox "What asset information currently exists, and who can verify it?"
+      - generic: Known gaps or uncertainties (optional)
+      - paragraph: Record anything missing, anything not yet confirmed, or who can help confirm it.
+      - textbox "Known gaps or uncertainties": SYNTHETIC PFA-001 IG2 progress marker — inventory remains unknown.
+    - button "Back" [disabled]
+    - button "Save & next"
+    - button "Save & close"
+    - button "Review interview history"
+  - contentinfo:
+    - status: Changes remain in your draft until saved.
+    - button "Save assessment"
+    - button "Save & next"
+  - button "Close":
+    - generic: Close

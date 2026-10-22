@@ -1,0 +1,7 @@
+Inter Latin face, used only inside the eligible native Brawndo Review and its Finding creation sheet.
+Exact font URL observed in the supplied Review concept stylesheet:
+https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2
+Source CSS: https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap
+Downloaded unmodified 2026-10-19. Bytes: 48256. SHA-256: 3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62
+SIL Open Font License 1.1: existing Inter-OFL.txt. No dependency or external runtime font request.
+The distinct CSS family keeps this resource scoped away from Dashboard, parent pages and other native editors.

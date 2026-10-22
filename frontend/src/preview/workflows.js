@@ -1,3 +1,4 @@
+import {isCisClient} from './cisCapability';
 import {ensurePolicyReview,syncPolicyReview} from './policyReviews';
 import {ensureVendorReviews} from './vendors';
 import {approvalSnapshot} from './policyProvenance';
@@ -17,8 +18,8 @@ function commandFields(body, allowed) {
     throw Object.assign(new Error('Unsupported command field or invalid text value'),{status:422});
 }
 
-function commandEdit(kind, body, user) {
-  try{guardEdit(kind,body,{},user);}
+function commandEdit(kind, body, user, db) {
+  try{guardEdit(kind,body,{},user,db);}
   catch(error){error.status=422;throw error;}
 }
 export function nextDue(base, recurrence, custom) {
@@ -201,7 +202,7 @@ export function action(db, kind, id, name, body) {
     if (!['low', 'medium', 'high', 'critical'].includes(body.severity || 'medium')) throw Object.assign(new Error('Invalid severity.'),{status:422});
     const owner=Object.prototype.hasOwnProperty.call(body,'owner_id')?body.owner_id:r.owner_id;
     requireCreationAssignee(db,cid,owner);
-    commandEdit('findings',{due_date:body.due_date},db.user);
+    commandEdit('findings',{due_date:body.due_date},db.user,db);
     const finding = write(db, 'findings', {
       title: body.title.trim(), description: body.description || '', severity: body.severity || 'medium',
       remediation_plan: body.remediation_plan || '', remediation_title:body.remediation_title.trim(), audit_item_key:body.audit_item_key, due_date: body.due_date || null,
@@ -224,7 +225,7 @@ export function action(db, kind, id, name, body) {
     commandFields(body,['title','priority','assignee_id','due_date','description']);
     const assignee=Object.prototype.hasOwnProperty.call(body,'assignee_id')?body.assignee_id:r.owner_id;
     requireCreationAssignee(db,cid,assignee);
-    commandEdit('tasks',{title:body.title||r.title,due_date:body.due_date||r.due_date},db.user);
+    commandEdit('tasks',{title:body.title||r.title,due_date:body.due_date||r.due_date},db.user,db);
     const task = write(db, 'tasks', {
       ...body,
       title: body.title || r.title,
@@ -310,7 +311,7 @@ export function action(db, kind, id, name, body) {
   if (kind === 'policies' && name === 'verify' && r.status==='in_review') throw new Error('Return the pending submission to Draft before verifying metadata');
   if (kind === 'policies' && name === 'verify' && Object.keys(body).some(k=>!['version','owner_id','approver_id','approved_at','last_reviewed_at','next_review_date','summary','status'].includes(k))) throw new Error('Unknown verification field');
   if(kind==='policies'&&name==='verify') {
-    if(r.client_id==='demo_brawndo'&&(r.schedule_from_reviews||db.reviews.some(v=>v.policy_id===id&&v.client_id===r.client_id))) {
+    if(isCisClient(db,r.client_id)&&(r.schedule_from_reviews||db.reviews.some(v=>v.policy_id===id&&v.client_id===r.client_id))) {
       for(const key of ['last_reviewed_at','next_review_date'])if(body[key]&&String(body[key]).slice(0,10)!==String(r[key]||'').slice(0,10))throw new Error('Policy Review dates are controlled by linked Reviews.');
       body={...body};delete body.last_reviewed_at;delete body.next_review_date;
     }
@@ -324,9 +325,9 @@ export function action(db, kind, id, name, body) {
         provenance:'Verified metadata; not an in-app approval',subject}];
     } else fields=invalidatePolicyApproval(fields,r);
     const updated=patch(fields);
-    // Brawndo: approval establishes the Policy's recurring Review (annual from the last review, or today)
+    // A configured CIS approval establishes the Policy's recurring Review (annual from the last review, or today)
     // instead of storing a free-standing next-review date on the Policy.
-    if(r.client_id==='demo_brawndo'&&body.status==='approved'){
+    if(isCisClient(db,r.client_id)&&body.status==='approved'){
       const had=db.reviews.some(v=>v.policy_id===id&&v.client_id===r.client_id&&!['completed','cancelled'].includes(v.status));
       const review=ensurePolicyReview(db,updated,updated.next_review_date||nextPolicyReview(String(updated.last_reviewed_at||now()).slice(0,10)));
       if(review){syncPolicyReview(db,review);if(!had)audit(db,'Policy Review scheduled','policies',updated,{review_id:review.review_id,due_date:review.due_date});}

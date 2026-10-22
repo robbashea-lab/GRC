@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
-import {readStore,saveStore} from './store';
+import {readStore,saveStore,ids} from './store';
 import {FRAMEWORKS,CATALOGS} from '../lib/frameworks';
 import {socGuidedCatalog,socQuestions,socGuidedResult,socGuidedEnabled} from '../lib/socGuidedAssessment';
 import baseline from '@catalogs/onboardingCatalog.json';
@@ -10,7 +10,7 @@ const state=programs=>({version:3,step:3,policies:Object.fromEntries(baseline.po
 const workspace=async id=>(await api.get('/frameworks/soc-2',{params:{client_id:id||cid}})).data;
 async function configure(programs=['soc-2']){await api.post('/onboarding/baseline',{client_id:cid,state:state(programs),finalize:true});return workspace();}
 async function scope(selected){const config=(await workspace()).configuration;await api.patch('/frameworks/soc-2/configuration',{client_id:cid,categories:selected,expected_updated_at:config.expected_updated_at??null});return workspace();}
-const complete=id=>Object.fromEntries(socQuestions(id,{},socGuidedCatalog.version).filter(q=>!q.condition).map(q=>[q.id,q.type==='context'?'Relevant':q.type==='text'?'':'Yes']));
+const complete=id=>Object.fromEntries(socQuestions(id,{},socGuidedCatalog.version).filter(q=>!q.condition).map(q=>[q.id,q.type==='context'?'Relevant':q.type==='text'?'':q.optional?'No':'Yes']));
 async function completed(row){
   const path='/framework_assessments/'+row.framework_assessment_id+'/guided-assessment',initial=(await api.get(path)).data;
   const answers=complete(row.definition_id);for(const q of socQuestions(row.definition_id,answers))if(!(q.id in answers))answers[q.id]=q.type==='text'?'':'Yes';
@@ -30,6 +30,17 @@ test('new SOC onboarding defaults to33 clean Common Criteria and add-program pre
   await api.patch('/onboarding/programs/soc-2',{client_id:existing,applicability:'applies'});expect((await workspace(existing)).assessments).toHaveLength(33);
 });
 test('every61criterion saves only progress then exact text/status with native history and no collateral mutation',async()=>{
+  // This exhaustive new-client contract does not exercise the unrelated seeded portfolio.
+  // Remove its records and reporting proof together; all other tests retain full Demo context.
+  const isolated=readStore(),client=isolated.clients.find(row=>row.client_id===cid),users=isolated.users;
+  for(const key of Object.keys(ids))if(key!=='users')isolated[key]=key==='clients'?[client]:[];
+  for(const key of ['baselines','drafts','riskSequences','ai_intake','ai_counters','guided_assessment_pilot'])isolated[key]={};
+  isolated.logs=[];isolated.notifications=[];
+  delete isolated.portfolio_reporting;delete isolated.cis_demo_scenario_history;delete isolated.cis_demo_rollout;
+  saveStore(isolated,{resetFiles:true});
+  const fresh=readStore();expect(fresh.clients).toEqual([client]);expect(fresh.users).toEqual(users);
+  expect(fresh.portfolio_reporting.snapshots).toEqual([]);expect(fresh.portfolio_reporting.scope_events).toEqual([]);
+  expect(fresh.cis_demo_scenario_history).toBeUndefined();
   await configure();const all=await scope(categories);expect(all.active_definition_ids).toHaveLength(61);
   for(const row of all.assessments){
     const before=JSON.parse(JSON.stringify(row)),draft=await completed(row),path='/framework_assessments/'+row.framework_assessment_id;
@@ -42,6 +53,8 @@ test('every61criterion saves only progress then exact text/status with native hi
     expect(saved.assessment_history.at(-1).guided_assessment_source.answers).toEqual(draft.answers);
     expect((await api.get(path)).data.implementation).toBe(text);
     await expect(api.patch(path,body)).rejects.toMatchObject({response:{status:409}});
+    const nativeBeforeReplay=readStore();
+    expect((await api.patch(path,{...body,expected_last_assessed:saved.last_saved||saved.last_assessed||null})).data).toEqual(saved);expect(readStore()).toEqual(nativeBeforeReplay);
   }
   const snapshot=readStore();expect(snapshot.findings.filter(row=>row.client_id===cid)).toHaveLength(0);
 },60000);

@@ -73,11 +73,11 @@
 .brawndo-ladder { display: flex; flex-direction: column; gap: 10px; }
 .brawndo-ladder li { display: flex; gap: 10px; line-height: 1.4; font-size: 13px; }
 .brawndo-ladder-mark { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; border: 2px solid var(--color-border-strong); background: var(--color-bg-surface); position: relative; }
-.brawndo-ladder .is-done .brawndo-ladder-mark { background: #12B76A; border-color: #12B76A; }
-.brawndo-ladder .is-done .brawndo-ladder-mark::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
-.brawndo-ladder .is-partial .brawndo-ladder-mark { border-color: #F79009; background: linear-gradient(90deg, #F79009 50%, var(--color-bg-surface) 50%); }
-.brawndo-ladder .is-gap .brawndo-ladder-mark { border-color: #D92D20; background: #D92D20; }
-.brawndo-ladder .is-gap .brawndo-ladder-mark::after { content: '!'; position: absolute; inset: 0; color: #fff; font-size: 10px; font-weight: 700; line-height: 12px; text-align: center; }
+.brawndo-ladder .is-done .brawndo-ladder-mark { background: var(--color-success); border-color: var(--color-success); }
+.brawndo-ladder .is-done .brawndo-ladder-mark::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid var(--color-bg-surface); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.brawndo-ladder .is-partial .brawndo-ladder-mark { border-color: var(--color-moderate-text); background: linear-gradient(90deg, var(--color-moderate-text) 50%, var(--color-bg-surface) 50%); }
+.brawndo-ladder .is-gap .brawndo-ladder-mark { border-color: var(--color-critical); background: var(--color-critical); }
+.brawndo-ladder .is-gap .brawndo-ladder-mark::after { content: '!'; position: absolute; inset: 0; color: var(--color-bg-surface); font-size: 10px; font-weight: 700; line-height: 12px; text-align: center; }
 .brawndo-checks { display: flex; flex-direction: column; gap: 8px; }
 .brawndo-checks li { position: relative; padding-left: 22px; font-size: 13px; line-height: 1.5; }
 .brawndo-checks li::before { content: ''; position: absolute; left: 2px; top: 3px; width: 13px; height: 13px; border: 1.5px solid var(--color-input-border); border-radius: 3px; }

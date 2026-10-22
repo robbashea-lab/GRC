@@ -1,4 +1,5 @@
 import {cisProgramName} from '@/lib/cisScope';
+import {selectedPolicies} from '@/lib/policySelection';
 import {Link} from 'react-router-dom';
 import PageHeader from './PageHeader';
 import {Button} from './ui/button';
@@ -6,15 +7,15 @@ import ClientRelationshipValue from './ClientRelationshipValue';
 import {grcLead, primaryContact} from '@/lib/clientRelationships';
 import {APPLICABILITY, currentHandoff, SETUP_FILTERS} from '@/lib/onboardingHandoff';
 
-export default function OnboardingHandoff({snapshot, state, catalog, clientId, canManage, embedded=false}) {
+export default function OnboardingHandoff({snapshot, state, catalog, clientId, canManage, embedded=false, presentation=false, theme}) {
   const data = currentHandoff(snapshot, clientId);
   const settings = canManage ? '/client-profile?tab=program' : '/requirements';
   const lead = grcLead(data.client), contact = primaryContact(data.client);
-  return <div data-testid="onboarding-handoff">
+  return <div data-testid="onboarding-handoff" className={presentation?(embedded?"native-current-handoff":"brawndo-onboarding native-current-handoff"):undefined} data-theme={presentation?theme:undefined}>
     {!embedded&&<PageHeader title="Onboarding complete" subtitle={`${data.client.name} · Current operational setup`} action={<Button asChild><Link to="/dashboard">Open Dashboard</Link></Button>}/>}
-    <div className="page-content max-w-7xl space-y-5">
+    <div className={presentation?"handoff-content":"page-content max-w-7xl space-y-5"}>
       <p className="text-sm text-ink-secondary">Your baseline is configured. Complete the remaining setup in the operational modules; onboarding does not need to be repeated.</p>
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className={presentation?"handoff-grid":"grid md:grid-cols-2 gap-4"}>
         {['reviews','policies'].map(kind => <section key={kind} className="rounded-lg border border-line bg-surface-card p-5 space-y-3">
           <h2 className="font-semibold text-base">{kind === 'reviews' ? 'Reviews' : 'Policies'}</h2>
           <p className="text-sm text-ink-secondary">{kind === 'reviews' ? `${data.activeReviews} current Reviews · ${data.activeReviews-data.counts.reviews.scheduling} scheduled` : `${data.records.policies.length} Policy records · ${data.records.policies.filter(p=>p.presence==='verified_existing').length} verified existing`}</p>
@@ -47,7 +48,7 @@ export default function OnboardingHandoff({snapshot, state, catalog, clientId, c
       <p className="text-xs text-ink-secondary">These counts reflect current client records, including later operational changes—not a completion-time snapshot or a compliance score.</p>
       {!embedded&&<details className="rounded-lg border border-line bg-surface-card p-4"><summary className="cursor-pointer text-sm font-medium">View onboarding baseline</summary>
         <p className="text-xs text-ink-secondary mt-3">Saved intake responses. Current Policies and program applicability may differ; manage changes in their normal modules.</p>
-        <div className="grid md:grid-cols-2 gap-5 mt-4 text-sm"><div><h3 className="font-semibold mb-2">Policies</h3>{catalog.policies.map(p=><p key={p.key}>{p.name} — {{yes:'Reported Existing',no:'Reported Missing',unsure:'Needs Confirmation'}[state.policies[p.key]] || 'Not recorded'}</p>)}</div><div><h3 className="font-semibold mb-2">Compliance</h3>{catalog.requirements.map(f=><p key={f.key}>{cisProgramName(f,state.framework_settings?.[f.key])} — {APPLICABILITY.find(([v])=>v===state.requirements[f.key])?.[1] || 'Not recorded'}</p>)}<h3 className="font-semibold mt-4 mb-2">General Review selections</h3>{catalog.reviews.filter(r=>state.reviews.includes(r.key)).map(r=><p key={r.key}>{r.name}</p>)}</div></div>
+        <div className="grid md:grid-cols-2 gap-5 mt-4 text-sm"><div><h3 className="font-semibold mb-2">Policies</h3>{selectedPolicies(catalog,state).map(p=><p key={p.key}>{p.name} — {{yes:'Reported Existing',no:'Reported Missing',unsure:'Needs Confirmation'}[state.policies[p.key]] || 'Not recorded'}</p>)}</div><div><h3 className="font-semibold mb-2">Compliance</h3>{catalog.requirements.map(f=><p key={f.key}>{cisProgramName(f,state.framework_settings?.[f.key])} — {APPLICABILITY.find(([v])=>v===state.requirements[f.key])?.[1] || 'Not recorded'}</p>)}<h3 className="font-semibold mt-4 mb-2">General Review selections</h3>{catalog.reviews.filter(r=>state.reviews.includes(r.key)).map(r=><p key={r.key}>{r.name}</p>)}</div></div>
       </details>}
     </div>
   </div>;

@@ -3744,7 +3744,6 @@
       "policy_key": "policy-vendor-third-party-risk-management-policy",
       "safeguards": [
         "15.1",
-        "15.2",
         "15.3",
         "15.4"
       ],
@@ -3765,6 +3764,14 @@
       ],
       "basis": "Required Document",
       "rationale": "Can contain the documented workforce reporting process and contacts; not a claim that all incident-policy content is IG1-required."
+    },
+    {
+      "policy_key": "policy-vendor-third-party-risk-management-policy",
+      "safeguards": [
+        "15.2"
+      ],
+      "basis": "Required Document",
+      "rationale": "CIS 15.2 requires a service-provider management policy addressing classification, inventory, assessment, monitoring and decommissioning. Applicable to IG2/IG3; the policy must contain the actual required process."
     }
   ],
   "implementation_groups": [

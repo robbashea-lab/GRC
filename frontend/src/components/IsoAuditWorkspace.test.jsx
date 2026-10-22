@@ -92,12 +92,22 @@ test('historical audit selections remain frozen and do not rewrite current cycle
 });
 
 test('sequential navigation provides a stable return target on the current audit item',async()=>{
-  await act(async()=>button('Next').click());
-  const key=auditPackage('governance-risk').items[1].key;
-  expect(document.querySelector('[role="dialog"] h2').textContent).toContain('4.2');
-  await act(async()=>button('Close assessment').click());
-  await act(async()=>new Promise(resolve=>requestAnimationFrame(resolve)));
-  expect(document.activeElement.getAttribute('data-audit-item')).toBe(key);
+  // jsdom has no layout; model rendered boxes while retaining real modal/hidden attributes.
+  const layout=jest.spyOn(HTMLElement.prototype,'getClientRects').mockImplementation(function(){return this.closest('[hidden]')?[]:[{}];});
+  try{
+    await act(async()=>button('Next').click());
+    const key=auditPackage('governance-risk').items[1].key;
+    expect(document.querySelector('[role="dialog"] h2').textContent).toContain('4.2');
+    await act(async()=>button('Close assessment').click());
+    await act(async()=>new Promise(resolve=>requestAnimationFrame(resolve)));
+    // Closing reloads the programme, so identify the current row after that reload.
+    const currentRow=document.querySelector('[data-audit-item="'+key+'"]');
+    expect(currentRow).not.toBeNull();expect(currentRow.isConnected).toBe(true);
+    expect(currentRow.closest('[hidden],[aria-hidden="true"],[inert]')).toBeNull();
+    expect(currentRow.matches(':disabled')).toBe(false);expect(currentRow.getClientRects().length).toBeGreaterThan(0);
+    expect(document.activeElement).toBe(currentRow);
+    expect(document.activeElement.getAttribute('data-audit-item')).toBe(key);
+  }finally{layout.mockRestore();}
 });
 
 test('package cards distinguish completed history from the upcoming cycle',async()=>{

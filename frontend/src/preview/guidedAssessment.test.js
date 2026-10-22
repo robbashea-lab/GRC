@@ -1,8 +1,9 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {guidedCatalog,versionForSafeguard,generateResult} from '../lib/guidedAssessment';
-import {readStore,saveStore,ids} from './store';
-import {prepareGuidedContext} from './frameworks';
+import {readStore,saveStore,ids,STORE_KEY} from './store';
+import {createBrawndoScenarioDateSelector} from './brawndoReportingHistory';
+import {prepareGuidedContext,frameworkRequest} from './frameworks';
 import lineageContract from '../../../backend/tests/fixtures/guided-lineage-contract.json';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS} from '../lib/frameworks';
@@ -30,7 +31,17 @@ function isolateNewClientFixture(){
   for(const key of Object.keys(ids))if(key!=='users')db[key]=[];
   for(const key of ['baselines','drafts','riskSequences','ai_intake','ai_counters','guided_assessment_pilot'])db[key]={};
   db.logs=[];db.notifications=[];
-  saveStore(db);
+  // This fixture discards the portfolio itself, so its imported reporting proof
+  // must go too. Existing-client tests never take this explicit reset path.
+  delete db.portfolio_reporting;
+  delete db.cis_demo_scenario_history;
+  delete db.cis_demo_rollout;
+  saveStore(db,{resetFiles:true});
+  const isolated=readStore();
+  expect(isolated.clients).toEqual([]);
+  expect(isolated.portfolio_reporting.snapshots).toEqual([]);
+  expect(isolated.portfolio_reporting.scope_events).toEqual([]);
+  expect(isolated.cis_demo_scenario_history).toBeUndefined();
 }
 test('save and resume leave native assessment evidence and history unchanged',async()=>{
   const first=(await api.put(path,pilotBody)).data;expect(first.revision).toBe(1);
@@ -49,13 +60,38 @@ test('Apply uses normal save and preserves verification and history attribution'
   expect(edited.guided_assessment_source).toBeNull();
   expect(edited.assessment_history.at(-2).guided_assessment_source).toEqual(result.guided_assessment_source);
 });
+test('full native CIS footer acknowledges the same guided source without duplicate writes',async()=>{
+  const result=generateResult('1.1',pilotBody.answers,new Date('2026-10-14T04:00:00Z'),pilotBody.version);
+  const draft=(await api.put(path,{...pilotBody,completed:true,result,narrative:result.narrative})).data;
+  const nativePath='/framework_assessments/'+row.framework_assessment_id;
+  const footer=Object.fromEntries(['technology','notes','na_rationale','addressable_decision','addressable_rationale'].map(key=>[key,row[key]??'']));
+  Object.assign(footer,{implementation:draft.narrative,status:result.status,owner_id:row.owner_id??null,
+    process_owner_id:row.process_owner_id??null,verification:row.verification??'not_verified',
+    cis_assessment_criteria:row.cis_assessment_criteria??[],guided_assessment_source:source(draft),
+    expected_last_assessed:row.last_saved||row.last_assessed||null});
+  if(row.cis_operation)footer.cis_operation={...row.cis_operation,confirmed:false};
+  const saved=(await api.patch(nativePath,footer)).data;
+  expect(saved).not.toHaveProperty('addressable_decision');
+  expect(saved).not.toHaveProperty('addressable_rationale');
+  expect(saved).toHaveProperty('cis_assessment_criteria');
+  const acknowledged={...footer,expected_last_assessed:saved.last_saved},before=readStore();
+  for(let attempt=0;attempt<2;attempt++){
+    expect((await api.patch(nativePath,acknowledged)).data).toEqual(saved);
+    expect(readStore()).toEqual(before);
+  }
+  for(const altered of [{...acknowledged,technology:'Unreviewed product change'},
+    {...acknowledged,guided_assessment_source:{...source(draft),revision:draft.revision+1}},
+    {...acknowledged,expected_last_assessed:footer.expected_last_assessed}])
+    await expect(api.patch(nativePath,altered)).rejects.toMatchObject({response:{status:409}});
+  expect((await api.get(nativePath)).data).toEqual(saved);
+});
 test('applicable CIS clients start clean, ISO uses its own version, and inactive ISO rejects access',async()=>{
   const cis=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data;
   const interview=(await api.get('/framework_assessments/'+cis.assessments.find(a=>a.definition_id==='1.1').framework_assessment_id+'/guided-assessment')).data;
   expect(interview.answers).toEqual({});expect(interview.revision).toBe(0);
   const iso=(await api.get('/frameworks/iso-27001',{params:{client_id:'demo_dunder'}})).data;
   const route='/framework_assessments/'+iso.assessments[0].framework_assessment_id+'/guided-assessment';
-  expect((await api.get(route)).data.version).toBe('iso27001-omni-1');
+  expect((await api.get(route)).data.version).toBe('iso27001-omni-2');
   await api.patch('/onboarding/programs/iso-27001',{client_id:'demo_dunder',applicability:'does_not_apply'});
   await expect(api.get(route)).rejects.toMatchObject({response:{status:404}});
 });
@@ -291,36 +327,61 @@ test('concurrent completed edits keep a single CAS winner and immutable prior ou
 
 test('storage reload after asynchronous hashing preserves unrelated writes and rejects a changed native base',async()=>{
   const subtle=globalThis.crypto.subtle,original=subtle.digest.bind(subtle);
+  const externalPatch=(id,notes)=>{
+    const db=readStore();frameworkRequest(db,'/framework_assessments/'+id,'patch',{}, {notes});
+    saveStore(db);return readStore().framework_assessments.find(assessment=>assessment.framework_assessment_id===id);
+  };
+  const projected=native=>{
+    const metadata=createBrawndoScenarioDateSelector(readStore())(native);
+    return metadata?{...native,demo_date_metadata:metadata}:native;
+  };
+  const other=readStore().framework_assessments.find(assessment=>assessment.client_id==='demo_initech');
+  expect(other).toBeTruthy();
   let arrived,release;const started=new Promise(resolve=>{arrived=resolve;}),paused=new Promise(resolve=>{release=resolve;});
   const spy=jest.spyOn(subtle,'digest').mockImplementation(async(...args)=>{arrived();await paused;return original(...args);});
+  let pending,queued;
   try{
-    const pending=api.put(path,pilotBody);await started;
-    const other=(await api.get('/frameworks/cis-ig1',{params:{client_id:'demo_initech'}})).data.assessments[0];
-    const unrelated=(await api.patch('/framework_assessments/'+other.framework_assessment_id,{notes:'Concurrent unrelated native edit'})).data;
+    pending=api.put(path,pilotBody);pending.catch(()=>undefined);await started;
+    // A second adapter request now waits in FIFO order. Model an external
+    // browser/storage writer through the same native framework mutation instead.
+    let observed=false;queued=api.get('/framework_assessments/'+other.framework_assessment_id).then(response=>{observed=true;return response;});queued.catch(()=>undefined);
+    const unrelated=externalPatch(other.framework_assessment_id,'Concurrent unrelated native edit');
+    expect(observed).toBe(false);
     release();await pending;
-    expect((await api.get('/framework_assessments/'+other.framework_assessment_id)).data).toEqual(unrelated);
-  }finally{release();spy.mockRestore();}
+    expect(readStore().framework_assessments.find(assessment=>assessment.framework_assessment_id===other.framework_assessment_id)).toEqual(unrelated);
+    expect((await queued).data).toEqual(projected(unrelated));
+    expect((await api.get('/framework_assessments/'+other.framework_assessment_id)).data).toEqual(projected(unrelated));
+  }finally{release();spy.mockRestore();await Promise.allSettled([pending,queued].filter(Boolean));}
   let arrivedAgain,releaseAgain;const startedAgain=new Promise(resolve=>{arrivedAgain=resolve;}),pausedAgain=new Promise(resolve=>{releaseAgain=resolve;});
   const nextSpy=jest.spyOn(subtle,'digest').mockImplementation(async(...args)=>{arrivedAgain();await pausedAgain;return original(...args);});
+  let nextPending;
   try{
-    const pending=api.put(path,{...pilotBody,expected_revision:1});await startedAgain;
-    const native=(await api.patch('/framework_assessments/'+row.framework_assessment_id,{notes:'Concurrent native base edit'})).data;
-    releaseAgain();await expect(pending).rejects.toMatchObject({response:{status:409}});
-    expect((await api.get('/framework_assessments/'+row.framework_assessment_id)).data).toEqual(native);
-  }finally{releaseAgain();nextSpy.mockRestore();}
+    nextPending=api.put(path,{...pilotBody,expected_revision:1});nextPending.catch(()=>undefined);await startedAgain;
+    const native=externalPatch(row.framework_assessment_id,'Concurrent native base edit');
+    releaseAgain();await expect(nextPending).rejects.toMatchObject({response:{status:409}});
+    expect(readStore().framework_assessments.find(assessment=>assessment.framework_assessment_id===row.framework_assessment_id)).toEqual(native);
+    expect((await api.get('/framework_assessments/'+row.framework_assessment_id)).data).toEqual(projected(native));
+  }finally{releaseAgain();nextSpy.mockRestore();if(nextPending)await Promise.allSettled([nextPending]);}
 });
 
 test('an account switch while hashing cannot save or expose the prior account draft',async()=>{
   const subtle=globalThis.crypto.subtle,original=subtle.digest.bind(subtle);
   let arrived,release;const started=new Promise(resolve=>{arrived=resolve;}),paused=new Promise(resolve=>{release=resolve;});
   const spy=jest.spyOn(subtle,'digest').mockImplementation(async(...args)=>{arrived();await paused;return original(...args);});
+  let pending;
   try{
-    const pending=api.put(path,pilotBody);await started;
+    pending=api.put(path,pilotBody);pending.catch(()=>undefined);await started;
     editStore(db=>{db.user={...db.user,user_id:'switched-demo-account'};});
-    release();await expect(pending).rejects.toMatchObject({response:{status:409}});
+    const switched=readStore(),saved=sessionStorage.getItem(STORE_KEY);
+    release();await expect(pending).rejects.toMatchObject({response:{status:401,data:{detail:'Demo actor changed; retry from the current session.'}}});
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+    expect(readStore().guided_assessment_pilot).toEqual(switched.guided_assessment_pilot);
+    expect(readStore().guided_assessment_history).toEqual(switched.guided_assessment_history);
+    expect(readStore().framework_assessments).toEqual(switched.framework_assessments);
+    expect(readStore().user.user_id).toBe('switched-demo-account');
     expect((await api.get(path)).data).toMatchObject({revision:0,answers:{}});
     expect((await api.get(path+'/history')).data.items).toEqual([]);
-  }finally{release();spy.mockRestore();}
+  }finally{release();spy.mockRestore();if(pending)await Promise.allSettled([pending]);}
 });
 
 test.each(['archived client','read-only role','revoked membership','reassigned owner','ended session'])('a %s during hashing rejects the write under current authorization',async change=>{

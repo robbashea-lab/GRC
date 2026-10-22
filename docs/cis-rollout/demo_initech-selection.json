@@ -1,0 +1,1152 @@
+{
+  "revision": "cis81-standard-demo-v1",
+  "framework_key": "cis-ig1",
+  "framework_version": "8.1",
+  "implementation_group": 2,
+  "safeguard_ids": [
+    "1.1",
+    "1.2",
+    "1.3",
+    "1.4",
+    "2.1",
+    "2.2",
+    "2.3",
+    "2.4",
+    "2.5",
+    "2.6",
+    "3.1",
+    "3.2",
+    "3.3",
+    "3.4",
+    "3.5",
+    "3.6",
+    "3.7",
+    "3.8",
+    "3.9",
+    "3.10",
+    "3.11",
+    "3.12",
+    "4.1",
+    "4.2",
+    "4.3",
+    "4.4",
+    "4.5",
+    "4.6",
+    "4.7",
+    "4.8",
+    "4.9",
+    "4.10",
+    "4.11",
+    "5.1",
+    "5.2",
+    "5.3",
+    "5.4",
+    "5.5",
+    "5.6",
+    "6.1",
+    "6.2",
+    "6.3",
+    "6.4",
+    "6.5",
+    "6.6",
+    "6.7",
+    "7.1",
+    "7.2",
+    "7.3",
+    "7.4",
+    "7.5",
+    "7.6",
+    "7.7",
+    "8.1",
+    "8.2",
+    "8.3",
+    "8.4",
+    "8.5",
+    "8.6",
+    "8.7",
+    "8.8",
+    "8.9",
+    "8.10",
+    "8.11",
+    "9.1",
+    "9.2",
+    "9.3",
+    "9.4",
+    "9.5",
+    "9.6",
+    "10.1",
+    "10.2",
+    "10.3",
+    "10.4",
+    "10.5",
+    "10.6",
+    "10.7",
+    "11.1",
+    "11.2",
+    "11.3",
+    "11.4",
+    "11.5",
+    "12.1",
+    "12.2",
+    "12.3",
+    "12.4",
+    "12.5",
+    "12.6",
+    "12.7",
+    "13.1",
+    "13.2",
+    "13.3",
+    "13.4",
+    "13.5",
+    "13.6",
+    "14.1",
+    "14.2",
+    "14.3",
+    "14.4",
+    "14.5",
+    "14.6",
+    "14.7",
+    "14.8",
+    "14.9",
+    "15.1",
+    "15.2",
+    "15.3",
+    "15.4",
+    "16.1",
+    "16.2",
+    "16.3",
+    "16.4",
+    "16.5",
+    "16.6",
+    "16.7",
+    "16.8",
+    "16.9",
+    "16.10",
+    "16.11",
+    "17.1",
+    "17.2",
+    "17.3",
+    "17.4",
+    "17.5",
+    "17.6",
+    "17.7",
+    "17.8",
+    "18.1",
+    "18.2",
+    "18.3"
+  ],
+  "policies": [
+    {
+      "policy_key": "policy-information-security-policy",
+      "title": "Information Security Policy",
+      "include": true,
+      "mappings": [
+        {
+          "policy_key": "policy-information-security-policy",
+          "safeguards": [
+            "8.1",
+            "8.4",
+            "8.5",
+            "8.6",
+            "8.7",
+            "8.8",
+            "8.9",
+            "8.10",
+            "8.11",
+            "9.3",
+            "9.4",
+            "9.5",
+            "9.6",
+            "10.4",
+            "10.5",
+            "10.6",
+            "10.7",
+            "13.1",
+            "13.2",
+            "13.3",
+            "13.4",
+            "13.5",
+            "13.6"
+          ],
+          "basis": "Supports Requirement",
+          "rationale": "May reference the documented log-management process; the policy alone does not demonstrate implementation."
+        }
+      ],
+      "classification": "framework_supporting_document",
+      "rationale": "Document contents support the mapped safeguard; the policy title alone is not implementation proof."
+    },
+    {
+      "policy_key": "policy-risk-management-policy",
+      "title": "Risk Management Policy",
+      "include": false,
+      "mappings": [],
+      "classification": "optional_organizational",
+      "rationale": "Not selected: no selected-IG CIS mapping; no missing-document response is generated."
+    },
+    {
+      "policy_key": "policy-access-control-identity-management-policy",
+      "title": "Access Control & Identity Management Policy",
+      "include": true,
+      "mappings": [
+        {
+          "policy_key": "policy-access-control-identity-management-policy",
+          "safeguards": [
+            "5.1",
+            "6.1",
+            "6.2",
+            "5.5",
+            "5.6",
+            "6.6",
+            "6.7"
+          ],
+          "basis": "Supports Requirement",
+          "rationale": "Supports account governance and the documented access-granting process; not an exact policy-title mandate."
+        }
+      ],
+      "classification": "framework_supporting_document",
+      "rationale": "Document contents support the mapped safeguard; the policy title alone is not implementation proof."
+    },
+    {
+      "policy_key": "policy-acceptable-use-policy",
+      "title": "Acceptable Use Policy",
+      "include": false,
+      "mappings": [],
+      "classification": "optional_organizational",
+      "rationale": "Not selected: no selected-IG CIS mapping; no missing-document response is generated."
+    },
+    {
+      "policy_key": "policy-change-management-policy",
+      "title": "Change Management Policy",
+      "include": false,
+      "mappings": [],
+      "classification": "optional_organizational",
+      "rationale": "Not selected: no selected-IG CIS mapping; no missing-document response is generated."
+    },
+    {
+      "policy_key": "policy-vendor-third-party-risk-management-policy",
+      "title": "Vendor / Third-Party Risk Management Policy",
+      "include": true,
+      "mappings": [
+        {
+          "policy_key": "policy-vendor-third-party-risk-management-policy",
+          "safeguards": [
+            "15.1",
+            "15.3",
+            "15.4"
+          ],
+          "basis": "Supports Requirement",
+          "rationale": "Supports provider-inventory ownership and maintenance."
+        },
+        {
+          "policy_key": "policy-vendor-third-party-risk-management-policy",
+          "safeguards": [
+            "15.2"
+          ],
+          "basis": "Required Document",
+          "rationale": "CIS 15.2 requires a service-provider management policy addressing classification, inventory, assessment, monitoring and decommissioning. Applicable to IG2/IG3; the policy must contain the actual required process."
+        }
+      ],
+      "classification": "framework_document_required_contents",
+      "rationale": "Document contents support the mapped safeguard; the policy title alone is not implementation proof."
+    },
+    {
+      "policy_key": "policy-data-classification-handling-policy",
+      "title": "Data Classification & Handling Policy",
+      "include": true,
+      "mappings": [
+        {
+          "policy_key": "policy-data-classification-handling-policy",
+          "safeguards": [
+            "3.1",
+            "3.2",
+            "3.7",
+            "3.8",
+            "3.9",
+            "3.10",
+            "3.11",
+            "3.12"
+          ],
+          "basis": "Required Document",
+          "rationale": "CIS 3.1 calls for a documented data-management process; this document may house that process, not a mandated standalone policy title."
+        }
+      ],
+      "classification": "framework_document_required_contents",
+      "rationale": "Document contents support the mapped safeguard; the policy title alone is not implementation proof."
+    },
+    {
+      "policy_key": "policy-data-retention-secure-disposal-policy",
+      "title": "Data Retention & Secure Disposal Policy",
+      "include": true,
+      "mappings": [
+        {
+          "policy_key": "policy-data-retention-secure-disposal-policy",
+          "safeguards": [
+            "3.1",
+            "3.4",
+            "3.5"
+          ],
+          "basis": "Supports Requirement",
+          "rationale": "Supports retention and disposal within the documented data-management process."
+        }
+      ],
+      "classification": "framework_supporting_document",
+      "rationale": "Document contents support the mapped safeguard; the policy title alone is not implementation proof."
+    },
+    {
+      "policy_key": "policy-asset-management-policy",
+      "title": "Asset Management Policy",
+      "include": false,
+      "mappings": [],
+      "classification": "optional_organizational",
+      "rationale": "Not selected: no selected-IG CIS mapping; no missing-document response is generated."
+    },
+    {
+      "policy_key": "policy-vulnerability-patch-management-policy",
+      "title": "Vulnerability & Patch Management Policy",
+      "include": true,
+      "mappings": [
+        {
+          "policy_key": "policy-vulnerability-patch-management-policy",
+          "safeguards": [
+            "7.1",
+            "7.2",
+            "7.3",
+            "7.4",
+            "7.5",
+            "7.6",
+            "7.7",
+            "16.1",
+            "16.2",
+            "16.3",
+            "16.4",
+            "16.5",
+            "16.6",
+            "16.7",
+            "16.8",
+            "16.9",
+            "16.10",
+            "16.11",
+            "18.1",
+            "18.2",
+            "18.3"
+          ],
+          "basis": "Required Document",
+          "rationale": "Documented vulnerability and remediation processes; operational patch frequency remains separate."
+        }
+      ],
+      "classification": "framework_document_required_contents",
+      "rationale": "Document contents support the mapped safeguard; the policy title alone is not implementation proof."
+    },
+    {
+      "policy_key": "policy-configuration-management-policy",
+      "title": "Configuration Management Policy",
+      "include": true,
+      "mappings": [
+        {
+          "policy_key": "policy-configuration-management-policy",
+          "safeguards": [
+            "4.1",
+            "4.2",
+            "4.8",
+            "4.9",
+            "4.10",
+            "4.11",
+            "12.2",
+            "12.3",
+            "12.4",
+            "12.5",
+            "12.6",
+            "12.7"
+          ],
+          "basis": "Required Document",
+          "rationale": "Documented secure-configuration processes are required; the document must contain the actual processes."
+        }
+      ],
+      "classification": "framework_document_required_contents",
+      "rationale": "Document contents support the mapped safeguard; the policy title alone is not implementation proof."
+    },
+    {
+      "policy_key": "policy-security-awareness-training-policy",
+      "title": "Security Awareness & Training Policy",
+      "include": true,
+      "mappings": [
+        {
+          "policy_key": "policy-security-awareness-training-policy",
+          "safeguards": [
+            "14.1",
+            "14.9"
+          ],
+          "basis": "Supports Requirement",
+          "rationale": "Supports the awareness program; CIS does not mandate this exact standalone policy."
+        }
+      ],
+      "classification": "framework_supporting_document",
+      "rationale": "Document contents support the mapped safeguard; the policy title alone is not implementation proof."
+    },
+    {
+      "policy_key": "policy-incident-response-policy",
+      "title": "Incident Response Policy",
+      "include": true,
+      "mappings": [
+        {
+          "policy_key": "policy-incident-response-policy",
+          "safeguards": [
+            "17.1",
+            "17.2",
+            "17.3",
+            "17.4",
+            "17.5",
+            "17.6",
+            "17.7",
+            "17.8"
+          ],
+          "basis": "Required Document",
+          "rationale": "Can contain the documented workforce reporting process and contacts; not a claim that all incident-policy content is IG1-required."
+        }
+      ],
+      "classification": "framework_document_required_contents",
+      "rationale": "Document contents support the mapped safeguard; the policy title alone is not implementation proof."
+    },
+    {
+      "policy_key": "policy-cryptography-key-management-policy",
+      "title": "Cryptography & Key Management Policy",
+      "include": false,
+      "mappings": [],
+      "classification": "optional_organizational",
+      "rationale": "Not selected: no selected-IG CIS mapping; no missing-document response is generated."
+    },
+    {
+      "policy_key": "policy-business-continuity-disaster-recovery-policy",
+      "title": "Business Continuity & Disaster Recovery Policy",
+      "include": false,
+      "mappings": [],
+      "classification": "optional_organizational",
+      "rationale": "Not selected: no selected-IG CIS mapping; no missing-document response is generated."
+    },
+    {
+      "policy_key": "policy-backup-restoration-policy",
+      "title": "Backup & Restoration Policy",
+      "include": true,
+      "mappings": [
+        {
+          "policy_key": "policy-backup-restoration-policy",
+          "safeguards": [
+            "11.1",
+            "11.2",
+            "11.3",
+            "11.4",
+            "11.5"
+          ],
+          "basis": "Required Document",
+          "rationale": "Must actually document recovery and backup procedures to represent the required process."
+        }
+      ],
+      "classification": "framework_document_required_contents",
+      "rationale": "Document contents support the mapped safeguard; the policy title alone is not implementation proof."
+    },
+    {
+      "policy_key": "policy-physical-environmental-security-policy",
+      "title": "Physical & Environmental Security Policy",
+      "include": false,
+      "mappings": [],
+      "classification": "optional_organizational",
+      "rationale": "Not selected: no selected-IG CIS mapping; no missing-document response is generated."
+    }
+  ],
+  "selected_policy_keys": [
+    "policy-information-security-policy",
+    "policy-access-control-identity-management-policy",
+    "policy-vendor-third-party-risk-management-policy",
+    "policy-data-classification-handling-policy",
+    "policy-data-retention-secure-disposal-policy",
+    "policy-vulnerability-patch-management-policy",
+    "policy-configuration-management-policy",
+    "policy-security-awareness-training-policy",
+    "policy-incident-response-policy",
+    "policy-backup-restoration-policy"
+  ],
+  "framework_reviews": [
+    {
+      "key": "asset-inventory",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "1.1",
+          "interval": "semiannual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls1/"
+        }
+      ],
+      "title": "Enterprise Asset Inventory Review",
+      "safeguards": [
+        "1.1",
+        "1.2",
+        "1.3",
+        "1.4"
+      ],
+      "default_cadence": "semiannual",
+      "review_type": "asset",
+      "baseline_key": "inventory",
+      "source_cadence": "1.1: six-month inventory review; 1.2: weekly operational handling, not weekly human Review",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "semiannual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "software-support",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "2.2",
+          "interval": "monthly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/"
+        },
+        {
+          "definition_id": "2.3",
+          "interval": "monthly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/"
+        },
+        {
+          "definition_id": "12.1",
+          "interval": "monthly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls12/"
+        },
+        {
+          "definition_id": "2.1",
+          "interval": "semiannual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls2/"
+        }
+      ],
+      "title": "Software Authorization & Support Review",
+      "safeguards": [
+        "2.1",
+        "2.2",
+        "2.3",
+        "2.4",
+        "2.5",
+        "2.6",
+        "9.1",
+        "12.1"
+      ],
+      "default_cadence": "monthly",
+      "review_type": "software",
+      "baseline_key": null,
+      "source_cadence": "2.2, 2.3 and 12.1: monthly review; 2.1: six-month inventory review; 9.1: implementation state",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "monthly",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "data-governance",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "3.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/"
+        },
+        {
+          "definition_id": "3.2",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls3/"
+        }
+      ],
+      "title": "Data Management & Inventory Review",
+      "safeguards": [
+        "3.1",
+        "3.2",
+        "3.3",
+        "3.4",
+        "3.5",
+        "3.6",
+        "3.7",
+        "3.8",
+        "3.9",
+        "3.10",
+        "3.11",
+        "3.12"
+      ],
+      "default_cadence": "annual",
+      "review_type": "policy",
+      "baseline_key": "data-inventory",
+      "source_cadence": "3.1, 3.2: annual review; significant change also triggers 3.1; other safeguards provide supporting context",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "secure-configuration",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "4.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/"
+        },
+        {
+          "definition_id": "4.2",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls4/"
+        }
+      ],
+      "title": "Secure Configuration Process Review",
+      "safeguards": [
+        "4.1",
+        "4.2"
+      ],
+      "default_cadence": "annual",
+      "review_type": "configuration",
+      "baseline_key": "configuration",
+      "source_cadence": "4.1, 4.2: annual documentation review and significant change",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "account-authorization",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "5.1",
+          "interval": "quarterly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls5/"
+        }
+      ],
+      "title": "Account Authorization & Access Review",
+      "safeguards": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5",
+        "5.6",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "6.5",
+        "6.6",
+        "6.7"
+      ],
+      "default_cadence": "quarterly",
+      "review_type": "access",
+      "baseline_key": "user-access",
+      "source_cadence": "5.1: quarterly authorization validation; 5.3: 45-day operational inactivity threshold; 6.1/6.2: event-driven",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "quarterly",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "vulnerability-remediation",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "7.2",
+          "interval": "monthly",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/"
+        },
+        {
+          "definition_id": "7.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls7/"
+        }
+      ],
+      "title": "Vulnerability & Remediation Process Review",
+      "safeguards": [
+        "7.1",
+        "7.2",
+        "7.3",
+        "7.4",
+        "7.5",
+        "7.6",
+        "7.7"
+      ],
+      "default_cadence": "monthly",
+      "review_type": "vulnerability",
+      "baseline_key": "vulnerability",
+      "source_cadence": "7.2: monthly process review; 7.1: annual/change review; 7.3/7.4: monthly operational patching",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "monthly",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "audit-logging",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "8.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls8/"
+        }
+      ],
+      "title": "Audit Log Management Process Review",
+      "safeguards": [
+        "8.1",
+        "8.2",
+        "8.3",
+        "8.4",
+        "8.5",
+        "8.6",
+        "8.7",
+        "8.8",
+        "8.9",
+        "8.10",
+        "8.11"
+      ],
+      "default_cadence": "annual",
+      "review_type": "configuration",
+      "baseline_key": null,
+      "source_cadence": "8.1: annual/change documentation review; 8.2/8.3: implementation state",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "ig2_operating_context": "8.11: actual log examination at least weekly; 8.10: at least 90 days retention. An annual governance meeting is insufficient to perform these duties.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "data-recovery",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "11.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls11/"
+        }
+      ],
+      "title": "Data Recovery Governance Review",
+      "safeguards": [
+        "11.1",
+        "11.2",
+        "11.3",
+        "11.4",
+        "11.5"
+      ],
+      "default_cadence": "annual",
+      "review_type": "backup",
+      "baseline_key": null,
+      "source_cadence": "11.1: annual/change process review; 11.2: weekly operational backups, not a weekly human Review",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "ig2_operating_context": "11.5: execute sampled recovery tests at least quarterly. Keep annual governance and separately link dated quarterly restore results.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "awareness",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "14.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls14/"
+        }
+      ],
+      "title": "Security Awareness Program Review",
+      "safeguards": [
+        "14.1",
+        "14.2",
+        "14.3",
+        "14.4",
+        "14.5",
+        "14.6",
+        "14.7",
+        "14.8",
+        "14.9"
+      ],
+      "default_cadence": "annual",
+      "review_type": "awareness",
+      "baseline_key": "awareness",
+      "source_cadence": "14.1: annual/change content review and training at hire/annually; remaining safeguards are training topics",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "provider-inventory",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "15.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls15/"
+        }
+      ],
+      "title": "Service Provider Inventory Review",
+      "safeguards": [
+        "15.1",
+        "15.2",
+        "15.3",
+        "15.4"
+      ],
+      "default_cadence": "annual",
+      "review_type": "vendor",
+      "baseline_key": null,
+      "source_cadence": "15.1: annual inventory review and significant change; not a separate assurance review for every vendor",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "incident-governance",
+      "cadence_class": "A",
+      "cadence_references": [
+        {
+          "definition_id": "17.1",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/"
+        },
+        {
+          "definition_id": "17.2",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/"
+        },
+        {
+          "definition_id": "17.3",
+          "interval": "annual",
+          "source": "https://cas.docs.cisecurity.org/en/latest/source/Controls17/"
+        }
+      ],
+      "title": "Incident Reporting & Contact Review",
+      "safeguards": [
+        "17.1",
+        "17.2",
+        "17.3",
+        "17.4",
+        "17.5",
+        "17.6",
+        "17.7",
+        "17.8"
+      ],
+      "default_cadence": "annual",
+      "review_type": "incident",
+      "baseline_key": null,
+      "source_cadence": "17.1–17.3: annual personnel, contact and reporting-process review; significant change for 17.1/17.3",
+      "basis": "CIS recurring governance / validation",
+      "source_minimum": "annual",
+      "reason": "Group related validation work into one authoritative Review while retaining each safeguard's source semantics.",
+      "include": true,
+      "classification": "framework_recurring_governance",
+      "exclusion_reason": null
+    },
+    {
+      "key": "endpoint-validation",
+      "cadence_class": "D",
+      "cadence_references": [],
+      "title": "Endpoint Protection Validation",
+      "safeguards": [
+        "4.3",
+        "4.4",
+        "4.5",
+        "4.6",
+        "4.7",
+        "4.8",
+        "4.9",
+        "4.10",
+        "4.11",
+        "9.2",
+        "9.3",
+        "9.4",
+        "9.5",
+        "9.6",
+        "10.1",
+        "10.2",
+        "10.3",
+        "10.4",
+        "10.5",
+        "10.6",
+        "10.7"
+      ],
+      "default_cadence": "quarterly",
+      "review_type": "configuration",
+      "baseline_key": null,
+      "source_cadence": "No prescribed human-review interval; quarterly validation is an Omnisciente recommendation",
+      "basis": "Omnisciente Recommended",
+      "source_minimum": null,
+      "reason": "Periodically validate implementation without turning automatic operational activity into a mandated Review.",
+      "include": true,
+      "classification": "framework_specific_recommended_validation",
+      "exclusion_reason": null
+    },
+    {
+      "key": "network-defense",
+      "title": "Network Defense Validation",
+      "safeguards": [
+        "12.2",
+        "12.3",
+        "12.4",
+        "12.5",
+        "12.6",
+        "12.7",
+        "13.1",
+        "13.2",
+        "13.3",
+        "13.4",
+        "13.5",
+        "13.6"
+      ],
+      "default_cadence": "quarterly",
+      "review_type": "configuration",
+      "baseline_key": null,
+      "basis": "Omnisciente Recommended",
+      "source_cadence": "Operational intervals and event triggers remain safeguard-specific; this Review evaluates actual execution and follow-up.",
+      "source_minimum": null,
+      "cadence_class": "D",
+      "cadence_references": [],
+      "reason": "Group related work without replacing external technical activity or automatically changing an existing schedule.",
+      "include": true,
+      "classification": "framework_specific_recommended_validation",
+      "exclusion_reason": null
+    },
+    {
+      "key": "secure-development",
+      "title": "Secure Development & Component Review",
+      "safeguards": [
+        "16.1",
+        "16.2",
+        "16.3",
+        "16.4",
+        "16.5",
+        "16.6",
+        "16.7",
+        "16.8",
+        "16.9",
+        "16.10",
+        "16.11"
+      ],
+      "default_cadence": "monthly",
+      "review_type": "configuration",
+      "baseline_key": null,
+      "basis": "Omnisciente Recommended",
+      "source_cadence": "Operational intervals and event triggers remain safeguard-specific; this Review evaluates actual execution and follow-up.",
+      "source_minimum": null,
+      "cadence_class": "D",
+      "cadence_references": [],
+      "reason": "Group related work without replacing external technical activity or automatically changing an existing schedule.",
+      "ig2_operating_context": "16.4: component evaluation at least monthly; 16.9: developer training at least annually; lifecycle and reporting duties continue between Reviews.",
+      "include": true,
+      "classification": "framework_specific_recommended_validation",
+      "exclusion_reason": null
+    },
+    {
+      "key": "penetration-testing",
+      "title": "External Penetration Testing Program Review",
+      "safeguards": [
+        "18.1",
+        "18.2",
+        "18.3"
+      ],
+      "default_cadence": "annual",
+      "review_type": "vulnerability",
+      "baseline_key": null,
+      "basis": "Omnisciente Recommended",
+      "source_cadence": "Operational intervals and event triggers remain safeguard-specific; this Review evaluates actual execution and follow-up.",
+      "source_minimum": null,
+      "cadence_class": "D",
+      "cadence_references": [],
+      "reason": "Group related work without replacing external technical activity or automatically changing an existing schedule.",
+      "ig2_operating_context": "18.2: qualified external testing at least annually, including reconnaissance; 18.3: risk-prioritized remediation. A Review alone is not a penetration test.",
+      "ig3_title": "Penetration Testing Program Review",
+      "include": true,
+      "classification": "framework_specific_recommended_validation",
+      "exclusion_reason": null
+    }
+  ],
+  "selected_framework_plan_keys": [
+    "asset-inventory",
+    "software-support",
+    "data-governance",
+    "secure-configuration",
+    "account-authorization",
+    "vulnerability-remediation",
+    "audit-logging",
+    "data-recovery",
+    "awareness",
+    "provider-inventory",
+    "incident-governance",
+    "endpoint-validation",
+    "network-defense",
+    "secure-development",
+    "penetration-testing"
+  ],
+  "generic_reviews": [
+    {
+      "baseline_key": "risk-assessment",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "policy-review",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "requirements-review",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "management-review",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "risk-exceptions",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "user-access",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "user-lifecycle",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "inventory",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "data-inventory",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "vulnerability",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "configuration",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "awareness",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "vendor",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "penetration-test",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "restore",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "bcp-dr",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    },
+    {
+      "baseline_key": "incident-response",
+      "include": false,
+      "classification": "optional_organizational",
+      "rationale": "Generic organizational preset is not selected; compatible CIS work is selected through its mapped framework plan."
+    }
+  ],
+  "exceptions": [
+    {
+      "kind": "risks",
+      "classification": "explicit_fictional_scenario_exception",
+      "rationale": "Useful company-specific exposures with human likelihood/impact and native owner follow-up; no claim of a CIS mandate."
+    },
+    {
+      "kind": "ai_systems",
+      "classification": "explicit_fictional_scenario_exception",
+      "rationale": "Internal drafting examples require human verification and a linked human-scored Risk; no automatic Critical rating or generic catalog enablement."
+    }
+  ],
+  "client_id": "demo_initech",
+  "native_followups": [
+    {
+      "review_id": "vendor_review_demo_initech_vendor_hosting_vendor",
+      "source_kind": "vendors",
+      "source_id": "demo_initech_vendor_hosting",
+      "include": true,
+      "recurrence": "annual",
+      "classification": "organization_selected_supplier_governance",
+      "cadence_basis": "Native provider-specific review supports applicable provider work. A scheduled Review alone does not prove a 15.5 assessment or replace its contract-event duty.",
+      "safeguards": [
+        "15.1",
+        "15.2",
+        "15.3",
+        "15.4"
+      ]
+    },
+    {
+      "review_id": "risk_review_demo_initech_risk_recovery",
+      "source_kind": "risks",
+      "source_id": "demo_initech_risk_recovery",
+      "include": true,
+      "recurrence": "quarterly",
+      "classification": "explicit_fictional_risk_exception",
+      "cadence_basis": "Human-scored service dependency exposure; native owner review is an organization decision, not a CIS-required generic Review.",
+      "safeguards": []
+    },
+    {
+      "review_id": "demo_initech_review_ai",
+      "source_kind": "ai_systems",
+      "source_id": "demo_initech_ai_drafting",
+      "include": true,
+      "recurrence": "quarterly",
+      "classification": "explicit_fictional_ai_exception",
+      "cadence_basis": "Human oversight of internal drafting and directly linked Risk; an explicit fictional scenario exception, not a CIS mandate.",
+      "safeguards": []
+    }
+  ]
+}

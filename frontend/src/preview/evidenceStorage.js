@@ -2,11 +2,14 @@ import {DEMO_INLINE_LIMIT,lastStorageError} from '../lib/demoStorageErrors';
 // Large file contents never enter Web Storage. This cache is deliberately
 // bounded and document-local: reload/eviction leaves the metadata intact.
 const files=new Map(),MAX_CACHE_BYTES=8*1024*1024;
+const INLINE_BUDGET_BYTES=64*1024;
 export const payloadBytes=value=>typeof value==='string'?value.length*2:0;
 export const fileBytes=value=>{const raw=(value||'').split(',').pop();return Math.floor(raw.length*3/4)-(raw.endsWith('==')?2:raw.endsWith('=')?1:0);};
 const SNAPSHOT_FIELDS=['title','review_type','recurrence','owner_id','reviewer_id','scope','framework_drivers','baseline_key','framework_key','framework_safeguards','framework_plan_key','governance_context','policy_id'];
-const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-const copy=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value));
+const immutableJSONPrimitive=value=>value===undefined||value===null||typeof value==='string'||typeof value==='boolean';
+const same=(a,b)=>immutableJSONPrimitive(a)&&immutableJSONPrimitive(b)?a===b:JSON.stringify(a)===JSON.stringify(b);
+// Immutable primitives need no clone; numbers retain JSON normalization (including -0).
+const copy=value=>immutableJSONPrimitive(value)?value:JSON.parse(JSON.stringify(value));
 const compactReviews=reviews=>(reviews||[]).map(review=>({...review,occurrences:(review.occurrences||[]).map(occurrence=>{
   const inherited=SNAPSHOT_FIELDS.filter(field=>Object.hasOwn(occurrence,field)&&same(occurrence[field],review[field]));
   if(!inherited.length)return occurrence;
@@ -16,9 +19,9 @@ const expandReviews=reviews=>(reviews||[]).map(review=>({...review,occurrences:(
   if(!occurrence._review_inherited)return occurrence;
   const expanded={...occurrence};for(const field of expanded._review_inherited)expanded[field]=copy(review[field]);delete expanded._review_inherited;return expanded;
 })}));
-export function lightweightStore(db,previousEvidence=[]){
-  let remaining=64*1024; // Aggregate UTF-16 payload budget, independent of metadata.
-  const evidence=db.evidence||[],previous=new Map(previousEvidence.map(e=>[e.evidence_id,e]));
+function inlineEvidence(evidence,previousEvidence){
+  let remaining=INLINE_BUDGET_BYTES; // Aggregate UTF-16 payload budget, independent of metadata.
+  const previous=new Map(previousEvidence.map(e=>[e.evidence_id,e]));
   // Reserve already-persisted bytes first: prepending another client's upload must
   // not demote a durable file to the reload-sensitive memory cache.
   const retained=new Set(evidence.filter(e=>e.content_base64&&previous.get(e.evidence_id)?.client_id===e.client_id&&previous.get(e.evidence_id).content_base64===e.content_base64));
@@ -27,10 +30,18 @@ export function lightweightStore(db,previousEvidence=[]){
     const bytes=payloadBytes(e.content_base64);
     if(e.content_base64&&fileBytes(e.content_base64)<=DEMO_INLINE_LIMIT&&bytes<=remaining){inline.add(e);remaining-=bytes;}
   }
-  return {...db,reviews:compactReviews(db.reviews),evidence:evidence.map(e=>{
+  return inline;
+}
+const evidenceMetadata=(evidence,inline)=>evidence.map(e=>{
     const {content_base64,...metadata}=e;
     return content_base64&&!inline.has(e)?{...metadata,demo_file_storage:'session_only'}:e;
-  })};
+  });
+export function lightweightEvidence(evidence=[],previousEvidence=[]){
+  return evidenceMetadata(evidence,inlineEvidence(evidence,previousEvidence));
+}
+export function lightweightStore(db,previousEvidence=[]){
+  const evidence=db.evidence||[],inline=inlineEvidence(evidence,previousEvidence);
+  return {...db,reviews:compactReviews(db.reviews),evidence:evidenceMetadata(evidence,inline)};
 }
 export function rememberFiles(db,persisted=lightweightStore(db)){
   const ids=new Set((db.evidence||[]).map(e=>e.evidence_id));
@@ -47,5 +58,7 @@ export function restoreFiles(db){
 export const clearFileCache=()=>files.clear();
 export function storageDiagnostics(saved,db){
   const payloads=(db.evidence||[]).filter(e=>e.content_base64);
-  return {storage:'sessionStorage',approximate_bytes:saved.length*2,evidence_records:(db.evidence||[]).length,persisted_payload_count:payloads.length,persisted_payload_bytes:payloads.reduce((n,e)=>n+payloadBytes(e.content_base64),0),memory_file_count:files.size,memory_file_bytes:[...files.values()].reduce((n,f)=>n+payloadBytes(f.content),0),last_error:lastStorageError()};
+  const persistedBytes=payloads.reduce((n,e)=>n+payloadBytes(e.content_base64),0);
+  const temporary=(db.evidence||[]).filter(e=>!e.content_base64&&e.demo_file_storage==='session_only');
+  return {storage:'sessionStorage',approximate_bytes:saved.length*2,evidence_records:(db.evidence||[]).length,persisted_payload_count:payloads.length,persisted_payload_bytes:persistedBytes,inline_budget_bytes:INLINE_BUDGET_BYTES,inline_remaining_bytes:Math.max(0,INLINE_BUDGET_BYTES-persistedBytes),inline_file_limit_bytes:DEMO_INLINE_LIMIT,temporary_payload_count:temporary.length,unavailable_temporary_payload_count:temporary.filter(e=>files.get(e.evidence_id)?.client_id!==e.client_id).length,memory_file_count:files.size,memory_file_bytes:[...files.values()].reduce((n,f)=>n+payloadBytes(f.content),0),last_error:lastStorageError()};
 }

@@ -1,0 +1,3 @@
+/* The shell hides legacy duplicate page toggles. Only corrected, gated pages opt in. */
+.brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bpage-actions button.surface-theme-action {display:inline-flex;}
+.surface-theme-action > svg {width:15px;height:15px;flex:none;}

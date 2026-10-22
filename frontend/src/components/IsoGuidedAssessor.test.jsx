@@ -2,8 +2,11 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import IsoGuidedAssessor from './IsoGuidedAssessor';
 import AssessmentShell from './AssessmentShell';
-import {isoGuidedCatalog,isoGroups,isoGuidedResult} from '@/lib/isoGuidedAssessment';
+import {isoGuidedCatalog,isoGroups,isoGuidedResult,isoInlineNarrative} from '@/lib/isoGuidedAssessment';
 import api from '@/lib/api';
+import axios from 'axios';
+import {previewAdapter} from '@/preview/commandTestAdapter';
+import {ids,saveStore} from '@/preview/store';
 
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'iso-actor',role:'super_admin'}})}));
@@ -293,7 +296,8 @@ test('unconfirmed native save retains exact wording and does not claim rejection
 });
 test.each(['native','interview'])('new %s failure clears the prior success notice without closing or retrying',async stage=>{
   await render();await open();await complete();await click('Save assessment');
-  expect(document.body.textContent).toContain('Assessment saved.');
+  expect(document.querySelector('.omni-workspace-window')).toBeNull();
+  await open();expect(document.body.textContent).toContain('Assessment saved.');
   const wording=document.querySelector('[aria-label="Omnibot implementation summary"]').value;
   if(stage==='native')props.onSaveAssessment.mockResolvedValueOnce(false);else failWrite=true;
   await click('Save & close');
@@ -407,4 +411,86 @@ test.each(['compare','restart'])('%s requires explicit discard of unsaved answer
   expect(api.put.mock.calls.at(-1)[1]).toMatchObject(action==='compare'?{rebase:true,answers:savedInterview.answers,narrative:savedInterview.narrative}:{restart:true,answers:{},narrative:'',summary_review:null});
   expect(api.put.mock.calls.at(-1)[1].expected_revision).toBe(savedInterview.revision);
   expect(props.current).toEqual(nativeBefore);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(document.querySelector('.omni-refined-close')).toBeNull();
+});
+
+test.each(['4.1','A.5.1','A.8.13'])('%s inline interview preserves progress without floating Omni and applies only after reviewed native save',async id=>{
+  setup(id);const onInlineClose=jest.fn();await render({inline:true,inlineOpen:false,onInlineClose});
+  const panel=document.querySelector('.assessment-inline-interview');expect(panel.hidden).toBe(true);
+  expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();expect(document.querySelector('.omni-workspace-window')).toBeNull();
+  await render({inlineOpen:true});await complete();
+  const summary=document.querySelector('[aria-label="Omnibot implementation summary"]');
+  expect(summary.value).toContain('\n\nControls in place\n• ');expect(summary.value).not.toContain('IMPLEMENTATION BREAKDOWN');expect(summary.value).not.toContain('\n\nITEMS TO ADDRESS');
+  expect(stored.result).toEqual({...isoGuidedResult(id,stored.answers,stored.version,'Agent 2 ISO fixture'),narrative:summary.value});expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  const reviewed=summary.value+'\nExact operator wording.\n';await changeInput(summary,reviewed);
+  await render({inlineOpen:false});await render({inlineOpen:true});expect(document.querySelector('.assessment-inline-interview')).toBe(panel);expect(summary.value).toBe(reviewed);
+  await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(props.onSaveAssessment.mock.calls[0][0]).toMatchObject({implementation:reviewed,status:'addressed'});expect(onInlineClose).toHaveBeenCalledTimes(1);
+  expect(props.current.verification).toBe('not_verified');expect(stored.narrative).toBe(reviewed);
+});
+
+test.each(['4.1','A.5.1','A.8.13'])('%s inline component binds reviewed text through the actual preview completion and native-save routes',async id=>{
+  setup(id);sessionStorage.clear();const previewApi=axios.create({adapter:previewAdapter});
+  const db=Object.fromEntries(Object.keys(ids).map(kind=>[kind,[]])),row={...props.current,technology:'',notes:'',na_rationale:'',owner_id:null,process_owner_id:null,iso_assessment_checks:[],assessment_history:[]};
+  db.user={user_id:'iso-actor',name:'SYNTHETIC ISO reviewer',role:'super_admin',status:'active',client_ids:['iso-fixture']};db.logs=[];
+  db.users.push(db.user);db.clients.push({client_id:'iso-fixture',name:'SYNTHETIC ISO contract',status:'active'});
+  db.framework_assessments.push(row);db.requirements.push({client_id:'iso-fixture',baseline_key:'iso-27001',baseline_response:'applies'});
+  saveStore(db);await previewApi.post('/demo/enter');props={...props,current:row,record:row,form:copy(row)};
+  const path='/framework_assessments/'+row.framework_assessment_id;
+  const requests=new Set(),track=request=>{requests.add(request);request.then(()=>requests.delete(request),()=>requests.delete(request));return request;};
+  const settle=()=>act(async()=>{while(requests.size)await Promise.all([...requests]);});
+  api.get.mockImplementation(url=>track(previewApi.get(url)));
+  api.put.mockImplementation((url,body)=>track(previewApi.put(url,body).then(response=>{stored=copy(response.data);return response;})));
+  props.onSaveAssessment.mockImplementation(async(values,expected)=>{
+    expect(expected).toBe(JSON.stringify(props.form));
+    const saved=(await track(previewApi.patch(path,{...values,expected_last_assessed:props.current.last_saved??props.current.last_assessed??null}))).data;
+    props={...props,current:saved,form:copy(saved)};return true;
+  });
+  const onInlineClose=jest.fn();await render({inline:true,inlineOpen:true,onInlineClose});await settle();await click('Start');
+  for(let guard=0;guard<12&&!document.body.textContent.includes('Review your assessment summary');guard++){
+    await act(async()=>document.querySelectorAll('.omni-answer-choices').forEach(group=>[...group.querySelectorAll('button')].find(item=>['Yes','Relevant'].includes(item.textContent))?.click()));
+    await click('Save & next');await settle();
+  }
+  expect(document.body.textContent).toContain('Review your assessment summary');
+  const summary=document.querySelector('[aria-label="Omnibot implementation summary"]'),reported=summary.value;
+  expect(reported).toContain('\n\nControls in place\n• ');
+  expect(stored.result.narrative).toBe(stored.narrative);expect(stored.narrative).toBe(reported);
+  expect((await previewApi.get(path)).data).toEqual(row);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  const reviewed=reported+'\nExact separately reviewed wording.\n';await changeInput(summary,reviewed);await click('Save assessment');await settle();
+  expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(onInlineClose).toHaveBeenCalledTimes(1);
+  const saved=(await previewApi.get(path)).data,interview=(await previewApi.get(path+'/guided-assessment')).data;
+  expect(interview.narrative).toBe(reviewed);expect(interview.result.narrative).toBe(reviewed);
+  expect(saved.implementation).toBe(reviewed);expect(saved.status).toBe('addressed');expect(saved.assessment_history.at(-1).implementation).toBe(reviewed);
+  for(const key of ['verification','soa_applicability','soa_justification','owner_id','process_owner_id','iso_assessment_checks','technology','notes'])expect(saved[key]).toEqual(row[key]);
+});
+
+test('inline saved early progress survives remount and uses the persisted group',async()=>{
+  const onInlineClose=jest.fn();await render({inline:true,inlineOpen:true,onInlineClose});await click('Start');
+  await act(async()=>document.querySelectorAll('.omni-answer-choices').forEach(group=>[...group.querySelectorAll('button')].find(item=>item.textContent==='Yes')?.click()));
+  await click('Save & next');const step=stored.step,answers=copy(stored.answers);expect(step).toBe(1);await click('Save & close');
+  expect(onInlineClose).toHaveBeenCalledTimes(1);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await act(async()=>root.unmount());root=createRoot(container);await render({inlineOpen:true});await click('Resume your review');
+  expect(document.querySelector('.omni-group-progress').getAttribute('aria-label')).toContain('Question group '+(step+1));expect(stored.answers).toEqual(answers);
+});
+
+test('inline summary conflict and concurrent native draft preserve wording without stale native write',async()=>{
+  await render({inline:true,inlineOpen:true,onInlineClose:jest.fn()});await complete();const summary=document.querySelector('[aria-label="Omnibot implementation summary"]'),text=summary.value;
+  failWrite=true;await click('Save assessment');expect(summary.value).toBe(text);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onInlineClose).not.toHaveBeenCalled();
+  failWrite=false;const original=api.put.getMockImplementation();let finish;api.put.mockImplementationOnce((path,body)=>new Promise(resolve=>{finish=async()=>resolve(await original(path,body));}));
+  await click('Save assessment');await render({assessmentDirty:true,form:{...props.form,implementation:'Concurrent native draft'}});await act(async()=>finish());
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onInlineClose).not.toHaveBeenCalled();expect(summary.value).toBe(text);
+});
+
+test('inline restored legacy manual summary remains exact until explicit refresh from revised answers',async()=>{
+  const answers=Object.fromEntries(isoGuidedCatalog.definitions['4.1'].groups.flatMap(group=>group.questions).map(q=>[q.id,q.type==='text'?'':q.type==='context'?'Relevant':'Yes']));
+  stored={...stored,answers,completed:true,revision:2,narrative:'Legacy manual wording\n\nIMPLEMENTATION BREAKDOWN\nRetain this exact text.\n',summary_review:{version:stored.version,answers},result:isoGuidedResult('4.1',answers)};
+  await render({inline:true,inlineOpen:true});await click('Resume your review');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(stored.narrative);
+  await click('Back to questions');await act(async()=>[...document.querySelector('.omni-answer-choices').querySelectorAll('button')].find(item=>item.textContent==='No').click());await click('Save & next');
+  expect(button('Refresh from answers')).toBeTruthy();await click('Refresh from answers');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(isoInlineNarrative('4.1',stored.answers,stored.version,'Agent 2 ISO fixture'));
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('inline excluded control and read-only session retain mandatory SoA and permission guards',async()=>{
+  setup('A.5.1');props.current={...props.current,soa_applicability:'excluded',soa_justification:'Outside reviewed scope'};props.form=copy(props.current);
+  await render({inline:true,inlineOpen:true});await complete();expect(button('Save assessment').disabled).toBe(true);
+  await render({disabled:true});expect(button('Save assessment').disabled).toBe(true);await click('Back to questions');expect(button('Save & next').disabled).toBe(true);
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });

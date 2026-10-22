@@ -28,7 +28,7 @@ test('decision validation, stale writes, explicit conditions and client isolatio
   const other=(await api.post('/clients',{name:'Other AI client'})).data.client_id;
   await expect(create({client_id:other})).rejects.toThrow(/read-only/);
   const foreign=(await api.post('/ai_systems',{client_id:other,name:'Other'})).data;
-  expect(foreign.approval_status).toBeUndefined();await expect(decide(foreign)).rejects.toThrow(/Brawndo/);
+  expect(foreign.approval_status).toBeUndefined();await expect(decide(foreign)).rejects.toThrow('Approval decisions require a configured CIS program');
 });
 test('non-administrator cannot decide; legacy lifecycle is never interpreted as approval',()=>{
   const row={ai_system_id:'a',client_id:cid,status:'active',updated_at:'2026-01-01'};
@@ -50,7 +50,7 @@ test('filters distinguish due today, unscheduled, archived, critical and pending
 });
 test('legacy missing version requires an explicit snapshot and produces a valid decision timestamp',()=>{
   const row={ai_system_id:'legacy',client_id:cid,status:'draft',environment:'QA',description:'Synthetic use',permitted_data_types:['Public']};
-  const db={user:{role:'super_admin',user_id:'admin'},clients:[{client_id:cid}],ai_systems:[row],logs:[],reviews:[],risks:[]};
+  const db={user:{role:'super_admin',user_id:'admin'},clients:[{client_id:cid,status:'active',framework_settings:{'cis-ig1':{implementation_group:1}}}],requirements:[{client_id:cid,baseline_key:'cis-ig1',baseline_response:'applies'}],ai_systems:[row],logs:[],reviews:[],risks:[]};
   expect(()=>aiRequest(db,'/ai_systems/legacy/approval','post',{}, {status:'approved',note:'Synthetic QA'})).toThrow(/changed/);
   const saved=aiRequest(db,'/ai_systems/legacy/approval','post',{}, {status:'approved',note:'Synthetic QA',expected_updated_at:null});
   expect(Number.isFinite(Date.parse(saved.updated_at))).toBe(true);expect(saved.approval_history).toHaveLength(1);

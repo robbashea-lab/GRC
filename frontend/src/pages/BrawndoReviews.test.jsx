@@ -4,11 +4,15 @@ import RecordListPage from './RecordListPage';
 import ReviewDrawer from '@/components/ReviewDrawer';
 import {ClientPresentationContext} from '@/components/ClientSurface';
 import api from '@/lib/api';
+import {cisClient as mockCisClient} from '@/testUtils/cisExperience';
+import {rememberClient} from '@/lib/clientSelection';
 let mockClient='demo_brawndo';
 let mockSearch='';
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Brawndo'}})}));
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:'demo',loading:false})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>{const client=mockClient==='demo_brawndo'?{...mockCisClient(mockClient),name:'Brawndo'}:{client_id:mockClient,name:'Brawndo',status:'active'};return {currentClientId:mockClient,currentClient:client,clients:[client],loading:false};}}));
+// These register assertions retain the legacy table; native drawers still use actual CIS capability.
+jest.mock('@/lib/brawndoDemoReviews',()=>({...jest.requireActual('@/lib/brawndoDemoReviews'),brawndoDemoReviewsGate:()=>false}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
 jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/reviews',search:mockSearch}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams(mockSearch))}),{virtual:true});
 jest.mock('@/components/RecordDrawer',()=>props=>props.open?<div data-testid="opened-record">{props.reviewsPilot?'Pilot':'Original'}</div>:null);
@@ -65,7 +69,7 @@ test.each(['cis','iso','both'])('combined non-pilot %s Review keeps Notes throug
   expect(close).toHaveBeenCalledWith(false);
 });
 beforeEach(()=>{
-  sessionStorage.clear();
+  sessionStorage.clear();localStorage.clear();rememberClient('demo_brawndo');
   jest.useFakeTimers({now:new Date('2026-10-03T00:30:00Z'),doNotFake:['setTimeout','clearTimeout','setInterval','clearInterval','setImmediate','clearImmediate','nextTick','queueMicrotask','performance']});
   global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';mockSearch='';
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
@@ -194,7 +198,7 @@ test('centered detail preserves policy/context and guards unsaved and failed sav
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={close}/>));
   const dialog=document.querySelector('[data-testid="reviews-drawer"]');
   expect(dialog.className).toContain('brawndo-cis-assessment');
-  expect(dialog.textContent).toContain('Assigned Reviewer');
+  expect(dialog.textContent).toContain('Assigned reviewer');
   expect(dialog.textContent).not.toContain('Access Control Policy');
   await click(dialog.querySelector('[data-testid="tab-requirements"]'));
   expect(dialog.textContent).toContain('Access Control Policy');
@@ -243,7 +247,7 @@ test('Requirements edits retain the Overview draft and save without changing the
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
   await input(document.querySelector('[data-testid="field-notes"]'),'Retained Overview draft');
   await click(document.querySelector('[data-testid="tab-requirements"]'));
-  expect(document.querySelector('[data-testid="tab-overview"]').nextElementSibling.textContent).toBe('Requirements');
+  expect(document.querySelector('[data-testid="tab-overview"]').nextElementSibling.textContent).toBe('Requirement');
   expect(document.querySelector('[data-testid="reviews-drawer"] details')).toBeNull();
   await input(document.querySelector('[aria-label="Review expectation"]'),'Organization-entered expectation draft');
   await click(document.querySelector('[data-testid="tab-overview"]'));
@@ -267,8 +271,13 @@ test('Assigned to Me uses the current user assignment and excludes history',asyn
 test.each([['normal-client',false,'in_progress','Overdue'],['normal-client',false,'open','Open'],['demo_brawndo',true,'in_progress','In Progress']])('%s summary preserves the existing status priority for %s',async(clientId,pilot,status,label)=>{
   mockClient=clientId;saved={...saved,client_id:clientId,status,due_date:status==='open'?'2099-01-01':'2020-01-01'};
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot={pilot} record={saved} clientId={clientId} onOpenChange={()=>{}}/>));
-  const summary=[...document.querySelectorAll('[aria-label="Review details"] dl > div')].find(row=>row.querySelector('dt').textContent==='Status');
-  expect(summary.querySelector('dd').textContent.toLowerCase()).toBe(label.toLowerCase());
+  if(pilot){
+    expect(document.querySelector('[aria-label="Review execution status"] button').getAttribute('aria-pressed')).toBe('true');
+    expect(document.querySelector('[aria-label="Review occurrence"] [role="note"]').textContent).toBe('Overdue and in progress');
+  }else{
+    const summary=[...document.querySelectorAll('[aria-label="Review details"] dl > div')].find(row=>row.querySelector('dt').textContent==='Status');
+    expect(summary.querySelector('dd').textContent.toLowerCase()).toBe(label.toLowerCase());
+  }
 });
 
 test.each([false,true])('normal-client %s existing Review retains drafts and requires explicit discard on close',async existing=>{
@@ -296,10 +305,12 @@ test('new pilot reviews do not wait for nonexistent requirement relationships',a
   expect(dialog.textContent).toContain('Requirement source not documented');
 });
 
-test('optional Review evaluation is protected as a draft and sent only on completion',async()=>{
+test('legacy non-CIS optional Review evaluation is protected as a draft and sent only on completion',async()=>{
+ // The approved CIS editor intentionally keeps legacy evaluation fields out of Overview.
+ mockClient='demo_prestige';saved={...saved,client_id:mockClient};rememberClient(mockClient);
  const close=jest.fn();
  api.post.mockResolvedValue({data:{review:{...saved,status:'completed'},occurrence:{occurrence_id:'done'}}});
- await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={close}/>));
+ await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId={mockClient} onOpenChange={close}/>));
  await click([...document.querySelectorAll('summary')].find(s=>s.textContent==='Review evaluation'));
  await input(document.querySelector('[aria-label="Reviewer conclusion"]'),'Operating gap remains despite completed activity');
  await input(document.querySelector('[aria-label="Scope examined"]'),'Client and provider responsibilities');
@@ -365,7 +376,9 @@ test('Risk review completion is confirmed first and sends only changed assessmen
  api.get.mockImplementation(async path=>({data:path==='/related'?{risks:[{risk_id:'risk',client_id:'demo_brawndo',likelihood_score:3,impact_score:4}]}:[]}));
  api.post.mockResolvedValue({data:{review:saved,occurrence:{occurrence_id:'done'}}});
  await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
- expect(document.querySelector('[data-testid="review-next-date"]').textContent).not.toMatch(/Calculated/);
+ const next=[...document.querySelectorAll('[aria-label="Review occurrence"] > div')].find(row=>row.textContent.includes('Next review after this'));
+ expect(next.querySelector('strong').textContent).toBe('Apr 1, 2020');
+ expect(next.textContent).not.toMatch(/Calculated/);
  await click(document.querySelector('[data-testid="review-complete"]'));
  expect(api.post).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Complete this review?');
  await click(document.querySelector('[data-testid="review-complete-confirmed"]'));
@@ -417,4 +430,15 @@ test('an uncertain Finding failure retains its identity and original draft for r
  expect(api.post).toHaveBeenCalledTimes(2);
  expect(api.post.mock.calls[1]).toEqual(original);
  expect(document.querySelector('[data-testid="review-finding-form"]')).toBeNull();
+});
+
+
+test('Requirement policy link uses the stored identity and rejects a foreign client policy',async()=>{
+ const load=api.get.getMockImplementation();
+ api.get.mockImplementation(async(path,...args)=>path==='/policies'?{data:[{policy_id:'p',client_id:'foreign',title:'Foreign policy must not appear'},{policy_id:'different',client_id:'demo_brawndo',title:'Unlinked policy must not appear'}]}:load(path,...args));
+ await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
+ await click(document.querySelector('[data-testid="tab-requirements"]'));
+ expect(document.body.textContent).not.toContain('Foreign policy must not appear');
+ expect(document.body.textContent).not.toContain('Unlinked policy must not appear');
+ expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

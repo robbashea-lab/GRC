@@ -1,12 +1,14 @@
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false}));
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import AIGovernance from './AIGovernance';
 import AIDrawer from '@/components/AIDrawer';
 import api from '@/lib/api';
+import {cisClient as mockCisClient} from '@/testUtils/cisExperience';
 let mockClient='demo_brawndo';
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient})}));
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:'demo',loading:false})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>{const client=mockClient==='demo_brawndo'?mockCisClient(mockClient):{client_id:mockClient,name:'Non-CIS client',status:'active'};return {currentClientId:mockClient,currentClient:client,clients:[client],loading:false};}}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/ai-governance',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'test-request-identity'}));

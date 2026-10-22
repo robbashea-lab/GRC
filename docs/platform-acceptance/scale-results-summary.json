@@ -1,0 +1,349 @@
+{
+  "qa_source_commit": "7c0f89bbeb750ceeb990dd60be3f84b1ad129495",
+  "product_baseline": "28b806716024ec149af2ec5da621a5a618c669d5",
+  "test_sha256": "78ebcd6c5707c2b1543eacb5f0d41e93f1c49dbb34a63c5a317027e0b2f84668",
+  "execution": {
+    "qa_source_commit": "7c0f89bbeb750ceeb990dd60be3f84b1ad129495",
+    "product_baseline": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "test_sha256": "78ebcd6c5707c2b1543eacb5f0d41e93f1c49dbb34a63c5a317027e0b2f84668",
+    "command": [
+      "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-11\\files-pasted-by-the-user-you\\work\\review-venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "-c",
+      "backend/pytest.ini",
+      "-q",
+      "backend/tests/test_platform_scale_reliability.py"
+    ],
+    "timeout_seconds": 600,
+    "mongo_origin": "mongodb://127.0.0.1:58749",
+    "started_utc": "2026-10-11T23:52:07.687707+00:00",
+    "persistence": "actual_loopback_Motor_Mongo",
+    "authentication_boundary": "in-process modeled signed fixture, not hosted login/permissions proof",
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 16.717,
+    "finished_utc": "2026-10-11T23:52:24.405039+00:00",
+    "raw_log_sha256": "eeab6502a17afe4d7e63e927e4d7358832e2cb9ed0b39d6a3931e17deed92ccc"
+  },
+  "toolchain": {
+    "python": "3.12.14",
+    "motor": "3.7.1",
+    "pymongo": "4.18.2",
+    "pytest": "9.1.1",
+    "pytest-xdist": "3.8.0",
+    "httpx": "0.28.1",
+    "fastapi": "0.141.1",
+    "reportlab": "4.4.9"
+  },
+  "independent_review": {
+    "reviewer": "acceptance_cis_soc",
+    "scope": "Frozen source-only review at7c0f89b; no independent execution claimed",
+    "disposition": "PASS after QA assertion/window corrections"
+  },
+  "pytest_result": {
+    "passed": 6,
+    "subtests_passed": 5,
+    "warnings": 8,
+    "pytest_seconds": 16.12,
+    "new_real_mongo_cases": 4,
+    "incidental_existing_mock_cases": 2,
+    "incidental_cause": "Imported Harness unittest class was collected; its original two ClientDashboardSourcesTests methods use Mongo mock",
+    "incidental_methods": [
+      "test_existing_sources_reject_other_tenants",
+      "test_new_client_has_zero_metrics_and_records_appear_without_setup"
+    ]
+  },
+  "case_results": [
+    {
+      "test": "test_calendar_limit_and_invalid_windows_never_return_partial_success",
+      "assertions": "passed",
+      "owned_database": {
+        "origin": "mongodb://127.0.0.1:58749",
+        "database_name": "platform_acceptance_20261011_scale_449150daedd24421",
+        "fresh_collection_readback": [],
+        "cleanup": "drop_acknowledged_by_driver"
+      },
+      "measurement_count": 5,
+      "volume": {
+        "cap_only_tasks": 5001,
+        "calendar_limit": 5000,
+        "window_limit_days_inclusive": 367
+      }
+    },
+    {
+      "test": "test_five_client_history_reads_pages_filters_relationships_and_reports",
+      "assertions": "passed",
+      "owned_database": {
+        "origin": "mongodb://127.0.0.1:58749",
+        "database_name": "platform_acceptance_20261011_scale_c32aa2c901de462c",
+        "fresh_collection_readback": [],
+        "cleanup": "drop_acknowledged_by_driver"
+      },
+      "measurement_count": 135,
+      "volume": {
+        "scale-cis-ig1": {
+          "active_definitions": 56,
+          "reviews": 12,
+          "seeded_review_occurrences": 1440,
+          "tasks": 445,
+          "active_tasks": 40,
+          "evidence_files": 120,
+          "retained_findings": 1,
+          "seeded_assessment_history_rows": 560
+        },
+        "scale-cis-ig2": {
+          "active_definitions": 130,
+          "reviews": 12,
+          "seeded_review_occurrences": 1440,
+          "tasks": 445,
+          "active_tasks": 40,
+          "evidence_files": 120,
+          "retained_findings": 1,
+          "seeded_assessment_history_rows": 1300
+        },
+        "scale-cis-ig3": {
+          "active_definitions": 153,
+          "reviews": 12,
+          "seeded_review_occurrences": 1440,
+          "tasks": 445,
+          "active_tasks": 40,
+          "evidence_files": 120,
+          "retained_findings": 1,
+          "seeded_assessment_history_rows": 1530
+        },
+        "scale-iso": {
+          "active_definitions": 123,
+          "reviews": 12,
+          "seeded_review_occurrences": 1440,
+          "tasks": 445,
+          "active_tasks": 40,
+          "evidence_files": 120,
+          "retained_findings": 1,
+          "seeded_assessment_history_rows": 1230
+        },
+        "scale-soc": {
+          "active_definitions": 38,
+          "reviews": 12,
+          "seeded_review_occurrences": 1440,
+          "tasks": 445,
+          "active_tasks": 40,
+          "evidence_files": 120,
+          "retained_findings": 1,
+          "seeded_assessment_history_rows": 380
+        }
+      }
+    },
+    {
+      "test": "test_ordinary_record_parallel_stale_and_post_write_audit_failure_retry",
+      "assertions": "passed",
+      "owned_database": {
+        "origin": "mongodb://127.0.0.1:58749",
+        "database_name": "platform_acceptance_20261011_scale_a80015ef8f93487d",
+        "fresh_collection_readback": [],
+        "cleanup": "drop_acknowledged_by_driver"
+      },
+      "measurement_count": 9,
+      "volume": {},
+      "concurrent_results": [
+        200,
+        409,
+        409,
+        409,
+        409,
+        409,
+        409,
+        409
+      ]
+    },
+    {
+      "test": "test_register_export_caps_fail_closed_and_export_retains_complete_set",
+      "assertions": "passed",
+      "owned_database": {
+        "origin": "mongodb://127.0.0.1:58749",
+        "database_name": "platform_acceptance_20261011_scale_bed62b781aaf46fd",
+        "fresh_collection_readback": [],
+        "cleanup": "drop_acknowledged_by_driver"
+      },
+      "measurement_count": 4,
+      "volume": {
+        "cap_only_assets": 10001,
+        "register_limit": 1000,
+        "export_limit": 10000,
+        "not_plausible_lifecycle_seed": "Exact declared capacity boundary fixture only"
+      }
+    }
+  ],
+  "route_observations": [
+    {
+      "method": "GET",
+      "path": "/api/assets",
+      "status": 200,
+      "samples": 1,
+      "median_ms": 22.312,
+      "max_ms": 22.312,
+      "max_response_bytes": 128891
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets",
+      "status": 413,
+      "samples": 1,
+      "median_ms": 11.721,
+      "max_ms": 11.721,
+      "max_response_bytes": 137
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/scale-retry",
+      "status": 200,
+      "samples": 4,
+      "median_ms": 7.187,
+      "max_ms": 8.742,
+      "max_response_bytes": 161
+    },
+    {
+      "method": "GET",
+      "path": "/api/calendar",
+      "status": 200,
+      "samples": 6,
+      "median_ms": 47.688,
+      "max_ms": 167.815,
+      "max_response_bytes": 1610071
+    },
+    {
+      "method": "GET",
+      "path": "/api/calendar",
+      "status": 413,
+      "samples": 1,
+      "median_ms": 24.874,
+      "max_ms": 24.874,
+      "max_response_bytes": 94
+    },
+    {
+      "method": "GET",
+      "path": "/api/calendar",
+      "status": 422,
+      "samples": 3,
+      "median_ms": 2.854,
+      "max_ms": 3.71,
+      "max_response_bytes": 69
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard",
+      "status": 200,
+      "samples": 65,
+      "median_ms": 41.623,
+      "max_ms": 72.629,
+      "max_response_bytes": 85522
+    },
+    {
+      "method": "GET",
+      "path": "/api/evidence/catalog",
+      "status": 200,
+      "samples": 45,
+      "median_ms": 53.488,
+      "max_ms": 81.151,
+      "max_response_bytes": 30473
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/assets",
+      "status": 200,
+      "samples": 1,
+      "median_ms": 21.487,
+      "max_ms": 21.487,
+      "max_response_bytes": 65990
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/assets",
+      "status": 413,
+      "samples": 1,
+      "median_ms": 32.318,
+      "max_ms": 32.318,
+      "max_response_bytes": 123
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/tasks",
+      "status": 200,
+      "samples": 5,
+      "median_ms": 108.897,
+      "max_ms": 260.445,
+      "max_response_bytes": 5810080
+    },
+    {
+      "method": "GET",
+      "path": "/api/related",
+      "status": 200,
+      "samples": 5,
+      "median_ms": 77.137,
+      "max_ms": 91.357,
+      "max_response_bytes": 2710293
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/board",
+      "status": 200,
+      "samples": 5,
+      "median_ms": 106.277,
+      "max_ms": 145.311,
+      "max_response_bytes": 2572
+    },
+    {
+      "method": "GET",
+      "path": "/api/tasks",
+      "status": 200,
+      "samples": 5,
+      "median_ms": 60.114,
+      "max_ms": 203.77,
+      "max_response_bytes": 5867841
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/assets/scale-retry",
+      "status": 200,
+      "samples": 3,
+      "median_ms": 16.378,
+      "max_ms": 57.922,
+      "max_response_bytes": 148
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/assets/scale-retry",
+      "status": 409,
+      "samples": 1,
+      "median_ms": 38.286,
+      "max_ms": 38.286,
+      "max_response_bytes": 69
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/assets/scale-retry",
+      "status": 503,
+      "samples": 1,
+      "median_ms": 42.347,
+      "max_ms": 42.347,
+      "max_response_bytes": 113
+    }
+  ],
+  "cleanup": {
+    "author_receipts": "All four guarded exact DB drops acknowledged by actual Motor driver",
+    "independent_readback": "Pending root reads of exact recorded DB collection names; author receipt is not independent proof"
+  },
+  "limitations": [
+    "Modeled signed ASGI actor; no real hosted login/Reader/Contributor/wrong-client proof.",
+    "Ten-year histories are seeded load volume; not executed save/approval/closure/scheduler lifecycle.",
+    "Board PDF date/generation/recent-policy cutoff used actual server.datetime; only Review/KPI model clock controlled.",
+    "Performance is local baseline measurements with no latency SLA, p95, throughput or production capacity certification.",
+    "Audit-side fault after Asset CAS/before audit persistence, not network/lost Mongo acknowledgment or multiworker fault.",
+    "No browser UI performance or discoverability result; API Board Report remains separate from unavailable UI control."
+  ],
+  "post_run_qa_import_cleanup": {
+    "test_sha256": "8b29c7487fba60e768beabfda0388d4dca94fe188ed4aaf514bb2055ed1148d5",
+    "change": "Fixture module import replaces exposed unittest Harness class; no assertions/runtime paths changed",
+    "execution": "Root final exact four-method independent execution pending; original six-pass log remains7c/78eb"
+  }
+}

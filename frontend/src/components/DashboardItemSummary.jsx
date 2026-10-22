@@ -5,10 +5,10 @@ import {dashboardStatus} from '@/lib/dashboardItemSummary';
 
 const destinations={tasks:'Action Item',findings:'Action Item',reviews:'Review',policies:'Policy',vendors:'Vendor',risks:'Risk',exceptions:'Acceptance',requirements:'Requirement'};
 const sources={framework_assessments:'safeguard/control',reviews:'review',policies:'policy',vendors:'vendor',risks:'risk',findings:'finding',assessments:'assessment'};
-export default function DashboardItemSummary({selection,onClose,opener,onOpenRecord}) {
+export default function DashboardItemSummary({selection,onClose,opener,onOpenRecord,fallbackFocus}) {
   const item=selection.item;
   return <Dialog open={!!selection} onOpenChange={open=>{if(!open)onClose();}}>
-    <DialogContent className="dashboard-item-summary" onCloseAutoFocus={event=>{event.preventDefault();opener?.focus();}} aria-describedby={undefined}>
+    <DialogContent className="dashboard-item-summary" onCloseAutoFocus={event=>{event.preventDefault();(opener?.isConnected?opener:fallbackFocus?.()||opener)?.focus();}} aria-describedby={undefined}>
       <div className="dashboard-summary-badges"><span>{item.type}</span><span>{dashboardStatus(item.status)}</span></div>
       <DialogTitle>{item.title}</DialogTitle>
       {selection.loading?<DialogDescription role="status">Loading item…</DialogDescription>:selection.error?<DialogDescription role="alert">{selection.error}</DialogDescription>:<>

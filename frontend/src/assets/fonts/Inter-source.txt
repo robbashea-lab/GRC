@@ -1,0 +1,15 @@
+Inter variable Latin subset used only by the canonical Brawndo Explore Dashboard.
+
+Original reference stylesheet:
+https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap
+Downloaded 2026-10-18 from its exact Latin face URL:
+https://fonts.gstatic.com/s/inter/v20/UcCo3FwrK3iLTcviYwY.woff2
+SHA-256: 2c295d99e26dcf357d4d01bcf270fd6924b600c9a13dd8c363ef114f4c6976fa
+Bytes: 72920. FontTools inspected opsz 14-32 and wght 100-900; CSS exposes reference weights 400-700.
+
+Unmodified font bytes. SIL Open Font License 1.1 in Inter-OFL.txt, obtained from
+https://raw.githubusercontent.com/google/fonts/main/ofl/inter/OFL.txt
+
+BrawndoDemoDashboard.css uses a distinct CSS family name so this local delivery
+cannot change existing Inter/Segoe typography on the shell, other pages or dialogs.
+No new external font origin or content-security-policy permission is needed.

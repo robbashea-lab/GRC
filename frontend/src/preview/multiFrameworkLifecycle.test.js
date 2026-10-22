@@ -1,5 +1,6 @@
 // DEMO — SYNTHETIC DATA. All state below is produced through normal workflows.
 import axios from 'axios';
+import {decodeDemoStore} from './demoStorageCodec';
 import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY,readStore,saveStore} from './store';
 import catalog from '@catalogs/onboardingCatalog.json';
@@ -18,7 +19,7 @@ beforeEach(async()=>{jest.useFakeTimers({doNotFake:['performance','nextTick','qu
 afterEach(()=>jest.useRealTimers());
 
 test('one organization operates five years across three frameworks without shared conclusions or lost history',async()=>{
-  const originals=copy(JSON.parse(sessionStorage.getItem(STORE_KEY)));
+  const originals=copy(decodeDemoStore(sessionStorage.getItem(STORE_KEY)));
   const client=await post('/clients',{name:'Aperture Research — Multi-Framework Reference',industry:'Synthetic research / technology services'}),cid=client.client_id;
   const state={version:3,step:3,policies:Object.fromEntries(catalog.policies.map(p=>[p.key,'yes'])),requirements:Object.fromEntries(FRAMEWORKS.map(f=>[f.key,['cis-ig1','iso-27001','soc-2'].includes(f.key)?'applies':'does_not_apply'])),reviews:[],framework_reviews:{}};
   for(const p of sharedFrameworkPlans(state)){const {conflict,...config}=reviewConfig(state,p);for(const d of p.drivers)state.framework_reviews[d.key]={...config,due_date:'2027-03-31'};}
@@ -195,7 +196,7 @@ test('one organization operates five years across three frameworks without share
   // Calendar emits one event per authoritative Review, not one per framework driver.
   const cal=await get('/calendar',cid,{start:'2032-01-01',end:'2032-12-31',scope:'active'});
   const entries=Object.values(cal.reviews).flat().filter(e=>e.id===access.review_id);expect(entries).toHaveLength(1);
-  const final=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  const final=decodeDemoStore(sessionStorage.getItem(STORE_KEY));
   for(const kind of ['clients','reviews','policies','risks','findings','tasks','vendors','assets','framework_assessments','evidence']){
     // Demo's existing bounded payload cache can move bytes to session memory.
     // Compare all authoritative metadata and verify a displaced download below.

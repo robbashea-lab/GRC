@@ -9,6 +9,8 @@ import unittest
 from unittest.mock import patch
 from pymongo.errors import AutoReconnect, NetworkTimeout, OperationFailure, WriteConcernError
 import guided_assessment
+import iso_guided_assessment
+import soc_guided_assessment
 import soc_guided_lease
 import test_framework_governance as harness
 from soc_guided_assessment import CATALOG, _questions, result_status
@@ -22,6 +24,101 @@ class SocGuidedRoutes(unittest.IsolatedAsyncioTestCase):
     sign_in=harness.FrameworkTests.sign_in
     body=harness.FrameworkTests.body
     configure=harness.FrameworkTests.configure
+
+    async def test_current_replay_preserves_manual_wording_items_and_rechecks_live_authority(self):
+        await self.setup_soc()
+        for framework, identity, engine in (('soc-2', 'CC1.1', soc_guided_assessment),
+                                           ('iso-27001', '4.1', iso_guided_assessment)):
+            with self.subTest(framework=framework):
+                self.sign_in('admin')
+                workspace = (await self.client.get('/api/frameworks/' + framework, params={'client_id': 'a'})).json()
+                row = next(row for row in workspace['assessments'] if row['definition_id'] == identity)
+                aid = row['framework_assessment_id']
+                query = {'framework_assessment_id': aid}
+                await server.db.framework_assessments.update_one(query, {'$set': {'owner_id': 'member'}})
+                self.sign_in('member')
+                path = '/api/framework_assessments/' + aid
+                base = (await self.client.get(path + '/guided-assessment')).json()
+                answers = {q['id']: '' if q['type'] == 'text' else 'Relevant' if q['type'] == 'context' else 'Yes'
+                           for q in engine._questions(identity)}
+                answers.update(additional_gap='Yes', gaps='A genuine scoped exception is reported.',
+                               additional_confirmation='Yes', unknowns='Confirm the remaining implementation detail.')
+                wording = 'The analyst accepted this exact scoped wording with a reported exception and confirmation item.'
+                payload = {'version': base['version'], 'answers': answers, 'step': 0, 'completed': True,
+                           'narrative': wording, 'expected_revision': base['revision'],
+                           'summary_review': {'version': base['version'], 'answers': answers},
+                           'result': {'version': base['version'], 'status': engine.result_status(identity, answers),
+                                      'narrative': wording, 'basis': [], 'gaps': [], 'unknowns': [],
+                                      'nextSteps': [], 'evidence': [], 'answers': [], 'signals': []},
+                           **{key: base[key] for key in ('base_assessment_token', 'base_scope_fingerprint')}}
+                response = await self.client.put(path + '/guided-assessment', json=payload)
+                self.assertEqual(response.status_code, 200, response.text)
+                draft = response.json()
+                replay = {**payload, 'expected_revision': draft['revision']}
+                unchanged = await self.client.put(path + '/guided-assessment', json=replay)
+                self.assertEqual(unchanged.status_code, 200, unchanged.text)
+                self.assertEqual(unchanged.json(), draft)
+                native = {'implementation': wording, 'status': draft['result']['status'],
+                          'guided_assessment_source': {key: draft[key] for key in ('version', 'revision', 'generated_at')},
+                          'expected_last_assessed': row.get('last_saved') or row.get('last_assessed')}
+                applied = await self.client.patch(path, json=native)
+                self.assertEqual(applied.status_code, 200, applied.text)
+                saved = applied.json()
+                self.assertEqual(saved['implementation'], wording)
+                self.assertEqual(saved.get('verification'), row.get('verification'))
+                self.assertEqual([(item['question_id'], item['kind']) for item in saved['items_to_address']],
+                                 [('gaps', 'gap'), ('unknowns', 'verification')])
+                gap = saved['items_to_address'][0]
+                resolved = await self.client.patch(path + '/items/' + gap['item_id'],
+                    json={'expected_revision': saved['items_revision'], 'state': 'resolved', 'resolution': 'Keep this analyst resolution.'})
+                self.assertEqual(resolved.status_code, 200, resolved.text)
+                # Synthetic technical capture metadata must remain server-side on acknowledgement.
+                await server.db.framework_assessments.update_one(query,
+                    {'$set': {'_portfolio_activity_pending': {'sentinel': 'private test metadata'}}})
+                before = await server.db.framework_assessments.find_one(query)
+                history_before = await server.db.guided_assessment_history.find({'assessment_id': aid}).to_list(None)
+                events_before = await server.db.portfolio_events.find({'source_id': aid}).to_list(None)
+                native['expected_last_assessed'] = saved['last_saved']
+                if framework == 'soc-2':
+                    native['record_assessment'] = True
+                for _ in range(2):
+                    repeated = await self.client.patch(path, json=native)
+                    self.assertEqual(repeated.status_code, 200, repeated.text)
+                    self.assertNotIn('_portfolio_activity_pending', repeated.json())
+                    self.assertEqual(repeated.json()['implementation'], wording)
+                    self.assertEqual(repeated.json()['items_to_address'], resolved.json()['items_to_address'])
+                    self.assertEqual(await server.db.framework_assessments.find_one(query), before)
+                    self.assertEqual(await server.db.guided_assessment_history.find({'assessment_id': aid}).to_list(None), history_before)
+                    self.assertEqual(await server.db.portfolio_events.find({'source_id': aid}).to_list(None), events_before)
+                stale = {**native, 'expected_last_assessed': row.get('last_saved') or row.get('last_assessed')}
+                self.assertEqual((await self.client.patch(path, json=stale)).status_code, 409)
+                self.assertEqual((await self.client.put(path + '/guided-assessment', json=payload)).status_code, 409)
+                forged_source = {**native, 'guided_assessment_source': {**native['guided_assessment_source'], 'generated_at': '2099-01-01T00:00:00Z'}}
+                self.assertEqual((await self.client.patch(path, json=forged_source)).status_code, 409)
+                self.sign_in('admin')
+                self.assertEqual((await self.client.patch(path, json=native)).status_code, 409)
+                original_actor = await server.db.users.find_one({'user_id': 'member'})
+                for changes in ({'role': 'client_readonly'}, {'client_ids': ['b']}):
+                    await server.db.users.update_one({'user_id': 'member'}, {'$set': changes})
+                    self.sign_in('member')
+                    for method, url, body in ((self.client.patch, path, native), (self.client.put, path + '/guided-assessment', replay)):
+                        rejected = await method(url, json=body)
+                        self.assertEqual(rejected.status_code, 403, rejected.text)
+                    await server.db.users.replace_one({'user_id': 'member'}, original_actor)
+                self.sign_in('member')
+                await server.db.clients.update_one({'client_id': 'a'}, {'$set': {'status': 'archived'}})
+                for method, url, body in ((self.client.patch, path, native), (self.client.put, path + '/guided-assessment', replay)):
+                    rejected = await method(url, json=body)
+                    self.assertEqual(rejected.status_code, 403, rejected.text)
+                await server.db.clients.update_one({'client_id': 'a'}, {'$set': {'status': 'active'}})
+                await server.db.requirements.update_many({'client_id': 'a', 'baseline_key': framework}, {'$set': {'baseline_response': 'does_not_apply'}})
+                for method, url, body in ((self.client.patch, path, native), (self.client.put, path + '/guided-assessment', replay)):
+                    rejected = await method(url, json=body)
+                    self.assertEqual(rejected.status_code, 404, rejected.text)
+                await server.db.requirements.update_many({'client_id': 'a', 'baseline_key': framework}, {'$set': {'baseline_response': 'applies'}})
+                self.assertEqual(await server.db.framework_assessments.find_one(query), before)
+                self.assertEqual(await server.db.guided_assessment_history.find({'assessment_id': aid}).to_list(None), history_before)
+                self.assertEqual(await server.db.portfolio_events.find({'source_id': aid}).to_list(None), events_before)
 
     async def setup_soc(self,cid='a'):
         payload=self.body(('soc-2','iso-27001'),cid)

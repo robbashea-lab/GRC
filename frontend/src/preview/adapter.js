@@ -1,3 +1,4 @@
+import {cisDemoOperationalView,visibleCisDemoRows} from './cisDemoVisibility';
 import catalog from '@catalogs/onboardingCatalog.json';
 import {isoAuditRequest} from './isoAudit';
 import { authorizeDemo } from './authorization';
@@ -6,6 +7,8 @@ import {clientProfileRequest} from './clientProfile';
 import {policyApprovalRequest} from './policyApproval';
 import {invalidatePolicyApproval,retainedPolicy} from '../lib/policyProvenance';
 import {frameworkSummary} from './frameworkSummary';
+import {portfolioReportingRequest} from './portfolioReporting';
+import {createBrawndoScenarioDateSelector} from './brawndoReportingHistory';
 import {calendarBuckets,vendorCalendarItems} from '../lib/calendarView';
 import {handoffSnapshot, adjustProgram} from './onboardingHandoff';
 import { identityRequest } from './identityLifecycle';
@@ -16,7 +19,7 @@ import {frameworkRequest,frameworkReverse,frameworkScope,prepareGuidedContext} f
 import { baselineState, baselineRecordVersions, saveBaseline } from './baseline';
 import axios from 'axios';
 import fixtures from './demoConfiguration.json';
-import { clone, readStore, saveStore, resetStore, ids, list, record, write, library, audit, uid, now } from './store';
+import { clone, readStore, releaseStoreBaseline, transferStoreBaseline, saveStoreAsync, resetStore, STORE_KEY, ids, list, record, write, library, audit, uid, now } from './store';
 import { portfolio, dashboard } from './summaries';
 import { onboard, action } from './workflows';
 import {commandRequest} from './commandRequests';
@@ -29,10 +32,57 @@ import {evidenceKind} from '../lib/evidenceReferences';
 import {clearEvidenceFiles,demoDiagnostics} from './store';
 import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
 import {fileBytes} from './evidenceStorage';
+import {pendingPolicyCoverage} from './policyReviewCoverage';
 const CREATE_REPLAY_KINDS=['clients','reviews','findings','tasks','risks','vendors','policies','contacts','assets','exceptions','requirements','ai_systems'];
 const SESSION = 'grc_demo_entered';
+let requestQueue=Promise.resolve(),sessionGeneration=0;
+// Even GETs may reconcile retained Demo data. Queue before reading any snapshot;
+// session controls stay immediate so sign-out can invalidate a pending save.
+export async function previewAdapter(config){
+  const generation=sessionGeneration,request={...config};
+  const path=new URL(request.url,'https://demo.invalid').pathname;
+  if(path==='/auth/logout'||path==='/demo/enter'&&(request.method||'get').toLowerCase()==='post'){
+    sessionGeneration++;
+    return executePreviewAdapter(request,sessionGeneration);
+  }
+  // Own command intent before queuing or hashing can yield to the caller.
+  request.params=clone(request.params||{});
+  if(request.data&&typeof request.data==='object')request.data=clone(request.data);
+  request.headers=new axios.AxiosHeaders(request.headers);
+  const pending=requestQueue.then(()=>executePreviewAdapter(request,generation));
+  requestQueue=pending.then(()=>undefined,()=>undefined);
+  return pending;
+}
+function assertClientBoundary(db,parts,params,body){
+  const [kind,id]=parts;
+  for(const clientId of [params.client_id,body.client_id])if(clientId&&!evidenceAccess(db.user,clientId))
+    throw Object.assign(new Error('Forbidden for this client'),{status:403});
+  const target=ids[kind]&&id&&(db[kind]||[]).find(row=>row[ids[kind]]===id);
+  if(target?.client_id&&!evidenceAccess(db.user,target.client_id))throw Object.assign(new Error('Forbidden for this client'),{status:403});
+  const relationKind=evidenceKind(params.entity_type||body.entity_type),relationId=params.entity_id||body.entity_id;
+  if(relationKind&&relationId){const parent=record(db,relationKind,relationId);if(!evidenceAccess(db.user,parent.client_id))throw Object.assign(new Error('Forbidden for this client'),{status:403});}
+}
+function assertFrameworkParentBoundary(db,method,params,body){
+  const parentType=params.entity_type||body.entity_type||params.linked_type||body.linked_type;
+  if(['framework_assessment','framework_assessments'].includes(parentType)){
+    const parent=record(db,'framework_assessments',params.entity_id||body.entity_id||params.linked_id||body.linked_id);
+    frameworkScope(db,parent.client_id);
+    if(method!=='get'&&!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');
+  }
+}
+// Decorate copied Demo responses only; scenario dates never enter native rows or write payloads.
+function frameworkDateResponse(data,db){
+  const rows=data?.framework_assessment_id?[data]:data?.framework?.key==='cis-ig1'?data.assessments:null;
+  if(!Array.isArray(rows)||!rows.some(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1'))return data;
+  const dateForRecord=createBrawndoScenarioDateSelector(db);
+  const project=row=>{
+    const metadata=dateForRecord(row);
+    return metadata?{...row,demo_date_metadata:metadata}:row;
+  };
+  return data.framework_assessment_id?project(data):{...data,assessments:rows.map(project)};
+}
 // Loaded only by the explicit demo build. No request is forwarded to any server.
-export async function previewAdapter(config) {
+async function executePreviewAdapter(config,generation) {
   const url = new URL(config.url, 'https://demo.invalid'),
     path = url.pathname;
   const params = {
@@ -57,13 +107,22 @@ export async function previewAdapter(config) {
       config
     });
   };
+  let requestDb;
   try {
+    if(config.signal?.aborted)throw new axios.CanceledError('Demo request cancelled',config);
+    if(generation!==sessionGeneration)return fail(401,'Demo session changed; retry from the current session.');
+    if(path==='/auth/logout'){
+      sessionStorage.removeItem(SESSION);
+      return respond({ok:true});
+    }
     if(['/demo/reset','/demo/clear-evidence-files','/demo/storage'].includes(path)){
       if(sessionStorage.getItem(SESSION)!=='true')return fail(401,'Choose Explore Demo before managing Demo storage.');
       if(path==='/demo/storage'&&method==='get')return respond(demoDiagnostics());
       if(method==='post'&&path!=='/demo/storage'){if(path==='/demo/reset')resetStore();else clearEvidenceFiles();return respond({ok:true});}
     }
-    const db = readStore();
+    const db = readStore({comparisonBaseline:method!=='get'});requestDb=db;
+    let expectedSaved=sessionStorage.getItem(STORE_KEY),authorizedSaved;
+    const actorId=db.user.user_id;
     if (path === '/auth/login') return fail(401, 'Use standard sign-in for email and password authentication.');
     if (path === '/demo/enter' && method === 'post') {
       localStorage.removeItem('grc_token');
@@ -72,30 +131,32 @@ export async function previewAdapter(config) {
         user: db.user
       });
     }
-    if (path === '/auth/logout') {
-      sessionStorage.removeItem(SESSION);
-      return respond({
-        ok: true
-      });
-    }
     if (sessionStorage.getItem(SESSION) !== 'true') return fail(401, 'Choose Explore Demo to enter the sample workspace.');
     if (params.client_id && !db.clients.some(c => c.client_id === params.client_id)) return fail(404, 'Demo client not found.');
     // Decode route parameters as the real router does (framework Finding IDs contain colons).
     const parts = path.split('/').filter(Boolean).map(decodeURIComponent),
       [kind, id, name] = parts;
     const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data || {};
-    if(kind==='evidence-library'){const data=evidenceLibraryRequest(db,method,parts,params,body);if(method!=='get')saveStore(db);return respond(data);}
-    // Portfolio drill-ins use the same authorized client boundary as the server.
-    // This remains a Demo simulation, never an authorization mechanism for real data.
-    {
-      for(const clientId of [params.client_id,body.client_id])if(clientId&&!evidenceAccess(db.user,clientId))return fail(403,'Forbidden for this client');
-      const target=ids[kind]&&id&&(db[kind]||[]).find(r=>r[ids[kind]]===id);
-      if(target?.client_id&&!evidenceAccess(db.user,target.client_id))return fail(403,'Forbidden for this client');
-      const relationKind=evidenceKind(params.entity_type||body.entity_type),relationId=params.entity_id||body.entity_id;
-      if(relationKind&&relationId){const parent=record(db,relationKind,relationId);if(!evidenceAccess(db.user,parent.client_id))return fail(403,'Forbidden for this client');}
-    }
+    // Native handlers may normalize their body; authorization retains the intent.
+    const authorizationBody=clone(body);
+    const commitStore=()=>saveStoreAsync(db,{expectedSaved,signal:config.signal,beforeCommit(){
+      const assertCurrent=()=>{
+        if(generation!==sessionGeneration||sessionStorage.getItem(SESSION)!=='true')
+          throw Object.assign(new Error('Demo session changed; changes were not saved.'),{status:401});
+        if(sessionStorage.getItem(STORE_KEY)!==expectedSaved)
+          throw Object.assign(new Error('Demo data changed; reload before retrying. Changes were not saved.'),{status:409});
+      };
+      // Exact unchanged authoritative bytes and session revalidate the original
+      // native permission decision for this owned intent; no second parse needed.
+      if(authorizedSaved!==expectedSaved)throw Object.assign(new Error('Demo authorization changed; changes were not saved.'),{status:409});
+      assertCurrent();
+    }});
+    if(kind==='evidence-library'){const data=evidenceLibraryRequest(db,method,parts,params,body);if(method!=='get'){authorizedSaved=expectedSaved;await commitStore();}return respond(data);}
+    // Portfolio drill-ins retain the native authorized client boundary.
+    assertClientBoundary(db,parts,params,body);
     // Role limits mirror the server so persona QA in the Demo sees the same refusals.
     try { authorizeDemo(db, method, parts, body, config.headers?.['Idempotency-Key']); } catch (error) { return fail(error.status||403, error.message); }
+    if(method==='get' && path.startsWith('/portfolio/reporting/')) return respond(portfolioReportingRequest(cisDemoOperationalView(db),path,params));
     if(kind==='evidence'){
       const cid=method==='get'&&!id?params.client_id:id&&id!=='catalog'?record(db,'evidence',id).client_id:body.client_id||params.client_id;
       if(cid&&!evidenceAccess(db.user,cid))return fail(403,'Forbidden for this client');
@@ -104,65 +165,74 @@ export async function previewAdapter(config) {
       if(path==='/evidence/catalog'&&method==='get')return respond(evidencePage(db,params));
     }
     // Existing Evidence/comments/related endpoints keep the assessment's tenant boundary.
-    const parentType=params.entity_type||body.entity_type||params.linked_type||body.linked_type;
-    if(['framework_assessment','framework_assessments'].includes(parentType)){
-      const parent=record(db,'framework_assessments',params.entity_id||body.entity_id||params.linked_id||body.linked_id);
-      frameworkScope(db,parent.client_id);
-      if(method!=='get'&&!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');
-    }
-    const save = data => {
-      saveStore(db);
+    assertFrameworkParentBoundary(db,method,params,body);
+    authorizedSaved=expectedSaved;
+    const save = async data => {
+      await commitStore();
       return respond(data);
     };
     if(kind==='iso-audit'||kind==='reviews'&&name==='iso-audit'){
       const result=isoAuditRequest(db,parts,method,params,body);
-      return method==='get'?respond(result):save(result);
+      return method==='get'?respond(result):await save(result);
     }
     if(kind==='organizational-controls'){
       const data=organizationalControlRequest(db,parts,method,params,body);
-      return method==='get'?respond(data):save(data);
+      return method==='get'?respond(data):await save(data);
     }
     const identity = identityRequest(db, path, method, params, body);
-    if(kind==='clients'&&id&&name==='profile')return method==='get'?respond(clientProfileRequest(db,id,method,body)):save(clientProfileRequest(db,id,method,body));
+    if(kind==='clients'&&id&&name==='profile')return method==='get'?respond(clientProfileRequest(db,id,method,body)):await save(clientProfileRequest(db,id,method,body));
     if(kind==='clients'&&method!=='get'&&['profile','initial_program_baseline','onboarding_baseline'].some(k=>k in body))return fail(422,'Use the dedicated profile or onboarding workflow');
-    if (identity !== undefined) return method === 'get' ? respond(identity) : save(identity);
+    if (identity !== undefined) return method === 'get' ? respond(identity) : await save(identity);
     const approval = policyApprovalRequest(db, path, method, params, body);
-    if (approval !== undefined) return method === 'get' ? respond(approval) : save(approval);
-    if(path==='/ai-intake'||kind==='ai_systems')return save(aiRequest(db,path,method,params,body));
+    if (approval !== undefined) return method === 'get' ? respond(approval) : await save(approval);
+    if(path==='/ai-intake'||kind==='ai_systems')return await save(aiRequest(db,path,method,params,body));
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
-    if(kind==='framework_assessments'&&method==='post'&&name==='findings')return save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
-    if(path==='/frameworks/cis-ig1/configuration'&&method==='patch')return save(commandRequest(db,path,body.client_id,config.headers?.['Idempotency-Key'],body,()=>frameworkRequest(db,path,method,params,body)));
+    if(kind==='framework_assessments'&&method==='post'&&name==='findings')return await save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
+    if(path==='/frameworks/cis-ig1/configuration'&&method==='patch')return await save(commandRequest(db,path,body.client_id,config.headers?.['Idempotency-Key'],body,()=>frameworkRequest(db,path,method,params,body)));
     if(kind==='frameworks'||kind==='framework_assessments'){
       const pendingContext=prepareGuidedContext(db,path,method,body);
       let context=null;
       if(pendingContext){
         context=await pendingContext;
-        if(sessionStorage.getItem(SESSION)!=='true')return fail(401,'Choose Explore Demo to enter the sample workspace.');
+        if(generation!==sessionGeneration||sessionStorage.getItem(SESSION)!=='true')return fail(401,'Choose Explore Demo to enter the sample workspace.');
         // Web Crypto yields. Re-read before authorization, native-token and
         // interview revision checks so this snapshot cannot erase newer writes.
-        const latest=readStore();
+        releaseStoreBaseline(db);
+        const latest=readStore({comparisonBaseline:method!=='get'});
+        expectedSaved=sessionStorage.getItem(STORE_KEY);
         for(const key of Object.keys(db))delete db[key];
         Object.assign(db,latest);
-        authorizeDemo(db,method,parts,body,config.headers?.['Idempotency-Key']);
+        transferStoreBaseline(latest,db);
+        if(db.user.user_id!==actorId)return fail(401,'Demo actor changed; retry from the current session.');
+        if(params.client_id&&!db.clients.some(client=>client.client_id===params.client_id))return fail(404,'Demo client not found.');
+        assertClientBoundary(db,parts,params,authorizationBody);
+        authorizeDemo(db,method,parts,authorizationBody,config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+        assertFrameworkParentBoundary(db,method,params,authorizationBody);
+        authorizedSaved=expectedSaved;
       }
-      return save(frameworkRequest(db,path,method,params,body,context));
+      const result=frameworkRequest(db,path,method,params,body,context);
+      // Ordinary reads stay pure; CIS export retains its existing audit write.
+      const auditedExport=kind==='frameworks'&&id==='cis-ig1'&&name==='export';
+      if(method==='get'&&!auditedExport)return respond(frameworkDateResponse(result,db));
+      const persisted=await commitStore();
+      return respond(frameworkDateResponse(result,persisted));
     }
     if (path === '/demo/onboarding-draft') {
       record(db, 'clients', params.client_id || body.client_id);
       if (method === 'get') return respond(db.drafts[params.client_id] || null);
       db.drafts[body.client_id] = body.draft;
-      return save({
+      return await save({
         ok: true
       });
     }
     if (path === '/onboarding/handoff' && method === 'get') return respond(handoffSnapshot(db, params.client_id));
-    if (path.startsWith('/onboarding/programs/') && method === 'patch') return save(adjustProgram(db, body.client_id, path.split('/').pop(), body));
+    if (path.startsWith('/onboarding/programs/') && method === 'patch') return await save(adjustProgram(db, body.client_id, path.split('/').pop(), body));
     if (path === '/onboarding/baseline') {
       const cid = params.client_id || body.client_id;
       if (method === 'get') return respond({catalog,framework_settings:record(db,'clients',cid).framework_settings||{}, state:baselineState(db,cid), record_versions:baselineRecordVersions(db,cid)});
       const execute=()=>saveBaseline(db,cid,body.state,body.finalize,body);
       const key=config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key'];
-      return save(body.finalize?commandRequest(db,path,cid,key,body,execute):execute());
+      return await save(body.finalize?commandRequest(db,path,cid,key,body,execute):execute());
     }
     if (path === '/auth/me') return respond(db.user);
     if (method === 'get') {
@@ -173,7 +243,7 @@ export async function previewAdapter(config) {
           && (!params.occurrence_id || belongsToOccurrence({occurrence_id:l.meta?.occurrence_id}, review, params.occurrence_id)))
           .map(l => ({...l,log_id:l.log_id || l.audit_id})));
       }
-      if (path === '/clients/directory') return respond(portfolio(db, params.include_archived === true || params.include_archived === 'true'));
+      if (path === '/clients/directory') return respond(portfolio(cisDemoOperationalView(db), params.include_archived === true || params.include_archived === 'true'));
       if (path === '/clients') return respond(db.clients.filter(c => evidenceAccess(db.user,c.client_id)&&(params.include_archived === true || params.include_archived === 'true' || c.status !== 'archived')).map(c => clientProjection(db, c)));
       if (path === '/clients/grc-leads') return respond(leadCandidates(db, params.client_id));
       if (kind === 'risks' && name === 'review-history') return respond(db.reviews.filter(r=>r.risk_id===id&&r.client_id===record(db,'risks',id).client_id).flatMap(r=>(r.occurrences||[]).map(o=>({...o,review_id:r.review_id}))));
@@ -186,7 +256,7 @@ export async function previewAdapter(config) {
         record(db, 'clients', id);
         return respond(assignmentCandidates(db, id, params, db.user));
       }
-      if (path === '/dashboard') return respond(dashboard(db, params));
+      if (path === '/dashboard') return respond(dashboard(cisDemoOperationalView(db), params));
       if (path === '/onboarding/policy-library') return respond(library(db, 'policy', params.client_id));
       if (path === '/onboarding/requirements-library') return respond(library(db, 'requirements', params.client_id));
       if (path === '/onboarding/state') return respond({
@@ -197,7 +267,7 @@ export async function previewAdapter(config) {
       if (path === '/baseline/templates') return respond(fixtures.responses[path]);
       if (path === '/calendar') {
         frameworkScope(db,params.client_id);
-        const buckets=calendarBuckets(Object.fromEntries(['reviews','findings','tasks'].map(k=>[k,list(db,k,params.client_id)])),db.user,params);
+        const buckets=calendarBuckets(Object.fromEntries(['reviews','findings','tasks'].map(k=>[k,visibleCisDemoRows(db,k,list(db,k,params.client_id))])),db.user,params);
         buckets.vendor_dates=vendorCalendarItems(list(db,'vendors',params.client_id),list(db,'reviews',params.client_id),params);
         return respond(buckets);
       }
@@ -216,10 +286,10 @@ export async function previewAdapter(config) {
           };
         for (const k of Object.keys(data)) data[k] = list(db, k, source.client_id).filter(r => k === params.entity_type
           ? k === 'reviews' && (r.parent_review_id === params.entity_id || r.review_id === source.parent_review_id || r.review_id === source.next_occurrence_id)
-          : (params.entity_type==='policies'&&k==='reviews'&&r.policy_ids?.includes(source.policy_id)) || (params.entity_type==='vendors'&&k==='risks'&&source.related_risk_ids?.includes(r.risk_id)) || (params.entity_type==='risks'&&k==='vendors'&&r.related_risk_ids?.includes(params.entity_id)) || (params.entity_type==='risks'&&k==='tasks'&&source.related_task_ids?.includes(r.task_id)) || (params.entity_type==='tasks'&&k==='risks'&&r.related_task_ids?.includes(params.entity_id)) || r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
+          : (params.entity_type==='policies'&&k==='reviews'&&(r.policy_ids?.includes(source.policy_id)||r.occurrences?.some(o=>o.policy_coverage?.some(member=>member.policy_id===source.policy_id)))) || (params.entity_type==='vendors'&&k==='risks'&&source.related_risk_ids?.includes(r.risk_id)) || (params.entity_type==='risks'&&k==='vendors'&&r.related_risk_ids?.includes(params.entity_id)) || (params.entity_type==='risks'&&k==='tasks'&&source.related_task_ids?.includes(r.task_id)) || (params.entity_type==='tasks'&&k==='risks'&&r.related_task_ids?.includes(params.entity_id)) || r[ids[params.entity_type]] === params.entity_id || (source[ids[k]] && source[ids[k]] === r[ids[k]]) || (k === 'evidence' && r.linked_id === params.entity_id));
         if (params.entity_type === 'policies') {
           // Findings raised in a Policy Review stay visible from the Policy, as in the backend.
-          const reviewIds = new Set(list(db, 'reviews', source.client_id).filter(r => r.policy_id === params.entity_id).map(r => r.review_id));
+          const reviewIds = new Set(data.reviews.map(r => r.review_id));
           for (const k of ['findings', 'tasks']) data[k] = [...data[k], ...list(db, k, source.client_id).filter(r => reviewIds.has(r.review_id) && !data[k].includes(r))];
         }
         if (params.entity_type === 'reviews' && params.occurrence_id)
@@ -229,6 +299,7 @@ export async function previewAdapter(config) {
           if(o) review.linked_occurrence={period:o.period,status:o.status};
           else if((review.current_occurrence_id||'occ_'+review.review_id)===source.occurrence_id) review.linked_occurrence={period:reviewView(review).period,status:review.status};
         }
+        data.reviews=data.reviews.map(review=>{const row={...review};delete row._policy_coverage_pending;return row;});
         return respond(frameworkReverse(db,params.entity_type,source,aiRelated(db,params.entity_type,source,data)));
       }
       if (kind === 'comments') return respond(db.comments.filter(r => r.entity_type === params.entity_type && r.entity_id === params.entity_id
@@ -274,9 +345,14 @@ export async function previewAdapter(config) {
         if (id) {
           const r = record(db, kind, id);
           if (params.client_id && r.client_id !== params.client_id) return fail(404, 'Record not found for this client.');
+          if (kind === 'reviews') {
+            const visible = { ...r };
+            delete visible._policy_coverage_pending;
+            return respond(visible);
+          }
           return respond(r);
         }
-        let rows = list(db, kind, params.client_id).filter(r => (!r.client_id||evidenceAccess(db.user,r.client_id))&&Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v));
+        let rows = visibleCisDemoRows(db,kind,list(db, kind, params.client_id)).filter(r => (!r.client_id||evidenceAccess(db.user,r.client_id))&&Object.entries(params).every(([k, v]) => !v || !['linked_id', 'linked_type'].includes(k) || r[k] === v));
         if(kind==='evidence')rows=list(db,kind,params.client_id).filter(r=>!params.linked_id ||
           (r.linked_id===params.linked_id&&evidenceKind(r.linked_type)===evidenceKind(params.linked_type)) ||
           r.relationships?.some(l=>l.kind===evidenceKind(params.linked_type)&&l.id===params.linked_id));
@@ -295,9 +371,9 @@ export async function previewAdapter(config) {
         delete db.drafts[body.client_id];
         return completed;
       });
-      return save(result);
+      return await save(result);
     }
-    if (path === '/onboarding/policy-responses') return save(onboard(db, {
+    if (path === '/onboarding/policy-responses') return await save(onboard(db, {
       client_id: body.client_id,
       policy_responses: body.responses
     }));
@@ -305,6 +381,7 @@ export async function previewAdapter(config) {
       if(body.kind==='framework_assessments')throw new Error('Use the framework workspace; assessment history is retained');
       if (!ids[body.kind] || !body.ids?.length) throw new Error('Select records first.');
       const rows = body.ids.map(i => record(db, body.kind, i));
+      if(body.action==='delete'&&rows.some(row=>pendingPolicyCoverage(db,body.kind,row)))throw new Error('Retry the pending annual Policy completion before deleting its records.');
       if(rows.some(row=>row.client_id&&!evidenceAccess(db.user,row.client_id)))return fail(403,'Forbidden for this client');
       if(body.expected_versions&&rows.some(row=>body.expected_versions[row[ids[body.kind]]] !== (row.updated_at??null)))throw Object.assign(new Error('Record changed since it was opened; reload before saving'), { status: 409 });
       if (body.kind === 'contacts' && body.action === 'delete' && db.clients.some(c => rows.some(r => r.client_id === c.client_id && r.contact_id === c.primary_contact_id))) throw new Error('A selected Contact is a Primary Contact. Archive it or change the client relationship before deleting it.');
@@ -345,7 +422,7 @@ export async function previewAdapter(config) {
             due_date: payload.due_date
           };
         } else if (body.action === 'update') patch = payload;else throw new Error('Unknown bulk action');
-        guardEdit(body.kind, patch, r, db.user);
+        guardEdit(body.kind, patch, r, db.user, db);
         if(body.kind==='policies')patch=invalidatePolicyApproval(patch,r);
         if (body.kind === 'reviews' && patch.status === 'completed' && r.status !== 'completed') {
           const { status, ...fields } = patch;
@@ -353,7 +430,7 @@ export async function previewAdapter(config) {
           action(db, 'reviews', r.review_id, 'complete', { spawn_next: true });
         } else write(db, body.kind, patch, r[ids[body.kind]]);
       }
-      return save({
+      return await save({
         ok: true,
         count: rows.length
       });
@@ -363,7 +440,7 @@ export async function previewAdapter(config) {
         n.read_at = now();
         n.read = true;
       }
-      return save({
+      return await save({
         ok: true
       });
     }
@@ -372,18 +449,18 @@ export async function previewAdapter(config) {
       Object.assign(db.user, body);
       const userRecord = db.users.find(u => u.user_id === db.user.user_id);
       if (userRecord) Object.assign(userRecord, body);
-      return save(db.user);
+      return await save(db.user);
     }
     if (ids[kind] && name) {
       if(kind==='findings'&&['validate','reopen','accept'].includes(name)&&body.request_id){
         const finding=record(db,kind,id);
-        return save(commandRequest(db,path,finding.client_id,body.request_id,body,()=>{
+        return await save(commandRequest(db,path,finding.client_id,body.request_id,body,()=>{
           const result=action(db,kind,id,name,body);audit(db,name,kind,result);return result;
         }));
       }
       if(kind==='reviews' && name==='create-finding') {
         const review=record(db,kind,id);
-        return save(commandRequest(db,path,review.client_id,body.request_id,body,()=>action(db,kind,id,name,body)));
+        return await save(commandRequest(db,path,review.client_id,body.request_id,body,()=>action(db,kind,id,name,body)));
       }
       const result = action(db, kind, id, name, body);
       const r = record(db, kind, id);
@@ -399,7 +476,7 @@ export async function previewAdapter(config) {
         read_at: null,
         simulated: true
       });
-      return save(result);
+      return await save(result);
     }
     if (kind === 'comments') {
       const source = record(db, body.entity_type, body.entity_id);
@@ -415,18 +492,19 @@ export async function previewAdapter(config) {
         user_email: db.user.email
       };
       db.comments.push(comment);
-      return save(comment);
+      return await save(comment);
     }
     if (ids[kind]) {
       if (method === 'delete') {
         const r = record(db, kind, id);
+        if(pendingPolicyCoverage(db,kind,r))throw new Error('Retry the pending annual Policy completion before deleting its records.');
         if(kind==='findings')retainFinding(db,r);
         if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw Object.assign(new Error('Record changed; reload before deleting'), { status: 409 });
         if(kind==='policies'&&retainedPolicy(r))throw new Error('Policy approval history must be retained; retire the Policy instead');
         if (kind === 'contacts' && db.clients.some(c => c.client_id === r.client_id && c.primary_contact_id === id)) throw new Error('This is the Primary Contact. Archive the Contact or change the client relationship before deleting it.');
         if(kind==='evidence'&&db.reviews.some(c=>c.client_id===r.client_id&&auditEvidenceLinks(c).some(l=>l.id===id)))throw new Error('Audit workpaper evidence must be retained.');
         if(kind==='evidence'&&(db.organizational_controls||[]).some(c=>c.client_id===r.client_id&&controlEvidenceLinks(c).some(l=>l.id===id)))throw new Error('Control design and operation evidence must be retained.');
-        if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id)||v.client_id==='demo_brawndo'&&a.history?.some(h=>h.evidence_ids?.includes(id)))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
+        if(kind==='evidence'&&db.vendors.some(v=>v.client_id===r.client_id&&(v.contract_evidence_ids?.includes(id)||v.assurance_records?.some(a=>a.evidence_ids?.includes(id)||a.history?.some(h=>h.evidence_ids?.includes(id)))||v.vendor_id===r.linked_id&&['inactive','terminated'].includes(v.status)))) throw new Error('Vendor assurance, contract and historical evidence must be retained.');
         if(kind==='evidence'&&['risk','risks'].includes(r.linked_type)&&db.risks.some(x=>x.risk_id===r.linked_id&&['closed','retired'].includes(x.status))) throw new Error('Closed Risk evidence must be retained.');
         if(kind==='evidence'&&['ai_system','ai_systems'].includes(r.linked_type)&&(db.ai_systems||[]).some(x=>x.ai_system_id===r.linked_id&&x.status==='retired'))throw new Error('Retired AI evidence must be retained');
         if(['risks','vendors'].includes(kind)||kind==='reviews'&&(r.risk_id||r.vendor_id||r.ai_system_id)) throw new Error('Governance records and their Review obligations must be retained.');
@@ -448,7 +526,7 @@ export async function previewAdapter(config) {
             if(next!==finding.status){finding.status=next;finding.updated_at=now();audit(db,next==='open'?'Finding returned to Open; its remediation Action Item was deleted':next==='remediated'?'Finding moved to Pending Validation':'Finding moved to In Remediation','findings',finding,{task_id:r.task_id});}
           }
         }
-        return save({
+        return await save({
           ok: true
         });
       }
@@ -467,7 +545,7 @@ export async function previewAdapter(config) {
         body.version = 1;
         const bytes=Uint8Array.from(atob(body.content_base64.split(',').pop()),c=>c.charCodeAt(0));
         body.size = bytes.length;
-        if(globalThis.crypto?.subtle)body.sha256=Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+        if(globalThis.crypto?.subtle){body.sha256=Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');}
         else delete body.sha256; // Never invent a digest where Web Crypto is unavailable.
         body.uploaded_at = now();
         body.uploaded_by = db.user.user_id;
@@ -478,34 +556,34 @@ export async function previewAdapter(config) {
         delete body.expected_occurrence_id;
       }
       const updateKey=CREATE_REPLAY_KINDS.includes(kind)&&id&&method==='patch'&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
-      if(updateKey)return save(commandRequest(db,path,record(db,kind,id).client_id,updateKey,body,()=>{
-        guardEdit(kind,body,record(db,kind,id),db.user);
+      if(updateKey)return await save(commandRequest(db,path,record(db,kind,id).client_id,updateKey,body,()=>{
+        guardEdit(kind,body,record(db,kind,id),db.user,db);
         return write(db,kind,body,id);
       }));
-      if (!['evidence','users','clients','comments'].includes(kind)) guardEdit(kind, body, id ? record(db, kind, id) : {}, db.user);
+      if (!['evidence','users','clients','comments'].includes(kind)) guardEdit(kind, body, id ? record(db, kind, id) : {}, db.user, db);
       if (kind === 'reviews' && id && body.status === 'completed' && record(db, kind, id).status !== 'completed') {
         const { status, ...fields } = body;
         write(db, kind, fields, id);
-        return save(action(db, kind, id, 'complete', { spawn_next: true }).review);
+        return await save(action(db, kind, id, 'complete', { spawn_next: true }).review);
       }
       // Create retries reuse their Idempotency-Key (lib/api.js); replay the original record, as the backend does.
       const requestKey=!id&&CREATE_REPLAY_KINDS.includes(kind)&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
       const requestScope=requestKey?JSON.stringify([db.user.user_id,body.client_id,requestKey]):null;
       const priorRequest=requestScope&&(db.create_requests?.[requestScope]||db.vendor_action_requests?.[requestScope]);
-      if(priorRequest){if(priorRequest.body!==JSON.stringify(body))throw new Error('This create request was already used with different values.');const prior=record(db,priorRequest.kind||'tasks',priorRequest.record_id||priorRequest.task_id);return kind==='clients'?save(clientProjection(db,prior)):respond(prior);}
+      if(priorRequest){if(priorRequest.body!==JSON.stringify(body))throw new Error('This create request was already used with different values.');const prior=record(db,priorRequest.kind||'tasks',priorRequest.record_id||priorRequest.task_id);return kind==='clients'?await save(clientProjection(db,prior)):respond(prior);}
       const result = write(db, kind, kind==='policies'&&id?invalidatePolicyApproval(body,record(db,kind,id)):body, id);
       if(requestScope){db.create_requests||={};db.create_requests[requestScope]={kind,body:JSON.stringify(body),record_id:result[ids[kind]]};}
-      if (kind === 'clients') return save(clientProjection(db, result));
+      if (kind === 'clients') return await save(clientProjection(db, result));
       if (kind === 'evidence' && ['review','reviews'].includes(body.linked_type))
         reviewEvent(db, record(db,'reviews',body.linked_id), 'Evidence uploaded', body.occurrence_id, {filename:body.filename,evidence_id:result.evidence_id});
       if (kind === 'evidence' && body.linked_type === 'task') audit(db,'Evidence uploaded','tasks',record(db,'tasks',body.linked_id),{filename:body.filename,evidence_id:result.evidence_id});
       if (kind === 'evidence' && ['framework_assessment','framework_assessments'].includes(body.linked_type)) audit(db,'Evidence linked','framework_assessments',record(db,'framework_assessments',body.linked_id),{filename:body.filename,evidence_id:result.evidence_id});
-      return save(result);
+      return await save(result);
     }
     return fail(501, 'This action is not implemented in the demo. No changes were saved.');
   } catch (error) {
     if (error.isAxiosError) throw error;
     if(['SecurityError','NotAllowedError','QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(error.name))error=demoStorageError(error);
     return fail(error.status || 400, error.message || 'Demo action failed. No changes were saved.',error.storage_code,error.create_rejected===true);
-  }
+  }finally{releaseStoreBaseline(requestDb);}
 }

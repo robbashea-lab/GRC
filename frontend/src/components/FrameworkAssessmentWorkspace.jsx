@@ -1,5 +1,6 @@
 import {isoGuideEntry} from './IsoRequirementGuide';
 import IsoGuidedAssessor from './IsoGuidedAssessor';
+import AssessmentItems from './AssessmentItems';
 import AssessmentLayout,{AssessmentChecklist,AssessmentRequirement} from './AssessmentLayout';
 import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 import BrawndoCisFindings from './BrawndoCisFindings';
@@ -14,7 +15,7 @@ import {operatorGuidance,operatorStatuses,operatorProgram,operatorVocabulary} fr
 import {sourcePresentation} from '@/lib/frameworkWorkspace';
 
 import {useOrg} from '@/context/OrgContext';
-import {CIS_TONE,CisStatusPill} from './CisStatus';
+import {implementationTone,CisStatusPill} from './CisStatus';
 import {verificationLadder,stackCapability} from '@/lib/cisVerification';
 import './BrawndoCisAssessment.css';
 import './BrawndoCisWorkspace.css';
@@ -35,13 +36,13 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
     description={`${definition.control_name||definition.category||definition.specification||'Framework assessment'} · ${definition.source_citation||definition.id}`}
     status={<><span aria-label="Saved conclusion"><CisStatusPill status={current.status} framework={framework}/></span><span className="text-xs text-ink-secondary">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}</span></>}
     {...{position,previous,next,close,busy}} testId={isIso?'iso-assessment-workspace':clientId==='demo_brawndo'&&isCis?'brawndo-cis-assessment':'framework-assessment-workspace'}
-    // Radix handles Escape during document capture, before the guide's own close/draft guard.
-    onEscapeKeyDown={isIso?e=>{if(document.activeElement?.closest('[data-testid="iso-assessment-workspace"] [data-testid="iso-guided-assessment"] .omni-workspace-window'))e.preventDefault();}:undefined}
     ariaModal crumbs={breadcrumb?.length?<CisBreadcrumb items={breadcrumb} label={`${program} location`}/>:null}
     returnSelector={`[data-testid="requirement-${definition.id}"] button, [data-testid="requirement-${definition.id}"][tabindex], .cis-summary-head button`}
     footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes remain in your draft until saved.')}</span>{otherDraft&&<p id="brawndo-other-draft" className="text-xs text-ink-secondary">{isIso?'Save or discard the open interview or related-record draft before using Save & next.':'Finish or cancel the open Finding before using Save & next.'}</p>}</div><div className="flex flex-wrap gap-2">{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={otherDraft?'brawndo-other-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
-    {isIso&&ctx&&<IsoGuidedAssessor clientId={clientId} configuration={ctx.configuration} record={record} current={current} form={form} assessmentDirty={dirty} relatedDraft={state.relatedDraft} onDraftChange={setGuidedDraft} onSaveAssessment={saveGuidedAssessment} disabled={disabled}/>}
-    <AssessmentLayout criteriaSummary="Omnisciente guidance for assessing this requirement. These are not additional ISO requirements." criteriaTitle="ISO assessment criteria" reference={`ISO/IEC 27001:2022 · ${definition.id}`} key={clientId+':'+definition.id} summary={isoGuide?.plain||guide.meaning}
+    <AssessmentLayout inlineWorkflow={isIso} criteriaSummary="Omnisciente guidance for assessing this requirement. These are not additional ISO requirements." criteriaTitle="ISO assessment criteria" reference={`ISO/IEC 27001:2022 · ${definition.id}`} key={clientId+':'+definition.id} summary={isoGuide?.plain||guide.meaning}
+      interview={isIso&&(ctx?.configuration||state.guidedConfiguration)?({open,close})=><IsoGuidedAssessor inline inlineOpen={open} onInlineClose={close} clientId={clientId} configuration={ctx?.configuration||state.guidedConfiguration} record={record} current={current} form={form} assessmentDirty={dirty} relatedDraft={state.relatedDraft} onDraftChange={setGuidedDraft} onSaveAssessment={saveGuidedAssessment} disabled={disabled}/>:null}
+      itemsToAddress={isIso?<AssessmentItems record={current} ctx={ctx} disabled={disabled} onDraftChange={actions.setItemsDraft} onSaved={actions.itemsSaved} onCreateFinding={actions.createItemFinding}/>:null}
+      findingDraft={!!finding}
       requirement={<AssessmentRequirement heading={definition.specification==='isms_clause'?'ISMS requirement & reference':'Annex A control & reference'} text={source.text||guide.meaning} official={!!source.text} trigger={criteria?.trigger} source={source.url} label="Official ISO source"/>}
       checklist={<AssessmentChecklist title={`${definition.specification==='isms_clause'?'Clause':'Control'} ${definition.id} checklist`} items={criteria?.coverage==='verified'?criteria.criteria:[]} value={form.iso_assessment_checks||[]} disabled={disabled} onChange={value=>put('iso_assessment_checks',value)}/>}
       findings={<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>}
@@ -55,7 +56,7 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
             <Step title="Implementation status">
               {isIso&&current.status==='not_applicable'&&(definition.specification==='isms_clause'||current.soa_applicability==='included')&&<p role="alert" className="brawndo-caution">Legacy conflict: this mandatory requirement or applicable control has a Not Applicable implementation status. Review the decision explicitly; the saved value and history have not been changed.</p>}
               <fieldset disabled={disabled}><legend className="sr-only">Assessment status</legend>
-                <div className="brawndo-status-options">{['addressed','in_progress','needs_attention','not_applicable','not_assessed'].filter(status=>status!=='not_applicable'||definition.specification!=='isms_clause').map(status=><label key={status} className={`cis-tone-${CIS_TONE[status]} ${form.status===status?'is-selected':''}`}>
+                <div className="brawndo-status-options">{['addressed','in_progress','needs_attention','not_applicable','not_assessed'].filter(status=>status!=='not_applicable'||definition.specification!=='isms_clause').map(status=><label key={status} className={`cis-tone-${implementationTone(status,framework)} ${form.status===status?'is-selected':''}`}>
                   <input type="radio" name="brawndo-assessment-status" value={status} checked={form.status===status} onChange={()=>put('status',status)}/><span className="cis-dot" aria-hidden="true"/><span>{statuses[status]}</span>
                 </label>)}</div>
               </fieldset>

@@ -1,0 +1,59 @@
+:root .ui-sheet.brawndo-review-finding[data-state][data-testid=review-finding-form] {
+  --rf-card:#fff;--rf-sunk:#f6f8fb;--rf-line:#e2e7ef;--rf-line2:#cfd7e3;--rf-ink:#0f1a2e;--rf-ink2:#46536a;--rf-muted:#6b7686;--rf-accent:#2f64e0;--rf-accent-ink:#fff;--rf-soft:#e8efff;--rf-critical:#b42318;--rf-critical-bg:#fdebea;
+  color:var(--rf-ink);background:var(--rf-card);font:14px/1.5 'GoverNara Review Detail Inter',Inter,system-ui,sans-serif;
+  --font-body:'GoverNara Review Detail Inter',Inter,system-ui,sans-serif;--font-heading:var(--font-body);--font:var(--font-body);
+}
+:root[data-brawndo-portal='dark'] .ui-sheet.brawndo-review-finding[data-state][data-testid=review-finding-form] {--rf-card:#0d1729;--rf-sunk:#0a1322;--rf-line:#1c2842;--rf-line2:#2a3858;--rf-ink:#eef3fb;--rf-ink2:#b7c2d3;--rf-muted:#8793a6;--rf-accent:#6f9bff;--rf-accent-ink:#06101f;--rf-soft:#16264a;--rf-critical:#ff8b85;--rf-critical-bg:#3a1820;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] {padding:0;display:flex;flex-direction:column;gap:0;overflow:hidden;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-header {padding:20px 22px 14px;border-bottom:1px solid var(--rf-line);flex:none;text-align:left;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-heading {display:flex;align-items:center;gap:12px;padding-right:26px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-heading h2 {font:650 18px/1.5 'GoverNara Review Detail Inter',Inter,system-ui,sans-serif;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-icon {width:36px;height:36px;flex:none;border-radius:10px;background:var(--rf-critical-bg);color:var(--rf-critical);display:grid;place-items:center;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-context {display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-context span {padding:2px 9px;border-radius:999px;border:1px solid var(--rf-line);background:var(--rf-sunk);color:var(--rf-ink2);font-size:11.5px;font-weight:600;overflow-wrap:anywhere;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-context span + span {color:var(--rf-accent);background:var(--rf-soft);}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-form {display:flex;flex:1;min-height:0;flex-direction:column;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-form > .review-finding-body {flex:1;min-height:0;overflow:auto;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-footer {flex:none;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] :is(button,input,textarea) {font-family:inherit;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] :is(button,input,textarea,a):focus-visible {outline:2px solid var(--rf-accent);outline-offset:2px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-body {padding:18px 22px 22px;display:flex;flex-direction:column;gap:14px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-card {border:1px solid var(--rf-line);border-radius:14px;padding:16px;min-width:0;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-card > header {display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-card h3 {font-size:14px;font-weight:650;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-card > header > span:last-child {font-size:12px;color:var(--rf-muted);margin-left:auto;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-number {width:22px;height:22px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--rf-soft);color:var(--rf-accent);font-size:12px;font-weight:600;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-field + .review-finding-field,.ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-two-columns,.ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-remediation-notes {margin-top:12px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] :is(.review-finding-field label,.review-finding-label) {display:block;font-size:12.5px;font-weight:600;color:var(--rf-ink2);margin-bottom:6px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-required {color:var(--rf-critical);}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-optional {font-size:11px;font-weight:400;color:var(--rf-muted);}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-field :is(input,textarea,button[aria-haspopup=dialog]) {width:100%;min-width:0;min-height:40px;border:1px solid var(--rf-line2);border-radius:9px;padding:9px 11px;background:var(--rf-card);color:var(--rf-ink);font-size:14px;height:auto;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-field textarea.ui-control {min-height:84px;line-height:1.5;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-remediation-notes textarea.ui-control {min-height:76px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-severity {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-severity button {--rf-severity:#6b7686;text-align:left;border:1px solid var(--rf-line2);border-radius:10px;padding:9px 10px;background:var(--rf-card);color:var(--rf-ink);min-width:0;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-severity [data-severity=medium] {--rf-severity:#d08a1a;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-severity [data-severity=high] {--rf-severity:#e0582f;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-severity [data-severity=critical] {--rf-severity:#c81e1e;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-severity [aria-pressed=true] {border-color:var(--rf-severity);background:color-mix(in srgb,var(--rf-severity) 7%,var(--rf-card));box-shadow:0 0 0 2px color-mix(in srgb,var(--rf-severity) 16%,transparent);}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-severity strong {display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-severity i {width:8px;height:8px;flex:none;border-radius:50%;background:var(--rf-severity);}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-severity small {display:block;font-size:11px;line-height:1.3;color:var(--rf-muted);margin-top:4px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-source {display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:8px 10px;border:1px solid var(--rf-line);border-radius:9px;background:var(--rf-sunk);color:var(--rf-ink2);font-size:12px;overflow-wrap:anywhere;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-source svg {flex:none;margin-top:2px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-two-columns {display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-two-columns > .review-finding-field {margin-top:0;min-width:0;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-help {font-size:12px;color:var(--rf-muted);margin-top:6px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-quick-dates {display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-quick-dates button {border:1px solid var(--rf-line2);border-radius:999px;padding:2px 9px;color:var(--rf-ink2);background:var(--rf-sunk);font-size:11.5px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-footer {padding:14px 22px;background:var(--rf-sunk);border-top:1px solid var(--rf-line);}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-summary {display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--rf-ink2);}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-summary svg {flex:none;margin-top:2px;color:var(--rf-accent);}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-buttons {display:flex;justify-content:flex-end;gap:10px;margin-top:12px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-buttons button {height:auto;padding:8px 14px;border-radius:9px;border:1px solid var(--rf-line2);background:var(--rf-card);color:var(--rf-ink);font-size:13.5px;}
+:root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-buttons [type=submit] {background:var(--rf-accent);border-color:var(--rf-accent);color:var(--rf-accent-ink);font-weight:600;}
+@media(max-width:760px){
+  :root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] :is(.review-finding-header,.review-finding-body,.review-finding-footer) {padding-left:16px;padding-right:16px;}
+  :root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-severity {grid-template-columns:repeat(2,minmax(0,1fr));}
+  :root .ui-sheet.brawndo-review-finding[data-testid=review-finding-form] .review-finding-two-columns {grid-template-columns:minmax(0,1fr);}
+}

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import secrets
 import unittest
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import test_client_dashboard_sources as harness
@@ -112,6 +113,16 @@ class IdentityLifecycleTests(unittest.IsolatedAsyncioTestCase):
                 'token': token, 'new_password': secrets.token_urlsafe(24),
             })
             self.assertEqual(result.status_code, 400)
+
+    async def test_authentication_rate_limit_is_enforced_within_the_isolated_peer(self):
+        password = secrets.token_urlsafe(24)
+        # Replace only this boundary's clock dependency, not asyncio's clock.
+        with patch.object(server.security_runtime, 'time', SimpleNamespace(monotonic=lambda: 1.0)):
+            responses = [await self.client.post('/api/auth/reset-password', json={
+                'token': 'isolated-invalid-token', 'new_password': password,
+            }) for _ in range(31)]
+        self.assertEqual([response.status_code for response in responses[:30]], [400] * 30)
+        self.assertEqual(responses[30].status_code, 429)
 
     async def test_disable_preserves_work_and_revokes_all_auth_material(self):
         token = await self.reset_token()

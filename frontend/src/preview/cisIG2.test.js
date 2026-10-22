@@ -3,6 +3,7 @@ import {previewAdapter} from './commandTestAdapter';
 import {readStore,STORE_KEY,clone} from './store';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,activeDefinitions,activePlans,reviewDrivers} from '../lib/frameworks';
+import {cisDemoSelection,CIS_DEMO_REVISION} from './cisDemoSelection';
 import {cisReviewBriefs} from '../lib/cisOperations';
 import {complianceNavigation} from '../lib/complianceNavigation';
 const api=axios.create({adapter:previewAdapter});
@@ -13,17 +14,29 @@ const blobText=blob=>new Promise((resolve,reject)=>{const reader=new FileReader(
 const scope=async(group,extra={},key='scope_change_'+Date.now()+Math.random().toString(36).slice(2))=>api.patch('/frameworks/cis-ig1/configuration',{client_id:cid,implementation_group:group,expected_updated_at:(await workspace()).configuration.expected_updated_at,...extra},{headers:{'Idempotency-Key':key}});
 beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');cid=(await api.post('/clients',{name:'Disposable cumulative scope QA'})).data.client_id;});
 
-test('canonical partition and fresh Initech have no fabricated assessment work or user grants',async()=>{
+test('canonical partition and explicit fictional Initech match the strict IG2 manifest without user grants',async()=>{
   expect(activeDefinitions('cis-ig1')).toHaveLength(56);expect(activeDefinitions('cis-ig1',{implementation_group:2})).toHaveLength(130);
   expect(activePlans('cis-ig1')).toHaveLength(12);expect(activePlans('cis-ig1',{implementation_group:2})).toHaveLength(15);
   const db=readStore(),id='demo_initech',rows=db.framework_assessments.filter(r=>r.client_id===id);
   expect(rows).toHaveLength(130);expect(new Set(rows.map(r=>r.definition_id)).size).toBe(130);
-  for(const r of rows){expect(r.status).toBe('not_assessed');expect(r.verification||'not_verified').toBe('not_verified');expect(r.implementation).toBe('');expect(r.assessment_history).toEqual([]);expect(r.owner_id).toBeNull();}
+  const manifest=cisDemoSelection(2);
+  expect(rows.map(row=>row.definition_id).sort()).toEqual(activeDefinitions('cis-ig1',{implementation_group:2}).map(row=>row.id).sort());
+  expect(rows.some(row=>row.assessment_history.length)).toBe(true);
+  for(const row of rows){
+    expect(db.contacts.some(contact=>contact.client_id===id&&contact.contact_id===row.process_owner_id)).toBe(true);
+    for(const event of row.assessment_history)expect(event.source).toBe('Explicit fictional Demo operating history');
+  }
   expect(db.contacts.filter(r=>r.client_id===id).map(r=>r.name)).toEqual(['Bill Lumbergh','Peter Gibbons','Michael Bolton','Samir Nagheenanajar','Tom Smykowski','Milton Waddams','Nina']);
   expect(db.users.some(r=>r.user_id.startsWith(id))).toBe(false);
-  for(const kind of ['findings','tasks','evidence','risks','policies'])expect(db[kind].filter(r=>r.client_id===id)).toEqual([]);
-  expect(db.reviews.filter(r=>r.client_id===id)).toHaveLength(15);
-  expect(db.reviews.filter(r=>r.client_id===id).every(r=>r.status==='needs_scheduling'&&!r.due_date&&!r.occurrences?.length)).toBe(true);
+  expect(db.cis_demo_rollout.clients[id].revision).toBe(CIS_DEMO_REVISION);
+  const policies=db.policies.filter(row=>row.client_id===id);
+  expect(policies).toHaveLength(10);
+  expect(policies.map(row=>row.baseline_key).sort()).toEqual(manifest.policies.filter(row=>row.include).map(row=>row.policy_key).sort());
+  const reviews=db.reviews.filter(row=>row.client_id===id);
+  expect(reviews).toHaveLength(18);
+  expect(reviews.filter(row=>row.framework_key==='cis-ig1')).toHaveLength(15);
+  for(const followup of manifest.native_followups)expect(reviews.find(row=>row.review_id===followup.review_id)).toBeTruthy();
+  for(const kind of ['findings','tasks','evidence','risks'])expect(db[kind].filter(row=>row.client_id===id).length).toBeGreaterThan(0);
 });
 
 test('upgrade exactly 74, reduction retains data and reenable recovers identities and schedules',async()=>{
@@ -90,7 +103,8 @@ test('new IG2, later enablement, persisted save failure and authorization bounda
   await api.patch('/onboarding/programs/cis-ig1',{client_id:cid,applicability:'applies',implementation_group:2});expect((await workspace()).assessments).toHaveLength(130);
   for(const group of [0,4,true,'2',null])await expect(scope(group)).rejects.toBeTruthy();
   const db=readStore(),old=db.clients.find(r=>r.client_id===cid).cis_configuration_updated_at;
-  const storage=jest.spyOn(Storage.prototype,'setItem').mockImplementationOnce(()=>{throw new DOMException('Quota exceeded','QuotaExceededError');});
+  const storage=jest.spyOn(Storage.prototype,'setItem')
+    .mockImplementation(()=>{throw new DOMException('Quota exceeded','QuotaExceededError');});
   await expect(scope(2)).rejects.toBeTruthy();storage.mockRestore();expect(readStore().clients.find(r=>r.client_id===cid).cis_configuration_updated_at).toBe(old);
   db.user={...db.user,role:'client_grc_manager',client_ids:[cid]};sessionStorage.setItem(STORE_KEY,JSON.stringify(db));await expect(scope(2)).rejects.toMatchObject({response:{status:403}});
   db.user={...db.user,role:'platform_admin',client_ids:['demo_brawndo']};sessionStorage.setItem(STORE_KEY,JSON.stringify(db));await expect(workspace()).rejects.toMatchObject({response:{status:403}});

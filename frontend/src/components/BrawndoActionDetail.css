@@ -1,0 +1,293 @@
+@font-face {
+  font-family: 'GoverNara Action Detail Inter';
+  src: url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* Appearance only. BrawndoFullRecord retains dialog geometry and scrolling. */
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] {
+  --bad-card: #ffffff;
+  --bad-sunk: #f6f8fb;
+  --bad-line: #e2e7ef;
+  --bad-line2: #cfd7e3;
+  --bad-ink: #0f1a2e;
+  --bad-ink2: #46536a;
+  --bad-muted: #6b7686;
+  --bad-accent: #2f64e0;
+  --bad-accent-ink: #ffffff;
+  --bad-accent-soft: #e8efff;
+  --bad-ok: #137a43;
+  --bad-ok-bg: #e5f5ec;
+  --bad-warn: #8a4b05;
+  --bad-warn-bg: #fdf3e1;
+  --bad-critical: #b42318;
+  --bad-critical-bg: #fdebea;
+  --bad-info: #2f4fa8;
+  --bad-info-bg: #eef3ff;
+  --bad-quote: #f3f6fb;
+  --bad-focus: #2f64e0;
+  background: var(--bad-card);
+  color: var(--bad-ink);
+  font-family: 'GoverNara Action Detail Inter', Inter, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+:is(html[data-brawndo-portal='dark']:not([data-brawndo-workspace]),html[data-brawndo-workspace='dark']) .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] {
+  --bad-card: #0d1729;
+  --bad-sunk: #0a1322;
+  --bad-line: #1c2842;
+  --bad-line2: #2a3858;
+  --bad-ink: #eef3fb;
+  --bad-ink2: #b7c2d3;
+  --bad-muted: #8793a6;
+  --bad-accent: #6f9bff;
+  --bad-accent-ink: #06101f;
+  --bad-accent-soft: #16264a;
+  --bad-ok: #5fd394;
+  --bad-ok-bg: #0f2e20;
+  --bad-warn: #f5c26b;
+  --bad-warn-bg: #3a2a12;
+  --bad-critical: #ff8b85;
+  --bad-critical-bg: #3a1820;
+  --bad-info: #a9c4ff;
+  --bad-info-bg: #15254a;
+  --bad-quote: #0a1424;
+  --bad-focus: #85c4ff;
+}
+
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record button,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record input,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record select,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record textarea {
+  font-family: 'GoverNara Action Detail Inter', Inter, system-ui, sans-serif;
+}
+
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .ticket-heading {
+  padding: 20px 24px 0;
+  background: var(--bad-card);
+  color: var(--bad-ink);
+  border-bottom: 1px solid var(--bad-line);
+}
+
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-title-row { display: flex; align-items: flex-start; gap: 14px; padding-right: 44px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-title-row > :not(.bad-icon) { min-width: 0; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-icon {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: 40px; height: 40px; border-radius: 11px;
+  border: 1px solid var(--bad-line);
+  background: linear-gradient(135deg, #85c4ff33, #9698fe33);
+  color: var(--bad-accent);
+}
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .ticket-heading h1,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .ticket-heading h2 {
+  margin: 0; color: var(--bad-ink); font-size: 20px;
+  line-height: 1.5; font-weight: 650; letter-spacing: -.01em;
+  overflow-wrap: anywhere;
+  text-wrap: wrap;
+}
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; color: var(--bad-muted); font-size: 12.5px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-chip[data-tone='plain'] { background: var(--bad-sunk); color: var(--bad-ink2); border: 1px solid var(--bad-line); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-chip[data-tone='info'] { background: var(--bad-info-bg); color: var(--bad-info); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-chip[data-tone='warn'] { background: var(--bad-warn-bg); color: var(--bad-warn); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-chip[data-tone='critical'] { background: var(--bad-critical-bg); color: var(--bad-critical); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-chip[data-tone='ok'] { background: var(--bad-ok-bg); color: var(--bad-ok); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] [data-priority='low'] { --bad-priority: #6b7686; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] [data-priority='medium'] { --bad-priority: #d08a1a; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] [data-priority='high'] { --bad-priority: #e0582f; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] [data-priority='critical'] { --bad-priority: #c81e1e; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-chip[data-priority]::before,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-segments [data-priority]::before { content: ''; width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: var(--bad-priority, var(--bad-muted)); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 16px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-step { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-right: 10px; min-width: 0; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-bar { display: block; width: 100%; height: 4px; border-radius: 4px; background: var(--bad-line); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-step-label { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--bad-muted); font-size: 12px; font-weight: 500; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-step-label small { color: var(--bad-muted); font-weight: 400; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-step[data-state='done'] .bad-bar { background: var(--bad-ok); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-step[data-state='done'] .bad-step-label { color: var(--bad-ok); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-step[data-state='current'] .bad-bar { background: linear-gradient(90deg, var(--bad-accent) 55%, var(--bad-line) 55%); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-step[data-state='blocked'] .bad-bar { background: linear-gradient(90deg, var(--bad-warn) 55%, var(--bad-line) 55%); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-step[data-state='current'] .bad-step-label,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-step[data-state='blocked'] .bad-step-label { color: var(--bad-ink); font-weight: 650; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-tabs { display: flex; gap: 4px; margin-top: 16px; overflow-x: auto; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .bad-tabs button[role='tab'] { display: inline-flex; align-items: center; gap: 6px; padding: 10px 12px; background: transparent; color: var(--bad-muted); border: 0; border-radius: 0; border-bottom: 2px solid transparent; font-size: 13.5px; font-weight: 400; white-space: nowrap; box-shadow: none; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .bad-tabs button[aria-selected='true'] { color: var(--bad-ink); border-bottom-color: var(--bad-accent); font-weight: 600; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-tabs button span { padding: 0 6px; border: 1px solid var(--bad-line); border-radius: 999px; background: var(--bad-sunk); color: var(--bad-muted); font-size: 11px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .bad-body { padding: 22px 24px 26px; background: var(--bad-card); color: var(--bad-ink); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-panel[hidden] { display: none; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why { position: relative; overflow: hidden; border: 1px solid var(--bad-line); border-radius: 14px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--bad-priority, var(--bad-accent)); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why-head { padding: 16px 18px 6px 22px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-kicker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--bad-muted); font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why-title { margin: 6px 0 0; color: var(--bad-ink); font-size: 16px; font-weight: 650; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why-description { padding: 4px 18px 14px 22px; color: var(--bad-ink2); overflow-wrap: anywhere; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why-description p { margin: 6px 0 0; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 18px 12px 22px; border-top: 1px solid var(--bad-line); background: var(--bad-sunk); font-size: 13.5px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin a { color: var(--bad-accent); font-weight: 600; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why blockquote { margin: 0 18px 14px 22px; padding: 14px 16px; border-left: 3px solid var(--bad-accent); border-radius: 0 10px 10px 0; background: var(--bad-quote); color: var(--bad-ink2); font-size: 14px; line-height: 1.6; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record [data-ticket-task] { margin-top: 16px; padding: 18px; border: 1px solid var(--bad-line); border-radius: 14px; background: var(--bad-card); color: var(--bad-ink); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-work-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-work-heading b { font-size: 14px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-work-heading small { font-size: 12.5px; color: var(--bad-muted); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .ticket-work-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 16px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields > * { min-width: 0; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields label { color: var(--bad-ink2); font-size: 12.5px; font-weight: 600; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record input:not([type='checkbox']):not([type='radio']):not([type='file']),
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record select,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record textarea { width: 100%; min-height: 40px; padding: 9px 11px; border: 1px solid var(--bad-line2); border-radius: 9px; background: var(--bad-card); color: var(--bad-ink); font-size: 14px; line-height: 1.5; box-shadow: none; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record textarea { min-height: 84px; resize: vertical; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record input::placeholder,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record textarea::placeholder { color: var(--bad-muted); opacity: 1; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record :is(input, select, textarea):focus { outline: none; border-color: var(--bad-accent); box-shadow: 0 0 0 3px var(--bad-accent-soft); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] :focus-visible { outline: 2px solid var(--bad-focus); outline-offset: 2px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-segments { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border: 1px solid var(--bad-line2); border-radius: 9px; background: var(--bad-card); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .bad-segments button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border: 0; border-radius: 6px; background: transparent; color: var(--bad-muted); font-size: 12.5px; font-weight: 400; box-shadow: none; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .bad-segments button[aria-pressed='true'] { background: var(--bad-accent-soft); color: var(--bad-ink); font-weight: 600; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-work-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-work-actions small { color: var(--bad-muted); font-size: 12.5px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-due-help { display: block; margin-top: 4px; color: var(--bad-muted); font-size: 12px; font-weight: 400; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-due-help[data-overdue='true'] { color: var(--bad-critical); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-state-card { margin-top: 16px; padding: 16px 18px; border: 1px solid; border-radius: 14px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-state-card[data-tone='info'] { border-color: color-mix(in srgb, var(--bad-accent) 50%, transparent); background: var(--bad-accent-soft); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-state-card[data-tone='ok'] { border-color: color-mix(in srgb, var(--bad-ok) 45%, transparent); background: var(--bad-ok-bg); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-state-card h3,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-state-card h4 { margin: 0 0 6px; color: var(--bad-ink); font-size: 14.5px; font-weight: 650; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-state-note { margin-top: 4px; color: var(--bad-ink2); font-size: 13.5px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-state-card .bad-state-note { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--bad-line); border-radius: 9px; background: var(--bad-card); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-accept { margin-top: 16px; border: 1px solid var(--bad-line); border-radius: 12px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-accept summary { padding: 11px 14px; color: var(--bad-ink2); font-size: 13px; font-weight: 500; cursor: pointer; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-accept > :not(summary) { margin: 0 14px 14px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-upload { padding: 26px; border: 1.5px dashed var(--bad-line2); border-radius: 14px; background: var(--bad-sunk); text-align: center; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-evidence { margin-top: 18px; color: var(--bad-ink); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-history { color: var(--bad-ink); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-activity-row { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: start; gap: 12px; padding: 10px 0; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-event-icon { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--bad-line); border-radius: 50%; background: var(--bad-card); color: var(--bad-muted); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-event-content { font-size: 13.5px; overflow-wrap: anywhere; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-event-time { color: var(--bad-muted); font-size: 12px; text-align: right; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .ticket-footer { display: flex; align-items: center; gap: 10px; padding: 12px 24px; border-top: 1px solid var(--bad-line); background: var(--bad-sunk); color: var(--bad-ink); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-dirty { color: var(--bad-muted); font-size: 12.5px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-footer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-left: auto; padding-left: 10px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record button:where(:not([role='tab']):not(.bad-segments button)) { border-color: var(--bad-line2); border-radius: 9px; background: var(--bad-card); color: var(--bad-ink); font-size: 13.5px; font-weight: 500; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record button:where(:not([role='tab']):not(.bad-segments button):not([aria-label='Close'])) { padding: 8px 14px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record button:is(.btn-primary, .bad-primary, [data-variant='primary']) { border-color: var(--bad-accent); background: var(--bad-accent); color: var(--bad-accent-ink); font-weight: 600; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record button:disabled { opacity: .45; cursor: not-allowed; }
+
+@media (max-width: 760px) {
+  .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .ticket-heading,
+  .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .bad-body { padding-left: 16px; padding-right: 16px; }
+  .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .ticket-footer { padding: 12px 16px; flex-wrap: wrap; }
+  .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .ticket-work-fields { grid-template-columns: minmax(0, 1fr); }
+  .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 10px; }
+  .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why-head,
+  .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why-description,
+  .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin { padding-left: 18px; padding-right: 14px; }
+  .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-activity-row { grid-template-columns: 30px minmax(0, 1fr); }
+  .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-event-time { grid-column: 2; text-align: left; }
+}
+
+/* Wrappers stay mounted during theme/scope rechecks and tab changes. */
+.remediation-ticket-dialog:not(.brawndo-action-detail) .bad-panel,
+.remediation-ticket-dialog:not(.brawndo-action-detail) .bad-state-slot { display: contents; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview { display: flex; flex-direction: column; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview[hidden] { display: none; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview > .bad-why { order: 1; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview > .bad-state-slot { order: 2; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview > [data-ticket-task] { order: 3; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview > .bad-accept { order: 4; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-state-slot:not(.bad-state-card):empty { display: none; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-work-heading strong { font-size: 14px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-work-heading > span { color: var(--bad-muted); font-size: 12.5px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields > .block > span { display: block; margin-bottom: 5px; color: var(--bad-ink2); font-size: 12.5px; font-weight: 600; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why[data-severity='low'] { --bad-priority: #6b7686; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why[data-severity='medium'] { --bad-priority: #d08a1a; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why[data-severity='high'] { --bad-priority: #e0582f; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why[data-severity='critical'] { --bad-priority: #c81e1e; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin button { padding: 0; color: var(--bad-accent); background: none; border: 0; border-radius: 0; font-weight: 600; text-align: left; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-history > summary { display: none; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-progress .bad-step > span { color: var(--bad-muted); font-size: 12px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] > .ticket-heading { padding-right: 56px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] :where(*) { font-family: 'GoverNara Action Detail Inter', Inter, system-ui, sans-serif; }
+
+.remediation-ticket-dialog:not(.brawndo-action-detail) .bad-footer-actions { display: contents; }
+
+/* Only the verified workspace passes this opt-in to its native owner picker. */
+:root .ui-popover.brawndo-action-owner-popover,
+:root .ui-popover.brawndo-action-owner-popover :where(*) {
+  font-family: 'GoverNara Action Detail Inter', Inter, system-ui, sans-serif;
+  font-size: 13.5px;
+}
+:root .ui-popover.brawndo-action-owner-popover {
+  --font-body: 'GoverNara Action Detail Inter', Inter, system-ui, sans-serif;
+  color: #0f1a2e; background: #ffffff; border-color: #cfd7e3;
+}
+:is(html[data-brawndo-portal='dark']:not([data-brawndo-workspace]),html[data-brawndo-workspace='dark']) .ui-popover.brawndo-action-owner-popover {
+  color: #eef3fb; background: #0d1729; border-color: #2a3858;
+}
+:root .ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role='dialog'].brawndo-full-record > button:last-child {
+  display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; background: none;
+}
+
+/* Preserve baseline select spacing without wrapping segmented buttons in a label. */
+.remediation-ticket-dialog:not(.brawndo-action-detail) .ticket-choice-field { font-size: 13px; font-weight: 500; }
+.remediation-ticket-dialog:not(.brawndo-action-detail) .ticket-choice-field > select { display: block; margin-top: 5px; }
+
+/* Native explanatory content remains after the concept's provenance and Work. */
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview > * { order: 5; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview > [role='status'] { order: 0; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview > .bad-why { order: 1; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview > .bad-state-slot { order: 2; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview > [data-ticket-task] { order: 3; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-overview > .bad-accept { order: 4; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why-description { margin: 0; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--bad-info-bg); color: var(--bad-info); flex-shrink: 0; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin > p { margin: 0; flex: 0 1 auto; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin > details { margin-left: auto; padding: 0; border: 0; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin > details > summary { padding: 0; margin: 0; color: var(--bad-accent); font-size: 13.5px; font-weight: 600; list-style: none; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin > details[open] { flex-basis: 100%; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin > details[open] > summary { text-align: right; margin-bottom: 12px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-quote-hide,
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin > details[open] .bad-quote-show { display: none; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-origin > details[open] .bad-quote-hide { display: inline; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields > .grid > div { color: var(--bad-ink2); font-size: 12.5px; font-weight: 600; }
+
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-upload-icon { display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto 10px; border: 1px solid var(--bad-line); border-radius: 12px; background: var(--bad-card); color: var(--bad-accent); }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-upload-description { display: block; color: var(--bad-muted); font-size: 12.5px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-upload-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-top: 14px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-choose-files { display: inline-flex; padding: 8px 14px; border: 1px solid var(--bad-accent); border-radius: 9px; background: var(--bad-accent); color: var(--bad-accent-ink); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-upload-choice:focus-within .bad-choose-files { outline: 2px solid var(--bad-focus); outline-offset: 2px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-upload-choice[data-disabled='true'] .bad-choose-files { opacity: .45; cursor: not-allowed; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields .text-xs { font-size: 12px; font-weight: 400; }
+
+/* Match measured reference line boxes while retaining native input/picker behavior. */
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-sub { line-height: 1.5; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-why-description { padding-top: 10px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ui-button { height: auto; min-height: 0; line-height: 1.5; border-width: 1px; border-style: solid; box-shadow: none; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields button[aria-haspopup='dialog'] { min-height: 40px; padding: 9px 11px; font-size: 14px; font-weight: 400; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields input[type='date'] { display: block; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-footer { font-size: 14px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"].brawndo-full-record .ticket-footer[data-single-action] {flex-wrap:nowrap;}
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-footer[data-single-action] .bad-dirty {min-width:0;}
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-footer[data-single-action] .bad-footer-actions {flex-shrink:0;}
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-body > .bad-panel {margin-top:0;}
+
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-upload > strong { display: block; font-size: 14.5px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-upload-actions > .ui-button { padding: 8px 14px; border-color: var(--bad-line2); border-radius: 9px; background: var(--bad-card); color: var(--bad-ink); font-size: 13.5px; font-weight: 500; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-upload-actions > .ui-button:hover { border-color: var(--bad-accent); }
+
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-state-note small { display: block; margin-bottom: 3px; color: var(--bad-muted); font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] [data-assignee-inactive] { margin-top: 14px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--bad-warn) 45%, transparent); border-radius: 12px; background: var(--bad-warn-bg); color: var(--bad-ink); font-size: 13.5px; line-height: 1.5; }
+
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-due-help[data-upcoming='true'] { color: var(--bad-warn); }
+
+/* Keep native inputs and owner picker aligned with the reference field grid. */
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields > .grid { column-gap: 16px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields > .grid > div > div { margin-top: 5px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields > .grid > div > div > p[id] { margin-top: 5px; line-height: 1.5; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .ticket-work-fields input:not([type='checkbox']):not([type='radio']):not([type='file']) { height: auto; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-due-help { margin-top: 5px; }
+.ui-dialog.remediation-ticket-dialog.brawndo-action-detail[data-state][data-testid][role="dialog"] .bad-segments { display: flex; }

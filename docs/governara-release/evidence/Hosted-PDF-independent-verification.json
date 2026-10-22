@@ -1,0 +1,166 @@
+{
+  "reviewed_at": "2026-10-13T19:34:37.083Z",
+  "owner_reported_deployed_source": "bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+  "owner_reported_deployment": "dep-db780cij9qps73bcu1sg",
+  "provenance_boundary": "Actual downloaded PDFs supplied by integration owner; browser/network/authentication/deployment origin not independently observed here.",
+  "source_files": [
+    {
+      "file": "hosted-soc-full.pdf",
+      "sha256": "76a9a558e26931217381f70355386b35b8c56228a15a9f03de490189d77b1f15",
+      "pages": 29,
+      "bytes": 95201
+    },
+    {
+      "file": "hosted-soc-executive.pdf",
+      "sha256": "cc9058af2b34c6a6e023c97170cb7b21bb41ff7ecca13d041b70e93d4c5f1c68",
+      "pages": 5,
+      "bytes": 61126
+    },
+    {
+      "file": "hosted-cis-full.pdf",
+      "sha256": "3490971123fe8392650cf1e3d55d13a61da90338830893503f54f30eb8487127",
+      "pages": 35,
+      "bytes": 102016
+    },
+    {
+      "file": "hosted-cis-executive.pdf",
+      "sha256": "aa77b9998824cd578412c15eed43dfb211272b4b5c98e9ca9202667c2329e807",
+      "pages": 5,
+      "bytes": 60796
+    },
+    {
+      "file": "hosted-iso-full.pdf",
+      "sha256": "ebbc34a0f5d3223c15939b005adcee8473180c4efaae624f7de5beeae8a988a9",
+      "pages": 69,
+      "bytes": 151266
+    },
+    {
+      "file": "hosted-iso-executive.pdf",
+      "sha256": "d670e5389f29baa016c181463b0b39ec0a6b86561ab581ed7a83534d04a417d5",
+      "pages": 5,
+      "bytes": 61191
+    }
+  ],
+  "source_hashes_stable": true,
+  "extracted_text_pages": 148,
+  "text_bounds_outside_page": [],
+  "rendered_and_visually_inspected_pages": {
+    "hosted-soc-full.pdf": [
+      1,
+      2,
+      3,
+      7,
+      8,
+      9,
+      10,
+      11,
+      29
+    ],
+    "hosted-soc-executive.pdf": [
+      1
+    ],
+    "hosted-cis-full.pdf": [
+      1,
+      6,
+      35
+    ],
+    "hosted-cis-executive.pdf": [
+      1
+    ],
+    "hosted-iso-full.pdf": [
+      1,
+      2,
+      3,
+      5,
+      26,
+      69
+    ],
+    "hosted-iso-executive.pdf": [
+      1
+    ]
+  },
+  "visual_pages_inspected": 21,
+  "visual_resolution_dpi": 110,
+  "extractors": [
+    "pdfplumber 0.11.9",
+    "pypdf 6.10.0"
+  ],
+  "render_engine": "Bundled Poppler pdftoppm",
+  "metrics": {
+    "soc": {
+      "total": 38,
+      "addressed": 0,
+      "in_progress": 0,
+      "needs_attention": 2,
+      "not_assessed": 36,
+      "implementation": {
+        "implemented": 0,
+        "denominator": 38
+      },
+      "resolution": {
+        "resolved": 0,
+        "total": 38
+      },
+      "not_verified": 38
+    },
+    "cis": {
+      "total": 56,
+      "not_assessed": 56,
+      "implementation": {
+        "implemented": 0,
+        "denominator": 56
+      },
+      "resolution": {
+        "resolved": 0,
+        "total": 56
+      },
+      "not_verified": 56
+    },
+    "iso": {
+      "total": 123,
+      "addressed": 1,
+      "not_assessed": 122,
+      "implementation": {
+        "implemented": 1,
+        "denominator": 31,
+        "displayed_percent": 3.2,
+        "isms_total": 30,
+        "included_annex": 1,
+        "undetermined_annex": 92,
+        "excluded_annex": 0
+      },
+      "resolution": {
+        "resolved": 1,
+        "total": 123,
+        "displayed_percent": 1
+      },
+      "not_verified": 123
+    }
+  },
+  "narrative": {
+    "soc_source_characters": 7351,
+    "cis_source_characters": 689,
+    "comparison": "Complete ordered text/punctuation matched in two extractors after repeated page furniture removal and layout whitespace normalization; no claim of PDF/native byte equality.",
+    "soc_numbered_qa_lines": 55,
+    "soc_end_marker_present": true,
+    "soc_u2014": 3,
+    "soc_ufffd": 0
+  },
+  "items": {
+    "soc_open": 3,
+    "retained_resolution_characters": 76,
+    "explicit_finding_reference_present": true,
+    "native_finding_id_equality": "Not independently established: supplied UI title receipt has no native Finding ID.",
+    "cis_saved_items": 0,
+    "iso_saved_items": 0
+  },
+  "verdict": "No material inconsistency or clipping/overlap detected in extracted content and selected rendered pages.",
+  "limits": [
+    "No browser/session/provider access or custody",
+    "No new application edits or test campaign",
+    "Hosted lifecycle/persistence/authorization actions are owner-reported",
+    "No whole-report visual inspection of all148 pages",
+    "No independent certification of originalPR75",
+    "No native Finding ID equality proof"
+  ]
+}

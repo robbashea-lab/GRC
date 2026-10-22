@@ -1,0 +1,69 @@
+/* Only a current, loaded, authorized IG1 workspace publishes this origin marker. */
+html[data-brawndo-cis-visual=true] {color-scheme:normal}
+html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] {color-scheme:dark}
+html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .bwp-topbar {padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+html[data-brawndo-cis-visual=true] .bwp-search kbd {display:block}
+html[data-brawndo-cis-visual=true] .bwp-search-results {top:44px;padding:6px;border:0;border-radius:10px;background:var(--tip-bg);box-shadow:var(--shadow-tip);z-index:5}
+html[data-brawndo-cis-visual=true] .bwp-search-results p {margin:6px 8px 4px;font:600 11px/1.5 var(--font);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+html[data-brawndo-cis-visual=true] .bwp-search-results :is(a,span) {padding:7px 9px;border-radius:6px;font:400 13px/1.5 var(--font);color:var(--fg)}
+html[data-brawndo-cis-visual=true] .bwp-search-results a:hover {background:var(--hover)}
+html[data-brawndo-cis-visual=true] .bwp-search-results small {font-size:12px;color:var(--muted)}
+html[data-brawndo-cis-visual=true] .bwp-theme .ic {fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .bsb-head {padding:16px 12px 0;gap:2px}
+html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .bsb-nav {padding:2px 12px 16px;gap:2px}
+html[data-brawndo-cis-visual=true] .bsb-group {gap:2px;border:0;padding-top:0}
+html[data-brawndo-cis-visual=true] .bsb-group>.bsb-group-label {padding:0;margin:16px 10px 6px;font:600 11px/1.5 var(--font);letter-spacing:.06em}
+html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .bsb-link {justify-content:initial}
+html[data-brawndo-cis-visual=true] .bsb-link>span {display:initial}
+html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .bsb-client {display:flex;margin:8px 0 2px;padding:9px 10px;gap:10px;border-width:1px;border-style:solid}
+html[data-brawndo-cis-visual=true] .bsb-group-label {display:block}
+html[data-brawndo-cis-visual=true] .bsb-client-name {font:600 13.5px/1.3 var(--font)}
+html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .bsb-client-industry {display:block}
+html[data-brawndo-cis-visual=true] .bsb-client>span:last-child {min-width:auto}
+html[data-brawndo-cis-visual=true] .bsb-client .bsb-group-label {display:none}
+html[data-brawndo-cis-visual=true] .bsb-back {justify-content:initial}
+html[data-brawndo-cis-visual=true] .bsb-back svg {width:16px;height:16px;flex:none}
+html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .app-workspace {background:var(--bg)}
+html[data-brawndo-cis-visual=true] .client-surface {padding:0;background:transparent;min-height:0}
+html[data-brawndo-cis-visual=true] .section-body {padding:0}
+/* Storage/recovery remains available in the existing account menu. */
+html[data-brawndo-cis-visual=true] .demo-notice {display:none}
+html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .brawndo-cis-visual[data-theme] {display:grid;align-content:start;gap:20px;margin:0;padding:28px max(24px,env(safe-area-inset-right,0px)) 120px 24px;max-width:1600px;min-height:0;transition:none;background:transparent;color:var(--fg);font:13.5px/1.5 var(--font)}
+.brawndo-cis-visual>* {min-width:0}
+.brawndo-cis-visual>.guided-pilot {display:contents}
+.brawndo-cis-visual :is(h1,h2,h3,h4,p) {margin:0}
+.brawndo-cis-visual :is(button,input,select) {font-family:inherit;color:inherit}
+.brawndo-cis-visual button {cursor:pointer}
+.brawndo-cis-visual .page-head h1 {color:var(--fg)}
+.brawndo-cis-visual .head-actions .primary {max-width:280px;overflow:hidden;text-overflow:ellipsis;display:block}
+.brawndo-cis-visual .ver {display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--fg2);min-width:0}
+.brawndo-cis-visual .ver small {display:block;font-size:12px;color:var(--muted)}
+.brawndo-cis-visual .ver svg {flex:none}
+.brawndo-cis-visual .f-search {font:inherit}
+.brawndo-cis-visual .f-field {font-weight:400}
+.brawndo-cis-visual .v-verified svg {color:var(--good)}
+.brawndo-cis-visual .v-gap_identified svg {color:var(--bad)}
+.brawndo-cis-visual .v-needs_validation svg {color:var(--warn)}
+body[data-brawndo-cis-visual=true] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-select-content,.ui-popover) {background:var(--surface);color:var(--fg);border-color:var(--border)}
+body[data-brawndo-cis-visual=true] .ui-overlay[data-state] {background:var(--scrim);backdrop-filter:blur(3px)}
+body[data-brawndo-cis-visual=true] :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible {outline:2px solid var(--focus);outline-offset:2px}
+@media(min-width:861px) and (max-width:1023px) {
+  html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .app-sidebar {display:flex}
+}
+@media(max-width:860px) {
+  html[data-brawndo-cis-visual=true] .bwp-mobile-nav {display:grid}
+  html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot[data-cis-visual=true] .bwp-brand {min-width:0;width:auto}
+  html[data-brawndo-cis-visual=true] .bwp-brand small,html[data-brawndo-cis-visual=true] .bwp-search {display:none}
+  html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot[data-cis-visual=true] .bwp-theme {margin-left:auto}
+  html[data-brawndo-cis-visual=true] .bwp-client .bwp-client-name {display:none}
+  html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot[data-navigation=closed] .app-sidebar {display:none}
+  html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot[data-navigation=open] .app-sidebar {display:flex;position:fixed;width:260px;z-index:45;left:0;top:60px}
+  html[data-brawndo-cis-visual=true] .bwp-nav-backdrop {display:block;inset:60px 0 0;background:var(--scrim)}
+  html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .brawndo-cis-visual[data-theme] {padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .brawndo-cis-visual :is(.card-head,.snap,.card-foot) {padding-left:16px;padding-right:16px}
+  .brawndo-cis-visual .snap {grid-template-columns:minmax(0,1fr)}
+  .brawndo-cis-visual .now-value {font-size:46px}
+  .brawndo-cis-visual .f-right {margin-left:0}
+}
+@media(max-width:520px) {html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot[data-cis-visual=true] .bwp-topbar [data-testid=notification-bell],html[data-brawndo-cis-visual=true] .bwp-client {display:none}}
+@media(prefers-reduced-motion:reduce) {body[data-brawndo-cis-visual=true] * {animation:none!important;transition:none!important}}

@@ -4,9 +4,11 @@ import Contacts from './Contacts';
 import ContactWorkspace from '@/components/ContactWorkspace';
 import api from '@/lib/api';
 let mockClient='a';
+let mockAdditional=false;
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Brawndo'}})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{client_id:mockClient,name:'Brawndo',primary_contact_id:'c'}})}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:(_surface,loadedClientId)=>mockAdditional&&!!loadedClientId}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message}));
 jest.mock('react-router-dom',()=>({useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 jest.mock('@/lib/reference',()=>({isReferencePresentation:id=>id==='demo_brawndo'}));
@@ -17,7 +19,7 @@ const click=node=>act(async()=>node.click());
 const button=name=>[...document.querySelectorAll('button')].find(b=>b.textContent===name);
 const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
 const submit=()=>act(async()=>document.querySelector('.contact-workspace-form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='a';mockUser.role='super_admin';container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='a';mockAdditional=false;mockUser.role='super_admin';container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   api.get.mockImplementation(async path=>({data:path==='/contacts'?[row,{...row,contact_id:'old',name:'Former',status:'inactive'}]:path==='/contacts/c'?row:[]}));
   api.post.mockImplementation(async(path,body)=>({data:path==='/contacts'?{...body,contact_id:'c',updated_at:'version-1'}:{user:{user_id:'u'},simulated:true}}));
   api.patch.mockImplementation(async(path,body)=>({data:{...row,...body,updated_at:'version-2'}}));
@@ -59,9 +61,40 @@ test('active account archiving is blocked and readonly users get no mutations',a
 test('tenant switching closes editor and does not show earlier contacts',async()=>{
   await act(async()=>root.render(<Contacts/>));await click(button('Person'));expect(document.querySelector('[role=dialog]')).not.toBeNull();mockClient='b';await act(async()=>root.render(<Contacts/>));expect(document.querySelector('[role=dialog]')).toBeNull();expect(container.textContent).not.toContain('Person');
 });
+test('same-client actor role changes close the editor and reload the authorized directory',async()=>{
+  await act(async()=>root.render(<Contacts/>));await click(button('Person'));expect(document.querySelector('[role=dialog]')).toBeTruthy();
+  const reads=api.get.mock.calls.filter(([path])=>path==='/contacts').length;
+  mockUser.role='client_readonly';await act(async()=>root.render(<Contacts/>));expect(document.querySelector('[role=dialog]')).toBeNull();expect(button('New Contact')).toBeUndefined();expect(api.get.mock.calls.filter(([path])=>path==='/contacts')).toHaveLength(reads+1);
+});
 test('the approved Contacts header is the default for existing and future clients',async()=>{
   mockClient='demo_brawndo';api.get.mockResolvedValue({data:[]});await act(async()=>root.render(<Contacts/>));
   expect(container.querySelector('.bpage h1').textContent).toBe('Contacts');expect(container.querySelector('.bpage-eyebrow').textContent).toBe('Brawndo · People');expect(button('New Contact')).toBeTruthy();
   await act(async()=>root.unmount());root=createRoot(container);mockClient='a';await act(async()=>root.render(<Contacts/>));
   expect(container.querySelector('.bpage')).not.toBeNull();expect(container.querySelector('h1').textContent).toBe('Contacts');
+});
+test('additional presentation keeps the full native workspace and uses actual contact/access facts',async()=>{
+  mockAdditional=true;await act(async()=>root.render(<Contacts/>));
+  expect(container.querySelector('.bac-page')).toBeTruthy();expect(container.querySelectorAll('.bac-segments button')).toHaveLength(3);
+  expect(container.querySelector('h1').textContent).toBe('Brawndo Contacts');expect(container.querySelector('.ba-page-head p').textContent).toBe('People · 1 contact');expect(container.querySelector('.bac-card > h2').classList.contains('sr-only')).toBe(true);expect(container.querySelector('button[aria-label="Switch to dark mode"]')).toBeTruthy();
+  expect(container.textContent).toContain('Primary contact');expect(container.textContent).not.toMatch(/Security Lead|HR Lead|Administrator|Reassign|Export CSV/);
+  expect(container.querySelector('.bac-access').textContent).toBe('No access');
+  await click(button('Person'));expect(document.querySelector('#contact-name').value).toBe('Person');expect(document.querySelector('#contact-email').value).toBe('person@example.test');expect(document.querySelector('#contact-phone')).toBeTruthy();expect(document.body.textContent).toContain('Existing contact notes');expect(button('Save Changes')).toBeTruthy();
+});
+test('a failed directory refresh preserves the open native editor and its new draft after a saved contact invitation fails',async()=>{
+  mockAdditional=true;let directoryReads=0,rejectRefresh;
+  api.get.mockImplementation(async path=>{if(path==='/contacts'){directoryReads++;if(directoryReads===2)return await new Promise((_resolve,reject)=>{rejectRefresh=reject;});return {data:[row]};}return {data:path==='/contacts/c'?row:[]};});
+  api.post.mockImplementation(async(path,body)=>{if(path.endsWith('/invite'))throw Error('Delivery unavailable');return {data:{...body,contact_id:'c',updated_at:'version-2'}};});
+  await act(async()=>root.render(<Contacts/>));await click(button('New Contact'));await input(document.querySelector('#contact-name'),'New person');await input(document.querySelector('#contact-email'),'new@example.test');await click(document.querySelector('.contact-workspace input[type=checkbox]'));await submit();
+  expect(document.body.textContent).toContain('Contact saved. Invitation was not confirmed');expect(rejectRefresh).toBeTruthy();
+  const draftInput=document.querySelector('#contact-title');await input(draftInput,'Draft after saved contact');
+  await act(async()=>rejectRefresh(Error('Directory refresh unavailable')));
+  expect(container.textContent).toContain('Directory refresh unavailable');expect(document.querySelector('#contact-title')).toBe(draftInput);expect(draftInput.value).toBe('Draft after saved contact');expect(button('Save Changes')).toBeTruthy();
+});
+test('access counts stay unknown while loading or failed and recover only after verified account data',async()=>{
+  mockAdditional=true;const accountReads=[];
+  api.get.mockImplementation(async path=>{if(path.endsWith('/contact-accounts'))return await new Promise((resolve,reject)=>accountReads.push({resolve,reject}));return {data:path==='/contacts'?[{...row,linked_user_id:'linked'},{...row,contact_id:'other',name:'Other'}]:[]};});
+  const facets=()=>[...container.querySelectorAll('.bac-segments button')].map(node=>node.textContent);
+  await act(async()=>root.render(<Contacts/>));expect(facets()).toEqual(['All contacts2','Platform access—','Contact only—']);expect(container.querySelector('.bac-summary').textContent).toContain('— active · — pending · — disabled');
+  await act(async()=>accountReads.at(-1).reject(Error('Access unavailable')));expect(container.textContent).toContain('Platform access could not be verified');expect(facets()).toEqual(['All contacts2','Platform access—','Contact only—']);expect(container.querySelector('.bac-summary').textContent).not.toMatch(/0 active|0 pending|0 disabled/);
+  await click(container.querySelector('.bac-alert button'));await act(async()=>accountReads.at(-1).resolve({data:[{user_id:'linked',status:'active',has_client_access:true}]}));expect(facets()).toEqual(['All contacts2','Platform access1','Contact only1']);expect(container.querySelector('.bac-summary').textContent).toContain('1 active · 0 pending · 0 disabled');
 });

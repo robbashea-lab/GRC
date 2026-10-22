@@ -1,3 +1,4 @@
+import {isCisClient} from './cisCapability';
 import {AI_DEFAULTS,AI_KEYS,aiProjection,validateAI,catalog} from '../lib/aiGovernance';
 import {record,write,audit,uid,now,ids} from './store';
 import {reviewView} from '../lib/reviewOccurrences';
@@ -21,14 +22,14 @@ export function aiRequest(db,path,method,params,body){
   const [, ,id,action]=path.split('/');
   if(!id&&method==='get'){checkClient(params.client_id);return db.ai_systems.filter(r=>r.client_id===params.client_id).map(view);}
   const old=id?record(db,'ai_systems',id):null;checkClient(old?.client_id||body.client_id);
-  const pilot=(old?.client_id||body.client_id)==='demo_brawndo';
+  const pilot=isCisClient(db,old?.client_id||body.client_id);
   if(method==='get'&&action==='activity'){
     const reviewIds=db.reviews.filter(r=>r.client_id===old.client_id&&r.ai_system_id===id).map(r=>r.review_id);
     return db.logs.filter(l=>l.client_id===old.client_id&&[id,...reviewIds].includes(l.entity_id));
   }
   if(old?.status==='retired')throw new Error('Retired AI records remain historical');
   if(action==='approval'&&method==='post'){
-    admin();if(!pilot)throw new Error('Approval pilot is available only for Brawndo Demo');
+    admin();if(!pilot)throw new Error('Approval decisions require a configured CIS program');
     if(body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before deciding');
     if(Object.keys(body).some(k=>!['status','note','expected_updated_at'].includes(k)))throw new Error('Unknown decision fields');
     if(!['approved','approved_with_conditions','not_approved'].includes(body.status)||typeof body.note!=='string'||!body.note.trim()||body.note.length>10000)throw new Error('Choose a decision and document its rationale');

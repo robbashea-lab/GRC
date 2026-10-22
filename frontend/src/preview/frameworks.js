@@ -1,5 +1,5 @@
 import {validateCsfProfile} from '../lib/csfProfile';
-import {pilotEnabled,versionForSafeguard,validateAnswers} from '../lib/guidedAssessment';
+import {pilotEnabled,versionForSafeguard,validateAnswers,validateGuidedCompletion,visibleQuestions} from '../lib/guidedAssessment';
 import {focusedOmniEnabled} from '../lib/focusedOmni';
 import {socGuidedEnabled,socGuidedCatalog,validateSocAnswers,validateSocCompletion,socGuidedResult} from '../lib/socGuidedAssessment';
 import {isoGuidedEnabled,isoGuidedCatalog,validateIsoAnswers,validateIsoCompletion,isoGuidedResult} from '../lib/isoGuidedAssessment';
@@ -13,14 +13,26 @@ import {cisConfiguration,validateCisSettings,validateCisConfiguration} from '../
 import {activePlans} from '../lib/frameworks';
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
 import {record,write,audit,now,ids} from './store';
+import {stable as canonicalSnapshot} from './commandRequests';
 import {action} from './workflows';
+import {reconcileItems,currentItem,updateItem,linkItemFinding} from './assessmentItems';
+import {demoCurrentPositions} from './portfolioReporting';
 import {assessmentWork,findingApplies} from '../lib/frameworkWorkspace';
+import {assessedRisk,riskDue} from '../lib/grcWork';
 import {existingFrameworkReview,sharedFrameworkPlans,reviewDriver,reviewDrivers} from '../lib/frameworks';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
 const assessmentTitle=a=>`${frameworkCatalog(a.framework_key)?.label||(a.framework_key==='cis-ig1'?'CIS':a.framework_key.toUpperCase())} ${a.definition_id} · ${frameworkDefinition(a.framework_key,a.definition_id)?.title||a.definition_id}`;
 const VERIFICATION_FIELDS=['verification','verification_checklist'],VERIFICATION_STATES=['not_verified','needs_validation','gap_identified','verified'],VERIFICATION_TIERS={foundation:'f',operational:'o',mature:'m'};
 const fail=(message,status=422)=>{const error=new Error(message);error.status=status;throw error;};
 const copy=value=>JSON.parse(JSON.stringify(value));
+// Replay recognition and write pruning must agree about unset optional fields.
+const NATIVE_EMPTY_DEFAULTS={addressable_decision:'',addressable_rationale:'',iso_assessment_checks:[]};
+function sameNativeField(key,value,previous){
+  if(Object.hasOwn(NATIVE_EMPTY_DEFAULTS,key)){
+    value=value??NATIVE_EMPTY_DEFAULTS[key];previous=previous??NATIVE_EMPTY_DEFAULTS[key];
+  }
+  return canonicalSnapshot(value)===canonicalSnapshot(previous);
+}
 const BASE_FIELDS=['base_assessment_token','base_scope_fingerprint'];
 const guidedConfiguration=(db,row)=>row.framework_key==='iso-27001'?{__program_active:db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key==='iso-27001'&&r.baseline_response==='applies')}:row.framework_key==='soc-2'?socConfiguration(record(db,'clients',row.client_id)):cisConfiguration(record(db,'clients',row.client_id));
 const guidedEnabled=(db,row)=>row.framework_key==='iso-27001'?isoGuidedEnabled(row.client_id,db.user,row.framework_key,guidedConfiguration(db,row),row.definition_id):row.framework_key==='soc-2'?db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key==='soc-2'&&r.baseline_response==='applies')&&socGuidedEnabled(row.client_id,db.user,row.framework_key,guidedConfiguration(db,row),row.definition_id):pilotEnabled(row.client_id,row.framework_key,guidedConfiguration(db,row),row.definition_id);
@@ -68,16 +80,17 @@ function validateReportedResult(result,version){
   const object=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
   const text=(value,max)=>typeof value==='string'&&value.length<=max;
   const list=(value,max,valid)=>Array.isArray(value)&&value.length<=max&&value.every(valid);
-  const keys=['version','status','narrative','basis','gaps','unknowns','nextSteps','evidence','answers','signals'];
+  const keys=['version','status','narrative','basis','gaps','unknowns','nextSteps','evidence','answers','signals','evaluation_date'];
   if(!object(result)||Object.keys(result).some(key=>!keys.includes(key))||
     !['not_assessed','needs_attention','in_progress','addressed'].includes(result.status)||!text(result.narrative,20000)||
     result.version!=null&&(!text(result.version,100)||result.version!==version)||
+    result.evaluation_date!=null&&(typeof result.evaluation_date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(result.evaluation_date)||calendarDay(result.evaluation_date)===null)||
     ['basis','gaps','unknowns','nextSteps','evidence'].some(key=>!list(result[key],153,value=>text(value,4000)))||
     !list(result.answers,300,value=>object(value)&&Object.keys(value).every(key=>['prompt','answer'].includes(key))&&text(value.prompt,4000)&&text(value.answer,12000))||
     result.signals!=null&&!list(result.signals,300,value=>object(value)&&Object.keys(value).every(key=>['kind','questionId','text'].includes(key))&&['gap','verification'].includes(value.kind)&&text(value.questionId,100)&&(value.text==null||text(value.text,4000))))
     fail('Invalid recorded interview result');
   const recorded=copy(result);
-  for(const key of ['version','signals'])if(recorded[key]===null)delete recorded[key];
+  for(const key of ['version','signals','evaluation_date'])if(recorded[key]===null)delete recorded[key];
   for(const signal of recorded.signals||[])if(signal.text===null)delete signal.text;
   return recorded;
 }
@@ -88,12 +101,18 @@ function pilotWork(db,row){
   const reviews=related.reviews.filter(r=>rids.has(r.review_id)&&!['completed','cancelled'].includes(r.status));
   const findings=related.findings.filter(f=>work.finding_ids.includes(f.finding_id));
   const tasks=related.tasks.filter(t=>!['done','cancelled'].includes(t.status)&&(linkedTask(t.task_id)||t.framework_assessment_id===row.framework_assessment_id||(t.finding_id?relevant.has(t.finding_id):!t.framework_assessment_id&&rids.has(t.review_id))));
-  const scalar=(kind,item,id)=>Object.fromEntries(Object.entries({kind,id,[kind==='reviews'?'review_id':kind==='findings'?'finding_id':'task_id']:id,
-    title:item.title??null,status:item.status??null,due_date:item.due_date??null,severity:item.severity,priority:item.priority,
+  const scalar=(kind,item,id)=>Object.fromEntries(Object.entries({kind,id,[kind==='reviews'?'review_id':kind==='findings'?'finding_id':kind==='risks'?'risk_id':'task_id']:id,
+    client_id:row.client_id,framework_assessment_id:item.framework_assessment_id,assessment_item_id:item.assessment_item_id,finding_id:item.finding_id,risk_id:item.risk_id,risk_level:kind==='risks'?assessedRisk(item).risk_level:undefined,
+    title:item.title??null,status:item.status??null,due_date:kind==='risks'?riskDue(item):item.due_date??null,severity:item.severity,priority:item.priority,
     owner_id:item.owner_id,assignee_id:item.assignee_id,reviewer_id:item.reviewer_id,
-    open_gap:kind==='findings'||kind==='tasks'&&work.finding_ids.includes(item.finding_id)}).filter(([,value])=>value!==undefined));
+    open_gap:kind==='findings'?work.finding_ids.includes(item.finding_id)&&gapFids.has(item.finding_id):kind==='tasks'&&gapFids.has(item.finding_id)}).filter(([,value])=>value!==undefined));
+  const gapFinding=finding=>finding.framework_assessment_id===row.framework_assessment_id&&row.items_to_address?.some(item=>item.item_id===finding.assessment_item_id&&item.finding_id===finding.finding_id&&item.kind==='gap'&&item.state==='open');
+  const gapFids=new Set(related.findings.filter(gapFinding).map(f=>f.finding_id));
+  const connectors=related.findings.filter(f=>gapFids.has(f.finding_id)&&!work.finding_ids.includes(f.finding_id)&&f.risk_id);
+  const riskIds=new Set([...findings,...connectors].map(f=>f.risk_id));
+  const risks=(db.risks||[]).filter(risk=>risk.client_id===row.client_id&&riskIds.has(risk.risk_id));
   return {...work,task_ids:[...new Set(tasks.map(t=>t.task_id))].sort(),context_complete:true,
-    priority_records:[...reviews.map(r=>scalar('reviews',r,r.review_id)),...findings.map(f=>scalar('findings',f,f.finding_id)),...tasks.map(t=>scalar('tasks',t,t.task_id))]};
+    priority_records:[...reviews.map(r=>scalar('reviews',r,r.review_id)),...[...findings,...connectors].map(f=>scalar('findings',f,f.finding_id)),...risks.map(r=>scalar('risks',r,r.risk_id)),...tasks.map(t=>scalar('tasks',t,t.task_id))]};
 }
 // Shape and safeguard prefix only; the UI checks ids against operator guidance.
 const validateVerificationChecklist=(value,definitionId)=>{
@@ -246,6 +265,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       return new Blob([[fields.join(','),...lines].join('\r\n')],{type:'text/csv;charset=utf-8'});
     }
     return {framework,selected:db.requirements.some(r=>r.client_id===params.client_id&&r.baseline_key===id&&r.baseline_response==='applies'),configured:!!assessments.length,
+      implementation_position:demoCurrentPositions(db,[record(db,'clients',params.client_id)]).find(position=>position.framework_key===id)?.current||null,
       definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,
       guided_assessment_drafts:Object.fromEntries(assessments.filter(a=>guidedEnabled(db,a)).flatMap(a=>{const draft=db.guided_assessment_pilot?.[a.framework_assessment_id+':'+db.user.user_id];return draft?[[a.definition_id,{revision:draft.revision,completed:draft.completed,...(upgraded?{version:draft.version??null,generated_at:draft.generated_at??null,user_id:draft.user_id??null}:{})}]]:[];})),
       organizational_controls:id==='soc-2'?(db.organizational_controls||[]).filter(c=>c.client_id===params.client_id).map(c=>({control_id:c.control_id,legacy_id:c.legacy_id,assessment_ids:c.assessment_ids,design:c.design,conflicts:c.conflicts,observations:c.observations.map(o=>({operating:o.operating,expected_instances:o.expected_instances,collected_instances:o.collected_instances}))})):[],
@@ -313,14 +333,33 @@ export function frameworkRequest(db,path,method,params,body,context=null){
         validateIsoAnswers(row.definition_id,review.answers,review.version);
       }
       if(body.completed){validateIsoCompletion(row.definition_id,body.answers,body.version);if(!result||result.status!==isoGuidedResult(row.definition_id,body.answers,body.version).status||result.narrative!==body.narrative)fail('ISO summary status and reviewed text must match this completed interview');}
-    }else validateAnswers(row.definition_id,body.answers,body.version);
+    }else{validateAnswers(row.definition_id,body.answers,body.version);if(body.completed)validateGuidedCompletion(row.definition_id,body.answers,body.version);}
+    const at=now();let generatedAt=body.completed?at:null;
+    const dateAssessment=row.framework_key==='cis-ig1'&&visibleQuestions(row.definition_id,body.answers,body.version).some(question=>question.type==='date');
+    if(result?.evaluation_date&&!dateAssessment)fail('Evaluation date belongs only to a CIS date-question result');
+    if(dateAssessment&&body.completed&&result){
+      const sameBasis=snapshot=>snapshot?.version===body.version&&canonicalSnapshot(snapshot.answers)===canonicalSnapshot(body.answers);
+      let prior=old.completed&&sameBasis(old)?old:null;
+      if(!prior&&sameBasis(old)&&old.completed===false&&!old.result&&old.revision>1){
+        const archived=db.guided_assessment_history?.[draftKey+':'+(old.revision-1)],source=row.guided_assessment_source;
+        if(archived?.completed&&sameBasis(archived)&&archived.client_id===row.client_id&&archived.assessment_id===id&&archived.user_id===db.user.user_id&&
+          source?.by===db.user.user_id&&source.version===archived.version&&source.revision===archived.revision&&source.generated_at===archived.generated_at&&canonicalSnapshot(source.answers)===canonicalSnapshot(archived.answers))prior=archived;
+      }
+      const knownDate=prior?.result?.evaluation_date;
+      if(!result.evaluation_date&&knownDate)result.evaluation_date=knownDate;
+      if(result.evaluation_date&&result.evaluation_date!==knownDate&&Math.abs(calendarDay(result.evaluation_date)-calendarDay(at))>1)fail('Evaluation date must be within one day of completion');
+      const evaluatorFields=snapshot=>Object.fromEntries(Object.entries(snapshot||{}).filter(([key])=>key!=='narrative'));
+      if(prior&&canonicalSnapshot(evaluatorFields(result))===canonicalSnapshot(evaluatorFields(prior.result)))generatedAt=prior.generated_at||at;
+    }
+    const data={version:body.version,answers:copy(body.answers),narrative:body.narrative||'',step:body.step,completed:body.completed,revision:old.revision+1,updated_at:at,generated_at:generatedAt,
+      ...(upgraded?{...base,client_id:row.client_id,assessment_id:id,user_id:db.user.user_id,result}:{})};
+    if(['soc-2','iso-27001'].includes(row.framework_key))data.summary_review=Object.hasOwn(body,'summary_review')?copy(body.summary_review??null):body.restart?null:copy(old.summary_review??null);
+    const semantic=['version','answers','step','completed','narrative','result','summary_review','base_assessment_token','base_scope_fingerprint'];
+    if(old.revision&&!body.restart&&semantic.every(key=>canonicalSnapshot(old[key]??null)===canonicalSnapshot(data[key]??null)))return upgraded?contextualDraft(old,trustedBase(db,row,context)):old;
     if(old.revision&&(upgraded?(old.completed||body.restart||body.rebase):(old.version!==body.version||old.completed&&!body.completed&&!Object.keys(body.answers).length))){
       const key=draftKey+':'+old.revision;
       if(!Object.hasOwn(db.guided_assessment_history||{},key))(db.guided_assessment_history||={})[key]={...copy(old),...(upgraded?{client_id:row.client_id,assessment_id:id,user_id:db.user.user_id}:{})};
     }
-    const at=now(),data={version:body.version,answers:copy(body.answers),narrative:body.narrative||'',step:body.step,completed:body.completed,revision:old.revision+1,updated_at:at,generated_at:body.completed?at:null,
-      ...(upgraded?{...base,client_id:row.client_id,assessment_id:id,user_id:db.user.user_id,result}:{})};
-    if(['soc-2','iso-27001'].includes(row.framework_key))data.summary_review=Object.hasOwn(body,'summary_review')?copy(body.summary_review??null):body.restart?null:copy(old.summary_review??null);
     (db.guided_assessment_pilot||={})[draftKey]=data;return upgraded?contextualDraft(data,trustedBase(db,row,context)):data;
   }
   if(method==='post'&&operation==='reviews'){
@@ -349,16 +388,24 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   if(method==='get'&&!operation)return row;
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);
+  if(method==='patch'&&operation==='items'&&detail){
+    if(!['cis-ig1','soc-2','iso-27001'].includes(row.framework_key))fail('Assessment items are not available for this framework',404);
+    if(updateItem(row,decodeURIComponent(detail),body,db.user.user_id,now()))audit(db,'Assessment item updated','framework_assessments',row,{item_id:decodeURIComponent(detail),state:body.state});
+    return row;
+  }
   if(method==='patch'&&!operation){
     if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_saved??row.last_assessed??null))fail('Assessment changed since it was opened; reload before saving',409);
     body={...body};delete body.expected_last_assessed;
+    let sameApplication=false;
     if('guided_assessment_source' in body){
       pilot();
       if(body.guided_assessment_source){
         const draft=readDraft(),source=body.guided_assessment_source;
+        const savedSource=row.guided_assessment_source;
+        sameApplication=savedSource?.by===db.user.user_id&&['version','revision','generated_at'].every(key=>source[key]===savedSource[key])&&Object.entries(body).every(([key,value])=>['guided_assessment_source','record_assessment'].includes(key)||sameNativeField(key,value,row[key]));
         if(!draft.completed||Object.keys(source).length!==3||['version','revision','generated_at'].some(k=>source[k]!==draft[k]))fail('Guided result changed; regenerate before applying',409);
-        if(upgraded&&draft.version!==guidedVersion(row))fail('Current-source interview review is required before saving a new assessment',409);
-        if(upgraded&&(!draft.lineage_known||draft.lineage_stale))fail('Assessment or scope changed after this review began; begin a new review before applying',409);
+        if(upgraded&&!sameApplication&&draft.version!==guidedVersion(row))fail('Current-source interview review is required before saving a new assessment',409);
+        if(upgraded&&!sameApplication&&(!draft.lineage_known||draft.lineage_stale))fail('Assessment or scope changed after this review began; begin a new review before applying',409);
         if(row.framework_key==='soc-2'){
           if(!draft.summary_review||draft.summary_review.version!==draft.version||JSON.stringify(Object.entries(draft.summary_review.answers).sort())!==JSON.stringify(Object.entries(draft.answers).sort()))fail('Review SOC wording against the current answers before saving',409);
           validateSocCompletion(row.definition_id,draft.answers,draft.version);
@@ -377,7 +424,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
         body.guided_assessment_source={...source,origin:'guided-assessment-pilot',answers:JSON.parse(JSON.stringify(draft.answers)),by:db.user.user_id,...(upgraded?Object.fromEntries(BASE_FIELDS.map(key=>[key,draft[key]])): {})};
       }
     }else if(row.guided_assessment_source&&['implementation','status'].some(k=>k in body&&body[k]!==row[k]))body.guided_assessment_source=null;
-    const recordAssessment=body.record_assessment===true;
+    const recordAssessment=body.record_assessment===true&&!sameApplication;
     if('record_assessment' in body&&(row.framework_key!=='soc-2'||typeof body.record_assessment!=='boolean'))fail('Explicit assessment recording applies only to SOC 2');
     delete body.record_assessment;
     const ownershipOnly=Object.keys(body).length>0&&Object.keys(body).every(k=>['owner_id','process_owner_id'].includes(k))&&!recordAssessment;
@@ -431,7 +478,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       if(JSON.stringify(body.management_controls)!==JSON.stringify(row.management_controls||[])&&(row.controls_migrated||db.organizational_controls?.some(c=>c.client_id===row.client_id&&(c.assessment_ids.includes(id)||c.legacy_sources.some(s=>s.assessment_id===id)))))throw new Error('Legacy descriptions are preserved. Edit the shared organizational Control instead');
       body={...body,management_controls:validateManagementControls(body.management_controls)};
     }
-    const data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
+    let data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
     if(recordAssessment&&data.status==='not_assessed')fail('Choose an assessment status before recording an assessment');
     const definition=frameworkDefinition(row.framework_key,row.definition_id);
     if(data.status==='not_applicable'&&definition?.specification!=='annex_control'&&!data.na_rationale.trim())throw new Error('N/A rationale is required');
@@ -452,7 +499,16 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     }else if(body.addressable_decision||body.addressable_rationale)throw new Error('Addressability fields apply only to addressable specifications');
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
-    const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
+    if(body.guided_assessment_source){
+      const items=reconcileItems(row,readDraft(),db.user.user_id,now());
+      if(JSON.stringify(items)!==JSON.stringify(row.items_to_address||[]))Object.assign(body,{items_to_address:items,items_revision:(row.items_revision||0)+1});
+      historyFields.push('items_to_address','items_revision');
+    }
+    // Match native no-op semantics for optional empty footer fields.
+    body={...body};
+    for(const key of Object.keys(NATIVE_EMPTY_DEFAULTS))if(Object.hasOwn(body,key)&&sameNativeField(key,body[key],row[key]))delete body[key];
+    data={...row,...body};
+    const changed=Object.keys(body).filter(k=>['guided_assessment_source','verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation'].includes(k)?canonicalSnapshot(body[k])!==canonicalSnapshot(row[k]??null):body[k]!==row[k]);
     if(changed.length||recordAssessment){
       const at=new Date(Math.max(Date.now(),(Date.parse(row.last_saved??row.last_assessed)||0)+1)).toISOString();
       if(row.framework_key==='soc-2'&&!ownershipOnly){
@@ -465,7 +521,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
         Object.assign(row,{last_assessed:at,assessed_by:db.user.user_id});
         (row.assessment_history||=[]).push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at,by:row.assessed_by});
       }
-      audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});
+      audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status,record_assessment:recordAssessment});
     }
     return row;
   }
@@ -484,7 +540,8 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   }
   if(method==='post'&&operation==='findings'){
     if(!body.title?.trim()||!body.remediation_title?.trim()||!body.request_id||!['low','medium','high','critical'].includes(body.severity||'medium'))throw new Error('Finding and Action titles, valid severity and request ID are required');
-    const fid=stable(row.client_id,'finding',id+':'+body.request_id);let f=db.findings.find(f=>f.finding_id===fid);
+    const item=body.item_id?currentItem(row,body.item_id):null;
+    const fid=stable(row.client_id,'finding',id+':'+(item?'item:'+body.item_id:body.request_id));let f=db.findings.find(f=>f.finding_id===fid);
     // A departed or out-of-scope safeguard owner is never copied onto new work; the Finding starts unassigned.
     let owner=row.owner_id&&eligible(db.users.find(u=>u.user_id===row.owner_id),row.client_id)?row.owner_id:null;
     // Optional at creation, as in the backend: an explicit owner must be eligible; a target date must be valid.
@@ -492,7 +549,14 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     const due=body.due_date?calendarDay(body.due_date):null;
     if(body.due_date&&due===null)throw new Error('Enter a valid target date');
     if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:assessmentTitle(row),owner_id:owner,due_date:due===null?null:new Date(due*86400000).toISOString().slice(0,10),remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};validateAssignment(db, 'findings', f);db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
-    action(db,'findings',fid,'create-task',{title:f.remediation_title});return f;
+    action(db,'findings',fid,'create-task',{title:f.remediation_title});
+    if(item){
+      if(!f.assessment_item_id)Object.assign(f,{assessment_item_id:body.item_id,assessment_item_text:item.text,framework_key:row.framework_key});
+      const previouslyLinked=item.finding_id;
+      linkItemFinding(row,body.item_id,fid,db.user.user_id,now());
+      if(previouslyLinked!==fid)audit(db,'Assessment item updated','framework_assessments',row,{item_id:body.item_id,state:item.state,finding_id:fid});
+    }
+    return f;
   }
   throw new Error('Unsupported framework operation; assessment history is retained');
 }

@@ -48,15 +48,27 @@ for (const row of cis.requirements.filter(r => r.control > 1)) {
   definitions[row.id] = {
     title: row.title, control: row.control, groups: [1, 2, 3].filter(g => g >= row.implementation_group),
     root: 'practice', source: criteria.requirements[row.id].source || row.source,
-    guidance: correctedGuidance[row.id] || row.guidance, evidence: aid.evidence,
+    guidance: correctedGuidance[row.id] || row.guidance,
+    evidence: row.id === '11.1' ? ['Recovery procedures identifying scope, priorities and backup protection.', aid.evidence[1]] : aid.evidence,
     elements: elements.filter(e => !retiredElements.has(e.id)).map(e => ({...e, conditional: e.conditional ?? /\b(where|when) (appropriate|supported|possible)|where a provider|where remote workers|where supported|when possible|to the extent possible/i.test(e.text), ...correctedElements[e.id]}))
   };
 }
 const pack = {version: 'cis-v8.1-program-3', framework_id: 'cis-ig1', framework_version: '8.1',
   reviewed_on: '2026-10-09', criteria_revision: criteria.revision, guidance_revision: guidance.revision,
   basis: 'Authored safeguard assessment criteria; CIS v8.1 requirements, not CAS metrics. Evidence examples and optional context do not impose additional obligations.', definitions};
+const historical = process.argv.includes('--historical-program-3');
+if (!historical) {
+  Object.assign(pack.definitions, require(path.join(root, 'guidedCisProgramV4.json')).definitions);
+  // The approved Navigator source does not impose these additional CAS assertions.
+  for (const [id, extra] of [['11.1', '11.1-guided-backup-procedures'], ['17.5', '17.5-guided-third-parties']]) {
+    pack.definitions[id] = {...pack.definitions[id], elements: pack.definitions[id].elements.filter(element => element.id !== extra)};
+  }
+  pack.version = 'cis-v8.1-program-5';
+  pack.reviewed_on = '2026-10-13';
+}
 const output = JSON.stringify(pack, null, 2) + '\n';
 if (process.argv.includes('--check')) {
-  if (fs.readFileSync(path.join(root, 'guidedCisProgram.json'), 'utf8').replace(/\r\n/g, '\n') !== output) throw new Error('Guided content differs from its reviewed inputs: review and version changes explicitly.');
-  console.log('148 expanded Safeguard definitions match reviewed inputs');
+  const filename = historical ? 'guidedCisProgram.json' : 'guidedCisProgramV5.json';
+  if (fs.readFileSync(path.join(root, filename), 'utf8').replace(/\r\n/g, '\n') !== output) throw new Error('Guided content differs from its reviewed inputs: review and version changes explicitly.');
+  console.log(`148 expanded Safeguard definitions match reviewed inputs (${pack.version})`);
 } else process.stdout.write(output);

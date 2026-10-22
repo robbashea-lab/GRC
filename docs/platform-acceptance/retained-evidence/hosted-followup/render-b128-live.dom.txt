@@ -1,0 +1,360 @@
+- alert:
+  - generic: Upcoming maintenance
+  - text: We will be upgrading critical infrastructure on October 13th, 9:00 pm EDT (October 14th, 1:00 am UTC). Follow our
+  - link "status page":
+    - /url: https://status.render.com/incidents/bwd9ycdxqps4
+  - text: for updates.
+  - button "Close notification":
+- banner:
+  - link "Render":
+    - /url: /
+    - img "Render"
+  - button "M My Workspace":
+    - generic: M
+    - generic "My Workspace"
+  - navigation "Breadcrumbs":
+    - list:
+      - link "Projects":
+        - /url: /
+        - generic: Projects
+      - link "My project":
+        - /url: /project/prj-db1s0cp42hec73e1oo60
+        - generic: My project
+      - button "Switch Project":
+      - link "Production":
+        - /url: /project/prj-db1s0cp42hec73e1oo60/environment/evm-db1s0cp42hec73e1oo6g
+        - generic: Production
+      - button "Switch Environment":
+      - link "omnisciente-staging":
+        - /url: /web/srv-db1s0cugekts73f72reg
+        - generic: omnisciente-staging
+      - button "Switch Service":
+      - link "Deploys":
+        - /url: /web/srv-db1s0cugekts73f72reg/deploys
+        - generic: Deploys
+      - button "Switch page":
+      - generic: dep-db63fah42hec73ap0jog
+      - button "Switch Deploy":
+  - button "Search Ctrl + K":
+    - text: Search
+    - generic: Ctrl
+    - generic: +
+    - generic: K
+    - generic: K
+  - button "New":
+    - generic: New
+  - button "Upgrade":
+    - generic: Upgrade
+  - button "Help":
+    - img "Help"
+  - button "Account menu":
+    - generic: r
+- navigation:
+  - separator "Resize sidebar"
+  - link "Environment":
+    - /url: /project/prj-db1s0cp42hec73e1oo60/environment/evm-db1s0cp42hec73e1oo6g
+    - generic: Environment
+  - generic: omnisciente-staging
+  - list:
+    - link "Deploys":
+      - /url: /web/srv-db1s0cugekts73f72reg/deploys
+      - generic: Deploys
+    - link "Settings":
+      - /url: /web/srv-db1s0cugekts73f72reg/settings
+      - generic: Settings
+  - generic: Monitor
+  - list "Monitor":
+    - link "Events":
+      - /url: /web/srv-db1s0cugekts73f72reg/events
+      - generic: Events
+    - link "Logs":
+      - /url: /web/srv-db1s0cugekts73f72reg/logs
+      - generic: Logs
+    - link "Metrics":
+      - /url: /web/srv-db1s0cugekts73f72reg/metrics
+      - generic: Metrics
+  - generic: Manage
+  - list "Manage":
+    - link "Compute":
+      - /url: /web/srv-db1s0cugekts73f72reg/compute
+      - generic: Compute
+    - link "Environment":
+      - /url: /web/srv-db1s0cugekts73f72reg/env
+      - generic: Environment
+    - link "Shell":
+      - /url: /web/srv-db1s0cugekts73f72reg/shell
+      - generic: Shell
+      - status:
+    - link "Previews":
+      - /url: /web/srv-db1s0cugekts73f72reg/previews
+      - generic: Previews
+    - link "Disk":
+      - /url: /web/srv-db1s0cugekts73f72reg/disks
+      - generic: Disk
+      - status:
+    - link "One-Off Jobs":
+      - /url: /web/srv-db1s0cugekts73f72reg/jobs
+      - generic: One-Off Jobs
+      - status:
+  - alert:
+    - generic: Introducing Workflows
+    - generic: An orchestration and execution engine for long-running, distributed tasks.
+    - link "Learn more":
+      - /url: https://render.com/workflows
+      - text: Learn more
+    - button "Close notification":
+  - list "Footer navigation":
+    - link "Changelog":
+      - /url: https://render.com/changelog
+      - generic: Changelog
+  - link "Status":
+    - /url: https://status.render.com
+    - generic: Status
+  - button "Collapse":
+    - generic: Collapse
+- main:
+  - alert:
+    - generic: Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more.
+    - link "Upgrade now":
+      - /url: /web/srv-db1s0cugekts73f72reg/plan
+  - 'heading "test: keep rejected fixture URLs out of diagnostics and clarify release provenance" [level=1]'
+  - term: Status
+  - definition: Deploy succeeded|Live
+  - term: Duration
+  - definition:
+    - time: 1m22s
+  - term: Deployed
+  - definition:
+    - paragraph:
+      - generic: Oct 11, 2026
+      - generic: at
+      - generic: 9:28:10 PM
+      - generic: EDT
+  - term: Trigger
+  - definition: Manually deployed by you via Dashboard
+  - term: Source
+  - definition:
+    - link "b128eb2":
+      - /url: https://github.com/robbashea-lab/GRC/commit/b128eb2b178ab8507b42aaa8ec010fd004d1a9ea
+  - list
+  - button "All logs":
+    - generic: All logs
+  - generic: Search
+  - searchbox "Search"
+  - button "Oct 11, 9:27 PM - 9:30 PM EDT":
+    - generic: Oct 11, 9:27 PM - 9:30 PM
+    - generic: EDT
+  - button "Maximize":
+    - img "Maximize"
+  - button "Options":
+    - img "Options"
+  - button "Return to Bottom":
+  - listbox:
+    - generic: Oct 11
+    - 'option "09:29:06 PM #25 [stage-1 11/12] COPY deploy/render_staging.py ./render_staging.py"':
+      - time: 09:29:06 PM
+      - generic: "#25 [stage-1 11/12] COPY deploy/render_staging.py ./render_staging.py"
+    - 'option "09:29:06 PM #25 DONE 0.0s"':
+      - time: 09:29:06 PM
+      - generic: "#25 DONE 0.0s"
+    - option "09:29:06 PM":
+      - time: 09:29:06 PM
+    - 'option "09:29:06 PM #26 [stage-1 12/12] RUN useradd --create-home --uid 10001 app"':
+      - time: 09:29:06 PM
+      - generic: "#26 [stage-1 12/12] RUN useradd --create-home --uid 10001 app"
+    - 'option "09:29:06 PM #26 DONE 0.1s"':
+      - time: 09:29:06 PM
+      - generic: "#26 DONE 0.1s"
+    - option "09:29:06 PM":
+      - time: 09:29:06 PM
+    - 'option "09:29:06 PM #27 exporting to image"':
+      - time: 09:29:06 PM
+      - generic: "#27 exporting to image"
+    - 'option "09:29:06 PM #27 exporting layers 0.0s done"':
+      - time: 09:29:06 PM
+      - generic: "#27 exporting layers 0.0s done"
+    - 'option "09:29:06 PM #27 pushing layers"':
+      - time: 09:29:06 PM
+      - generic: "#27 pushing layers"
+    - 'option "09:29:07 PM #27 pushing layers 0.9s done"':
+      - time: 09:29:07 PM
+      - generic: "#27 pushing layers 0.9s done"
+    - 'option "09:29:07 PM #27 DONE 1.2s"':
+      - time: 09:29:07 PM
+      - generic: "#27 DONE 1.2s"
+    - option "09:29:07 PM":
+      - time: 09:29:07 PM
+    - 'option "09:29:07 PM #28 exporting cache to registry"':
+      - time: 09:29:07 PM
+      - generic: "#28 exporting cache to registry"
+    - 'option "09:29:07 PM #28 sending cache export"':
+      - time: 09:29:07 PM
+      - generic: "#28 sending cache export"
+    - 'option "09:29:10 PM #28 sending cache export 3.1s done"':
+      - time: 09:29:10 PM
+      - generic: "#28 sending cache export 3.1s done"
+    - 'option "09:29:10 PM #28 DONE 3.4s"':
+      - time: 09:29:10 PM
+      - generic: "#28 DONE 3.4s"
+    - option "09:29:11 PM ==> Deploying...":
+      - time: 09:29:11 PM
+      - generic: ==> Deploying...
+    - option "09:29:11 PM ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance":
+      - time: 09:29:11 PM
+      - generic: ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+    - 'option "09:29:24 PM [gv78v] INFO: Started server process [7]"':
+      - time: 09:29:24 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: Started server process [7]"
+    - 'option "09:29:24 PM [gv78v] INFO: Waiting for application startup."':
+      - time: 09:29:24 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: Waiting for application startup."
+    - 'option "09:29:25 PM [gv78v] INFO: Application startup complete."':
+      - time: 09:29:25 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: Application startup complete."
+    - 'option "09:29:25 PM [gv78v] INFO: Uvicorn running on http://0.0.0.0:10000 (Press CTRL+C to quit)"':
+      - time: 09:29:25 PM
+      - generic: "[gv78v]"
+      - text: "INFO: Uvicorn running on"
+      - link "http://0.0.0.0:10000":
+        - /url: http://0.0.0.0:10000
+      - text: (Press CTRL+C to quit)
+    - 'option "09:29:27 PM [gv78v] INFO: 127.0.0.1:43322 - \"HEAD / HTTP/1.1\" 200 OK"':
+      - time: 09:29:27 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 127.0.0.1:43322 - \"HEAD / HTTP/1.1\" 200 OK"
+    - 'option "09:29:31 PM [gv78v] INFO: 10.235.25.10:43176 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:29:31 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:43176 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:29:31 PM [gv78v] INFO: 10.235.25.10:43178 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:29:31 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:43178 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:29:32 PM [gv78v] INFO: 10.29.158.153:0 - \"GET / HTTP/1.1\" 200 OK"':
+      - time: 09:29:32 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.29.158.153:0 - \"GET / HTTP/1.1\" 200 OK"
+    - option "09:29:32 PM ==> Your service is live 🎉":
+      - time: 09:29:32 PM
+      - generic: ==> Your service is live 🎉
+    - option "09:29:32 PM ==>":
+      - time: 09:29:32 PM
+      - generic: ==>
+    - option "09:29:32 PM ==> ///////////////////////////////////////////////////////////":
+      - time: 09:29:32 PM
+      - generic: ==> ///////////////////////////////////////////////////////////
+    - option "09:29:32 PM ==>":
+      - time: 09:29:32 PM
+      - generic: ==>
+    - option "09:29:32 PM ==> Available at your primary URL https://omnisciente-staging.onrender.com":
+      - time: 09:29:32 PM
+      - text: ==>
+      - text: Available at your primary URL
+      - link "https://omnisciente-staging.onrender.com":
+        - /url: https://omnisciente-staging.onrender.com
+    - option "09:29:32 PM ==>":
+      - time: 09:29:32 PM
+      - generic: ==>
+    - option "09:29:32 PM ==> ///////////////////////////////////////////////////////////":
+      - time: 09:29:32 PM
+      - generic: ==> ///////////////////////////////////////////////////////////
+    - 'option "09:29:36 PM [gv78v] INFO: 10.235.25.10:52834 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:29:36 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:52834 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:29:41 PM [gv78v] INFO: 10.235.25.10:52850 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:29:41 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:52850 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:29:41 PM [gv78v] INFO: 10.235.25.10:52864 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:29:41 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:52864 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:29:46 PM [gv78v] INFO: 10.235.25.10:47690 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:29:46 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:47690 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:29:51 PM [gv78v] INFO: 10.235.25.10:47706 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:29:51 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:47706 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:29:56 PM [gv78v] INFO: 10.235.25.10:37700 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:29:56 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:37700 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:30:01 PM [gv78v] INFO: 10.235.25.10:37706 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:30:01 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:37706 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:30:06 PM [gv78v] INFO: 10.235.25.10:60166 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:30:06 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:60166 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:30:11 PM [gv78v] INFO: 10.235.25.10:60182 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:30:11 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:60182 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:30:11 PM [gv78v] INFO: 10.235.25.10:60184 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:30:11 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:60184 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:30:16 PM [gv78v] INFO: 10.235.25.10:57070 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:30:16 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:57070 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:30:19 PM [gv78v] INFO: 10.26.119.178:0 - \"GET /api/notifications HTTP/1.1\" 200 OK"':
+      - time: 09:30:19 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.26.119.178:0 - \"GET /api/notifications HTTP/1.1\" 200 OK"
+    - 'option "09:30:19 PM [gv78v] INFO: 10.25.202.240:0 - \"GET /api/clients?include_archived=true HTTP/1.1\" 200 OK"':
+      - time: 09:30:19 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/clients?include_archived=true HTTP/1.1\" 200 OK"
+    - 'option "09:30:21 PM [gv78v] INFO: 10.235.25.10:57076 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:30:21 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:57076 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:30:26 PM [gv78v] INFO: 10.235.25.10:50328 - \"GET /api/ HTTP/1.1\" 200 OK"':
+      - time: 09:30:26 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.235.25.10:50328 - \"GET /api/ HTTP/1.1\" 200 OK"
+    - 'option "09:30:28 PM [gv78v] INFO: 10.25.202.240:0 - \"GET /api/notifications HTTP/1.1\" 200 OK"':
+      - time: 09:30:28 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.25.202.240:0 - \"GET /api/notifications HTTP/1.1\" 200 OK"
+    - 'option "09:30:28 PM [gv78v] INFO: 10.26.119.178:0 - \"GET /api/clients?include_archived=true HTTP/1.1\" 200 OK"':
+      - time: 09:30:28 PM
+      - generic: "[gv78v]"
+      - generic: "INFO: 10.26.119.178:0 - \"GET /api/clients?include_archived=true HTTP/1.1\" 200 OK"
+  - paragraph:
+    - text: Need better ways to work with logs? Try the
+    - link "Render CLI":
+      - /url: https://render.com/docs/cli
+      - text: Render CLI
+    - text: ","
+    - link "Render MCP Server":
+      - /url: https://render.com/docs/mcp-server
+    - text: ", or set up a"
+    - link "log stream integration":
+      - /url: https://render.com/docs/log-streams
+      - text: log stream integration
+  - dialog:
+    - generic: /
+    - button:
+    - tablist:
+      - tab [selected]: Overview
+      - tab [disabled]: Build Logs
+      - tab [disabled]: Linked Services
+      - tab [disabled]: Commits
+    - tabpanel:
+      - generic: Build not found
+      - generic: This build may have been deleted, or the link may be incorrect.
+- generic: "0 services selected:"
+- button:
+  - generic: Move
+- separator
+- button:
+- iframe [id="intercom-frame"]

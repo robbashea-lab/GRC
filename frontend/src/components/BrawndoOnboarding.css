@@ -1,0 +1,244 @@
+
+/* Target SHA256 0983b24c46162476af223a2ae805811a5fc28424e4a1d69cf89af4a0f80e6524.
+   Source declarations below are unchanged; selectors are scoped to onboarding.
+   Inter 400-700 is loaded by the existing Additional Sections appearance. */
+.brawndo-onboarding {
+  --bg:#F4F6F9; --surface:#FFFFFF; --subtle:#F7F9FB; --tablehead:#F9FAFC; --hover:#F2F5F9; --border:#E3E8EF; --border-strong:#CDD5E0;
+  --fg:#0F1B2D; --fg2:#46566B; --muted:#5A687B; --link:#1F56C3; --selected:#EDF2FC; --rail:#215BC1; --focus:#215BC1;
+  --good:#05603A; --good-bg:#E7F6EF; --bad:#B42318; --bad-bg:#FDECEA; --warn:#93370D; --warn-bg:#FEF3E2;
+  --chrome:#FFFFFF; --banner:#FAFBFC; --brand:#1D4FA8; --avatar:#1D4FA8; --avatar-fg:#FFFFFF; --scrim:rgba(15,27,45,.38);
+  --c-part:#E2AA30; --c-sched:#215BC1; --c-due:#B7791F; --c-over:#D64550; --b-low:#94A3B8; --m-rev:#215BC1; --m-asr:#B7791F; --m-ren:#0F8A7A;
+  --seg-on:#FFFFFF; --tip-bg:#FFFFFF;
+  --shadow-sm:0 1px 2px rgba(15,27,45,.05), 0 1px 1px rgba(15,27,45,.02);
+  --shadow-seg:0 1px 2px rgba(15,27,45,.10), 0 0 0 1px rgba(15,27,45,.06);
+  --shadow-tip:0 0 0 1px rgba(15,27,45,.05), 0 12px 28px -8px rgba(15,27,45,.24);
+  --shadow:0 0 0 1px rgba(15,27,45,.06), 0 28px 64px -16px rgba(15,27,45,.34);
+  --font:Inter, 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+
+  min-width:0; background:var(--bg); color:var(--fg); font:13.5px/1.5 var(--font); font-optical-sizing:auto;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+@media (prefers-color-scheme: dark) {
+  .brawndo-onboarding:not([data-theme="light"]) {
+  --bg:#0A0F16; --surface:#111823; --subtle:#151D29; --tablehead:#131B26; --hover:#19222F; --border:#222C3A; --border-strong:#34404F;
+  --fg:#EDF1F7; --fg2:#A7B3C4; --muted:#8E9BAE; --link:#8EC5FF; --selected:#1B2738; --rail:#8EC5FF; --focus:#8EC5FF;
+  --good:#3DC79F; --good-bg:rgba(61,199,159,.13); --bad:#F2828C; --bad-bg:rgba(242,130,140,.13); --warn:#E9B65A; --warn-bg:rgba(233,182,90,.13);
+  --chrome:#0D131B; --banner:#0D131B; --brand:#8CC4FF; --avatar:#2F6FD6; --avatar-fg:#FFFFFF; --scrim:rgba(0,0,0,.6);
+  --c-part:#D4A13C; --c-sched:#4A8BDB; --c-due:#C2862F; --c-over:#E66767; --b-low:#5B6878; --m-rev:#4A8BDB; --m-asr:#C2862F; --m-ren:#1F9E89;
+  --seg-on:#243042; --tip-bg:#161F2B;
+  --shadow-sm:none; --shadow-seg:0 1px 2px rgba(0,0,0,.4);
+  --shadow-tip:0 0 0 1px rgba(255,255,255,.05), 0 12px 32px -8px rgba(0,0,0,.65);
+  --shadow:0 0 0 1px rgba(255,255,255,.06), 0 28px 64px -16px rgba(0,0,0,.75);
+  color-scheme:dark;
+}
+}
+.brawndo-onboarding[data-theme="dark"] {
+  --bg:#0A0F16; --surface:#111823; --subtle:#151D29; --tablehead:#131B26; --hover:#19222F; --border:#222C3A; --border-strong:#34404F;
+  --fg:#EDF1F7; --fg2:#A7B3C4; --muted:#8E9BAE; --link:#8EC5FF; --selected:#1B2738; --rail:#8EC5FF; --focus:#8EC5FF;
+  --good:#3DC79F; --good-bg:rgba(61,199,159,.13); --bad:#F2828C; --bad-bg:rgba(242,130,140,.13); --warn:#E9B65A; --warn-bg:rgba(233,182,90,.13);
+  --chrome:#0D131B; --banner:#0D131B; --brand:#8CC4FF; --avatar:#2F6FD6; --avatar-fg:#FFFFFF; --scrim:rgba(0,0,0,.6);
+  --c-part:#D4A13C; --c-sched:#4A8BDB; --c-due:#C2862F; --c-over:#E66767; --b-low:#5B6878; --m-rev:#4A8BDB; --m-asr:#C2862F; --m-ren:#1F9E89;
+  --seg-on:#243042; --tip-bg:#161F2B;
+  --shadow-sm:none; --shadow-seg:0 1px 2px rgba(0,0,0,.4);
+  --shadow-tip:0 0 0 1px rgba(255,255,255,.05), 0 12px 32px -8px rgba(0,0,0,.65);
+  --shadow:0 0 0 1px rgba(255,255,255,.06), 0 28px 64px -16px rgba(0,0,0,.75);
+  color-scheme:dark;
+}
+.brawndo-onboarding :is(h1,h2,h3,h4,p) { margin:0; }
+.brawndo-onboarding :is(button,input,select) { font:inherit; color:inherit; }
+.brawndo-onboarding button { cursor:pointer; text-align:inherit; }
+.brawndo-onboarding :is(button,a,input,select,[tabindex]):focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.brawndo-onboarding select { font:inherit; color:inherit; }
+.brawndo-onboarding .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.brawndo-onboarding .ic { fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.brawndo-onboarding .sample-chip { display:inline-flex; align-items:center; gap:6px; padding:1px 9px; border-radius:999px; border:1px solid var(--border-strong); background:var(--surface); color:var(--fg2); font-size:11.5px; font-weight:500; }
+.brawndo-onboarding .sample-chip::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--c-part); }
+.brawndo-onboarding .content { display:grid; gap:20px; padding-block:28px 120px; padding-left:24px; padding-right:max(24px, env(safe-area-inset-right, 0px)); max-width:1600px; }
+.brawndo-onboarding .content > * { min-width:0; }
+.brawndo-onboarding .page-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.brawndo-onboarding .page-head h1 { font-size:24px; font-weight:650; letter-spacing:-.025em; text-wrap:balance; }
+.brawndo-onboarding .page-head p { margin-top:3px; font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.brawndo-onboarding .head-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.brawndo-onboarding .ghost { display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 12px; border:1px solid var(--border); border-radius:7px; background:var(--surface); font-size:12.5px; font-weight:500; color:var(--fg2); box-shadow:var(--shadow-sm); }
+.brawndo-onboarding .ghost:hover { background:var(--hover); color:var(--fg); }
+.brawndo-onboarding .ghost svg { width:15px; height:15px; }
+.brawndo-onboarding select { height:34px; padding:0 10px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); font-size:12.5px; font-weight:500; }
+.brawndo-onboarding .wiz { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:20px; align-items:start; }
+.brawndo-onboarding .stepper { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:0; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--surface); }
+.brawndo-onboarding .stp { display:grid; grid-template-columns:auto minmax(0,1fr); gap:1px 10px; align-items:center; padding:12px 14px; text-align:left; border-right:1px solid var(--border); transition:background .12s; }
+.brawndo-onboarding .stp:last-child { border-right:0; }
+.brawndo-onboarding .stp:hover { background:var(--subtle); }
+.brawndo-onboarding .stp[aria-current="step"] { background:var(--selected); box-shadow:inset 0 -2px 0 var(--rail); }
+.brawndo-onboarding .stp i { grid-row:1 / span 2; display:grid; place-items:center; width:26px; height:26px; border-radius:50%; box-shadow:inset 0 0 0 1.5px var(--border-strong); font-size:12px; font-weight:700; font-style:normal; color:var(--fg2); }
+.brawndo-onboarding .stp[aria-current="step"] i { background:var(--rail); box-shadow:none; color:var(--surface); }
+.brawndo-onboarding .stp.done i { background:var(--good-bg); box-shadow:none; color:var(--good); }
+.brawndo-onboarding .stp b { font-size:13px; font-weight:600; }
+.brawndo-onboarding .stp small { font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.brawndo-onboarding .panel-c { display:grid; gap:16px; margin-top:16px; }
+.brawndo-onboarding .sec { background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-sm); }
+.brawndo-onboarding .sec-h { display:flex; justify-content:space-between; align-items:flex-start; gap:8px 16px; flex-wrap:wrap; padding:16px 20px 12px; }
+.brawndo-onboarding .sec-h h2 { font-size:15px; font-weight:600; letter-spacing:-.01em; }
+.brawndo-onboarding .sec-h p { font-size:12.5px; color:var(--muted); margin-top:3px; max-width:78ch; }
+.brawndo-onboarding .fws { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:10px; padding:0 20px 20px; }
+.brawndo-onboarding .fwc { position:relative; display:grid; gap:6px; align-content:start; padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--surface); text-align:left; transition:border-color .12s, background .12s; }
+.brawndo-onboarding .fwc:hover { background:var(--subtle); }
+.brawndo-onboarding .fwc[aria-pressed="true"] { border-color:var(--rail); background:var(--selected); box-shadow:inset 0 0 0 1px var(--rail); }
+.brawndo-onboarding .fwc b { font-size:14px; font-weight:600; padding-right:60px; }
+.brawndo-onboarding .fwc small { font-size:12px; color:var(--muted); line-height:1.45; }
+.brawndo-onboarding .fwc .st { position:absolute; top:12px; right:12px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; background:var(--subtle); color:var(--muted); box-shadow:inset 0 0 0 1px var(--border); }
+.brawndo-onboarding .fwc[aria-pressed="true"] .st { background:var(--rail); color:var(--surface); box-shadow:none; }
+.brawndo-onboarding .fwc .gives { font-size:12px; color:var(--fg2); font-variant-numeric:tabular-nums; }
+.brawndo-onboarding .grp-h { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 20px; border-top:1px solid var(--border); background:var(--tablehead); font-size:12px; font-weight:600; color:var(--fg2); }
+.brawndo-onboarding .grp-h span { display:inline-flex; align-items:center; gap:8px; }
+.brawndo-onboarding .grp-h .n { font-weight:500; color:var(--muted); }
+.brawndo-onboarding .prow { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 16px; align-items:center; padding:11px 20px; border-top:1px solid var(--border); }
+.brawndo-onboarding .prow > div { min-width:0; }
+.brawndo-onboarding .prow b { font-size:13px; font-weight:600; }
+.brawndo-onboarding .prow .meta { display:flex; flex-wrap:wrap; gap:4px 6px; align-items:center; margin-top:3px; font-size:12px; color:var(--muted); }
+.brawndo-onboarding .fwt { display:inline-flex; align-items:center; gap:5px; padding:1px 7px; border-radius:5px; font-size:11px; font-weight:600; white-space:nowrap; background:var(--subtle); color:var(--fg2); box-shadow:inset 0 0 0 1px var(--border); }
+.brawndo-onboarding .fwt.req { background:var(--warn-bg); color:var(--warn); box-shadow:none; }
+.brawndo-onboarding .why { grid-column:1 / -1; font-size:12px; color:var(--muted); }
+.brawndo-onboarding .why summary { cursor:pointer; color:var(--link); font-weight:500; width:max-content; }
+.brawndo-onboarding .why ul { margin:6px 0 2px; padding-left:18px; display:grid; gap:4px; }
+.brawndo-onboarding .ans { display:inline-flex; gap:2px; padding:3px; border-radius:8px; background:var(--hover); box-shadow:inset 0 0 0 1px var(--border); }
+.brawndo-onboarding .ans button { padding:4px 12px; border-radius:6px; font-size:12.5px; font-weight:500; color:var(--fg2); }
+.brawndo-onboarding .ans button[aria-pressed="true"] { background:var(--seg-on); color:var(--fg); font-weight:600; box-shadow:var(--shadow-seg); }
+.brawndo-onboarding .ans button[data-v="no"][aria-pressed="true"] { color:var(--bad); }
+.brawndo-onboarding .ans button[data-v="unsure"][aria-pressed="true"] { color:var(--warn); }
+.brawndo-onboarding .prog { display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--fg2); font-variant-numeric:tabular-nums; }
+.brawndo-onboarding .prog .bar { width:140px; height:6px; border-radius:3px; overflow:hidden; background:color-mix(in srgb, var(--fg) 9%, var(--surface)); }
+.brawndo-onboarding .prog .bar i { display:block; height:100%; background:var(--good); border-radius:3px; }
+.brawndo-onboarding .empty-s { padding:14px 20px 18px; font-size:12.5px; color:var(--muted); border-top:1px solid var(--border); }
+.brawndo-onboarding .kstrip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:0 20px; }
+.brawndo-onboarding .kcell { display:grid; gap:3px; align-content:start; padding:14px 16px 15px; background:var(--surface); text-align:left; }
+.brawndo-onboarding .kcell span { font-size:12.5px; font-weight:500; color:var(--muted); }
+.brawndo-onboarding .kcell strong { font-size:28px; font-weight:600; letter-spacing:-.02em; line-height:1.15; font-variant-numeric:tabular-nums; }
+.brawndo-onboarding .kcell small { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.brawndo-onboarding .plot { display:grid; grid-template-columns:repeat(12, minmax(0,1fr)); grid-template-rows:110px auto; column-gap:6px; padding:12px 20px 4px; }
+.brawndo-onboarding .mcol { grid-row:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:4px; border-bottom:1px solid var(--border-strong); }
+.brawndo-onboarding .mval { font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; }
+.brawndo-onboarding .mstack { display:flex; flex-direction:column-reverse; gap:2px; width:min(24px, 62%); }
+.brawndo-onboarding .mseg { display:block; border-radius:1px; }
+.brawndo-onboarding .mseg.top { border-radius:4px 4px 1px 1px; }
+.brawndo-onboarding .mseg.f { background:var(--rail); }
+.brawndo-onboarding .mseg.g { background:var(--b-low); }
+.brawndo-onboarding .mlab { grid-row:2; padding-top:6px; text-align:center; font-size:11.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.brawndo-onboarding .mlab small { display:block; font-size:10.5px; }
+.brawndo-onboarding .legend { display:flex; flex-wrap:wrap; gap:4px 14px; padding:4px 20px 0; font-size:12px; color:var(--fg2); }
+.brawndo-onboarding .legend span { display:inline-flex; align-items:center; gap:6px; }
+.brawndo-onboarding .sw { display:inline-block; width:10px; height:10px; border-radius:3px; }
+.brawndo-onboarding .sw.f { background:var(--rail); }
+.brawndo-onboarding .sw.g { background:var(--b-low); }
+.brawndo-onboarding .rt .thead, .brawndo-onboarding .rt .trow { display:grid; grid-template-columns:minmax(0,2.2fr) minmax(0,1.6fr) 120px 120px; gap:12px; align-items:center; padding-inline:20px; }
+.brawndo-onboarding .rt .thead { padding-block:8px; font-size:12px; font-weight:500; color:var(--muted); background:var(--tablehead); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.brawndo-onboarding .rt .trow { padding-block:9px; border-bottom:1px solid var(--border); font-size:12.5px; }
+.brawndo-onboarding .rt .trow:last-child { border-bottom:0; }
+.brawndo-onboarding .block-msg { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:0 20px; padding:10px 14px; border-radius:8px; background:var(--warn-bg); color:var(--warn); font-size:12.5px; font-weight:600; }
+.brawndo-onboarding .rail { position:sticky; top:84px; display:grid; gap:12px; padding:16px; border:1px solid var(--border); border-radius:10px; background:var(--surface); box-shadow:var(--shadow-sm); }
+.brawndo-onboarding .rail h3 { font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.brawndo-onboarding .rl { display:grid; gap:2px; padding-top:10px; border-top:1px solid var(--border); }
+.brawndo-onboarding .rl:first-of-type { border-top:0; padding-top:0; }
+.brawndo-onboarding .rl span { font-size:12px; color:var(--muted); }
+.brawndo-onboarding .rl strong { font-size:20px; font-weight:600; font-variant-numeric:tabular-nums; }
+.brawndo-onboarding .rl small { font-size:12px; color:var(--fg2); line-height:1.45; }
+.brawndo-onboarding .rail .chips { display:flex; flex-wrap:wrap; gap:4px; }
+.brawndo-onboarding .wfoot { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-top:16px; }
+.brawndo-onboarding .wfoot .hint { font-size:12px; color:var(--muted); }
+@media (max-width:1180px) {
+.brawndo-onboarding .wiz { grid-template-columns:minmax(0,1fr); }
+.brawndo-onboarding .rail { position:static; }
+}
+@media (max-width:760px) {
+.brawndo-onboarding .stepper { grid-template-columns:repeat(2, minmax(0,1fr)); }
+.brawndo-onboarding .stp:nth-child(2) { border-right:0; }
+.brawndo-onboarding .stp:nth-child(-n+2) { border-bottom:1px solid var(--border); }
+.brawndo-onboarding .kstrip { grid-template-columns:repeat(2, minmax(0,1fr)); }
+.brawndo-onboarding .rt .thead { display:none; }
+.brawndo-onboarding .rt .trow { grid-template-columns:minmax(0,1fr) auto; }
+.brawndo-onboarding .rt .trow > :nth-child(2) { grid-column:1 / -1; order:3; color:var(--muted); }
+}
+@media (max-width:760px) {
+.brawndo-onboarding .kstrip { grid-template-columns:repeat(2, minmax(0,1fr)); }
+}
+@media (max-width:860px) {
+.brawndo-onboarding .content { padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brawndo-onboarding, .brawndo-onboarding * { animation:none !important; transition:none !important; }
+}
+
+/* Native fit adapters: retain complete native fields, state and handlers. These
+   are scoped additions, not declarations from the visual fixture. */
+.brawndo-onboarding :is(.native-ai-intake,.native-review-fields,.native-program-applicability,.native-completed-content) { min-width:0; }
+.brawndo-onboarding :is(button,input,select,textarea):disabled { cursor:not-allowed; }
+.brawndo-onboarding button:disabled { opacity:.6; }
+.brawndo-onboarding :is(.prow,.rrow,.trow) :is(b,span,small,a) { overflow-wrap:anywhere; }
+.brawndo-onboarding .native-step-panel { min-width:0; margin:0; padding:0; }
+.brawndo-onboarding .native-step-body { min-width:0; }
+.brawndo-onboarding .onboarding-layout { display:grid; gap:20px; min-width:0; }
+.brawndo-onboarding .native-step-body > div > p:first-child { display:none; }
+.brawndo-onboarding .native-step-body > :is(.space-y-3,.space-y-5,.space-y-6) > :not([hidden]) ~ :not([hidden]) { margin-top:0; margin-bottom:0; }
+.brawndo-onboarding .fwc { font-size:13.5px; font-weight:400; line-height:1.5; }
+.brawndo-onboarding .native-step-body > div > p { padding:0 20px 12px; }
+.brawndo-onboarding .native-step-body > div > * + * { margin-top:0; }
+/* Native preview details remain complete, spaced below the reference chart/table. */
+.brawndo-onboarding .native-step-body > .space-y-6 { display:grid; gap:16px; padding-bottom:16px; }
+.brawndo-onboarding .native-step-body > .space-y-6 > section:not(.schedule-preview) { padding:0 20px; }
+.brawndo-onboarding .native-step-body .fws { grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr)); }
+.brawndo-onboarding .fwc > span:first-child { font-size:14px; font-weight:600; }
+.brawndo-onboarding .fwc select { margin:0; width:100%; min-width:0; }
+.brawndo-onboarding .fwc > span:last-child { margin:0; font-size:12px; color:var(--muted); line-height:1.45; }
+.brawndo-onboarding .fwc[data-applicability=applies] { border-color:var(--rail); background:var(--selected); box-shadow:inset 0 0 0 1px var(--rail); }
+.brawndo-onboarding .native-step-body > .space-y-5 > label { display:block; padding:0 20px 20px; }
+.brawndo-onboarding .native-step-body > .space-y-5 > label select { width:min(100%, 288px); }
+.brawndo-onboarding .native-step-body [data-testid=ai-intake] { margin:0; padding:14px 20px; border:0; border-top:1px solid var(--border); border-radius:0; }
+/* Match the reference segments without replacing the native AI intake or save. */
+.brawndo-onboarding .native-step-body [data-testid=ai-intake] > h3 { font-size:13px; }
+.brawndo-onboarding .native-step-body [data-testid=ai-intake] > p:not([role=alert]) { font-size:12.5px; color:var(--muted); }
+.brawndo-onboarding .native-step-body [data-testid=ai-intake] > fieldset > .flex { display:inline-flex; gap:2px; padding:3px; border-radius:8px; background:var(--hover); box-shadow:inset 0 0 0 1px var(--border); }
+.brawndo-onboarding .native-step-body [data-testid=ai-intake] > fieldset > .flex > button { padding:4px 12px; border:0; border-radius:6px; background:none; font-size:12.5px; font-weight:500; color:var(--fg2); }
+.brawndo-onboarding .native-step-body [data-testid=ai-intake] > fieldset > .flex > button[aria-pressed=true] { background:var(--seg-on); color:var(--fg); font-weight:600; box-shadow:var(--shadow-seg); }
+.brawndo-onboarding .native-policy-row > div { grid-column:1 / -1; }
+.brawndo-onboarding .native-policy-row > .flex { align-items:center; }
+.brawndo-onboarding .native-policy-row > p { grid-column:1 / -1; }
+.brawndo-onboarding .ans button { border:0; background:none; }
+.brawndo-onboarding .native-step-body .native-review-plan { margin:0; padding:10px 20px; border-top:1px solid var(--border); display:grid; gap:8px; }
+.brawndo-onboarding .native-review-plan > label { font-size:13px; font-weight:600; }
+.brawndo-onboarding .native-review-plan input[type=checkbox] { width:16px; height:16px; accent-color:var(--rail); }
+
+.brawndo-onboarding .ui-button { height:32px; padding:0 12px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); color:var(--fg); font-size:12.5px; font-weight:600; box-shadow:var(--shadow-sm); }
+.brawndo-onboarding .wfoot .ui-button:last-child:not(:first-child) { background:var(--rail); border-color:var(--rail); color:var(--surface); }
+.brawndo-onboarding .ui-button:hover { background:var(--hover); }
+.brawndo-onboarding .review-retention { display:block; font-size:11.5px; color:var(--muted); }
+.brawndo-onboarding .schedule-preview { margin:0!important; border:0; box-shadow:none; }
+.brawndo-onboarding .schedule-preview .legend { padding-top:14px; }
+.brawndo-onboarding .sample-chip[data-save-state=saved]::before { background:var(--good); }
+.brawndo-onboarding .sample-chip[data-save-state=failed]::before { background:var(--bad); }
+.brawndo-onboarding .handoff-content { display:grid; gap:20px; }
+.brawndo-onboarding.onboarding-completed { display:grid; gap:20px; background:transparent; }
+.brawndo-onboarding.onboarding-completed > :is(section,details),.brawndo-onboarding .handoff-grid > section { padding:16px 20px; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-sm); }
+.brawndo-onboarding.onboarding-completed [aria-label="Program configuration"] > .grid > div { padding:14px 16px; border:1px solid var(--border); border-radius:10px; }
+.brawndo-onboarding .native-policy-row { min-width:0; }
+.brawndo-onboarding .native-review-plan { min-width:0; }
+.brawndo-onboarding .native-review-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; min-width:0; }
+.brawndo-onboarding .native-review-controls :is(input,select) { width:100%; min-width:0; height:34px; padding:0 10px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); font-size:12.5px; }
+.brawndo-onboarding .native-review-controls input[type="checkbox"] { width:16px; height:16px; padding:0; }
+.brawndo-onboarding .native-current-handoff { min-width:0; }
+.brawndo-onboarding .handoff-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr)); gap:16px; }
+.brawndo-onboarding.onboarding-completed .content, .brawndo-onboarding .onboarding-completed .content { max-width:none; padding:0; }
+@media (max-width:760px) {
+  .brawndo-onboarding .native-review-controls { grid-template-columns:minmax(0,1fr); }
+  .brawndo-onboarding .wfoot { flex-wrap:wrap; }
+  .brawndo-onboarding .wfoot .hint { flex:1 1 100%; order:3; }
+}
+
+.brawndo-onboarding .native-policy-row > .flex > div:first-child > p:first-child { font-size:13px; font-weight:600; }
+.brawndo-onboarding .schedule-preview .rt { margin-top:14px; }
+/* Separate program and optional general cards while retaining the same native
+   fieldset, details element and controls through appearance withdrawal. */
+.brawndo-onboarding .native-review-surface > .sec-h { background:var(--surface); border:1px solid var(--border); border-bottom:0; border-radius:10px 10px 0 0; }
+.brawndo-onboarding .native-review-surface .native-program-plans, .brawndo-onboarding .native-review-surface .native-no-plans { background:var(--surface); border:1px solid var(--border); border-top:0; border-radius:0 0 10px 10px; box-shadow:var(--shadow-sm); }
+.brawndo-onboarding .native-review-surface .native-no-plans { padding:0 20px 16px; }
+.brawndo-onboarding .native-review-surface .native-step-body > .space-y-5 > [role=alert] { padding:10px 20px; background:var(--surface); border-inline:1px solid var(--border); }
+.brawndo-onboarding .native-review-surface .native-step-body > .space-y-5 > .general-review-card { margin:16px 0 0; padding:16px 20px; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-sm); }
+.brawndo-onboarding .general-review-card > summary { font-size:14px; font-weight:600; }

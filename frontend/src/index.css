@@ -7,7 +7,7 @@
    Base fonts — palette and component tokens live in design-system.css
    =========================================================== */
 :root {
-  --font-body: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-body: 'Segoe UI', Inter, Arial, sans-serif;
   --font-heading: var(--font-body);
   --font-mono: ui-monospace, 'Cascadia Mono', SFMono-Regular, Consolas, monospace;
   --color-ai: #6C32F3;
@@ -47,11 +47,16 @@ a:hover { color: var(--color-link-hover); }
   }
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-input-border); }
+/* Approved surface markers and the mounted Login retain native scrollbar painting.
+   The inner forgiving :where preserves ordinary styles in engines without :has. */
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara))))::-webkit-scrollbar,
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara)))) ::-webkit-scrollbar { width: 10px; height: 10px; }
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara))))::-webkit-scrollbar-track,
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara)))) ::-webkit-scrollbar-track { background: transparent; }
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara))))::-webkit-scrollbar-thumb,
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara)))) ::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 8px; }
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara))))::-webkit-scrollbar-thumb:hover,
+:where(html:not([data-visual-surface]):not([data-additional-surface]):not([data-brawndo-cis-visual=true]):not(:where(:has(#login-governara)))) ::-webkit-scrollbar-thumb:hover { background: var(--color-input-border); }
 
 /* Compact table utilities */
 .tbl-cell {

@@ -1,4 +1,5 @@
 import {reviewSchedule,reviewView} from '../lib/reviewOccurrences';
+import {isCisClient} from './cisCapability';
 // Keep document lifecycle separate from the existing recurring Review lifecycle.
 export function syncPolicyReview(db, review) {
   const ids=review.policy_ids||[review.policy_id].filter(Boolean);if(!ids.length)return;
@@ -9,10 +10,10 @@ export function syncPolicyReview(db, review) {
 }
 
 const ACTIVE=r=>!['completed','cancelled'].includes(r.status);
-// Brawndo: a Policy's review obligation is one authoritative recurring Review (annual by default),
+// A CIS Policy's review obligation is one authoritative recurring Review (annual by default),
 // never a date maintained separately on the Policy. Returns the active linked Review.
 export function ensurePolicyReview(db, policy, due) {
-  if (policy.client_id !== 'demo_brawndo' || ['retired', 'not_applicable'].includes(policy.status)) return null;
+  if (!isCisClient(db, policy.client_id) || ['retired', 'not_applicable'].includes(policy.status)) return null;
   const linked = db.reviews.filter(r => r.policy_id === policy.policy_id && r.client_id === policy.client_id);
   const active = linked.find(ACTIVE);
   if (active) return active;

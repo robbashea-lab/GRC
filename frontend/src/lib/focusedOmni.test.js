@@ -1,4 +1,5 @@
-import {focusedOmniEnabled,focusedRecommendations,nextFocusedQuestion,correctFocusedAnswer,focusedNarrative,focusedResult} from './focusedOmni';
+import {focusedOmniEnabled,focusedRecommendations,nextFocusedQuestion,correctFocusedAnswer,focusedNarrative,focusedResult,focusedEvaluationDate} from './focusedOmni';
+import {omniCisSummary} from './omniCisSummary';
 import {versionForSafeguard as runtimeVersion,visibleQuestions,generateResult,catalogForVersion} from './guidedAssessment';
 const versionForSafeguard=id=>id==='1.2'?runtimeVersion(id,false):runtimeVersion(id,true);
 const version=versionForSafeguard('1.1',true);
@@ -31,17 +32,24 @@ test('changed prerequisite invalidates dependent current conclusions; unrelated 
   expect(generateResult('1.1',corrected,new Date(),version).status).toBe('needs_attention');
 });
 
-test('recommendations contain only justified 1.1/1.2 work, with recorded foundation rationale',()=>{
+test('recommendations put Not Assessed first and retain the inventory foundation rationale',()=>{
   const rows=[{definition_id:'1.2',framework_assessment_id:'handling',status:'not_assessed'},{definition_id:'1.1',framework_assessment_id:'inventory',status:'needs_attention'},{definition_id:'3.5',status:'needs_attention'}].map(row=>({...row,framework_key:'cis-ig1'}));
   const items=focusedRecommendations(rows,{},false);
-  expect(items.map(r=>r.definition_id)).toEqual(['1.1','1.2']);expect(items[0].reason).toContain('supports unauthorized-asset comparison');
+  expect(items.map(r=>r.definition_id)).toEqual(['1.2','1.1','3.5']);expect(items.find(r=>r.definition_id==='1.1').reason).toContain('supports unauthorized-asset comparison');
   expect(focusedRecommendations(rows,{'1.2':{revision:2,completed:false}},false)[0].definition_id).toBe('1.2');
   expect(focusedRecommendations([{framework_key:'cis-ig1',definition_id:'1.1',status:'addressed',verification:'verified',work:{context_complete:true,open_findings:0,open_actions:0}}],{},true)).toEqual([]);
 });
 
+test('unsupported identities never enter recommendations through saved-interview resume',()=>{
+  const unsupported={client_id:'client-a',framework_key:'cis-ig1',framework_assessment_id:'unsupported',definition_id:'99.1',status:'not_assessed'};
+  expect(focusedRecommendations([unsupported],{'99.1':{revision:1,completed:false}},true)).toEqual([]);
+  const clean={...unsupported,definition_id:'1.1',status:'addressed',verification:'verified',work:{context_complete:true,open_findings:0,open_actions:0}};
+  expect(focusedRecommendations([clean],{'1.1':{revision:1,completed:false}},true)).toMatchObject([{definition_id:'1.1',action:'resume'}]);
+});
+
 const complete=id=>{
   const current=new Date(),day=[current.getFullYear(),String(current.getMonth()+1).padStart(2,'0'),String(current.getDate()).padStart(2,'0')].join('-');
-  return Object.fromEntries(catalogForVersion(versionForSafeguard(id,true)).safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':q.type==='date'?day:q.type==='multi'?['Quarantine or isolate']:q.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):q.id==='sources'?'One source':q.id==='unresolved'?'No':'Yes']));
+  return Object.fromEntries(catalogForVersion(versionForSafeguard(id,true)).safeguards[id].map(q=>[q.id,q.optional?'No':q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':q.type==='date'?day:q.type==='multi'?['Quarantine or isolate']:q.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):q.id==='sources'?'One source':q.id==='unresolved'?'No':'Yes']));
 };
 
 test('all material criteria must be addressed, not merely answered, and verification is separate',()=>{
@@ -78,7 +86,7 @@ test.each(['1.1','1.2'])('%s narrative names unknown requirements without claimi
   const answers=complete(id),v=versionForSafeguard(id,true);
   const uncertain=id==='1.1'?{...answers,attributes:{...answers.attributes,'Hardware address':'Not sure'}}:{...answers,detection:'Not sure'};
   const result=focusedResult(id,uncertain,v);
-  expect(result.status).toBe('in_progress');expect(result.unknowns.length).toBeGreaterThan(0);
+  expect(result.status).toBe(id==='1.1'?'not_assessed':'in_progress');expect(result.unknowns.length).toBeGreaterThan(0);
   for(const unknown of result.unknowns)expect(result.narrative).toContain(unknown);
   expect(result.verification).toBeUndefined();
 });
@@ -109,4 +117,23 @@ test('a lost 1.2 prerequisite does not carry hidden affirmative process details 
   expect(result.narrative).not.toContain('Obsolete detector');
   expect(result.narrative).not.toContain('Reported identification of unauthorized assets: Yes');
   expect(result.narrative).not.toContain('Reported authorized inventory available for comparison: Yes');
+});
+
+test('CIS review clock captures the New York calendar day at UTC midnight and replays its threshold',()=>{
+  const instant=new Date('2026-10-13T00:30:00Z');
+  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(instant).map(part=>[part.type,part.value]));
+  const day=`${parts.year}-${parts.month}-${parts.day}`,today=focusedEvaluationDate(day),v=versionForSafeguard('1.1');
+  expect(day).toBe('2026-10-12');expect(instant.toISOString().slice(0,10)).toBe('2026-10-13');
+  expect(focusedEvaluationDate(today)).toBe(today);
+  const answers={...complete('1.1'),last_review:'2026-04-12'},output=focusedResult('1.1',answers,v,today);
+  expect(output).toMatchObject({status:'addressed',evaluation_date:day});
+  expect(focusedResult('1.1',answers,v,focusedEvaluationDate('2026-10-13')).status).toBe('in_progress');
+  expect(focusedResult('1.1',{...answers,last_review:'2026-04-11'},v,today).status).toBe('in_progress');
+  expect(focusedResult('1.1',{...answers,last_review:'2026-10-13'},v,today).status).not.toBe('addressed');
+  const inline=omniCisSummary('1.1',answers,v,'Synthetic client',today).result;
+  expect(inline).toMatchObject({status:output.status,evaluation_date:day});
+  expect(inline.narrative).toContain('reported on 2026-10-12');
+  expect(omniCisSummary('1.1',answers,v,'Synthetic client',day).result).toEqual(inline);
+  expect(focusedResult('1.1',answers,v,focusedEvaluationDate(JSON.parse(JSON.stringify(output)).evaluation_date)).status).toBe(output.status);
+  expect(focusedResult('1.2',complete('1.2'),versionForSafeguard('1.2'),today)).not.toHaveProperty('evaluation_date');
 });
