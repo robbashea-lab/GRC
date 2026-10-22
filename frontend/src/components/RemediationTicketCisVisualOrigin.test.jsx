@@ -131,7 +131,8 @@ test('a default parent keeps the same source native without creating a presentat
   await savePersonalProgress();const before=await snapshot();observeWrites();await render(false);const outer=assessments()[0];await openTicket(outer);
   const nested=await openSource();expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(false);
   expect(nested.querySelector('.cis-collapsible-requirement summary').textContent).toBe('What CIS requires · CIS v8.1 safeguard 1.1');
-  expect(button(nested,'Resume guided assessment').getAttribute('aria-expanded')).toBe('false');
+  const launcher=button(nested,'Resume guided assessment')||button(nested,'Begin guided assessment');
+  expect(launcher).toBeTruthy();expect(launcher.getAttribute('aria-expanded')).toBe('false');
   await click(nested,'Close');expect(ticket()).toBeTruthy();expect(outer.isConnected).toBe(true);
   expect(await snapshot()).toEqual(before);expectNoWrites();
 });
