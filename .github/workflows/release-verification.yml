@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [ten-year, multi-framework, '1', '2', '3']
+        shard: [ten-year, multi-framework, framework-five-year, '1', '2', '3']
     defaults:
       run:
         working-directory: frontend

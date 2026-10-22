@@ -2,9 +2,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {spawnSync} = require('node:child_process');
 
-const LONG_SUITE = 'src/preview/brawndoTenYear.test.js';
-const MULTI_FRAMEWORK_SUITE = 'src/preview/multiFrameworkLifecycle.test.js';
-const SHARDS = ['ten-year', 'multi-framework', '1', '2', '3'];
+const LIFECYCLE_SUITES = Object.freeze({
+  'ten-year': 'src/preview/brawndoTenYear.test.js',
+  'multi-framework': 'src/preview/multiFrameworkLifecycle.test.js',
+  'framework-five-year': 'src/preview/frameworkFiveYear.test.js',
+});
+const SHARDS = [...Object.keys(LIFECYCLE_SUITES), '1', '2', '3'];
 function requireThat(condition, message) { if (!condition) throw new Error(message); }
 function normalized(file, root) {
   const relative = path.relative(root, path.resolve(root, file)).split(path.sep).join('/');
@@ -19,13 +22,15 @@ function uniqueSorted(files) {
 function plan(files, sha) {
   const discovered = uniqueSorted(files);
   requireThat(typeof sha === 'string' && /^[a-f0-9]{40}$/.test(sha), 'Full source SHA required');
-  requireThat(discovered.includes(LONG_SUITE), 'Ten-year suite missing from discovery');
-  requireThat(discovered.includes(MULTI_FRAMEWORK_SUITE), 'Multi-framework suite missing from discovery');
+  const dedicated = new Set(Object.values(LIFECYCLE_SUITES));
+  requireThat(dedicated.size === Object.keys(LIFECYCLE_SUITES).length, 'Duplicate dedicated suite');
   const partitions = Object.fromEntries(SHARDS.map(id => [id, []]));
   // Long lifecycle suites use fresh processes without changing their fixtures or deadlines.
-  partitions['ten-year'] = [LONG_SUITE];
-  partitions['multi-framework'] = [MULTI_FRAMEWORK_SUITE];
-  discovered.filter(file => file !== LONG_SUITE && file !== MULTI_FRAMEWORK_SUITE).forEach((file, index) => partitions[String(index % 3 + 1)].push(file));
+  for (const [shard, file] of Object.entries(LIFECYCLE_SUITES)) {
+    requireThat(discovered.includes(file), 'Lifecycle suite missing from discovery: ' + file);
+    partitions[shard] = [file];
+  }
+  discovered.filter(file => !dedicated.has(file)).forEach((file, index) => partitions[String(index % 3 + 1)].push(file));
   requireThat(SHARDS.every(id => partitions[id].length), 'Empty campaign partition');
   requireThat(JSON.stringify(uniqueSorted(Object.values(partitions).flat())) === JSON.stringify(discovered), 'Partition coverage differs from discovery');
   return {version: 1, sha, discovered, partitions};
@@ -86,4 +91,4 @@ if (require.main === module) {
     } else throw new Error('Usage: frontend-campaign.cjs run <shard> <output> | audit <artifacts>');
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
-module.exports = {plan, verifyResult, audit, LONG_SUITE, MULTI_FRAMEWORK_SUITE, SHARDS};
+module.exports = {plan, verifyResult, audit, LIFECYCLE_SUITES, SHARDS};
