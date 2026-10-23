@@ -6,15 +6,17 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional, Literal
 from fastapi import APIRouter, Depends, HTTPException, Header
-from pydantic import BaseModel, Field, ConfigDict, StrictBool, ValidationError, field_validator, model_validator
+from pydantic import BaseModel, Field, ConfigDict, StrictBool, StrictStr, ValidationError, field_validator, model_validator
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 import review_occurrences
 import assignment_eligibility
 import create_requests
+import cis_scope
 from register_catalog_identity import validate_catalog_key
 
 CATALOG = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/aiGovernanceCatalog.json').read_text(encoding='utf-8'))
+AI_METADATA_DEFAULTS = {'environment':'','restrictions':'','data_settings':'','permitted_data_types':[]}
 
 class AIInput(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -39,11 +41,22 @@ class AIInput(BaseModel):
     oversight_owner_id: Optional[str] = None
     oversight_notes: str = ''
     governance_notes: str = ''
+    environment: str = Field(default='', strict=True, max_length=10000)
+    restrictions: str = Field(default='', strict=True, max_length=10000)
+    data_settings: str = Field(default='', strict=True, max_length=10000)
+    permitted_data_types: list[StrictStr] = Field(default_factory=list, strict=True, max_length=len(CATALOG['data_types']))
 
     @field_validator('catalog_key', mode='before')
     @classmethod
     def valid_catalog_key(cls, value):
         return validate_catalog_key('ai_systems', value)
+
+    @field_validator('permitted_data_types')
+    @classmethod
+    def valid_permitted_data_types(cls, values):
+        if any(value not in CATALOG['data_types'] for value in values):
+            raise ValueError('Invalid permitted data classifications')
+        return values
 
 class AILinkInput(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
@@ -140,6 +153,14 @@ def router_for(s):
     async def view(row):
         q={'client_id':row['client_id']}
         return projection(row,await s.db.reviews.find({**q,'ai_system_id':row['ai_system_id']},{'_id':0}).to_list(None),await s.db.risks.find(q,{'_id':0}).to_list(None))
+    async def metadata_scope(cid,supplied):
+        if not set(supplied).intersection(AI_METADATA_DEFAULTS): return
+        client=await s.db.clients.find_one({'client_id':cid})
+        selected=await s.db.requirements.find_one({'client_id':cid,'baseline_key':'cis-ig1','baseline_response':'applies'})
+        if not client or not selected or client.get('status') not in ('active','onboarding') \
+            or client.get('archived') or client.get('archived_at') \
+            or cis_scope.experience_program(client,True)['implementation_group'] is None:
+            raise HTTPException(422,'AI governance metadata requires a configured CIS client')
     async def validate(data,user,old=None):
         await client_scope(data['client_id'],user,True)
         if not data['name'].strip(): raise HTTPException(422,'Name is required')
@@ -178,15 +199,32 @@ def router_for(s):
     @router.post('/ai_systems')
     async def create_ai(body:AIInput,user=Depends(s.get_current_user),idempotency_key:Optional[str]=Header(None)):
         await client_scope(body.client_id,user,True)
+        await metadata_scope(body.client_id,body.model_fields_set)
         async def execute(identity):
+            await metadata_scope(body.client_id,body.model_fields_set)
             return await create_ai_record(body,user,identity)
-        return await create_requests.run(s.db,idempotency_key,user['user_id'],body.client_id,'ai_systems',body.model_dump(),execute)
+        payload=body.model_dump()
+        if idempotency_key is not None and all(payload[key]==default for key,default in AI_METADATA_DEFAULTS.items()):
+            # Exact retained schemas only. Empty new metadata must not strand an
+            # old create, but a real association or governance edit stays hashed.
+            previous_payload={key:value for key,value in payload.items() if key not in AI_METADATA_DEFAULTS}
+            candidates=[previous_payload]
+            if body.catalog_key is None:
+                candidates.append({key:value for key,value in previous_payload.items() if key!='catalog_key'})
+            identity=create_requests.digest([user['user_id'],body.client_id,'ai_systems',idempotency_key])
+            receipt=await s.db.create_requests.find_one({'_id':identity},{'fingerprint':1})
+            for candidate in candidates:
+                if receipt and receipt.get('fingerprint')==create_requests.digest(candidate):
+                    payload=candidate
+                    break
+        return await create_requests.run(s.db,idempotency_key,user['user_id'],body.client_id,'ai_systems',payload,execute)
     async def create_ai_record(body,user,identity):
         existing=await s.db.ai_systems.find_one({'_id':'create:'+identity},{'_id':0})
         if existing:
             await s.audit(user,'AI use case created','ai_system',existing['ai_system_id'],existing['client_id'])
             return await view(existing)
-        data=body.model_dump();await validate(data,user)
+        data=body.model_dump(exclude=set(AI_METADATA_DEFAULTS)-body.model_fields_set)
+        await validate(data,user)
         counter_key='ai-display:'+data['client_id']
         try:
             counter=await s.db.business_counters.find_one_and_update({'_id':counter_key},{'$inc':{'sequence':1}},upsert=True,return_document=ReturnDocument.AFTER)
@@ -202,12 +240,23 @@ def router_for(s):
         s._require_snapshot(body,old)
         changes={k:v for k,v in body.items() if k!='expected_updated_at'}
         if set(changes)-set(AIInput.model_fields): raise HTTPException(422,'Unknown or read-only AI fields')
+        await metadata_scope(old['client_id'],changes)
         async with lease(s.db,aid):
             old=await parent(aid,user,True)
             s._require_snapshot(body,old)
+            await metadata_scope(old['client_id'],changes)
             try: data=AIInput(**{**{k:old[k] for k in AIInput.model_fields if k in old},**changes}).model_dump()
             except Exception as exc: raise HTTPException(422,'Invalid AI fields') from exc
+            # Existing forms resend empty defaults; that is not a backfill or an
+            # edit to an absent legacy boundary. Existing fields still clear.
+            for key,default in AI_METADATA_DEFAULTS.items():
+                if key not in old and data[key]==default: data.pop(key)
             await validate(data,user,old)
+            if old.get('approval_status') in ('approved','approved_with_conditions') and any(
+                data.get(key,AIInput.model_fields[key].get_default(call_default_factory=True))
+                !=old.get(key,AIInput.model_fields[key].get_default(call_default_factory=True))
+                for key in AI_METADATA_DEFAULTS):
+                raise HTTPException(409,'This change affects a recorded AI approval scope; authenticated reassessment is not supported. The original decision and record are unchanged.')
             if data['status']=='retired':
                 # Started work may finish as a one-time closure obligation; history is retained.
                 for review in await s.db.reviews.find({'ai_system_id':aid,'client_id':old['client_id'],'status':{'$nin':['completed','cancelled']}},{'_id':0}).to_list(None):

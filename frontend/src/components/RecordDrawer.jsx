@@ -247,7 +247,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         });
         base.catalog_key = record?.catalog_key ?? null;
         base.service = record?.service || record?.services || "";
-        if(vendorPilot){for(const key of ['contract_notice_deadline','access_level','processing_location'])base[key]=record?.[key]||'';base.connected_system_ids=record?.connected_system_ids||[];}
+        if(vendorPilot){for(const key of ['contract_notice_deadline','access_level','processing_location'])base[key]=record?.[key]||'';if(record&&Object.prototype.hasOwnProperty.call(record,'connected_system_ids'))base.connected_system_ids=record.connected_system_ids;}
         base.assurance_records = record?.assurance_records || [];base.contract_evidence_ids=record?.contract_evidence_ids||[];
         base.assurance_window_days=record?.assurance_window_days||90;base.contract_lead_days=record?.contract_lead_days||90;
         for(const key of ["assurance_required","separate_assurance_review","contract_review_enabled"])base[key]=!!record?.[key];
