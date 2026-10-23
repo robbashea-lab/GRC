@@ -2,8 +2,6 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import BrawndoCisSafeguard from './BrawndoCisSafeguard';
 import catalog from '@catalogs/cisIG1.json';
-import guide from '@catalogs/operatorGuidance/cisRequirementGuide.json';
-import criteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 
 let mockGuideProps,mockShellProps,mockBrawndoRecord=true;
 jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>mockBrawndoRecord}));
@@ -33,11 +31,12 @@ test('visual requirement retains native official text, complete guidance and edi
   expect(mockShellProps.closeInNavigation).toBe(true);expect(mockShellProps.close).toBe(actions.close);
   expect(mockShellProps.previous).toBe(actions.previous);expect(mockShellProps.next).toBe(actions.next);
   expect(container.querySelector('[data-source-kind="official"]').textContent).toBe(state.definition.official_text);
-  expect(container.querySelector('.brawndo-cis-visual-requirement').textContent).toContain(guide.requirements['1.1'].plain);
-  expect(container.querySelector('.brawndo-cis-native-guidance').textContent).toContain(guide.requirements['1.1'].evidence);
-  expect(container.querySelector('.brawndo-cis-native-guidance').textContent).toContain('Previous checklist responses');
-  await act(async()=>container.querySelector('.assessment-check input').click());
-  expect(actions.put).toHaveBeenCalledWith('cis_assessment_criteria',['historical-id',criteria.requirements['1.1'].criteria[0].id]);
+  const requirement=container.querySelector('.cis-collapsible-requirement');
+  expect(requirement.open).toBe(false);expect(requirement.querySelector('summary').textContent).toContain('What CIS requires');
+  expect(container.textContent).not.toContain('Assessment guidance & working checklist');
+  expect(container.querySelector('.assessment-check')).toBeNull();
+  expect(state.form.cis_assessment_criteria).toEqual(['historical-id']);
+  expect(actions.put).not.toHaveBeenCalled();
   expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(state.form.implementation);
   expect(container.querySelector('[aria-label="Previously recorded notes"]').value).toBe(state.form.notes);
   expect(actions.save).not.toHaveBeenCalled();
@@ -46,17 +45,15 @@ test('visual requirement retains native official text, complete guidance and edi
 test('native guide callbacks and tab transitions retain manual drafts and distinct save actions',async()=>{
   await render();
   expect(mockGuideProps.visualReference).toBe(true);
-  expect(mockGuideProps.onFreshInterviewReady).toEqual(expect.any(Function));
+  expect(mockGuideProps.onFreshInterviewReady).toBeUndefined();expect(mockGuideProps.sequential).toBe(true);
   expect(mockGuideProps.onApply).toBe(actions.applyGuided);
   expect(mockGuideProps.onSaveAssessment).toBe(actions.saveGuidedAssessment);
   expect(mockGuideProps.onUpdateImplementation).toBe(actions.stageGuidedImplementation);
-  const details=container.querySelector('.assessment-summary');
-  await act(async()=>{details.open=true;details.dispatchEvent(new Event('toggle'));});
   expect(mockGuideProps.inlineOpen).toBe(true);
   await tab('Items to address');await tab('Requirement & implementation');
   expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(state.form.implementation);
   await act(async()=>button('Close interview').click());
-  expect(details.open).toBe(false);expect(document.activeElement).toBe(details.querySelector('summary'));
+  expect(state.form.cis_assessment_criteria).toEqual(['historical-id']);
   await act(async()=>button('Save assessment').click());await act(async()=>button('Save & next').click());
   expect(actions.save).toHaveBeenCalledTimes(1);expect(actions.saveAndNext).toHaveBeenCalledTimes(1);
   expect(actions.put).not.toHaveBeenCalled();
@@ -76,7 +73,7 @@ test('badges count native open items and Findings while N/A keeps its existing r
 test('read-only visual workspace preserves disabled fields and withholds save actions',async()=>{
   const manageRecord=jest.fn();state={...state,writable:false,manageRecord};await render();
   expect(container.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
-  expect(container.querySelector('.assessment-check input').closest('fieldset').disabled).toBe(true);
+  expect(container.querySelector('.assessment-check input')).toBeNull();expect(state.form.cis_assessment_criteria).toEqual(['historical-id']);
   expect(mockGuideProps.disabled).toBe(true);expect(mockGuideProps.onUpdateImplementation).toBeUndefined();
   expect(button('Save assessment')).toBeUndefined();expect(button('Save & next')).toBeUndefined();
   expect(mockShellProps.closeInNavigation).toBe(true);expect(mockShellProps.close).toBe(actions.close);
@@ -95,7 +92,7 @@ test.each([false,undefined])('without an explicit visual gate (%s) the existing 
   expect(container.querySelector('[data-testid="native-shell"]').className).toBe('');
   expect(container.querySelector('.brawndo-cis-visual-requirement')).toBeNull();
   expect(container.querySelector('.brawndo-cis-native-guidance')).toBeNull();
-  expect(container.querySelector('.assessment-summary summary').textContent).toBe('Requirement summary');
+  expect(container.querySelector('.cis-collapsible-requirement summary').textContent).toContain('What CIS requires');
   expect([...container.querySelectorAll('[role="tab"]')].map(element=>element.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
   expect(mockGuideProps.visualReference).toBe(false);
   expect(mockGuideProps.onFreshInterviewReady).toBeUndefined();

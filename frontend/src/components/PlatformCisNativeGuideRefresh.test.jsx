@@ -32,11 +32,16 @@ async function value(selector,next){
 }
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={record.client_id} onOpenChange={()=>{}}/>));}
 async function open(){
-  const summary=document.querySelector('details.assessment-summary');expect(summary).toBeTruthy();
-  await act(async()=>{summary.open=true;summary.dispatchEvent(new Event('toggle'));});
+  const launcher=document.querySelector('.cis-guided-launch button');expect(launcher).toBeTruthy();expect(launcher.disabled).toBe(false);
+  if(launcher.getAttribute('aria-expanded')!=='true')await act(async()=>launcher.click());
+  expect(launcher.getAttribute('aria-expanded')).toBe('true');
   expect(workspace()).toBeTruthy();
 }
-async function answer(){await click('Not sure',workspace());await value('[aria-label="Known gaps or uncertainties"]','Synthetic uncertainty retained through native save.');}
+async function answer(){
+  const choice=workspace().querySelector('fieldset select');expect(choice).toBeTruthy();
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(choice,'Not sure');choice.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(choice.value).toBe('Not sure');await value('[aria-label="Known gaps or uncertainties"]','Synthetic uncertainty retained through native save.');
+}
 async function nativeSave(){await value('[aria-label="Current implementation"]','SYNTHETIC QA native preservation marker.');await click('Save assessment',container);expect(container.textContent).toContain('Assessment saved.');expect(native.last_saved).toBe(tokenB);}
 
 beforeEach(()=>{
@@ -96,7 +101,7 @@ test('an unseen external native writer rejects first progress without losing the
   await render();await open();await answer();native={...native,implementation:'External synthetic winner',last_saved:tokenB};const winner=copy(native);
   await click('Save & close',workspace());expect(document.querySelector('[role="alert"]')).toBeTruthy();
   expect(interview.revision).toBe(0);expect(native).toEqual(winner);expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toContain('Synthetic uncertainty');
-  expect([...workspace().querySelectorAll('button')].find(button=>button.textContent==='Not sure').getAttribute('aria-pressed')).toBe('true');expect(api.patch).not.toHaveBeenCalled();
+  expect(workspace().querySelector('fieldset select').value).toBe('Not sure');expect(api.patch).not.toHaveBeenCalled();
 });
 
 test('a competing persisted interview is not adopted by the first-write refresh',async()=>{

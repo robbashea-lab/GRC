@@ -36,9 +36,15 @@ async function openSource(){
   const added=assessments().filter(node=>!prior.includes(node));expect(added).toHaveLength(1);return added[0];
 }
 async function revealInterview(surface){
-  const disclosure=surface.querySelector('.assessment-summary');expect(disclosure.open).toBe(false);
-  await act(async()=>{disclosure.open=true;disclosure.dispatchEvent(new Event('toggle'));});
+  const launcher=button(surface,'Resume guided assessment')||button(surface,'Begin guided assessment');
+  expect(launcher).toBeTruthy();expect(launcher.getAttribute('aria-expanded')).toBe('false');
+  await act(async()=>launcher.click());
   const guide=surface.querySelector('[aria-label="CIS assessment interview"]');expect(guide.hidden).toBe(false);return guide;
+}
+const inventoryAnswer=guide=>guide.querySelector('.cis-sequential-interview select[aria-label="Does an enterprise asset inventory exist?"]');
+async function chooseInventoryAnswer(guide,value){
+  const answer=inventoryAnswer(guide);expect(answer).toBeTruthy();expect(answer.disabled).toBe(false);
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(answer,value);answer.dispatchEvent(new Event('change',{bubbles:true}));});
 }
 async function snapshot(){
   const paths=[base,base+'/guided-assessment',base+'/guided-assessment/history','/tasks/'+task.task_id,'/findings/'+finding.finding_id];
@@ -93,9 +99,8 @@ test.each(['Close','Escape'])('the completed ticket opens its exact native CIS s
   expect(nested.querySelector('[aria-label$="location"]')).toBeNull();
   const guide=await revealInterview(nested);
   expect(guide.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe('Retained exact reviewed completion.');
-  const disclosure=guide.closest('details');
-  await act(async()=>{disclosure.open=false;disclosure.dispatchEvent(new Event('toggle'));});
-  expect(disclosure.open).toBe(false);
+  await click(nested,'Resume guided assessment');
+  expect(guide.hidden).toBe(true);expect(button(nested,'Resume guided assessment').getAttribute('aria-expanded')).toBe('false');
   if(closeMethod==='Close')await click(nested,'Close');
   else await act(async()=>nested.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));
   await act(async()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
@@ -110,7 +115,7 @@ test('nested assessment and ticket drafts retain their independent close guards 
   await savePersonalProgress();const before=await snapshot();observeWrites();await render();const outer=assessments()[0];await openTicket(outer);
   await edit(ticket().querySelector('[aria-label="Planned action"]'),'Retained unsaved ticket plan.');
   const nested=await openSource();expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
-  const guide=await revealInterview(nested);expect(button(guide,'Not sure').getAttribute('aria-pressed')).toBe('true');
+  const guide=await revealInterview(nested);expect(inventoryAnswer(guide).value).toBe('Not sure');
   await edit(nested.querySelector('[aria-label="Current implementation"]'),'Retained unsaved source wording.');
   await click(nested,'Close');await click(document.body,'Keep editing');expect(nested.isConnected).toBe(true);
   expect(nested.querySelector('[aria-label="Current implementation"]').value).toBe('Retained unsaved source wording.');
@@ -125,7 +130,9 @@ test('nested assessment and ticket drafts retain their independent close guards 
 test('a default parent keeps the same source native without creating a presentation receipt',async()=>{
   await savePersonalProgress();const before=await snapshot();observeWrites();await render(false);const outer=assessments()[0];await openTicket(outer);
   const nested=await openSource();expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(false);
-  expect(nested.querySelector('.assessment-summary summary').textContent).toBe('Requirement summary');
+  expect(nested.querySelector('.cis-collapsible-requirement summary').textContent).toBe('What CIS requires · CIS v8.1 safeguard 1.1');
+  const launcher=button(nested,'Resume guided assessment')||button(nested,'Begin guided assessment');
+  expect(launcher).toBeTruthy();expect(launcher.getAttribute('aria-expanded')).toBe('false');
   await click(nested,'Close');expect(ticket()).toBeTruthy();expect(outer.isConnected).toBe(true);
   expect(await snapshot()).toEqual(before);expectNoWrites();
 });
@@ -167,16 +174,15 @@ test('source refresh loss preserves an unsaved supported interview answer and no
   patchSpy.mockImplementationOnce((...args)=>new Promise((resolve,reject)=>{completeAction=()=>write(...args).then(resolve,reject);}));
   await click(ticket().querySelector('[data-ticket-task="'+task.task_id+'"]'),'Complete work');
   const nested=await openSource(),pilot=nested.querySelector('[data-testid="guided-pilot"]'),guide=await revealInterview(nested);
-  const question=()=>guide.querySelector('[role="group"][aria-label="Does an enterprise asset inventory exist?"]');
-  await click(question(),'Yes');await edit(guide.querySelector('[aria-label="Known gaps or uncertainties"]'),'Retain this exact unsaved interview note.');
+  await chooseInventoryAnswer(guide,'Yes');await edit(guide.querySelector('[aria-label="Known gaps or uncertainties"]'),'Retain this exact unsaved interview note.');
   const read=api.get.bind(api),reads=jest.spyOn(api,'get').mockImplementation((path,...args)=>path===base?Promise.reject({response:{status:404},message:'Source unavailable for this ticket refresh'}):read(path,...args));
   await act(async()=>completeAction());
   expect(nested.isConnected).toBe(true);expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(false);
   expect(nested.querySelector('[data-testid="guided-pilot"]')).toBe(pilot);
-  expect(button(question(),'Yes').getAttribute('aria-pressed')).toBe('true');
+  expect(inventoryAnswer(guide).value).toBe('Yes');
   expect(guide.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe('Retain this exact unsaved interview note.');
   await click(nested,'Close');await click(document.body,'Keep editing');
-  expect(nested.isConnected).toBe(true);expect(button(question(),'Yes').getAttribute('aria-pressed')).toBe('true');
+  expect(nested.isConnected).toBe(true);expect(inventoryAnswer(guide).value).toBe('Yes');
   expect(guide.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe('Retain this exact unsaved interview note.');
   reads.mockRestore();const after=await snapshot();expect(after.records[0]).toEqual(before.records[0]);
   for(const field of ['version','answers','step','completed','narrative','result','revision','base_assessment_token','base_scope_fingerprint'])expect(after.records[1][field]).toEqual(before.records[1][field]);

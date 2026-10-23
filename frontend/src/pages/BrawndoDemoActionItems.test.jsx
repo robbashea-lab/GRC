@@ -53,9 +53,10 @@ test('actual route gate accepts resolved CIS clients and denies inconsistent ide
 test('full-population summary is independent of search/source and filters precede ten-row pagination',async()=>{
   records.tasks[11]={...records.tasks[11],title:'Distinct target',source_type:'review',review_id:'original'};
   records.findings=[finding('accepted',{status:'accepted',severity:'high'})];records.tasks.push(task('linked',{finding_id:'accepted',status:'blocked'}));
-  await render();expect(tickets()).toHaveLength(10);expect(summary('active')).toBe('13');expect(summary('unassigned')).toBe('12');expect(summary('high_critical')).toBe('1');
-  // A blocked, unscheduled ticket must not be described as being on track.
-  expect(container.querySelector('.bda-high_critical small').textContent).toBe('None overdue or awaiting validation');
+  await render();expect(tickets()).toHaveLength(10);expect(summary('active')).toBe('13');expect(summary('unassigned')).toBe('12');expect(summary('upcoming')).toBe('0');
+  // The replacement overview does not invent a deadline for a blocked, unscheduled ticket.
+  expect(container.querySelector('.bda-upcoming small').textContent).toBe('Saved active Action deadlines');
+  expect(container.querySelector('.bda-runway')).toBeNull();
   await click(button('Next'));expect(tickets()).toHaveLength(3);expect(container.textContent).toContain('Page 2 of 2');
   await search('Distinct target');expect(tickets()).toHaveLength(1);expect(tickets()[0].textContent).toContain('Distinct target');expect(container.textContent).toContain('Page 1 of 1');expect(summary('active')).toBe('13');
   await change(container.querySelector('select'), 'reviews');expect(tickets()).toHaveLength(1);expect(summary('unassigned')).toBe('12');
@@ -203,43 +204,31 @@ test('reference row uses structured source, Finding title, neutral priority and 
  });
 
 
-test('runway hover and keyboard emphasis are read-only and restore the selected native window',async()=>{
-  records={tasks:[task('late',{due_date:'2000-01-01'}),task('later',{due_date:'2099-01-01'}),task('unscheduled')],findings:[]};
+test('compact overview replaces runway, preserves selected native filters and opens the exact saved Action',async()=>{
+  records={tasks:[task('late',{due_date:'2000-01-01',priority:'low'}),task('later',{due_date:'2099-01-01'}),task('unscheduled')],findings:[]};
   await render('/action-items?view=active&quick=overdue');
-  const segments=()=>[...container.querySelectorAll('.bda-runway-bar span')];
-  const keys=[...container.querySelectorAll('.bda-runway-keys button')];
-  const later=keys.find(node=>node.textContent.startsWith('Later'));
-  const overdue=keys.find(node=>node.textContent.startsWith('Overdue'));
-  const dimmed=key=>container.querySelector('.bda-runway-bar .bda-window-'+key).dataset.dimmed;
-  expect(dimmed('overdue')).toBe('false');expect(dimmed('later')).toBe('true');
-  expect(segments()[0].title).toBe('Overdue: 1');expect(tickets()).toHaveLength(1);
-  const before=location.search;
-  await act(async()=>later.dispatchEvent(new MouseEvent('mouseover',{bubbles:true})));
-  expect(dimmed('later')).toBe('false');expect(dimmed('overdue')).toBe('true');expect(location.search).toBe(before);
-  await act(async()=>later.dispatchEvent(new MouseEvent('mouseout',{bubbles:true})));
-  expect(dimmed('overdue')).toBe('false');
-  await act(async()=>later.focus());expect(dimmed('later')).toBe('false');
-  await act(async()=>later.blur());expect(dimmed('overdue')).toBe('false');
-  await click(overdue);expect(location.search).not.toContain('quick=');expect(tickets()).toHaveLength(3);
-  expect(segments().every(node=>node.dataset.dimmed==='false')).toBe(true);
-  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+  expect(container.querySelector('.bda-runway')).toBeNull();expect(container.querySelectorAll('.cpt-lane')).toHaveLength(3);
+  expect(tickets()).toHaveLength(1);const before=location.search;
+  const point=container.querySelector('.cpt-event');expect(point.getAttribute('aria-label')).toContain('Action late');
+  await act(async()=>point.focus());expect(location.search).toBe(before);
+  await click(container.querySelector('.compact-program-coming button'));
+  expect(mockDrawer.record.task_id).toBe('late');expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
-
-test.each(['overdue','next14','15_30','31_60','later'])('runway %s uses native selection and zero-bin click semantics without writes',async key=>{
-  records={tasks:Array.from({length:12},(_,i)=>task(String(i),{due_date:'2099-01-01'})),findings:[]};
-  await render('/action-items?page=2');
-  const index=['overdue','next14','15_30','31_60','later'].indexOf(key);
-  const legend=container.querySelectorAll('.bda-runway-keys button')[index];
-  const segment=container.querySelectorAll('.bda-runway-bar span')[index];
-  expect(segment.hidden).toBe(key!=='later');
-  expect(Number.parseFloat(segment.style.flex)).toBe(key==='later'?12:0);
-  await click(legend);
-  expect(new URLSearchParams(location.search).get('quick')).toBe(key);
-  expect(new URLSearchParams(location.search).has('page')).toBe(false);
-  expect(segment.dataset.dimmed).toBe('false');
-  expect(tickets()).toHaveLength(key==='later'?10:0);
-  await click(legend);expect(new URLSearchParams(location.search).has('quick')).toBe(false);
-  expect([...container.querySelectorAll('.bda-runway-bar span')].every(node=>node.dataset.dimmed==='false')).toBe(true);
-  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+test('new due-in-30 card retains native date filtering and clears pagination without writes',async()=>{
+  const date=new Date();date.setUTCDate(date.getUTCDate()+12);const due=date.toISOString().slice(0,10);
+  records={tasks:[...Array.from({length:12},(_,i)=>task(String(i),{due_date:due})),task('undated')],findings:[]};
+  await render('/action-items?page=2');expect(summary('upcoming')).toBe('12');
+  await click(container.querySelector('.bda-upcoming'));
+  expect(new URLSearchParams(location.search).get('quick')).toBe('upcoming');expect(new URLSearchParams(location.search).has('page')).toBe(false);expect(tickets()).toHaveLength(10);
+  await click(container.querySelector('.bda-upcoming'));expect(new URLSearchParams(location.search).has('quick')).toBe(false);
+  expect(summary('active')).toBe('13');expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+test.each(['overdue','next14','15_30','31_60','later'])('native %s deep filter remains available after removing the runway presentation',async key=>{
+ records={tasks:Array.from({length:12},(_,i)=>task(String(i),{due_date:'2099-01-01'})),findings:[]};
+ await render(`/action-items?view=active&quick=${key}`);
+ expect(new URLSearchParams(location.search).get('quick')).toBe(key);
+ expect(tickets()).toHaveLength(key==='later'?10:0);
+ expect(summary('active')).toBe('12');expect(container.querySelector('.bda-runway')).toBeNull();
+ expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

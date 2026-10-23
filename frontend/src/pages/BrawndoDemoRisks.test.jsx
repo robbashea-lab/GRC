@@ -93,11 +93,11 @@ test('Coming up opens the canonical Action and discards a pending opener after a
   const task={task_id:'native-action',client_id:'demo_brawndo',title:'Saved treatment Action',status:'open',due_date:new Date().toISOString().slice(0,10)};
   const original=api.get.getMockImplementation();let resolveTask;
   api.get.mockImplementation((path,...args)=>path==='/related'?Promise.resolve({data:{tasks:[task]}}):path==='/tasks/native-action'?new Promise(resolve=>{resolveTask=resolve;}):original(path,...args));
-  await render();await click(container.querySelector('.bdr-event button'));
+  await render();await click(container.querySelector('.compact-program-coming button'));
   await act(async()=>resolveTask({data:task}));
   expect(container.querySelector('[data-testid="native-dispatch"]').dataset).toMatchObject({kind:'tasks',id:'native-action'});
   await click([...container.querySelectorAll('button')].find(b=>b.textContent==='Close native record'));
-  await click(container.querySelector('.bdr-event button'));
+  await click(container.querySelector('.compact-program-coming button'));
   mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'next-actor'}};await render();
   await act(async()=>resolveTask({data:task}));
   expect(container.querySelector('[data-testid="native-dispatch"]')).toBeNull();
@@ -107,12 +107,12 @@ test('a pending Coming up response cannot replace or revive a subsequently opene
   rows[0].next_review=new Date().toISOString().slice(0,10);
   const original=api.get.getMockImplementation();let resolveRisk;
   api.get.mockImplementation((path,...args)=>path==='/risks/risk-high'?new Promise(resolve=>{resolveRisk=resolve;}):original(path,...args));
-  await render();await click(container.querySelector('.bdr-event button'));
+  await render();await click(container.querySelector('.compact-program-coming button'));
   await click([...container.querySelectorAll('tbody .register-record-link')].find(b=>b.textContent==='Native unrated'));
   await act(async()=>resolveRisk({data:rows[0]}));
   expect(container.querySelector('[data-testid="native-dispatch"]').dataset.id).toBe('unrated');
   await click([...container.querySelectorAll('button')].find(b=>b.textContent==='Close native record'));
-  await click(container.querySelector('.bdr-event button'));
+  await click(container.querySelector('.compact-program-coming button'));
   await click([...container.querySelectorAll('tbody .register-record-link')].find(b=>b.textContent==='Native unrated'));
   await click([...container.querySelectorAll('button')].find(b=>b.textContent==='Close native record'));
   await act(async()=>resolveRisk({data:rows[0]}));
@@ -123,7 +123,7 @@ test.each(['new-risk','risk-matrix-btn'])('pending Coming up cannot overlay nati
   rows[0].next_review=new Date().toISOString().slice(0,10);
   const original=api.get.getMockImplementation();let resolveRisk;
   api.get.mockImplementation((path,...args)=>path==='/risks/risk-high'?new Promise(resolve=>{resolveRisk=resolve;}):original(path,...args));
-  await render();await click(container.querySelector('.bdr-event button'));
+  await render();await click(container.querySelector('.compact-program-coming button'));
   await click(container.querySelector(`[data-testid="${testId}"]`));
   await act(async()=>resolveRisk({data:rows[0]}));
   expect(container.querySelector('[data-testid="native-dispatch"]')).toBeNull();

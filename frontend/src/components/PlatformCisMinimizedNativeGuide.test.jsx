@@ -29,12 +29,12 @@ async function click(name,scope=document){const target=[...scope.querySelectorAl
 async function value(selector,next){const target=document.querySelector(selector);expect(target).toBeTruthy();await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(target,next);target.dispatchEvent(new Event('input',{bubbles:true}));});}
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={record.client_id} onOpenChange={()=>{}}/>));}
 async function toggleSummary(open){
-  const summary=document.querySelector('details.assessment-summary');expect(summary).toBeTruthy();
-  await act(async()=>{summary.open=open;summary.dispatchEvent(new Event('toggle'));});
-  expect(summary.open).toBe(open);
+  const launcher=document.querySelector('.cis-guided-launch button');expect(launcher).toBeTruthy();
+  if(launcher.getAttribute('aria-expanded')!==String(open))await act(async()=>launcher.click());
+  expect(launcher.getAttribute('aria-expanded')).toBe(String(open));
 }
 async function open(){await toggleSummary(true);expect(workspace()).toBeTruthy();}
-async function typeAndCloseSummary(){await open();await click('Not sure',workspace());await value('[aria-label="Known gaps or uncertainties"]',detail);await toggleSummary(false);expect(workspace()).toBeNull();}
+async function typeAndCloseSummary(){await open();const rootQuestion=workspace().querySelector('select');expect(rootQuestion).toBeTruthy();await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(rootQuestion,'Not sure');rootQuestion.dispatchEvent(new Event('change',{bubbles:true}));});await value('[aria-label="Known gaps or uncertainties"]',detail);await toggleSummary(false);expect(workspace()).toBeNull();}
 async function nativeSave(){await value('[aria-label="Current implementation"]','SYNTHETIC native receipt B.');await click('Save assessment',container);expect(container.textContent).toContain('Assessment saved.');expect(native.last_saved).toBe(tokenB);}
 
 beforeEach(()=>{

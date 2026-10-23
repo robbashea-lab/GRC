@@ -32,7 +32,10 @@ test('default assessment combines source context, narrative, status, inline inte
   await render();expect(container.textContent).toContain('What CIS requires');
   expect([...container.querySelectorAll('[role="tab"]')].map(tab=>tab.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
   expect(container.querySelector('.assessment-inline-criteria')).toBeNull();
-  expect(container.querySelector('[data-testid="guided-pilot"]').closest('.assessment-summary')).toBeTruthy();
+  expect(container.querySelector('[data-testid="guided-pilot"]').closest('.assessment-layout')).toBeTruthy();
+  expect(container.querySelector('.assessment-summary')).toBeNull();
+  expect(button('Begin guided assessment').getAttribute('aria-expanded')).toBe('false');
+  expect(container.querySelector('[aria-label="CIS assessment interview"]').hidden).toBe(true);
   expect(container.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
   expect(container.querySelector('[role="tab"][aria-selected="true"]').textContent).toBe('Requirement & implementation');
   expect(container.querySelector('[aria-label="Current implementation"]')).toBeTruthy();expect(container.querySelector('input[value="in_progress"]')).toBeTruthy();

@@ -13,6 +13,7 @@ import OmniDock from './OmniDock';
 import OmniWindow from './OmniWindow';
 
 import RefinedOmniInterview from './RefinedOmniInterview';
+import CisSequentialInterview from './CisSequentialInterview';
 import {inventorySummaryEnabled} from '@/lib/omniInventorySummary';
 import {omniCisSummary} from '@/lib/omniCisSummary';
 
@@ -36,7 +37,8 @@ export default function GuidedAssessor(props){
   if(props.record?.client_id&&props.record.client_id!==props.clientId||!pilotEnabled(props.clientId,props.framework,props.configuration,props.record?.definition_id))return null;
   return <Pilot key={user?.user_id+':'+props.clientId+':'+props.record?.framework_assessment_id+(focusedOmniEnabled(props.clientId,user,props.framework,props.configuration,props.record?.definition_id)?':'+(props.invitationContext||'program'):'')} {...props}/>;
 }
-function Pilot({clientId,framework,configuration,invitationContext,inventoryContext,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onSaveAssessment,onDraftChange,onUpdateImplementation,disabled=false,current=record,related={},contextComplete=false,assessmentDirty=false,onOpenNative,people=EMPTY_ROWS,inline=false,inlineOpen=false,onInlineClose,onFreshInterviewReady,visualReference=false,safeguard11=false}){
+function Pilot({clientId,framework,configuration,invitationContext,inventoryContext,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onSaveAssessment,onDraftChange,onUpdateImplementation,disabled=false,current=record,related={},contextComplete=false,assessmentDirty=false,onOpenNative,people=EMPTY_ROWS,inline=false,inlineOpen=false,onInlineClose,onFreshInterviewReady,visualReference=false,safeguard11=false,sequential=false}){
+  const [sequentialOpen,setSequentialOpen]=useState(false);
   const auth=useAuth(),{user}=auth,org=useOrg(),key='guided-pilot-ui:'+user?.user_id+':'+clientId,initial=readPreference(key);
   const focused=focusedOmniEnabled(clientId,user,framework,configuration,record?.definition_id);
   const visualRecordMatches=record ? record.client_id===clientId&&current?.client_id===clientId&&!!record.framework_assessment_id
@@ -147,12 +149,13 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     }).catch(e=>{if(!controller.signal.aborted){setError(formatError(e));setLoaded(true);}});}
     return()=>controller.abort();
   },[base,id,clientId,user?.user_id]);// eslint-disable-line react-hooks/exhaustive-deps
-  const changeMode=value=>{setMode(value);setGreeting(false);setContextPrompt(false);if(inline){if(value==='collapsed')onInlineClose?.();return;}try{if(!focused)sessionStorage.setItem(workspacePilot?promptKey:key+':'+id+':prompt','1');localStorage.setItem(key,JSON.stringify({...readPreference(key),mode:value==='expanded'?'collapsed':value,...(!workspacePilot?{dismissGreeting:true}:{})}));}catch{/* Cosmetic preferences are optional. */}};
+  const changeMode=value=>{setMode(value);setGreeting(false);setContextPrompt(false);if(inline){if(value==='collapsed'){setSequentialOpen(false);if(sequential)launcher.current?.focus();onInlineClose?.();}return;}try{if(!focused)sessionStorage.setItem(workspacePilot?promptKey:key+':'+id+':prompt','1');localStorage.setItem(key,JSON.stringify({...readPreference(key),mode:value==='expanded'?'collapsed':value,...(!workspacePilot?{dismissGreeting:true}:{})}));}catch{/* Cosmetic preferences are optional. */}};
 
   const savedAnswers=loaded&&draft?.revision>0&&Object.keys(draft.answers||{}).length>0;
 
   const invitation=!focused?'':record?(!loaded||!draft?'I can help you review Safeguard '+id+'. Open my guide to check your saved assessment and next steps.':savedAnswers?(needsComparison?'Welcome back. Let’s compare your saved answers with the current assessment, then continue with the relevant changes.':draft.completed&&['not_assessed','needs_attention','in_progress'].includes(draft.result?.status)?'Your saved interview identifies unresolved work. The native assessment still records '+(STATUSES[current?.status]||'Not recorded')+'. Review the proposed reassessment before changing it.':currentRecommendation&&current?.status==='addressed'&&draft.completed?'Your implementation is saved. I can help you maintain Safeguard '+id+', update a recorded fact, or review outstanding verification.':draft.completed?'Your interview proposal is saved. Review it against the native assessment before applying and saving any changes.':'Welcome back. I can help you continue your saved interview for Safeguard '+id+' and work through the remaining requirements.'):current?.status==='addressed'?'Safeguard '+id+' has a saved Implemented position. I can help you review changes or outstanding verification; no new interview is required to keep the recorded assessment.':'Let’s work through Safeguard '+id+' together. I’ll ask about your current practices and help you prepare an implementation summary for your review.'):invitationContext?.startsWith('control-')?'I can help you work through Control '+invitationContext.slice(8)+'’s safeguards. Open my guide to review your next steps.':'Hi, I’m Omnibot. I can help you choose your next safeguard and work through its assessment. Ready to get started?';
 
+  const pauseSequential=()=>{setSequentialOpen(false);launcher.current?.focus();};
   const close=()=>{if(refined&&dirty){setConfirmClose(true);return;}changeMode('collapsed');};
 
   async function saveAndClose(){
@@ -287,7 +290,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
   function putRefinedDetail(key,value){setAnswers(previous=>({...previous,[key]:value}));setResult(null);setReplace(false);setSaveNotice('');}
 
-  async function nextRefinedGroup(index,groups){
+  async function nextRefinedGroup(index,groups,nextQuestionId){
     try{(boundedGuideCorrections?validateAnswers:validateGuidedCompletion)(id,answers,version);}catch(e){setError(formatError(e));return;}
 
     if(requireFocusedComparison())return;
@@ -297,6 +300,12 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     if(group.ids.includes(root)&&!answers[root]){setError('Choose an answer before continuing. Not sure is a valid response.');return;}
 
     if(group.ids.includes('sources')&&multipleOmniSources(answers)&&!answers.sources_detail?.trim()){setError('List each source and what it covers, or record what still needs confirmation.');return;}
+
+    // Sequential presentation keeps the original native group checkpoint boundary.
+    if(nextQuestionId&&group.questions.some(question=>question.id===nextQuestionId)){
+      setStep(visibleQuestions(id,answers,version).findIndex(question=>question.id===nextQuestionId));
+      heading.current?.focus({preventScroll:true});return;
+    }
 
     const next=groups.find((g,i)=>i>index&&g.questions.length);
 
@@ -415,7 +424,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
           {workspacePilot&&record&&!focused&&<><p>{context.summary}</p><div className="guided-actions">{context.actions.map(name=><Button key={name} variant="outline" disabled={busy} onClick={()=>action(name)}>{({start:'Start',resume:'Resume your review',current:'Review current position',findings:context.signals.openFindings>0?'Review findings':'Review linked records',changes:'Review changes',reassess:'Full reassessment',result:'Review recommendation'})[name]}</Button>)}</div>{assessmentDirty&&<p>Unsaved native assessment changes are present. Save or discard them in the assessment before applying a recommendation.</p>}</>}
           {updated&&<section><p>Updated assessment guidance is available. Your saved answers and narrative remain associated with their original question set. Continue saving interview progress here. Before saving a new native assessment, begin a current-source review and explicitly confirm which unchanged answers remain relevant.</p><Button disabled={disabled||busy} onClick={()=>setRestart(true)}>Begin a new review</Button></section>}
 
-          {!record?focused?<FocusedProgram visualReference={visualOmni} rows={rows} drafts={draftSummaries} contextComplete={contextComplete} onSelect={row=>{changeMode('minimized');onSelect?.(row);}}/>:workspacePilot?<ProgramPosition overview={overview} rows={rows} onSelect={row=>{close();onSelect?.(row);}} onViewAll={()=>{close();onViewAll?.();}}/>:<><p>Omni helps you see the full picture.</p>{prioritizeGuidedRows(rows.filter(r=>pilotEnabled(clientId,'cis-ig1',configuration,r.definition_id)),draftSummaries).map((r,i)=><section key={r.definition_id}><h3>{i===0?'Recommended next step':'Also needs attention'} · {r.definition_id} · {r.title}</h3><p>{draftSummaries[r.definition_id]?.completed?'Recommendation ready':draftSummaries[r.definition_id]?.revision?'Resume assessment':r.work?.overdue_reviews?'Overdue scheduled review':r.status==='not_assessed'?'Not Assessed':r.status==='addressed'?'Verification required':'Unresolved gap'}</p><Button onClick={()=>{close();onSelect(r);}}>{draftSummaries[r.definition_id]?.revision?'Resume':'Start'} safeguard {r.definition_id}</Button></section>)}<Button variant="outline" onClick={()=>{close();onViewAll?.();}}>View all safeguards</Button></>:refined&&draft&&view==='interview'?<RefinedOmniInterview focusScopeKey={JSON.stringify([identity,user?.role,framework,version])} safeguard11={safeguard11&&visualOmni&&id==='1.1'} visualReference={visualOmni} id={id} answers={answers} version={version} step={question?.id} setStep={questionId=>{setStep(questions.findIndex(q=>q.id===questionId));heading.current?.focus({preventScroll:true});}} put={putRefined} detail={putRefinedDetail} blocked={disabled||busy||!!incremental||compareTarget!==null||restart} busy={busy} onNext={nextRefinedGroup} onSaveClose={saveAndClose} inventoryContext={inventoryContext} boundedGuideCorrections={boundedGuideCorrections}/> :directAssessment&&draft&&view==='result'&&result?<>
+          {!record?focused?<FocusedProgram visualReference={visualOmni} rows={rows} drafts={draftSummaries} contextComplete={contextComplete} onSelect={row=>{changeMode('minimized');onSelect?.(row);}}/>:workspacePilot?<ProgramPosition overview={overview} rows={rows} onSelect={row=>{close();onSelect?.(row);}} onViewAll={()=>{close();onViewAll?.();}}/>:<><p>Omni helps you see the full picture.</p>{prioritizeGuidedRows(rows.filter(r=>pilotEnabled(clientId,'cis-ig1',configuration,r.definition_id)),draftSummaries).map((r,i)=><section key={r.definition_id}><h3>{i===0?'Recommended next step':'Also needs attention'} · {r.definition_id} · {r.title}</h3><p>{draftSummaries[r.definition_id]?.completed?'Recommendation ready':draftSummaries[r.definition_id]?.revision?'Resume assessment':r.work?.overdue_reviews?'Overdue scheduled review':r.status==='not_assessed'?'Not Assessed':r.status==='addressed'?'Verification required':'Unresolved gap'}</p><Button onClick={()=>{close();onSelect(r);}}>{draftSummaries[r.definition_id]?.revision?'Resume':'Start'} safeguard {r.definition_id}</Button></section>)}<Button variant="outline" onClick={()=>{close();onViewAll?.();}}>View all safeguards</Button></>:refined&&draft&&view==='interview'&&sequential?<CisSequentialInterview safeguard11={safeguard11&&visualOmni&&id==='1.1'} visualReference={visualOmni} id={id} answers={answers} version={version} step={question?.id} setStep={questionId=>setStep(questions.findIndex(item=>item.id===questionId))} put={putRefined} detail={putRefinedDetail} blocked={disabled||busy||!!incremental||compareTarget!==null||restart} busy={busy} inventoryContext={inventoryContext} boundedGuideCorrections={boundedGuideCorrections} onNext={nextRefinedGroup} onPause={pauseSequential} onSaveClose={saveAndClose}/>:refined&&draft&&view==='interview'?<RefinedOmniInterview focusScopeKey={JSON.stringify([identity,user?.role,framework,version])} safeguard11={safeguard11&&visualOmni&&id==='1.1'} visualReference={visualOmni} id={id} answers={answers} version={version} step={question?.id} setStep={questionId=>{setStep(questions.findIndex(q=>q.id===questionId));heading.current?.focus({preventScroll:true});}} put={putRefined} detail={putRefinedDetail} blocked={disabled||busy||!!incremental||compareTarget!==null||restart} busy={busy} onNext={nextRefinedGroup} onSaveClose={saveAndClose} inventoryContext={inventoryContext} boundedGuideCorrections={boundedGuideCorrections}/> :directAssessment&&draft&&view==='result'&&result?<>
             <h3>Review your assessment summary</h3>
             <p>Safeguard {id} — {record.title}</p>
             <p>Proposed Implementation Status: <strong>{STATUSES[result.status]}</strong></p>
@@ -481,6 +490,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
         </div>
   );
+  if(inline&&record&&sequential)return <div className="guided-pilot guided-lifecycle omni-refined assessment-interview" data-testid="guided-pilot"><div className="cis-guided-launch"><div><h3>Guided assessment</h3><p>One question at a time. Review your answers before updating the assessment.</p></div><Button ref={launcher} disabled={busy} aria-expanded={sequentialOpen} onClick={()=>{if(sequentialOpen)pauseSequential();else setSequentialOpen(true);}}>{Object.keys(answers).length||draft?.revision?'Resume guided assessment':'Begin guided assessment'}</Button></div><section aria-label="CIS assessment interview" hidden={!sequentialOpen}><h3 ref={heading} tabIndex={-1} className="sr-only">Assessment interview</h3>{panelBody}</section></div>;
   if(inline&&record)return <div className={'guided-pilot guided-lifecycle omni-refined assessment-interview'+(visualOmni?' brawndo-cis-visual-omni':'')} data-testid="guided-pilot"><section aria-label="CIS assessment interview" hidden={!inlineOpen}><h3 ref={heading} tabIndex={-1} className="sr-only">Assessment interview</h3>{panelBody}</section></div>;
 
   const guideTitle=record?(refined?'Omnibot guide':botName+' Guide')+' · Safeguard '+id:focused?'Guided assessment with Omnibot':'Guided Assessment with Omni';

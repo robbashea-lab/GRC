@@ -91,11 +91,17 @@ async function openControl(id,ensureActive=()=>{}){
 function editorSnapshot(){return {title:native().querySelector('h2').textContent,official:native().querySelector('[data-source-kind="official"]').textContent,implementation:native().querySelector('[aria-label="Current implementation"]').value,status:native().querySelector('input[name="bcsg-status"]:checked').value,verification:native().querySelector('[aria-label="Saved verification"]').textContent,items:native().querySelector('[aria-label="Items to address"]').textContent,findings:native().querySelector('.bcsg-findings').textContent};}
 async function tab(name){const target=[...native().querySelectorAll('[role="tab"]')].find(element=>element.textContent===name);expect(target).toBeTruthy();await act(async()=>target.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));}
 async function openOmni(){
-  const summary=native().querySelector('.assessment-summary');
-  if(!summary.open)await click(summary.querySelector('summary'));
-  await act(async()=>summary.dispatchEvent(new Event('toggle')));
+  const launcher=button('Begin guided assessment',native())||button('Resume guided assessment',native());
+  expect(launcher).toBeTruthy();expect(launcher.disabled).toBe(false);
+  if(launcher.getAttribute('aria-expanded')!=='true')await click(launcher);
   expect(omni()).toBeTruthy();expect(omni().hidden).toBe(false);
 }
+function omniRootAnswer(){const select=omni().querySelector('fieldset[data-question-id] select');expect(select).toBeTruthy();return select;}
+async function setOmniRootAnswer(answer){
+  const select=omniRootAnswer();
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(select,answer);select.dispatchEvent(new Event('change',{bubbles:true}));});
+}
+
 
 beforeEach(()=>{
   currentCase={active:true};
@@ -285,11 +291,11 @@ test.each(['1.1','1.2'])('Demo Brawndo keeps %s on its native Omnibot checkpoint
   useSyntheticClient(CLIENT);
   const assessmentId=record(id).framework_assessment_id,originalRecord=clone(record(id)),otherRecords=clone(records.filter(value=>value.definition_id!==id));
   const answers={[id==='1.1'?'inventory':'process']:'No'},path='/framework_assessments/'+assessmentId+'/guided-assessment';
-  await mount(CLIENT);await openDomain(id);await openOmni();await clickName('No',omni());await clickName('Save & close',omni());
+  await mount(CLIENT);await openDomain(id);await openOmni();await setOmniRootAnswer('No');await clickName('Save & close',omni());
   expect(api.put).toHaveBeenLastCalledWith(path,expect.objectContaining({expected_revision:0,completed:false,answers:expect.objectContaining(answers)}));
   await closeNative();await remount(CLIENT);await openControl(id);await openOmni();
   expect(new URLSearchParams(route().search).get('assessment')).toBe(assessmentId);expect(assessmentId).toBe('fixture-native-'+id);
-  expect(route().state).toEqual({fromWorkspace:true});expect(button('No',omni()).getAttribute('aria-pressed')).toBe('true');
+  expect(route().state).toEqual({fromWorkspace:true});expect(omniRootAnswer().value).toBe('No');
   expect(record(id)).toEqual(originalRecord);
   expect(interviews[id]).toEqual(expect.objectContaining({client_id:CLIENT,assessment_id:assessmentId,revision:1,answers}));
   await clickName('Save & close',omni());
@@ -359,11 +365,11 @@ test('native authorization/context rejection does not turn domain entry into a w
 
 test.each(['1.1','1.2'])('%s Omnibot interview saving resumes from Controls after domain entry without replacing manual implementation',async id=>{
   const before=clone(record(id));await mount();await openDomain(id);await openOmni();
-  await clickName('No',omni());await clickName('Save & close',omni());
+  await setOmniRootAnswer('No');await clickName('Save & close',omni());
   expect(api.put).toHaveBeenCalledWith('/framework_assessments/native-'+id+'/guided-assessment',expect.objectContaining({expected_revision:0,completed:false,answers:expect.objectContaining({[id==='1.1'?'inventory':'process']:'No'})}));
   expect(api.patch).not.toHaveBeenCalled();expect(record(id)).toEqual(before);
   await closeNative();await openControl(id);await openOmni();
-  expect(button('No',omni()).getAttribute('aria-pressed')).toBe('true');
+  expect(omniRootAnswer().value).toBe('No');
   expect(record(id).implementation).toBe(before.implementation);expect(record(id).verification).toBe(before.verification);
 });
 

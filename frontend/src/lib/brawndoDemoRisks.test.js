@@ -1,5 +1,5 @@
 import {cisClient, cisContext} from '../testUtils/cisExperience';
-import {brawndoDemoRisksGate,riskHorizon,loadRiskRelations,upcomingRiskEvents} from './brawndoDemoRisks';
+import {brawndoDemoRisksGate,riskHorizon,loadRiskRelations,upcomingRiskEvents,riskOverviewEvents} from './brawndoDemoRisks';
 import {calendarDay} from './managementDates';
 import {riskMatches} from './brawndoRisks';
 
@@ -50,4 +50,34 @@ test('cancellation starts no additional relationship reads and rejects an aborte
   expect(load).toHaveBeenCalledTimes(1);
   const unused=jest.fn();
   expect(await loadRiskRelations([{risk_id:'r'}],unused,controller.signal)).toEqual({relations:{},unavailable:[]});expect(unused).not.toHaveBeenCalled();
+});
+
+
+test('twelve-month overview uses Vendor calendar bounds, no invented dates and one identity per linked Action',()=>{
+  const now=new Date('2026-10-16T12:00:00Z');
+  const first={client_id:'synthetic',risk_id:'r1',title:'Original Risk',status:'accepted',next_review:'2027-08-01',acceptance_expires_at:'2027-10-16'};
+  const second={...first,risk_id:'r2',next_review:'2027-10-17',acceptance_expires_at:null};
+  const action={client_id:'synthetic',task_id:'a1',title:'Shared treatment',status:'open',due_date:'2027-04-25'};
+  const rows=[first,second,{...first,risk_id:'undated',next_review:null,acceptance_expires_at:null},{...first,risk_id:'closed',status:'closed'}];
+  const before=JSON.stringify(rows),{events,conflictingActions}=riskOverviewEvents(rows,{r1:[action,action],r2:[action]},now);
+  expect(events.map(event=>[event.kind,event.date])).toEqual([['action','2027-04-25'],['review','2027-08-01'],['expiry','2027-10-16']]);
+  expect(events[0].record).toBe(action);expect(events[1].record).toBe(first);
+  expect(new Set(events.map(event=>event.id)).size).toBe(3);
+  expect(conflictingActions).toEqual([]);
+  expect(events.every(event=>['review','action','expiry'].includes(event.kind))).toBe(true);
+  expect(JSON.stringify(rows)).toBe(before);
+  expect(riskOverviewEvents([{...first,status:'open',next_review:null,acceptance_expires_at:'2027-01-01'}],{},now).events).toEqual([]);
+});
+
+test('independent relationship snapshots with conflicting dates omit that Action instead of inventing a winner',()=>{
+  const rows=['r1','r2'].map(risk_id=>({risk_id,client_id:'synthetic',status:'open'}));
+  const task={task_id:'shared',client_id:'synthetic',status:'open',title:'Shared treatment',due_date:'2026-12-01'};
+  for(const due_date of ['2026-12-02','2028-01-01',null]) {
+    const relations={r1:[task],r2:[{...task,due_date}]},before=JSON.stringify(relations);
+    const result=riskOverviewEvents(rows,relations,new Date('2026-10-16T12:00:00Z'));
+    expect(result.events).toEqual([]);
+    expect(result.conflictingActions).toEqual(['synthetic:action:shared']);
+    expect(JSON.stringify(relations)).toBe(before);
+    expect(riskOverviewEvents([...rows].reverse(),relations,new Date('2026-10-16T12:00:00Z'))).toEqual(result);
+  }
 });

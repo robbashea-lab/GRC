@@ -1,3 +1,9 @@
+import CompactProgramTimeline from '@/components/CompactProgramTimeline';
+import {actionTimelineEvents} from '@/lib/compactProgramTimeline';
+import {cisExperienceEligible} from '@/lib/cisExperience';
+import {selectedClient} from '@/lib/clientSelection';
+import {brawndoEligibleOwnerIds,brawndoTicketMetrics} from '@/lib/brawndoDemoActions';
+import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import {useEffect,useRef,useState} from 'react';
 import {Navigate,useLocation,useSearchParams,useNavigationType} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
@@ -30,7 +36,8 @@ export function FindingsRoute(){
 }
 
 export default function BrawndoActionItems(){
-  const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
+  const org=useOrg(),auth=useAuth(),{currentClientId,currentClient}=org,{user}=auth;
+  const [theme]=useBrawndoTheme();
   const location=useLocation();
   const navigationType=useNavigationType();
   const [params,setParams]=useSearchParams(),view=params.get('view')||(params.get('signal')==='material'?'high_critical':'active');
@@ -59,9 +66,12 @@ export default function BrawndoActionItems(){
   const applied=table.apply(rows.filter(r=>pilotActionMatches(r,view)&&(!params.get('owner')||r.owner_id===(params.get('owner')==='__me__'?user.user_id:params.get('owner')))&&(params.get('unassigned')!=='1'||!r.owner_id)&&[r.title,r.raw.description,r.actionSearchText,r.finding?.title,r.finding?.description,r.source.label,users.find(u=>u.user_id===r.owner_id)?.name].filter(Boolean).join(' ').toLowerCase().includes(q.trim().toLowerCase())));
   const userSort=!!table.state.sort,filtered=userSort?applied:[...applied].sort(soonest),viewCount=rows.filter(r=>pilotActionMatches(r,view)).length;
   const clientName=currentClient?.name||'Client';
+  const compactOverview=cisExperienceEligible({...org,...auth,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:params.get('client_id')});
+  const metrics=brawndoTicketMetrics(rows,brawndoEligibleOwnerIds(users));
   const canWrite=['super_admin','platform_admin','client_grc_manager','client_contributor'].includes(user?.role);
   return <BrawndoSurface className="register-surface brawndo-ai">
     <BrawndoPageHeader eyebrow={`${clientName} · Corrective actions`} title="Action Items">{canWrite&&<>{['super_admin','platform_admin'].includes(user?.role)&&<Button variant="outline" onClick={()=>setDrawer({kind:'findings',record:null})}>New Finding</Button>}<PrimaryAction label="New Action Item" testid="new-action-item" onClick={()=>setDrawer({kind:'tasks',record:null})}/></>}</BrawndoPageHeader>
+    {compactOverview&&<><div className="cpt-summary" aria-label="Action summaries">{[['active','Active',metrics.active.length],['overdue','Overdue',metrics.overdue.length],['upcoming','Due in 30 days',metrics.windows.next14.length+metrics.windows['15_30'].length],['unassigned','Needs an owner',rows.filter(row=>pilotActionMatches(row,'unassigned')).length]].map(([key,label,count])=><button type="button" key={key} disabled={loading||!!error} onClick={()=>selectView(key)}><span>{label}</span><strong>{loading||error?'—':count}</strong></button>)}</div><CompactProgramTimeline scopeKey={JSON.stringify([user?.user_id,user?.role,user?.client_ids,auth.workspaceMode,user?.workspace_mode,currentClientId])} events={actionTimelineEvents(rows)} onOpen={event=>open(event.record)} theme={theme} available={!loading&&!error} recordOpen={!!drawer} legend={[{kind:'high',label:'High / Critical priority'},{kind:'other',label:'Other priority'},{kind:'low',label:'Low priority'}]} description="Saved Action due dates, grouped by Action priority."/></>}
     <div className="register-toolbar"><SearchField label="Search action items" placeholder="Search action items…" testid="ai-search" value={q} onChange={changeSearch}/>
       <div data-testid="ai-views"><BrawndoChips label="Action Item views" chips={views.map(v=>({id:v.id,label:v.label,count:rows.filter(r=>pilotActionMatches(r,v.id)).length,pressed:view===v.id,testid:'ai-view-'+v.id,onClick:()=>selectView(view===v.id?'all':v.id)}))}/></div>
       <div className="brawndo-ai-source-filter"><ColumnControl table={table} columnKey="source_type"/></div>

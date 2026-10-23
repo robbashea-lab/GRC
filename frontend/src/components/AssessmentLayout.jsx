@@ -3,7 +3,7 @@ import {Tabs,TabsList,TabsTrigger,TabsContent} from './ui/tabs';
 import './AssessmentLayout.css';
 
 // Tabs only control presentation. Drafts and saved conclusions belong to the caller.
-export default function AssessmentLayout({summary,summaryLabel='Requirement summary',requirement,children,findings,checklist,review,outcome,criteriaTitle,reference,criteriaSummary,inlineCriteria=false,inlineWorkflow=false,interview,itemsToAddress,findingDraft=false,sectionCounts,safeguard11=false}) {
+export default function AssessmentLayout({summary,summaryLabel='Requirement summary',requirement,children,findings,checklist,review,outcome,criteriaTitle,reference,criteriaSummary,inlineCriteria=false,inlineWorkflow=false,interview,itemsToAddress,findingDraft=false,sectionCounts,safeguard11=false,guidedWorkflow=false}) {
   const [section,setSection]=useState('implementation'),[summaryOpen,setSummaryOpen]=useState(false);
   const summaryControl=useRef(null),findingsControl=useRef(null);
   const interviewChoiceMade=useRef(false);
@@ -25,8 +25,8 @@ export default function AssessmentLayout({summary,summaryLabel='Requirement summ
       <TabsTrigger value="findings" ref={findingsControl}>Findings{sectionCounts&&<span className="assessment-tab-count" aria-label={sectionCounts.findings==null?'Finding count unavailable':undefined}>{sectionCounts.findings??'—'}</span>}</TabsTrigger>
     </TabsList>
     <TabsContent value="implementation" forceMount>
-      <details className="assessment-summary" open={summaryOpen} onToggle={event=>setSummaryOpen(event.currentTarget.open)}><summary aria-label={safeguard11?summaryLabel:undefined} ref={summaryControl} onClick={()=>{interviewChoiceMade.current=true;}}>{summaryLabel}{safeguard11&&<small className="sg11-guide-hint">Answer from current practice. Review status and current implementation before saving.</small>}</summary><p>{summary}</p>{interview?.({open:summaryOpen,close:closeInterview,reveal:revealInterview})}</details>
-      {requirement}{children}
+      {!guidedWorkflow&&<details className="assessment-summary" open={summaryOpen} onToggle={event=>setSummaryOpen(event.currentTarget.open)}><summary aria-label={safeguard11?summaryLabel:undefined} ref={summaryControl} onClick={()=>{interviewChoiceMade.current=true;}}>{summaryLabel}{safeguard11&&<small className="sg11-guide-hint">Answer from current practice. Review status and current implementation before saving.</small>}</summary><p>{summary}</p>{interview?.({open:summaryOpen,close:closeInterview,reveal:revealInterview})}</details>}
+      {requirement}{guidedWorkflow&&interview?.({open:true,close:closeInterview,reveal:revealInterview})}{children}
       {!inlineWorkflow&&inlineCriteria&&<details className="assessment-inline-criteria"><summary>Assessment guidance &amp; working checklist</summary>{criteria}</details>}
     </TabsContent>
     {inlineWorkflow?<TabsContent value="items" forceMount>{itemsToAddress}</TabsContent>:!inlineCriteria&&<TabsContent value="criteria" forceMount>{criteria}</TabsContent>}
