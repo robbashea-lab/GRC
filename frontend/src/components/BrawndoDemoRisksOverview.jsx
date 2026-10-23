@@ -57,7 +57,7 @@ export default function BrawndoDemoRisksOverview({rows,matrixRows,selected,onSel
       </div>
     </div>
     <div className="bdr-overview-right">
-      <CompactProgramTimeline events={events} rows={4} upcomingLimit={4} theme={theme} recordOpen={recordOpen}
+      <CompactProgramTimeline scopeKey={scope} events={events} rows={4} upcomingLimit={4} theme={theme} recordOpen={recordOpen}
         legend={[{kind:'review',label:'Risk review'},{kind:'action',label:'Treatment action due'},{kind:'expiry',label:'Acceptance expires'}]}
         description="Saved Risk reviews, linked treatment deadlines and acceptance expiries."
         onOpen={event=>onOpen(event.kind==='action'?'tasks':'risks',event.record)}/>

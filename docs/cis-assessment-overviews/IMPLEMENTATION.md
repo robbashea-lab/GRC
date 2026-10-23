@@ -14,6 +14,8 @@ The shared compact timeline receives saved native events and exact record callba
 
 Action priority is read from Actions rather than a linked Finding's severity. Missing priority/dates remain unknown. Risk review, linked treatment Action and acceptance expiry remain separate meanings; completing a Review does not close or accept a Risk. Unavailable relationship reads are disclosed rather than shown as complete information.
 
+Cluster Open item retains its stable timeline trigger for keyboard focus after the native editor closes. Restoration is bounded to the same actor/client/mode scope and exact event; if a save moves or removes that event, focus returns to the current timeline controls or heading. Delayed native record loading and refreshes do not change the protected editor.
+
 Registers, search/filter/sort/pagination, native full editors, New-item flows and exports remain protected. Shared presentation changes are scoped to new overview selectors; Vendor source and stylesheet are unchanged.
 
 ## Verification boundary
