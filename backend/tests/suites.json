@@ -72,6 +72,7 @@
     "test_policy_approval.py",
     "test_policy_provenance.py",
     "test_portfolio_overview.py",
+    "test_register_catalog_identity.py",
     "test_review_lifecycle.py",
     "test_review_occurrences.py",
     "test_review_recovery.py",

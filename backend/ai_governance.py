@@ -6,12 +6,13 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional, Literal
 from fastapi import APIRouter, Depends, HTTPException, Header
-from pydantic import BaseModel, Field, ConfigDict, StrictBool, ValidationError, model_validator
+from pydantic import BaseModel, Field, ConfigDict, StrictBool, ValidationError, field_validator, model_validator
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 import review_occurrences
 import assignment_eligibility
 import create_requests
+from register_catalog_identity import validate_catalog_key
 
 CATALOG = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/aiGovernanceCatalog.json').read_text(encoding='utf-8'))
 
@@ -19,6 +20,7 @@ class AIInput(BaseModel):
     model_config = ConfigDict(extra='forbid')
     client_id: str
     name: str = Field(min_length=1, max_length=240)
+    catalog_key: Optional[str] = None
     description: str = ''
     owner_id: Optional[str] = None
     technical_owner_id: Optional[str] = None
@@ -37,6 +39,11 @@ class AIInput(BaseModel):
     oversight_owner_id: Optional[str] = None
     oversight_notes: str = ''
     governance_notes: str = ''
+
+    @field_validator('catalog_key', mode='before')
+    @classmethod
+    def valid_catalog_key(cls, value):
+        return validate_catalog_key('ai_systems', value)
 
 class AILinkInput(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)

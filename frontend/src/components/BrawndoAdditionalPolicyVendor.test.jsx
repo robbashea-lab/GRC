@@ -11,6 +11,22 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 const click = node => act(async () => node.click());
 
+test('Vendor register adds only decorative catalog identity beside the preserved name and service',async()=>{
+  const vendor=Object.freeze({vendor_id:'catalog-vendor',client_id:'demo_brawndo',catalog_key:'iventure-solutions',name:'Renamed service partner',service:'Existing managed service',status:'active',criticality:'low'});
+  const custom=Object.freeze({...vendor,vendor_id:'custom-vendor',catalog_key:null,name:'iVenture custom'});
+  const onOpen=jest.fn();
+  await act(async()=>root.render(<BrawndoAdditionalVendors rows={[vendor,custom]} onOpen={onOpen} onView={jest.fn()}/>));
+  const cells=container.querySelectorAll('.bav-item');
+  expect(cells).toHaveLength(2);
+  expect(cells[0].querySelector('.register-identity-logo img').src).toMatch(/^data:image\/jpeg;base64,/);
+  expect(cells[1].querySelector('.register-identity-logo img')).toBeNull();
+  expect(cells[0].querySelector('.bapv-name').textContent).toBe(vendor.name);
+  expect(cells[0].querySelector('.bapv-meta').textContent).toBe(vendor.service);
+  expect(cells[0].querySelector('.register-identity-logo').querySelector('button,a,[tabindex]')).toBeNull();
+  await click(cells[0].querySelector('.bapv-name'));
+  expect(onOpen).toHaveBeenLastCalledWith(vendor);
+});
+
 test('policy presentation opens the full native record and keeps selection, row actions and scheduled review access', async () => {
   const policy = { policy_id: 'p1', client_id: 'demo_brawndo', title: 'Recorded policy', category: 'Governance', status: 'draft', next_review_date: '2026-11-01' };
   const review = { review_id: 'r1', client_id: policy.client_id, policy_id: policy.policy_id, title: 'Actual annual review', recurrence: 'annual', status: 'upcoming', due_date: '2026-11-01' };

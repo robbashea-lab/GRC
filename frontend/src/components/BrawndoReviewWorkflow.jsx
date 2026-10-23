@@ -7,10 +7,11 @@ import {personLabel} from '@/lib/people';
 
 const day = value => value ? new Date(String(value).slice(0,10)+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Not recorded';
 
-export function ReviewWorkflowContext({record,source}) {
+export function ReviewWorkflowContext({record,source,clientName}) {
   const required=source?.classification==='required',primary=source?.primary;
   const label=required?`${source.label} ${primary.definition.id}`:source?.classification==='organizational'?`${source.label}${source.supports.some(group=>group.key==='cis-ig1')?' · supports CIS IG1':''}`:source?.label||'Source not recorded';
-  return <div className="review-workflow-context"><span>Brawndo</span><span aria-hidden="true">·</span>
+  const clientLabel=typeof clientName==='string'&&clientName.trim()?clientName:'Client not recorded';
+  return <div className="review-workflow-context"><span>{clientLabel}</span><span aria-hidden="true">·</span>
     <span className={`review-workflow-chip is-${required?'success':'info'}`}>{label}</span>
     <span className="review-workflow-chip is-plain">{record.recurrence==='custom'?`Every ${record.custom_recurrence_days} days`:reviewDisplayValue('recurrence',record.recurrence)||'Cadence not recorded'}</span>
     {source?.comparison.state==='below'&&<span className="review-workflow-chip is-warning">Cadence below requirement</span>}

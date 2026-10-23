@@ -1,5 +1,6 @@
 import {isCisClient} from './cisCapability';
 import {AI_DEFAULTS,AI_KEYS,aiProjection,validateAI,catalog} from '../lib/aiGovernance';
+import {validateCatalogKey} from '../lib/registerCatalogIdentity';
 import {record,write,audit,uid,now,ids} from './store';
 import {reviewView} from '../lib/reviewOccurrences';
 import { validateAssignment, clientAccess } from './assignmentEligibility';
@@ -62,6 +63,7 @@ export function aiRequest(db,path,method,params,body){
   if(old&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
   body={...body};delete body.expected_updated_at;
   if(Object.keys(body).some(k=>![...AI_KEYS,...(pilot?AI_PILOT_KEYS:[]),'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
+  if(Object.prototype.hasOwnProperty.call(body,'catalog_key'))body.catalog_key=validateCatalogKey('ai_systems',body.catalog_key);
   const row={...AI_DEFAULTS,...(pilot?AI_PILOT_DEFAULTS:{}),...old,...body};validateAI(db,row,old);validateAssignment(db,'ai_systems',row,old);
   if(pilot){
     for(const key of ['environment','restrictions','data_settings'])if(typeof row[key]!=='string'||row[key].length>10000)throw new Error('Invalid '+key);

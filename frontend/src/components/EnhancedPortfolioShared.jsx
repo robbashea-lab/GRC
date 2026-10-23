@@ -1,3 +1,5 @@
+import { useId, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import ClientIdentityMark from './ClientIdentityMark';
 import { clientAttention } from '@/lib/enhancedPortfolio';
 import { calendarDay, managementDay } from '@/lib/managementDates';
@@ -35,7 +37,11 @@ export function WorkList({
   asOf,
   onNavigate
 }) {
-  return <section className="ep-work"><h3>{title} <span>{items.length}</span></h3>{items.length ? items.map(item => {
+  const [expanded, setExpanded] = useState(false);
+  const id = useId();
+  const detailsId = `${id}-work-details`;
+  const tone = items.length ? title === 'Overdue' ? 'ep-red' : 'ep-amber' : '';
+  return <section className="ep-work"><h3><button type="button" className={`ep-work-disclosure ${tone}`} aria-expanded={expanded} aria-controls={detailsId} onClick={() => setExpanded(value => !value)}><span>{title}</span><span className="ep-work-count">{items.length}</span><ChevronDown size={16} aria-hidden="true" /></button></h3><div id={detailsId} className="ep-work-details" hidden={!expanded}>{items.length ? items.map(item => {
       const kind = {
         task: 'tasks',
         review: 'reviews',
@@ -57,5 +63,5 @@ export function WorkList({
       return <button key={item.key} type="button" className="ep-work-item" disabled={!href} onClick={() => onNavigate(href)}><span className="ep-chip">{item.type || (kind === 'tasks' ? 'Action item' : item.entity_type)}</span><span>{item.title}<small>{item.owner_name || 'Unassigned'}</small></span><time className={days < 0 ? 'ep-red' : ''}>{days < 0 ? `${-days} days overdue` : `${formatPortfolioDate(item.due_date, {
             year: undefined
           })} · ${days === 0 ? 'today' : `in ${days} days`}`}</time><span aria-hidden="true">↗</span></button>;
-    }) : <p>Nothing {title === 'Overdue' ? 'overdue' : 'due'}.</p>}</section>;
+    }) : <p>Nothing {title === 'Overdue' ? 'overdue' : 'due'}.</p>}</div></section>;
 }

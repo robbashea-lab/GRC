@@ -1,3 +1,5 @@
+import RegisterIdentityLogo from '@/components/RegisterIdentityLogo';
+import {registerCatalogLogo} from '@/lib/registerCatalogLogo';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import BrawndoAdditionalVendors from '@/components/BrawndoAdditionalVendors';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
@@ -243,8 +245,8 @@ export default function VendorRegister() {
                   return (
                     <tr key={v.vendor_id} className={`row-hover row-open${vendorMatches(v,'review_overdue')?' bpage-late':''}`} onClick={() => setDrawer({ open: true, record: v })} data-testid={`vendor-row-${i}`}>
                       <td className="tbl-cell">
-                        <button type="button" className="register-record-link hover:underline" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v});}}>{v.name}</button>
-                        {meta&&<span className="bpage-meta">{meta}</span>}
+                        <div className="register-identity"><RegisterIdentityLogo kind="vendor" src={registerCatalogLogo('vendors',v)}/><div className="register-identity__text"><button type="button" className="register-record-link hover:underline" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v});}}>{v.name}</button>
+                        {meta&&<span className="bpage-meta">{meta}</span>}</div></div>
                       </td>
                       {!vendorWorkflow&&<td className="tbl-cell text-ink-secondary">{v.service||v.services||'—'}</td>}
                       <td className="tbl-cell"><SeverityBadge value={v.criticality} label={CRIT_LABEL[v.criticality]} /></td>
@@ -314,10 +316,10 @@ export default function VendorRegister() {
                 return (
                   <tr key={v.vendor_id} className="row-hover row-open" onClick={() => setDrawer({ open: true, record: v })} data-testid={`vendor-row-${i}`}>
                     <td className="tbl-cell font-medium text-ink-primary">
-                      <span className="inline-flex items-center gap-2">
+                      <div className="register-identity"><RegisterIdentityLogo kind="vendor" src={registerCatalogLogo('vendors',v)}/><span className="inline-flex items-center gap-2">
                         <button className="text-left hover:underline focus-visible:outline" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v});}}>{v.name}</button>
                         {v._attention && <><span className="attention-dot" aria-hidden="true" title="Needs attention" /><span className="sr-only">Needs attention</span></>}
-                      </span>
+                      </span></div>
                     </td>
                     <td className="tbl-cell text-ink-secondary">{v.service || v.services || <span className="register-empty">—</span>}</td>
                     <td className="tbl-cell"><SeverityBadge value={v.criticality} label={CRIT_LABEL[v.criticality]} /></td>

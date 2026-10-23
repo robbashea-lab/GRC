@@ -238,13 +238,14 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         ].forEach((k) => { if (!(k in base)) base[k] = record?.[k] ?? ""; });
       }
       if (kind === "vendors") {
-        ["service","category","criticality","status","contact_name","contact_email","contact_phone","website",
+        ["catalog_key","service","category","criticality","status","contact_name","contact_email","contact_phone","website",
          "data_types","data_relationship","business_owner_id","assurance_status","assurance_expires_at",
          "review_frequency","last_review","next_review","contract_start","contract_renewal","contract_expiration",
          "auto_renewal","related_risk_ids","notes","custom_recurrence_days","assurance_required","assurance_records","assurance_window_days","separate_assurance_review","assurance_review_date","assurance_cadence","contract_review_enabled","contract_lead_days","contract_evidence_ids","dpa_present","baa_present","security_addendum_present","contract_notes","termination_requirements","dependency_notes","offboarding_review_date"
         ].forEach((k) => {
           if (!(k in base)) base[k] = record?.[k] ?? (["data_types","data_relationship","related_risk_ids"].includes(k) ? [] : "");
         });
+        base.catalog_key = record?.catalog_key ?? null;
         base.service = record?.service || record?.services || "";
         if(vendorPilot){for(const key of ['contract_notice_deadline','access_level','processing_location'])base[key]=record?.[key]||'';base.connected_system_ids=record?.connected_system_ids||[];}
         base.assurance_records = record?.assurance_records || [];base.contract_evidence_ids=record?.contract_evidence_ids||[];

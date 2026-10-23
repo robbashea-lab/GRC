@@ -1,7 +1,20 @@
 import {renderToStaticMarkup} from 'react-dom/server';
-import {ReviewWorkflowOccurrence,ReviewWorkflowActivity,reviewActivityCategory} from './BrawndoReviewWorkflow';
+import {ReviewWorkflowContext,ReviewWorkflowOccurrence,ReviewWorkflowActivity,reviewActivityCategory} from './BrawndoReviewWorkflow';
 
 const review={review_id:'r',client_id:'demo_brawndo',status:'upcoming',due_date:'2026-10-31',recurrence:'quarterly',owner_id:'assigned'};
+test.each(['Brawndo','Synthetic Portfolio client','<Synthetic & QA>'])('workflow context renders the supplied client name as text: %s',clientName=>{
+  const html=renderToStaticMarkup(<ReviewWorkflowContext record={review} clientName={clientName}/>);
+  const container=document.createElement('div');container.innerHTML=html;
+  expect(container.querySelector('.review-workflow-context > span').textContent).toBe(clientName);
+  expect(container.querySelector('synthetic')).toBeNull();
+  expect(container.textContent).toContain('Quarterly');
+});
+test.each([undefined,null,'','   ',42])('workflow context never invents a client name when the name is unavailable: %s',clientName=>{
+  const html=renderToStaticMarkup(<ReviewWorkflowContext record={review} clientName={clientName}/>);
+  const container=document.createElement('div');container.innerHTML=html;
+  expect(container.querySelector('.review-workflow-context > span').textContent).toBe('Client not recorded');
+  expect(container.textContent).not.toContain('Brawndo');
+});
 test('open occurrence keeps the actual last completer separate from its assigned reviewer',()=>{
   const html=renderToStaticMarkup(<ReviewWorkflowOccurrence record={review} users={[{user_id:'assigned',name:'Current reviewer'}]} history={[{completed_at:'2026-07-30',completed_by_name:'Actual completer'}]} writable onStart={()=>{}}/>);
   expect(html).toContain('Not started');expect(html).toContain('Actual completer');expect(html).not.toContain('Current reviewer');

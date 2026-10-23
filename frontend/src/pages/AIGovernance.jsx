@@ -1,3 +1,5 @@
+import RegisterIdentityLogo from '@/components/RegisterIdentityLogo';
+import {registerCatalogLogo} from '@/lib/registerCatalogLogo';
 import {useEffect,useState} from 'react';
 import { isInternal } from '@/lib/permissions';
 import {useOrg} from '@/context/OrgContext';
@@ -81,7 +83,7 @@ function AIWorkspace({identity}){
           {data&&!visible.length&&<tr><td colSpan={columns.length} className="empty-state">{rows.length?<FilterEmpty table={table} name="AI systems" onClear={clear}/>:'No AI systems recorded yet.'}</td></tr>}
           {data&&visible.map(r=><tr key={r.ai_system_id} className="row-hover row-open" data-testid={`ai-system-row-${r.display_id}`} onClick={()=>setSelected(r)}>
             <td className="tbl-cell font-mono text-xs text-ink-help whitespace-nowrap">{r.display_id}</td>
-            <td className="tbl-cell"><button type="button" className="register-record-link" onClick={e=>{e.stopPropagation();setSelected(r);}}>{r.name}</button></td>
+            <td className="tbl-cell"><div className="register-identity"><RegisterIdentityLogo kind="ai" src={registerCatalogLogo('ai_systems',r)}/><button type="button" className="register-record-link" onClick={e=>{e.stopPropagation();setSelected(r);}}>{r.name}</button></div></td>
             <td className="tbl-cell"><OwnerCell people={members} id={r.owner_id} status={r.status}/></td>
             <td className="tbl-cell text-ink-secondary">{r.provider||<span className="register-empty">—</span>}</td>
             <td className="tbl-cell text-ink-secondary">{r.purposes?.join(', ')||<span className="register-empty">—</span>}</td>
