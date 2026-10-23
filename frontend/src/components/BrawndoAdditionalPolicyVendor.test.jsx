@@ -11,6 +11,25 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 const click = node => act(async () => node.click());
 
+test('Vendor logo deferral preserves complete catalog/custom names, subtitles and native opening',async()=>{
+  const vendor=Object.freeze({vendor_id:'catalog-vendor',client_id:'demo_brawndo',catalog_key:'iventure-solutions',name:'Renamed service partner',service:'Existing managed service',status:'active',criticality:'low'});
+  const custom=Object.freeze({...vendor,vendor_id:'custom-vendor',catalog_key:null,name:'iVenture custom'});
+  const onOpen=jest.fn();
+  await act(async()=>root.render(<BrawndoAdditionalVendors rows={[vendor,custom]} onOpen={onOpen} onView={jest.fn()}/>));
+  const cells=container.querySelectorAll('.bav-item');
+  expect(cells).toHaveLength(2);
+  expect(container.querySelectorAll('.register-identity-logo')).toHaveLength(0);
+  expect(cells[0].querySelector('.bapv-name').textContent).toBe(vendor.name);
+  expect(cells[0].querySelector('.bapv-meta').textContent).toBe(vendor.service);
+  expect(cells[1].querySelector('.bapv-name').textContent).toBe(custom.name);
+  expect(cells[0].querySelectorAll('button,a,[tabindex]')).toHaveLength(1);
+  await click(cells[0].querySelector('.bapv-name'));
+  expect(onOpen).toHaveBeenLastCalledWith(vendor);
+  await click(cells[1].querySelector('.bapv-name'));
+  expect(onOpen).toHaveBeenLastCalledWith(custom);
+  expect(vendor.catalog_key).toBe('iventure-solutions');
+});
+
 test('policy presentation opens the full native record and keeps selection, row actions and scheduled review access', async () => {
   const policy = { policy_id: 'p1', client_id: 'demo_brawndo', title: 'Recorded policy', category: 'Governance', status: 'draft', next_review_date: '2026-11-01' };
   const review = { review_id: 'r1', client_id: policy.client_id, policy_id: policy.policy_id, title: 'Actual annual review', recurrence: 'annual', status: 'upcoming', due_date: '2026-11-01' };

@@ -33,6 +33,7 @@ import {clearEvidenceFiles,demoDiagnostics} from './store';
 import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
 import {fileBytes} from './evidenceStorage';
 import {pendingPolicyCoverage} from './policyReviewCoverage';
+import {validateCatalogKey} from '../lib/registerCatalogIdentity';
 const CREATE_REPLAY_KINDS=['clients','reviews','findings','tasks','risks','vendors','policies','contacts','assets','exceptions','requirements','ai_systems'];
 const SESSION = 'grc_demo_entered';
 let requestQueue=Promise.resolve(),sessionGeneration=0;
@@ -422,6 +423,7 @@ async function executePreviewAdapter(config,generation) {
             due_date: payload.due_date
           };
         } else if (body.action === 'update') patch = payload;else throw new Error('Unknown bulk action');
+        if(body.kind==='vendors'&&Object.prototype.hasOwnProperty.call(patch,'catalog_key'))validateCatalogKey('vendors',patch.catalog_key);
         guardEdit(body.kind, patch, r, db.user, db);
         if(body.kind==='policies')patch=invalidatePolicyApproval(patch,r);
         if (body.kind === 'reviews' && patch.status === 'completed' && r.status !== 'completed') {
@@ -554,6 +556,10 @@ async function executePreviewAdapter(config,generation) {
       if (kind === 'reviews' && id) {
         assertCurrentOccurrence(record(db,kind,id),body.expected_occurrence_id);
         delete body.expected_occurrence_id;
+      }
+      if(kind==='vendors'){
+        if(Object.prototype.hasOwnProperty.call(body,'catalog_key'))body.catalog_key=validateCatalogKey('vendors',body.catalog_key);
+        else if(!id)body.catalog_key=null;
       }
       const updateKey=CREATE_REPLAY_KINDS.includes(kind)&&id&&method==='patch'&&(config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
       if(updateKey)return await save(commandRequest(db,path,record(db,kind,id).client_id,updateKey,body,()=>{

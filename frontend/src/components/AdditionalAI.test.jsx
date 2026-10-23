@@ -9,6 +9,22 @@ let node,root;
 beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;node=document.createElement('div');document.body.appendChild(node);root=createRoot(node);api.get.mockImplementation(async path=>({data:path==='/ai-intake'?intake:[]}));api.post.mockImplementation(async(path,body)=>({data:{...body,updated_at:'v2'}}));});
 afterEach(async()=>{await act(async()=>root.unmount());node.remove();jest.clearAllMocks();});
 const props={clientId:'demo_brawndo',clientName:'Brawndo',rows:[],users:[],intake,canWrite:true,canCreate:true,onOpen:()=>{},onCreate:()=>{}};
+
+test('AI register logos retain native names, state and keyboard opening for catalog and custom records',async()=>{
+  const known=Object.freeze({ai_system_id:'known',display_id:'AI-1',catalog_key:'chatgpt',client_id:'demo_brawndo',name:'Renamed assistant',provider:'OpenAI',status:'active',approval_status:'approved'});
+  const custom=Object.freeze({ai_system_id:'custom',display_id:'AI-2',client_id:'demo_brawndo',name:'ChatGPT custom',status:'active',approval_status:'pending_assessment'});
+  const open=jest.fn();
+  await act(async()=>root.render(<ControlledAI {...props} rows={[known,custom]} onOpen={open}/>));
+  const rows=node.querySelectorAll('.baai-row');
+  expect(rows[0].querySelector('.register-identity-logo img').alt).toBe('');
+  expect(rows[1].querySelector('.register-identity-logo img')).toBeNull();
+  expect(rows[0].querySelector('.baai-name').textContent).toBe('Renamed assistant');
+  expect(rows[0].querySelector('.baai-approval').textContent).toContain('Approved');
+  expect(rows[0].querySelector('.register-identity-logo').querySelector('button,a,[tabindex]')).toBeNull();
+  await act(async()=>rows[0].querySelector('.baai-name').click());
+  expect(open).toHaveBeenLastCalledWith(known);
+  expect(api.post).not.toHaveBeenCalled();
+});
 function ControlledAI(properties){
   const [query,onSearch]=useState(''),[view,onView]=useState('active'),[showInactive,onShowInactive]=useState(false);
   const intakeEditor=useAIIntake(properties);

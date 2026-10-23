@@ -1,6 +1,7 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import EnhancedPortfolioBoundary, { EnhancedPortfolio } from './EnhancedPortfolio';
+import EnhancedPortfolioHistory from '@/components/EnhancedPortfolioHistory';
 import api from '@/lib/api';
 import { PORTFOLIO_CHANGED } from '@/lib/usePortfolioRefresh';
 import { usePortfolioView } from '@/lib/usePortfolioView';
@@ -94,12 +95,14 @@ const item = {
 };
 let root,
   host,
-  current = program;
+  current = program,
+  currentWork;
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   window.scrollTo = jest.fn();
   jest.clearAllMocks();
   current = program;
+  currentWork = {past_due: [item], due_30d: [], due_31_90d: []};
   mockAuth={user:{user_id:'u',role:'super_admin',workspace_mode:'demo'},workspaceMode:'demo'};
   mockLocation={pathname:'/clients',search:''};
   sessionStorage.clear();
@@ -117,10 +120,7 @@ beforeEach(() => {
     } : path === '/clients/directory' ? {
       clients: [{
         ...client,
-        metric_items: {
-          past_due: [item],
-          due_30d: [], due_31_90d: []
-        }
+        metric_items: currentWork
       }]
     } : {
       client_id: CID,
@@ -150,6 +150,13 @@ const click = async label => act(async () => {
   expect(button).toBeTruthy();
   button.click();
 });
+const workDisclosure = (title, dialog = document.querySelector('[data-testid="enhanced-portfolio-history"]')) => {
+  const button = [...dialog.querySelectorAll('button[aria-expanded][aria-controls]')]
+    .find(node => node.textContent.trim().startsWith(title));
+  expect(button).toBeTruthy();
+  return button;
+};
+const workDetails = button => document.getElementById(button.getAttribute('aria-controls'));
 test('native work, consistent lead/KPI filters and exact navigation survive missing lead and programs', async () => {
   await act(async () => root.render(<EnhancedPortfolio user={{
     user_id: 'u'
@@ -172,11 +179,11 @@ test('native work, consistent lead/KPI filters and exact navigation survive miss
   await act(async () => preview.click());
   const dialog = document.querySelector('[data-testid="enhanced-portfolio-history"]');
   expect(dialog).toBeTruthy();
-  expect(dialog.textContent).toContain('Real native action');
-  expect(dialog.textContent).toContain('Latest retained completion');
-  expect(dialog.textContent).toContain('Native completed review');
-  expect(dialog.textContent).toContain('Scheduled recurring reviews · 2');
-  expect(dialog.textContent).toContain('Retained completion history is partial.');
+  expect(dialog.querySelector('[aria-label="Recorded work facts"]')).toBeNull();
+  expect(dialog.textContent).not.toMatch(/Latest retained completion|Native completed review|Scheduled recurring reviews|Retained completion history is partial/);
+  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('false');
+  await act(async () => workDisclosure('Overdue').click());
+  expect(workDetails(workDisclosure('Overdue')).textContent).toContain('Real native action');
   expect(document.body.textContent).not.toMatch(/gone quiet|scheduling gap|monitoring policy/i);
   await act(async () => dialog.querySelector('.ep-work-item').click());
   expect(mockNavigate).toHaveBeenLastCalledWith('/action-items?id=task1&client_id=demo_brawndo');
@@ -266,7 +273,11 @@ test('missing program retains operational preview and native record navigation',
   expect(host.textContent).toContain('No enabled programs');
   await click('View existing work');
   const dialog = document.querySelector('[data-testid="enhanced-portfolio-history"]');
-  expect(dialog.textContent).toContain('Real native action');
+  expect(dialog.querySelector('[aria-label="Recorded work facts"]')).toBeNull();
+  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('false');
+  expect(workDisclosure('Next 30 days').getAttribute('aria-expanded')).toBe('false');
+  await act(async () => workDisclosure('Overdue').click());
+  expect(workDetails(workDisclosure('Overdue')).textContent).toContain('Real native action');
   expect(dialog.textContent).toContain('No enabled program is recorded');
   await act(async () => dialog.querySelector('.ep-work-item').click());
   expect(mockNavigate).toHaveBeenLastCalledWith('/action-items?id=task1&client_id=demo_brawndo');
@@ -480,4 +491,217 @@ test('the whole tile accessible name retains percentage, implemented/assessed an
   expect(name).toContain('20.0%, 2 of 10 implemented');
   expect(name).toContain('Assessed 4 of 10');
   for(const count of position().included_counts)expect(name).toContain(count.count+' '+count.label);
+});
+
+test('work disclosures start collapsed, expand independently and retain exact native Review occurrence navigation', async () => {
+  const review = {...item, key: 'review:annual', entity_type: 'review', entity_id: 'annual-review',
+    occurrence_id: 'occurrence-2026-10-22', title: 'Exact scheduled review', due_date: '2026-10-22',
+    overdue: false, type: 'Review'};
+  currentWork.due_30d = [review];
+  await act(async () => root.render(<EnhancedPortfolio user={{user_id: 'u'}} />));
+  await act(async () => host.querySelector('.ep-program').click());
+  const dialog = document.querySelector('[data-testid="enhanced-portfolio-history"]');
+  const overdue = workDisclosure('Overdue'), upcoming = workDisclosure('Next 30 days');
+  const overdueDetails = workDetails(overdue), upcomingDetails = workDetails(upcoming);
+  expect(dialog.querySelector('.ep-history-body').firstElementChild.contains(overdue)).toBe(true);
+  expect(overdue.getAttribute('aria-controls')).not.toBe(upcoming.getAttribute('aria-controls'));
+  expect(overdue.classList.contains('ep-red')).toBe(true);
+  expect(upcoming.classList.contains('ep-amber')).toBe(true);
+  for (const button of [overdue, upcoming]) {
+    expect(button.tagName).toBe('BUTTON');
+    expect(button.type).toBe('button');
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(workDetails(button).hidden).toBe(true);
+    expect(button.textContent).toContain('1');
+    expect(button.querySelector('button,a,input,select,textarea')).toBeNull();
+  }
+  // jsdom checks the native button and hidden subtree contract; browser QA covers actual key activation/tab order.
+  overdue.focus();
+  expect(document.activeElement).toBe(overdue);
+  await act(async () => overdue.click());
+  expect(overdue.getAttribute('aria-expanded')).toBe('true');
+  expect(overdueDetails.hidden).toBe(false);
+  expect(upcoming.getAttribute('aria-expanded')).toBe('false');
+  expect(upcomingDetails.hidden).toBe(true);
+  expect(overdueDetails.textContent).toContain('Real native action');
+  expect(overdueDetails.textContent).toContain('Frito');
+  expect(overdueDetails.textContent).toContain('3 days overdue');
+  await act(async () => upcoming.click());
+  expect(overdueDetails.hidden).toBe(false);
+  expect(upcomingDetails.hidden).toBe(false);
+  await act(async () => overdue.click());
+  expect(overdueDetails.hidden).toBe(true);
+  expect(upcomingDetails.hidden).toBe(false);
+  expect(upcomingDetails.textContent).toContain('Exact scheduled review');
+  expect(upcomingDetails.textContent).toContain('in 2 days');
+  await act(async () => upcomingDetails.querySelector('.ep-work-item').click());
+  expect(mockSwitch).toHaveBeenLastCalledWith(CID);
+  expect(mockNavigate).toHaveBeenLastCalledWith('/reviews?id=annual-review&client_id=demo_brawndo&occurrence=occurrence-2026-10-22');
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('closing and reopening the same program resets both disclosures and restores its existing opener', async () => {
+  await act(async () => root.render(<EnhancedPortfolio user={{user_id: 'u'}} />));
+  const opener = host.querySelector('.ep-program');
+  opener.focus();
+  await act(async () => opener.click());
+  await act(async () => workDisclosure('Overdue').click());
+  await act(async () => workDisclosure('Next 30 days').click());
+  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('true');
+  expect(workDisclosure('Next 30 days').getAttribute('aria-expanded')).toBe('true');
+  await closedPreview();
+  expect(document.querySelector('[data-testid="enhanced-portfolio-history"]')).toBeNull();
+  expect(document.activeElement).toBe(opener);
+  await act(async () => opener.click());
+  for (const title of ['Overdue', 'Next 30 days']) {
+    expect(workDisclosure(title).getAttribute('aria-expanded')).toBe('false');
+    expect(workDetails(workDisclosure(title)).hidden).toBe(true);
+  }
+});
+
+test('a normal native refresh updates counts and implementation data without resetting current expansion choices', async () => {
+  await act(async () => root.render(<EnhancedPortfolio user={{user_id: 'u'}} />));
+  await act(async () => host.querySelector('.ep-program').click());
+  const overdue = workDisclosure('Overdue');
+  const detailsId = overdue.getAttribute('aria-controls');
+  await act(async () => overdue.click());
+  currentWork = {...currentWork, past_due: [item, {...item, key: 'task2', entity_id: 'task2', title: 'Another native action'}]};
+  current = {...program, current: position(3)};
+  await act(async () => {
+    window.dispatchEvent(new Event(PORTFOLIO_CHANGED));
+    await new Promise(resolve => setTimeout(resolve, 5));
+  });
+  expect(workDisclosure('Overdue')).toBe(overdue);
+  expect(overdue.getAttribute('aria-controls')).toBe(detailsId);
+  expect(overdue.getAttribute('aria-expanded')).toBe('true');
+  expect(overdue.textContent).toContain('2');
+  expect(workDetails(overdue).hidden).toBe(false);
+  expect(workDetails(overdue).querySelectorAll('.ep-work-item')).toHaveLength(2);
+  expect(workDetails(overdue).textContent).toContain('Another native action');
+  expect(workDisclosure('Next 30 days').getAttribute('aria-expanded')).toBe('false');
+  expect(document.querySelector('.ep-current strong').textContent).toBe('30.0%');
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('changing actual program or client identity resets disclosures and never retains the previous client work', async () => {
+  const first = {...client, metric_items: {past_due: [item], due_30d: [], due_31_90d: []}};
+  const other = {...client, client_id: 'new_authorized', name: 'New authorized client',
+    metric_items: {past_due: [{...item, client_id: 'new_authorized', key: 'other-task', entity_id: 'other-task', title: 'Other client native work'}], due_30d: [], due_31_90d: []}};
+  const soc = {...program, program_id: CID + ':soc-2', program_key: 'soc-2', framework_key: 'soc-2',
+    program_label: 'SOC 2', to: '/compliance/soc-2',
+    current: {...position(), scope: {framework_key: 'soc-2', catalog_version: '2017', configuration: {}}}};
+  const otherSoc = {...soc, client_id: other.client_id, program_id: other.client_id + ':soc-2'};
+  const contexts = [[first, program], [first, soc], [other, otherSoc]];
+  api.get.mockImplementation(async (_path, {params}) => ({data: {
+    client_id: params.client_id, program_key: params.program_key, as_of: AT,
+    current: contexts.find(([row, candidate]) => row.client_id === params.client_id && candidate.program_key === params.program_key)[1].current,
+    snapshots: [], forecast_snapshots: [], scope_changes: [], comparison: {comparable: false}
+  }}));
+  const renderPreview = ([row, selectedProgram]) => root.render(<EnhancedPortfolioHistory client={row}
+    programs={[selectedProgram]} selected={selectedProgram.program_id} onSelect={jest.fn()} asOf={AT}
+    refreshToken={0} onClose={jest.fn()} onNavigate={mockNavigate} theme="light" />);
+  let previousId;
+  for (const context of contexts) {
+    await act(async () => renderPreview(context));
+    const overdue = workDisclosure('Overdue');
+    expect(overdue.getAttribute('aria-expanded')).toBe('false');
+    expect(workDisclosure('Next 30 days').getAttribute('aria-expanded')).toBe('false');
+    expect(overdue.getAttribute('aria-controls')).not.toBe(previousId);
+    previousId = overdue.getAttribute('aria-controls');
+    await act(async () => overdue.click());
+    await act(async () => workDisclosure('Next 30 days').click());
+    expect(workDetails(overdue).textContent).toContain(context[0] === other ? 'Other client native work' : 'Real native action');
+    if (context[0] === other) {
+      expect(document.querySelector('[data-testid="enhanced-portfolio-history"]').textContent).not.toContain('Real native action');
+      await act(async () => workDetails(overdue).querySelector('.ep-work-item').click());
+      expect(mockNavigate).toHaveBeenLastCalledWith('/action-items?id=other-task&client_id=new_authorized');
+    }
+  }
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('collapsed counts and expanded lists preserve every native item and the existing inclusive 30-day boundary', async () => {
+  const many = Array.from({length: 100}, (_, index) => ({...item,
+    key: 'task:' + index, entity_id: 'task-' + index, title: 'Native action ' + (index + 1)}));
+  const upcoming = (key, due_date) => ({...item, key, entity_id: key, title: key, due_date, overdue: false});
+  currentWork = {
+    past_due: [...many, many[0], {...item, key: 'foreign', client_id: 'foreign'}],
+    due_30d: [upcoming('due today', '2026-10-20'), upcoming('due day 30', '2026-11-19'),
+      upcoming('outside day 31', '2026-11-20'), upcoming('already past due', '2026-10-19')],
+    due_31_90d: [upcoming('later native work', '2026-12-01')]
+  };
+  await act(async () => root.render(<EnhancedPortfolio user={{user_id: 'u'}} />));
+  await act(async () => host.querySelector('.ep-program').click());
+  expect(workDisclosure('Overdue').textContent).toContain('100');
+  expect(workDisclosure('Next 30 days').textContent).toContain('2');
+  await act(async () => workDisclosure('Overdue').click());
+  await act(async () => workDisclosure('Next 30 days').click());
+  const actions = [...workDetails(workDisclosure('Overdue')).querySelectorAll('.ep-work-item')];
+  expect(actions).toHaveLength(100);
+  expect(actions.map(button => button.querySelector('span:nth-child(2)').firstChild.textContent)).toEqual(many.map(row => row.title));
+  const due = workDetails(workDisclosure('Next 30 days'));
+  expect(due.querySelectorAll('.ep-work-item')).toHaveLength(2);
+  expect(due.textContent).toContain('due today');
+  expect(due.textContent).toContain('due day 30');
+  expect(due.textContent).not.toMatch(/outside day 31|already past due|later native work/);
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test.each(['demo', 'standard'])('a newly authorized non-CIS program uses compact zero rows and exact workspace identity in %s mode', async mode => {
+  const row = {...client, client_id: 'new_authorized', name: 'New authorized client',
+    metric_items: {past_due: [], due_30d: [], due_31_90d: []}};
+  const nativeProgram = {...program, client_id: row.client_id, program_id: row.client_id + ':soc-2',
+    program_key: 'soc-2', framework_key: 'soc-2', program_label: 'SOC 2', to: '/compliance/soc-2',
+    current: {...position(), scope: {framework_key: 'soc-2', catalog_version: '2017', configuration: {}}}};
+  mockAuth = {user: {user_id: 'operator', role: 'platform_admin', workspace_mode: mode}, workspaceMode: mode};
+  api.get.mockImplementation(async path => ({data: path.endsWith('/overview') ? {
+    as_of: AT, clients: [row], programs: [nativeProgram]
+  } : path === '/clients/directory' ? {clients: [row]} : {
+    client_id: row.client_id, program_key: nativeProgram.program_key, as_of: AT,
+    current: nativeProgram.current, snapshots: [], forecast_snapshots: [], scope_changes: [], comparison: {comparable: false}
+  }}));
+  await act(async () => root.render(<EnhancedPortfolioBoundary><p>Legacy Portfolio</p></EnhancedPortfolioBoundary>));
+  await act(async () => host.querySelector('.ep-program').click());
+  const dialog = document.querySelector('[data-testid="enhanced-portfolio-history"]');
+  expect(dialog.querySelector('[role="alert"]')).toBeNull();
+  expect(dialog.querySelector('[aria-label="Recorded work facts"]')).toBeNull();
+  for (const title of ['Overdue', 'Next 30 days']) {
+    const button = workDisclosure(title);
+    expect(button.textContent).toContain('0');
+    expect(button.classList.contains('ep-red')).toBe(false);
+    expect(button.classList.contains('ep-amber')).toBe(false);
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(workDetails(button).hidden).toBe(true);
+    await act(async () => button.click());
+    expect(workDetails(button).querySelectorAll('.ep-work-item')).toHaveLength(0);
+    expect(workDetails(button).textContent).toContain(title === 'Overdue' ? 'Nothing overdue.' : 'Nothing due.');
+  }
+  await click('Open SOC 2 workspace →');
+  expect(mockSwitch).toHaveBeenLastCalledWith(row.client_id);
+  expect(mockNavigate).toHaveBeenLastCalledWith('/compliance/soc-2?client_id=new_authorized');
+  expect(api.get.mock.calls.filter(([path]) => path.endsWith('/history')).every(([, options]) =>
+    options.params.client_id === row.client_id && options.params.program_key === 'soc-2' && options.params.demo_scenario === undefined)).toBe(true);
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('pending native work coverage stays loading rather than showing compact false-zero counts', async () => {
+  const original = api.get.getMockImplementation();
+  let resolveOperations;
+  api.get.mockImplementation((path, options) => path === '/clients/directory'
+    ? new Promise(resolve => {resolveOperations = resolve;}) : original(path, options));
+  await act(async () => root.render(<EnhancedPortfolio user={{user_id: 'u'}} />));
+  expect(host.querySelector('[role="status"]').textContent).toContain('Loading client portfolio');
+  expect(host.querySelector('.ep-program')).toBeNull();
+  expect(document.querySelector('[data-testid="enhanced-portfolio-history"]')).toBeNull();
+  expect(host.textContent).not.toMatch(/Nothing overdue|Nothing due/);
+  await act(async () => resolveOperations({data: {clients: [{...client, metric_items: currentWork}]}}));
+  await act(async () => host.querySelector('.ep-program').click());
+  expect(workDisclosure('Overdue').textContent).toContain('1');
+  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('false');
 });

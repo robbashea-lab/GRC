@@ -1,0 +1,59 @@
+.register-identity-logo {
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  border: 1px solid var(--color-border, #C6D4E4);
+  border-radius: 9px;
+  background: var(--color-bg-subtle, #F3F7FC);
+  color: var(--color-text-muted, #536A84);
+  overflow: hidden;
+}
+
+.baai-page .register-identity-logo {
+  border-color: var(--border);
+  background: var(--subtle);
+  color: var(--muted);
+}
+
+.register-identity-logo__image,
+.register-identity-logo__fallback {
+  grid-area: 1 / 1;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.register-identity-logo__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Native catalog marks use a white canvas, including in dark mode. */
+  background: #fff;
+}
+
+.register-identity-logo__image--loading {
+  visibility: hidden;
+}
+
+.register-identity {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-inline-start: 46px;
+  min-width: 0;
+}
+
+.register-identity > .register-identity-logo {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.register-identity__text {
+  min-width: 0;
+}

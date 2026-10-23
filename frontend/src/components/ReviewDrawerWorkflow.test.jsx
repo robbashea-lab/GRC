@@ -46,6 +46,37 @@ test('eligible existing review follows approved tabs and removes the rejected le
   expect(button('In progress').disabled).toBe(false);
 });
 
+test('the same native Review drawer follows each matching Portfolio client without writing or retaining the previous client label',async()=>{
+  const fixtures=[];
+  for(const [name,group] of [['Synthetic Portfolio Alpha',2],['Synthetic Portfolio Beta',3]]){
+    const client=(await api.post('/clients',{name})).data;
+    const review=(await api.post('/reviews',{client_id:client.client_id,title:`${name} Review`,review_type:'access',recurrence:'annual',due_date:'2099-09-30'})).data;
+    fixtures.push({client:{...cisClient(client.client_id,group),name:client.name},review});
+  }
+  const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');
+  let previousName;
+  for(const fixture of fixtures){
+    mockClient=fixture.client;record=fixture.review;
+    await render();
+    expect(query('reviews-drawer').classList.contains('brawndo-review-workflow')).toBe(true);
+    expect(document.querySelector('.review-workflow-context > span').textContent).toBe(fixture.client.name);
+    expect(document.querySelector('[data-review-title]').textContent).toBe(fixture.review.title);
+    expect(document.querySelector('.review-workflow-context').textContent).not.toContain('Brawndo');
+    if(previousName)expect(document.querySelector('.review-workflow-context').textContent).not.toContain(previousName);
+    expect((await api.get('/reviews/'+fixture.review.review_id)).data).toMatchObject({review_id:fixture.review.review_id,client_id:fixture.client.client_id,title:fixture.review.title});
+    previousName=fixture.client.name;
+  }
+  expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
+});
+
+test.each(['missing name','different client'])('workflow header uses an explicit unknown-client fallback for %s',async mode=>{
+  mockClient=mode==='missing name'?{...mockClient,name:'   '}:{...cisClient('different-client'),name:'Foreign client name'};
+  await render();
+  expect(document.querySelector('.review-workflow-context > span').textContent).toBe('Client not recorded');
+  expect(document.querySelector('.review-workflow-context').textContent).not.toContain('Foreign client name');
+  expect(document.querySelector('.review-workflow-context').textContent).not.toContain('Brawndo');
+});
+
 test.each(['non-Brawndo','new','mismatched'])('%s record cannot acquire workflow presentation',async mode=>{
   if(mode==='non-Brawndo')mockFullRecord=false;
   await render(mode==='new'?{record:null}:mode==='mismatched'?{clientId:'demo_dunder'}:{});

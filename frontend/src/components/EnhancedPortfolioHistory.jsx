@@ -4,7 +4,7 @@ import { PortfolioHistoryChart, formatPortfolioDate, programLanguage, scopeNote,
 import { applicableCounts, calendarRangeStart, currentPercentage, forecastImplementation, historyWindow, periodChange, programIdentity, snapshotTime, validImplementationPosition } from '@/lib/portfolioProgress';
 import { grcLead } from '@/lib/clientRelationships';
 import { clientAttention, operationalItems } from '@/lib/enhancedPortfolio';
-import { Attention, ClientMark, WorkFacts, WorkList, signedPoints } from './EnhancedPortfolioShared';
+import { Attention, ClientMark, WorkList, signedPoints } from './EnhancedPortfolioShared';
 import {useAuth} from '@/context/AuthContext';
 import {PREVIEW_MODE} from '@/lib/api';
 import {namedDemoClient} from '@/lib/demoClients';
@@ -47,7 +47,7 @@ function WorkOnlyPreview({
     if (!open) onClose();
   }}><DialogContent showCloseButton={false} className="portfolio-history-dialog enhanced-portfolio ep-history" data-theme={theme} data-testid="enhanced-portfolio-history" onCloseAutoFocus={onCloseAutoFocus}>
     <header className="ep-dialog-heading"><ClientMark client={client} /><div><DialogTitle>{client.name}</DialogTitle><DialogDescription>GRC lead · {grcLead(client).name} · <span className={"ep-attention-chip ep-" + clientAttention(client, asOf).tone}>{clientAttention(client, asOf).label}</span></DialogDescription></div><div className="ep-dialog-actions"><button type="button" className="ep-button" onClick={() => onNavigate('/dashboard')}>Open client portal</button><DialogClose className="ep-close" aria-label="Close implementation preview">×</DialogClose></div></header>
-    <div className="ep-history-body"><Attention client={client} asOf={asOf} /><WorkFacts client={client} /><WorkList client={client} items={work.overdue} title="Overdue" asOf={asOf} onNavigate={onNavigate} /><WorkList client={client} items={work.due30} title="Next 30 days" asOf={asOf} onNavigate={onNavigate} /><div className="ep-notice">No enabled program is recorded. Existing work remains available.</div></div><footer>Assessment progress, not a compliance determination.</footer>
+    <div className="ep-history-body"><div className="ep-glance"><WorkList key={`${client.client_id}:overdue`} client={client} items={work.overdue} title="Overdue" asOf={asOf} onNavigate={onNavigate} /><WorkList key={`${client.client_id}:due30`} client={client} items={work.due30} title="Next 30 days" asOf={asOf} onNavigate={onNavigate} /></div><Attention client={client} asOf={asOf} /><div className="ep-notice">No enabled program is recorded. Existing work remains available.</div></div><footer>Assessment progress, not a compliance determination.</footer>
   </DialogContent></Dialog>;
 }
 function ProgramHistory({
@@ -103,11 +103,10 @@ function ProgramHistory({
   }}><DialogContent showCloseButton={false} className="portfolio-history-dialog enhanced-portfolio ep-history" data-theme={theme} data-testid="enhanced-portfolio-history" onCloseAutoFocus={onCloseAutoFocus}>
     <header className="ep-dialog-heading"><ClientMark client={client} /><div><DialogTitle>{client.name}</DialogTitle><DialogDescription>GRC lead · {grcLead(client).name} · <span className={"ep-attention-chip ep-" + clientAttention(client, asOf).tone}>{clientAttention(client, asOf).label}</span></DialogDescription></div><div className="ep-dialog-actions"><button type="button" className="ep-button" onClick={() => onNavigate('/dashboard')}>Open client portal</button><DialogClose className="ep-close" aria-label="Close implementation preview">×</DialogClose></div></header>
     <div className="ep-history-body ph-body">
-
+      {/* Context keys reset disclosure state without resetting history controls on refresh. */}
+      <div className="ep-glance"><WorkList key={JSON.stringify([client.client_id, programIdentity(program), 'overdue'])} client={client} items={work.overdue} title="Overdue" asOf={cutoff} onNavigate={onNavigate} /><WorkList key={JSON.stringify([client.client_id, programIdentity(program), 'due30'])} client={client} items={work.due30} title="Next 30 days" asOf={cutoff} onNavigate={onNavigate} /></div>
       {!client.grc_lead_id && !client.assigned_owner_id && <div className="ep-notice"><b>No GRC lead assigned</b><p>Existing work and assessment history remain visible.</p><button type="button" className="ep-button" onClick={() => onNavigate('/admin/clients')}>Assign a lead</button></div>}
       {client.monitoring?.onboarding === 'in_progress' && <div className="ep-notice"><b>Onboarding in progress</b><button type="button" className="ep-button" onClick={() => onNavigate('/onboarding')}>Continue onboarding</button></div>}
-      <WorkFacts client={client} />
-      <div className="ep-glance"><WorkList client={client} items={work.overdue} title="Overdue" asOf={cutoff} onNavigate={onNavigate} /><WorkList client={client} items={work.due30} title="Next 30 days" asOf={cutoff} onNavigate={onNavigate} /></div>
       <div className="ep-program-switch"><span>Program</span><div className="ep-segment" role="group" aria-label="Select program">{programs.map(value => <button key={programIdentity(value)} type="button" aria-pressed={programIdentity(value) === programIdentity(program)} onClick={() => onSelect(programIdentity(value))}>{value.program_label}</button>)}</div></div>
       <section className="ep-current"><div><p>{program.program_label} · current implementation</p><strong>{value == null ? percentage(current) : <>{value.toFixed(1)}<small>%</small></>}</strong><p>{valid ? `${current.implemented} of ${current.denominator} implemented · assessed ${current.denominator - (counts.find(count => count.key === 'not_assessed')?.count || 0)} of ${current.denominator}` : current?.reason || 'Current implementation unavailable'}</p><small>As of {formatPortfolioDate(current?.effective_at || current?.captured_at || cutoff)}</small><button type="button" className="ep-link" onClick={() => onNavigate(program.to)}>Open {program.program_label} workspace →</button></div><CompactBreakdown current={current} /></section>
       <div className="ep-periods" role="group" aria-label="Implementation changes">{PERIODS.map(([key, months]) => {

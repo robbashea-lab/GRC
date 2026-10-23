@@ -39,6 +39,7 @@ from governance_context import GovernanceContext
 from pymongo.errors import DuplicateKeyError
 from grc_rules import RULES, CLOSED, is_open, assessed_risk, risk_level, risk_due, represented_finding
 import record_contracts
+from register_catalog_identity import validate_catalog_key
 import action_items
 import assignment_eligibility
 import client_relationships
@@ -559,6 +560,7 @@ class PolicyIn(BaseModel):
 class VendorIn(BaseModel):
     name: str
     client_id: str
+    catalog_key: Optional[str] = None
     service: Optional[str] = None  # short description of what they provide
     category: Optional[str] = "SaaS"
     criticality: str = "medium"  # low, medium, high, critical
@@ -600,6 +602,11 @@ class VendorIn(BaseModel):
     termination_requirements: Optional[str] = None
     dependency_notes: Optional[str] = None
     offboarding_review_date: Optional[str] = None
+
+    @field_validator('catalog_key', mode='before')
+    @classmethod
+    def valid_catalog_key(cls, value):
+        return validate_catalog_key('vendors', value)
 
 
 class AssetIn(BaseModel):
@@ -2676,6 +2683,12 @@ def _apply_risk_scoring(doc: Dict) -> Dict:
 def _editable_patch(kind: str, body: Dict, existing: Optional[Dict] = None, user: Optional[Dict] = None) -> Dict:
     """One contract for normal and bulk writes; decisions have separate endpoints."""
     body = record_contracts.normalize_write(kind, body, existing)
+    # Validate even empty/no-op inputs before generic omission of blank optional fields.
+    if kind == 'vendors' and 'catalog_key' in body:
+        try:
+            validate_catalog_key('vendors', body['catalog_key'])
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
     previous = existing or {}
     if 'framework_assessment_id' in body or any(k.startswith('framework_') for k in body):
         raise HTTPException(422,'Framework relationships are managed through the framework workspace')
