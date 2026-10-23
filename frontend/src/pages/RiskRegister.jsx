@@ -100,6 +100,7 @@ export default function RiskRegister() {
   useEffect(()=>setAcceptedRefresh(null),[scope,demoRisks]);
   const [eventDrawer,setEventDrawer]=useState(null);
   const eventRequest=useRef(0);
+  const linkedRequest=useRef(null);
   const pilot=isReferenceRegister(currentClientId,user);
   const workspacePilot=isWorkspacePresentation(currentClientId,user);
   const [matrixSelection,setMatrixSelection]=useState(null);
@@ -114,26 +115,31 @@ export default function RiskRegister() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [drawer, setDrawer] = useState({ open: false, record: null });
+  const currentDrawer=useRef(drawer);currentDrawer.current=drawer;
+  const drawerRecordId=drawer.record?.risk_id;
   const [addOpen, setAddOpen] = useState(false);
-  function openRisk(record){eventRequest.current++;setDrawer({open:true,record});}
-  function closeLinkedDrawer(value){eventRequest.current++;setDrawer(p=>({...p,open:value}));if(!value){const next=new URLSearchParams(searchParams);next.delete('id');setSearchParams(next,{replace:true});}}
+  function openRisk(record){linkedRequest.current?.abort();eventRequest.current++;setDrawer({open:true,record});}
+  function closeLinkedDrawer(value){if(!value)linkedRequest.current?.abort();eventRequest.current++;setDrawer(p=>({...p,open:value}));if(!value){const next=new URLSearchParams(searchParams);next.delete('id');setSearchParams(next,{replace:true});}}
   const linkedRecordId=searchParams.get('id'),linkedClientId=searchParams.get('client_id');
   const [recordLinkError,setRecordLinkError]=useState('');
+  // Close retains record identity; a native scope reset clears it and may resolve a fresh link.
   useEffect(()=>{
-    if(!linkedRecordId||!currentClientId||drawer.open)return;
-    const controller=new AbortController(),entryScope=scope;setRecordLinkError('');
+    if(!linkedRecordId||!currentClientId||currentDrawer.current.open)return;
+    setRecordLinkError('');
     if(linkedClientId&&linkedClientId!==currentClientId){setRecordLinkError('This link belongs to another client. Select that client before opening it.');return;}
+    const controller=new AbortController(),entryScope=scope;
+    linkedRequest.current=controller;
     api.get('/risks/'+encodeURIComponent(linkedRecordId),{signal:controller.signal}).then(({data})=>{
       if(controller.signal.aborted||currentScope.current!==entryScope)return;
       if(data.client_id!==currentClientId)throw new Error('Record belongs to another client.');
       setDrawer({open:true,record:data});
-    }).catch(error=>{if(!controller.signal.aborted)setRecordLinkError(formatError(error));});
-    return()=>controller.abort();
-  },[linkedRecordId,linkedClientId,currentClientId,drawer.open,scope]);
+    }).catch(error=>{if(!controller.signal.aborted&&currentScope.current===entryScope)setRecordLinkError(formatError(error));});
+    return()=>{controller.abort();if(linkedRequest.current===controller)linkedRequest.current=null;};
+  },[linkedRecordId,linkedClientId,currentClientId,scope,drawerRecordId]);
 
   const [matrixOpen, setMatrixOpen] = useState(false);
-  function openMatrix(){eventRequest.current++;setMatrixOpen(true);}
-  function openNewRisk(){eventRequest.current++;setAddOpen(true);}
+  function openMatrix(){linkedRequest.current?.abort();eventRequest.current++;setMatrixOpen(true);}
+  function openNewRisk(){linkedRequest.current?.abort();eventRequest.current++;setAddOpen(true);}
 
   const canWrite = ["super_admin", "platform_admin"].includes(user?.role);
   const userMap = useMemo(() => {
@@ -187,6 +193,7 @@ export default function RiskRegister() {
   useEffect(()=>{setEventDrawer(null);eventRequest.current++;},[scope]);
   useEffect(()=>()=>{eventRequest.current++;},[]);
   async function openUpcoming(kind,record){
+    linkedRequest.current?.abort();
     const request=++eventRequest.current,entryScope=scope;
     try {
       const id=kind==='tasks'?record.task_id:record.risk_id;
