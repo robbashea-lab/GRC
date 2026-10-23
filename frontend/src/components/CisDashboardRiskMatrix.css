@@ -2,7 +2,7 @@
 .cis-dashboard-risk.bpage.brawndo-demo-risks {
   --bp-card:#FFFFFF; --bp-border:#E3E8EF; --bp-text:#0F1B2D; --bp-muted:#5A687B; --bp-focus:#215BC1;
   --bdr-fg2:#46566B; --bdr-low:#94A3B8; --bdr-moderate:#E8B341; --bdr-high:#DD6B2E; --bdr-critical:#B4232F;
-  min-width:0; padding:18px 20px; border:1px solid var(--bp-border); border-radius:10px;
+  min-width:0; min-height:0; padding:18px 20px; border:1px solid var(--bp-border); border-radius:10px;
   background:var(--bp-card); color:var(--bp-text); font-family:'GoverNara Risks Inter',Inter,'Segoe UI',system-ui,sans-serif;
 }
 .cis-dashboard-risk.bpage.brawndo-demo-risks[data-theme="dark"] {
@@ -13,7 +13,8 @@
 .cis-dashboard-risk h2 { margin:0; font-size:15px; font-weight:600; }
 .cis-dashboard-risk header a { color:var(--bp-focus); font-size:12.5px; }
 .cis-dashboard-risk > p { margin:4px 0 0; font-size:12.5px; color:var(--bp-muted); }
-.cis-dashboard-risk .bdr-matrix-wrap { width:max-content; max-width:100%; margin-inline:auto; }
+.cis-dashboard-risk.bpage.brawndo-demo-risks .bdr-matrix-wrap { width:100%; max-width:100%; margin-inline:auto; grid-template-columns:14px minmax(0,1fr); }
+.cis-dashboard-risk.bpage.brawndo-demo-risks :is(.bdr-matrix,.bdr-matrix-x) { grid-template-columns:repeat(5,minmax(0,1fr)); }
 .cis-dashboard-risk .bdr-cell:disabled { cursor:default; opacity:1; }
 .cis-dashboard-risk .bdr-cell:focus-visible { outline:2px solid var(--bp-focus); outline-offset:2px; }
 .cis-dashboard-risk .cis-dashboard-risk-summary { margin-top:10px; }

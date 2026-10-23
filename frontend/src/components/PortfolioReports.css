@@ -232,12 +232,12 @@
 .portfolio-history-dialog .ph-change-arrow { display:inline-block; width:.9em; height:.9em; vertical-align:-.08em; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 
 /* Only the CIS Dashboard opts into the compact arrangement and point inspection. */
-.brawndo-demo-program[data-cis-dashboard-profile=true] .ph-cis-history-head { display:grid; gap:12px; padding:18px 20px 12px; margin-bottom:0; border:1px solid var(--color-border); border-bottom:0; border-radius:10px 10px 0 0; }
+.brawndo-demo-program[data-cis-dashboard-profile=true] .ph-cis-history-head { display:grid; gap:8px; padding:14px 16px 10px; margin-bottom:0; border:1px solid var(--color-border); border-bottom:0; border-radius:10px 10px 0 0; }
 .brawndo-demo-program[data-cis-dashboard-profile=true] .ph-cis-history-head .ph-range { margin:0; padding:0; }
 .brawndo-demo-program[data-cis-dashboard-profile=true] .ph-history-panel { border-radius:0 0 10px 10px; }
-.brawndo-demo-program[data-cis-dashboard-profile=true] .ph-metric { gap:4px; padding:12px 20px; }
-.brawndo-demo-program[data-cis-dashboard-profile=true] .ph-metric strong { font-size:22px; letter-spacing:0; }
-.brawndo-demo-program[data-cis-dashboard-profile=true] .ph-metric strong.is-text { font-size:14px; }
+.brawndo-demo-program[data-cis-dashboard-profile=true] .ph-metric { gap:3px; padding:10px 16px; }
+.brawndo-demo-program[data-cis-dashboard-profile=true] .ph-metric strong { font-size:20px; letter-spacing:0; }
+.brawndo-demo-program[data-cis-dashboard-profile=true] .ph-metric strong.is-text { font-size:14px; line-height:1.35; }
 .brawndo-demo-program[data-cis-dashboard-profile=true] .ph-metric p { font-size:12px; }
 .brawndo-demo-program[data-cis-dashboard-profile=true] .ph-change-badge { width:24px; height:24px; margin-right:6px; }
 .brawndo-demo-program[data-cis-dashboard-profile=true] .ph-chart-card { gap:8px; padding-top:10px; }

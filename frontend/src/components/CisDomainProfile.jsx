@@ -31,21 +31,55 @@ function DomainTrigger({domain,point=false,style,children,activeTrigger,onActive
   </Popover>;
 }
 
-const pointAt=(index,total,radius)=>{const angle=index/total*Math.PI*2-Math.PI/2;return [230+Math.cos(angle)*radius,208+Math.sin(angle)*radius];};
+const pointAt=(index,total,radius)=>{const angle=index/total*Math.PI*2-Math.PI/2;return [180+Math.cos(angle)*radius,270+Math.sin(angle)*radius];};
+
+function labelLines(name){
+  const lines=[];
+  for(const word of name.split(' ')){
+    if(!lines.length||`${lines[lines.length-1]} ${word}`.length>16)lines.push(word);
+    else lines[lines.length-1]+=` ${word}`;
+  }
+  return lines;
+}
+
+// Separate the side labels vertically so all native IG3 domains remain readable.
+function radarLabels(domains){
+  const labels=domains.map((domain,index)=>({domain,index,point:pointAt(index,domains.length,96)}));
+  for(const side of [-1,1]){
+    const members=labels.filter(label=>label.index!==0&&!(domains.length%2===0&&label.index===domains.length/2)&&Math.sign(label.point[0]-180)===side).sort((a,b)=>a.point[1]-b.point[1]);
+    // Include the name lines, rate baseline and font ascent/descent in each block.
+    const heights=members.map(label=>(labelLines(label.domain.name).length-1)*14+16+18);
+    const gap=members.length>1?Math.max(8,(403-heights.reduce((sum,height)=>sum+height,0))/(members.length-1)):0;
+    let top=72;
+    members.forEach((label,index)=>{
+      Object.assign(label,{x:side<0?0:250,y:top+14,anchor:'start',edge:side<0?110:250});
+      top+=heights[index]+gap;
+    });
+  }
+  labels[0]&&Object.assign(labels[0],{x:180,y:15,anchor:'middle'});
+  if(domains.length%2===0)Object.assign(labels[domains.length/2],{x:180,y:490,anchor:'middle'});
+  return labels;
+}
 
 export default function CisDomainProfile({source,clientId,implementationGroup}){
   const heading=useId(),[activeTrigger,onActiveTrigger]=useState(null),model=buildCisDomainProfile(source,{clientId,implementationGroup});
   return <section className="cdp-card" aria-labelledby={heading}><header><h2 id={heading}>Domain implementation profile</h2><p>Implemented safeguards as a share of each native domain’s applicable scope.</p></header>
     {!model.available?<p role="status" className="cdp-empty">{model.reason}</p>:!model.domains.length?<p className="cdp-empty">No mapped applicable domains are available.</p>:<>
-      <div className="cdp-profile"><div className="cdp-radar-wrap"><div className="cdp-radar-canvas"><svg className="cdp-radar" viewBox="0 0 460 416" role="img" aria-label="Domain implementation radar. Exact domain names, counts and rates are available in the adjacent table.">
-        {[.25,.5,.75,1].map(scale=><polygon className="cdp-grid" key={scale} points={model.domains.map((_,i)=>pointAt(i,model.domains.length,140*scale).join(',')).join(' ')}/>)}
-        {model.domains.map((domain,i)=>{const outer=pointAt(i,model.domains.length,140),label=pointAt(i,model.domains.length,168);return <g key={domain.id}><line className="cdp-grid" x1="230" y1="208" x2={outer[0]} y2={outer[1]}/><text x={label[0]} y={label[1]} textAnchor="middle" dominantBaseline="middle">{i+1}<title>{domain.name}</title></text></g>;})}
-        {model.domains.every(domain=>domain.rate!==null)&&<polygon className="cdp-value" points={model.domains.map((domain,i)=>pointAt(i,model.domains.length,140*domain.rate/100).join(',')).join(' ')}/>}
-        <text className="cdp-scale" x="235" y="62">100%</text><text className="cdp-scale" x="235" y="137">50%</text>
-      </svg>{model.domains.filter(domain=>domain.rate!==null).map(domain=>{const i=model.domains.indexOf(domain),point=pointAt(i,model.domains.length,140*domain.rate/100);return <DomainTrigger key={domain.id} domain={domain} point activeTrigger={activeTrigger} onActiveTrigger={onActiveTrigger} style={{left:`${point[0]/460*100}%`,top:`${point[1]/416*100}%`}}><span className="sr-only">{domain.name}</span></DomainTrigger>;})}
-        </div><p className="cdp-radar-note">Point numbers match the native domains in the table. Focus or tap a point or domain name for details.</p></div>
+      <div className="cdp-profile"><div className="cdp-radar-wrap"><div className="cdp-radar-canvas"><svg className="cdp-radar" viewBox="0 0 360 550" role="img" aria-label="Domain implementation radar. Exact domain names, counts and rates are available in the adjacent table.">
+        {[.25,.5,.75,1].map(scale=><polygon className="cdp-grid" key={scale} points={model.domains.map((_,i)=>pointAt(i,model.domains.length,96*scale).join(',')).join(' ')}/>)}
+        {radarLabels(model.domains).map(({domain,point,x,y,anchor,edge})=>{const lines=labelLines(domain.name);return <g key={domain.id}>
+          <line className="cdp-grid" x1="180" y1="270" x2={point[0]} y2={point[1]}/>
+          {edge!==undefined&&<path className="cdp-label-leader" d={`M${point.join(',')} L${edge},${y+14}`}/>}
+          <text className="cdp-axis-label" x={x} y={y} textAnchor={anchor} aria-label={`${domain.name}: ${formatDomainRate(domain.rate)}`}>
+            {lines.map((line,index)=><tspan key={index} x={x} dy={index?14:0}>{line}</tspan>)}
+            <tspan className="cdp-axis-rate" x={x} dy="16">{formatDomainRate(domain.rate)}</tspan>
+          </text></g>;})}
+        {model.domains.every(domain=>domain.rate!==null)&&<polygon className="cdp-value" points={model.domains.map((domain,i)=>pointAt(i,model.domains.length,96*domain.rate/100).join(',')).join(' ')}/>}
+        <text className="cdp-scale" x="185" y="170">100%</text><text className="cdp-scale" x="185" y="220">50%</text>
+      </svg>{model.domains.filter(domain=>domain.rate!==null).map(domain=>{const i=model.domains.indexOf(domain),point=pointAt(i,model.domains.length,96*domain.rate/100);return <DomainTrigger key={domain.id} domain={domain} point activeTrigger={activeTrigger} onActiveTrigger={onActiveTrigger} style={{left:`${point[0]/360*100}%`,top:`${point[1]/550*100}%`}}><span className="sr-only">{domain.name}</span></DomainTrigger>;})}
+        </div><p className="cdp-radar-note">Focus or tap a point or domain name for details.</p></div>
         <div className="cdp-table-wrap"><table><caption className="sr-only">Native CIS domain implementation counts and rates</caption><thead><tr><th scope="col">Domain</th><th scope="col">Implemented</th><th scope="col">Applicable</th><th scope="col">Rate</th></tr></thead>
-          <tbody>{model.domains.map((domain,i)=><tr key={domain.id}><th scope="row"><span className="cdp-domain-number">{i+1}</span><DomainTrigger domain={domain} activeTrigger={activeTrigger} onActiveTrigger={onActiveTrigger}>{domain.name}</DomainTrigger></th><td>{domain.implemented}</td><td>{domain.applicable}</td><td>{formatDomainRate(domain.rate)}</td></tr>)}</tbody></table></div>
+          <tbody>{model.domains.map(domain=><tr key={domain.id}><th scope="row"><DomainTrigger domain={domain} activeTrigger={activeTrigger} onActiveTrigger={onActiveTrigger}>{domain.name}</DomainTrigger></th><td>{domain.implemented}</td><td>{domain.applicable}</td><td>{formatDomainRate(domain.rate)}</td></tr>)}</tbody></table></div>
       </div><p className="cdp-note">Implemented ÷ applicable. Partial implementation receives no added credit; not assessed means unknown. Domain mappings may overlap.</p>
     </>}
   </section>;
