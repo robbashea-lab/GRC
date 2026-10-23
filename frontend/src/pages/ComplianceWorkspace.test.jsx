@@ -5,12 +5,13 @@ import MockComplianceWorkspace from './ComplianceWorkspace';
 import MockRecordListPage from './RecordListPage';
 import {THEME_KEY} from '@/lib/brawndoTheme';
 import api from '@/lib/api';
-let mockClient, mockPath, mockKey;
+import {cisClient} from '@/testUtils/cisExperience';
+let mockClient, mockPath, mockKey, mockAuth;
 jest.mock('@/context/OrgContext', () => ({ useOrg: () => ({ currentClientId: mockClient.client_id, currentClient: mockClient, clients: [mockClient] }) }));
-jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ user: { role: 'super_admin', name: 'Alex Morgan', workspace_mode: 'demo' } }) }));
+jest.mock('@/context/AuthContext', () => ({ useAuth: () => mockAuth }));
 jest.mock('@/components/NotificationBell', () => () => null);
 jest.mock('@/preview/DemoNotice', () => () => null);
-jest.mock('@/lib/api', () => ({ __esModule: true, default: { get: jest.fn() }, formatError: e => e.message }));
+jest.mock('@/lib/api', () => ({ __esModule: true, PREVIEW_MODE:true, default: { get: jest.fn() }, formatError: e => e.message }));
 jest.mock('react-router-dom', () => ({
   useSearchParams: () => require('react').useState(new URLSearchParams()),
   useLocation: () => ({ pathname: mockPath }), useParams: () => ({ requirementKey: mockKey }), useNavigate: () => jest.fn(),
@@ -23,6 +24,7 @@ beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   localStorage.removeItem(THEME_KEY);
   mockClient = { client_id: 'a', name: 'Client A' }; mockKey = 'hipaa'; mockPath = '/compliance/hipaa';
+  mockAuth={user:{role:'super_admin',name:'Alex Morgan',workspace_mode:'demo'}};
   api.get.mockImplementation(async (path, config) => ({ data: path === '/onboarding/baseline' ? { state: { completed: true } }
     : path.startsWith('/frameworks/') ? {configured:false,selected:mockClient.client_id==='a',assessments:[],definitions:[]}
     : path.endsWith('/members') ? []
@@ -58,6 +60,33 @@ test('failed loads show a safe error instead of a blank page', async () => {
   await render();
   expect(container.querySelector('[role="alert"]').textContent).toContain('Unable to retrieve requirements');
   expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(0);
+});
+
+test('enrolled CIS keeps one scoped loading header across requirement and framework reads without exposing assessments',async()=>{
+  mockClient={...cisClient('demo_brawndo',1),name:'Brawndo'};mockKey='cis-ig1';mockPath='/compliance/cis-ig1';
+  mockAuth={user:{user_id:'loading-demo',role:'super_admin',workspace_mode:'demo'},workspaceMode:'demo',loading:false};
+  sessionStorage.setItem('grc_client_id','demo_brawndo');
+  let resolveRequirements,rejectFramework;
+  const requirements=new Promise(resolve=>{resolveRequirements=resolve;});
+  const framework=new Promise((resolve,reject)=>{rejectFramework=reject;});
+  api.get.mockImplementation(path=>path==='/requirements'?requirements:path.startsWith('/frameworks/')?framework
+    :Promise.resolve({data:{state:{completed:true,requirements:{'cis-ig1':'applies'}},framework_settings:mockClient.framework_settings}}));
+  try{
+    await render();
+    expect(container.querySelectorAll('main h1')).toHaveLength(1);
+    expect(container.querySelector('main h1').textContent).toBe('CIS IG1');
+    expect(container.querySelector('[data-testid="cis-workspace-loading"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="cis-workspace"]')).toBeNull();
+    expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
+    await act(async()=>resolveRequirements({data:[{client_id:'demo_brawndo',baseline_key:'cis-ig1',baseline_response:'applies'}]}));
+    expect(api.get.mock.calls.some(([path])=>path==='/frameworks/cis-ig1')).toBe(true);
+    expect(container.querySelectorAll('main h1')).toHaveLength(1);
+    expect(container.querySelector('[data-testid="cis-workspace-loading"]')).toBeTruthy();
+    expect(container.querySelector('main').textContent).not.toContain('0 safeguards');
+    await act(async()=>rejectFramework(new Error('Framework unavailable')));
+    expect(container.querySelector('[role="alert"]').textContent).toContain('Framework unavailable');
+    expect(container.querySelector('[data-testid="cis-workspace-loading"]')).toBeNull();
+  }finally{sessionStorage.removeItem('grc_client_id');}
 });
 
 test.each(['demo_brawndo','demo_dunder','demo_prestige','new-client'])('%s Reviews inherits shared header, theme and portal surface from Layout',async clientId=>{

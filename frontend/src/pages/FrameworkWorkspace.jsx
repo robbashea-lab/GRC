@@ -1,4 +1,5 @@
 import {FrameworkRecordButton} from '@/components/FrameworkRecordAccess';
+import CisWorkspaceLoading,{useCisLoadingProgram} from '@/components/CisWorkspaceLoading';
 import GuidedAssessor from '@/components/GuidedAssessor';
 import SocGuidedAssessor from '@/components/SocGuidedAssessor';
 import {focusedOmniEnabled} from '@/lib/focusedOmni';
@@ -104,6 +105,7 @@ function Sections({nodes,expanded,toggle,openRecord,onManage,statuses,prototype,
 export default function FrameworkWorkspace({frameworkKey,clientId}){
   const workspaceRef=useRef(null);
   const auth=useAuth(),org=useOrg()||{},trustedDemo=PREVIEW_MODE;
+  const loadingProgram=useCisLoadingProgram(frameworkKey,clientId);
   const [params,setParams]=useSearchParams(),{user}=auth,location=useLocation(),navigate=useNavigate();
   const [loadedScope,setLoadedScope]=useState(null);
   const workspacePilot=isWorkspacePresentation(clientId,user);
@@ -183,7 +185,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const chooseFilter=key=>{if(initialView){const n=new URLSearchParams(params);n.set('view',key);setParams(n);}setFilter(key);if(prototype)setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,key,search)))));};
   const changeSearch=value=>{setSearch(value);if(prototype&&value.trim())setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,filter,value)))));};
   if(error)return <RegisterLoadError error={error} onRetry={prototype?()=>setRevision(n=>n+1):undefined} name="workspace"/>;
-  if(!data)return <p role="status" className="text-sm text-ink-secondary">Loading program workspace…</p>;
+  if(!data)return loadingProgram?<CisWorkspaceLoading program={loadingProgram}/>:<p role="status" className="text-sm text-ink-secondary">Loading program workspace…</p>;
   if(!data.configured)return <section className="border border-line bg-surface-card rounded p-6 text-sm"><p>{data.selected?'Program selected for this client.':'Program not currently selected.'}</p><p className="text-ink-secondary mt-2">Select Applies in Client Profile to initialize this program after onboarding. Existing records are not reset.</p><Link className="text-link underline" to="/client-profile?tab=program">Configure in Client Profile</Link></section>;
   const navigationRows=additionsGroup?scoped.filter(r=>r.implementation_group===additionsGroup):scoped;
   const progress=assessmentProgress(activeRows),resume=nextAssessment(activeRows,preference.lastId),index=navigationRows.findIndex(r=>r.framework_assessment_id===selected?.framework_assessment_id);

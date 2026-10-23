@@ -5,10 +5,10 @@ import {cis,FRAMEWORKS} from '@/lib/frameworks';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
 
-let mockAuth,mockOrg,mockLocation,mockMounts,mockUnmounts,mockOmniProps,mockRegisterProps;
+let mockAuth,mockOrg,mockLocation,mockMounts,mockUnmounts,mockOmniProps,mockRegisterProps,mockPreviewMode;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
-jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:true,default:{get:jest.fn()},formatError:error=>error.message}));
+jest.mock('@/lib/api',()=>({__esModule:true,get PREVIEW_MODE(){return mockPreviewMode;},default:{get:jest.fn()},formatError:error=>error.message}));
 jest.mock('@/components/GuidedAssessor',()=>props=>{mockOmniProps=props;return null;});
 jest.mock('@/components/SocGuidedAssessor',()=>()=>null);
 jest.mock('@/components/BrawndoCisControls',()=>({...jest.requireActual('@/components/BrawndoCisControls'),__esModule:true,default:()=>null}));
@@ -56,6 +56,7 @@ const expectVisual=()=>{expect(host.querySelector('.brawndo-cis-visual')).toBeTr
 
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();sessionStorage.setItem('grc_client_id','demo_brawndo');
+  mockPreviewMode=true;
   mockAuth={user:{user_id:'visual-refresh-actor',workspace_mode:'demo',role:'super_admin'},workspaceMode:'demo',loading:false};
   const client={...cisClient('demo_brawndo',1),name:'Brawndo'};
   mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
@@ -77,6 +78,62 @@ test.each([false,true])('same-origin linked refresh retains appearance and the %
   await act(async()=>pending.resolve({data:fixture()}));
   expectVisual();expect(input.isConnected).toBe(true);expect(input.value).toBe('Unsaved native draft retained during linked refresh');
   expect(mockMounts).toEqual(mounts);expect(mockUnmounts).toEqual(unmounts);
+});
+
+test('initial CIS read shows only its enrolled program shell until the complete response qualifies the register',async()=>{
+  const pending=deferred();api.get.mockImplementationOnce(()=>pending.promise);
+  await render();
+  const shell=host.querySelector('[data-testid="cis-workspace-loading"]');
+  expect(shell.querySelector('h1').textContent).toBe('CIS IG1');
+  expect(shell.querySelector('[role="status"]')).toBeTruthy();
+  expect(shell.querySelector('button')).toBeNull();
+  expect(host.querySelector('[data-testid="register-boundary"]')).toBeNull();
+  expect(host.querySelector('[data-testid="assessment-boundary"]')).toBeNull();
+  expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
+  await act(async()=>pending.resolve({data:fixture()}));
+  expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBeNull();expectVisual();
+  expect(host.querySelector('[data-testid="assessment-boundary"]')).toBeTruthy();
+});
+
+test.each(['unresolved organization','authentication error','unauthorized client','mismatched selected client','mismatched route client','mismatched mode','wrong route','unenrolled program'])('pending read does not name a CIS shell for %s',async boundary=>{
+  api.get.mockImplementationOnce(()=>deferred().promise);
+  if(boundary==='unresolved organization')mockOrg.loading=true;
+  if(boundary==='authentication error')mockAuth.error='Authentication unavailable';
+  if(boundary==='unauthorized client')mockOrg.clients=[];
+  if(boundary==='mismatched selected client')sessionStorage.setItem('grc_client_id','other-client');
+  if(boundary==='mismatched route client')mockLocation.search='?client_id=other-client';
+  if(boundary==='mismatched mode')mockAuth.workspaceMode='standard';
+  if(boundary==='wrong route')mockLocation.pathname='/compliance/iso-27001';
+  if(boundary==='unenrolled program')mockOrg.currentClient={...mockOrg.currentClient,cis_program:{selected:false}};
+  await render();
+  expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBeNull();
+  expect(host.querySelector('[data-testid="register-boundary"]')).toBeNull();
+  expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
+});
+
+test.each([['demo',2],['demo',3],['standard',1]])('%s pending workspace names enrolled IG%s without inventing loaded counts',async(mode,group)=>{
+  mockPreviewMode=mode==='demo';
+  mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
+  const client=cisClient('demo_brawndo',group);mockOrg={...mockOrg,currentClient:client,clients:[client]};
+  if(mode==='standard')localStorage.setItem('grc_client_id','demo_brawndo');
+  api.get.mockImplementationOnce(()=>deferred().promise);await render();
+  const shell=host.querySelector('[data-testid="cis-workspace-loading"]');
+  expect(shell.querySelector('h1').textContent).toBe(`CIS IG${group}`);
+  expect(shell.textContent).not.toContain('safeguards');expect(shell.querySelector('button')).toBeNull();
+  expect(host.querySelector('[data-testid="register-boundary"]')).toBeNull();
+  expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
+});
+
+test('client change during an initial read drops the old shell and ignores its late response',async()=>{
+  const pending=deferred();api.get.mockImplementationOnce(()=>pending.promise);await render();
+  expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBeTruthy();
+  mockOrg={...mockOrg,currentClientId:'other-client',currentClient:{client_id:'other-client',status:'active'},clients:[]};
+  api.get.mockImplementationOnce(()=>deferred().promise);
+  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="other-client"/>));
+  expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBeNull();
+  await act(async()=>pending.resolve({data:fixture()}));
+  expect(host.querySelector('[data-testid="register-boundary"]')).toBeNull();
+  expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
 });
 
 test('Manage transitions to the exact manager and unmounts the selected controller before returning to the program',async()=>{
@@ -130,7 +187,10 @@ test('actor switch removes appearance while awaiting data loaded for that actor'
   const pending=deferred();api.get.mockImplementationOnce(()=>pending.promise);
   mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'new-demo-actor'}};
   await render();
-  expect(host.querySelector('.brawndo-cis-visual')).toBeNull();expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
+  expect(host.querySelector('[data-testid="cis-workspace"]')).toBeNull();
+  expect(host.querySelector('[data-testid="register-boundary"]')).toBeNull();
+  expect(host.querySelector('[data-testid="assessment-boundary"]')).toBeNull();
+  expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
   await act(async()=>pending.resolve({data:fixture()}));
   expectVisual();
 });
