@@ -23,6 +23,8 @@ beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';m
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 test('shared vendor summary and assurance columns preserve creation across clients',async()=>{
   await act(async()=>root.render(<VendorRegister/>));expect(container.querySelector('.bpage h1').textContent).toBe('Vendors');expect(container.textContent).toContain('Test · Third parties');expect(container.querySelector('[data-testid="tile-critical_high"]').textContent).toContain('Cloud QA');expect(container.querySelector('[data-testid="vendor-row-0"] .bpage-meta').textContent).toBe('Hosting');expect(container.querySelector('[data-testid="vendor-foot"]').textContent).toBe('Showing 1 of 1 active vendors');
+  expect(container.querySelector('[data-testid="vendor-row-0"] .register-identity-logo')).toBeNull();
+  expect(container.querySelector('[data-testid="vendor-row-0"] .register-record-link').textContent).toBe('Cloud QA');
   await click(container.querySelector('[data-testid="new-vendor"]'));
   const dialog=document.querySelector('[data-testid="vendors-drawer"]');expect(dialog.className).toContain('brawndo-cis-assessment');expect(dialog.textContent).not.toContain('Category');expect(dialog.textContent).toContain('Add to Register');
   await click(document.querySelector('[data-testid="drawer-cancel"]'));

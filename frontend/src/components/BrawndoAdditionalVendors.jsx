@@ -1,5 +1,3 @@
-import RegisterIdentityLogo from '@/components/RegisterIdentityLogo';
-import {registerCatalogLogo} from '@/lib/registerCatalogLogo';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { formatAcceptedRefresh } from '@/lib/acceptedRefreshPresentation';
 import { ChevronRight, Search } from 'lucide-react';
@@ -113,7 +111,7 @@ export default function BrawndoAdditionalVendors({ clientName = 'Client', rows =
           const followup = document?.next_follow_up || document?.refresh_due;
           const nextDay = calendarDay(vendor.next_review), renewalDay = calendarDay(vendor.contract_renewal);
           return <div className="bav-row" role="row" key={vendor.vendor_id} onClick={() => onOpen(vendor)} data-testid={`vendor-row-${index}`}>
-            <div role="cell" className="bav-item register-identity"><RegisterIdentityLogo kind="vendor" src={registerCatalogLogo('vendors',vendor)}/><div className="register-identity__text"><button type="button" className="bapv-name" onClick={event => { event.stopPropagation(); onOpen(vendor); }}>{vendor.name}</button><div className="bapv-meta">{[vendor.service || vendor.services, vendor.status !== 'active' ? vendor.status : ''].filter(Boolean).join(' · ')}</div></div></div>
+            <div role="cell" className="bav-item"><button type="button" className="bapv-name" onClick={event => { event.stopPropagation(); onOpen(vendor); }}>{vendor.name}</button><div className="bapv-meta">{[vendor.service || vendor.services, vendor.status !== 'active' ? vendor.status : ''].filter(Boolean).join(' · ')}</div></div>
             <div role="cell" className="bav-criticality"><span className={`bav-critical ${vendor.criticality}`}><i />{CRITICALITY[vendor.criticality] || vendor.criticality || 'Not recorded'}</span></div>
             <div role="cell" className="bav-types">{vendor.data_types?.length ? vendor.data_types.map(type => <span className="bav-data-type" key={type}>{type}</span>) : <span>Not recorded</span>}</div>
             <div role="cell" className="bav-owner"><AdditionalOwner users={users} id={vendor.business_owner_id} /></div>
