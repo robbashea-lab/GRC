@@ -7,6 +7,8 @@ import {calendarDay,managementDay} from '@/lib/managementDates';
 import {loadRiskRelations,riskOverviewEvents} from '@/lib/brawndoDemoRisks';
 import {shortDate} from './BrawndoPage';
 import CompactProgramTimeline from './CompactProgramTimeline';
+import QuarterlyProgramTimeline from './QuarterlyProgramTimeline';
+import {quarterlyRiskEvents,QUARTERLY_RISK_LEGEND} from '@/lib/quarterlyProgramTimeline';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 
 const bands=[['low','Low','1–4'],['moderate','Moderate','5–9'],['high','High','10–14'],['critical','Critical','15–25']];
@@ -19,7 +21,7 @@ export function RiskScoreBar({risk}) {
   </span>;
 }
 
-export default function BrawndoDemoRisksOverview({rows,matrixRows,selected,onSelect,view,onView,matches,onOpen,scope,recordOpen=false}) {
+export default function BrawndoDemoRisksOverview({rows,matrixRows,selected,onSelect,view,onView,matches,onOpen,scope,recordOpen=false,quarterlyChart=false,chartScopeKey=scope}) {
   const [theme]=useBrawndoTheme();
   const [related,setRelated]=useState({rows:null,relations:{},unavailable:[]});
   useEffect(()=>{
@@ -31,7 +33,10 @@ export default function BrawndoDemoRisksOverview({rows,matrixRows,selected,onSel
     return()=>controller.abort();
   },[rows,scope]);
   const now=new Date(),today=managementDay(now),ready=related.rows===rows&&related.scope===scope;
-  const {events,conflictingActions}=useMemo(()=>riskOverviewEvents(rows,ready?related.relations:{},new Date(today*86400000)),[rows,ready,related.relations,today]);
+  const {events,conflictingActions}=useMemo(()=>quarterlyChart
+    ?quarterlyRiskEvents(rows,ready?related.relations:{})
+    :riskOverviewEvents(rows,ready?related.relations:{},new Date(today*86400000)),[rows,ready,related.relations,today,quarterlyChart]);
+  const Timeline=quarterlyChart?QuarterlyProgramTimeline:CompactProgramTimeline;
   const counts={};for(const row of matrixRows){const key=riskCoordinates(row)||'unrated';counts[key]=(counts[key]||0)+1;}
   const active=rows.filter(r=>matches(r,'all_active',now));
   const accepted=rows.filter(r=>matches(r,'accepted',now));
@@ -57,8 +62,8 @@ export default function BrawndoDemoRisksOverview({rows,matrixRows,selected,onSel
       </div>
     </div>
     <div className="bdr-overview-right">
-      <CompactProgramTimeline scopeKey={scope} events={events} rows={4} upcomingLimit={4} theme={theme} recordOpen={recordOpen}
-        legend={[{kind:'review',label:'Risk review'},{kind:'action',label:'Treatment action due'},{kind:'expiry',label:'Acceptance expires'}]}
+      <Timeline chartKey="risks" scopeKey={quarterlyChart?chartScopeKey:scope} events={events} rows={4} upcomingLimit={4} theme={theme} recordOpen={recordOpen}
+        legend={quarterlyChart?QUARTERLY_RISK_LEGEND:[{kind:'review',label:'Risk review'},{kind:'action',label:'Treatment action due'},{kind:'expiry',label:'Acceptance expires'}]}
         description="Saved Risk reviews, linked treatment deadlines and acceptance expiries."
         onOpen={event=>onOpen(event.kind==='action'?'tasks':'risks',event.record)}/>
       {!ready&&<p role="status">Loading linked Action deadlines…</p>}
