@@ -20,6 +20,21 @@ const snapshot=items=>({contract_version:2,members:[],programs:[],programRows:{}
 beforeEach(()=>{localStorage.setItem('grc_client_id','demo_brawndo');sessionStorage.setItem('grc_client_id','demo_brawndo');global.IS_REACT_ACT_ENVIRONMENT=true;mockDashboardUser={user_id:'u',role:'super_admin'};mockWorkspaceMode='standard';mockDashboardSearch='';container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);useOrg.mockReturnValue({currentClientId:'a',currentClient:{name:'Synthetic A'}});loadClientDashboard.mockReset();Object.values(api).forEach(fn=>fn.mockReset());});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();localStorage.clear();});
 const click=async text=>act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());
+
+test('a native CIS group change reloads projections without discarding an open native editor',async()=>{
+ useOrg.mockReturnValue({...cisContext('demo_brawndo',1,'standard'),currentClient:{...cisClient('demo_brawndo',1),name:'Brawndo'}});
+ const items=[row('scope-draft')];loadClientDashboard.mockResolvedValue(snapshot(items));
+ api.get.mockImplementation(async(path,options)=>({data:path==='/dashboard'?{client_id:'demo_brawndo',items,total:1,offset:options.params.offset,limit:options.params.limit,has_more:false}:{client_id:'demo_brawndo',task_id:'scope-draft',title:items[0].title,source_type:'manual'}}));
+ await act(async()=>root.render(<Dashboard/>));await click('Synthetic work scope-draft');await click('Open Action Item');
+ const editor=document.querySelector('[aria-label="Native record test boundary"]');expect(editor).not.toBeNull();
+ let resolveScope;loadClientDashboard.mockImplementationOnce(()=>new Promise(resolve=>{resolveScope=resolve;}));
+ useOrg.mockReturnValue({...cisContext('demo_brawndo',2,'standard'),currentClient:{...cisClient('demo_brawndo',2),name:'Brawndo'}});
+ await act(async()=>root.render(<Dashboard/>));
+ expect(container.textContent).toContain('Loading dashboard');expect(document.querySelector('[aria-label="Native record test boundary"]')).toBe(editor);
+ await act(async()=>resolveScope(snapshot(items)));
+ expect(document.querySelector('[aria-label="Native record test boundary"]')).toBe(editor);
+ expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
 test('shared empty layout has compact filters instead of tiles',async()=>{loadClientDashboard.mockResolvedValue(snapshot([]));await act(async()=>root.render(<Dashboard/>));expect(container.textContent).toContain('Synthetic A Dashboard');expect(container.textContent).toContain('Priority overview');expect(container.querySelectorAll('.bd-tile')).toHaveLength(0);expect(container.querySelectorAll('.quick-filters button')).toHaveLength(4);expect(container.textContent).toContain('No items match these filters.');expect(container.textContent).not.toMatch(/Posture|Ranked by|Board Report|Work items:|Next:/);expect(loadClientDashboard.mock.calls[0][1].workQueue).toBe(true);});
 test('all record types use read-only summaries with real dates and proper destinations',async()=>{
  const types=[['tasks','task_id'],['reviews','review_id'],['findings','finding_id'],['risks','risk_id'],['vendors','vendor_id'],['policies','policy_id'],['exceptions','exception_id'],['requirements','requirement_id']];
@@ -108,11 +123,12 @@ test('pilot refresh replaces queue fields and dismisses work removed by native c
  });
  test('same-client appearance suspension keeps the open native record mounted',async()=>{
  mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
- const org={currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo',status:'active'}};useOrg.mockReturnValue(org);
+ const org={...cisContext(),currentClient:{...cisClient(),name:'Brawndo'}};useOrg.mockReturnValue(org);
  const items=[row('draft')];loadClientDashboard.mockResolvedValue(snapshot(items));
  api.get.mockImplementation(async(path,options)=>({data:path==='/dashboard'?{client_id:'demo_brawndo',items,total:1,offset:options.params.offset,limit:options.params.limit,has_more:false}:{client_id:'demo_brawndo',task_id:'draft',title:items[0].title,source_type:'manual'}}));
  await act(async()=>root.render(<Dashboard/>));await click('Synthetic work draft');await click('Open Action Item');
  const editor=document.querySelector('[aria-label="Native record test boundary"]');
+ expect(container.querySelector('.brawndo-demo-dashboard')).not.toBeNull();
  useOrg.mockReturnValue({...org,loading:true});await act(async()=>root.render(<Dashboard/>));
  expect(container.querySelector('.brawndo-demo-dashboard')).toBeNull();expect(document.querySelector('[aria-label="Native record test boundary"]')).toBe(editor);
  useOrg.mockReturnValue(org);await act(async()=>root.render(<Dashboard/>));

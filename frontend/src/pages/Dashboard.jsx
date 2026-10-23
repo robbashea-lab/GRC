@@ -33,23 +33,30 @@ export default function Dashboard(){
   const [linked,setLinked]=useState(null),[refreshVersion,setRefreshVersion]=useState(0),[refreshError,setRefreshError]=useState('');
   const pilot=isWorkspacePresentation(currentClientId,user),linkedOpener=useRef(null),refreshRequest=useRef(null);
   const detailRequest=useRef(null),opener=useRef(null),selectionVersion=useRef(0);
-  const requestKey=JSON.stringify([currentClientId,user?.user_id,workspaceMode,user?.workspace_mode,demoDashboard,revision]);
+  const configuredCis=cisClientProgram(currentClient);
+  const recordContextKey=JSON.stringify([currentClientId,user?.user_id,workspaceMode,user?.workspace_mode,revision]);
+  const requestKey=JSON.stringify([recordContextKey,demoDashboard,configuredCis?.version,configuredCis?.implementationGroup]);
   const activeRequest=useRef(requestKey);activeRequest.current=requestKey;
   const filter=WORK_FILTERS.some(f=>f.key===params.get('work'))?params.get('work'):'all';
   useEffect(()=>{
-    const controller=new AbortController();setError(null);setSelection(null);setLinked(null);setRefreshError('');detailRequest.current?.abort();refreshRequest.current?.abort();
+    setSelection(null);setLinked(null);setRefreshError('');detailRequest.current?.abort();refreshRequest.current?.abort();
+    return()=>{detailRequest.current?.abort();refreshRequest.current?.abort();};
+  },[recordContextKey]);
+  useEffect(()=>{
+    const controller=new AbortController();setError(null);
     if(currentClientId)loadClientDashboard(api,{clientId:currentClientId,user,scope:SCOPE,signal:controller.signal,workQueue:true,includeProgramMetadata:demoDashboard})
       .then(result=>{if(!controller.signal.aborted)setSnapshot({key:requestKey,result});})
       .catch(e=>{if(!controller.signal.aborted)setError({key:requestKey,message:formatError(e)});});
-    return()=>{controller.abort();detailRequest.current?.abort();refreshRequest.current?.abort();};
+    return()=>controller.abort();
   },[currentClientId,user,requestKey,demoDashboard]);
   // Keep native dirty drawers intact; background reads update only dashboard projections.
   usePortfolioRefresh(()=>{if(demoDashboard&&!linked&&snapshot?.key===requestKey)refreshDashboard(false);});
   const shell=body=><div><PageHeader title={`${currentClient?.name||'Client'} Dashboard`}/><div className="section-body">{body}</div></div>;
+  function nativeRecord(){return linked?.key===recordContextKey?<RecordDrawer key="dashboard-native-record" open kind={linked.kind} record={linked.record} initialValues={linked.initialValues} schema={SCHEMAS[linked.kind]?.fields} clientId={currentClientId} reviewsPilot onSaved={()=>refreshDashboard()} onOpenChange={open=>{if(!open){setLinked(null);requestAnimationFrame(()=>{const target=linkedOpener.current?.isConnected?linkedOpener.current:demoPresentation?document.getElementById('bdd-work-heading'):null;target?.focus({preventScroll:true});});}}}/>:null;}
   if(!currentClientId)return shell(<p>Select a client to view its GRC program.</p>);
-  if(error?.key===requestKey)return shell(<RegisterLoadError error={error.message} onRetry={()=>setRevision(n=>n+1)} name="Dashboard"/>);
+  if(error?.key===requestKey)return <>{shell(<RegisterLoadError error={error.message} onRetry={()=>setRevision(n=>n+1)} name="Dashboard"/>)}{nativeRecord()}</>;
   const data=snapshot?.key===requestKey?snapshot.result:null;
-  if(!data)return shell(<p role="status">Loading dashboard…</p>);
+  if(!data)return <>{shell(<p role="status">Loading dashboard…</p>)}{nativeRecord()}</>;
   function onFilter(value){const next=new URLSearchParams(params);next.set('work',value);setParams(next);}
   async function openItem(item,element){
     selectionVersion.current++;
@@ -86,10 +93,10 @@ export default function Dashboard(){
   const program=demoDashboard?brawndoDemoProgram(data.programs,data.programMetadata,currentClientId):null;
   return <>{demoPresentation?<BrawndoDemoDashboard key={requestKey} queue={data.queue} programs={data.programs} client={currentClient} members={data.members}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion}>
-      {program?<BrawndoDemoProgram client={currentClient} program={program} refreshToken={refreshVersion}/>:<section className="bdd-card" aria-label={`CIS IG${cisClientProgram(currentClient)?.implementationGroup} Status`}><header><h2>CIS IG{cisClientProgram(currentClient)?.implementationGroup} Status</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} CIS v8.1 IG{cisClientProgram(currentClient)?.implementationGroup} program is unavailable. Review its native configuration.</p></section>}
+      {program?<BrawndoDemoProgram client={currentClient} program={program} refreshToken={refreshVersion} cisDashboardProfile domainSource={data.cisDomainSource} contextKey={requestKey}/>:<section className="bdd-card" aria-label={`CIS IG${cisClientProgram(currentClient)?.implementationGroup} Status`}><header><h2>CIS IG{cisClientProgram(currentClient)?.implementationGroup} Status</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} CIS v8.1 IG{cisClientProgram(currentClient)?.implementationGroup} program is unavailable. Review its native configuration.</p></section>}
     </BrawndoDemoDashboard>:<ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} workspacePilot={pilot}/>}
     {refreshError&&<p role="alert">{refreshError} <button onClick={()=>refreshDashboard(false)}>Retry dashboard refresh</button></p>}
-    {selection?.key===requestKey&&<DashboardItemSummary selection={selection} onClose={close} opener={opener.current} fallbackFocus={demoPresentation?()=>document.getElementById('bdd-work-heading'):undefined} onOpenRecord={pilot?(item,element)=>{linkedOpener.current=element;setLinked({...item,key:requestKey});}:undefined}/>}
-    {linked?.key===requestKey&&<RecordDrawer open kind={linked.kind} record={linked.record} initialValues={linked.initialValues} schema={SCHEMAS[linked.kind]?.fields} clientId={currentClientId} reviewsPilot onSaved={()=>refreshDashboard()} onOpenChange={open=>{if(!open){setLinked(null);requestAnimationFrame(()=>{const target=linkedOpener.current?.isConnected?linkedOpener.current:demoPresentation?document.getElementById('bdd-work-heading'):null;target?.focus({preventScroll:true});});}}}/>}</>;
+    {selection?.key===requestKey&&<DashboardItemSummary selection={selection} onClose={close} opener={opener.current} fallbackFocus={demoPresentation?()=>document.getElementById('bdd-work-heading'):undefined} onOpenRecord={pilot?(item,element)=>{linkedOpener.current=element;setLinked({...item,key:recordContextKey});}:undefined}/>}
+    {nativeRecord()}</>;
 }

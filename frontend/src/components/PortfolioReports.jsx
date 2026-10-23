@@ -269,13 +269,14 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
   </div>;
 }
 
-export default function PortfolioHistoryDialog({client, programs, selected, onSelect, onClose, onCloseAutoFocus, onNavigate, chartView = 'line', onChartViewChange, refreshToken, asOf: overviewAsOf, inline = false, onStatusNavigate, referenceHistory = false, demoScenario = false}) {
+export default function PortfolioHistoryDialog({client, programs, selected, onSelect, onClose, onCloseAutoFocus, onNavigate, chartView = 'line', onChartViewChange, refreshToken, asOf: overviewAsOf, inline = false, onStatusNavigate, referenceHistory = false, demoScenario = false, cisDashboardProfile = false, profileContent = null}) {
   const [range, setRange] = useState('6m'), [showData, setShowData] = useState(false);
   const [referenceView, setReferenceView] = useState('line');
   const program = programs.find(value => programIdentity(value) === selected);
   const scopedScenario = demoScenario && inline && referenceHistory && !!namedDemoClient(client.client_id)?.historyVersion
     && program.program_id === `${client.client_id}:cis-ig1` && program.framework_key === 'cis-ig1' && program.framework_key === 'cis-ig1';
-  const historyView = referenceHistory ? scopedScenario ? referenceView : 'line' : chartView;
+  const dashboardProfile = inline && cisDashboardProfile;
+  const historyView = dashboardProfile || (referenceHistory && scopedScenario) ? referenceView : referenceHistory ? 'line' : chartView;
   const report = useHistory(client, program, range, refreshToken, inline, scopedScenario);
   const scenarioContext = scopedScenario ? report.data?.scenario_context : null;
   const current = report.data?.current || program.current || {}, asOf = report.data?.as_of || overviewAsOf || current.retrieved_at || current.captured_at;
@@ -297,13 +298,15 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
   const referenceFooter = referenceHistory && <div className={inline ? 'ph-foot ph-reference-foot ph-inline-foot' : 'ph-foot ph-reference-foot'}>
     {!inline && program.framework_key === 'soc-2' ? 'Internal readiness, not an auditor opinion.' : 'Assessment progress, not a compliance determination.'} Estimated completion is based on implementation progress over the latest 90 days.
   </div>;
+  const periodControls = <div className="ph-range"><div className="ph-segmented" role="group" aria-label="History period">{RANGES.map(([key, label]) => <button key={key} type="button" aria-pressed={key === range} onClick={() => setRange(key)}>{label}</button>)}</div><span>{formatPortfolioDate(start)} – {formatPortfolioDate(asOf)} · UTC</span></div>;
+  const historyHeading = <div className="ph-chart-top"><div><h4>Implementation history</h4><p>{historyView === 'mix' ? `Share of applicable ${language.unit} in each status at each saved position` : `${counts[0]?.label || 'Implemented'} ${language.unit} as a share of applicable scope`}</p></div><div className="ph-chart-tools">{!referenceHistory && !dashboardProfile && <details className="ph-chart-options"><summary>Chart view</summary><div className="ph-segmented" role="group" aria-label="Chart view">{[['line', 'Implemented'], ['mix', 'Status mix']].map(([key, label]) => <button key={key} type="button" aria-pressed={key === chartView} onClick={() => onChartViewChange(key)}>{label}</button>)}</div></details>}{(scopedScenario || dashboardProfile) && <button type="button" className="ph-link" aria-pressed={referenceView === 'mix'} onClick={() => setReferenceView(value => value === 'line' ? 'mix' : 'line')}>{referenceView === 'line' ? 'View status history' : 'Implemented history'}</button>}<button type="button" className="ph-link" aria-expanded={showData} aria-controls="portfolio-history-data" onClick={() => setShowData(value => !value)}>{showData ? 'Hide data' : 'View data'}</button></div></div>;
   const details = <>
     <div className="ph-program-head"><div><h3>{`${program.program_label} Status`}</h3><span className="sr-only">{program.scope_label}</span></div><button type="button" className="ph-link" onClick={() => onNavigate(program.to)}>Open {program.program_label} workspace →</button></div>
     <div className="ph-current-overview">
       <div className="ph-current-value"><span>Current implementation</span><strong className={percentage == null || current.not_started ? 'is-text' : ''}>{percentage != null ? current.not_started ? 'Not started' : <>{percentage.toFixed(1)}<span className="ph-unit">%</span></> : noScope ? 'No applicable scope' : 'Unavailable'}</strong><p>{percentage != null ? current.not_started ? `0 of ${current.denominator} ${language.unit} assessed` : `${current.implemented} of ${current.denominator} ${language.unit} ${language.verb}` : current.reason || current.notice || 'No applicable implementation units.'}</p><small>As of {dateTime(current.effective_at || current.captured_at || asOf)}</small></div>
       <CurrentStatusBreakdown key={selected} current={current} onStatusNavigate={onStatusNavigate} inline={inline} />
     </div>
-    <div className="ph-range"><div className="ph-segmented" role="group" aria-label="History period">{RANGES.map(([key, label]) => <button key={key} type="button" aria-pressed={key === range} onClick={() => setRange(key)}>{label}</button>)}</div><span>{formatPortfolioDate(start)} – {formatPortfolioDate(asOf)} · UTC</span></div>
+    {dashboardProfile ? <>{profileContent}<div className="ph-cis-history-head">{historyHeading}{periodControls}</div></> : periodControls}
     <div className="ph-history-panel">{sparseModal ? <div className="ph-metrics ph-metrics-sparse"><div className="ph-metric ph-sparse-card">
       <span>Trend and estimated completion</span>
       <strong className="is-text">{current.not_started ? 'Available after the assessment starts' : 'Available after more saved history'}</strong>
@@ -327,16 +330,16 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
       <div className="ph-metric"><span>Estimated completion</span><strong className={forecast.ok ? '' : 'is-text'}>{forecast.ok ? forecast.estimated_at ? formatPortfolioDate(forecast.estimated_at, {day:undefined}) : forecast.label : 'Not estimated yet'}</strong>{forecast.estimated_at && <ForecastTimeline asOf={asOf} estimatedAt={forecast.estimated_at} />}<p>{forecastExplanation(forecast)}</p></div>
     </div>}
     <div className="ph-chart-card">
-      <div className="ph-chart-top"><div><h4>Implementation history</h4><p>{historyView === 'mix' ? `Share of applicable ${language.unit} in each status at each saved position` : `${counts[0]?.label || 'Implemented'} ${language.unit} as a share of applicable scope`}</p></div><div className="ph-chart-tools">{!referenceHistory && <details className="ph-chart-options"><summary>Chart view</summary><div className="ph-segmented" role="group" aria-label="Chart view">{[['line', 'Implemented'], ['mix', 'Status mix']].map(([key, label]) => <button key={key} type="button" aria-pressed={key === chartView} onClick={() => onChartViewChange(key)}>{label}</button>)}</div></details>}{scopedScenario && <button type="button" className="ph-link" aria-pressed={referenceView === 'mix'} onClick={() => setReferenceView(value => value === 'line' ? 'mix' : 'line')}>{referenceView === 'line' ? 'View status history' : 'Implemented history'}</button>}<button type="button" className="ph-link" aria-expanded={showData} aria-controls="portfolio-history-data" onClick={() => setShowData(value => !value)}>{showData ? 'Hide data' : 'View data'}</button></div></div>
+      {!dashboardProfile && historyHeading}
       {report.loading && !report.data ? <div className="ph-empty" role="status">Loading saved history…</div> : report.error ? <div className="ph-empty" role="alert"><p>{report.error}</p><button type="button" className="ph-link" onClick={report.retry}>Retry</button></div> : <>
-        <PortfolioHistoryChart key={selected + ':' + range} points={points} start={start} asOf={asOf} view={historyView} current={current} scopeChanges={scopeChanges} unit={language.unit} inline={inline} referenceHistory={referenceHistory} demoScenario={scenarioContext} scenarioPresentation={scopedScenario} showProvenance={showHistoryProvenance} />
+        <PortfolioHistoryChart key={selected + ':' + range} points={points} start={start} asOf={asOf} view={historyView} current={current} scopeChanges={scopeChanges} unit={language.unit} inline={inline} referenceHistory={referenceHistory} demoScenario={scenarioContext} scenarioPresentation={scopedScenario} showProvenance={showHistoryProvenance} cisDashboardProfile={dashboardProfile} stackedHistory={dashboardProfile} />
         {scopeChanges.length > 0 && <div className="ph-scope-notes">{scopeChanges.map((change,index) => <p key={index}>{formatPortfolioDate(change.effective_at || change.at)}: {scopeNote(change,language.unit,scopedScenario)}</p>)}</div>}
         {showData && <>{scopedScenario && <p className="ph-history-basis">Initial history is illustrative demo scenario data. Later saved demo activity is identified separately below.</p>}<div className="ph-data" id="portfolio-history-data"><table><caption className="sr-only">{showHistoryProvenance ? 'Implementation positions, newest effective date first' : 'Genuine implementation positions, newest effective date first'}</caption><thead><tr><th scope="col">Position date</th>{counts.map(value => <th scope="col" key={value.key}>{value.label}{scopedScenario ? ' · count / share' : ''}</th>)}<th scope="col">Applicable</th><th scope="col">{counts[0]?.label || 'Implemented'} %</th></tr></thead><tbody>{[...points].reverse().map(point => <tr key={identity(point)}><td>{dateTime(snapshotTime(point))}{point.carried && <small>In effect at period start</small>}{point.effective_at && point.captured_at && Date.parse(point.effective_at) !== Date.parse(point.captured_at) && <small>Captured {dateTime(point.captured_at)}</small>}{scopeChangesForPosition(scopeChanges, point).map((change,index)=><small key={index}>{scopeNote(change, language.unit, scopedScenario)}</small>)}{showHistoryProvenance && <small>{historyBasis(point)}</small>}</td>{counts.map(value => <td key={value.key}>{validImplementationPosition(point) ? <>{applicableCounts(point).find(item => item.key === value.key)?.count ?? '—'}{scopedScenario && <small>{statusShare(point, value.key)}</small>}</> : 'Unavailable'}</td>)}<td>{validImplementationPosition(point) ? point.denominator : 'Unavailable'}</td><td>{rate(point)}</td></tr>)}</tbody></table>{!points.length && <p className="ph-empty">No saved positions in this period.</p>}</div></>}
       </>}
 
     </div></div>
   </>;
-  if (inline) return <section className="brawndo-demo-program" data-reference-history={referenceHistory ? 'true' : undefined} aria-label={`${program.program_label} Status`}>
+  if (inline) return <section className="brawndo-demo-program" data-cis-dashboard-profile={dashboardProfile ? 'true' : undefined} data-reference-history={referenceHistory ? 'true' : undefined} aria-label={`${program.program_label} Status`}>
     {details}
     {referenceFooter}
   </section>;
@@ -364,10 +367,25 @@ function historyTicks(start, asOf, width) {
   return ticks.filter((_,index)=>index%stride===0);
 }
 
-export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', inline = false, referenceHistory = false, demoScenario = null, scenarioPresentation = false, showProvenance = scenarioPresentation, stackedHistory = false}) {
+export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', inline = false, referenceHistory = false, demoScenario = null, scenarioPresentation = false, showProvenance = scenarioPresentation, stackedHistory = false, cisDashboardProfile = false}) {
   const box = useRef(null), svg = useRef(null), tooltip = useRef(null);
+  const dismissTimer = useRef(null), pinned = useRef(false);
   const chartId = useId().replace(/:/g, '');
   const [width, setWidth] = useState(900), [active, setActive] = useState(null), [engaged, setEngaged] = useState(false);
+  const cancelDismiss = () => clearTimeout(dismissTimer.current);
+  const dismiss = () => { cancelDismiss(); pinned.current = false; setActive(null); setEngaged(false); };
+  const scheduleDismiss = () => { if (cisDashboardProfile && pinned.current) return; cancelDismiss(); dismissTimer.current = setTimeout(dismiss, 160); };
+  const inspectPoint = (point, pin = false) => { cancelDismiss(); pinned.current = pin; setEngaged(true); setActive(identity(point)); };
+  useEffect(() => () => clearTimeout(dismissTimer.current), []);
+  useEffect(() => {
+    if (!cisDashboardProfile || !engaged) return;
+    const escape = event => { if (event.key === 'Escape') { event.stopPropagation(); clearTimeout(dismissTimer.current); pinned.current = false; setActive(null); setEngaged(false); } };
+    const outside = event => { if (!box.current?.contains(event.target)) { clearTimeout(dismissTimer.current); pinned.current = false; setActive(null); setEngaged(false); } };
+    document.addEventListener('keydown', escape);
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('focusin', outside);
+    return () => { document.removeEventListener('keydown', escape); document.removeEventListener('pointerdown', outside); document.removeEventListener('focusin', outside); };
+  }, [cisDashboardProfile, engaged]);
   useEffect(() => {
     const measure = () => setWidth(inline ? Math.max(300, Math.round(box.current?.getBoundingClientRect().width || 900)) : modalCanvasWidth(box.current, 300));
     measure();
@@ -378,7 +396,7 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
   }, [inline]);
   const selected = points.find(point => identity(point) === active) || points.at(-1);
   const low = 0, high = 100;
-  const height = inline ? 284 : 296, left = 44, right = width - 72, top = inline ? 32 : 26, bottom = height - 30;
+  const height = cisDashboardProfile ? 236 : inline ? 284 : 296, left = 44, right = width - 72, top = inline ? 32 : 26, bottom = height - 30;
   const x = point => left + (Date.parse(point.display_at || snapshotTime(point)) - Date.parse(start)) / (Date.parse(asOf) - Date.parse(start)) * (right - left);
   const y = value => bottom - (value - low) / (high - low) * (bottom - top);
   const step = high - low <= 30 ? 5 : high - low <= 60 ? 10 : 25, ticks = [];
@@ -412,11 +430,11 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
   const selectedValid = validImplementationPosition(selected);
   const nearest = event => {
     if (!points.length) return;
+    if (cisDashboardProfile && pinned.current && event.type !== 'pointerdown') return;
     const rect = svg.current.getBoundingClientRect();
     if (!rect.width) return;
     const pointer = (event.clientX - rect.left) / rect.width * width;
-    setEngaged(true);
-    setActive(identity(points.reduce((best, point) => Math.abs(x(point) - pointer) < Math.abs(x(best) - pointer) ? point : best, points[0])));
+    inspectPoint(points.reduce((best, point) => Math.abs(x(point) - pointer) < Math.abs(x(best) - pointer) ? point : best, points[0]), cisDashboardProfile && event.type === 'pointerdown');
   };
   const keyboard = event => {
     if (!points.length) return;
@@ -426,7 +444,7 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
     else if (event.key === 'ArrowLeft') index = Math.max(0, index - 1);
     else if (event.key === 'ArrowRight') index = Math.min(points.length - 1, index + 1);
     else return;
-    event.preventDefault(); setEngaged(true); setActive(identity(points[index]));
+    event.preventDefault(); inspectPoint(points[index]);
   };
   const shadeEnd = points.length ? x(points[0]) : right;
   const endpoint = points.at(-1);
@@ -440,11 +458,19 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
     && Math.abs(y(savedEndpointPercentage) - y(100)) > 24;
   const tooltipAnchorX = selected ? x(selected) : 0, tooltipAnchorY = selected ? y(currentPercentage(selected) ?? 0) : 0;
   useLayoutEffect(() => {
-    if (inline && !scenarioPresentation || !engaged || !selected || !tooltip.current || !box.current) return;
+    if (inline && !scenarioPresentation && !cisDashboardProfile || !engaged || !selected || !tooltip.current || !box.current) return;
     return observeTooltipLayout(box.current, tooltip.current, (bounds, size) => {
       const chartBounds = svg.current.getBoundingClientRect();
       const anchorX = chartBounds.left - bounds.left + tooltipAnchorX * chartBounds.width / width;
       const anchorY = chartBounds.top - bounds.top + tooltipAnchorY * chartBounds.height / height;
+      if (cisDashboardProfile) {
+        const maxHeight = Math.max(0, window.innerHeight - 16);
+        tooltip.current.style.maxHeight = `${maxHeight}px`;
+        const after = bounds.left + anchorX + 14;
+        const left = after + size.width <= window.innerWidth - 8 ? after : bounds.left + anchorX - size.width - 14;
+        return {left:Math.max(8, Math.min(window.innerWidth - size.width - 8, left)),
+          top:Math.max(8, Math.min(window.innerHeight - Math.min(size.height, maxHeight) - 8, bounds.top + anchorY - 30))};
+      }
       const after = anchorX + 14;
       const left = after + size.width > bounds.width ? anchorX - 14 - size.width : after;
       const localLeft = Math.max(0, Math.min(bounds.width - size.width, left));
@@ -457,11 +483,11 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
       tooltip.current.style.maxHeight=`${Math.max(0,maxBottom-minTop)}px`;
       return {left:Math.max(minLeft-bounds.left,Math.min(maxRight-bounds.left-size.width,localLeft)),
         top:Math.max(minTop-bounds.top,Math.min(maxBottom-bounds.top-size.height,localTop))};
-    }, {constrainWidth:scenarioPresentation, maximumWidth:270, scrollTarget:scenarioPresentation ? window : undefined, captureScroll:scenarioPresentation});
-  }, [engaged, selected, inline, width, height, tooltipAnchorX, tooltipAnchorY, view, scenarioPresentation]);
-  return <div ref={box} className="ph-chart" data-demo-scenario={scenarioPresentation ? 'true' : undefined}>
+    }, {constrainWidth:scenarioPresentation || cisDashboardProfile, maximumWidth:cisDashboardProfile ? 340 : 270, scrollTarget:scenarioPresentation || cisDashboardProfile ? window : undefined, captureScroll:scenarioPresentation || cisDashboardProfile});
+  }, [engaged, selected, inline, width, height, tooltipAnchorX, tooltipAnchorY, view, scenarioPresentation, cisDashboardProfile]);
+  return <div ref={box} className="ph-chart" data-demo-scenario={scenarioPresentation ? 'true' : undefined} data-cis-history-inspection={cisDashboardProfile ? 'true' : undefined}>
     {scenarioPresentation && view === 'mix' && <div className="ph-status-history-legend" aria-label="Historical status shares">{applicableCounts(current).map(value => <span key={value.key}><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label}</span>)}</div>}
-    <svg ref={svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" tabIndex={points.length ? 0 : undefined} aria-label={showProvenance ? `${view === 'mix' ? 'Status' : 'Implementation'} history over the selected period. Use Left, Right, Home and End to read implementation positions.` : 'Implementation history over the selected period. Use Left, Right, Home and End to read genuine positions.'} onKeyDown={keyboard} onFocus={() => setEngaged(true)} onBlur={() => {setActive(null);setEngaged(false);}}>
+    <svg ref={svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role={cisDashboardProfile ? 'group' : 'img'} tabIndex={points.length ? 0 : undefined} aria-describedby={cisDashboardProfile && engaged ? `${chartId}-tooltip` : undefined} aria-label={showProvenance ? `${view === 'mix' ? 'Status' : 'Implementation'} history over the selected period. Use Left, Right, Home and End to read implementation positions.` : 'Implementation history over the selected period. Use Left, Right, Home and End to read genuine positions.'} onKeyDown={keyboard} onFocus={() => { cancelDismiss(); setEngaged(true); }} onBlur={event => { if (cisDashboardProfile) { if (!box.current?.contains(event.relatedTarget)) scheduleDismiss(); } else dismiss(); }}>
       <title>{view === 'mix' && (scenarioPresentation || stackedHistory) ? 'Status history' : 'Implementation history'}</title><desc>{scenarioPresentation ? 'Historical state shares, not counts of transitions. Illustrative scenario history and later saved demo activity are identified in the readout and View data.' : showProvenance ? 'Illustrative demo scenario and later saved demo activity are identified in the readout and View data.' : 'Each marker is a saved observation at its genuine effective date. The text readout and View data provide exact counts.'}</desc>
       <defs><pattern id={`${chartId}-hatch`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" className="ph-hatch-line" /></pattern><linearGradient id={`${chartId}-area`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--chart-implemented)" stopOpacity=".22"/><stop offset="100%" stopColor="var(--chart-implemented)" stopOpacity=".02"/></linearGradient></defs>
       {shadeEnd - left >= 130 && points.length > 0 && <g><rect x={left} y={top} width={shadeEnd-left} height={bottom-top} fill={`url(#${chartId}-hatch)`}/><text className="ph-before-tracking" x={(left+shadeEnd)/2} y={(top+bottom)/2} textAnchor="middle">Before tracking began</text></g>}
@@ -492,19 +518,36 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
       {(view === 'line' || !(scenarioPresentation || stackedHistory)) && <path className="ph-line" d={line} />}
       {endpointPercentage != null && <g><rect className="ph-current-flag" x={right+9} y={y(endpointPercentage)-11} width={endpointWidth} height="22" rx="6"/><text className="ph-current-flag-label" x={right+9+endpointWidth/2} y={y(endpointPercentage)+4} textAnchor="middle" >{endpointLabel}</text></g>}
       {showCompleteLabel && <text x={right+9} y={y(100)+4}>Complete</text>}
-      {(view === 'line' || !(scenarioPresentation || stackedHistory)) && points.map(point => currentPercentage(point) != null && <circle key={identity(point)} className="ph-marker" cx={x(point)} cy={y(currentPercentage(point))} r={4} />)}
+      {!cisDashboardProfile && (view === 'line' || !(scenarioPresentation || stackedHistory)) && points.map(point => currentPercentage(point) != null && <circle key={identity(point)} className="ph-marker" cx={x(point)} cy={y(currentPercentage(point))} r={4} />)}
       {scopeChanges.filter(change => Date.parse(change.effective_at || change.at) >= Date.parse(start) && Date.parse(change.effective_at || change.at) <= Date.parse(asOf)).map((change, index) => <g key={index}><line className="ph-scope-marker" x1={x({effective_at: change.effective_at || change.at})} x2={x({effective_at: change.effective_at || change.at})} y1={top} y2={bottom} /><text x={Math.min(x({effective_at: change.effective_at || change.at}) + 6, right - 90)} y={top + 15}>{change.before?.denominator != null && change.after?.denominator != null ? `Scope ${change.before.denominator} → ${change.after.denominator}` : 'Scope changed'}</text></g>)}
       {historyTicks(start,asOf,width).map(at => <text key={at} x={x({effective_at:at})} y={height-8} textAnchor="middle">{formatPortfolioDate(at,{year:undefined,...(Date.parse(asOf)-Date.parse(start)>45*DAY ? {day:undefined} : {})})}</text>)}
       {!points.length && <text className="ph-chart-empty" x={(left + right) / 2} y={(top + bottom) / 2} textAnchor="middle">No saved positions in this period</text>}
       {engaged && selected && <><line className="ph-crosshair" x1={x(selected)} x2={x(selected)} y1={top} y2={bottom} />{currentPercentage(selected) != null && <circle className="ph-active" cx={x(selected)} cy={y(currentPercentage(selected))} r={inline ? 5.5 : 6} />}</>}
-      <rect x={left} y={top} width={right - left} height={bottom - top} fill="transparent" onPointerMove={nearest} onPointerDown={nearest} onPointerLeave={() => { if (document.activeElement !== svg.current) {setActive(null);setEngaged(false);} }} />
+      <rect className={cisDashboardProfile ? 'ph-inspection-area' : undefined} x={left} y={top} width={right - left} height={bottom - top} fill="transparent" onPointerMove={nearest} onPointerDown={nearest} onPointerLeave={() => { if (!svg.current.contains(document.activeElement)) { if (cisDashboardProfile) scheduleDismiss(); else dismiss(); } }} />
+      {cisDashboardProfile && points.map(point => currentPercentage(point) != null && <g key={identity(point)} className="ph-inspection-point" tabIndex={0} role="button" aria-label={`${dateTime(snapshotTime(point))}, ${rate(point)} implemented, ${point.implemented} of ${point.denominator} applicable ${unit}`} aria-describedby={engaged && selected === point ? `${chartId}-tooltip` : undefined}
+        onFocus={() => inspectPoint(point)}
+        onPointerEnter={() => { if (!pinned.current) inspectPoint(point); }}
+        onPointerDown={() => inspectPoint(point, true)}
+        onPointerLeave={() => { if (!svg.current.contains(document.activeElement)) scheduleDismiss(); }}
+        onClick={() => inspectPoint(point, true)}
+        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); inspectPoint(point, true); } }}>
+        <circle className="ph-inspection-hit" cx={x(point)} cy={y(currentPercentage(point))} r={10} />
+        <circle className="ph-marker" cx={x(point)} cy={y(currentPercentage(point))} r={4} />
+      </g>)}
     </svg>
     {view === 'line' && (low > 0 || high < 100) && <p className="ph-axis-disclosure">Vertical axis zoomed to the data range ({low}–{high}%).</p>}
-    {engaged && selected && <div ref={tooltip} className="ph-history-tip" style={inline && !scenarioPresentation ? {left:Math.max(0,Math.min(width-270,x(selected)+14)) / width * 100+'%',top:Math.max(0,Math.min(100,y(currentPercentage(selected) ?? 0)-30)) * (box.current?.clientWidth || width) / width} : undefined}>
+    {engaged && selected && <div ref={tooltip} className={cisDashboardProfile ? 'ph-history-tip ph-cis-history-tip' : 'ph-history-tip'} id={cisDashboardProfile ? `${chartId}-tooltip` : undefined} role={cisDashboardProfile ? 'tooltip' : undefined} onPointerEnter={cisDashboardProfile ? cancelDismiss : undefined} onPointerLeave={cisDashboardProfile ? scheduleDismiss : undefined} style={inline && !scenarioPresentation && !cisDashboardProfile ? {left:Math.max(0,Math.min(width-270,x(selected)+14)) / width * 100+'%',top:Math.max(0,Math.min(100,y(currentPercentage(selected) ?? 0)-30)) * (box.current?.clientWidth || width) / width} : undefined}>
       <div className="ph-tip-date">{showProvenance ? selected.carried ? 'In effect at period start · position ' : selected.observation_kind === 'demo_fixture' ? 'Scenario position · ' : selected.observation_kind === 'current_state' ? 'Current state · ' : 'Saved ' : selected.carried ? 'In effect at period start · saved ' : 'Saved '}{formatPortfolioDate(snapshotTime(selected))}</div>{showProvenance && <p className="ph-tip-basis">{historyBasis(selected)}</p>}
-      <strong>{rate(selected)}</strong><p>{selectedValid ? `${selected.implemented} of ${selected.denominator} ${unit} implemented` : selected.reason || 'Implementation unavailable'}</p>
+      {cisDashboardProfile ? <>
+        <div className="ph-cis-tip-headline"><strong>{rate(selected)}</strong><span>{selectedValid ? `${selected.implemented} implemented / ${selected.denominator} applicable ${unit}` : selected.reason || 'Implementation unavailable'}</span></div>
+        {selectedValid && selected.denominator === 0 && <small>No applicable scope</small>}
+        <small>{dateTime(snapshotTime(selected))}{selected.carried && ' · In effect at period start'}</small>
+        {selected.effective_at && selected.captured_at && Date.parse(selected.effective_at) !== Date.parse(selected.captured_at) && <small>Captured {dateTime(selected.captured_at)}</small>}
+        {selected.notice && <p>{selected.notice}</p>}
+        {selectedValid && <PortfolioStatusBar snapshot={selected} />}
+      </> : <><strong>{rate(selected)}</strong><p>{selectedValid ? `${selected.implemented} of ${selected.denominator} ${unit} implemented` : selected.reason || 'Implementation unavailable'}</p></>}
       {selectedValid && <div className="ph-tip-rows">{applicableCounts(selected).map(value => <div key={value.key}><span><i className={`ph-dot is-${tone(value.key)}`} />{value.label}</span><b>{value.count}{(scenarioPresentation || stackedHistory) && ` · ${statusShare(selected, value.key)}`}</b></div>)}</div>}
-      {scopeChangesForPosition(scopeChanges,selected).map((change,index)=><p className="ph-tip-scope" key={index}>{scopeNote(change,unit,scenarioPresentation)}</p>)}
+      {scopeChangesForPosition(scopeChanges,selected).map((change,index)=><p className="ph-tip-scope" key={index}>{scopeNote(change,unit,scenarioPresentation || cisDashboardProfile)}</p>)}
     </div>}
     <div className="ph-readout sr-only" aria-live="polite">{selected ? <><strong>{dateTime(snapshotTime(selected))}</strong>{selectedValid ? <>{applicableCounts(selected).map(value => <span key={value.key}><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label} {value.count}{scenarioPresentation ? ` · ${statusShare(selected, value.key)}` : value.key === 'addressed' && ` · ${rate(selected)}`} </span>)}<span>of {selected.denominator} applicable</span>{showProvenance && <span>{historyBasis(selected)}</span>}</> : <><span>Implementation/counts unavailable</span><span>{selected.reason || selected.notice || 'This saved position has unavailable implementation data.'}</span></>}{scopeChangesForPosition(scopeChanges, selected).map((change,index)=><span key={index}>{scopeNote(change, unit, scenarioPresentation)}</span>)}{selected.effective_at && selected.captured_at && Date.parse(selected.effective_at) !== Date.parse(selected.captured_at) && <span>Captured {dateTime(selected.captured_at)}</span>}</> : <span>No saved position selected.</span>}</div>
   </div>;
