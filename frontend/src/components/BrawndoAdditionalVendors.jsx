@@ -6,6 +6,7 @@ import { assuranceAttention, assuranceName, assuranceState, vendorMatches } from
 import { calendarDay, managementDay } from '@/lib/managementDates';
 import { vendorOverview, vendorTimelineEvents, timelineBounds, eventCycleProgress } from '@/lib/brawndoAdditionalPolicyVendor';
 import { AdditionalOwner, savedDate, relativeDate } from './BrawndoAdditionalPolicyVendorCells';
+import QuarterlyProgramTimeline from './QuarterlyProgramTimeline';
 import './BrawndoAdditionalPolicyVendor.css';
 
 const VIEWS = [['all_active', 'All active'], ['review_due', 'Reviews due'], ['review_overdue', 'Reviews past due'], ['critical_high', 'Critical / High'], ['renewal_soon', 'Renewal / notice actions'], ['assurance', 'Assurance follow-up due'], ['inactive', 'Inactive']];
@@ -20,6 +21,24 @@ function eventContext(event) {
     : event.review?.description || event.review?.notes || event.vendor.service || event.vendor.services || '';
   const text = typeof value === 'string' ? value.trim() : '';
   return text.length > 240 ? `${text.slice(0, 237)}…` : text;
+}
+
+const QUARTER_LEGEND = [
+  {kind: 'rev', label: 'Review', shape: 'circle'},
+  {kind: 'asr', label: 'Assurance follow-up', shape: 'diamond'},
+  {kind: 'ren', label: 'Contract renewal', shape: 'square'},
+];
+
+export function vendorQuarterlyTimelineEvents(rows, reviews = []) {
+  return vendorTimelineEvents(rows, reviews).map(event => ({
+    ...event,
+    kind: event.review?.vendor_purpose === 'assurance' ? 'asr' : event.review?.vendor_purpose === 'contract' ? 'ren' : event.kind,
+    title: event.vendor.name,
+    detail: eventContext(event),
+    record: event.review || event.vendor,
+    // A past legal date does not establish overdue work; an active linked Review does.
+    overdueEligible: !!event.review || event.kind !== 'ren',
+  }));
 }
 
 function VendorTimeline({ rows, reviews, onOpen, onOpenReview, theme }) {
@@ -60,7 +79,7 @@ function VendorTimeline({ rows, reviews, onOpen, onOpenReview, theme }) {
   </div></Tooltip.Provider>;
 }
 
-export default function BrawndoAdditionalVendors({ clientName = 'Client', rows = [], filteredRows = rows, reviews = [], users = [], loading = false, error = '', onRetry, q = '', onSearch, view = 'all_active', onView, table, onOpen, onOpenReview, actions, theme = 'light', acceptedRefresh = null }) {
+export default function BrawndoAdditionalVendors({ clientName = 'Client', rows = [], filteredRows = rows, reviews = [], users = [], loading = false, error = '', onRetry, q = '', onSearch, view = 'all_active', onView, table, onOpen, onOpenReview, actions, theme = 'light', acceptedRefresh = null, quarterlyChart = false, scopeKey = '', recordOpen = false }) {
   const refreshLabel = !loading && !error ? formatAcceptedRefresh(acceptedRefresh) : '';
   const metrics = vendorOverview(rows);
   const figures = [['critical_high', 'Critical / High'], ['review_due', 'Reviews due in 30 days'], ['assurance', 'Assurance follow-up due'], ['renewal_soon', 'Renewal / notice actions in 30 days']];
@@ -75,7 +94,9 @@ export default function BrawndoAdditionalVendors({ clientName = 'Client', rows =
     <div className="bapv-page-head"><div><h1>{clientName} Vendors</h1><p>{countsAvailable ? `Third-party register · ${counts.all_active} active ${counts.all_active === 1 ? 'vendor' : 'vendors'}` : 'Third-party register'}{refreshLabel && ` · As of ${refreshLabel}`}</p></div><div className="bapv-head-actions">{actions}</div></div>
     <section className="bapv-card bav-overview" aria-label="Vendor overview">
       <div className="bapv-kstrip" aria-label="Vendor summary. Select a figure to filter the register.">{figures.map(([id, label], index) => <button type="button" className="bapv-kcell" key={id} aria-pressed={view === id} disabled={!countsAvailable} onClick={() => onView(view === id ? 'all_active' : id)} data-testid={`additional-vendor-metric-${id}`}><span>{label}</span><strong>{countsAvailable ? metrics[index] : '—'}</strong></button>)}</div>
-      <div><div className="bav-timeline-head"><div><h3>Next 12 months</h3><p className="bapv-sub">Reviews, assurance follow-ups and contract renewals for each vendor.</p></div><div className="bav-legend" aria-label="Timeline markers"><span><i className="bav-marker rev" />Review</span><span><i className="bav-marker asr" />Assurance follow-up</span><span><i className="bav-marker ren" />Contract renewal</span></div></div>{!loading && !error && <VendorTimeline key={acceptedRefresh || 'unacknowledged'} rows={rows} reviews={reviews} onOpen={onOpen} onOpenReview={onOpenReview} theme={theme} />}</div>
+      {quarterlyChart ? <QuarterlyProgramTimeline chartKey="vendors" scopeKey={scopeKey} events={vendorQuarterlyTimelineEvents(rows, reviews)} available={!loading && !error} recordOpen={recordOpen} theme={theme} legend={QUARTER_LEGEND}
+        description="Saved Vendor reviews, assurance follow-ups and contract renewal dates."
+        onOpen={event => event.review && onOpenReview ? onOpenReview(event.review) : onOpen(event.vendor, event.tab)} /> : <div><div className="bav-timeline-head"><div><h3>Next 12 months</h3><p className="bapv-sub">Reviews, assurance follow-ups and contract renewals for each vendor.</p></div><div className="bav-legend" aria-label="Timeline markers"><span><i className="bav-marker rev" />Review</span><span><i className="bav-marker asr" />Assurance follow-up</span><span><i className="bav-marker ren" />Contract renewal</span></div></div>{!loading && !error && <VendorTimeline key={acceptedRefresh || 'unacknowledged'} rows={rows} reviews={reviews} onOpen={onOpen} onOpenReview={onOpenReview} theme={theme} />}</div>}
     </section>
     <section className="bapv-card" aria-label="Vendor register">
       <div className="bapv-filters"><label className="bapv-search"><span className="sr-only">Search vendors</span><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search vendors…" value={q} onChange={event => onSearch(event.target.value)} data-testid="vendor-search" /></label><div className="bapv-segment" role="group" aria-label="Show vendors">{VIEWS.map(([id, label]) => <button type="button" key={id} aria-pressed={view === id} onClick={() => onView(id)} data-testid={`vendor-view-${id}`}>{label}<span>{countsAvailable ? counts[id] : '—'}</span></button>)}</div><label className="bapv-field">More views <select aria-label="Other vendor views" value={EXTRA_VIEWS.some(([id]) => id === view) ? view : ''} onChange={event => onView(event.target.value || 'all_active')}><option value="">Select</option>{EXTRA_VIEWS.map(([id, label]) => <option value={id} key={id}>{countsAvailable ? `${label} (${counts[id]})` : label}</option>)}</select></label></div>

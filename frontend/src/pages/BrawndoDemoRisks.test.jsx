@@ -18,8 +18,8 @@ const click=node=>act(async()=>node.click());
 const subtitle=()=>container.querySelector('.bpage-subtitle')?.textContent||'';
 const openFilters=async()=>{await click(container.querySelector('.bdr-filter-trigger'));return document.querySelector('.bdr-filters-panel');};
 beforeEach(()=>{
-  // Freeze only the clock; Radix's native scheduling and focus timers remain real.
-  jest.useFakeTimers({doNotFake:['nextTick','setImmediate','clearImmediate','setTimeout','clearTimeout','setInterval','clearInterval','requestAnimationFrame','cancelAnimationFrame','queueMicrotask','performance']});
+  // Jest 27 freezes the clock and scheduling; focus checks explicitly advance their pending timers.
+  jest.useFakeTimers();
   jest.setSystemTime(new Date('2026-10-18T18:00:00.000Z'));
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();rememberClient('demo_brawndo');mockSearch='';mockPath='/risks';
   mockAuth={workspaceMode:'demo',loading:false,user:{user_id:`admin-${++mockActorSequence}`,role:'super_admin',workspace_mode:'demo'}};
@@ -93,11 +93,11 @@ test('Coming up opens the canonical Action and discards a pending opener after a
   const task={task_id:'native-action',client_id:'demo_brawndo',title:'Saved treatment Action',status:'open',due_date:new Date().toISOString().slice(0,10)};
   const original=api.get.getMockImplementation();let resolveTask;
   api.get.mockImplementation((path,...args)=>path==='/related'?Promise.resolve({data:{tasks:[task]}}):path==='/tasks/native-action'?new Promise(resolve=>{resolveTask=resolve;}):original(path,...args));
-  await render();await click(container.querySelector('.compact-program-coming button'));
+  await render();await click(container.querySelector('.qpt-coming button'));
   await act(async()=>resolveTask({data:task}));
   expect(container.querySelector('[data-testid="native-dispatch"]').dataset).toMatchObject({kind:'tasks',id:'native-action'});
   await click([...container.querySelectorAll('button')].find(b=>b.textContent==='Close native record'));
-  await click(container.querySelector('.compact-program-coming button'));
+  await click(container.querySelector('.qpt-coming button'));
   mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'next-actor'}};await render();
   await act(async()=>resolveTask({data:task}));
   expect(container.querySelector('[data-testid="native-dispatch"]')).toBeNull();
@@ -107,12 +107,12 @@ test('a pending Coming up response cannot replace or revive a subsequently opene
   rows[0].next_review=new Date().toISOString().slice(0,10);
   const original=api.get.getMockImplementation();let resolveRisk;
   api.get.mockImplementation((path,...args)=>path==='/risks/risk-high'?new Promise(resolve=>{resolveRisk=resolve;}):original(path,...args));
-  await render();await click(container.querySelector('.compact-program-coming button'));
+  await render();await click(container.querySelector('.qpt-coming button'));
   await click([...container.querySelectorAll('tbody .register-record-link')].find(b=>b.textContent==='Native unrated'));
   await act(async()=>resolveRisk({data:rows[0]}));
   expect(container.querySelector('[data-testid="native-dispatch"]').dataset.id).toBe('unrated');
   await click([...container.querySelectorAll('button')].find(b=>b.textContent==='Close native record'));
-  await click(container.querySelector('.compact-program-coming button'));
+  await click(container.querySelector('.qpt-coming button'));
   await click([...container.querySelectorAll('tbody .register-record-link')].find(b=>b.textContent==='Native unrated'));
   await click([...container.querySelectorAll('button')].find(b=>b.textContent==='Close native record'));
   await act(async()=>resolveRisk({data:rows[0]}));
@@ -123,11 +123,51 @@ test.each(['new-risk','risk-matrix-btn'])('pending Coming up cannot overlay nati
   rows[0].next_review=new Date().toISOString().slice(0,10);
   const original=api.get.getMockImplementation();let resolveRisk;
   api.get.mockImplementation((path,...args)=>path==='/risks/risk-high'?new Promise(resolve=>{resolveRisk=resolve;}):original(path,...args));
-  await render();await click(container.querySelector('.compact-program-coming button'));
+  await render();await click(container.querySelector('.qpt-coming button'));
   await click(container.querySelector(`[data-testid="${testId}"]`));
   await act(async()=>resolveRisk({data:rows[0]}));
   expect(container.querySelector('[data-testid="native-dispatch"]')).toBeNull();
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+});
+
+test('quarter/year, selector and chart-data controls preserve native Risk cards, all matrix cells and the complete register',async()=>{
+  rows[0].next_review='2026-11-05';
+  const originalBounds=Element.prototype.getBoundingClientRect;
+  const bounds=jest.spyOn(Element.prototype,'getBoundingClientRect').mockImplementation(function(){return this.classList?.contains('qpt-plot')?{width:700,height:280,left:0,right:700,top:0,bottom:280}:originalBounds.call(this);});
+  const chartButton=name=>[...container.querySelectorAll('.quarterly-program-timeline button')].find(node=>node.textContent===name||node.getAttribute('aria-label')===name);
+  const protectedMarkup=()=>({
+    cards:container.querySelector('[aria-label="Risk summaries"]').outerHTML,
+    matrix:container.querySelector('.bdr-matrix-region').outerHTML,
+    toolbar:container.querySelector('.register-toolbar').outerHTML,
+    register:container.querySelector('.register-body').outerHTML,
+  });
+  try{
+    await render();const baseline=protectedMarkup(),reads=api.get.mock.calls.length;
+    expect(container.querySelectorAll('.bdr-matrix .bdr-cell')).toHaveLength(25);
+    expect(container.querySelectorAll('tbody .register-record-link')).toHaveLength(2);
+    for(const control of ['Next quarter','Previous quarter','Q1','Q4','This quarter','View data','Hide data']){
+      await click(chartButton(control));expect(protectedMarkup()).toEqual(baseline);
+    }
+    expect(api.get.mock.calls).toHaveLength(reads);
+    const marker=container.querySelector('.qpt-event');expect(marker).not.toBeNull();await click(marker);
+    expect(document.querySelectorAll('.qpt-selection-row')).toHaveLength(1);
+    expect(document.querySelector('.qpt-selection-row').textContent).toContain('Native high risk');
+    expect(container.querySelector('[data-testid="native-dispatch"]')).toBeNull();
+    await click(document.querySelector('[aria-label="Close item selection"]'));
+    // Jest 27 also fakes Radix's focus timer; explicitly flush it rather than awaiting a stopped clock.
+    await act(async()=>jest.advanceTimersByTime(30));
+    expect(protectedMarkup()).toEqual(baseline);expect(document.activeElement).toBe(marker);
+    expect(api.get.mock.calls).toHaveLength(reads);
+    await click(container.querySelector('[aria-label="Likelihood 3, impact 4, score 12, band high: 1 risk"]'));
+    expect(container.querySelectorAll('tbody .register-record-link')).toHaveLength(1);
+    await click([...container.querySelectorAll('button')].find(node=>node.textContent==='Clear matrix selection'));
+    expect(container.querySelectorAll('tbody .register-record-link')).toHaveLength(2);
+    await click([...container.querySelectorAll('[aria-label="Risk summaries"] button')].find(node=>node.textContent.startsWith('Accepted')));
+    expect(container.querySelectorAll('tbody .register-record-link')).toHaveLength(0);
+    await click([...container.querySelectorAll('[aria-label="Risk summaries"] button')].find(node=>node.textContent.startsWith('Active risks')));
+    expect(container.querySelectorAll('tbody .register-record-link')).toHaveLength(2);
+    expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+  }finally{bounds.mockRestore();}
 });
 
 test('presentation-only treatment filter preserves native column controls and closed record access',async()=>{

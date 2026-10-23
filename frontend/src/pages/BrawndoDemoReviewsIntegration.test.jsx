@@ -48,6 +48,36 @@ test('History native menu opens the exact occurrence while Delete retains the pa
   expect(api.delete).toHaveBeenCalledWith('/reviews/review',{data:{expected_updated_at:'current-parent-version'}});
 });
 
+test('quarter chart opens the original saved historical occurrence without changing cards, register or current Review',async()=>{
+  jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-18T12:00:00'));
+  const original=HTMLElement.prototype.getBoundingClientRect;
+  const geometry=jest.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(){return this.classList.contains('qpt-plot')?{width:1100,height:220,left:0,right:1100,top:0,bottom:220}:original.call(this);});
+  try{
+    const execution={occurrence_id:'saved-quarterly',review_id:'review',client_id:'demo_brawndo',
+      title:'Original saved quarterly Review',recurrence:'quarterly',status:'completed',due_date:'2026-09-30',
+      completed_at:'2026-10-01T10:00:00Z',evidence:[{evidence_id:'saved-evidence'}],notes:'Original occurrence notes'};
+    mockRows=[{...mockRows[0],title:'Renamed current monthly Review',updated_at:'current-parent-version',occurrences:[execution]}];
+    const before=JSON.stringify(mockRows);
+    await act(async()=>root.render(<RecordListPage kind="reviews"/>));
+    const protectedBefore={cards:container.querySelector('.bdr-kstrip').outerHTML,register:container.querySelector('.bdr-register').outerHTML};
+    await act(async()=>container.querySelector('[aria-label="Previous quarter"]').click());
+    expect(container.querySelector('.qpt-year').textContent).toContain('Q3 2026');
+    expect({cards:container.querySelector('.bdr-kstrip').outerHTML,register:container.querySelector('.bdr-register').outerHTML}).toEqual(protectedBefore);
+    const marker=container.querySelector('[data-group-id="2026-09-30:quarterly"]');
+    expect(marker.querySelector('b').textContent).toBe('1');expect(marker.classList.contains('qpt-overdue')).toBe(false);
+    await act(async()=>marker.click());
+    expect(document.querySelector('.qpt-selection-row').textContent).toContain('Original saved quarterly Review');
+    expect(document.querySelector('.qpt-selection-row').textContent).toContain('Completed Review occurrence');
+    await act(async()=>document.querySelector('.qpt-selection-row').click());
+    expect(mockNativeProps.record).toBe(mockRows[0]);expect(mockNativeProps.initialValues.occurrence).toBe(execution);
+    expect(mockNativeProps.initialValues.occurrence.evidence).toBe(execution.evidence);
+    await act(async()=>mockNativeProps.onOpenChange(false));
+    expect(container.querySelector('.qpt-year').textContent).toContain('Q3 2026');
+    expect(JSON.stringify(mockRows)).toBe(before);
+    for(const verb of ['post','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
+  }finally{geometry.mockRestore();jest.useRealTimers();}
+});
+
  test.each(['selection','route'])('shared appearance boundary excludes mismatched %s identity',async mismatch=>{
  if(mismatch==='selection')sessionStorage.setItem('grc_client_id','another-client');else mockReviewSearch='?client_id=another-client';
  await act(async()=>root.render(<RecordListPage kind="reviews"/>));

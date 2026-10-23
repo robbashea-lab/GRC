@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import BrawndoAdditionalVendors from '@/components/BrawndoAdditionalVendors';
+import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
 import { useAdditionalSectionsSurface } from '@/lib/brawndoAdditionalScope';
 import { useBrawndoTheme } from '@/lib/brawndoTheme';
 import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from "@/components/Register";
@@ -196,7 +197,7 @@ export default function VendorRegister() {
       setSearchParams(next,{replace:true});
     };
     surface = <>
-      <BrawndoAdditionalVendors clientName={currentClient?.name||'Client'} rows={tableSource} filteredRows={filtered} reviews={reviews} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
+      <BrawndoAdditionalVendors quarterlyChart scopeKey={quarterlyChartScope(user,auth.workspaceMode,currentClient)} recordOpen={drawer.open||addOpen} clientName={currentClient?.name||'Client'} rows={tableSource} filteredRows={filtered} reviews={reviews} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
         onOpen={(record,tab)=>setDrawer({open:true,record,tab})}
         onOpenReview={review=>navigate(`/reviews?id=${encodeURIComponent(review.review_id)}&client_id=${encodeURIComponent(currentClientId)}`)}
         actions={<><button type="button" onClick={()=>setTheme(theme==='light'?'dark':'light')}><Sun size={15} aria-hidden="true"/>{theme==='light'?'Dark':'Light'}</button><button type="button" onClick={exportCsv} data-testid="vendors-export"><Download size={15} aria-hidden="true"/>Export CSV</button>{canWrite&&<button type="button" onClick={()=>setAddOpen(true)} data-testid="new-vendor">+ New vendor</button>}</>}/>

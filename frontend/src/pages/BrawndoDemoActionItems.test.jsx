@@ -204,15 +204,48 @@ test('reference row uses structured source, Finding title, neutral priority and 
  });
 
 
-test('compact overview replaces runway, preserves selected native filters and opens the exact saved Action',async()=>{
-  records={tasks:[task('late',{due_date:'2000-01-01',priority:'low'}),task('later',{due_date:'2099-01-01'}),task('unscheduled')],findings:[]};
-  await render('/action-items?view=active&quick=overdue');
-  expect(container.querySelector('.bda-runway')).toBeNull();expect(container.querySelectorAll('.cpt-lane')).toHaveLength(3);
-  expect(tickets()).toHaveLength(1);const before=location.search;
-  const point=container.querySelector('.cpt-event');expect(point.getAttribute('aria-label')).toContain('Action late');
-  await act(async()=>point.focus());expect(location.search).toBe(before);
-  await click(container.querySelector('.compact-program-coming button'));
-  expect(mockDrawer.record.task_id).toBe('late');expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+test('quarter browsing preserves native overdue filters, cards and register while exact saved Actions remain independently reachable',async()=>{
+  jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-18T12:00:00'));
+  const original=HTMLElement.prototype.getBoundingClientRect;
+  const geometry=jest.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(){return this.classList.contains('qpt-plot')?{width:1100,height:220,left:0,right:1100,top:0,bottom:220}:original.call(this);});
+  try{
+    records={tasks:[task('late',{due_date:'2026-10-01',priority:'low'}),task('later',{due_date:'2027-01-01',priority:'high'}),task('unscheduled')],findings:[]};
+    await render('/action-items?view=active&quick=overdue');
+    await click(button('This quarter'));
+    expect(container.querySelector('.bda-runway')).toBeNull();expect(container.querySelectorAll('.qpt-lane')).toHaveLength(3);
+    expect(tickets()).toHaveLength(1);const before=location.search;
+    const protectedBefore={cards:container.querySelector('.bda-summary').outerHTML,register:container.querySelector('.bda-register').outerHTML};
+    const point=container.querySelector('.qpt-event');expect(point.getAttribute('aria-label')).toContain('Low');
+    await act(async()=>point.focus());expect(location.search).toBe(before);
+    await click(container.querySelector('[aria-label="Next quarter"]'));
+    expect(container.querySelector('.qpt-year').textContent).toContain('Q1 2027');
+    expect({cards:container.querySelector('.bda-summary').outerHTML,register:container.querySelector('.bda-register').outerHTML}).toEqual(protectedBefore);
+    expect(location.search).toBe(before);expect(tickets()[0].textContent).toContain('Action late');
+    await click(container.querySelector('.qpt-coming button'));
+    expect(mockDrawer.kind).toBe('tasks');expect(mockDrawer.record.task_id).toBe('later');
+    expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+  }finally{geometry.mockRestore();jest.useRealTimers();}
+});
+
+test('a secondary Action marker opens that exact native Action rather than the linked Finding primary',async()=>{
+  jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-18T12:00:00'));
+  const original=HTMLElement.prototype.getBoundingClientRect;
+  const geometry=jest.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(){return this.classList.contains('qpt-plot')?{width:1100,height:220,left:0,right:1100,top:0,bottom:220}:original.call(this);});
+  try{
+    records={findings:[finding('issue',{primary_task_id:'primary',severity:'critical',status:'in_remediation'})],tasks:[
+      task('primary',{finding_id:'issue',priority:'low',due_date:'2026-11-05'}),
+      task('secondary',{finding_id:'issue',priority:'high',due_date:'2026-11-12'}),
+    ]};
+    await render();
+    await click(button('This quarter'));
+    await click(container.querySelector('[data-group-id="2026-11-12:high"]'));
+    expect(mockDrawer).toBeNull();expect(document.querySelectorAll('.qpt-selection-row')).toHaveLength(1);
+    await click(document.querySelector('.qpt-selection-row'));
+    expect(mockDrawer.kind).toBe('tasks');expect(mockDrawer.record).toBe(records.tasks[1]);
+    expect(new URLSearchParams(location.search).get('task_id')).toBe('secondary');
+    expect(new URLSearchParams(location.search).has('finding_id')).toBe(false);
+    expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+  }finally{geometry.mockRestore();jest.useRealTimers();}
 });
 
 test('new due-in-30 card retains native date filtering and clears pagination without writes',async()=>{

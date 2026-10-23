@@ -18,6 +18,7 @@ import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useLocation,useSearchParams} from 'react-router-dom';
 import {brawndoDemoRisksGate} from '@/lib/brawndoDemoRisks';
+import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
 import BrawndoDemoRisksOverview,{RiskScoreBar} from '@/components/BrawndoDemoRisksOverview';
 import {riskCategories,riskTreatments} from '@/lib/brawndoRisks';
 import './BrawndoDemoRisks.css';
@@ -244,7 +245,7 @@ export default function RiskRegister() {
       </BrawndoPageHeader>
       {portfolioSignificant&&<p className="bpage-notice" role="status" data-testid="portfolio-risk-filter">Active High / Critical Risks · includes accepted Risks <button className="register-link" onClick={()=>{const next=new URLSearchParams(searchParams);next.delete('portfolio');setSearchParams(next,{replace:true});}}>Clear portfolio filter</button></p>}
       {view==='significant'&&<p className="bpage-notice" role="status" data-testid="significant-risk-filter">High / Critical Risks <button className="register-link" onClick={()=>{selectView('all_active');const next=new URLSearchParams(searchParams);next.delete('view');setSearchParams(next,{replace:true});}}>Clear risk filter</button></p>}
-      {demoPresentation?<BrawndoDemoRisksOverview rows={demoRows} matrixRows={matrixRows} selected={matrixSelection} onSelect={setMatrixSelection} view={view} onView={selectView} matches={matches} onOpen={openUpcoming} scope={scope} users={users} recordOpen={drawer.open||!!eventDrawer}/>:workspacePilot&&<BrawndoRiskMatrix rows={matrixRows} selected={matrixSelection} onSelect={setMatrixSelection} loading={loading}/>}
+      {demoPresentation?<BrawndoDemoRisksOverview rows={demoRows} matrixRows={matrixRows} selected={matrixSelection} onSelect={setMatrixSelection} view={view} onView={selectView} matches={matches} onOpen={openUpcoming} scope={scope} quarterlyChart chartScopeKey={quarterlyChartScope(user,auth.workspaceMode,currentClient)} users={users} recordOpen={drawer.open||!!eventDrawer}/>:workspacePilot&&<BrawndoRiskMatrix rows={matrixRows} selected={matrixSelection} onSelect={setMatrixSelection} loading={loading}/>}
       <div className="register-toolbar">
           <SearchField label="Search risks" placeholder="Search risks…" value={q} onChange={setQ} testid="risk-search"/>
           {demoPresentation?<div className="bdr-view-segment bdr-record-controls" role="group" aria-label="Records">
