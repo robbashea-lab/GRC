@@ -51,7 +51,7 @@
 }
 
 /* Opt-in concept presentation; default profiles and native editors keep their rules above. */
-.cdp-card.cdp-concept { align-self:stretch;padding:17px 18px;border:1px solid var(--cc-border,#dfe6f1);border-radius:9px;background:var(--cc-card,#fff);color:var(--cc-text,#10213b);box-shadow:0 1px 1px #10213b03;font:13px/1.45 'GoverNara Policy Vendor Inter',Inter,Arial,sans-serif; }
+.cdp-card.cdp-concept { align-self:stretch;padding:17px 18px;border:1px solid var(--cc-border,#dfe6f1);border-radius:9px;background:var(--cc-card,#fff);color:var(--cc-text,#10213b);box-shadow:0 1px 1px #10213b03;font:13px/1.45 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif; }
 .cdp-card.cdp-concept h2 { font-family:inherit;font-size:14px;font-weight:650;line-height:1.45;letter-spacing:-.2px; }
 .cdp-card.cdp-concept header p { color:var(--cc-muted,#627594);font-size:11.5px;line-height:1.45;margin:3px 0 0; }
 .cdp-concept .cdp-profile { grid-template-columns:minmax(250px,1fr) minmax(280px,1.15fr);gap:10px;margin-top:7px;min-height:278px; }
@@ -86,7 +86,7 @@
 .cdp-concept-hint { margin:6px 0 0;color:var(--cc-muted,#627594);font-size:9px; }
 .cdp-concept .cdp-empty { color:var(--cc-muted,#627594); }
 
-.ui-popover.cdp-domain-tip.cdp-concept-tip { width:300px;max-width:calc(100vw - 20px);max-height:calc(100dvh - 20px);padding:13px 14px;border:1px solid var(--cc-border,#dfe6f1);border-radius:9px;background:var(--cc-card,#fff);color:var(--cc-text,#10213b);box-shadow:var(--cc-shadow,0 10px 30px #10213b18);font:11px/1.45 'GoverNara Policy Vendor Inter',Inter,Arial,sans-serif; }
+.ui-popover.cdp-domain-tip.cdp-concept-tip.cis-dashboard-concept-portal[data-theme] { width:300px;max-width:calc(100vw - 20px);max-height:calc(100dvh - 20px);padding:13px 14px;border:1px solid var(--cc-border,#dfe6f1);border-radius:9px;background:var(--cc-card,#fff);color:var(--cc-text,#10213b);box-shadow:var(--cc-shadow,0 10px 30px #10213b18);font:11px/1.45 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif; }
 .cdp-domain-tip.cdp-concept-tip h3 { margin:0 15px 0 0;font-size:13px;font-weight:700; }
 .cdp-concept-tip .cdp-tip-rate { gap:8px;margin:7px 0 8px; }
 .cdp-concept-tip .cdp-tip-rate strong { font-size:22px;font-weight:650;letter-spacing:-.4px; }

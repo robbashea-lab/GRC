@@ -86,7 +86,7 @@ function ConceptDomainDetail({domain}){
     <div className={`cdp-focus is-${focus.tone}`}><b>{focus.title}</b><p>{focus.detail}</p></div></>;
 }
 
-function ConceptDomainTrigger({domain,kind='table',children,active,setActive,theme}){
+function ConceptDomainTrigger({domain,kind='table',children,active,setActive,theme,compact}){
   const id=`${kind}:${domain.id}`,open=active?.target===id, timer=useRef(null),dismissed=useRef(false);
   const svg=kind!=='table';
   useEffect(()=>()=>clearTimeout(timer.current),[]);
@@ -119,7 +119,7 @@ function ConceptDomainTrigger({domain,kind='table',children,active,setActive,the
   return <Popover open={open} onOpenChange={value=>{if(!value){dismissed.current=true;close();}}}>
     <PopoverTrigger asChild>{trigger}</PopoverTrigger>
     <PopoverContent className="cdp-domain-tip cdp-concept-tip cis-dashboard-concept-portal" data-theme={theme}
-      aria-label={`${domain.name} implementation details`} side="right" align="start" sideOffset={12} collisionPadding={10}
+      aria-label={`${domain.name} implementation details`} side={compact?'bottom':'right'} align={compact?'center':'start'} sideOffset={12} collisionPadding={10}
       onOpenAutoFocus={event=>event.preventDefault()} onCloseAutoFocus={event=>event.preventDefault()}
       onPointerEnter={enter} onPointerLeave={leave} onEscapeKeyDown={()=>{dismissed.current=true;close();}}>
       <ConceptDomainDetail domain={domain}/>
@@ -134,25 +134,26 @@ const conceptPoint=(index,total,radius)=>{
 
 // Keep the reference's compact ring; only names move when the native axes collide.
 function conceptLabels(domains){
+  // Allow for the loaded Inter glyph widths; narrow estimates let adjacent 14-domain names overlap.
   const labels=domains.map((domain,index)=>{
     const point=conceptPoint(index,domains.length,133),cosine=(point[0]-215)/133;
     const side=Math.abs(cosine)<.12?0:Math.sign(cosine),anchor=side<0?'end':side>0?'start':'middle';
     const x=point[0]+side*4,available=side<0?x-8:side>0?422-x:180;
-    const limit=Math.max(11,Math.floor(available/5.6)),lines=[];
+    const limit=Math.max(11,Math.floor(available/6.4)),lines=[];
     for(const word of domain.name.split(' ')){
       if(!lines.length||`${lines[lines.length-1]} ${word}`.length>limit)lines.push(word);
       else lines[lines.length-1]+=` ${word}`;
     }
-    const height=lines.length*12+19,width=Math.max(...lines.map(line=>line.length*5.6),formatDomainRate(domain.rate).length*7);
+    const height=lines.length*12+19,width=Math.max(...lines.map(line=>line.length*6.4),formatDomainRate(domain.rate).length*7);
     const top=Math.max(8,Math.min(324-height,point[1]-height/2));
     return {domain,index,x,top,width,height,anchor,side,lines};
   });
   const left=label=>label.x-(label.anchor==='end'?label.width:label.anchor==='middle'?label.width/2:0);
-  const intersects=(a,b)=>left(a)<left(b)+b.width+3&&left(b)<left(a)+a.width+3;
+  const intersects=(a,b)=>left(a)<left(b)+b.width+6&&left(b)<left(a)+a.width+6;
   for(const label of labels.filter(value=>value.side)){
     for(const fixed of labels.filter(value=>!value.side)){
-      if(intersects(label,fixed)&&label.top<fixed.top+fixed.height+3&&fixed.top<label.top+label.height+3){
-        label.x=label.side<0?left(fixed)-3:left(fixed)+fixed.width+3;
+      if(intersects(label,fixed)&&label.top<fixed.top+fixed.height+6&&fixed.top<label.top+label.height+6){
+        label.x=label.side<0?left(fixed)-6:left(fixed)+fixed.width+6;
       }
     }
   }
@@ -162,13 +163,13 @@ function conceptLabels(domains){
     const bottom=labels.find(label=>label.side===0&&label.index!==0);
     const previous=top?[top]:[];
     for(const label of members){
-      for(const other of previous)if(intersects(label,other))label.top=Math.max(label.top,other.top+other.height+3);
+      for(const other of previous)if(intersects(label,other))label.top=Math.max(label.top,other.top+other.height+6);
       previous.push(label);
     }
     const following=bottom?[bottom]:[];
     for(const label of members.slice().reverse()){
       label.top=Math.min(label.top,324-label.height);
-      for(const other of following)if(intersects(label,other))label.top=Math.min(label.top,other.top-label.height-3);
+      for(const other of following)if(intersects(label,other))label.top=Math.min(label.top,other.top-label.height-6);
       following.push(label);
     }
   }
@@ -176,9 +177,15 @@ function conceptLabels(domains){
 }
 
 function ConceptDomainProfile({model,heading,theme}){
-  const [active,setActive]=useState(null);
+  const [active,setActive]=useState(null),[compact,setCompact]=useState(false);
+  useEffect(()=>{
+    if(!window.matchMedia)return;
+    const query=window.matchMedia('(max-width: 650px)'),update=()=>setCompact(query.matches);
+    update();query.addEventListener('change',update);
+    return()=>query.removeEventListener('change',update);
+  },[]);
   useEffect(()=>{if(!model.available)setActive(null);},[model.available]);
-  const domains=model.domains, trigger={active,setActive,theme};
+  const domains=model.domains, trigger={active,setActive,theme,compact};
   return <section className="cdp-card cdp-concept" data-theme={theme} aria-labelledby={heading}>
     <header><h2 id={heading}>Domain implementation profile</h2><p>Implemented share of applicable safeguards by domain</p></header>
     {!model.available?<p role="status" className="cdp-empty">{model.reason}</p>:!domains.length?<p className="cdp-empty">No mapped applicable domains are available.</p>:<>

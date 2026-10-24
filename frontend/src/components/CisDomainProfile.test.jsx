@@ -4,6 +4,14 @@ import CisDomainProfile from './CisDomainProfile';
 import {cisWorkspace} from '@/testUtils/cisExperience';
 import {cisSecurityDomainMapping} from '@/lib/brawndoSecurityDomains';
 
+// Preserve the real native popover while observing requested placement: JSDOM
+// has no layout, so its collision solver's final data-side is not a viewport test.
+jest.mock('./ui/popover',()=>{
+  const actual=jest.requireActual('./ui/popover'),React=jest.requireActual('react');
+  return {...actual,PopoverContent:React.forwardRef((props,ref)=>React.createElement(actual.PopoverContent,
+    {...props,ref,'data-requested-side':props.side,'data-requested-align':props.align}))};
+});
+
 let host,root;
 beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);});
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.useRealTimers();});
@@ -261,4 +269,65 @@ test('concept unavailable context removes stale popup without changing the defau
   await renderProfile();
   expect(host.querySelector('.cdp-concept')).toBeNull();
   expect(host.querySelector('.cdp-radar').getAttribute('viewBox')).toBe('0 0 360 550');
+});
+
+test('14-domain labels separate the four overlap pairs measured with the loaded Inter font',async()=>{
+  await renderConcept(conceptSource(3));
+  // CANDIDATE_INITECH_1920_DARK.json: browser bounding boxes, normalized by
+  // its measured 12px SVG line step (12.27905 CSS px). These are independent
+  // observed glyph extents, not the layout algorithm's character estimates.
+  const scale=(43.31771087646485-31.03865623474121)/12;
+  const measured={
+    'Asset & Software Management':[168.712890625,31.03865623474121,1],
+    'Data Protection':[84.25,31.0386962890625,1],
+    'Penetration Testing':[105.76042175292967,31.0386962890625,1],
+    'Email, Web & Malware Protection':[120.90625,43.31771087646485,2],
+    'Backup & Data Recovery':[134.8087158203125,31.03865623474121,1],
+    'Security Awareness':[108.4375457763672,31.03865623474121,1],
+  };
+  const rectangles=Object.fromEntries(Object.entries(measured).map(([name,[width,height,lineCount]])=>{
+    const axis=[...host.querySelectorAll('.cdp-concept-axis-label')].find(node=>node.getAttribute('aria-label').startsWith(`${name}:`));
+    const text=axis.querySelector('text'),anchor=text.getAttribute('text-anchor');
+    expect(axis.querySelectorAll('tspan:not(.cdp-axis-rate)')).toHaveLength(lineCount);
+    width/=scale;height/=scale;
+    const x=Number(text.getAttribute('x')),y=Number(text.getAttribute('y'));
+    return [name,{left:x-(anchor==='end'?width:anchor==='middle'?width/2:0),top:y,width,height}];
+  }));
+  for(const [first,second]of [
+    ['Asset & Software Management','Data Protection'],
+    ['Asset & Software Management','Penetration Testing'],
+    ['Email, Web & Malware Protection','Backup & Data Recovery'],
+    ['Backup & Data Recovery','Security Awareness'],
+  ]){
+    const a=rectangles[first],b=rectangles[second];
+    const overlapX=Math.min(a.left+a.width,b.left+b.width)-Math.max(a.left,b.left);
+    const overlapY=Math.min(a.top+a.height,b.top+b.height)-Math.max(a.top,b.top);
+    expect(overlapX<=0||overlapY<=0).toBe(true);
+  }
+});
+
+test('one responsive listener moves concept details below narrow triggers and is removed on unmount',async()=>{
+  const descriptor=Object.getOwnPropertyDescriptor(window,'matchMedia');
+  let listener;
+  const query={matches:false,addEventListener:jest.fn((type,callback)=>{listener=callback;}),removeEventListener:jest.fn()};
+  Object.defineProperty(window,'matchMedia',{configurable:true,value:jest.fn(()=>query)});
+  try{
+    await renderConcept(conceptSource(3));
+    expect(window.matchMedia).toHaveBeenCalledTimes(1);
+    expect(window.matchMedia).toHaveBeenCalledWith('(max-width: 650px)');
+    expect(query.addEventListener).toHaveBeenCalledTimes(1);
+    await act(async()=>host.querySelector('.cdp-domain-name').click());
+    expect(document.querySelector('.cdp-concept-tip').dataset.requestedSide).toBe('right');
+    expect(document.querySelector('.cdp-concept-tip').dataset.requestedAlign).toBe('start');
+    await act(async()=>{query.matches=true;listener();});
+    expect(document.querySelector('.cdp-concept-tip').dataset.requestedSide).toBe('bottom');
+    expect(document.querySelector('.cdp-concept-tip').dataset.requestedAlign).toBe('center');
+    expect(host.querySelectorAll('tbody tr.is-selected')).toHaveLength(1);
+    expect(window.matchMedia).toHaveBeenCalledTimes(1);
+    await renderProfile();
+    expect(query.removeEventListener).toHaveBeenCalledWith('change',listener);
+  }finally{
+    if(descriptor)Object.defineProperty(window,'matchMedia',descriptor);
+    else delete window.matchMedia;
+  }
 });

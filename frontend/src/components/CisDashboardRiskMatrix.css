@@ -44,7 +44,7 @@
   --bp-card:var(--cc-card,#fff); --bp-border:var(--cc-border,#dfe6f1); --bp-text:var(--cc-text,#10213b);
   --bp-muted:var(--cc-muted,#627594); --bp-focus:var(--cc-blue,#225aca); --cc-risk-cell-height:42px;
   align-self:stretch; padding:17px 18px; border-color:var(--bp-border); background:var(--bp-card); color:var(--bp-text);
-  font:13px/1.45 'GoverNara Policy Vendor Inter',Inter,Arial,sans-serif;
+  font:13px/1.45 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif;
 }
 .cis-dashboard-risk[data-concept="true"] > header { align-items:flex-start; gap:10px; }
 .cis-dashboard-risk[data-concept="true"] > header h2 { font-size:14px; font-weight:650; line-height:1.45; letter-spacing:-.2px; }
@@ -71,29 +71,29 @@
 .cis-dashboard-risk[data-concept="true"] > .cc-risk-caption { margin:9px 0 0 18px; font-size:9px; line-height:1.45; }
 .cis-dashboard-risk[data-concept="true"] > .cis-dashboard-risk-summary:not(.sr-only) { margin-top:6px; font-size:9px; }
 
-.cis-dashboard-risk-tooltip.ui-tooltip[data-concept="true"] {
+.cis-dashboard-risk-tooltip.ui-tooltip.cis-dashboard-concept-portal[data-concept="true"][data-state] {
   z-index:90; width:300px; max-width:calc(100vw - 20px); max-height:calc(100dvh - 20px); overflow:auto;
   padding:13px 14px; border:1px solid var(--cc-border,#dfe6f1); border-radius:9px;
   background:var(--cc-card,#fff); color:var(--cc-text,#10213b); box-shadow:var(--cc-shadow,0 10px 30px #10213b18);
-  font:11px/1.45 'GoverNara Policy Vendor Inter',Inter,Arial,sans-serif; animation:none;
+  font:11px/1.45 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif; animation:none;
 }
 .cis-dashboard-risk-tooltip[data-concept="true"] h3 { margin:0 15px 0 0; font-size:13px; font-weight:700; line-height:1.45; }
 .cis-dashboard-risk-tooltip[data-concept="true"] p { margin:3px 0 0; color:var(--cc-muted,#627594); font-size:11.5px; line-height:1.45; }
 .cis-dashboard-risk-tooltip[data-concept="true"] ul { margin:7px 0 0; padding-left:15px; color:var(--cc-muted,#627594); font-size:10.5px; }
 
 /* DialogContent renders this overlay immediately before its own portaled content. */
-.ui-overlay:has(+ .cis-dashboard-risk-selection[data-concept="true"]) { background:#0b17355c; backdrop-filter:blur(2px); }
-.cis-dashboard-risk-selection.ui-dialog[data-concept="true"] {
+.ui-overlay[data-state]:has(+ .cis-dashboard-risk-selection.ui-dialog.cis-dashboard-concept-portal[data-concept="true"]) { background:#0b17355c; backdrop-filter:blur(2px); }
+.cis-dashboard-risk-selection.ui-dialog.cis-dashboard-concept-portal[data-concept="true"][data-state] {
   display:block; width:min(680px,calc(100vw - 32px)); max-width:680px; max-height:calc(100dvh - 32px); overflow:hidden;
   padding:0; border:1px solid var(--cc-border,#dfe6f1); border-radius:12px;
   background:var(--cc-card,#fff); color:var(--cc-text,#10213b); box-shadow:0 25px 100px #07142b55;
-  font:13px/1.45 'GoverNara Policy Vendor Inter',Inter,Arial,sans-serif;
+  font:13px/1.45 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif;
 }
 .cis-dashboard-risk-selection[data-concept="true"] .cc-risk-selection-head { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding:20px 22px 16px; border-bottom:1px solid var(--cc-border,#dfe6f1); }
 .cis-dashboard-risk-selection[data-concept="true"] .cc-risk-eyebrow { margin:0 0 6px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(--cc-muted,#627594); }
 .cis-dashboard-risk-selection[data-concept="true"] h2 { margin:0; font-size:18px; font-weight:650; line-height:1.45; letter-spacing:-.2px; }
 .cis-dashboard-risk-selection[data-concept="true"] .cc-risk-selection-head div > p:last-child { margin:3px 0 0; font-size:11.5px; line-height:1.45; color:var(--cc-muted,#627594); }
-.cis-dashboard-risk-selection[data-concept="true"] .cc-risk-close { flex:none; padding:0 2px; border:0; background:none; color:var(--cc-muted,#627594); font:24px/1 'GoverNara Policy Vendor Inter',Inter,Arial,sans-serif; cursor:pointer; }
+.cis-dashboard-risk-selection[data-concept="true"] .cc-risk-close { flex:none; padding:0 2px; border:0; background:none; color:var(--cc-muted,#627594); font:24px/1 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif; cursor:pointer; }
 .cis-dashboard-risk-selection[data-concept="true"] .cc-risk-selection-body { padding:18px 22px; max-height:calc(100dvh - 170px); overflow:auto; }
 .cis-dashboard-risk-selection[data-concept="true"] .cc-risk-selection-body > p { margin:0 0 9px; }
 .cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list { display:grid; gap:9px; }

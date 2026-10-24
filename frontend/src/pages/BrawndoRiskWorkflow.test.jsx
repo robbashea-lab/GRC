@@ -85,13 +85,35 @@ test('create lock prevents duplicate submission and cancel keeps an unfinished d
   await act(async()=>resolve({data:{risk_id:'server-risk'}}));
 });
 
-test.each(['unsupported-mode','other-client','loading','mismatch','wrong-route'])('creation presentation stays off for %s',async condition=>{
+test.each(['unsupported-mode','other-client','mismatch','wrong-route'])('creation presentation stays off for %s',async condition=>{
   if(condition==='wrong-route'){mockPath='/dashboard';window.history.replaceState({},'','/dashboard');}
   if(condition==='unsupported-mode'){mockAuth.workspaceMode='authenticated';mockAuth.user.workspace_mode='authenticated';}
   if(condition==='other-client'){mockOrg.currentClientId='demo_dunder';mockOrg.currentClient={client_id:'demo_dunder',name:'Brawndo',status:'active'};rememberClient('demo_dunder');}
-  if(condition==='loading')mockOrg.loading=true;
   if(condition==='mismatch')rememberClient('different-client');
   const dialog=await open();
   expect(dialog.className).not.toContain('brawndo-risk-workflow');
   expect(dialog.querySelector('.rw-scale')).toBeNull();
+});
+
+test('organization loading withholds creation until the matching client context resolves',async()=>{
+  mockOrg={...mockOrg,loading:true};
+  await act(async()=>root.render(<RiskRegister/>));
+  const frame=container.querySelector('[data-testid="risks-navigation-loading"]');
+  expect(frame?.querySelector('[role="status"]')?.textContent).toContain('Loading risks');
+  expect(container.querySelector('h1')?.textContent).toBe('Brawndo Risks');
+  expect(container.querySelector('[data-testid="new-risk"]')).toBeNull();
+  expect(container.querySelector('table,[role="table"]')).toBeNull();
+  expect(document.querySelector('[data-testid="new-risk-dialog"]')).toBeNull();
+  expect(api.post).not.toHaveBeenCalled();
+
+  mockOrg={...mockOrg,loading:false};
+  const dialog=await open();
+  expect(container.querySelector('[data-testid="risks-navigation-loading"]')).toBeNull();
+  expect(dialog.className).toContain('brawndo-risk-workflow');
+  expect(api.post).not.toHaveBeenCalled();
+  await complete(dialog);
+  await click(dialog.querySelector('[data-testid="new-risk-save"]'));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(api.post).toHaveBeenCalledWith('/risks',expect.objectContaining({client_id:'demo_brawndo',title:'Restore dependencies',likelihood_score:3,impact_score:4}));
+  expect(document.querySelector('[data-testid="new-risk-dialog"]')).toBeNull();
 });
