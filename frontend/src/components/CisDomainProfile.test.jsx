@@ -19,8 +19,13 @@ test.each([1,2,3])('native IG%s domain table, radar alternatives and rates agree
   const domains=cisSecurityDomainMapping(group),rows=host.querySelectorAll('tbody tr');
   expect(rows).toHaveLength(domains.length);
   expect(host.querySelectorAll('.cdp-radar-point')).toHaveLength(domains.length);
+  expect(host.querySelectorAll('.cdp-axis-label')).toHaveLength(domains.length);
   for(const [index,domain] of domains.entries()){
     expect(rows[index].textContent).toContain(domain.label);
+    const axis=host.querySelectorAll('.cdp-axis-label')[index];
+    expect(axis.getAttribute('aria-label')).toBe(`${domain.label}: 0.0%`);
+    expect(axis.querySelector('.cdp-axis-rate').textContent).toBe('0.0%');
+    expect([...axis.querySelectorAll('tspan:not(.cdp-axis-rate)')].map(line=>line.textContent).join(' ')).toBe(domain.label);
     expect(rows[index].querySelectorAll('td')[1].textContent).toBe(String(domain.safeguardIds.length));
     expect(rows[index].querySelectorAll('td')[2].textContent).toBe('0.0%');
   }
@@ -111,4 +116,35 @@ test('tap details stay readable after finger leaves until Escape or an outside i
   expect(document.querySelectorAll('.cdp-domain-tip')).toHaveLength(1);
   await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
   expect(document.querySelector('.cdp-domain-tip')).toBeNull();
+});
+
+
+test('named axis and adjacent table use the same native rounded implemented rate',async()=>{
+  const source=cisWorkspace('synthetic',3);
+  source.assessments[0].status='addressed';
+  source.implementation_position.implemented=1;
+  source.implementation_position.counts.find(row=>row.key==='addressed').count=1;
+  source.implementation_position.counts.find(row=>row.key==='not_assessed').count--;
+  await act(async()=>root.render(<CisDomainProfile source={source} clientId="synthetic" implementationGroup={3}/>));
+  const domain=cisSecurityDomainMapping(3)[0],rate=`${(100/domain.safeguardIds.length).toFixed(1)}%`;
+  expect(host.querySelector('.cdp-axis-label').getAttribute('aria-label')).toBe(`${domain.label}: ${rate}`);
+  expect(host.querySelector('.cdp-axis-rate').textContent).toBe(rate);
+  expect(host.querySelector('tbody tr td:last-child').textContent).toBe(rate);
+});
+
+test('a native domain with no applicable safeguards keeps its name and N/A instead of an invented percentage',async()=>{
+  const source=cisWorkspace('synthetic',3),domain=cisSecurityDomainMapping(3)[0];
+  for(const row of source.assessments.filter(row=>domain.safeguardIds.includes(row.definition_id))){
+    row.status='not_applicable';row.na_rationale='Synthetic applicability decision';
+  }
+  source.implementation_position.excluded=domain.safeguardIds.length;
+  source.implementation_position.denominator-=domain.safeguardIds.length;
+  source.implementation_position.counts.find(row=>row.key==='not_assessed').count-=domain.safeguardIds.length;
+  await act(async()=>root.render(<CisDomainProfile source={source} clientId="synthetic" implementationGroup={3}/>));
+  expect(host.querySelectorAll('.cdp-axis-label')).toHaveLength(14);
+  expect(host.querySelector('.cdp-axis-label').getAttribute('aria-label')).toBe(`${domain.label}: N/A`);
+  expect(host.querySelector('.cdp-axis-rate').textContent).toBe('N/A');
+  expect(host.querySelector('tbody tr td:last-child').textContent).toBe('N/A');
+  expect(host.querySelectorAll('.cdp-radar-point')).toHaveLength(13);
+  expect(host.querySelector('.cdp-value')).toBeNull();
 });

@@ -396,7 +396,7 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
   }, [inline]);
   const selected = points.find(point => identity(point) === active) || points.at(-1);
   const low = 0, high = 100;
-  const height = cisDashboardProfile ? 236 : inline ? 284 : 296, left = 44, right = width - 72, top = inline ? 32 : 26, bottom = height - 30;
+  const height = cisDashboardProfile ? 208 : inline ? 284 : 296, left = 44, right = width - 72, top = inline ? 32 : 26, bottom = height - 30;
   const x = point => left + (Date.parse(point.display_at || snapshotTime(point)) - Date.parse(start)) / (Date.parse(asOf) - Date.parse(start)) * (right - left);
   const y = value => bottom - (value - low) / (high - low) * (bottom - top);
   const step = high - low <= 30 ? 5 : high - low <= 60 ? 10 : 25, ticks = [];
