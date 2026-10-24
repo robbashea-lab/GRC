@@ -2,6 +2,8 @@ import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {guidedCatalog,versionForSafeguard,generateResult} from '../lib/guidedAssessment';
 import {readStore,saveStore,ids,STORE_KEY} from './store';
+import * as demoStore from './store';
+import {rememberFiles,clearFileCache} from './evidenceStorage';
 import {createBrawndoScenarioDateSelector} from './brawndoReportingHistory';
 import {prepareGuidedContext,frameworkRequest} from './frameworks';
 import lineageContract from '../../../backend/tests/fixtures/guided-lineage-contract.json';
@@ -418,5 +420,130 @@ test('unavailable native hashing fails explicitly without fabricated lineage or 
   const crypto=globalThis.crypto;
   try{globalThis.crypto={};await expect(api.put(path,pilotBody)).rejects.toMatchObject({response:{status:503}});}
   finally{globalThis.crypto=crypto;}
+  expect((await api.get(path)).data.revision).toBe(0);
+});
+
+async function duringGuidedHash(request,change){
+  const subtle=globalThis.crypto.subtle,original=subtle.digest.bind(subtle);
+  let arrived,release,pending;
+  const started=new Promise(resolve=>{arrived=resolve;}),paused=new Promise(resolve=>{release=resolve;});
+  const digest=jest.spyOn(subtle,'digest').mockImplementation(async(...args)=>{arrived();await paused;return original(...args);});
+  try{
+    pending=request();pending.catch(()=>undefined);await started;await change();release();return await pending;
+  }finally{release();digest.mockRestore();if(pending)await Promise.allSettled([pending]);}
+}
+
+test('unchanged guided reads reuse only their own snapshot and return independently mutable answers',async()=>{
+  const saved=sessionStorage.getItem(STORE_KEY),reads=jest.spyOn(demoStore,'readStore');
+  let first;
+  try{first=(await api.get(path)).data;expect(reads).toHaveBeenCalledTimes(1);}
+  finally{reads.mockRestore();}
+  expect(first).toMatchObject({revision:0,answers:{},lineage_known:true});
+  first.answers.inventory='local unsaved change';
+  expect((await api.get(path)).data.answers).toEqual({});
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+});
+
+test.each(['parser','storage reader'])('a changed %s hook while hashing takes the original reload path',async kind=>{
+  const saved=sessionStorage.getItem(STORE_KEY),reads=jest.spyOn(demoStore,'readStore');let hook;
+  try{
+    const response=await duringGuidedHash(()=>api.get(path),()=>{
+      if(kind==='parser'){const parse=JSON.parse;hook=jest.spyOn(JSON,'parse').mockImplementation((...args)=>parse(...args));}
+      else{const get=Storage.prototype.getItem;hook=jest.spyOn(Storage.prototype,'getItem').mockImplementation(function(...args){return get.apply(this,args);});}
+    });
+    expect(reads).toHaveBeenCalledTimes(2);expect(response.data).toMatchObject({revision:0,answers:{}});
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  }finally{hook?.mockRestore();reads.mockRestore();}
+});
+
+test.each(['parser','storage reader'])('removing an initial %s hook while hashing still reloads authoritative state',async kind=>{
+  const reads=jest.spyOn(demoStore,'readStore');let hook;
+  try{
+    if(kind==='parser'){const parse=JSON.parse;hook=jest.spyOn(JSON,'parse').mockImplementation((...args)=>parse(...args));}
+    else{const get=Storage.prototype.getItem;hook=jest.spyOn(Storage.prototype,'getItem').mockImplementation(function(...args){return get.apply(this,args);});}
+    const response=await duringGuidedHash(()=>api.get(path),()=>hook.mockRestore());
+    expect(reads).toHaveBeenCalledTimes(2);expect(response.data).toMatchObject({revision:0,answers:{}});
+  }finally{hook?.mockRestore();reads.mockRestore();}
+});
+
+test('restoring the native parser while hashing cannot retain a hook-derived permission decision',async()=>{
+  editStore(db=>{db.user.role='client_readonly';});
+  const saved=sessionStorage.getItem(STORE_KEY),parse=JSON.parse;
+  const hook=jest.spyOn(JSON,'parse').mockImplementation((...args)=>{
+    const parsed=parse(...args);if(parsed?.user)parsed.user.role='platform_admin';return parsed;
+  });
+  try{
+    await expect(duringGuidedHash(()=>api.put(path,pilotBody),()=>hook.mockRestore())).rejects.toMatchObject({response:{status:403}});
+  }finally{hook.mockRestore();}
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  expect(readStore().user.role).toBe('client_readonly');
+  expect((await api.get(path)).data.revision).toBe(0);
+});
+
+test('exact-byte ABA retains the current authoritative state without sharing mutable request objects',async()=>{
+  const saved=sessionStorage.getItem(STORE_KEY);
+  const response=await duringGuidedHash(()=>api.put(path,pilotBody),()=>{
+    sessionStorage.setItem(STORE_KEY,'{"temporary_external_value":true}');
+    sessionStorage.setItem(STORE_KEY,saved);
+  });
+  expect(response.data).toMatchObject({revision:1,answers:body.answers});
+  response.data.answers.inventory='not persisted';
+  expect((await api.get(path)).data.answers).toEqual(body.answers);
+});
+
+test.each(['clear','replace','partial replacement','evict'])('a same-byte evidence cache %s while hashing cannot reuse stale file contents',async change=>{
+  const payload=btoa('a'.repeat(20000)),replacement=btoa('b'.repeat(20000));
+  const file=(await api.post('/evidence',{client_id:'demo_brawndo',filename:'cache-race.bin',mime_type:'application/octet-stream',content_base64:payload})).data;
+  const saved=sessionStorage.getItem(STORE_KEY),metadata={...file,content_base64:undefined,demo_file_storage:'session_only'};
+  expect((await api.get('/evidence/'+file.evidence_id+'/download')).data.content_base64).toBe(payload);
+  await duringGuidedHash(()=>api.put(path,pilotBody),()=>{
+    if(change==='clear')clearFileCache();
+    else if(change==='evict'){
+      const large=btoa('e'.repeat(1024*1024));
+      const rows=[{...file,content_base64:payload},...Array.from({length:4},(_,i)=>({evidence_id:'cache-eviction-'+i,client_id:'demo_brawndo',content_base64:large}))];
+      rememberFiles({evidence:rows},{evidence:rows.map(({content_base64,...row})=>row)});
+    }else{
+      const rows=[{...file,content_base64:replacement}],persisted=[metadata];
+      if(change==='partial replacement'){
+        rows.push({evidence_id:'cache-failed-row',get content_base64(){throw new Error('Synthetic partial cache update');}});
+        persisted.push({evidence_id:'cache-failed-row'});
+        expect(()=>rememberFiles({evidence:rows},{evidence:persisted})).toThrow('Synthetic partial cache update');
+      }else rememberFiles({evidence:rows},{evidence:persisted});
+    }
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  });
+  expect((await api.get(path)).data.revision).toBe(1);
+  if(change==='clear'||change==='evict')await expect(api.get('/evidence/'+file.evidence_id+'/download')).rejects.toThrow('metadata and relationships are preserved');
+  else expect((await api.get('/evidence/'+file.evidence_id+'/download')).data.content_base64).toBe(replacement);
+});
+
+test('storage becoming unreadable during hashing preserves its native error classification',async()=>{
+  const get=Storage.prototype.getItem;let storage;
+  try{
+    await expect(duringGuidedHash(()=>api.get(path),()=>{
+      storage=jest.spyOn(Storage.prototype,'getItem').mockImplementation(function(key){if(key===STORE_KEY)throw new DOMException('Synthetic denied read','SecurityError');return get.call(this,key);});
+    })).rejects.toMatchObject({response:{data:{storage_code:'STORAGE_UNAVAILABLE'}}});
+  }finally{storage?.mockRestore();}
+  expect((await api.get(path)).data.revision).toBe(0);
+});
+
+test('cancellation while hashing cannot commit a guided checkpoint',async()=>{
+  const controller=new AbortController(),saved=sessionStorage.getItem(STORE_KEY);
+  await expect(duringGuidedHash(()=>api.put(path,pilotBody,{signal:controller.signal}),()=>controller.abort())).rejects.toMatchObject({code:'ERR_CANCELED'});
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);expect((await api.get(path)).data.revision).toBe(0);
+});
+
+test('failed storage commit after hashing retains the prior authoritative snapshot',async()=>{
+  const saved=sessionStorage.getItem(STORE_KEY),set=Storage.prototype.setItem;let storage;
+  try{
+    await expect(duringGuidedHash(()=>api.put(path,pilotBody),()=>{
+      storage=jest.spyOn(Storage.prototype,'setItem').mockImplementation(function(key,value){if(key===STORE_KEY)throw new DOMException('Synthetic full store','QuotaExceededError');return set.call(this,key,value);});
+    })).rejects.toMatchObject({response:{data:{storage_code:'QUOTA_EXCEEDED'}}});
+  }finally{storage?.mockRestore();}
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);expect((await api.get(path)).data.revision).toBe(0);
+});
+
+test('re-entering the demo during hashing invalidates the prior request generation',async()=>{
+  await expect(duringGuidedHash(()=>api.put(path,pilotBody),()=>api.post('/demo/enter'))).rejects.toMatchObject({response:{status:401}});
   expect((await api.get(path)).data.revision).toBe(0);
 });

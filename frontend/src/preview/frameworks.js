@@ -49,8 +49,8 @@ function guidedScope(db,row){
     .replace(/[\u007f-\uffff]/g,char=>'\\u'+char.charCodeAt(0).toString(16).padStart(4,'0'));
   return {serialized,base_assessment_token:row.last_saved||row.last_assessed||null};
 }
-// Hash before dispatch. The adapter reloads storage after this await, then the
-// synchronous handler compares trusted inputs and applies its revision check.
+// Hash before dispatch. The adapter revalidates storage and file-cache freshness
+// after this await; the synchronous handler still checks trusted inputs and revision.
 export function prepareGuidedContext(db,path,method,body){
   const [,kind,id,operation,detail]=path.split('/');
   if(kind!=='framework_assessments'||!(operation==='guided-assessment'&&!detail||method==='patch'&&!operation&&body.guided_assessment_source))return null;

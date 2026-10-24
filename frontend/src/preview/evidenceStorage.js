@@ -2,6 +2,8 @@ import {DEMO_INLINE_LIMIT,lastStorageError} from '../lib/demoStorageErrors';
 // Large file contents never enter Web Storage. This cache is deliberately
 // bounded and document-local: reload/eviction leaves the metadata intact.
 const files=new Map(),MAX_CACHE_BYTES=8*1024*1024;
+let fileCacheRevision=Symbol();
+export const getEvidenceCacheRevision=()=>fileCacheRevision;
 const INLINE_BUDGET_BYTES=64*1024;
 export const payloadBytes=value=>typeof value==='string'?value.length*2:0;
 export const fileBytes=value=>{const raw=(value||'').split(',').pop();return Math.floor(raw.length*3/4)-(raw.endsWith('==')?2:raw.endsWith('=')?1:0);};
@@ -44,6 +46,8 @@ export function lightweightStore(db,previousEvidence=[]){
   return {...db,reviews:compactReviews(db.reviews),evidence:evidenceMetadata(evidence,inline)};
 }
 export function rememberFiles(db,persisted=lightweightStore(db)){
+  // Invalidate request snapshots before any mutation, including a partially failed update.
+  fileCacheRevision=Symbol();
   const ids=new Set((db.evidence||[]).map(e=>e.evidence_id));
   for(const id of files.keys())if(!ids.has(id))files.delete(id);
   for(const [i,e] of (db.evidence||[]).entries())if(e.content_base64&&!persisted.evidence[i].content_base64){files.delete(e.evidence_id);files.set(e.evidence_id,{client_id:e.client_id,content:e.content_base64});}
@@ -55,7 +59,7 @@ export function restoreFiles(db){
   db.reviews=expandReviews(db.reviews);
   return db;
 }
-export const clearFileCache=()=>files.clear();
+export const clearFileCache=()=>{fileCacheRevision=Symbol();files.clear();};
 export function storageDiagnostics(saved,db){
   const payloads=(db.evidence||[]).filter(e=>e.content_base64);
   const persistedBytes=payloads.reduce((n,e)=>n+payloadBytes(e.content_base64),0);

@@ -3,7 +3,7 @@ import {previewAdapter} from './adapter';
 import {STORE_KEY,readStore,saveStore,seedStore,clearEvidenceFiles,demoDiagnostics} from './store';
 import {compressDemoStore,decodeDemoStore} from './demoStorageCodec';
 import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
-import {clearFileCache,lightweightEvidence,lightweightStore,rememberFiles,restoreFiles,storageDiagnostics} from './evidenceStorage';
+import {clearFileCache,getEvidenceCacheRevision,lightweightEvidence,lightweightStore,rememberFiles,restoreFiles,storageDiagnostics} from './evidenceStorage';
 const api=axios.create({adapter:previewAdapter});
 const persisted=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
 const OPENED_AT='2026-10-13T17:00:00.000Z',RESET_AT='2026-10-13T18:00:00.000Z';
@@ -339,4 +339,23 @@ test('Review object serializers retain callback ordering, failures and independe
  expect(expanded[1].scope.nested[0].value).toBe('retained Unicode ✓');
  const broken={reviews:[{scope:{toJSON(){throw new Error('Synthetic serializer failure');}},occurrences:[{scope:{}}]}],evidence:[]};
  expect(()=>lightweightStore(broken)).toThrow('Synthetic serializer failure');
+});
+
+test('file-cache freshness changes before partial updates and clearing without changing persisted metadata',()=>{
+ const metadata={evidence_id:'synthetic-cache-file',client_id:'demo_brawndo',demo_file_storage:'session_only'};
+ const oldPayload=btoa('old temporary content'),newPayload=btoa('new temporary content');
+ const persisted={evidence:[{...metadata}]},saved=sessionStorage.getItem(STORE_KEY);
+ rememberFiles({evidence:[{...metadata,content_base64:oldPayload}]},persisted);
+ const before=getEvidenceCacheRevision();
+ expect(restoreFiles({evidence:[{...metadata}],reviews:[]}).evidence[0].content_base64).toBe(oldPayload);
+ const broken={evidence_id:'synthetic-failed-file',get content_base64(){throw new Error('Synthetic cache update failure');}};
+ expect(()=>rememberFiles({evidence:[{...metadata,content_base64:newPayload},broken]},
+   {evidence:[{...metadata},{evidence_id:broken.evidence_id}]})).toThrow('Synthetic cache update failure');
+ const partiallyUpdated=getEvidenceCacheRevision();
+ expect(partiallyUpdated).not.toBe(before);
+ expect(restoreFiles({evidence:[{...metadata}],reviews:[]}).evidence[0].content_base64).toBe(newPayload);
+ expect(persisted).toEqual({evidence:[metadata]});
+ clearFileCache();expect(getEvidenceCacheRevision()).not.toBe(partiallyUpdated);
+ expect(restoreFiles({evidence:[{...metadata}],reviews:[]}).evidence[0].content_base64).toBeUndefined();
+ expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
 });
