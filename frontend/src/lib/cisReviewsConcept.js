@@ -2,8 +2,16 @@ import {calendarDay} from './managementDates';
 import {occurrenceId} from './reviewOccurrences';
 import {reviewMatches} from './tableFilters';
 import {quarterToday,quarterTimelineBounds} from './quarterlyProgramTimeline';
+import {reviewDisplayValue} from './reviewPresentation';
 
 export {currentQuarter,shiftQuarter,quarterToday} from './quarterlyProgramTimeline';
+
+const reviewStatusLabels={upcoming:'Upcoming',in_progress:'In progress',not_started:'Not started',needs_scheduling:'Needs scheduling'};
+
+// Concept labels are display-only; native history and stored status values stay unchanged.
+export function cisReviewStatusLabel(value) {
+  return Object.hasOwn(reviewStatusLabels,value)?reviewStatusLabels[value]:reviewDisplayValue('status',value);
+}
 
 export const CIS_REVIEW_CADENCES = [
   {kind:'monthly',label:'Monthly',color:'#2f66c6'},

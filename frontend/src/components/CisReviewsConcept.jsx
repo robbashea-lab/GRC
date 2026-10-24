@@ -4,7 +4,7 @@ import {Dialog, DialogContent, DialogTitle, DialogDescription} from '@/component
 import {personLabel} from '@/lib/people';
 import {reviewDisplayValue} from '@/lib/reviewPresentation';
 import {CIS_REVIEW_CADENCES, cisReviewCadence, cisReviewEvents, cisReviewQuarter, cisReviewAgenda,
-  cisReviewUrgency, formatCisReviewDate, currentQuarter, shiftQuarter, quarterToday} from '@/lib/cisReviewsConcept';
+  cisReviewStatusLabel, cisReviewUrgency, formatCisReviewDate, currentQuarter, shiftQuarter, quarterToday} from '@/lib/cisReviewsConcept';
 
 const dayString = day => new Date(day * 86400000).toISOString().slice(0, 10);
 const countLabel = count => `${count} ${count === 1 ? 'review' : 'reviews'}`;
@@ -114,7 +114,7 @@ export default function CisReviewsConcept({rows = [], users = [], scopeKey, avai
     onOpenReview?.(current.record);
   };
   const owner = event => personLabel(users, event.record.owner_id);
-  const status = event => reviewDisplayValue('status', event.record.status);
+  const status = event => cisReviewStatusLabel(event.record.status);
   const cadenceLabel = event => reviewDisplayValue('recurrence', event.record.recurrence);
   const listTitle = activePopup?.type === 'date' ? formatCisReviewDate(activePopup.date, {long: true})
     : activePopup?.type === 'agenda' ? `${mode === 'overdue' ? 'Overdue' : 'Upcoming'} reviews` : 'Quarter review dates';

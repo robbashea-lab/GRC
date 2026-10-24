@@ -26,6 +26,8 @@ The compiled dark Reviews check also reproduced native design-system rules overr
 
 The exact final commit/tree must be obtained from Git and bound to a fresh complete integrated campaign, both unchanged CI build entrypoints, required remote release checks, provider Live revision, served assets and affected native hosted paths. Owner-local and historical native results remain dated; do not add their totals or relabel them as integrated qualification.
 
+The final c8bd5c3 compiled keyboard-tooltip check found the overview and date list still used native lowercase status text while the approved register used sentence case. The same four-label, own-property-guarded concept mapping now lives in the existing `cisReviewsConcept` presentation module and is used by all three concept consumers. Unknown and missing status fallbacks, stored values, native history, editors and commands remain unchanged. Eight additional component regressions reproduce the known-label mismatch and retain unknown/prototype-name fallbacks, exact native opening and record equality. The c8 evidence remains dated; this correction requires a fresh complete campaign, both builds, exact-head CI and final compiled/hosted proof before deployment.
+
 ## QA and acceptance limits
 
 Mutations are limited to explicitly allocated disposable synthetic records in the existing isolated local fixture. Preserve the protected assessment and genuine history. No shared staging records, accounts or access changes, reseeding or implicit migrations are permitted. Use finite sequential browser/build leases and return them explicitly; do not start competing servers or deployments.

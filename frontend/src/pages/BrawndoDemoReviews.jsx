@@ -9,9 +9,7 @@ import {personLabel} from '@/lib/people';
 import {reviewDaysUntil} from '@/lib/brawndoReviews';
 import {displayDay,displayRecordedAt} from '@/lib/managementDates';
 import {calendarDay,reviewMatches} from '@/lib/tableFilters';
-import {cisReviewUrgency,formatCisReviewDate} from '@/lib/cisReviewsConcept';
-
-const reviewStatusLabels={upcoming:'Upcoming',in_progress:'In progress',not_started:'Not started',needs_scheduling:'Needs scheduling'};
+import {cisReviewStatusLabel,cisReviewUrgency,formatCisReviewDate} from '@/lib/cisReviewsConcept';
 
 export default function BrawndoDemoReviews({clientName='Client',children,rows=[],theme,view,onView,actions,available=true,recordOpen=false,onOpenReview,scopeKey,users=[],...props}){
   const now=new Date(),summary=reviewSummary(rows,now),today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
@@ -61,7 +59,7 @@ export function BrawndoReviewRows({rows,users,checked,toggleOne,toggleAll,allChe
       <tbody>{loading||error||!displayRows.length?<tr><td colSpan={history?5:7} className="bdr-empty" role={error?'alert':loading?'status':undefined}>{loading?'Loading reviews…':error?'Reviews unavailable':'No reviews match these filters.'}</td></tr>:displayRows.slice((current-1)*10,current*10).map((row,index)=>{
         const owner=history&&!row.completed_by?'Actor not recorded':personLabel(users,history?row.completed_by:row.owner_id);
         const urgency=cisReviewUrgency(row.due_date),schedule=reviewSchedule(row);
-        const status=!history&&Object.hasOwn(reviewStatusLabels,row.status)?reviewStatusLabels[row.status]:reviewDisplayValue('status',row.status);
+        const status=history?reviewDisplayValue('status',row.status):cisReviewStatusLabel(row.status);
         return <tr key={row.occurrence_id||row.review_id} className={'bdr-trow'+(checked.has(row.review_id)?' bdr-selected':'')+(!history&&urgency.days!==null&&urgency.days<0?' overdue-row':'')} onClick={()=>onOpen(row)} data-testid={`reviews-row-${index}`}>
           {!history&&<td className="check-col" onClick={event=>event.stopPropagation()}><input type="checkbox" className="bdr-cb" checked={checked.has(row.review_id)} onChange={()=>toggleOne(row.review_id)} aria-label={'Select '+row.title}/></td>}
           <td className="bdr-c-item"><button className="bdr-name" onClick={event=>{event.stopPropagation();onOpen(row);}}>{row.title}</button><div className="bdr-meta"><span>{reviewDisplayValue('review_type',row.review_type)}</span><span className="bdr-fwchip">{basisSummary(row)}</span>{history&&row.status==='cancelled'&&<span>Cancelled</span>}</div></td>

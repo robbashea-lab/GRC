@@ -28,6 +28,22 @@ test('five saved occurrences share one date and keep individual tooltip/list ide
   expect(onOpenReview).toHaveBeenCalledWith(rows[3]);
 });
 
+test.each([['upcoming','Upcoming'],['in_progress','In progress'],['not_started','Not started'],
+  ['needs_scheduling','Needs scheduling'],['custom_status','custom status'],['__proto__','  proto  '],
+  ['constructor','constructor'],['toString','toString']])(
+  'tooltip and date list share the approved status label for %s without changing the native record',async(status,label)=>{
+    const record={...rows[0],status},before=JSON.stringify(record),onOpenReview=jest.fn();
+    await render({rows:[record],onOpenReview});
+    const dot=container.querySelector('.review-dot');expect(dot).not.toBeNull();
+    await act(async()=>dot.focus());
+    expect(container.querySelector('.tip-meta').textContent.endsWith(`· ${label}`)).toBe(true);
+    await act(async()=>dot.click());
+    const entry=document.querySelector('[role="dialog"] .date-review');expect(entry).not.toBeNull();
+    expect([...entry.querySelectorAll('.list-details span')].pop().textContent).toBe(label);
+    await act(async()=>entry.click());
+    expect(onOpenReview).toHaveBeenCalledWith(record);expect(JSON.stringify(record)).toBe(before);
+  });
+
 test('quarter and cadence filter presentation without changing records, and Today appears only in current quarter',async()=>{
   await render();expect(container.querySelector('.today-line')).not.toBeNull();
   await act(async()=>button('Monthly').click());expect(container.querySelectorAll('.review-dot')).toHaveLength(1);

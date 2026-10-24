@@ -1,6 +1,6 @@
 import {calendarDay} from './managementDates';
 import {cisReviewEvents,cisReviewQuarter,cisReviewAgenda,cisReviewUrgency,cisReviewCadence,
-  formatCisReviewDate,currentQuarter,shiftQuarter,quarterToday,CIS_REVIEW_CADENCES} from './cisReviewsConcept';
+  cisReviewStatusLabel,formatCisReviewDate,currentQuarter,shiftQuarter,quarterToday,CIS_REVIEW_CADENCES} from './cisReviewsConcept';
 
 const row=(id,due='2026-11-29',extra={})=>({client_id:'client',review_id:id,
   current_occurrence_id:`occ-${id}`,title:'Same review title',due_date:due,status:'upcoming',recurrence:'monthly',...extra});
@@ -74,6 +74,11 @@ test('native viewer-local today does not shift literal due dates through UTC',()
 });
 
 test('placeholders and completed history never gain overdue styling; approved cadence colors are separate',()=>{
+  expect(cisReviewStatusLabel(null)).toBe('—');
+  expect(cisReviewStatusLabel(undefined)).toBe('—');
+  expect(cisReviewStatusLabel('')).toBe('—');
+  expect(cisReviewStatusLabel('completed')).toBe('completed');
+  expect(cisReviewStatusLabel('cancelled')).toBe('cancelled');
   expect(cisReviewUrgency(null,now)).toMatchObject({days:null,tone:'neutral',text:'Not scheduled'});
   expect(cisReviewUrgency('2026-01-01',now,true)).toMatchObject({tone:'completed',text:'Completed'});
   expect(formatCisReviewDate('bad')).toBe('Not scheduled');
