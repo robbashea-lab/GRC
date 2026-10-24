@@ -47,6 +47,12 @@ function winner(node,property,width,order){
           expect(parsed).not.toBe('');
           value=property==='background-color'&&decl.value.includes('var(')?decl.value:parsed;
         }
+        // The dialog contract inspects the actual overflow axes after shorthand reset.
+        if(['overflow-x','overflow-y'].includes(property)&&decl.prop==='overflow'){
+          const axes=decl.value.trim().split(/\s+/);
+          if(axes.length>2||axes.some(axis=>!['visible','hidden','clip','scroll','auto'].includes(axis)))throw new Error(`Unsupported overflow shorthand: ${decl.value}`);
+          value=property==='overflow-x'?axes[0]:axes[1]||axes[0];
+        }
         if(property.startsWith('padding-')&&decl.prop==='padding'){
           const style=document.createElement('div').style;style.padding=decl.value;value=style.getPropertyValue(property);
         }
@@ -189,5 +195,105 @@ test.each(controlOrders)('concept Action KPI weight and breakpoint size survive 
   expect({width,weight:winner(concept,'font-weight',width,order)}).toEqual({width,weight:'650'});
   expect({width,size:winner(concept,'font-size',width,order)}).toEqual({width,size:width<=760?'26px':'28px'});
   expect(winner(legacy,'font-weight',width,order)).toBe('600');
+ }
+});
+
+styles['CisRisksConcept.css']=postcss.parse(fs.readFileSync(path.join(__dirname,'CisRisksConcept.css'),'utf8'));
+const dialogFiles=[...controlFiles,'CisDashboardRiskMatrix.css','CisRisksConcept.css','SixSurfaceAppearance.css'];
+const dialogOrders=[dialogFiles,[...dialogFiles].reverse()];
+test.each(dialogOrders)('Reviews date-list retains its bounded shell and content-only scrolling in either stylesheet order %j',(...order)=>{
+ for(const theme of ['light','dark']){
+  document.documentElement.dataset.visualSurface='reviews';document.documentElement.dataset.visualTheme=theme;
+  const portal=document.createElement('div');fixture.appendChild(portal);
+  portal.innerHTML=`<div role="dialog" class="ui-dialog crr-root crr-list" data-state="open" data-theme="${theme}"><div class="dialog-shell"><div class="dialog-heading"><h2>Reviews due</h2></div><div class="dialog-content"></div><div class="dialog-footer"></div></div></div>`;
+  const dialog=portal.firstElementChild,content=dialog.querySelector('.dialog-content');
+  for(const width of [390,540,541,1280]){
+   const actual={theme,width,widthValue:winner(dialog,'width',width,order),maxHeight:winner(dialog,'max-height',width,order),maxWidth:winner(dialog,'max-width',width,order),overflowX:winner(dialog,'overflow-x',width,order),overflowY:winner(dialog,'overflow-y',width,order),padding:winner(dialog,'padding',width,order),gap:winner(dialog,'gap',width,order)};
+   expect(actual).toEqual({theme,width,widthValue:width<=540?'calc(100vw - 22px)':'min(710px,calc(100vw - 40px))',maxHeight:width<=540?'calc(100dvh - 24px)':'calc(100dvh - 56px)',maxWidth:'none',overflowX:'hidden',overflowY:'hidden',padding:'0',gap:'0'});
+   expect(winner(content,'overflow-y',width,order)).toBe('auto');
+   expect(winner(content,'max-height',width,order)).toBe('calc(100dvh - 245px)');
+   expect(winner(dialog.querySelector('h2'),'font-size',width,order)).toBe(width<=540?'19px':'20px');
+  }
+ }
+});
+test.each(dialogOrders)('Reviews date-list geometry does not change unmarked native or Risk dialogs in order %j',(...order)=>{
+ const portals=document.createElement('div');fixture.appendChild(portals);
+ portals.innerHTML='<div role="dialog" class="ui-dialog" data-state="open" data-testid="risks-drawer"></div><div role="dialog" class="ui-dialog cis-dashboard-risk-selection cis-dashboard-concept-portal" data-concept="true" data-theme="dark" data-state="open"></div>';
+ const withoutReviews=order.filter(name=>name!=='CisReviewsConcept.css');
+ for(const dialog of portals.children)for(const width of [390,540,541,1280])for(const property of ['width','max-width','max-height','overflow-x','overflow-y','padding','gap'])
+  expect({classes:dialog.className,width,property,value:winner(dialog,property,width,order)}).toEqual({classes:dialog.className,width,property,value:winner(dialog,property,width,withoutReviews)});
+});
+
+test.each(dialogOrders)('Action date-list also retains bounded shell and content-only scrolling in order %j',(...order)=>{
+ for(const theme of ['light','dark']){
+  document.documentElement.dataset.visualSurface='reviews';document.documentElement.dataset.visualTheme=theme;
+  const portal=document.createElement('div');fixture.appendChild(portal);
+  portal.innerHTML=`<div role="dialog" class="ui-dialog cia-root cia-selector" data-state="open" data-theme="${theme}"><div class="dialog-heading"></div><div class="dialog-content date-list"></div></div>`;
+  const dialog=portal.firstElementChild,content=dialog.querySelector('.dialog-content');
+  for(const width of [390,540,541,1280]){
+   expect({theme,width,widthValue:winner(dialog,'width',width,order),maxHeight:winner(dialog,'max-height',width,order),maxWidth:winner(dialog,'max-width',width,order),overflowX:winner(dialog,'overflow-x',width,order),overflowY:winner(dialog,'overflow-y',width,order),padding:winner(dialog,'padding',width,order),gap:winner(dialog,'gap',width,order),radius:winner(dialog,'border-radius',width,order),shadow:winner(dialog,'box-shadow',width,order)}).toEqual({theme,width,widthValue:width<=540?'calc(100vw - 22px)':'min(710px,calc(100vw - 40px))',maxHeight:width<=540?'calc(100dvh - 24px)':'calc(100dvh - 56px)',maxWidth:'none',overflowX:'hidden',overflowY:'hidden',padding:'0',gap:'0',radius:'11px',shadow:'0 24px 90px #08152440'});
+   expect(winner(content,'overflow-y',width,order)).toBe('auto');
+  }
+ }
+});
+test.each(dialogOrders)('Reviews overlay tint is owned by its actual sibling list and leaves native and Risk overlays unchanged in order %j',(...order)=>{
+ const portals=document.createElement('div');fixture.appendChild(portals);
+ portals.innerHTML='<div data-pair="reviews"><div class="ui-overlay" data-state="open"></div><div role="dialog" class="ui-dialog crr-root crr-list" data-theme="dark" data-state="open"></div></div><div data-pair="native"><div class="ui-overlay" data-state="open"></div><div role="dialog" class="ui-dialog" data-state="open"></div></div><div data-pair="risk"><div class="ui-overlay" data-state="open"></div><div role="dialog" class="ui-dialog cis-dashboard-risk-selection cis-dashboard-concept-portal" data-concept="true" data-theme="dark" data-state="open"></div></div>';
+ const overlay=portals.querySelector('[data-pair="reviews"] .ui-overlay');
+ for(const theme of ['light','dark']){
+  document.documentElement.dataset.visualSurface='reviews';document.documentElement.dataset.visualTheme=theme;
+  expect(winner(overlay,'background',1280,order)).toBe('#08152468');
+  expect(winner(overlay,'backdrop-filter',1280,order)).toBe('blur(2px)');
+ }
+ const withoutReviews=order.filter(name=>name!=='CisReviewsConcept.css');
+ for(const pair of ['native','risk'])for(const property of ['background','backdrop-filter']){
+  const native=portals.querySelector(`[data-pair="${pair}"] .ui-overlay`);
+  expect(winner(native,property,1280,order)).toBe(winner(native,property,1280,withoutReviews));
+ }
+});
+
+test.each(dialogOrders)('owned date-list fonts and palette tokens survive the actual shared surface chrome in order %j',(...order)=>{
+ for(const theme of ['light','dark']){
+  document.documentElement.dataset.visualTheme=theme;
+  for(const [surface,classes,font,card,text,line] of [['reviews','crr-root crr-list','GoverNara Policy Vendor Inter','--card','--text','--line'],['action-items','cia-root cia-selector','GoverNara Action Concept Inter','--cia-card','--cia-text','--cia-line'],['risks','cis-risks-concept cr-list-dialog','GoverNara CIS Risks Inter','--card','--text','--line']]){
+   document.documentElement.dataset.visualSurface=surface;
+   const dialog=document.createElement('div');fixture.appendChild(dialog);dialog.className=`ui-dialog ${classes}`;dialog.setAttribute('role','dialog');dialog.dataset.state='open';dialog.dataset.theme=theme;
+   expect(winner(dialog,'font-size',1280,order)).toBe('12px');
+   expect(winner(dialog,'line-height',1280,order)).toBe('1.45');
+   const family=winner(dialog,'font-family',1280,order);
+   expect(family).toBe(surface==='action-items'?'var(--cia-font)':'var(--font)');
+   expect(winner(dialog,surface==='action-items'?'--cia-font':'--font',1280,order)).toContain(font);
+   expect(winner(dialog,card,1280,order)).toBe(theme==='dark'?'#19283d':'#fff');
+   expect(winner(dialog,text,1280,order)).toBe(theme==='dark'?'#e3ebf8':surface==='risks'?'#0c1b34':'#10213b');
+   expect(winner(dialog,line,1280,order)).toBe(theme==='dark'?'#31435e':surface==='risks'?'#dce5f3':'#dfe6f1');
+  }
+ }
+});
+test.each(dialogOrders)('Action adjacent overlay retains the approved tint in both surface themes in order %j',(...order)=>{
+ for(const theme of ['light','dark']){
+  document.documentElement.dataset.visualSurface='action-items';document.documentElement.dataset.visualTheme=theme;
+  const portal=document.createElement('div');fixture.appendChild(portal);portal.innerHTML=`<div class="ui-overlay" data-state="open"></div><div class="ui-dialog cia-root cia-selector" data-state="open" data-theme="${theme}"></div>`;
+  expect(winner(portal.firstElementChild,'background',1280,order)).toBe('#08152468');
+  expect(winner(portal.firstElementChild,'backdrop-filter',1280,order)).toBe('blur(2px)');
+ }
+});
+
+test.each(dialogOrders)('Risk date-list retains its already-correct bounded geometry with shared chrome loaded in order %j',(...order)=>{
+ for(const theme of ['light','dark']){
+  document.documentElement.dataset.visualSurface='risks';document.documentElement.dataset.visualTheme=theme;
+  const dialog=document.createElement('div');fixture.appendChild(dialog);dialog.className='ui-dialog cis-risks-concept cr-list-dialog';dialog.dataset.state='open';dialog.dataset.theme=theme;
+  for(const width of [390,540,541,1280])expect({theme,width,widthValue:winner(dialog,'width',width,order),maxHeight:winner(dialog,'max-height',width,order),maxWidth:winner(dialog,'max-width',width,order),overflowX:winner(dialog,'overflow-x',width,order),overflowY:winner(dialog,'overflow-y',width,order),padding:winner(dialog,'padding',width,order),gap:winner(dialog,'gap',width,order),radius:winner(dialog,'border-radius',width,order),shadow:winner(dialog,'box-shadow',width,order)}).toEqual({theme,width,widthValue:width<=540?'calc(100vw - 22px)':'min(710px,calc(100vw - 40px))',maxHeight:width<=540?'calc(100dvh - 24px)':'calc(100dvh - 56px)',maxWidth:'none',overflowX:'hidden',overflowY:'hidden',padding:'0',gap:'0',radius:'11px',shadow:'0 24px 90px #08152440'});
+ }
+});
+test.each(dialogOrders)('Risk adjacent overlay retains approved tint in both themes without retheming full editors in order %j',(...order)=>{
+ for(const theme of ['light','dark']){
+  document.documentElement.dataset.visualSurface='risks';document.documentElement.dataset.visualTheme=theme;
+  const portal=document.createElement('div');fixture.appendChild(portal);portal.innerHTML=`<div class="ui-overlay" data-state="open"></div><div class="ui-dialog cis-risks-concept cr-list-dialog" data-state="open" data-theme="${theme}"></div><section><div class="ui-overlay" data-state="open"></div><div role="dialog" class="ui-dialog" data-state="open" data-testid="risks-drawer"></div></section>`;
+  expect(winner(portal.firstElementChild,'background',1280,order)).toBe('#08152468');
+  expect(winner(portal.firstElementChild,'backdrop-filter',1280,order)).toBe('blur(2px)');
+  const native=portal.querySelector('section .ui-overlay'),withoutConcepts=order.filter(name=>!['CisReviewsConcept.css','CisActionItemsConcept.css','CisRisksConcept.css'].includes(name));
+  for(const property of ['background','backdrop-filter'])expect(winner(native,property,1280,order)).toBe(winner(native,property,1280,withoutConcepts));
+  const form=portal.querySelector('[data-testid="risks-drawer"]');
+  for(const property of ['font-family','font-size','line-height','background','color','border-radius','width','max-height','overflow-y'])expect(winner(form,property,1280,order)).toBe(winner(form,property,1280,withoutConcepts));
  }
 });

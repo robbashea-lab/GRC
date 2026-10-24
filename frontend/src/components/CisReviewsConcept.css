@@ -1,9 +1,9 @@
 /* Approved Reviews reference CSS, scoped to page content and its own date list.
  * Native editors and the application shell do not inherit these tokens. */
 @font-face{font-family:"GoverNara Policy Vendor Inter";font-style:normal;font-weight:400 700;font-display:swap;src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2')}
-.crr-root{--font:"GoverNara Policy Vendor Inter",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--bg:#f4f6fb;--card:#fff;--text:#10213b;--muted:#647491;--line:#dfe6f1;--subtle:#f7f9fc;--blue:#225aca;--nav:#081524;--navactive:#29466d;--danger:#ad2e45;--danger-bg:#fff1f4;--gold:#966215;--gold-bg:#fff5df;--soon:#a16b09;--soon-bg:#fff0cd;--info:#245da8;--info-bg:#edf4ff;--shadow:0 14px 44px #10213b20;--sidebar:204px;--header:56px}
+.crr-root,:root .ui-dialog.crr-root.crr-list[data-state]{--font:"GoverNara Policy Vendor Inter",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--bg:#f4f6fb;--card:#fff;--text:#10213b;--muted:#647491;--line:#dfe6f1;--subtle:#f7f9fc;--blue:#225aca;--nav:#081524;--navactive:#29466d;--danger:#ad2e45;--danger-bg:#fff1f4;--gold:#966215;--gold-bg:#fff5df;--soon:#a16b09;--soon-bg:#fff0cd;--info:#245da8;--info-bg:#edf4ff;--shadow:0 14px 44px #10213b20;--sidebar:204px;--header:56px}
 .crr-root *{box-sizing:border-box}
-.crr-root{--font-body:var(--font);--font-heading:var(--font);margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:12px;line-height:1.45}
+.crr-root,:root .ui-dialog.crr-root.crr-list[data-state]{--font-body:var(--font);--font-heading:var(--font);margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:12px;line-height:1.45}
 .crr-root button,.crr-root input,.crr-root select{font:inherit}
 .crr-root button,.crr-root a,.crr-root input,.crr-root select{-webkit-tap-highlight-color:transparent}
 .crr-root button,.crr-root a{touch-action:manipulation}
@@ -205,7 +205,7 @@
 .crr-root .date-review .open-text{color:var(--blue);white-space:nowrap}
 .crr-root .activity-entry{padding:13px 0;border-bottom:1px solid var(--line);font-size:11px}
 .crr-root .activity-entry time{display:block;color:var(--muted);font-size:10px;margin-top:4px}
-.crr-root[data-theme="dark"]{--bg:#111c2d;--card:#19283d;--text:#e3ebf8;--muted:#a2b4d0;--line:#31435e;--subtle:#21334b;--danger:#f7a7b7;--danger-bg:#402936;--gold:#f3d18b;--gold-bg:#3b3327;--soon:#f3c86f;--soon-bg:#403522;--info:#b9d1ff;--info-bg:#233b5c;--shadow:0 14px 44px #0005}
+.crr-root[data-theme="dark"],:root .ui-dialog.crr-root.crr-list[data-state][data-theme="dark"]{--bg:#111c2d;--card:#19283d;--text:#e3ebf8;--muted:#a2b4d0;--line:#31435e;--subtle:#21334b;--danger:#f7a7b7;--danger-bg:#402936;--gold:#f3d18b;--gold-bg:#3b3327;--soon:#f3c86f;--soon-bg:#403522;--info:#b9d1ff;--info-bg:#233b5c;--shadow:0 14px 44px #0005}
 .crr-root[data-theme="dark"] .kpi:first-child{background:linear-gradient(110deg,#243852,var(--card))}
 .crr-root[data-theme="dark"] .due-badge.today{background:#233b5c;color:#b9d1ff}
 .crr-root[data-theme="dark"] .agenda-switch button span{background:#354862;color:#c3d3ec}
@@ -321,7 +321,7 @@
 .crr-list{width:calc(100vw - 22px);max-height:calc(100dvh - 24px)}
 .crr-root .dialog-shell{max-height:calc(100dvh - 26px)}
 .crr-root .dialog-heading{padding:17px 16px 13px;gap:8px}
-.crr-root .dialog-heading h2{font-size:19px}
+:root .ui-dialog.crr-root.crr-list[data-state] .dialog-heading h2{font-size:19px}
 .crr-root .dialog-content{padding:12px 16px 17px}
 .crr-root .dialog-footer{padding:12px 16px}
 .crr-root .date-review{padding:12px}
@@ -376,7 +376,7 @@
 .crr-root .bdr-c-cad small{font-size:8px}
 .crr-root .bdr-cb{accent-color:var(--blue);width:12px;height:12px;margin:0}
 .crr-root .bdr-empty{padding:36px;color:var(--muted);text-align:center}
-.crr-root.crr-list{padding:0;gap:0;width:min(710px,calc(100vw - 40px));max-width:none;max-height:calc(100dvh - 56px);overflow:hidden;border:1px solid var(--line);border-radius:11px;box-shadow:0 24px 90px #08152440;background:var(--card);color:var(--text)}
+:root .ui-dialog.crr-root.crr-list[data-state]{padding:0;gap:0;width:min(710px,calc(100vw - 40px));max-width:none;max-height:calc(100dvh - 56px);overflow:hidden;border:1px solid var(--line);border-radius:11px;box-shadow:0 24px 90px #08152440;background:var(--card);color:var(--text)}
 .crr-root.crr-list .dialog-heading h2{font-size:20px;font-weight:650;letter-spacing:-.5px;line-height:1.35}
 .crr-root.crr-list .dialog-content{max-height:calc(100dvh - 245px)}
 .crr-root[data-theme="dark"] .bdr-avatar{background:#2a4265;color:#d1dff6}
@@ -384,7 +384,7 @@
 @media(min-width:1700px){.crr-root:not(.crr-list){padding:27px 30px 30px}.crr-root .bdr-trow{padding:13px 16px}.crr-root .bdr-name{font-size:11px}.crr-root .bdr-st{font-size:10px}}
 @media(max-width:1200px){.crr-root:not(.crr-list){padding:21px 18px 30px}}
 @media(max-width:760px){.crr-root:not(.crr-list){padding:20px 17px 24px}.crr-root .bdr-summary{flex-wrap:wrap}.crr-root .bdr-filter-right{margin-left:0}}
-@media(max-width:540px){.crr-root:not(.crr-list){padding:18px 12px 24px}.crr-root .bdr-summary{padding:8px 10px;font-size:8px}.crr-root .bdr-summary nav{gap:5px}.crr-root .bdr-summary nav button{font-size:8px}.crr-root.crr-list{width:calc(100vw - 22px);max-height:calc(100dvh - 24px)}}
+@media(max-width:540px){.crr-root:not(.crr-list){padding:18px 12px 24px}.crr-root .bdr-summary{padding:8px 10px;font-size:8px}.crr-root .bdr-summary nav{gap:5px}.crr-root .bdr-summary nav button{font-size:8px}:root .ui-dialog.crr-root.crr-list[data-state]{width:calc(100vw - 22px);max-height:calc(100dvh - 24px)}}
 .crr-root .bdr-trow>div,.crr-root .bdr-owner,.crr-root .bdr-owner>span:last-child,.crr-root .agenda-title,.crr-root .list-title{min-width:0;overflow-wrap:anywhere}
 .crr-root .bdr-name{max-width:100%;overflow-wrap:anywhere}
 .crr-root .tooltip h3{overflow-wrap:anywhere}
@@ -397,7 +397,7 @@
 .crr-root .bdr-trow>td{min-width:0;overflow-wrap:anywhere}
 .crr-root .review-resizable-header{position:relative;padding-right:16px}
 /* The shared Dialog portal places its overlay immediately before this date list. */
-.ui-overlay:has(+.crr-list){background:#08152468;backdrop-filter:blur(2px)}
+:root .ui-overlay[data-state]:has(+.ui-dialog.crr-root.crr-list){background:#08152468;backdrop-filter:blur(2px)}
 @media(max-width:760px){.crr-root .agenda-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}}
 @media(max-width:540px){.crr-root .agenda-list{grid-template-columns:1fr}}
 @media(max-width:760px){.crr-root .page-heading h1{font-size:23px}.crr-root .page-actions>button{font-size:9px}}

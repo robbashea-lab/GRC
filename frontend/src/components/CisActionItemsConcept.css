@@ -1,7 +1,7 @@
 /* Approved Action Items concept; all selectors stop at this page and its own popups. */
 @font-face{font-family:'GoverNara Action Concept Inter';src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:swap}
-.cia-root,.cia-page{--cia-font:'GoverNara Action Concept Inter',Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--font:var(--cia-font);--font-heading:var(--cia-font);--font-body:var(--cia-font);--cia-bg:#f4f6fb;--cia-card:#fff;--cia-text:#10213b;--cia-muted:#647491;--cia-line:#dfe6f1;--cia-subtle:#f7f9fc;--cia-blue:#225aca;--cia-danger:#ad2e45;--cia-danger-bg:#fff1f4;--cia-gold:#966215;--cia-gold-bg:#fff5df;--cia-soon:#a16b09;--cia-soon-bg:#fff0cd;--cia-info:#245da8;--cia-info-bg:#edf4ff;color:var(--cia-text);font-family:var(--cia-font);font-size:12px;line-height:1.45}
-.cia-root[data-theme=dark],.cia-page[data-theme=dark]{--cia-bg:#111c2d;--cia-card:#19283d;--cia-text:#e3ebf8;--cia-muted:#a2b4d0;--cia-line:#31435e;--cia-subtle:#21334b;--cia-danger:#f7a7b7;--cia-danger-bg:#402936;--cia-gold:#f3d18b;--cia-gold-bg:#3b3327;--cia-soon:#f3c86f;--cia-soon-bg:#403522;--cia-info:#b9d1ff;--cia-info-bg:#233b5c}
+.cia-root,.cia-page,:root .ui-dialog.cia-root.cia-selector[data-state]{--cia-font:'GoverNara Action Concept Inter',Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--font:var(--cia-font);--font-heading:var(--cia-font);--font-body:var(--cia-font);--cia-bg:#f4f6fb;--cia-card:#fff;--cia-text:#10213b;--cia-muted:#647491;--cia-line:#dfe6f1;--cia-subtle:#f7f9fc;--cia-blue:#225aca;--cia-danger:#ad2e45;--cia-danger-bg:#fff1f4;--cia-gold:#966215;--cia-gold-bg:#fff5df;--cia-soon:#a16b09;--cia-soon-bg:#fff0cd;--cia-info:#245da8;--cia-info-bg:#edf4ff;color:var(--cia-text);font-family:var(--cia-font);font-size:12px;line-height:1.45}
+.cia-root[data-theme=dark],.cia-page[data-theme=dark],:root .ui-dialog.cia-root.cia-selector[data-state][data-theme=dark]{--cia-bg:#111c2d;--cia-card:#19283d;--cia-text:#e3ebf8;--cia-muted:#a2b4d0;--cia-line:#31435e;--cia-subtle:#21334b;--cia-danger:#f7a7b7;--cia-danger-bg:#402936;--cia-gold:#f3d18b;--cia-gold-bg:#3b3327;--cia-soon:#f3c86f;--cia-soon-bg:#403522;--cia-info:#b9d1ff;--cia-info-bg:#233b5c}
 .cia-page.cia-page{display:block;max-width:none;padding:24px 25px 40px;background:var(--cia-bg);min-width:0;--bp-text:var(--cia-text);--bp-muted:var(--cia-muted);--bp-focus:var(--cia-blue)}
 .cia-root *,.cia-page *{box-sizing:border-box}
 :is(.cia-root,.cia-page) :is(button,input,select){font-family:inherit;color:inherit}
@@ -121,7 +121,8 @@
 .cia-tooltip .tip-due{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;margin:9px 0}
 .cia-tooltip .tip-meta{font-size:9px;color:var(--cia-muted);border-top:1px solid var(--cia-line);padding-top:8px}
 .cia-tooltip .tip-hint{font-size:8px;color:var(--cia-muted);margin-top:7px}
-.cia-selector.cia-selector{display:flex;flex-direction:column;gap:0;width:min(710px,calc(100vw - 40px));max-width:none;max-height:calc(100dvh - 56px);padding:0;border:1px solid var(--cia-line);background:var(--cia-card);border-radius:11px;box-shadow:0 24px 90px #08152440;overflow:hidden}
+:root .ui-dialog.cia-root.cia-selector[data-state]{display:flex;flex-direction:column;gap:0;width:min(710px,calc(100vw - 40px));max-width:none;max-height:calc(100dvh - 56px);padding:0;border:1px solid var(--cia-line);background:var(--cia-card);border-radius:11px;box-shadow:0 24px 90px #08152440;overflow:hidden}
+:root .ui-overlay[data-state]:has(+.ui-dialog.cia-root.cia-selector){background:#08152468;backdrop-filter:blur(2px)}
 .cia-selector .dialog-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:21px 23px 17px;border-bottom:1px solid var(--cia-line)}
 .cia-selector .dialog-heading h2{font-size:20px;letter-spacing:-.5px;line-height:1.35}
 .cia-selector .dialog-heading p{font-size:11px;color:var(--cia-muted);margin-top:6px}
@@ -259,7 +260,7 @@ html[data-brawndo-demo-actions-suspended=true] :is(.ui-dialog,.ui-sheet,.ui-over
   .cia-page.cia-page .bda-results button{font-size:8px;padding:3px 4px}
   .cia-page .bda-table-scroll:not(.bda-done) th:nth-child(2),.cia-page .bda-done th:first-child,.cia-page.cia-page .brawndo-ai-table th:first-child{padding-left:12px}
   .cia-tooltip.cia-tooltip{min-width:225px;max-width:calc(100vw - 20px);padding:11px 12px}
-  .cia-selector.cia-selector{width:calc(100vw - 22px);max-height:calc(100dvh - 24px)}
+  :root .ui-dialog.cia-root.cia-selector[data-state]{width:calc(100vw - 22px);max-height:calc(100dvh - 24px)}
   .cia-selector .dialog-heading{padding:17px 16px 13px;gap:8px}
   .cia-selector .dialog-heading h2{font-size:19px}
   .cia-selector .dialog-content{padding:12px 16px 17px}

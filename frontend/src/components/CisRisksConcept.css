@@ -11,13 +11,16 @@
 .bpage.approved-risk-register.cis-risks-surface { background:#f5f7fc; }
 .bpage.approved-risk-register.cis-risks-surface[data-theme="dark"] { background:#111c2d; }
 /* Native heading/control rules read these aliases; keep them local to the approved body and its own list/tooltip portals. */
-.cis-risks-concept { --font-body:var(--font); --font-heading:var(--font); }
+.cis-risks-concept,
+:root .ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { --font-body:var(--font); --font-heading:var(--font); }
 .cis-risks-concept :is(h1,h2,h3,p) { font-family:inherit; color:inherit; }
 
-.cis-risks-concept { --font:"GoverNara CIS Risks Inter",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; --bg:#f4f6fb; --card:#fff; --text:#10213b; --muted:#647491; --line:#dfe6f1; --subtle:#f7f9fc; --blue:#225aca; --danger:#ad2e45; --danger-bg:#fff1f4; --gold:#966215; --gold-bg:#fff5df; --soon:#a16b09; --soon-bg:#fff0cd; --info:#245da8; --info-bg:#edf4ff; --shadow:0 14px 44px #10213b20; --header:56px; }
+.cis-risks-concept,
+:root .ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { --font:"GoverNara CIS Risks Inter",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; --bg:#f4f6fb; --card:#fff; --text:#10213b; --muted:#647491; --line:#dfe6f1; --subtle:#f7f9fc; --blue:#225aca; --danger:#ad2e45; --danger-bg:#fff1f4; --gold:#966215; --gold-bg:#fff5df; --soon:#a16b09; --soon-bg:#fff0cd; --info:#245da8; --info-bg:#edf4ff; --shadow:0 14px 44px #10213b20; --header:56px; }
 .cis-risks-concept,
 .cis-risks-concept * { box-sizing:border-box; }
-.cis-risks-concept { margin:0; background:var(--bg); color:var(--text); font-family:var(--font); font-size:12px; line-height:1.45; }
+.cis-risks-concept,
+:root .ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { margin:0; background:var(--bg); color:var(--text); font-family:var(--font); font-size:12px; line-height:1.45; }
 .cis-risks-concept button { font:inherit; }
 .cis-risks-concept input { font:inherit; }
 .cis-risks-concept select { font:inherit; }
@@ -212,8 +215,8 @@
 .cis-risks-concept .tooltip .tip-due { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:10px; margin:9px 0; }
 .cis-risks-concept .tooltip .tip-meta { font-size:9px; color:var(--muted); border-top:1px solid var(--line); padding-top:8px; }
 .cis-risks-concept .tooltip .tip-hint { font-size:8px; color:var(--muted); margin-top:7px; }
-.ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { border:1px solid var(--line); background:var(--card); color:var(--text); border-radius:11px; padding:0; width:min(710px,calc(100vw - 40px)); max-height:calc(100dvh - 56px); box-shadow:0 24px 90px #08152440; overflow:hidden; font-family:var(--font); }
-.ui-overlay[data-state]:has(+ .cis-risks-concept.cr-list-dialog) { background:#08152468; backdrop-filter:blur(2px); }
+:root .ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { border:1px solid var(--line); background:var(--card); color:var(--text); border-radius:11px; padding:0; width:min(710px,calc(100vw - 40px)); max-height:calc(100dvh - 56px); box-shadow:0 24px 90px #08152440; overflow:hidden; font-family:var(--font); }
+:root .ui-overlay[data-state]:has(+ .ui-dialog.cis-risks-concept.cr-list-dialog) { background:#08152468; backdrop-filter:blur(2px); }
 .cis-risks-concept .dialog-shell { display:flex; flex-direction:column; max-height:calc(100dvh - 58px); }
 .cis-risks-concept .dialog-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:21px 23px 17px; border-bottom:1px solid var(--line); }
 .cis-risks-concept .dialog-heading h2 { font-size:20px; letter-spacing:-.5px; line-height:1.35; }
@@ -235,7 +238,8 @@
 .cis-risks-concept .data-table th:nth-child(n) { width:auto; }
 .cis-risks-concept .data-table th { font-size:10px; }
 .cis-risks-concept .data-table td { padding:10px 7px; }
-.cis-risks-concept[data-theme="dark"] { --bg:#111c2d; --card:#19283d; --text:#e3ebf8; --muted:#a2b4d0; --line:#31435e; --subtle:#21334b; --danger:#f7a7b7; --danger-bg:#402936; --gold:#f3d18b; --gold-bg:#3b3327; --soon:#f3c86f; --soon-bg:#403522; --info:#b9d1ff; --info-bg:#233b5c; --shadow:0 14px 44px #0005; }
+.cis-risks-concept[data-theme="dark"],
+:root .ui-dialog.cis-risks-concept.cr-list-dialog[data-state][data-theme="dark"] { --bg:#111c2d; --card:#19283d; --text:#e3ebf8; --muted:#a2b4d0; --line:#31435e; --subtle:#21334b; --danger:#f7a7b7; --danger-bg:#402936; --gold:#f3d18b; --gold-bg:#3b3327; --soon:#f3c86f; --soon-bg:#403522; --info:#b9d1ff; --info-bg:#233b5c; --shadow:0 14px 44px #0005; }
 .cis-risks-concept[data-theme="dark"] .kpi:first-child { background:linear-gradient(110deg,#243852,var(--card)); }
 .cis-risks-concept[data-theme="dark"] .due-badge.today { background:#233b5c; color:#b9d1ff; }
 .cis-risks-concept[data-theme="dark"] .agenda-switch button span { background:#354862; color:#c3d3ec; }
@@ -364,7 +368,7 @@
   .cis-risks-concept .register-meta>div { gap:5px; }
   .cis-risks-concept .pagination { font-size:8px; padding:3px 4px; }
   .cis-risks-concept .register-meta #clearFilters { display:none; }
-  .ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { width:calc(100vw - 22px); max-height:calc(100dvh - 24px); }
+  :root .ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { width:calc(100vw - 22px); max-height:calc(100dvh - 24px); }
   .cis-risks-concept .dialog-shell { max-height:calc(100dvh - 26px); }
   .cis-risks-concept .dialog-heading { padding:17px 16px 13px; gap:8px; }
   .cis-risks-concept .dialog-heading h2 { font-size:19px; }
@@ -379,7 +383,8 @@
 }
 .cis-risks-concept #register { scroll-margin-top:calc(var(--header) + 16px); }
 .cis-risks-concept .agenda { position:relative; isolation:isolate; z-index:1; background:var(--card); }
-.cis-risks-concept { --header:56px; --blue:#1459dc; --text:#0c1b34; --bg:#f5f7fc; --line:#dce5f3; }
+.cis-risks-concept,
+:root .ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { --header:56px; --blue:#1459dc; --text:#0c1b34; --bg:#f5f7fc; --line:#dce5f3; }
 .cis-risks-concept #actionRows tr[data-risk-row] { cursor:pointer; }
 .bpage.approved-risk-register.cis-risks-surface { padding:22px 25px 10px; }
 .cis-risks-concept .page-heading { align-items:center; gap:14px; margin-bottom:17px; }
@@ -677,7 +682,7 @@
 }
 
 /* The existing native Dialog supplies the portal, focus trap, dismissal and close behavior. */
-.ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { display:block; max-width:none; gap:0; }
+:root .ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { display:block; max-width:none; gap:0; }
 
 /* Restore the reference's inherited defaults where shared native register rules supply unrelated values. */
 .cis-risks-concept .register-toolbar { background:transparent; border-radius:0; }
