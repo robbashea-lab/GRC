@@ -54,6 +54,8 @@ export default function Dashboard(){
   usePortfolioRefresh(()=>{if(demoDashboard&&!linked&&snapshot?.key===requestKey)refreshDashboard(false);});
   const shell=body=>conceptFrame?<CisDashboardPending client={currentClient}>{body}</CisDashboardPending>:<div><PageHeader title={`${currentClient?.name||'Client'} Dashboard`}/><div className="section-body">{body}</div></div>;
   function nativeRecord(){return linked?.key===recordContextKey?<RecordDrawer key="dashboard-native-record" open kind={linked.kind} record={linked.record} initialValues={linked.initialValues} schema={SCHEMAS[linked.kind]?.fields} clientId={currentClientId} reviewsPilot onSaved={()=>refreshDashboard()} onOpenChange={open=>{if(!open){setLinked(null);requestAnimationFrame(()=>{const target=linkedOpener.current?.isConnected?linkedOpener.current:demoPresentation?document.getElementById('bdd-work-heading'):null;target?.focus({preventScroll:true});});}}}/>:null;}
+  // A stored selection is not a resolved client; wait before choosing any client presentation.
+  if(org.loading&&(!currentClient||currentClient.client_id!==currentClientId))return <div className="section-body" role="status">Loading workspace…</div>;
   if(!currentClientId)return shell(<p>Select a client to view its GRC program.</p>);
   if(conceptFrame&&!demoPresentation)return <>{shell(<p role="status">Loading dashboard…</p>)}{nativeRecord()}</>;
   if(error?.key===requestKey)return <>{shell(<RegisterLoadError error={error.message} onRetry={()=>setRevision(n=>n+1)} name="Dashboard"/>)}{nativeRecord()}</>;
