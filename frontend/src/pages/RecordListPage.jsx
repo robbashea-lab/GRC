@@ -283,9 +283,15 @@ function EntityListPage({ kind }) {
     try {
       let linkedPolicyReviews = [];
       const { data } = await api.get(`/${kind}`, { params: { client_id: currentClientId,...(kind==='reviews'?{include_basis:true}:{}) } });
+      if (['policies','reviews'].includes(kind) && (!Array.isArray(data) || data.some(row => !row || typeof row !== 'object' || row.client_id !== currentClientId))) {
+        throw new Error('Records could not be verified for this client.');
+      }
       if (kind === "policies") {
         const { data: reviews } = await api.get("/reviews", { params: { client_id: currentClientId } });
-        linkedPolicyReviews = reviews.filter(review => review.client_id === currentClientId);
+        if (!Array.isArray(reviews) || reviews.some(review => !review || typeof review !== 'object' || review.client_id !== currentClientId)) {
+          throw new Error('Linked Reviews could not be verified for this client.');
+        }
+        linkedPolicyReviews = reviews;
         data.forEach(policy => {
           const linked = reviews.filter(r => r.policy_id === policy.policy_id);
           const next = linked.filter(r => !["completed", "cancelled"].includes(r.status) && r.due_date).sort((a,b) => a.due_date.localeCompare(b.due_date))[0];
@@ -300,7 +306,10 @@ function EntityListPage({ kind }) {
       // This acknowledges only the accepted Policies + Reviews load, not alignment or people data.
       if (kind === 'policies') setAcceptedPolicyRefresh({ scope: policyScope, instant: new Date().toISOString() });
       setChecked(new Set(options?.selection || []));
-    } catch (e) { if (sequence === loadSequence.current) { setRows([]); setLoadError(formatError(e)); } }
+    } catch (e) { if (sequence === loadSequence.current) {
+      loadedReviewScope.current=''; loadedPolicyScope.current='';
+      setRows([]); setPolicyReviews([]); setLoadError(formatError(e));
+    } }
     finally { if (sequence === loadSequence.current) setLoading(false); }
   }, [kind, currentClientId,reviewScope,policyScope]);
 

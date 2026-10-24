@@ -28,7 +28,7 @@ beforeEach(()=>{
     vendor('expiration','Expiration only',{contract_expiration:day(10)}),vendor('missing','Missing date'),vendor('invalid','Invalid date',{contract_renewal:'invalid'}),
     vendor('inactive','Inactive vendor',{status:'inactive',contract_renewal:day(5),assurance_required:true,assurance_records:[{type:'SOC 2',required:true}]}),
     vendor('terminated','Terminated vendor',{status:'terminated',contract_renewal:day(5)}),vendor('foreign','Other client',{client_id:'other-client',contract_renewal:day(5)})];
-  api.get.mockImplementation(async path=>({data:path==='/vendors'?fixtures:path.startsWith('/vendors/')?fixtures.find(v=>v.vendor_id===path.split('/').at(-1)):path==='/related'?{}:[]}));
+  api.get.mockImplementation(async path=>({data:path==='/vendors'?fixtures.filter(v=>v.client_id===mockClient):path.startsWith('/vendors/')?fixtures.find(v=>v.vendor_id===path.split('/').at(-1)):path==='/related'?{}:[]}));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 

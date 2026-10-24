@@ -3,7 +3,7 @@ const path=require('path');
 const postcss=require('postcss');
 const parser=require('postcss-selector-parser');
 const {selectorSpecificity,compare}=require('@csstools/selector-specificity');
-const files=['CisDashboardConcept.css','PortfolioReports.css','BrawndoDemoDashboard.css','CisDomainProfile.css','CisDashboardRiskMatrix.css','SixSurfaceAppearance.css','BrawndoPortalTheme.css','AdditionalSectionsAppearance.css','BrawndoCisVisualShell.css','BrawndoWorkspace.css'];
+const files=['CisDashboardConcept.css','PortfolioReports.css','BrawndoDemoDashboard.css','CisDomainProfile.css','CisDashboardRiskMatrix.css','SixSurfaceAppearance.css','BrawndoPortalTheme.css','AdditionalSectionsAppearance.css','BrawndoCisVisualShell.css','BrawndoWorkspace.css','BrawndoSidebar.css'];
 const styles=Object.fromEntries(files.map(name=>[name,postcss.parse(fs.readFileSync(path.join(__dirname,name),'utf8'))]));
 
 // Bounded authored-cascade contract: selected declarations, width media and normal
@@ -121,4 +121,20 @@ test.each(orders)('tablet concept rail remains visible without changing unrelate
  shell.removeAttribute('data-cis-dashboard-concept');
  const legacy=order.filter(name=>name!=='CisDashboardConcept.css');
  for(const property of ['display','position','width','top'])expect(winner(sidebar,property,768,order)).toBe(winner(sidebar,property,768,legacy));
+});
+
+test.each(orders)('concept client text can shrink within the native sidebar in order %j',(...order)=>{
+ const rail=document.createElement('div');fixture.appendChild(rail);
+ const name='SYNTHETIC CIS Dashboard IG1 CIS378-20261023';
+ rail.innerHTML=`<div class="brawndo-workspace-pilot" data-cis-dashboard-concept="true" data-cis-visual="true" data-theme="light"><aside class="app-sidebar bsb"><div class="bsb-head"><div class="bsb-client"><span class="bsb-client-mark"></span><span class="min-w-0"><span class="bsb-client-name">${name}</span><span class="bsb-client-industry">Industry not recorded</span></span></div></div></aside></div>`;
+ const shell=rail.firstElementChild,text=shell.querySelector('.bsb-client > span:last-child'),label=shell.querySelector('.bsb-client-name');
+ for(const marker of ['true','false']){
+   document.documentElement.dataset.brawndoCisVisual=marker;
+   expect(winner(text,'min-width',1440,order)).toBe('0');
+   expect(winner(label,'white-space',1440,order)).toBe('nowrap');
+   expect(winner(label,'text-overflow',1440,order)).toBe('ellipsis');
+   expect(label.textContent).toBe(name);
+ }
+ shell.removeAttribute('data-cis-dashboard-concept');
+ expect(winner(text,'min-width',1440,order)).toBe('auto');
 });

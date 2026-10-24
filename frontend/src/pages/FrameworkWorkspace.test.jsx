@@ -148,10 +148,42 @@ test('every client gets the reference workspace: categories start compact; open,
  await act(async()=>buttons('Next')[0].click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('2.1');
  expect(JSON.parse(sessionStorage.getItem('framework-workspace:u:a:cis-ig1')).lastId).toBe('a2');
 });
-test('a mismatched client response cannot populate the workspace or resume selection',async()=>{
+test('a mismatched client response is an error rather than an empty workspace',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="b"/>));
- expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);expect(container.querySelector('.bwp-program-counts').textContent).toContain('0 of 0');
+ expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);
+ expect(container.querySelector('[role="alert"]')?.textContent).toContain('CIS workspace records could not be verified for this client.');
+ expect(container.querySelector('.bwp-program-counts')).toBeNull();
  expect([...container.querySelectorAll('button')].some(b=>b.textContent.startsWith('Continue with'))).toBe(false);
+});
+
+test.each(['mixed-client','missing-id','non-array','null-row','foreign-position','missing-definition','missing-definitions'])('invalid current CIS %s response is rejected and Retry restores verified native records',async variant=>{
+ const valid=(await api.get()).data;
+ const invalid={...valid,assessments:valid.assessments.map(row=>({...row}))};
+ if(variant==='mixed-client')invalid.assessments[0].client_id='foreign';
+ if(variant==='missing-id')delete invalid.assessments[0].framework_assessment_id;
+ if(variant==='non-array')invalid.assessments={};
+ if(variant==='null-row')invalid.assessments=[null];
+ if(variant==='foreign-position')invalid.implementation_position={program_id:'foreign:cis-ig1'};
+ if(variant==='missing-definition')invalid.assessments[0].definition_id='missing-native-definition';
+ if(variant==='missing-definitions')invalid.definitions=[];
+ api.get.mockResolvedValue({data:invalid});
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="a"/>));
+ expect(container.querySelector('[role="alert"]')?.textContent).toContain('CIS workspace records could not be verified for this client.');
+ expect(container.querySelector('.bwp-program-counts')).toBeNull();
+ expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);
+ expect(api.patch).not.toHaveBeenCalled();
+ api.get.mockResolvedValue({data:valid});
+ await act(async()=>buttons('Retry workspace')[0].click());
+ expect(container.querySelector('[role="alert"]')).toBeNull();
+ expect(container.querySelectorAll('[data-testid^="control-row-"]')).not.toHaveLength(0);
+});
+
+test.each([true,false])('a valid empty unconfigured CIS response preserves selected=%s native setup state',async selected=>{
+ api.get.mockResolvedValue({data:{configured:false,selected,definitions:[],assessments:[],work:{}}});
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="a"/>));
+ expect(container.querySelector('[role="alert"]')).toBeNull();
+ expect(container.textContent).toContain(selected?'Program selected for this client.':'Program not currently selected.');
+ expect(container.querySelector('a[href="/client-profile?tab=program"]')).not.toBeNull();
 });
 
 test('a requirement opened here is one history entry: Next replaces it and closing steps back to the view',async()=>{

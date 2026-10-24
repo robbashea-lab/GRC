@@ -146,6 +146,10 @@
 .brawndo-workspace-pilot[data-cis-dashboard-concept=true][data-theme] .bsb { --sb-text:#cad7ed; --sb-muted:#cad7ed; --sb-hover:#172b45; --sb-head:#fff; }
 .brawndo-workspace-pilot[data-cis-dashboard-concept=true][data-theme] .bsb { font-family:'GoverNara CIS Concept Inter',Inter,Arial,sans-serif; background:#081524; border:0; }
 .brawndo-workspace-pilot[data-cis-dashboard-concept=true][data-theme] .bsb-head { padding:16px 11px 0; }
+/* Keep long native client names inside the rail; the older CIS shell restores
+   min-width:auto on this flex child, preventing the native ellipsis from working. */
+.brawndo-workspace-pilot[data-cis-dashboard-concept=true][data-theme] .app-sidebar .bsb-client { min-width:0; max-width:100%; }
+.brawndo-workspace-pilot[data-cis-dashboard-concept=true][data-theme] .app-sidebar .bsb-client > span:last-child { min-width:0; flex:1; }
 .brawndo-workspace-pilot[data-cis-dashboard-concept=true][data-theme] .bsb-nav { padding:0 11px 16px; }
 .brawndo-workspace-pilot[data-cis-dashboard-concept=true][data-theme] .bsb-link { min-height:32px; padding:8px 10px; margin:2px 0; font:400 11px/1.45 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif; border:0; border-radius:6px; color:#cad7ed; }
 .brawndo-workspace-pilot[data-cis-dashboard-concept=true][data-theme] .bsb-link.is-active { background:#28456d; box-shadow:none; color:#fff; font-weight:600; }

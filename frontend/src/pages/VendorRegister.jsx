@@ -143,9 +143,13 @@ export default function VendorRegister() {
         api.get("/reviews",{params:{client_id:currentClientId}}).then(r=>r.data),
       ]);
       if(token!==generation.current) return;
-      setRows(v || []); setUsers(u || []); setReviews(r||[]);setLoadedClientId(currentClientId);setLoadedReadScope(vendorReadScope);
+      if ([v,r].some(list => !Array.isArray(list) || list.some(row => !row || typeof row !== 'object' || row.client_id !== currentClientId))) {
+        setLoadedClientId(null); setLoadedReadScope('');
+        throw new Error('Vendors and linked Reviews could not be verified for this client.');
+      }
+      setRows(v); setUsers(u || []); setReviews(r);setLoadedClientId(currentClientId);setLoadedReadScope(vendorReadScope);
       setAcceptedRefresh({scope:vendorReadScope,at:new Date().toISOString()});
-    } catch (e) { if(token===generation.current){setRows([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
+    } catch (e) { if(token===generation.current){setRows([]);setReviews([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
     finally { if(token===generation.current)setLoading(false); }
   }
   useEffect(() => { const activeGeneration=generation; setAcceptedRefresh(null);setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};

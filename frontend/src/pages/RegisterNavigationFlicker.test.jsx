@@ -6,7 +6,7 @@ import RecordListPage from './RecordListPage';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
 
-let mockAuth, mockOrg, mockPath;
+let mockAuth, mockOrg, mockPath, mockDrawerProps;
 jest.mock('@/context/AuthContext', () => ({useAuth: () => mockAuth}));
 jest.mock('@/context/OrgContext', () => ({useOrg: () => mockOrg}));
 jest.mock('react-router-dom', () => ({
@@ -19,7 +19,7 @@ jest.mock('@/lib/api', () => ({__esModule: true,
   default: {get: jest.fn(), post: jest.fn(), patch: jest.fn(), delete: jest.fn()},
   formatError: error => error.message, API: '/api', PREVIEW_MODE: true,
 }));
-jest.mock('@/components/RecordDrawer', () => () => null);
+jest.mock('@/components/RecordDrawer', () => props => {mockDrawerProps=props;return null;});
 
 let root, container, pending;
 const pages = [
@@ -34,17 +34,17 @@ beforeEach(() => {
   mockAuth = {workspaceMode: 'demo', user: {user_id: 'navigation-actor', role: 'super_admin', workspace_mode: 'demo'}};
   const client = {...cisClient('demo_brawndo'), name: 'Brawndo'};
   mockOrg = {currentClientId: client.client_id, currentClient: client, clients: [client]};
-  pending = [];
+  pending = [];mockDrawerProps=null;
   api.get.mockImplementation(path => new Promise((resolve, reject) => pending.push({path, resolve, reject})));
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
 });
 afterEach(async () => {await act(async () => root.unmount()); container.remove(); jest.clearAllMocks();});
 const render = Page => act(async () => root.render(<Page/>));
-async function finishReads() {
+async function finishReads(overrides = {}) {
   // Policies starts its review read after its policy read; resolve each native batch.
   for (let batch = 0; batch < 4 && pending.length; batch++) {
     const reads = pending.splice(0);
-    await act(async () => reads.forEach(({path, resolve}) => resolve({data:
+    await act(async () => reads.forEach(({path, resolve}) => resolve({data: Object.hasOwn(overrides,path) ? overrides[path] :
       path === '/frameworks/summary' ? {client_id: mockOrg.currentClientId, items: []} : []})));
   }
 }
@@ -156,4 +156,65 @@ test('a mixed-client Risk response cannot switch to a generic register or expose
   await act(async () => [...frame.querySelectorAll('button')].find(button => button.textContent.startsWith('Retry')).click());
   await finishReads();
   expect(container.querySelector('[data-testid="demo-risks-overview"]')).not.toBeNull();
+});
+
+const recordPages = pages.filter(([route]) => route !== 'risks');
+const ownRecord = {vendor_id:'own-vendor',policy_id:'own-policy',client_id:'demo_brawndo',name:'Current native record',title:'Current native record',status:'active'};
+const foreignRecord = {...ownRecord,vendor_id:'foreign-vendor',policy_id:'foreign-policy',client_id:'another-client',name:'Unverified foreign record',title:'Unverified foreign record'};
+const invalidLists = [
+  ['foreign-only',[foreignRecord]], ['mixed-client',[ownRecord,foreignRecord]],
+  ['null',null], ['non-array',{}], ['missing identity',[{name:'Unverified record',title:'Unverified record'}]], ['null row',[null]],
+];
+describe.each(recordPages)('%s current response identity', (route,Page,heading,loadedMarker) => {
+  test.each(invalidLists)('rejects a %s list without approved empty counts and recovers with Retry',async(_kind,payload)=>{
+    mockPath=`/${route}`;await render(Page);await finishReads({['/'+route]:payload});
+    const frame=container.querySelector(`[data-testid="${route}-navigation-loading"]`);
+    expect(frame).not.toBeNull();expect(frame.getAttribute('aria-busy')).toBe('false');
+    expect(frame.querySelector('[role="alert"]').textContent).toContain('could not be verified for this client');
+    expect(container.querySelector('h1').textContent).toBe(heading);
+    expect(container.querySelector(`[data-testid="${loadedMarker}"],table,[role="table"]`)).toBeNull();
+    expect(container.textContent).not.toMatch(/Unverified|Current native record|0 active|No policies|No vendors/);
+    await act(async()=>[...frame.querySelectorAll('button')].find(button=>button.textContent.startsWith('Retry')).click());await finishReads();
+    expect(container.querySelector(`[data-testid="${loadedMarker}"]`)).not.toBeNull();expect(container.querySelector('[role="alert"]')).toBeNull();
+    for(const method of ['post','patch','delete'])expect(api[method]).not.toHaveBeenCalled();
+  });
+  test.each([['foreign',[{review_id:'foreign-review',client_id:'another-client',title:'Unverified foreign review'}]],['malformed',null]])('rejects %s linked Reviews without accepting the primary register',async(_kind,reviews)=>{
+    mockPath=`/${route}`;await render(Page);await finishReads({'/reviews':reviews});
+    const frame=container.querySelector(`[data-testid="${route}-navigation-loading"]`);
+    expect(frame?.querySelector('[role="alert"]')?.textContent).toContain('could not be verified for this client');
+    expect(container.querySelector(`[data-testid="${loadedMarker}"],table,[role="table"]`)).toBeNull();expect(container.textContent).not.toContain('Unverified foreign review');
+    await act(async()=>[...frame.querySelectorAll('button')].find(button=>button.textContent.startsWith('Retry')).click());await finishReads();
+    expect(container.querySelector(`[data-testid="${loadedMarker}"]`)).not.toBeNull();
+  });
+  test('accepts the native verified empty array without treating it as a failed read',async()=>{
+    mockPath=`/${route}`;await render(Page);await finishReads();
+    expect(container.querySelector(`[data-testid="${loadedMarker}"]`)).not.toBeNull();expect(container.querySelector('[role="alert"]')).toBeNull();
+  });
+});
+
+test.each(invalidLists)('Reviews rejects a %s current list without successful zero counts',async(_kind,payload)=>{
+  mockPath='/reviews';await render(()=> <RecordListPage kind="reviews"/>);await finishReads({'/reviews':payload});
+  expect(container.querySelector('[data-testid="register-load-error"]')?.textContent).toContain('could not be verified for this client');
+  expect([...container.querySelectorAll('.bdr-kcell strong')].map(node=>node.textContent)).toEqual(['—','—','—','—']);
+  expect(container.querySelector('[data-testid="export-reviews-button"]').disabled).toBe(true);
+  expect(container.querySelector('[data-testid^="reviews-row-"]')).toBeNull();expect(container.textContent).not.toMatch(/Unverified|Current native record/);
+  await act(async()=>container.querySelector('[data-testid="register-load-error"] button').click());await finishReads();
+  expect(container.querySelector('[data-testid="register-load-error"]')).toBeNull();
+  expect([...container.querySelectorAll('.bdr-kcell strong')].map(node=>node.textContent)).toEqual(['0','0','0','0']);
+});
+
+test.each([
+  ...recordPages,
+  ['reviews',()=> <RecordListPage kind="reviews"/>, 'Brawndo Reviews',null],
+])('%s invalid refresh withdraws its earlier accepted receipt while retaining the native editor',async(route,Page,_heading,loadedMarker)=>{
+  mockPath=`/${route}`;await render(Page);await finishReads(route==='vendors'?{'/vendors':[ownRecord]}:{});
+  const openEditor=container.querySelector(route==='vendors'?'[data-testid="vendor-row-0"] .bapv-name':`[data-testid="create-${route}-button"]`);
+  await act(async()=>openEditor.click());expect(mockDrawerProps.open).toBe(true);
+  await act(async()=>{mockDrawerProps.onSaved();});await finishReads({['/'+route]:[foreignRecord]});
+  expect(mockDrawerProps.open).toBe(true);
+  expect(container.querySelector('[data-testid="register-load-error"]')?.textContent).toContain('could not be verified for this client');
+  if(loadedMarker)expect(container.querySelector(`[data-testid="${loadedMarker}"]`)).toBeNull();
+  else expect([...container.querySelectorAll('.bdr-kcell strong')].map(node=>node.textContent)).toEqual(['—','—','—','—']);
+  expect(container.querySelector('[data-testid^="reviews-row-"],[data-testid^="policies-row-"],[data-testid^="vendor-row-"]')).toBeNull();
+  for(const method of ['post','patch','delete'])expect(api[method]).not.toHaveBeenCalled();
 });
