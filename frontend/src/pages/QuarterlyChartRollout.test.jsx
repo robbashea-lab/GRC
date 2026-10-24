@@ -16,16 +16,49 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(
   formatError:error=>error.message,API:'/api',PREVIEW_MODE:false}));
 
 const modules=[
-  {name:'Reviews',path:'/reviews',collection:'reviews',element:<RecordListPage kind="reviews"/>,cards:'.bdr-kstrip',register:'.bdr-register'},
-  {name:'Actions',path:'/action-items',collection:'tasks',element:<ActionItems/>,cards:'.bda-summary',register:'.bda-table-scroll'},
-  {name:'Risks',path:'/risks',collection:'risks',element:<RiskRegister/>,cards:'.bdr-figures',register:'.register-table-frame',matrix:'.bdr-matrix-region'},
-  {name:'Vendors',path:'/vendors',collection:'vendors',element:<VendorRegister/>,cards:'.bapv-kstrip',register:'[aria-label="Vendor register"]'},
+  {name:'Reviews',path:'/reviews',collection:'reviews',element:<RecordListPage kind="reviews"/>,
+    chart:'.crr-root .crr-overview',period:'.quarter-controls strong',agenda:'.agenda-list .agenda-entry',markers:'.review-dot',
+    cards:'.crr-root > .kpis',register:'.crr-root > section.register',savedMarker:'[data-date="2028-04-12"] .review-dot',
+    overdue:true,unavailable:'Review dates unavailable.',pending:'.bdr-empty[role="status"]',denied:'.bdr-empty[role="alert"]'},
+  {name:'Actions',path:'/action-items',collection:'tasks',element:<ActionItems/>,
+    chart:'.cia-page .quarter-card',period:'.quarter-controls strong',agenda:'.cia-agenda-list .agenda-entry',markers:'.review-dot',
+    cards:'.bda-summary',register:'.bda-table-scroll',savedMarker:'[data-date="2028-04-13"] [data-action-id="saved-action"]',
+    overdue:true,unavailable:'Action deadlines unavailable.',pending:'.bda-results [role="status"]',denied:'.bda-results [role="status"]'},
+  {name:'Risks',path:'/risks',collection:'risks',element:<RiskRegister/>,
+    chart:'.cis-risks-concept .quarter-card',period:'.quarter-controls strong',agenda:'.agenda-list .agenda-entry',markers:'.review-dot',
+    cards:'.cis-risks-concept > .kpis',register:'.cis-risks-concept > section.register',matrix:'.cis-risks-concept .matrix-panel',
+    savedMarker:'[data-date="2028-04-14"] .review-dot[data-event-id]',overdue:true,loadingFrame:'[data-testid="risks-navigation-loading"]'},
+  {name:'Vendors',path:'/vendors',collection:'vendors',element:<VendorRegister/>,
+    chart:'.quarterly-program-timeline',period:'.qpt-year strong',agenda:'.qpt-coming button',markers:'.qpt-event',
+    cards:'.bapv-kstrip',register:'[aria-label="Vendor register"]',loadingFrame:'[data-testid="vendors-navigation-loading"]'},
 ];
 let root,container,actorSequence=0;
 // Mocked hook values need a fresh element to rerender; keep the same mounted route/controller.
 const mount=module=>act(async()=>root.render(<MemoryRouter initialEntries={[`${module.path}?client_id=${mockOrg.currentClientId}`]}>{React.cloneElement(module.element)}</MemoryRouter>));
-const click=node=>act(async()=>node.click());
-const chart=()=>container.querySelector('.quarterly-program-timeline');
+const click=node=>{expect(node).toBeDefined();expect(node).not.toBeNull();return act(async()=>node.click());};
+const chart=module=>container.querySelector(module.chart);
+function requiredNode(parent,selector){
+  const nodes=parent.querySelectorAll(selector);expect(nodes).toHaveLength(1);return nodes[0];
+}
+const requiredChart=module=>requiredNode(container,module.chart);
+const period=module=>requiredNode(requiredChart(module),module.period).textContent;
+function expectEmptyEvents(module){
+  const overview=requiredChart(module);
+  expect(overview.querySelectorAll(module.agenda)).toHaveLength(0);
+  expect(overview.querySelectorAll(module.markers)).toHaveLength(0);
+}
+function expectUnavailable(module,error=''){
+  if(module.loadingFrame){
+    expect(chart(module)).toBeNull();
+    const frame=requiredNode(container,module.loadingFrame);
+    expect(frame.getAttribute('aria-busy')).toBe(String(!error));
+    expect(requiredNode(frame,error?'[role="alert"]':'[role="status"]').textContent).toContain(error||`Loading ${module.collection}…`);
+  }else{
+    expectEmptyEvents(module);
+    for(const selector of ['.agenda-empty','.chart-empty'])expect(requiredNode(requiredChart(module),selector).textContent).toContain(module.unavailable);
+    expect(requiredNode(container,error?module.denied:module.pending).textContent).toContain(error?(module.name==='Reviews'?'Reviews unavailable':'Tickets unavailable'):(module.name==='Reviews'?'Loading reviews…':'Loading authorized tickets…'));
+  }
+}
 const noWrites=()=>{for(const verb of ['post','patch','put','delete'])expect(api[verb]).not.toHaveBeenCalled();};
 function configure(clientId,group=1,mode='standard'){
   const client={...cisClient(clientId,group),name:'Synthetic future customer'};
@@ -43,8 +76,7 @@ function configure(clientId,group=1,mode='standard'){
 function protectedMarkup(module){
   const result={};
   for(const key of ['cards','register','matrix'])if(module[key]){
-    const node=container.querySelector(module[key]);
-    expect(node).not.toBeNull();result[key]=node.outerHTML;
+    result[key]=requiredNode(container,module[key]).outerHTML;
   }
   return result;
 }
@@ -69,18 +101,23 @@ test.each(modules.flatMap(module=>[1,2,3].flatMap(group=>['demo','standard'].map
   '%s uses the quarterly chart for an arbitrary IG%i %s client without changing protected surfaces',async(name,group,mode,module)=>{
     configure(`new-${module.collection}-${group}-${mode}`,group,mode);
     const before=JSON.stringify(mockRecords);await mount(module);
-    expect(chart()).not.toBeNull();expect(chart().querySelector('.qpt-year').textContent).toContain('Q2 2028');
+    expect(period(module)).toBe('Q2 2028');
     expect(container.querySelector('.compact-program-timeline')).toBeNull();
     expect(api.get).toHaveBeenCalledWith('/'+module.collection,expect.objectContaining({params:expect.objectContaining({client_id:mockOrg.currentClientId})}));
     expect(mockOrg.clients).toHaveLength(1);expect(mockOrg.clients[0].client_id).not.toContain('brawndo');
     const protectedBefore=protectedMarkup(module);
-    await click(chart().querySelector('[aria-label="Previous quarter"]'));
-    expect(chart().querySelector('.qpt-year').textContent).toContain('Q1 2028');
-    expect(chart().querySelectorAll('.qpt-coming button')).toHaveLength(0);
+    await click(requiredNode(requiredChart(module),'[aria-label="Previous quarter"]'));
+    expect(period(module)).toBe('Q1 2028');expectEmptyEvents(module);
     expect(protectedMarkup(module)).toEqual(protectedBefore);
-    await click([...chart().querySelectorAll('button')].find(button=>button.textContent==='This quarter'));
-    expect(chart().querySelector('.qpt-year').textContent).toContain('Q2 2028');
-    expect(chart().querySelectorAll('.qpt-coming button').length).toBeGreaterThan(0);
+    await click([...requiredChart(module).querySelectorAll('button')].find(button=>button.textContent==='This quarter'));
+    expect(period(module)).toBe('Q2 2028');
+    // These native agendas separate the unchanged saved past dates from upcoming work.
+    if(module.overdue){
+      expect(requiredNode(requiredChart(module),module.savedMarker).getAttribute('aria-label')).toContain('Retained native '+name.slice(0,-1));
+      await click(requiredNode(requiredChart(module),'[data-mode="overdue"]'));
+    }
+    expect(requiredChart(module).querySelectorAll(module.agenda).length).toBeGreaterThan(0);
+    expect(requiredChart(module).querySelector(module.agenda).textContent).toContain('Retained native '+name.slice(0,-1));
     expect(protectedMarkup(module)).toEqual(protectedBefore);expect(JSON.stringify(mockRecords)).toBe(before);noWrites();
   },
 );
@@ -88,14 +125,14 @@ test.each(modules.flatMap(module=>[1,2,3].flatMap(group=>['demo','standard'].map
 test.each(modules)('$name receives the chart after later CIS enrollment and resets only chart selection across retained IG changes',async module=>{
   const original=mockOrg.currentClient;
   mockOrg.currentClient={...original,onboarding_baseline:{completed:true,requirements:{'soc-2':'applies'}}};mockOrg.clients=[mockOrg.currentClient];
-  const retained=JSON.stringify(mockRecords);await mount(module);expect(chart()).toBeNull();
+  const retained=JSON.stringify(mockRecords);await mount(module);expect(chart(module)).toBeNull();
   mockOrg.currentClient=cisClient(original.client_id,1);mockOrg.clients=[mockOrg.currentClient];await mount(module);
-  expect(chart()).not.toBeNull();const protectedBefore=protectedMarkup(module);
+  requiredChart(module);const protectedBefore=protectedMarkup(module);
   for(const group of [2,3]){
-    await click(chart().querySelector('[aria-label="Previous quarter"]'));
-    expect(chart().querySelector('.qpt-year').textContent).toContain('Q1 2028');
+    await click(requiredNode(requiredChart(module),'[aria-label="Previous quarter"]'));
+    expect(period(module)).toBe('Q1 2028');
     mockOrg.currentClient=cisClient(original.client_id,group);mockOrg.clients=[mockOrg.currentClient];await mount(module);
-    expect(chart().querySelector('.qpt-year').textContent).toContain('Q2 2028');
+    expect(period(module)).toBe('Q2 2028');
     expect(protectedMarkup(module)).toEqual(protectedBefore);
   }
   expect(JSON.stringify(mockRecords)).toBe(retained);noWrites();
@@ -111,26 +148,26 @@ test.each(modules)('$name withholds quarterly appearance while native identity o
   ];
   for(const apply of cases){
     mockAuth=auth;mockOrg=org;apply();await mount(module);
-    expect(chart()).toBeNull();
+    expect(chart(module)).toBeNull();
   }
-  mockAuth=auth;mockOrg=org;await mount(module);expect(chart()).not.toBeNull();noWrites();
+  mockAuth=auth;mockOrg=org;await mount(module);requiredChart(module);noWrites();
 });
 
 test.each(modules)('$name cannot expose an old actor response while replacement native reads are pending',async module=>{
-  await mount(module);expect(chart()).not.toBeNull();
+  await mount(module);requiredChart(module);
   let resolveRead;mockPendingRead=new Promise(resolve=>{resolveRead=resolve;});
   mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'replacement-actor'}};
   await mount(module);
-  expect(chart()?.querySelectorAll('.qpt-coming button').length||0).toBe(0);
+  expectUnavailable(module);
   expect(container.textContent).not.toContain('Retained native '+({reviews:'Review',tasks:'Action',risks:'Risk',vendors:'Vendor'}[module.collection]));
   mockPendingRead=null;
   await act(async()=>resolveRead({data:[]}));
-  expect(chart()?.querySelectorAll('.qpt-coming button').length||0).toBe(0);noWrites();
+  expectEmptyEvents(module);noWrites();
 });
 
 test.each(modules)('$name denied native data stays unavailable rather than showing stale saved chart events',async module=>{
   mockReadError='Synthetic native read denied';await mount(module);
-  expect(chart()?.querySelectorAll('.qpt-coming button').length||0).toBe(0);
+  expectUnavailable(module,mockReadError);
   expect(container.textContent).toContain(mockReadError);noWrites();
 });
 
@@ -139,7 +176,7 @@ test.each(modules.flatMap(module=>['demo_dunder','demo_prestige'].map(clientId=>
     configure(clientId,1,'demo');
     mockOrg.currentClient={client_id:clientId,name:clientId==='demo_dunder'?'Dunder Mifflin':'Prestige Worldwide',status:'active',
       onboarding_baseline:{completed:true,requirements:{'iso-27001':'applies'}}};mockOrg.clients=[mockOrg.currentClient];
-    await mount(module);expect(chart()).toBeNull();
+    await mount(module);expect(chart(module)).toBeNull();
     expect(container.textContent).toContain('Retained native '+({reviews:'Review',tasks:'Action',risks:'Risk',vendors:'Vendor'}[module.collection]));
     noWrites();
   },

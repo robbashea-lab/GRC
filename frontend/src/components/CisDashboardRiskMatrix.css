@@ -103,6 +103,7 @@
 .cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list b { font-size:12px; font-weight:600; line-height:1.45; }
 .cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list small { margin-top:5px; color:var(--cc-muted,#627594); font-size:10px; line-height:1.45; opacity:1; }
 .cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-score { display:inline-block; border-radius:5px; background:#f9e2b6; padding:4px 8px; font-size:11px; font-weight:400; white-space:nowrap; }
+.cis-dashboard-risk-selection[data-concept="true"][data-theme="dark"] .cis-dashboard-risk-score { color:#172741; }
 .cis-dashboard-risk-selection[data-concept="true"] :is(.cc-risk-close,.cis-dashboard-risk-list button):focus-visible { outline:2px solid var(--cc-blue,#225aca); outline-offset:2px; }
 @media(min-width:1700px) {
   .cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] { --cc-risk-cell-height:48px; padding:20px 22px; }

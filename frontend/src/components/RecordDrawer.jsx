@@ -256,7 +256,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         });
       }
       if (kind === "tasks") Object.assign(base,{source_type:record?.source_type || (record ? taskSource(record).type : "manual"),source_id:record?.source_id || null,assignee_id:record?.assignee_id ?? record?.owner_id ?? null,status:record?.status||"open",priority:pilot&&record?record.priority??'':record?.priority||"medium"});
-      if (!record && kind === "findings") Object.assign(base, {status: "open", severity: "medium",...(pilot?{source:'manual'}:{})});
+      if (!record && kind === "findings") Object.assign(base, {status: "open", severity: "medium"});
       if (!record && kind === "risks") Object.assign(base, {...(riskPilot?newRiskDefaults():{}),status: "identified", review_cadence: "annual", source_type: "manual"});
       if (!record && kind === "vendors") Object.assign(base, {status: "onboarding", criticality: "medium", review_frequency: "annual"});
       if(['policies','tasks'].includes(kind))base.governance_context=record?.governance_context||null;

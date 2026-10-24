@@ -40,6 +40,33 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 
+test('concept native close owns late focus after reload replaces its opener; register opens retain native fallback',async()=>{
+  const day=new Date(),due=[day.getFullYear(),String(day.getMonth()+1).padStart(2,'0'),String(day.getDate()).padStart(2,'0')].join('-');
+  records.tasks=[task('focus',{due_date:due})];await render();
+  const origin=container.querySelector('.agenda-entry');await click(origin);
+  const returnFocus=mockDrawer.onReturnFocus;expect(typeof returnFocus).toBe('function');
+  records.tasks=[];await act(async()=>mockDrawer.onSaved());
+  await act(async()=>mockDrawer.onOpenChange(false));
+  expect(origin.isConnected).toBe(false);expect(returnFocus()).toBe(true);
+  expect(document.activeElement.textContent).toBe('View data');
+  records.tasks=[task('focus',{due_date:due})];await act(async()=>mockDrawer.onSaved());
+  await click(container.querySelector('.bda-title'));
+  expect(mockDrawer.onReturnFocus).toBeUndefined();
+});
+
+test('Due in 30 days uses native inclusive boundaries, excludes undated/finished work and labels its destination',async()=>{
+  jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-24T12:00:00'));
+  try{
+    records.tasks=[task('yesterday',{due_date:'2026-10-23'}),task('today',{due_date:'2026-10-24'}),task('day14',{due_date:'2026-11-07'}),task('day15',{due_date:'2026-11-08'}),task('day30',{due_date:'2026-11-23'}),task('day31',{due_date:'2026-11-24'}),task('undated'),task('done',{due_date:'2026-11-05',status:'done'}),task('pending-task',{finding_id:'pending',due_date:'2026-11-23',status:'done'})];
+    records.findings=[finding('pending',{status:'remediated',primary_task_id:'pending-task'})];
+    await render();expect(summary('upcoming')).toBe('5');
+    await click(container.querySelector('.bda-upcoming'));
+    expect(new Set(tickets().map(row=>row.dataset.ticketId))).toEqual(new Set(['task:today','task:day14','task:day15','task:day30','finding:pending']));
+    expect(container.querySelector('.bda-more-controls label:last-child select').selectedOptions[0].textContent).toBe('Due in 30 days');
+    expect(container.querySelector('.bda-chip').textContent).toContain('Due in 30 days');
+  }finally{jest.useRealTimers();}
+});
+
 test('actual route gate accepts resolved CIS clients and denies inconsistent identity or authentication',async()=>{
   await render();expect(container.querySelector('[aria-label="Action summaries"]')).not.toBeNull();
   const originalAuth=mockAuth,originalOrg=mockOrg;
@@ -59,7 +86,7 @@ test('full-population summary is independent of search/source and filters preced
   expect(container.querySelector('.bda-runway')).toBeNull();
   await click(button('Next'));expect(tickets()).toHaveLength(3);expect(container.textContent).toContain('Page 2 of 2');
   await search('Distinct target');expect(tickets()).toHaveLength(1);expect(tickets()[0].textContent).toContain('Distinct target');expect(container.textContent).toContain('Page 1 of 1');expect(summary('active')).toBe('13');
-  await change(container.querySelector('select'), 'reviews');expect(tickets()).toHaveLength(1);expect(summary('unassigned')).toBe('12');
+  await change(container.querySelector('.bda-controls select'), 'reviews');expect(tickets()).toHaveLength(1);expect(summary('unassigned')).toBe('12');
   await search('does not exist');expect(tickets()).toHaveLength(0);expect(summary('active')).toBe('13');
 });
 
@@ -190,7 +217,8 @@ test('reference row uses structured source, Finding title, neutral priority and 
   expect(row.querySelector('.bda-origin button').textContent).toBe('CIS 14.1');
   expect(row.textContent).toContain('Finding: Short native Finding title');
   expect(row.textContent).not.toContain('Long detail remains');
-  expect(row.querySelectorAll('.bda-bars rect.on')).toHaveLength(2);
+  expect(row.querySelector('.priority-badge').textContent).toBe('Medium');
+  expect(row.querySelector('.bda-bars')).toBeNull();
   expect(row.querySelector('.bda-avatar').textContent).toBe('EO');
   const columns=[...row.children];expect(columns.indexOf(row.querySelector('.bda-due'))).toBeLessThan(columns.indexOf(row.querySelector('.bda-stage')));
   await click(row);expect(mockDrawer.record.description).toBe('Long detail remains inside the full native record');
@@ -207,21 +235,21 @@ test('reference row uses structured source, Finding title, neutral priority and 
 test('quarter browsing preserves native overdue filters, cards and register while exact saved Actions remain independently reachable',async()=>{
   jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-18T12:00:00'));
   const original=HTMLElement.prototype.getBoundingClientRect;
-  const geometry=jest.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(){return this.classList.contains('qpt-plot')?{width:1100,height:220,left:0,right:1100,top:0,bottom:220}:original.call(this);});
+  const geometry=jest.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(){return this.classList.contains('plot')?{width:1100,height:220,left:0,right:1100,top:0,bottom:220}:original.call(this);});
   try{
     records={tasks:[task('late',{due_date:'2026-10-01',priority:'low'}),task('later',{due_date:'2027-01-01',priority:'high'}),task('unscheduled')],findings:[]};
     await render('/action-items?view=active&quick=overdue');
     await click(button('This quarter'));
-    expect(container.querySelector('.bda-runway')).toBeNull();expect(container.querySelectorAll('.qpt-lane')).toHaveLength(3);
+    expect(container.querySelector('.bda-runway')).toBeNull();expect([...container.querySelectorAll('.review-dot')].map(node=>node.dataset.actionId)).toEqual(['late']);
     expect(tickets()).toHaveLength(1);const before=location.search;
     const protectedBefore={cards:container.querySelector('.bda-summary').outerHTML,register:container.querySelector('.bda-register').outerHTML};
-    const point=container.querySelector('.qpt-event');expect(point.getAttribute('aria-label')).toContain('Low');
+    const point=container.querySelector('.review-dot');expect(point.getAttribute('aria-label')).toContain('Low');
     await act(async()=>point.focus());expect(location.search).toBe(before);
     await click(container.querySelector('[aria-label="Next quarter"]'));
-    expect(container.querySelector('.qpt-year').textContent).toContain('Q1 2027');
+    expect(container.querySelector('.quarter-controls').textContent).toContain('Q1 2027');
     expect({cards:container.querySelector('.bda-summary').outerHTML,register:container.querySelector('.bda-register').outerHTML}).toEqual(protectedBefore);
     expect(location.search).toBe(before);expect(tickets()[0].textContent).toContain('Action late');
-    await click(container.querySelector('.qpt-coming button'));
+    await click(container.querySelector('.agenda-entry'));
     expect(mockDrawer.kind).toBe('tasks');expect(mockDrawer.record.task_id).toBe('later');
     expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
   }finally{geometry.mockRestore();jest.useRealTimers();}
@@ -230,7 +258,7 @@ test('quarter browsing preserves native overdue filters, cards and register whil
 test('a secondary Action marker opens that exact native Action rather than the linked Finding primary',async()=>{
   jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-18T12:00:00'));
   const original=HTMLElement.prototype.getBoundingClientRect;
-  const geometry=jest.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(){return this.classList.contains('qpt-plot')?{width:1100,height:220,left:0,right:1100,top:0,bottom:220}:original.call(this);});
+  const geometry=jest.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(){return this.classList.contains('plot')?{width:1100,height:220,left:0,right:1100,top:0,bottom:220}:original.call(this);});
   try{
     records={findings:[finding('issue',{primary_task_id:'primary',severity:'critical',status:'in_remediation'})],tasks:[
       task('primary',{finding_id:'issue',priority:'low',due_date:'2026-11-05'}),
@@ -238,9 +266,9 @@ test('a secondary Action marker opens that exact native Action rather than the l
     ]};
     await render();
     await click(button('This quarter'));
-    await click(container.querySelector('[data-group-id="2026-11-12:high"]'));
-    expect(mockDrawer).toBeNull();expect(document.querySelectorAll('.qpt-selection-row')).toHaveLength(1);
-    await click(document.querySelector('.qpt-selection-row'));
+    await click(container.querySelector('[data-action-id="secondary"]'));
+    expect(mockDrawer).toBeNull();expect(document.querySelectorAll('.date-review')).toHaveLength(1);
+    await click(document.querySelector('.date-review'));
     expect(mockDrawer.kind).toBe('tasks');expect(mockDrawer.record).toBe(records.tasks[1]);
     expect(new URLSearchParams(location.search).get('task_id')).toBe('secondary');
     expect(new URLSearchParams(location.search).has('finding_id')).toBe(false);
@@ -256,6 +284,30 @@ test('new due-in-30 card retains native date filtering and clears pagination wit
   expect(new URLSearchParams(location.search).get('quick')).toBe('upcoming');expect(new URLSearchParams(location.search).has('page')).toBe(false);expect(tickets()).toHaveLength(10);
   await click(container.querySelector('.bda-upcoming'));expect(new URLSearchParams(location.search).has('quick')).toBe(false);
   expect(summary('active')).toBe('13');expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('native cards, register badges and overview advance together at local midnight without writes',async()=>{
+  jest.useFakeTimers();jest.setSystemTime(new Date(2026,9,24,23,59,59));
+  try{
+    records={tasks:[task('today',{due_date:'2026-10-24',priority:'medium'})],findings:[]};
+    await render();
+    expect(summary('overdue')).toBe('0');expect(summary('upcoming')).toBe('1');
+    expect(container.querySelector('.bda-due').textContent).toContain('Due today');
+    await act(async()=>{jest.advanceTimersByTime(2000);});
+    expect(summary('overdue')).toBe('1');expect(summary('upcoming')).toBe('0');
+    expect(container.querySelector('.bda-due').textContent).toContain('1 day overdue');
+    expect(container.querySelector('[data-mode="overdue"]').textContent).toContain('1');
+    expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+  }finally{jest.useRealTimers();}
+});
+
+test('priority sorting uses saved Action priority without inheriting Finding-only severity',async()=>{
+  records={tasks:[task('own-low',{priority:'low'})],findings:[finding('no-action',{severity:'critical'})]};
+  await render('/action-items?sort=priority');
+  expect(tickets().map(row=>row.dataset.ticketId)).toEqual(['task:own-low','finding:no-action']);
+  expect(tickets()[0].querySelector('.priority-badge').textContent).toBe('Low');
+  expect(tickets()[1].querySelector('.priority-badge').textContent).toBe('Unclassified');
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 test.each(['overdue','next14','15_30','31_60','later'])('native %s deep filter remains available after removing the runway presentation',async key=>{
  records={tasks:Array.from({length:12},(_,i)=>task(String(i),{due_date:'2099-01-01'})),findings:[]};

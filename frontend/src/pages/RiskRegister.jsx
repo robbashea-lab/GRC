@@ -23,6 +23,8 @@ import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
 import BrawndoDemoRisksOverview,{RiskScoreBar} from '@/components/BrawndoDemoRisksOverview';
 import {riskCategories,riskTreatments} from '@/lib/brawndoRisks';
 import './BrawndoDemoRisks.css';
+import CisRisksConcept from '@/components/CisRisksConcept';
+import '@/components/CisRisksConcept.css';
 import managementRules from '@/lib/managementRules.json';
 import api, { formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
@@ -210,7 +212,10 @@ export default function RiskRegister() {
     }catch(error){if(request===eventRequest.current&&currentScope.current===entryScope)toast.error(formatError(error));}
   }
   const baseColumns = tableColumns('risk-register', { rows: tableSource, users });
-  const columns=riskColumns(baseColumns).map(c=>({...(!pilot?baseColumns.find(base=>base.key===c.key):c),label:demoPresentation?({title:'Risk',risk_score:'Score',owner_id:'Owner',next_review:'Next review'}[c.key]||c.label):c.key==='risk_score'?'Score / Level':c.label}));
+  const columns=riskColumns(baseColumns).map(c=>({...(!pilot?baseColumns.find(base=>base.key===c.key):c),label:demoPresentation?({title:'Risk',risk_score:'Score',owner_id:'Owner',next_review:'Next review'}[c.key]||c.label):c.key==='risk_score'?'Score / Level':c.label,
+    // Keep native Open/In Treatment groups while exposing the exact legacy retired subset.
+    ...(demoPresentation&&c.key==='status'?{value:r=>r.status==='retired'?'retired':pilotRiskStatus(r.status||'open'),labelValue:status=>status==='retired'?'Retired (legacy)':status,options:undefined}:{}),
+    ...(demoPresentation&&c.key==='owner_id'?{sortable:true,filterOnly:false}:{})}));
   const table = useTableControls({ columns, rows: tableSource, module: pilot?'brawndo-risks':'risk-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: (key,values) => { if(pilot){if(key===null||['status','next_review','risk_level','owner_id'].includes(key)&&values.length)setView('all');return;} if (key === null || key === 'status' && !values.length) setView('all_active'); else if (key === 'status') setView('all'); } });
   const matrixRows = table.apply(presetRows.filter(r => r.client_id === currentClientId));
   const filtered = workspacePilot&&matrixSelection?matrixRows.filter(r=>(riskCoordinates(r)||'unrated')===matrixSelection):matrixRows;
@@ -227,6 +232,10 @@ export default function RiskRegister() {
   function selectTreatment(){
     selectView('all');
     table.replaceState({...table.state,filters:{...table.state.filters,status:['In Treatment'],next_review:[],risk_level:[],owner_id:[]}});
+  }
+
+  function selectConceptView(id){
+    selectView(id);setQ('');setMatrixSelection(null);table.replaceState({filters:{}});
   }
 
   async function exportCsv() {
@@ -249,12 +258,17 @@ export default function RiskRegister() {
     a.download = `risk-register-${(currentClient?.name || "client").replace(/\s+/g, "-")}.csv`; a.click();
   }
 
-  return <BrawndoSurface className={`approved-risk-register${demoPresentation||navigationLoading?' brawndo-demo-risks':''}`}>
+  return <BrawndoSurface className={`approved-risk-register${demoPresentation||navigationLoading?' cis-risks-surface':''}`}>
       {navigationLoading ? <section data-testid="risks-navigation-loading" aria-busy={!navigationError}>
         <BrawndoPageHeader title={`${currentClient?.name||'Client'} Risks`} subtitle="Risk register · current assessed likelihood × impact" renderThemeAction={props=><SurfaceThemeAction {...props} className="bpage-btn"/>}/>
         <RegisterLoadError error={navigationError} onRetry={load} name="risks"/>
         {!navigationError&&<p role="status">Loading risks…</p>}
-      </section> : <>
+      </section> : demoPresentation ? <CisRisksConcept key={quarterlyChartScope(user,auth.workspaceMode,currentClient)} rows={demoRows} filtered={filtered} users={users} matches={matches} view={view} onView={selectConceptView} search={q} onSearch={setQ} table={table}
+        clientId={currentClientId} clientName={currentClient?.name||'Client'} refreshLabel={refreshLabel} scope={quarterlyChartScope(user,auth.workspaceMode,currentClient)} recordOpen={drawer.open||!!eventDrawer||addOpen||matrixOpen}
+        onOpenRisk={openRisk} onOpenEvent={openUpcoming} onNewRisk={openNewRisk} onRiskScale={openMatrix} onExport={exportCsv} canWrite={canWrite}
+        filters={<><div className="cr-native-views" role="group" aria-label="Risk views">{[['all_active','All active'],['significant','High or critical'],['treatment','In treatment'],['accepted','Accepted'],['upcoming','Review due in 30 days'],...riskViews.filter(v=>['critical','high','review_due'].includes(v.id)).map(v=>[v.id,v.label])].map(([id,label])=><button type="button" key={id} aria-pressed={id==='treatment'?treatmentSelected:view===id} data-testid={`risk-view-${id}`} onClick={()=>id==='treatment'?selectTreatment():selectView(id)}>{label}</button>)}</div>
+          <div className="cr-native-columns" role="group" aria-label="Column filters and sorting">{['category','title','risk_level','risk_score','owner_id','status','next_review','last_reviewed'].map(key=><ColumnControl key={key} table={table} columnKey={key}/>)}</div>
+          <label>Sort by<select aria-label="Sort risks" value={table.state.sort?`${table.state.sort.key}:${table.state.sort.dir}`:'id'} onChange={event=>{if(event.target.value==='id')table.setSort(null);else{const [key,dir]=event.target.value.split(':');table.setSort(key,dir);}}}><option value="id">Risk ID</option><option value="next_review:asc">Next review first</option><option value="risk_score:desc">Highest score</option><option value="title:asc">Risk title</option><option value="owner_id:asc">Owner name</option>{table.state.sort&&!['next_review:asc','risk_score:desc','title:asc','owner_id:asc'].includes(`${table.state.sort.key}:${table.state.sort.dir}`)&&<option value={`${table.state.sort.key}:${table.state.sort.dir}`}>{`${columns.find(column=>column.key===table.state.sort.key)?.label} · ${table.state.sort.dir==='asc'?'Ascending':'Descending'}`}</option>}</select></label><TableFilterChips table={table}/></>}/>: <>
       <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Risk register`} title={demoPresentation?`${currentClient?.name||'Client'} Risks`:'Risks'} subtitle={demoPresentation?`Risk register · current assessed likelihood × impact${refreshLabel?` · As of ${refreshLabel}`:''}`:undefined}
         renderThemeAction={demoPresentation?props=><SurfaceThemeAction {...props} className="bpage-btn"/>:undefined}>
         <button type="button" className="bpage-btn" onClick={openMatrix} data-testid="risk-matrix-btn"><Grid3x3 size={16} aria-hidden="true"/>{demoPresentation?'Risk scale':'Risk Scale & Matrix'}</button>
