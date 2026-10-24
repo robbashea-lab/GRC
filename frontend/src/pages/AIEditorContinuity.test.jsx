@@ -48,7 +48,8 @@ test('organization refresh withdraws appearance while retaining the native dirty
   const listLoads=api.get.mock.calls.filter(([path])=>path==='/ai_systems').length;
   for(const loading of [true,false]){
     mockOrg={...mockOrg,loading};await act(async()=>root.render(page()));
-    expect(!!container.querySelector('.baai-page')).toBe(!loading);
+    expect(!!container.querySelector('.baai-page:not([data-presentation-state="pending"])')).toBe(!loading);
+    if(loading){expect(container.querySelector('[data-presentation-state="pending"] [role="status"]')).not.toBeNull();expect(container.querySelector('[data-presentation-state="pending"] [role="table"]')).toBeNull();}
     expect(container.querySelector('[data-testid="appearance-status"]').textContent).toBe(loading?'none':'ai-governance');
     expect(document.querySelector('[data-testid="ai-drawer"]')===drawer).toBe(true);
     expect(drawerInput().value).toBe('Unsaved AI name');
@@ -81,11 +82,15 @@ test('additional search, native pending view and inactive selection survive appe
   const expected=['AI continuity pending','Archived AI continuity'];expect(names()).toEqual(expected);
   for(const loading of [true,false]){
     mockOrg={...mockOrg,loading};await act(async()=>root.render(page()));
-    expect(!!container.querySelector('.baai-page')).toBe(!loading);
-    expect(container.querySelector('[data-testid="ai-system-search"]').value).toBe('continuity');
-    expect(container.querySelector('[data-testid="ai-system-view-pending"]').getAttribute('aria-pressed')).toBe('true');
-    expect(container.querySelector(loading?'.register-toolbar input[type="checkbox"]':'.baai-summary input').checked).toBe(true);
-    expect(names()).toEqual(expected);
+    expect(!!container.querySelector('.baai-page:not([data-presentation-state="pending"])')).toBe(!loading);
+    if(loading){
+      expect(container.querySelector('[data-presentation-state="pending"] [role="status"]')).not.toBeNull();
+      expect(container.querySelector('[data-testid="ai-system-search"]')).toBeNull();expect(names()).toEqual([]);
+    }else{
+      expect(container.querySelector('[data-testid="ai-system-search"]').value).toBe('continuity');
+      expect(container.querySelector('[data-testid="ai-system-view-pending"]').getAttribute('aria-pressed')).toBe('true');
+      expect(container.querySelector('.baai-summary input').checked).toBe(true);expect(names()).toEqual(expected);
+    }
   }
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

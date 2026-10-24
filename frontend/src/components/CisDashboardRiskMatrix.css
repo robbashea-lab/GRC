@@ -38,3 +38,86 @@
   .cis-dashboard-risk.bpage.brawndo-demo-risks :is(.bdr-matrix,.bdr-matrix-x) { grid-template-columns:repeat(5,minmax(0,1fr)); }
   .cis-dashboard-risk.bpage.brawndo-demo-risks .bdr-matrix-wrap { width:100%; grid-template-columns:14px minmax(0,1fr); }
 }
+
+/* Concept presentation stays separate from the native Risk register and default callers. */
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] {
+  --bp-card:var(--cc-card,#fff); --bp-border:var(--cc-border,#dfe6f1); --bp-text:var(--cc-text,#10213b);
+  --bp-muted:var(--cc-muted,#627594); --bp-focus:var(--cc-blue,#225aca); --cc-risk-cell-height:42px;
+  align-self:stretch; padding:17px 18px; border-color:var(--bp-border); background:var(--bp-card); color:var(--bp-text);
+  font:13px/1.45 'GoverNara Policy Vendor Inter',Inter,Arial,sans-serif;
+}
+.cis-dashboard-risk[data-concept="true"] > header { align-items:flex-start; gap:10px; }
+.cis-dashboard-risk[data-concept="true"] > header h2 { font-size:14px; font-weight:650; line-height:1.45; letter-spacing:-.2px; }
+.cis-dashboard-risk[data-concept="true"] > header a { padding:0; color:var(--cc-blue,#225aca); font-size:11px; white-space:nowrap; }
+.cis-dashboard-risk[data-concept="true"] > header a:hover { text-decoration:underline; }
+.cis-dashboard-risk[data-concept="true"] > p { margin:3px 0 0; font-size:10px; line-height:1.5; }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] .bdr-matrix-wrap { grid-template-columns:18px minmax(0,1fr); gap:4px; margin-top:10px; }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] :is(.bdr-matrix,.bdr-matrix-y) { grid-template-rows:repeat(5,var(--cc-risk-cell-height)); }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] :is(.bdr-matrix,.bdr-matrix-x) { grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] :is(.bdr-matrix-y,.bdr-matrix-x) { font-size:10px; line-height:1.45; color:var(--bp-muted); }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] .bdr-matrix-y { justify-items:center; }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] .bdr-cell {
+  display:flex; align-items:center; justify-content:center; flex-direction:column; gap:0;
+  height:var(--cc-risk-cell-height); border-radius:5px; padding:0; background:var(--cc-risk-cell-fill); color:#8897ad; font-size:11px;
+}
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] .bdr-cell.has-risks { color:var(--bp-text); }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] .bdr-cell > span { font-size:11px; opacity:1; }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] .bdr-cell strong { font-size:17px; line-height:1.05; font-weight:650; }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] .bdr-cell small { margin-top:2px; font-size:10px; font-weight:400; letter-spacing:normal; color:inherit; }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] .bdr-cell.has-risks:hover { box-shadow:inset 0 0 0 2px #8e612744; filter:brightness(.98); }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"][data-theme="dark"] .bdr-cell { color:#6d7d97; }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"][data-theme="dark"] .bdr-cell.has-risks { color:#172741; }
+.cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] .bdr-axis { margin-top:2px; padding-left:18px; font-size:10px; line-height:1.45; }
+.cis-dashboard-risk[data-concept="true"] > .cc-risk-caption { margin:9px 0 0 18px; font-size:9px; line-height:1.45; }
+.cis-dashboard-risk[data-concept="true"] > .cis-dashboard-risk-summary:not(.sr-only) { margin-top:6px; font-size:9px; }
+
+.cis-dashboard-risk-tooltip.ui-tooltip[data-concept="true"] {
+  z-index:90; width:300px; max-width:calc(100vw - 20px); max-height:calc(100dvh - 20px); overflow:auto;
+  padding:13px 14px; border:1px solid var(--cc-border,#dfe6f1); border-radius:9px;
+  background:var(--cc-card,#fff); color:var(--cc-text,#10213b); box-shadow:var(--cc-shadow,0 10px 30px #10213b18);
+  font:11px/1.45 'GoverNara Policy Vendor Inter',Inter,Arial,sans-serif; animation:none;
+}
+.cis-dashboard-risk-tooltip[data-concept="true"] h3 { margin:0 15px 0 0; font-size:13px; font-weight:700; line-height:1.45; }
+.cis-dashboard-risk-tooltip[data-concept="true"] p { margin:3px 0 0; color:var(--cc-muted,#627594); font-size:11.5px; line-height:1.45; }
+.cis-dashboard-risk-tooltip[data-concept="true"] ul { margin:7px 0 0; padding-left:15px; color:var(--cc-muted,#627594); font-size:10.5px; }
+
+/* DialogContent renders this overlay immediately before its own portaled content. */
+.ui-overlay:has(+ .cis-dashboard-risk-selection[data-concept="true"]) { background:#0b17355c; backdrop-filter:blur(2px); }
+.cis-dashboard-risk-selection.ui-dialog[data-concept="true"] {
+  display:block; width:min(680px,calc(100vw - 32px)); max-width:680px; max-height:calc(100dvh - 32px); overflow:hidden;
+  padding:0; border:1px solid var(--cc-border,#dfe6f1); border-radius:12px;
+  background:var(--cc-card,#fff); color:var(--cc-text,#10213b); box-shadow:0 25px 100px #07142b55;
+  font:13px/1.45 'GoverNara Policy Vendor Inter',Inter,Arial,sans-serif;
+}
+.cis-dashboard-risk-selection[data-concept="true"] .cc-risk-selection-head { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding:20px 22px 16px; border-bottom:1px solid var(--cc-border,#dfe6f1); }
+.cis-dashboard-risk-selection[data-concept="true"] .cc-risk-eyebrow { margin:0 0 6px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(--cc-muted,#627594); }
+.cis-dashboard-risk-selection[data-concept="true"] h2 { margin:0; font-size:18px; font-weight:650; line-height:1.45; letter-spacing:-.2px; }
+.cis-dashboard-risk-selection[data-concept="true"] .cc-risk-selection-head div > p:last-child { margin:3px 0 0; font-size:11.5px; line-height:1.45; color:var(--cc-muted,#627594); }
+.cis-dashboard-risk-selection[data-concept="true"] .cc-risk-close { flex:none; padding:0 2px; border:0; background:none; color:var(--cc-muted,#627594); font:24px/1 'GoverNara Policy Vendor Inter',Inter,Arial,sans-serif; cursor:pointer; }
+.cis-dashboard-risk-selection[data-concept="true"] .cc-risk-selection-body { padding:18px 22px; max-height:calc(100dvh - 170px); overflow:auto; }
+.cis-dashboard-risk-selection[data-concept="true"] .cc-risk-selection-body > p { margin:0 0 9px; }
+.cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list { display:grid; gap:9px; }
+.cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list li + li { border-top:0; }
+.cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list button { gap:14px; padding:13px 15px; border:1px solid var(--cc-border,#dfe6f1); border-radius:7px; background:var(--cc-card,#fff); color:inherit; }
+.cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list button:hover { background:var(--cc-subtle,#f7f9fc); border-color:#aabfdf; }
+.cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list b { font-size:12px; font-weight:600; line-height:1.45; }
+.cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list small { margin-top:5px; color:var(--cc-muted,#627594); font-size:10px; line-height:1.45; opacity:1; }
+.cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-score { display:inline-block; border-radius:5px; background:#f9e2b6; padding:4px 8px; font-size:11px; font-weight:400; white-space:nowrap; }
+.cis-dashboard-risk-selection[data-concept="true"] :is(.cc-risk-close,.cis-dashboard-risk-list button):focus-visible { outline:2px solid var(--cc-blue,#225aca); outline-offset:2px; }
+@media(min-width:1700px) {
+  .cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] { --cc-risk-cell-height:48px; padding:20px 22px; }
+}
+@media(max-width:1240px) {
+  .cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] { align-self:start; }
+}
+@media(max-width:720px) {
+  .cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] { --cc-risk-cell-height:48px; width:100%; }
+}
+@media(max-width:540px) {
+  .cis-dashboard-risk.bpage.brawndo-demo-risks[data-concept="true"] { --cc-risk-cell-height:46px; padding:15px; }
+  .cis-dashboard-risk-selection[data-concept="true"] :is(.cc-risk-selection-head,.cc-risk-selection-body) { padding:17px; }
+  .cis-dashboard-risk-selection[data-concept="true"] h2 { font-size:16px; }
+  .cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list button { padding:11px; }
+  .cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list b { font-size:11px; }
+  .cis-dashboard-risk-selection[data-concept="true"] .cis-dashboard-risk-list small { font-size:9px; }
+}

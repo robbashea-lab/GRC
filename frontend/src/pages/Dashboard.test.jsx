@@ -8,6 +8,12 @@ import api from '@/lib/api';
 jest.mock('@/context/OrgContext',()=>({useOrg:jest.fn()}));
 let mockDashboardUser={user_id:'u',role:'super_admin'};
 let mockWorkspaceMode='standard',mockDashboardSearch='';
+let mockDashboardEnabled=true;
+jest.mock('@/lib/brawndoDemoDashboard',()=>{
+ const actual=jest.requireActual('@/lib/brawndoDemoDashboard');
+ return {...actual,get BRAWNDO_DEMO_DASHBOARD_ENABLED(){return mockDashboardEnabled;},
+  brawndoDemoDashboard:context=>mockDashboardEnabled&&actual.brawndoDemoDashboard(context)};
+});
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockDashboardUser,workspaceMode:mockWorkspaceMode})}));
 jest.mock('@/components/RecordDrawer',()=>({kind,record,initialValues,onSaved,onOpenChange})=><div role="dialog" aria-label="Native record test boundary"><span>{kind}: {record.title}</span>{initialValues?.occurrence&&<span>Historical period: {initialValues.occurrence.period}</span>}<button onClick={onSaved}>Save native record</button><button onClick={()=>onOpenChange(false)}>Cancel native record</button></div>);
 jest.mock('@/lib/loadClientDashboard',()=>({loadClientDashboard:jest.fn()}));
@@ -17,9 +23,23 @@ let root,container;
 const row=(id='t',kind='tasks')=>({key:kind+':'+id,id,kind,type:kind==='tasks'?'Action Item':'Review',title:'Synthetic work '+id,status:'open',owner:'Unassigned',unassigned:true,due_date:'2026-09-01'});
 const queue=items=>({as_of:'2026-10-05',groups:Object.fromEntries(['all','pastDue','due30','unassigned'].map(key=>[key,{total:items.length,items:items.slice(0,9)}]))});
 const snapshot=items=>({contract_version:2,members:[],programs:[],programRows:{},queue:queue(items)});
-beforeEach(()=>{localStorage.setItem('grc_client_id','demo_brawndo');sessionStorage.setItem('grc_client_id','demo_brawndo');global.IS_REACT_ACT_ENVIRONMENT=true;mockDashboardUser={user_id:'u',role:'super_admin'};mockWorkspaceMode='standard';mockDashboardSearch='';container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);useOrg.mockReturnValue({currentClientId:'a',currentClient:{name:'Synthetic A'}});loadClientDashboard.mockReset();Object.values(api).forEach(fn=>fn.mockReset());});
+beforeEach(()=>{mockDashboardEnabled=true;localStorage.setItem('grc_client_id','demo_brawndo');sessionStorage.setItem('grc_client_id','demo_brawndo');global.IS_REACT_ACT_ENVIRONMENT=true;mockDashboardUser={user_id:'u',role:'super_admin'};mockWorkspaceMode='standard';mockDashboardSearch='';container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);useOrg.mockReturnValue({currentClientId:'a',currentClient:{name:'Synthetic A'}});loadClientDashboard.mockReset();Object.values(api).forEach(fn=>fn.mockReset());});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();localStorage.clear();});
 const click=async text=>act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());
+
+test('the documented gate-only rollback keeps the native Dashboard usable for an eligible CIS client',async()=>{
+ mockDashboardEnabled=false;
+ const context=cisContext('demo_brawndo',1,'standard');useOrg.mockReturnValue(context);
+ loadClientDashboard.mockResolvedValue(snapshot([]));
+ await act(async()=>root.render(<Dashboard/>));
+ expect(container.querySelector('[data-cis-dashboard-concept]')).toBeNull();
+ expect(container.querySelectorAll('.quick-filters button')).toHaveLength(4);
+ expect(container.textContent).toContain('Priority overview');
+ expect(loadClientDashboard.mock.calls[0][1].includeProgramMetadata).toBe(false);
+ useOrg.mockReturnValue({...context,loading:true});await act(async()=>root.render(<Dashboard/>));
+ expect(container.querySelector('.cis-dashboard-concept-pending')).toBeNull();
+ expect(container.textContent).not.toContain('Loading dashboard…');
+});
 
 test('a native CIS group change reloads projections without discarding an open native editor',async()=>{
  useOrg.mockReturnValue({...cisContext('demo_brawndo',1,'standard'),currentClient:{...cisClient('demo_brawndo',1),name:'Brawndo'}});
@@ -130,7 +150,11 @@ test('pilot refresh replaces queue fields and dismisses work removed by native c
  const editor=document.querySelector('[aria-label="Native record test boundary"]');
  expect(container.querySelector('.brawndo-demo-dashboard')).not.toBeNull();
  useOrg.mockReturnValue({...org,loading:true});await act(async()=>root.render(<Dashboard/>));
- expect(container.querySelector('.brawndo-demo-dashboard')).toBeNull();expect(document.querySelector('[aria-label="Native record test boundary"]')).toBe(editor);
+ expect(container.querySelector('[data-cis-dashboard-concept=true]')).toBeTruthy();
+ expect(container.querySelector('.cis-dashboard-concept-pending [role=status]').textContent).toBe('Loading dashboard…');
+ expect(container.querySelector('.bdd-summary')).toBeNull();expect(container.querySelector('.bdd-table-scroll')).toBeNull();
+ expect(container.querySelector('.cis-dashboard-concept-presentation').textContent).not.toContain('Synthetic work draft');
+ expect(document.querySelector('[aria-label="Native record test boundary"]')).toBe(editor);
  useOrg.mockReturnValue(org);await act(async()=>root.render(<Dashboard/>));
  expect(document.querySelector('[aria-label="Native record test boundary"]')).toBe(editor);expect(api.patch).not.toHaveBeenCalled();
  });

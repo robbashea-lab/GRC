@@ -1,6 +1,6 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
-import BrawndoDemoDashboard from './BrawndoDemoDashboard';
+import BrawndoDemoDashboard,{CisDashboardPending} from './BrawndoDemoDashboard';
 jest.mock('@/lib/api',()=>({formatError:error=>error.message}));
 let root,container;
 beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
@@ -8,6 +8,33 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 const rows=Array.from({length:32},(_,i)=>({key:`tasks:${i}`,id:String(i),kind:'tasks',title:`Action ${i}`,type:'Action Item',owner:'Alex',status:'in_progress',due_date:'2026-10-15'}));
 const queue={as_of:'2026-10-15',groups:{all:{total:32},pastDue:{total:0},due30:{total:32},unassigned:{total:0}}};
 const props={queue,client:{client_id:'demo_brawndo',name:'Brawndo'},programs:[],filter:'all',onFilter:jest.fn(),onOpen:jest.fn(),loadDetail:async(key,offset,signal,{limit})=>({items:rows.slice(offset,offset+limit),offset,limit,total:rows.length,has_more:offset+limit<rows.length})};
+
+test('concept groups approved presentation while Priority work keeps its native markup and controls',async()=>{
+ await act(async()=>root.render(<BrawndoDemoDashboard {...props}><section data-testid="program">Native CIS</section></BrawndoDemoDashboard>));
+ const original=container.querySelector('[aria-labelledby="bdd-work-heading"]').outerHTML;
+ expect(container.querySelector('.cis-dashboard-concept-presentation')).toBeNull();
+ await act(async()=>root.render(<BrawndoDemoDashboard {...props} concept><section data-testid="program">Native CIS</section></BrawndoDemoDashboard>));
+ const presentation=container.querySelector('.cis-dashboard-concept-presentation');
+ expect(presentation.querySelector('[data-testid="program"]')).toBeTruthy();
+ expect(presentation.querySelector('.bdd-summary')).toBeTruthy();
+ expect(presentation.querySelector('#bdd-work-heading')).toBeNull();
+ expect(container.querySelector('[aria-labelledby="bdd-work-heading"]').outerHTML).toBe(original);
+ await act(async()=>container.querySelector('tbody button').click());
+ expect(props.onOpen).toHaveBeenLastCalledWith(rows[0],expect.any(HTMLElement));
+});
+
+test('concept loading and error frame has no saved counts or queue requests and reuses native theme preference',async()=>{
+ localStorage.setItem('omnisciente:brawndo-dashboard-theme','dark');
+ await act(async()=>root.render(<CisDashboardPending client={{name:'Owned CIS'}}><p role="status">Loading dashboard…</p></CisDashboardPending>));
+ expect(container.querySelector('[data-cis-dashboard-concept=true]').dataset.theme).toBe('dark');
+ expect(container.querySelector('h1').textContent).toBe('Owned CIS Dashboard');
+ expect(container.querySelector('.bdd-summary')).toBeNull();
+ expect(container.querySelector('.bdd-table-scroll')).toBeNull();
+ await act(async()=>container.querySelector('[aria-label="Switch to light theme"]').click());
+ expect(localStorage.getItem('omnisciente:brawndo-dashboard-theme')).toBe('light');
+ expect(container.querySelector('[data-cis-dashboard-concept=true]').dataset.theme).toBe('light');
+ localStorage.clear();
+});
 test('renders eight rows from full work with native identity, full counts and page navigation',async()=>{
  await act(async()=>root.render(<BrawndoDemoDashboard {...props}><section>CIS IG1 Status</section></BrawndoDemoDashboard>));
  expect(container.querySelectorAll('tbody tr')).toHaveLength(8);expect(container.querySelector('.bdd-summary').textContent).toContain('32');expect(container.textContent).toContain('32 in progress');

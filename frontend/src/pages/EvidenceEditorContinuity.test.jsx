@@ -8,7 +8,7 @@ jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/context/ComplianceContext',()=>({useCompliance:()=>({items:[],loading:false,error:''})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn(),delete:jest.fn()},formatError:error=>error.message}));
-jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:(surface,loadedClientId)=>!mockOrg.loading&&loadedClientId==='demo_brawndo'}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:(surface,loadedClientId)=>!mockOrg.loading&&loadedClientId==='demo_brawndo',useAdditionalSectionsPresentation:()=>true}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/evidence',search:''}),useNavigate:()=>jest.fn()}),{virtual:true});
 jest.mock('@/components/AdditionalEvidence',()=>{
   const actual=jest.requireActual('@/components/AdditionalEvidence');
@@ -78,7 +78,9 @@ test('native catalog search, facets, recent selection and page survive appearanc
   await act(async()=>node.querySelector('[data-testid="evidence-figure-recent"]').click());
   await act(async()=>[...node.querySelectorAll('[aria-label="Evidence pagination"] button')].find(element=>element.textContent==='Next').click());
   const before=request();expect(before.page).toBe(2);expect(before.q).toBe('Check');expect(JSON.parse(before.state).filters).toEqual({created_at:['last90'],evidence_type:['Report'],years:['2026']});
-  refreshAppearance(true);expect(node.querySelector('.brawndo-additional')).toBeNull();
+  refreshAppearance(true);expect(node.querySelector('.brawndo-additional:not([data-presentation-state="pending"])')).toBeNull();
+  expect(node.querySelector('[data-presentation-state="pending"] [role="status"]')).not.toBeNull();
+  expect(node.querySelector('[data-presentation-state="pending"] table,[data-presentation-state="pending"] input')).toBeNull();
   mockOrg={...mockOrg,loading:false};await act(async()=>root.render(<Evidence/>));
   expect(request()).toEqual(before);expect(node.querySelector('[data-testid="evidence-search"]').value).toBe('Check');expect(node.querySelector('[aria-label="Evidence type"]').value).toBe('Report');expect(node.querySelector('[aria-label="Evidence year"]').value).toBe('2026');expect(node.querySelector('[data-testid="evidence-figure-recent"]').getAttribute('aria-pressed')).toBe('true');expect(node.querySelector('[aria-label="Evidence pagination"]').textContent).toContain('26–26 of 26 files');
   for(const method of ['post','patch','delete'])expect(api[method]).not.toHaveBeenCalled();

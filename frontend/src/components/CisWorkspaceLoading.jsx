@@ -6,6 +6,7 @@ import {selectedClient} from '@/lib/clientSelection';
 import {cisClientProgram,cisExperienceEligible,CIS_FRAMEWORK} from '@/lib/cisExperience';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import {BRAWNDO_CIS_VISUAL_ENABLED} from '@/lib/brawndoCisVisual';
+import {useCisVisualChrome} from './BrawndoCisVisualAppearance';
 
 export function useCisLoadingProgram(frameworkKey,clientId){
   const auth=useAuth(),org=useOrg()||{},location=useLocation();
@@ -20,6 +21,7 @@ export function useCisLoadingProgram(frameworkKey,clientId){
 // Enrollment can name the loading shell; only the existing loaded-data gate may expose assessments or actions.
 export default function CisWorkspaceLoading({program}){
   const [theme]=useBrawndoTheme();
+  useCisVisualChrome(true);
   return <section className="bcis brawndo-cis-visual" data-theme={theme} data-testid="cis-workspace-loading" aria-busy="true">
     <header className="page-head"><div><h1>CIS IG{program.implementationGroup}</h1>
       <p>CIS Controls v{program.version} · Implementation Group {program.implementationGroup}</p></div></header>

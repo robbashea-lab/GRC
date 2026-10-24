@@ -6,7 +6,7 @@ let mockUser,mockMode;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:mockMode})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'demo_brawndo',currentClient:{client_id:'demo_brawndo',name:'Brawndo'},refresh:jest.fn()})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn()},formatError:error=>error.message}));
-jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false,useAdditionalSectionsPresentation:()=>false}));
 jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/client-profile',search:''}),useSearchParams:()=>require('react').useState(new URLSearchParams()),Link:({to,children,...props})=><a href={to} {...props}>{children}</a>,Navigate:()=>null}),{virtual:true});
 jest.mock('./Onboarding',()=>()=>null);
 jest.mock('./PlatformAdmin',()=>({UsersTable:()=>null}));

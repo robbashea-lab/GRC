@@ -19,7 +19,7 @@ jest.mock('react-router-dom', () => ({
   useSearchParams: () => require('react').useState(new URLSearchParams(mockLocation.search)),
   Link: ({to, children, ...props}) => <a href={to} {...props}>{children}</a>, Navigate: () => null,
 }), {virtual: true});
-jest.mock('@/lib/brawndoAdditionalScope', () => ({useAdditionalSectionsSurface: () => false}));
+jest.mock('@/lib/brawndoAdditionalScope', () => ({useAdditionalSectionsSurface: () => false,useAdditionalSectionsPresentation: () => false}));
 jest.mock('./PlatformAdmin', () => ({UsersTable: () => null}));
 jest.mock('@/components/ComplianceProfile', () => () => null);
 jest.mock('@/components/ClientDialog', () => () => null);

@@ -1,6 +1,6 @@
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
-import {useAdditionalSectionsSurface} from '@/lib/brawndoAdditionalScope';
+import {useAdditionalSectionsSurface,useAdditionalSectionsPresentation} from '@/lib/brawndoAdditionalScope';
 import {policyVisualMatches} from '@/lib/brawndoAdditionalPolicyVendor';
 import BrawndoAdditionalPolicies from '@/components/BrawndoAdditionalPolicies';
 import {selectedClient} from '@/lib/clientSelection';
@@ -151,6 +151,9 @@ function EntityListPage({ kind }) {
   const [policyReviews, setPolicyReviews] = useState([]);
   const [acceptedPolicyRefresh, setAcceptedPolicyRefresh] = useState(null);
   const [policyAlignmentScope, setPolicyAlignmentScope] = useState('');
+  const [policyScopeError,setPolicyScopeError] = useState('');
+  const [policyAlignmentRetry,setPolicyAlignmentRetry] = useState(0);
+  const policyPresentation = useAdditionalSectionsPresentation('policies');
   const additionalPolicies = useAdditionalSectionsSurface('policies',
     kind === 'policies' && !loadError && loadedPolicyScope.current === policyScope && policyAlignmentScope === policyScope ? currentClientId : null);
   const loadSequence = useRef(0);
@@ -165,17 +168,18 @@ function EntityListPage({ kind }) {
   useEffect(() => {
     if (kind !== 'policies' || !currentClientId) { setPrograms([]); return undefined; }
     const controller = new AbortController();
-    setPrograms([]);setPolicyAssessments([]);setCisGroup(1);setAlignmentError('');setPolicyAlignmentScope('');
+    setPrograms([]);setPolicyAssessments([]);setCisGroup(1);setAlignmentError('');setPolicyAlignmentScope('');setPolicyScopeError('');
     api.get('/frameworks/summary', { params: { client_id: currentClientId }, signal: controller.signal })
       .then(async({ data }) => {
-        if(controller.signal.aborted||data.client_id!==currentClientId)return;
+        if(controller.signal.aborted)return;
+        if(data.client_id!==currentClientId){setPolicyScopeError('Policy alignment could not be verified for this client.');return;}
         const enabled=(data.items||[]).filter(p=>p.tracking_available).map(p=>p.key);setPrograms(enabled);setCisGroup(data.items.find(p=>p.key==='cis-ig1')?.implementation_group||1);
         if(policiesPilot){const results=await Promise.all(enabled.map(key=>api.get('/frameworks/'+key,{params:{client_id:currentClientId},signal:controller.signal})));if(!controller.signal.aborted)setPolicyAssessments(results.flatMap(r=>(r.data.assessments||[]).filter(a=>!r.data.active_definition_ids||r.data.active_definition_ids.includes(a.definition_id))).filter(a=>a.client_id===currentClientId));}
         if(!controller.signal.aborted)setPolicyAlignmentScope(policyScope);
       })
       .catch(() => { if (!controller.signal.aborted) {setPrograms([]);if(policiesPilot)setAlignmentError('Alignment unavailable');setPolicyAlignmentScope(policyScope);} });
     return () => controller.abort();
-  }, [kind, currentClientId,policiesPilot,policyScope]);
+  }, [kind, currentClientId,policiesPilot,policyScope,policyAlignmentRetry]);
   // Existing bookmarked pilot views continue to open their corresponding shared filter.
   const legacyReviewView = kind==='reviews' ? params.get('reviewView') : '';
   const signal = useMemo(() => signals.find(x => x.id === (params.get("signal") || (legacyReviewView==='unassigned'?'unowned':''))), [signals, params, legacyReviewView]);
@@ -692,7 +696,11 @@ function EntityListPage({ kind }) {
 
 
   return (<>
-    {additionalPolicies ? <BrawndoAdditionalPolicies clientName={currentClient?.name||'Client'}
+    {kind==='policies'&&policyPresentation&&!additionalPolicies ? <section className="brawndo-additional bap-page" data-theme={theme} data-testid="policies-navigation-loading" aria-busy={!(loadError||policyScopeError)}>
+      <div className="bapv-page-head"><div><h1>{currentClient?.name||'Client'} Policies</h1><p>Policy library</p></div></div>
+      <RegisterLoadError error={loadError||policyScopeError} onRetry={()=>{if(policyScopeError)setPolicyAlignmentRetry(value=>value+1);load();}} name="policies"/>
+      {!loadError&&!policyScopeError&&<p role="status">Loading policies…</p>}
+    </section> : additionalPolicies ? <BrawndoAdditionalPolicies clientName={currentClient?.name||'Client'}
       rows={tableSource} filteredRows={filtered} reviews={policyReviews} users={users} theme={theme}
       programs={programs} assessments={policyAssessments} cisGroup={cisGroup} alignmentError={alignmentError}
       loading={showLoading} error={loadError} onRetry={load} q={q} onSearch={setQ}

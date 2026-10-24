@@ -258,6 +258,9 @@ test.each(['actor','route','mode','mixed-client'])('pending refresh cannot retai
   await render();jest.setSystemTime(new Date('2026-10-18T18:25:00.000Z'));
   await act(async()=>pending[0]({data:change==='mixed-client'?[...rows,{...rows[0],risk_id:'foreign',client_id:'demo_dunder'}]:rows}));
   expect(subtitle()).not.toContain('As of');
-  if(change==='actor')expect(container.querySelector('tbody').textContent).not.toContain('Native high risk');
+  if(change==='actor'){
+    expect(container.querySelector('[data-testid="risks-navigation-loading"]')).not.toBeNull();
+    expect(container.textContent).not.toContain('Native high risk');
+  }
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

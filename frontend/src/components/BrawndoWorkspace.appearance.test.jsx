@@ -14,6 +14,11 @@ import {useCisVisualAppearance} from './BrawndoCisVisualAppearance';
 import BrawndoWorkspace from './BrawndoWorkspace';
 
 let mockAuth, mockOrg, mockLocation, mockLoadedOrigin, mockMounts, mockUnmounts;
+let mockDashboardEnabled=true;
+jest.mock('@/lib/brawndoDemoDashboard',()=>({
+  ...jest.requireActual('@/lib/brawndoDemoDashboard'),
+  get BRAWNDO_DEMO_DASHBOARD_ENABLED(){return mockDashboardEnabled;},
+}));
 jest.mock('@/context/AuthContext', () => ({useAuth: () => mockAuth}));
 jest.mock('@/context/OrgContext', () => ({useOrg: () => mockOrg}));
 jest.mock('@/context/ComplianceContext', () => ({useCompliance: () => ({items: []})}));
@@ -65,6 +70,7 @@ function NativePageOrigin() {
 
 let root, host;
 beforeEach(() => {
+  mockDashboardEnabled=true;
   require('@/lib/api').PREVIEW_MODE = true;
   global.IS_REACT_ACT_ENVIRONMENT = true;
   localStorage.clear(); sessionStorage.clear();
@@ -86,14 +92,25 @@ const render = () => act(async () => root.render(
   <AdditionalSectionsProvider><BrawndoWorkspace><NativePageOrigin/></BrawndoWorkspace></AdditionalSectionsProvider>
 ));
 
-function expectAppearance(surface, theme = 'light') {
+test('the Dashboard-only shell follows the documented gate-only rollback without changing other page appearance',async()=>{
+  mockDashboardEnabled=false;await render();
+  expect(host.querySelector('.brawndo-workspace-pilot').dataset.cisDashboardConcept).toBeUndefined();
+  mockOrg={...mockOrg,loading:true};await render();
+  expect(host.querySelector('.brawndo-workspace-pilot').dataset.cisDashboardConcept).toBeUndefined();
+  mockLocation={pathname:'/policies',search:''};await render();
+  expect(host.querySelector('.brawndo-workspace-pilot').dataset.additionalSurface).toBe('policies');
+});
+
+function expectAppearance(surface, theme = 'light', chrome = surface) {
   const shell = host.querySelector('.brawndo-workspace-pilot'), html = document.documentElement;
   const visual = surface === 'dashboard' ? surface : undefined;
   const additional = surface === 'policies' ? surface : undefined;
+  const additionalChrome = chrome === 'policies' ? chrome : undefined;
   const cisVisual = surface === 'cis' ? 'true' : undefined;
+  const cisChrome = chrome === 'cis' ? 'true' : undefined;
   expect(shell.dataset.visualSurface).toBe(visual);
-  expect(shell.dataset.additionalSurface).toBe(additional);
-  expect(shell.dataset.cisVisual).toBe(cisVisual);
+  expect(shell.dataset.additionalSurface).toBe(additionalChrome);
+  expect(shell.dataset.cisVisual).toBe(cisChrome);
   expect(html.dataset.visualSurface).toBe(visual);
   expect(html.dataset.visualTheme).toBe(visual ? theme : undefined);
   expect(html.dataset.additionalSurface).toBe(additional);
@@ -125,11 +142,11 @@ test('combined appearance transitions retain the mounted native draft and reject
     await render(); expectAppearance(surface); expectDraft();
 
     // A routine refresh withdraws styling without remounting the native editor.
-    mockOrg = {...mockOrg, loading: true}; await render(); expectAppearance(null); expectDraft();
+    mockOrg = {...mockOrg, loading: true}; await render(); expectAppearance(null, 'light', surface); expectDraft();
     mockOrg = {...mockOrg, loading: false}; await render(); expectAppearance(surface); expectDraft();
 
     mockAuth = {...mockAuth, user: {...mockAuth.user, user_id: `${mockAuth.user.user_id}-next`}};
-    await render(); expectAppearance(null); expectDraft();
+    await render(); expectAppearance(null, 'light', surface); expectDraft();
     mockLoadedOrigin = currentOrigin(); await render(); expectAppearance(surface); expectDraft();
 
     // Even a resolved native read cannot enable either design for a lookalike client.
@@ -164,4 +181,21 @@ test('combined appearance transitions retain the mounted native draft and reject
   }
   expect(document.body.hasAttribute('data-brawndo-cis-visual')).toBe(false);
   expect(document.body.hasAttribute('data-brawndo-cis-theme')).toBe(false);
+});
+
+
+test('background dashboard chrome is stable while strict portal appearance is withdrawn and concept styling stays route-local',async()=>{
+  await render();expect(host.querySelector('.brawndo-workspace-pilot').dataset.cisDashboardConcept).toBe('true');
+  mockOrg={...mockOrg,loading:true};await render();
+  expect(host.querySelector('.brawndo-workspace-pilot').dataset.visualSurface).toBe('dashboard');
+  expect(document.documentElement.dataset.visualSurface).toBeUndefined();
+  expect(host.querySelector('.bwp-brand small').textContent).toBe('By Prestige Worldwide');
+  for(const pathname of ['/systems','/reports','/compliance/iso-27001','/admin/clients']){
+    mockLocation={pathname,search:''};await render();
+    expect(host.querySelector('.brawndo-workspace-pilot').dataset.cisDashboardConcept).toBeUndefined();
+    expect(host.querySelector('.brawndo-workspace-pilot').dataset.visualSurface).toBeUndefined();
+  }
+  mockLocation={pathname:'/dashboard',search:''};mockAuth={...mockAuth,error:'Current identity unavailable'};await render();
+  expect(host.querySelector('.brawndo-workspace-pilot').dataset.cisDashboardConcept).toBeUndefined();
+  expect(host.querySelector('.brawndo-workspace-pilot').dataset.visualSurface).toBeUndefined();
 });

@@ -148,3 +148,117 @@ test('a native domain with no applicable safeguards keeps its name and N/A inste
   expect(host.querySelectorAll('.cdp-radar-point')).toHaveLength(13);
   expect(host.querySelector('.cdp-value')).toBeNull();
 });
+
+function conceptSource(group=1,assetStatuses=[]){
+  const source=cisWorkspace('synthetic',group),assets=cisSecurityDomainMapping(group)[0];
+  for(const row of source.assessments){
+    const index=assets.safeguardIds.indexOf(row.definition_id);
+    if(index>=0&&assetStatuses[index])row.status=assetStatuses[index];
+    if(row.status==='not_applicable')row.na_rationale='Synthetic native applicability decision';
+  }
+  const applicable=source.assessments.filter(row=>row.status!=='not_applicable');
+  source.implementation_position.denominator=applicable.length;
+  source.implementation_position.excluded=source.assessments.length-applicable.length;
+  source.implementation_position.implemented=applicable.filter(row=>row.status==='addressed').length;
+  source.implementation_position.counts.forEach(row=>{row.count=applicable.filter(record=>record.status===row.key).length;});
+  return source;
+}
+
+const renderConcept=async(source=conceptSource(),theme='light')=>act(async()=>root.render(
+  <CisDomainProfile source={source} clientId="synthetic" implementationGroup={source.configuration.implementation_group} concept theme={theme}/>
+));
+
+test.each([1,2,3])('concept IG%s keeps every true domain name/rate in a compact angular radar and adjacent table',async group=>{
+  await renderConcept(conceptSource(group));
+  const domains=cisSecurityDomainMapping(group),axes=[...host.querySelectorAll('.cdp-concept-axis-label')];
+  expect(host.querySelector('.cdp-radar').getAttribute('viewBox')).toBe('0 0 430 332');
+  expect(host.querySelectorAll('tbody tr')).toHaveLength(domains.length);
+  expect(axes).toHaveLength(domains.length);
+  expect(host.querySelectorAll('.cdp-concept-point')).toHaveLength(domains.length);
+  expect(new Set(axes.map(axis=>axis.querySelector('text').getAttribute('x'))).size).toBeGreaterThan(3);
+  for(const [index,domain]of domains.entries()){
+    const axis=axes[index],text=axis.querySelector('text'),lines=axis.querySelectorAll('tspan:not(.cdp-axis-rate)');
+    expect([...lines].map(line=>line.textContent).join(' ')).toBe(domain.label);
+    expect(axis.getAttribute('aria-label')).toContain(domain.label);
+    expect(axis.querySelector('.cdp-axis-rate').textContent).toBe('0.0%');
+    expect(Number(text.getAttribute('y'))).toBeGreaterThanOrEqual(8);
+    expect(Number(text.getAttribute('y'))+(lines.length-1)*12+16).toBeLessThanOrEqual(332);
+    expect(host.querySelectorAll('tbody tr')[index].textContent).toContain(domain.label);
+  }
+  expect(host.querySelector('.cdp-label-leader')).toBeNull();
+});
+
+test('concept point, named axis and table share native details and coordinated highlighting',async()=>{
+  await renderConcept();
+  const targets=[host.querySelector('.cdp-concept-point'),host.querySelector('.cdp-concept-axis-label'),host.querySelector('.cdp-domain-name')];
+  let expected;
+  for(const target of targets){
+    await act(async()=>target.focus());
+    const popup=document.querySelector('.cdp-concept-tip');
+    expect(popup).not.toBeNull();
+    expect(popup.classList.contains('cis-dashboard-concept-portal')).toBe(true);
+    expect(popup.dataset.theme).toBe('light');
+    expect(popup.querySelector('.cdp-focus').classList.contains('is-warning')).toBe(true);
+    expect(popup.textContent).toContain('Assess 5 untouched safeguards');
+    expect(popup.textContent).toContain('this is not an assessed failure');
+    expected??=popup.textContent;
+    expect(popup.textContent).toBe(expected);
+    expect(host.querySelectorAll('tbody tr.is-selected')).toHaveLength(1);
+    expect(host.querySelectorAll('.cdp-concept-point.is-selected')).toHaveLength(1);
+    expect(host.querySelectorAll('.cdp-concept-axis-label.is-selected')).toHaveLength(1);
+    await act(async()=>target.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+    expect(document.querySelector('.cdp-concept-tip')).toBeNull();
+    expect(document.activeElement).toBe(target);
+  }
+});
+
+test.each([
+  [['needs_attention','in_progress'], 'danger', 'Address 1 not-implemented safeguard', '1 safeguard is partially implemented; 3 safeguards need assessment.'],
+  [Array(5).fill('in_progress'), 'warning', 'Complete 5 partial implementations', 'The remaining safeguards are assessed, but implementation is not complete.'],
+  [Array(5).fill('addressed'), 'success', 'All applicable safeguards implemented', 'not a certification or assurance conclusion'],
+  [Array(5).fill('not_applicable'), 'neutral', 'No applicable safeguards', 'There is no applicable scope to assess in this domain.'],
+])('concept focus preserves the reference hierarchy for actual native counts (%#)',async(statuses,tone,title,detail)=>{
+  await renderConcept(conceptSource(1,statuses),'dark');
+  await act(async()=>host.querySelector('.cdp-domain-name').focus());
+  const popup=document.querySelector('.cdp-concept-tip'),focus=popup.querySelector('.cdp-focus');
+  expect(popup.dataset.theme).toBe('dark');
+  expect(focus.classList.contains(`is-${tone}`)).toBe(true);
+  expect(focus.querySelector('b').textContent).toBe(title);
+  expect(focus.querySelector('p').textContent).toContain(detail);
+  expect(popup.querySelectorAll('dl div')).toHaveLength(4);
+  if(tone==='neutral'){
+    expect(popup.textContent).toContain('N/A');
+    expect(host.querySelectorAll('.cdp-concept-point')).toHaveLength(10);
+    expect(host.querySelector('.cdp-value')).toBeNull();
+  }
+});
+
+test('concept click pins/toggles, keyboard activates named SVG axes, and outside dismissal clears highlights',async()=>{
+  jest.useFakeTimers();await renderConcept();
+  const first=host.querySelector('.cdp-domain-name'),second=host.querySelectorAll('.cdp-domain-name')[1];
+  await act(async()=>first.click());
+  await pointer(first,'pointerout',document.body);
+  await pointer(second,'pointerover');
+  await act(async()=>jest.advanceTimersByTime(200));
+  expect(document.querySelector('.cdp-concept-tip h3').textContent).toBe('Asset & Software Management');
+  await act(async()=>first.click());
+  expect(document.querySelector('.cdp-concept-tip')).toBeNull();
+  const axis=host.querySelector('.cdp-concept-axis-label');
+  await act(async()=>axis.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true})));
+  expect(document.querySelector('.cdp-concept-tip')).not.toBeNull();
+  await act(async()=>jest.advanceTimersByTime(0));
+  await pointer(document.body,'pointerdown');
+  expect(document.querySelector('.cdp-concept-tip')).toBeNull();
+  expect(host.querySelector('tr.is-selected')).toBeNull();
+});
+
+test('concept unavailable context removes stale popup without changing the default presentation',async()=>{
+  await renderConcept();
+  await act(async()=>host.querySelector('.cdp-domain-name').click());
+  await act(async()=>root.render(<CisDomainProfile source={cisWorkspace('synthetic',1)} clientId="foreign" implementationGroup={1} concept/>));
+  expect(document.querySelector('.cdp-concept-tip')).toBeNull();
+  expect(host.querySelector('[role=status]').textContent).toContain('unavailable');
+  await renderProfile();
+  expect(host.querySelector('.cdp-concept')).toBeNull();
+  expect(host.querySelector('.cdp-radar').getAttribute('viewBox')).toBe('0 0 360 550');
+});

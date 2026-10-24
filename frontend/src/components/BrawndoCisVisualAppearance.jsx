@@ -4,10 +4,16 @@ import './BrawndoCisVisualShell.css';
 
 export const CisVisualPublisher = createContext(null);
 
-// One originating workspace owns the shell/portal variant, removed before the next route paints.
-export function useCisVisualAppearance(enabled, theme) {
+// Loading may select record-free shell chrome; it never enables assessment or portal appearance.
+export function useCisVisualChrome(enabled) {
   const publish = useContext(CisVisualPublisher);
-  useLayoutEffect(() => {publish?.(enabled); return () => publish?.(false);}, [enabled,publish]);
+  // An inactive loaded workspace must not withdraw its verified loading child's chrome.
+  useLayoutEffect(() => {if (!enabled) return undefined; publish?.(true); return () => publish?.(false);}, [enabled,publish]);
+}
+
+// Only the complete loaded workspace owns assessment and portal appearance.
+export function useCisVisualAppearance(enabled, theme) {
+  useCisVisualChrome(enabled);
   useLayoutEffect(() => {
     if (!enabled) return;
     const roots = [document.documentElement, document.body];

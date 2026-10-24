@@ -8,7 +8,7 @@ let mockAdditional=false;
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{client_id:mockClient,name:'Brawndo',primary_contact_id:'c'}})}));
-jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:(_surface,loadedClientId)=>mockAdditional&&!!loadedClientId}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:(_surface,loadedClientId)=>mockAdditional&&!!loadedClientId,useAdditionalSectionsPresentation:()=>false}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message}));
 jest.mock('react-router-dom',()=>({useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 jest.mock('@/lib/reference',()=>({isReferencePresentation:id=>id==='demo_brawndo'}));

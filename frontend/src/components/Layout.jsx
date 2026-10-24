@@ -10,7 +10,8 @@ import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
-import {AdditionalSectionsProvider, additionalAppearanceSurface, useAdditionalSectionsAppearance} from '@/lib/brawndoAdditionalScope';
+import {cisPresentationEligible} from '@/lib/cisExperience';
+import {AdditionalSectionsProvider, additionalSectionChrome} from '@/lib/brawndoAdditionalScope';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -311,15 +312,22 @@ function LayoutContents() {
   const {currentClientId,currentClient}=org;
   const {user}=auth;
   const {pathname,search}=useLocation();
-  const visualSurface=visualCorrectionSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
-  const additionalAppearance=useAdditionalSectionsAppearance();
-  const additionalSurface=additionalAppearanceSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error},additionalAppearance);
+  const chromeContext={...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error};
+  const verifiedChrome=cisPresentationEligible(chromeContext);
+  const visualChrome=visualCorrectionSurface({...chromeContext,orgLoading:verifiedChrome?false:org.loading});
+  const nativeRoute=!['/clients','/admin','/platform','/account'].some(path=>pathname.startsWith(path))
+    &&(!pathname.startsWith('/compliance/')||pathname==='/compliance/cis-ig1');
+  const refreshing=org.loading&&verifiedChrome&&nativeRoute;
+  const additionalSurface=additionalSectionChrome({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const pilot=!!user;
   const content=<div className={'app-shell min-h-screen flex bg-surface-app '+(pathname==='/clients'?'governara-portfolio-shell':'governara-operational-shell')}>
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
-        {!visualSurface && !additionalSurface && pathname !== '/clients' && !(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
+        {!visualChrome && !additionalSurface && pathname !== '/clients' && !(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
+        {refreshing&&<p role="status" className="text-sm text-ink-secondary">Refreshing client workspace…</p>}
+        <div hidden={refreshing} data-client-workspace-content>
         {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'||!isCisReference(currentClientId,user,currentClient))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
+        </div>
       </main>
     </div>;
   return <ComplianceProvider>{pilot?<BrawndoWorkspace>{content}</BrawndoWorkspace>:content}</ComplianceProvider>;
