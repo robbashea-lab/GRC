@@ -19,6 +19,8 @@ function winner(node,property,width,order){
       if(constraints.some(([,kind,size])=>kind==='min'?width<Number(size):width>Number(size)))return;
     }
     for(const selector of rule.selectors){
+      // Pseudo-elements style generated boxes, not the element under inspection.
+      if(parser().astSync(selector).nodes[0].nodes.some(part=>part.type==='pseudo'&&part.value.startsWith('::')))continue;
       if(!node.matches(selector))continue;
       const specificity=selectorSpecificity(parser().astSync(selector).nodes[0]);
       rule.walkDecls(decl=>{
@@ -31,6 +33,8 @@ function winner(node,property,width,order){
           const expanded=decl.value.replace(/var\([^)]*\)/g,property==='background-color'?'rgb(1, 2, 3)':'Arial');
           style.setProperty(shorthand,expanded);
           let parsed=style.getPropertyValue(property);
+          // background:none resets the element color to transparent; cssstyle omits that longhand.
+          if(!parsed&&shorthand==='background'&&expanded==='none')parsed='rgba(0, 0, 0, 0)';
           if(!parsed&&shorthand==='font'){
             // cssstyle cannot expand compact font size/line-height. Limit this
             // fallback to the authored px/unitless grammar and validate longhands.
@@ -151,4 +155,39 @@ test.each(orders)('concept client text can shrink within the native sidebar in o
  }
  shell.removeAttribute('data-cis-dashboard-concept');
  expect(winner(text,'min-width',1440,order)).toBe('auto');
+});
+
+// These controls load both native design-system and legacy timeline styles.
+const controlFiles=['design-system.css','CompactProgramTimeline.css','CisActionItemsConcept.css','CisReviewsConcept.css'];
+for(const name of controlFiles)styles[name]=postcss.parse(fs.readFileSync(path.join(__dirname,name==='design-system.css'?'../design-system.css':name),'utf8'));
+const controlOrders=[controlFiles,[...controlFiles].reverse()];
+function controlFixture(){
+ const controls=document.createElement('div');fixture.appendChild(controls);
+ controls.innerHTML='<main class="app-workspace"><section class="crr-root" data-visual-surface="reviews" data-theme="dark"><div class="register-toolbar"><div class="register-search"><input type="search" class="ui-control"></div><div class="bdr-filter-right"><label>Basis<select data-control="basis"></select></label><label>Sort<select data-control="sort"></select></label></div></div><section class="crr-overview"><div class="quarter-controls"><select data-control="year"></select></div></section></section><section class="crr-root" data-unmarked><div class="register-search"><input class="ui-control"></div></section><section class="brawndo-demo-actions cia-root cia-page"><div class="bda-summary"><div class="bda-cell kpi"><strong>12</strong></div></div></section><section class="brawndo-demo-actions" data-legacy><div class="bda-summary"><div class="bda-cell"><strong>12</strong></div></div></section></main><div role="dialog" class="ui-dialog"><input class="ui-control"><select></select></div><div role="dialog" class="crr-root crr-list"><div class="register-search"><input class="ui-control"></div></div>';
+ return controls;
+}
+test.each(controlOrders)('marked Reviews controls retain authored ink and card surfaces against native styles in order %j',(...order)=>{
+ const controls=controlFixture(),search=controls.querySelector('[data-visual-surface="reviews"] input');
+ for(const width of [390,760,761,1440]){
+  expect(winner(search,'background-color',width,order)).toBe('rgba(0, 0, 0, 0)');
+  expect(winner(search,'color',width,order)).toBe('var(--text)');
+  expect(winner(search,'border',width,order)).toBe('0');
+  for(const name of ['basis','sort','year'])expect({name,background:winner(controls.querySelector(`[data-control="${name}"]`),'background-color',width,order)}).toEqual({name,background:'var(--card)'});
+ }
+});
+test.each(controlOrders)('Reviews correction leaves unmarked and native portaled controls on their existing cascade in order %j',(...order)=>{
+ const controls=controlFixture();
+ for(const selector of ['[data-unmarked] input','.ui-dialog input','.ui-dialog select','.crr-list input']){
+  const node=controls.querySelector(selector);
+  expect(winner(node,'background-color',1440,order)).toBe('var(--color-bg-surface)');
+  if(node.tagName==='INPUT')expect(winner(node,'color',1440,order)).toBe('var(--color-text-primary)');
+ }
+});
+test.each(controlOrders)('concept Action KPI weight and breakpoint size survive legacy styles without altering legacy KPIs in order %j',(...order)=>{
+ const controls=controlFixture(),concept=controls.querySelector('.cia-page strong'),legacy=controls.querySelector('[data-legacy] strong');
+ for(const width of [390,540,760,761,1440]){
+  expect({width,weight:winner(concept,'font-weight',width,order)}).toEqual({width,weight:'650'});
+  expect({width,size:winner(concept,'font-size',width,order)}).toEqual({width,size:width<=760?'26px':'28px'});
+  expect(winner(legacy,'font-weight',width,order)).toBe('600');
+ }
 });

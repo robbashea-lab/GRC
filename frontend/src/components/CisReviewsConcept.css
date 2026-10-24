@@ -403,3 +403,8 @@
 @media(max-width:760px){.crr-root .page-heading h1{font-size:23px}.crr-root .page-actions>button{font-size:9px}}
 /* Keep every native header action reachable on narrow screens. */
 @media(max-width:540px){.crr-root .page-heading{flex-wrap:wrap}.crr-root .page-heading>div:first-child{flex-basis:100%}.crr-root .page-heading h1{font-size:22px}.crr-root .page-actions{max-width:none;justify-content:flex-start}.crr-root .page-actions>button{padding:5px 7px;min-height:28px}.crr-root .bdr-filter-right select{max-width:124px;padding-left:5px}}
+
+/* Keep native control chrome from replacing the approved marked-page surfaces. */
+.crr-root.crr-root[data-visual-surface="reviews"] .register-search input.ui-control{background:none;color:var(--text);border:0}
+.crr-root.crr-root[data-visual-surface="reviews"] .register-toolbar .bdr-filter-right select,
+.crr-root.crr-root[data-visual-surface="reviews"] .crr-overview .quarter-controls select{background:var(--card)}

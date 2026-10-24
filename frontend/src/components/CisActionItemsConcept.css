@@ -36,6 +36,7 @@
 .cia-page .kpi.needs-owner small{color:var(--cia-gold)}
 .cia-page .kpi span.label{font-size:10px;color:var(--cia-muted);display:block;font-weight:400}
 .cia-page .kpi strong{font-size:28px;line-height:1.1;font-weight:650;display:block;letter-spacing:-.8px;margin:7px 0 6px}
+.cia-page.cia-page .kpi.kpi strong{font-weight:650}
 .cia-page .kpi small{color:var(--cia-muted);font-size:9px;display:block;font-weight:400}
 .cia-root .quarter-card{padding:17px 18px 14px;margin-bottom:16px}
 .cia-root .quarter-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -219,8 +220,52 @@ html[data-brawndo-demo-actions-suspended=true] :is(.ui-dialog,.ui-sheet,.ui-over
 @media(min-width:1700px){.cia-page.cia-page{padding:27px 30px 40px}.cia-root .quarter-content{grid-template-columns:285px minmax(0,1fr);gap:22px}.cia-root .quarter-card{padding:20px 21px 16px}.cia-page .kpi.kpi{padding:18px 22px}.cia-page .kpi span.label{font-size:11px}.cia-page .kpi small{font-size:10px}.cia-root .agenda-title{font-size:11px;max-width:240px}.cia-root .agenda-entry{padding:12px 2px 12px 11px}.cia-page .bda-title{font-size:11px}.cia-page :is(.bda-table-scroll,.brawndo-ai-table) td,.cia-page.cia-page .brawndo-ai-table .tbl-cell{padding:13px 11px}.cia-page .bda-item{padding-left:18px!important}.cia-page :is(.bda-status,.priority-badge){font-size:10px}.cia-page .bda-origin>:is(button,span){font-size:9px}.cia-root .plot{min-height:206px}}
 @media(max-width:1200px){.cia-page.cia-page{padding:21px 18px 30px}.cia-root .quarter-content{grid-template-columns:215px minmax(0,1fr);gap:13px}.cia-root .agenda{padding-right:12px}.cia-root .quarter-heading{align-items:flex-start}.cia-root .quarter-controls{justify-content:flex-end;max-width:440px}.cia-page .kpi.kpi{padding:15px 12px;gap:8px}.cia-page .kpi-icon svg{height:17px;width:17px}.cia-root .legend{gap:9px}.cia-root .timeline-foot{align-items:flex-start}}
 @media(max-width:960px){.cia-page .kpi .kpi-icon{display:none}.cia-page .kpi.kpi{padding:14px}.cia-root .quarter-content{grid-template-columns:205px minmax(0,1fr)}}
-@media(max-width:760px){.cia-page.cia-page .bpage-head{align-items:flex-start}.cia-page.cia-page .bpage-head h1{font-size:23px}.cia-page .bpage-actions{max-width:200px;justify-content:flex-end;flex-shrink:0}.cia-root .quarter-heading{display:block}.cia-root .quarter-controls{margin-top:13px;justify-content:flex-start;max-width:none}.cia-root .legend-row{display:block;margin:12px 0}.cia-root .legend{margin-top:7px;gap:12px}.cia-root .quarter-content{grid-template-columns:1fr}.cia-root .agenda{border:0;padding:0}.cia-root .agenda-switch{max-width:300px}.cia-root .cia-agenda-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.cia-root .agenda-entry{padding:9px 5px 9px 9px}.cia-root .agenda-bottom{display:block}.cia-root .agenda-date{display:block;margin-bottom:4px}.cia-root .agenda-all{margin:5px 0 10px}.cia-root .timeline-foot{margin-top:4px}.cia-page .kpi strong{font-size:26px}.cia-page .kpi small{font-size:8px}.cia-root .quarter-card{padding:16px 14px 12px}.cia-page :is(.bda-table-scroll,.brawndo-ai-table) td,.cia-page.cia-page .brawndo-ai-table .tbl-cell{padding:11px 9px}.cia-page .bda-item{padding-left:12px!important}.cia-page .bda-title{font-size:10px}}
-@media(max-width:540px){.cia-page.cia-page{padding:18px 12px 25px}.cia-page.cia-page .bpage-head{gap:7px}.cia-page.cia-page .bpage-head h1{font-size:22px}.cia-page .bpage-actions{gap:5px;max-width:130px;justify-content:flex-end}.cia-page .bpage-subtitle{font-size:10px;max-width:205px}.cia-page.cia-page .bpage-head :is(.bda-button,.bpage-btn,.bpage-actions button){font-size:9px;padding:5px 7px;min-height:28px}.cia-summary.cia-summary{grid-template-columns:1fr 1fr;gap:7px}.cia-page .kpi.kpi{min-height:93px;padding:12px}.cia-root .quarter-controls{gap:5px}.cia-root .cia-year{max-width:59px}.cia-root .quarters button{padding:4px 5px}.cia-root .cia-agenda-list{grid-template-columns:1fr}.cia-root .agenda-title{max-width:none}.cia-root .agenda-bottom{display:flex}.cia-root .agenda-date{margin:0}.cia-root .agenda-switch{max-width:none}.cia-root .timeline-foot{font-size:8px}.cia-root .timeline-foot>span{max-width:245px}.cia-selector.cia-selector{width:calc(100vw - 22px);max-height:calc(100dvh - 24px)}.cia-selector .dialog-heading{padding:17px 16px 13px;gap:8px}.cia-selector .dialog-heading h2{font-size:19px}.cia-selector .dialog-content{padding:12px 16px 17px}.cia-root .date-review{padding:12px}.cia-root .list-bottom{flex-wrap:wrap}}
+@media(max-width:760px){.cia-page.cia-page .bpage-head{align-items:flex-start}.cia-page.cia-page .bpage-head h1{font-size:23px}.cia-page .bpage-actions{max-width:200px;justify-content:flex-end;flex-shrink:0}.cia-root .quarter-heading{display:block}.cia-root .quarter-controls{margin-top:13px;justify-content:flex-start;max-width:none}.cia-root .legend-row{display:block;margin:12px 0}.cia-root .legend{margin-top:7px;gap:12px}.cia-root .quarter-content{grid-template-columns:1fr}.cia-root .agenda{border:0;padding:0}.cia-root .agenda-switch{max-width:300px}.cia-root .cia-agenda-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.cia-root .agenda-entry{padding:9px 5px 9px 9px}.cia-root .agenda-bottom{display:block}.cia-root .agenda-date{display:block;margin-bottom:4px}.cia-root .agenda-all{margin:5px 0 10px}.cia-root .timeline-foot{margin-top:4px}.cia-page.cia-page .kpi.kpi strong{font-size:26px}.cia-page .kpi small{font-size:8px}.cia-root .quarter-card{padding:16px 14px 12px}.cia-page :is(.bda-table-scroll,.brawndo-ai-table) td,.cia-page.cia-page .brawndo-ai-table .tbl-cell{padding:11px 9px}.cia-page .bda-item{padding-left:12px!important}.cia-page .bda-title{font-size:10px}}
+@media(max-width:540px){
+  .cia-page.cia-page{padding:18px 12px 25px}
+  .cia-page.cia-page .bpage-head{gap:7px}
+  .cia-page.cia-page .bpage-head h1{font-size:22px}
+  .cia-page .bpage-actions{gap:5px;max-width:130px;justify-content:flex-end}
+  .cia-page .bpage-subtitle{font-size:10px;max-width:205px}
+  .cia-page.cia-page .bpage-head :is(.bda-button,.bpage-btn,.bpage-actions button){font-size:9px;padding:5px 7px;min-height:28px}
+  .cia-summary.cia-summary{grid-template-columns:1fr 1fr;gap:7px}
+  .cia-page .kpi.kpi{min-height:93px;padding:12px}
+  .cia-page.cia-page .kpi.kpi strong{margin:6px 0}
+  .cia-root .quarter-controls{gap:5px}
+  .cia-root .quarter-controls strong{font-size:10px;min-width:44px}
+  .cia-root .cia-year{max-width:59px}
+  .cia-root .quarters button{padding:4px 5px}
+  .cia-root .this-quarter{font-size:9px;padding:5px 6px}
+  .cia-root .cia-agenda-list{grid-template-columns:1fr}
+  .cia-root .agenda-entry{padding:9px 6px 9px 11px}
+  .cia-root .agenda-title{max-width:none}
+  .cia-root .agenda-bottom{display:flex}
+  .cia-root .agenda-date{margin:0}
+  .cia-root .agenda-switch{max-width:none}
+  .cia-root .timeline-scroll{margin-right:-4px}
+  .cia-root .timeline-foot{font-size:8px}
+  .cia-root .timeline-foot>span{max-width:245px}
+  .cia-page.cia-page .cia-register-head{padding:13px 12px}
+  .cia-page.cia-page .bda-controls,.cia-page.cia-page .register-toolbar{padding:10px}
+  .cia-page.cia-page .bda-search,.cia-page.cia-page .register-toolbar .register-search{width:100%;flex-basis:100%;max-width:none}
+  .cia-page.cia-page .bda-show{width:100%;gap:3px}
+  .cia-page.cia-page .register-toolbar > [data-testid="ai-views"]{width:100%;order:0}
+  .cia-page.cia-page [data-testid="ai-views"] .bpage-chips{gap:3px}
+  .cia-page.cia-page .bda-show button,.cia-page.cia-page [data-testid="ai-views"] .bpage-chip{padding:4px 5px}
+  .cia-page.cia-page .bda-more-controls label{font-size:8px}
+  .cia-page.cia-page .bda-more-controls select,.cia-page.cia-page .brawndo-ai-source-filter .column-control{font-size:9px;padding-left:5px;max-width:125px}
+  .cia-page.cia-page .bda-results,.cia-page.cia-page .bpage-foot{font-size:8px;padding:8px 10px}
+  .cia-page.cia-page .bda-results nav{gap:5px}
+  .cia-page.cia-page .bda-results button{font-size:8px;padding:3px 4px}
+  .cia-page .bda-table-scroll:not(.bda-done) th:nth-child(2),.cia-page .bda-done th:first-child,.cia-page.cia-page .brawndo-ai-table th:first-child{padding-left:12px}
+  .cia-tooltip.cia-tooltip{min-width:225px;max-width:calc(100vw - 20px);padding:11px 12px}
+  .cia-selector.cia-selector{width:calc(100vw - 22px);max-height:calc(100dvh - 24px)}
+  .cia-selector .dialog-heading{padding:17px 16px 13px;gap:8px}
+  .cia-selector .dialog-heading h2{font-size:19px}
+  .cia-selector .dialog-content{padding:12px 16px 17px}
+  .cia-root .date-review{padding:12px}
+  .cia-root .list-bottom{flex-wrap:wrap}
+}
 @media(min-width:1700px){.cia-page .bda-source-caption{font-size:9px}}
 @media(max-width:540px){.cia-root .timeline-scroll{--cia-timeline-min-width:570px}}
 @media(prefers-reduced-motion:reduce){.cia-root *,.cia-page *{scroll-behavior:auto!important;transition:none!important}}
