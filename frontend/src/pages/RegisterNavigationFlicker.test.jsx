@@ -23,7 +23,7 @@ jest.mock('@/components/RecordDrawer', () => props => {mockDrawerProps=props;ret
 
 let root, container, pending;
 const pages = [
-  ['risks', RiskRegister, 'Brawndo Risks', 'demo-risks-overview'],
+  ['risks', RiskRegister, 'Brawndo Risks', 'cis-risks-concept'],
   ['policies', () => <RecordListPage kind="policies"/>, 'Brawndo Policies', 'additional-policies'],
   ['vendors', VendorRegister, 'Brawndo Vendors', 'additional-vendors'],
 ];
@@ -155,7 +155,7 @@ test('a mixed-client Risk response cannot switch to a generic register or expose
   expect(container.textContent).not.toContain('Foreign native risk');
   await act(async () => [...frame.querySelectorAll('button')].find(button => button.textContent.startsWith('Retry')).click());
   await finishReads();
-  expect(container.querySelector('[data-testid="demo-risks-overview"]')).not.toBeNull();
+  expect(container.querySelector('[data-testid="cis-risks-concept"]')).not.toBeNull();
 });
 
 const recordPages = pages.filter(([route]) => route !== 'risks');

@@ -1,0 +1,690 @@
+/* Page-body rules transcribed from the approved Risks HTML; native shell and full editors stay outside this scope. */
+@font-face {
+  font-family:"GoverNara CIS Risks Inter";
+  font-style:normal;
+  font-weight:400 700;
+  font-display:swap;
+  /* Exact embedded reference bytes; SIL OFL 1.1 is retained in assets/fonts/Inter-OFL.txt. */
+  src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');
+}
+
+.bpage.approved-risk-register.cis-risks-surface { background:#f5f7fc; }
+.bpage.approved-risk-register.cis-risks-surface[data-theme="dark"] { background:#111c2d; }
+/* Native heading/control rules read these aliases; keep them local to the approved body and its own list/tooltip portals. */
+.cis-risks-concept { --font-body:var(--font); --font-heading:var(--font); }
+.cis-risks-concept :is(h1,h2,h3,p) { font-family:inherit; color:inherit; }
+
+.cis-risks-concept { --font:"GoverNara CIS Risks Inter",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; --bg:#f4f6fb; --card:#fff; --text:#10213b; --muted:#647491; --line:#dfe6f1; --subtle:#f7f9fc; --blue:#225aca; --danger:#ad2e45; --danger-bg:#fff1f4; --gold:#966215; --gold-bg:#fff5df; --soon:#a16b09; --soon-bg:#fff0cd; --info:#245da8; --info-bg:#edf4ff; --shadow:0 14px 44px #10213b20; --header:56px; }
+.cis-risks-concept,
+.cis-risks-concept * { box-sizing:border-box; }
+.cis-risks-concept { margin:0; background:var(--bg); color:var(--text); font-family:var(--font); font-size:12px; line-height:1.45; }
+.cis-risks-concept button { font:inherit; }
+.cis-risks-concept input { font:inherit; }
+.cis-risks-concept select { font:inherit; }
+.cis-risks-concept button { -webkit-tap-highlight-color:transparent; }
+.cis-risks-concept a { -webkit-tap-highlight-color:transparent; }
+.cis-risks-concept input { -webkit-tap-highlight-color:transparent; }
+.cis-risks-concept select { -webkit-tap-highlight-color:transparent; }
+.cis-risks-concept button { touch-action:manipulation; }
+.cis-risks-concept a { touch-action:manipulation; }
+.cis-risks-concept button { cursor:pointer; }
+.cis-risks-concept button:disabled { cursor:default; opacity:.45; }
+.cis-risks-concept a { color:inherit; text-decoration:none; }
+.cis-risks-concept button { color:inherit; }
+.cis-risks-concept h1 { margin:0; }
+.cis-risks-concept h2 { margin:0; }
+.cis-risks-concept h3 { margin:0; }
+.cis-risks-concept p { margin:0; }
+.cis-risks-concept button:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+.cis-risks-concept a:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+.cis-risks-concept input:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+.cis-risks-concept select:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+.cis-risks-concept button { border:0; background:none; }
+.cis-risks-concept svg.icon { width:16px; height:16px; display:block; flex:none; stroke:currentColor; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+.cis-risks-concept button svg { pointer-events:none; }
+.cis-risks-concept .sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.cis-risks-concept [hidden] { display:none!important; }
+.bpage.approved-risk-register.cis-risks-surface { padding:24px 25px 15px; }
+.cis-risks-concept .page-heading { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; gap:12px; }
+.cis-risks-concept .eyebrow { font-size:8px; font-weight:600; letter-spacing:1px; color:var(--muted); margin-bottom:5px; }
+.cis-risks-concept .eyebrow span { font-weight:400; letter-spacing:.1px; }
+.cis-risks-concept h1 { font-size:25px; line-height:1.2; font-weight:650; letter-spacing:-.7px; }
+.cis-risks-concept .page-heading p { color:var(--muted); font-size:11px; margin-top:5px; }
+.cis-risks-concept .page-actions { display:flex; align-items:center; gap:8px; }
+.cis-risks-concept .button { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:31px; border:1px solid var(--line); background:var(--card); border-radius:5px; padding:6px 10px; font-size:10px; white-space:nowrap; box-shadow:0 1px 2px #10213b05; }
+.cis-risks-concept .button svg { width:13px; height:13px; }
+.cis-risks-concept .button:hover { background:var(--subtle); }
+.cis-risks-concept .button.primary { background:var(--blue); border-color:var(--blue); color:#fff; }
+.cis-risks-concept .button.primary:hover { filter:brightness(1.08); }
+.cis-risks-concept .text-link { font-size:10px; color:var(--blue); padding:2px 0; }
+.cis-risks-concept .text-link:hover { text-decoration:underline; }
+.cis-risks-concept .panel { background:var(--card); border:1px solid var(--line); border-radius:9px; }
+.cis-risks-concept h2 { font-size:13px; line-height:1.35; font-weight:650; letter-spacing:-.25px; }
+.cis-risks-concept h3 { font-size:12px; font-weight:600; }
+.cis-risks-concept .kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-bottom:16px; }
+.cis-risks-concept .kpi { border:1px solid var(--line); border-radius:7px; background:var(--card); display:flex; gap:14px; padding:16px 17px; text-align:left; min-height:108px; position:relative; transition:border-color .15s; }
+.cis-risks-concept .kpi:hover { border-color:#aebfdd; }
+.cis-risks-concept .kpi:first-child { background:linear-gradient(110deg,#f1f5ff,var(--card)); }
+.cis-risks-concept .kpi:first-child:after { content:""; height:2px; background:var(--blue); bottom:0; left:1px; right:1px; position:absolute; border-radius:0 0 6px 6px; }
+.cis-risks-concept .kpi .kpi-icon { color:var(--blue); padding-top:2px; }
+.cis-risks-concept .kpi-icon svg { width:20px; height:20px; }
+.cis-risks-concept .kpi:nth-child(2) .kpi-icon { color:var(--danger); }
+.cis-risks-concept .kpi.overdue strong { color:var(--danger); }
+.cis-risks-concept .kpi span.label { font-size:10px; color:var(--muted); display:block; }
+.cis-risks-concept .kpi strong { font-size:28px; line-height:1.1; font-weight:650; display:block; letter-spacing:-.8px; margin:7px 0 6px; }
+.cis-risks-concept .kpi small { color:var(--muted); font-size:9px; display:block; }
+.cis-risks-concept .kpi.overdue small { color:var(--danger); }
+.cis-risks-concept .quarter-card { padding:17px 18px 14px; margin-bottom:16px; }
+.cis-risks-concept .quarter-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.cis-risks-concept .quarter-heading p { color:var(--muted); font-size:10px; margin-top:3px; }
+.cis-risks-concept .quarter-controls { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.cis-risks-concept .quarter-controls strong { font-size:11px; min-width:50px; text-align:center; }
+.cis-risks-concept .icon-button { display:grid; place-items:center; border:1px solid var(--line); border-radius:5px; background:var(--card); height:26px; width:24px; color:var(--muted); }
+.cis-risks-concept .icon-button svg { width:12px; height:12px; }
+.cis-risks-concept .quarter-controls select { border:1px solid var(--line); border-radius:4px; background:var(--card); color:var(--muted); padding:4px 5px; font-size:10px; height:26px; max-width:65px; }
+.cis-risks-concept .segmented { display:flex; align-items:center; background:var(--subtle); padding:3px; border:1px solid var(--line); border-radius:6px; gap:3px; }
+.cis-risks-concept .segmented button { padding:4px 9px; font-size:10px; border-radius:4px; color:var(--muted); white-space:nowrap; }
+.cis-risks-concept .segmented button[aria-pressed=true] { background:var(--card); color:var(--text); box-shadow:0 1px 4px #10213b12; }
+.cis-risks-concept .quarters { padding:2px; gap:0; }
+.cis-risks-concept .quarters button { font-size:9px; padding:4px 7px; }
+.cis-risks-concept .quarters button[aria-pressed=true] { color:var(--blue); background:var(--info-bg); box-shadow:inset 0 -2px var(--blue); }
+.cis-risks-concept .this-quarter { font-size:10px; background:var(--info-bg); color:var(--blue); padding:5px 8px; border:1px solid #d8e4fb; border-radius:4px; white-space:nowrap; }
+.cis-risks-concept .legend-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:13px 0 10px; }
+.cis-risks-concept .quarter-range { font-size:9px; color:var(--muted); }
+.cis-risks-concept .legend { display:flex; gap:11px; flex-wrap:wrap; align-items:center; }
+.cis-risks-concept .legend button { display:inline-flex; align-items:center; gap:5px; color:var(--muted); font-size:9px; padding:3px 0; }
+.cis-risks-concept .legend button[aria-pressed=false] { opacity:.4; }
+.cis-risks-concept .legend button:hover { color:var(--text); }
+.cis-risks-concept .legend .legend-dot { width:7px; height:7px; background:var(--cadence); border-radius:50%; }
+.cis-risks-concept .quarter-content { display:grid; grid-template-columns:250px minmax(0,1fr); gap:18px; }
+.cis-risks-concept .agenda { border-right:1px solid var(--line); padding-right:17px; }
+.cis-risks-concept .agenda-switch { width:100%; padding:3px; }
+.cis-risks-concept .agenda-switch button { flex:1; padding:5px 7px; }
+.cis-risks-concept .agenda-switch button span { background:#e7ecf5; color:#52637f; border-radius:4px; font-size:9px; padding:1px 5px; margin-left:5px; }
+.cis-risks-concept .agenda-switch button[data-mode=upcoming][aria-pressed=true] { background:var(--blue); color:white; }
+.cis-risks-concept .agenda-switch button[data-mode=upcoming][aria-pressed=true] span { background:#fff; color:var(--blue); }
+.cis-risks-concept .agenda-switch button[data-mode=overdue][aria-pressed=true] { background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1px #f2d8df; }
+.cis-risks-concept .agenda-switch button[data-mode=overdue] span { background:var(--danger-bg); color:var(--danger); }
+.cis-risks-concept .agenda-caption { color:var(--muted); font-size:9px; margin:8px 0 4px; }
+.cis-risks-concept .agenda-entry { display:block; width:100%; border-top:1px solid var(--line); padding:11px 1px 11px 10px; text-align:left; position:relative; }
+.cis-risks-concept .agenda-entry:before { content:""; position:absolute; left:0; top:13px; bottom:13px; width:2px; background:#8cafd9; }
+.cis-risks-concept .agenda-entry.overdue:before { background:var(--danger); }
+.cis-risks-concept .agenda-entry:hover { background:var(--subtle); }
+.cis-risks-concept .agenda-title { font-size:10px; line-height:1.5; font-weight:600; max-width:205px; display:block; }
+.cis-risks-concept .agenda-bottom { display:flex; justify-content:space-between; align-items:center; gap:5px; margin-top:5px; }
+.cis-risks-concept .agenda-date { font-size:9px; color:var(--muted); }
+.cis-risks-concept .due-badge { display:inline-flex; align-items:center; justify-content:center; gap:4px; padding:3px 6px; border-radius:4px; font-size:9px; line-height:1.2; white-space:nowrap; background:var(--subtle); color:var(--muted); font-weight:500; }
+.cis-risks-concept .due-badge.overdue { background:var(--danger-bg); color:var(--danger); }
+.cis-risks-concept .due-badge.today { background:#e9f0ff; color:var(--blue); }
+.cis-risks-concept .due-badge.week { background:var(--soon-bg); color:var(--soon); }
+.cis-risks-concept .due-badge.fortnight { background:var(--gold-bg); color:var(--gold); }
+.cis-risks-concept .due-badge.month { background:var(--info-bg); color:var(--info); }
+.cis-risks-concept .agenda-all { margin-top:8px; }
+.cis-risks-concept .agenda-empty { color:var(--muted); padding:30px 6px 32px; border-top:1px solid var(--line); font-size:10px; }
+.cis-risks-concept .agenda-empty b { display:block; color:var(--text); font-size:11px; margin-bottom:5px; }
+.cis-risks-concept .timeline-column { min-width:0; }
+.cis-risks-concept .timeline-scroll { overflow-x:auto; scrollbar-width:thin; }
+.cis-risks-concept .timeline-inner { min-width:530px; }
+.cis-risks-concept .month-row { height:40px; position:relative; margin:0 40px; color:var(--text); font-size:10px; font-weight:600; display:flex; align-items:flex-start; padding-top:1px; }
+.cis-risks-concept .month-name { position:absolute; }
+.cis-risks-concept .plot { position:relative; min-height:190px; border:1px solid var(--line); background:var(--card); isolation:isolate; }
+.cis-risks-concept .plot .past-area { position:absolute; top:0; bottom:0; left:0; background:#e8edf54d; z-index:-1; }
+.cis-risks-concept .plot .grid-line { position:absolute; top:0; bottom:0; border-left:1px dashed var(--line); z-index:-1; }
+.cis-risks-concept .plot .month-line { border-left-style:solid; }
+.cis-risks-concept .plot .h-line { position:absolute; left:0; right:0; border-top:1px solid var(--line); opacity:.55; z-index:-1; }
+.cis-risks-concept .today-line { position:absolute; top:-5px; bottom:0; border-left:1px dashed #5685db; z-index:2; pointer-events:none; }
+.cis-risks-concept .today-label { position:absolute; left:0; top:-34px; transform:translateX(-50%); color:var(--blue); font-size:9px; line-height:1.25; font-weight:600; text-align:center; white-space:nowrap; background:var(--card); padding:0 4px; }
+.cis-risks-concept .today-label:after { content:""; position:absolute; left:50%; bottom:-8px; width:5px; height:5px; background:var(--blue); border-radius:50%; transform:translateX(-50%); }
+.cis-risks-concept .date-group { position:absolute; text-align:center; z-index:3; }
+.cis-risks-concept .circle-row { display:flex; align-items:center; justify-content:center; gap:1px; position:relative; }
+.cis-risks-concept .review-dot { width:22px; height:24px; padding:0; display:grid; place-items:center; border-radius:6px; background:none; position:relative; flex:none; }
+.cis-risks-concept .review-dot .dot { width:8px; height:8px; border-radius:50%; background:var(--cadence); box-shadow:0 0 0 1px var(--card); transition:transform .12s,box-shadow .12s; pointer-events:none; }
+.cis-risks-concept .review-dot:hover { background:var(--info-bg); }
+.cis-risks-concept .review-dot:focus-visible { background:var(--info-bg); }
+.cis-risks-concept .review-dot:hover .dot { transform:scale(1.25); box-shadow:0 0 0 3px #225aca15; }
+.cis-risks-concept .review-dot:focus-visible .dot { transform:scale(1.25); box-shadow:0 0 0 3px #225aca15; }
+.cis-risks-concept .review-dot:focus-visible { outline:2px solid var(--blue); outline-offset:-1px; }
+.cis-risks-concept .review-dot.late .dot { box-shadow:0 0 0 3px #ad2e4513; }
+.cis-risks-concept .date-stem { display:block; height:6px; width:1px; background:var(--line); margin:0 auto 1px; }
+.cis-risks-concept .date-label { font-size:9px; color:var(--muted); padding:0 4px; line-height:1.7; border-radius:3px; white-space:nowrap; }
+.cis-risks-concept .date-label:hover { background:var(--subtle); color:var(--blue); }
+.cis-risks-concept .date-label.overdue { color:var(--danger); }
+.cis-risks-concept .date-label.today { color:var(--blue); font-weight:600; }
+.cis-risks-concept .date-axis { position:relative; height:25px; font-size:8px; color:var(--muted); }
+.cis-risks-concept .axis-label { position:absolute; top:6px; transform:translateX(-50%); white-space:nowrap; }
+.cis-risks-concept .timeline-foot { display:flex; justify-content:space-between; align-items:center; gap:12px; color:var(--muted); font-size:8.5px; margin-top:5px; min-height:16px; }
+.cis-risks-concept .timeline-foot button { white-space:nowrap; font-size:9px; }
+.cis-risks-concept .chart-empty { display:grid; place-items:center; height:190px; color:var(--muted); font-size:11px; }
+.cis-risks-concept .chart-empty div { text-align:center; }
+.cis-risks-concept .chart-empty b { display:block; color:var(--text); font-size:12px; margin-bottom:5px; }
+.cis-risks-concept .register-heading { display:flex; align-items:center; justify-content:space-between; padding:15px 17px; border-bottom:1px solid var(--line); }
+.cis-risks-concept .register-toolbar { padding:12px 14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--line); }
+.cis-risks-concept .register-search { display:flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:5px; background:var(--card); height:30px; padding:0 8px; min-width:155px; width:180px; flex:1; }
+.cis-risks-concept .register-search svg { color:var(--muted); height:13px; width:13px; }
+.cis-risks-concept .register-search input { background:none; color:var(--text); border:0; outline:none; min-width:0; width:100%; font-size:10px; }
+.cis-risks-concept .register-search input::placeholder { color:var(--muted); }
+.cis-risks-concept .filters { display:flex; align-items:center; background:var(--subtle); border-radius:5px; border:1px solid var(--line); padding:3px; gap:2px; flex-wrap:wrap; }
+.cis-risks-concept .filters button { font-size:9px; padding:4px 6px; border-radius:3px; color:var(--muted); white-space:nowrap; }
+.cis-risks-concept .filters button span { color:var(--text); margin-left:4px; }
+.cis-risks-concept .filters button[aria-pressed=true] { background:var(--card); color:var(--blue); box-shadow:0 1px 3px #10213b10; }
+.cis-risks-concept .filters button[aria-pressed=true] span { color:var(--blue); }
+.cis-risks-concept .select-label { display:flex; align-items:center; gap:5px; font-size:9px; color:var(--muted); white-space:nowrap; }
+.cis-risks-concept .select-label select { height:29px; max-width:152px; border:1px solid var(--line); border-radius:5px; background:var(--card); color:var(--text); padding:4px 20px 4px 8px; font-size:9px; }
+.cis-risks-concept .register-meta { display:flex; align-items:center; justify-content:space-between; padding:9px 15px; color:var(--muted); font-size:9px; border-bottom:1px solid var(--line); }
+.cis-risks-concept .register-meta>div { display:flex; gap:10px; align-items:center; }
+.cis-risks-concept .pagination { font-size:9px; color:var(--muted); border:1px solid var(--line); border-radius:4px; padding:3px 6px; }
+.cis-risks-concept .table-scroll { overflow:auto; border-radius:0 0 9px 9px; }
+.cis-risks-concept table { border-collapse:collapse; width:100%; min-width:800px; text-align:left; font-size:10px; }
+.cis-risks-concept thead { background:var(--subtle); color:var(--muted); font-size:9px; font-weight:400; }
+.cis-risks-concept th { font-weight:500; padding:10px 9px; border-bottom:1px solid var(--line); }
+.cis-risks-concept th:nth-child(2) { width:35%; }
+.cis-risks-concept th:nth-child(3) { width:17%; }
+.cis-risks-concept th:nth-child(4) { width:12%; }
+.cis-risks-concept th:nth-child(5) { width:20%; }
+.cis-risks-concept td { padding:11px 9px; border-bottom:1px solid var(--line); vertical-align:middle; }
+.cis-risks-concept tr:last-child td { border-bottom:0; }
+.cis-risks-concept tr.overdue-row { background:linear-gradient(90deg,var(--danger-bg),var(--card)); }
+.cis-risks-concept tr.overdue-row td:first-child { box-shadow:inset 2px 0 var(--danger); }
+.cis-risks-concept tbody tr:hover { background:var(--subtle); }
+.cis-risks-concept tbody tr.selected-row { background:var(--info-bg); }
+.cis-risks-concept .check-col { width:35px!important; padding-left:16px; }
+.cis-risks-concept input[type=checkbox] { accent-color:var(--blue); width:12px; height:12px; margin:0; vertical-align:middle; }
+.cis-risks-concept .review-title { font-size:10px; font-weight:600; line-height:1.45; text-align:left; padding:0; color:var(--text); }
+.cis-risks-concept .review-title:hover { color:var(--blue); }
+.cis-risks-concept .row-sub { display:flex; gap:8px; align-items:center; font-size:8px; color:var(--muted); margin-top:3px; }
+.cis-risks-concept .origin-label { border:1px solid var(--line); border-radius:3px; padding:0 4px; background:var(--subtle); font-size:8px; }
+.cis-risks-concept .owner { display:flex; align-items:center; gap:7px; white-space:nowrap; }
+.cis-risks-concept .status-text { color:var(--muted); font-size:9px; white-space:nowrap; }
+.cis-risks-concept .status-text.in-progress { color:var(--blue); }
+.cis-risks-concept .status-text.completed { color:#168566; }
+.cis-risks-concept .due-cell time { font-size:9px; white-space:nowrap; }
+.cis-risks-concept .due-cell .due-badge { margin-top:4px; display:table; }
+.cis-risks-concept .cadence-cell { font-size:9px; color:var(--muted); white-space:nowrap; }
+.cis-risks-concept .open-col { width:26px; }
+.cis-risks-concept .row-open { color:var(--muted); padding:2px; }
+.cis-risks-concept .row-open svg { width:12px; height:12px; }
+.cis-risks-concept .empty-row { text-align:center; padding:36px; color:var(--muted); }
+.cis-risks-concept .selected-bar { display:flex; align-items:center; justify-content:space-between; background:var(--info-bg); padding:9px 16px; font-size:10px; border-top:1px solid var(--line); border-radius:0 0 9px 9px; }
+.cis-risks-concept .concept-footer { font-size:9px; color:var(--muted); text-align:center; padding:16px 0 4px; }
+.cis-risks-concept .tooltip { position:fixed; z-index:70; max-width:300px; width:max-content; min-width:245px; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:13px 14px; box-shadow:var(--shadow); pointer-events:none; }
+.cis-risks-concept .tooltip .tip-type { color:var(--muted); font-size:9px; letter-spacing:.2px; border-left:3px solid var(--cadence); padding-left:6px; margin-bottom:6px; }
+.cis-risks-concept .tooltip h3 { font-size:11px; line-height:1.5; max-width:270px; }
+.cis-risks-concept .tooltip .tip-due { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:10px; margin:9px 0; }
+.cis-risks-concept .tooltip .tip-meta { font-size:9px; color:var(--muted); border-top:1px solid var(--line); padding-top:8px; }
+.cis-risks-concept .tooltip .tip-hint { font-size:8px; color:var(--muted); margin-top:7px; }
+.ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { border:1px solid var(--line); background:var(--card); color:var(--text); border-radius:11px; padding:0; width:min(710px,calc(100vw - 40px)); max-height:calc(100dvh - 56px); box-shadow:0 24px 90px #08152440; overflow:hidden; font-family:var(--font); }
+.ui-overlay[data-state]:has(+ .cis-risks-concept.cr-list-dialog) { background:#08152468; backdrop-filter:blur(2px); }
+.cis-risks-concept .dialog-shell { display:flex; flex-direction:column; max-height:calc(100dvh - 58px); }
+.cis-risks-concept .dialog-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:21px 23px 17px; border-bottom:1px solid var(--line); }
+.cis-risks-concept .dialog-heading h2 { font-size:20px; letter-spacing:-.5px; line-height:1.35; }
+.cis-risks-concept .dialog-heading p { font-size:11px; color:var(--muted); margin-top:6px; }
+.cis-risks-concept .dialog-close { display:grid; place-items:center; width:27px; height:27px; border-radius:5px; color:var(--muted); flex:none; }
+.cis-risks-concept .dialog-close:hover { background:var(--subtle); }
+.cis-risks-concept .dialog-close svg { height:18px; width:18px; }
+.cis-risks-concept .dialog-content { overflow:auto; padding:14px 23px 22px; min-height:0; }
+.cis-risks-concept .dialog-footer { padding:13px 23px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-top:1px solid var(--line); background:var(--subtle); font-size:10px; color:var(--muted); }
+.cis-risks-concept .date-list { display:grid; gap:8px; }
+.cis-risks-concept .date-review { display:block; border:1px solid var(--line); border-radius:7px; padding:13px 14px; width:100%; text-align:left; background:var(--card); }
+.cis-risks-concept .date-review:hover { border-color:#a3b8df; background:var(--subtle); }
+.cis-risks-concept .date-review.highlight { border-color:#8aa9df; box-shadow:inset 3px 0 var(--blue); }
+.cis-risks-concept .date-review .list-title { display:block; font-size:12px; font-weight:600; line-height:1.5; }
+.cis-risks-concept .date-review .list-details { font-size:10px; color:var(--muted); display:flex; gap:12px; align-items:center; margin:8px 0; flex-wrap:wrap; }
+.cis-risks-concept .date-review .list-bottom { display:flex; justify-content:space-between; align-items:center; font-size:10px; color:var(--muted); gap:8px; }
+.cis-risks-concept .date-review .open-text { color:var(--blue); white-space:nowrap; }
+.cis-risks-concept .data-table { font-size:11px; min-width:570px; }
+.cis-risks-concept .data-table th:nth-child(n) { width:auto; }
+.cis-risks-concept .data-table th { font-size:10px; }
+.cis-risks-concept .data-table td { padding:10px 7px; }
+.cis-risks-concept[data-theme="dark"] { --bg:#111c2d; --card:#19283d; --text:#e3ebf8; --muted:#a2b4d0; --line:#31435e; --subtle:#21334b; --danger:#f7a7b7; --danger-bg:#402936; --gold:#f3d18b; --gold-bg:#3b3327; --soon:#f3c86f; --soon-bg:#403522; --info:#b9d1ff; --info-bg:#233b5c; --shadow:0 14px 44px #0005; }
+.cis-risks-concept[data-theme="dark"] .kpi:first-child { background:linear-gradient(110deg,#243852,var(--card)); }
+.cis-risks-concept[data-theme="dark"] .due-badge.today { background:#233b5c; color:#b9d1ff; }
+.cis-risks-concept[data-theme="dark"] .agenda-switch button span { background:#354862; color:#c3d3ec; }
+.cis-risks-concept[data-theme="dark"] .agenda-switch button[data-mode=upcoming][aria-pressed=true] { background:#2d62bf; }
+.cis-risks-concept[data-theme="dark"] .plot .past-area { background:#0b142344; }
+.cis-risks-concept[data-theme="dark"] .legend button { color:#9dbdff; }
+.cis-risks-concept[data-theme="dark"] .text-link { color:#9dbdff; }
+.cis-risks-concept[data-theme="dark"] .today-label { color:#9dbdff; }
+.cis-risks-concept[data-theme="dark"] .filters button[aria-pressed=true] { color:#9dbdff; }
+.cis-risks-concept[data-theme="dark"] .filters button[aria-pressed=true] span { color:#9dbdff; }
+.cis-risks-concept[data-theme="dark"] .this-quarter { border-color:#425c80; color:#b7d0ff; }
+.cis-risks-concept[data-theme="dark"] .status-text.in-progress { color:#9dbdff; }
+.cis-risks-concept[data-theme="dark"] .status-text.completed { color:#77d1b4; }
+@media(min-width:1700px) {
+  .bpage.approved-risk-register.cis-risks-surface { padding:27px 30px 18px; }
+  .cis-risks-concept .quarter-content { grid-template-columns:285px minmax(0,1fr); gap:22px; }
+  .cis-risks-concept .quarter-card { padding:20px 21px 16px; }
+  .cis-risks-concept .kpi { padding:18px 22px; }
+  .cis-risks-concept .kpi span.label { font-size:11px; }
+  .cis-risks-concept .kpi small { font-size:10px; }
+  .cis-risks-concept .agenda-title { font-size:11px; max-width:240px; }
+  .cis-risks-concept .agenda-entry { padding:12px 2px 12px 11px; }
+  .cis-risks-concept .register-toolbar { gap:10px; }
+  .cis-risks-concept .filters button { font-size:10px; }
+  .cis-risks-concept .review-title { font-size:11px; }
+  .cis-risks-concept td { padding:13px 11px; }
+  .cis-risks-concept .owner { font-size:10px; }
+  .cis-risks-concept .due-cell time { font-size:10px; }
+  .cis-risks-concept .cadence-cell { font-size:10px; }
+  .cis-risks-concept .status-text { font-size:10px; }
+  .cis-risks-concept .plot { min-height:206px; }
+}
+@media(max-width:1200px) {
+  .bpage.approved-risk-register.cis-risks-surface { padding:21px 18px 15px; }
+  .cis-risks-concept .quarter-content { grid-template-columns:215px minmax(0,1fr); gap:13px; }
+  .cis-risks-concept .agenda { padding-right:12px; }
+  .cis-risks-concept .quarter-heading { align-items:flex-start; }
+  .cis-risks-concept .quarter-controls { justify-content:flex-end; max-width:440px; }
+  .cis-risks-concept .kpi { padding:15px 12px; gap:8px; }
+  .cis-risks-concept .kpi .kpi-icon svg { height:17px; width:17px; }
+  .cis-risks-concept .legend { gap:9px; }
+  .cis-risks-concept .register-search { min-width:170px; }
+  .cis-risks-concept .select-label { margin-left:auto; }
+  .cis-risks-concept .timeline-foot { align-items:flex-start; }
+}
+@media(max-width:960px) {
+  .bpage.approved-risk-register.cis-risks-surface { padding:20px 17px; }
+  .cis-risks-concept .kpi .kpi-icon { display:none; }
+  .cis-risks-concept .kpi { padding:14px; }
+  .cis-risks-concept .quarter-content { grid-template-columns:205px minmax(0,1fr); }
+  .cis-risks-concept .legend-row { align-items:flex-start; }
+  .cis-risks-concept .quarter-range { max-width:160px; }
+  .cis-risks-concept .legend { gap:7px; }
+  .cis-risks-concept .quarter-heading p { max-width:200px; }
+  .cis-risks-concept .select-label { margin-left:0; }
+}
+@media(max-width:760px) {
+  .cis-risks-concept .page-heading { align-items:flex-start; }
+  .cis-risks-concept h1 { font-size:23px; }
+  .cis-risks-concept .page-actions { flex-wrap:wrap; justify-content:flex-end; max-width:200px; }
+  .cis-risks-concept .page-actions .button { font-size:9px; }
+  .cis-risks-concept .quarter-heading { display:block; }
+  .cis-risks-concept .quarter-controls { margin-top:13px; justify-content:flex-start; max-width:none; }
+  .cis-risks-concept .legend-row { display:block; margin:12px 0; }
+  .cis-risks-concept .legend { margin-top:7px; gap:12px; }
+  .cis-risks-concept .quarter-range { max-width:none; }
+  .cis-risks-concept .quarter-content { grid-template-columns:1fr; }
+  .cis-risks-concept .agenda { border:0; padding:0; }
+  .cis-risks-concept .agenda-switch { max-width:300px; }
+  .cis-risks-concept .agenda-caption { margin-top:7px; }
+  .cis-risks-concept #agendaList { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+  .cis-risks-concept .agenda-entry { padding:9px 5px 9px 9px; }
+  .cis-risks-concept .agenda-title { font-size:10px; }
+  .cis-risks-concept .agenda-bottom { display:block; }
+  .cis-risks-concept .agenda-date { display:block; margin-bottom:4px; }
+  .cis-risks-concept .agenda-all { margin:5px 0 10px; }
+  .cis-risks-concept .timeline-foot { margin-top:4px; }
+  .cis-risks-concept .kpi strong { font-size:26px; }
+  .cis-risks-concept .kpi small { font-size:8px; }
+  .cis-risks-concept .kpi span.label { font-size:9px; }
+  .cis-risks-concept .register-toolbar { gap:7px; }
+  .cis-risks-concept .register-meta { gap:10px; }
+  .cis-risks-concept .register-meta>div { gap:6px; }
+  .cis-risks-concept .dialog-footer>span { max-width:70%; }
+  .cis-risks-concept .quarter-card { padding:16px 14px 12px; }
+}
+@media(max-width:540px) {
+  .cis-risks-concept { --header:52px; }
+  .bpage.approved-risk-register.cis-risks-surface { padding:18px 12px 12px; }
+  .cis-risks-concept .eyebrow { font-size:7px; letter-spacing:.7px; }
+  .cis-risks-concept .eyebrow span { display:block; margin-top:3px; }
+  .cis-risks-concept .page-heading { gap:7px; }
+  .cis-risks-concept h1 { font-size:22px; }
+  .cis-risks-concept .page-heading p { max-width:200px; font-size:10px; }
+  .cis-risks-concept .page-actions { gap:5px; max-width:130px; }
+  .cis-risks-concept .page-actions #export { display:none; }
+  .cis-risks-concept .page-actions .button { padding:5px 7px; min-height:28px; font-size:9px; }
+  .cis-risks-concept .kpis { grid-template-columns:1fr 1fr; gap:7px; }
+  .cis-risks-concept .kpi { min-height:93px; padding:12px; }
+  .cis-risks-concept .kpi span.label { font-size:10px; }
+  .cis-risks-concept .kpi small { font-size:8px; }
+  .cis-risks-concept .kpi strong { font-size:26px; margin:6px 0; }
+  .cis-risks-concept .quarter-controls { gap:5px; }
+  .cis-risks-concept .quarter-controls strong { font-size:10px; min-width:44px; }
+  .cis-risks-concept .quarter-controls select { max-width:59px; }
+  .cis-risks-concept .quarters button { padding:4px 5px; }
+  .cis-risks-concept .this-quarter { font-size:9px; padding:5px 6px; }
+  .cis-risks-concept #agendaList { grid-template-columns:1fr; }
+  .cis-risks-concept .agenda-entry { padding:9px 6px 9px 11px; }
+  .cis-risks-concept .agenda-title { max-width:none; font-size:10px; }
+  .cis-risks-concept .agenda-bottom { display:flex; }
+  .cis-risks-concept .agenda-date { margin:0; }
+  .cis-risks-concept .agenda-switch { max-width:none; }
+  .cis-risks-concept .timeline-scroll { margin-right:-4px; }
+  .cis-risks-concept .timeline-inner { min-width:570px; }
+  .cis-risks-concept .timeline-foot { font-size:8px; }
+  .cis-risks-concept .timeline-foot span { max-width:245px; }
+  .cis-risks-concept .register-heading { padding:13px 12px; }
+  .cis-risks-concept .register-toolbar { padding:10px; }
+  .cis-risks-concept .register-search { width:100%; flex-basis:100%; }
+  .cis-risks-concept .filters { width:100%; gap:3px; }
+  .cis-risks-concept .filters button { padding:4px 5px; }
+  .cis-risks-concept .select-label { font-size:8px; }
+  .cis-risks-concept .select-label select { font-size:9px; max-width:124px; padding-left:5px; }
+  .cis-risks-concept .register-meta { padding:8px 10px; font-size:8px; }
+  .cis-risks-concept .register-meta>div { gap:5px; }
+  .cis-risks-concept .pagination { font-size:8px; padding:3px 4px; }
+  .cis-risks-concept .register-meta #clearFilters { display:none; }
+  .ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { width:calc(100vw - 22px); max-height:calc(100dvh - 24px); }
+  .cis-risks-concept .dialog-shell { max-height:calc(100dvh - 26px); }
+  .cis-risks-concept .dialog-heading { padding:17px 16px 13px; gap:8px; }
+  .cis-risks-concept .dialog-heading h2 { font-size:19px; }
+  .cis-risks-concept .dialog-content { padding:12px 16px 17px; }
+  .cis-risks-concept .dialog-footer { padding:12px 16px; }
+  .cis-risks-concept .date-review { padding:12px; }
+  .cis-risks-concept .tooltip { min-width:225px; max-width:calc(100vw - 20px); padding:11px 12px; }
+  .cis-risks-concept .concept-footer { font-size:8px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .cis-risks-concept * { scroll-behavior:auto!important; transition:none!important; }
+}
+.cis-risks-concept #register { scroll-margin-top:calc(var(--header) + 16px); }
+.cis-risks-concept .agenda { position:relative; isolation:isolate; z-index:1; background:var(--card); }
+.cis-risks-concept { --header:56px; --blue:#1459dc; --text:#0c1b34; --bg:#f5f7fc; --line:#dce5f3; }
+.cis-risks-concept #actionRows tr[data-risk-row] { cursor:pointer; }
+.bpage.approved-risk-register.cis-risks-surface { padding:22px 25px 10px; }
+.cis-risks-concept .page-heading { align-items:center; gap:14px; margin-bottom:17px; }
+.cis-risks-concept .eyebrow { font-size:9px; letter-spacing:.55px; }
+.cis-risks-concept .eyebrow span { letter-spacing:0; }
+.cis-risks-concept h1 { font-size:26px; letter-spacing:-.9px; line-height:1.25; margin-top:3px; }
+.cis-risks-concept .page-heading p { font-size:10.5px; line-height:1.5; margin-top:4px; }
+.cis-risks-concept .page-actions { gap:7px; }
+.cis-risks-concept .button { font-size:10px; min-height:31px; padding:6px 9px; gap:6px; }
+.cis-risks-concept .button svg { width:13px; height:13px; }
+.cis-risks-concept .page-actions #themeButton { display:none; }
+.cis-risks-concept .kpis { gap:8px; margin-bottom:13px; }
+.cis-risks-concept .kpi { padding:16px 18px; min-height:99px; gap:15px; }
+.cis-risks-concept .kpi strong { font-size:27px; line-height:1.05; margin:6px 0 4px; letter-spacing:-.3px; }
+.cis-risks-concept .kpi span.label { font-size:11px; }
+.cis-risks-concept .kpi small { font-size:10px; }
+.cis-risks-concept .kpi-icon svg { width:20px; height:20px; }
+.cis-risks-concept .kpi-high .kpi-icon { color:#ba3046; }
+.cis-risks-concept .kpi-high strong { color:var(--text); }
+.cis-risks-concept .kpi-accepted .kpi-icon { color:#00a88b; }
+.cis-risks-concept .overview-grid { display:grid; grid-template-columns:minmax(300px,.335fr) minmax(0,.665fr); border:1px solid var(--line); border-radius:9px; background:var(--card); margin-bottom:13px; overflow:hidden; align-items:stretch; }
+.cis-risks-concept .matrix-panel { padding:15px 16px 17px; border-right:1px solid var(--line); display:flex; flex-direction:column; min-width:0; }
+.cis-risks-concept .panel-title h2 { font-size:14px; line-height:1.35; letter-spacing:-.25px; }
+.cis-risks-concept .quarter-heading h2 { font-size:14px; line-height:1.35; letter-spacing:-.25px; }
+.cis-risks-concept .register-heading h2 { font-size:14px; line-height:1.35; letter-spacing:-.25px; }
+.cis-risks-concept .panel-title p { color:var(--muted); font-size:10px; margin-top:3px; }
+.cis-risks-concept .quarter-heading p { color:var(--muted); font-size:10px; margin-top:3px; }
+.cis-risks-concept .matrix-grid { display:grid; grid-template-columns:23px repeat(5,minmax(0,1fr)); grid-template-rows:repeat(5,44px) 19px; gap:3px; margin:13px 6px 0 0; }
+.cis-risks-concept .matrix-axis { font-size:10px; color:var(--muted); display:grid; place-items:center; }
+.cis-risks-concept .matrix-cell { display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:5px; position:relative; transition:box-shadow .12s; }
+.cis-risks-concept .matrix-cell.low { background:#f2f5fa; }
+.cis-risks-concept .matrix-cell.moderate { background:#fff8e9; }
+.cis-risks-concept .matrix-cell.high { background:#fff0e6; }
+.cis-risks-concept .matrix-cell.critical { background:#faeaee; }
+.cis-risks-concept .matrix-score { font-size:10px; font-weight:400; color:#6d7b95; }
+.cis-risks-concept .matrix-count { font-size:9px; line-height:1.3; color:#162238; }
+.cis-risks-concept .matrix-cell.occupied .matrix-score { font-size:16px; line-height:1.2; font-weight:650; color:#111b2e; }
+.cis-risks-concept .matrix-cell.occupied.high { background:#ffcfb7; }
+.cis-risks-concept .matrix-cell.occupied.moderate { background:#ffe8af; }
+.cis-risks-concept .matrix-cell:hover { box-shadow:inset 0 0 0 2px #6b8ccd; }
+.cis-risks-concept .matrix-cell:focus-visible { box-shadow:inset 0 0 0 2px #6b8ccd; }
+.cis-risks-concept .matrix-axis-labels { display:flex; justify-content:space-between; margin:0 6px 0 24px; font-size:10px; color:var(--muted); }
+.cis-risks-concept .matrix-legend { display:flex; align-items:center; justify-content:space-between; gap:7px; flex-wrap:wrap; margin-top:auto; padding-top:24px; color:var(--muted); font-size:9px; }
+.cis-risks-concept .matrix-legend-item { display:inline-flex; gap:5px; align-items:center; white-space:nowrap; }
+.cis-risks-concept .matrix-legend-dot { display:inline-block; width:12px; height:12px; border-radius:50%; }
+.cis-risks-concept .matrix-legend-dot.low { background:#eaf0f7; }
+.cis-risks-concept .matrix-legend-dot.moderate { background:#fff1d6; }
+.cis-risks-concept .matrix-legend-dot.high { background:#ffcbb7; }
+.cis-risks-concept .matrix-legend-dot.critical { background:#efa7b3; }
+.cis-risks-concept .overview-grid .quarter-card { padding:15px 15px 15px; margin:0; min-width:0; }
+.cis-risks-concept .quarter-heading { align-items:flex-start; gap:8px; flex-wrap:wrap; }
+.cis-risks-concept .quarter-heading p { font-size:9px; max-width:none; }
+.cis-risks-concept .quarter-controls { gap:5px; margin:0 0 0 auto; justify-content:flex-end; max-width:none; }
+.cis-risks-concept .quarter-controls strong { font-size:10px; min-width:44px; }
+.cis-risks-concept .icon-button { height:25px; width:23px; }
+.cis-risks-concept .quarter-controls select { height:25px; font-size:9px; max-width:59px; }
+.cis-risks-concept .quarters button { font-size:9px; padding:4px 6px; }
+.cis-risks-concept .this-quarter { font-size:9px; padding:5px 7px; }
+.cis-risks-concept .quarter-content { display:grid; grid-template-columns:minmax(190px,.35fr) minmax(0,.65fr); gap:13px; margin-top:14px; }
+.cis-risks-concept .agenda { padding-right:12px; background:var(--card); }
+.cis-risks-concept .agenda-switch { max-width:none; }
+.cis-risks-concept .agenda-switch button { font-size:10px; padding:5px 7px; }
+.cis-risks-concept .agenda-caption { font-size:9px; margin:8px 0 5px; }
+.cis-risks-concept .agenda-entry { padding:11px 0 12px 10px; border-top:0; margin-bottom:4px; }
+.cis-risks-concept .agenda-entry:before { top:2px; bottom:8px; }
+.cis-risks-concept .agenda-title { font-size:10.2px; line-height:1.4; max-width:none; letter-spacing:-.15px; }
+.cis-risks-concept .agenda-bottom { align-items:flex-start; gap:4px; flex-wrap:wrap; margin-top:6px; }
+.cis-risks-concept .agenda-date { font-size:9px; line-height:1.35; }
+.cis-risks-concept .due-badge { font-size:9px; padding:3px 6px; line-height:1.2; }
+.cis-risks-concept .agenda .due-badge.later { background:#fff3da; color:#966215; }
+.cis-risks-concept .agenda .due-badge { margin-left:auto; }
+.cis-risks-concept .agenda-all { font-size:9px; }
+.cis-risks-concept .agenda-empty { padding:20px 0; font-size:10px; line-height:1.6; }
+.cis-risks-concept .timeline-column { display:flex; flex-direction:column; min-width:0; }
+.cis-risks-concept .legend { gap:9px; justify-content:flex-end; min-height:22px; align-items:flex-start; margin:0 0 18px; }
+.cis-risks-concept .legend button { font-size:8.5px; gap:4px; white-space:nowrap; }
+.cis-risks-concept .legend .legend-dot { height:8px; width:8px; }
+.cis-risks-concept .timeline-inner { min-width:0; }
+.cis-risks-concept .month-row { height:38px; margin:0 18px; font-size:9px; }
+.cis-risks-concept .plot { min-height:190px; }
+.cis-risks-concept .today-label { font-size:9px; top:-32px; }
+.cis-risks-concept .date-label { font-size:9px; padding:0 2px; }
+.cis-risks-concept .date-axis { height:25px; font-size:7.5px; }
+.cis-risks-concept .timeline-foot { margin-top:auto; padding-top:14px; align-items:flex-end; font-size:8px; gap:8px; }
+.cis-risks-concept .timeline-foot button { font-size:9px; }
+.cis-risks-concept .timeline-foot span { max-width:270px; }
+.cis-risks-concept .review-dot .dot { width:8px; height:8px; }
+.cis-risks-concept .timeline-scroll { overflow:visible; }
+.cis-risks-concept .register { position:relative; }
+.cis-risks-concept .register-heading { padding:15px 17px 7px; border:0; min-height:40px; align-items:flex-start; }
+.cis-risks-concept .register-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+.cis-risks-concept .register-actions .segmented { padding:2px; gap:2px; border-radius:5px; }
+.cis-risks-concept .register-actions .segmented button { font-size:10px; min-height:26px; padding:4px 10px; }
+.cis-risks-concept .register-actions .segmented button[aria-pressed=true] { background:var(--blue); color:white; box-shadow:none; }
+.cis-risks-concept .register-actions .segmented button span { display:inline-block; font-size:9px; padding:0 5px; background:var(--card); color:var(--text); border-radius:4px; margin-left:5px; min-width:15px; }
+.cis-risks-concept .register-actions .segmented button[aria-pressed=true] span { color:var(--blue); }
+.cis-risks-concept .filter-button { height:30px; min-height:30px; font-size:10px; border-radius:5px; }
+.cis-risks-concept .filter-button svg { width:12px; height:12px; }
+.cis-risks-concept #filterBadge { border-radius:4px; background:var(--info-bg); color:var(--blue); font-size:9px; padding:0 4px; }
+.cis-risks-concept .register-toolbar { padding:0 17px 9px; border-bottom:1px solid var(--line); gap:9px; min-height:40px; }
+.cis-risks-concept .register-search { height:29px; flex:1; width:auto; font-size:10px; }
+.cis-risks-concept .register-search input { font-size:10px; }
+.cis-risks-concept #matchCount { font-size:9px; color:var(--muted); }
+.cis-risks-concept #clearFilters { font-size:9px; color:var(--muted); }
+.cis-risks-concept .filter-panel { display:flex; gap:10px; flex-wrap:wrap; padding:12px 17px; background:var(--subtle); border-bottom:1px solid var(--line); }
+.cis-risks-concept .filter-panel label { font-size:10px; color:var(--muted); display:flex; gap:5px; align-items:center; }
+.cis-risks-concept .filter-panel select { font:inherit; color:var(--text); border:1px solid var(--line); border-radius:4px; background:var(--card); padding:5px 7px; max-width:180px; }
+.cis-risks-concept .risk-table { font-size:10.2px; min-width:820px; }
+.cis-risks-concept .risk-table th { font-size:9px; padding:9px 10px; background:var(--subtle); font-weight:500; }
+.cis-risks-concept .risk-table th:first-child { width:45%; padding-left:17px; }
+.cis-risks-concept .risk-table th:nth-child(2) { width:12%; }
+.cis-risks-concept .risk-table th:nth-child(3) { width:16%; }
+.cis-risks-concept .risk-table th:nth-child(4) { width:13%; }
+.cis-risks-concept .risk-table th:nth-child(5) { width:18%; }
+.cis-risks-concept .risk-table td { padding:11px 10px; }
+.cis-risks-concept .risk-table td:first-child { padding-left:17px; }
+.cis-risks-concept .risk-title-cell { display:flex; align-items:flex-start; gap:12px; }
+.cis-risks-concept .risk-id { font-size:9px; color:var(--muted); white-space:nowrap; line-height:1.5; min-width:53px; }
+.cis-risks-concept .risk-title { font-size:10.3px; line-height:1.5; padding:0; text-align:left; font-weight:450; color:var(--text); letter-spacing:-.15px; }
+.cis-risks-concept .risk-title:hover { color:var(--blue); }
+.cis-risks-concept .risk-owner { font-size:10px; white-space:nowrap; }
+.cis-risks-concept .score-badge { display:inline-block; font-size:10px; padding:3px 8px; border-radius:4px; white-space:nowrap; font-weight:500; }
+.cis-risks-concept .score-badge.low { background:#edf2f8; color:#536580; }
+.cis-risks-concept .score-badge.moderate { background:#fff0cb; color:#172235; }
+.cis-risks-concept .score-badge.high { background:#ffd6c5; color:#172235; }
+.cis-risks-concept .score-badge.critical { background:#f9d9e0; color:#9f304c; }
+.cis-risks-concept .risk-status { display:inline-block; padding:4px 7px; border-radius:4px; font-size:10px; white-space:nowrap; }
+.cis-risks-concept .risk-status.in-treatment { background:#edf4ff; color:#145bd5; }
+.cis-risks-concept .risk-status.open { background:#edf1f7; color:#263954; }
+.cis-risks-concept .risk-status.accepted { background:#ddf4f0; color:#166d65; }
+.cis-risks-concept .next-review-cell time { display:block; font-size:10px; white-space:nowrap; }
+.cis-risks-concept .review-relative { display:block; font-size:9px; color:var(--muted); white-space:nowrap; line-height:1.6; }
+.cis-risks-concept .review-relative.overdue { color:var(--danger); }
+.cis-risks-concept .row-open { display:block; }
+.cis-risks-concept .row-open svg { width:13px; height:13px; }
+.cis-risks-concept .register-footer { font-size:9px; padding:7px 17px; color:var(--muted); border-top:1px solid var(--line); }
+.cis-risks-concept .empty-row strong { display:block; }
+.cis-risks-concept .empty-row span { display:block; }
+.cis-risks-concept .empty-row span { font-size:10px; margin-top:7px; }
+.cis-risks-concept .concept-footer { font-size:8px; padding-top:9px; color:#8190a9; }
+.cis-risks-concept .event-label { color:var(--cadence); font-weight:500; }
+.cis-risks-concept .scale-bands { display:grid; gap:15px; margin:10px 0 22px; }
+.cis-risks-concept .scale-bands p { font-size:11px; color:var(--muted); margin-top:7px; }
+.cis-risks-concept[data-theme="dark"] .matrix-cell.low { background:#243349; }
+.cis-risks-concept[data-theme="dark"] .matrix-cell.moderate { background:#3c352b; }
+.cis-risks-concept[data-theme="dark"] .matrix-cell.high { background:#493531; }
+.cis-risks-concept[data-theme="dark"] .matrix-cell.critical { background:#442d3c; }
+.cis-risks-concept[data-theme="dark"] .matrix-score { color:#adbad0; }
+.cis-risks-concept[data-theme="dark"] .matrix-cell.occupied.moderate { background:#705924; }
+.cis-risks-concept[data-theme="dark"] .matrix-cell.occupied.high { background:#79513d; }
+.cis-risks-concept[data-theme="dark"] .matrix-cell.occupied .matrix-score { color:#f1f4f9; }
+.cis-risks-concept[data-theme="dark"] .matrix-count { color:#f1f4f9; }
+.cis-risks-concept[data-theme="dark"] .score-badge.moderate { background:#493c25; color:#f6dc9a; }
+.cis-risks-concept[data-theme="dark"] .score-badge.high { background:#553c31; color:#ffd7bc; }
+.cis-risks-concept[data-theme="dark"] .score-badge.low { background:#2a3c54; color:#c5d3e9; }
+.cis-risks-concept[data-theme="dark"] .score-badge.critical { background:#4e2c3d; color:#f4b7c8; }
+.cis-risks-concept[data-theme="dark"] .risk-status.open { background:#2b3a50; color:#d3dfed; }
+.cis-risks-concept[data-theme="dark"] .risk-status.in-treatment { background:#243e64; color:#b7d0ff; }
+.cis-risks-concept[data-theme="dark"] .risk-status.accepted { background:#214740; color:#9bdfd1; }
+.cis-risks-concept[data-theme="dark"] .agenda .due-badge.later { background:#423623; color:#f3d18b; }
+.cis-risks-concept[data-theme="dark"] .kpi-high strong { color:var(--text); }
+@media(min-width:1500px) {
+  .bpage.approved-risk-register.cis-risks-surface { padding:22px 28px 10px; }
+  .cis-risks-concept .overview-grid { grid-template-columns:minmax(355px,.327fr) minmax(0,.673fr); }
+  .cis-risks-concept .matrix-grid { grid-template-rows:repeat(5,46px) 20px; }
+  .cis-risks-concept .quarter-content { grid-template-columns:242px minmax(0,1fr); gap:14px; }
+  .cis-risks-concept .quarter-heading p { font-size:10px; }
+  .cis-risks-concept .quarter-heading { flex-wrap:nowrap; }
+  .cis-risks-concept .quarter-controls { gap:6px; }
+  .cis-risks-concept .legend button { font-size:9px; }
+  .cis-risks-concept .agenda-title { font-size:11px; }
+  .cis-risks-concept .agenda-date { font-size:10px; }
+  .cis-risks-concept .kpi strong { font-size:28px; }
+  .cis-risks-concept .risk-table td { padding:12px 12px; }
+  .cis-risks-concept .risk-table th { padding:10px 12px; }
+  .cis-risks-concept .risk-title { font-size:11px; }
+  .cis-risks-concept .risk-owner { font-size:11px; }
+  .cis-risks-concept .score-badge { font-size:11px; }
+  .cis-risks-concept .risk-status { font-size:11px; }
+  .cis-risks-concept .next-review-cell time { font-size:11px; }
+  .cis-risks-concept .review-relative { font-size:10px; }
+  .cis-risks-concept .risk-id { font-size:10px; }
+  .cis-risks-concept .matrix-legend { font-size:10px; }
+  .cis-risks-concept .matrix-legend-dot { height:14px; width:14px; }
+  .cis-risks-concept .panel-title h2 { font-size:15px; }
+  .cis-risks-concept .quarter-heading h2 { font-size:15px; }
+  .cis-risks-concept .register-heading h2 { font-size:15px; }
+}
+@media(max-width:1200px) {
+  .bpage.approved-risk-register.cis-risks-surface { padding:20px 18px 10px; }
+  .cis-risks-concept .page-heading { align-items:flex-start; }
+  .cis-risks-concept .page-heading p { max-width:460px; }
+  .cis-risks-concept .page-actions { flex-wrap:wrap; justify-content:flex-end; max-width:250px; }
+  .cis-risks-concept .overview-grid { grid-template-columns:310px minmax(0,1fr); }
+  .cis-risks-concept .quarter-content { grid-template-columns:1fr; }
+  .cis-risks-concept .agenda { border:0; padding:0; }
+  .cis-risks-concept .agenda-switch { max-width:250px; }
+  .cis-risks-concept .agenda-caption { margin-bottom:7px; }
+  .cis-risks-concept #agendaList { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+  .cis-risks-concept .agenda-entry { padding:6px 0 8px 9px; }
+  .cis-risks-concept .agenda-bottom { display:block; }
+  .cis-risks-concept .agenda .due-badge { margin:5px 0 0; }
+  .cis-risks-concept .timeline-column { min-width:0; }
+  .cis-risks-concept .legend { margin:0 0 12px; justify-content:flex-start; }
+  .cis-risks-concept .quarter-heading { display:block; }
+  .cis-risks-concept .quarter-controls { margin-top:8px; justify-content:flex-start; }
+  .cis-risks-concept .timeline-foot { padding-top:5px; }
+  .cis-risks-concept .matrix-legend { margin-top:20px; justify-content:flex-start; gap:10px; }
+  .cis-risks-concept .matrix-grid { grid-template-rows:repeat(5,44px) 20px; }
+  .cis-risks-concept .kpi { padding:14px 12px; gap:8px; }
+  .cis-risks-concept .kpi span.label { font-size:10px; }
+  .cis-risks-concept .kpi small { font-size:9px; }
+  .cis-risks-concept .register-actions .segmented button { font-size:9px; padding:4px 8px; }
+}
+@media(max-width:960px) {
+  .bpage.approved-risk-register.cis-risks-surface { padding:20px 17px 10px; }
+  .cis-risks-concept .overview-grid { grid-template-columns:290px minmax(0,1fr); }
+  .cis-risks-concept .kpi .kpi-icon { display:none; }
+  .cis-risks-concept .kpi { padding:13px; }
+  .cis-risks-concept .register-actions .segmented button span { margin-left:3px; }
+  .cis-risks-concept .matrix-grid { grid-template-rows:repeat(5,42px) 18px; }
+  .cis-risks-concept .matrix-panel { padding:15px 12px; }
+  .cis-risks-concept .matrix-legend { gap:9px; font-size:8.5px; }
+  .cis-risks-concept .quarter-card { padding:15px 13px!important; }
+}
+@media(max-width:760px) {
+  .cis-risks-concept .overview-grid { grid-template-columns:1fr; overflow:visible; }
+  .cis-risks-concept .matrix-panel { border-right:0; border-bottom:1px solid var(--line); }
+  .cis-risks-concept .matrix-grid { max-width:400px; width:100%; align-self:center; grid-template-rows:repeat(5,48px) 20px; }
+  .cis-risks-concept .matrix-axis-labels { max-width:375px; width:calc(100% - 25px); align-self:center; }
+  .cis-risks-concept .matrix-legend { justify-content:center; margin:0; padding-top:17px; gap:18px; }
+  .cis-risks-concept .quarter-content { grid-template-columns:1fr; }
+  .cis-risks-concept .timeline-inner { min-width:530px; }
+  .cis-risks-concept .timeline-scroll { overflow:auto; }
+  .cis-risks-concept .quarter-heading { display:block; }
+  .cis-risks-concept .page-heading p { font-size:10px; max-width:310px; }
+  .cis-risks-concept .page-actions { max-width:220px; }
+  .cis-risks-concept .page-actions .button { font-size:9px; }
+  .cis-risks-concept .kpi strong { font-size:26px; }
+  .cis-risks-concept .register-heading { align-items:center; }
+  .cis-risks-concept .register-actions { gap:5px; }
+  .cis-risks-concept .register-actions .segmented button { padding:4px 7px; }
+  .cis-risks-concept .filter-button { font-size:9px; padding:5px 7px; }
+  .cis-risks-concept .timeline-foot { padding-top:8px; }
+  .cis-risks-concept .legend { margin-top:5px; }
+  .cis-risks-concept .legend button { font-size:9px; }
+  .cis-risks-concept .panel-title h2 { font-size:14px; }
+  .cis-risks-concept .quarter-heading h2 { font-size:14px; }
+  .cis-risks-concept .register-heading h2 { font-size:14px; }
+  .cis-risks-concept .agenda-title { font-size:10px; }
+}
+@media(max-width:540px) {
+  .cis-risks-concept { --header:52px; }
+  .bpage.approved-risk-register.cis-risks-surface { padding:18px 12px 10px; }
+  .cis-risks-concept .page-heading { display:block; }
+  .cis-risks-concept .page-heading h1 { font-size:24px; }
+  .cis-risks-concept .page-heading p { max-width:100%; }
+  .cis-risks-concept .page-actions { margin-top:11px; max-width:none; justify-content:flex-start; }
+  .cis-risks-concept .page-actions .button { min-height:29px; font-size:9px; padding:5px 8px; }
+  .cis-risks-concept .eyebrow span { display:inline; }
+  .cis-risks-concept .kpis { grid-template-columns:1fr 1fr; }
+  .cis-risks-concept .kpi { min-height:90px; }
+  .cis-risks-concept .kpi span.label { font-size:10px; }
+  .cis-risks-concept .kpi small { font-size:8.5px; }
+  .cis-risks-concept .matrix-grid { grid-template-rows:repeat(5,44px) 19px; }
+  .cis-risks-concept .matrix-legend { gap:12px; font-size:8.5px; }
+  .cis-risks-concept .quarter-controls { gap:4px; }
+  .cis-risks-concept .quarters button { padding:4px 5px; }
+  .cis-risks-concept .this-quarter { font-size:8.5px; }
+  .cis-risks-concept .quarter-content { margin-top:14px; }
+  .cis-risks-concept #agendaList { display:block; }
+  .cis-risks-concept .agenda-switch { max-width:none; }
+  .cis-risks-concept .agenda-entry { padding:10px 4px 12px 10px; }
+  .cis-risks-concept .agenda-title { font-size:11px; }
+  .cis-risks-concept .agenda-bottom { display:flex; }
+  .cis-risks-concept .agenda .due-badge { margin:0 0 0 auto; }
+  .cis-risks-concept .agenda-date { font-size:9px; }
+  .cis-risks-concept .agenda { margin-bottom:8px; }
+  .cis-risks-concept .legend { gap:11px; margin:0 0 14px; }
+  .cis-risks-concept .timeline-inner { min-width:570px; }
+  .cis-risks-concept .register-heading { display:block; padding:14px 12px 8px; }
+  .cis-risks-concept .register-actions { justify-content:flex-start; margin-top:10px; gap:7px; }
+  .cis-risks-concept .register-actions .segmented button { font-size:10px; padding:4px 9px; }
+  .cis-risks-concept .register-actions .segmented button span { font-size:9px; }
+  .cis-risks-concept .register-toolbar { padding:0 12px 9px; }
+  .cis-risks-concept .register-search { flex-basis:100%; }
+  .cis-risks-concept .register-footer { padding-left:12px; }
+  .cis-risks-concept .filter-panel { padding:12px; display:grid; grid-template-columns:1fr 1fr; }
+  .cis-risks-concept .filter-panel label { display:block; }
+  .cis-risks-concept .filter-panel select { display:block; width:100%; margin-top:4px; max-width:none; }
+  .cis-risks-concept .risk-table { min-width:850px; }
+  .cis-risks-concept .dialog-heading h2 { font-size:19px; }
+  .cis-risks-concept .timeline-foot { font-size:8px; }
+  .cis-risks-concept .timeline-foot span { max-width:225px; }
+}
+
+/* The existing native Dialog supplies the portal, focus trap, dismissal and close behavior. */
+.ui-dialog.cis-risks-concept.cr-list-dialog[data-state] { display:block; max-width:none; gap:0; }
+
+/* Restore the reference's inherited defaults where shared native register rules supply unrelated values. */
+.cis-risks-concept .register-toolbar { background:transparent; border-radius:0; }
+.cis-risks-concept .risk-table { border-collapse:collapse; }
+.cis-risks-concept .risk-table :is(th,td) { font-family:inherit; line-height:inherit; }
+.cis-risks-concept .quarter-controls select { min-height:0; }
+.cis-risks-concept .filter-panel label { font-family:inherit; font-weight:400; }
+.cis-risks-concept .filter-panel select { min-height:0; }
+.cis-risks-concept .filter-panel .column-control { margin:0; min-height:0; padding:5px 7px; border:1px solid var(--line); border-radius:4px; background:var(--card); color:var(--text); font-size:10px; font-weight:400; box-shadow:none; }
+.bpage.approved-risk-register.cis-risks-surface .cis-risks-concept .register-search input { min-height:0; height:auto; background:none; font-family:inherit; color:var(--text); }

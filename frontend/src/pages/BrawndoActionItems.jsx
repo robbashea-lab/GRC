@@ -1,5 +1,5 @@
-import QuarterlyProgramTimeline from '@/components/QuarterlyProgramTimeline';
-import {quarterlyActionEvents,quarterlyChartScope,QUARTERLY_ACTION_LEGEND} from '@/lib/quarterlyProgramTimeline';
+import {CisActionItemsOverview,CisActionItemsSummary,ActionConceptPriority,ActionConceptDue,useActionConceptClock} from '@/components/CisActionItemsConcept';
+import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
 import {cisExperienceEligible} from '@/lib/cisExperience';
 import {selectedClient} from '@/lib/clientSelection';
 import {brawndoEligibleOwnerIds,brawndoTicketMetrics} from '@/lib/brawndoDemoActions';
@@ -21,6 +21,8 @@ import RegisterLoadError from '@/components/RegisterLoadError';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import {Button} from '@/components/ui/button';
 import {recordUuid} from '@/lib/recordUuid';
+import {displayDay,displayRecordedAt} from '@/lib/managementDates';
+import {personLabel} from '@/lib/people';
 import './BrawndoActionItems.css';
 
 const views=[['active','Active'],['overdue','Overdue'],['in_progress','In Progress'],['open','Open'],['completed','Completed'],['high_critical','High / Critical Findings']].map(([id,label])=>({id,label}));
@@ -28,6 +30,10 @@ const nouns={active:'active',overdue:'overdue',in_progress:'in-progress',open:'o
 const due=r=>r.due_date?String(r.due_date).slice(0,10):'9999-99-99';
 const soonest=(a,b)=>due(a)<due(b)?-1:due(a)>due(b)?1:0;
 const labels={open:'Open',in_progress:'In Progress',overdue:'Overdue',completed:'Completed',pending_validation:'Pending Validation'};
+
+function ActionRegisterContainer({eligible,children}){
+  return eligible?<section className="cia-register" aria-label="Action items register">{children}</section>:<>{children}</>;
+}
 
 export function FindingsRoute(){
   const location=useLocation();
@@ -51,7 +57,12 @@ export default function BrawndoActionItems(){
   const opened=useRef('');
   useEffect(()=>{setDrawer(null);setDeepLinkError('');opened.current='';},[currentClientId]);
   const rows=unifiedActions(data,currentClientId);
-  const table=useTableControls({columns:pilotActionColumns(tableColumns('action-items',{rows,users}),rows),rows,module:'brawndo-actions',scope:`${user?.user_id}:${currentClientId}`,
+  const compactOverview=cisExperienceEligible({...org,...auth,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:params.get('client_id')});
+  const now=useActionConceptClock(compactOverview);
+  const nativeColumns=pilotActionColumns(tableColumns('action-items',{rows,users}),rows);
+  // Preserve native filter values while displaying only the Action's own saved priority.
+  const columns=compactOverview?nativeColumns.map(column=>column.key==='priority'?{...column,value:row=>pilotPriority(row.primary?.priority),labelValue:value=>({Moderate:'Medium','Critical / Immediate':'Critical','Classification needed':'Unclassified'})[value]||value}:column):nativeColumns;
+  const table=useTableControls({columns,rows,module:'brawndo-actions',scope:`${user?.user_id}:${currentClientId}`,
     onFilterChange:(key,values)=>{const next=new URLSearchParams(params);if(['status','due_date'].includes(key)&&values.length)next.set('view','all');if(key==='owner_id'||key===null){next.delete('owner');next.delete('unassigned');}if(next.toString()!==params.toString())setParams(next,{replace:true});}});
   function selectView(value){table.replaceState({...table.state,filters:{...table.state.filters,status:[],due_date:[],owner_id:[]}});const next=new URLSearchParams(params);next.set('view',value);next.delete('owner');next.delete('unassigned');setParams(next,{replace:true});}
   function open(row){setDrawer({kind:row.kind,record:row.raw});}
@@ -66,29 +77,33 @@ export default function BrawndoActionItems(){
   const applied=table.apply(rows.filter(r=>pilotActionMatches(r,view)&&(!params.get('owner')||r.owner_id===(params.get('owner')==='__me__'?user.user_id:params.get('owner')))&&(params.get('unassigned')!=='1'||!r.owner_id)&&[r.title,r.raw.description,r.actionSearchText,r.finding?.title,r.finding?.description,r.source.label,users.find(u=>u.user_id===r.owner_id)?.name].filter(Boolean).join(' ').toLowerCase().includes(q.trim().toLowerCase())));
   const userSort=!!table.state.sort,filtered=userSort?applied:[...applied].sort(soonest),viewCount=rows.filter(r=>pilotActionMatches(r,view)).length;
   const clientName=currentClient?.name||'Client';
-  const compactOverview=cisExperienceEligible({...org,...auth,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:params.get('client_id')});
-  const metrics=brawndoTicketMetrics(rows,brawndoEligibleOwnerIds(users));
+  // This controller's native Needs an owner destination selects missing owners only.
+  const metrics={...brawndoTicketMetrics(rows,brawndoEligibleOwnerIds(users),now),needsOwner:rows.filter(row=>pilotActionMatches(row,'unassigned'))};
+  metrics.ownerDetail=metrics.needsOwner.length?'Missing owner':'Every action has an assigned owner';
   const canWrite=['super_admin','platform_admin','client_grc_manager','client_contributor'].includes(user?.role);
-  return <BrawndoSurface className="register-surface brawndo-ai">
-    <BrawndoPageHeader eyebrow={`${clientName} · Corrective actions`} title="Action Items">{canWrite&&<>{['super_admin','platform_admin'].includes(user?.role)&&<Button variant="outline" onClick={()=>setDrawer({kind:'findings',record:null})}>New Finding</Button>}<PrimaryAction label="New Action Item" testid="new-action-item" onClick={()=>setDrawer({kind:'tasks',record:null})}/></>}</BrawndoPageHeader>
-    {compactOverview&&<><div className="cpt-summary" aria-label="Action summaries">{[['active','Active',metrics.active.length],['overdue','Overdue',metrics.overdue.length],['upcoming','Due in 30 days',metrics.windows.next14.length+metrics.windows['15_30'].length],['unassigned','Needs an owner',rows.filter(row=>pilotActionMatches(row,'unassigned')).length]].map(([key,label,count])=><button type="button" key={key} disabled={loading||!!error} onClick={()=>selectView(key)}><span>{label}</span><strong>{loading||error?'—':count}</strong></button>)}</div><QuarterlyProgramTimeline chartKey="actions" scopeKey={quarterlyChartScope(user,auth.workspaceMode,currentClient)} events={quarterlyActionEvents(rows)} onOpen={event=>event.task?setDrawer({kind:'tasks',record:event.task}):open(event.record)} theme={theme} available={!loading&&!error} recordOpen={!!drawer} legend={QUARTERLY_ACTION_LEGEND} description="Saved Action due dates, grouped by Action priority."/></>}
+  return <BrawndoSurface className={`register-surface brawndo-ai${compactOverview?' cia-root cia-page':''}`}>
+    <BrawndoPageHeader eyebrow={compactOverview?undefined:`${clientName} · Corrective actions`} title={compactOverview?`${clientName} Action Items`:'Action Items'} subtitle={compactOverview?'Corrective actions from findings, risks, reviews and manual entries':undefined}>{canWrite&&<>{['super_admin','platform_admin'].includes(user?.role)&&<Button variant="outline" onClick={()=>setDrawer({kind:'findings',record:null})}>{compactOverview?'New finding':'New Finding'}</Button>}<PrimaryAction label={compactOverview?'New action item':'New Action Item'} testid="new-action-item" onClick={()=>setDrawer({kind:'tasks',record:null})}/></>}</BrawndoPageHeader>
+    {compactOverview&&<><CisActionItemsSummary metrics={metrics} ready={!loading&&!error} onSelect={selectView} activeKey={view}/><CisActionItemsOverview rows={rows} users={users} now={now} available={!loading&&!error} scopeKey={quarterlyChartScope(user,auth.workspaceMode,currentClient)} onOpen={(event,onReturnFocus)=>event.task?setDrawer({kind:'tasks',record:event.task,onReturnFocus}):open(event.record)} theme={theme} recordOpen={!!drawer}/></>}
+    <ActionRegisterContainer eligible={compactOverview}>
+    {compactOverview&&<div className="cia-register-head"><h2>Action items register</h2><div className="cia-tabs" aria-label="Action register history"><button type="button" aria-pressed={view!=='completed'} onClick={()=>selectView('active')}>Active</button><button type="button" aria-pressed={view==='completed'} onClick={()=>selectView('completed')}>Completed</button></div></div>}
     <div className="register-toolbar"><SearchField label="Search action items" placeholder="Search action items…" testid="ai-search" value={q} onChange={changeSearch}/>
       <div data-testid="ai-views"><BrawndoChips label="Action Item views" chips={views.map(v=>({id:v.id,label:v.label,count:rows.filter(r=>pilotActionMatches(r,v.id)).length,pressed:view===v.id,testid:'ai-view-'+v.id,onClick:()=>selectView(view===v.id?'all':v.id)}))}/></div>
       <div className="brawndo-ai-source-filter"><ColumnControl table={table} columnKey="source_type"/></div>
     </div>
     <div className="register-body">{(params.get('owner')||params.get('unassigned')==='1')&&<div className="text-sm my-2">Assigned To: {params.get('unassigned')==='1'?'Unassigned':users.find(u=>u.user_id===(params.get('owner')==='__me__'?user.user_id:params.get('owner')))?.name||'Selected user'} <button className="underline" onClick={()=>{const next=new URLSearchParams(params);next.delete('owner');next.delete('unassigned');setParams(next,{replace:true});}}>Clear assignment filter</button></div>}<TableFilterChips table={table}/><RegisterLoadError error={error||deepLinkError} name="action items" onRetry={()=>{opened.current='';setDeepLinkError('');load();}}/>
-      <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto"><table className="w-full text-sm brawndo-ai-table"><colgroup>{[49,10,16,12,13].map((width,i)=><col key={i} style={{width:width+'%'}}/>)}</colgroup><thead><tr>{['title','priority','owner_id','due_date','status'].map(key=><SortableHeader key={key} table={table} columnKey={key}/>)}</tr></thead><tbody className="divide-y divide-line">
+      <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto"><table className="w-full text-sm brawndo-ai-table"><colgroup>{[49,10,16,12,13].map((width,i)=><col key={i} style={{width:width+'%'}}/>)}</colgroup><thead><tr>{['title','priority','owner_id','due_date','status'].map(key=>compactOverview&&view==='completed'&&key==='due_date'?<th key={key} scope="col" className="tbl-head"><span>Completed</span><ColumnControl table={table} columnKey={key}/></th>:<SortableHeader key={key} table={table} columnKey={key}/>)}</tr></thead><tbody className="divide-y divide-line">
         {loading&&!rows.length&&<TableLoadingRow colSpan={5}/>}
         {!loading&&!error&&!filtered.length&&<tr><td colSpan={5} className="py-10"><FilterEmpty table={table} name="action items" onClear={()=>setParams(new URLSearchParams('view=all'),{replace:true})}/></td></tr>}
-        {filtered.map((r,i)=><tr key={r.kind+':'+r.id} data-testid={`ai-row-${i}`} className={`row-hover row-open${pilotActionMatches(r,'overdue')?' bpage-late':''}`} onClick={()=>open(r)}>
+        {filtered.map((r,i)=><tr key={r.kind+':'+r.id} data-testid={`ai-row-${i}`} className={`row-hover row-open${pilotActionMatches(r,'overdue')?` bpage-late${compactOverview?' overdue-row':''}`:''}`} onClick={()=>open(r)}>
           <td className="tbl-cell"><button className="register-record-link text-left" onClick={e=>{e.stopPropagation();open(r);}}>{r.title}</button>{r.finding&&<span className="bpage-meta brawndo-ai-finding line-clamp-2"><strong>Finding:</strong> {r.issue||'Issue description not recorded'}</span>}<span className="bpage-meta brawndo-ai-origin">Originated from: {r.source.target?<button className="text-link underline text-left" onClick={e=>{e.stopPropagation();setDrawer({kind:r.source.kind,record:r.source.target,initialValues:r.source.initialValues});}}>{r.source.label}</button>:<span>{r.source.id?'Linked source unavailable · '+r.source.id:r.source.label}</span>}{r.source.detail&&` · ${r.source.detail}`}</span>{r.diagnostic&&<span className="bpage-meta">{r.diagnostic}</span>}</td>
-          <td className="tbl-cell"><SeverityBadge value={r.priority||'unknown'} label={pilotPriority(r.priority)}/></td>
+          <td className="tbl-cell">{compactOverview?<ActionConceptPriority value={r.primary?.priority}/>:<SeverityBadge value={r.priority||'unknown'} label={pilotPriority(r.priority)}/>}</td>
           <td className="tbl-cell"><OwnerCell people={users} id={r.owner_id} status={r.raw.status}/></td>
-          <td className="tbl-cell">{r.due_date?<DueDate iso={r.due_date} closed={finished(r)}/>:<span className="text-ink-secondary">No due date</span>}</td>
-          <td className="tbl-cell"><StatusBadge value={pilotActionStatus(r)} label={labels[pilotActionStatus(r)]||pilotActionStatus(r)}/></td>
+          <td className="tbl-cell">{compactOverview&&view==='completed'?<><span>{displayRecordedAt(r.primary?.completed_at)||'Completion date not recorded'}</span><small className="completed-meta">{r.primary?.completed_by?`by ${personLabel(users,r.primary.completed_by)}`:'Completion actor not recorded'}</small></>:compactOverview?<ActionConceptDue date={r.due_date} completed={finished(r)}/>:r.due_date?<DueDate iso={r.due_date} closed={finished(r)}/>:<span className="text-ink-secondary">No due date</span>}</td>
+          <td className="tbl-cell"><StatusBadge value={pilotActionStatus(r)} label={labels[pilotActionStatus(r)]||pilotActionStatus(r)}/>{compactOverview&&view==='completed'&&(r.finding?<span className="validation-date">{r.finding.validated_at?`Finding validated ${displayDay(r.finding.validated_at)||'date unavailable'}`:`Finding status: ${r.finding.status||'Not recorded'}`}</span>:<span className="validation-date">No finding linked</span>)}</td>
         </tr>)}
       </tbody></table><p className="bpage-foot" data-testid="ai-foot">Showing {filtered.length} of {plural(viewCount,`${nouns[view]||''} action item`.trim())}{!userSort&&filtered.length>1?' · soonest due first':''}</p></div>
     </div>
-    {drawer&&<RecordDrawer open kind={drawer.kind} record={drawer.record} initialValues={drawer.initialValues} clientId={currentClientId} users={users} onSaved={load} onOpenChange={v=>{if(!v){setDrawer(null);const next=new URLSearchParams(params);next.delete('finding_id');next.delete('id');setParams(next,{replace:true});}}}/>}
+    </ActionRegisterContainer>
+    {drawer&&<RecordDrawer open kind={drawer.kind} record={drawer.record} initialValues={drawer.initialValues} onReturnFocus={drawer.onReturnFocus} clientId={currentClientId} users={users} onSaved={load} onOpenChange={v=>{if(!v){setDrawer(null);const next=new URLSearchParams(params);next.delete('finding_id');next.delete('id');setParams(next,{replace:true});}}}/>}
   </BrawndoSurface>;
 }

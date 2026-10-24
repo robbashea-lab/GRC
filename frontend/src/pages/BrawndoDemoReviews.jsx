@@ -1,5 +1,7 @@
-import {useEffect,useLayoutEffect,useRef,useState} from 'react';
-import {reviewWorkload,reviewSummary,reviewExecutions} from '@/lib/brawndoDemoReviews';
+import CisReviewsConcept from '@/components/CisReviewsConcept';
+import '@/components/CisReviewsConcept.css';
+import {useEffect,useRef,useState} from 'react';
+import {reviewSummary,reviewExecutions} from '@/lib/brawndoDemoReviews';
 import {reviewSchedule} from '@/lib/reviewOccurrences';
 import {reviewDisplayValue} from '@/lib/reviewPresentation';
 import {basisSummary} from '@/lib/requirementBasis';
@@ -7,71 +9,69 @@ import {personLabel} from '@/lib/people';
 import {reviewDaysUntil} from '@/lib/brawndoReviews';
 import {displayDay,displayRecordedAt} from '@/lib/managementDates';
 import {calendarDay,reviewMatches} from '@/lib/tableFilters';
-import {placeReviewTooltip} from '@/lib/reviewTooltipPosition';
-import './BrawndoDemoReviews.css';
-import QuarterlyProgramTimeline from '@/components/QuarterlyProgramTimeline';
-import {quarterlyReviewEvents,QUARTERLY_REVIEW_LEGEND} from '@/lib/quarterlyProgramTimeline';
+import {cisReviewUrgency,formatCisReviewDate} from '@/lib/cisReviewsConcept';
 
-const fmt=(value,options)=>new Date(value).toLocaleDateString('en-US',{...options,timeZone:'UTC'});
-export function ReviewWorkload({rows,available=true,recordOpen=false}){
-  const months=reviewWorkload(rows),totals=months.map(month=>month.done+month.due+month.late),sum=totals.reduce((a,b)=>a+b,0),peak=totals.indexOf(Math.max(...totals));
-  const [shown,setShown]=useState(true),[table,setTable]=useState(false),[active,setActive]=useState(null),[width,setWidth]=useState(1000),box=useRef(null),tip=useRef(null);
-  const [tipPosition,setTipPosition]=useState(null);
-  useEffect(()=>{if(!box.current)return;const node=box.current;const resize=()=>setWidth(Math.max(320,Math.round(node.clientWidth||1000)));resize();if(typeof ResizeObserver==='undefined')return;const observer=new ResizeObserver(resize);observer.observe(node);return()=>observer.disconnect();},[shown]);
-  const H=172,L=30,R=width-6,T=18,B=H-34,max=Math.max(5,Math.ceil(Math.max(...totals)/5)*5),slot=(R-L)/12,bw=Math.min(24,slot*.55),cx=i=>L+slot*(i+.5),y=value=>B-value/max*(B-T);
-  const grid=Array.from({length:Math.floor(max/(max>20?10:5))+1},(_,index)=>index*(max>20?10:5));
-  const activeX=active===null?0:cx(active)/width;
-  useEffect(()=>{if(!available||recordOpen||!shown)setActive(null);},[available,recordOpen,shown]);
-  useLayoutEffect(()=>{
-    if(active===null||!shown||!available||recordOpen||!box.current||!tip.current)return;
-    const chartNode=box.current,tipNode=tip.current;
-    const position=()=>{
-      const chart=chartNode.querySelector('svg').getBoundingClientRect(),tooltip=tipNode.getBoundingClientRect();
-      if(!chart.width||!tooltip.width||!tooltip.height)return;
-      const next=placeReviewTooltip({anchorX:chart.left+activeX*chart.width,anchorY:chart.top+T/H*chart.height,
-        width:tooltip.width,height:tooltip.height,viewportWidth:window.innerWidth,viewportHeight:window.innerHeight,
-        topInset:parseFloat(getComputedStyle(chartNode).getPropertyValue('--bwp-top'))||0});
-      setTipPosition(previous=>previous?.left===next.left&&previous?.top===next.top?previous:next);
-    };
-    position();
-    const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(position);
-    observer?.observe(chartNode);observer?.observe(tipNode);
-    window.addEventListener('resize',position);window.addEventListener('scroll',position,true);
-    return()=>{observer?.disconnect();window.removeEventListener('resize',position);window.removeEventListener('scroll',position,true);};
-  },[active,activeX,table,shown,available,recordOpen,rows]);
-  const leaveChart=event=>{if(!(event.relatedTarget instanceof Node&&box.current?.contains(event.relatedTarget)))setActive(null);};
-  return <section className="bdr-card bdr-workload" aria-labelledby="bdr-workload-heading"><div className="bdr-card-head"><div><h2 id="bdr-workload-heading">Review workload</h2><p>{!available?'Review workload is unavailable while records are loading.':<>{sum} occurrences from {fmt(months[0].at,{month:'long'})} through next {fmt(months[11].at,{month:'long'})}, about {(sum/12).toFixed(1)} a month. {fmt(months[peak].at,{month:'long'})} is the heaviest, with {totals[peak]}.</>}</p></div><span className="bdr-links">{shown&&<button disabled={!available} onClick={()=>setTable(!table)} aria-expanded={table}>{table?'Hide data':'View data'}</button>}<button onClick={()=>setShown(!shown)} aria-expanded={shown} aria-controls="bdr-workload-body">{shown?'Hide chart':'Show chart'}</button></span></div>
-    {shown?<div className="bdr-wl-body" id="bdr-workload-body"><div className="bdr-wl-top"><div className="bdr-legend">{[['done','Completed'],['due','Due'],['late','Overdue']].map(([key,label])=><span key={key}><i className={'bdr-key bdr-'+key}/>{label}</span>)}</div><span title="Current due dates and genuine completions; future cycles use the native recurrence schedule without creating records.">{months[0].projectionUnavailable>0?`${months[0].projectionUnavailable} review projections unavailable · `:''}Projected from each cadence · {fmt(months[0].at,{month:'short',year:'numeric'})} – {fmt(months[11].at,{month:'short',year:'numeric'})}</span></div>
-    <div className="bdr-chart" ref={box}><svg viewBox={`0 0 ${width} ${H}`} width={width} height={H} role="img" tabIndex={0} aria-describedby={available&&active!==null&&!recordOpen?'bdr-workload-tip':undefined} aria-label={available?`Review workload by month. ${sum} occurrences. Use Left and Right to read each month.`:'Review workload loading or unavailable'} onFocus={()=>setActive(0)} onBlur={leaveChart} onPointerLeave={leaveChart} onKeyDown={event=>{if(['ArrowLeft','ArrowRight','Home','End','Escape'].includes(event.key)){event.preventDefault();setActive(event.key==='Escape'?null:event.key==='Home'?0:event.key==='End'?11:Math.max(0,Math.min(11,(active??0)+(event.key==='ArrowRight'?1:-1))));}}}>
-      {grid.map(value=><g key={value}><line className={value?'bdr-grid':'bdr-axis'} x1={L} x2={R} y1={y(value)} y2={y(value)}/><text x={L-8} y={y(value)+4} textAnchor="end">{value}</text></g>)}
-      {months.map((month,index)=>{let accumulated=0;const segments=[['done',month.done],['due',month.due],['late',month.late]].filter(([,value])=>value);return <g key={month.at} onPointerEnter={()=>setActive(index)}><g opacity={active===null||active===index?1:.3}>{segments.map(([key,value],segment)=>{const bottom=y(accumulated)-(segment?2:0),top=y(accumulated+value),height=Math.max(2,bottom-top);accumulated+=value;const x=cx(index)-bw/2,r=segment===segments.length-1?Math.min(4,height,bw/2):0;return <path key={key} className={'bdr-fill-'+key} d={`M${x},${bottom}V${top+r}Q${x},${top} ${x+r},${top}H${x+bw-r}Q${x+bw},${top} ${x+bw},${top+r}V${bottom}Z`}/>;})}</g>{available&&(index===0||index===peak)&&<text className="bdr-value" x={cx(index)} y={y(totals[index])-7} textAnchor="middle">{totals[index]}</text>}<text x={cx(index)} y={H-16} textAnchor="middle">{fmt(month.at,{month:'short'})}</text>{(index===0||new Date(month.at).getUTCMonth()===0)&&<text className="bdr-year" x={cx(index)} y={H-2} textAnchor="middle">{fmt(month.at,{year:'numeric'})}</text>}<rect x={L+slot*index} y={T-10} width={slot} height={B-T+10} fill="transparent"/></g>;})}
-    </svg>{available&&active!==null&&!recordOpen&&<div id="bdr-workload-tip" ref={tip} role="status" tabIndex={0} className="bdr-tip" style={{...tipPosition,visibility:tipPosition?'visible':'hidden'}} onPointerLeave={leaveChart} onBlur={leaveChart} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();box.current?.querySelector('svg')?.focus();setActive(null);}}}>
-      <small className="tip-h">{fmt(months[active].at,{month:'long',year:'numeric'})}</small>
-      <strong className="v">{totals[active]} occurrences</strong>
-      {['done','due','late'].map(key=><div className="r" key={key}><span><i className={'bdr-key bdr-'+key}/>{({done:'Completed',due:'Due',late:'Overdue'})[key]}</span><b>{months[active][key]}</b></div>)}
-      <small>{months[active].projected} projected future cycles</small>
-      {!!months[active].items.length&&<div className="rows">{months[active].items.slice(0,5).map((item,index)=><div className="li" key={index}><time dateTime={String(item.at)}>{fmt(item.at,{month:'short',day:'numeric'})}</time><span className="bdr-tip-title" title={item.title}>{item.title}</span><span className="bdr-tip-kind">{item.type}</span></div>)}{months[active].items.length>5&&<span className="bdr-tip-more">+{months[active].items.length-5} more</span>}</div>}
-    </div>}</div>
-    {available&&table&&<div className="bdr-data"><table><thead><tr>{['Month','Completed','Due','Overdue','Projected'].map(label=><th key={label}>{label}</th>)}</tr></thead><tbody>{months.map(month=><tr key={month.at}><td>{fmt(month.at,{month:'short',year:'numeric'})}</td><td>{month.done}</td><td>{month.due}</td><td>{month.late}</td><td>{month.projected}</td></tr>)}</tbody></table></div>}</div>:<div className="bdr-wl-spacer"/>}</section>;
-}
+const reviewStatusLabels={upcoming:'Upcoming',in_progress:'In progress',not_started:'Not started',needs_scheduling:'Needs scheduling'};
 
-export default function BrawndoDemoReviews({clientName='Client',children,rows=[],theme,view,onView,actions,available=true,recordOpen=false,compactOverview=false,onOpenReview,scopeKey,...props}){
+export default function BrawndoDemoReviews({clientName='Client',children,rows=[],theme,view,onView,actions,available=true,recordOpen=false,onOpenReview,scopeKey,users=[],...props}){
   const now=new Date(),summary=reviewSummary(rows,now),today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
   const due90=rows.filter(row=>reviewMatches(row,'upcoming',now)).length;
   const overdueDays=rows.filter(row=>reviewMatches(row,'overdue',now)).map(row=>-reviewDaysUntil(row,now));
   const nextDue=rows.filter(row=>reviewMatches(row,'due30',now)).reduce((next,row)=>!next||calendarDay(row.due_date)<calendarDay(next)?row.due_date:next,null);
   // Summary counts stay native. These are display-only facts from the same rows/executions.
   const latestCompletion=reviewExecutions(rows).filter(({execution})=>execution.status==='completed').map(({execution})=>execution.completed_at||execution.completion_date).filter(at=>calendarDay(at)!==null&&calendarDay(at)<=today).reduce((latest,at)=>!latest||calendarDay(at)>calendarDay(latest)?at:latest,null);
-  const contexts=[`${due90} due in the next 90 days`,summary.overdue?`Oldest ${Math.max(...overdueDays)} day${Math.max(...overdueDays)===1?'':'s'} past due`:'Nothing past due',nextDue?`Next due ${displayDay(nextDue)}`:'Nothing due in 30 days',summary.completed90&&latestCompletion?`Latest ${displayDay(latestCompletion)}`:'None in 90 days'];
-  return <div {...props} className={`brawndo-demo-reviews${compactOverview?' cis-compact-overview':''}`} data-visual-surface="reviews" data-theme={theme}><header className="bdr-page-head"><div><h1>{clientName} Reviews</h1><p>Recurring governance and compliance reviews</p></div><div className="bdr-head-actions">{actions}</div></header><section className="bdr-kstrip" aria-label="Review summary. Select a figure to filter the register.">{[['all','Active reviews',summary.active],['overdue','Overdue',summary.overdue],['due30','Due in 30 days',summary.due30],['history','Completed · last 90 days',summary.completed90]].map(([key,label,value],index)=><button key={key} disabled={!available} onClick={()=>onView(key)} className="bdr-kcell" aria-pressed={view===key}><span>{label}</span><strong className={key==='overdue'?'bdr-bad':''}>{available?value:'—'}</strong><small className={key==='overdue'&&available&&value>0?'bdr-bad':undefined}>{available?contexts[index]:'—'}</small></button>)}</section>{compactOverview?<QuarterlyProgramTimeline chartKey="reviews" scopeKey={scopeKey} events={quarterlyReviewEvents(rows)} available={available} recordOpen={recordOpen} theme={theme} onOpen={event=>onOpenReview?.(event.record)} legend={QUARTERLY_REVIEW_LEGEND} description="Saved Review due dates and current occurrences."/>:<ReviewWorkload rows={rows} available={available} recordOpen={recordOpen}/>}<section className="bdr-card bdr-register"><header className="bdr-card-head"><h2>Register</h2><div className="bdr-seg" role="group" aria-label="Records"><button aria-pressed={view!=='history'} onClick={()=>onView('all')}>Active</button><button aria-pressed={view==='history'} onClick={()=>onView('history')}>History</button></div></header>{children}</section></div>;
+  const dueToday=rows.some(row=>reviewMatches(row,'due30',now)&&reviewDaysUntil(row,now)===0);
+  const contexts=[`${due90} due in the next 90 days`,summary.overdue?`Oldest ${Math.max(...overdueDays)} day${Math.max(...overdueDays)===1?'':'s'} past due`:'Nothing past due',dueToday?'Includes a review due today':nextDue?`Next due ${formatCisReviewDate(nextDue)}`:'Nothing due in 30 days',summary.completed90&&latestCompletion?`Latest ${formatCisReviewDate(latestCompletion)}`:'None in 90 days'];
+  const icons=[<><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v4H9zm-1 10 2 2 5-5"/></>,<path d="m12 3 10 18H2L12 3Zm0 6v5m0 3v1"/>,<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M7 3v4m10-4v4M7 14h2m4 0h2m-8 4h2m4 0h2"/></>,<><circle cx="12" cy="12" r="9"/><path d="m7 12 3 3 7-7"/></>];
+  return <div {...props} className="crr-root" data-visual-surface="reviews" data-theme={theme}>
+    <header className="page-heading"><div><h1>{clientName} Reviews</h1><p>Recurring governance and compliance reviews</p></div><div className="page-actions">{actions}</div></header>
+    <section className="kpis" aria-label="Review summary. Select a figure to filter the register.">
+      {[['all','Active reviews',summary.active],['overdue','Overdue',summary.overdue],['due30','Due in 30 days',summary.due30],['history','Completed · last 90 days',summary.completed90]].map(([key,label,value],index)=><button key={key} disabled={!available} onClick={()=>onView(key)} className={'kpi bdr-kcell'+(key==='overdue'?' overdue':'')} aria-pressed={view===key}><span className="kpi-icon"><svg className="icon" viewBox="0 0 24 24" aria-hidden="true">{icons[index]}</svg></span><span><span className="label">{label}</span><strong>{available?value:'—'}</strong><small>{available?contexts[index]:'—'}</small></span></button>)}
+    </section>
+    <CisReviewsConcept key={scopeKey} rows={rows} users={users} scopeKey={scopeKey} available={available} recordOpen={recordOpen} theme={theme} onOpenReview={onOpenReview}/>
+    <section className="panel register"><header className="register-heading"><h2>Reviews register</h2><div className="segmented" role="group" aria-label="Records"><button aria-pressed={view!=='history'} onClick={()=>onView('all')}>Active</button><button aria-pressed={view==='history'} onClick={()=>onView('history')}>History</button></div></header>{children}</section>
+  </div>;
 }
 
-export function BrawndoReviewRows({rows,users,checked,toggleOne,toggleAll,allChecked,onOpen,rowMenu,history,controls,loading,error,widths={}}){
-  const displayRows=history?reviewExecutions(rows).filter(({execution})=>['completed','cancelled'].includes(execution.status)).map(({review,execution})=>({...review,...execution,review_id:review.review_id,due_date:execution.due_date,completed_by:execution.completed_by,completed_at:execution.completed_at,completion_date:execution.completion_date,_review:review,_execution:execution})):rows;
-  const [page,setPage]=useState(1),predicate=useRef(displayRows.map(row=>row.review_id).join('|'));
-  const signature=displayRows.map(row=>row.review_id+':'+(row.occurrence_id||'current')).join('|'),lastPage=Math.max(1,Math.ceil(displayRows.length/10)),current=predicate.current===signature?Math.min(page,lastPage):1;
+export function BrawndoReviewRows({rows,users,checked,toggleOne,toggleAll,allChecked,onOpen,rowMenu,history,controls,loading,error,widths={},sortBy,sortDir='desc'}){
+  const executions=history?reviewExecutions(rows).filter(({execution})=>['completed','cancelled'].includes(execution.status)).map(({review,execution})=>({...review,...execution,review_id:review.review_id,due_date:execution.due_date,completed_by:execution.completed_by,completed_at:execution.completed_at,completion_date:execution.completion_date,_review:review,_execution:execution})):rows;
+  // Completion belongs to the saved occurrence, never the recurring parent record.
+  const completedTime=row=>{const value=Date.parse(row.completed_at||row.completion_date||'');return Number.isNaN(value)?null:value;};
+  const displayRows=history&&sortBy==='completed_at'?[...executions].sort((a,b)=>{
+    const left=completedTime(a),right=completedTime(b);
+    return left===null?(right===null?0:1):right===null?-1:(left-right)*(sortDir==='asc'?1:-1);
+  }):executions;
+  const [page,setPage]=useState(1),predicate=useRef('');
+  const signature=displayRows.map(row=>row.review_id+':'+(row.occurrence_id||'current')).join('|');
+  const lastPage=Math.max(1,Math.ceil(displayRows.length/10)),current=predicate.current===signature?Math.min(page,lastPage):1;
   useEffect(()=>{if(predicate.current!==signature){predicate.current=signature;setPage(1);}},[signature]);
-  return <><div className="bdr-summary"><span>{loading?'Loading reviews…':error?'Reviews unavailable':<>{displayRows.length} matching review{displayRows.length===1?'':'s'}</>}</span><details className="bdr-more"><summary>More controls</summary><div className="bdr-more-panel">{controls}</div></details><nav aria-label="Review register pages"><span>Page {current} of {lastPage}</span><button disabled={current===1} onClick={()=>setPage(current-1)}>Previous</button><button disabled={current===lastPage} onClick={()=>setPage(current+1)}>Next</button></nav></div><div role="table" aria-label="Reviews register" className={'bdr-table'+(history?' bdr-history':'')} style={!history&&Object.keys(widths).length?{'--bdr-columns':`18px ${widths.title?widths.title+'px':'minmax(260px,3fr)'} ${widths.owner_id?widths.owner_id+'px':'minmax(150px,1.2fr)'} ${widths.status||140}px ${widths.due_date||150}px ${widths.recurrence||170}px 12px`}:undefined}><div role="row" className="bdr-thead">{!history&&<input type="checkbox" className="bdr-cb" aria-label="Select all reviews" checked={allChecked} onChange={toggleAll}/>}<span>Review</span><span>{history?'Completed by':'Owner'}</span>{!history&&<span>Status</span>}<span>{history?'Occurrence due':'Due'}</span><span>{history?'Completed':'Cadence'}</span><span/></div>
-    {loading?<p className="bdr-empty" role="status">Loading reviews…</p>:error?<p className="bdr-empty" role="alert">Reviews unavailable</p>:!displayRows.length?<p className="bdr-empty">No reviews match these filters.</p>:displayRows.slice((current-1)*10,current*10).map((row,index)=>{const owner=history&&!row.completed_by?'Actor not recorded':personLabel(users,history?row.completed_by:row.owner_id),days=reviewDaysUntil(row),status=history?reviewDisplayValue('status',row.status):row.status==='needs_scheduling'?'Needs scheduling':row.status==='in_progress'?'In progress':'Upcoming',statusClass=row.status==='in_progress'?'prog':row.status==='needs_scheduling'?'need':history?'done':'up',schedule=reviewSchedule(row);return <div key={row.occurrence_id||row.review_id} role="row" className={'bdr-trow'+(checked.has(row.review_id)?' bdr-selected':'')} onClick={()=>onOpen(row)} data-testid={`reviews-row-${index}`}>
-    {!history&&<div role="cell" className="bdr-c-cb" onClick={event=>event.stopPropagation()}><input type="checkbox" className="bdr-cb" checked={checked.has(row.review_id)} onChange={()=>toggleOne(row.review_id)} aria-label={'Select '+row.title}/></div>}<div role="cell" className="bdr-c-item"><button className="bdr-name" onClick={event=>{event.stopPropagation();onOpen(row);}}>{row.title}</button><div className="bdr-meta"><span>{reviewDisplayValue('review_type',row.review_type)}</span><span className="bdr-fwchip">{basisSummary(row)}</span>{history&&row.status==='cancelled'&&<span>Cancelled</span>}</div></div><div role="cell" className={'bdr-owner bdr-c-owner'+(!(history?row.completed_by:row.owner_id)?' bdr-none':'')}><span className="bdr-avatar">{owner.split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase()}</span><span>{owner}</span></div>{!history&&<div role="cell" className={'bdr-st bdr-c-st bdr-st-'+statusClass}><i/>{status}</div>}<div role="cell" className="bdr-two bdr-c-due"><span>{displayDay(row.due_date)||(history?'Due date not recorded':'Not scheduled')}</span>{!history&&<small className={days!==null&&days<0?'bdr-bad':''}>{days===null?'Set a due date':days<0?`${-days} days overdue`:days===0?'Due today':`In ${days} days`}</small>}</div><div className="bdr-two bdr-c-cad">{history?<span>{row.status==='cancelled'?'Cancelled':displayRecordedAt(row.completed_at||row.completion_date)||'Date not recorded'}</span>:<><span>{reviewDisplayValue('recurrence',row.recurrence)}</span><small>Next cycle {displayDay(schedule.next_review_date)||'—'}</small></>}</div><div role="cell" className="bdr-row-menu" onClick={event=>event.stopPropagation()}>{rowMenu(row,index)}</div></div>;})}</div></>;
+  return <>
+    <div className="bdr-summary"><span>{loading?'Loading reviews…':error?'Reviews unavailable':`${displayRows.length} matching review${displayRows.length===1?'':'s'}`}</span>
+      <details className="bdr-more"><summary>More controls</summary><div className="bdr-more-panel">{controls}</div></details>
+      <nav aria-label="Review register pages"><span>Page {current} of {lastPage}</span><button disabled={current===1} onClick={()=>setPage(current-1)}>Previous</button><button disabled={current===lastPage} onClick={()=>setPage(current+1)}>Next</button></nav>
+    </div>
+    <div className="table-scroll"><table aria-label="Reviews register" className={'bdr-table'+(history?' bdr-history':'')}>
+      <thead><tr className="bdr-thead">
+        {!history&&<th className="check-col"><input type="checkbox" className="bdr-cb" aria-label="Select all reviews" checked={allChecked} onChange={toggleAll}/></th>}
+        <th style={widths.title?{width:widths.title}:undefined}>Review</th><th style={widths.owner_id?{width:widths.owner_id}:undefined}>{history?'Completed by':'Owner'}</th>
+        {!history&&<th style={widths.status?{width:widths.status}:undefined}>Status</th>}
+        <th style={widths.due_date?{width:widths.due_date}:undefined}>{history?'Occurrence due':'Due'}</th>
+        <th style={widths.recurrence?{width:widths.recurrence}:undefined}>{history?'Completed':'Cadence'}</th><th className="open-col"><span className="sr-only">Open review</span></th>
+      </tr></thead>
+      <tbody>{loading||error||!displayRows.length?<tr><td colSpan={history?5:7} className="bdr-empty" role={error?'alert':loading?'status':undefined}>{loading?'Loading reviews…':error?'Reviews unavailable':'No reviews match these filters.'}</td></tr>:displayRows.slice((current-1)*10,current*10).map((row,index)=>{
+        const owner=history&&!row.completed_by?'Actor not recorded':personLabel(users,history?row.completed_by:row.owner_id);
+        const urgency=cisReviewUrgency(row.due_date),schedule=reviewSchedule(row);
+        const status=!history&&Object.hasOwn(reviewStatusLabels,row.status)?reviewStatusLabels[row.status]:reviewDisplayValue('status',row.status);
+        return <tr key={row.occurrence_id||row.review_id} className={'bdr-trow'+(checked.has(row.review_id)?' bdr-selected':'')+(!history&&urgency.days!==null&&urgency.days<0?' overdue-row':'')} onClick={()=>onOpen(row)} data-testid={`reviews-row-${index}`}>
+          {!history&&<td className="check-col" onClick={event=>event.stopPropagation()}><input type="checkbox" className="bdr-cb" checked={checked.has(row.review_id)} onChange={()=>toggleOne(row.review_id)} aria-label={'Select '+row.title}/></td>}
+          <td className="bdr-c-item"><button className="bdr-name" onClick={event=>{event.stopPropagation();onOpen(row);}}>{row.title}</button><div className="bdr-meta"><span>{reviewDisplayValue('review_type',row.review_type)}</span><span className="bdr-fwchip">{basisSummary(row)}</span>{history&&row.status==='cancelled'&&<span>Cancelled</span>}</div></td>
+          <td><div className="bdr-owner"><span className="bdr-avatar">{owner.split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase()}</span><span>{owner}</span></div></td>
+          {!history&&<td><span className={'bdr-st'+(row.status==='in_progress'?' bdr-st-prog':'')}>{status}</span></td>}
+          <td className="bdr-c-due"><time dateTime={row.due_date||undefined}>{calendarDay(row.due_date)===null?(history?'Due date not recorded':'Not scheduled'):formatCisReviewDate(row.due_date,{year:true})}</time>{!history&&<small className={'due-badge '+urgency.tone}>{urgency.days===null?'Set a due date':urgency.text}</small>}</td>
+          <td className="bdr-c-cad">{history?<span>{row.status==='cancelled'?'Cancelled':displayRecordedAt(row.completed_at||row.completion_date)||'Date not recorded'}</span>:<><span>{reviewDisplayValue('recurrence',row.recurrence)}</span><small>Next cycle {displayDay(schedule.next_review_date)||'—'}</small></>}</td>
+          <td className="bdr-row-menu" onClick={event=>event.stopPropagation()}>{rowMenu(row,index)}</td>
+        </tr>;
+      })}</tbody>
+    </table></div>
+  </>;
 }
