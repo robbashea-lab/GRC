@@ -23,7 +23,8 @@ import {Button} from '@/components/ui/button';
 import BrawndoProfileOverview,{BrawndoProfileHeader} from '@/components/BrawndoProfileOverview';
 import {isReferencePresentation} from '@/lib/reference';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
-import {useAdditionalSectionsSurface} from '@/lib/brawndoAdditionalScope';
+import {useAdditionalSectionsSurface,useAdditionalSectionsPresentation} from '@/lib/brawndoAdditionalScope';
+import AdditionalPagePending from '@/components/AdditionalPagePending';
 import {useBrawndoOnboardingAppearance} from '@/lib/useBrawndoOnboardingAppearance';
 import {BrawndoOnboardingFrame} from '@/components/BrawndoOnboardingSummary';
 import {AdditionalProfileIdentity,AdditionalProfileTabs,AdditionalProfileOverview,AdditionalProfileReadSection,AdditionalProfilePeople} from '@/components/BrawndoAdditionalProfile';
@@ -39,15 +40,17 @@ function ProfileWorkspace({clientId}){
   const org=useOrg(),{user}=useAuth(),[params,setParams]=useSearchParams();
   const [data,setData]=useState(null),[handoff,setHandoff]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[editClient,setEditClient]=useState(false);
   const additional=useAdditionalSectionsSurface('profile',!error&&data?.client_id===handoff?.client?.client_id?data?.client_id:null);
+  const additionalPresentation=useAdditionalSectionsPresentation('profile');
   const onboardingPresentation=useBrawndoOnboardingAppearance({profileClientId:data?.client_id,loadedClientId:data?.client_id,handoffClientId:handoff?.client?.client_id,hasError:!!error});
   const canEdit=['super_admin','platform_admin'].includes(user?.role),tab=TABS.some(([id])=>id===params.get('tab'))?params.get('tab'):'overview';
   const reload=()=>setRevision(n=>n+1);
   // Brawndo reference presentation only; data, permissions and saving are unchanged.
   const brawndo=isReferencePresentation(clientId,user),[theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(brawndo,theme);
   useEffect(()=>{if(!clientId)return;const c=new AbortController();setError('');
-    Promise.all([api.get('/clients/'+clientId+'/profile',{signal:c.signal}),api.get('/onboarding/handoff',{params:{client_id:clientId},signal:c.signal})]).then(([p,h])=>{if(!c.signal.aborted){setData(p.data);setHandoff(h.data);}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();
+    Promise.all([api.get('/clients/'+clientId+'/profile',{signal:c.signal}),api.get('/onboarding/handoff',{params:{client_id:clientId},signal:c.signal})]).then(([p,h])=>{if(!c.signal.aborted){if(p.data?.client_id!==clientId||h.data?.client?.client_id!==clientId)throw new Error('Client Profile could not be verified for this client.');setData(p.data);setHandoff(h.data);}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();
   },[clientId,revision]);
   if(!clientId)return <PageHeader title="Client Profile" subtitle="Select or create a client first."/>;
+  if(additionalPresentation&&(error||!data||!handoff))return <AdditionalPagePending className="baprof-page" title={`${org.currentClient.name} Client Profile`} subtitle="Organization context · Not a control assessment. Do not enter credentials or secrets." name="Client Profile" loadingMessage="Loading Client Profile…" error={error} onRetry={reload}/>;
   const shell=body=><div><PageHeader title="Client Profile" subtitle={SUBTITLE}/><div className="section-body">{body}</div></div>;
   if(error)return shell(<RegisterLoadError error={error} onRetry={reload} name="Client Profile"/>);
   if(!data||!handoff)return shell(<p role="status" className="text-sm text-ink-muted">Loading Client Profile…</p>);

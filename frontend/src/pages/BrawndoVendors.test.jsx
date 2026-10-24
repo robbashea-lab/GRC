@@ -11,7 +11,7 @@ const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:'demo',loading:false})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>{const client=mockClient==='demo_brawndo'?{...mockCisClient(mockClient),name:'Test'}:{client_id:mockClient,name:'Test',status:'active'};return {currentClientId:mockClient,currentClient:client,clients:[client],loading:false};}}));
 // These register assertions retain the legacy table; native drawers still use actual CIS capability.
-jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false,useAdditionalSectionsPresentation:()=>false}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/vendors',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams(mockSearch))}),{virtual:true});
 jest.mock('@/components/EvidencePanel',()=>()=> <div>Existing evidence panel</div>);

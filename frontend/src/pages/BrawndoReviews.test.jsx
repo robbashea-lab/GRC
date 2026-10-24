@@ -156,9 +156,19 @@ test.each([['upcoming',1,'Due today'],['unassigned',2,'Schedule me'],['history',
   expect(container.querySelectorAll('tr[data-testid^="reviews-row-"]')).toHaveLength(3);
 });
 
-test('shared Review summaries and rows never count another client',async()=>{
+test('mixed-client Review responses are rejected and Retry restores scoped native counts',async()=>{
   rows.push({...rows[0],client_id:'other-client',review_id:'foreign',title:'Another client review'});
   await act(async()=>root.render(<RecordListPage kind="reviews"/>));
+  const error=container.querySelector('[data-testid="register-load-error"]');
+  expect(error?.textContent).toContain('Records could not be verified for this client.');
+  expect(container.querySelectorAll('[data-testid^="reviews-row-"]')).toHaveLength(0);
+  expect(container.querySelector('[data-testid="export-reviews-button"]').disabled).toBe(true);
+  expect(container.textContent).not.toContain('Another client review');
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.patch).not.toHaveBeenCalled();
+  rows=rows.filter(row=>row.client_id===mockClient);
+  await click(error.querySelector('button'));
+  expect(container.querySelector('[data-testid="register-load-error"]')).toBeNull();
   expect(container.querySelector('[data-testid="reviews-tab-overdue"]').textContent).toBe('Overdue1');
   expect(container.querySelector('[data-testid="reviews-tab-all"]').textContent).toBe('All3');
   expect(container.textContent).not.toContain('Another client review');

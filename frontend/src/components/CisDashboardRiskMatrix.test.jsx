@@ -91,10 +91,10 @@ test.each([
   expect(route()).toBe('/');expect(dialog().querySelector('[role="alert"]').textContent).toContain(message);
 });
 
-test('scope change immediately hides old cells/dialog and discards late list or open responses',async()=>{
+test.each([false,true])('concept=%s scope change immediately hides old cells/dialog and discards late list or open responses',async concept=>{
   let resolveList,resolveRecord;
   api.get.mockImplementation(url=>url==='/risks'?Promise.resolve({data:[risk('1')]}):new Promise(resolve=>{resolveRecord=resolve;}));
-  await render();await click(cell());await click(rowButton('Risk 1'));
+  await render({concept});await click(cell());await click(rowButton('Risk 1'));
   const openSignal=api.get.mock.calls[1][1].signal;
   api.get.mockImplementation(()=>new Promise(resolve=>{resolveList=resolve;}));
   await render({clientId:'client-b',contextKey:'demo:u2:cis-ig2'});
@@ -117,8 +117,8 @@ test('refresh reconciles a selection with its current cohort rather than retaini
   expect(cell(3,2).textContent).toBe('61 risk');
 });
 
-test('Escape returns focus to the connected cell; direct register link stays direct',async()=>{
-  api.get.mockResolvedValue({data:[risk('1')]});await render();const trigger=cell();await click(trigger);
+test.each([false,true])('concept=%s Escape returns focus to the connected cell; direct register link stays direct',async concept=>{
+  api.get.mockResolvedValue({data:[risk('1')]});await render({concept});const trigger=cell();await click(trigger);
   await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
   await act(async()=>{await new Promise(resolve=>setTimeout(resolve,0));});
   expect(dialog()).toBeNull();expect(document.activeElement).toBe(trigger);
@@ -135,10 +135,99 @@ test('opening and closing selection retains one controlled tooltip lifetime with
  }finally{warning.mockRestore();}
 });
 
-test('permission failure stays unavailable instead of displaying a false empty cohort, with safe retry',async()=>{
-  api.get.mockRejectedValue({response:{status:403,data:{detail:'Permission denied'}}});await render();
+test.each([false,true])('concept=%s permission failure stays unavailable instead of displaying a false empty cohort, with safe retry',async concept=>{
+  api.get.mockRejectedValue({response:{status:403,data:{detail:'Permission denied'}}});await render({concept});
   expect(host.querySelector('[role="alert"]').textContent).toContain('Permission denied');
   expect(host.textContent).not.toContain('0 risks · 0 unrated');expect(cell().getAttribute('aria-label')).toContain('count unavailable');
   api.get.mockResolvedValue({data:[risk('1')]});await click(host.querySelector('[role="alert"] button'));
   expect(cell().textContent).toBe('61 risk');expect(host.querySelector('[role="alert"]')).toBeNull();
+});
+
+test('concept palette remains presentation while native equal-score tuples and risk bands stay truthful',async()=>{
+  const rows=[risk('1'),risk('2'),risk('3',{likelihood_score:3,impact_score:2}),risk('12',{likelihood_score:4,impact_score:3}),risk('25',{likelihood_score:5,impact_score:5})];
+  const before=JSON.stringify(rows);api.get.mockResolvedValue({data:rows});await render({concept:true,theme:'dark'});
+  expect(host.querySelector('.cis-dashboard-risk').dataset.concept).toBe('true');
+  expect(host.querySelectorAll('.bdr-cell')).toHaveLength(25);
+  expect(cell().querySelector('small').textContent).toBe('2 risks');
+  expect(cell(3,2).querySelector('small').textContent).toBe('1 risk');
+  expect(cell().style.getPropertyValue('--cc-risk-cell-fill')).toBe('#f6dfad');
+  expect(cell(4,3).style.getPropertyValue('--cc-risk-cell-fill')).toBe('#f3c7ac');
+  expect(cell(5,5).style.getPropertyValue('--cc-risk-cell-fill')).toBe('#f6dfad');
+  expect(cell(5,5).getAttribute('aria-label')).toContain('score 25, band critical: 1 risk');
+  for(const [likelihood,impact,color] of [[4,4,'#f8e9ed'],[5,2,'#fbefeb'],[2,4,'#fcf7ed'],[1,2,'#f3f6f9']]){
+    expect(cell(likelihood,impact).style.getPropertyValue('--cc-risk-cell-fill')).toBe(color);
+    expect(cell(likelihood,impact).disabled).toBe(true);
+  }
+  expect(JSON.stringify(rows)).toBe(before);expect(api.get).toHaveBeenCalledTimes(1);
+});
+
+test('concept focus tooltip uses the same current cell records and scoped theme outside the Dashboard',async()=>{
+  api.get.mockResolvedValue({data:[risk('1'),risk('2',{likelihood_score:3,impact_score:2})]});await render({concept:true,theme:'dark'});
+  await act(async()=>cell().focus());
+  const tip=document.querySelector('.cis-dashboard-risk-tooltip[data-concept="true"]');
+  expect(tip.classList.contains('cis-dashboard-concept-portal')).toBe(true);
+  expect(tip.dataset.theme).toBe('dark');expect(tip.dataset.concept).toBe('true');
+  expect(tip.querySelector('h3').textContent).toBe('Risk score 6 · 1 risk');
+  expect(tip.textContent).toContain('Likelihood 2 × impact 3');
+  // Radix mirrors the content into a visually hidden accessible description.
+  const visibleLists=tip.querySelectorAll(':scope > ul');
+  expect(visibleLists).toHaveLength(1);
+  expect([...visibleLists[0].children].map(item=>item.textContent)).toEqual(['Risk 1']);
+  expect(tip.textContent).not.toContain('Risk 2');
+  api.get.mockResolvedValue({data:[risk('next',{client_id:'client-b'})]});
+  await render({clientId:'client-b',contextKey:'standard:u2:cis-ig2'});
+  expect(document.querySelector('[role="tooltip"]')).toBeNull();
+});
+
+test('concept selection keeps one-risk selection-first, true owner/review metadata and exact native opening',async()=>{
+  const record=risk('id /?',{owner_id:'owner-1',next_review:'2027-01-15'});
+  api.get.mockImplementation(url=>Promise.resolve({data:url==='/risks'?[record]:record}));
+  await render({concept:true,theme:'dark',clientName:'Synthetic client A',members:[{user_id:'owner-1',name:'Synthetic Analyst'}]});
+  await click(cell());
+  const selection=dialog();
+  expect(selection.classList.contains('cis-dashboard-concept-portal')).toBe(true);
+  expect(selection.dataset.theme).toBe('dark');expect(selection.dataset.concept).toBe('true');
+  expect(selection.previousElementSibling.classList.contains('ui-overlay')).toBe(true);
+  expect(selection.querySelector('h2').textContent).toBe('1 risk at score 6');
+  expect(selection.textContent).toContain('Current assessed risks');
+  expect(selection.textContent).toContain('Likelihood 2 × impact 3 · Synthetic client A');
+  const choice=rowButton(record.title);
+  expect(choice.querySelector('b').textContent).toBe(record.title);
+  expect(choice.querySelector('small').textContent).toBe('RISK-id /? · Synthetic Analyst · Next review Jan 15, 2027');
+  expect(choice.querySelector('.cis-dashboard-risk-score').getAttribute('aria-label')).toBe('Score 6, band moderate');
+  expect(selection.querySelectorAll('[aria-label="Close"]')).toHaveLength(1);
+  expect(selection.textContent).not.toMatch(/preview|fictional|read-only record/i);
+  expect(api.get).toHaveBeenCalledTimes(1);expect(route()).toBe('/');
+  await click(choice);
+  expect(api.get.mock.calls[1][0]).toBe('/risks/id%20%2F%3F');
+  expect(route()).toBe('/risks?id=id%20%2F%3F&client_id=client-a');expect(dialog()).toBeNull();
+});
+
+test('concept list preserves native order and honest missing owner/review labels',async()=>{
+  api.get.mockResolvedValue({data:[risk('10',{owner_id:'unknown-account'}),risk('2')]});
+  await render({concept:true});await click(cell());
+  const choices=[...dialog().querySelectorAll('.cis-dashboard-risk-list button')];
+  expect(choices.map(button=>button.querySelector('b').textContent)).toEqual(['Risk 2','Risk 10']);
+  expect(choices[0].textContent).toContain('Unassigned · Next review Not scheduled');
+  expect(choices[1].textContent).toContain('Former user · Next review Not scheduled');
+  expect(dialog().textContent).not.toContain('unknown-account');
+});
+
+test.each([
+  ['foreign identity',{data:risk('1',{client_id:'other'})},'unavailable for the selected client'],
+  ['moved tuple',{data:risk('1',{likelihood_score:3,impact_score:2})},'This risk has changed'],
+])('concept selection still rejects a fresh %s instead of navigating',async(_label,response,message)=>{
+  api.get.mockImplementation(url=>Promise.resolve(url==='/risks'?{data:[risk('1')]}:response));
+  await render({concept:true});await click(cell());await click(rowButton('Risk 1'));
+  expect(route()).toBe('/');expect(dialog().querySelector('[role="alert"]').textContent).toContain(message);
+});
+
+test('default callers do not receive concept classes, palette styles or portal treatment',async()=>{
+  api.get.mockResolvedValue({data:[risk('1')]});await render();
+  expect(host.querySelector('.cis-dashboard-risk').hasAttribute('data-concept')).toBe(false);
+  expect(cell().style.getPropertyValue('--cc-risk-cell-fill')).toBe('');
+  await click(cell());
+  expect(dialog().hasAttribute('data-concept')).toBe(false);
+  expect(dialog().classList.contains('cis-dashboard-concept-portal')).toBe(false);
+  expect(dialog().querySelector('h2').textContent).toBe('Risks at likelihood 2, impact 3');
 });

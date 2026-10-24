@@ -17,7 +17,8 @@ import './BrawndoRisks.css';
 import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useLocation,useSearchParams} from 'react-router-dom';
-import {brawndoDemoRisksGate} from '@/lib/brawndoDemoRisks';
+import {brawndoDemoRisksGate,BRAWNDO_DEMO_RISKS_ENABLED} from '@/lib/brawndoDemoRisks';
+import {useCisPresentation} from '@/lib/brawndoAdditionalScope';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
 import BrawndoDemoRisksOverview,{RiskScoreBar} from '@/components/BrawndoDemoRisksOverview';
 import {riskCategories,riskTreatments} from '@/lib/brawndoRisks';
@@ -92,6 +93,7 @@ export default function RiskRegister() {
   const { currentClient, currentClientId } = org;
   const appearanceContext={...auth,...org,pathname:location.pathname,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(location.search).get('client_id')};
   const demoRisks=brawndoDemoRisksGate(appearanceContext)&&visualCorrectionSurface(appearanceContext)==='risks';
+  const cisPresentation=useCisPresentation();
   const currentDemo=useRef(demoRisks);currentDemo.current=demoRisks;
   const scope=JSON.stringify([user?.user_id,user?.role,user?.client_ids,auth.workspaceMode,user?.workspace_mode,currentClientId]);
   const currentScope=useRef(scope);currentScope.current=scope;
@@ -187,6 +189,10 @@ export default function RiskRegister() {
 
   const tableSource = rows.filter(r => r.client_id === currentClientId);
   const demoPresentation=demoRisks&&loadedScope===scope&&!loadError&&tableSource.length===rows.length;
+  // Keep route presentation stable while native records are unavailable; never project pending rows.
+  const pendingPresentation=BRAWNDO_DEMO_RISKS_ENABLED&&location.pathname==='/risks'&&cisPresentation;
+  const navigationLoading=pendingPresentation&&!demoPresentation;
+  const navigationError=loadError||(loadedScope===scope&&!loading&&tableSource.length!==rows.length?'Risks could not be verified for this client.':'');
   const refreshLabel=demoPresentation&&!loading&&acceptedRefresh?.scope===scope?riskRefreshLabel(acceptedRefresh.instant):null;
   // Keep the projection population stable across matrix/filter changes.
   const demoRows=useMemo(()=>rows.filter(r=>r.client_id===currentClientId),[rows,currentClientId]);
@@ -243,7 +249,12 @@ export default function RiskRegister() {
     a.download = `risk-register-${(currentClient?.name || "client").replace(/\s+/g, "-")}.csv`; a.click();
   }
 
-  return <BrawndoSurface className={`approved-risk-register${demoPresentation?' brawndo-demo-risks':''}`}>
+  return <BrawndoSurface className={`approved-risk-register${demoPresentation||navigationLoading?' brawndo-demo-risks':''}`}>
+      {navigationLoading ? <section data-testid="risks-navigation-loading" aria-busy={!navigationError}>
+        <BrawndoPageHeader title={`${currentClient?.name||'Client'} Risks`} subtitle="Risk register · current assessed likelihood × impact" renderThemeAction={props=><SurfaceThemeAction {...props} className="bpage-btn"/>}/>
+        <RegisterLoadError error={navigationError} onRetry={load} name="risks"/>
+        {!navigationError&&<p role="status">Loading risks…</p>}
+      </section> : <>
       <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Risk register`} title={demoPresentation?`${currentClient?.name||'Client'} Risks`:'Risks'} subtitle={demoPresentation?`Risk register · current assessed likelihood × impact${refreshLabel?` · As of ${refreshLabel}`:''}`:undefined}
         renderThemeAction={demoPresentation?props=><SurfaceThemeAction {...props} className="bpage-btn"/>:undefined}>
         <button type="button" className="bpage-btn" onClick={openMatrix} data-testid="risk-matrix-btn"><Grid3x3 size={16} aria-hidden="true"/>{demoPresentation?'Risk scale':'Risk Scale & Matrix'}</button>
@@ -302,6 +313,7 @@ export default function RiskRegister() {
           {!loading&&<p className="bpage-foot" data-testid="risk-count">Showing {filtered.length} of {plural(tableSource.length,'risk')}</p>}
         </div>
       </div>
+      </>}
       {recordLinkError&&<p role="alert">{recordLinkError}</p>}
       {drawer.open&&<RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} kind="risks" record={drawer.record} schema={SCHEMAS.risks.fields} clientId={currentClientId} users={users} onSaved={load}/>}
       {eventDrawer&&eventDrawer.scope===scope&&eventDrawer.record.client_id===currentClientId&&<RecordDrawer open record={eventDrawer.record} kind={eventDrawer.kind} clientId={currentClientId} users={users} onOpenChange={value=>{if(!value){eventRequest.current++;setEventDrawer(null);}}} onSaved={load}/>}

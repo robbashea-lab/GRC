@@ -31,6 +31,36 @@ const renderDialog = async (extra = {}) => act(async () => root.render(<Portfoli
   client={{client_id:program.client_id,name:'Isolated'}} programs={[program]} selected={program.program_id}
   onNavigate={jest.fn()} asOf={AS_OF} {...extra}/>));
 
+test('concept status card and history opt in only for inline CIS while keeping real sparse history',async()=>{
+ await renderDialog({cisDashboardProfile:true,concept:true,profileContent:<section data-testid="profile">Actual domains and risks</section>});
+ const card=container.querySelector('[data-concept=true]');
+ expect(card.querySelector('.ph-concept-status .ph-current-value').textContent).toContain('31 of 56');
+ expect(card.querySelector('.ph-concept-status').nextElementSibling.dataset.testid).toBe('profile');
+ expect(card.querySelector('.ph-chart svg').getAttribute('height')).toBe('164');
+ expect(card.querySelectorAll('.ph-scenario-area')).toHaveLength(0);
+ expect(card.querySelector('.ph-line').getAttribute('d')).not.toContain('H');
+ await click('View data');
+ expect(card.querySelectorAll('#portfolio-history-data tbody tr')).toHaveLength(2);
+ await renderDialog({concept:true});
+ expect(container.querySelector('[data-concept]')).toBeNull();
+ expect(container.querySelector('.ph-concept-status')).toBeNull();
+ expect(container.querySelector('.ph-current-overview').nextElementSibling.className).toBe('ph-range');
+});
+
+test('concept fills only supported runs and retains native scope explanations and point counts',async()=>{
+ const middle=position('middle','2026-10-01T12:00:00Z',[27,12,5,12]);
+ const first={...old,continuity_proven:true,effective_until:middle.effective_at};
+ const changed={...current,scope_signature:'changed-scope'};
+ await act(async()=>root.render(<PortfolioHistoryChart {...chartProps} points={[first,middle,changed]} cisDashboardProfile concept/>));
+ expect(container.querySelectorAll('.ph-scenario-area')).toHaveLength(1);
+ const tipPoint=container.querySelector('.ph-inspection-point');
+ await act(async()=>tipPoint.focus());
+ const tip=container.querySelector('[role=tooltip]');
+ expect(tip.textContent).toContain('23 implemented / 54 applicable safeguards');
+ expect(tip.textContent).toContain('Captured');
+ expect(tip.textContent).toContain('UTC');
+});
+
 test('opt-in places domain/Risk content before the heading, periods, compact native summaries and chart', async () => {
   await renderDialog({cisDashboardProfile:true, profileContent:<section data-testid="profile">Domain and Risk</section>});
   const children = [...container.querySelector('.brawndo-demo-program').children];

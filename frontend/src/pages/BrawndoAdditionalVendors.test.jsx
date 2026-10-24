@@ -93,7 +93,8 @@ test.each([['all', ['Assigned vendor', 'Retained vendor', 'Unassigned vendor']],
     mockOrg = { ...mockOrg, loading };
     await act(async () => root.render(<VendorRegister />));
     expect(!!container.querySelector('[data-testid="additional-vendors"]')).toBe(!loading);
-    expect(names()).toEqual(expected);
+    expect(names()).toEqual(loading?[]:expected);
+    if(loading)expect(container.querySelector('[data-testid="vendors-navigation-loading"]')).not.toBeNull();
     if (!loading) expect(container.querySelector('[aria-label="Other vendor views"]').value).toBe(view);
   }
   expect(api.get).toHaveBeenCalledTimes(reads);

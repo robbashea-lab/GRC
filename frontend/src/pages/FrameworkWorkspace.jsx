@@ -102,6 +102,19 @@ function Sections({nodes,expanded,toggle,openRecord,onManage,statuses,prototype,
     </section>;
   })}</div>;
 }
+function cisResponseMatches(data,clientId){
+  const record=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
+  const identity=value=>typeof value==='string'&&!!value.trim();
+  if(!record(data)||!Array.isArray(data.definitions)||!Array.isArray(data.assessments))return false;
+  if(!data.definitions.every(definition=>record(definition)&&identity(definition.id)))return false;
+  const definitionIds=new Set(data.definitions.map(definition=>definition.id));
+  // Every accepted assessment must survive the native definition join below.
+  return data.assessments.every(row=>record(row)&&row.client_id===clientId
+      &&identity(row.framework_assessment_id)&&identity(row.definition_id)&&definitionIds.has(row.definition_id)
+      &&(row.framework_key===undefined||row.framework_key==='cis-ig1'))
+    &&(data.framework===undefined||record(data.framework)&&data.framework.key==='cis-ig1')
+    &&(data.implementation_position?.program_id===undefined||data.implementation_position.program_id===`${clientId}:cis-ig1`);
+}
 export default function FrameworkWorkspace({frameworkKey,clientId}){
   const workspaceRef=useRef(null);
   const auth=useAuth(),org=useOrg()||{},trustedDemo=PREVIEW_MODE;
@@ -136,7 +149,10 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     setError('');
     if(!clientId)return()=>c.abort();
     api.get('/frameworks/'+frameworkKey,{params:{client_id:clientId},signal:c.signal}).then(r=>{
-      if(!c.signal.aborted){setData(r.data);setLoadedScope(origin);}
+      if(c.signal.aborted)return;
+      // Native response identity is required even when optional visual presentation is disabled.
+      if(frameworkKey==='cis-ig1'&&!cisResponseMatches(r.data,clientId))throw new Error('CIS workspace records could not be verified for this client.');
+      setData(r.data);setLoadedScope(origin);
     }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});
     return()=>c.abort();
   },[frameworkKey,clientId,revision,user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,trustedDemo]);

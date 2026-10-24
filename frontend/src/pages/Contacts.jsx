@@ -15,9 +15,10 @@ import TableLoadingRow from '@/components/TableLoadingRow';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem} from '@/components/ui/dropdown-menu';
 import {Button} from '@/components/ui/button';
 import {BrawndoSurface,BrawndoPageHeader} from '@/components/BrawndoPage';
-import {useAdditionalSectionsSurface} from '@/lib/brawndoAdditionalScope';
+import {useAdditionalSectionsSurface,useAdditionalSectionsPresentation} from '@/lib/brawndoAdditionalScope';
 import {additionalDirectoryRows} from '@/lib/additionalContactsPresentation';
 import BrawndoAdditionalContacts from '@/components/BrawndoAdditionalContacts';
+import AdditionalPagePending from '@/components/AdditionalPagePending';
 
 import './BrawndoContacts.css';
 
@@ -32,11 +33,12 @@ function ContactDirectory({clientId,user,brawndo,clientName,client}){
   const [params,setParams]=useSearchParams(),[rows,setRows]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[revision,setRevision]=useState(0);
   const [loadedClientId,setLoadedClientId]=useState(null);
   const additional=useAdditionalSectionsSurface('contacts',!error?loadedClientId:null);
+  const additionalPresentation=useAdditionalSectionsPresentation('contacts');
   const [selected,setSelected]=useState(null),[open,setOpen]=useState(false);
   const canWrite=['super_admin','platform_admin'].includes(user?.role);
   const refresh=useCallback(()=>setRevision(n=>n+1),[]);
   useEffect(()=>{if(!clientId){setLoading(false);return;}const abort=new AbortController();setLoading(true);setError('');
-    api.get('/contacts',{params:{client_id:clientId},signal:abort.signal}).then(({data})=>{if(!abort.signal.aborted){setRows(data.filter(r=>r.client_id===clientId));setLoadedClientId(clientId);}}).catch(e=>{if(!abort.signal.aborted)setError(formatError(e));}).finally(()=>{if(!abort.signal.aborted)setLoading(false);});return()=>abort.abort();
+    api.get('/contacts',{params:{client_id:clientId},signal:abort.signal}).then(({data})=>{if(!abort.signal.aborted){if(!Array.isArray(data)||data.some(row=>row?.client_id!==clientId))throw new Error('Contacts could not be verified for this client.');setRows(data);setLoadedClientId(clientId);}}).catch(e=>{if(!abort.signal.aborted)setError(formatError(e));}).finally(()=>{if(!abort.signal.aborted)setLoading(false);});return()=>abort.abort();
   },[clientId,revision]);
   const context=useContactAccess(clientId,!!clientId,rows);
   const table=useTableControls({columns,rows,module:'contacts-directory',scope:`${user?.user_id}:${clientId}`});
@@ -72,7 +74,7 @@ function ContactDirectory({clientId,user,brawndo,clientName,client}){
         {!loading&&!error&&!filtered.length&&<tr><td className="empty-state" colSpan={6}>{rows.length?'No contacts match these filters.':'No contacts yet. Add a person to this client directory; platform access is optional.'}</td></tr>}
       </tbody></table></div>
   </>;
-  const surface=additional?<BrawndoAdditionalContacts client={client} clientId={clientId} rows={rows} filtered={filtered} query={query} access={access} archived={archived} context={context} table={table} onParam={setParam} onClear={()=>{setParams({},{replace:true});table.clear();}} onOpen={edit} newContact={newContact} error={error} onRetry={refresh}/>:brawndo?<BrawndoSurface className="register-surface contacts-directory bcontacts">{body}</BrawndoSurface>:<div className="register-surface contacts-directory">{body}</div>;
+  const surface=additionalPresentation&&!additional?<AdditionalPagePending className="bac-page" title={`${clientName} Contacts`} subtitle="People" name="contacts" loadingMessage="Loading contacts…" error={error} onRetry={refresh}/>:additional?<BrawndoAdditionalContacts client={client} clientId={clientId} rows={rows} filtered={filtered} query={query} access={access} archived={archived} context={context} table={table} onParam={setParam} onClear={()=>{setParams({},{replace:true});table.clear();}} onOpen={edit} newContact={newContact} error={error} onRetry={refresh}/>:brawndo?<BrawndoSurface className="register-surface contacts-directory bcontacts">{body}</BrawndoSurface>:<div className="register-surface contacts-directory">{body}</div>;
   // A same-scope appearance fallback must not remount the native editor or discard its draft.
   return <>{surface}<ContactWorkspace open={open} onOpenChange={close} record={selected} clientId={clientId} onSaved={refresh} additionalPresentation={additional}/></>;
 }

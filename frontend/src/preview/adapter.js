@@ -31,11 +31,19 @@ import {evidencePage,evidenceAccess,evidenceLibraryRequest,controlEvidenceLinks,
 import {evidenceKind} from '../lib/evidenceReferences';
 import {clearEvidenceFiles,demoDiagnostics} from './store';
 import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
-import {fileBytes} from './evidenceStorage';
+import {fileBytes,getEvidenceCacheRevision} from './evidenceStorage';
+import {canForkPortfolioStore} from './portfolioReporting';
 import {pendingPolicyCoverage} from './policyReviewCoverage';
 import {validateCatalogKey} from '../lib/registerCatalogIdentity';
 const CREATE_REPLAY_KINDS=['clients','reviews','findings','tasks','risks','vendors','policies','contacts','assets','exceptions','requirements','ai_systems'];
 const SESSION = 'grc_demo_entered';
+const nativeStorageGetItem=typeof Storage==='function'?Object.getOwnPropertyDescriptor(Storage.prototype,'getItem')?.value:null;
+function nativeSnapshotReads(){
+  try{return !!nativeStorageGetItem&&canForkPortfolioStore()
+    &&Object.getOwnPropertyDescriptor(Storage.prototype,'getItem')?.value===nativeStorageGetItem
+    &&!Object.hasOwn(sessionStorage,'getItem')&&sessionStorage.getItem===nativeStorageGetItem;}
+  catch{return false;}
+}
 let requestQueue=Promise.resolve(),sessionGeneration=0;
 // Even GETs may reconcile retained Demo data. Queue before reading any snapshot;
 // session controls stay immediate so sign-out can invalidate a pending save.
@@ -121,7 +129,9 @@ async function executePreviewAdapter(config,generation) {
       if(path==='/demo/storage'&&method==='get')return respond(demoDiagnostics());
       if(method==='post'&&path!=='/demo/storage'){if(path==='/demo/reset')resetStore();else clearEvidenceFiles();return respond({ok:true});}
     }
+    const initialNativeReads=nativeSnapshotReads();
     const db = readStore({comparisonBaseline:method!=='get'});requestDb=db;
+    const evidenceRevision=getEvidenceCacheRevision();
     let expectedSaved=sessionStorage.getItem(STORE_KEY),authorizedSaved;
     const actorId=db.user.user_id;
     if (path === '/auth/login') return fail(401, 'Use standard sign-in for email and password authentication.');
@@ -196,14 +206,22 @@ async function executePreviewAdapter(config,generation) {
       if(pendingContext){
         context=await pendingContext;
         if(generation!==sessionGeneration||sessionStorage.getItem(SESSION)!=='true')return fail(401,'Choose Explore Demo to enter the sample workspace.');
-        // Web Crypto yields. Re-read before authorization, native-token and
-        // interview revision checks so this snapshot cannot erase newer writes.
-        releaseStoreBaseline(db);
-        const latest=readStore({comparisonBaseline:method!=='get'});
-        expectedSaved=sessionStorage.getItem(STORE_KEY);
-        for(const key of Object.keys(db))delete db[key];
-        Object.assign(db,latest);
-        transferStoreBaseline(latest,db);
+        // Reuse only this request's snapshot when both authoritative bytes and
+        // document-local file contents stayed exact across Web Crypto's await.
+        let unchanged=false;
+        if(initialNativeReads&&nativeSnapshotReads()&&typeof expectedSaved==='string'
+          &&evidenceRevision===getEvidenceCacheRevision()){
+          try{unchanged=sessionStorage.getItem(STORE_KEY)===expectedSaved;}
+          catch(error){throw demoStorageError(error,'read');}
+        }
+        if(!unchanged){
+          releaseStoreBaseline(db);
+          const latest=readStore({comparisonBaseline:method!=='get'});
+          expectedSaved=sessionStorage.getItem(STORE_KEY);
+          for(const key of Object.keys(db))delete db[key];
+          Object.assign(db,latest);
+          transferStoreBaseline(latest,db);
+        }
         if(db.user.user_id!==actorId)return fail(401,'Demo actor changed; retry from the current session.');
         if(params.client_id&&!db.clients.some(client=>client.client_id===params.client_id))return fail(404,'Demo client not found.');
         assertClientBoundary(db,parts,params,authorizationBody);

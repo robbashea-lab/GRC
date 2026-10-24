@@ -1,5 +1,5 @@
 import {cisContext} from '../testUtils/cisExperience';
-import {additionalSectionSurface, additionalAppearanceSurface, ADDITIONAL_SECTION_ROUTES} from './brawndoAdditionalScope';
+import {additionalSectionSurface, additionalAppearanceSurface, additionalSectionChrome, ADDITIONAL_SECTION_ROUTES} from './brawndoAdditionalScope';
 import {visualCorrectionSurface} from './visualCorrectionScope';
 
 const context = {...cisContext(), workspaceMode: 'demo',
@@ -49,4 +49,21 @@ test.each([1,2,3])('configured IG%i receives additional surfaces in both modes',
     expect(additionalSectionSurface({...selected,pathname,loadedClientId:selected.currentClientId})).toBe(surface);
     expect(additionalSectionSurface({...selected,pathname,loadedClientId:'previous-client'})).toBeNull();
   }
+});
+
+
+test.each(Object.entries(ADDITIONAL_SECTION_ROUTES))('%s chrome is ready before native data without granting loaded appearance', (pathname,surface)=>{
+  const pending={...context,pathname,loadedClientId:null};
+  expect(additionalSectionChrome(pending)).toBe(surface);
+  expect(additionalSectionChrome({...pending,orgLoading:true})).toBe(surface);
+  expect(additionalSectionChrome({...pending,orgLoading:true,currentClient:null,clients:[]})).toBeNull();
+  expect(additionalSectionSurface(pending)).toBeNull();
+  expect(additionalAppearanceSurface(pending,null)).toBeNull();
+  for(const patch of [{user:null},{authLoading:true},{authError:'Denied'},{orgError:'Unavailable'},
+    {currentClient:null},{selectedClientId:'other'},{routeClientId:'other'},
+    {user:{...context.user,workspace_mode:'standard'}},{currentClient:{...context.currentClient,status:'archived'}},
+    {currentClient:{...context.currentClient,onboarding_baseline:{completed:true,requirements:{'cis-ig1':'does_not_apply'}}}}]){
+    expect(additionalSectionChrome({...pending,...patch})).toBeNull();
+  }
+  expect(additionalSectionChrome({...pending,pathname:pathname+'/archive'})).toBeNull();
 });

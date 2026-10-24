@@ -1,4 +1,4 @@
-import {cisClientProgram} from '@/lib/cisExperience';
+import {cisClientProgram,cisPresentationEligible} from '@/lib/cisExperience';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {selectedClient} from '@/lib/clientSelection';
 import {useEffect,useRef,useState} from 'react';
@@ -9,9 +9,9 @@ import {useAuth} from '@/context/AuthContext';
 import PageHeader from '@/components/PageHeader';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import ClientWorkDashboard from '@/components/ClientWorkDashboard';
-import BrawndoDemoDashboard from '@/components/BrawndoDemoDashboard';
+import BrawndoDemoDashboard,{CisDashboardPending} from '@/components/BrawndoDemoDashboard';
 import BrawndoDemoProgram from '@/components/BrawndoDemoProgram';
-import {brawndoDemoDashboard,brawndoDemoProgram} from '@/lib/brawndoDemoDashboard';
+import {BRAWNDO_DEMO_DASHBOARD_ENABLED,brawndoDemoDashboard,brawndoDemoProgram} from '@/lib/brawndoDemoDashboard';
 import {loadCompleteDemoWork} from '@/lib/brawndoDemoWork';
 import {usePortfolioRefresh} from '@/lib/usePortfolioRefresh';
 import DashboardItemSummary from '@/components/DashboardItemSummary';
@@ -29,6 +29,7 @@ export default function Dashboard(){
   const demoDashboard=brawndoDemoDashboard({...org,...auth,pathname,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')});
   // Appearance rechecks must not change the native data scope or discard open editor drafts.
   const demoPresentation=demoDashboard&&visualCorrectionSurface({...org,...auth,pathname,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')})==='dashboard';
+  const conceptFrame=BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&cisPresentationEligible({...org,...auth,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')});
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(null),[revision,setRevision]=useState(0),[selection,setSelection]=useState(null);
   const [linked,setLinked]=useState(null),[refreshVersion,setRefreshVersion]=useState(0),[refreshError,setRefreshError]=useState('');
   const pilot=isWorkspacePresentation(currentClientId,user),linkedOpener=useRef(null),refreshRequest=useRef(null);
@@ -51,9 +52,12 @@ export default function Dashboard(){
   },[currentClientId,user,requestKey,demoDashboard]);
   // Keep native dirty drawers intact; background reads update only dashboard projections.
   usePortfolioRefresh(()=>{if(demoDashboard&&!linked&&snapshot?.key===requestKey)refreshDashboard(false);});
-  const shell=body=><div><PageHeader title={`${currentClient?.name||'Client'} Dashboard`}/><div className="section-body">{body}</div></div>;
+  const shell=body=>conceptFrame?<CisDashboardPending client={currentClient}>{body}</CisDashboardPending>:<div><PageHeader title={`${currentClient?.name||'Client'} Dashboard`}/><div className="section-body">{body}</div></div>;
   function nativeRecord(){return linked?.key===recordContextKey?<RecordDrawer key="dashboard-native-record" open kind={linked.kind} record={linked.record} initialValues={linked.initialValues} schema={SCHEMAS[linked.kind]?.fields} clientId={currentClientId} reviewsPilot onSaved={()=>refreshDashboard()} onOpenChange={open=>{if(!open){setLinked(null);requestAnimationFrame(()=>{const target=linkedOpener.current?.isConnected?linkedOpener.current:demoPresentation?document.getElementById('bdd-work-heading'):null;target?.focus({preventScroll:true});});}}}/>:null;}
+  // A stored selection is not a resolved client; wait before choosing any client presentation.
+  if(org.loading&&(!currentClient||currentClient.client_id!==currentClientId))return <div className="section-body" role="status">Loading workspace…</div>;
   if(!currentClientId)return shell(<p>Select a client to view its GRC program.</p>);
+  if(conceptFrame&&!demoPresentation)return <>{shell(<p role="status">Loading dashboard…</p>)}{nativeRecord()}</>;
   if(error?.key===requestKey)return <>{shell(<RegisterLoadError error={error.message} onRetry={()=>setRevision(n=>n+1)} name="Dashboard"/>)}{nativeRecord()}</>;
   const data=snapshot?.key===requestKey?snapshot.result:null;
   if(!data)return <>{shell(<p role="status">Loading dashboard…</p>)}{nativeRecord()}</>;
@@ -92,8 +96,8 @@ export default function Dashboard(){
   }
   const program=demoDashboard?brawndoDemoProgram(data.programs,data.programMetadata,currentClientId):null;
   return <>{demoPresentation?<BrawndoDemoDashboard key={requestKey} queue={data.queue} programs={data.programs} client={currentClient} members={data.members}
-    filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion}>
-      {program?<BrawndoDemoProgram client={currentClient} program={program} refreshToken={refreshVersion} cisDashboardProfile domainSource={data.cisDomainSource} contextKey={requestKey}/>:<section className="bdd-card" aria-label={`CIS IG${cisClientProgram(currentClient)?.implementationGroup} Status`}><header><h2>CIS IG{cisClientProgram(currentClient)?.implementationGroup} Status</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} CIS v8.1 IG{cisClientProgram(currentClient)?.implementationGroup} program is unavailable. Review its native configuration.</p></section>}
+    filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} concept>
+      {program?<BrawndoDemoProgram client={currentClient} program={program} members={data.members} refreshToken={refreshVersion} cisDashboardProfile concept domainSource={data.cisDomainSource} contextKey={requestKey}/>:<section className="bdd-card" aria-label={`CIS IG${cisClientProgram(currentClient)?.implementationGroup} Status`}><header><h2>CIS IG{cisClientProgram(currentClient)?.implementationGroup} Status</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} CIS v8.1 IG{cisClientProgram(currentClient)?.implementationGroup} program is unavailable. Review its native configuration.</p></section>}
     </BrawndoDemoDashboard>:<ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} workspacePilot={pilot}/>}
     {refreshError&&<p role="alert">{refreshError} <button onClick={()=>refreshDashboard(false)}>Retry dashboard refresh</button></p>}

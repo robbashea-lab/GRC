@@ -1,4 +1,4 @@
-jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false,useAdditionalSectionsPresentation:()=>false}));
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import Evidence from './Evidence';
@@ -13,7 +13,7 @@ jest.mock('@/components/RecordDrawer',()=>()=>null);
 
 async function mount(){
   global.IS_REACT_ACT_ENVIRONMENT=true;
-  api.get.mockResolvedValue({data:{items:[{evidence_id:'e',filename:'Policy.pdf'}],total:1,unfiltered_total:1,page_size:5,program_counts:{}}});
+  api.get.mockResolvedValue({data:{items:[{client_id:mockOrg.currentClientId,evidence_id:'e',filename:'Policy.pdf'}],total:1,unfiltered_total:1,page_size:5,program_counts:{}}});
   const node=document.createElement('div');document.body.appendChild(node);const root=createRoot(node);
   await act(async()=>root.render(<Evidence/>));
   return {node,done:async()=>{await act(async()=>root.unmount());node.remove();jest.clearAllMocks();}};

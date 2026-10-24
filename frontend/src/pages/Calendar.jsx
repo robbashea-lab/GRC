@@ -17,6 +17,16 @@ import BrawndoDemoCalendar from './BrawndoDemoCalendar';
 import BrawndoCalendarView,{calendarEntries} from './BrawndoCalendar';
 
 const emptyBuckets=()=>({reviews:{},findings:{},tasks:{}});
+function verifiedCalendarEntries(data,clientId){
+  const record=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
+  const kinds=['reviews','findings','tasks',...(data&&Object.hasOwn(data,'vendor_dates')?['vendor_dates']:[])];
+  if(!record(data)||kinds.some(kind=>!record(data[kind])||Object.values(data[kind]).some(items=>!Array.isArray(items)))){
+    throw new Error('Calendar records do not match the selected client.');
+  }
+  const entries=calendarEntries(data);
+  if(entries.some(item=>item.client_id!==clientId))throw new Error('Calendar records do not match the selected client.');
+  return entries;
+}
 export default function Calendar() {
   const org=useOrg(),auth=useAuth();
   const {currentClientId,currentClient,loading:orgLoading,error:orgError}=org,{user,workspaceMode,loading:authLoading,error:authError}=auth;
@@ -52,7 +62,7 @@ export default function Calendar() {
     if(!currentClientId)return;
     api.get('/calendar',{params:{client_id:currentClientId,start,end,scope:'all',overdue_before:today},signal:controller.signal}).then(({data})=>{
       if(controller.signal.aborted)return;
-      if(['reviews','findings','tasks'].some(kind=>!data[kind])||calendarEntries(data).some(item=>item.client_id!==currentClientId))throw new Error('Calendar records do not match the selected client.');
+      verifiedCalendarEntries(data,currentClientId);
       setResult({key:requestKey,periodKey,data});
     }).catch(e=>{if(!controller.signal.aborted)setError(formatError(e));});
     return ()=>controller.abort();
@@ -68,8 +78,7 @@ export default function Calendar() {
     const controller=new AbortController(),last=new Date(today+'T12:00:00');last.setDate(last.getDate()+7);
     api.get('/calendar',{params:{client_id:currentClientId,start:today,end:localCalendarDate(last),scope:'all',overdue_before:today},signal:controller.signal}).then(({data:next})=>{
       if(controller.signal.aborted)return;
-      if(['reviews','findings','tasks'].some(kind=>!next[kind])||calendarEntries(next).some(item=>item.client_id!==currentClientId))throw new Error('Calendar records do not match the selected client.');
-      setSummaryResult({key:summaryKey,entries:calendarEntries(next)});
+      setSummaryResult({key:summaryKey,entries:verifiedCalendarEntries(next,currentClientId)});
     }).catch(e=>{if(!controller.signal.aborted)setSummaryResult({key:summaryKey,error:formatError(e)});});
     return()=>controller.abort();
   },[demoCalendar,currentClientId,summaryKey,today,revision]);

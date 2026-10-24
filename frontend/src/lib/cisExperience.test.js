@@ -1,4 +1,4 @@
-import {cisClientProgram,cisExperienceEligible,cisWorkspaceMatches,cisDefinitions} from './cisExperience';
+import {cisClientProgram,cisExperienceEligible,cisPresentationEligible,cisWorkspaceMatches,cisDefinitions} from './cisExperience';
 import {cisClient,cisContext,cisWorkspace} from '../testUtils/cisExperience';
 import {brawndoCisVisualGate,cisVisualRecordMatches} from './brawndoCisVisual';
 import {brawndoDemoDashboard,brawndoDemoProgram} from './brawndoDemoDashboard';
@@ -143,4 +143,18 @@ test('native onboarding client status receives CIS appearance without changing l
   for(const status of ['inactive','paused','archived',undefined])expect(cisExperienceEligible({...context,currentClient:{...context.currentClient,status}})).toBe(false);
   context.currentClient.onboarding_baseline={completed:false,requirements:{}};
   expect(brawndoOnboardingGate({...input,currentClient:context.currentClient,nativeDraft:{requirements:{'cis-ig1':'applies'}}})).toBe(true);
+});
+
+
+test('record-free retained presentation survives only background org loading, never unresolved or invalid identity',()=>{
+  const context={...cisContext(),orgLoading:true,loadedClientId:null};
+  expect(cisExperienceEligible(context)).toBe(false);
+  expect(cisPresentationEligible(context)).toBe(true);
+  for(const patch of [{currentClient:null},{clients:[]},{selectedClientId:'foreign'},{routeClientId:'foreign'},
+    {user:null},{authLoading:true},{authError:'Denied'},{orgError:'Unavailable'},
+    {user:{...context.user,workspace_mode:'standard'}},
+    {currentClient:{...context.currentClient,status:'archived'}},
+    {currentClient:{...context.currentClient,onboarding_baseline:{completed:true,requirements:{'iso-27001':'applies'}}}}]){
+    expect(cisPresentationEligible({...context,...patch})).toBe(false);
+  }
 });

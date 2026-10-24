@@ -8,6 +8,7 @@ import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import {formatError} from '@/lib/api';
 import {DEMO_WORK_FILTERS,DEMO_WORK_PAGE_SIZE,loadCompleteDemoWork,selectDemoWork,demoWorkSummary} from '@/lib/brawndoDemoWork';
 import './BrawndoDemoDashboard.css';
+import './CisDashboardConcept.css';
 
 // Calendar deadlines retain their literal UTC day; dated snapshots never invent a save instant.
 function dashboardDay(value,year=true){
@@ -21,7 +22,13 @@ function dashboardAsOf(value){
   return /T.*(?:Z|[+-]\d{2}:\d{2})$/i.test(value)&&!Number.isNaN(date.getTime())?date.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZone:'UTC',timeZoneName:'short'}):null;
 }
 
-export default function BrawndoDemoDashboard({queue,programs=[],client,members=[],filter='all',onFilter,onOpen,loadDetail,refreshVersion=0,children}){
+// Pending/error frames keep the approved presentation without displaying old records.
+export function CisDashboardPending({client,children}){
+  const [theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(true,theme);
+  return <div className="brawndo-demo-dashboard" data-theme={theme} data-cis-dashboard-concept="true"><div className="cis-dashboard-concept-presentation"><header className="bdd-heading"><div><h1>{client?.name||'Client'} Dashboard</h1></div><SurfaceThemeAction theme={theme} onTheme={()=>setTheme(theme==='dark'?'light':'dark')}/></header><div className="cis-dashboard-concept-pending">{children}</div></div></div>;
+}
+
+export default function BrawndoDemoDashboard({queue,programs=[],client,members=[],filter='all',onFilter,onOpen,loadDetail,refreshVersion=0,concept=false,children}){
   const [theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(true,theme);
   const [work,setWork]=useState(null),[frameworkWork,setFrameworkWork]=useState(null),[error,setError]=useState(''),[frameworkError,setFrameworkError]=useState('');
   const [framework,setFramework]=useState(''),[search,setSearch]=useState(''),[sort,setSort]=useState('due'),[page,setPage]=useState(0),[retry,setRetry]=useState(0);
@@ -37,10 +44,13 @@ export default function BrawndoDemoDashboard({queue,programs=[],client,members=[
   const summary=work?demoWorkSummary(work,queue.as_of,value=>dashboardDay(value,false)):null;
   const leadClient=client?.grc_lead?client:{...client,grc_lead:members.find(member=>member.user_id===client?.assigned_owner_id)};
   function choose(key,scroll=false){onFilter(scroll&&filter===key?'all':key);setPage(0);if(scroll){heading.current?.scrollIntoView?.({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});heading.current?.focus({preventScroll:true});}}
-  return <div className="brawndo-demo-dashboard" data-theme={theme}>
-    <header className="bdd-heading"><div><h1>{client?.name||'Client'} Dashboard</h1><p>{programs.find(program=>program.key==='cis-ig1')?.label||'CIS'} program · GRC Lead {grcLead(leadClient).name} · As of {dashboardAsOf(queue.as_of)||'unavailable'}</p></div><SurfaceThemeAction theme={theme} onTheme={()=>setTheme(theme==='dark'?'light':'dark')}/></header>
+  const presentation = <>
+    <header className="bdd-heading"><div><h1>{client?.name||'Client'} Dashboard</h1><p>{programs.find(program=>/^cis-ig[123]$/.test(program.key))?.label||'CIS'} program · GRC Lead {grcLead(leadClient).name} · As of {dashboardAsOf(queue.as_of)||'unavailable'}</p></div><SurfaceThemeAction theme={theme} onTheme={()=>setTheme(theme==='dark'?'light':'dark')}/></header>
     <section className="bdd-summary" aria-label="Work summary">{DEMO_WORK_FILTERS.map(([key,label])=><button key={key} type="button" aria-pressed={filter===key} onClick={()=>choose(key,true)}><span>{label}</span><strong className={key==='pastDue'&&queue.groups[key]?.total?'bdd-late':''}>{queue.groups[key]?.total??'—'}</strong><small className={key==='pastDue'&&queue.groups[key]?.total?'bdd-late':undefined}>{summary?.[key]||(error?'Context unavailable':'Loading context…')}</small></button>)}</section>
     {children}
+  </>;
+  return <div className="brawndo-demo-dashboard" data-theme={theme} data-cis-dashboard-concept={concept?'true':undefined}>
+    {concept?<div className="cis-dashboard-concept-presentation">{presentation}</div>:presentation}
     <section className="bdd-card" aria-labelledby="bdd-work-heading"><header><h2 id="bdd-work-heading" tabIndex={-1} ref={heading}>Priority work</h2><p>Work that needs a decision, an owner, or a next step.</p></header>
       <div className="bdd-controls"><label className="bdd-search"><span className="sr-only">Search item, owner, type or safeguard</span><Search aria-hidden="true" size={15}/><input type="search" placeholder="Search work…" maxLength={200} value={search} onChange={event=>setSearch(event.target.value)}/></label>
         <div className="bdd-filters" role="group" aria-label="Show work">{DEMO_WORK_FILTERS.map(([key,label])=><button type="button" key={key} aria-pressed={filter===key} onClick={()=>choose(key)}>{key==='all'?'All':label} <span>{queue.groups[key]?.total??0}</span></button>)}</div>

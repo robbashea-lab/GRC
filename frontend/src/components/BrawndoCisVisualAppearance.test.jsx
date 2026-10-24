@@ -1,6 +1,6 @@
 import React, {act} from 'react';
 import {createRoot} from 'react-dom/client';
-import {CisVisualPublisher, useCisVisualAppearance} from './BrawndoCisVisualAppearance';
+import {CisVisualPublisher, useCisVisualAppearance, useCisVisualChrome} from './BrawndoCisVisualAppearance';
 
 function Origin({enabled, theme = 'light'}) {
   useCisVisualAppearance(enabled, theme);
@@ -27,7 +27,26 @@ const expectCleared = () => roots().forEach(element => {
 
 test('disabled origin applies no shell or portal markers', async () => {
   await render({enabled: false});
-  expectCleared(); expect(publish).toHaveBeenLastCalledWith(false);
+  expectCleared(); expect(publish).not.toHaveBeenCalled();
+});
+
+test('loading chrome publishes the shell without enabling loaded assessment or portal markers', async () => {
+  function LoadingOrigin() {useCisVisualChrome(true); return <div>Loading verified program</div>;}
+  await act(async () => root.render(<CisVisualPublisher.Provider value={publish}><LoadingOrigin/></CisVisualPublisher.Provider>));
+  expect(publish).toHaveBeenLastCalledWith(true);expectCleared();
+});
+
+test('a disabled parent cannot withdraw the appearance owned by its enabled loading child', async () => {
+  function LoadingOrigin() {
+    useCisVisualAppearance(false, 'light');
+    return <Origin enabled theme="light"/>;
+  }
+  await act(async () => root.render(<CisVisualPublisher.Provider value={publish}><LoadingOrigin/></CisVisualPublisher.Provider>));
+  roots().forEach(element => expect(element.dataset.brawndoCisVisual).toBe('true'));
+  expect(publish.mock.calls).toEqual([[true]]);
+  await act(async () => root.render(<CisVisualPublisher.Provider value={publish}><Origin enabled theme="light"/></CisVisualPublisher.Provider>));
+  roots().forEach(element => expect(element.dataset.brawndoCisVisual).toBe('true'));
+  expect(publish).toHaveBeenLastCalledWith(true);
 });
 
 test('enabled origin publishes exact theme on html and body then updates it', async () => {

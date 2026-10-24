@@ -49,3 +49,99 @@
   .brawndo-demo-program[data-cis-dashboard-profile=true] > .cis-dashboard-profile-row { margin-left:0; margin-right:0; }
   .cis-dashboard-profile-row .cdp-card { padding:8px; }
 }
+
+/* Opt-in concept presentation; default profiles and native editors keep their rules above. */
+.cdp-card.cdp-concept { align-self:stretch;padding:17px 18px;border:1px solid var(--cc-border,#dfe6f1);border-radius:9px;background:var(--cc-card,#fff);color:var(--cc-text,#10213b);box-shadow:0 1px 1px #10213b03;font:13px/1.45 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif; }
+.cdp-card.cdp-concept h2 { font-family:inherit;font-size:14px;font-weight:650;line-height:1.45;letter-spacing:-.2px; }
+.cdp-card.cdp-concept header p { color:var(--cc-muted,#627594);font-size:11.5px;line-height:1.45;margin:3px 0 0; }
+.cdp-concept .cdp-profile { grid-template-columns:minmax(250px,1fr) minmax(280px,1.15fr);gap:10px;margin-top:7px;min-height:278px; }
+.cdp-concept .cdp-radar-wrap { max-width:420px; }
+.cdp-concept .cdp-radar text { fill:var(--cc-muted,#627594);font-family:inherit;font-size:11.3px;font-weight:400; }
+.cdp-concept .cdp-radar .cdp-scale { font-size:9px; }
+.cdp-concept .cdp-radar .cdp-axis-rate { fill:var(--cc-text,#10213b);font-size:13px;font-weight:650; }
+.cdp-concept .cdp-grid { stroke:var(--cc-border,#dfe6f1);stroke-width:1; }
+.cdp-concept .cdp-value { fill:#16856624;stroke:var(--cc-green,#168566);stroke-width:2; }
+.cdp-concept-axis-label,.cdp-concept-point { cursor:pointer; }
+.cdp-concept-hit { fill:transparent;stroke:none; }
+.cdp-concept-dot { fill:var(--cc-green,#168566);stroke:var(--cc-card,#fff);stroke-width:1.5; }
+.cdp-concept-point:hover .cdp-concept-dot,.cdp-concept-point:focus-visible .cdp-concept-dot,.cdp-concept-point.is-selected .cdp-concept-dot { fill:#07553d;stroke:var(--cc-blue,#225aca);stroke-width:3; }
+.cdp-concept-point:focus-visible { outline:none; }
+.cdp-concept-axis-label:focus-visible,.cdp-concept .cdp-domain-name:focus-visible { outline:2px solid #396fe0;outline-offset:3px; }
+.cdp-concept .cdp-table-wrap table { table-layout:fixed;font-size:11px; }
+.cdp-concept .cdp-table-wrap th,.cdp-concept .cdp-table-wrap td { border-color:var(--cc-border,#dfe6f1);padding:5px;text-align:right; }
+.cdp-concept .cdp-table-wrap thead th { background:var(--cc-surface,#f7f9fc);color:var(--cc-muted,#627594);font-size:10px;font-weight:500;white-space:nowrap;padding:7px 5px; }
+.cdp-concept .cdp-table-wrap th:first-child { width:43%;text-align:left;padding-left:8px; }
+.cdp-concept .cdp-table-wrap thead th:nth-child(2) { width:22%; }
+.cdp-concept .cdp-table-wrap thead th:nth-child(3) { width:21%; }
+.cdp-concept .cdp-table-wrap thead th:last-child { width:14%; }
+.cdp-concept .cdp-table-wrap tbody :is(th,td) { height:28px; }
+.cdp-concept .cdp-table-wrap tbody tr:last-child :is(th,td) { border:0; }
+.cdp-concept .cdp-table-wrap td:last-child { font-weight:650; }
+.cdp-concept .cdp-domain-name { color:var(--cc-muted,#627594);font-size:10.5px;line-height:1.2;overflow-wrap:anywhere; }
+.cdp-concept .cdp-domain-name:hover { color:var(--cc-blue,#225aca);text-decoration:none; }
+.cdp-concept .cdp-table-wrap tr.is-selected { background:#f0f5ff; }
+.cdp-concept[data-theme=dark] .cdp-table-wrap tr.is-selected { background:#2a4265; }
+.cdp-concept-legend { display:flex;align-items:center;gap:6px;margin:11px 0 0;color:var(--cc-muted,#627594);font-size:10px; }
+.cdp-concept-legend i { width:8px;height:8px;flex:none;border-radius:2px;background:var(--cc-green,#168566); }
+.cdp-concept-hint { margin:6px 0 0;color:var(--cc-muted,#627594);font-size:9px; }
+.cdp-concept .cdp-empty { color:var(--cc-muted,#627594); }
+
+.ui-popover.cdp-domain-tip.cdp-concept-tip.cis-dashboard-concept-portal[data-theme] { width:300px;max-width:calc(100vw - 20px);max-height:calc(100dvh - 20px);padding:13px 14px;border:1px solid var(--cc-border,#dfe6f1);border-radius:9px;background:var(--cc-card,#fff);color:var(--cc-text,#10213b);box-shadow:var(--cc-shadow,0 10px 30px #10213b18);font:11px/1.45 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif; }
+.cdp-domain-tip.cdp-concept-tip h3 { margin:0 15px 0 0;font-size:13px;font-weight:700; }
+.cdp-concept-tip .cdp-tip-rate { gap:8px;margin:7px 0 8px; }
+.cdp-concept-tip .cdp-tip-rate strong { font-size:22px;font-weight:650;letter-spacing:-.4px; }
+.cdp-concept-tip .cdp-tip-rate span { color:var(--cc-muted,#627594);font-size:10px; }
+.cdp-domain-tip.cdp-concept-tip .cis-bar { height:6px;margin:0 0 9px;border-radius:3px; }
+.ui-popover.cdp-domain-tip.cdp-concept-tip .cis-fill-success { background:var(--cc-green,#168566); }
+.ui-popover.cdp-domain-tip.cdp-concept-tip .cis-fill-moderate { background:var(--cc-yellow,#dcb13e); }
+.ui-popover.cdp-domain-tip.cdp-concept-tip .cis-fill-critical { background:var(--cc-rose,#d95e7d); }
+.ui-popover.cdp-domain-tip.cdp-concept-tip .cis-fill-neutral { background:var(--cc-gray,#d2dae5); }
+.ui-popover.cdp-domain-tip.cdp-concept-tip .cis-tone-success { --tone:var(--cc-green,#168566); }
+.ui-popover.cdp-domain-tip.cdp-concept-tip .cis-tone-moderate { --tone:var(--cc-yellow,#dcb13e); }
+.ui-popover.cdp-domain-tip.cdp-concept-tip .cis-tone-critical { --tone:var(--cc-rose,#d95e7d); }
+.ui-popover.cdp-domain-tip.cdp-concept-tip .cis-tone-neutral { --tone:var(--cc-gray,#d2dae5); }
+.cdp-domain-tip.cdp-concept-tip dl { gap:4px;margin:0; }
+.cdp-domain-tip.cdp-concept-tip dl div { gap:6px;font-size:11px; }
+.cdp-domain-tip.cdp-concept-tip dt { gap:6px; }
+.cdp-domain-tip.cdp-concept-tip dd { font-weight:600; }
+.cdp-domain-tip.cdp-concept-tip .cis-dot { width:8px;height:8px;border-radius:2px; }
+.cdp-concept-tip .cdp-focus { margin-top:10px;padding:8px 9px;border-left:3px solid var(--cc-gray,#d2dae5);border-radius:5px;background:var(--cc-surface,#f7f9fc);line-height:1.45; }
+.cdp-concept-tip .cdp-focus b { display:block;font-size:10.5px; }
+.cdp-concept-tip .cdp-focus p { color:var(--cc-muted,#627594);font-size:10px;margin:3px 0 0; }
+.cdp-concept-tip .cdp-focus.is-danger { background:#fff2f4;border-color:var(--cc-rose,#d95e7d); }
+.cdp-concept-tip .cdp-focus.is-warning { background:#fff8e9;border-color:var(--cc-yellow,#dcb13e); }
+.cdp-concept-tip .cdp-focus.is-success { background:#edf8f2;border-color:var(--cc-green,#168566); }
+.cdp-concept-tip[data-theme=dark] .cdp-focus.is-danger { background:#492d3c; }
+.cdp-concept-tip[data-theme=dark] .cdp-focus.is-warning { background:#453c29; }
+.cdp-concept-tip[data-theme=dark] .cdp-focus.is-success { background:#203e37; }
+@media(min-width:1700px) {
+  .cdp-card.cdp-concept { padding:20px 22px; }
+  .cdp-concept .cdp-profile { grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:23px;min-height:320px; }
+  .cdp-concept .cdp-radar-wrap { max-width:440px; }
+  .cdp-concept .cdp-table-wrap table,.cdp-concept .cdp-domain-name { font-size:12px; }
+  .cdp-concept .cdp-table-wrap tbody :is(th,td) { height:31px; }
+}
+@media(max-width:1240px) {
+  .cdp-card.cdp-concept { min-height:580px; }
+  .cdp-concept .cdp-profile { grid-template-columns:minmax(0,1fr);gap:8px; }
+  .cdp-concept .cdp-radar-wrap { max-width:360px; }
+  .cdp-concept .cdp-domain-name { font-size:11px; }
+}
+@media(max-width:900px) {
+  .cdp-card.cdp-concept { min-height:550px; }
+  .cdp-concept .cdp-radar-wrap { max-width:350px; }
+  .cdp-concept .cdp-domain-name { font-size:10px; }
+}
+@media(max-width:720px) {
+  .cdp-card.cdp-concept { min-height:0; }
+  .cdp-concept .cdp-profile { grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px; }
+}
+@media(max-width:540px) {
+  .cdp-card.cdp-concept { padding:15px; }
+  .cdp-concept .cdp-profile { grid-template-columns:minmax(0,1fr); }
+  .cdp-concept .cdp-radar-wrap { max-width:370px; }
+  .cdp-concept .cdp-table-wrap table { font-size:12px; }
+  .cdp-concept .cdp-domain-name { font-size:11px; }
+  .cdp-concept .cdp-table-wrap tbody :is(th,td) { height:30px; }
+  .cdp-concept .cdp-table-wrap thead th { font-size:9px; }
+}

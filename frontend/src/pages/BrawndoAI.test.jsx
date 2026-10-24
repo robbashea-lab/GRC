@@ -1,4 +1,4 @@
-jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false,useAdditionalSectionsPresentation:()=>false}));
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import AIGovernance from './AIGovernance';
@@ -15,7 +15,7 @@ jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'test-request-identity'}));
 let root,container;
 const click=node=>act(async()=>node.click());
 const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/ai-intake'?{usage:'unsure'}:path==='/ai_systems'?[{ai_system_id:'a',client_id:mockClient,name:'AI QA',status:'active',provider:'Test',data_types:['Public']}]:[]}));});
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/ai-intake'?{client_id:mockClient,usage:'unsure'}:path==='/ai_systems'?[{ai_system_id:'a',client_id:mockClient,name:'AI QA',status:'active',provider:'Test',data_types:['Public']}]:[]}));});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 test('shared AI cards do not expand approval or data permission and other clients retain intake notice',async()=>{
   await act(async()=>root.render(<AIGovernance/>));expect(container.querySelector('.brawndo-ai-grid')).not.toBeNull();expect(container.textContent).toContain('Approval not recorded');expect(container.textContent).toContain('Data permissions not established');expect(container.textContent).not.toContain('AI applicability is not yet confirmed');

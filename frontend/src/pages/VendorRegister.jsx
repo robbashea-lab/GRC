@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import BrawndoAdditionalVendors from '@/components/BrawndoAdditionalVendors';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
-import { useAdditionalSectionsSurface } from '@/lib/brawndoAdditionalScope';
+import { useAdditionalSectionsSurface, useAdditionalSectionsPresentation } from '@/lib/brawndoAdditionalScope';
 import { useBrawndoTheme } from '@/lib/brawndoTheme';
 import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from "@/components/Register";
 import { DueDate, HistoryDate, OwnerCell } from "@/components/RegisterCells";
@@ -92,6 +92,7 @@ export default function VendorRegister() {
   const vendorReadScope = `${user?.user_id}:${user?.role}:${auth.workspaceMode}:${user?.workspace_mode}:${currentClientId}`;
   const [loadedReadScope,setLoadedReadScope] = useState('');
   const [acceptedRefresh,setAcceptedRefresh] = useState(null);
+  const presentation = useAdditionalSectionsPresentation('vendors');
   const additional = useAdditionalSectionsSurface('vendors',loadedReadScope===vendorReadScope?loadedClientId:null);
   const pilot=isReferencePresentation(currentClientId,user);
   const vendorWorkflow=isReferenceWorkflow(currentClientId,user,currentClient);
@@ -142,9 +143,13 @@ export default function VendorRegister() {
         api.get("/reviews",{params:{client_id:currentClientId}}).then(r=>r.data),
       ]);
       if(token!==generation.current) return;
-      setRows(v || []); setUsers(u || []); setReviews(r||[]);setLoadedClientId(currentClientId);setLoadedReadScope(vendorReadScope);
+      if ([v,r].some(list => !Array.isArray(list) || list.some(row => !row || typeof row !== 'object' || row.client_id !== currentClientId))) {
+        setLoadedClientId(null); setLoadedReadScope('');
+        throw new Error('Vendors and linked Reviews could not be verified for this client.');
+      }
+      setRows(v); setUsers(u || []); setReviews(r);setLoadedClientId(currentClientId);setLoadedReadScope(vendorReadScope);
       setAcceptedRefresh({scope:vendorReadScope,at:new Date().toISOString()});
-    } catch (e) { if(token===generation.current){setRows([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
+    } catch (e) { if(token===generation.current){setRows([]);setReviews([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
     finally { if(token===generation.current)setLoading(false); }
   }
   useEffect(() => { const activeGeneration=generation; setAcceptedRefresh(null);setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
@@ -189,7 +194,14 @@ export default function VendorRegister() {
   }
 
   let surface;
-  if(additional){
+  if(presentation&&!additional){
+    surface = <section className="brawndo-additional bav-page" data-theme={theme} data-testid="vendors-navigation-loading" aria-busy={!loadError}>
+      <div className="bapv-page-head"><div><h1>{currentClient?.name||'Client'} Vendors</h1><p>Third-party register</p></div></div>
+      <RegisterLoadError error={loadError} onRetry={load} name="vendors"/>
+      {!loadError&&<p role="status">Loading vendors…</p>}
+      {recordLinkError&&<p role="alert">{recordLinkError}</p>}
+    </section>;
+  } else if(additional){
     const selectAdditionalView = id => {
       selectView(id);
       const next=new URLSearchParams(searchParams);

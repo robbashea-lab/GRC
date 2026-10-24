@@ -8,7 +8,7 @@ jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/context/ComplianceContext',()=>({useCompliance:()=>({items:[],loading:false,error:''})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:error=>error.message}));
-jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:(surface,loadedClientId)=>loadedClientId==='demo_brawndo'}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:(surface,loadedClientId)=>loadedClientId==='demo_brawndo',useAdditionalSectionsPresentation:()=>false}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/ai-governance',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 jest.mock('@/components/AdditionalAI',()=>props=><div data-testid="additional-ai-view">{props.rows.map(row=><button key={row.ai_system_id} onClick={()=>props.onOpen(row)}>{row.name}</button>)}</div>);
 jest.mock('@/components/AdditionalEvidence',()=>({...jest.requireActual('@/components/AdditionalEvidence'),__esModule:true,default:()=> <div data-testid="additional-evidence-view"/>}));

@@ -55,6 +55,14 @@ export function cisIdentityEligible(context) {
 
 export const cisExperienceEligible = context => cisIdentityEligible(context) && !!cisClientProgram(context.currentClient);
 
+// Record-free chrome can retain the current authorized client during a background
+// refresh. Initial reads still fail without a resolved DTO/list; errors fail closed.
+export function cisPresentationEligible(context) {
+  const identity={...context,orgLoading:false};
+  delete identity.loadedClientId;
+  return cisExperienceEligible(identity);
+}
+
 export const cisDefinitions = group => cis.available_implementation_groups.includes(group)
   ? cis.requirements.filter(definition => definition.implementation_group <= group) : [];
 

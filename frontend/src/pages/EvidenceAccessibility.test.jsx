@@ -1,4 +1,4 @@
-jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false}));
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false,useAdditionalSectionsPresentation:()=>false}));
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import Evidence from './Evidence';
@@ -29,7 +29,7 @@ test('evidence icon actions announce their purpose and exact file without changi
 test('folders navigate to paged files with clickable breadcrumbs and scoped search',async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;
   const folder={area:'Reviews',key:'backup',label:'backup',path:'["Reviews","backup"]',count:1};
-  api.get.mockResolvedValue({data:{items:[{evidence_id:'e',filename:'Restore test.txt'}],total:1,unfiltered_total:1,page_size:25,folder_counts:[folder],program_counts:{Reviews:1}}});
+  api.get.mockResolvedValue({data:{items:[{client_id:'a',evidence_id:'e',filename:'Restore test.txt'}],total:1,unfiltered_total:1,page_size:25,folder_counts:[folder],program_counts:{Reviews:1}}});
   const node=document.createElement('div');document.body.appendChild(node);const root=createRoot(node);
   const click=async text=>act(async()=>[...node.querySelectorAll('button')].find(b=>b.textContent===text).click());
   try{

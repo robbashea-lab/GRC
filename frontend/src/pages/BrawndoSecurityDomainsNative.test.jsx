@@ -343,10 +343,22 @@ test.each([2,3])('Demo Brawndo configured as IG%s uses the complete native CIS d
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
 
-test('another client cannot receive pilot shortcuts or resolve a foreign assessment deep link',async()=>{
+test('an unverified client response is rejected before resolving a foreign assessment deep link',async()=>{
   await mount('other-client','?assessment=native-1.1');
   expect(query('.bcis-domains')).toBeNull();expect(native()).toBeNull();
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain('CIS workspace records could not be verified for this client.');
+  expect(container.querySelector('.bwp-program-counts')).toBeNull();
+  expect(button('Retry workspace')).toBeTruthy();
+  expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
+test('a verified client program cannot resolve another client assessment deep link',async()=>{
+  useSyntheticClient('other-client');const before=clone(records);
+  await mount('other-client','?assessment=native-1.1');
+  expect(container.querySelector('[role="alert"]')).toBeNull();expect(native()).toBeNull();
   expect(container.textContent).toContain('This assessment is not available in the current client workspace.');
+  expect(records).toEqual(before);
+  expect(api.get.mock.calls.some(([path])=>path.startsWith('/framework_assessments/native-1.1/'))).toBe(false);
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
 

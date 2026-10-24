@@ -1,13 +1,17 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkWorkspace from './FrameworkWorkspace';
+import ComplianceWorkspace from './ComplianceWorkspace';
+import BrawndoWorkspace from '@/components/BrawndoWorkspace';
 import {cis,FRAMEWORKS} from '@/lib/frameworks';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
 
-let mockAuth,mockOrg,mockLocation,mockMounts,mockUnmounts,mockOmniProps,mockRegisterProps,mockPreviewMode;
+let mockAuth,mockOrg,mockLocation,mockMounts,mockUnmounts,mockOmniProps,mockRegisterProps,mockPreviewMode,mockCompliance;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
+jest.mock('@/context/ComplianceContext',()=>({useCompliance:()=>mockCompliance}));
+jest.mock('@/components/NotificationBell',()=>()=>null);
 jest.mock('@/lib/api',()=>({__esModule:true,get PREVIEW_MODE(){return mockPreviewMode;},default:{get:jest.fn()},formatError:error=>error.message}));
 jest.mock('@/components/GuidedAssessor',()=>props=>{mockOmniProps=props;return null;});
 jest.mock('@/components/SocGuidedAssessor',()=>()=>null);
@@ -35,6 +39,7 @@ jest.mock('@/components/FrameworkDrawer',()=>function Drawer({record,onSaved,onM
 jest.mock('react-router-dom',()=>({
   useSearchParams:()=>{const [params,set]=require('react').useState(mockLocation.params);return [params,(next,options={})=>{mockLocation.search='?'+String(next);mockLocation.state=options.state??null;set(new URLSearchParams(next));}];},
   useLocation:()=>mockLocation,useNavigate:()=>jest.fn(),Link:({to,children})=><a href={to}>{children}</a>,
+  useParams:()=>({requirementKey:'cis-ig1'}),
 }),{virtual:true});
 
 function fixture(){
@@ -47,7 +52,7 @@ function fixture(){
     implementation_position:{program_id:'demo_brawndo:cis-ig1',availability:'available',total:56,denominator:56,implemented:0,excluded:0,
       counts:[{key:'addressed',count:0},{key:'in_progress',count:0},{key:'needs_attention',count:0},{key:'not_assessed',count:56}]}};
 }
-const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};
+const deferred=()=>{let resolve,reject;const promise=new Promise((done,fail)=>{resolve=done;reject=fail;});return {promise,resolve,reject};};
 let root,host,data;
 const render=()=>act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="demo_brawndo"/>));
 async function click(button){expect(button).toBeTruthy();await act(async()=>button.click());}
@@ -60,6 +65,7 @@ beforeEach(()=>{
   mockAuth={user:{user_id:'visual-refresh-actor',workspace_mode:'demo',role:'super_admin'},workspaceMode:'demo',loading:false};
   const client={...cisClient('demo_brawndo',1),name:'Brawndo'};
   mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false};
+  mockCompliance={items:[{key:'cis-ig1',label:'CIS IG1',name:'CIS Controls v8.1',implemented:true}],loading:false,error:''};
   mockLocation={pathname:'/compliance/cis-ig1',search:'?assessment=native-1.1',params:new URLSearchParams('assessment=native-1.1'),state:null};
   mockMounts=[];mockUnmounts=[];mockOmniProps=null;mockRegisterProps=null;data=fixture();api.get.mockResolvedValue({data});
   host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);
@@ -95,17 +101,73 @@ test('initial CIS read shows only its enrolled program shell until the complete 
   expect(host.querySelector('[data-testid="assessment-boundary"]')).toBeTruthy();
 });
 
-test.each(['unresolved organization','authentication error','unauthorized client','mismatched selected client','mismatched route client','mismatched mode','wrong route','unenrolled program'])('pending read does not name a CIS shell for %s',async boundary=>{
+const renderNativeRoute=()=>act(async()=>root.render(<BrawndoWorkspace><ComplianceWorkspace/></BrawndoWorkspace>));
+const expectLoadingChrome=(loaded=false)=>{
+  expect(host.querySelector('.brawndo-workspace-pilot').dataset.cisVisual).toBe('true');
+  expect(document.documentElement.dataset.brawndoCisVisual).toBe(loaded?'true':undefined);
+  expect(document.body.dataset.brawndoCisVisual).toBe(loaded?'true':undefined);
+};
+
+test('verified CIS loading keeps the real shell through deferred requirement and workspace reads without exposing assessments',async()=>{
+  mockCompliance={...mockCompliance,loading:true};
+  const pending=deferred();api.get.mockImplementationOnce(()=>pending.promise);
+  await renderNativeRoute();
+  expectLoadingChrome();
+  expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBeTruthy();
+  expect(host.querySelector('[data-testid="register-boundary"]')).toBeNull();
+  expect(host.querySelector('[data-testid="assessment-boundary"]')).toBeNull();
+  expect(api.get).not.toHaveBeenCalled();
+
+  mockCompliance={...mockCompliance,loading:false};await renderNativeRoute();
+  expectLoadingChrome();
+  expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBeTruthy();
+  expect(host.querySelector('[data-testid="register-boundary"]')).toBeNull();
+  expect(host.querySelector('[data-testid="assessment-boundary"]')).toBeNull();
+  expect(api.get).toHaveBeenCalledTimes(1);
+
+  await act(async()=>pending.resolve({data:fixture()}));
+  expectLoadingChrome(true);expectVisual();
+  expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBeNull();
+  expect(host.querySelector('[data-testid="assessment-boundary"]').dataset.assessmentId).toBe('native-1.1');
+});
+
+test('a failed deferred CIS read retains qualified chrome and native retry without enabling loaded appearance or records',async()=>{
+  const pending=deferred();api.get.mockImplementationOnce(()=>pending.promise);
+  await renderNativeRoute();expectLoadingChrome();
+  await act(async()=>pending.reject(new Error('Synthetic CIS source unavailable')));
+  expect(host.querySelector('.brawndo-workspace-pilot').dataset.cisVisual).toBe('true');
+  expect(document.documentElement.dataset.brawndoCisVisual).toBeUndefined();
+  expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
+  expect(host.querySelector('[role="alert"]').textContent).toContain('Synthetic CIS source unavailable');
+  expect(host.querySelector('[role="alert"] button').textContent).toContain('Retry');
+  expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBeNull();
+  expect(host.querySelector('[data-testid="register-boundary"]')).toBeNull();
+  expect(host.querySelector('[data-testid="assessment-boundary"]')).toBeNull();
+});
+
+test.each(['unresolved organization','organization error','authentication loading','authentication error','unauthorized client','mismatched selected client','mismatched route client','mismatched mode','mismatched transport','wrong route','unenrolled program'])('pending read does not name a CIS shell for %s',async boundary=>{
   api.get.mockImplementationOnce(()=>deferred().promise);
   if(boundary==='unresolved organization')mockOrg.loading=true;
+  if(boundary==='organization error')mockOrg.error='Organization unavailable';
+  if(boundary==='authentication loading')mockAuth.loading=true;
   if(boundary==='authentication error')mockAuth.error='Authentication unavailable';
   if(boundary==='unauthorized client')mockOrg.clients=[];
   if(boundary==='mismatched selected client')sessionStorage.setItem('grc_client_id','other-client');
   if(boundary==='mismatched route client')mockLocation.search='?client_id=other-client';
   if(boundary==='mismatched mode')mockAuth.workspaceMode='standard';
+  if(boundary==='mismatched transport')mockPreviewMode=false;
   if(boundary==='wrong route')mockLocation.pathname='/compliance/iso-27001';
   if(boundary==='unenrolled program')mockOrg.currentClient={...mockOrg.currentClient,cis_program:{selected:false}};
   await render();
+  expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBeNull();
+  expect(host.querySelector('[data-testid="register-boundary"]')).toBeNull();
+  expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
+});
+
+test.each(['iso-27001','soc-2'])('pending %s workspace cannot publish CIS loading chrome',async frameworkKey=>{
+  mockLocation={...mockLocation,pathname:'/compliance/'+frameworkKey};
+  api.get.mockImplementationOnce(()=>deferred().promise);
+  await act(async()=>root.render(<FrameworkWorkspace frameworkKey={frameworkKey} clientId="demo_brawndo"/>));
   expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBeNull();
   expect(host.querySelector('[data-testid="register-boundary"]')).toBeNull();
   expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
