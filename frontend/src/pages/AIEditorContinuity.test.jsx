@@ -1,3 +1,4 @@
+import {questions,screeningScope} from '@/lib/aiOnboarding';
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import AIGovernance from './AIGovernance';
@@ -28,7 +29,9 @@ const page=()=> <AdditionalSectionsProvider><AIGovernance/><AppearanceStatus/></
 const drawerInput=()=>document.querySelector('[data-testid="ai-drawer"] [aria-label="Name"], [data-testid="ai-drawer"] [aria-label="Product / System Name"]');
 async function openDirtyDrawer(){
   await act(async()=>root.render(page()));
-  await act(async()=>container.querySelector('.baai-name').click());
+  await act(async()=>container.querySelector('.system-name').click());
+  await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Open system record').click());
+  await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Edit details').click());
   const input=drawerInput();
   await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Unsaved AI name');input.dispatchEvent(new Event('input',{bubbles:true}));});
   return input;
@@ -48,7 +51,7 @@ test('organization refresh withdraws appearance while retaining the native dirty
   const listLoads=api.get.mock.calls.filter(([path])=>path==='/ai_systems').length;
   for(const loading of [true,false]){
     mockOrg={...mockOrg,loading};await act(async()=>root.render(page()));
-    expect(!!container.querySelector('.baai-page:not([data-presentation-state="pending"])')).toBe(!loading);
+    expect(!!container.querySelector('[data-testid="ai-register-first"]')).toBe(!loading);
     if(loading){expect(container.querySelector('[data-presentation-state="pending"] [role="status"]')).not.toBeNull();expect(container.querySelector('[data-presentation-state="pending"] [role="table"]')).toBeNull();}
     expect(container.querySelector('[data-testid="appearance-status"]').textContent).toBe(loading?'none':'ai-governance');
     expect(document.querySelector('[data-testid="ai-drawer"]')===drawer).toBe(true);
@@ -77,19 +80,19 @@ test('additional search, native pending view and inactive selection survive appe
   await act(async()=>root.render(page()));
   await act(async()=>{const input=container.querySelector('[data-testid="ai-system-search"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'continuity');input.dispatchEvent(new Event('input',{bubbles:true}));});
   await act(async()=>container.querySelector('[data-testid="ai-system-view-pending"]').click());
-  await act(async()=>container.querySelector('.baai-summary input').click());
-  const names=()=>[...container.querySelectorAll('.baai-name,.brawndo-ai-card h2')].map(node=>node.textContent);
+  await act(async()=>container.querySelector('.archive-toggle input').click());
+  const names=()=>[...container.querySelectorAll('.system-name strong')].map(node=>node.textContent);
   const expected=['AI continuity pending','Archived AI continuity'];expect(names()).toEqual(expected);
   for(const loading of [true,false]){
     mockOrg={...mockOrg,loading};await act(async()=>root.render(page()));
-    expect(!!container.querySelector('.baai-page:not([data-presentation-state="pending"])')).toBe(!loading);
+    expect(!!container.querySelector('[data-testid="ai-register-first"]')).toBe(!loading);
     if(loading){
       expect(container.querySelector('[data-presentation-state="pending"] [role="status"]')).not.toBeNull();
       expect(container.querySelector('[data-testid="ai-system-search"]')).toBeNull();expect(names()).toEqual([]);
     }else{
       expect(container.querySelector('[data-testid="ai-system-search"]').value).toBe('continuity');
       expect(container.querySelector('[data-testid="ai-system-view-pending"]').getAttribute('aria-pressed')).toBe('true');
-      expect(container.querySelector('.baai-summary input').checked).toBe(true);expect(names()).toEqual(expected);
+      expect(container.querySelector('.archive-toggle input').checked).toBe(true);expect(names()).toEqual(expected);
     }
   }
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
@@ -98,23 +101,100 @@ test('additional search, native pending view and inactive selection survive appe
 test('unsaved native intake choices survive appearance withdrawal and keep explicit versioned save errors',async()=>{
   await act(async()=>root.render(page()));
   const button=text=>[...container.querySelectorAll('button')].find(node=>node.textContent===text);
+  await act(async()=>container.querySelector('.profile-button').click());
   await act(async()=>button('Not sure').click());
-  await act(async()=>container.querySelector('.baai-indicators button').click());
-  const indicator=container.querySelector('.baai-indicators button').textContent;
+  await act(async()=>container.querySelector('.dialog-body .chip input').click());
+  const indicator=container.querySelector('.dialog-body .chip').textContent;
   const intakeReads=api.get.mock.calls.filter(([path])=>path==='/ai-intake').length;
   for(const loading of [true,false]){
     mockOrg={...mockOrg,loading};await act(async()=>root.render(page()));
     expect(container.querySelector('[data-testid="appearance-status"]').textContent).toBe(loading?'none':'ai-governance');
-    if(loading)expect(container.querySelector('[data-testid="ai-intake"]')).toBeNull();
+    if(loading)expect(container.querySelector('.dialog-body fieldset').disabled).toBe(true);
   }
   expect(button('Not sure').getAttribute('aria-pressed')).toBe('true');
-  expect(container.querySelector('.baai-indicators button').getAttribute('aria-pressed')).toBe('true');
+  expect(container.querySelector('.dialog-body .chip input').checked).toBe(true);
   expect(api.get.mock.calls.filter(([path])=>path==='/ai-intake')).toHaveLength(intakeReads);
   expect(api.post).not.toHaveBeenCalled();
   api.post.mockRejectedValueOnce(new Error('Intake save unavailable'));
-  await act(async()=>button('Save AI intake').click());
+  await act(async()=>button('Save profile').click());
   expect(api.post).toHaveBeenLastCalledWith('/ai-intake',expect.objectContaining({client_id:'demo_brawndo',usage:'unsure',indicators:[indicator],expected_updated_at:'intake-v1'}));
   expect(container.textContent).toContain('Intake save unavailable');expect(button('Not sure').getAttribute('aria-pressed')).toBe('true');
   mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'actor-two'}};await act(async()=>root.render(page()));
-  expect(button('Yes').getAttribute('aria-pressed')).toBe('true');expect(container.querySelector('.baai-indicators button').getAttribute('aria-pressed')).toBe('false');expect(container.textContent).not.toContain('Intake save unavailable');
+  expect(container.querySelector('.dialog-body')).toBeNull();
+  await act(async()=>container.querySelector('.profile-button').click());
+  expect(button('Yes').getAttribute('aria-pressed')).toBe('true');expect(container.querySelector('.dialog-body .chip input').checked).toBe(false);expect(container.textContent).not.toContain('Intake save unavailable');
+});
+
+test('transient context loss retains guided draft and blocks final Add without exposing legacy direct create',async()=>{
+  await act(async()=>root.render(page()));
+  await act(async()=>container.querySelector('[data-testid="new-ai-system"]').click());
+  await act(async()=>container.querySelector('.picker-trigger').click());
+  await act(async()=>container.querySelector('[role="option"]').click());
+  const name=container.querySelector('.dialog-body input[maxlength="150"]');
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(name,'Retained guided draft');name.dispatchEvent(new Event('input',{bubbles:true}));});
+  mockOrg={...mockOrg,loading:true};await act(async()=>root.render(page()));
+  expect(container.querySelector('[data-testid="ai-drawer"]')).toBeNull();
+  expect(name.isConnected).toBe(true);expect(name.value).toBe('Retained guided draft');
+  expect(container.querySelector('.dialog-body fieldset').disabled).toBe(true);
+  mockOrg={...mockOrg,loading:false};await act(async()=>root.render(page()));
+  expect(name.isConnected).toBe(true);expect(name.value).toBe('Retained guided draft');
+  expect(container.querySelector('.dialog-body fieldset').disabled).toBe(false);
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+test('versioned screening requires confirmation and invalidates it when answers change back',async()=>{
+  const get=api.get.getMockImplementation();
+  const row={ai_system_id:'ai-one',client_id:'demo_brawndo',name:'AI continuity record',status:'active',data_types:['Public'],updated_at:'v1'};
+  row.onboarding_screening={schema_version:1,catalog_version:'2026-10-25',answers:Object.fromEntries(questions.map(q=>[q.id,false])),scope:screeningScope(row),recorded_at:'original',recorded_by:'creator'};
+  api.get.mockImplementation(path=>path==='/ai_systems'?Promise.resolve({data:[row]}):get(path));
+  await openDirtyDrawer();
+  const section=container.querySelector('[aria-label="Deployment screening review"]');
+  expect(section.querySelectorAll('select')).toHaveLength(10);
+  expect(container.querySelector('.aic-questions')).toBeNull();
+  expect(container.querySelector('[aria-label="Product / Model"]')).not.toBeNull();
+  expect(container.querySelector('[aria-label="Technical Owner"]')).not.toBeNull();
+  expect(container.querySelector('[aria-label="Third-party product or service?"]')).not.toBeNull();
+  expect(container.querySelector('[aria-label="Customer-facing use?"]')).not.toBeNull();
+  const select=section.querySelector('select'),confirm=section.querySelector('input[type="checkbox"]');
+  const choose=async value=>act(async()=>{select.value=value;select.dispatchEvent(new Event('change',{bubbles:true}));});
+  const save=()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Save Changes');
+  await choose('yes');await act(async()=>save().click());
+  expect(api.patch).not.toHaveBeenCalled();
+  expect(container.textContent).toContain('Review the ten screening answers');
+  await act(async()=>confirm.click());expect(confirm.checked).toBe(true);
+  await choose('no');await choose('yes');expect(confirm.checked).toBe(false);
+  await act(async()=>confirm.click());await act(async()=>save().click());
+  expect(api.patch).toHaveBeenCalledTimes(1);
+  const body=api.patch.mock.calls[0][1];
+  expect(body.expected_updated_at).toBe('v1');
+  expect(body.onboarding_screening).toEqual({schema_version:1,catalog_version:'2026-10-25',answers:{...row.onboarding_screening.answers,[questions[0].id]:true},reviewed:true});
+});
+
+test.each(['not-a-date','2026-02-30',42])('retained invalid review date %s does not crash the register',async next_review=>{
+  const get=api.get.getMockImplementation();
+  api.get.mockImplementation(path=>path==='/ai_systems'?Promise.resolve({data:[{ai_system_id:'ai-one',client_id:'demo_brawndo',name:'Retained AI',status:'active',next_review}]}):get(path));
+  await act(async()=>root.render(page()));
+  await act(async()=>container.querySelector('.system-name').click());
+  expect(container.querySelector('.expanded-row').textContent).toContain('Not recorded');
+});
+
+test('a delayed linked record cannot open after its originating AI view closes',async()=>{
+  const get=api.get.getMockImplementation();let finish;
+  const risk={risk_id:'risk-one',client_id:'demo_brawndo',title:'Delayed Risk',status:'open'};
+  api.get.mockImplementation(path=>path==='/related'?Promise.resolve({data:{risks:[risk]}}):path==='/risks/risk-one'?new Promise(resolve=>{finish=resolve;}):get(path));
+  await act(async()=>root.render(page()));
+  await act(async()=>container.querySelector('.system-name').click());
+  await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Open system record').click());
+  await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Linked risk').click());
+  await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Open linked risk').click());
+  await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Close').click());
+  await act(async()=>finish({data:risk}));
+  expect(container.textContent).not.toContain('Delayed Risk');
+});
+
+test('a retained owner missing from the directory is not reported as unassigned',async()=>{
+  const get=api.get.getMockImplementation();
+  api.get.mockImplementation(path=>path==='/ai_systems'?Promise.resolve({data:[{ai_system_id:'ai-one',client_id:'demo_brawndo',name:'Retained AI',status:'active',owner_id:'former-owner'}]}):get(path));
+  await act(async()=>root.render(page()));
+  expect(container.querySelector('.owner').textContent).toContain('Owner unavailable (former-owner)');
 });

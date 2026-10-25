@@ -1,6 +1,6 @@
 import RegisterIdentityLogo from '@/components/RegisterIdentityLogo';
 import {registerCatalogLogo} from '@/lib/registerCatalogLogo';
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import { isInternal } from '@/lib/permissions';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
@@ -21,7 +21,14 @@ import {AI_VIEWS,aiMatches,aiNeedsAttention} from '@/lib/brawndoAI';
 import BrawndoAICards from '@/components/BrawndoAICards';
 import {BrawndoSurface,BrawndoPageHeader,BrawndoChips} from '@/components/BrawndoPage';
 import {useAdditionalSectionsSurface,useAdditionalSectionsPresentation} from '@/lib/brawndoAdditionalScope';
-import AdditionalAI from '@/components/AdditionalAI';
+import AIRegisterFirst from '@/components/AIRegisterFirst';
+import AIOnboardingWizard from '@/components/AIOnboardingWizard';
+import AIRecordView from '@/components/AIRecordView';
+import AIProfileDialog from '@/components/AIProfileDialog';
+import RecordDrawer from '@/components/RecordDrawer';
+import {SCHEMAS} from '@/lib/schemas';
+import evidenceSources from '@/lib/evidenceSources.json';
+import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import AdditionalPagePending from '@/components/AdditionalPagePending';
 
 const text=(key,label)=>({key,label,sortable:true});
@@ -33,8 +40,13 @@ export default function AIGovernance(){
 function AIWorkspace({identity}){
   const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
   const reference=isReferencePresentation(currentClientId,user),approvalPilot=isCisReference(currentClientId,user,currentClient),referenceWorkflow=isReferenceWorkflow(currentClientId,user,currentClient);
-  const [showInactive,setShowInactive]=useState(false);
+  const [showInactive,setShowInactive]=useState(false),[guided,setGuided]=useState(false),[relatedRevision,setRelatedRevision]=useState(0);
+  const mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  const [profileOpen,setProfileOpen]=useState(false),[nativeEdit,setNativeEdit]=useState(false),[nested,setNested]=useState(null),[relatedError,setRelatedError]=useState('');
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[selected,setSelected]=useState(null),[search,setSearch]=useState(''),[quick,setQuick]=useState('active');
+  const relatedRequest=useRef(0),originRecord=useRef(selected);
+  if(originRecord.current!==selected){originRecord.current=selected;relatedRequest.current+=1;}
   const key=`${identity}:${revision}`;
   useEffect(()=>{const c=new AbortController();setSelected(null);setError('');if(!currentClientId)return;Promise.all([api.get('/ai_systems',{params:{client_id:currentClientId},signal:c.signal}),api.get(`/clients/${currentClientId}/members`,{signal:c.signal}),api.get('/ai-intake',{params:{client_id:currentClientId},signal:c.signal})]).then(([rows,members,intake])=>{if(!c.signal.aborted){if(rows.data.some(r=>r.client_id!==currentClientId))throw new Error('Client data mismatch');if(intake.data?.client_id!==currentClientId)throw new Error('AI intake could not be verified for this client.');setSnapshot({key,identity,clientId:currentClientId,rows:rows.data,members:members.data,intake:intake.data});}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[currentClientId,key,identity]);
   useEffect(()=>{setQuick('active');setSearch('');setShowInactive(false);},[currentClientId]);
@@ -44,7 +56,7 @@ function AIWorkspace({identity}){
   const columns=[text('display_id','ID'),text('name','AI System / Use Case'),{...text('owner_id','Owner'),filter:true,emptyLabel:'Unassigned',optionsOnly:true,options:members.map(u=>({value:u.user_id,label:u.name||u.email}))},text('provider','Provider'),{...text('purposes','Purpose / Use'),filter:true},{...text('risk_tier','Risk Tier'),filter:true,rank:ranks,emptyLabel:'Not Screened'},{...text('status','Status'),filter:true},{...text('last_review','Last Review'),filter:true,dateKind:'history',emptyLabel:'Never Reviewed'},{...text('next_review','Next Review'),filter:true,dateKind:'future',emptyLabel:'No Review Scheduled'}];
   const table=useTableControls({columns,rows,module:'ai-governance',scope:`${user?.user_id}:${currentClientId}`});
   const today=new Date().toISOString().slice(0,10),active=r=>!['suspended','retired'].includes(r.status);
-  const presets=[['active','All Active',active],['due','Due for Review',r=>active(r)&&(!r.next_review||r.next_review.slice(0,10)<=today)],['high','High Risk',r=>active(r)&&r.risk_tier==='high'],['third','Third-Party',r=>active(r)&&(r.vendor_id||r.provider||r.screening?.third_party)],['customer','Customer-Facing',r=>active(r)&&(r.purposes?.includes('Customer-Facing')||r.screening?.customer_facing)],['inactive','Inactive',r=>!active(r)]];
+  const presets=[['active','All Active',active],['due','Due for Review',r=>active(r)&&(typeof r.next_review!=='string'||r.next_review.slice(0,10)<=today)],['high','High Risk',r=>active(r)&&r.risk_tier==='high'],['third','Third-Party',r=>active(r)&&(r.vendor_id||r.provider||r.screening?.third_party)],['customer','Customer-Facing',r=>active(r)&&(r.purposes?.includes('Customer-Facing')||r.screening?.customer_facing)],['inactive','Inactive',r=>!active(r)]];
   const searched=rows.filter(r=>[r.display_id,r.name,r.provider,r.description,...(reference?[r.product_model,r.environment]:[]),...(r.purposes||[])].join(' ').toLowerCase().includes(search.toLowerCase()));
   const visible=referenceWorkflow?searched.filter(r=>quick==='attention'?aiNeedsAttention(r):aiMatches(r,quick,showInactive)):table.apply(searched.filter(presets.find(p=>p[0]===quick)?.[2]||active));
   const writable=isInternal(user);
@@ -56,11 +68,35 @@ function AIWorkspace({identity}){
   if(!currentClientId)return <p className="page-content">Select a client.</p>;
   const counts=Object.fromEntries(presets.map(([id,,test])=>[id,rows.filter(test).length]));
   const canAdd=writable&&!!data&&!error&&data.intake.usage!=='no';
+  async function openRelated(kind,id,source){
+    const generation=++relatedRequest.current,origin=selected;
+    const stillCurrent=()=>mounted.current&&relatedRequest.current===generation&&originRecord.current===origin;
+    const verify=row=>{if(row.client_id!==currentClientId||row[evidenceSources[kind]?.key]!==id)throw new Error('Related record identity could not be verified.');};
+    setRelatedError('');
+    try{
+      if(source){const resolved=await resolveEvidenceSource(source,currentClientId);verify(resolved.record);if(stillCurrent())setNested(resolved);return;}
+      if(!['risks','vendors','reviews','findings','tasks','policies','requirements'].includes(kind))throw new Error('This related record cannot be opened here.');
+      const response=await api.get(`/${kind}/${encodeURIComponent(id)}`);
+      verify(response.data);
+      if(stillCurrent())setNested({kind,record:response.data});
+    }catch(cause){if(stillCurrent())setRelatedError(formatError(cause));}
+  }
+  async function refreshRelatedRecord(){
+    setNested(null);setRelatedRevision(value=>value+1);
+    if(!selected?.ai_system_id)return;
+    const id=selected.ai_system_id;
+    try{
+      const {data:records}=await api.get('/ai_systems',{params:{client_id:currentClientId}});
+      const row=records.find(record=>record.ai_system_id===id&&record.client_id===currentClientId);
+      if(!row)throw new Error('The updated AI record could not be verified. Close and reload the register.');
+      if(mounted.current)setSelected(current=>current?.ai_system_id===id?row:current);
+    }catch(cause){if(mounted.current)setRelatedError(formatError(cause));}
+  }
   const SUBTITLE='AI systems and use cases, screened for governance attention. Not a legal classification.';
   const addAction=canAdd?<PrimaryAction label="New AI System" onClick={()=>setSelected({})} testid="new-ai-system"/>:null;
   // The complete native drawer stays outside the appearance branch so refreshes retain its draft.
   const Shell=reference?BrawndoSurface:'div';
-  return <>{additionalPresentation&&!additional?<AdditionalPagePending className="baai-page" headerClassName="baai-page-head" title={`${currentClient.name} AI Governance`} subtitle={SUBTITLE} name="AI systems" loadingMessage="Loading AI systems…" error={error} onRetry={()=>setRevision(n=>n+1)}/>:additional?<><AdditionalAI clientId={currentClientId} clientName={currentClient?.name||'Organization'} rows={rows} users={members} intake={data.intake} canCreate={canAdd} onOpen={setSelected} onCreate={template=>setSelected(template?{template}: {})} error={error} onRetry={()=>setRevision(n=>n+1)} query={search} view={quick} showInactive={showInactive} onSearch={setSearch} onView={setQuick} onShowInactive={setShowInactive} intakeEditor={intakeEditor}/>
+  return <>{additionalPresentation&&!additional?<AdditionalPagePending className="baai-page" headerClassName="baai-page-head" title={`${currentClient.name} AI Governance`} subtitle={SUBTITLE} name="AI systems" loadingMessage="Loading AI systems…" error={error} onRetry={()=>setRevision(n=>n+1)}/>:additional?<><AIRegisterFirst clientName={currentClient?.name||'Organization'} rows={rows} users={members} intake={data.intake} canCreate={canAdd} onOpen={row=>{setGuided(true);setNativeEdit(false);setSelected(row);}} onCreate={()=>{setGuided(true);setNativeEdit(false);setSelected({});}} onProfile={()=>setProfileOpen(true)} onRelated={openRelated} query={search} view={quick} showInactive={showInactive} onSearch={setSearch} onView={setQuick} onShowInactive={setShowInactive}/>
     {rows.some(row=>row.relationship_integrity_warning)&&<p role="status" className="register-notice">{AI_RELATIONSHIP_NOTICE}</p>}
   </>:
   <Shell className="register-surface brawndo-ai-page">{reference?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · AI systems`} title="AI Governance" subtitle={SUBTITLE}>{addAction}</BrawndoPageHeader>:<PageHeader title="AI Governance" subtitle={SUBTITLE}
@@ -98,5 +134,9 @@ function AIWorkspace({identity}){
       </table></div>}
     </div>
   </Shell>}
-  {selected&&data&&<AIDrawer key={`${identity}:${selected.ai_system_id||'new'}`} open conceptPresentation={additional} template={selected.template} record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>}</>;
+  {relatedError&&<p role="alert" className="register-notice">{relatedError}</p>}
+  {selected&&data&&(guided&&!nativeEdit?(selected.ai_system_id?<AIRecordView refreshKey={relatedRevision} record={selected} clientId={currentClientId} users={members} canWrite={writable&&additional} onClose={()=>{setSelected(null);setRevision(value=>value+1);}} onEdit={()=>setNativeEdit(true)} onRelated={openRelated}/>:<AIOnboardingWizard contextAvailable={additional} clientId={currentClientId} users={members} onClose={()=>setSelected(null)} onVendor={id=>openRelated('vendors',id)} onSaved={()=>{setSelected(null);setRevision(n=>n+1);}}/>):<AIDrawer key={`${identity}:${selected.ai_system_id||'new'}`} open contextAvailable={!guided||additional} conceptPresentation={!nativeEdit&&(guided||additional)} template={selected.template} record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setNativeEdit(false);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>)}
+  {profileOpen&&data&&<AIProfileDialog clientId={currentClientId} clientName={currentClient?.name||'Organization'} intake={data.intake} canWrite={writable&&additional} onClose={()=>setProfileOpen(false)} onSaved={()=>{setProfileOpen(false);setRevision(n=>n+1);}}/>}
+  {nested&&<RecordDrawer {...nested} open clientId={currentClientId} users={members} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={open=>{if(!open){relatedRequest.current+=1;setNested(null);}}} onSaved={refreshRelatedRecord}/>}
+  </>;
 }

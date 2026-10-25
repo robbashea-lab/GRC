@@ -1,0 +1,12 @@
+import {useEffect,useRef,useState} from 'react';
+import api,{formatError} from '@/lib/api';
+import {catalog} from '@/lib/aiGovernance';
+import {AIModal} from './AIRegisterFirst';
+
+export default function AIProfileDialog({clientId,clientName,intake,canWrite,onClose,onSaved}) {
+  const mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  const [draft,setDraft]=useState(()=>({...intake,indicators:[...(intake.indicators||[])]})),[busy,setBusy]=useState(false),[error,setError]=useState('');
+  async function save(){if(!canWrite)return;setBusy(true);setError('');try{await api.post('/ai-intake',{client_id:clientId,usage:draft.usage,indicators:draft.indicators,expected_updated_at:intake.updated_at??null});if(mounted.current)onSaved();}catch(cause){if(mounted.current)setError(formatError(cause));}finally{if(mounted.current)setBusy(false);}}
+  return <AIModal title="AI profile" subtitle="Saved intake stays accessible without taking over the register." eyebrow="CLIENT AI PROFILE" onClose={()=>{if(!busy)onClose();}} footer={<><span className="hint">Client AI profile</span><div><button className="button secondary" disabled={busy} onClick={onClose}>Cancel</button>{canWrite&&<button className="button primary" disabled={busy} onClick={save}>{busy?'Saving…':'Save profile'}</button>}</div></>}><div className="notice blue">Existing AI systems, approvals and risks are retained.</div><fieldset disabled={!canWrite||busy}><section className="form-section"><h3>Does {clientName} use AI?</h3><div className="answer-group">{[['yes','Yes'],['no','No'],['unsure','Not sure']].map(([value,title])=><button key={value} type="button" className={`answer-btn ${draft.usage===value?'selected':''}`} aria-pressed={draft.usage===value} onClick={()=>setDraft({...draft,usage:value})}>{title}</button>)}</div></section><section className="form-section"><h3>What does {clientName} use it for?</h3><p className="hint">Select the uses that apply to this client.</p><div className="chips">{catalog.intake_indicators.map(value=><label className="chip" key={value}><input type="checkbox" checked={draft.indicators.includes(value)} onChange={event=>setDraft({...draft,indicators:event.target.checked?[...draft.indicators,value]:draft.indicators.filter(item=>item!==value)})}/>{value}</label>)}</div></section></fieldset>{error&&<p role="alert" className="field-error">{error}</p>}</AIModal>;
+}

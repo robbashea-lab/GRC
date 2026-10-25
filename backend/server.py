@@ -2839,7 +2839,7 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
 
 @risk_mutation
 @finding_mutation
-async def _create_entity(kind, body, user, identity=None):
+async def _create_entity(kind, body, user, identity=None, creation_metadata=None):
     if not _writable(user):
         raise HTTPException(403, "Read-only role")
     entity_type, Model, id_field, prefix = ENTITY_MAP[kind]
@@ -2876,6 +2876,9 @@ async def _create_entity(kind, body, user, identity=None):
     new_id = _uid(prefix)
     doc = {id_field: new_id, **parsed, "created_at": _now(), "updated_at": _now(),
            "created_by": user["user_id"]}
+    if creation_metadata:
+        doc.update(creation_metadata)
+        doc['_ai_onboarding_initial_version'] = doc['updated_at']
     if kind == "reviews":
         doc = review_occurrences.view(doc)
     _, portfolio_event = _portfolio_event_patch(entity_type, new_id, doc['client_id'], user, None, doc, doc['created_at'], 'create')
@@ -2894,9 +2897,11 @@ async def _finish_entity_create(kind, doc, user):
     if kind == "reviews":
         await policy_reviews.sync(db, doc, user)
     await audit(user, "Risk created" if kind == "risks" else "Vendor created" if kind == "vendors" else "create", entity_type, new_id, doc.get("client_id"), meta={'_portfolio_activity_event_id': doc.get('_portfolio_activity_last_event_id')})
-    if kind == "vendors":
+    if kind in ("vendors","risks") and doc.get('_ai_onboarding_command'):
+        await ai_governance.ai_onboarding.ensure_native_reviews(db,kind,doc,user,_now())
+    elif kind == "vendors":
         await vendor_governance.ensure_reviews(db,doc,user,_now())
-    if kind == "risks":
+    elif kind == "risks":
         await risk_lifecycle.ensure_review(db, doc, user, _now())
     if kind == "risks" and doc.get("vendor_id"):
         await audit(user,"Risk linked","vendor",doc["vendor_id"],doc["client_id"],meta={"risk_id":new_id})

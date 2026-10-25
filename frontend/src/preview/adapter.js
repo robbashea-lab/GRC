@@ -15,6 +15,7 @@ import { identityRequest } from './identityLifecycle';
 import { assignmentCandidates } from './assignmentEligibility';
 import { clientProjection, leadCandidates } from './clientRelationships';
 import {aiRequest,aiRelated} from './aiGovernance';
+import {aiOnboardingRequest} from './aiOnboarding';
 import {frameworkRequest,frameworkReverse,frameworkScope,prepareGuidedContext} from './frameworks';
 import { baselineState, baselineRecordVersions, saveBaseline } from './baseline';
 import axios from 'axios';
@@ -196,6 +197,7 @@ async function executePreviewAdapter(config,generation) {
     if (identity !== undefined) return method === 'get' ? respond(identity) : await save(identity);
     const approval = policyApprovalRequest(db, path, method, params, body);
     if (approval !== undefined) return method === 'get' ? respond(approval) : await save(approval);
+    if(path==='/ai_systems/onboard'&&method==='post')return await save(aiOnboardingRequest(db,body,config.headers?.['Idempotency-Key']));
     if(path==='/ai-intake'||kind==='ai_systems')return await save(aiRequest(db,path,method,params,body));
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
     if(kind==='framework_assessments'&&method==='post'&&name==='findings')return await save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
