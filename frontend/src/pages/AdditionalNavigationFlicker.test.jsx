@@ -18,7 +18,7 @@ jest.mock('react-router-dom',()=>({Link:({children,to,...props})=><a href={to} {
 }}),{virtual:true});
 jest.mock('@/components/AIIntake',()=>({useAIIntake:()=>({}),AIIntakeView:()=>null}));
 jest.mock('@/components/ContactAccess',()=>({useContactAccess:clientId=>({status:'ready',clientId,accounts:[]})}));
-jest.mock('@/components/AdditionalAI',()=>props=><div data-testid="loaded-additional"><h1>{props.clientName} AI Governance</h1><table><tbody>{props.rows.map(row=><tr key={row.ai_system_id}><td>{row.name}</td></tr>)}</tbody></table></div>);
+jest.mock('@/components/AIRegisterFirst',()=>props=><div data-testid="loaded-additional"><h1>{props.clientName} AI Governance</h1><table><tbody>{props.rows.map(row=><tr key={row.ai_system_id}><td>{row.name}</td></tr>)}</tbody></table></div>);
 jest.mock('@/components/AdditionalEvidence',()=>({__esModule:true,initialEvidenceView:()=>({}),default:props=><div data-testid="loaded-additional"><h1>{props.clientName} Evidence Library</h1></div>}));
 jest.mock('@/components/BrawndoAdditionalContacts',()=>props=><div data-testid="loaded-additional"><h1>{props.client.name} Contacts</h1><table><tbody>{props.rows.map(row=><tr key={row.contact_id}><td>{row.name}</td></tr>)}</tbody></table></div>);
 jest.mock('@/components/ContactWorkspace',()=>({__esModule:true,default:()=>null,ContactAccessPill:()=>null}));

@@ -14,6 +14,8 @@
 
 .airf.airf-page{margin:0;min-width:0}.airf.airf-dialog{display:block;position:fixed;inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;padding:0;gap:0;max-width:calc(100vw - 18px)}
 
+/* The expanded row spans the table's last cell, which otherwise inherits nowrap. */
+.airf .expanded-row .record-field{white-space:normal;overflow-wrap:anywhere}
 /* The native Radix portal is a sibling overlay, not an HTML dialog backdrop. */
 :root .ui-dialog.airf-dialog[data-state]{width:min(1120px,calc(100vw - 40px));max-width:1120px;max-height:calc(100dvh - 36px);overflow:hidden;border-radius:12px;box-shadow:0 24px 90px #06132b40}
 :root .ui-overlay[data-state]:has(+ .ui-dialog.airf-dialog){background:#05132870;backdrop-filter:blur(3px)}
