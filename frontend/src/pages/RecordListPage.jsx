@@ -738,7 +738,7 @@ function EntityListPage({ kind }) {
       <div className="bapv-page-head"><div><h1>{currentClient?.name||'Client'} Policies</h1><p>Policy library</p></div></div>
       <RegisterLoadError error={loadError||policyScopeError} onRetry={()=>{if(policyScopeError)setPolicyAlignmentRetry(value=>value+1);load();}} name="policies"/>
       {!loadError&&!policyScopeError&&<p role="status">Loading policies…</p>}
-    </section> : additionalPolicies ? <BrawndoAdditionalPolicies clientName={currentClient?.name||'Client'}
+    </section> : additionalPolicies ? <BrawndoAdditionalPolicies clientId={currentClientId} clientName={currentClient?.name||'Client'}
       rows={tableSource} filteredRows={filtered} reviews={policyReviews} users={users} theme={theme}
       programs={programs} assessments={policyAssessments} cisGroup={cisGroup} alignmentError={alignmentError}
       loading={showLoading} error={loadError} onRetry={load} q={q} onSearch={setQ}

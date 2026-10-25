@@ -31,7 +31,7 @@ const rows = [
   { policy_id: 'p2', client_id: 'demo_brawndo', title: 'Missing operations', category: 'Operations', status: 'draft', presence: 'reported_missing' },
   { policy_id: 'p3', client_id: 'demo_brawndo', title: 'Approved governance', category: 'Governance', status: 'approved', approved_at: '2026-10-01', version: '2' },
 ];
-const review = { review_id: 'actual-review', client_id: 'demo_brawndo', policy_ids: ['p1', 'p3'], title: 'Actual annual review', recurrence: 'annual', status: 'upcoming', due_date: '2026-11-01' };
+const review = { review_id: 'actual-review', client_id: 'demo_brawndo', baseline_key: 'policy-review', policy_ids: ['p1', 'p3'], title: 'Actual annual review', recurrence: 'annual', status: 'upcoming', due_date: '2026-11-01' };
 beforeAll(() => Object.defineProperty(global, 'crypto', { configurable: true, value: require('crypto').webcrypto }));
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true; sessionStorage.clear(); localStorage.clear(); sessionStorage.setItem('grc_client_id', 'demo_brawndo');

@@ -32,7 +32,7 @@ test('Vendor logo deferral preserves complete catalog/custom names, subtitles an
 
 test('policy presentation opens the full native record and keeps selection, row actions and scheduled review access', async () => {
   const policy = { policy_id: 'p1', client_id: 'demo_brawndo', title: 'Recorded policy', category: 'Governance', status: 'draft', next_review_date: '2026-11-01' };
-  const review = { review_id: 'r1', client_id: policy.client_id, policy_id: policy.policy_id, title: 'Actual annual review', recurrence: 'annual', status: 'upcoming', due_date: '2026-11-01' };
+  const review = { review_id: 'r1', client_id: policy.client_id, baseline_key: 'policy-review', policy_ids: [policy.policy_id], title: 'Actual annual review', recurrence: 'annual', status: 'upcoming', due_date: '2026-11-01' };
   const onOpen = jest.fn(), onOpenReview = jest.fn(), onToggle = jest.fn(), onView = jest.fn();
   await act(async () => root.render(<BrawndoAdditionalPolicies rows={[policy]} reviews={[review]} onOpen={onOpen} onOpenReview={onOpenReview} onToggle={onToggle} onView={onView} selectedIds={new Set()} rowActions={() => <button type="button">Native actions</button>} />));
   expect(container.textContent).toContain('Next:');
@@ -43,7 +43,7 @@ test('policy presentation opens the full native record and keeps selection, row 
   await click(container.querySelector('[data-testid="additional-policy-metric-missing"]')); expect(onView).toHaveBeenCalledWith('missing');
 });
 
-test('policy status bar groups saved states without reordering or changing native records', async () => {
+test('policy cards group saved states without reordering or changing native records', async () => {
   const base = { client_id: 'demo_brawndo', title: 'Recorded policy' };
   const rows = Object.freeze([
     Object.freeze({ ...base, policy_id: 'missing', presence: 'reported_missing', status: 'draft' }),
@@ -52,11 +52,12 @@ test('policy status bar groups saved states without reordering or changing nativ
     Object.freeze({ ...base, policy_id: 'unverified', status: 'approved' }),
   ]);
   await act(async () => root.render(<BrawndoAdditionalPolicies rows={rows} />));
-  expect([...container.querySelectorAll('.bap-status-bar i')].map(node => node.className)).toEqual(['approved', 'awaiting', 'missing', 'other']);
+  expect([...container.querySelectorAll('.pc-status-card strong')].map(node => node.textContent)).toEqual(['1', '1', '1']);
+  expect(container.querySelector('.pc-approval-track').getAttribute('aria-label')).toBe('1 of 4 policies approved');
   expect([...container.querySelectorAll('.bap-row[data-testid]')].map(node => node.dataset.testid)).toEqual(['policies-row-0', 'policies-row-1', 'policies-row-2', 'policies-row-3']);
   expect([...container.querySelectorAll('.bap-row[data-testid] .bap-state-label')].map(node => node.textContent)).toEqual(['Needs Creation', 'Approved', 'Draft', 'Needs Confirmation']);
   expect(rows.map(row => row.policy_id)).toEqual(['missing', 'approved', 'awaiting', 'unverified']);
-  expect(container.querySelector('.bapv-summary').textContent).toContain('CIS mappings are catalog support mappings, not evidence that a safeguard is implemented.');
+  expect(container.querySelector('.bapv-summary').textContent).toContain('Select a policy to open its record.');
 });
 
 test('vendor timeline and assurance cell open original native destinations without changing records', async () => {
@@ -86,7 +87,7 @@ test('policy review warning follows the native local-day overdue and 30-day wind
   jest.useFakeTimers();
   jest.setSystemTime(new Date(2026, 9, 16, 23, 30));
   const policy = { policy_id: 'p1', client_id: 'demo_brawndo', title: 'Recorded policy', status: 'draft' };
-  const review = { review_id: 'r1', client_id: policy.client_id, policy_id: policy.policy_id, recurrence: 'annual', status: 'upcoming' };
+  const review = { review_id: 'r1', client_id: policy.client_id, baseline_key: 'policy-review', policy_ids: [policy.policy_id], recurrence: 'annual', status: 'upcoming' };
   try {
     for (const [due_date, tone] of [['2026-10-15', 'bad'], ['2026-10-16', 'warn'], ['2026-11-15', 'warn'], ['2026-11-16', ''], [null, ''], ['unknown', '']]) {
       await act(async () => root.render(<BrawndoAdditionalPolicies rows={[policy]} reviews={[{ ...review, due_date }]} />));

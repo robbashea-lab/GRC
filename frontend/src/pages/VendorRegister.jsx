@@ -1,6 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import BrawndoAdditionalVendors from '@/components/BrawndoAdditionalVendors';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
+import {occurrenceId} from '@/lib/reviewOccurrences';
 import { useAdditionalSectionsSurface, useAdditionalSectionsPresentation } from '@/lib/brawndoAdditionalScope';
 import { useBrawndoTheme } from '@/lib/brawndoTheme';
 import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from "@/components/Register";
@@ -100,6 +101,12 @@ export default function VendorRegister() {
   const contractDate=v=>vendorWorkflow?v.contract_renewal:v.contract_renewal||v.contract_expiration||v.contract_end;
   const [rows, setRows] = useState([]);
   const [reviews,setReviews] = useState([]);
+  const [tasks,setTasks] = useState([]);
+  const [acceptedTaskScope,setAcceptedTaskScope] = useState(null);
+  const [taskDrawer,setTaskDrawer] = useState(null);
+  const previousPresentation = useRef(presentation);
+  const vendorWorkScope = quarterlyChartScope(user,auth.workspaceMode,currentClient);
+  const previousWorkScope = useRef(vendorWorkScope);
   const generation=useRef(0);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
@@ -135,26 +142,36 @@ export default function VendorRegister() {
   async function load() {
     if (!currentClientId) return;
     const token=++generation.current;
-    setLoading(true); setLoadError(''); setAcceptedRefresh(null);
+    setLoading(true); setLoadError(''); setAcceptedRefresh(null);setAcceptedTaskScope(null);
     try {
-      const [v, u, r] = await Promise.all([
+      const [v, u, r, t] = await Promise.all([
         api.get("/vendors", { params: { client_id: currentClientId } }).then((r) => r.data),
         api.get(`/clients/${currentClientId}/members`).then((r) => r.data),
         api.get("/reviews",{params:{client_id:currentClientId}}).then(r=>r.data),
+        // Native lists fail with 413 above their cap; never publish a partial work total.
+        presentation ? api.get('/tasks',{params:{client_id:currentClientId}}).then(response=>response.data) : Promise.resolve([]),
       ]);
       if(token!==generation.current) return;
-      if ([v,r].some(list => !Array.isArray(list) || list.some(row => !row || typeof row !== 'object' || row.client_id !== currentClientId))) {
+      if ([v,r,t].some(list => !Array.isArray(list) || list.some(row => !row || typeof row !== 'object' || row.client_id !== currentClientId))) {
         setLoadedClientId(null); setLoadedReadScope('');
         throw new Error('Vendors and linked Reviews could not be verified for this client.');
       }
-      setRows(v); setUsers(u || []); setReviews(r);setLoadedClientId(currentClientId);setLoadedReadScope(vendorReadScope);
+      setRows(v); setUsers(u || []); setReviews(r);setTasks(t);setLoadedClientId(currentClientId);setLoadedReadScope(vendorReadScope);
+      setAcceptedTaskScope(presentation?`${vendorReadScope}:${vendorWorkScope}`:null);
       setAcceptedRefresh({scope:vendorReadScope,at:new Date().toISOString()});
-    } catch (e) { if(token===generation.current){setRows([]);setReviews([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
+    } catch (e) { if(token===generation.current){setRows([]);setReviews([]);setTasks([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
     finally { if(token===generation.current)setLoading(false); }
   }
-  useEffect(() => { const activeGeneration=generation; setAcceptedRefresh(null);setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
+  useEffect(() => { const activeGeneration=generation; setAcceptedRefresh(null);setRows([]);setUsers([]);setReviews([]);setTasks([]);setTaskDrawer(null);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClientId,vendorReadScope]);
+  useEffect(() => {
+    // Later enrollment can enable CIS without changing the current client or actor.
+    const wasEligible=previousPresentation.current,oldScope=previousWorkScope.current;
+    previousPresentation.current=presentation;previousWorkScope.current=vendorWorkScope;
+    if(presentation&&(!wasEligible||oldScope!==vendorWorkScope))load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[presentation,vendorWorkScope]);
 
   const enriched = useMemo(() => rows.map(v=>{const value=vendorSignals(v,reviews);return {...value,_attention:vendorWorkflow?['review_overdue','review_due','contract_soon','renewal_soon','assurance'].some(view=>vendorMatches(value,view)):value._reviewDue||value._contractSoon||value._assuranceIssue};}),[rows,reviews,vendorWorkflow]);
 
@@ -209,9 +226,10 @@ export default function VendorRegister() {
       setSearchParams(next,{replace:true});
     };
     surface = <>
-      <BrawndoAdditionalVendors quarterlyChart scopeKey={quarterlyChartScope(user,auth.workspaceMode,currentClient)} recordOpen={drawer.open||addOpen} clientName={currentClient?.name||'Client'} rows={tableSource} filteredRows={filtered} reviews={reviews} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
-        onOpen={(record,tab)=>setDrawer({open:true,record,tab})}
-        onOpenReview={review=>navigate(`/reviews?id=${encodeURIComponent(review.review_id)}&client_id=${encodeURIComponent(currentClientId)}`)}
+      <BrawndoAdditionalVendors quarterlyChart scopeKey={vendorWorkScope} workAvailable={acceptedTaskScope===`${vendorReadScope}:${vendorWorkScope}`} recordOpen={drawer.open||addOpen||!!taskDrawer} clientName={currentClient?.name||'Client'} rows={tableSource} filteredRows={filtered} reviews={reviews} tasks={tasks} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
+        onOpen={(record,tab,assuranceId)=>setDrawer({open:true,record,tab,assuranceId})}
+        onOpenTask={record=>{if(record.client_id===currentClientId)setTaskDrawer(record);}}
+        onOpenReview={review=>navigate(`/reviews?id=${encodeURIComponent(review.review_id)}&client_id=${encodeURIComponent(currentClientId)}&occurrence=${encodeURIComponent(occurrenceId(review))}`)}
         actions={<><button type="button" onClick={()=>setTheme(theme==='light'?'dark':'light')}><Sun size={15} aria-hidden="true"/>{theme==='light'?'Dark':'Light'}</button><button type="button" onClick={exportCsv} data-testid="vendors-export"><Download size={15} aria-hidden="true"/>Export CSV</button>{canWrite&&<button type="button" onClick={()=>setAddOpen(true)} data-testid="new-vendor">+ New vendor</button>}</>}/>
       {recordLinkError&&<p role="alert">{recordLinkError}</p>}
     </>;
@@ -354,7 +372,8 @@ export default function VendorRegister() {
   // Appearance can withdraw during an organization refresh; native drafts keep the same mounted editors.
   return <>
     {surface}
-    {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
+    {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab,assuranceId:drawer.assuranceId}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
+    {taskDrawer&&taskDrawer.client_id===currentClientId&&<RecordDrawer open onOpenChange={open=>{if(!open)setTaskDrawer(null);}} kind="tasks" record={taskDrawer} schema={SCHEMAS.tasks.fields} clientId={currentClientId} users={users} onSaved={load}/>}
     {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}}/>}
   </>;
 }

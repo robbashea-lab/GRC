@@ -29,8 +29,9 @@ const modules=[
     cards:'.cis-risks-concept > .kpis',register:'.cis-risks-concept > section.register',matrix:'.cis-risks-concept .matrix-panel',
     savedMarker:'[data-date="2028-04-14"] .review-dot[data-event-id]',overdue:true,loadingFrame:'[data-testid="risks-navigation-loading"]'},
   {name:'Vendors',path:'/vendors',collection:'vendors',element:<VendorRegister/>,
-    chart:'.quarterly-program-timeline',period:'.qpt-year strong',agenda:'.qpt-coming button',markers:'.qpt-event',
-    cards:'.bapv-kstrip',register:'[aria-label="Vendor register"]',loadingFrame:'[data-testid="vendors-navigation-loading"]'},
+    chart:'.cv-quarter',period:'.cv-quarter-controls strong',agenda:'.cv-agenda-entry',markers:'.cv-event-dot',
+    cards:'.cv-kpis',register:'[aria-label="Vendor register"]',loadingFrame:'[data-testid="vendors-navigation-loading"]',
+    savedMarker:'[data-event-id$=":saved-vendor:review"]',overdue:true,overdueButtonText:'Overdue'},
 ];
 let root,container,actorSequence=0;
 // Mocked hook values need a fresh element to rerender; keep the same mounted route/controller.
@@ -114,7 +115,10 @@ test.each(modules.flatMap(module=>[1,2,3].flatMap(group=>['demo','standard'].map
     // These native agendas separate the unchanged saved past dates from upcoming work.
     if(module.overdue){
       expect(requiredNode(requiredChart(module),module.savedMarker).getAttribute('aria-label')).toContain('Retained native '+name.slice(0,-1));
-      await click(requiredNode(requiredChart(module),'[data-mode="overdue"]'));
+      const overdueControl=module.overdueButtonText
+        ? [...requiredChart(module).querySelectorAll('button')].find(button=>button.textContent.startsWith(module.overdueButtonText))
+        : requiredNode(requiredChart(module),'[data-mode="overdue"]');
+      await click(overdueControl);
     }
     expect(requiredChart(module).querySelectorAll(module.agenda).length).toBeGreaterThan(0);
     expect(requiredChart(module).querySelector(module.agenda).textContent).toContain('Retained native '+name.slice(0,-1));

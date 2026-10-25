@@ -7,58 +7,64 @@ import { AdditionalOwner, savedDate, relativePolicyDate } from './BrawndoAdditio
 import { personLabel } from '@/lib/people';
 import { formatAcceptedRefresh } from '@/lib/acceptedRefreshPresentation';
 import { Checkbox } from './ui/checkbox';
+import { annualPolicyReview } from '@/lib/policiesConcept';
 import './BrawndoAdditionalPolicyVendor.css';
+import './PoliciesConcept.css';
 
 const VIEWS = [['', 'All'], ['approved', 'Approved'], ['awaiting', 'Awaiting approval'], ['missing', 'Missing']];
+const STATUS_ICONS = [
+  <><path d="M14 2H5a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V8l-6-6Zm0 0v6h6"/><path d="m8 15 3 3 5-6"/></>,
+  <><path d="M13 2H5v20h7M13 2v6h6l-6-6Zm6 6v3"/><circle cx="16" cy="17" r="5"/><path d="M16 14v3l2 1"/></>,
+  <><path d="M14 2H5v20h14V8l-5-6Zm0 0v6h5"/><path d="m9 12 6 6m-6 0 6-6"/></>,
+];
 const statusTone = status => status === 'approved' ? 'approved' : status === 'needs_creation' ? 'missing' : ['draft', 'in_review', 'pending_approval'].includes(status) ? 'awaiting' : 'other';
-const STATUS_BAR_ORDER = { approved: 0, awaiting: 1, missing: 2, other: 3 };
 
 export default function BrawndoAdditionalPolicies({
-  clientName = 'Client', rows = [], filteredRows = rows, reviews = [], users = [], programs = [], assessments = [], cisGroup = 1,
+  clientId, clientName = 'Client', rows = [], filteredRows = rows, reviews = [], users = [], programs = [], assessments = [], cisGroup = 1,
   alignmentError = '', loading = false, error = '', onRetry, q = '', onSearch, view = '', onView,
   category = '', onCategory, onClear, table, onOpen, onOpenReview, onAlignment, actions, pendingDecisions, nativeControls,
   selectedIds, onToggle, onSelectAll, rowActions,
   theme = 'light', acceptedRefresh = null, refreshing = loading,
 }) {
   const overview = policyOverview(rows, reviews, programs, assessments, cisGroup);
-  const statusRows = [...rows].sort((a, b) => STATUS_BAR_ORDER[statusTone(policyStatus(a))] - STATUS_BAR_ORDER[statusTone(policyStatus(b))]);
   const visible = filteredRows.filter(row => policyVisualMatches(row, view, category, programs, assessments, cisGroup));
   const count = id => rows.filter(row => policyViewMatches(row, id) && policyVisualMatches(row, id, '', programs, assessments, cisGroup)).length;
   const figures = [
     ['approved', 'Approved', overview.approved], ['awaiting', 'Awaiting approval', overview.awaiting],
     ['missing', 'Missing', overview.missing], ['mapped', `Mapped to CIS IG${cisGroup}`, alignmentError ? null : overview.mapped],
   ];
-  const review = overview.review;
+  const { review, lastClosed } = annualPolicyReview(reviews, clientId || rows[0]?.client_id);
+  const unavailable = loading || !!error;
   const reviewDate = { next_review_date: review?.due_date };
   const reviewTone = policyViewMatches(reviewDate, 'overdue') ? 'bad' : policyViewMatches(reviewDate, 'due30') ? 'warn' : '';
   const refreshLabel = !refreshing && !error ? formatAcceptedRefresh(acceptedRefresh) : '';
   const header = (key, label) => table ? <ColumnControl table={table} column={{ ...table.columns.find(column => column.key === key), key, label }} /> : label;
   const clear = onClear || (() => { onSearch?.(''); onView?.(''); onCategory?.(''); table?.clear(); });
 
-  return <div className="brawndo-additional bap-page" data-theme={theme} data-testid="additional-policies">
+  return <div className="brawndo-additional bap-page policies-concept" data-theme={theme} data-testid="additional-policies">
     <div className="bapv-page-head"><div><h1>{clientName} Policies</h1><p>Policy register · {refreshing ? 'Loading policies…' : error ? 'Policies unavailable' : `${rows.length} ${rows.length === 1 ? 'policy' : 'policies'}`}{refreshLabel && ` · As of ${refreshLabel}`}</p></div><div className="bapv-head-actions">{actions}</div></div>
-    <section className="bapv-card bap-overview" aria-labelledby="bap-status-heading">
+    <section className="pc-overview" aria-label="Policy overview">
       <div className="bap-status">
-        <div><h2 id="bap-status-heading">Policy status</h2><p className="bapv-sub">{rows.length} {rows.length === 1 ? 'policy' : 'policies'} in the {clientName} register. Select a figure to filter.</p></div>
-        <div className="bap-status-bar" role="img" aria-label={loading ? 'Loading policy status' : `${overview.approved} approved, ${overview.awaiting} awaiting approval, ${overview.missing} missing, ${rows.length - overview.approved - overview.awaiting - overview.missing} other recorded states`}>
-          {!loading && statusRows.map(row => <i key={row.policy_id} className={statusTone(policyStatus(row))} title={`${row.title}: ${policyStatusLabel(policyStatus(row))}`} />)}
+        <h2 id="bap-status-heading">Policy status</h2>
+        <div className="pc-status-cards">
+          {figures.slice(0, 3).map(([id, label, value], index) => {
+            return <button type="button" className={`pc-status-card ${id}`} key={id} aria-pressed={view === id} disabled={unavailable} onClick={() => onView?.(view === id ? '' : id)} data-testid={`additional-policy-metric-${id}`}><span className="pc-status-icon"><svg viewBox="0 0 24 24" aria-hidden="true">{STATUS_ICONS[index]}</svg></span><span className="pc-card-copy"><strong>{unavailable ? '—' : value}</strong><b>{label}</b><small>{unavailable ? '—' : `of ${rows.length} ${rows.length === 1 ? 'policy' : 'policies'}`}</small></span></button>;
+          })}
         </div>
-        <div className="bap-legend"><span><i className="approved" />Approved {overview.approved}</span><span><i className="awaiting" />Awaiting approval {overview.awaiting}</span><span><i className="missing" />Missing {overview.missing}</span>{rows.some(row => statusTone(policyStatus(row)) === 'other') && <span><i className="other" />Other recorded states</span>}</div>
-        <div className="bapv-kstrip" aria-label="Policy summary. Select a figure to filter the register.">
-          {figures.map(([id, label, value]) => <button type="button" className="bapv-kcell" key={id} aria-pressed={view === id} disabled={id === 'mapped' && !!alignmentError} onClick={() => onView?.(view === id ? '' : id)} data-testid={`additional-policy-metric-${id}`}><span>{label}</span><strong>{loading || value === null ? '—' : value}{['approved', 'mapped'].includes(id) && <em>of {rows.length}</em>}</strong></button>)}
-        </div>
+        <div className="pc-approval-track" role="img" aria-label={unavailable ? 'Policy status unavailable' : `${overview.approved} of ${rows.length} policies approved`}><span style={{width: unavailable || !rows.length ? '0%' : `${overview.approved / rows.length * 100}%`}} /></div>
+        <div className="pc-status-foot"><span>{unavailable ? '—' : <><strong>{overview.approved} of {rows.length}</strong> policies approved</>}</span><button type="button" className="pc-mapping" data-testid="additional-policy-metric-mapped" aria-pressed={view === 'mapped'} disabled={unavailable || !!alignmentError} onClick={() => onView?.(view === 'mapped' ? '' : 'mapped')}>Mapped to CIS IG{cisGroup}: <strong>{unavailable || alignmentError ? '—' : `${overview.mapped} of ${rows.length}`}</strong></button></div>
       </div>
       <div className="bap-review" aria-labelledby="bap-review-heading">
-        <div className="bap-review-top"><h3 id="bap-review-heading">{review?.recurrence === 'annual' ? 'Annual policy review' : 'Policy review'}</h3>{review && <button type="button" className="bapv-link" onClick={() => onOpenReview?.(review)}>Open in Reviews <span aria-hidden="true">↗</span></button>}</div>
-        <div className="bap-review-date"><strong>{loading ? '—' : savedDate(review?.due_date) || 'Not scheduled'}</strong><small className={reviewTone}>{review ? `Next review · ${relativePolicyDate(review.due_date).toLowerCase()}` : 'No active linked policy review'}</small></div>
-        <dl><dt>Last reviewed</dt><dd>{savedDate(overview.lastClosed) || 'Not recorded'}</dd><dt>Assigned to</dt><dd>{review ? personLabel(users, review.owner_id) : 'Unassigned'}</dd></dl>
+        <div className="bap-review-top"><h3 id="bap-review-heading">Annual policy review</h3>{review && !unavailable && <button type="button" className="bapv-link" onClick={() => onOpenReview?.(review)}>Open in Reviews <span aria-hidden="true">↗</span></button>}</div>
+        <div className="bap-review-date"><strong>{unavailable ? '—' : savedDate(review?.due_date) || 'Not scheduled'}</strong><small className={reviewTone}>{unavailable ? '—' : review ? `Next review · ${relativePolicyDate(review.due_date).toLowerCase()}` : 'No active linked policy review'}</small></div>
+        <dl><dt>Last reviewed</dt><dd>{unavailable ? '—' : savedDate(lastClosed) || 'Not recorded'}</dd><dt>Assigned to</dt><dd>{unavailable ? '—' : review ? personLabel(users, review.owner_id) : 'Unassigned'}</dd></dl>
       </div>
     </section>
-    {pendingDecisions}
+    {(pendingDecisions || nativeControls) && <div className="pc-native-toolbar" aria-label="Native policy controls">{pendingDecisions}{nativeControls}</div>}
     <section className="bapv-card" aria-label="Policy register">
       <div className="bapv-filters">
         <label className="bapv-search"><span className="sr-only">Search policies</span><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search policies…" value={q} onChange={event => onSearch?.(event.target.value)} data-testid="policies-search" /></label>
-        <div className="bapv-segment" role="group" aria-label="Show policies">{VIEWS.map(([id, label]) => <button type="button" key={id} aria-pressed={view === id} onClick={() => onView?.(id)} data-testid={`additional-policy-view-${id || 'all'}`}>{label}<span>{loading ? '' : count(id)}</span></button>)}</div>
+        <div className="bapv-segment" role="group" aria-label="Show policies">{VIEWS.map(([id, label]) => <button type="button" key={id} aria-pressed={view === id} disabled={unavailable} onClick={() => onView?.(id)} data-testid={`additional-policy-view-${id || 'all'}`}>{label}<span>{unavailable ? '—' : count(id)}</span></button>)}</div>
         <label className="bapv-field">Category <select value={category} onChange={event => onCategory?.(event.target.value)} aria-label="Policy category"><option value="">All</option>{[...new Set(rows.map(row => row.category).filter(Boolean))].sort().map(value => <option key={value}>{value}</option>)}</select></label>
       </div>
       {table && <TableFilterChips table={table} />}
@@ -80,8 +86,7 @@ export default function BrawndoAdditionalPolicies({
           </div>;
         })}
       </div>
-      <div className="bapv-summary bap-summary"><span className="bap-summary-left"><span role="status">Showing {visible.length} of {rows.length} {rows.length === 1 ? 'policy' : 'policies'}</span>{view && <button type="button" className="bapv-filter-chip" onClick={() => onView?.('')}>{figures.find(item => item[0] === view)?.[1] || view} ×</button>}</span><span>CIS mappings are catalog support mappings, not evidence that a safeguard is implemented.</span></div>
+      <div className="bapv-summary bap-summary"><span className="bap-summary-left"><span role="status">{unavailable ? error ? 'Policy counts unavailable.' : 'Loading policies…' : `Showing ${visible.length} of ${rows.length} ${rows.length === 1 ? 'policy' : 'policies'}`}</span>{view && <button type="button" className="bapv-filter-chip" onClick={() => onView?.('')}>{figures.find(item => item[0] === view)?.[1] || view} ×</button>}</span><span>{selectedIds?.size ? `${selectedIds.size} selected` : 'Select a policy to open its record.'}</span></div>
     </section>
-    {nativeControls}
   </div>;
 }
