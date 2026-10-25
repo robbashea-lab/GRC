@@ -256,7 +256,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
         });
       }
       if (kind === "tasks") Object.assign(base,{source_type:record?.source_type || (record ? taskSource(record).type : "manual"),source_id:record?.source_id || null,assignee_id:record?.assignee_id ?? record?.owner_id ?? null,status:record?.status||"open",priority:pilot&&record?record.priority??'':record?.priority||"medium"});
-      if (!record && kind === "findings") Object.assign(base, {status: "open", severity: "medium",...(pilot?{source:'manual'}:{})});
+      if (!record && kind === "findings") Object.assign(base, {status: "open", severity: "medium"});
       if (!record && kind === "risks") Object.assign(base, {...(riskPilot?newRiskDefaults():{}),status: "identified", review_cadence: "annual", source_type: "manual"});
       if (!record && kind === "vendors") Object.assign(base, {status: "onboarding", criticality: "medium", review_frequency: "annual"});
       if(['policies','tasks'].includes(kind))base.governance_context=record?.governance_context||null;
@@ -916,6 +916,8 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
 
   // -------- Tab content dispatch --------
   function renderTabContent() {
+    // A create request can render before the previous saved-record tab is reset.
+    if (policyPilot&&!record) return renderOverview();
     if (policyPilot&&tab==='requirements') return <div className="approved-policy-requirements"><BrawndoPolicyDetails record={record} related={related} users={users} onOpen={openLinkedRecord}/><div className="space-y-5"><RequirementBasis readable kind="policies" record={record} related={related} onOpen={openLinkedRecord} loading={relatedLoading} error={relatedError} users={users}/><GovernanceContextFields expanded value={form.governance_context} cadence disabled={!canWrite||record?.status==='in_review'||approvalDirty||!!clientFields&&!clientFields.has('governance_context')} onChange={governance_context=>setForm(p=>({...p,governance_context}))}/>{[record.onboarding_note,record.applicability_rationale,record.governance_context?.cadence_rationale].filter(Boolean).map((text,i)=><p className="text-sm whitespace-pre-wrap" key={i}>{text}</p>)}{relatedError?<p role="alert">{relatedError}</p>:renderRelated()}</div></div>;
     if (policyPilot&&tab==='evidence') return <div className="space-y-5">{renderPolicyPanel()}<PolicyRetainedApproval record={record}/>{renderEvidence()}</div>;
     if (tab === "overview") return <>{record && !pilot && <div className="mb-4"><RecordSummary kind={kind} record={taskCompletion?.task || record} clientId={clientId} related={related} users={users} /></div>}{pilot&&kind==='findings'&&record&&<p className="mb-4 text-sm">Finding status: <StatusBadge value={record.status}/></p>}{riskPilot&&record&&<RiskSummary risk={form} users={users} statusLabel={user?.workspace_mode==='demo'?pilotRiskStatus(form.status):riskStatus(form.status)}/>} {renderOverview()}</>;

@@ -25,7 +25,7 @@ jest.mock('react-router-dom',()=>{
 jest.mock('@/components/RecordDrawer',()=>{
   const Actual=jest.requireActual('@/components/RecordDrawer').default;
   return function Drawer(props){
-    return mockNativeDrawer?<Actual {...props}/>:<section data-testid="linked-risk" data-kind={props.kind} data-id={props.record.risk_id||props.record.task_id}>
+    return mockNativeDrawer?<Actual {...props}/>:<section data-testid="linked-risk" data-kind={props.kind} data-id={props.kind==='tasks'?props.record.task_id:props.record.risk_id}>
       <button onClick={()=>props.onOpenChange(false)}>Close linked Risk</button>
     </section>;
   };
@@ -137,14 +137,14 @@ test('a row opening supersedes an unresolved linked read even if its transport r
 
 test.each(['risks','tasks'].flatMap(kind=>['resolve','reject'].map(outcome=>[kind,outcome])))('upcoming %s cancels a pending deep link before its opener settles, ignoring late %s',async(kind,outcome)=>{
   otherRisk.next_review=new Date().toISOString().slice(0,10);
-  const task={task_id:'selected-task',client_id:'demo_brawndo',title:'Selected upcoming task',status:'open',due_date:otherRisk.next_review};
+  const task={task_id:'selected-task',client_id:'demo_brawndo',risk_id:otherRisk.risk_id,title:'Selected upcoming task',status:'open',due_date:otherRisk.next_review};
   const oldLink=deferred(),chosen=deferred(),original=api.get.getMockImplementation();
   const chosenPath=kind==='risks'?'/risks/risk-b':'/tasks/selected-task';
   api.get.mockImplementation((path,...args)=>path==='/risks/risk-a'?oldLink.promise:path===chosenPath?chosen.promise
-    :path==='/related'?Promise.resolve({data:{tasks:kind==='tasks'?[task]:[]}}):original(path,...args));
+    :path==='/tasks'?Promise.resolve({data:kind==='tasks'?[task]:[]}):original(path,...args));
   await render();
   const title=kind==='risks'?otherRisk.title:task.title;
-  await click([...host.querySelectorAll('.qpt-coming button')].find(button=>button.textContent.includes(title)));
+  await click([...host.querySelectorAll('.agenda-entry')].find(button=>button.textContent.includes(title)));
   expect(api.get.mock.calls.find(([path])=>path==='/risks/risk-a')[1].signal.aborted).toBe(true);
   await act(async()=>chosen.resolve({data:kind==='risks'?otherRisk:task}));
   expect(linked().dataset).toMatchObject({kind,id:kind==='risks'?'risk-b':'selected-task'});

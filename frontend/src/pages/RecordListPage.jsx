@@ -236,6 +236,18 @@ function EntityListPage({ kind }) {
   const [selected, setSelected] = useState(null);
   const [linkedInitialValues,setLinkedInitialValues]=useState({});
   const [linkError,setLinkError]=useState('');
+  // New linked-Risk commands must retain both the page identity and the child's occurrence scope.
+  const reviewRiskIdentity=JSON.stringify([kind,user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,
+    auth.loading,!!auth.error,org.loading,!!org.error,currentClientId,currentClient?.client_id,currentClient?.status,currentClient?.archived,currentClient?.archived_at,
+    selectedClient(),location.pathname,new URLSearchParams(location.search).get('client_id'),open,selected?.client_id,selected?.review_id,
+    selected&&occurrenceId(selected),linkedInitialValues?.occurrence?.occurrence_id]);
+  const currentReviewRiskScope=useRef({identity:reviewRiskIdentity,mounted:false});
+  currentReviewRiskScope.current.identity=reviewRiskIdentity;
+  useEffect(()=>{
+    const scope=currentReviewRiskScope.current;
+    scope.mounted=true;
+    return()=>{scope.mounted=false;};
+  },[]);
   const [checked, setChecked] = useState(new Set());
   const [ownerPicker, setOwnerPicker] = useState(false);
   const [pickedOwner, setPickedOwner] = useState("");
@@ -276,9 +288,11 @@ function EntityListPage({ kind }) {
   const userMap = useMemo(() => peopleMap(users), [users]);
 
   const load = useCallback(async (options) => {
+    if(options?.accept&&!options.accept())return {ok:false};
     const sequence = ++loadSequence.current;
+    const accepted=()=>sequence===loadSequence.current&&(!options?.accept||options.accept());
     setAcceptedPolicyRefresh(null);
-    if (!currentClientId) { setRows([]); setLoading(false); return; }
+    if (!currentClientId) { setRows([]); setLoading(false); return {ok:false}; }
     setLoading(true); setLoadError('');
     try {
       let linkedPolicyReviews = [];
@@ -298,7 +312,7 @@ function EntityListPage({ kind }) {
           if (linked.length) { policy.next_review_date = next?.due_date || null; policy.schedule_from_reviews = true; }
         });
       }
-      if (sequence !== loadSequence.current) return;
+      if (!accepted()) return {ok:false};
       loadedReviewScope.current=reviewScope;
       loadedPolicyScope.current=policyScope;
       setPolicyReviews(linkedPolicyReviews);
@@ -306,12 +320,24 @@ function EntityListPage({ kind }) {
       // This acknowledges only the accepted Policies + Reviews load, not alignment or people data.
       if (kind === 'policies') setAcceptedPolicyRefresh({ scope: policyScope, instant: new Date().toISOString() });
       setChecked(new Set(options?.selection || []));
-    } catch (e) { if (sequence === loadSequence.current) {
+      return {ok:true};
+    } catch (e) { if (accepted()) {
       loadedReviewScope.current=''; loadedPolicyScope.current='';
       setRows([]); setPolicyReviews([]); setLoadError(formatError(e));
-    } }
+    } return {ok:false}; }
     finally { if (sequence === loadSequence.current) setLoading(false); }
   }, [kind, currentClientId,reviewScope,policyScope]);
+
+  async function refreshReviewRegisterAfterRisk(options) {
+    const identity=reviewRiskIdentity;
+    const accepted=()=>kind==='reviews'&&open&&(!selected||selected.client_id===currentClientId)
+      &&auth.loading===false&&org.loading===false&&!auth.error&&!org.error
+      &&currentReviewRiskScope.current.mounted&&currentReviewRiskScope.current.identity===identity
+      &&(!options?.accept||options.accept());
+    const result=await load({accept:accepted});
+    if(result?.ok!==true||!accepted())throw new Error('The Reviews register refresh could not be confirmed. Reload before continuing.');
+    return {ok:true};
+  }
 
   useEffect(() => { const sequence = loadSequence; setOpen(false); setSelected(null); setLinkedInitialValues({});setLinkError('');setRows([]); load(); return () => { sequence.current++; }; }, [load]);
 
@@ -413,6 +439,9 @@ function EntityListPage({ kind }) {
     if (isReviews) { next.set('tab', 'all'); next.delete('reviewView'); next.delete('signal'); }
     setParams(next, { replace: true });
   } });
+  // A native column sort takes precedence over the new occurrence-completion presentation sort.
+  const recentReviewHistory = reviewsPilot && reviewTab === "history" && !table.state.sort && (params.get("reviewHistorySort") === "recent" || (!params.has("reviewHistorySort") && !params.has("sortBy")));
+  const reviewSortValue = recentReviewHistory ? "completed_at:desc" : table.state.sort ? `${table.state.sort.key}:${table.state.sort.dir}` : `${sortBy}:${sortDir}`;
   const columnStatusActive = !!table.state.filters.status?.length;
   const setupEntry = useRef('');
   useEffect(() => {
@@ -709,7 +738,7 @@ function EntityListPage({ kind }) {
       <div className="bapv-page-head"><div><h1>{currentClient?.name||'Client'} Policies</h1><p>Policy library</p></div></div>
       <RegisterLoadError error={loadError||policyScopeError} onRetry={()=>{if(policyScopeError)setPolicyAlignmentRetry(value=>value+1);load();}} name="policies"/>
       {!loadError&&!policyScopeError&&<p role="status">Loading policies…</p>}
-    </section> : additionalPolicies ? <BrawndoAdditionalPolicies clientName={currentClient?.name||'Client'}
+    </section> : additionalPolicies ? <BrawndoAdditionalPolicies clientId={currentClientId} clientName={currentClient?.name||'Client'}
       rows={tableSource} filteredRows={filtered} reviews={policyReviews} users={users} theme={theme}
       programs={programs} assessments={policyAssessments} cisGroup={cisGroup} alignmentError={alignmentError}
       loading={showLoading} error={loadError} onRetry={load} q={q} onSearch={setQ}
@@ -727,7 +756,7 @@ function EntityListPage({ kind }) {
       pendingDecisions={<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       nativeControls={<>{hasUrlFilters&&<div className="bap-native-scope" data-testid="carried-scope-chip">{carriedScopeLabel}<button type="button" aria-label="Clear filter" data-testid="clear-carried-scope" onClick={()=>navigate(location.pathname,{replace:true})}>Clear filter</button></div>}
         <div className="bap-native-columns" aria-label="Additional native policy filters"><label>Review timing <select aria-label="Policy review timing" value={['due30','overdue'].includes(policyView)?policyView:''} onChange={event=>setParam('policyView',event.target.value)}><option value="">All review dates</option><option value="due30">Review due in 30 days</option><option value="overdue">Overdue reviews</option></select></label>{columns.filter(column=>['next_review_date','version'].includes(column.key)).map(column=><ColumnControl key={column.key} table={table} column={column}/>)}</div>{nativeBulkControls}</>}
-    /> : <Surface {...(reviewsPilot?{clientName:currentClient?.name||'Client',compactOverview:true,scopeKey:quarterlyChartScope(user,auth.workspaceMode,currentClient),onOpenReview:openReviewRow,rows:loading||loadError?[]:tableSource,available:!loading&&!loadError&&loadedReviewScope.current===reviewScope,recordOpen:open,theme,view:reviewTab,onView:setReviewTab,actions:<><SurfaceThemeAction theme={theme} onTheme={()=>setTheme(theme==='light'?'dark':'light')}/><SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId||!rows.length} testid="export-reviews-button"/>{canWrite&&<PrimaryAction label="New review" testid="create-reviews-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}</>}: {className:`register-surface${policiesPilot?' bpage':''}`, 'data-layout':isReviews?'reviews':undefined,'data-theme':policiesPilot?theme:undefined})}>
+    /> : <Surface {...(reviewsPilot?{clientName:currentClient?.name||'Client',users,scopeKey:quarterlyChartScope(user,auth.workspaceMode,currentClient),onOpenReview:openReviewRow,rows:loading||loadError?[]:tableSource,available:!loading&&!loadError&&loadedReviewScope.current===reviewScope,recordOpen:open,theme,view:reviewTab,onView:setReviewTab,actions:<><SurfaceThemeAction theme={theme} onTheme={()=>setTheme(theme==='light'?'dark':'light')}/><SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId||!rows.length} testid="export-reviews-button"/>{canWrite&&<PrimaryAction label="New review" testid="create-reviews-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}</>}: {className:`register-surface${policiesPilot?' bpage':''}`, 'data-layout':isReviews?'reviews':undefined,'data-theme':policiesPilot?theme:undefined})}>
       {!reviewsPilot&&(policiesPilot ? <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Policy library`} title="Policies">
           <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId || rows.length === 0} testid="export-policies-button" />
           {canWrite && <PrimaryAction label="New Policy" testid="create-policies-button" onClick={() => { setSelected(null); setOpen(true); }} />}
@@ -781,7 +810,7 @@ function EntityListPage({ kind }) {
             </Select>
           )
         )}
-        {reviewsPilot&&<div className="bdr-filter-right"><label>Basis <select aria-label="Review basis" value={params.get('basis')||''} onChange={event=>setParam('basis',event.target.value)}><option value="">All</option>{[...new Set(tableSource.map(basisSummary))].sort().map(basis=><option key={basis}>{basis}</option>)}</select></label><label>Sort by <select aria-label="Sort reviews" value={sortBy+':'+sortDir} onChange={event=>{const [by,dir]=event.target.value.split(':');table.setSort(null);const next=new URLSearchParams(params);next.set('sortBy',by);next.set('sortDir',dir);setParams(next,{replace:true});}}><option value="due_date:asc">Due date, soonest first</option><option value="due_date:desc">Due date, latest first</option><option value="title:asc">Review A–Z</option><option value="owner_id:asc">Owner A–Z</option><option value="recurrence:asc">Cadence</option></select></label></div>}
+        {reviewsPilot&&<div className="bdr-filter-right"><label>Review origin <select aria-label="Review basis" value={params.get('basis')||''} onChange={event=>setParam('basis',event.target.value)}><option value="">All</option>{[...new Set(tableSource.map(basisSummary))].sort().map(basis=><option key={basis}>{basis}</option>)}</select></label><label>Sort by <select aria-label="Sort reviews" value={reviewSortValue} onChange={event=>{const [by,dir]=event.target.value.split(':');table.setSort(null);const next=new URLSearchParams(params);if(by==='completed_at'){next.set('reviewHistorySort','recent');}else{next.set('reviewHistorySort','native');next.set('sortBy',by);next.set('sortDir',dir);}setParams(next,{replace:true});}}>{table.state.sort&&!['due_date:asc','due_date:desc','title:asc','owner_id:asc','recurrence:asc'].includes(reviewSortValue)&&<option value={reviewSortValue}>{columns.find(column=>column.key===table.state.sort.key)?.label||'Column'} · {table.state.sort.dir==='asc'?'Ascending':'Descending'}</option>}{reviewTab==='history'&&<option value="completed_at:desc">Recently completed</option>}<option value="due_date:asc">{reviewTab==='overdue'?'Most overdue':'Next due first'}</option><option value="due_date:desc">Due date, latest first</option><option value="title:asc">Review title</option><option value="owner_id:asc">Owner name</option><option value="recurrence:asc">Cadence</option></select></label></div>}
         {!policiesPilot && !reviewsPilot && <RegisterCount shown={filtered.length} total={isReviews && !columnStatusActive && signal?.id!=='recent' ? tableSource.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : tableSource.length} />}
       </div>
 
@@ -790,7 +819,7 @@ function EntityListPage({ kind }) {
       <div className="register-body">
         <TableFilterChips table={table} />
         <RegisterLoadError error={loadError} onRetry={load} name="records" />
-        {reviewsPilot?<BrawndoReviewRows rows={filtered} users={users} checked={checked} toggleOne={toggleOne} toggleAll={toggleAll} allChecked={allChecked} history={reviewTab==='history'} widths={reviewWidths} loading={showLoading} error={loadError} onOpen={openReviewRow} rowMenu={rowActions} controls={<table><thead><tr>{columns.map(column=>['title','owner_id','status','due_date','recurrence'].includes(column.key)?<ReviewColumnHeader key={column.key} table={table} column={column} width={reviewWidths[column.key]} onResize={(key,width,initial)=>setReviewWidths(previous=>({...initial,...previous,[key]:width}))}/>:<th key={column.key}><ColumnControl table={table} column={column}/></th>)}</tr></thead></table>}/>:<>
+        {reviewsPilot?<BrawndoReviewRows rows={filtered} users={users} checked={checked} toggleOne={toggleOne} toggleAll={toggleAll} allChecked={allChecked} history={reviewTab==='history'} sortBy={recentReviewHistory?'completed_at':sortBy} sortDir={recentReviewHistory?'desc':sortDir} widths={reviewWidths} loading={showLoading} error={loadError} onOpen={openReviewRow} rowMenu={rowActions} controls={<table><thead><tr>{columns.map(column=>['title','owner_id','status','due_date','recurrence'].includes(column.key)?<ReviewColumnHeader key={column.key} table={table} column={column} width={reviewWidths[column.key]} onResize={(key,width,initial)=>setReviewWidths(previous=>({...initial,...previous,[key]:width}))}/>:<th key={column.key}><ColumnControl table={table} column={column}/></th>)}</tr></thead></table>}/>:<>
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-layout={isReviews ? 'reviews' : undefined}>
           <table className="w-full" style={isReviews&&Object.keys(reviewWidths).length?{width:72+displayColumns.reduce((sum,c)=>sum+(reviewWidths[c.key]||REVIEW_COLUMN_MIN[c.key]||90),0)}:undefined}>
             {isReviews && <colgroup><col className="register-col-check" />{displayColumns.map(c => <col key={c.key} style={reviewWidths[c.key]?{width:reviewWidths[c.key]}:undefined} className={c.primary ? 'register-col-title' : c.user ? 'register-col-owner' : c.date ? 'register-col-date' : `register-col-${c.key}`} />)}<col className="register-col-actions" /></colgroup>}
@@ -892,6 +921,7 @@ function EntityListPage({ kind }) {
         schema={schema.fields}
         clientId={currentClientId}
         users={users}
+        onRiskLinked={kind==='reviews'?refreshReviewRegisterAfterRisk:undefined}
         onSaved={saved=>{if(policiesPilot&&saved&&!selected)setSelected(saved);load();}}
       />
       {linkError&&<p role="alert">{linkError}</p>}

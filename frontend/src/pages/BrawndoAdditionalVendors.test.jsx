@@ -228,3 +228,38 @@ test('configured CIS standard client retains appearance while invalid group is d
   expect(container.querySelector('[data-testid="additional-vendors"]')).toBeNull();
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
+
+test('later CIS enrollment withholds work totals until the exact Tasks read succeeds', async () => {
+  const ordinary={client_id:'demo_brawndo',name:'Brawndo'};
+  mockOrg={currentClientId:'demo_brawndo',currentClient:ordinary,clients:[ordinary]};
+  await act(async()=>root.render(<VendorRegister/>));
+  expect(api.get.mock.calls.some(([path])=>path==='/tasks')).toBe(false);
+  let resolveTasks;
+  api.get.mockImplementation(async path=>({data:path==='/vendors'?[vendor]:path==='/tasks'?await new Promise(resolve=>{resolveTasks=resolve;}):[]}));
+  mockOrg={currentClientId:'demo_brawndo',currentClient:{...cisClient('demo_brawndo',1),name:'Brawndo'},clients:[cisClient('demo_brawndo',1)]};
+  await act(async()=>root.render(<VendorRegister/>));
+  const pending=container.querySelector('[data-testid="additional-vendor-metric-due30"] strong');
+  expect(pending?.textContent||'—').toBe('—');
+  expect(resolveTasks).toBeInstanceOf(Function);
+  await act(async()=>resolveTasks([{client_id:'demo_brawndo',vendor_id:'v1',task_id:'owned-action',source_type:'vendor',source_id:'v1',status:'open',due_date:new Date().toISOString().slice(0,10)}]));
+  expect(container.querySelector('[data-testid="additional-vendor-metric-due30"] strong').textContent).toBe('1');
+  await click(container.querySelector('[data-testid="additional-vendor-metric-due30"]'));
+  await click(document.querySelector('.cv-list-items>button'));
+  expect(mockDrawerProps.kind).toBe('tasks');expect(mockDrawerProps.record.task_id).toBe('owned-action');
+});
+
+test('failed or foreign Tasks reads cannot publish a successful zero work total', async()=>{
+  api.get.mockImplementation(async path=>{if(path==='/tasks')throw new Error('Task population unavailable');return {data:path==='/vendors'?[vendor]:[]};});
+  await act(async()=>root.render(<VendorRegister/>));
+  expect(container.textContent).toContain('Task population unavailable');
+  expect(container.querySelector('[data-testid="additional-vendor-metric-due30"] strong')).toBeNull();
+  expect(container.querySelector('[data-testid="native-vendor-drawer"]')).toBeNull();
+});
+test('Review list navigation binds the exact current occurrence, not only the recurring parent',async()=>{
+  const review={client_id:'demo_brawndo',vendor_id:'v1',review_id:'review/exact',current_occurrence_id:'occ:actual',status:'upcoming',vendor_purpose:'vendor',due_date:new Date().toISOString().slice(0,10)};
+  api.get.mockImplementation(async path=>({data:path==='/vendors'?[vendor]:path==='/reviews'?[review]:[]}));
+  await act(async()=>root.render(<VendorRegister/>));
+  await click(container.querySelector('[data-testid="additional-vendor-metric-due30"]'));
+  await click(document.querySelector('.cv-list-items>button'));
+  expect(mockNavigate).toHaveBeenCalledWith('/reviews?id=review%2Fexact&client_id=demo_brawndo&occurrence=occ%3Aactual');
+});

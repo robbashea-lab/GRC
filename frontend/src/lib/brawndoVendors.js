@@ -5,7 +5,7 @@ export const assuranceNames={'SOC 2':'SOC 2 Report','ISO 27001':'ISO/IEC 27001 C
 export const assuranceStates={requested:'Requested',received:'Received',reviewed:'Reviewed',awaiting_update:'Awaiting Update'};
 export const assuranceName=a=>a.document_name||assuranceNames[a.type]||a.type;
 // Legacy receipt never establishes review. Retain ambiguous historical dates as recorded.
-export const assuranceState=a=>assuranceStates[a.review_status]|| (a.last_reviewed?'Reviewed':a.received_at?'Received':'Not recorded');
+export const assuranceState=a=>Object.prototype.hasOwnProperty.call(assuranceStates,a.review_status)?assuranceStates[a.review_status]:(a.last_reviewed?'Reviewed':a.received_at?'Received':'Not recorded');
 export const assuranceKey=(a,index)=>a.assurance_id||`legacy:${index}`;
 export function assuranceAttention(a,now=new Date()){
   if(a.superseded_by)return [];
