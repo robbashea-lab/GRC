@@ -30,7 +30,7 @@ const priorities={critical:4,immediate:4,high:3,medium:2,moderate:2,low:1,inform
 export default function BrawndoDemoActionItems({suspended=false}){
   const [theme]=useBrawndoTheme();
   const now=useActionConceptClock();
-  const auth=useAuth(),{user}=auth,{currentClientId,currentClient}=useOrg();
+  const auth=useAuth(),{user}=auth,org=useOrg(),{currentClientId,currentClient}=org;
   const {data,users,loading,error,load}=useActionRegisterData(currentClientId,{retainOnRefreshError:true});
   const [params,setParams]=useSearchParams(),location=useLocation(),navigationType=useNavigationType();
   const [drawer,setDrawer]=useState(null),[linkError,setLinkError]=useState(''),[refreshError,setRefreshError]=useState('');
@@ -97,6 +97,22 @@ export default function BrawndoDemoActionItems({suspended=false}){
   }
   async function saved(){const result=await load();if(mounted.current&&result?.ok===false)throw new Error('The record was saved, but the register could not refresh. '+result.error);}
   async function creationSaved(){try{await saved();if(mounted.current)setRefreshError('');}catch(failure){if(mounted.current)setRefreshError(failure.message);}}
+  // Only the new Finding-to-Risk command needs this acknowledged parent read.
+  // Other native saves keep their established callback and draft behavior.
+  const riskRefreshKey=JSON.stringify([user?.user_id,user?.role,auth.workspaceMode,user?.workspace_mode,currentClientId,currentClient?.client_id,
+    drawer?.kind,drawer?.record?.client_id,drawer?.record?.finding_id,drawer?.record?.task_id,!!suspended,auth.loading,org.loading,auth.error,org.error]);
+  const riskRefreshContext=useRef({key:riskRefreshKey,generation:0});
+  if(riskRefreshContext.current.key!==riskRefreshKey){riskRefreshContext.current.key=riskRefreshKey;riskRefreshContext.current.generation++;}
+  const riskRefreshGeneration=riskRefreshContext.current.generation;
+  async function riskLinked(){
+    const current=()=>mounted.current&&riskRefreshContext.current.generation===riskRefreshGeneration&&!suspended
+      &&auth.loading===false&&org.loading===false&&!auth.error&&!org.error&&drawer?.record?.client_id===currentClientId;
+    const failure='The register refresh is unconfirmed. Reload the register before continuing.';
+    if(!current())throw new Error(failure);
+    const result=await load();
+    if(!current()||result?.ok!==true)throw new Error(failure+(result?.error?' '+result.error:''));
+    return result;
+  }
   const total=metrics.active.length,quickLabels={active:'Active tickets',upcoming:'Due in 30 days',overdue:'Overdue',unassigned:'Needs an owner',high_critical:'High-severity findings',unscheduled:'Unscheduled',...Object.fromEntries(windows)};
   return <BrawndoSurface className="brawndo-demo-actions cia-root cia-page" data-visual-surface="action-items">
     <BrawndoPageHeader title={`${currentClient.name} Action Items`} subtitle="Corrective actions from findings, risks, reviews and manual entries"
@@ -122,6 +138,6 @@ export default function BrawndoDemoActionItems({suspended=false}){
         </tr>;
       })}</tbody></table>{!filtered.length&&<p className="bda-empty">No tickets match these filters.</p>}</div>}
     </section>
-    {drawer&&<RecordDrawer key={drawer.ticketKey||'create:'+drawer.kind} {...drawer} presentation={drawer.record&&['tasks','findings'].includes(drawer.kind)?'brawndo-demo-actions':undefined} closeRequest={closeRequest} onCloseCancelled={keepEditing} open clientId={currentClientId} users={users} onSaved={drawer.record&&['tasks','findings'].includes(drawer.kind)?saved:creationSaved} onOpenChange={value=>{if(!value)drawerClosed();}}/>}
+    {drawer&&<RecordDrawer key={drawer.ticketKey||'create:'+drawer.kind} {...drawer} presentation={drawer.record&&['tasks','findings'].includes(drawer.kind)?'brawndo-demo-actions':undefined} closeRequest={closeRequest} onCloseCancelled={keepEditing} open clientId={currentClientId} users={users} onSaved={drawer.record&&['tasks','findings'].includes(drawer.kind)?saved:creationSaved} onRiskLinked={drawer.record&&(drawer.kind==='findings'||drawer.kind==='tasks'&&drawer.record.finding_id)?riskLinked:undefined} onOpenChange={value=>{if(!value)drawerClosed();}}/>}
   </BrawndoSurface>;
 }

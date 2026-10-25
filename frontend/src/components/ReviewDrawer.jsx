@@ -54,7 +54,7 @@ const date = value => value ? new Date(String(value).slice(0,10) + 'T00:00:00').
 const outcome = o => o.outcome === 'no_findings' ? 'No findings recorded' : o.outcome === 'findings_raised' ? `${o.finding_count} Finding${o.finding_count === 1 ? '' : 's'}` : o.outcome || 'Legacy completion';
 const evaluationFields=[['conclusion','Reviewer conclusion',20000],['tested_scope','Scope examined',4000],['tested_period','Period examined',4000],['no_evidence_reason','Supporting records / reason no separate artifact is appropriate',4000]];
 
-export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,initialValues,reviewsPilot=false}) {
+export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,onRiskLinked,initialValues,reviewsPilot=false}) {
   const {user,workspaceMode,error:authError} = useAuth();
   const {currentClient,currentClientId,error:orgError}=useOrg()||{};
   const pilot=(reviewsPilot || isPrestigeReference(clientId,user)) && isReferenceWorkflow(clientId,user,currentClient) && (!record || record.client_id===clientId);
@@ -156,9 +156,11 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       ...(defaultPolicyCadence ? {recurrence:value === 'policy' ? 'annual' : 'none'} : {})}));
   }
 
-  const reload = useCallback(async () => {
-    if (!open || !rid || !oid) return;
+  const reload = useCallback(async (options) => {
+    if (!open || !rid || !oid) return {ok:false};
     const version = generation.current;
+    const accepted=()=>version===generation.current&&(!options?.accept||options.accept());
+    if(!accepted())return {ok:false};
     try {
       const [h,r,c,a] = await Promise.all([
         api.get(`/reviews/${current.review_id}/history`),
@@ -166,13 +168,24 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
         api.get('/comments',{params:{entity_type:'reviews',entity_id:rid,occurrence_id:oid}}),
         api.get(`/reviews/${rid}/activity`,{params:selected ? {occurrence_id:oid} : {}})
       ]);
-      if (version !== generation.current) return;
+      if (!accepted()) return {ok:false};
       setHistory(h.data); setRelated(r.data);setBasisError('');
       if(current.risk_id) {const risk=r.data.risks?.find(x=>x.risk_id===current.risk_id); if(risk){const next={likelihood_score:risk.likelihood_score,impact_score:risk.impact_score,assessment_rationale:risk.assessment_rationale||'',treatment:risk.treatment||(pilot?'':'monitor')},base=riskBase.current;setRiskDraft(previous=>previous&&base?Object.fromEntries(Object.keys(next).map(k=>[k,previous[k]!==base[k]?previous[k]:next[k]])):next);riskBase.current=next;}} setEvidenceVersion(v=>v+1); setComments(c.data); setActivity(a.data);
-    } catch(e) { if (version === generation.current) {setBasisError(formatError(e));toast.error(formatError(e));} }
-    finally {if(version===generation.current)setBasisLoading(false);}
+      return {ok:true};
+    } catch(e) { if (accepted()) {setBasisError(formatError(e));toast.error(formatError(e));} return {ok:false}; }
+    finally {if(accepted())setBasisLoading(false);}
   }, [open,rid,oid,current?.review_id,current?.risk_id,selected,pilot]);
   useEffect(() => { reload(); },[reload]);
+  // Only the new linked-Risk command requires confirmed parent refresh before success.
+  async function refreshAfterLinkedRisk() {
+    const version=generation.current,identity=focusIdentity;
+    const isCurrent=()=>version===generation.current&&identity===committedDetail.current?.identity;
+    const unconfirmed=()=>new Error('The Review refresh could not be confirmed. Reload before continuing.');
+    const result=await reload({accept:isCurrent});
+    if(result?.ok!==true||!isCurrent())throw unconfirmed();
+    const parentResult=onRiskLinked?await onRiskLinked({accept:isCurrent}):await onSaved?.();
+    if(parentResult?.ok===false||!isCurrent())throw unconfirmed();
+  }
   // The linked ticket calls this from its native close-autofocus teardown.
   function returnFromHistoryTicket(){
     const receipt=historyLinkedReturn.current;historyLinkedReturn.current=null;
@@ -382,7 +395,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       setLinked(null);reload();
       const target=cisBriefOpener.current;cisBriefOpener.current=null;
       if(target)requestAnimationFrame(()=>{if(target.isConnected)target.focus({preventScroll:true});});
-    }}} onSaved={() => {reload();onSaved?.();}} />}
+    }}} onRiskLinked={refreshAfterLinkedRisk} onSaved={() => {reload();onSaved?.();}} />}
     <Sheet open={!!finding} onOpenChange={v => {if (!v) leave(()=>setFinding(null),true);}}>
       <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className={'w-full sm:max-w-xl overflow-y-auto'+(findingPresentation?' brawndo-review-finding':'')} data-testid="review-finding-form"><SheetHeader className={findingPresentation?'review-finding-header':undefined}><div className={findingPresentation?'review-finding-heading':undefined}>{findingPresentation&&<span className="review-finding-icon" aria-hidden="true"><AlertTriangle size={18}/></span>}<SheetTitle>Raise Finding</SheetTitle></div>{findingPresentation&&<div className="review-finding-context"><span>From {current.title}</span><span>{current.period||reviewSchedule(current).period} occurrence</span></div>}</SheetHeader>
         {finding && <form className={findingPresentation?'review-finding-form':'mt-5 space-y-4'} onSubmit={e => {e.preventDefault();run(async () => {await createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>

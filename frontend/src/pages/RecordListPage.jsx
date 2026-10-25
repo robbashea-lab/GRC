@@ -236,6 +236,18 @@ function EntityListPage({ kind }) {
   const [selected, setSelected] = useState(null);
   const [linkedInitialValues,setLinkedInitialValues]=useState({});
   const [linkError,setLinkError]=useState('');
+  // New linked-Risk commands must retain both the page identity and the child's occurrence scope.
+  const reviewRiskIdentity=JSON.stringify([kind,user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,
+    auth.loading,!!auth.error,org.loading,!!org.error,currentClientId,currentClient?.client_id,currentClient?.status,currentClient?.archived,currentClient?.archived_at,
+    selectedClient(),location.pathname,new URLSearchParams(location.search).get('client_id'),open,selected?.client_id,selected?.review_id,
+    selected&&occurrenceId(selected),linkedInitialValues?.occurrence?.occurrence_id]);
+  const currentReviewRiskScope=useRef({identity:reviewRiskIdentity,mounted:false});
+  currentReviewRiskScope.current.identity=reviewRiskIdentity;
+  useEffect(()=>{
+    const scope=currentReviewRiskScope.current;
+    scope.mounted=true;
+    return()=>{scope.mounted=false;};
+  },[]);
   const [checked, setChecked] = useState(new Set());
   const [ownerPicker, setOwnerPicker] = useState(false);
   const [pickedOwner, setPickedOwner] = useState("");
@@ -276,9 +288,11 @@ function EntityListPage({ kind }) {
   const userMap = useMemo(() => peopleMap(users), [users]);
 
   const load = useCallback(async (options) => {
+    if(options?.accept&&!options.accept())return {ok:false};
     const sequence = ++loadSequence.current;
+    const accepted=()=>sequence===loadSequence.current&&(!options?.accept||options.accept());
     setAcceptedPolicyRefresh(null);
-    if (!currentClientId) { setRows([]); setLoading(false); return; }
+    if (!currentClientId) { setRows([]); setLoading(false); return {ok:false}; }
     setLoading(true); setLoadError('');
     try {
       let linkedPolicyReviews = [];
@@ -298,7 +312,7 @@ function EntityListPage({ kind }) {
           if (linked.length) { policy.next_review_date = next?.due_date || null; policy.schedule_from_reviews = true; }
         });
       }
-      if (sequence !== loadSequence.current) return;
+      if (!accepted()) return {ok:false};
       loadedReviewScope.current=reviewScope;
       loadedPolicyScope.current=policyScope;
       setPolicyReviews(linkedPolicyReviews);
@@ -306,12 +320,24 @@ function EntityListPage({ kind }) {
       // This acknowledges only the accepted Policies + Reviews load, not alignment or people data.
       if (kind === 'policies') setAcceptedPolicyRefresh({ scope: policyScope, instant: new Date().toISOString() });
       setChecked(new Set(options?.selection || []));
-    } catch (e) { if (sequence === loadSequence.current) {
+      return {ok:true};
+    } catch (e) { if (accepted()) {
       loadedReviewScope.current=''; loadedPolicyScope.current='';
       setRows([]); setPolicyReviews([]); setLoadError(formatError(e));
-    } }
+    } return {ok:false}; }
     finally { if (sequence === loadSequence.current) setLoading(false); }
   }, [kind, currentClientId,reviewScope,policyScope]);
+
+  async function refreshReviewRegisterAfterRisk(options) {
+    const identity=reviewRiskIdentity;
+    const accepted=()=>kind==='reviews'&&open&&selected?.client_id===currentClientId
+      &&auth.loading===false&&org.loading===false&&!auth.error&&!org.error
+      &&currentReviewRiskScope.current.mounted&&currentReviewRiskScope.current.identity===identity
+      &&(!options?.accept||options.accept());
+    const result=await load({accept:accepted});
+    if(result?.ok!==true||!accepted())throw new Error('The Reviews register refresh could not be confirmed. Reload before continuing.');
+    return {ok:true};
+  }
 
   useEffect(() => { const sequence = loadSequence; setOpen(false); setSelected(null); setLinkedInitialValues({});setLinkError('');setRows([]); load(); return () => { sequence.current++; }; }, [load]);
 
@@ -895,6 +921,7 @@ function EntityListPage({ kind }) {
         schema={schema.fields}
         clientId={currentClientId}
         users={users}
+        onRiskLinked={kind==='reviews'?refreshReviewRegisterAfterRisk:undefined}
         onSaved={saved=>{if(policiesPilot&&saved&&!selected)setSelected(saved);load();}}
       />
       {linkError&&<p role="alert">{linkError}</p>}

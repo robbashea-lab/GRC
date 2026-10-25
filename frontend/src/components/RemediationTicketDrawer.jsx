@@ -10,6 +10,7 @@ import AssigneeSelect from './AssigneeSelect';
 import EvidencePanel from './EvidencePanel';
 import RecordDrawer from './RecordDrawer';
 import {useAuth} from '@/context/AuthContext';
+import {useOrg} from '@/context/OrgContext';
 import {canOperate,editableFields,isAssignedTo,isInternal} from '@/lib/permissions';
 import {useActionRegisterData} from '@/lib/useActionRegisterData';
 import {ticketRecords,ticketStage} from '@/lib/remediationTickets';
@@ -32,7 +33,130 @@ const fields=['title','assignee_id','due_date','description','resolution','statu
 const draft=t=>Object.fromEntries(fields.map(k=>[k,t[k]??'']));
 const mayEdit=(user,task)=>canOperate(user)&&(user.role!=='client_contributor'||isAssignedTo(user,task)||!task.assignee_id&&task.created_by===user.user_id);
 
-function Work({task,users,user,onSaved,onDirty,onControls,detail=false,showInlineSave=true,requiresValidation=false,readOnly=false,pendingValidation=false}) {
+// This endpoint has no replay key and can partially commit. Keep attempted commands
+// read-only across drawer remounts in this app session; a page reload is not a replay guarantee.
+const findingRiskAttempts=new Map();
+
+function FindingRiskCommand({open,finding,record,clientId,ready,busy,dirty,workControls,onBusy,refresh,onSaved,fullRecord,risks}) {
+  const auth=useAuth(),org=useOrg(),user=auth?.user;
+  const eligible=fullRecord&&auth?.loading===false&&org?.loading===false&&!auth?.error&&!org?.error
+    &&auth?.workspaceMode==='demo'&&user?.workspace_mode==='demo'&&isInternal(user)
+    &&clientId==='demo_brawndo'&&org?.currentClientId===clientId&&org?.currentClient?.client_id===clientId
+    &&record.client_id===clientId&&finding.client_id===clientId&&!!finding.finding_id;
+  const identity=JSON.stringify([user?.user_id,user?.role,auth?.workspaceMode,user?.workspace_mode,clientId,org?.currentClientId,record.finding_id,record.task_id,finding.finding_id]);
+  const originalIdentity=useRef(identity);
+  // The hold follows the resource across actors; authority and navigation remain actor-bound.
+  const key=JSON.stringify([auth?.workspaceMode,clientId,finding.finding_id]);
+  const signature=identity+':'+!!eligible+':'+!!open;
+  const live=useRef({signature,generation:0,mounted:false});
+  if(live.current.signature!==signature){live.current.signature=signature;live.current.generation++;}
+  const renderGeneration=live.current.generation;
+  const ownsContext=()=>live.current.mounted&&live.current.signature===signature&&live.current.generation===renderGeneration;
+  live.current.ready=ready;live.current.busy=busy;
+  const lock=useRef(false),confirmationOpener=useRef(null);
+  const [working,setWorking]=useState(false),[confirm,setConfirm]=useState(false),[message,setMessage]=useState(''),[verified,setVerified]=useState(null),[openedRisk,setOpenedRisk]=useState(null);
+  useEffect(()=>{
+    const context=live.current;
+    context.mounted=true;
+    return()=>{context.mounted=false;onBusy(false);};
+  },[onBusy]);
+  useEffect(()=>{setConfirm(false);setWorking(false);onBusy(false);},[signature,onBusy]);
+  const allowed=eligible&&open&&originalIdentity.current===identity;
+  const attempt=findingRiskAttempts.get(key);
+  const linked=finding.risk_id||attempt?.riskId||verified?.risk_id;
+  const blocked=()=>busy||!ready||dirty.current.size||[...workControls.current.values()].some(control=>control.busy);
+  const draftMessage='Save, post or discard unfinished Work, comments and rationale before using the Risk command.';
+  function request(opener){
+    if(!ownsContext()||!allowed||lock.current||busy||!ready)return;
+    if(dirty.current.size){setMessage(draftMessage);return;}
+    if([...workControls.current.values()].some(control=>control.busy))return;
+    confirmationOpener.current={node:opener,generation:live.current.generation};
+    setMessage('');setConfirm(true);
+  }
+  async function run(create=false,openRisk=false){
+    if(!ownsContext())return;
+    if(!allowed||lock.current||blocked()){
+      if(allowed&&dirty.current.size)setMessage(draftMessage);
+      return;
+    }
+    if(create&&findingRiskAttempts.has(key))return;
+    lock.current=true;setWorking(true);onBusy(true);setConfirm(false);setMessage('');
+    const generation=live.current.generation;
+    const current=()=>live.current.mounted&&live.current.generation===generation;
+    let attempted=findingRiskAttempts.has(key);
+    try{
+      // Always read the actual Finding before a new command; the collection or
+      // parent prop may predate a Risk linked by another native surface.
+      let fresh=(await api.get('/findings/'+encodeURIComponent(finding.finding_id))).data;
+      if(!current())return;
+      if(fresh?.finding_id!==finding.finding_id||fresh.client_id!==clientId)throw new Error('The current Finding could not be verified.');
+      if(create&&!fresh.risk_id){
+        if(!live.current.ready||live.current.busy||dirty.current.size||[...workControls.current.values()].some(control=>control.busy))
+          throw new Error('Save, post or discard drafts and wait for current ticket reads and commands before continuing.');
+        // Another drawer may have reserved this same Finding during the preflight read.
+        if(findingRiskAttempts.has(key)){attempted=true;throw new Error('Another creation attempt is already held for this Finding.');}
+        if(risks?.some(risk=>risk.client_id===clientId&&(risk.source_type==='finding'&&risk.source_id===finding.finding_id||risk.finding_id===finding.finding_id||risk.related_finding_ids?.includes(finding.finding_id)))){
+          findingRiskAttempts.set(key,{status:'unconfirmed'});attempted=true;
+          throw new Error('An existing Risk references this Finding without a confirmed Finding link. Administrator repair may be needed.');
+        }
+        findingRiskAttempts.set(key,{status:'unconfirmed'});attempted=true;
+        const result=await api.post('/findings/'+encodeURIComponent(finding.finding_id)+'/raise-risk');
+        if(!current())return;
+        const returned=result?.data?.risk;
+        if(!returned?.risk_id||returned.client_id!==clientId)throw new Error('The creation response could not be verified.');
+        findingRiskAttempts.set(key,{status:'unconfirmed',riskId:returned.risk_id});
+        fresh=(await api.get('/findings/'+encodeURIComponent(finding.finding_id))).data;
+        if(!current())return;
+      }
+      const expected=findingRiskAttempts.get(key)?.riskId;
+      if(fresh?.finding_id!==finding.finding_id||fresh.client_id!==clientId||!fresh.risk_id||expected&&fresh.risk_id!==expected)
+        throw new Error('No matching linked Risk is confirmed. An empty read does not make another creation safe.');
+      const risk=(await api.get('/risks/'+encodeURIComponent(fresh.risk_id))).data;
+      if(!current())return;
+      if(risk?.risk_id!==fresh.risk_id||risk.client_id!==clientId||risk.source_type!=='finding'
+        ||risk.source_id!==finding.finding_id||risk.finding_id!==finding.finding_id||!risk.related_finding_ids?.includes(finding.finding_id))
+        throw new Error('The Risk client and Finding backlinks could not be verified.');
+      // Refresh the same native ticket (without remounting Work drafts), then its
+      // owning register/Review. Never report success after a failed refresh.
+      const refreshed=await refresh();
+      if(!current())return;
+      if(refreshed?.ok!==true)throw new Error('The ticket could not be refreshed.');
+      // Opening an existing link is a read: it must not announce a native save.
+      if(!openRisk){
+        const parentRefresh=await onSaved?.();
+        if(!current())return;
+        if(parentRefresh?.ok===false)throw new Error('The Risk link is verified, but the parent register refresh is unconfirmed. '+(parentRefresh.error||'Reload the register before continuing.'));
+        window.dispatchEvent(new Event('grc:ticket-saved'));
+      }
+      findingRiskAttempts.set(key,{status:'verified',riskId:risk.risk_id});
+      setVerified(risk);setMessage(openRisk?'Linked Risk verified.':'Risk linked and verified. Assess likelihood and impact in the Risk record.');
+      if(openRisk)setOpenedRisk({risk,generation});
+    }catch(error){
+      if(!current())return;
+      setMessage((attempted?'Risk creation/link is unconfirmed. ':'Risk link is unconfirmed. ')+formatError(error)+(attempted?' Use Check linked Risk; do not create another Risk.':''));
+    }finally{
+      lock.current=false;
+      if(current()){setWorking(false);onBusy(false);}
+    }
+  }
+  if(!allowed)return null;
+  const held=attempt&&attempt.status!=='verified';
+  return <section aria-label="Finding Risk" className="space-y-2">
+    <strong>Risk</strong>
+    {held?<><p>Creation/link is unconfirmed. Check the existing link before any further action. If no link appears, a partial creation may require administrator repair.</p><Button disabled={working||busy||!ready||!!dirty.current.size} onClick={()=>run()}>Check linked Risk</Button></>
+      :linked?<Button disabled={working||busy||!ready||!!dirty.current.size} onClick={()=>run(false,true)}>Open linked Risk</Button>
+      :<Button disabled={working||busy||!ready||[...workControls.current.values()].some(control=>control.busy)} onClick={event=>request(event.currentTarget)}>Raise as risk</Button>}
+    {message&&<p role="status">{message}</p>}
+    <AlertDialog open={confirm&&allowed} onOpenChange={value=>{if(ownsContext())setConfirm(value);}}><AlertDialogContent onCloseAutoFocus={event=>{
+      event.preventDefault();
+      const receipt=confirmationOpener.current;
+      if(live.current.mounted&&receipt?.generation===live.current.generation&&receipt.node?.isConnected&&!receipt.node.disabled)receipt.node.focus({preventScroll:true});
+    }}><AlertDialogTitle>Raise this Finding as a risk?</AlertDialogTitle><AlertDialogDescription>This creates a linked, unassessed Risk. Assess likelihood and impact in its native Risk record. Finding severity does not set its Risk score. Existing work, evidence and validation remain unchanged.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction disabled={working||busy||!ready} onClick={()=>run(true)}>Confirm raise as risk</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+    {openedRisk?.generation===live.current.generation&&<RecordDrawer kind="risks" record={openedRisk.risk} clientId={clientId} open onSaved={()=>run()} onOpenChange={value=>{if(ownsContext()&&!value)setOpenedRisk(null);}}/>}
+  </section>;
+}
+
+function Work({task,users,user,onSaved,onDirty,onControls,commandBusyRef,detail=false,showInlineSave=true,requiresValidation=false,readOnly=false,pendingValidation=false}) {
   const update=useCreateIntent((...args)=>api.patch(...args),user.user_id+':'+task.client_id+':'+task.task_id,true);
   const [edits,setEdits]=useState({}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[feedback,setFeedback]=useState('');
   const editVersion=useRef(task.updated_at??null),current=draft(task);
@@ -70,7 +194,8 @@ function Work({task,users,user,onSaved,onDirty,onControls,detail=false,showInlin
       .map(([key,edit])=>[key,{...edit,before:accepted[key]}])));
   }
   async function save(status){
-    if(readOnly)return;
+    if(readOnly||commandBusyRef?.current)return;
+    onControls?.(task.task_id,{save:()=>save(),disabled:true,busy:true});
     setBusy(true);setError('');
     const next={...form,...(status?{status}:{})};
     const body=Object.fromEntries(fields.filter(k=>enabled(k)&&next[k]!==current[k]).map(k=>[k,['assignee_id','due_date'].includes(k)?next[k]||null:next[k]]));
@@ -118,12 +243,15 @@ function History({ticket,onDirty,presentation,detail=false,readOnly=false}) {
   return <details className="bad-history" {...(detail?{open:true}:{})}><summary>History and comments</summary>{error&&<p role="alert">{error}</p>}<ul className="space-y-2 text-sm">{rows.map((r,i)=><li className="whitespace-pre-wrap bad-activity-row" key={r.log_id||r.audit_id||r.comment_id||i}>{detail&&<span className="bad-event-icon" aria-hidden="true">{r.comment_id?<MessageSquare size={14}/>:/(completed|validated)/i.test(r.action||'')?<CheckCircle2 size={14}/>:<Clock3 size={14}/>}</span>}<div className="bad-event-content">{(detail||presentation==='brawndo-demo-actions')&&<span className="block text-xs text-ink-secondary">{r.user_name||r.user_email||r.user_id||'Historical actor unavailable'}</span>}{!detail&&<>{r.at||r.created_at} · </>}{r.action||r.body}{r.meta?.rationale?' · '+r.meta.rationale:''}</div>{detail&&<time className="bad-event-time" dateTime={r.at||r.created_at}>{displayRecordedAt(r.at||r.created_at)||r.at||r.created_at}</time>}</li>)}</ul>{writable&&<div className="space-y-2"><label>Comment (optional)<Textarea aria-label="Ticket comment" value={comment} disabled={busy} onChange={e=>setComment(e.target.value)}/></label><Button disabled={busy||!comment.trim()} onClick={async()=>{setBusy(true);setError('');try{await api.post('/comments',{entity_type:kind,entity_id:id,body:comment});setComment('');setVersion(v=>v+1);}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Add comment</Button></div>}</details>;
 }
 
-export default function RemediationTicketDrawer({open,onOpenChange,kind,record,clientId,onSaved,presentation,closeRequest=0,onCloseCancelled,cisVisualOrigin,onReturnFocus}) {
+export default function RemediationTicketDrawer({open,onOpenChange,kind,record,clientId,onSaved,onRiskLinked,presentation,closeRequest=0,onCloseCancelled,cisVisualOrigin,onReturnFocus}) {
   const pilot=presentation==='brawndo-demo-actions';
   const panelPrefix=useId();
   const {user}=useAuth(),{data,users,loading,error,load}=useActionRegisterData(record.client_id||clientId,{retainOnRefreshError:pilot});
   const [nested,setNested]=useState(null),[rationale,setRationale]=useState(''),[busy,setBusy]=useState(false),[commandError,setCommandError]=useState(''),[feedback,setFeedback]=useState(''),[discard,setDiscard]=useState(false);
   const [evidenceVersion,setEvidenceVersion]=useState(0),[evidenceSummary,setEvidenceSummary]=useState(null),[tab,setTab]=useState('overview'),[hasDirty,setHasDirty]=useState(false);
+  const [riskBusy,setRiskBusy]=useState(false);
+  const riskBusyRef=useRef(false);
+  const markRiskBusy=useCallback(value=>{riskBusyRef.current=value;setRiskBusy(value);},[]);
   const workControls=useRef(new Map());
   const [,refreshControls]=useState(0);
   const registerControls=useRef((id,controls)=>{
@@ -154,8 +282,8 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
     && origin.id===cisVisualOrigin?.assessmentId && nested.record.framework_assessment_id===origin.id
     && origin.target?.framework_assessment_id===cisVisualOrigin?.assessmentId && origin.target?.definition_id===cisVisualOrigin?.definitionId
     && origin.target?.client_id===cisVisualOrigin?.clientId && origin.target?.framework_key==='cis-ig1'?cisVisualOrigin:undefined;
-  const canMutate=!pilot||!loading&&!error;
-  const close=useCallback(v=>{if(v)onOpenChange(true);else if(!busy){if(dirty.current.size)setDiscard(true);else onOpenChange(false);}},[busy,onOpenChange]);
+  const canMutate=(!pilot||!loading&&!error)&&!riskBusy;
+  const close=useCallback(v=>{if(v)onOpenChange(true);else if(!busy&&!riskBusy){if(dirty.current.size)setDiscard(true);else onOpenChange(false);}},[busy,riskBusy,onOpenChange]);
   const handledCloseRequest=useRef(closeRequest);
   useEffect(()=>{
     if(!pilot||busy||!closeRequest||handledCloseRequest.current===closeRequest)return;
@@ -197,7 +325,8 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
       {!detail&&ticket.finding&&<p className="whitespace-pre-wrap"><strong>Finding:</strong> {ticket.issue||'Issue description not recorded'}</p>}
       {!detail&&origin.id&&<p>Originated from: {origin.target?<button className="text-link underline" disabled={!canMutate} onClick={()=>setNested({kind:origin.kind,record:origin.target,initialValues:origin.initialValues})}>{origin.label}{origin.detail?' · '+origin.detail:''}</button>:<span>{origin.label} · {origin.id} · unavailable</span>}</p>}
       {ticket.diagnostic&&<p role="status">{ticket.diagnostic}. Existing records and their assignments are retained.</p>}
-      {ticket.actions.map(task=><Work key={user.user_id+':'+task.client_id+':'+task.task_id} {...{task,users,user,detail}} pendingValidation={stage==='pending_validation'} requiresValidation={!!ticket.finding&&!['closed','accepted'].includes(ticket.finding.status)} showInlineSave={!detail||ticket.actions.length!==1} onControls={registerControls} readOnly={!canMutate} onSaved={saved} onDirty={markDirty}/>)}
+      {ticket.finding&&<FindingRiskCommand {...{open,record,clientId,fullRecord,dirty,workControls}} onSaved={onRiskLinked||onSaved} risks={data.risks} finding={ticket.finding} ready={!loading&&!error} busy={busy} onBusy={markRiskBusy} refresh={load}/>}
+      {ticket.actions.map(task=><Work key={user.user_id+':'+task.client_id+':'+task.task_id} {...{task,users,user,detail}} commandBusyRef={riskBusyRef} pendingValidation={stage==='pending_validation'} requiresValidation={!!ticket.finding&&!['closed','accepted'].includes(ticket.finding.status)} showInlineSave={!detail||ticket.actions.length!==1} onControls={registerControls} readOnly={!canMutate} onSaved={saved} onDirty={markDirty}/>)}
       {!ticket.actions.length&&<p>No remediation Action is recorded. The Finding remains open.</p>}
       {!ticket.actions.length&&ticket.finding&&isInternal(user)&&canMutate&&<Button disabled={busy||!canMutate} onClick={async()=>{setBusy(true);setCommandError('');try{await api.post('/findings/'+ticket.finding.finding_id+'/create-task',{title:ticket.title});await saved();}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Start remediation</Button>}
       <ActionDetailState ticket={ticket} stage={stage} users={users} detail={detail} evidenceCount={evidenceCount}>
