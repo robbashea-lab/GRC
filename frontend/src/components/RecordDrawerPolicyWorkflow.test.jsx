@@ -148,3 +148,19 @@ test('clearing optional Purpose remains a deliberate empty draft and preserves o
   await click(button('Save changes'));
   expect(api.patch).toHaveBeenCalledWith('/policies/policy-native',expect.objectContaining({governance_context:{...originalContext,rationale:''},expected_updated_at:'2026-10-20T08:00:00Z'}),expect.any(Object));
 });
+
+
+test.each(['Document & approval','Framework mapping'])('new Policy opens its native create form after %s without reusing saved-record content', async previousTab => {
+  await render();
+  await click(tab(previousTab));
+  api.get.mockClear();
+  await render({record:null});
+  expect(dialog()).not.toBeNull();
+  expect(dialog().querySelector('h2').textContent).toBe('New policy');
+  expect(dialog().querySelector('[data-testid="field-title"]').value).toBe('');
+  expect(dialog().querySelector('[data-testid="drawer-evidence-input"]')).toBeNull();
+  expect(dialog().querySelector('[aria-label="Policy approval authority"]')).toBeNull();
+  expect(api.get.mock.calls.some(([path]) => path.includes('/policies/null') || path.includes('/policies/undefined'))).toBe(false);
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.patch).not.toHaveBeenCalled();
+});
