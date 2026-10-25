@@ -330,7 +330,7 @@ function EntityListPage({ kind }) {
 
   async function refreshReviewRegisterAfterRisk(options) {
     const identity=reviewRiskIdentity;
-    const accepted=()=>kind==='reviews'&&open&&selected?.client_id===currentClientId
+    const accepted=()=>kind==='reviews'&&open&&(!selected||selected.client_id===currentClientId)
       &&auth.loading===false&&org.loading===false&&!auth.error&&!org.error
       &&currentReviewRiskScope.current.mounted&&currentReviewRiskScope.current.identity===identity
       &&(!options?.accept||options.accept());

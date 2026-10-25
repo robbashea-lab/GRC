@@ -18,7 +18,8 @@ const click=node=>act(async()=>{expect(node).toBeTruthy();node.focus();node.clic
 const focusSettled=()=>act(async()=>{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
 const render=(kind='reviews')=>act(async()=>root.render(<RecordListPage kind={kind}/>));
 const input=(node,value)=>act(async()=>{
-  Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(node,value);
+  const prototype=node.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(prototype,'value').set.call(node,value);
   node.dispatchEvent(new Event('input',{bubbles:true}));
 });
 function deferred(){
@@ -146,4 +147,83 @@ test('changing the native Review occurrence while its register read is pending p
   expect(container.textContent).not.toContain(sentinel.title);expect(savedEvent).not.toHaveBeenCalled();
   expect(document.body.textContent).not.toContain('Risk linked and verified.');expect(query('risks-drawer')).toBeNull();
   expect(button(query('reviews-drawer'),'Back to current Review')).toBeTruthy();
+});
+
+describe('a Review created natively and kept open',()=>{
+  let nativePost,createdReview,createdFinding,originalDrawer,originalScrollIntoView;
+  beforeEach(()=>{originalScrollIntoView=HTMLElement.prototype.scrollIntoView;HTMLElement.prototype.scrollIntoView=jest.fn();});
+  afterEach(()=>{if(originalScrollIntoView)HTMLElement.prototype.scrollIntoView=originalScrollIntoView;else delete HTMLElement.prototype.scrollIntoView;});
+  beforeEach(async()=>{
+    await render();await click(query('create-reviews-button'));originalDrawer=query('reviews-drawer');
+    nativePost=jest.spyOn(api,'post');
+    await input(query('field-title'),'Native newborn Review kept open');
+    await act(async()=>query('field-review_type').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true})));
+    await click([...document.querySelectorAll('[role="option"]')].find(node=>node.textContent==='Access'));
+    await input(query('field-due_date'),'2026-11-12');
+    expect(query('field-recurrence').textContent).toBe('One-time');
+    await click(query('drawer-save'));
+    const index=nativePost.mock.calls.findIndex(([path])=>path==='/reviews');
+    expect(index).toBeGreaterThanOrEqual(0);createdReview=(await nativePost.mock.results[index].value).data;
+    expect(createdReview).toMatchObject({client_id:'demo_brawndo',review_type:'access',recurrence:'none'});
+    expect(query('reviews-drawer')).toBe(originalDrawer);
+    expect(originalDrawer.classList.contains('brawndo-review-workflow')).toBe(false);
+    await input(query('field-notes'),'Unfinished newborn Review draft');
+  });
+  beforeEach(async()=>{
+    await click(query('quick-create-finding'));
+    await input(query('finding-title'),'Native newborn Finding');
+    await input(query('finding-remediation-title'),'Native newborn required Action');
+    await input(query('review-finding-form').querySelector('input[type="date"]'),'2026-11-19');
+    await act(async()=>query('finding-save').closest('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+    const index=nativePost.mock.calls.findIndex(([path])=>path===`/reviews/${createdReview.review_id}/create-finding`);
+    expect(index).toBeGreaterThanOrEqual(0);createdFinding=(await nativePost.mock.results[index].value).data;
+    expect(createdFinding).toMatchObject({review_id:createdReview.review_id,occurrence_id:createdReview.current_occurrence_id});
+    await click(query('tab-related'));await focusSettled();
+    await click(button(query('reviews-drawer'),'Native newborn required Action'));await focusSettled();
+    expect(query('remediation-ticket-drawer')).toBeTruthy();expect(query('reviews-drawer')).toBe(originalDrawer);
+  });
+
+  test('acknowledges the saved newborn Review without closing or reopening its native drawer',async()=>{
+    const gate=holdPageRefresh(),patch=jest.spyOn(api,'patch');
+    await raiseRisk();
+    expect({pageReadStarted:!!gate.response(),falseUnconfirmed:query('remediation-ticket-drawer').textContent.includes('Reviews register refresh could not be confirmed')})
+      .toEqual({pageReadStarted:true,falseUnconfirmed:false});
+    expect(savedEvent).not.toHaveBeenCalled();await act(async()=>gate.resolve());
+    expect(query('remediation-ticket-drawer').textContent).toContain('Risk linked and verified.');
+    expect(savedEvent).toHaveBeenCalledTimes(1);expect(query('reviews-drawer')).toBe(originalDrawer);
+    expect(originalDrawer.classList.contains('brawndo-review-workflow')).toBe(false);
+    expect(query('tab-related').getAttribute('aria-pressed')).toBe('true');expect(patch).not.toHaveBeenCalled();
+    expect(nativePost.mock.calls.filter(([path])=>path.endsWith('/raise-risk')).map(([path])=>path)).toEqual([`/findings/${createdFinding.finding_id}/raise-risk`]);
+    const linked=(await api.get(`/findings/${createdFinding.finding_id}`)).data;
+    expect((await api.get(`/risks/${linked.risk_id}`)).data).toMatchObject({client_id:'demo_brawndo',finding_id:createdFinding.finding_id,likelihood_score:null,impact_score:null,risk_score:null});
+    await click(button(query('remediation-ticket-drawer'),'Cancel'));await click(query('tab-overview'));
+    expect(query('field-notes').value).toBe('Unfinished newborn Review draft');
+  });
+
+  test('keeps a newborn Risk unconfirmed on register failure and reconciles without creating another Risk',async()=>{
+    const gate=holdPageRefresh(),patch=jest.spyOn(api,'patch');
+    await raiseRisk();expectPending(gate);
+    await act(async()=>gate.reject(new Error('Newborn register read unavailable')));
+    expect(savedEvent).not.toHaveBeenCalled();expect(query('remediation-ticket-drawer').textContent).toContain('Reviews register refresh could not be confirmed');
+    gate.spy.mockRestore();await click(button(query('remediation-ticket-drawer'),'Check linked Risk'));
+    expect(query('remediation-ticket-drawer').textContent).toContain('Risk linked and verified.');expect(savedEvent).toHaveBeenCalledTimes(1);
+    expect(nativePost.mock.calls.filter(([path])=>path.endsWith('/raise-risk')).map(([path])=>path)).toEqual([`/findings/${createdFinding.finding_id}/raise-risk`]);
+    expect(patch).not.toHaveBeenCalled();expect(query('reviews-drawer')).toBe(originalDrawer);
+  });
+
+  test.each(['auth-loading','actor-roundtrip'])('rejects a pending newborn register response after %s without installing its stale projection',async change=>{
+    const sentinel=(await createReview('Superseded newborn register projection','1990-01-01')).data;
+    const gate=holdPageRefresh();await raiseRisk();expectPending(gate);
+    expect((await gate.response()).data.some(row=>row.review_id===sentinel.review_id)).toBe(true);
+    await api.delete(`/reviews/${sentinel.review_id}`,{data:{expected_updated_at:sentinel.updated_at??null}});
+    if(change==='auth-loading'){mockAuth={...mockAuth,loading:true};await render();}
+    else{
+      const originalAuth=mockAuth;mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'temporary-other-native-actor'}};await render();
+      mockAuth=originalAuth;await render();
+    }
+    await act(async()=>gate.resolve());
+    expect(container.textContent).not.toContain(sentinel.title);expect(savedEvent).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain('Risk linked and verified.');expect(query('risks-drawer')).toBeNull();
+    expect(nativePost.mock.calls.filter(([path])=>path.endsWith('/raise-risk')).map(([path])=>path)).toEqual([`/findings/${createdFinding.finding_id}/raise-risk`]);
+  });
 });
