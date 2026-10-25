@@ -1,3 +1,4 @@
+import {useQuarterClock} from './QuarterlyProgramTimeline';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import {useEffect, useState} from 'react';
 import { formatAcceptedRefresh } from '@/lib/acceptedRefreshPresentation';
@@ -81,7 +82,8 @@ function VendorTimeline({ rows, reviews, onOpen, onOpenReview, theme }) {
 export default function BrawndoAdditionalVendors({ clientName = 'Client', rows = [], filteredRows = rows, reviews = [], tasks = [], workAvailable = true, workError = '', users = [], loading = false, error = '', onRetry, q = '', onSearch, view = 'all_active', onView, table, onOpen, onOpenReview, onOpenTask, actions, theme = 'light', acceptedRefresh = null, quarterlyChart = false, scopeKey = '', recordOpen = false }) {
   const [selection, setSelection] = useState(null);
   useEffect(() => setSelection(null), [scopeKey]);
-  const work = vendorOutstandingWork(rows, reviews, tasks);
+  const [now] = useQuarterClock();
+  const work = vendorOutstandingWork(rows, reviews, tasks, now);
   const selectEvents = (events, title, opener) => setSelection({scope: scopeKey, ids: events.map(event => event.id), title, opener});
   const openEvent = event => event.task ? onOpenTask?.(event.task) : event.review && onOpenReview ? onOpenReview(event.review) : onOpen(event.vendor, event.tab, event.assuranceId);
   const refreshLabel = !loading && !error ? formatAcceptedRefresh(acceptedRefresh) : '';
@@ -109,7 +111,7 @@ export default function BrawndoAdditionalVendors({ clientName = 'Client', rows =
     <div className="bapv-page-head"><div><h1>{clientName} Vendors</h1><p>{countsAvailable ? `Third-party register · ${counts.all_active} active ${counts.all_active === 1 ? 'vendor' : 'vendors'}` : 'Third-party register'}{refreshLabel && ` · As of ${refreshLabel}`}</p></div><div className="bapv-head-actions">{actions}</div></div>
     <section className={quarterlyChart ? 'cv-overview' : 'bapv-card bav-overview'} aria-label="Vendor overview">
       {quarterlyChart ? <><div className="cv-kpis" aria-label="Vendor summaries">{cards.map(({id, label, count, detail, Icon, open, ready}) => <button type="button" key={id} className={`cv-kpi bapv-kcell${id === 'overdue' && count ? ' has-overdue' : ''}`} disabled={!ready} onClick={open} data-testid={`additional-vendor-metric-${id}`}><Icon aria-hidden="true"/><div><span>{label}</span><strong>{ready ? count : '—'}</strong><small>{ready ? detail : 'Counts unavailable'}</small></div></button>)}</div>{workError && <p className="cv-work-error" role="alert">{workError} Work counts unavailable.</p>}
-      <VendorsConceptTimeline key={scopeKey} events={work.events} users={users} available={workReady} theme={theme} onSelect={selectEvents}/></> : <><div className="bapv-kstrip" aria-label="Vendor summary. Select a figure to filter the register.">{figures.map(([id, label], index) => <button type="button" className="bapv-kcell" key={id} aria-pressed={view === id} disabled={!countsAvailable} onClick={() => onView(view === id ? 'all_active' : id)} data-testid={`additional-vendor-metric-${id}`}><span>{label}</span><strong>{countsAvailable ? metrics[index] : '—'}</strong></button>)}</div><div><div className="bav-timeline-head"><div><h3>Next 12 months</h3><p className="bapv-sub">Reviews, assurance follow-ups and contract renewals for each vendor.</p></div><div className="bav-legend" aria-label="Timeline markers"><span><i className="bav-marker rev" />Review</span><span><i className="bav-marker asr" />Assurance follow-up</span><span><i className="bav-marker ren" />Contract renewal</span></div></div>{!loading && !error && <VendorTimeline key={acceptedRefresh || 'unacknowledged'} rows={rows} reviews={reviews} onOpen={onOpen} onOpenReview={onOpenReview} theme={theme} />}</div></>}
+      <VendorsConceptTimeline key={scopeKey} scopeKey={scopeKey} events={work.events} users={users} available={workReady} theme={theme} onSelect={selectEvents}/></> : <><div className="bapv-kstrip" aria-label="Vendor summary. Select a figure to filter the register.">{figures.map(([id, label], index) => <button type="button" className="bapv-kcell" key={id} aria-pressed={view === id} disabled={!countsAvailable} onClick={() => onView(view === id ? 'all_active' : id)} data-testid={`additional-vendor-metric-${id}`}><span>{label}</span><strong>{countsAvailable ? metrics[index] : '—'}</strong></button>)}</div><div><div className="bav-timeline-head"><div><h3>Next 12 months</h3><p className="bapv-sub">Reviews, assurance follow-ups and contract renewals for each vendor.</p></div><div className="bav-legend" aria-label="Timeline markers"><span><i className="bav-marker rev" />Review</span><span><i className="bav-marker asr" />Assurance follow-up</span><span><i className="bav-marker ren" />Contract renewal</span></div></div>{!loading && !error && <VendorTimeline key={acceptedRefresh || 'unacknowledged'} rows={rows} reviews={reviews} onOpen={onOpen} onOpenReview={onOpenReview} theme={theme} />}</div></>}
     </section>
     <section className="bapv-card" aria-label="Vendor register">
       {quarterlyChart && <div className="cv-register-heading"><h2>Vendor register</h2></div>}
@@ -138,6 +140,6 @@ export default function BrawndoAdditionalVendors({ clientName = 'Client', rows =
       </div>
       <div className="bapv-summary" role="status">{summary}{view !== 'all_active' && <button type="button" className="bapv-filter-chip" onClick={() => onView('all_active')}>{[...VIEWS, ...EXTRA_VIEWS].find(([id]) => id === view)?.[1] || view} ×</button>}</div>
     </section>
-    {quarterlyChart && <VendorsEventList selection={selection?.scope === scopeKey ? selection : null} events={work.events} available={workReady} recordOpen={recordOpen} users={users} theme={theme} onClose={() => setSelection(null)} onOpen={openEvent}/>}
+    {quarterlyChart && <VendorsEventList now={now} selection={selection?.scope === scopeKey ? selection : null} events={work.events} available={workReady} recordOpen={recordOpen} users={users} theme={theme} onClose={() => setSelection(null)} onOpen={openEvent}/>}
   </div>;
 }

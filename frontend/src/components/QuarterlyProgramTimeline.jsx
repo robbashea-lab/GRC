@@ -35,7 +35,7 @@ export function packQuarterGroups(groups,rows,width){
   return {lanes,overflow};
 }
 
-function useQuarterClock(){
+export function useQuarterClock(){
   const [now,setNow]=useState(()=>new Date());
   useEffect(()=>{
     let timer;
@@ -51,12 +51,26 @@ function useQuarterClock(){
   return [now,setNow];
 }
 
-export default function QuarterlyProgramTimeline({events=[],rows=3,upcomingLimit=3,legend=[],onOpen,theme='light',available=true,description='Saved dates from the native register.',recordOpen=false,scopeKey='',chartKey='chart'}){
-  const [now,setNow]=useQuarterClock(),today=quarterToday(now);
+export function useQuarterWindow(scopeKey,chartKey){
+  const [now,setNow]=useQuarterClock();
   const [windowState,setWindowState]=useState(()=>initialWindow(scopeKey,chartKey));
-  const [table,setTable]=useState(false),[selection,setSelection]=useState(null),[plotWidth,setPlotWidth]=useState(0);
   const matchingWindow=windowState.scopeKey===scopeKey&&windowState.chartKey===chartKey;
   const selected=matchingWindow&&windowState.manual?windowState:currentQuarter(now);
+  useEffect(()=>{setWindowState(initialWindow(scopeKey,chartKey));},[scopeKey,chartKey]);
+  useEffect(()=>{
+    if(!matchingWindow||rememberedScope!==scopeKey)return;
+    if(windowState.manual){
+      rememberedWindows.set(chartKey,{manual:true,year:windowState.year,quarter:windowState.quarter});
+      if(rememberedWindows.size>4)rememberedWindows.delete(rememberedWindows.keys().next().value);
+    }else rememberedWindows.delete(chartKey);
+  },[windowState,matchingWindow,scopeKey,chartKey]);
+  return {now,setNow,windowState,setWindowState,matchingWindow,selected};
+}
+
+export default function QuarterlyProgramTimeline({events=[],rows=3,upcomingLimit=3,legend=[],onOpen,theme='light',available=true,description='Saved dates from the native register.',recordOpen=false,scopeKey='',chartKey='chart'}){
+  const {now,setNow,windowState,setWindowState,matchingWindow,selected}=useQuarterWindow(scopeKey,chartKey);
+  const today=quarterToday(now);
+  const [table,setTable]=useState(false),[selection,setSelection]=useState(null),[plotWidth,setPlotWidth]=useState(0);
   const selectedYear=selected.year,selectedQuarter=selected.quarter;
   const model=useMemo(()=>quarterTimelineGroups(available?events:[],{year:selectedYear,quarter:selectedQuarter}),[events,available,selectedYear,selectedQuarter]);
   const layout=useMemo(()=>packQuarterGroups(model.groups,rows,plotWidth),[model.groups,rows,plotWidth]);
@@ -67,15 +81,8 @@ export default function QuarterlyProgramTimeline({events=[],rows=3,upcomingLimit
   live.current={scopeKey,recordOpen,available,groups:model.groups,events:model.events,overflow:layout.overflow};
 
   useEffect(()=>{
-    setWindowState(initialWindow(scopeKey,chartKey));setSelection(null);setTable(false);selectionReturn.current=null;pendingReturn.current=null;
+    setSelection(null);setTable(false);selectionReturn.current=null;pendingReturn.current=null;
   },[scopeKey,chartKey]);
-  useEffect(()=>{
-    if(!matchingWindow||rememberedScope!==scopeKey)return;
-    if(windowState.manual){
-      rememberedWindows.set(chartKey,{manual:true,year:windowState.year,quarter:windowState.quarter});
-      if(rememberedWindows.size>4)rememberedWindows.delete(rememberedWindows.keys().next().value);
-    }else rememberedWindows.delete(chartKey);
-  },[windowState,matchingWindow,scopeKey,chartKey]);
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;pendingReturn.current=null;if(launchFrame.current!==null)cancelAnimationFrame(launchFrame.current);};},[]);
   useLayoutEffect(()=>{
     const node=plot.current;if(!node)return;

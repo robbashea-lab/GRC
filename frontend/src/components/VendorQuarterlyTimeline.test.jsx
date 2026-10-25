@@ -164,3 +164,22 @@ test('three agenda entries open a readable list before native work; independent 
   expect(handlers.onOpen.mock.calls[0].slice(0,2)).toEqual([vendor,'assurance']);
   expect(handlers.onView).not.toHaveBeenCalled();expect(handlers.onSearch).not.toHaveBeenCalled();
 });
+
+
+test('local midnight refreshes global overdue counts and open-list urgency without changing saved work', async () => {
+  jest.setSystemTime(new Date(2026, 9, 18, 23, 59, 59));
+  const datedVendor = {...vendor, next_review: null, contract_renewal: null, contract_notice_deadline: null, assurance_records: []};
+  const datedReview = {...review, due_date: '2026-10-18'};
+  const before = JSON.stringify({datedVendor, datedReview});
+  await render({rows: [datedVendor], reviews: [datedReview]});
+  const due = [...container.querySelectorAll('.cv-kpis button')].find(node => node.textContent.includes('Due in 30 days'));
+  expect(due.textContent).toContain('1 item');
+  await click(due);
+  expect(document.querySelector('.cv-list-items').textContent).toContain('Due today');
+  await act(async () => jest.advanceTimersByTime(1100));
+  expect(document.querySelector('.cv-list-items').textContent).toContain('1 day overdue');
+  const overdue = [...container.querySelectorAll('.cv-kpis button')].find(node => node.textContent.includes('Overdue'));
+  expect(overdue.textContent).toContain('1 item');
+  expect(due.textContent).toContain('0 items');
+  expect(JSON.stringify({datedVendor, datedReview})).toBe(before);
+});
