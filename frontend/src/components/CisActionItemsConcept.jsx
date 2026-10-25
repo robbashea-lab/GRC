@@ -17,6 +17,12 @@ const dateLabel=(value,year=true)=>{
 };
 const statusLabel=value=>({open:'Open',in_progress:'In progress',blocked:'Blocked',pending_validation:'Pending validation',completed:'Completed',accepted:'Accepted',cancelled:'Cancelled'})[value]||value;
 
+// Radix uses the visual viewport; reserve the document scrollbar in its right collision padding.
+const getTooltipScrollbarWidth=()=>{
+  const clientWidth=typeof document==='undefined'?0:document.documentElement.clientWidth;
+  return clientWidth>0?Math.max(0,window.innerWidth-clientWidth):0;
+};
+
 export function ActionConceptPriority({value}){
   const priority=actionConceptPriority(value);
   return <span className={`priority-badge priority-${priority.key}`}>{priority.label}</span>;
@@ -68,6 +74,7 @@ export function CisActionItemsOverview({rows=[],users=[],available=true,onOpen,s
   const internalNow=useActionConceptClock(!providedNow),now=providedNow||internalNow;
   const today=quarterToday(now),[windowState,setWindow]=useState(null),[mode,setMode]=useState('upcoming'),[priority,setPriority]=useState(null),[selection,setSelection]=useState(null),[plotWidth,setPlotWidth]=useState(700);
   const [openError,setOpenError]=useState(null);
+  const [tooltipScrollbarWidth,setTooltipScrollbarWidth]=useState(getTooltipScrollbarWidth);
   const matching=windowState?.scopeKey===scopeKey,selected=matching?windowState:currentQuarter(now);
   const events=useMemo(()=>actionConceptEvents(available?rows:[]),[rows,available]);
   const model=useMemo(()=>actionConceptQuarter(events,{year:selected.year,quarter:selected.quarter},now),[events,selected.year,selected.quarter,now]);
@@ -83,7 +90,10 @@ export function CisActionItemsOverview({rows=[],users=[],available=true,onOpen,s
   useEffect(()=>{if(!available||recordOpen)setSelection(null);},[available,recordOpen]);
   useLayoutEffect(()=>{
     const node=plot.current;if(!node)return;
-    const measure=()=>setPlotWidth(Math.max(node.getBoundingClientRect().width||700,Number.parseFloat(getComputedStyle(node).getPropertyValue('--cia-timeline-min-width'))||530));
+    const measure=()=>{
+      setPlotWidth(Math.max(node.getBoundingClientRect().width||700,Number.parseFloat(getComputedStyle(node).getPropertyValue('--cia-timeline-min-width'))||530));
+      setTooltipScrollbarWidth(getTooltipScrollbarWidth());
+    };
     measure();const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(measure);observer?.observe(node);window.addEventListener('resize',measure);
     return()=>{observer?.disconnect();window.removeEventListener('resize',measure);};
   },[]);
@@ -127,7 +137,7 @@ export function CisActionItemsOverview({rows=[],users=[],available=true,onOpen,s
         <Tooltip.Provider delayDuration={150}><div className="plot" style={{height}} aria-label={`${label} saved Action deadlines`}>
           {today>first&&<div className="past-area" style={{width:today>last?width:position(today)}}/>}{ticks.map(day=><i aria-hidden="true" className="grid-line" key={day} style={{left:position(day)}}/>)}{model.months.slice(1).map(month=><i className="grid-line month-line" aria-hidden="true" key={month.toISOString()} style={{left:position(calendarDay(month.toISOString()))}}/>)}{[1,2].map(index=><i className="h-line" aria-hidden="true" key={index} style={{top:height*index/3}}/>)}
           {today>=first&&today<=last&&<div className="today-line" style={{left:position(today)}}><span className="today-label">Today<br/>{dateLabel(dayAt(today),false)}</span></div>}
-          {layout.map(group=><div className="date-group" key={group.id} data-date={group.date} style={{left:group.left,top:20+group.lane*54,width:group.width}}><div className="circle-row">{group.events.map(event=><Tooltip.Root key={event.id}><Tooltip.Trigger asChild><button type="button" className={`review-dot ${calendarDay(event.date)<today?'late':''}`} data-action-id={event.task.task_id} aria-label={`${event.title}, ${event.priority.label} priority, ${dateLabel(event.date)}, ${actionConceptUrgency(event.date,now).text}. Open date’s actions.`} onClick={click=>showList('date',click.currentTarget,group.date,event.id)}><i className="dot" aria-hidden="true" style={{background:event.priority.color}}/></button></Tooltip.Trigger><Tooltip.Portal><Tooltip.Content className="cia-root cia-tooltip" data-theme={theme} collisionPadding={12} sideOffset={10} hideWhenDetached><div className="tip-type" style={{borderColor:event.priority.color}}>{event.priority.label} priority · {context(event)}</div><h3>{event.title}</h3><div className="tip-due"><span>{dateLabel(event.date)}</span><span className={`due-badge ${actionConceptUrgency(event.date,now).className}`}>{actionConceptUrgency(event.date,now).text}</span></div><div className="tip-meta">{owner(event)}{needsOwner(event)?' · Needs reassignment':''}<br/>{eventStatus(event)}{event.record.source?.detail?` · ${event.record.source.detail}`:''}</div><p className="tip-hint">Click to see the date’s actions.</p></Tooltip.Content></Tooltip.Portal></Tooltip.Root>)}</div><i className="date-stem" aria-hidden="true"/><button type="button" className={`date-label ${actionConceptUrgency(group.date,now).className}`} onClick={event=>showList('date',event.currentTarget,group.date)} aria-label={`${dateLabel(group.date)}: ${group.events.length} actions`}>{dateLabel(group.date,false)}</button></div>)}
+          {layout.map(group=><div className="date-group" key={group.id} data-date={group.date} style={{left:group.left,top:20+group.lane*54,width:group.width}}><div className="circle-row">{group.events.map(event=><Tooltip.Root key={event.id} onOpenChange={open=>{if(open)setTooltipScrollbarWidth(getTooltipScrollbarWidth());}}><Tooltip.Trigger asChild><button type="button" className={`review-dot ${calendarDay(event.date)<today?'late':''}`} data-action-id={event.task.task_id} aria-label={`${event.title}, ${event.priority.label} priority, ${dateLabel(event.date)}, ${actionConceptUrgency(event.date,now).text}. Open date’s actions.`} onClick={click=>showList('date',click.currentTarget,group.date,event.id)}><i className="dot" aria-hidden="true" style={{background:event.priority.color}}/></button></Tooltip.Trigger><Tooltip.Portal><Tooltip.Content className="cia-root cia-tooltip" data-theme={theme} collisionPadding={{top:12,right:12+tooltipScrollbarWidth,bottom:12,left:12}} sideOffset={10} hideWhenDetached><div className="tip-type" style={{borderColor:event.priority.color}}>{event.priority.label} priority · {context(event)}</div><h3>{event.title}</h3><div className="tip-due"><span>{dateLabel(event.date)}</span><span className={`due-badge ${actionConceptUrgency(event.date,now).className}`}>{actionConceptUrgency(event.date,now).text}</span></div><div className="tip-meta">{owner(event)}{needsOwner(event)?' · Needs reassignment':''}<br/>{eventStatus(event)}{event.record.source?.detail?` · ${event.record.source.detail}`:''}</div><p className="tip-hint">Click to see the date’s actions.</p></Tooltip.Content></Tooltip.Portal></Tooltip.Root>)}</div><i className="date-stem" aria-hidden="true"/><button type="button" className={`date-label ${actionConceptUrgency(group.date,now).className}`} onClick={event=>showList('date',event.currentTarget,group.date)} aria-label={`${dateLabel(group.date)}: ${group.events.length} actions`}>{dateLabel(group.date,false)}</button></div>)}
           {!visible.length&&<p className="chart-empty">{available?'No saved Action deadlines in this selection.':'Action deadlines unavailable.'}</p>}
         </div></Tooltip.Provider><div className="date-axis" aria-hidden="true">{ticks.filter((_,index)=>index%2===0||index===ticks.length-1).map(day=><span className="axis-label" key={day} style={{left:position(day)}}>{dateLabel(dayAt(day),false)}</span>)}</div></div></div><div className="timeline-foot"><span>{priority?`${actionConceptPriority(priority).label} priority · select the legend again to show all.`:'One circle per action. Hover for details; click to see the date’s actions.'}</span><button type="button" className="text-link" ref={viewData} disabled={!available} onClick={event=>showList('all',event.currentTarget)}>View data</button></div></div>
     </div>

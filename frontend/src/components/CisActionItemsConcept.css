@@ -115,7 +115,8 @@
 .cia-root .axis-label{position:absolute;top:6px;transform:translateX(-50%);white-space:nowrap}
 .cia-root .timeline-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--cia-muted);font-size:8.5px;margin-top:5px;min-height:16px}
 .cia-root .chart-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--cia-muted);font-size:11px;text-align:center;padding:20px}
-.cia-tooltip.cia-tooltip{z-index:70;max-width:300px;width:max-content;min-width:245px;background:var(--cia-card);border:1px solid var(--cia-line);border-radius:8px;padding:13px 14px;box-shadow:0 14px 44px #10213b20;pointer-events:none}
+.cia-tooltip.cia-tooltip{z-index:70;max-width:min(300px,var(--radix-tooltip-content-available-width,300px));width:max-content;min-width:min(245px,var(--radix-tooltip-content-available-width,245px));background:var(--cia-card);border:1px solid var(--cia-line);border-radius:8px;padding:13px 14px;box-shadow:0 14px 44px #10213b20;pointer-events:none}
+.cia-tooltip.cia-tooltip[data-theme=dark]{box-shadow:0 14px 44px #0005}
 .cia-tooltip .tip-type{color:var(--cia-muted);font-size:9px;letter-spacing:.2px;border-left:3px solid;padding-left:6px;margin-bottom:6px}
 .cia-tooltip h3{font-size:11px;line-height:1.5;max-width:270px}
 .cia-tooltip .tip-due{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;margin:9px 0}
@@ -259,7 +260,7 @@ html[data-brawndo-demo-actions-suspended=true] :is(.ui-dialog,.ui-sheet,.ui-over
   .cia-page.cia-page .bda-results nav{gap:5px}
   .cia-page.cia-page .bda-results button{font-size:8px;padding:3px 4px}
   .cia-page .bda-table-scroll:not(.bda-done) th:nth-child(2),.cia-page .bda-done th:first-child,.cia-page.cia-page .brawndo-ai-table th:first-child{padding-left:12px}
-  .cia-tooltip.cia-tooltip{min-width:225px;max-width:calc(100vw - 20px);padding:11px 12px}
+  .cia-tooltip.cia-tooltip{min-width:min(225px,var(--radix-tooltip-content-available-width,225px));max-width:min(calc(100vw - 20px),var(--radix-tooltip-content-available-width,calc(100vw - 20px)));padding:11px 12px}
   :root .ui-dialog.cia-root.cia-selector[data-state]{width:calc(100vw - 22px);max-height:calc(100dvh - 24px)}
   .cia-selector .dialog-heading{padding:17px 16px 13px;gap:8px}
   .cia-selector .dialog-heading h2{font-size:19px}
