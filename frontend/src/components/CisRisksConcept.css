@@ -176,7 +176,8 @@
 .cis-risks-concept .register-meta { display:flex; align-items:center; justify-content:space-between; padding:9px 15px; color:var(--muted); font-size:9px; border-bottom:1px solid var(--line); }
 .cis-risks-concept .register-meta>div { display:flex; gap:10px; align-items:center; }
 .cis-risks-concept .pagination { font-size:9px; color:var(--muted); border:1px solid var(--line); border-radius:4px; padding:3px 6px; }
-.cis-risks-concept .table-scroll { overflow:auto; border-radius:0 0 9px 9px; }
+/* Keep absolute accessible header text inside its horizontal scroller. */
+.cis-risks-concept .table-scroll { position:relative; overflow:auto; border-radius:0 0 9px 9px; }
 .cis-risks-concept table { border-collapse:collapse; width:100%; min-width:800px; text-align:left; font-size:10px; }
 .cis-risks-concept thead { background:var(--subtle); color:var(--muted); font-size:9px; font-weight:400; }
 .cis-risks-concept th { font-weight:500; padding:10px 9px; border-bottom:1px solid var(--line); }

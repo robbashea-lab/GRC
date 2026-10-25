@@ -1,7 +1,10 @@
 import React, {act} from 'react';
 import {createRoot} from 'react-dom/client';
+import {readFileSync} from 'fs';
+import {join} from 'path';
 import api from '@/lib/api';
 import {riskMatches} from '@/lib/brawndoRisks';
+import {THEME_KEY} from '@/lib/brawndoTheme';
 import CisRisksConcept from './CisRisksConcept';
 
 jest.mock('@/lib/api', () => ({__esModule: true, default: {get: jest.fn(), post: jest.fn(), put: jest.fn(), patch: jest.fn(), delete: jest.fn()}, formatError: error => error.message}));
@@ -28,6 +31,46 @@ beforeEach(() => {
     onNewRisk: jest.fn(), onRiskScale: jest.fn(), onExport: jest.fn(), canWrite: true, clientId: 'fixture-client', clientName: 'Fixture', scope: 'actor:fixture-client:demo:ig1', now};
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
+
+test.each(['light', 'dark'])('accessible Risk header stays within its internal scroller in %s', async theme => {
+  const previousTheme = localStorage.getItem(THEME_KEY), style = document.createElement('style');
+  // CSS imports are mocked by Jest; inspect the authored relationship, not JSDOM geometry.
+  style.textContent = readFileSync(join(__dirname, 'CisRisksConcept.css'), 'utf8');
+  document.head.appendChild(style);
+  localStorage.setItem(THEME_KEY, theme);
+  try {
+    expect(style.sheet).not.toBeNull();
+    await render();
+    const surface = container.querySelector('[data-testid="cis-risks-concept"]');
+    expect(surface.dataset.theme).toBe(theme);
+    const label = surface.querySelector('.risk-table thead th.open-col .sr-only');
+    expect(label).not.toBeNull();
+    const scroller = label.closest('.table-scroll');
+    expect(scroller).not.toBeNull();
+    expect(label.closest('th').textContent.trim()).toBe('Open risk');
+    expect(label.closest('[hidden], [aria-hidden="true"]')).toBeNull();
+    expect(getComputedStyle(label).display).not.toBe('none');
+    expect(getComputedStyle(label).visibility).not.toBe('hidden');
+    expect(getComputedStyle(label).position).toBe('absolute');
+    expect(getComputedStyle(scroller).overflow).toBe('auto');
+    let positionedAncestor = label.parentElement;
+    while (positionedAncestor) {
+      const position = getComputedStyle(positionedAncestor).position || 'static';
+      if (position !== 'static') break;
+      positionedAncestor = positionedAncestor.parentElement;
+    }
+    expect(positionedAncestor).toBe(scroller);
+    const opener = surface.querySelector('tbody .row-open');
+    expect(opener.getAttribute('aria-label')).toBe('Open RISK-001: Recovery risk');
+    await click(opener);
+    expect(props.onOpenRisk).toHaveBeenCalledWith(props.rows[0]);
+    for (const method of ['post', 'put', 'patch', 'delete']) expect(api[method]).not.toHaveBeenCalled();
+  } finally {
+    style.remove();
+    if (previousTheme === null) localStorage.removeItem(THEME_KEY);
+    else localStorage.setItem(THEME_KEY, previousTheme);
+  }
+});
 
 test('all 25 matrix scores and exact members lead to the native Risk while unrated records remain in the register', async () => {
   await render();
