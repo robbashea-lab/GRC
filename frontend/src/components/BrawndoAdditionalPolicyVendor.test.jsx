@@ -150,3 +150,21 @@ test('vendor native notice-deadline cohort is labeled as renewal or notice work'
   expect(figure.querySelector('strong').textContent).toBe('1');
   expect(container.querySelector('[data-testid="vendor-view-renewal_soon"]').textContent).toContain('Renewal / notice actions');
 });
+test.each([
+  [{received_at:'2026-10-01'},'Received','received'],
+  [{review_status:'constructor',received_at:'2026-10-01'},'Received','received'],
+  [{review_status:'__proto__'},'Not recorded','not_recorded'],
+  [{last_reviewed:'2026-10-02',received_at:'2026-10-01'},'Reviewed','reviewed'],
+  [{},'Not recorded','not_recorded'],
+])('Vendor assurance badge follows existing saved-date fallback %s',async(saved,label,token)=>{
+  const document=Object.freeze({assurance_id:'legacy-assurance',type:'SOC 2',...saved});
+  const vendor=Object.freeze({vendor_id:'legacy-vendor',client_id:'demo_brawndo',name:'Legacy assurance vendor',status:'active',criticality:'low',assurance_records:[document]});
+  const onOpen=jest.fn();
+  await act(async()=>root.render(<BrawndoAdditionalVendors rows={[vendor]} quarterlyChart onOpen={onOpen} onView={jest.fn()}/>));
+  const badge=container.querySelector('.cv-assurance-status');
+  expect(badge.textContent).toBe(label);
+  expect(badge.classList.contains(`cv-status-${token}`)).toBe(true);
+  await click(container.querySelector('.bav-assurance button'));
+  expect(onOpen).toHaveBeenCalledWith(vendor,'assurance','legacy-assurance');
+  expect(document).toEqual({assurance_id:'legacy-assurance',type:'SOC 2',...saved});
+});

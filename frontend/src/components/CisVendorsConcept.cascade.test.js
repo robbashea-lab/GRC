@@ -51,3 +51,23 @@ test('legacy non-concept Vendors retain their existing narrow-container named ar
   node.classList.add('bav-header');
   expect(winner(node,'display',974)).toBe('none');
 });
+const criticalityTokens=[
+  ['critical','#ffd9d7','#a42a31','#4e2c3d','#f5b6c6'],
+  ['high','#ffe4cc','#985516','#533d2d','#f8cd9a'],
+  ['moderate','#fff0c9','#6a4c15','#443a26','#f2d896'],
+  ['low','#dcf3ef','#265f59','#23453f','#9dded1'],
+];
+test.each(criticalityTokens.flatMap(([level,lightBg,lightFg,darkBg,darkFg])=>[
+  [level,'light',lightBg,lightFg],[level,'dark',darkBg,darkFg],
+]))('CIS Vendor %s badge uses approved %s reference tokens',(level,theme,background,color)=>{
+  const page=document.createElement('div');page.className='cv-page';page.dataset.theme=theme;
+  page.innerHTML=`<span class="bav-critical ${level}"></span>`;
+  expect(winner(page.firstElementChild,'background',974)).toBe(background);
+  expect(winner(page.firstElementChild,'color',974)).toBe(color);
+});
+test.each([['received','#253d60','#b6ceff'],['requested','#443922','#f2d58a']])('CIS Vendor dark %s assurance uses approved reference tokens',(status,background,color)=>{
+  const page=document.createElement('div');page.className='cv-page';page.dataset.theme='dark';
+  page.innerHTML=`<span class="cv-assurance-status cv-status-${status}"></span>`;
+  expect(winner(page.firstElementChild,'background',974)).toBe(background);
+  expect(winner(page.firstElementChild,'color',974)).toBe(color);
+});

@@ -115,7 +115,14 @@
 .cv-page .register-identity-logo{width:34px;height:34px;min-width:34px;border-radius:5px;border-color:var(--cv-line);background:var(--cv-subtle);color:var(--cv-muted)}
 .cv-page .bav-critical{font-size:10px;padding:3px 7px;border-radius:3px;font-weight:400;display:inline-flex}
 .cv-page .bav-critical i{display:none}
-.cv-page .bav-critical.critical{background:#fff1f4;color:#a52d44}.cv-page .bav-critical.high{background:#fff0e6;color:#a65420}.cv-page .bav-critical.medium,.cv-page .bav-critical.moderate{background:#fff5df;color:#966215}.cv-page .bav-critical.low{background:#e7f5f1;color:#246f62}
+.cv-page .bav-critical.critical{background:#ffd9d7;color:#a42a31}.cv-page .bav-critical.high{background:#ffe4cc;color:#985516}.cv-page .bav-critical.medium,.cv-page .bav-critical.moderate{background:#fff0c9;color:#6a4c15}.cv-page .bav-critical.low{background:#dcf3ef;color:#265f59}
+/* Theme tokens from the approved Vendor reference; unrelated native palettes stay scoped. */
+.cv-page[data-theme=dark] .bav-critical.critical{background:#4e2c3d;color:#f5b6c6}
+.cv-page[data-theme=dark] .bav-critical.high{background:#533d2d;color:#f8cd9a}
+.cv-page[data-theme=dark] .bav-critical.medium,.cv-page[data-theme=dark] .bav-critical.moderate{background:#443a26;color:#f2d896}
+.cv-page[data-theme=dark] .bav-critical.low{background:#23453f;color:#9dded1}
+.cv-page[data-theme=dark] .cv-status-received,.cv-page[data-theme=dark] .cv-status-reviewed{background:#253d60;color:#b6ceff}
+.cv-page[data-theme=dark] .cv-status-requested,.cv-page[data-theme=dark] .cv-status-awaiting_update{background:#443922;color:#f2d58a}
 .cv-page .bav-data-type{display:inline;background:none;padding:0;font-size:10px;border:0;box-shadow:none;white-space:normal;overflow-wrap:anywhere}.cv-page .bav-data-type:not(:last-child):after{content:' · '}
 .cv-page .bav-assurance button{font-size:10px;color:var(--cv-blue);display:inline;padding:0;background:none;border:0;text-align:left}
 .cv-assurance+.cv-assurance{margin-top:9px}.cv-assurance-status{display:inline-block;padding:2px 5px;margin-left:5px;border-radius:3px;font-size:8px;background:var(--cv-subtle);color:var(--cv-muted)}
