@@ -99,10 +99,16 @@
 .cv-page .bapv-segment button{font-size:9px;padding:4px 7px;border:0;border-radius:4px;color:var(--cv-muted)}
 .cv-page .bapv-segment button[aria-pressed=true]{background:var(--cv-info);color:var(--cv-blue)}
 .cv-page .bav-table{overflow-x:auto;max-width:100%;background:var(--cv-card)}
-.cv-page .bav-row{min-width:1080px;display:grid;grid-template-columns:minmax(230px,1.6fr) 96px 116px 125px 135px minmax(210px,1.4fr) 125px 28px;border-color:var(--cv-line);gap:0;align-items:center}
-.cv-page .bav-row>div{padding:12px 11px;min-width:0;font-size:11px}
+.cv-page .bav-row{min-width:1095px;display:grid;grid-template-areas:none;padding:0;grid-template-columns:minmax(260px,1.6fr) 96px 116px 125px 135px minmax(210px,1.4fr) 125px 28px;border-color:var(--cv-line);gap:0;align-items:center}
+/* Keep the concept register in columns when legacy container rules apply. */
+.cv-page .bav-row>div{grid-area:auto;justify-self:stretch;text-align:left;padding:12px 11px;min-width:0;font-size:11px}
+.cv-page .bav-row>.bapv-chevron{display:block;justify-self:center}
 .cv-page .bav-header{background:var(--cv-subtle);color:var(--cv-muted);font-size:10px}
-.cv-page .bav-header>div{font-size:10px;padding:10px 11px}
+.cv-page .bav-header>div{font-size:9px;padding:9px 11px}
+.cv-page .bav-header .column-control{font-size:9px}
+.cv-page .bav-types{display:block}
+.cv-page .bav-owner .bapv-owner{font-size:10px;gap:5px}
+.cv-page .bav-next small,.cv-page .bav-renewal small{font-size:9px}
 .cv-page .bav-item{display:flex;gap:11px;align-items:center}
 .cv-page .bapv-name{font-size:11.5px;font-weight:600;line-height:1.4;text-align:left;color:var(--cv-text);background:none;border:0;padding:0}
 .cv-page .bapv-meta{font-size:10px;line-height:1.5;color:var(--cv-muted);margin-top:3px}
@@ -110,7 +116,7 @@
 .cv-page .bav-critical{font-size:10px;padding:3px 7px;border-radius:3px;font-weight:400;display:inline-flex}
 .cv-page .bav-critical i{display:none}
 .cv-page .bav-critical.critical{background:#fff1f4;color:#a52d44}.cv-page .bav-critical.high{background:#fff0e6;color:#a65420}.cv-page .bav-critical.medium,.cv-page .bav-critical.moderate{background:#fff5df;color:#966215}.cv-page .bav-critical.low{background:#e7f5f1;color:#246f62}
-.cv-page .bav-data-type{display:inline;background:none;padding:0;font-size:10px;border:0}.cv-page .bav-data-type:not(:last-child):after{content:' · '}
+.cv-page .bav-data-type{display:inline;background:none;padding:0;font-size:10px;border:0;box-shadow:none;white-space:normal;overflow-wrap:anywhere}.cv-page .bav-data-type:not(:last-child):after{content:' · '}
 .cv-page .bav-assurance button{font-size:10px;color:var(--cv-blue);display:inline;padding:0;background:none;border:0;text-align:left}
 .cv-assurance+.cv-assurance{margin-top:9px}.cv-assurance-status{display:inline-block;padding:2px 5px;margin-left:5px;border-radius:3px;font-size:8px;background:var(--cv-subtle);color:var(--cv-muted)}
 .cv-status-requested,.cv-status-awaiting_update{background:#fff5df;color:#966215}.cv-status-received,.cv-status-reviewed{background:var(--cv-info);color:var(--cv-blue)}
