@@ -71,3 +71,39 @@ test.each([['received','#253d60','#b6ceff'],['requested','#443922','#f2d58a']])(
   expect(winner(page.firstElementChild,'background',974)).toBe(background);
   expect(winner(page.firstElementChild,'color',974)).toBe(color);
 });
+test.each(['received','reviewed'])('CIS Vendor light %s assurance uses approved reference foreground',status=>{
+  const page=document.createElement('div');page.className='cv-page';page.dataset.theme='light';
+  page.innerHTML=`<span class="cv-assurance-status cv-status-${status}"></span>`;
+  expect(winner(page.firstElementChild,'color',974)).toBe('#1459dc');
+});
+// Resolve the inherited single custom-property tokens used by these badge rules.
+function resolvedBadgeToken(node,property,width){
+  const value=winner(node,property,width);
+  const token=/^var\((--[\w-]+)\)$/.exec(value||'');
+  if(!token)return value;
+  for(let ancestor=node;ancestor;ancestor=ancestor.parentElement){
+    const inherited=winner(ancestor,token[1],width);
+    if(inherited!==undefined)return inherited;
+  }
+  return value;
+}
+const urgencyReferenceTokens={
+  light:{today:['#e9f0ff','#1459dc'],week:['#fff0cd','#a16b09'],fortnight:['#fff5df','#966215'],month:['#edf4ff','#245da8'],later:['#f7f9fc','#647491'],overdue:['#fff1f4','#ad2e45']},
+  dark:{today:['#233b5c','#b9d1ff'],week:['#403522','#f3c86f'],fortnight:['#3b3327','#f3d18b'],month:['#233b5c','#b9d1ff'],later:['#21334b','#a2b4d0'],overdue:['#402936','#f7a7b7']},
+};
+test.each(['cv-page','cv-tooltip','cv-event-list'].flatMap(scope=>Object.entries(urgencyReferenceTokens).flatMap(([theme,tokens])=>Object.entries(tokens).map(([urgency,[background,color]])=>[scope,theme,urgency,background,color]))))('%s %s %s urgency retains approved badge tokens',(scope,theme,urgency,background,color)=>{
+  const page=document.createElement('div');page.className=scope;page.dataset.theme=theme;
+  page.innerHTML=`<span class="cv-due cv-${urgency}"></span>`;
+  expect(resolvedBadgeToken(page.firstElementChild,'background',974)).toBe(background);
+  expect(resolvedBadgeToken(page.firstElementChild,'color',974)).toBe(color);
+});
+test.each([
+  ['light','received','#edf4ff','#1459dc'],['dark','received','#253d60','#b6ceff'],
+  ['light','requested','#fff4dd','#8d691d'],['dark','requested','#443922','#f2d58a'],
+  ['light','not_recorded','#f7f9fc','#647491'],['dark','not_recorded','#21334b','#a2b4d0'],
+])('%s %s assurance complete reference badge map',(theme,status,background,color)=>{
+  const page=document.createElement('div');page.className='cv-page';page.dataset.theme=theme;
+  page.innerHTML=`<span class="cv-assurance-status cv-status-${status}"></span>`;
+  expect(resolvedBadgeToken(page.firstElementChild,'background',974)).toBe(background);
+  expect(resolvedBadgeToken(page.firstElementChild,'color',974)).toBe(color);
+});
