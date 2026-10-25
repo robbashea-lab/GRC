@@ -15,6 +15,7 @@
 !frontend/src/lib/managementRules.json
 !frontend/src/lib/portfolioRules.json
 !frontend/src/lib/aiGovernanceCatalog.json
+!frontend/src/lib/aiOnboardingCatalog.json
 !shared
 !shared/catalogs
 !shared/catalogs/**

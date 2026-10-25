@@ -22,6 +22,7 @@
     "test_finding_risk_native_command.py",
     "test_action_items.py",
     "test_ai_governance.py",
+    "test_ai_onboarding.py",
     "test_assessment_verification.py",
     "test_assignment_eligibility.py",
     "test_brawndo_action_owner_eligibility.py",

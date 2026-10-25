@@ -5,6 +5,7 @@ import {record,write,audit,uid,now,ids} from './store';
 import {reviewView} from '../lib/reviewOccurrences';
 import { validateAssignment, clientAccess } from './assignmentEligibility';
 import {AI_PILOT_DEFAULTS,AI_PILOT_KEYS,aiScope} from '../lib/brawndoAI';
+import {reviewedScreening,screeningReviewSnapshot} from '../lib/aiOnboarding';
 
 export function aiRequest(db,path,method,params,body){
   db.ai_systems||=[];db.ai_intake||={};db.ai_counters||={};
@@ -62,14 +63,18 @@ export function aiRequest(db,path,method,params,body){
   if(action||!['post','patch'].includes(method)||(!id&&method!=='post')||(id&&method!=='patch'))throw new Error('AI records are retained; use the supported lifecycle controls');
   if(old&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
   body={...body};delete body.expected_updated_at;
+  const screeningReview=body.onboarding_screening;
+  if(Object.hasOwn(body,'onboarding_screening')&&(!old||!pilot||!screeningReview))throw new Error('Screening review requires an existing versioned CIS AI record');
+  delete body.onboarding_screening;
   if(Object.keys(body).some(k=>![...AI_KEYS,...(pilot?AI_PILOT_KEYS:[]),'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
   if(Object.prototype.hasOwnProperty.call(body,'catalog_key'))body.catalog_key=validateCatalogKey('ai_systems',body.catalog_key);
   const row={...AI_DEFAULTS,...(pilot?AI_PILOT_DEFAULTS:{}),...old,...body};validateAI(db,row,old);validateAssignment(db,'ai_systems',row,old);
+  if(screeningReview)row.onboarding_screening=reviewedScreening(old,row,screeningReview,db.user.user_id,now());
   if(pilot){
     for(const key of ['environment','restrictions','data_settings'])if(typeof row[key]!=='string'||row[key].length>10000)throw new Error('Invalid '+key);
     if(!Array.isArray(row.permitted_data_types)||row.permitted_data_types.some(v=>!catalog.data_types.includes(v)))throw new Error('Invalid permitted data classifications');
     if(!old)row.approval_status='pending_assessment';
-    else if(JSON.stringify(aiScope(old))!==JSON.stringify(aiScope(row))&&['approved','approved_with_conditions','not_approved'].includes(old.approval_status)){
+    else if((JSON.stringify(aiScope(old))!==JSON.stringify(aiScope(row))||screeningReview&&screeningReviewSnapshot(old)!==screeningReviewSnapshot(row))&&['approved','approved_with_conditions','not_approved'].includes(old.approval_status)){
       row.approval_status='pending_assessment';row.material_change_at=now();row.material_change_note='Approval boundaries changed; reassessment required.';
       audit(db,'AI approval boundaries changed; reassessment required','ai_systems',row);
     }
