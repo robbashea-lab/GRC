@@ -1,0 +1,143 @@
+/* Sizing only. Do not publish font defaults/tokens to ancestors or native portals. */
+/* Reserve the native document scrollbar so short registers do not move the shell. */
+html:has(.brawndo-workspace-pilot[data-cis-sizing=true]) {scrollbar-gutter:stable;}
+.brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] {
+  --bwp-top:60px;
+  --bwp-sidebar:240px;
+}
+.brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar {
+  height:60px;
+  flex-shrink:0;
+}
+.brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .bwp-body .app-sidebar {
+  top:60px;
+  height:calc(100dvh - 60px);
+  flex-shrink:0;
+}
+@media(min-width:861px) {
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .bwp-body .app-sidebar {
+    display:flex;
+    position:sticky;
+    width:240px;
+    min-width:240px;
+    max-width:240px;
+    left:auto;
+  }
+}
+/* Approved exception: Dashboard now uses the existing shared 860px navigation state. */
+@media(min-width:861px) and (max-width:900px) {
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand {
+    width:155px;
+    min-width:155px;
+  }
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand > span {
+    display:block;
+  }
+}
+@media(min-width:861px) {
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-client {display:flex;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-group > .bsb-group-label {display:block;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-link > span {display:initial;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-link {justify-content:initial;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-back {justify-content:initial;font-size:13px;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-mobile-nav,
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-nav-backdrop {display:none;}
+}
+@media(max-width:860px) {
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-mobile-nav {display:grid;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand {width:auto;min-width:0;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand > span {display:block;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand small,
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-search {display:none;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation=closed] .bwp-body .app-sidebar {display:none;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation=open] .bwp-body .app-sidebar {
+    display:flex;
+    position:fixed;
+    width:260px;
+    min-width:260px;
+    max-width:260px;
+    left:0;
+    z-index:45;
+  }
+  html .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation=open] > button.bwp-nav-backdrop {
+    display:block;
+    position:fixed;
+    top:60px;
+    right:0;
+    bottom:0;
+    left:0;
+    z-index:40;
+  }
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-client {display:flex;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-group > .bsb-group-label {display:block;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-link > span {display:initial;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-link {justify-content:initial;}
+  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-back {justify-content:initial;font-size:13px;}
+}
+
+/* Dashboard: explicit workspace roles leave history/domain/matrix hover cards alone. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-heading h1 {font-size:26px;line-height:1.25;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] :is(.bdd-heading p,.surface-theme-action,.bdd-summary button > span,.bdd-summary small) {font-size:12.5px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-summary strong {font-size:32px;line-height:1.2;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] :is(.ph-program-head h3,.ph-chart-top h4),
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cdp-card.cdp-concept > header h2,
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cis-dashboard-risk[data-concept=true] > header h2,
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-card > header h2 {font-size:16px;line-height:1.4;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] :is(.ph-program-head .ph-link,.ph-current-value > span,.ph-current-value > p,.ph-current-value > small,.ph-breakdown-head,.ph-breakdown-label,.ph-breakdown-value > span,.ph-chart-top p,.ph-chart-top .ph-link,.ph-range > span,.ph-segmented button,.ph-metric > span,.ph-metric > p,.ph-metric > small,.ph-scope-notes,.ph-foot.ph-reference-foot) {font-size:12.5px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-current-value > strong:not(.is-text) {font-size:48px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-current-value .ph-unit {font-size:25px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-metric strong {font-size:21px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-data :is(th,td) {font-size:12.5px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cdp-card.cdp-concept :is(header p,.cdp-concept-legend,.cdp-concept-hint,.cdp-radar-note) {font-size:12.5px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cdp-card.cdp-concept .cdp-table-wrap thead th {font-size:12px;white-space:normal;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cdp-card.cdp-concept .cdp-table-wrap tbody :is(th,td) {font-size:13px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cdp-card.cdp-concept .cdp-domain-name {font-size:12.5px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cis-dashboard-risk[data-concept=true] > header a,
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cis-dashboard-risk[data-concept=true] > p,
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cis-dashboard-risk[data-concept=true] > .cc-risk-caption,
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-card > header p,
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-card :is(.bdd-controls input,.bdd-filters button,.bdd-controls label,.bdd-controls select,.bdd-results,.bdd-meta,.bdd-framework-chip,.bdd-cell-due > small,.bdd-status) {font-size:12.5px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-card :is(.bdd-item,.bdd-owner > span,.bdd-cell-due > time,tbody td) {font-size:14px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-card thead th {font-size:12.5px;}
+
+/* Calendar: keep event positioning, agenda breakpoint, native tips and scheduling editor. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .bdcal .bpage-head h1 {font-size:26px;line-height:1.25;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .bdcal .card-head h2 {font-size:16px;line-height:1.4;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .bdcal .cal-nav h2 {font-size:20px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .bdcal :is(.kcell span,.kcell small,.card-foot,.dow,.ev,.more,.wcol-h,.wempty,.meta,.fwchip,.ag-group,.ag-meta,.ag-link,.cal-foot,.card .ct,.card .cl) {font-size:12.5px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .bdcal :is(.dt,.owner,.dstate,.ag-main > b,.card b,.card .cm) {font-size:14px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .bdcal .ag-date b {font-size:19px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .bdcal .ag-date small {font-size:12.5px;}
+
+/* Native CIS overview/register only; the full safeguard and guided editor are portals. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-cis-visual[data-theme] > .page-head h1 {font-size:26px;line-height:1.25;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-cis-visual[data-theme] > .pcard .card-head h2 {font-size:16px;line-height:1.4;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-cis-visual[data-theme] > .pcard :is(.now-head p,.now-head small,.bd-head,.lg-val > span,.card-foot,.summary,.ghead,.gname small,.fig > span,.sg-t small,.ver small) {font-size:12.5px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-cis-visual[data-theme] > .pcard :is(.gname b,.sg-t,.fig b) {font-size:14px;}
+
+/* Policies: retain every native control/column and the actual annual-review relationship. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .policies-concept .bapv-page-head h1 {font-size:26px;line-height:1.25;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .policies-concept .bap-status h2 {font-size:16px;line-height:1.4;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .policies-concept .pc-card-copy strong {font-size:36px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .policies-concept :is(.bapv-page-head p,.bapv-head-actions button,.pc-card-copy small,.pc-status-foot,.pc-mapping,.bap-review-top h3,.bapv-link,.bap-review-date small,.bap-review dt,.bapv-meta,.bap-alignment button,.bap-state-label,.bap-state small,.bap-last button,.bapv-summary,.bapv-filter-chip,.bapv-search input,.bapv-segment button,.bapv-field,.bapv-field select,.bap-header,.bap-header button,.pc-native-toolbar label,.pc-native-toolbar > button) {font-size:12.5px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .policies-concept :is(.pc-card-copy b,.bap-review dd,.bapv-name,.bapv-owner > span:last-child,.bap-last > span) {font-size:14px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .policies-concept .bap-review-date strong {font-size:25px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .policies-concept .bapv-field select option {font-size:12px;}
+
+/* AI register only. Its inline preview and all profile/record/wizard dialogs keep native sizes. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .page-heading h1 {font-size:26px;line-height:1.25;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .page-heading :is(.eyebrow,p,.page-actions .button,.profile-button b,.profile-button small),
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .summary :is(.metric-label,small),
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .register > .register-toolbar :is(input,.filters button,.filters button span,.archive-toggle),
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .register > .table-scroll th,
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .register .system-row :is(.system-secondary,.badge,.risk-link),
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .register > .register-footer,
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .concept-footer {font-size:12.5px;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .summary strong {font-size:32px;line-height:1.2;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .register .system-row :is(.system-name,.owner) {font-size:14px;}
+/* Native IDs must remain complete without covering the adjacent expand control. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .register .system-row .risk-link {
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}

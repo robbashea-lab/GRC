@@ -10,7 +10,7 @@ import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
-import {cisPresentationEligible} from '@/lib/cisExperience';
+import {cisNativeClientRoute,cisPresentationEligible} from '@/lib/cisExperience';
 import {AdditionalSectionsProvider, additionalSectionChrome} from '@/lib/brawndoAdditionalScope';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
 import { useEffect, useMemo, useState } from "react";
@@ -315,8 +315,7 @@ function LayoutContents() {
   const chromeContext={...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error};
   const verifiedChrome=cisPresentationEligible(chromeContext);
   const visualChrome=visualCorrectionSurface({...chromeContext,orgLoading:verifiedChrome?false:org.loading});
-  const nativeRoute=!['/clients','/admin','/platform','/account'].some(path=>pathname.startsWith(path))
-    &&(!pathname.startsWith('/compliance/')||pathname==='/compliance/cis-ig1');
+  const nativeRoute=cisNativeClientRoute(pathname);
   const refreshing=org.loading&&verifiedChrome&&nativeRoute;
   const additionalSurface=additionalSectionChrome({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const pilot=!!user;
