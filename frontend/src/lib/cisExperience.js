@@ -5,6 +5,10 @@ import {cisConfiguration} from './cisScope';
 const ROLES = [...OPERATOR_ROLES, 'client_readonly', 'client_viewer'];
 export const CIS_FRAMEWORK = 'cis-ig1';
 
+// Shared client chrome excludes platform routes and dedicated non-CIS programs.
+export const cisNativeClientRoute = pathname => !['/clients', '/admin', '/platform', '/account'].some(path => pathname.startsWith(path))
+  && (!pathname.startsWith('/compliance/') || pathname === '/compliance/cis-ig1');
+
 export function cisImplementationGroup(client) {
   const settings = client?.framework_settings;
   if (settings !== undefined && (!settings || typeof settings !== 'object' || Array.isArray(settings))) return null;

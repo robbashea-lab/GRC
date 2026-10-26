@@ -16,11 +16,13 @@ import {BRAWNDO_DEMO_DASHBOARD_ENABLED} from '@/lib/brawndoDemoDashboard';
 import './BrawndoWorkspace.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {selectedClient} from '@/lib/clientSelection';
-import {cisPresentationEligible} from '@/lib/cisExperience';
+import {cisNativeClientRoute,cisPresentationEligible} from '@/lib/cisExperience';
 import './SixSurfaceAppearance.css';
 import {additionalAppearanceSurface, additionalSectionChrome, useAdditionalSectionsAppearance} from '@/lib/brawndoAdditionalScope';
 import './AdditionalSectionsAppearance.css';
 import {CisVisualPublisher} from './BrawndoCisVisualAppearance';
+import './CisWorkspaceSizing.css';
+import './CisRegisterSizing.css';
 
 const PAGES=[['Dashboard','/dashboard'],['Calendar','/calendar'],['Reviews','/reviews'],['Action Items','/action-items'],['Risks','/risks'],['Policies','/policies'],['Vendors','/vendors'],['Reports','/reports'],['Evidence Library','/evidence'],['Contacts','/contacts'],['Systems & Scope','/systems'],['AI Governance','/ai-governance'],['Client Profile','/client-profile']];
 
@@ -65,6 +67,7 @@ export default function BrawndoWorkspace({children}){
   const cisVisual=cisPublication===cisScopeKey;
   const chromeContext={...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error};
   const verifiedChrome=cisPresentationEligible(chromeContext);
+  const sizingChrome=verifiedChrome&&cisNativeClientRoute(pathname);
   const risksPresentation=brawndoDemoRisksGate({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const visualSurface=visualCorrectionSurface(chromeContext);
   const visualChrome=visualCorrectionSurface({...chromeContext,orgLoading:verifiedChrome?false:org.loading});
@@ -90,7 +93,7 @@ export default function BrawndoWorkspace({children}){
     if(additionalSurface){root.dataset.additionalSurface=additionalSurface;root.dataset.additionalTheme=theme;}
     return()=>{delete root.dataset.additionalSurface;delete root.dataset.additionalTheme;};
   },[additionalSurface,theme]);
-  return <CisVisualPublisher.Provider value={publishCis}><div className="brawndo-workspace-pilot" data-cis-dashboard-concept={BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&verifiedChrome?'true':undefined} data-additional-surface={additionalChrome||undefined} data-visual-surface={visualChrome||undefined} data-cis-visual={cisChrome||undefined} data-theme={theme} data-navigation={navigation?'open':'closed'}>
+  return <CisVisualPublisher.Provider value={publishCis}><div className="brawndo-workspace-pilot" data-cis-sizing={sizingChrome?'true':undefined} data-cis-dashboard-concept={BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&verifiedChrome?'true':undefined} data-additional-surface={additionalChrome||undefined} data-visual-surface={visualChrome||undefined} data-cis-visual={cisChrome||undefined} data-theme={theme} data-navigation={navigation?'open':'closed'}>
     <header className="bwp-topbar">
       <button type="button" className="bwp-mobile-nav" aria-label="Toggle client navigation" aria-expanded={navigation} onClick={()=>setNavigation(!navigation)}><Menu size={22}/></button>
       <Link to={currentClientId?'/dashboard':'/clients'} className="bwp-brand" aria-label="GoverNara"><BrandMark className="bwp-mark"/><span>GoverNara<small>{visualChrome||additionalChrome||risksPresentation||cisChrome?'By Prestige Worldwide':'CLARITY FOR A STRONGER TOMORROW'}</small></span></Link>
