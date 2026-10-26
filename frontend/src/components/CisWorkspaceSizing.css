@@ -136,6 +136,10 @@ html:has(.brawndo-workspace-pilot[data-cis-sizing=true]):not(:has(.ui-overlay)) 
 .brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .summary strong {font-size:32px;line-height:1.2;}
 .brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .register .system-row :is(.system-name,.owner) {font-size:14px;}
 /* Native IDs must remain complete without covering the adjacent expand control. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .register > .table-scroll {
+  /* Keep the absolute accessible heading inside its native scroll container. */
+  position:relative;
+}
 .brawndo-workspace-pilot[data-cis-sizing=true] .airf.airf-page > .register .system-row .risk-link {
   max-width:100%;
   white-space:normal;

@@ -280,7 +280,7 @@ const workspaceCases = [
   },
   {
     surface: 'ai',
-    html: '<main class="airf airf-page"><section class="page-heading"><div><h1>AI Governance</h1><p>Native inventory</p></div></section><section class="summary"><button class="summary-card"><span><span class="metric-label">AI systems</span><strong>12</strong></span></button></section><section class="register"><div class="register-toolbar"><input type="search"></div><div class="table-scroll"><table><thead><tr><th>AI system</th></tr></thead><tbody><tr class="system-row"><td><button class="system-name"><span><strong>Native title</strong><span class="system-secondary">Native provider</span></span></button></td><td><span class="owner">Native owner</span></td><td><button class="risk-link">rsk_ABCDEF0123456789-ABCDEF0123456789</button></td><td><button class="row-chevron" aria-label="Expand native system">⌄</button></td></tr></tbody></table></div></section></main>',
+    html: '<main class="airf airf-page"><section class="page-heading"><div><h1>AI Governance</h1><p>Native inventory</p></div></section><section class="summary"><button class="summary-card"><span><span class="metric-label">AI systems</span><strong>12</strong></span></button></section><section class="register"><div class="register-toolbar"><input type="search"></div><div class="table-scroll"><table><thead><tr><th>AI system</th><th><span class="sr-only">Expand</span></th></tr></thead><tbody><tr class="system-row"><td><button class="system-name"><span><strong>Native title</strong><span class="system-secondary">Native provider</span></span></button></td><td><span class="owner">Native owner</span></td><td><button class="risk-link">rsk_ABCDEF0123456789-ABCDEF0123456789</button></td><td><button class="row-chevron" aria-label="Expand native system">⌄</button></td></tr></tbody></table></div></section></main>',
     // The reference's .ai-risk-link uses the supporting --small identity role.
     roles: [['.page-heading h1', '26px'], ['.summary strong', '32px'], ['.metric-label', '12.5px'], ['.system-name', '14px'], ['.owner', '14px'], ['.risk-link', '12.5px'], ['.system-secondary', '12.5px'], ['th', '12.5px']],
   },
@@ -304,6 +304,17 @@ describe.each(orders.map(files => [files]))('sizing declarations with stylesheet
       expect(value(linkedId, 'white-space', 1440, files)).toBe('normal');
       expect(value(linkedId, 'overflow-wrap', 1440, files)).toBe('anywhere');
       expect(value(linkedId, 'text-overflow', 1440, files)).toBe(value(linkedId, 'text-overflow', 1440, nativeFiles));
+      const scroll = shell.querySelector('.table-scroll'), table = scroll.querySelector('table');
+      const expandHeading = shell.querySelector('th .sr-only');
+      expect(expandHeading.textContent).toBe('Expand');
+      // Preserve native columns and accessible text while containing its absolute box.
+      for (const width of [390, 861, 1440]) {
+        expect(value(scroll, 'position', width, files)).toBe('relative');
+        expect(value(scroll, 'overflow', width, files)).toBe('auto');
+        expect(value(table, 'min-width', width, files)).toBe(value(table, 'min-width', width, nativeFiles));
+        for (const property of ['position', 'width', 'height', 'clip', 'white-space'])
+          expect(value(expandHeading, property, width, files)).toBe(value(expandHeading, property, width, nativeFiles));
+      }
     }
   });
 
