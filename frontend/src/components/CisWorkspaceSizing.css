@@ -89,7 +89,7 @@ html:has(.brawndo-workspace-pilot[data-cis-sizing=true]):not(:has(.ui-overlay)) 
 .brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-metric strong {font-size:21px;}
 .brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-data :is(th,td) {font-size:12.5px;}
 .brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cdp-card.cdp-concept :is(header p,.cdp-concept-legend,.cdp-concept-hint,.cdp-radar-note) {font-size:12.5px;}
-.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cdp-card.cdp-concept .cdp-table-wrap thead th {font-size:12px;white-space:normal;}
+.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cdp-card.cdp-concept .cdp-table-wrap thead th {font-size:12px;white-space:normal;overflow-wrap:anywhere;}
 .brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cdp-card.cdp-concept .cdp-table-wrap tbody :is(th,td) {font-size:13px;}
 .brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cdp-card.cdp-concept .cdp-domain-name {font-size:12.5px;}
 .brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .cis-dashboard-risk[data-concept=true] > header a,

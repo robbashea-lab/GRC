@@ -318,6 +318,28 @@ describe.each(orders.map(files => [files]))('sizing declarations with stylesheet
     }
   });
 
+  test('domain headers can wrap without changing native column proportions or presentation', () => {
+    const html = '<section class="brawndo-demo-dashboard" data-cis-dashboard-concept="true"><section class="cdp-card cdp-concept"><div class="cdp-table-wrap"><table><thead><tr><th>Domain</th><th>Implemented</th><th>Applicable</th><th>Rate</th></tr></thead></table></div></section></section>';
+    for (const eligible of [true, false]) {
+      const shell = mount(html, {surface: 'dashboard', eligible});
+      const table = shell.querySelector('.cdp-table-wrap table');
+      const headers = [...table.querySelectorAll('thead th')];
+      expect(headers.map(header => header.textContent)).toEqual(['Domain', 'Implemented', 'Applicable', 'Rate']);
+      for (const width of [1280, 1440]) {
+        expect(value(table, 'table-layout', width, files)).toBe('fixed');
+        for (const header of headers) {
+          // Authored fitting contract only; real text/cell bounds need browser QA.
+          for (const property of ['font-size', 'white-space', 'overflow-wrap']) {
+            const target = {'font-size': '12px', 'white-space': 'normal', 'overflow-wrap': 'anywhere'}[property];
+            expect(value(header, property, width, files)).toBe(eligible ? target : value(header, property, width, nativeFiles));
+          }
+          for (const property of ['width', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left', 'font-family', 'font-weight', 'color', 'background', 'border-color'])
+            expect(value(header, property, width, files)).toBe(value(header, property, width, nativeFiles));
+        }
+      }
+    }
+  });
+
   test.each(workspaceCases.flatMap(({surface}) => [861, 900, 1440, 1920].map(width => [surface, width])))('%s shell stays 240/60 and non-shrinking at %ipx', (surface, width) => {
     const shell = mount('', {surface});
     const header = shell.querySelector('.bwp-topbar'), sidebar = shell.querySelector('.app-sidebar');
