@@ -191,11 +191,25 @@ test('sizing styles require the explicit client boundary and contain no theme, e
   });
 });
 
-test('stable document gutter is reserved only while an eligible native CIS shell is present', () => {
-  for (const eligible of [true, false]) {
+test('workspace gutter never adds a second reservation to native modal scroll compensation', () => {
+  for (const eligible of [true, false]) for (const role of ['dialog', 'alertdialog']) {
     mount('', {eligible});
+    const nativeDefault = value(document.documentElement, 'scrollbar-gutter', 1440, nativeFiles);
+    const workspaceDefault = eligible ? 'stable' : nativeDefault;
+    const popup = document.createElement('div');
+    popup.setAttribute('role', role);
+    fixture.appendChild(popup);
+    // Popovers and the guided assistant can be non-modal role=dialog surfaces.
     expect(value(document.documentElement, 'scrollbar-gutter', 1440, orders[0]))
-      .toBe(eligible ? 'stable' : value(document.documentElement, 'scrollbar-gutter', 1440, nativeFiles));
+      .toBe(workspaceDefault);
+    const overlay = document.createElement('div');
+    overlay.className = 'ui-overlay';
+    fixture.appendChild(overlay);
+    matchingDeclarations = new WeakMap(); selectorMatches = new WeakMap();
+    expect(value(document.documentElement, 'scrollbar-gutter', 1440, orders[0])).toBe(nativeDefault);
+    overlay.remove();
+    matchingDeclarations = new WeakMap(); selectorMatches = new WeakMap();
+    expect(value(document.documentElement, 'scrollbar-gutter', 1440, orders[0])).toBe(workspaceDefault);
   }
 });
 
