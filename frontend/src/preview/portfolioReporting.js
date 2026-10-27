@@ -369,10 +369,12 @@ function restorePortfolioReportingCore(db,validatedRows=null,collectedRows=null,
             if(!(error instanceof RangeError))throw error;
             entry.skip=true;metadata=null;
           }
+          // Cached variants already own this charged immutable text; each view
+          // still reserves its full independent closure/raw-scope allowance.
+          if(metadata&&scopeBudget.reserve(2*(metadata.signature.length+metadata.fullSignature.length))){
+            entry.signature=metadata.signature;entry.variants.set(variant,metadata);
+          }else metadata=null;
         }
-        if(metadata&&scopeBudget.reserve(2*(metadata.signature.length+metadata.fullSignature.length))){
-          entry.signature=metadata.signature;entry.variants.set(variant,metadata);
-        }else metadata=null;
       }
       if(metadata)attachRestoredScope(result,metadata);
       else {
@@ -404,13 +406,15 @@ export function restorePortfolioReporting(db){return restorePortfolioReportingCo
 // or expanded vectors. The existing decoder cap bounds optimization memory only.
 let validatedSavedValue=null,validatedSavedRows=null,validatedSavedRowBytes=0;
 function rowTable(limit=MAX_DEMO_DECODE_BYTES){
-  let table=Object.create(null),bytes=128;
+  let table=Object.create(null),bytes=128,retainedRowBytes=128;
   return {enabled(){return !!table;},reserve(size){bytes+=size;if(bytes>limit)table=null;return !!table;},add(index,metadata){
     if(!table||Object.hasOwn(table,index))return;
-    bytes+=metadata.json.length*2+160; // text plus conservative object/index/flag overhead
+    const size=metadata.json.length*2+160; // text plus conservative object/index/flag overhead
+    bytes+=size;retainedRowBytes+=size;
     if(bytes>limit){table=null;return;}
     table[index]=metadata;
-  },finish(){return table?{rows:Object.freeze(table),bytes}:null;}};
+  // Scope reservations belong to the returned view, not the retained row cache.
+  },finish(){return table?{rows:Object.freeze(table),bytes:retainedRowBytes}:null;}};
 }
 function publishSavedRows(saved,prepared){
   // Publish only reader-validated text; indices are bound to these exact bytes.
