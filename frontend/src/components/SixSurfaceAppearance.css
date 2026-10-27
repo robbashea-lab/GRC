@@ -189,6 +189,47 @@ html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] :is(.ui-dialog,.
 .brawndo-workspace-pilot[data-additional-surface] .bsb-back,
 .brawndo-workspace-pilot[data-cis-visual=true] .bsb-back,
 .brawndo-workspace-pilot[data-shared-shell=true] .bsb-back {font:400 12.5px/1.5 var(--font);color:#a8bad5}
+/* Verified native Sidebar text follows Calendar, independently of page appearance.
+   Direct longhands preserve each route's weights, palette, hover/focus and borders. */
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar :is(.bsb-link,.bsb-group-label,.bsb-back,.bsb-client-name,.bsb-client-industry) {
+  font-family:var(--font-body);
+}
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-link {
+  font-size:13px;
+  line-height:1.5;
+  min-height:33.5px;
+  padding:7px 10px;
+  margin:0;
+}
+/* Native fallback rows retain their border (including active emphasis). Reduce
+   only vertical padding; the natural minimum absorbs device-pixel rounding. */
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation]:not([data-visual-surface]):not([data-additional-surface]):not([data-cis-visual=true]):not([data-shared-shell=true]) .app-sidebar .bsb-link {
+  padding-top:6px;
+  padding-bottom:6px;
+}
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-nav {
+  padding:0 12px 16px;
+  gap:2px;
+}
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-group {
+  gap:2px;
+}
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-group > .bsb-group-label {
+  font-size:11px;
+  line-height:1.5;
+  margin:16px 10px 6px;
+  padding:0;
+}
+/* Reuse the existing Dashboard containment guard so native name ellipsis can
+   shrink inside the shared rail; keep the card's controls and appearance. */
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-client {
+  min-width:0;
+  max-width:100%;
+}
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-client > span:last-child {
+  min-width:0;
+  flex:1;
+}
 .brawndo-workspace-pilot[data-visual-surface] .app-workspace {background:var(--bg)}
 .brawndo-workspace-pilot[data-visual-surface] .client-surface {padding:0;background:transparent;min-height:0}
 .brawndo-workspace-pilot[data-visual-surface] :is(.bpage-head,.bd-header) h1 {font:650 24px/1.5 var(--font);letter-spacing:-.025em}
