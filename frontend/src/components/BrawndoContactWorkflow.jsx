@@ -9,7 +9,7 @@ const roles=PLANNED_ROLES.filter(role=>role.legacyKey.startsWith('client_'));
 const rolePresentation={
   client_grc_manager:{label:'GRC Manager',description:'Coordinates the program and existing users. Can’t change programs, delete records or manage access.'},
   client_contributor:{label:'Contributor',description:'Works assigned items, uploads evidence and comments. Can’t approve governance decisions.'},
-  client_readonly:{label:'Read only',description:'Sees Brawndo’s program. Can’t change records or be assigned work.'},
+  client_readonly:{label:'Read only',description:'Can’t change records or be assigned work.'},
 };
 const roleLabel=value=>rolePresentation[value]?.label||PLANNED_ROLES.find(role=>role.legacyKey===value)?.label||'Not recorded';
 const displayDay=value=>{const day=calendarDay(value);return day===null?null:new Date(day*86400000).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});};
@@ -20,9 +20,10 @@ function ContactChanges({event}){
 }
 const titles=['Executive Sponsor','Security Program Lead','Operations and Technology Lead','Business Stakeholder','Privacy Lead','HR Lead'];
 const groups={reviews:'Reviews',tasks:'Action items',findings:'Findings',policies:'Policies',risks:'Risks',vendors:'Vendors',assets:'Systems & assets',framework_assessments:'Assessments',requirements:'Requirements',ai_systems:'AI systems'};
-function RoleCards({value,onChange,disabled}) {
+function RoleCards({value,onChange,disabled,clientName}) {
   const selected=roles.find(role=>role.legacyKey===value);
-  return <><div className="roles" aria-label="Client role">{roles.map(role=><button type="button" key={role.key} aria-pressed={value===role.legacyKey} disabled={disabled} onClick={()=>onChange(role.legacyKey)}><b>{roleLabel(role.legacyKey)}</b><small>{rolePresentation[role.legacyKey]?.description||role.detail}</small></button>)}</div>
+  const readOnlyScope=typeof clientName==='string'&&clientName.trim()?`${clientName}’s`:'the';
+  return <><div className="roles" aria-label="Client role">{roles.map(role=><button type="button" key={role.key} aria-pressed={value===role.legacyKey} disabled={disabled} onClick={()=>onChange(role.legacyKey)}><b>{roleLabel(role.legacyKey)}</b><small>{role.legacyKey==='client_readonly'&&`Sees ${readOnlyScope} program. `}{rolePresentation[role.legacyKey]?.description||role.detail}</small></button>)}</div>
     <div className="can">{PLANNED_CAPABILITIES.filter(row=>!['Create client tenants','Manage internal accounts','Platform audit access'].includes(row.label)).map(row=>{
       const permission=selected&&row.roles[selected.key],allowed=permission&&permission!=='No';
       return <span key={row.label} className={allowed?'':'no'}>{capabilityLabel(row.label)}</span>;
@@ -64,7 +65,7 @@ export default function BrawndoContactWorkflow({current,form,setForm,state,data,
           <div className="grid">{field('name','Full name','text',true)}{field('title','Role in the program')}{field('email','Email','email',true,true)}<div className="f full">{primaryToggle}</div></div>
           <div className="secn"><span className="num">2</span><b>Platform access</b><span className="h">Optional. Contacts without access can still be listed here.</span></div>
           <label className="toggle"><input type="checkbox" checked={invite} disabled={blocked} onChange={event=>setInvite(event.target.checked)}/><span><b>Invite to GoverNara</b><small>Create a Demo invitation for this client. No email will be sent.</small></span></label>
-          {invite&&<div className="sec"><RoleCards value={role} onChange={setRole} disabled={blocked}/></div>}
+          {invite&&<div className="sec"><RoleCards value={role} onChange={setRole} disabled={blocked} clientName={client?.name}/></div>}
         </>:<>
           <section role="tabpanel" id="contact-panel-overview" aria-labelledby="contact-tab-overview" hidden={tab!=='overview'}>
             <div className="strip"><div><span className="lbl">Owns</span><div className="val">{ready&&owns?`${owns.total} item${owns.total===1?'':'s'}`:'Not available'}</div><small>{ready&&owns?Object.entries(groups).filter(([key])=>owns[key]).map(([key,label])=>`${owns[key]} ${label.toLowerCase()}`).join(' · ')||'Nothing assigned':'Ownership has not been verified'}</small></div>
@@ -82,7 +83,7 @@ export default function BrawndoContactWorkflow({current,form,setForm,state,data,
             <div className="acc-card"><div className="hd">{accessChip}<b>{account?.email||'Contact only'}</b><span className="sp"/>
               {canWrite&&!archived&&<>{state.key==='pending'&&<button type="button" className="btn" disabled={saving||dirty} onClick={onResend}>Resend invite</button>}{['active','pending'].includes(state.key)&&account&&<button type="button" className="btn" disabled={saving||dirty} onClick={onDisable}>Disable access</button>}{!current.linked_user_id&&!dirty&&accountActions}</>}
             </div><p className="help">{account?`Sign-in address: ${account.email} · Last signed in ${account.last_login_at?displayDay(account.last_login_at):'Not recorded'}`:state.description}</p></div>
-            <div className="sec"><h3>Role <span className="hint">What they can do in GoverNara for {client?.name||'Brawndo'}.</span></h3><RoleCards value={role} onChange={setRole} disabled={blocked||!account||archived||!roles.some(item=>item.legacyKey===account.role)}/></div>
+            <div className="sec"><h3>Role <span className="hint">What they can do in GoverNara for {client?.name||'Brawndo'}.</span></h3><RoleCards value={role} onChange={setRole} disabled={blocked||!account||archived||!roles.some(item=>item.legacyKey===account.role)} clientName={client?.name}/></div>
             {account&&<p className="help">Changing this role applies across the account’s client memberships.</p>}
             <p className="contact-access-note"><Info size={14} aria-hidden="true"/><span>Client contacts can only hold client roles. iVenture roles (Platform Owner, Service Provider GRC Administrator) are granted in Administration → Users &amp; Access.</span></p>
             <div className="danger"><h4>{archived?'Restore contact':'Archive contact'}</h4><p>{archived?'Return this contact to the directory. Platform access does not change.':'Removes them from the default directory. History remains. Archiving never revokes account access.'}</p><div className="acts"><button type="button" className="btn" disabled={blocked||dirty||!archived&&!['none','disabled'].includes(state.key)} onClick={onArchive}>{archived?'Restore contact':'Archive contact'}</button></div></div>

@@ -286,7 +286,7 @@ function EntityListPage({ kind }) {
   const isReviews = kind === "reviews";
   const [reviewWidths,setReviewWidths]=useState({});
   useEffect(()=>{setReviewWidths({});},[currentClientId,user?.user_id,kind]);
-  const users = useClientPeople(currentClientId);
+  const users = useClientPeople(currentClientId, kind === 'assets' ? rows : undefined);
   const userMap = useMemo(() => peopleMap(users), [users]);
 
   const load = useCallback(async (options) => {
