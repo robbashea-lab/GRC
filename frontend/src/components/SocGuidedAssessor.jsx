@@ -8,11 +8,13 @@ import {rankProgramRows} from '@/lib/programTriage';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
-import OmniCharacter from './OmniCharacter';
+import OmniGuideCharacter from './OmniGuideCharacter';
+import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import OmniDock from './OmniDock';
 import OmniWindow from './OmniWindow';
 import './GuidedAssessor.css';
 import './RefinedOmni.css';
+import './BrawndoCisVisualOmni.css';
 
 const LABELS=operatorStatuses('soc-2'),EMPTY=[];
 const preferences=key=>{try{return JSON.parse(localStorage.getItem(key)||'{}');}catch{return {};}};
@@ -25,6 +27,7 @@ export default function SocGuidedAssessor(props){
 
 function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,draftSummaries={},contextComplete=false,onSelect,onViewAll,form,assessmentDirty=false,relatedDraft=false,onDraftChange,onSaveAssessment,disabled=false,inline=false,inlineOpen=false,onInlineClose}){
   const embedded=!!record&&inline;
+  const [theme]=useBrawndoTheme();
   const org=useOrg(),clientName=org?.clients?.find(client=>client.client_id===clientId)?.name||(org?.currentClient?.client_id===clientId?org.currentClient.name:null)||'The organization';
   // A directory refresh changes display context, not interview identity. Explicit
   // hydration uses the latest name without reloading and discarding dirty work.
@@ -45,7 +48,6 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
   const ownApplication=!!draft?.completed&&draft.base_scope_fingerprint===draft.current_scope_fingerprint&&current?.guided_assessment_source?.by===user.user_id&&current?.guided_assessment_source?.version===draft.version&&current?.guided_assessment_source?.revision===draft.revision;
   const stale=!!draft?.revision&&draft.lineage_stale!==false&&!ownApplication;
   const blocked=disabled||busy||!loaded||updated||stale||assessmentDirty||!!validationError;
-  const character=busy?'thinking':view==='summary'&&result?(result.gaps.length?'gap':result.unknowns.length?'verification':'complete'):mode==='minimized'?'minimized':'helpful';
   useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
   useEffect(()=>{onDraftChange?.(dirty||busy);return()=>onDraftChange?.(false);},[dirty,busy,onDraftChange]);
   useEffect(()=>{
@@ -147,18 +149,18 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
 {view==='history'&&<><h3>Retained interview history</h3>{history?.items?.map(item=><section key={item.revision}><p>Revision {item.revision} · {item.version} · {item.updated_at}</p><p className="whitespace-pre-wrap">{item.narrative||'Interview progress only.'}</p></section>)}{history&&!history.items.length&&<p>No earlier saved interview snapshots.</p>}{history?.has_more&&<Button variant="outline" disabled={busy} onClick={()=>historyLoad(true)}>Load earlier snapshots</Button>}<Button variant="outline" onClick={()=>setView('position')}>Return to current position</Button></>}
           </>}
         </div>;
-  return <div className={'guided-pilot guided-lifecycle omni-refined '+(embedded?'assessment-interview':record?'guided-in-assessment':'')} data-testid="soc-guided-assessment">
+  return <div className={'guided-pilot guided-lifecycle omni-refined '+(embedded?'assessment-interview':(record?'guided-in-assessment ':'')+'shared-program-omni')} data-theme={!embedded?theme:undefined} data-testid="soc-guided-assessment">
     {embedded?<section aria-label="SOC 2 interview" ref={heading} tabIndex={-1} hidden={!inlineOpen}>{body}</section>:<>
-    <OmniDock preferenceKey={key} freePosition inAssessment={!!record} name="Omnibot" focused>
+    <OmniDock preferenceKey={key} freePosition inAssessment={!!record} name="Omnibot" focused visualReference>
       {mode==='dismissed'?<Button variant="outline" size="sm" ref={launcher} onClick={()=>changeMode('collapsed')}>Show Omnibot</Button>:<>
-        <button type="button" ref={launcher} className={'omni-launch-button '+(mode==='minimized'?'is-minimized':'')} aria-label="Open Omnibot guide" aria-expanded={mode==='expanded'} aria-controls={mode==='expanded'?panelId:undefined} aria-describedby={stateId} onClick={()=>changeMode('expanded')}><OmniCharacter approved state={character}/></button>
+        <button type="button" ref={launcher} className={'omni-launch-button '+(mode==='minimized'?'is-minimized':'')} aria-label="Open Omnibot guide" aria-expanded={mode==='expanded'} aria-controls={mode==='expanded'?panelId:undefined} aria-describedby={stateId} onClick={()=>changeMode('expanded')}><OmniGuideCharacter/></button>
         {prompt&&mode==='collapsed'&&<div className="guided-context-prompt" role="complementary" aria-label="Omnibot invitation"><p>{record?(draft?.revision?'Your SOC 2 interview is available to resume.':'Review this SOC 2 criterion with Omnibot.'):'Choose the next criterion in your configured SOC 2 scope.'}</p><button type="button" className="omni-invitation-x" aria-label="Close invitation" onClick={()=>setPrompt(false)}>×</button></div>}
         <details className="omni-position-controls"><summary>Omnibot preferences</summary><div><Button variant="ghost" onClick={()=>changeMode('dismissed')}>Hide Omnibot</Button><Button variant="ghost" onClick={()=>{try{localStorage.setItem(key,JSON.stringify({...preferences(key),invitationsDisabled:true}));}catch{}setPrompt(false);}}>Turn off invitations</Button></div></details>
       </>}<span className="sr-only" id={stateId}>{busy?'Saving review':'Omnibot is available'}</span>
     </OmniDock>
     <Dialog open={mode==='expanded'} modal={false} onOpenChange={open=>{if(!open)close();}}>
-      {mode==='expanded'&&<OmniWindow id={panelId} name="Omnibot" refined program={!record} anchor={()=>launcher.current?.getBoundingClientRect()} onMinimize={()=>changeMode('minimized')} onClose={close} onOpenAutoFocus={()=>heading.current?.focus({preventScroll:true})} onCloseAutoFocus={()=>launcher.current?.focus({preventScroll:true})}>
-        <div className="omni-panel-header"><OmniCharacter approved state={character}/><div><DialogTitle id={panelId+'-title'} ref={heading} tabIndex={0}>{record?'Omnibot guide · Criterion '+id:'Guided assessment with Omnibot'}</DialogTitle></div></div>
+      {mode==='expanded'&&<OmniWindow id={panelId} name="Omnibot" refined program={!record} visualReference anchor={()=>launcher.current?.getBoundingClientRect()} onMinimize={()=>changeMode('minimized')} onClose={close} onOpenAutoFocus={()=>heading.current?.focus({preventScroll:true})} onCloseAutoFocus={()=>launcher.current?.focus({preventScroll:true})}>
+        <div className="omni-panel-header"><OmniGuideCharacter/><div><DialogTitle id={panelId+'-title'} ref={heading} tabIndex={0}>{record?'Omnibot guide · Criterion '+id:'Guided assessment with Omnibot'}</DialogTitle></div></div>
         <DialogDescription id={panelId+'-description'} className="sr-only">Review reported practices and prepare an implementation write-up. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.</DialogDescription>
         {body}
       </OmniWindow>}

@@ -1,4 +1,6 @@
-import { eventCycleProgress, policyOverview, policyVisualMatches, timelineBounds, vendorOverview, vendorTimelineEvents } from './brawndoAdditionalPolicyVendor';
+import { eventCycleProgress, policyOverview, policyVisualMatches, policyMappingPresentation, policyMappedFilterUnavailable, timelineBounds, vendorOverview, vendorTimelineEvents } from './brawndoAdditionalPolicyVendor';
+import {CATALOGS} from './frameworks';
+import {policyAlignment} from './brawndoPolicies';
 
 const now = new Date('2026-10-16T12:00:00Z');
 const policy = { policy_id: 'p1', client_id: 'demo_brawndo', title: 'Recorded policy', category: 'Governance', status: 'draft' };
@@ -51,6 +53,71 @@ test('mapping figures use native catalog identity rather than a policy title', (
   const result = policyOverview(rows, [], ['cis-ig1']);
   expect(result.mapped).toBe(1);
   expect(policyVisualMatches(rows[1], 'mapped', '', ['cis-ig1'], [], 1)).toBe(false);
+});
+
+test.each([
+  ['iso-27001','Mapped to ISO 27001','ISO 27001 alignment'],
+  ['soc-2','Mapped to SOC 2','SOC 2 criteria'],
+])('%s policy counts and mapped filter use native catalog support without a CIS template', (framework,mappedLabel,alignmentHeading) => {
+  const mapped={...policy,baseline_key:'policy-information-security-policy'};
+  const titleOnly={...policy,policy_id:'title-only',title:'Information Security Policy'};
+  const rows=[mapped,titleOnly],before=JSON.stringify(rows);
+  expect(policyOverview(rows,[],[framework]).mapped).toBe(1);
+  expect(policyVisualMatches(mapped,'mapped','',[framework],[],1)).toBe(true);
+  expect(policyVisualMatches(titleOnly,'mapped','',[framework],[],1)).toBe(false);
+  expect(policyMappingPresentation([framework],1)).toEqual({mappedLabel,alignmentHeading});
+  expect(policyAlignment(mapped,[framework]).every(ref=>ref.key===framework)).toBe(true);
+  expect(policyAlignment(mapped,[framework]).length).toBeGreaterThan(1);
+  expect(JSON.stringify(rows)).toBe(before);
+});
+
+test('mixed ISO/SOC/CIS mappings count each policy identity once and retain every own framework reference',()=>{
+  const programs=['cis-ig1','iso-27001','soc-2'];
+  const mapped={...policy,baseline_key:'policy-information-security-policy'};
+  const custom={...policy,policy_id:'custom-linked'};
+  const assessments=[{client_id:policy.client_id,framework_key:'soc-2',definition_id:'CC1.1',related_links:[{kind:'policies',id:custom.policy_id}]}];
+  const before=JSON.stringify({mapped,custom,assessments,programs});
+  expect(policyOverview([mapped,custom],[],programs,assessments,1).mapped).toBe(2);
+  expect(policyOverview([mapped,{...mapped}],[],programs,assessments,1).mapped).toBe(1);
+  expect(policyVisualMatches(custom,'mapped','',programs,assessments,1)).toBe(true);
+  expect(new Set(policyAlignment(mapped,programs,assessments,1).map(ref=>ref.key))).toEqual(new Set(programs));
+  expect(policyMappingPresentation(programs,1)).toEqual({mappedLabel:'Framework-mapped',alignmentHeading:'Framework alignment'});
+  expect(JSON.stringify({mapped,custom,assessments,programs})).toBe(before);
+});
+
+test('saved policy links are client scoped and only count authorized configured frameworks',()=>{
+  const custom={...policy,policy_id:'custom-linked'};
+  const assessment={client_id:policy.client_id,framework_key:'soc-2',definition_id:'CC1.1',related_links:[{kind:'policies',id:custom.policy_id}]};
+  expect(policyOverview([custom],[],['soc-2'],[assessment]).mapped).toBe(1);
+  expect(policyOverview([custom],[],['soc-2'],[{...assessment,client_id:'foreign'}]).mapped).toBe(0);
+  expect(policyVisualMatches(custom,'mapped','',['iso-27001'],[assessment],1)).toBe(false);
+});
+
+test.each([1,2,3])('CIS IG%s and prior CIS+HIPAA semantics stay unchanged without an ISO/SOC enrollment',group=>{
+  const custom={...policy,policy_id:'hipaa-linked'};
+  const assessment={client_id:policy.client_id,framework_key:'hipaa',definition_id:CATALOGS.hipaa.requirements[0].id,related_links:[{kind:'policies',id:custom.policy_id}]};
+  const programs=['cis-ig1','hipaa'];
+  expect(policyAlignment(custom,programs,[assessment],group).map(ref=>ref.key)).toEqual(['hipaa']);
+  expect(policyOverview([custom],[],programs,[assessment],group).mapped).toBe(0);
+  expect(policyVisualMatches(custom,'mapped','',programs,[assessment],group)).toBe(false);
+  expect(policyMappingPresentation(programs,group)).toEqual({mappedLabel:`Mapped to CIS IG${group}`,alignmentHeading:`CIS IG${group} safeguards`});
+  expect(policyOverview([custom],[],['iso-27001',...programs],[assessment],group).mapped).toBe(1);
+});
+
+test.each(['iso-27001','soc-2'])('healthy zero %s mapping is zero without inventing enrollment or policy identity',framework=>{
+  expect(policyOverview([],[],[framework]).mapped).toBe(0);
+  expect(policyOverview([policy],[],[framework]).mapped).toBe(0);
+  expect(policyVisualMatches(policy,'mapped','',[framework],[],1)).toBe(false);
+});
+
+test('only the expanded target mapped filter becomes unavailable after a read failure',()=>{
+  expect(policyMappedFilterUnavailable('mapped','Alignment unavailable',[],['iso-27001'])).toBe(true);
+  expect(policyMappedFilterUnavailable('mapped','Alignment unavailable',['soc-2'])).toBe(true);
+  expect(policyMappedFilterUnavailable('mapped','Alignment unavailable',['cis-ig1','hipaa'],['cis-ig1'])).toBe(false);
+  expect(policyMappedFilterUnavailable('approved','Alignment unavailable',[],['iso-27001'])).toBe(false);
+  expect(policyMappedFilterUnavailable('','Alignment unavailable',[],['iso-27001'],true)).toBe(true);
+  expect(policyMappedFilterUnavailable('','Alignment unavailable',['cis-ig1'],['cis-ig1'],true)).toBe(false);
+  expect(policyMappedFilterUnavailable('mapped','',[],['iso-27001'])).toBe(false);
 });
 
 test('vendor figures use native 30-day cohorts and distinguish legal expiration from renewal', () => {

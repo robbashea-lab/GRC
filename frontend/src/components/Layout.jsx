@@ -10,7 +10,7 @@ import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
-import {cisNativeClientRoute,cisPresentationEligible} from '@/lib/cisExperience';
+import {sharedClientRoute,sharedNativeClientRoute,sharedPresentationEligible} from '@/lib/sharedExperience';
 import {AdditionalSectionsProvider, additionalSectionChrome} from '@/lib/brawndoAdditionalScope';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
 import { useEffect, useMemo, useState } from "react";
@@ -313,19 +313,23 @@ function LayoutContents() {
   const {user}=auth;
   const {pathname,search}=useLocation();
   const chromeContext={...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error};
-  const verifiedChrome=cisPresentationEligible(chromeContext);
+  const verifiedChrome=sharedPresentationEligible(chromeContext);
   const visualChrome=visualCorrectionSurface({...chromeContext,orgLoading:verifiedChrome?false:org.loading});
-  const nativeRoute=cisNativeClientRoute(pathname);
+  const nativeRoute=sharedNativeClientRoute(pathname);
   const refreshing=org.loading&&verifiedChrome&&nativeRoute;
   const additionalSurface=additionalSectionChrome({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const pilot=!!user;
+  const sharedBody=verifiedChrome&&sharedClientRoute(pathname);
+  const clientSurface=currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'
+    ||!isCisReference(currentClientId,user,currentClient)&&!sharedBody)
+    &&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path));
   const content=<div className={'app-shell min-h-screen flex bg-surface-app '+(pathname==='/clients'?'governara-portfolio-shell':'governara-operational-shell')}>
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">
         {!visualChrome && !additionalSurface && pathname !== '/clients' && !(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
         {refreshing&&<p role="status" className="text-sm text-ink-secondary">Refreshing client workspace…</p>}
         <div hidden={refreshing} data-client-workspace-content>
-        {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'||!isCisReference(currentClientId,user,currentClient))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
+        {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : clientSurface?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
         </div>
       </main>
     </div>;

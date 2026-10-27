@@ -494,3 +494,36 @@ test('inline excluded control and read-only session retain mandatory SoA and per
   await render({disabled:true});expect(button('Save assessment').disabled).toBe(true);await click('Back to questions');expect(button('Save & next').disabled).toBe(true);
   expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
+
+
+test('program guide adopts the shared circular presentation locally and retains audit opening without native writes',async()=>{
+  localStorage.setItem('omnisciente:brawndo-dashboard-theme','dark');
+  const onOpen=jest.fn();
+  await render({record:null,current:null,programLabel:'Internal Audit',programContent:({close})=><button onClick={()=>{close();onOpen();}}>Open retained audit Review</button>});
+  const guide=document.querySelector('[data-testid="iso-guided-assessment"]');
+  expect(guide.classList.contains('shared-program-omni')).toBe(true);
+  expect(guide.dataset.theme).toBe('dark');
+  expect(guide.querySelector('.omni-launch-button .cis-omni-owl')).toBeTruthy();
+  expect(document.documentElement.hasAttribute('data-brawndo-cis-visual')).toBe(false);
+  await open();
+  const panel=guide.querySelector('.omni-workspace-window');
+  expect(panel.classList.contains('cis-omni-program-window')).toBe(true);
+  expect(parseFloat(panel.style.width)).toBe(360);
+  expect(document.body.textContent).toContain('Internal Audit');
+  await act(async()=>guide.querySelector('[aria-label="Minimize Omnibot Guide"]').click());
+  expect(guide.querySelector('.omni-workspace-window')).toBeNull();
+  expect(guide.querySelector('.omni-launch-button').classList.contains('is-minimized')).toBe(true);
+  await open();await click('Open retained audit Review');
+  expect(onOpen).toHaveBeenCalledTimes(1);
+  expect(guide.querySelector('.omni-workspace-window')).toBeNull();
+  expect(api.get).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
+test('native inline ISO editor remains outside the floating guide presentation',async()=>{
+  await render({inline:true,inlineOpen:true});
+  const guide=document.querySelector('[data-testid="iso-guided-assessment"]');
+  expect(guide.classList.contains('shared-program-omni')).toBe(false);
+  expect(guide.hasAttribute('data-theme')).toBe(false);
+  expect(guide.querySelector('.cis-omni-owl')).toBeNull();
+  expect(guide.querySelector('section[aria-label="ISO requirement interview"]')).toBeTruthy();
+});

@@ -1,4 +1,6 @@
-import {cisClientProgram,cisPresentationEligible} from '@/lib/cisExperience';
+import {cisClientProgram} from '@/lib/cisExperience';
+import {sharedClientPrograms,sharedPresentationEligible} from '@/lib/sharedExperience';
+import {frameworkDashboardPrograms} from '@/lib/frameworkDashboard';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {selectedClient} from '@/lib/clientSelection';
 import {useEffect,useRef,useState} from 'react';
@@ -11,7 +13,7 @@ import RegisterLoadError from '@/components/RegisterLoadError';
 import ClientWorkDashboard from '@/components/ClientWorkDashboard';
 import BrawndoDemoDashboard,{CisDashboardPending} from '@/components/BrawndoDemoDashboard';
 import BrawndoDemoProgram from '@/components/BrawndoDemoProgram';
-import {BRAWNDO_DEMO_DASHBOARD_ENABLED,brawndoDemoDashboard,brawndoDemoProgram} from '@/lib/brawndoDemoDashboard';
+import {BRAWNDO_DEMO_DASHBOARD_ENABLED,brawndoDemoDashboard} from '@/lib/brawndoDemoDashboard';
 import {loadCompleteDemoWork} from '@/lib/brawndoDemoWork';
 import {usePortfolioRefresh} from '@/lib/usePortfolioRefresh';
 import DashboardItemSummary from '@/components/DashboardItemSummary';
@@ -29,14 +31,15 @@ export default function Dashboard(){
   const demoDashboard=brawndoDemoDashboard({...org,...auth,pathname,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')});
   // Appearance rechecks must not change the native data scope or discard open editor drafts.
   const demoPresentation=demoDashboard&&visualCorrectionSurface({...org,...auth,pathname,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')})==='dashboard';
-  const conceptFrame=BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&cisPresentationEligible({...org,...auth,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')});
+  const conceptFrame=BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&sharedPresentationEligible({...org,...auth,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')});
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(null),[revision,setRevision]=useState(0),[selection,setSelection]=useState(null);
   const [linked,setLinked]=useState(null),[refreshVersion,setRefreshVersion]=useState(0),[refreshError,setRefreshError]=useState('');
   const pilot=isWorkspacePresentation(currentClientId,user),linkedOpener=useRef(null),refreshRequest=useRef(null);
   const detailRequest=useRef(null),opener=useRef(null),selectionVersion=useRef(0);
   const configuredCis=cisClientProgram(currentClient);
+  const configuredPrograms=sharedClientPrograms(currentClient);
   const recordContextKey=JSON.stringify([currentClientId,user?.user_id,workspaceMode,user?.workspace_mode,revision]);
-  const requestKey=JSON.stringify([recordContextKey,demoDashboard,configuredCis?.version,configuredCis?.implementationGroup]);
+  const requestKey=JSON.stringify([recordContextKey,demoDashboard,configuredCis?.version,configuredCis?.implementationGroup,configuredPrograms]);
   const activeRequest=useRef(requestKey);activeRequest.current=requestKey;
   const filter=WORK_FILTERS.some(f=>f.key===params.get('work'))?params.get('work'):'all';
   useEffect(()=>{
@@ -94,10 +97,12 @@ export default function Dashboard(){
       }
     }catch(e){if(!controller.signal.aborted&&activeRequest.current===requestKey)setRefreshError((saved?'The record was saved, but dashboard refresh failed: ':'Dashboard refresh failed: ')+formatError(e));}
   }
-  const program=demoDashboard?brawndoDemoProgram(data.programs,data.programMetadata,currentClientId):null;
+  const programs=demoDashboard?frameworkDashboardPrograms(data.programs,data.programMetadata,currentClientId):[];
+  const program=programs.find(value=>value.framework_key===params.get('program'))||programs[0];
+  const chooseProgram=key=>{const next=new URLSearchParams(params);next.set('program',key);setParams(next);};
   return <>{demoPresentation?<BrawndoDemoDashboard key={requestKey} queue={data.queue} programs={data.programs} client={currentClient} members={data.members}
-    filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} concept>
-      {program?<BrawndoDemoProgram client={currentClient} program={program} members={data.members} refreshToken={refreshVersion} cisDashboardProfile concept domainSource={data.cisDomainSource} contextKey={requestKey}/>:<section className="bdd-card" aria-label={`CIS IG${cisClientProgram(currentClient)?.implementationGroup} Status`}><header><h2>CIS IG{cisClientProgram(currentClient)?.implementationGroup} Status</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} CIS v8.1 IG{cisClientProgram(currentClient)?.implementationGroup} program is unavailable. Review its native configuration.</p></section>}
+    filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} concept programOptions={programs} selectedProgram={program} onProgramSelect={chooseProgram}>
+      {program?<BrawndoDemoProgram key={program.program_id} client={currentClient} program={program} members={data.members} refreshToken={refreshVersion} cisDashboardProfile concept domainSource={data.programSources?.[program.framework_key]||data.cisDomainSource} contextKey={requestKey}/>:<section className="bdd-card" aria-label={configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}><header><h2>{configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} {configuredCis?`CIS v8.1 IG${configuredCis.implementationGroup} program`:'program'} is unavailable. Review its native configuration.</p></section>}
     </BrawndoDemoDashboard>:<ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} workspacePilot={pilot}/>}
     {refreshError&&<p role="alert">{refreshError} <button onClick={()=>refreshDashboard(false)}>Retry dashboard refresh</button></p>}

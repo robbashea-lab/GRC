@@ -1,6 +1,6 @@
 import {aiRequest} from './aiGovernance';
 import {commandRequest} from './commandRequests';
-import {isCisClient} from './cisCapability';
+import {isSharedClient} from './sharedCapability';
 import {clientAccess} from './assignmentEligibility';
 import {record,write,audit,now} from './store';
 import {aiProjection} from '../lib/aiGovernance';
@@ -11,7 +11,7 @@ const exact=(object,keys)=>object&&typeof object==='object'&&!Array.isArray(obje
 export function aiOnboardingRequest(db,body,key) {
   const cid=body.client_id;
   if(!['super_admin','platform_admin'].includes(db.user.role)||!clientAccess(db.user,cid))reject('AI onboarding is not permitted for this client',403);
-  if(!isCisClient(db,cid))reject('AI onboarding requires an active CIS client',403);
+  if(!isSharedClient(db,cid))reject('AI onboarding requires an active CIS, ISO 27001 or SOC 2 client',403);
   if(db.ai_intake?.[cid]?.usage==='no')reject('Update the client AI profile before adding an AI system',409);
   if(typeof key!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(key))reject('Invalid Idempotency-Key');
   const result=commandRequest(db,'/ai_systems/onboard',cid,key,body,()=>{
@@ -44,6 +44,7 @@ export function aiOnboardingRequest(db,body,key) {
     const created=aiRequest(db,'/ai_systems','post',{}, {...ai,client_id:cid,status:'draft',vendor_id:vendorId});
     const saved=record(db,'ai_systems',created.ai_system_id);
     saved.created_at=anchor;
+    saved.approval_status='pending_assessment';
     saved.onboarding_screening={...screening,scope:screeningScope(saved),recorded_at:anchor,recorded_by:db.user.user_id};
     const linked=write(db,'risks',{client_id:cid,title:risk.title,description:risk.description,owner_id:ai.owner_id,likelihood_score:risk.likelihood,impact_score:risk.impact,assessment_rationale:risk.rationale,next_review:annual,review_cadence:'annual',status:'identified'});
     Object.assign(linked,{created_at:anchor,date_identified:anchor});

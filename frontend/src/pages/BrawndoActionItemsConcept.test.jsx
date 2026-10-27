@@ -12,7 +12,8 @@ const mockRows=jest.requireActual('@/lib/brawndoActions').unifiedActions({tasks:
 ]},'client');
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'reader',role:'client_readonly'},workspaceMode:'standard'})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'client',currentClient:{client_id:'client',name:'Client'}})}));
-jest.mock('@/lib/cisExperience',()=>({...jest.requireActual('@/lib/cisExperience'),cisExperienceEligible:()=>mockEligible}));
+// This suite isolates the reader controller from enrollment; shared eligibility owns rollout.
+jest.mock('@/lib/sharedExperience',()=>({...jest.requireActual('@/lib/sharedExperience'),sharedExperienceEligible:()=>mockEligible}));
 jest.mock('@/lib/brawndoActions',()=>({...jest.requireActual('@/lib/brawndoActions'),unifiedActions:()=>mockRows}));
 jest.mock('@/lib/useActionRegisterData',()=>({useActionRegisterData:()=>({data:{},users:[],loading:false,error:null,load:jest.fn()})}));
 jest.mock('react-router-dom',()=>({Navigate:()=>null,useLocation:()=>({state:null}),useNavigationType:()=> 'POP',useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
@@ -33,7 +34,7 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 
-test('CIS reader preserves missing-only owner destination and opens exact native saved Action',async()=>{
+test('eligible shared reader preserves missing-only owner destination and opens exact native saved Action',async()=>{
   await act(async()=>root.render(<BrawndoActionItems/>));
   expect(container.querySelector('.cia-register')).toBeTruthy();
   expect(container.querySelector('[data-testid="new-action-item"]')).toBeNull();
@@ -54,11 +55,14 @@ test('ordinary register opens preserve the native focus owner',async()=>{
   expect(mockNativeProps.onReturnFocus).toBeUndefined();
 });
 
-test('non-CIS controller retains native register structure and presentation',async()=>{
+test('ineligible shared controller retains native register structure and presentation',async()=>{
   mockEligible=false;await act(async()=>root.render(<BrawndoActionItems/>));
   expect(container.querySelector('.cia-page')).toBeNull();
   expect(container.querySelector('.cia-register')).toBeNull();
   expect(container.querySelector('[data-testid="concept-priority"]')).toBeNull();
+  expect(container.querySelector('[data-testid="owner-summary"]')).toBeNull();
+  expect(container.querySelector('[data-testid="concept-open"]')).toBeNull();
+  expect(container.querySelector('[data-testid="new-action-item"]')).toBeNull();
   expect(container.querySelector('.register-toolbar').previousElementSibling.querySelector('h1').textContent).toBe('Action Items');
 });
 

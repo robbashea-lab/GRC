@@ -1,21 +1,21 @@
 /* Sizing only. Do not publish font defaults/tokens to ancestors or native portals. */
 /* Reserve workspace scroll space, but leave native modal scroll compensation alone. */
 html:has(.brawndo-workspace-pilot[data-cis-sizing=true]):not(:has(.ui-overlay)) {scrollbar-gutter:stable;}
-.brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] {
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] {
   --bwp-top:60px;
   --bwp-sidebar:240px;
 }
-.brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar {
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] > .bwp-topbar {
   height:60px;
   flex-shrink:0;
 }
-.brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .bwp-body .app-sidebar {
+.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .bwp-body .app-sidebar {
   top:60px;
   height:calc(100dvh - 60px);
   flex-shrink:0;
 }
 @media(min-width:861px) {
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .bwp-body .app-sidebar {
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .bwp-body .app-sidebar {
     display:flex;
     position:sticky;
     width:240px;
@@ -26,31 +26,31 @@ html:has(.brawndo-workspace-pilot[data-cis-sizing=true]):not(:has(.ui-overlay)) 
 }
 /* Approved exception: Dashboard now uses the existing shared 860px navigation state. */
 @media(min-width:861px) and (max-width:900px) {
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand {
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] > .bwp-topbar .bwp-brand {
     width:155px;
     min-width:155px;
   }
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand > span {
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] > .bwp-topbar .bwp-brand > span {
     display:block;
   }
 }
 @media(min-width:861px) {
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-client {display:flex;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-group > .bsb-group-label {display:block;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-link > span {display:initial;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-link {justify-content:initial;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-back {justify-content:initial;font-size:13px;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-mobile-nav,
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-nav-backdrop {display:none;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-client {display:flex;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-group > .bsb-group-label {display:block;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-link > span {display:initial;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-link {justify-content:initial;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-back {justify-content:initial;font-size:13px;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] > .bwp-topbar .bwp-mobile-nav,
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] > .bwp-nav-backdrop {display:none;}
 }
 @media(max-width:860px) {
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-mobile-nav {display:grid;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand {width:auto;min-width:0;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand > span {display:block;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand small,
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] > .bwp-topbar .bwp-search {display:none;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation=closed] .bwp-body .app-sidebar {display:none;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation=open] .bwp-body .app-sidebar {
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] > .bwp-topbar .bwp-mobile-nav {display:grid;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] > .bwp-topbar .bwp-brand {width:auto;min-width:0;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] > .bwp-topbar .bwp-brand > span {display:block;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] > .bwp-topbar .bwp-brand small,
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] > .bwp-topbar .bwp-search {display:none;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation=closed] .bwp-body .app-sidebar {display:none;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation=open] .bwp-body .app-sidebar {
     display:flex;
     position:fixed;
     width:260px;
@@ -59,7 +59,7 @@ html:has(.brawndo-workspace-pilot[data-cis-sizing=true]):not(:has(.ui-overlay)) 
     left:0;
     z-index:45;
   }
-  html .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation=open] > button.bwp-nav-backdrop {
+  html .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation=open] > button.bwp-nav-backdrop {
     display:block;
     position:fixed;
     top:60px;
@@ -68,11 +68,11 @@ html:has(.brawndo-workspace-pilot[data-cis-sizing=true]):not(:has(.ui-overlay)) 
     left:0;
     z-index:40;
   }
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-client {display:flex;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-group > .bsb-group-label {display:block;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-link > span {display:initial;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-link {justify-content:initial;}
-  .brawndo-workspace-pilot[data-cis-sizing=true][data-theme][data-navigation] .app-sidebar .bsb-back {justify-content:initial;font-size:13px;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-client {display:flex;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-group > .bsb-group-label {display:block;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-link > span {display:initial;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-link {justify-content:initial;}
+  .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] .app-sidebar .bsb-back {justify-content:initial;font-size:13px;}
 }
 
 /* Dashboard: explicit workspace roles leave history/domain/matrix hover cards alone. */

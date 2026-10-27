@@ -2,9 +2,29 @@ import {clientProjection, leadCandidates, validateClientRelationships} from './c
 import {grcLead, primaryContact} from '../lib/clientRelationships';
 import {seedStore, write} from './store';
 import {previewAdapter} from './adapter';
+import {frameworkCatalog} from '../lib/frameworks';
 
 const user = (user_id, role, client_ids, status='active') => ({user_id,name:'Same Name',email:user_id+'@example.test',role,client_ids,status,private_metadata:'never return'});
 const fixture = () => ({user:user('actor','super_admin',[]),users:[user('internal','platform_admin',['a']),user('global','platform_admin',[]),user('foreign','platform_admin',['b']),user('client','client_admin',['a']),user('disabled','platform_admin',['a'],'disabled')],contacts:[{contact_id:'maya',client_id:'a',name:'Maya',status:'active'}, {contact_id:'jordan',client_id:'b',name:'Maya',status:'active'}]});
+
+test('shared programs use finalized tenant enrollment, deduplicate and never rewrite records or follow drafts',()=>{
+  const db=fixture(),client={client_id:'a',status:'active',onboarding_baseline:{completed:true,requirements:{'cis-ig1':'applies','soc-2':'does_not_apply'}}};
+  db.requirements=[
+    {requirement_id:'a-iso',client_id:'a',baseline_key:'iso-27001',baseline_response:'applies'},
+    {requirement_id:'duplicate-iso',client_id:'a',baseline_key:'iso-27001',baseline_response:'applies'},
+    {requirement_id:'a-soc',client_id:'a',baseline_key:'soc-2',baseline_response:'applies'},
+    {requirement_id:'b-cis',client_id:'b',baseline_key:'cis-ig1',baseline_response:'applies'},
+    {requirement_id:'a-hipaa',client_id:'a',baseline_key:'hipaa',baseline_response:'applies'},
+  ];
+  const before=JSON.stringify({db,client});
+  expect(clientProjection(db,client).shared_programs).toEqual(['iso-27001','soc-2'].map(key=>({
+    client_id:'a',program_id:`a:${key}`,framework_key:key,version:frameworkCatalog(key).version,selected:true,
+  })));
+  expect(clientProjection(db,client).cis_program.selected).toBe(false);
+  expect(JSON.stringify({db,client})).toBe(before);
+  db.requirements=db.requirements.filter(row=>row.client_id!=='a');
+  expect(clientProjection(db,client).shared_programs).toEqual([]);
+});
 
 test('provider without explicit global scope cannot enumerate global lead candidates',()=>{
   const db=fixture();db.users.push(user('owner','super_admin',[]));

@@ -2,7 +2,7 @@ import { ChevronRight, Search } from 'lucide-react';
 import { PolicyAlignment } from './BrawndoPolicyDetails';
 import { ColumnControl, TableFilterChips } from './TableControls';
 import { policyStatus, policyStatusLabel, policyViewMatches } from '@/lib/brawndoPolicies';
-import { policyOverview, policyVisualMatches } from '@/lib/brawndoAdditionalPolicyVendor';
+import { policyOverview, policyVisualMatches, policyMappingPresentation, policyMappedFilterUnavailable } from '@/lib/brawndoAdditionalPolicyVendor';
 import { AdditionalOwner, savedDate, relativePolicyDate } from './BrawndoAdditionalPolicyVendorCells';
 import { personLabel } from '@/lib/people';
 import { formatAcceptedRefresh } from '@/lib/acceptedRefreshPresentation';
@@ -20,18 +20,21 @@ const STATUS_ICONS = [
 const statusTone = status => status === 'approved' ? 'approved' : status === 'needs_creation' ? 'missing' : ['draft', 'in_review', 'pending_approval'].includes(status) ? 'awaiting' : 'other';
 
 export default function BrawndoAdditionalPolicies({
-  clientId, clientName = 'Client', rows = [], filteredRows = rows, reviews = [], users = [], programs = [], assessments = [], cisGroup = 1,
+  clientId, clientName = 'Client', rows = [], filteredRows = rows, reviews = [], users = [], programs = [], assessments = [], cisGroup = 1, frameworkKeys = [],
   alignmentError = '', loading = false, error = '', onRetry, q = '', onSearch, view = '', onView,
   category = '', onCategory, onClear, table, onOpen, onOpenReview, onAlignment, actions, pendingDecisions, nativeControls,
   selectedIds, onToggle, onSelectAll, rowActions,
   theme = 'light', acceptedRefresh = null, refreshing = loading,
 }) {
   const overview = policyOverview(rows, reviews, programs, assessments, cisGroup);
-  const visible = filteredRows.filter(row => policyVisualMatches(row, view, category, programs, assessments, cisGroup));
+  // Enrollment labels remain known after an alignment read fails; they never supply mapping counts.
+  const mapping = policyMappingPresentation(programs.length ? programs : frameworkKeys, cisGroup);
+  const mappingUnavailable = policyMappedFilterUnavailable(view, alignmentError, programs, frameworkKeys, !!table?.state?.filters?.alignment?.length);
+  const visible = mappingUnavailable ? [] : filteredRows.filter(row => policyVisualMatches(row, view, category, programs, assessments, cisGroup));
   const count = id => rows.filter(row => policyViewMatches(row, id) && policyVisualMatches(row, id, '', programs, assessments, cisGroup)).length;
   const figures = [
     ['approved', 'Approved', overview.approved], ['awaiting', 'Awaiting approval', overview.awaiting],
-    ['missing', 'Missing', overview.missing], ['mapped', `Mapped to CIS IG${cisGroup}`, alignmentError ? null : overview.mapped],
+    ['missing', 'Missing', overview.missing], ['mapped', mapping.mappedLabel, alignmentError ? null : overview.mapped],
   ];
   const { review, lastClosed } = annualPolicyReview(reviews, clientId || rows[0]?.client_id);
   const unavailable = loading || !!error;
@@ -52,7 +55,7 @@ export default function BrawndoAdditionalPolicies({
           })}
         </div>
         <div className="pc-approval-track" role="img" aria-label={unavailable ? 'Policy status unavailable' : `${overview.approved} of ${rows.length} policies approved`}><span style={{width: unavailable || !rows.length ? '0%' : `${overview.approved / rows.length * 100}%`}} /></div>
-        <div className="pc-status-foot"><span>{unavailable ? '—' : <><strong>{overview.approved} of {rows.length}</strong> policies approved</>}</span><button type="button" className="pc-mapping" data-testid="additional-policy-metric-mapped" aria-pressed={view === 'mapped'} disabled={unavailable || !!alignmentError} onClick={() => onView?.(view === 'mapped' ? '' : 'mapped')}>Mapped to CIS IG{cisGroup}: <strong>{unavailable || alignmentError ? '—' : `${overview.mapped} of ${rows.length}`}</strong></button></div>
+        <div className="pc-status-foot"><span>{unavailable ? '—' : <><strong>{overview.approved} of {rows.length}</strong> policies approved</>}</span><button type="button" className="pc-mapping" data-testid="additional-policy-metric-mapped" aria-pressed={view === 'mapped'} disabled={unavailable || !!alignmentError} onClick={() => onView?.(view === 'mapped' ? '' : 'mapped')}>{mapping.mappedLabel}: <strong>{unavailable || alignmentError ? '—' : `${overview.mapped} of ${rows.length}`}</strong></button></div>
       </div>
       <div className="bap-review" aria-labelledby="bap-review-heading">
         <div className="bap-review-top"><h3 id="bap-review-heading">Annual policy review</h3>{review && !unavailable && <button type="button" className="bapv-link" onClick={() => onOpenReview?.(review)}>Open in Reviews <span aria-hidden="true">↗</span></button>}</div>
@@ -70,9 +73,9 @@ export default function BrawndoAdditionalPolicies({
       {table && <TableFilterChips table={table} />}
       {error && <div className="bapv-empty" role="alert"><p>{error}</p><button type="button" onClick={onRetry}>Retry</button></div>}
       <div className="bap-table" role="table" aria-label="Policies" data-has-selection={!!onToggle}>
-        <div className="bap-row bap-header" role="row">{onToggle && <div role="columnheader" className="bap-selection"><Checkbox aria-label="Select all policies" checked={visible.length > 0 && visible.every(row => selectedIds?.has(row.policy_id)) ? true : visible.some(row => selectedIds?.has(row.policy_id)) ? 'indeterminate' : false} onCheckedChange={onSelectAll} /></div>}<div role="columnheader">{header('title', 'Policy')}</div><div role="columnheader">{header('alignment', `CIS IG${cisGroup} safeguards`)}</div><div role="columnheader">{header('status', 'Status')}</div><div role="columnheader">{header('owner_id', 'Owner')}</div><div role="columnheader">{header('last_reviewed_at', 'Last review')}</div><span aria-hidden="true" /></div>
+        <div className="bap-row bap-header" role="row">{onToggle && <div role="columnheader" className="bap-selection"><Checkbox aria-label="Select all policies" checked={visible.length > 0 && visible.every(row => selectedIds?.has(row.policy_id)) ? true : visible.some(row => selectedIds?.has(row.policy_id)) ? 'indeterminate' : false} onCheckedChange={onSelectAll} /></div>}<div role="columnheader">{header('title', 'Policy')}</div><div role="columnheader">{header('alignment', mapping.alignmentHeading)}</div><div role="columnheader">{header('status', 'Status')}</div><div role="columnheader">{header('owner_id', 'Owner')}</div><div role="columnheader">{header('last_reviewed_at', 'Last review')}</div><span aria-hidden="true" /></div>
         {loading && <div className="bapv-empty" role="status">Loading policies…</div>}
-        {!loading && !error && !visible.length && <div className="bapv-empty"><h3>No policies match</h3><p>Try a different search or filter.</p><button type="button" onClick={clear}>Clear filters</button></div>}
+        {!loading && !error && !visible.length && <div className="bapv-empty" role={mappingUnavailable?'alert':undefined}><h3>{mappingUnavailable?'Policy mappings unavailable':'No policies match'}</h3><p>{mappingUnavailable?'The saved mapping filter cannot be evaluated. Clear filters to view saved policies.':'Try a different search or filter.'}</p><button type="button" onClick={clear}>Clear filters</button></div>}
         {!loading && !error && visible.map((row, index) => {
           const status = policyStatus(row);
           return <div className="bap-row" role="row" key={row.policy_id} onClick={() => onOpen?.(row)} data-testid={`policies-row-${index}`}>
@@ -86,7 +89,7 @@ export default function BrawndoAdditionalPolicies({
           </div>;
         })}
       </div>
-      <div className="bapv-summary bap-summary"><span className="bap-summary-left"><span role="status">{unavailable ? error ? 'Policy counts unavailable.' : 'Loading policies…' : `Showing ${visible.length} of ${rows.length} ${rows.length === 1 ? 'policy' : 'policies'}`}</span>{view && <button type="button" className="bapv-filter-chip" onClick={() => onView?.('')}>{figures.find(item => item[0] === view)?.[1] || view} ×</button>}</span><span>{selectedIds?.size ? `${selectedIds.size} selected` : 'Select a policy to open its record.'}</span></div>
+      <div className="bapv-summary bap-summary"><span className="bap-summary-left"><span role="status">{unavailable ? error ? 'Policy counts unavailable.' : 'Loading policies…' : mappingUnavailable ? 'Policy mapping counts unavailable.' : `Showing ${visible.length} of ${rows.length} ${rows.length === 1 ? 'policy' : 'policies'}`}</span>{view && <button type="button" className="bapv-filter-chip" onClick={() => onView?.('')}>{figures.find(item => item[0] === view)?.[1] || view} ×</button>}</span><span>{selectedIds?.size ? `${selectedIds.size} selected` : 'Select a policy to open its record.'}</span></div>
     </section>
   </div>;
 }

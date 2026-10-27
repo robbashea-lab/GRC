@@ -1,11 +1,26 @@
 import { policyAlignment, policyStatus, AWAITING_APPROVAL } from './brawndoPolicies';
 import { vendorMatches } from './brawndoVendors';
 import { calendarDay, managementDay } from './managementDates';
+import { CATALOGS, FRAMEWORKS } from './frameworks';
 
 const liveReview = review => !['completed', 'cancelled'].includes(review.status) && !review.archived_at;
 const eventKindOrder = { rev: 0, asr: 1, ren: 2 };
 export const policyReviewIds = review => [...new Set([review.policy_id, ...(review.policy_ids || [])].filter(Boolean))];
 export const isPolicySetReview = review => !!review.client_id && review.baseline_key === 'policy-review' && (review.review_type == null || review.review_type === 'policy') && !review.policy_id;
+const expandedPolicyMapping = programs => programs.some(key => ['iso-27001', 'soc-2'].includes(key));
+export const policyMappedFilterUnavailable = (view, error, programs = [], frameworkKeys = [], alignmentFiltered = false) => (view === 'mapped' || alignmentFiltered) && !!error
+  && expandedPolicyMapping([...programs, ...frameworkKeys]);
+const visiblePolicyAlignment = (row, programs, assessments, cisGroup) => policyAlignment(row, programs, assessments, cisGroup)
+  .filter(item => expandedPolicyMapping(programs) || item.key === 'cis-ig1');
+
+export function policyMappingPresentation(programs = [], cisGroup = 1) {
+  if (!expandedPolicyMapping(programs)) return {mappedLabel:`Mapped to CIS IG${cisGroup}`, alignmentHeading:`CIS IG${cisGroup} safeguards`};
+  const keys = [...new Set(programs.filter(key => typeof key === 'string' && Object.hasOwn(CATALOGS, key)))];
+  if (keys.length !== 1) return {mappedLabel:'Framework-mapped', alignmentHeading:'Framework alignment'};
+  const key = keys[0], label = key === 'cis-ig1' ? `CIS IG${cisGroup}` : FRAMEWORKS.find(program => program.key === key)?.label || CATALOGS[key].label;
+  const unit = key === 'cis-ig1' ? 'safeguards' : key === 'iso-27001' ? 'alignment' : (CATALOGS[key].labels?.items || 'requirements').toLowerCase();
+  return {mappedLabel:`Mapped to ${label}`, alignmentHeading:`${label} ${unit}`};
+}
 
 // These are presentation cohorts; the native approval and scheduling commands remain authoritative.
 export function policyOverview(rows, reviews = [], programs = [], assessments = [], cisGroup = 1) {
@@ -20,12 +35,12 @@ export function policyOverview(rows, reviews = [], programs = [], assessments = 
     ...(item.status === 'completed' && item.completion_date ? [item.completion_date] : []),
     ...(item.occurrences || []).filter(occurrence => occurrence.status !== 'cancelled' && occurrence.completed_at).map(occurrence => occurrence.completed_at),
   ]).filter(value => calendarDay(value) !== null).sort();
-  const alignments = rows.map(row => policyAlignment(row, programs, assessments, cisGroup).filter(item => item.key === 'cis-ig1'));
+  const mapped = rows.filter(row => visiblePolicyAlignment(row, programs, assessments, cisGroup).length);
   return {
     approved: rows.filter(row => policyStatus(row) === 'approved').length,
     awaiting: rows.filter(row => AWAITING_APPROVAL.includes(policyStatus(row))).length,
     missing: rows.filter(row => policyStatus(row) === 'needs_creation').length,
-    mapped: alignments.filter(items => items.length).length,
+    mapped: expandedPolicyMapping(programs) ? new Set(mapped.map(row => row.policy_id)).size : mapped.length,
     review, covered, scheduledCount: scheduled.length, lastClosed: completed.at(-1) || null,
   };
 }
@@ -33,7 +48,7 @@ export function policyOverview(rows, reviews = [], programs = [], assessments = 
 export function policyVisualMatches(row, view, category, programs, assessments, cisGroup) {
   if (category && row.category !== category) return false;
   if (view === 'missing') return policyStatus(row) === 'needs_creation';
-  if (view === 'mapped') return policyAlignment(row, programs, assessments, cisGroup).some(item => item.key === 'cis-ig1');
+  if (view === 'mapped') return visiblePolicyAlignment(row, programs, assessments, cisGroup).length > 0;
   return true;
 }
 

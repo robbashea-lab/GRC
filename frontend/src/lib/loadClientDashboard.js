@@ -27,6 +27,7 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
     const frameworkSummary=programs.some(program=>program.trackingAvailable)
       ? (await api.get('/frameworks/summary',{params:{client_id:clientId},signal})).data : undefined;
     let queue, programRows, cisDomainSource;
+    const programSources = {};
     const positions = new Map(), programMetadata = {};
     if(workQueue) {
       const response=await api.get('/dashboard',{params:{...params,work_queue:true},signal});
@@ -37,8 +38,11 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
       for(const program of programs.filter(p=>p.trackingAvailable)) {
         const {data}=await api.get(`/frameworks/${program.key}`,{params:{client_id:clientId},signal});
         if(data.assessments.some(a=>a.client_id!==clientId))throw new Error('Assessment belongs to another client.');
-        if(includeProgramMetadata)programMetadata[program.key]={framework:data.framework,selected:data.selected,configured:data.configured,
-          configuration:data.configuration,assessments:data.assessments.map(({client_id,framework_key,framework_version})=>({client_id,framework_key,framework_version}))};
+        if(includeProgramMetadata){
+          programMetadata[program.key]={framework:data.framework,selected:data.selected,configured:data.configured,
+            configuration:data.configuration,assessments:data.assessments.map(({client_id,framework_key,framework_version})=>({client_id,framework_key,framework_version}))};
+          programSources[program.key]=data;
+        }
         // Keep the complete native scope for domain reconciliation, including missing/invalid records.
         if(includeProgramMetadata && program.key==='cis-ig1')cisDomainSource=data;
         if(data.implementation_position)positions.set(program.key,data.implementation_position);
@@ -47,7 +51,7 @@ export async function loadClientDashboard(api, { clientId, user, scope, signal, 
         programRows[program.key]=data.definitions.filter(d=>byId.has(d.id)&&workspaceScope(program.key,data,d)).map(d=>({...d,...byId.get(d.id),work:data.work?.[byId.get(d.id).framework_assessment_id]}));
       }
     }
-    return {...summary.data,members,queue,programRows,...(includeProgramMetadata?{programMetadata,cisDomainSource}:{}),cisRows:programRows?.['cis-ig1'],onboardingCompleted:!!baselineResponse.data?.state?.completed,
+    return {...summary.data,members,queue,programRows,...(includeProgramMetadata?{programMetadata,cisDomainSource,programSources}:{}),cisRows:programRows?.['cis-ig1'],onboardingCompleted:!!baselineResponse.data?.state?.completed,
       posture:Object.fromEntries(Object.entries(summary.data.posture).map(([key,value])=>[key,Array.isArray(value)?labelDashboardRows(value,members):value])),
       programs:complianceProgress(clientId,baselineResponse.data?.state,requirements,frameworkSummary)
         .map(program=>({...program,implementation_position:positions.get(program.key)}))};

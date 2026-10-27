@@ -5,12 +5,12 @@ import {DueDate} from './RegisterCells';
 import {useAuth} from '@/context/AuthContext';
 import {isReferenceWorkflow} from '@/lib/reference';
 
-export default function BrawndoAIFields({tab,form,current,input,person,boolean,put,Choices,vendors,admin,isNew,dirty,approvalPilot,clientId}){
+export default function BrawndoAIFields({tab,form,current,input,person,boolean,put,Choices,vendors,admin,isNew,dirty,approvalPilot,metadataEnabled=approvalPilot,clientId}){
   const {user}=useAuth(),{currentClient}=useOrg()||{},referenceWorkflow=isReferenceWorkflow(clientId,user,currentClient);
   if(tab==='Data & Access')return <>
     <Choices label="Known data processed (not permission to use)" values={catalog.data_types} selected={form.data_types} onChange={v=>put('data_types',v)}/>
     <Choices label="System access" values={catalog.access} selected={form.access} onChange={v=>put('access',v)}/>
-    {approvalPilot&&<>{input('data_settings','Data, integrations & account settings',true)}
+    {metadataEnabled&&<>{input('data_settings','Data, integrations & account settings',true)}
     <p className="text-xs text-ink-muted">Document connected systems, accounts, retention and training-use settings only when known. Blank means not documented.</p></>}
   </>;
   return <>
@@ -20,7 +20,7 @@ export default function BrawndoAIFields({tab,form,current,input,person,boolean,p
       <h3>{!approvalPilot?'Intended Use':aiApproved(current||{})?(dirty?'Proposed Changes to Approved Boundaries':'Approved Uses & Restrictions'):current?.approval_status==='not_approved'?'Intended Uses & Restrictions':'Proposed Uses & Approval Conditions'}</h3>
       {approvalPilot&&<p className="text-xs text-ink-muted">Approval applies only to the saved product, environment, uses and conditions. Editing these boundaries requires reassessment; a draft is not an approval.</p>}
       {input('description','Purpose / Use',true)}
-      {approvalPilot&&<>{input('environment','Environment / Account Type')}
+      {metadataEnabled&&<>{input('environment','Environment / Account Type')}
       <p className="text-sm"><strong>Permitted Data: </strong>{!dirty&&aiApproved(current||{})&&form.permitted_data_types?.length?form.permitted_data_types.join(', '):'Data permissions not established for this proposal'}</p>
       <details><summary className="text-sm cursor-pointer">Data permissions & restrictions {form.permitted_data_types?.length?`(${form.permitted_data_types.length} proposed classifications)`:'— not established'}</summary><div className="space-y-3 mt-3"><Choices label="Proposed permitted data classifications" values={catalog.data_types} selected={form.permitted_data_types} onChange={v=>put('permitted_data_types',v)}/>
       {!aiApproved(current||{})&&<p className="text-sm text-ink-muted">Data permissions not established</p>}

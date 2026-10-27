@@ -17,6 +17,7 @@ import './BrawndoWorkspace.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {selectedClient} from '@/lib/clientSelection';
 import {cisNativeClientRoute,cisPresentationEligible} from '@/lib/cisExperience';
+import {sharedClientRoute,sharedNativeClientRoute,sharedPresentationEligible} from '@/lib/sharedExperience';
 import './SixSurfaceAppearance.css';
 import {additionalAppearanceSurface, additionalSectionChrome, useAdditionalSectionsAppearance} from '@/lib/brawndoAdditionalScope';
 import './AdditionalSectionsAppearance.css';
@@ -66,12 +67,14 @@ export default function BrawndoWorkspace({children}){
   const publishCis=useCallback(enabled=>setCisPublication(old=>enabled?cisScopeKey:old===cisScopeKey?null:old),[cisScopeKey]);
   const cisVisual=cisPublication===cisScopeKey;
   const chromeContext={...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error};
-  const verifiedChrome=cisPresentationEligible(chromeContext);
-  const sizingChrome=verifiedChrome&&cisNativeClientRoute(pathname);
+  const verifiedChrome=sharedPresentationEligible(chromeContext);
+  const cisVerifiedChrome=cisPresentationEligible(chromeContext);
+  const sizingChrome=(cisVerifiedChrome&&cisNativeClientRoute(pathname))||(verifiedChrome&&sharedClientRoute(pathname));
+  const sharedShell=verifiedChrome&&sharedNativeClientRoute(pathname)&&(!cisVerifiedChrome||!cisNativeClientRoute(pathname));
   const risksPresentation=brawndoDemoRisksGate({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const visualSurface=visualCorrectionSurface(chromeContext);
   const visualChrome=visualCorrectionSurface({...chromeContext,orgLoading:verifiedChrome?false:org.loading});
-  const cisChrome=cisVisual||verifiedChrome&&pathname==='/compliance/cis-ig1'
+  const cisChrome=cisVisual||cisVerifiedChrome&&pathname==='/compliance/cis-ig1'
     &&(auth.workspaceMode==='demo'?PREVIEW_MODE===true:PREVIEW_MODE===false);
   const additionalChrome=additionalSectionChrome({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const additionalAppearance=useAdditionalSectionsAppearance();
@@ -93,14 +96,14 @@ export default function BrawndoWorkspace({children}){
     if(additionalSurface){root.dataset.additionalSurface=additionalSurface;root.dataset.additionalTheme=theme;}
     return()=>{delete root.dataset.additionalSurface;delete root.dataset.additionalTheme;};
   },[additionalSurface,theme]);
-  return <CisVisualPublisher.Provider value={publishCis}><div className="brawndo-workspace-pilot" data-cis-sizing={sizingChrome?'true':undefined} data-cis-dashboard-concept={BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&verifiedChrome?'true':undefined} data-additional-surface={additionalChrome||undefined} data-visual-surface={visualChrome||undefined} data-cis-visual={cisChrome||undefined} data-theme={theme} data-navigation={navigation?'open':'closed'}>
+  return <CisVisualPublisher.Provider value={publishCis}><div className="brawndo-workspace-pilot" data-cis-sizing={sizingChrome?'true':undefined} data-shared-shell={sharedShell?'true':undefined} data-cis-dashboard-concept={BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&verifiedChrome?'true':undefined} data-additional-surface={additionalChrome||undefined} data-visual-surface={visualChrome||undefined} data-cis-visual={cisChrome||undefined} data-theme={theme} data-navigation={navigation?'open':'closed'}>
     <header className="bwp-topbar">
       <button type="button" className="bwp-mobile-nav" aria-label="Toggle client navigation" aria-expanded={navigation} onClick={()=>setNavigation(!navigation)}><Menu size={22}/></button>
-      <Link to={currentClientId?'/dashboard':'/clients'} className="bwp-brand" aria-label="GoverNara"><BrandMark className="bwp-mark"/><span>GoverNara<small>{visualChrome||additionalChrome||risksPresentation||cisChrome?'By Prestige Worldwide':'CLARITY FOR A STRONGER TOMORROW'}</small></span></Link>
+      <Link to={currentClientId?'/dashboard':'/clients'} className="bwp-brand" aria-label="GoverNara"><BrandMark className="bwp-mark"/><span>GoverNara<small>{visualChrome||additionalChrome||risksPresentation||cisChrome||sharedShell?'By Prestige Worldwide':'CLARITY FOR A STRONGER TOMORROW'}</small></span></Link>
       <WorkspaceSearch key={searchClient} clientId={searchClient}/>
       <div className="bwp-top-actions">
       {canOpenDirectory?<button type="button" className="bwp-client" onClick={()=>navigate('/clients')}><span className="bwp-client-name">{platform?'Portfolio':currentClient?.name||'Portfolio'}</span><ChevronDown size={15} aria-hidden="true"/><span className="sr-only">Open authorized client directory</span></button>:<span className="bwp-client">{currentClient?.name||'Client workspace'}</span>}
-      <button type="button" className="bwp-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-label={theme==='dark'?'Use light workspace theme':'Use dark workspace theme'}>{cisChrome?<svg viewBox="0 0 16 16" aria-hidden="true"><circle className="ic" cx="8" cy="8" r="3"/><path className="ic" d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1"/></svg>:(visualChrome||additionalChrome)?<Sun size={16}/>:theme==='dark'?<Sun size={20}/>:<Moon size={20}/>}</button>
+      <button type="button" className="bwp-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-label={theme==='dark'?'Use light workspace theme':'Use dark workspace theme'}>{cisChrome?<svg viewBox="0 0 16 16" aria-hidden="true"><circle className="ic" cx="8" cy="8" r="3"/><path className="ic" d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1"/></svg>:(visualChrome||additionalChrome||sharedShell)?<Sun size={16}/>:theme==='dark'?<Sun size={20}/>:<Moon size={20}/>}</button>
       <NotificationBell/><ProfileMenu compact storageTools={!!(visualChrome||additionalChrome||cisChrome)}/>
       </div>
     </header>

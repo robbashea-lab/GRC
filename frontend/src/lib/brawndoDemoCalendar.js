@@ -1,6 +1,6 @@
-import {cisExperienceEligible} from './cisExperience';
+import {sharedExperienceEligible} from './sharedExperience';
 export function brawndoDemoCalendar(context) {
-  return cisExperienceEligible(context) && context.pathname === '/calendar';
+  return sharedExperienceEligible(context) && context.pathname === '/calendar';
 }
 export const calendarKind=item=>item.kind.startsWith('vendor_')?'vendor':item.kind;
 export const calendarOwner=(item,members)=>members.find(person=>person.user_id===item.owner_id)?.name||(item.owner_id?'Owner unavailable':'Unassigned');

@@ -7,6 +7,7 @@ import RiskRegister from './RiskRegister';
 import VendorRegister from './VendorRegister';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
+import {frameworkCatalog} from '@/lib/frameworks';
 import {rememberClient} from '@/lib/clientSelection';
 
 let mockAuth,mockOrg,mockRecords,mockReadError='',mockPendingRead=null;
@@ -128,7 +129,7 @@ test.each(modules.flatMap(module=>[1,2,3].flatMap(group=>['demo','standard'].map
 
 test.each(modules)('$name receives the chart after later CIS enrollment and resets only chart selection across retained IG changes',async module=>{
   const original=mockOrg.currentClient;
-  mockOrg.currentClient={...original,onboarding_baseline:{completed:true,requirements:{'soc-2':'applies'}}};mockOrg.clients=[mockOrg.currentClient];
+  mockOrg.currentClient={...original,onboarding_baseline:{completed:true,requirements:{hipaa:'applies'}}};mockOrg.clients=[mockOrg.currentClient];
   const retained=JSON.stringify(mockRecords);await mount(module);expect(chart(module)).toBeNull();
   mockOrg.currentClient=cisClient(original.client_id,1);mockOrg.clients=[mockOrg.currentClient];await mount(module);
   requiredChart(module);const protectedBefore=protectedMarkup(module);
@@ -175,13 +176,49 @@ test.each(modules)('$name denied native data stays unavailable rather than showi
   expect(container.textContent).toContain(mockReadError);noWrites();
 });
 
-test.each(modules.flatMap(module=>['demo_dunder','demo_prestige'].map(clientId=>[module.name,clientId,module])))(
-  '%s leaves the current non-CIS %s native experience outside the quarterly rollout',async(name,clientId,module)=>{
-    configure(clientId,1,'demo');
-    mockOrg.currentClient={client_id:clientId,name:clientId==='demo_dunder'?'Dunder Mifflin':'Prestige Worldwide',status:'active',
-      onboarding_baseline:{completed:true,requirements:{'iso-27001':'applies'}}};mockOrg.clients=[mockOrg.currentClient];
+test.each(modules.flatMap(module=>['hipaa','nist-csf-2'].flatMap(frameworkKey=>['demo','standard'].map(mode=>[module.name,frameworkKey,mode,module]))))(
+  '%s leaves an enrolled %s %s client outside the quarterly rollout',async(name,frameworkKey,mode,module)=>{
+    const clientId=`outside-${frameworkKey}-${mode}`;configure(clientId,1,mode);
+    mockOrg.currentClient={client_id:clientId,name:'Synthetic outside-scope customer',status:'active',
+      onboarding_baseline:{completed:true,requirements:{[frameworkKey]:'applies'}}};mockOrg.clients=[mockOrg.currentClient];
+    const retained=JSON.stringify(mockRecords);
     await mount(module);expect(chart(module)).toBeNull();
     expect(container.textContent).toContain('Retained native '+({reviews:'Review',tasks:'Action',risks:'Risk',vendors:'Vendor'}[module.collection]));
-    noWrites();
+    expect(JSON.stringify(mockRecords)).toBe(retained);noWrites();
+  },
+);
+
+const sharedClients=[
+  ['demo_dunder','Dunder Mifflin','iso-27001','demo'],
+  ['demo_prestige','Prestige Worldwide','soc-2','demo'],
+  ...['iso-27001','soc-2'].flatMap(frameworkKey=>['demo','standard'].map(mode=>[
+    `future-${frameworkKey}-${mode}`,'Synthetic future customer',frameworkKey,mode,
+  ])),
+];
+test.each(modules.flatMap(module=>sharedClients.map(([clientId,clientName,frameworkKey,mode])=>[
+  module.name,clientId,frameworkKey,mode,module,clientName,
+])))(
+  '%s uses native saved dates for %s enrolled in %s in %s without changing records or protected surfaces',async(name,clientId,frameworkKey,mode,module,clientName)=>{
+    configure(clientId,1,mode);
+    mockOrg.currentClient={client_id:clientId,name:clientName,status:'active',
+      onboarding_baseline:{completed:true,requirements:{[frameworkKey]:'applies'}},
+      framework_settings:frameworkKey==='soc-2'?{'soc-2':{categories:['security','availability']}}:{},
+      shared_programs:[{client_id:clientId,program_id:`${clientId}:${frameworkKey}`,framework_key:frameworkKey,
+        version:frameworkCatalog(frameworkKey).version,selected:true}]};
+    mockOrg.clients=[mockOrg.currentClient];
+    const retained=JSON.stringify({client:mockOrg.currentClient,records:mockRecords});await mount(module);
+    expect(period(module)).toBe('Q2 2028');
+    expect(container.querySelector('.compact-program-timeline')).toBeNull();
+    expect(api.get).toHaveBeenCalledWith('/'+module.collection,expect.objectContaining({params:expect.objectContaining({client_id:clientId})}));
+    expect(requiredNode(requiredChart(module),module.savedMarker).getAttribute('aria-label')).toContain('Retained native '+name.slice(0,-1));
+    const protectedBefore=protectedMarkup(module);
+    await click(requiredNode(requiredChart(module),'[aria-label="Previous quarter"]'));
+    expect(period(module)).toBe('Q1 2028');expectEmptyEvents(module);
+    expect(protectedMarkup(module)).toEqual(protectedBefore);
+    await click([...requiredChart(module).querySelectorAll('button')].find(button=>button.textContent==='This quarter'));
+    expect(period(module)).toBe('Q2 2028');
+    expect(requiredNode(requiredChart(module),module.savedMarker).getAttribute('aria-label')).toContain('Retained native '+name.slice(0,-1));
+    expect(protectedMarkup(module)).toEqual(protectedBefore);
+    expect(JSON.stringify({client:mockOrg.currentClient,records:mockRecords})).toBe(retained);noWrites();
   },
 );

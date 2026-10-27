@@ -4,6 +4,7 @@ import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import {selectedClient} from './clientSelection';
 import {cisExperienceEligible,cisPresentationEligible} from './cisExperience';
+import {sharedExperienceEligible,sharedPresentationEligible,sharedClientRoute} from './sharedExperience';
 
 export const ADDITIONAL_SECTION_ROUTES = Object.freeze({
   '/policies': 'policies',
@@ -40,7 +41,8 @@ export function additionalSectionChrome(context) {
   const identity={...context};
   delete identity.loadedClientId;
   const surface=ADDITIONAL_SECTION_ROUTES[identity.pathname];
-  return surface&&cisPresentationEligible(identity)?surface:null;
+  const eligible=sharedClientRoute(identity.pathname)?sharedPresentationEligible(identity):cisPresentationEligible(identity);
+  return surface&&eligible?surface:null;
 }
 
 // Appearance never grants access; authorized native controllers still own every operation.
@@ -48,7 +50,8 @@ export function additionalSectionSurface({pathname, workspaceMode, user, current
   currentClient, clients, selectedClientId, routeClientId, loadedClientId, authLoading, authError,
   orgLoading, orgError}) {
   const surface = ADDITIONAL_SECTION_ROUTES[pathname];
-  if (!surface || !cisExperienceEligible({pathname, workspaceMode, user, currentClientId, currentClient,
+  const eligible=sharedClientRoute(pathname)?sharedExperienceEligible:cisExperienceEligible;
+  if (!surface || !eligible({pathname, workspaceMode, user, currentClientId, currentClient,
     clients, selectedClientId, routeClientId, loadedClientId,
     authLoading, authError, orgLoading, orgError})) return null;
   return surface;
@@ -57,7 +60,7 @@ export function additionalSectionSurface({pathname, workspaceMode, user, current
 // Native routes such as Risks can use this only for a record-free pending frame.
 export function useCisPresentation() {
   const auth=useAuth(),org=useOrg(),{pathname,search}=useLocation();
-  return cisPresentationEligible({...org,...auth,pathname,selectedClientId:selectedClient(),
+  return (sharedClientRoute(pathname)?sharedPresentationEligible:cisPresentationEligible)({...org,...auth,pathname,selectedClientId:selectedClient(),
     routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,
     authError:auth.error,orgLoading:org.loading,orgError:org.error});
 }

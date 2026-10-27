@@ -183,12 +183,55 @@ test('sizing styles require the explicit client boundary and contain no theme, e
   const shell = mount('<p>Native content</p>');
   const protectedProperties = new Set(['font', 'font-family', 'font-weight', 'font-style', 'letter-spacing', 'color', 'background', 'background-color', 'border', 'border-color', 'box-shadow', 'text-transform', 'text-overflow']);
   for (const file of sizingFiles) sheets[file].walkRules(rule => {
-    for (const selector of rule.selectors) expect(selector).toMatch(/\.brawndo-workspace-pilot\[data-cis-sizing=(?:"true"|true)\]/);
+    for (const selector of rule.selectors) {
+      expect(selector).toMatch(/\.brawndo-workspace-pilot(?:\[data-cis-sizing=(?:"true"|true)\]|:is\(\[data-cis-sizing=true\],\[data-shared-shell=true\]\))/);
+      // Shared ISO/SOC chrome changes geometry only, never a protected program body.
+      if (selector.includes('data-shared-shell')) expect(selector).not.toMatch(/(?:brawndo-cis-visual|policies-concept|bdcal|cia-page|crr-root|cis-risks|airf|app-workspace)/);
+    }
     rule.walkDecls(declaration => {
       expect(protectedProperties.has(declaration.prop)).toBe(false);
       if (rule.selectors.some(selector => shell.matches(selector))) expect(['font-size', 'line-height'].includes(declaration.prop)).toBe(false);
     });
   });
+});
+
+test.each(['light','dark'])('shared %s program chrome leaves protected body and editor declarations unchanged',theme=>{
+  const shell=mount('<section class="client-surface bpage"><h1 data-protected>Native ISO/SOC program</h1><div class="bpage-card"><label data-protected>Native assessment<input data-protected value="Saved narrative"></label><button data-protected>Save assessment</button></div></section>',{surface:'program',theme,eligible:false});
+  shell.removeAttribute('data-cis-visual');shell.removeAttribute('data-visual-surface');
+  for(const node of [document.documentElement,document.body]) {
+    for(const attr of ['data-brawndo-cis-visual','data-brawndo-cis-theme','data-visual-surface','data-visual-theme','data-additional-surface','data-additional-theme']) node.removeAttribute(attr);
+  }
+  const files=[...nativeFiles,...sizingFiles],nodes=[...shell.querySelectorAll('[data-protected]')];
+  const properties=['font-size','font-family','font-weight','line-height','color','background','border-color','box-shadow','width','height','padding-top','padding-right','padding-bottom','padding-left','gap','--font','--surface','--rail'];
+  matchingDeclarations=new WeakMap();selectorMatches=new WeakMap();
+  const before=nodes.map(node=>properties.map(property=>value(node,property,1440,files)));
+  shell.setAttribute('data-shared-shell','true');
+  matchingDeclarations=new WeakMap();selectorMatches=new WeakMap();
+  expect(nodes.map(node=>properties.map(property=>value(node,property,1440,files)))).toEqual(before);
+  expect(value(shell.querySelector('.bwp-topbar'),'height',1440,files)).toBe('60px');
+  expect(value(shell.querySelector('.app-sidebar'),'width',1440,files)).toBe('240px');
+});
+
+test.each(['light','dark'])('shared-only %s program menu keeps its native fixed backdrop at 800px',theme=>{
+  const shell=mount('<section class="client-surface"><p>Native program body</p></section>',{surface:'program',theme,eligible:false,navigation:'open'});
+  shell.removeAttribute('data-cis-visual');shell.removeAttribute('data-visual-surface');shell.setAttribute('data-shared-shell','true');
+  expect(shell.hasAttribute('data-cis-sizing')).toBe(false);
+  for(const node of [document.documentElement,document.body]) {
+    for(const attr of ['data-brawndo-cis-visual','data-brawndo-cis-theme','data-visual-surface','data-visual-theme','data-additional-surface','data-additional-theme']) node.removeAttribute(attr);
+  }
+  matchingDeclarations=new WeakMap();selectorMatches=new WeakMap();
+  const files=[...nativeFiles,...sizingFiles],backdrop=shell.querySelector('.bwp-nav-backdrop'),sidebar=shell.querySelector('.app-sidebar');
+  expect(value(backdrop,'display',800,files)).toBe('block');
+  expect(value(backdrop,'position',800,files)).toBe('fixed');
+  expect(value(backdrop,'top',800,files)).toBe('60px');
+  expect(value(backdrop,'z-index',800,files)).toBe('40');
+  expect(value(backdrop,'--scrim',800,files)).toBe(theme==='dark'?'rgba(0,0,0,.6)':'rgba(15,27,45,.38)');
+  expect(value(sidebar,'position',800,files)).toBe('fixed');
+  expect(value(sidebar,'z-index',800,files)).toBe('45');
+  expect(value(sidebar,'width',800,files)).toBe('260px');
+  shell.setAttribute('data-navigation','closed');
+  matchingDeclarations=new WeakMap();selectorMatches=new WeakMap();
+  expect(value(sidebar,'display',800,files)).toBe('none');
 });
 
 test('workspace gutter never adds a second reservation to native modal scroll compensation', () => {

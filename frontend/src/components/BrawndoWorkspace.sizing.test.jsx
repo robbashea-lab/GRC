@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import api from '@/lib/api';
 import {AdditionalSectionsProvider} from '@/lib/brawndoAdditionalScope';
 import {cisClient} from '../testUtils/cisExperience';
+import {frameworkCatalog} from '@/lib/frameworks';
 import BrawndoWorkspace from './BrawndoWorkspace';
 
 let mockAuth,mockOrg,mockLocation,mockMounts,mockUnmounts;
@@ -144,7 +145,7 @@ test.each(['demo','standard'])('%s unresolved, mismatched, denied and withdrawn 
 test.each(['demo','standard'])('%s client switching and a native non-CIS lookalike withdraw the previous marker immediately',async mode=>{
   setContext(`first-${mode}`,1,mode);await render();expectSizing(true);
   const nextId=`second-${mode}`,next={client_id:nextId,name:'Synthetic CIS client',status:'active',
-    onboarding_baseline:{completed:true,requirements:{'iso-27001':'applies'}},framework_settings:{}};
+    onboarding_baseline:{completed:true,requirements:{hipaa:'applies'}},framework_settings:{}};
   mockOrg={...mockOrg,currentClientId:nextId,currentClient:next,clients:[mockOrg.currentClient,next]};
   mockLocation={pathname:'/dashboard',search:`?client_id=${nextId}`};
   (mode==='demo'?sessionStorage:localStorage).setItem('grc_client_id',nextId);
@@ -152,3 +153,40 @@ test.each(['demo','standard'])('%s client switching and a native non-CIS lookali
   const enrolled=enrolledClient(nextId,3);mockOrg={...mockOrg,currentClient:enrolled,clients:[enrolled]};
   await render();expectSizing(true);expect(api.get).not.toHaveBeenCalled();
 });
+
+test.each(['iso-27001','soc-2'].flatMap(framework=>['demo','standard'].map(mode=>[framework,mode])))(
+  '%s %s reuses shared chrome without publishing protected program or unrelated body presentation',async(framework,mode)=>{
+    const id=`unlisted-${framework}-${mode}`;setContext(id,1,mode);
+    const program={client_id:id,program_id:`${id}:${framework}`,framework_key:framework,version:frameworkCatalog(framework).version,selected:true};
+    const client={client_id:id,name:'Native framework organization',status:'active',shared_programs:[program],framework_settings:{}};
+    mockOrg={...mockOrg,currentClient:client,clients:[client]};
+    const before=JSON.stringify(mockOrg);
+    for(const pathname of ['/dashboard','/calendar','/reviews','/action-items','/risks','/policies','/vendors','/ai-governance']) {
+      mockLocation={...mockLocation,pathname};await render();expectSizing(true);
+      expect(shell().getAttribute('data-shared-shell')).toBe('true');
+      expect(shell().hasAttribute('data-cis-visual')).toBe(false);
+      expect(document.documentElement.hasAttribute('data-brawndo-cis-visual')).toBe(false);
+    }
+    const nativeInput=host.querySelector('label input');
+    for(const pathname of [`/compliance/${framework}`,'/reports','/evidence','/contacts','/systems','/client-profile']) {
+      mockLocation={...mockLocation,pathname};await render();expectSizing(false);
+      expect(shell().getAttribute('data-shared-shell')).toBe('true');
+      expect(shell().hasAttribute('data-cis-visual')).toBe(false);
+      expect(shell().hasAttribute('data-additional-surface')).toBe(false);
+      expect(shell().hasAttribute('data-visual-surface')).toBe(false);
+      expect(host.querySelector('label input')).toBe(nativeInput);
+    }
+    expect(shell().getAttribute('data-navigation')).toBe('closed');
+    expect(host.querySelector('.bwp-nav-backdrop')).toBeNull();
+    await act(async()=>host.querySelector('.bwp-mobile-nav').click());
+    expectSizing(false);expect(shell().getAttribute('data-navigation')).toBe('open');
+    expect(host.querySelector('.bwp-nav-backdrop')).not.toBeNull();
+    await act(async()=>host.querySelector('.bwp-nav-backdrop').click());
+    expect(shell().getAttribute('data-navigation')).toBe('closed');
+    expect(host.querySelector('.bwp-nav-backdrop')).toBeNull();
+    expect(JSON.stringify(mockOrg)).toBe(before);
+    expect(mockMounts).toBe(1);expect(mockUnmounts).toBe(0);expect(api.get).not.toHaveBeenCalled();
+    mockOrg={...mockOrg,currentClient:{...client,shared_programs:[]}};
+    mockLocation={...mockLocation,pathname:'/dashboard'};await render();expectSizing(false);
+    expect(shell().hasAttribute('data-shared-shell')).toBe(false);
+  });

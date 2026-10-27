@@ -1,7 +1,8 @@
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
 import {useAdditionalSectionsSurface,useAdditionalSectionsPresentation} from '@/lib/brawndoAdditionalScope';
-import {policyVisualMatches} from '@/lib/brawndoAdditionalPolicyVendor';
+import {policyVisualMatches,policyMappedFilterUnavailable} from '@/lib/brawndoAdditionalPolicyVendor';
+import {sharedClientPrograms} from '@/lib/sharedExperience';
 import BrawndoAdditionalPolicies from '@/components/BrawndoAdditionalPolicies';
 import {selectedClient} from '@/lib/clientSelection';
 import BrawndoDemoReviews,{BrawndoReviewRows} from './BrawndoDemoReviews';
@@ -131,6 +132,7 @@ function EntityListPage({ kind }) {
   // Preserve the existing drawer's guarded completion workflow independently of list presentation.
   const guardedReviewDrawer = kind==='reviews' && isReferenceWorkflow(currentClientId,user,currentClient);
   const policiesPilot = kind==='policies';
+  const policyFrameworkKeys = policiesPilot ? sharedClientPrograms(currentClient).map(program=>program.frameworkKey) : [];
   const POLICY_HIDDEN=['version'];
   const displayColumns = policiesPilot ? schema.columns.filter(c=>!POLICY_HIDDEN.includes(c.key)).map(c=>c.key==='presence'?{key:'alignment',label:'Framework Alignment'}:c).sort((a,b)=>POLICY_COLUMN_ORDER.indexOf(a.key)-POLICY_COLUMN_ORDER.indexOf(b.key)) : schema.columns;
   const [theme,setTheme]=useBrawndoTheme();useBrawndoPortalTheme(policiesPilot,theme);
@@ -513,7 +515,8 @@ function EntityListPage({ kind }) {
     });
     return sorted;
   }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, policiesPilot, user, policyView,reviewsPilot,reviewScope]);
-  const filtered = table.apply(presetRows).filter(row => !additionalPolicies || policyVisualMatches(row,
+  const policyMappingUnavailable = additionalPolicies && policyMappedFilterUnavailable(policyView,alignmentError,programs,policyFrameworkKeys,!!table.state.filters.alignment?.length);
+  const filtered = table.apply(presetRows).filter(row => !additionalPolicies || !policyMappingUnavailable && policyVisualMatches(row,
     policyView, params.get('category') || '', programs, policyAssessments, cisGroup));
   // Keep the register's geometry/opener during an in-place modal save refresh.
   const showLoading = loading && (!(isReviews||policiesPilot) || !tableSource.length);
@@ -740,7 +743,7 @@ function EntityListPage({ kind }) {
       {!loadError&&!policyScopeError&&<p role="status">Loading policies…</p>}
     </section> : additionalPolicies ? <BrawndoAdditionalPolicies clientId={currentClientId} clientName={currentClient?.name||'Client'}
       rows={tableSource} filteredRows={filtered} reviews={policyReviews} users={users} theme={theme}
-      programs={programs} assessments={policyAssessments} cisGroup={cisGroup} alignmentError={alignmentError}
+      programs={programs} assessments={policyAssessments} cisGroup={cisGroup} alignmentError={alignmentError} frameworkKeys={policyFrameworkKeys}
       loading={showLoading} error={loadError} onRetry={load} q={q} onSearch={setQ}
       acceptedRefresh={!loading && !loadError && acceptedPolicyRefresh?.scope === policyScope ? acceptedPolicyRefresh.instant : null}
       refreshing={loading}
@@ -751,7 +754,7 @@ function EntityListPage({ kind }) {
       onOpenReview={review=>navigate('/reviews?'+new URLSearchParams({client_id:currentClientId,id:review.review_id}).toString())}
       onAlignment={setAlignmentTarget} selectedIds={checked} onToggle={toggleOne} onSelectAll={toggleAll} rowActions={rowActions}
       actions={<><button type="button" onClick={()=>setTheme(theme==='light'?'dark':'light')}><Sun size={15} aria-hidden="true"/>{theme==='light'?'Dark':'Light'}</button>
-        <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId||!rows.length} testid="export-policies-button"/>
+        <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId||!rows.length||policyMappingUnavailable} testid="export-policies-button"/>
         {canWrite&&<PrimaryAction label="New policy" testid="create-policies-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}</>}
       pendingDecisions={<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
       nativeControls={<>{hasUrlFilters&&<div className="bap-native-scope" data-testid="carried-scope-chip">{carriedScopeLabel}<button type="button" aria-label="Clear filter" data-testid="clear-carried-scope" onClick={()=>navigate(location.pathname,{replace:true})}>Clear filter</button></div>}
