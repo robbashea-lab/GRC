@@ -120,6 +120,7 @@
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-tip-scope { padding:8px 9px; border-radius:5px; box-shadow:inset 3px 0 0 var(--cc-amber); background:#fff8e9; font-size:10px; }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true][data-theme=dark] .brawndo-demo-program[data-concept=true] .ph-tip-scope { background:#453c29; }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true][data-theme=dark] .brawndo-demo-program[data-concept=true] .ph-link,
+.brawndo-demo-dashboard[data-cis-dashboard-concept=true][data-theme=dark] .bdd-empty a,
 .cis-dashboard-concept-presentation .cis-dashboard-risk[data-concept=true][data-theme=dark] > header a { color:#9cbdff; }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true][data-theme=dark] .brawndo-demo-program[data-concept=true] .ph-change-badge { background:#244238; }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-scope-notes { font-size:9px; color:var(--cc-warning); }

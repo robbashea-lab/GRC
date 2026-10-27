@@ -4,6 +4,8 @@ import {MemoryRouter,useLocation,useNavigate} from 'react-router-dom';
 import ActionItems from './ActionItems';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
+import {cisClientProgram} from '@/lib/cisExperience';
+import {brawndoFullRecordEligible} from '@/lib/brawndoFullRecord';
 
 let mockAuth,mockOrg,mockDrawer,mockForm;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -67,13 +69,18 @@ test('Due in 30 days uses native inclusive boundaries, excludes undated/finished
   }finally{jest.useRealTimers();}
 });
 
-test('actual route gate accepts resolved CIS clients and denies inconsistent identity or authentication',async()=>{
+test('alternate controller requires saved enrollment while invalid CIS settings retain the original native controller',async()=>{
   await render();expect(container.querySelector('[aria-label="Action summaries"]')).not.toBeNull();
   const originalAuth=mockAuth,originalOrg=mockOrg;
   const cases=[()=>{mockAuth={...originalAuth,user:{...originalAuth.user,role:'client_readonly'}};},()=>{mockAuth={...originalAuth,workspaceMode:'standard'};},()=>{mockAuth={...originalAuth,user:{...originalAuth.user,workspace_mode:'standard'}};},()=>{mockOrg={...originalOrg,error:'Denied'};},()=>{mockOrg={...originalOrg,currentClient:null};},()=>{mockOrg={...originalOrg,currentClientId:'other'};},()=>{mockOrg={...originalOrg,currentClient:{client_id:'other',name:'Brawndo'}};},()=>{mockOrg={...originalOrg,currentClient:{...originalOrg.currentClient,status:'archived'}};}];
   for(const apply of cases){mockAuth=originalAuth;mockOrg=originalOrg;apply();await rerender();expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();expect(container.querySelector('[aria-label="Action summaries"]')).toBeNull();expect(container.querySelector('.surface-theme-action')).toBeNull();}
   mockAuth={...originalAuth,workspaceMode:'standard',user:{...originalAuth.user,workspace_mode:'standard'}};mockOrg=originalOrg;await rerender();expect(container.querySelector('[aria-label="Action summaries"]')).not.toBeNull();
-  mockAuth=originalAuth;mockOrg={...originalOrg,currentClient:cisClient(cid,4)};await rerender();expect(container.querySelector('[aria-label="Action summaries"]')).toBeNull();
+  mockAuth=originalAuth;mockOrg={...originalOrg,currentClient:cisClient(cid,4)};await rerender();
+  expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();
+  expect(container.querySelector('.brawndo-demo-actions')).toBeNull();
+  expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
+  expect(brawndoFullRecordEligible({...mockOrg,...mockAuth,pathname:'/action-items',clientId:cid,selectedClientId:cid})).toBe(false);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
   mockAuth=originalAuth;mockOrg=originalOrg;await rerender();await act(async()=>navigate('/findings'));expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();
 });
 

@@ -247,34 +247,53 @@ class RegisterCatalogIdentityTests(unittest.IsolatedAsyncioTestCase):
                             response = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
                                 'environment': 'Blocked stale capability', 'expected_updated_at': row['updated_at']})
                     self.assertEqual(interleaved, [True])
-                    self.assertEqual(response.status_code, 422, response.text)
-                    self.assertEqual(await server.db.ai_systems.count_documents({}), count)
-                    if row:
-                        self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']}), before)
+                    if revoked == 'archived':
+                        self.assertEqual(response.status_code, 422, response.text)
+                        self.assertEqual(await server.db.ai_systems.count_documents({}), count)
+                        if row:
+                            self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']}), before)
+                    else:
+                        # Framework withdrawal does not revoke the universal AI contract.
+                        self.assertEqual(response.status_code, 200, response.text)
+                        self.assertEqual(await server.db.ai_systems.count_documents({}), count + (boundary == 'create'))
+                        stored = await server.db.ai_systems.find_one({'ai_system_id': response.json()['ai_system_id']})
+                        self.assertEqual(stored['environment'], AI_METADATA['environment'] if boundary == 'create' else 'Blocked stale capability')
+                        self.assertNotIn('approval_status', stored)
+                        if row:
+                            for field in ('ai_system_id', 'client_id', 'created_at', 'created_by'):
+                                self.assertEqual(stored[field], before[field])
 
-    async def test_ai_metadata_capability_requires_committed_cis_enrollment_and_valid_client(self):
+    async def test_ai_metadata_requires_a_valid_client_independently_of_framework_enrollment(self):
         self.sign_in('admin')
-        # Editable setup and a projected-looking DTO cannot substitute for the saved requirement.
+        # Neither editable setup nor CIS enrollment selects the universal AI contract.
         await server.db.clients.update_one({'client_id': 'a'}, {'$set': {
             'onboarding_baseline': {'completed': True, 'requirements': {'cis-ig1': 'applies'}},
             'cis_program': {'selected': True, 'implementation_group': 3}}})
-        denied = await self.client.post('/api/ai_systems', json={'client_id': 'a', 'name': 'No enrollment', **AI_METADATA})
-        self.assertEqual(denied.status_code, 422, denied.text)
+        created = await self.client.post('/api/ai_systems', json={'client_id': 'a', 'name': 'No enrollment needed', **AI_METADATA})
+        self.assertEqual(created.status_code, 200, created.text)
+        self.assertEqual({key: created.json()[key] for key in AI_METADATA}, AI_METADATA)
+        self.assertNotIn('approval_status', created.json())
+        self.assertEqual(await server.db.requirements.count_documents({'client_id': 'a'}), 0)
         await self.configure_cis_metadata()
         for value in (None, 0, 4, True, '2'):
             with self.subTest(group=value):
                 await server.db.clients.update_one({'client_id': 'a'}, {'$set': {
                     'framework_settings': {'cis-ig1': {'implementation_group': value}}}})
                 response = await self.client.post('/api/ai_systems', json={'client_id': 'a', 'name': 'Invalid scope', **AI_METADATA})
-                self.assertEqual(response.status_code, 422, response.text)
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertEqual({key: response.json()[key] for key in AI_METADATA}, AI_METADATA)
+                self.assertNotIn('approval_status', response.json())
+                client = await server.db.clients.find_one({'client_id': 'a'})
+                self.assertEqual(client['framework_settings']['cis-ig1']['implementation_group'], value)
         await self.configure_cis_metadata()
+        count = await server.db.ai_systems.count_documents({})
         for field, value in (('status', 'archived'), ('archived', True), ('archived_at', '2026-10-22')):
             with self.subTest(client_state=field):
                 await server.db.clients.update_one({'client_id': 'a'}, {'$set': {field: value}})
                 response = await self.client.post('/api/ai_systems', json={'client_id': 'a', 'name': 'Inactive scope', **AI_METADATA})
                 self.assertEqual(response.status_code, 422, response.text)
                 await server.db.clients.update_one({'client_id': 'a'}, {'$set': {'status': 'active'}, '$unset': {'archived': '', 'archived_at': ''}})
-        self.assertEqual(await server.db.ai_systems.count_documents({}), 0)
+        self.assertEqual(await server.db.ai_systems.count_documents({}), count)
 
     async def test_non_cis_ai_contract_and_retained_absence_do_not_gain_metadata_defaults(self):
         self.sign_in('admin')
@@ -284,10 +303,14 @@ class RegisterCatalogIdentityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(renamed.status_code, 200, renamed.text)
         self.assertFalse(set(AI_METADATA).intersection(renamed.json()))
         original = await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']})
-        rejected = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
-            'name': 'Rejected non-CIS rename', 'environment': '', 'expected_updated_at': original['updated_at']})
-        self.assertEqual(rejected.status_code, 422, rejected.text)
-        self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']}), original)
+        neutral = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
+            'name': 'Ordinary metadata-neutral rename', 'environment': '', 'expected_updated_at': original['updated_at']})
+        self.assertEqual(neutral.status_code, 200, neutral.text)
+        self.assertFalse(set(AI_METADATA).intersection(neutral.json()))
+        original = await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']})
+        self.assertEqual(original['name'], 'Ordinary metadata-neutral rename')
+        self.assertEqual(original['created_at'], row['created_at'])
+        self.assertNotIn('approval_status', original)
         await self.configure_cis_metadata()
         retained = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
             **EMPTY_AI_METADATA, 'catalog_key': 'chatgpt', 'expected_updated_at': original['updated_at']})

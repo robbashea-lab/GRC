@@ -4,6 +4,8 @@ import RiskRegister from './RiskRegister';
 import api from '@/lib/api';
 import {rememberClient} from '@/lib/clientSelection';
 import {cisClient} from '@/testUtils/cisExperience';
+import {cisClientProgram} from '@/lib/cisExperience';
+import {brawndoFullRecordEligible} from '@/lib/brawndoFullRecord';
 
 let mockAuth, mockOrg, mockSearch;
 jest.mock('@/context/AuthContext', () => ({useAuth: () => mockAuth}));
@@ -100,33 +102,46 @@ test.each(['existing', 'new'].flatMap(scenario => cases.map(([group, mode]) => [
   noWrites();
 });
 
-test.each(cases)('later saved enrollment selects IG%i %s presentation without reseeding existing records', async (group, mode) => {
+test.each(cases)('common presentation survives later IG%i %s enrollment without reseeding existing records', async (group, mode) => {
   const clientId = `later_risk_client_ig${group}_${mode}`;
   selectClient({client_id: clientId, name: 'Later enrolled client', status: 'active'}, mode);
   risks = [risk({risk_id: 'retained-before-enrollment', display_id: 'RISK-019'})];
+  const retained = JSON.stringify(risks);
   await render();
-  expect(concept()).toBeNull();
+  expect(concept()).not.toBeNull();
+  expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
   expect(host.querySelector('tbody').textContent).toContain('Native recovery risk');
   const enrolled = cisClient(clientId, group);
   mockOrg = {...mockOrg, currentClient: enrolled, clients: [enrolled]};
   await render();
+  expect(cisClientProgram(mockOrg.currentClient).implementationGroup).toBe(group);
   expect(concept()).not.toBeNull();
   expect(rowTitles()).toEqual(['Native recovery risk']);
   await click(host.querySelector('tbody .risk-title'));
   expect(riskDrawer().textContent).toContain('RISK-019');
   expect(riskDrawer().querySelector('[aria-label="Title"]').value).toBe('Native recovery risk');
+  expect(JSON.stringify(risks)).toBe(retained);
   noWrites();
 });
 
-test('non-CIS clients retain their native register and controls', async () => {
+test('a client without CIS enrollment receives common presentation and keeps native record access', async () => {
   selectClient({client_id: 'demo_dunder', name: 'Non-CIS client', status: 'active'});
   risks = [risk()];
   await render();
-  expect(concept()).toBeNull();
-  expect(host.querySelectorAll('thead th')).toHaveLength(7);
-  expect(host.querySelector('[data-testid="risk-matrix-btn"]').textContent).toContain('Risk Scale & Matrix');
-  expect(host.querySelector('[data-testid="risk-view-review_due"]')).not.toBeNull();
-  expect(api.get.mock.calls.some(([path]) => path === '/tasks')).toBe(false);
+  expect(concept()).not.toBeNull();
+  expect([...host.querySelectorAll('thead th')].map(node => node.textContent.trim())).toEqual(['Risk', 'Score', 'Owner', 'Status', 'Next review', 'Open risk']);
+  expect(host.querySelector('[data-testid="risk-matrix-btn"]').textContent).toContain('Risk scale');
+  expect(host.querySelector('.filter-button')).not.toBeNull();
+  expect(api.get).toHaveBeenCalledWith('/tasks', expect.objectContaining({params: {client_id: 'demo_dunder'}}));
+  expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
+  expect(brawndoFullRecordEligible({...mockAuth, ...mockOrg, pathname: '/risks', selectedClientId: 'demo_dunder', clientId: 'demo_dunder', record: risks[0]})).toBe(false);
+  expect(host.querySelector('tbody .risk-id').textContent).toBe('RISK-001');
+  await click(host.querySelector('tbody .risk-title'));
+  // The established non-enrolled drawer shows the saved title, not the full-record ID heading.
+  expect(riskDrawer().classList.contains('brawndo-risk-workflow')).toBe(false);
+  expect(riskDrawer().querySelector('[aria-label="Title"]').value).toBe('Native recovery risk');
+  expect(riskDrawer().querySelector('[aria-label="Description"]').value).toBe('Saved native risk description.');
+  expect(api.get).toHaveBeenCalledWith('/risks/risk-native/activity');
   noWrites();
 });
 
@@ -146,7 +161,23 @@ test('mixed client-wide risks remain available with stable identities and Risk I
   noWrites();
 });
 
-test('Owner name sorting uses displayed names rather than owner IDs and stays scoped to CIS', async () => {
+test.each(['unconfigured','general','hipaa','nist-csf-2','cmmc'])('%s retains native severity/score order while explicit common sorting still works',async framework=>{
+  const client={client_id:`native-risk-order-${framework}`,name:'Synthetic common client',status:'active',shared_programs:[],
+    onboarding_baseline:{completed:framework!=='unconfigured',requirements:['unconfigured','general'].includes(framework)?{}:{[framework]:'applies'}}};
+  selectClient(client);risks=[risk({risk_id:'low-native',display_id:'RISK-001',title:'A low score',risk_level:'low',risk_score:3,likelihood_score:1,impact_score:3}),
+    risk({risk_id:'high-native',display_id:'RISK-009',title:'Z high score',risk_level:'high',risk_score:15,likelihood_score:3,impact_score:5})];
+  const before=JSON.stringify(risks);await render();
+  expect(concept()).toBeTruthy();expect(cisClientProgram(client)).toBeNull();
+  expect(rowTitles()).toEqual(['Z high score','A low score']);
+  await click(host.querySelector('.filter-button'));
+  const sort=host.querySelector('[aria-label="Sort risks"]');expect(sort.value).toBe('native');
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(sort,'title:asc');sort.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(rowTitles()).toEqual(['A low score','Z high score']);
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(sort,'native');sort.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(rowTitles()).toEqual(['Z high score','A low score']);expect(JSON.stringify(risks)).toBe(before);noWrites();
+});
+
+test('Owner name sorting uses displayed names for CIS and common client presentation', async () => {
   risks = [risk({risk_id: 'risk-zoe', display_id: 'RISK-001', title: 'Risk owned by Zoe', owner_id: 'owner-a'}),
     risk({risk_id: 'risk-ada', display_id: 'RISK-002', title: 'Risk owned by Ada', owner_id: 'owner-z'})];
   const owners = [{user_id: 'owner-a', name: 'Zoe Native', status: 'active'},
@@ -170,9 +201,19 @@ test('Owner name sorting uses displayed names rather than owner IDs and stays sc
   selectClient({client_id: 'non-cis-owners', name: 'Non-CIS owners', status: 'active'});
   risks = risks.map(record => ({...record, client_id: mockOrg.currentClientId}));
   await render();
-  expect(concept()).toBeNull();
-  expect(host.querySelector('[aria-label="Assigned Owner: filter"]')).not.toBeNull();
-  expect(host.querySelector('[aria-label="Owner: sort and filter"]')).toBeNull();
+  expect(concept()).not.toBeNull();
+  expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
+  await click(host.querySelector('.filter-button'));
+  expect(host.querySelector('[aria-label="Assigned Owner: filter"]')).toBeNull();
+  expect(host.querySelector('[aria-label="Owner: sort and filter"]')).not.toBeNull();
+  expect([...host.querySelectorAll('tbody .risk-owner')].map(node => node.textContent)).toEqual(['Zoe Native', 'Ada Native']);
+  const commonSort = host.querySelector('[aria-label="Sort risks"]');
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(commonSort, 'owner_id:asc');
+    commonSort.dispatchEvent(new Event('change', {bubbles: true}));
+  });
+  expect(rowTitles()).toEqual(['Risk owned by Ada', 'Risk owned by Zoe']);
+  expect([...host.querySelectorAll('tbody .risk-owner')].map(node => node.textContent)).toEqual(['Ada Native', 'Zoe Native']);
   noWrites();
 });
 

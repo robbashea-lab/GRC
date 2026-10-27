@@ -39,6 +39,50 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual((await self.client.post('/api/ai_systems',json={'client_id':'a','name':'Denied'})).status_code,403)
         self.assertEqual((await self.client.get('/api/ai_systems?client_id=a')).status_code,200)
 
+    async def test_unenrolled_client_metadata_round_trips_without_automatic_approval_or_related_records(self):
+        values={'environment':'Synthetic workspace — 合成','restrictions':'Human review required',
+                'data_settings':'Synthetic data only','permitted_data_types':['Public','Internal']}
+        for status in ('active','onboarding'):
+            with self.subTest(client_status=status):
+                await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':status}})
+                self.assertEqual(await server.db.requirements.count_documents({'client_id':'a'}),0)
+                row=await self.create(status='draft',owner_id=None,**values)
+                self.assertEqual({key:row[key] for key in values},values)
+                self.assertNotIn('approval_status',row);self.assertNotIn('approval_history',row)
+                saved=await self.client.patch('/api/ai_systems/'+row['ai_system_id'],json={
+                    'restrictions':'Explicit revised limit','expected_updated_at':row['updated_at']})
+                self.assertEqual(saved.status_code,200,saved.text)
+                loaded=(await self.client.get('/api/ai_systems',params={'client_id':'a'})).json()
+                current=next(item for item in loaded if item['ai_system_id']==row['ai_system_id'])
+                self.assertEqual(current['restrictions'],'Explicit revised limit')
+                self.assertEqual(current['environment'],values['environment'])
+                self.assertEqual(current['created_at'],row['created_at'])
+                self.assertEqual(current['related_links'],[])
+                self.assertNotIn('approval_status',current);self.assertNotIn('approval_history',current)
+                for kind in ('reviews','risks','vendors','findings','tasks','framework_assessments'):
+                    self.assertEqual(await server.db[kind].count_documents({}),0,kind)
+
+    async def test_unenrolled_metadata_keeps_native_client_lifecycle_and_readonly_denials(self):
+        self.sign_in('admin')
+        body={'client_id':'a','name':'Synthetic bounded metadata','environment':'Synthetic workspace'}
+        for changes in ({'status':'archived'},{'status':'inactive'},{'archived':True},{'archived_at':'2026-01-01'}):
+            with self.subTest(client_changes=changes):
+                await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'active'},'$unset':{'archived':'','archived_at':''}})
+                await server.db.clients.update_one({'client_id':'a'},{'$set':changes})
+                response=await self.client.post('/api/ai_systems',json=body)
+                self.assertEqual(response.status_code,422,response.text)
+        response=await self.client.post('/api/ai_systems',json={**body,'client_id':'missing-native-client'})
+        self.assertEqual(response.status_code,404,response.text)
+        self.sign_in('member')
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
+        self.assertEqual((await self.client.post('/api/ai_systems',json=body)).status_code,403)
+        self.assertEqual((await self.client.post('/api/ai_systems',json={**body,'client_id':'b'})).status_code,403)
+        for kind in ('ai_systems','reviews','risks','vendors','create_requests'):
+            self.assertEqual(await server.db[kind].count_documents({}),0,kind)
+        denials=await server.db.audit_logs.find({}).to_list(None)
+        self.assertEqual(len(denials),2)
+        self.assertTrue(all(event['action']=='access-denied' and event['user_id']=='member' for event in denials))
+
     async def test_review_occurrence_findings_actions_evidence_and_retirement(self):
         row=await self.create();aid=row['ai_system_id'];base='/api/ai_systems/'+aid
         schedule={'due_date':'2026-09-30','recurrence':'annual'}

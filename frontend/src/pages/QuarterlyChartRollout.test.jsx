@@ -7,6 +7,8 @@ import RiskRegister from './RiskRegister';
 import VendorRegister from './VendorRegister';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
+import {cisClientProgram} from '@/lib/cisExperience';
+import {brawndoFullRecordEligible} from '@/lib/brawndoFullRecord';
 import {frameworkCatalog} from '@/lib/frameworks';
 import {rememberClient} from '@/lib/clientSelection';
 
@@ -127,11 +129,14 @@ test.each(modules.flatMap(module=>[1,2,3].flatMap(group=>['demo','standard'].map
   },
 );
 
-test.each(modules)('$name receives the chart after later CIS enrollment and resets only chart selection across retained IG changes',async module=>{
+test.each(modules)('$name retains common chart data through later CIS enrollment and resets only chart selection across IG changes',async module=>{
   const original=mockOrg.currentClient;
-  mockOrg.currentClient={...original,onboarding_baseline:{completed:true,requirements:{hipaa:'applies'}}};mockOrg.clients=[mockOrg.currentClient];
-  const retained=JSON.stringify(mockRecords);await mount(module);expect(chart(module)).toBeNull();
+  mockOrg.currentClient={...original,onboarding_baseline:{completed:false,requirements:{}},cis_program:null,shared_programs:[]};mockOrg.clients=[mockOrg.currentClient];
+  const retained=JSON.stringify(mockRecords);await mount(module);requiredChart(module);
+  expect(period(module)).toBe('Q2 2028');
+  expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
   mockOrg.currentClient=cisClient(original.client_id,1);mockOrg.clients=[mockOrg.currentClient];await mount(module);
+  expect(cisClientProgram(mockOrg.currentClient).implementationGroup).toBe(1);
   requiredChart(module);const protectedBefore=protectedMarkup(module);
   for(const group of [2,3]){
     await click(requiredNode(requiredChart(module),'[aria-label="Previous quarter"]'));
@@ -177,12 +182,16 @@ test.each(modules)('$name denied native data stays unavailable rather than showi
 });
 
 test.each(modules.flatMap(module=>['hipaa','nist-csf-2'].flatMap(frameworkKey=>['demo','standard'].map(mode=>[module.name,frameworkKey,mode,module]))))(
-  '%s leaves an enrolled %s %s client outside the quarterly rollout',async(name,frameworkKey,mode,module)=>{
+  '%s uses common quarterly presentation for native %s %s records without granting CIS capability',async(name,frameworkKey,mode,module)=>{
     const clientId=`outside-${frameworkKey}-${mode}`;configure(clientId,1,mode);
     mockOrg.currentClient={client_id:clientId,name:'Synthetic outside-scope customer',status:'active',
       onboarding_baseline:{completed:true,requirements:{[frameworkKey]:'applies'}}};mockOrg.clients=[mockOrg.currentClient];
     const retained=JSON.stringify(mockRecords);
-    await mount(module);expect(chart(module)).toBeNull();
+    await mount(module);requiredChart(module);
+    expect(period(module)).toBe('Q2 2028');
+    expect(requiredNode(requiredChart(module),module.savedMarker).getAttribute('aria-label')).toContain('Retained native '+name.slice(0,-1));
+    expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
+    expect(brawndoFullRecordEligible({...mockAuth,...mockOrg,pathname:module.path,selectedClientId:clientId,clientId,record:mockRecords[module.collection][0]})).toBe(false);
     expect(container.textContent).toContain('Retained native '+({reviews:'Review',tasks:'Action',risks:'Risk',vendors:'Vendor'}[module.collection]));
     expect(JSON.stringify(mockRecords)).toBe(retained);noWrites();
   },

@@ -27,6 +27,7 @@ def main():
     parser.add_argument('--include-portfolio-reporting', action='store_true', help='Also run reporting indexes, automatic snapshots and committed-event recovery')
     parser.add_argument('--include-policy-coverage', action='store_true', help='Run annual Policy coverage interruption, retry, concurrency and identity checks')
     parser.add_argument('--include-evidence-integrity', action='store_true', help='Run binary/Unicode Evidence persistence and tenant denial checks')
+    parser.add_argument('--include-ai-onboarding', action='store_true', help='Run native AI onboarding, replay and tenant/lifecycle checks')
     args = parser.parse_args()
     parsed = urlsplit(args.mongo_url)
     if (parsed.scheme != 'mongodb' or parsed.hostname != '127.0.0.1' or not parsed.port
@@ -120,6 +121,10 @@ def main():
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     suite.addTest(ReconnectReceiptTests('test_receipt_survives_a_new_database_connection'))
     suite.addTest(ReconnectAssessmentItemTests('test_items_and_finding_receipt_survive_a_new_database_connection'))
+    if args.include_ai_onboarding:
+        from test_ai_onboarding import AIOnboardingTests
+        concrete = type('MongoAIOnboardingTests', (MongoStorage, AIOnboardingTests), {})
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     if args.include_policy_coverage:
         from test_policy_review_coverage import PolicyCoverageTests
         class MongoPolicyCoverageTests(MongoStorage, PolicyCoverageTests):

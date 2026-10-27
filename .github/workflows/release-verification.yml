@@ -142,6 +142,7 @@ jobs:
           --include-remediation-tickets --include-cis-ig3-scope
           --include-cis-six-year --include-generic-saves --include-portfolio-reporting
           --include-policy-coverage --include-evidence-integrity
+          --include-ai-onboarding
 
   release-gate:
     name: Release gate

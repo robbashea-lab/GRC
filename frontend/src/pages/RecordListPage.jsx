@@ -140,6 +140,8 @@ function EntityListPage({ kind }) {
   const location = useLocation();
   const appearanceContext={...org,...auth,loading:org.loading,authLoading:auth.loading,error:org.error,authError:auth.error,orgLoading:org.loading,orgError:org.error,pathname:location.pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(location.search).get('client_id')};
   const reviewsPilot=kind==='reviews'&&brawndoDemoReviewsGate(appearanceContext)&&visualCorrectionSurface(appearanceContext)==='reviews';
+  // Execution-level History is an existing enrolled-client behavior, not a common styling default.
+  const executionHistory=reviewsPilot&&sharedClientPrograms(currentClient).length>0;
   const reviewScope=kind==='reviews'?`${user?.user_id}:${user?.role}:${auth.workspaceMode}:${currentClientId}`:'';
   const loadedReviewScope=useRef('');
   const policyScope = kind === 'policies' ? `${user?.user_id}:${user?.role}:${user?.workspace_mode}:${auth.workspaceMode}:${currentClientId}` : '';
@@ -442,7 +444,7 @@ function EntityListPage({ kind }) {
     setParams(next, { replace: true });
   } });
   // A native column sort takes precedence over the new occurrence-completion presentation sort.
-  const recentReviewHistory = reviewsPilot && reviewTab === "history" && !table.state.sort && (params.get("reviewHistorySort") === "recent" || (!params.has("reviewHistorySort") && !params.has("sortBy")));
+  const recentReviewHistory = executionHistory && reviewTab === "history" && !table.state.sort && (params.get("reviewHistorySort") === "recent" || (!params.has("reviewHistorySort") && !params.has("sortBy")));
   const reviewSortValue = recentReviewHistory ? "completed_at:desc" : table.state.sort ? `${table.state.sort.key}:${table.state.sort.dir}` : `${sortBy}:${sortDir}`;
   const columnStatusActive = !!table.state.filters.status?.length;
   const setupEntry = useRef('');
@@ -473,7 +475,7 @@ function EntityListPage({ kind }) {
 
       if (!policiesPilot && signal && !signal.test(r)) return false;
       if (policiesPilot && !policyViewMatches(r, policyView)) return false;
-      if (isReviews && !signal && !columnStatusActive && !(reviewsPilot&&reviewTab==='history'&&r.occurrences?.some(occurrence=>['completed','cancelled'].includes(occurrence.status)))&&!reviewMatches(r, reviewTab, undefined, user?.user_id)) return false;
+      if (isReviews && !signal && !columnStatusActive && !(executionHistory&&reviewTab==='history'&&r.occurrences?.some(occurrence=>['completed','cancelled'].includes(occurrence.status)))&&!reviewMatches(r, reviewTab, undefined, user?.user_id)) return false;
       if (!isReviews && !columnStatusActive && statusFilter !== "all" && r.status && (statusFilter === "active" ? (TERMINAL_STATUS[kind] || []).includes(r.status) : (policiesPilot?policyStatus(r):r.status) !== statusFilter)) return false;
       if (!s) return true;
       const {occurrences, ...searchable} = r;
@@ -514,7 +516,7 @@ function EntityListPage({ kind }) {
       return String(va).localeCompare(String(vb)) * dir;
     });
     return sorted;
-  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, policiesPilot, user, policyView,reviewsPilot,reviewScope]);
+  }, [rows, q, statusFilter, reviewTab, isReviews, urlFilters, ownerField, sortBy, sortDir, schema.columns, userMap, params, currentClientId, columnStatusActive, signal, kind, policiesPilot, user, policyView,reviewsPilot,executionHistory,reviewScope]);
   const policyMappingUnavailable = additionalPolicies && policyMappedFilterUnavailable(policyView,alignmentError,programs,policyFrameworkKeys,!!table.state.filters.alignment?.length);
   const filtered = table.apply(presetRows).filter(row => !additionalPolicies || !policyMappingUnavailable && policyVisualMatches(row,
     policyView, params.get('category') || '', programs, policyAssessments, cisGroup));
@@ -611,7 +613,7 @@ function EntityListPage({ kind }) {
     }
   }
 
-  const openReviewRow=row=>{if(reviewsPilot)setLinkedInitialValues(row._execution?{occurrence:row._execution}:{});setSelected(reviewsPilot?row._review||row:row);setOpen(true);};
+  const openReviewRow=row=>{if(reviewsPilot)setLinkedInitialValues(executionHistory&&row._execution?{occurrence:row._execution}:{});setSelected(executionHistory?row._review||row:row);setOpen(true);};
   const rowActions=(row,i)=>(<DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
@@ -813,7 +815,7 @@ function EntityListPage({ kind }) {
             </Select>
           )
         )}
-        {reviewsPilot&&<div className="bdr-filter-right"><label>Review origin <select aria-label="Review basis" value={params.get('basis')||''} onChange={event=>setParam('basis',event.target.value)}><option value="">All</option>{[...new Set(tableSource.map(basisSummary))].sort().map(basis=><option key={basis}>{basis}</option>)}</select></label><label>Sort by <select aria-label="Sort reviews" value={reviewSortValue} onChange={event=>{const [by,dir]=event.target.value.split(':');table.setSort(null);const next=new URLSearchParams(params);if(by==='completed_at'){next.set('reviewHistorySort','recent');}else{next.set('reviewHistorySort','native');next.set('sortBy',by);next.set('sortDir',dir);}setParams(next,{replace:true});}}>{table.state.sort&&!['due_date:asc','due_date:desc','title:asc','owner_id:asc','recurrence:asc'].includes(reviewSortValue)&&<option value={reviewSortValue}>{columns.find(column=>column.key===table.state.sort.key)?.label||'Column'} · {table.state.sort.dir==='asc'?'Ascending':'Descending'}</option>}{reviewTab==='history'&&<option value="completed_at:desc">Recently completed</option>}<option value="due_date:asc">{reviewTab==='overdue'?'Most overdue':'Next due first'}</option><option value="due_date:desc">Due date, latest first</option><option value="title:asc">Review title</option><option value="owner_id:asc">Owner name</option><option value="recurrence:asc">Cadence</option></select></label></div>}
+        {reviewsPilot&&<div className="bdr-filter-right"><label>Review origin <select aria-label="Review basis" value={params.get('basis')||''} onChange={event=>setParam('basis',event.target.value)}><option value="">All</option>{[...new Set(tableSource.map(basisSummary))].sort().map(basis=><option key={basis}>{basis}</option>)}</select></label><label>Sort by <select aria-label="Sort reviews" value={reviewSortValue} onChange={event=>{const [by,dir]=event.target.value.split(':');table.setSort(null);const next=new URLSearchParams(params);if(by==='completed_at'){next.set('reviewHistorySort','recent');}else{next.set('reviewHistorySort','native');next.set('sortBy',by);next.set('sortDir',dir);}setParams(next,{replace:true});}}>{table.state.sort&&!['due_date:asc','due_date:desc','title:asc','owner_id:asc','recurrence:asc'].includes(reviewSortValue)&&<option value={reviewSortValue}>{columns.find(column=>column.key===table.state.sort.key)?.label||'Column'} · {table.state.sort.dir==='asc'?'Ascending':'Descending'}</option>}{executionHistory&&reviewTab==='history'&&<option value="completed_at:desc">Recently completed</option>}<option value="due_date:asc">{reviewTab==='overdue'?'Most overdue':'Next due first'}</option><option value="due_date:desc">Due date, latest first</option><option value="title:asc">Review title</option><option value="owner_id:asc">Owner name</option><option value="recurrence:asc">Cadence</option></select></label></div>}
         {!policiesPilot && !reviewsPilot && <RegisterCount shown={filtered.length} total={isReviews && !columnStatusActive && signal?.id!=='recent' ? tableSource.filter(r => reviewMatches(r,reviewTab === 'history' ? 'history' : 'all')).length : tableSource.length} />}
       </div>
 
@@ -822,7 +824,7 @@ function EntityListPage({ kind }) {
       <div className="register-body">
         <TableFilterChips table={table} />
         <RegisterLoadError error={loadError} onRetry={load} name="records" />
-        {reviewsPilot?<BrawndoReviewRows rows={filtered} users={users} checked={checked} toggleOne={toggleOne} toggleAll={toggleAll} allChecked={allChecked} history={reviewTab==='history'} sortBy={recentReviewHistory?'completed_at':sortBy} sortDir={recentReviewHistory?'desc':sortDir} widths={reviewWidths} loading={showLoading} error={loadError} onOpen={openReviewRow} rowMenu={rowActions} controls={<table><thead><tr>{columns.map(column=>['title','owner_id','status','due_date','recurrence'].includes(column.key)?<ReviewColumnHeader key={column.key} table={table} column={column} width={reviewWidths[column.key]} onResize={(key,width,initial)=>setReviewWidths(previous=>({...initial,...previous,[key]:width}))}/>:<th key={column.key}><ColumnControl table={table} column={column}/></th>)}</tr></thead></table>}/>:<>
+        {reviewsPilot?<BrawndoReviewRows rows={filtered} users={users} checked={checked} toggleOne={toggleOne} toggleAll={toggleAll} allChecked={allChecked} history={executionHistory&&reviewTab==='history'} nativeParentRows={!executionHistory} sortBy={recentReviewHistory?'completed_at':sortBy} sortDir={recentReviewHistory?'desc':sortDir} widths={reviewWidths} loading={showLoading} error={loadError} onOpen={openReviewRow} rowMenu={rowActions} controls={<table><thead><tr>{columns.map(column=>['title','owner_id','status','due_date','recurrence'].includes(column.key)?<ReviewColumnHeader key={column.key} table={table} column={column} width={reviewWidths[column.key]} onResize={(key,width,initial)=>setReviewWidths(previous=>({...initial,...previous,[key]:width}))}/>:<th key={column.key}><ColumnControl table={table} column={column}/></th>)}</tr></thead></table>}/>:<>
         <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-layout={isReviews ? 'reviews' : undefined}>
           <table className="w-full" style={isReviews&&Object.keys(reviewWidths).length?{width:72+displayColumns.reduce((sum,c)=>sum+(reviewWidths[c.key]||REVIEW_COLUMN_MIN[c.key]||90),0)}:undefined}>
             {isReviews && <colgroup><col className="register-col-check" />{displayColumns.map(c => <col key={c.key} style={reviewWidths[c.key]?{width:reviewWidths[c.key]}:undefined} className={c.primary ? 'register-col-title' : c.user ? 'register-col-owner' : c.date ? 'register-col-date' : `register-col-${c.key}`} />)}<col className="register-col-actions" /></colgroup>}

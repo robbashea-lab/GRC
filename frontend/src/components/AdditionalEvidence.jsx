@@ -11,23 +11,30 @@ import {toast} from 'sonner';
 import './AdditionalEvidence.css';
 
 const areaName=area=>area==='Unassigned'?'Needs Classification':area;
+const nativeFolderLabel=folder=>folder.label;
 const assertClient=(rows,clientId)=>{if(!Array.isArray(rows)||rows.some(row=>row?.client_id!==clientId))throw new Error('Client data mismatch');return rows;};
 export const initialEvidenceView=()=>({area:'',folder:null,recent:false,q:'',type:'',year:'',page:1,archived:false,sort:{key:'created_at',dir:'desc'},missing:false});
 
-function useEvidenceOverview(clientId,revision){
-  const [state,setState]=useState({}),[attempt,setAttempt]=useState(0),key=`${clientId}:${revision}:${attempt}`;
+function useEvidenceOverview(clientId,revision,cisProgram){
+  const scope=JSON.stringify(cisProgram?.clientId===clientId?cisProgram:null);
+  const [state,setState]=useState({}),[attempt,setAttempt]=useState(0),key=JSON.stringify([clientId,revision,attempt,scope]);
   useEffect(()=>{
     const controller=new AbortController(),signal=controller.signal;setState({key,loading:true});
     async function load(){
       const [files,assessmentResponse,reviewResponse]=await Promise.all([
         collectEvidencePages(async page=>(await api.get('/evidence/catalog',{params:{client_id:clientId,page,page_size:100},signal})).data,{signal}),
-        api.get('/frameworks/cis-ig1',{params:{client_id:clientId},signal}),
+        // Common presentation is not proof of enrollment. The native descriptor
+        // controls this read independently of the shared library appearance.
+        JSON.parse(scope)?api.get('/frameworks/cis-ig1',{params:{client_id:clientId},signal}):null,
         api.get('/reviews',{params:{client_id:clientId},signal})
       ]);
       assertClient(files,clientId);if(new Set(files.map(file=>file.evidence_id)).size!==files.length)throw new Error('Evidence changed while loading the overview. Reload to refresh it.');
-      const framework=assessmentResponse.data;
-      assertClient(framework.assessments,clientId);
-      if(!Array.isArray(framework.active_definition_ids)||typeof framework.selected!=='boolean'||typeof framework.configured!=='boolean')throw new Error('Framework context is incomplete');
+      const framework=assessmentResponse?.data||null;
+      if(JSON.parse(scope)&&!framework)throw new Error('Framework context is incomplete');
+      if(framework){
+        assertClient(framework.assessments,clientId);
+        if(!Array.isArray(framework.active_definition_ids)||typeof framework.selected!=='boolean'||typeof framework.configured!=='boolean')throw new Error('Framework context is incomplete');
+      }
       const reviews=assertClient(reviewResponse.data,clientId),reviewSets=[];
       if(reviews.length>1000)throw new Error('Review coverage is unavailable for this library size. Paged files remain available.');
       let periodCount=0;
@@ -36,26 +43,28 @@ function useEvidenceOverview(clientId,revision){
         periodCount+=periods.length;if(periodCount>10000)throw new Error('Review coverage is unavailable for this library size. Paged files remain available.');
         reviewSets.push({reviewId:review.review_id,title:review.title,cadence:review.recurrence,periods});
       }
-      const group=framework.configuration?.implementation_group;
-      return {files,overview:evidenceOverview(files,framework,reviewSets),safeguardLabel:`CIS${[1,2,3].includes(group)?` IG${group}`:''} safeguards with evidence`,coverage:evidenceCoverage(reviewSets)};
+      const group=framework?.configuration?.implementation_group;
+      return {files,overview:evidenceOverview(files,framework,reviewSets),safeguardLabel:framework?`CIS${[1,2,3].includes(group)?` IG${group}`:''} safeguards with evidence`:null,coverage:evidenceCoverage(reviewSets)};
     }
     load().then(data=>{if(!signal.aborted)setState({key,...data});}).catch(error=>{if(!signal.aborted)setState({key,error:formatError(error)});});
     return()=>controller.abort();
-  },[clientId,key]);
+  },[clientId,key,scope]);
   return {...(state.key===key?state:{loading:true}),reload:()=>setAttempt(value=>value+1)};
 }
 
-export default function AdditionalEvidence({clientId,clientName='Client',canUpload,onUpload,onOpenItem,onOpenSource,revision=0,viewState,onViewStateChange}){
+export default function AdditionalEvidence({clientId,clientName='Client',cisProgram=null,frameworkItems=[],frameworkError='',frameworkLoading=false,frameworkFolderName=nativeFolderLabel,canUpload,onUpload,onOpenItem,onOpenSource,revision=0,viewState,onViewStateChange}){
   const [theme,setTheme]=useBrawndoTheme();
   const [localView,setLocalView]=useState(initialEvidenceView);
   const {area,folder,recent,q,type,year,page,archived,sort,missing}=viewState||localView;
   const setView=onViewStateChange||setLocalView;
   const coverageRef=useRef(null);
   const state=JSON.stringify({include_archived:archived,filters:{...(area?{program_areas:[area]}:{}),...(folder?{folder_paths:[folder.path]}:{}),...(recent?{created_at:['last90']}:{}),...(type?{evidence_type:[type]}:{}),...(year?{years:[year]}:{})},sort});
-  const result=useEvidenceCatalog({client_id:clientId,q,state,page,page_size:25},revision),summary=useEvidenceOverview(clientId,revision);
+  const result=useEvidenceCatalog({client_id:clientId,q,state,page,page_size:25},revision),summary=useEvidenceOverview(clientId,revision,cisProgram);
   const data=Array.isArray(result.data?.items)&&result.data.items.every(row=>row?.client_id===clientId)?result.data:null;
   const sourceMismatch=result.data&&!data;
-  const folders=(data?.folder_counts||[]).filter(f=>f.area===area);
+  const groups=(data?.folder_counts||[]).filter(f=>f.area===area);
+  const enabled=new Set(frameworkItems.map(framework=>framework.key));
+  const folders=area==='Frameworks'?(data?frameworkItems.map(framework=>groups.find(group=>group.key===framework.key)||{area:'Frameworks',key:framework.key,label:framework.label,path:JSON.stringify(['Frameworks',framework.key]),count:0}):[]):groups;
   const coverageRows=summary.coverage?.rows.filter(row=>!missing||row.missing)||[];
   const facets=data?.facets||{};
   const counts=useMemo(()=>Object.fromEntries(PROGRAM_AREAS.map(a=>[a,(summary.files||[]).filter(file=>file.program_areas?.includes(a)).length])),[summary.files]);
@@ -66,10 +75,11 @@ export default function AdditionalEvidence({clientId,clientName='Client',canUplo
   function sortBy(key){setView(current=>({...current,sort:{key,dir:current.sort.key===key&&current.sort.dir==='asc'?'desc':'asc'},page:1}));}
   function setPage(value){setView(current=>({...current,page:value}));}
   const overview=summary.overview;
+  const hasCisProgram=cisProgram?.clientId===clientId;
   const figures=[
     {key:'files',label:'Files',value:overview?.files,selected:!area&&!folder&&!recent,onClick:()=>browse('')},
     {key:'recent',label:'Added in the last 90 days',value:overview?.recent,selected:recent,onClick:toggleRecent},
-    {key:'cis',label:summary.safeguardLabel||'CIS safeguards with evidence',value:overview?.safeguards,detail:overview?`of ${overview.safeguardTotal}`:null,selected:area==='Frameworks'&&!recent,onClick:()=>browse(area==='Frameworks'?'':'Frameworks')},
+    {key:'cis',label:hasCisProgram?summary.safeguardLabel||'CIS safeguards with evidence':'Framework files',value:hasCisProgram?overview?.safeguards:overview?counts.Frameworks:null,detail:hasCisProgram&&overview?`of ${overview.safeguardTotal}`:null,selected:area==='Frameworks'&&!recent,onClick:()=>browse(area==='Frameworks'?'':'Frameworks')},
     {key:'coverage',label:'Review periods with evidence',value:overview?.periods,detail:overview?`of ${overview.periodTotal}`:null,selected:false,onClick:showCoverage},
   ];
   return <div className="brawndo-additional bae-page">
@@ -80,10 +90,13 @@ export default function AdditionalEvidence({clientId,clientName='Client',canUplo
       <div className="bae-section-head"><h2>Browse</h2><span className="bae-note">Files appear from existing relationships. A file can sit in more than one folder.</span></div>
       <div className="bae-folders" role="group" aria-label="Evidence areas">{PROGRAM_AREAS.map(a=><button key={a} type="button" aria-pressed={area===a} className={`bae-folder${overview&&counts[a]===0?' bae-zero':''}`} onClick={()=>browse(area===a?'':a)}><Folder size={18} aria-hidden="true"/><b>{areaName(a)}</b><small>files</small><span className="bae-n">{overview?counts[a]:'—'}</span></button>)}</div>
       {area&&<nav aria-label="Evidence location" className="bae-breadcrumb"><button type="button" onClick={()=>browse('')}>Evidence Library</button><span>›</span><button type="button" onClick={()=>browse(area)} aria-current={!folder?'page':undefined}>{areaName(area)}</button>{folder&&<><span>›</span><span aria-current="page">{folder.label}</span></>}</nav>}
-      {area&&folders.length>0&&<div className="bae-subfolders" aria-label={`${areaName(area)} folders`}>{folders.map(f=><button type="button" key={f.path} aria-pressed={folder?.path===f.path} onClick={()=>browse(area,folder?.path===f.path?null:f)}>{f.label}<span>{f.count}</span></button>)}</div>}
+      {area==='Frameworks'&&frameworkLoading&&<p role="status" className="bae-note">Loading framework configuration…</p>}
+      {area==='Frameworks'&&frameworkError&&<p role="alert" className="bae-note">Framework configuration could not be loaded: {frameworkError}</p>}
+      {area&&folders.length>0&&<div className="bae-subfolders" aria-label={`${areaName(area)} folders`}>{folders.map(f=>{const label=area==='Frameworks'?frameworkFolderName(f):f.label;return <button type="button" key={f.path} aria-pressed={folder?.path===f.path} onClick={()=>browse(area,folder?.path===f.path?null:{...f,label})}>{label}<span>{f.count}</span></button>;})}</div>}
+      {area==='Frameworks'&&groups.some(f=>!enabled.has(f.key))&&<p className="bae-note">Evidence from inactive or unrecorded frameworks remains available in search and All files below.</p>}
     </div></section>
     <section className="bae-card" aria-label="Evidence files">
-      <div className="bae-filters"><label className="bae-search"><Search size={15} aria-hidden="true"/><span className="sr-only">Search Evidence</span><input type="search" placeholder="Search files, safeguards, reviews…" value={q} onChange={e=>change('q',e.target.value)} data-testid="evidence-search"/></label>
+      <div className="bae-filters"><label className="bae-search"><Search size={15} aria-hidden="true"/><span className="sr-only">Search Evidence</span><input type="search" placeholder={hasCisProgram?'Search files, safeguards, reviews…':'Search files, frameworks, reviews…'} value={q} onChange={e=>change('q',e.target.value)} data-testid="evidence-search"/></label>
         <div className="bae-filter-right"><label>Type <select value={type} onChange={e=>change('type',e.target.value)} aria-label="Evidence type"><option value="">All</option>{(facets.evidence_type||[]).map(value=><option key={value}>{value}</option>)}</select></label><label>Year <select value={year} onChange={e=>change('year',e.target.value)} aria-label="Evidence year"><option value="">All</option>{(facets.years||[]).map(value=><option key={value}>{value}</option>)}</select></label></div>
       </div>
       <div className="bae-table" role="table" aria-label="Evidence files"><div className="bae-thead" role="row">{[['File','filename'],['Type'],['Linked to'],['Uploaded by','uploaded_by_email'],['Date','created_at'],['Download']].map(([label,key])=><div role="columnheader" key={label} {...(key&&sort.key===key?{'aria-sort':sort.dir==='asc'?'ascending':'descending'}:{})}>{key?<button type="button" onClick={()=>sortBy(key)}>{label}<ArrowDown size={10} aria-hidden="true"/></button>:label==='Download'?<span className="sr-only">{label}</span>:label}</div>)}</div>

@@ -1,4 +1,5 @@
-import {cisClientProgram,cisExperienceEligible,cisPresentationEligible,cisWorkspaceMatches,cisDefinitions} from './cisExperience';
+import {cisClientProgram,cisExperienceEligible,cisPresentationEligible,cisWorkspaceMatches,cisDefinitions,cisImplementationGroup} from './cisExperience';
+import {validateCisSettings} from './cisScope';
 import {cisClient,cisContext,cisWorkspace} from '../testUtils/cisExperience';
 import {brawndoCisVisualGate,cisVisualRecordMatches} from './brawndoCisVisual';
 import {brawndoDemoDashboard,brawndoDemoProgram} from './brawndoDemoDashboard';
@@ -43,7 +44,7 @@ test.each([1,2,3])('IG%i uses its exact cumulative catalog in both modes and eve
   }
 });
 
-test('missing, unselected and non-CIS configurations cannot inherit appearance from a company name',()=>{
+test('missing, unselected and non-CIS configurations cannot inherit CIS capability from a company name',()=>{
   const context=cisContext('demo_brawndo');
   for(const patch of [{onboarding_baseline:null},{framework_settings:{'cis-ig1':null}},{framework_settings:{'cis-ig1':{implementation_group:'2'}}},{onboarding_baseline:{completed:false,requirements:{'cis-ig1':'applies'}}},{onboarding_baseline:{completed:true,requirements:{'cis-ig1':'does_not_apply','iso-27001':'applies'}}}]) {
     expect(cisExperienceEligible({...context,currentClient:{...context.currentClient,...patch,name:'Brawndo'}})).toBe(false);
@@ -68,14 +69,17 @@ test('retained higher-scope rows do not enter the active set and malformed activ
   expect(cisWorkspaceMatches(data,'retained')).toBe(false);
 });
 
-test('new native onboarding receives appearance only after explicit CIS selection and matching loaded identities',()=>{
+test('new native onboarding receives common appearance without granting CIS capability and requires matching loaded identities',()=>{
   const context=cisContext('new',3,'standard');context.currentClient.onboarding_baseline={completed:false,requirements:{}};
   const nativeDraft={requirements:{'cis-ig1':'applies'},framework_settings:{'cis-ig1':{implementation_group:3}}};
   const input={...context,pathname:'/client-profile',loadedClientId:'new',profileClientId:'new',handoffClientId:'new',nativeDraft};
   expect(brawndoOnboardingGate(input)).toBe(true);
-  expect(brawndoOnboardingGate({...input,nativeDraft:{}})).toBe(false);
+  expect(brawndoOnboardingGate({...input,nativeDraft:{}})).toBe(true);
+  expect(cisExperienceEligible(input)).toBe(false);
+  expect(cisClientProgram(context.currentClient)).toBeNull();
   expect(brawndoOnboardingGate({...input,handoffClientId:'foreign'})).toBe(false);
   expect(brawndoOnboardingGate({...input,clients:[]})).toBe(false);
+  for(const patch of [{authLoading:true},{orgLoading:true},{authError:'denied'},{orgError:'denied'},{routeClientId:'foreign'},{loadedClientId:'foreign'}])expect(brawndoOnboardingGate({...input,...patch})).toBe(false);
 });
 
 test('IG1 domain mapping remains the approved eleven-domain disjoint partition',()=>{
@@ -96,24 +100,33 @@ test('legacy finalized CIS enrollment uses the native IG1 default without mutati
 });
 
 
-test('first CIS onboarding selection uses native IG1 default while refusing malformed explicit draft groups',()=>{
+test('common onboarding appearance preserves native IG1 default and malformed draft-group validation',()=>{
   const context=cisContext('new-native','1','standard');context.currentClient.onboarding_baseline={completed:false,requirements:{}};
   const nativeDraft={requirements:{'cis-ig1':'applies'}};
   const input={...context,pathname:'/client-profile',loadedClientId:'new-native',profileClientId:'new-native',handoffClientId:'new-native',nativeDraft};
   expect(brawndoOnboardingGate(input)).toBe(true);
-  for(const implementation_group of [null,undefined,'1',0,4,true])expect(brawndoOnboardingGate({...input,nativeDraft:{...nativeDraft,framework_settings:{'cis-ig1':{implementation_group}}}})).toBe(false);
+  expect(cisImplementationGroup({framework_settings:nativeDraft.framework_settings})).toBe(1);
+  for(const implementation_group of [null,undefined,'1',0,4,true]){
+    const framework_settings={'cis-ig1':{implementation_group}};
+    expect(brawndoOnboardingGate({...input,nativeDraft:{...nativeDraft,framework_settings}})).toBe(true);
+    expect(cisImplementationGroup({framework_settings})).toBeNull();
+    expect(()=>validateCisSettings(framework_settings)).toThrow('CIS implementation group is not available');
+  }
   expect(brawndoOnboardingGate({...input,clients:[]})).toBe(false);
-  expect(brawndoOnboardingGate({...input,nativeDraft:{requirements:{'cis-ig1':'does_not_apply'}}})).toBe(false);
+  expect(brawndoOnboardingGate({...input,nativeDraft:{requirements:{'cis-ig1':'does_not_apply'}}})).toBe(true);
+  expect(cisExperienceEligible(input)).toBe(false);
 });
 
 
-test('malformed top-level CIS settings are refused rather than interpreted as an absent legacy group',()=>{
+test('malformed top-level CIS settings deny capability while common appearance remains independent',()=>{
   for(const framework_settings of [null,[],['cis-ig1'],'cis-ig1',1,true]) {
     const client={...cisClient(),framework_settings};
     expect(cisClientProgram(client)).toBeNull();
     const context=cisContext();context.currentClient=client;
+    expect(cisExperienceEligible(context)).toBe(false);
+    expect(()=>validateCisSettings(framework_settings)).toThrow();
     expect(brawndoOnboardingGate({...context,pathname:'/client-profile',loadedClientId:client.client_id,profileClientId:client.client_id,handoffClientId:client.client_id,
-      nativeDraft:{requirements:{'cis-ig1':'applies'},framework_settings}})).toBe(false);
+      nativeDraft:{requirements:{'cis-ig1':'applies'},framework_settings}})).toBe(true);
   }
 });
 

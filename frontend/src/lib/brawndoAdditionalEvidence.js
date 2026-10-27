@@ -18,12 +18,12 @@ export async function collectEvidencePages(loadPage,{signal,maxItems=10000}={}){
 }
 
 export function evidenceOverview(files,framework,reviewSets,today=managementDay()){
-  const activeDefinitions=new Set(framework.selected&&framework.configured?framework.active_definition_ids:[]);
-  const cutoff=today-90,safeguards=framework.assessments.filter(r=>r.framework_key==='cis-ig1'&&activeDefinitions.has(r.definition_id));
+  const activeDefinitions=new Set(framework?.selected&&framework.configured?framework.active_definition_ids:[]);
+  const cutoff=today-90,safeguards=(framework?.assessments||[]).filter(r=>r.framework_key==='cis-ig1'&&activeDefinitions.has(r.definition_id));
   const ids=new Set(safeguards.map(r=>r.framework_assessment_id)),linked=new Set();
   for(const file of files)for(const ref of file.references||[])if(ref.available&&ref.kind==='framework_assessments'&&ids.has(ref.id))linked.add(ref.id);
   const periods=reviewSets.flatMap(r=>r.periods).filter(p=>p.status==='completed'&&Number.isInteger(p.evidence_count)&&p.evidence_count>=0);
-  return {files:files.length,recent:files.filter(f=>{const day=calendarDay(f.created_at);return day!==null&&day>=cutoff&&day<=today;}).length,safeguards:linked.size,safeguardTotal:activeDefinitions.size,periods:periods.filter(p=>p.evidence_count>0).length,periodTotal:periods.length};
+  return {files:files.length,recent:files.filter(f=>{const day=calendarDay(f.created_at);return day!==null&&day>=cutoff&&day<=today;}).length,safeguards:framework?linked.size:null,safeguardTotal:framework?activeDefinitions.size:null,periods:periods.filter(p=>p.evidence_count>0).length,periodTotal:periods.length};
 }
 
 export function evidenceCoverage(reviewSets,today=managementDay()){

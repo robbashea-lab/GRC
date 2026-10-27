@@ -75,6 +75,17 @@ beforeEach(()=>{
 afterEach(()=>{fixture.remove();for(const [node,attributes] of [[document.documentElement,htmlAttributes],[document.body,bodyAttributes]]){for(const name of node.getAttributeNames())node.removeAttribute(name);for(const [name,value] of attributes)node.setAttribute(name,value);}});
 const orders=[files,[...files].reverse()];
 
+test.each(orders)('dark concept empty-state links reuse the approved readable link color without retheming native links in order %j',(...order)=>{
+ const links=document.createElement('div');fixture.appendChild(links);
+ links.innerHTML='<div class="brawndo-demo-dashboard" data-cis-dashboard-concept="true" data-theme="dark"><section class="bdd-card"><p class="bdd-empty"><a data-target="dark" href="/client-profile">Review client configuration</a></p></section></div><div class="brawndo-demo-dashboard" data-cis-dashboard-concept="true" data-theme="light"><p class="bdd-empty"><a data-target="light" href="/client-profile">Review client configuration</a></p></div><div class="brawndo-demo-dashboard" data-theme="dark"><p class="bdd-empty"><a data-target="native" href="/client-profile">Review client configuration</a></p></div>';
+ expect(winner(links.querySelector('[data-target=dark]'),'color',1280,order)).toBe('#9cbdff');
+ const withoutConcept=order.filter(name=>name!=='CisDashboardConcept.css');
+ for(const target of ['light','native']){
+   const link=links.querySelector(`[data-target=${target}]`);
+   expect(winner(link,'color',1280,order)).toBe(winner(link,'color',1280,withoutConcept));
+ }
+});
+
 test.each(orders)('dark concept Risk score pills retain readable foreground without changing other scopes in order %j',(...order)=>{
  const portals=document.createElement('div');fixture.appendChild(portals);
  portals.innerHTML='<div class="cis-dashboard-risk-selection ui-dialog cis-dashboard-concept-portal" data-concept="true" data-theme="dark" data-state="open"><span class="cis-dashboard-risk-score">6 <span>→</span></span></div><div class="cis-dashboard-risk-selection ui-dialog cis-dashboard-concept-portal" data-concept="true" data-theme="light" data-state="open"><span class="cis-dashboard-risk-score">6 <span>→</span></span></div><div class="cis-dashboard-risk-selection ui-dialog" data-theme="dark" data-state="open"><span class="cis-dashboard-risk-score">Score 6<small>moderate</small></span></div>';

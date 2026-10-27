@@ -10,7 +10,7 @@ import VendorsConceptTimeline, {VendorsEventList} from './VendorsConceptTimeline
 import { ColumnControl, TableFilterChips } from './TableControls';
 import { assuranceAttention, assuranceName, assuranceState, vendorMatches } from '@/lib/brawndoVendors';
 import { calendarDay, managementDay } from '@/lib/managementDates';
-import { vendorOverview, vendorTimelineEvents, timelineBounds, eventCycleProgress } from '@/lib/brawndoAdditionalPolicyVendor';
+import { vendorTimelineEvents, timelineBounds, eventCycleProgress } from '@/lib/brawndoAdditionalPolicyVendor';
 import { AdditionalOwner, savedDate, relativeDate } from './BrawndoAdditionalPolicyVendorCells';
 import './BrawndoAdditionalPolicyVendor.css';
 import './CisVendorsConcept.css';
@@ -79,7 +79,7 @@ function VendorTimeline({ rows, reviews, onOpen, onOpenReview, theme }) {
   </div></Tooltip.Provider>;
 }
 
-export default function BrawndoAdditionalVendors({ clientName = 'Client', rows = [], filteredRows = rows, reviews = [], tasks = [], workAvailable = true, workError = '', users = [], loading = false, error = '', onRetry, q = '', onSearch, view = 'all_active', onView, table, onOpen, onOpenReview, onOpenTask, actions, theme = 'light', acceptedRefresh = null, quarterlyChart = false, scopeKey = '', recordOpen = false }) {
+export default function BrawndoAdditionalVendors({ clientName = 'Client', rows = [], filteredRows = rows, reviews = [], tasks = [], workAvailable = true, workError = '', users = [], loading = false, error = '', onRetry, q = '', onSearch, view = 'all_active', onView, table, onOpen, onOpenReview, onOpenTask, actions, theme = 'light', acceptedRefresh = null, quarterlyChart = false, scopeKey = '', recordOpen = false, viewCounts, contractDate = vendor=>vendor.contract_renewal, contractDateLabel }) {
   const [selection, setSelection] = useState(null);
   useEffect(() => setSelection(null), [scopeKey]);
   const [now] = useQuarterClock();
@@ -87,20 +87,23 @@ export default function BrawndoAdditionalVendors({ clientName = 'Client', rows =
   const selectEvents = (events, title, opener) => setSelection({scope: scopeKey, ids: events.map(event => event.id), title, opener});
   const openEvent = event => event.task ? onOpenTask?.(event.task) : event.review && onOpenReview ? onOpenReview(event.review) : onOpen(event.vendor, event.tab, event.assuranceId);
   const refreshLabel = !loading && !error ? formatAcceptedRefresh(acceptedRefresh) : '';
-  const metrics = vendorOverview(rows);
   const figures = [['critical_high', 'Critical / High'], ['review_due', 'Reviews due in 30 days'], ['assurance', 'Assurance follow-up due'], ['renewal_soon', 'Renewal / notice actions in 30 days']];
-  const header = (key, label) => table ? <ColumnControl table={table} column={{ ...table.columns.find(column => column.key === key), key, label }} /> : label;
+  const header = (key, label) => {
+    const column=table?.columns.find(column=>column.key===key);
+    return column?<ColumnControl table={table} column={{...column,label}}/>:label;
+  };
   const today = managementDay();
-  const counts = Object.fromEntries([...VIEWS, ...EXTRA_VIEWS].map(([id]) => [id, rows.filter(row => vendorMatches(row, id)).length]));
+  const counts = viewCounts||Object.fromEntries([...VIEWS, ...EXTRA_VIEWS].map(([id]) => [id, rows.filter(row => vendorMatches(row, id)).length]));
+  const metrics = figures.map(([id])=>counts[id]);
   const countsAvailable = !loading && !error;
   const cohort = Object.prototype.hasOwnProperty.call(counts, view) ? view : 'all_active';
   const cohortLabel = cohort === 'inactive' ? 'inactive ' : cohort === 'all_active' ? 'active ' : '';
   const summary = countsAvailable ? `Showing ${filteredRows.length} of ${counts[cohort]} ${cohortLabel}${counts[cohort] === 1 ? 'vendor' : 'vendors'}` : error ? 'Vendor counts unavailable.' : 'Loading vendors…';
   const workReady = countsAvailable && workAvailable;
-  const activeCount = rows.filter(vendor => vendorMatches(vendor, 'all_active')).length;
-  const inactiveCount = rows.filter(vendor => vendorMatches(vendor, 'inactive')).length;
-  const critical = rows.filter(vendor => vendorMatches(vendor, 'critical')).length;
-  const high = rows.filter(vendor => vendorMatches(vendor, 'high')).length;
+  const activeCount = counts.all_active;
+  const inactiveCount = counts.inactive;
+  const critical = counts.critical;
+  const high = counts.high;
   const cards = [
     {id: 'all', label: 'All vendors', count: rows.length, detail: `${activeCount} active · ${inactiveCount} inactive`, Icon: BriefcaseBusiness, open: () => onView('all'), ready: countsAvailable},
     {id: 'critical_high', label: 'Critical / High', count: critical + high, detail: `${critical} critical · ${high} high`, Icon: TriangleAlert, open: () => onView('critical_high'), ready: countsAvailable},
@@ -125,7 +128,8 @@ export default function BrawndoAdditionalVendors({ clientName = 'Client', rows =
         {!loading && !error && filteredRows.map((vendor, index) => {
           const documents = (vendor.assurance_records || []).filter(document => !document.superseded_by), document = documents[0];
           const followup = document?.next_follow_up || document?.refresh_due;
-          const nextDay = calendarDay(vendor.next_review), renewalDay = calendarDay(vendor.contract_renewal);
+          const contract=contractDate(vendor),contractLabel=contract?contractDateLabel?.(vendor):'';
+          const nextDay = calendarDay(vendor.next_review), renewalDay = calendarDay(contract);
           return <div className="bav-row" role="row" key={vendor.vendor_id} onClick={() => onOpen(vendor)} data-testid={`vendor-row-${index}`}>
             <div role="cell" className="bav-item">{quarterlyChart && <RegisterIdentityLogo kind="vendor" src={registerCatalogLogo('vendors', vendor)}/>}<div><button type="button" className="bapv-name" onClick={event => { event.stopPropagation(); onOpen(vendor); }}>{vendor.name}</button><div className="bapv-meta">{[vendor.service || vendor.services, vendor.status !== 'active' ? vendor.status : ''].filter(Boolean).join(' · ')}</div></div></div>
             <div role="cell" className="bav-criticality"><span className={`bav-critical ${vendor.criticality}`}><i />{CRITICALITY[vendor.criticality] || vendor.criticality || 'Not recorded'}</span></div>
@@ -133,7 +137,7 @@ export default function BrawndoAdditionalVendors({ clientName = 'Client', rows =
             <div role="cell" className="bav-owner"><AdditionalOwner users={users} id={vendor.business_owner_id} /></div>
             <div role="cell" className="bav-next bapv-two"><span>{savedDate(vendor.next_review) || 'Not scheduled'}</span><small className={nextDay !== null && nextDay <= today + 30 ? 'warn' : ''}>{vendor.next_review ? relativeDate(vendor.next_review) : ''}{vendor.last_review ? `${vendor.next_review ? ' · ' : ''}last ${savedDate(vendor.last_review, true)}` : ''}</small></div>
             <div role="cell" className="bav-assurance">{quarterlyChart ? documents.length ? documents.map((item, index) => <div className="cv-assurance" key={item.assurance_id || index}><button type="button" onClick={event => {event.stopPropagation(); onOpen(vendor, 'assurance', item.assurance_id || `legacy:${vendor.assurance_records.indexOf(item)}`);}}>{assuranceName(item)}</button><span className={`cv-assurance-status cv-status-${assuranceState(item).toLowerCase().replaceAll(' ', '_')}`}>{assuranceState(item)}</span>{(item.next_follow_up || item.refresh_due) && <small className={assuranceAttention(item).length ? 'warn' : ''}>Follow-up {savedDate(item.next_follow_up || item.refresh_due, true)}</small>}</div>) : <button type="button" onClick={event => {event.stopPropagation(); onOpen(vendor, 'assurance');}}>No assurance recorded</button> : <><button type="button" onClick={event => { event.stopPropagation(); onOpen(vendor, 'assurance'); }}>{document ? assuranceName(document) : 'No assurance recorded'}{documents.length > 1 ? ` +${documents.length - 1}` : ''}</button>{document && <small className={assuranceAttention(document).length ? 'warn' : ''}>{assuranceState(document)}{followup ? ` · Follow-up ${savedDate(followup, true)}` : ''}</small>}</>}</div>
-            <div role="cell" className="bav-renewal bapv-two"><span>{savedDate(vendor.contract_renewal) || 'No renewal date'}</span><small className={renewalDay !== null && renewalDay >= today && renewalDay <= today + 30 ? 'warn' : ''}>{relativeDate(vendor.contract_renewal)}</small>{vendor.contract_notice_deadline && <small>Notice {savedDate(vendor.contract_notice_deadline, true)}</small>}</div>
+            <div role="cell" className="bav-renewal bapv-two"><span>{savedDate(contract) || 'No renewal date'}</span><small className={renewalDay !== null && renewalDay >= today && renewalDay <= today + 30 ? 'warn' : ''}>{contractLabel&&`${contractLabel} · `}{relativeDate(contract)}</small>{vendor.contract_notice_deadline && <small>Notice {savedDate(vendor.contract_notice_deadline, true)}</small>}</div>
             <ChevronRight size={16} className="bapv-chevron" aria-hidden="true" />
           </div>;
         })}

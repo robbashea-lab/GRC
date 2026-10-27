@@ -40,3 +40,9 @@ test('coverage retains exact occurrence identity and never calls cancelled, unkn
 test('file size is omitted when unavailable and preserves actual zero',()=>{
   expect(evidenceFileSize({})).toBeNull();expect(evidenceFileSize({size_bytes:0})).toBe('0 B');expect(evidenceFileSize({size_bytes:2048})).toBe('2.0 KB');expect(evidenceFileSize({size_bytes:-1})).toBeNull();
 });
+
+test('an intentionally absent CIS program does not invent a safeguard assessment or denominator',()=>{
+  const files=[{created_at:'2026-10-16',program_areas:['Frameworks']}];
+  const overview=evidenceOverview(files,null,[{periods:[{status:'completed',evidence_count:1}]}],calendarDay('2026-10-16'));
+  expect(overview).toEqual({files:1,recent:1,safeguards:null,safeguardTotal:null,periods:1,periodTotal:1});
+});

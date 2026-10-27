@@ -15,7 +15,7 @@ import RegisterLoadError from '@/components/RegisterLoadError';
 import AIDrawer from '@/components/AIDrawer';
 import {AIIntakeView,useAIIntake} from '@/components/AIIntake';
 import {ranks} from '@/lib/tableFilters';
-import {AI_RELATIONSHIP_NOTICE} from '@/lib/aiGovernance';
+import {AI_RELATIONSHIP_NOTICE,aiClientAvailable} from '@/lib/aiGovernance';
 import {isReferencePresentation,isCisReference,isReferenceWorkflow} from '@/lib/reference';
 import {AI_VIEWS,aiMatches,aiNeedsAttention} from '@/lib/brawndoAI';
 import BrawndoAICards from '@/components/BrawndoAICards';
@@ -54,8 +54,9 @@ function AIWorkspace({identity}){
   useEffect(()=>{setQuick('active');setSearch('');setShowInactive(false);},[currentClientId]);
   const data=snapshot?.identity===identity&&(reference?snapshot.clientId===currentClientId:snapshot.key===key)?snapshot:null,rows=data?.rows||[],members=data?.members||[];
   const additional=useAdditionalSectionsSurface('ai-governance',data&&!error&&data.identity===identity&&data.intake?.client_id===currentClientId?data.clientId:null);
-  // Common register appearance must not opt an unenrolled client into guided AI commands.
-  const nativeAIExperience=additional&&sharedExperienceEligible({...org,...auth,selectedClientId:selectedClient(),
+  const nativeAIExperience=additional&&aiClientAvailable(currentClient);
+  // Preserve existing saved-field view rules separately from universal guided availability.
+  const priorSharedRegister=sharedExperienceEligible({...org,...auth,selectedClientId:selectedClient(),
     routeClientId:new URLSearchParams(window.location.search).get('client_id'),authLoading:auth.loading,
     authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const additionalPresentation=useAdditionalSectionsPresentation('ai-governance');
@@ -65,6 +66,13 @@ function AIWorkspace({identity}){
   const presets=[['active','All Active',active],['due','Due for Review',r=>active(r)&&(typeof r.next_review!=='string'||r.next_review.slice(0,10)<=today)],['high','High Risk',r=>active(r)&&r.risk_tier==='high'],['third','Third-Party',r=>active(r)&&(r.vendor_id||r.provider||r.screening?.third_party)],['customer','Customer-Facing',r=>active(r)&&(r.purposes?.includes('Customer-Facing')||r.screening?.customer_facing)],['inactive','Inactive',r=>!active(r)]];
   const searched=rows.filter(r=>[r.display_id,r.name,r.provider,r.description,...(reference?[r.product_model,r.environment]:[]),...(r.purposes||[])].join(' ').toLowerCase().includes(search.toLowerCase()));
   const visible=referenceWorkflow?searched.filter(r=>quick==='attention'?aiNeedsAttention(r):aiMatches(r,quick,showInactive)):table.apply(searched.filter(presets.find(p=>p[0]===quick)?.[2]||active));
+  // Reuse native saved-field meaning for clients outside the earlier framework rollout.
+  // Attention and inactive controls remain separate from these established filters.
+  const nativeRegister=additional&&!priorSharedRegister&&!referenceWorkflow?{
+    searchedRows:searched,applyRows:table.apply,
+    filters:Object.fromEntries(presets.filter(([id])=>['due','high','third','customer'].includes(id)).map(([id,,test])=>[id,test])),
+    screening:row=>row.risk_tier?<SeverityBadge value={row.risk_tier}/>:<span className="register-empty">Not screened</span>,
+  }:null;
   const writable=isInternal(user);
   const [intakeEnabled,setIntakeEnabled]=useState(false);
   // Activate only where native intake is displayed, then retain its draft during appearance refreshes.
@@ -102,7 +110,7 @@ function AIWorkspace({identity}){
   const addAction=canAdd?<PrimaryAction label="New AI System" onClick={()=>setSelected({})} testid="new-ai-system"/>:null;
   // The complete native drawer stays outside the appearance branch so refreshes retain its draft.
   const Shell=reference?BrawndoSurface:'div';
-  return <>{additionalPresentation&&!additional?<AdditionalPagePending className="baai-page" headerClassName="baai-page-head" title={`${currentClient.name} AI Governance`} subtitle={SUBTITLE} name="AI systems" loadingMessage="Loading AI systems…" error={error} onRetry={()=>setRevision(n=>n+1)}/>:additional?<><AIRegisterFirst clientName={currentClient?.name||'Organization'} rows={rows} users={members} intake={data.intake} canCreate={canAdd} onOpen={row=>{setGuided(nativeAIExperience);setNativeEdit(false);setSelected(row);}} onCreate={()=>{setGuided(nativeAIExperience);setNativeEdit(false);setSelected({});}} onProfile={nativeAIExperience?()=>setProfileOpen(true):undefined} onRelated={openRelated} query={search} view={quick} showInactive={showInactive} onSearch={setSearch} onView={setQuick} onShowInactive={setShowInactive}/>
+  return <>{additionalPresentation&&!additional?<AdditionalPagePending className="baai-page" headerClassName="baai-page-head" title={`${currentClient.name} AI Governance`} subtitle={SUBTITLE} name="AI systems" loadingMessage="Loading AI systems…" error={error} onRetry={()=>setRevision(n=>n+1)}/>:additional?<><AIRegisterFirst clientName={currentClient?.name||'Organization'} rows={rows} users={members} intake={data.intake} canCreate={canAdd} onOpen={row=>{setGuided(nativeAIExperience);setNativeEdit(false);setSelected(row);}} onCreate={()=>{setGuided(nativeAIExperience);setNativeEdit(false);setSelected({});}} onProfile={nativeAIExperience?()=>setProfileOpen(true):undefined} onRelated={openRelated} query={search} view={quick} showInactive={showInactive} onSearch={setSearch} onView={setQuick} onShowInactive={setShowInactive} nativeRegister={nativeRegister}/>
     {!nativeAIExperience&&data.intake.usage==='no'&&<div className="register-notice">AI usage is marked No. Historical records remain accessible; update intake before adding new systems.<AIIntakeView state={intakeEditor}/></div>}
     {!nativeAIExperience&&!approvalPilot&&data.intake.usage==='unsure'&&<p className="register-notice">AI applicability is not yet confirmed. Record known use cases and confirm intake in Client Profile.</p>}
     {rows.some(row=>row.relationship_integrity_warning)&&<p role="status" className="register-notice">{AI_RELATIONSHIP_NOTICE}</p>}

@@ -13,7 +13,6 @@ import review_occurrences
 import assignment_eligibility
 import create_requests
 import ai_onboarding
-import cis_scope
 from register_catalog_identity import validate_catalog_key
 
 CATALOG = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/aiGovernanceCatalog.json').read_text(encoding='utf-8'))
@@ -159,14 +158,9 @@ def router_for(s):
     async def metadata_scope(cid,supplied):
         if not set(supplied).intersection(AI_METADATA_DEFAULTS): return
         client=await s.db.clients.find_one({'client_id':cid})
-        selected=await s.db.requirements.find({'client_id':cid,
-            'baseline_key':{'$in':['cis-ig1','iso-27001','soc-2']},'baseline_response':'applies'},
-            {'_id':0,'baseline_key':1}).to_list(None)
         if not client or client.get('status') not in ('active','onboarding') \
-            or client.get('archived') or client.get('archived_at') or not any(
-                row['baseline_key']!='cis-ig1' or cis_scope.experience_program(client,True)['implementation_group'] is not None
-                for row in selected):
-            raise HTTPException(422,'AI governance metadata requires a configured CIS, ISO 27001 or SOC 2 client')
+            or client.get('archived') or client.get('archived_at'):
+            raise HTTPException(422,'AI governance metadata requires an active or onboarding client that is not archived')
     async def validate(data,user,old=None):
         await client_scope(data['client_id'],user,True)
         if not data['name'].strip(): raise HTTPException(422,'Name is required')

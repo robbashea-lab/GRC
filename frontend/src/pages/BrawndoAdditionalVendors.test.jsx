@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import VendorRegister from './VendorRegister';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
+import {cisClientProgram} from '@/lib/cisExperience';
+import {brawndoFullRecordEligible} from '@/lib/brawndoFullRecord';
 
 jest.setTimeout(15000);
 
@@ -219,13 +221,15 @@ test('new actor waits for its own refresh and ignores late former-actor success'
 });
 
 
-test('configured CIS standard client retains appearance while invalid group is denied',async()=>{
+test('common vendor appearance does not grant CIS capability to an invalid group',async()=>{
   mockAuth={...mockAuth,workspaceMode:'standard',user:{...mockAuth.user,workspace_mode:'standard'}};
   await act(async()=>root.render(<VendorRegister/>));
   expect(container.querySelector('[data-testid="additional-vendors"]')).toBeTruthy();
   mockOrg={...mockOrg,currentClient:cisClient('demo_brawndo',4)};
   await act(async()=>root.render(<VendorRegister/>));
-  expect(container.querySelector('[data-testid="additional-vendors"]')).toBeNull();
+  expect(container.querySelector('[data-testid="additional-vendors"]')).toBeTruthy();
+  expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
+  expect(brawndoFullRecordEligible({...mockAuth,...mockOrg,pathname:'/vendors',selectedClientId:'demo_brawndo',clientId:'demo_brawndo',record:vendor})).toBe(false);
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 

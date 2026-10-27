@@ -12,14 +12,13 @@ import {Textarea} from './ui/textarea';
 import api,{formatError} from '@/lib/api';
 import {useCreateIntent} from '@/lib/createIntent';
 import {useAuth} from '@/context/AuthContext';
-import {AI_DEFAULTS,AI_KEYS,aiScreening,catalog,AI_RELATIONSHIP_NOTICE} from '@/lib/aiGovernance';
+import {AI_DEFAULTS,AI_KEYS,aiScreening,aiClientAvailable,catalog,AI_RELATIONSHIP_NOTICE} from '@/lib/aiGovernance';
 import {questions,screeningReviewSnapshot,screeningReviewPayload,screeningStale} from '@/lib/aiOnboarding';
 import RecordDrawer from './RecordDrawer';
 import AssigneeSelect from './AssigneeSelect';
 import {SCHEMAS} from '@/lib/schemas';
 
 import {isReferencePresentation,isCisReference} from '@/lib/reference';
-import {sharedClientPrograms} from '@/lib/sharedExperience';
 import {AI_PILOT_DEFAULTS,AI_PILOT_KEYS,AI_APPROVAL_LABELS,aiApproval} from '@/lib/brawndoAI';
 import BrawndoAIFields from './BrawndoAIFields';
 import BrawndoAIConceptFields from './BrawndoAIConceptFields';
@@ -40,7 +39,7 @@ export default function AIDrawer({open,onOpenChange,record,clientId,users=[],onS
   const {user}=useAuth(),id=record?.ai_system_id;
   const {currentClient}=useOrg()||{};
   const reference=isReferencePresentation(clientId,user),approvalPilot=isCisReference(clientId,user,currentClient);
-  const metadataEnabled=approvalPilot||currentClient?.client_id===clientId&&sharedClientPrograms(currentClient).some(program=>['iso-27001','soc-2'].includes(program.frameworkKey));
+  const metadataEnabled=currentClient?.client_id===clientId&&aiClientAvailable(currentClient);
   const keys=metadataEnabled?[...AI_KEYS,...AI_PILOT_KEYS]:AI_KEYS;
   const initial={...AI_DEFAULTS,...(metadataEnabled?AI_PILOT_DEFAULTS:{}),...(template?aiTemplateDraft(template):{}),...record};
   const opener=useRef(null),heading=useRef(null);
