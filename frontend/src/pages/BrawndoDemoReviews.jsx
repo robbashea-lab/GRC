@@ -57,7 +57,9 @@ export function BrawndoReviewRows({rows,users,checked,toggleOne,toggleAll,allChe
         <th style={widths.recurrence?{width:widths.recurrence}:undefined}>{history?'Completed':'Cadence'}</th><th className="open-col"><span className="sr-only">Open review</span></th>
       </tr></thead>
       <tbody>{loading||error||!displayRows.length?<tr><td colSpan={history?5:7} className="bdr-empty" role={error?'alert':loading?'status':undefined}>{loading?'Loading reviews…':error?'Reviews unavailable':'No reviews match these filters.'}</td></tr>:displayRows.slice((current-1)*10,current*10).map((row,index)=>{
-        const owner=history&&!row.completed_by?'Actor not recorded':personLabel(users,history?row.completed_by:row.owner_id);
+        const owner=history
+          ? row._execution.completed_by_name||(row.completed_by?personLabel(users,row.completed_by):'Actor not recorded')
+          : personLabel(users,row.owner_id);
         const urgency=cisReviewUrgency(row.due_date),schedule=reviewSchedule(row);
         const status=history?reviewDisplayValue('status',row.status):cisReviewStatusLabel(row.status);
         return <tr key={row.occurrence_id||row.review_id} className={'bdr-trow'+(checked.has(row.review_id)?' bdr-selected':'')+(!history&&urgency.days!==null&&urgency.days<0?' overdue-row':'')} onClick={()=>onOpen(row)} data-testid={`reviews-row-${index}`}>
