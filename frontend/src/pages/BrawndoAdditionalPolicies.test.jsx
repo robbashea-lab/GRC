@@ -155,7 +155,7 @@ test.each([['iso-27001','mapped'],['soc-2','mapped'],['iso-27001','column'],['so
   });
   await act(async()=>root.render(<RecordListPage kind="policies"/>));
   if(mappingFilter==='column'){
-    const heading=catalog.label+' '+(framework==='iso-27001'?'requirements and controls':'criteria');
+    const heading=catalog.label+' '+(framework==='iso-27001'?'alignment':'criteria');
     const control=container.querySelector(`[aria-label="${heading}: filter"]`);
     await act(async()=>control.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0,ctrlKey:false})));
     const option=[...document.querySelectorAll('[role=menuitemcheckbox]')].find(node=>node.textContent==='Supports '+catalog.label);

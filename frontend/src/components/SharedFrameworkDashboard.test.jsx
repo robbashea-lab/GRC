@@ -42,6 +42,11 @@ test.each(['iso-27001','soc-2'])('%s uses current cards, exact domain/table/hove
   const popup=document.querySelector('.cdp-concept-tip');
   expect(popup.textContent).toContain(model.domains[0].name);
   expect(popup.querySelectorAll('dl div')).toHaveLength(4);
+  expect([...popup.querySelectorAll('dl dt')].map(node=>node.textContent)).toEqual(framework==='iso-27001'
+    ? ['Implemented','Partially Implemented','Not Implemented / Needs Validation','Not Assessed']
+    : ['Addressed (Readiness)','Partially Addressed','Needs Remediation / Validation','Not Assessed']);
+  expect([...popup.querySelectorAll('dl dd')].map(node=>node.textContent)).toEqual(
+    ['addressed','in_progress','needs_attention','not_assessed'].map(key=>String(model.domains[0].counts[key])));
   expect(popup.textContent).not.toContain('safeguard');
   await act(async()=>first.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
   for(const [index,status] of ['addressed','in_progress','needs_attention','not_assessed'].entries()){

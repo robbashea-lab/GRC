@@ -82,7 +82,7 @@ function conceptFocus({applicable,counts}){
 function ConceptDomainDetail({domain,presentation}){
   const focus=domain.focusSummary||conceptFocus(domain);
   return <><h3>{domain.name}</h3><div className="cdp-tip-rate"><strong>{formatDomainRate(domain.rate)}</strong><span>{domain.implemented} {presentation.verb} / {domain.applicable} applicable</span></div>
-    <CisStatusBar counts={domain.counts} framework={presentation.frameworkKey}/><dl>{Object.entries(presentation.labels).filter(([key])=>key!=='not_applicable').map(([key,label])=><div key={key}><dt><i className={`cis-dot cis-tone-${implementationTone(key,presentation.frameworkKey)}`} aria-hidden="true"/>{label}</dt><dd>{domain.counts[key]}</dd></div>)}</dl>
+    <CisStatusBar counts={domain.counts} framework={presentation.frameworkKey}/><dl>{Object.keys(LABELS).map(key=><div key={key}><dt><i className={`cis-dot cis-tone-${implementationTone(key,presentation.frameworkKey)}`} aria-hidden="true"/>{presentation.labels[key]}</dt><dd>{domain.counts[key]}</dd></div>)}</dl>
     {presentation.frameworkKey!=='cis-ig1'&&!!domain.excludedIds?.length&&<p>{domain.excludedIds.length} excluded / not applicable</p>}
     {!!domain.undeterminedIds?.length&&<p>{domain.undeterminedIds.length} SoA applicability undetermined</p>}
     <div className={`cdp-focus is-${focus.tone}`}><b>{focus.title}</b><p>{focus.detail}</p></div></>;

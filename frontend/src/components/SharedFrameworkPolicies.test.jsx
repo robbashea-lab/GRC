@@ -14,7 +14,7 @@ const unmapped={client_id:clientId,policy_id:'unmapped',title:'Information Secur
 const annual={client_id:clientId,review_id:'native-annual-review',baseline_key:'policy-review',review_type:'policy',recurrence:'annual',status:'upcoming',due_date:'2027-10-01'};
 
 test.each([
-  ['iso-27001','ISO 27001','requirements and controls','5.2'],
+  ['iso-27001','ISO 27001','alignment','5.2'],
   ['soc-2','SOC 2','criteria','CC1.1'],
 ])('%s register shows its real mapping and preserves exact native record/Review/assessment opening',async(framework,label,unit,definitionId)=>{
   const rows=[mapped,unmapped],before=JSON.stringify({rows,annual});

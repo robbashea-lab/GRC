@@ -56,7 +56,7 @@ test('mapping figures use native catalog identity rather than a policy title', (
 });
 
 test.each([
-  ['iso-27001','Mapped to ISO 27001','ISO 27001 requirements and controls'],
+  ['iso-27001','Mapped to ISO 27001','ISO 27001 alignment'],
   ['soc-2','Mapped to SOC 2','SOC 2 criteria'],
 ])('%s policy counts and mapped filter use native catalog support without a CIS template', (framework,mappedLabel,alignmentHeading) => {
   const mapped={...policy,baseline_key:'policy-information-security-policy'};

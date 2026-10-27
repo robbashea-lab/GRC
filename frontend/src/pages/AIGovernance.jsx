@@ -82,7 +82,7 @@ function AIWorkspace({identity}){
     }catch(cause){if(stillCurrent())setRelatedError(formatError(cause));}
   }
   async function refreshRelatedRecord(){
-    setNested(null);setRelatedRevision(value=>value+1);
+    setRelatedRevision(value=>value+1);
     if(!selected?.ai_system_id)return;
     const id=selected.ai_system_id;
     try{

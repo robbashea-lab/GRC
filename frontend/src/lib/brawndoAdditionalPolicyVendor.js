@@ -18,7 +18,7 @@ export function policyMappingPresentation(programs = [], cisGroup = 1) {
   const keys = [...new Set(programs.filter(key => typeof key === 'string' && Object.hasOwn(CATALOGS, key)))];
   if (keys.length !== 1) return {mappedLabel:'Framework-mapped', alignmentHeading:'Framework alignment'};
   const key = keys[0], label = key === 'cis-ig1' ? `CIS IG${cisGroup}` : FRAMEWORKS.find(program => program.key === key)?.label || CATALOGS[key].label;
-  const unit = key === 'cis-ig1' ? 'safeguards' : key === 'iso-27001' ? 'requirements and controls' : (CATALOGS[key].labels?.items || 'requirements').toLowerCase();
+  const unit = key === 'cis-ig1' ? 'safeguards' : key === 'iso-27001' ? 'alignment' : (CATALOGS[key].labels?.items || 'requirements').toLowerCase();
   return {mappedLabel:`Mapped to ${label}`, alignmentHeading:`${label} ${unit}`};
 }
 

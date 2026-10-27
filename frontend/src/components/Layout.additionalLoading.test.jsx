@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import Layout from './Layout';
 import api from '@/lib/api';
 import {cisClient} from '../testUtils/cisExperience';
+import {frameworkCatalog} from '@/lib/frameworks';
 
 let mockAuth,mockOrg,mockLocation;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -11,13 +12,18 @@ jest.mock('@/context/ComplianceContext',()=>({ComplianceProvider:({children})=>c
 jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:error=>error.message}));
 jest.mock('./NotificationBell',()=>()=>null);
 // Keep the real Layout, workspace, Contacts controller and appearance publisher.
+// Dedicated program content is a stable draft fixture: assertions here cover Layout
+// masking/markers and mount retention, not execution of a native ISO/SOC controller.
 // Router location and unrelated navigation widgets are fixtures, not gates under test.
 jest.mock('./BrawndoSidebar',()=>({__esModule:true,default:()=> <aside/>,BrawndoPlatformSidebar:()=> <aside/>,ProfileMenu:({storageTools})=><span data-testid="profile-storage" data-enabled={String(storageTools)}/> }));
 jest.mock('react-router-dom',()=>({
   Link:({to,children,...props})=><a href={to} {...props}>{children}</a>,
   NavLink:({to,children})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn(),useLocation:()=>mockLocation,
   useSearchParams:()=>[new URLSearchParams(mockLocation.search),jest.fn()],
-  Outlet:()=>{const Contacts=require('../pages/Contacts').default;return <Contacts/>;},
+  Outlet:()=>{
+    if(['/compliance/iso-27001','/compliance/soc-2'].includes(mockLocation.pathname))return <section data-testid="protected-native-program"><label>Native program draft<input data-testid="protected-program-draft" defaultValue="Retained native draft"/></label></section>;
+    const Contacts=require('../pages/Contacts').default;return <Contacts/>;
+  },
 }),{virtual:true});
 
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
@@ -97,7 +103,7 @@ test('deferred background client refresh hides generic scenery while the native 
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
-test('background errors withdraw pending chrome and ISO/SOC routes never gain the CIS refresh mask',async()=>{
+test('background errors withdraw pending chrome and platform routes never gain the client refresh mask',async()=>{
   await render();mockOrg={...mockOrg,loading:true};await render();
   expect(host.querySelector('[data-client-workspace-content]').hidden).toBe(true);
   mockOrg={...mockOrg,loading:false,error:'Owned authorization refresh failed'};await render();
@@ -105,10 +111,43 @@ test('background errors withdraw pending chrome and ISO/SOC routes never gain th
   expect(shell().dataset.additionalSurface).toBeUndefined();
   expect(document.documentElement.dataset.additionalSurface).toBeUndefined();
   mockOrg={...mockOrg,loading:true,error:''};
-  for(const pathname of ['/compliance/iso-27001','/compliance/soc-2','/admin/clients','/account']){
+  for(const pathname of ['/admin/clients','/account']){
     mockLocation={pathname,search:'?client_id=demo_brawndo'};await render();
     expect(host.querySelector('[data-client-workspace-content]').hidden).toBe(false);
     expect(shell().dataset.additionalSurface).toBeUndefined();
     expect(shell().dataset.cisDashboardConcept).toBeUndefined();
   }
+});
+
+
+test.each(['iso-27001','soc-2'])('%s shared shell masks a background refresh without enabling CIS program appearance or remounting a native draft',async framework=>{
+  const clientId='synthetic-'+framework,client={client_id:clientId,name:'Native framework client',status:'active',framework_settings:{},
+    shared_programs:[{client_id:clientId,program_id:`${clientId}:${framework}`,framework_key:framework,version:frameworkCatalog(framework).version,selected:true}]};
+  mockOrg={currentClientId:clientId,currentClient:client,clients:[client],loading:false};
+  mockLocation={pathname:'/compliance/'+framework,search:'?client_id='+clientId};
+  sessionStorage.setItem('grc_client_id',clientId);
+  await render();
+  const draft=host.querySelector('[data-testid="protected-program-draft"]');
+  expect(draft).toBeTruthy();draft.value='Unsaved native program wording';
+  const expectProtectedBody=()=>{
+    expect(shell().dataset.sharedShell).toBe('true');
+    for(const key of ['cisSizing','cisVisual','cisDashboardConcept','additionalSurface','visualSurface'])expect(shell().dataset[key]).toBeUndefined();
+    for(const node of [document.documentElement,document.body])for(const key of ['brawndoCisVisual','additionalSurface','visualSurface'])expect(node.dataset[key]).toBeUndefined();
+    expect(host.querySelector('[data-testid="protected-program-draft"]')).toBe(draft);
+    expect(draft.value).toBe('Unsaved native program wording');
+  };
+  expect(host.querySelector('[data-client-workspace-content]').hidden).toBe(false);expectProtectedBody();
+  mockOrg={...mockOrg,loading:true};await render();
+  expect(host.querySelector('[data-client-workspace-content]').hidden).toBe(true);
+  expect(host.textContent).toContain('Refreshing client workspace…');expectProtectedBody();
+  mockOrg={...mockOrg,loading:false};await render();
+  expect(host.querySelector('[data-client-workspace-content]').hidden).toBe(false);expectProtectedBody();
+  // Withdrawn enrollment cannot keep either the shared shell or a stale loading mask.
+  mockOrg={...mockOrg,currentClient:{...client,shared_programs:[]},loading:true};await render();
+  expect(shell().dataset.sharedShell).toBeUndefined();
+  expect(shell().dataset.cisVisual).toBeUndefined();
+  expect(host.querySelector('[data-client-workspace-content]').hidden).toBe(false);
+  expect(host.querySelector('[data-testid="protected-program-draft"]')).toBe(draft);
+  expect(draft.value).toBe('Unsaved native program wording');
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
