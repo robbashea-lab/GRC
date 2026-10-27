@@ -1,6 +1,6 @@
 import {CisActionItemsOverview,CisActionItemsSummary,ActionConceptPriority,ActionConceptDue,useActionConceptClock} from '@/components/CisActionItemsConcept';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
-import {sharedExperienceEligible} from '@/lib/sharedExperience';
+import {sharedAppearanceEligible} from '@/lib/sharedExperience';
 import {selectedClient} from '@/lib/clientSelection';
 import {brawndoEligibleOwnerIds,brawndoTicketMetrics} from '@/lib/brawndoDemoActions';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
@@ -57,7 +57,7 @@ export default function BrawndoActionItems(){
   const opened=useRef('');
   useEffect(()=>{setDrawer(null);setDeepLinkError('');opened.current='';},[currentClientId]);
   const rows=unifiedActions(data,currentClientId);
-  const compactOverview=sharedExperienceEligible({...org,...auth,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:params.get('client_id')});
+  const compactOverview=sharedAppearanceEligible({...org,...auth,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:params.get('client_id')});
   const now=useActionConceptClock(compactOverview);
   const nativeColumns=pilotActionColumns(tableColumns('action-items',{rows,users}),rows);
   // Preserve native filter values while displaying only the Action's own saved priority.

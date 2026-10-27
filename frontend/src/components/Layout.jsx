@@ -10,7 +10,7 @@ import AdminSurface from './AdminSurface';
 import Brand from "@/components/Brand";
 import './BrawndoPortalTheme.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
-import {sharedClientRoute,sharedNativeClientRoute,sharedPresentationEligible} from '@/lib/sharedExperience';
+import {sharedAppearanceClientRoute,sharedNativeClientRoute,sharedPresentationEligible} from '@/lib/sharedExperience';
 import {AdditionalSectionsProvider, additionalSectionChrome} from '@/lib/brawndoAdditionalScope';
 import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
 import { useEffect, useMemo, useState } from "react";
@@ -319,7 +319,7 @@ function LayoutContents() {
   const refreshing=org.loading&&verifiedChrome&&nativeRoute;
   const additionalSurface=additionalSectionChrome({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const pilot=!!user;
-  const sharedBody=verifiedChrome&&sharedClientRoute(pathname);
+  const sharedBody=verifiedChrome&&sharedAppearanceClientRoute(pathname);
   const clientSurface=currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'
     ||!isCisReference(currentClientId,user,currentClient)&&!sharedBody)
     &&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path));

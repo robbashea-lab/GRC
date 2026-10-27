@@ -7,7 +7,8 @@ const liveReview = review => !['completed', 'cancelled'].includes(review.status)
 const eventKindOrder = { rev: 0, asr: 1, ren: 2 };
 export const policyReviewIds = review => [...new Set([review.policy_id, ...(review.policy_ids || [])].filter(Boolean))];
 export const isPolicySetReview = review => !!review.client_id && review.baseline_key === 'policy-review' && (review.review_type == null || review.review_type === 'policy') && !review.policy_id;
-const expandedPolicyMapping = programs => programs.some(key => ['iso-27001', 'soc-2'].includes(key));
+const expandedPolicyMapping = programs => !programs.includes('cis-ig1')
+  || programs.some(key => ['iso-27001', 'soc-2'].includes(key));
 export const policyMappedFilterUnavailable = (view, error, programs = [], frameworkKeys = [], alignmentFiltered = false) => (view === 'mapped' || alignmentFiltered) && !!error
   && expandedPolicyMapping([...programs, ...frameworkKeys]);
 const visiblePolicyAlignment = (row, programs, assessments, cisGroup) => policyAlignment(row, programs, assessments, cisGroup)
@@ -18,6 +19,7 @@ export function policyMappingPresentation(programs = [], cisGroup = 1) {
   const keys = [...new Set(programs.filter(key => typeof key === 'string' && Object.hasOwn(CATALOGS, key)))];
   if (keys.length !== 1) return {mappedLabel:'Framework-mapped', alignmentHeading:'Framework alignment'};
   const key = keys[0], label = key === 'cis-ig1' ? `CIS IG${cisGroup}` : FRAMEWORKS.find(program => program.key === key)?.label || CATALOGS[key].label;
+  if (!['cis-ig1','iso-27001','soc-2'].includes(key)) return {mappedLabel:`Mapped to ${label}`, alignmentHeading:'Framework alignment'};
   const unit = key === 'cis-ig1' ? 'safeguards' : key === 'iso-27001' ? 'alignment' : (CATALOGS[key].labels?.items || 'requirements').toLowerCase();
   return {mappedLabel:`Mapped to ${label}`, alignmentHeading:`${label} ${unit}`};
 }

@@ -149,12 +149,12 @@ test('combined appearance transitions retain the mounted native draft and reject
     await render(); expectAppearance(null, 'light', surface); expectDraft();
     mockLoadedOrigin = currentOrigin(); await render(); expectAppearance(surface); expectDraft();
 
-    // Even a resolved native read cannot enable either design for a lookalike client.
+    // A different authorized client receives common appearance, never a CIS program design by name.
     const originalOrg = mockOrg;
     const other = {client_id: 'other-client', name: 'Brawndo', status: 'active'};
     mockOrg = {...mockOrg, currentClientId: other.client_id, currentClient: other, clients: [other]};
     sessionStorage.setItem('grc_client_id', other.client_id); mockLoadedOrigin = currentOrigin();
-    await render(); expectAppearance(null); expectDraft();
+    await render(); expectAppearance(surface==='policies'?'policies':null); expectDraft();
     mockOrg = originalOrg; sessionStorage.setItem('grc_client_id', 'demo_brawndo');
     mockLoadedOrigin = currentOrigin(); await render(); expectAppearance(surface); expectDraft();
 

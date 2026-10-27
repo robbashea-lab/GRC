@@ -17,7 +17,7 @@ import './BrawndoWorkspace.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {selectedClient} from '@/lib/clientSelection';
 import {cisNativeClientRoute,cisPresentationEligible} from '@/lib/cisExperience';
-import {sharedClientRoute,sharedNativeClientRoute,sharedPresentationEligible} from '@/lib/sharedExperience';
+import {sharedAppearanceClientRoute,sharedNativeClientRoute,sharedPresentationEligible} from '@/lib/sharedExperience';
 import './SixSurfaceAppearance.css';
 import {additionalAppearanceSurface, additionalSectionChrome, useAdditionalSectionsAppearance} from '@/lib/brawndoAdditionalScope';
 import './AdditionalSectionsAppearance.css';
@@ -69,7 +69,7 @@ export default function BrawndoWorkspace({children}){
   const chromeContext={...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error};
   const verifiedChrome=sharedPresentationEligible(chromeContext);
   const cisVerifiedChrome=cisPresentationEligible(chromeContext);
-  const sizingChrome=(cisVerifiedChrome&&cisNativeClientRoute(pathname))||(verifiedChrome&&sharedClientRoute(pathname));
+  const sizingChrome=(cisVerifiedChrome&&cisNativeClientRoute(pathname))||(verifiedChrome&&sharedAppearanceClientRoute(pathname));
   const sharedShell=verifiedChrome&&sharedNativeClientRoute(pathname)&&(!cisVerifiedChrome||!cisNativeClientRoute(pathname));
   const risksPresentation=brawndoDemoRisksGate({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const visualSurface=visualCorrectionSurface(chromeContext);

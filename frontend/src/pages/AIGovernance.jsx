@@ -30,6 +30,8 @@ import {SCHEMAS} from '@/lib/schemas';
 import evidenceSources from '@/lib/evidenceSources.json';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import AdditionalPagePending from '@/components/AdditionalPagePending';
+import {sharedExperienceEligible} from '@/lib/sharedExperience';
+import {selectedClient} from '@/lib/clientSelection';
 
 const text=(key,label)=>({key,label,sortable:true});
 export default function AIGovernance(){
@@ -38,7 +40,7 @@ export default function AIGovernance(){
   return <AIWorkspace key={identity} identity={identity}/>;
 }
 function AIWorkspace({identity}){
-  const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
+  const org=useOrg(),auth=useAuth(),{currentClientId,currentClient}=org,{user}=auth;
   const reference=isReferencePresentation(currentClientId,user),approvalPilot=isCisReference(currentClientId,user,currentClient),referenceWorkflow=isReferenceWorkflow(currentClientId,user,currentClient);
   const [showInactive,setShowInactive]=useState(false),[guided,setGuided]=useState(false),[relatedRevision,setRelatedRevision]=useState(0);
   const mounted=useRef(true);
@@ -52,6 +54,10 @@ function AIWorkspace({identity}){
   useEffect(()=>{setQuick('active');setSearch('');setShowInactive(false);},[currentClientId]);
   const data=snapshot?.identity===identity&&(reference?snapshot.clientId===currentClientId:snapshot.key===key)?snapshot:null,rows=data?.rows||[],members=data?.members||[];
   const additional=useAdditionalSectionsSurface('ai-governance',data&&!error&&data.identity===identity&&data.intake?.client_id===currentClientId?data.clientId:null);
+  // Common register appearance must not opt an unenrolled client into guided AI commands.
+  const nativeAIExperience=additional&&sharedExperienceEligible({...org,...auth,selectedClientId:selectedClient(),
+    routeClientId:new URLSearchParams(window.location.search).get('client_id'),authLoading:auth.loading,
+    authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const additionalPresentation=useAdditionalSectionsPresentation('ai-governance');
   const columns=[text('display_id','ID'),text('name','AI System / Use Case'),{...text('owner_id','Owner'),filter:true,emptyLabel:'Unassigned',optionsOnly:true,options:members.map(u=>({value:u.user_id,label:u.name||u.email}))},text('provider','Provider'),{...text('purposes','Purpose / Use'),filter:true},{...text('risk_tier','Risk Tier'),filter:true,rank:ranks,emptyLabel:'Not Screened'},{...text('status','Status'),filter:true},{...text('last_review','Last Review'),filter:true,dateKind:'history',emptyLabel:'Never Reviewed'},{...text('next_review','Next Review'),filter:true,dateKind:'future',emptyLabel:'No Review Scheduled'}];
   const table=useTableControls({columns,rows,module:'ai-governance',scope:`${user?.user_id}:${currentClientId}`});
@@ -62,7 +68,7 @@ function AIWorkspace({identity}){
   const writable=isInternal(user);
   const [intakeEnabled,setIntakeEnabled]=useState(false);
   // Activate only where native intake is displayed, then retain its draft during appearance refreshes.
-  useEffect(()=>{if(additional||data?.intake.usage==='no')setIntakeEnabled(true);},[additional,data?.intake.usage]);
+  useEffect(()=>{if(nativeAIExperience||data?.intake.usage==='no')setIntakeEnabled(true);},[nativeAIExperience,data?.intake.usage]);
   const intakeEditor=useAIIntake({clientId:currentClientId,canWrite:writable,onSaved:()=>setRevision(n=>n+1),enabled:intakeEnabled});
   function clear(){table.clear();setSearch('');setQuick('active');setShowInactive(false);}
   if(!currentClientId)return <p className="page-content">Select a client.</p>;
@@ -96,7 +102,9 @@ function AIWorkspace({identity}){
   const addAction=canAdd?<PrimaryAction label="New AI System" onClick={()=>setSelected({})} testid="new-ai-system"/>:null;
   // The complete native drawer stays outside the appearance branch so refreshes retain its draft.
   const Shell=reference?BrawndoSurface:'div';
-  return <>{additionalPresentation&&!additional?<AdditionalPagePending className="baai-page" headerClassName="baai-page-head" title={`${currentClient.name} AI Governance`} subtitle={SUBTITLE} name="AI systems" loadingMessage="Loading AI systems…" error={error} onRetry={()=>setRevision(n=>n+1)}/>:additional?<><AIRegisterFirst clientName={currentClient?.name||'Organization'} rows={rows} users={members} intake={data.intake} canCreate={canAdd} onOpen={row=>{setGuided(true);setNativeEdit(false);setSelected(row);}} onCreate={()=>{setGuided(true);setNativeEdit(false);setSelected({});}} onProfile={()=>setProfileOpen(true)} onRelated={openRelated} query={search} view={quick} showInactive={showInactive} onSearch={setSearch} onView={setQuick} onShowInactive={setShowInactive}/>
+  return <>{additionalPresentation&&!additional?<AdditionalPagePending className="baai-page" headerClassName="baai-page-head" title={`${currentClient.name} AI Governance`} subtitle={SUBTITLE} name="AI systems" loadingMessage="Loading AI systems…" error={error} onRetry={()=>setRevision(n=>n+1)}/>:additional?<><AIRegisterFirst clientName={currentClient?.name||'Organization'} rows={rows} users={members} intake={data.intake} canCreate={canAdd} onOpen={row=>{setGuided(nativeAIExperience);setNativeEdit(false);setSelected(row);}} onCreate={()=>{setGuided(nativeAIExperience);setNativeEdit(false);setSelected({});}} onProfile={nativeAIExperience?()=>setProfileOpen(true):undefined} onRelated={openRelated} query={search} view={quick} showInactive={showInactive} onSearch={setSearch} onView={setQuick} onShowInactive={setShowInactive}/>
+    {!nativeAIExperience&&data.intake.usage==='no'&&<div className="register-notice">AI usage is marked No. Historical records remain accessible; update intake before adding new systems.<AIIntakeView state={intakeEditor}/></div>}
+    {!nativeAIExperience&&!approvalPilot&&data.intake.usage==='unsure'&&<p className="register-notice">AI applicability is not yet confirmed. Record known use cases and confirm intake in Client Profile.</p>}
     {rows.some(row=>row.relationship_integrity_warning)&&<p role="status" className="register-notice">{AI_RELATIONSHIP_NOTICE}</p>}
   </>:
   <Shell className="register-surface brawndo-ai-page">{reference?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · AI systems`} title="AI Governance" subtitle={SUBTITLE}>{addAction}</BrawndoPageHeader>:<PageHeader title="AI Governance" subtitle={SUBTITLE}
@@ -135,8 +143,8 @@ function AIWorkspace({identity}){
     </div>
   </Shell>}
   {relatedError&&<p role="alert" className="register-notice">{relatedError}</p>}
-  {selected&&data&&(guided&&!nativeEdit?(selected.ai_system_id?<AIRecordView refreshKey={relatedRevision} record={selected} clientId={currentClientId} users={members} canWrite={writable&&additional} onClose={()=>{setSelected(null);setRevision(value=>value+1);}} onEdit={()=>setNativeEdit(true)} onRelated={openRelated}/>:<AIOnboardingWizard contextAvailable={additional} clientId={currentClientId} users={members} onClose={()=>setSelected(null)} onVendor={id=>openRelated('vendors',id)} onSaved={()=>{setSelected(null);setRevision(n=>n+1);}}/>):<AIDrawer key={`${identity}:${selected.ai_system_id||'new'}`} open contextAvailable={!guided||additional} conceptPresentation={!nativeEdit&&(guided||additional)} template={selected.template} record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setNativeEdit(false);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>)}
-  {profileOpen&&data&&<AIProfileDialog clientId={currentClientId} clientName={currentClient?.name||'Organization'} intake={data.intake} canWrite={writable&&additional} onClose={()=>setProfileOpen(false)} onSaved={()=>{setProfileOpen(false);setRevision(n=>n+1);}}/>}
+  {selected&&data&&(guided&&!nativeEdit?(selected.ai_system_id?<AIRecordView refreshKey={relatedRevision} record={selected} clientId={currentClientId} users={members} canWrite={writable&&nativeAIExperience} onClose={()=>{setSelected(null);setRevision(value=>value+1);}} onEdit={()=>setNativeEdit(true)} onRelated={openRelated}/>:<AIOnboardingWizard contextAvailable={nativeAIExperience} clientId={currentClientId} users={members} onClose={()=>setSelected(null)} onVendor={id=>openRelated('vendors',id)} onSaved={()=>{setSelected(null);setRevision(n=>n+1);}}/>):<AIDrawer key={`${identity}:${selected.ai_system_id||'new'}`} open contextAvailable={!guided||nativeAIExperience} conceptPresentation={!nativeEdit&&(guided||nativeAIExperience)} template={selected.template} record={selected.ai_system_id?selected:null} clientId={currentClientId} users={members} onOpenChange={v=>{if(!v){setSelected(null);setNativeEdit(false);setRevision(n=>n+1);}}} onSaved={()=>setRevision(n=>n+1)}/>)}
+  {profileOpen&&data&&<AIProfileDialog clientId={currentClientId} clientName={currentClient?.name||'Organization'} intake={data.intake} canWrite={writable&&nativeAIExperience} onClose={()=>setProfileOpen(false)} onSaved={()=>{setProfileOpen(false);setRevision(n=>n+1);}}/>}
   {nested&&<RecordDrawer {...nested} open clientId={currentClientId} users={members} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={open=>{if(!open){relatedRequest.current+=1;setNested(null);}}} onSaved={refreshRelatedRecord}/>}
   </>;
 }

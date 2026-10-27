@@ -142,12 +142,16 @@ test.each(['iso-27001','soc-2'])('%s shared shell masks a background refresh wit
   expect(host.textContent).toContain('Refreshing client workspace…');expectProtectedBody();
   mockOrg={...mockOrg,loading:false};await render();
   expect(host.querySelector('[data-client-workspace-content]').hidden).toBe(false);expectProtectedBody();
-  // Withdrawn enrollment cannot keep either the shared shell or a stale loading mask.
+  // Enrollment withdrawal does not revoke authorized appearance or validate the program body.
   mockOrg={...mockOrg,currentClient:{...client,shared_programs:[]},loading:true};await render();
-  expect(shell().dataset.sharedShell).toBeUndefined();
+  expect(shell().dataset.sharedShell).toBe('true');
   expect(shell().dataset.cisVisual).toBeUndefined();
-  expect(host.querySelector('[data-client-workspace-content]').hidden).toBe(false);
+  expect(host.querySelector('[data-client-workspace-content]').hidden).toBe(true);
   expect(host.querySelector('[data-testid="protected-program-draft"]')).toBe(draft);
   expect(draft.value).toBe('Unsaved native program wording');
+  mockOrg={...mockOrg,loading:false,error:'Native client read failed'};await render();
+  expect(shell().dataset.sharedShell).toBeUndefined();
+  expect(host.querySelector('[data-client-workspace-content]').hidden).toBe(false);
+  expect(host.querySelector('[data-testid="protected-program-draft"]')).toBe(draft);
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

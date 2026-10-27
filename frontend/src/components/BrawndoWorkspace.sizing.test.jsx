@@ -4,6 +4,8 @@ import api from '@/lib/api';
 import {AdditionalSectionsProvider} from '@/lib/brawndoAdditionalScope';
 import {cisClient} from '../testUtils/cisExperience';
 import {frameworkCatalog} from '@/lib/frameworks';
+import {cisClientProgram} from '@/lib/cisExperience';
+import {sharedClientPrograms} from '@/lib/sharedExperience';
 import BrawndoWorkspace from './BrawndoWorkspace';
 
 let mockAuth,mockOrg,mockLocation,mockMounts,mockUnmounts;
@@ -78,10 +80,11 @@ test.each(['demo','standard'].flatMap(mode=>[1,2,3].flatMap(group=>['super_admin
   }
 );
 
-test.each(['demo','standard'])('%s later native enrollment and supported IG changes update chrome without remounting an unsaved native child',async mode=>{
+test.each(['demo','standard'])('%s appearance stays consistent through later enrollment and IG changes without remounting an unsaved native child',async mode=>{
   const clientId=`later-enrolled-${mode}`;setContext(clientId,1,mode);
   mockOrg.currentClient={...mockOrg.currentClient,cis_program:{...mockOrg.currentClient.cis_program,selected:false}};
-  mockOrg.clients=[mockOrg.currentClient];await render();expectSizing(false);
+  mockOrg.clients=[mockOrg.currentClient];await render();expectSizing(true);
+  expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
   const input=host.querySelector('label input');
   await act(async()=>{
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Existing unsaved native draft');
@@ -94,7 +97,7 @@ test.each(['demo','standard'])('%s later native enrollment and supported IG chan
     expect(mockOrg.currentClient.framework_settings['cis-ig1'].implementation_group).toBe(group);
   }
   mockOrg={...mockOrg,currentClient:{...mockOrg.currentClient,cis_program:{...mockOrg.currentClient.cis_program,selected:false}}};
-  await render();expectSizing(false);
+  await render();expectSizing(true);expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
   expect(host.querySelector('label input')).toBe(input);expect(input.value).toBe('Existing unsaved native draft');
   expect(mockMounts).toBe(1);expect(mockUnmounts).toBe(0);expect(api.get).not.toHaveBeenCalled();
 });
@@ -115,7 +118,7 @@ test.each(['demo','standard'])('%s mixed-program navigation keeps dedicated non-
   expect(JSON.stringify(mockOrg)).toBe(before);expect(api.get).not.toHaveBeenCalled();
 });
 
-test.each(['demo','standard'])('%s unresolved, mismatched, denied and withdrawn identities cannot retain sizing',async mode=>{
+test.each(['demo','standard'])('%s unresolved, mismatched and denied identities cannot retain sizing',async mode=>{
   const clientId=`verified-${mode}`;
   const cases=[
     ()=>{mockAuth={...mockAuth,loading:true};},
@@ -131,31 +134,36 @@ test.each(['demo','standard'])('%s unresolved, mismatched, denied and withdrawn 
     ()=>{mockLocation={...mockLocation,search:'?client_id=other-client'};},
     ()=>{(mode==='demo'?sessionStorage:localStorage).setItem('grc_client_id','other-client');},
     ()=>{mockOrg={...mockOrg,currentClient:{...mockOrg.currentClient,status:'archived'}};},
-    ()=>{mockOrg={...mockOrg,currentClient:{...mockOrg.currentClient,cis_program:{...mockOrg.currentClient.cis_program,selected:false}}};},
-    ()=>{mockOrg={...mockOrg,currentClient:{...mockOrg.currentClient,framework_settings:{'cis-ig1':{implementation_group:2}}}};},
   ];
   for(const invalidate of cases) {
     setContext(clientId,1,mode);await render();expectSizing(true);
     invalidate();await render();expectSizing(false);
   }
+  for(const patch of [
+    {cis_program:{...enrolledClient(clientId,1).cis_program,selected:false}},
+    {framework_settings:{'cis-ig1':{implementation_group:2}}},
+  ]) {
+    setContext(clientId,1,mode);mockOrg={...mockOrg,currentClient:{...mockOrg.currentClient,...patch}};
+    await render();expectSizing(true);expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
+  }
   setContext(clientId,1,mode);mockOrg={...mockOrg,loading:true};await render();expectSizing(true);
   expect(api.get).not.toHaveBeenCalled();
 });
 
-test.each(['demo','standard'])('%s client switching and a native non-CIS lookalike withdraw the previous marker immediately',async mode=>{
+test.each(['demo','standard'])('%s authorized client switching preserves common sizing without inferring CIS from a name',async mode=>{
   setContext(`first-${mode}`,1,mode);await render();expectSizing(true);
   const nextId=`second-${mode}`,next={client_id:nextId,name:'Synthetic CIS client',status:'active',
     onboarding_baseline:{completed:true,requirements:{hipaa:'applies'}},framework_settings:{}};
   mockOrg={...mockOrg,currentClientId:nextId,currentClient:next,clients:[mockOrg.currentClient,next]};
   mockLocation={pathname:'/dashboard',search:`?client_id=${nextId}`};
   (mode==='demo'?sessionStorage:localStorage).setItem('grc_client_id',nextId);
-  await render();expectSizing(false);
+  await render();expectSizing(true);expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
   const enrolled=enrolledClient(nextId,3);mockOrg={...mockOrg,currentClient:enrolled,clients:[enrolled]};
   await render();expectSizing(true);expect(api.get).not.toHaveBeenCalled();
 });
 
 test.each(['iso-27001','soc-2'].flatMap(framework=>['demo','standard'].map(mode=>[framework,mode])))(
-  '%s %s reuses shared chrome without publishing protected program or unrelated body presentation',async(framework,mode)=>{
+  '%s %s reuses common appearance while keeping its dedicated program body protected',async(framework,mode)=>{
     const id=`unlisted-${framework}-${mode}`;setContext(id,1,mode);
     const program={client_id:id,program_id:`${id}:${framework}`,framework_key:framework,version:frameworkCatalog(framework).version,selected:true};
     const client={client_id:id,name:'Native framework organization',status:'active',shared_programs:[program],framework_settings:{}};
@@ -169,17 +177,17 @@ test.each(['iso-27001','soc-2'].flatMap(framework=>['demo','standard'].map(mode=
     }
     const nativeInput=host.querySelector('label input');
     for(const pathname of [`/compliance/${framework}`,'/reports','/evidence','/contacts','/systems','/client-profile']) {
-      mockLocation={...mockLocation,pathname};await render();expectSizing(false);
+      mockLocation={...mockLocation,pathname};await render();expectSizing(pathname!==`/compliance/${framework}`);
       expect(shell().getAttribute('data-shared-shell')).toBe('true');
       expect(shell().hasAttribute('data-cis-visual')).toBe(false);
-      expect(shell().hasAttribute('data-additional-surface')).toBe(false);
+      expect(shell().getAttribute('data-additional-surface')).toBe(({'/evidence':'evidence','/contacts':'contacts','/client-profile':'profile'})[pathname]||null);
       expect(shell().hasAttribute('data-visual-surface')).toBe(false);
       expect(host.querySelector('label input')).toBe(nativeInput);
     }
     expect(shell().getAttribute('data-navigation')).toBe('closed');
     expect(host.querySelector('.bwp-nav-backdrop')).toBeNull();
     await act(async()=>host.querySelector('.bwp-mobile-nav').click());
-    expectSizing(false);expect(shell().getAttribute('data-navigation')).toBe('open');
+    expectSizing(true);expect(shell().getAttribute('data-navigation')).toBe('open');
     expect(host.querySelector('.bwp-nav-backdrop')).not.toBeNull();
     await act(async()=>host.querySelector('.bwp-nav-backdrop').click());
     expect(shell().getAttribute('data-navigation')).toBe('closed');
@@ -187,6 +195,7 @@ test.each(['iso-27001','soc-2'].flatMap(framework=>['demo','standard'].map(mode=
     expect(JSON.stringify(mockOrg)).toBe(before);
     expect(mockMounts).toBe(1);expect(mockUnmounts).toBe(0);expect(api.get).not.toHaveBeenCalled();
     mockOrg={...mockOrg,currentClient:{...client,shared_programs:[]}};
-    mockLocation={...mockLocation,pathname:'/dashboard'};await render();expectSizing(false);
-    expect(shell().hasAttribute('data-shared-shell')).toBe(false);
+    mockLocation={...mockLocation,pathname:'/dashboard'};await render();expectSizing(true);
+    expect(shell().getAttribute('data-shared-shell')).toBe('true');
+    expect(sharedClientPrograms(mockOrg.currentClient)).toEqual([]);
   });

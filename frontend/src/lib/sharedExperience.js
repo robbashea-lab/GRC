@@ -1,5 +1,5 @@
 import {cisClientProgram,cisIdentityEligible,cisNativeClientRoute} from './cisExperience';
-import {frameworkCatalog} from './frameworks';
+import {FRAMEWORKS,frameworkCatalog} from './frameworks';
 
 export const SHARED_CLIENT_ROUTES = Object.freeze([
   '/dashboard','/calendar','/reviews','/action-items','/risks','/policies','/vendors','/ai-governance',
@@ -7,8 +7,10 @@ export const SHARED_CLIENT_ROUTES = Object.freeze([
 const TARGET_FRAMEWORKS = ['iso-27001','soc-2'];
 const object = value => !!value && typeof value === 'object' && !Array.isArray(value);
 export const sharedClientRoute = pathname => SHARED_CLIENT_ROUTES.includes(pathname);
+export const sharedAppearanceClientRoute = pathname => sharedClientRoute(pathname)
+  || ['/reports','/evidence','/contacts','/systems','/client-profile'].includes(pathname);
 export const sharedNativeClientRoute = pathname => cisNativeClientRoute(pathname)
-  || ['/compliance/iso-27001','/compliance/soc-2'].includes(pathname);
+  || FRAMEWORKS.some(framework=>pathname===`/compliance/${framework.key}`);
 
 // Appearance reads finalized native enrollment; it neither enrolls clients nor grants access.
 export function sharedClientPrograms(client) {
@@ -47,9 +49,12 @@ export function sharedClientPrograms(client) {
 export const sharedExperienceEligible = context => cisIdentityEligible(context)
   && sharedClientPrograms(context.currentClient).length>0;
 
+// Common appearance does not imply enrollment or activate framework-specific commands.
+export const sharedAppearanceEligible = context => cisIdentityEligible(context);
+
 // Record-free chrome may survive a background refresh; loaded records retain strict identity guards.
 export function sharedPresentationEligible(context) {
   const identity={...context,orgLoading:false};
   delete identity.loadedClientId;
-  return sharedExperienceEligible(identity);
+  return sharedAppearanceEligible(identity);
 }

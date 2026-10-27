@@ -76,6 +76,23 @@ test('appearance waits for the native baseline and matching profile/handoff iden
   expect(container.querySelector('.brawndo-onboarding')).toBeNull();
 });
 
+test.each(['demo','standard'])('%s untouched no-framework creation retains native choices and no implicit enrollment in the approved frame',async mode=>{
+  const clientId='arbitrary-new-onboarding';
+  const client={client_id:clientId,name:'New unconfigured organization',status:'onboarding',cis_program:null,shared_programs:[]};
+  mockAuth={workspaceMode:mode,user:{user_id:'new-operator',role:'super_admin',...(mode==='demo'?{workspace_mode:'demo'}:{})},loading:false};
+  mockOrg={...mockOrg,currentClientId:clientId,currentClient:client,clients:[client]};
+  mockAI={...mockAI,client_id:clientId};rememberClient(clientId);
+  const before=JSON.stringify(mockState);
+  await act(async()=>renderWizard(clientId));
+  expect(container.querySelector('.brawndo-onboarding')).not.toBeNull();
+  expect(container.textContent).toContain('General GRC only');
+  expect(container.querySelectorAll('.fws .fwc')).toHaveLength(catalog.requirements.length);
+  expect([...container.querySelectorAll('.fws .fwc select')].every(select=>select.value==='does_not_apply')).toBe(true);
+  expect(button('Next')).toBeTruthy();expect(button('Complete onboarding')).toBeUndefined();
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+  expect(JSON.stringify(mockState)).toBe(before);
+});
+
 test('mounted presentation withdraws immediately on mode, route, selection, authorization or archived context changes', async () => {
   await act(async () => renderWizard());
   const originalAuth = mockAuth, originalOrg = mockOrg, originalLocation = mockLocation;

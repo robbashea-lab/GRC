@@ -46,7 +46,8 @@ test.each(['iso-27001','soc-2'].flatMap(key=>['demo','standard'].map(mode=>[key,
     }
     for(const pathname of ['/evidence','/contacts','/client-profile','/reports','/systems','/compliance/iso-27001','/compliance/soc-2']) {
       expect(sharedClientRoute(pathname)).toBe(false);
-      expect(additionalSectionChrome({...context,pathname})).toBeNull();
+      expect(additionalSectionChrome({...context,pathname})).toBe(({'/evidence':'evidence','/contacts':'contacts','/client-profile':'profile'})[pathname]||null);
+      // Common appearance must not expand the native full-record workflow boundary.
       expect(brawndoFullRecordEligible({...context,pathname,clientId:context.currentClientId,record:null})).toBe(false);
     }
     expect(JSON.stringify(context)).toBe(before);
@@ -104,6 +105,6 @@ test('identity denial, loading, stale route and record scope retain the existing
 });
 
 test('shared shell accepts only existing native client/program route boundaries',()=>{
-  for(const route of [...SHARED_CLIENT_ROUTES,'/compliance/cis-ig1','/compliance/iso-27001','/compliance/soc-2']) expect(sharedNativeClientRoute(route)).toBe(true);
-  for(const route of ['/clients','/admin/security','/platform/security','/account','/compliance/hipaa','/compliance/iso-27001/other']) expect(sharedNativeClientRoute(route)).toBe(false);
+  for(const route of [...SHARED_CLIENT_ROUTES,'/compliance/cis-ig1','/compliance/iso-27001','/compliance/soc-2','/compliance/hipaa','/compliance/nist-csf-2','/compliance/cmmc']) expect(sharedNativeClientRoute(route)).toBe(true);
+  for(const route of ['/clients','/admin/security','/platform/security','/account','/compliance/unknown','/compliance/iso-27001/other']) expect(sharedNativeClientRoute(route)).toBe(false);
 });
