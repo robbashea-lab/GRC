@@ -270,3 +270,38 @@ test('program recommendations retain the Omnibot launcher and native open naviga
  await act(async()=>launcher.click());expect(document.body.textContent).toContain('Omnibot’s recommended next steps');
  await click('Open criterion CC1.1');expect(onSelect).toHaveBeenCalledWith(row);
 });
+
+
+test('configured SOC program guide uses local circular presentation and keeps native category destinations',async()=>{
+  localStorage.setItem('omnisciente:brawndo-dashboard-theme','dark');
+  const onSelect=jest.fn(),rows=[
+    {client_id:'soc-fixture',framework_key:'soc-2',definition_id:'CC1.1',title:'Control environment',category:'security',status:'not_assessed'},
+    {client_id:'soc-fixture',framework_key:'soc-2',definition_id:'A1.1',title:'Available capacity',category:'availability',status:'not_assessed'},
+    {client_id:'soc-fixture',framework_key:'soc-2',definition_id:'C1.1',title:'Confidential information',category:'confidentiality',status:'not_assessed'},
+  ];
+  await render({record:null,current:null,rows,contextComplete:true,onSelect});
+  const guide=document.querySelector('[data-testid="soc-guided-assessment"]');
+  expect(guide.classList.contains('shared-program-omni')).toBe(true);
+  expect(guide.dataset.theme).toBe('dark');
+  expect(guide.querySelector('.omni-launch-button .cis-omni-owl')).toBeTruthy();
+  expect(document.documentElement.hasAttribute('data-brawndo-cis-visual')).toBe(false);
+  await open();
+  const panel=guide.querySelector('.omni-workspace-window');
+  expect(panel.classList.contains('cis-omni-program-window')).toBe(true);
+  expect(parseFloat(panel.style.width)).toBe(360);
+  expect(document.body.textContent).toContain('3 criteria in the configured SOC 2 scope');
+  await act(async()=>guide.querySelector('[aria-label="Minimize Omnibot Guide"]').click());
+  expect(guide.querySelector('.omni-workspace-window')).toBeNull();
+  await open();await click('Open criterion C1.1');
+  expect(onSelect).toHaveBeenCalledWith(rows[2]);
+  expect(api.get).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
+test('native inline SOC criterion editor remains outside the floating guide presentation',async()=>{
+  await render({inline:true,inlineOpen:true});
+  const guide=document.querySelector('[data-testid="soc-guided-assessment"]');
+  expect(guide.classList.contains('shared-program-omni')).toBe(false);
+  expect(guide.hasAttribute('data-theme')).toBe(false);
+  expect(guide.querySelector('.cis-omni-owl')).toBeNull();
+  expect(guide.querySelector('section[aria-label="SOC 2 interview"]')).toBeTruthy();
+});

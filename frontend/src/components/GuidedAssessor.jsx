@@ -9,6 +9,7 @@ import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import OmniCharacter from './OmniCharacter';
+import OmniGuideCharacter from './OmniGuideCharacter';
 import OmniDock from './OmniDock';
 import OmniWindow from './OmniWindow';
 
@@ -502,7 +503,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     <OmniDock preferenceKey={key} inAssessment={!!record} freePosition={workspacePilot} name={botName} focused={focused} visualReference={visualOmni}>
       {greeting&&<div className="guided-greeting omni-entrance"><p>Hi, I’m Omni. How can I help you today?</p><p>I can help you review safeguards, identify missing requirements, and prepare your implementation summary.</p><button onClick={()=>changeMode('collapsed')} aria-label="Dismiss Omni greeting">Dismiss</button></div>}
       {mode==='dismissed'?<Button ref={launcher} size="sm" variant="outline" onClick={()=>changeMode('collapsed')}>Show {botName}</Button>:<>
-      <button ref={launcher} className={'omni-launch-button '+(greeting?'omni-entrance ':'')+(mode==='minimized'?'is-minimized':'')} onClick={()=>changeMode('expanded')} aria-label={focused?"Open Omnibot guide":"Open Omni guided assessment"} aria-expanded={mode==='expanded'} aria-controls={mode==='expanded'?panelId:undefined} aria-describedby={stateId}>{visualOmni?<CisOmniCharacter/>:<OmniCharacter state={characterState} approved={workspacePilot}/>} {hasOmniRecommendations&&<span className="cis-omni-recommendation-dot" aria-hidden="true"/>}</button>
+      <button ref={launcher} className={'omni-launch-button '+(greeting?'omni-entrance ':'')+(mode==='minimized'?'is-minimized':'')} onClick={()=>changeMode('expanded')} aria-label={focused?"Open Omnibot guide":"Open Omni guided assessment"} aria-expanded={mode==='expanded'} aria-controls={mode==='expanded'?panelId:undefined} aria-describedby={stateId}>{visualOmni?<OmniGuideCharacter/>:<OmniCharacter state={characterState} approved={workspacePilot}/>} {hasOmniRecommendations&&<span className="cis-omni-recommendation-dot" aria-hidden="true"/>}</button>
       {focused?<>
 
         {contextPrompt&&(mode==='collapsed'||mode==='minimized')&&<div className="guided-context-prompt" role="complementary" aria-label="Omnibot invitation"><p>{invitation}</p>{visualOmni&&<div className="cis-omni-invitation-actions"><Button onClick={()=>changeMode('expanded')}>Show next steps</Button><Button variant="outline" onClick={()=>{changeMode('collapsed');launcher.current?.focus({preventScroll:true});}}>Not now</Button></div>}<button type="button" aria-label="Close invitation" className="omni-invitation-x" onClick={()=>{changeMode('collapsed');launcher.current?.focus({preventScroll:true});}}>×</button></div>}
@@ -515,7 +516,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
       {mode==='expanded'&&<GuideContent id={panelId} className="guided-panel bg-surface-card" onOpenAutoFocus={e=>{e.preventDefault();heading.current?.focus({preventScroll:true});}} onCloseAutoFocus={e=>{e.preventDefault();launcher.current?.focus({preventScroll:true});}} onPointerDownOutside={e=>e.preventDefault()} {...(workspacePilot?{onMinimize:()=>changeMode('minimized'),onClose:close,name:botName,refined,program:!record,visualReference:visualOmni,...(focused?{anchor:()=>launcher.current?.getBoundingClientRect()}:{} )}:{})}>
 
-        <div className="omni-panel-header">{visualOmni?<CisOmniCharacter/>:<OmniCharacter state={characterState} approved={workspacePilot}/>}<div><DialogTitle {...(workspacePilot?{id:panelId+'-title'}:{})} ref={heading} tabIndex={refined?0:-1} aria-label={compactProgramTitle?guideTitle:undefined}>{compactProgramTitle?'Omnibot':guideTitle}</DialogTitle>{!refined&&<p className="omni-state-text" role="status">{stateText}</p>}</div></div>
+        <div className="omni-panel-header">{visualOmni?<OmniGuideCharacter/>:<OmniCharacter state={characterState} approved={workspacePilot}/>}<div><DialogTitle {...(workspacePilot?{id:panelId+'-title'}:{})} ref={heading} tabIndex={refined?0:-1} aria-label={compactProgramTitle?guideTitle:undefined}>{compactProgramTitle?'Omnibot':guideTitle}</DialogTitle>{!refined&&<p className="omni-state-text" role="status">{stateText}</p>}</div></div>
 
         <DialogDescription className={refined?'sr-only':undefined} {...(workspacePilot?{id:panelId+'-description'}:{})}>{refined?'Review reported practices and prepare an implementation draft. Focus the heading and use arrow keys to move the window, or Alt and arrow keys to resize it.':<>{record?record.title:`CIS IG${configuration?.implementation_group||1} · CIS Controls v8.1`} · Deterministic guidance, not an independent assessment or evidence review.</>}</DialogDescription>
 
@@ -533,9 +534,6 @@ function FocusedProgram({rows,drafts,contextComplete,onSelect,visualReference=fa
 
 }
 
-function CisOmniCharacter(){
-  return <svg className="omni-character cis-omni-owl" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 14 6 6l10 5a18 18 0 0 1 16 0l10-5-4 8a17 17 0 0 1 3 10c0 11-8 19-17 19S7 35 7 24a17 17 0 0 1 3-10Z" fill="color-mix(in srgb, var(--rail) 18%, var(--surface))" stroke="var(--fg2)" strokeWidth="1.6" strokeLinejoin="round"/><circle cx="17.5" cy="22" r="6" fill="var(--surface)" stroke="var(--fg2)" strokeWidth="1.6"/><circle cx="30.5" cy="22" r="6" fill="var(--surface)" stroke="var(--fg2)" strokeWidth="1.6"/><circle cx="17.5" cy="22" r="2.4" fill="var(--rail)"/><circle cx="30.5" cy="22" r="2.4" fill="var(--rail)"/><path d="m22 29 2 3 2-3Z" fill="var(--c-part)"/><path d="M15 37c3 2 6 3 9 3s6-1 9-3" fill="none" stroke="var(--fg2)" strokeWidth="1.4" strokeLinecap="round" opacity=".6"/></svg>;
-}
 
 function ProgramPosition({overview,rows,onSelect,onViewAll}){
   const labels={safeguards:'Safeguards in authorized active scope',notAssessed:'Not Assessed',needsAttention:'Not Implemented',partialOrUnresolved:'Partial implementation or unresolved work',verificationOrReview:'Verification, scheduled review or remaining linked work',openFindings:'Unique open Findings',openActions:'Unique open Action Items'};

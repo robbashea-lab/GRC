@@ -49,6 +49,61 @@ class AIOnboardingTests(unittest.IsolatedAsyncioTestCase):
         changed=copy.deepcopy(body);changed['ai']['name']='Another intent'
         self.assertEqual((await self.add(changed,key)).status_code,409)
 
+    async def test_iso_soc_native_onboarding_replay_reload_and_scope_denials(self):
+        for framework in ('iso-27001', 'soc-2'):
+            with self.subTest(framework=framework):
+                await server.db.requirements.delete_many({'client_id': 'a'})
+                await server.db.requirements.insert_one({'requirement_id': 'selected-' + framework,
+                    'client_id': 'a', 'baseline_key': framework, 'baseline_response': 'applies'})
+                body=self.payload();key=uuid.uuid4().hex
+                response=await self.add(body,key)
+                self.assertEqual(response.status_code,200,response.text)
+                result=response.json()
+                self.assertEqual((await self.add(body,key)).json(),result)
+                reloaded=next(row for row in (await self.client.get('/api/ai_systems?client_id=a')).json()
+                              if row['ai_system_id']==result['ai_system_id'])
+                self.assertEqual(reloaded['environment'],body['ai']['environment'])
+                self.assertEqual(reloaded['permitted_data_types'],body['ai']['permitted_data_types'])
+                self.assertEqual(reloaded['onboarding_screening']['answers'],body['screening']['answers'])
+                self.assertEqual(reloaded['approval_status'],'pending_assessment')
+                self.assertEqual(await server.db.reviews.count_documents({'ai_system_id':result['ai_system_id']}),1)
+                risk=await server.db.risks.find_one({'risk_id':result['risk_id']})
+                self.assertEqual((risk['client_id'],risk['likelihood_score'],risk['impact_score']),
+                                 ('a',body['risk']['likelihood'],body['risk']['impact']))
+                self.sign_in('member')
+                self.assertEqual((await self.add(body)).status_code,403)
+                foreign={**body,'client_id':'b'}
+                self.assertEqual((await self.add(foreign)).status_code,403)
+                self.sign_in('admin')
+                await server.db.requirements.delete_many({'client_id': 'a'})
+                self.assertEqual((await self.add(body,key)).status_code,422)
+
+    async def test_retained_shared_ai_approval_scope_is_not_expanded_by_metadata_or_screening(self):
+        for framework in ('iso-27001', 'soc-2'):
+            for status in ('approved', 'approved_with_conditions'):
+                with self.subTest(framework=framework,status=status):
+                    await server.db.requirements.delete_many({'client_id':'a'})
+                    await server.db.requirements.insert_one({'requirement_id':'selected-'+framework,
+                        'client_id':'a','baseline_key':framework,'baseline_response':'applies'})
+                    created=(await self.add()).json()['ai_system']
+                    aid=created['ai_system_id']
+                    history=[{'status':status,'note':'Synthetic retained original approval','by':'original-approver',
+                              'at':'2026-01-01T12:00:00+00:00','scope':{'environment':created['environment']}}]
+                    await server.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{
+                        'approval_status':status,'approval_history':history}})
+                    path='/api/ai_systems/'+aid
+                    noop=await self.client.patch(path,json={'environment':created['environment'],'expected_updated_at':created['updated_at']})
+                    self.assertEqual(noop.status_code,200,noop.text)
+                    self.assertEqual(noop.json()['approval_history'],history)
+                    before=await server.db.ai_systems.find_one({'ai_system_id':aid},{'_id':0})
+                    changed=await self.client.patch(path,json={'environment':'Different unapproved account','expected_updated_at':before['updated_at']})
+                    self.assertEqual(changed.status_code,409,changed.text)
+                    review={'schema_version':1,'catalog_version':CATALOG['reviewedOn'],'reviewed':True,
+                        'answers':{**before['onboarding_screening']['answers'],'managed':not before['onboarding_screening']['answers']['managed']}}
+                    changed=await self.client.patch(path,json={'onboarding_screening':review,'expected_updated_at':before['updated_at']})
+                    self.assertEqual(changed.status_code,409,changed.text)
+                    self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid},{'_id':0}),before)
+
     async def test_denials_and_validation_write_nothing(self):
         self.sign_in('member')
         self.assertEqual((await self.add()).status_code,403)

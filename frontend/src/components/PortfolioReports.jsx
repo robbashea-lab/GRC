@@ -26,7 +26,9 @@ const historyBasis = point => point.observation_kind === 'demo_fixture' ? 'Illus
 const statusShare = (point, key) => validImplementationPosition(point) && point.denominator > 0
   ? `${((applicableCounts(point).find(value => value.key === key)?.count || 0) / point.denominator * 100).toFixed(1)}%` : 'N/A';
 
-export function scopeNote(change, unit = 'items', detailed = false) {
+export function scopeNote(change, unit = 'items', detailed = false, language) {
+  const verb=language?.verb||'implemented',done=verb[0].toUpperCase()+verb.slice(1);
+  const label=key=>language?.statusLabels?.[key]||statusLabel(key);
   const before = change.before?.denominator, after = change.after?.denominator;
   const implementedBefore = change.before?.implemented, implementedAfter = change.after?.implemented;
   const membership = change.membership_known === true
@@ -36,13 +38,13 @@ export function scopeNote(change, unit = 'items', detailed = false) {
     change.membership_known === true && change.added_ids?.length ? `Added: ${change.added_ids.join(', ')}.` : '',
     change.membership_known === true && change.removed_ids?.length ? `Removed: ${change.removed_ids.join(', ')}.` : '',
     before > 0 && after > 0 && Number.isInteger(implementedBefore) && Number.isInteger(implementedAfter)
-      ? `Implemented share ${(implementedBefore / before * 100).toFixed(1)}% → ${(implementedAfter / after * 100).toFixed(1)}%. ${implementedBefore === implementedAfter ? before !== after ? 'The implemented count is unchanged; the applicable denominator changed.' : 'The implemented count is unchanged; the scope definition or membership changed.' : 'Both implementation and scope changed.'}` : '',
+      ? `${done} share ${(implementedBefore / before * 100).toFixed(1)}% → ${(implementedAfter / after * 100).toFixed(1)}%. ${implementedBefore === implementedAfter ? before !== after ? `The ${verb} count is unchanged; the applicable denominator changed.` : `The ${verb} count is unchanged; the scope definition or membership changed.` : `Both ${verb==='implemented'?'implementation':'readiness'} and scope changed.`}` : '',
     change.status_changes_known === true ? change.status_changes?.length
-      ? `Status changes: ${change.status_changes.map(item=>`${item.definition_id}: ${statusLabel(item.before_status)} → ${statusLabel(item.after_status)}`).join('; ')}.`
+      ? `Status changes: ${change.status_changes.map(item=>`${item.definition_id}: ${label(item.before_status)} → ${label(item.after_status)}`).join('; ')}.`
       : 'No status changes among retained scope members.' : ''
   ].filter(Boolean).join(' ') : '';
   return membership + (Number.isInteger(before) && Number.isInteger(after) ? ` Applicable went from ${before} to ${after}.` : '')
-    + (Number.isInteger(implementedBefore) && Number.isInteger(implementedAfter) && implementedBefore !== implementedAfter ? ` Implemented went from ${implementedBefore} to ${implementedAfter}.` : '') + (detail ? ` ${detail}` : '');
+    + (Number.isInteger(implementedBefore) && Number.isInteger(implementedAfter) && implementedBefore !== implementedAfter ? ` ${done} went from ${implementedBefore} to ${implementedAfter}.` : '') + (detail ? ` ${detail}` : '');
 }
 
 const scopeChangesForPosition = (changes, point) => changes.filter(change => change.after_snapshot_id
@@ -165,19 +167,19 @@ export function PortfolioSparkline({program, asOf, span}) {
   </svg>;
 }
 
-export function useHistory(client, program, range, refreshToken, requireIdentity = false, demoScenario = false, expectedScope) {
+export function useHistory(client, program, range, refreshToken, requireIdentity = false, demoScenario = false, expectedScope, expectedRevision) {
   const cisProgram = program.framework_key === 'cis-ig1' ? cisClientProgram(client) : null;
   const scope = (expectedScope && Object.keys(expectedScope).length ? expectedScope : undefined)
     || (program.framework_key === 'cis-ig1' ? program.current?.scope : undefined)
     || (cisProgram ? {framework_key:cisProgram.frameworkKey,catalog_version:cisProgram.version,
       configuration:{implementation_group:cisProgram.implementationGroup}} : undefined);
-  const key = JSON.stringify([client.client_id, program.program_key, range, demoScenario, scope]);
+  const key = JSON.stringify([client.client_id, program.program_key, range, demoScenario, scope, expectedRevision]);
   const [state, setState] = useState({key: '', data: null, loading: true, error: ''}), [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
     setState(previous => ({key, data: previous.key === key ? previous.data : null, loading: true, error: ''}));
-    const [client_id, program_key, selectedRange, scenarioRequested, selectedScope] = JSON.parse(key);
+    const [client_id, program_key, selectedRange, scenarioRequested, selectedScope, selectedRevision] = JSON.parse(key);
     api.get('/portfolio/reporting/history', {params: {client_id, program_key, range: selectedRange, include_archived: false,
       ...(scenarioRequested && namedDemoClient(client_id)?.historyVersion ? {demo_scenario:namedDemoClient(client_id).historyVersion} : {})}, signal: controller.signal}).then(({data}) => {
       if (!Array.isArray(data?.snapshots) || !data.current || !Number.isFinite(Date.parse(data.as_of))) throw new Error('The history response is incomplete.');
@@ -186,6 +188,25 @@ export function useHistory(client, program, range, refreshToken, requireIdentity
       if (selectedScope && (['framework_key', 'catalog_version'].some(field => selectedScope[field] != null && data.current.scope?.[field] !== selectedScope[field])
         || selectedScope.configuration?.implementation_group != null && data.current.scope?.configuration?.implementation_group !== selectedScope.configuration.implementation_group)) {
         throw new Error('The history scope does not match the selected program.');
+      }
+      if (requireIdentity && ['iso-27001','soc-2'].includes(program_key) && selectedScope) {
+        const actual = data.current.scope, expectedIds = selectedScope.definition_ids;
+        const sameIds = (values, expected) => Array.isArray(values) && values.length === expected.length
+          && new Set(values).size === values.length && expected.every(id => values.includes(id));
+        if (expectedIds && (!sameIds(actual?.definition_ids, expectedIds)
+          || expectedIds.some(id => actual?.applicability?.[id] !== selectedScope.applicability?.[id]))
+          || selectedScope.configuration?.categories && !sameIds(actual?.configuration?.categories, selectedScope.configuration.categories)) {
+          throw new Error('The history subject or applicability scope changed. Refresh the dashboard.');
+        }
+      }
+      if (selectedRevision) {
+        const fields=['source_revision','status_signature'];
+        if (fields.some(field=>typeof selectedRevision[field]!=='string'||!selectedRevision[field]
+          ||typeof data.current[field]!=='string'||!data.current[field])) {
+          throw new Error('The native assessment state identity is unavailable. Refresh the dashboard.');
+        }
+        if (fields.some(field=>data.current[field]!==selectedRevision[field]))
+          throw new Error('The native assessment state changed while loading history. Refresh the dashboard.');
       }
       if(requireIdentity && ['cis-ig1','cis-ig2','cis-ig3'].includes(program_key) && (selectedScope?.framework_key!=='cis-ig1'
         || selectedScope.catalog_version!=='8.1' || ![1,2,3].includes(selectedScope.configuration?.implementation_group))) {
@@ -198,7 +219,7 @@ export function useHistory(client, program, range, refreshToken, requireIdentity
   return {...(state.key === key ? state : {data: null, loading: true, error: ''}), retry: () => setAttempt(value => value + 1)};
 }
 
-function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
+function CurrentStatusBreakdown({current, onStatusNavigate, inline = false, unit = 'safeguards'}) {
   const [activeStatus, setActiveStatus] = useState(null);
   const [width, setWidth] = useState(900);
   const scale = useRef(null), bar = useRef(null), tooltip = useRef(null);
@@ -255,7 +276,7 @@ function CurrentStatusBreakdown({current, onStatusNavigate, inline = false}) {
     <span className="ph-breakdown-value"><b>{share(value)}</b><span>{value.count}{inline ? ' of ' : ' / '}{total}</span></span>
   </button>);
   return <div className="ph-breakdown">
-    {inline && <div className="ph-breakdown-head"><span>Status of {total} applicable safeguards</span><span>Assessed {assessed} of {total} · {total ? (assessed/total*100).toFixed(1)+'%' : 'N/A'}</span></div>}
+    {inline && <div className="ph-breakdown-head"><span>Status of {total} applicable {unit}</span><span>Assessed {assessed} of {total} · {total ? (assessed/total*100).toFixed(1)+'%' : 'N/A'}</span></div>}
     <div ref={scale} className="ph-status-scale">
       {inline ? composition : <svg className="ph-composition-canvas" viewBox={`0 0 ${width} 62`} width={width} height="62" role="presentation">
         <foreignObject x="4" y="24" width={width - 8} height="14" overflow="visible">{composition}</foreignObject>
@@ -278,7 +299,9 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
   const dashboardProfile = inline && cisDashboardProfile;
   const conceptPresentation = dashboardProfile && concept;
   const historyView = dashboardProfile || (referenceHistory && scopedScenario) ? referenceView : referenceHistory ? 'line' : chartView;
-  const report = useHistory(client, program, range, refreshToken, inline, scopedScenario);
+  const nativeDashboard = dashboardProfile && ['iso-27001','soc-2'].includes(program.framework_key);
+  const report = useHistory(client, program, range, refreshToken, inline, scopedScenario, nativeDashboard ? program.current?.scope : undefined,
+    nativeDashboard ? {source_revision:program.current?.source_revision,status_signature:program.current?.status_signature} : undefined);
   const scenarioContext = scopedScenario ? report.data?.scenario_context : null;
   const current = report.data?.current || program.current || {}, asOf = report.data?.as_of || overviewAsOf || current.retrieved_at || current.captured_at;
   const language = programLanguage({...program, current}), months = RANGES.find(([key]) => key === range)[2], start = calendarRangeStart(asOf, months);
@@ -290,6 +313,7 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
   const forecast = forecastImplementation(report.data?.forecast_snapshots, current, asOf, {scopeChanges: report.data?.forecast_scope_changes, verb: language.verb, demoScenario:scenarioContext});
   const percentage = currentPercentage(current), valid = validImplementationPosition(current), noScope = valid && current.denominator === 0;
   const counts = applicableCounts(current);
+  const scopeLanguage=nativeDashboard?{verb:language.verb,statusLabels:Object.fromEntries(counts.map(value=>[value.key,value.label]))}:undefined;
   const retained = [...new Map([...(report.data?.snapshots || []), ...(report.data?.forecast_snapshots || []), ...(report.data?.comparison?.baseline ? [report.data.comparison.baseline] : [])]
     .filter(point => Number.isFinite(Date.parse(snapshotTime(point))))
     .map(point => [identity(point), point])).values()].sort((a,b) => Date.parse(snapshotTime(a))-Date.parse(snapshotTime(b)));
@@ -297,16 +321,17 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
   const sparseModal = !inline && !!report.data && !report.error && valid && !noScope && (current.not_started || retained.length < 2);
   const lead = grcLead(client);
   const referenceFooter = referenceHistory && <div className={inline ? 'ph-foot ph-reference-foot ph-inline-foot' : 'ph-foot ph-reference-foot'}>
-    {!inline && program.framework_key === 'soc-2' ? 'Internal readiness, not an auditor opinion.' : 'Assessment progress, not a compliance determination.'} Estimated completion is based on implementation progress over the latest 90 days.
+    {program.framework_key === 'soc-2' ? 'Internal readiness, not an auditor opinion.' : 'Assessment progress, not a compliance determination.'} Estimated completion is based on implementation progress over the latest 90 days.
   </div>;
   const periodControls = <div className="ph-range"><div className="ph-segmented" role="group" aria-label="History period">{RANGES.map(([key, label]) => <button key={key} type="button" aria-pressed={key === range} onClick={() => setRange(key)}>{label}</button>)}</div><span>{formatPortfolioDate(start)} – {formatPortfolioDate(asOf)} · UTC</span></div>;
   const historyHeading = <div className="ph-chart-top"><div><h4>Implementation history</h4><p>{historyView === 'mix' ? `Share of applicable ${language.unit} in each status at each saved position` : `${counts[0]?.label || 'Implemented'} ${language.unit} as a share of applicable scope`}</p></div><div className="ph-chart-tools">{!referenceHistory && !dashboardProfile && <details className="ph-chart-options"><summary>Chart view</summary><div className="ph-segmented" role="group" aria-label="Chart view">{[['line', 'Implemented'], ['mix', 'Status mix']].map(([key, label]) => <button key={key} type="button" aria-pressed={key === chartView} onClick={() => onChartViewChange(key)}>{label}</button>)}</div></details>}{(scopedScenario || dashboardProfile) && <button type="button" className="ph-link" aria-pressed={referenceView === 'mix'} onClick={() => setReferenceView(value => value === 'line' ? 'mix' : 'line')}>{referenceView === 'line' ? 'View status history' : 'Implemented history'}</button>}<button type="button" className="ph-link" aria-expanded={showData} aria-controls="portfolio-history-data" onClick={() => setShowData(value => !value)}>{showData ? 'Hide data' : 'View data'}</button></div></div>;
   const status = <>
     <div className="ph-program-head"><div><h3>{`${program.program_label} Status`}</h3><span className="sr-only">{program.scope_label}</span></div><button type="button" className="ph-link" onClick={() => onNavigate(program.to)}>Open {program.program_label} workspace →</button></div>
     <div className="ph-current-overview">
-      <div className="ph-current-value"><span>Current implementation</span><strong className={percentage == null || current.not_started ? 'is-text' : ''}>{percentage != null ? current.not_started ? 'Not started' : <>{percentage.toFixed(1)}<span className="ph-unit">%</span></> : noScope ? 'No applicable scope' : 'Unavailable'}</strong><p>{percentage != null ? current.not_started ? `0 of ${current.denominator} ${language.unit} assessed` : `${current.implemented} of ${current.denominator} ${language.unit} ${language.verb}` : current.reason || current.notice || 'No applicable implementation units.'}</p><small>As of {dateTime(current.effective_at || current.captured_at || asOf)}</small></div>
-      <CurrentStatusBreakdown key={selected} current={current} onStatusNavigate={onStatusNavigate} inline={inline} />
+      <div className="ph-current-value"><span>{nativeDashboard && program.framework_key === 'soc-2' ? 'Current readiness' : 'Current implementation'}</span><strong className={percentage == null || current.not_started ? 'is-text' : ''}>{percentage != null ? current.not_started ? 'Not started' : <>{percentage.toFixed(1)}<span className="ph-unit">%</span></> : noScope ? 'No applicable scope' : 'Unavailable'}</strong><p>{percentage != null ? current.not_started ? `0 of ${current.denominator} ${language.unit} assessed` : `${current.implemented} of ${current.denominator} ${language.unit} ${language.verb}` : current.reason || current.notice || 'No applicable implementation units.'}</p><small>As of {dateTime(current.effective_at || current.captured_at || asOf)}</small></div>
+      <CurrentStatusBreakdown key={selected} current={current} onStatusNavigate={onStatusNavigate} inline={inline} unit={nativeDashboard ? language.unit : undefined}/>
     </div>
+    {nativeDashboard && <p className="ph-scope-notes">{Number.isInteger(current.excluded)?current.excluded:'Unavailable'} excluded / not applicable{program.framework_key === 'iso-27001' ? ` · ${Number.isInteger(current.scope_undetermined)?current.scope_undetermined:'Unavailable'} SoA applicability undetermined. ISMS requirements and included Annex A implementation remain distinct from SoA decisions and audit completion.` : '. Internal readiness, not an auditor opinion.'}</p>}
   </>;
   const details = <>
     {conceptPresentation ? <div className="ph-concept-status">{status}</div> : status}
@@ -336,9 +361,9 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
     <div className="ph-chart-card">
       {!dashboardProfile && historyHeading}
       {report.loading && !report.data ? <div className="ph-empty" role="status">Loading saved history…</div> : report.error ? <div className="ph-empty" role="alert"><p>{report.error}</p><button type="button" className="ph-link" onClick={report.retry}>Retry</button></div> : <>
-        <PortfolioHistoryChart key={selected + ':' + range} points={points} start={start} asOf={asOf} view={historyView} current={current} scopeChanges={scopeChanges} unit={language.unit} inline={inline} referenceHistory={referenceHistory} demoScenario={scenarioContext} scenarioPresentation={scopedScenario} showProvenance={showHistoryProvenance} cisDashboardProfile={dashboardProfile} stackedHistory={dashboardProfile} concept={conceptPresentation} />
-        {scopeChanges.length > 0 && <div className="ph-scope-notes">{scopeChanges.map((change,index) => <p key={index}>{formatPortfolioDate(change.effective_at || change.at)}: {scopeNote(change,language.unit,scopedScenario)}</p>)}</div>}
-        {showData && <>{scopedScenario && <p className="ph-history-basis">Initial history is illustrative demo scenario data. Later saved demo activity is identified separately below.</p>}<div className="ph-data" id="portfolio-history-data"><table><caption className="sr-only">{showHistoryProvenance ? 'Implementation positions, newest effective date first' : 'Genuine implementation positions, newest effective date first'}</caption><thead><tr><th scope="col">Position date</th>{counts.map(value => <th scope="col" key={value.key}>{value.label}{scopedScenario ? ' · count / share' : ''}</th>)}<th scope="col">Applicable</th><th scope="col">{counts[0]?.label || 'Implemented'} %</th></tr></thead><tbody>{[...points].reverse().map(point => <tr key={identity(point)}><td>{dateTime(snapshotTime(point))}{point.carried && <small>In effect at period start</small>}{point.effective_at && point.captured_at && Date.parse(point.effective_at) !== Date.parse(point.captured_at) && <small>Captured {dateTime(point.captured_at)}</small>}{scopeChangesForPosition(scopeChanges, point).map((change,index)=><small key={index}>{scopeNote(change, language.unit, scopedScenario)}</small>)}{showHistoryProvenance && <small>{historyBasis(point)}</small>}</td>{counts.map(value => <td key={value.key}>{validImplementationPosition(point) ? <>{applicableCounts(point).find(item => item.key === value.key)?.count ?? '—'}{scopedScenario && <small>{statusShare(point, value.key)}</small>}</> : 'Unavailable'}</td>)}<td>{validImplementationPosition(point) ? point.denominator : 'Unavailable'}</td><td>{rate(point)}</td></tr>)}</tbody></table>{!points.length && <p className="ph-empty">No saved positions in this period.</p>}</div></>}
+        <PortfolioHistoryChart key={selected + ':' + range} points={points} start={start} asOf={asOf} view={historyView} current={current} scopeChanges={scopeChanges} unit={language.unit} verb={nativeDashboard ? language.verb : undefined} scopeLanguage={scopeLanguage} inline={inline} referenceHistory={referenceHistory} demoScenario={scenarioContext} scenarioPresentation={scopedScenario} showProvenance={showHistoryProvenance} cisDashboardProfile={dashboardProfile} stackedHistory={dashboardProfile} concept={conceptPresentation} />
+        {scopeChanges.length > 0 && <div className="ph-scope-notes">{scopeChanges.map((change,index) => <p key={index}>{formatPortfolioDate(change.effective_at || change.at)}: {scopeNote(change,language.unit,scopedScenario,scopeLanguage)}</p>)}</div>}
+        {showData && <>{scopedScenario && <p className="ph-history-basis">Initial history is illustrative demo scenario data. Later saved demo activity is identified separately below.</p>}<div className="ph-data" id="portfolio-history-data"><table><caption className="sr-only">{showHistoryProvenance ? 'Implementation positions, newest effective date first' : 'Genuine implementation positions, newest effective date first'}</caption><thead><tr><th scope="col">Position date</th>{counts.map(value => <th scope="col" key={value.key}>{value.label}{scopedScenario ? ' · count / share' : ''}</th>)}<th scope="col">Applicable</th><th scope="col">{counts[0]?.label || 'Implemented'} %</th></tr></thead><tbody>{[...points].reverse().map(point => <tr key={identity(point)}><td>{dateTime(snapshotTime(point))}{point.carried && <small>In effect at period start</small>}{point.effective_at && point.captured_at && Date.parse(point.effective_at) !== Date.parse(point.captured_at) && <small>Captured {dateTime(point.captured_at)}</small>}{scopeChangesForPosition(scopeChanges, point).map((change,index)=><small key={index}>{scopeNote(change, language.unit, scopedScenario,scopeLanguage)}</small>)}{showHistoryProvenance && <small>{historyBasis(point)}</small>}</td>{counts.map(value => <td key={value.key}>{validImplementationPosition(point) ? <>{applicableCounts(point).find(item => item.key === value.key)?.count ?? '—'}{scopedScenario && <small>{statusShare(point, value.key)}</small>}</> : 'Unavailable'}</td>)}<td>{validImplementationPosition(point) ? point.denominator : 'Unavailable'}</td><td>{rate(point)}</td></tr>)}</tbody></table>{!points.length && <p className="ph-empty">No saved positions in this period.</p>}</div></>}
       </>}
 
     </div></div>
@@ -371,7 +396,7 @@ function historyTicks(start, asOf, width) {
   return ticks.filter((_,index)=>index%stride===0);
 }
 
-export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', inline = false, referenceHistory = false, demoScenario = null, scenarioPresentation = false, showProvenance = scenarioPresentation, stackedHistory = false, cisDashboardProfile = false, concept = false}) {
+export function PortfolioHistoryChart({points, start, asOf, view, current, scopeChanges, unit = 'items', verb = 'implemented', scopeLanguage, inline = false, referenceHistory = false, demoScenario = null, scenarioPresentation = false, showProvenance = scenarioPresentation, stackedHistory = false, cisDashboardProfile = false, concept = false}) {
   const box = useRef(null), svg = useRef(null), tooltip = useRef(null);
   const dismissTimer = useRef(null), pinned = useRef(false);
   const chartId = useId().replace(/:/g, '');
@@ -529,7 +554,7 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
       {!points.length && <text className="ph-chart-empty" x={(left + right) / 2} y={(top + bottom) / 2} textAnchor="middle">No saved positions in this period</text>}
       {engaged && selected && <><line className="ph-crosshair" x1={x(selected)} x2={x(selected)} y1={top} y2={bottom} />{currentPercentage(selected) != null && <circle className="ph-active" cx={x(selected)} cy={y(currentPercentage(selected))} r={inline ? 5.5 : 6} />}</>}
       <rect className={cisDashboardProfile ? 'ph-inspection-area' : undefined} x={left} y={top} width={right - left} height={bottom - top} fill="transparent" onPointerMove={nearest} onPointerDown={nearest} onPointerLeave={() => { if (!svg.current.contains(document.activeElement)) { if (cisDashboardProfile) scheduleDismiss(); else dismiss(); } }} />
-      {cisDashboardProfile && points.map(point => currentPercentage(point) != null && <g key={identity(point)} className="ph-inspection-point" tabIndex={0} role="button" aria-label={`${dateTime(snapshotTime(point))}, ${rate(point)} implemented, ${point.implemented} of ${point.denominator} applicable ${unit}`} aria-describedby={engaged && selected === point ? `${chartId}-tooltip` : undefined}
+      {cisDashboardProfile && points.map(point => currentPercentage(point) != null && <g key={identity(point)} className="ph-inspection-point" tabIndex={0} role="button" aria-label={`${dateTime(snapshotTime(point))}, ${rate(point)} ${verb}, ${point.implemented} of ${point.denominator} applicable ${unit}`} aria-describedby={engaged && selected === point ? `${chartId}-tooltip` : undefined}
         onFocus={() => inspectPoint(point)}
         onPointerEnter={() => { if (!pinned.current) inspectPoint(point); }}
         onPointerDown={() => inspectPoint(point, true)}
@@ -544,7 +569,7 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
     {engaged && selected && <div ref={tooltip} className={cisDashboardProfile ? 'ph-history-tip ph-cis-history-tip' : 'ph-history-tip'} id={cisDashboardProfile ? `${chartId}-tooltip` : undefined} role={cisDashboardProfile ? 'tooltip' : undefined} onPointerEnter={cisDashboardProfile ? cancelDismiss : undefined} onPointerLeave={cisDashboardProfile ? scheduleDismiss : undefined} style={inline && !scenarioPresentation && !cisDashboardProfile ? {left:Math.max(0,Math.min(width-270,x(selected)+14)) / width * 100+'%',top:Math.max(0,Math.min(100,y(currentPercentage(selected) ?? 0)-30)) * (box.current?.clientWidth || width) / width} : undefined}>
       <div className="ph-tip-date">{showProvenance ? selected.carried ? 'In effect at period start · position ' : selected.observation_kind === 'demo_fixture' ? 'Scenario position · ' : selected.observation_kind === 'current_state' ? 'Current state · ' : 'Saved ' : selected.carried ? 'In effect at period start · saved ' : 'Saved '}{formatPortfolioDate(snapshotTime(selected))}</div>{showProvenance && <p className="ph-tip-basis">{historyBasis(selected)}</p>}
       {cisDashboardProfile ? <>
-        <div className="ph-cis-tip-headline"><strong>{rate(selected)}</strong><span>{selectedValid ? `${selected.implemented} implemented / ${selected.denominator} applicable ${unit}` : selected.reason || 'Implementation unavailable'}</span></div>
+        <div className="ph-cis-tip-headline"><strong>{rate(selected)}</strong><span>{selectedValid ? `${selected.implemented} ${verb} / ${selected.denominator} applicable ${unit}` : selected.reason || 'Implementation unavailable'}</span></div>
         {selectedValid && selected.denominator === 0 && <small>No applicable scope</small>}
         <small>{dateTime(snapshotTime(selected))}{selected.carried && ' · In effect at period start'}</small>
         {selected.effective_at && selected.captured_at && Date.parse(selected.effective_at) !== Date.parse(selected.captured_at) && <small>Captured {dateTime(selected.captured_at)}</small>}
@@ -552,8 +577,8 @@ export function PortfolioHistoryChart({points, start, asOf, view, current, scope
         {selectedValid && <PortfolioStatusBar snapshot={selected} />}
       </> : <><strong>{rate(selected)}</strong><p>{selectedValid ? `${selected.implemented} of ${selected.denominator} ${unit} implemented` : selected.reason || 'Implementation unavailable'}</p></>}
       {selectedValid && <div className="ph-tip-rows">{applicableCounts(selected).map(value => <div key={value.key}><span><i className={`ph-dot is-${tone(value.key)}`} />{value.label}</span><b>{value.count}{(scenarioPresentation || stackedHistory) && ` · ${statusShare(selected, value.key)}`}</b></div>)}</div>}
-      {scopeChangesForPosition(scopeChanges,selected).map((change,index)=><p className="ph-tip-scope" key={index}>{scopeNote(change,unit,scenarioPresentation || cisDashboardProfile)}</p>)}
+      {scopeChangesForPosition(scopeChanges,selected).map((change,index)=><p className="ph-tip-scope" key={index}>{scopeNote(change,unit,scenarioPresentation || cisDashboardProfile,scopeLanguage)}</p>)}
     </div>}
-    <div className="ph-readout sr-only" aria-live="polite">{selected ? <><strong>{dateTime(snapshotTime(selected))}</strong>{selectedValid ? <>{applicableCounts(selected).map(value => <span key={value.key}><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label} {value.count}{scenarioPresentation ? ` · ${statusShare(selected, value.key)}` : value.key === 'addressed' && ` · ${rate(selected)}`} </span>)}<span>of {selected.denominator} applicable</span>{showProvenance && <span>{historyBasis(selected)}</span>}</> : <><span>Implementation/counts unavailable</span><span>{selected.reason || selected.notice || 'This saved position has unavailable implementation data.'}</span></>}{scopeChangesForPosition(scopeChanges, selected).map((change,index)=><span key={index}>{scopeNote(change, unit, scenarioPresentation)}</span>)}{selected.effective_at && selected.captured_at && Date.parse(selected.effective_at) !== Date.parse(selected.captured_at) && <span>Captured {dateTime(selected.captured_at)}</span>}</> : <span>No saved position selected.</span>}</div>
+    <div className="ph-readout sr-only" aria-live="polite">{selected ? <><strong>{dateTime(snapshotTime(selected))}</strong>{selectedValid ? <>{applicableCounts(selected).map(value => <span key={value.key}><i className={`ph-dot is-${tone(value.key)}`} aria-hidden="true" />{value.label} {value.count}{scenarioPresentation ? ` · ${statusShare(selected, value.key)}` : value.key === 'addressed' && ` · ${rate(selected)}`} </span>)}<span>of {selected.denominator} applicable</span>{showProvenance && <span>{historyBasis(selected)}</span>}</> : <><span>Implementation/counts unavailable</span><span>{selected.reason || selected.notice || 'This saved position has unavailable implementation data.'}</span></>}{scopeChangesForPosition(scopeChanges, selected).map((change,index)=><span key={index}>{scopeNote(change, unit, scenarioPresentation,scopeLanguage)}</span>)}{selected.effective_at && selected.captured_at && Date.parse(selected.effective_at) !== Date.parse(selected.captured_at) && <span>Captured {dateTime(selected.captured_at)}</span>}</> : <span>No saved position selected.</span>}</div>
   </div>;
 }

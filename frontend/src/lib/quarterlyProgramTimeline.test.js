@@ -6,6 +6,7 @@ import {calendarDay} from './managementDates';
 import {localCalendarDate} from './calendarView';
 import {unifiedActions} from './brawndoActions';
 import {cisClient} from '../testUtils/cisExperience';
+import {frameworkCatalog} from './frameworks';
 
 const q1={year:2028,quarter:1},q2={year:2028,quarter:2};
 const event=(id,date,kind='monthly',title=id)=>({id,date,kind,title,label:'Saved date'});
@@ -23,6 +24,20 @@ test('chart state scope is stable for equivalent membership but resets for actor
     [user,'standard',{...client,onboarding_baseline:{completed:true,requirements:{'iso-27001':'applies'}}}],
   ])expect(quarterlyChartScope(actor,mode,current)).not.toBe(scope);
   expect(JSON.stringify({user,client})).toBe(before);
+});
+
+test('native ISO/SOC enrollment and SOC category changes reset stale chart state without rewriting subjects or schedules',()=>{
+  const user={user_id:'u',role:'platform_admin',workspace_mode:'standard'};
+  const descriptor=key=>({client_id:'a',program_id:`a:${key}`,framework_key:key,version:frameworkCatalog(key).version,selected:true});
+  const client={client_id:'a',status:'active',shared_programs:[descriptor('soc-2')],framework_settings:{'soc-2':{categories:['security','availability']}}};
+  const before=JSON.stringify(client),scope=quarterlyChartScope(user,'standard',client);
+  expect(quarterlyChartScope(user,'standard',{...client,framework_settings:{'soc-2':{categories:['availability','security']}}})).toBe(scope);
+  for(const changed of [{...client,shared_programs:[]},{...client,shared_programs:[descriptor('iso-27001')]},
+    {...client,shared_programs:[descriptor('soc-2'),descriptor('iso-27001')]},
+    {...client,framework_settings:{'soc-2':{categories:['security','availability','privacy']}}}]) {
+    expect(quarterlyChartScope(user,'standard',changed)).not.toBe(scope);
+  }
+  expect(JSON.stringify(client)).toBe(before);
 });
 
 test.each([

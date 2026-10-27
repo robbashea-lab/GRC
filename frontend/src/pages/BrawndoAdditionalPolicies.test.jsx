@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
 import BrawndoAdditionalPolicies from '@/components/BrawndoAdditionalPolicies';
 import { savedDate } from '@/components/BrawndoAdditionalPolicyVendorCells';
+import {frameworkCatalog} from '@/lib/frameworks';
 
 jest.setTimeout(15000);
 let mockAuth, mockOrg, mockDrawerProps, mockLocationSearch;
@@ -130,6 +131,60 @@ test('same-client role and actor changes await their own alignment snapshot and 
   await act(async () => resolvePrevious({ data: { client_id: 'demo_brawndo', items: [{ key: 'cis-ig1', tracking_available: true, implementation_group: 3 }] } }));
   expect(container.querySelector('[data-testid="additional-policy-metric-mapped"] strong').textContent.startsWith('0')).toBe(true);
   expect(container.textContent).not.toContain('Mapped to CIS IG3');
+});
+
+test.each([['iso-27001','mapped'],['soc-2','mapped'],['iso-27001','column'],['soc-2','column']])('retained %s %s filter after actual alignment failure stays unknown and clears back to its saved custom policy',async(framework,mappingFilter)=>{
+  const clientId='synthetic-native-policy',catalog=frameworkCatalog(framework),definitionId=catalog.requirements[0].id;
+  const client={client_id:clientId,name:'Synthetic native client',status:'active',onboarding_baseline:{completed:true,requirements:{[framework]:'applies'}},
+    framework_settings:framework==='soc-2'?{[framework]:{categories:['security']}}:{},
+    shared_programs:[{client_id:clientId,program_id:clientId+':'+framework,framework_key:framework,version:catalog.version,selected:true}]};
+  mockAuth={workspaceMode:'standard',user:{user_id:'native-actor',role:'super_admin',workspace_mode:'standard'}};
+  mockOrg={currentClientId:clientId,currentClient:client,clients:[client]};
+  sessionStorage.setItem('grc_client_id',clientId);localStorage.setItem('grc_client_id',clientId);
+  mockLocationSearch='?'+new URLSearchParams({client_id:clientId,...(mappingFilter==='mapped'?{policyView:'mapped'}:{}),sortBy:'title',sortDir:'asc'});
+  const custom={policy_id:'saved-link-only',client_id:clientId,title:'Saved custom policy',status:'draft'};
+  const approved={policy_id:'approved-native',client_id:clientId,title:'Approved saved policy',status:'approved',approved_at:'2026-10-01'};
+  const assessment={framework_assessment_id:'saved-native-assessment',client_id:clientId,framework_key:framework,definition_id:definitionId,related_links:[{kind:'policies',id:custom.policy_id}]};
+  let failAlignment=false;
+  api.get.mockImplementation(async path=>{
+    if(path==='/frameworks/summary'){
+      if(failAlignment)throw new Error('Synthetic native alignment failure');
+      return {data:{client_id:clientId,items:[{key:framework,tracking_available:true}]}};
+    }
+    return {data:path==='/policies'?[custom,approved]:path==='/reviews'?[{...review,client_id:clientId}]:path==='/frameworks/'+framework?{assessments:[assessment],active_definition_ids:[definitionId]}:[]};
+  });
+  await act(async()=>root.render(<RecordListPage kind="policies"/>));
+  if(mappingFilter==='column'){
+    const heading=catalog.label+' '+(framework==='iso-27001'?'requirements and controls':'criteria');
+    const control=container.querySelector(`[aria-label="${heading}: filter"]`);
+    await act(async()=>control.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0,ctrlKey:false})));
+    const option=[...document.querySelectorAll('[role=menuitemcheckbox]')].find(node=>node.textContent==='Supports '+catalog.label);
+    expect(option).toBeTruthy();await click(option);
+    await act(async()=>document.querySelector('[role=menu]')?.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+  }
+  expect(visibleRows()).toHaveLength(1);expect(visibleRows()[0].textContent).toContain(custom.title);
+  failAlignment=true;
+  mockAuth={...mockAuth,user:{...mockAuth.user,...(mappingFilter==='column'?{role:'platform_admin'}:{user_id:'next-native-actor'})}};
+  await act(async()=>root.render(<RecordListPage kind="policies"/>));
+  const mapping=container.querySelector('[data-testid=additional-policy-metric-mapped]');
+  expect(mapping.textContent).toContain('Mapped to '+catalog.label);expect(mapping.querySelector('strong').textContent).toBe('—');
+  expect(container.textContent).not.toContain('CIS');expect(container.textContent).not.toContain('No policies match');expect(container.textContent).not.toContain('Showing 0');
+  expect(container.querySelector('.bapv-empty[role=alert]').textContent).toContain('Policy mappings unavailable');
+  expect(container.querySelector('.bapv-summary [role=status]').textContent).toBe('Policy mapping counts unavailable.');
+  expect(container.querySelector('[data-testid=additional-policy-metric-approved] strong').textContent).toBe('1');
+  if(mappingFilter==='mapped')expect(new URLSearchParams(mockLocationSearch).get('policyView')).toBe('mapped');
+  else expect(container.querySelector('[aria-label="Active table filters"]')).toBeTruthy();
+  expect(container.querySelector('[data-testid=export-policies-button]').disabled).toBe(true);
+  await click(container.querySelector('.bapv-empty button'));
+  expect(new URLSearchParams(mockLocationSearch).has('policyView')).toBe(false);
+  expect(new URLSearchParams(mockLocationSearch).get('client_id')).toBe(clientId);
+  expect(visibleRows()).toHaveLength(2);
+  await click(container.querySelector('[data-testid=additional-policy-view-awaiting]'));
+  expect(visibleRows()).toHaveLength(1);expect(visibleRows()[0].textContent).toContain(custom.title);
+  expect(container.querySelector('[data-testid=export-policies-button]').disabled).toBe(false);
+  const customButton=[...container.querySelectorAll('.bapv-name')].find(button=>button.textContent===custom.title);
+  await click(customButton);expect(mockDrawerProps.record.policy_id).toBe(custom.policy_id);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
 const policySubtitle = () => container.querySelector('.bapv-page-head p')?.textContent;

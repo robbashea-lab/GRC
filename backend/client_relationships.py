@@ -1,6 +1,7 @@
 """Client relationship references and read projections, never access grants."""
 from fastapi import HTTPException
 import cis_scope
+from framework_catalog import CATALOGS
 
 INTERNAL_ROLES = ("super_admin", "platform_admin")
 
@@ -36,10 +37,16 @@ async def project(db, clients):
     contact_map = {(c["client_id"], c["contact_id"]): c for c in contacts}
     user_map = {u["user_id"]: u for u in users}
     programs = await db.requirements.find({'client_id': {'$in': [c['client_id'] for c in clients]},
-        'baseline_key': 'cis-ig1', 'baseline_response': 'applies'}, {'_id': 0, 'client_id': 1}).to_list(None) if clients else []
-    selected = {row['client_id'] for row in programs}
+        'baseline_key': {'$in': ['cis-ig1', 'iso-27001', 'soc-2']}, 'baseline_response': 'applies'},
+        {'_id': 0, 'client_id': 1, 'baseline_key': 1}).to_list(None) if clients else []
+    selected = {(row['client_id'], row['baseline_key']) for row in programs}
     return [{**{k:v for k,v in c.items() if k!='_configuration_lock'},
-        'cis_program': cis_scope.experience_program(c, c['client_id'] in selected),
+        'cis_program': cis_scope.experience_program(c, (c['client_id'], 'cis-ig1') in selected),
+        # Finalized requirement records, never an editable onboarding draft or an access grant.
+        'shared_programs': [cis_scope.experience_program(c, True) if key == 'cis-ig1' else {
+            'client_id': c['client_id'], 'program_id': f"{c['client_id']}:{key}",
+            'framework_key': key, 'version': CATALOGS[key]['version'], 'selected': True,
+        } for key in ('cis-ig1', 'iso-27001', 'soc-2') if (c['client_id'], key) in selected],
         "primary_contact_record": contact_map.get((c["client_id"], c.get("primary_contact_id"))),
         "grc_lead_id": c.get("assigned_owner_id"),
         "grc_lead": user_map.get(c.get("assigned_owner_id")),

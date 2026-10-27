@@ -79,14 +79,16 @@ function conceptFocus({applicable,counts}){
   return {tone:'success',title:'All applicable safeguards implemented',detail:'This describes implementation status, not a certification or assurance conclusion.'};
 }
 
-function ConceptDomainDetail({domain}){
-  const focus=conceptFocus(domain);
-  return <><h3>{domain.name}</h3><div className="cdp-tip-rate"><strong>{formatDomainRate(domain.rate)}</strong><span>{domain.implemented} implemented / {domain.applicable} applicable</span></div>
-    <CisStatusBar counts={domain.counts}/><dl>{Object.entries(LABELS).map(([key,label])=><div key={key}><dt><i className={`cis-dot cis-tone-${implementationTone(key)}`} aria-hidden="true"/>{label}</dt><dd>{domain.counts[key]}</dd></div>)}</dl>
+function ConceptDomainDetail({domain,presentation}){
+  const focus=domain.focusSummary||conceptFocus(domain);
+  return <><h3>{domain.name}</h3><div className="cdp-tip-rate"><strong>{formatDomainRate(domain.rate)}</strong><span>{domain.implemented} {presentation.verb} / {domain.applicable} applicable</span></div>
+    <CisStatusBar counts={domain.counts} framework={presentation.frameworkKey}/><dl>{Object.entries(presentation.labels).filter(([key])=>key!=='not_applicable').map(([key,label])=><div key={key}><dt><i className={`cis-dot cis-tone-${implementationTone(key,presentation.frameworkKey)}`} aria-hidden="true"/>{label}</dt><dd>{domain.counts[key]}</dd></div>)}</dl>
+    {presentation.frameworkKey!=='cis-ig1'&&!!domain.excludedIds?.length&&<p>{domain.excludedIds.length} excluded / not applicable</p>}
+    {!!domain.undeterminedIds?.length&&<p>{domain.undeterminedIds.length} SoA applicability undetermined</p>}
     <div className={`cdp-focus is-${focus.tone}`}><b>{focus.title}</b><p>{focus.detail}</p></div></>;
 }
 
-function ConceptDomainTrigger({domain,kind='table',children,active,setActive,theme,compact}){
+function ConceptDomainTrigger({domain,kind='table',children,active,setActive,theme,compact,presentation}){
   const id=`${kind}:${domain.id}`,open=active?.target===id, timer=useRef(null),dismissed=useRef(false);
   const svg=kind!=='table';
   useEffect(()=>()=>clearTimeout(timer.current),[]);
@@ -109,7 +111,7 @@ function ConceptDomainTrigger({domain,kind='table',children,active,setActive,the
   };
   const props={
     className:kind==='axis'?'cdp-axis-label cdp-concept-axis-label':kind==='point'?'cdp-concept-point':'cdp-domain-name',
-    'aria-label':`${domain.name}: ${formatDomainRate(domain.rate)}, ${domain.implemented} of ${domain.applicable} implemented. Show domain details.`,
+    'aria-label':`${domain.name}: ${formatDomainRate(domain.rate)}, ${domain.implemented} of ${domain.applicable} ${presentation.verb}. Show domain details.`,
     onPointerEnter:enter,onPointerLeave:leave,onFocus:enter,onBlur:leave,onClick:toggle,
   };
   if(active?.domainId===domain.id)props.className+=' is-selected';
@@ -122,7 +124,7 @@ function ConceptDomainTrigger({domain,kind='table',children,active,setActive,the
       aria-label={`${domain.name} implementation details`} side={compact?'bottom':'right'} align={compact?'center':'start'} sideOffset={12} collisionPadding={10}
       onOpenAutoFocus={event=>event.preventDefault()} onCloseAutoFocus={event=>event.preventDefault()}
       onPointerEnter={enter} onPointerLeave={leave} onEscapeKeyDown={()=>{dismissed.current=true;close();}}>
-      <ConceptDomainDetail domain={domain}/>
+      <ConceptDomainDetail domain={domain} presentation={presentation}/>
     </PopoverContent>
   </Popover>;
 }
@@ -185,9 +187,11 @@ function ConceptDomainProfile({model,heading,theme}){
     return()=>query.removeEventListener('change',update);
   },[]);
   useEffect(()=>{if(!model.available)setActive(null);},[model.available]);
-  const domains=model.domains, trigger={active,setActive,theme,compact};
+  const presentation={frameworkKey:model.frameworkKey||'cis-ig1',labels:model.labels||LABELS,unit:model.unit||'safeguards',verb:model.verb||'implemented'};
+  const domains=model.domains, trigger={active,setActive,theme,compact,presentation};
+  const done=presentation.verb==='addressed'?'Addressed':'Implemented';
   return <section className="cdp-card cdp-concept" data-theme={theme} aria-labelledby={heading}>
-    <header><h2 id={heading}>Domain implementation profile</h2><p>Implemented share of applicable safeguards by domain</p></header>
+    <header><h2 id={heading}>Domain implementation profile</h2><p>{done} share of applicable {presentation.unit} by domain</p></header>
     {!model.available?<p role="status" className="cdp-empty">{model.reason}</p>:!domains.length?<p className="cdp-empty">No mapped applicable domains are available.</p>:<>
       <div className="cdp-profile"><div className="cdp-radar-wrap"><svg className="cdp-radar" viewBox="0 0 430 332" role="group" aria-label="Domain implementation radar. Exact domain names, counts and rates are available in the adjacent table.">
         {[.25,.5,.75,1].map(scale=><polygon className="cdp-grid" key={scale} points={domains.map((_,index)=>conceptPoint(index,domains.length,95*scale).join(',')).join(' ')}/>)}
@@ -200,16 +204,16 @@ function ConceptDomainProfile({model,heading,theme}){
         {domains.map((domain,index)=>{if(domain.rate===null)return null;const point=conceptPoint(index,domains.length,95*domain.rate/100);return <ConceptDomainTrigger key={`point:${domain.id}`} domain={domain} kind="point" {...trigger}>
           <circle className="cdp-concept-hit" cx={point[0]} cy={point[1]} r="12"/><circle className="cdp-concept-dot" cx={point[0]} cy={point[1]} r="4.5"/>
         </ConceptDomainTrigger>;})}
-      </svg></div><div className="cdp-table-wrap"><table><caption className="sr-only">Native CIS domain implementation counts and rates</caption><thead><tr><th scope="col">Domain</th><th scope="col">Implemented</th><th scope="col">Applicable</th><th scope="col">Rate</th></tr></thead>
+      </svg></div><div className="cdp-table-wrap"><table><caption className="sr-only">{model.frameworkKey?'Native framework':'Native CIS'} domain implementation counts and rates</caption><thead><tr><th scope="col">Domain</th><th scope="col">{done}</th><th scope="col">Applicable</th><th scope="col">Rate</th></tr></thead>
         <tbody>{domains.map(domain=><tr key={domain.id} className={active?.domainId===domain.id?'is-selected':undefined}><th scope="row"><ConceptDomainTrigger domain={domain} {...trigger}>{domain.name}</ConceptDomainTrigger></th><td>{domain.implemented}</td><td>{domain.applicable}</td><td>{formatDomainRate(domain.rate)}</td></tr>)}</tbody>
-      </table><p className="cdp-concept-legend"><i aria-hidden="true"/>Implemented share of applicable safeguards</p><p className="cdp-concept-hint">Hover, focus or tap a point or domain name for details.</p></div></div>
-      <p className="sr-only">Implemented ÷ applicable. Partial implementation receives no added credit; not assessed means unknown. Domain mappings may overlap.</p>
+      </table><p className="cdp-concept-legend"><i aria-hidden="true"/>{done} share of applicable {presentation.unit}</p><p className="cdp-concept-hint">Hover, focus or tap a point or domain name for details.</p></div></div>
+      <p className="sr-only">{done} ÷ applicable. Partial implementation receives no added credit; not assessed means unknown. {model.mapping?.overlapping===false?'Native subject groups do not overlap.':'Domain mappings may overlap.'}</p>
     </>}
   </section>;
 }
 
-export default function CisDomainProfile({source,clientId,implementationGroup,concept=false,theme='light'}){
-  const heading=useId(),[activeTrigger,onActiveTrigger]=useState(null),model=buildCisDomainProfile(source,{clientId,implementationGroup});
+export default function CisDomainProfile({source,clientId,implementationGroup,concept=false,theme='light',nativeModel}){
+  const heading=useId(),[activeTrigger,onActiveTrigger]=useState(null),model=nativeModel||buildCisDomainProfile(source,{clientId,implementationGroup});
   if(concept)return <ConceptDomainProfile key={`${clientId}:${implementationGroup}`} model={model} heading={heading} theme={theme}/>;
   return <section className="cdp-card" aria-labelledby={heading}><header><h2 id={heading}>Domain implementation profile</h2><p>Implemented safeguards as a share of each native domain’s applicable scope.</p></header>
     {!model.available?<p role="status" className="cdp-empty">{model.reason}</p>:!model.domains.length?<p className="cdp-empty">No mapped applicable domains are available.</p>:<>

@@ -31,7 +31,9 @@ html[data-visual-surface="dashboard"] { scrollbar-gutter: stable; }
 .brawndo-workspace-pilot[data-additional-surface],
 html[data-additional-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating),
 html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true],
-html[data-brawndo-cis-visual=true] {
+html[data-brawndo-cis-visual=true],
+.shared-program-omni,
+.brawndo-workspace-pilot[data-shared-shell=true] :is(.bwp-topbar,.app-sidebar,.bwp-nav-backdrop) {
   --bg:#EDF3FA; --surface:#FFFFFF; --subtle:#F3F7FC; --tablehead:#F3F7FC; --hover:#EAF1FA; --border:#C6D4E4; --border-strong:#B6C6DB;
   --fg:#132A49; --fg2:#4A617B; --muted:#536A84; --link:#215BC1; --selected:#E4EEFC; --rail:#215BC1; --focus:#215BC1;
   --good:#05603A; --good-bg:#ECFDF3; --bad:#B42318; --bad-bg:#FEF3F2; --warn:#93370D; --warn-bg:#FFFAEB;
@@ -48,7 +50,9 @@ html[data-brawndo-cis-visual=true] {
 .brawndo-workspace-pilot[data-additional-surface][data-theme=dark],
 html[data-additional-surface][data-additional-theme=dark] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating),
 html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true][data-theme=dark],
-html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] {
+html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark],
+.shared-program-omni[data-theme=dark],
+.brawndo-workspace-pilot[data-shared-shell=true][data-theme=dark] :is(.bwp-topbar,.app-sidebar,.bwp-nav-backdrop) {
   --bg:#071321; --surface:#0C1B30; --subtle:#11243A; --tablehead:#112238; --hover:#172B45; --border:#263C58; --border-strong:#3D5778;
   --fg:#EDF3FF; --fg2:#A8BAD5; --muted:#A2AEC4; --link:#85D4FF; --selected:#25416A; --rail:#85D4FF; --focus:#85D4FF;
   --good:#39C7A5; --good-bg:#0E312E; --bad:#FA7B85; --bad-bg:#321C2B; --warn:#F5BC4F; --warn-bg:#332715;
@@ -65,7 +69,8 @@ html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] {
 html[data-additional-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating),
 html[data-brawndo-cis-visual=true],
 .brawndo-workspace-pilot[data-cis-visual=true],
-body[data-brawndo-cis-visual=true] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-select-content,.ui-popover) {
+body[data-brawndo-cis-visual=true] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-select-content,.ui-popover),
+.brawndo-workspace-pilot[data-shared-shell=true] :is(.bwp-topbar,.app-sidebar) {
  --font-body:var(--font);--font-heading:var(--font);--color-bg-app:var(--bg);--color-bg-surface:var(--surface);--color-bg-subtle:var(--subtle);--color-bg-tablehead:var(--tablehead);--color-bg-row-hover:var(--hover);--color-border:var(--border);--color-border-strong:var(--border-strong);--color-input-border:var(--border-strong);--color-text-primary:var(--fg);--color-text-secondary:var(--fg2);--color-text-muted:var(--muted);--color-link:var(--link);--color-focus-ring:var(--focus);--color-selected-bg:var(--selected);--color-brand-accent:var(--rail);--color-brand-on-accent:#fff;
  --bwp-top:60px;--bwp-sidebar:240px;--bwp-bg:var(--bg);--bwp-card:var(--surface);--bwp-line:var(--border);--bwp-text:var(--fg);--bwp-muted:var(--fg2);--bwp-accent:var(--link);--bwp-subtle:var(--subtle);--bwp-focus:var(--focus);
  font:13.5px/1.5 var(--font);font-optical-sizing:auto;-webkit-font-smoothing:antialiased;
@@ -82,83 +87,108 @@ html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] :is(.ui-dialog,.
 }
 .brawndo-workspace-pilot[data-visual-surface] .bwp-topbar,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-topbar,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-topbar {height:60px;gap:16px;padding:0 16px;background:#081426;border-bottom:1px solid #263c58;box-shadow:none;color:#edf3ff}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-topbar,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-topbar {height:60px;gap:16px;padding:0 16px;background:#081426;border-bottom:1px solid #263c58;box-shadow:none;color:#edf3ff}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-top-actions,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-top-actions,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-top-actions {margin-left:auto;display:flex;align-items:center;gap:4px}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-top-actions,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-top-actions {margin-left:auto;display:flex;align-items:center;gap:4px}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-top-actions .bwp-client,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-top-actions .bwp-client,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-top-actions .bwp-client {margin-left:0}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-top-actions .bwp-client,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-top-actions .bwp-client {margin-left:0}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-brand,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-brand,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-brand {width:228px;min-width:228px;flex:none;gap:10px;font:600 16px/1.05 var(--font);letter-spacing:0}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-brand,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-brand {width:228px;min-width:228px;flex:none;gap:10px;font:600 16px/1.05 var(--font);letter-spacing:0}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-mark,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-mark,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-mark {width:30px;height:30px}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-mark,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-mark {width:30px;height:30px}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-brand small,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-brand small,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-brand small {margin:0;color:#a8bad5;font:600 10px/1.5 var(--font);letter-spacing:.08em;text-transform:uppercase}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-brand small,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-brand small {margin:0;color:#a8bad5;font:600 10px/1.5 var(--font);letter-spacing:.08em;text-transform:uppercase}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-search,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-search,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-search {flex:1 1 360px;max-width:400px}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-search,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-search {flex:1 1 360px;max-width:400px}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-search input,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-search input,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-search input {height:36px;padding:0 64px 0 36px;border:1px solid #263c58;border-radius:8px;background:#13223a;color:#edf3ff;font:inherit}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-search input,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-search input {height:36px;padding:0 64px 0 36px;border:1px solid #263c58;border-radius:8px;background:#13223a;color:#edf3ff;font:inherit}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-search > svg,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-search > svg,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-search > svg {left:12px;top:10px;width:16px;height:16px;color:#a8bad5}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-search > svg,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-search > svg {left:12px;top:10px;width:16px;height:16px;color:#a8bad5}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-search input::placeholder,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-search input::placeholder,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-search input::placeholder {color:#a8bad5}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-search input::placeholder,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-search input::placeholder {color:#a8bad5}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-search kbd,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-search kbd,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-search kbd {right:8px;top:8px;padding:0 6px;border:1px solid #263c58;border-radius:5px;background:#13223a;font:500 11px/18px var(--font);color:#edf3ff}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-search kbd,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-search kbd {right:8px;top:8px;padding:0 6px;border:1px solid #263c58;border-radius:5px;background:#13223a;font:500 11px/18px var(--font);color:#edf3ff}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-client,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-client,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-client {height:36px;gap:10px;padding:0 10px 0 12px;border:1px solid #263c58;border-radius:8px;font:500 13px/1.5 var(--font);background:#13223a}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-client,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-client {height:36px;gap:10px;padding:0 10px 0 12px;border:1px solid #263c58;border-radius:8px;font:500 13px/1.5 var(--font);background:#13223a}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-theme,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-theme,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-theme {width:36px;height:36px;margin-left:0;color:#a8bad5}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-theme,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-theme {width:36px;height:36px;margin-left:0;color:#a8bad5}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-theme svg,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-theme svg,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-theme svg {width:16px;height:16px}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-theme svg,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-theme svg {width:16px;height:16px}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-profile .bsb-profile,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-profile .bsb-profile,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-profile .bsb-profile {width:34px;height:34px;margin-left:8px}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-profile .bsb-profile,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-profile .bsb-profile {width:34px;height:34px;margin-left:8px}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-profile .bsb-avatar,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-profile .bsb-avatar,
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-profile .bsb-avatar {width:34px;height:34px;background:#215bc1;border:0;font:600 12px/1.5 var(--font);letter-spacing:.02em}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-profile .bsb-avatar,
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-profile .bsb-avatar {width:34px;height:34px;background:#215bc1;border:0;font:600 12px/1.5 var(--font);letter-spacing:.02em}
 .brawndo-workspace-pilot[data-visual-surface] .app-sidebar,
 .brawndo-workspace-pilot[data-additional-surface] .app-sidebar,
-.brawndo-workspace-pilot[data-cis-visual=true] .app-sidebar {width:240px;background:#071321;border-color:#263c58;top:60px;height:calc(100dvh - 60px)}
+.brawndo-workspace-pilot[data-cis-visual=true] .app-sidebar,
+.brawndo-workspace-pilot[data-shared-shell=true] .app-sidebar {width:240px;background:#071321;border-color:#263c58;top:60px;height:calc(100dvh - 60px)}
 .brawndo-workspace-pilot[data-visual-surface] .bsb,
 .brawndo-workspace-pilot[data-additional-surface] .bsb,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb {--sb-head:#edf3ff;--sb-text:#c9d6eb;--sb-muted:#a8bad5;--sb-hover:#13223a;--sb-active-bg:#25416a;--sb-active-text:#fff;--sb-border:#263c58;--sb-chip:#13223a;--sb-focus:var(--focus);--sb-accent:#fff;font-family:var(--font)}
-.brawndo-workspace-pilot[data-visual-surface] .bsb-head {padding:16px 12px 12px;gap:12px}
-.brawndo-workspace-pilot[data-visual-surface] .bsb-nav {padding:0 12px 16px;gap:2px}
-.brawndo-workspace-pilot[data-visual-surface] .bsb-group {gap:2px}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb {--sb-head:#edf3ff;--sb-text:#c9d6eb;--sb-muted:#a8bad5;--sb-hover:#13223a;--sb-active-bg:#25416a;--sb-active-text:#fff;--sb-border:#263c58;--sb-chip:#13223a;--sb-focus:var(--focus);--sb-accent:#fff;font-family:var(--font)}
+.brawndo-workspace-pilot[data-visual-surface] .bsb-head, .brawndo-workspace-pilot[data-shared-shell=true] .bsb-head {padding:16px 12px 12px;gap:12px}
+.brawndo-workspace-pilot[data-visual-surface] .bsb-nav, .brawndo-workspace-pilot[data-shared-shell=true] .bsb-nav {padding:0 12px 16px;gap:2px}
+.brawndo-workspace-pilot[data-visual-surface] .bsb-group, .brawndo-workspace-pilot[data-shared-shell=true] .bsb-group {gap:2px}
 .brawndo-workspace-pilot[data-visual-surface] .bsb-group-label,
 .brawndo-workspace-pilot[data-additional-surface] .bsb-group-label,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-group-label {font:600 11px/1.5 var(--font);letter-spacing:.06em}
-.brawndo-workspace-pilot[data-visual-surface] .bsb-group > .bsb-group-label {padding:0;margin:16px 10px 6px}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb-group-label,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb-group-label {font:600 11px/1.5 var(--font);letter-spacing:.06em}
+.brawndo-workspace-pilot[data-visual-surface] .bsb-group > .bsb-group-label, .brawndo-workspace-pilot[data-shared-shell=true] .bsb-group > .bsb-group-label {padding:0;margin:16px 10px 6px}
 .brawndo-workspace-pilot[data-visual-surface] .bsb-link,
 .brawndo-workspace-pilot[data-additional-surface] .bsb-link,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-link {min-height:0;gap:10px;padding:7px 10px;border:0;border-radius:7px;font:400 13px/1.5 var(--font)}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb-link,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb-link {min-height:0;gap:10px;padding:7px 10px;border:0;border-radius:7px;font:400 13px/1.5 var(--font)}
 .brawndo-workspace-pilot[data-visual-surface] .bsb-link svg,
 .brawndo-workspace-pilot[data-additional-surface] .bsb-link svg,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-link svg {width:16px;height:16px}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb-link svg,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb-link svg {width:16px;height:16px}
 .brawndo-workspace-pilot[data-visual-surface] .bsb-link.is-active,
 .brawndo-workspace-pilot[data-additional-surface] .bsb-link.is-active,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-link.is-active {background:#25416a;box-shadow:none;font-weight:600}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb-link.is-active,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb-link.is-active {background:#25416a;box-shadow:none;font-weight:600}
 .brawndo-workspace-pilot[data-visual-surface] .bsb-client,
 .brawndo-workspace-pilot[data-additional-surface] .bsb-client,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client {border-radius:8px;background:#13223a;border-color:#263c58}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb-client {border-radius:8px;background:#13223a;border-color:#263c58}
 .brawndo-workspace-pilot[data-visual-surface] .bsb-client-name,
 .brawndo-workspace-pilot[data-additional-surface] .bsb-client-name,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client-name {font-size:13.5px;font-weight:600}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client-name,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb-client-name {font-size:13.5px;font-weight:600}
 .brawndo-workspace-pilot[data-visual-surface] .bsb-back,
 .brawndo-workspace-pilot[data-additional-surface] .bsb-back,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-back {font:400 12.5px/1.5 var(--font);color:#a8bad5}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb-back,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb-back {font:400 12.5px/1.5 var(--font);color:#a8bad5}
 .brawndo-workspace-pilot[data-visual-surface] .app-workspace {background:var(--bg)}
 .brawndo-workspace-pilot[data-visual-surface] .client-surface {padding:0;background:transparent;min-height:0}
 .brawndo-workspace-pilot[data-visual-surface] :is(.bpage-head,.bd-header) h1 {font:650 24px/1.5 var(--font);letter-spacing:-.025em}
@@ -182,8 +212,8 @@ html[data-visual-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-sele
 :root[data-visual-surface][data-visual-theme=dark] .ui-overlay[data-state] {background:rgba(0,0,0,.6)}
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) :is(input,select,textarea){font:13px/1.5 var(--font);border-color:var(--border-strong);background:var(--surface);color:var(--fg);border-radius:7px}
 html[data-visual-surface] :is(.ui-dialog,.ui-sheet) :is(button,a,input,select,textarea):focus-visible {outline:2px solid var(--focus);outline-offset:2px}
-@media(min-width:861px) and (max-width:1023px){.brawndo-workspace-pilot[data-visual-surface] .app-sidebar{display:flex}.brawndo-workspace-pilot[data-visual-surface] .bsb-link{justify-content:initial}.brawndo-workspace-pilot[data-visual-surface] .bsb-link>span,.brawndo-workspace-pilot[data-visual-surface] .bsb-client,.brawndo-workspace-pilot[data-visual-surface] .bsb-group-label{display:initial}.brawndo-workspace-pilot[data-visual-surface] .bsb-back{font-size:12.5px;justify-content:initial}.brawndo-workspace-pilot[data-visual-surface] .bsb-group{border:0;padding-top:0}}
-@media(max-width:860px){.brawndo-workspace-pilot[data-visual-surface]{--bwp-sidebar:0px}.brawndo-workspace-pilot[data-visual-surface] .bwp-mobile-nav{display:grid}.brawndo-workspace-pilot[data-visual-surface] .bwp-topbar{padding:0 16px;gap:16px}.brawndo-workspace-pilot[data-visual-surface] .bwp-brand{min-width:0;width:auto}.brawndo-workspace-pilot[data-visual-surface] .bwp-brand small,.brawndo-workspace-pilot[data-visual-surface] .bwp-search{display:none}.brawndo-workspace-pilot[data-visual-surface] .bwp-client{display:none}.brawndo-workspace-pilot[data-visual-surface] .bwp-theme{margin-left:auto}.brawndo-workspace-pilot[data-visual-surface][data-navigation=closed] .app-sidebar{display:none}.brawndo-workspace-pilot[data-visual-surface][data-navigation=open] .app-sidebar{position:fixed;display:flex;width:260px;z-index:45;left:0;top:60px}.brawndo-workspace-pilot[data-visual-surface] .bwp-nav-backdrop{display:block;inset:60px 0 0;background:var(--scrim)}}
+@media(min-width:861px) and (max-width:1023px){.brawndo-workspace-pilot[data-visual-surface] .app-sidebar,.brawndo-workspace-pilot[data-shared-shell=true] .app-sidebar{display:flex}.brawndo-workspace-pilot[data-visual-surface] .bsb-link,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-link{justify-content:initial}.brawndo-workspace-pilot[data-visual-surface] .bsb-link>span,.brawndo-workspace-pilot[data-visual-surface] .bsb-client,.brawndo-workspace-pilot[data-visual-surface] .bsb-group-label,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-group-label,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-link>span,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-client{display:initial}.brawndo-workspace-pilot[data-visual-surface] .bsb-back,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-back{font-size:12.5px;justify-content:initial}.brawndo-workspace-pilot[data-visual-surface] .bsb-group,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-group{border:0;padding-top:0}}
+@media(max-width:860px){.brawndo-workspace-pilot[data-visual-surface]{--bwp-sidebar:0px}.brawndo-workspace-pilot[data-visual-surface] .bwp-mobile-nav,.brawndo-workspace-pilot[data-shared-shell=true] .bwp-mobile-nav{display:grid}.brawndo-workspace-pilot[data-visual-surface] .bwp-topbar,.brawndo-workspace-pilot[data-shared-shell=true] .bwp-topbar{padding:0 16px;gap:16px}.brawndo-workspace-pilot[data-visual-surface] .bwp-brand,.brawndo-workspace-pilot[data-shared-shell=true] .bwp-brand{min-width:0;width:auto}.brawndo-workspace-pilot[data-visual-surface] .bwp-brand small,.brawndo-workspace-pilot[data-visual-surface] .bwp-search,.brawndo-workspace-pilot[data-shared-shell=true] .bwp-brand small,.brawndo-workspace-pilot[data-shared-shell=true] .bwp-search{display:none}.brawndo-workspace-pilot[data-visual-surface] .bwp-client,.brawndo-workspace-pilot[data-shared-shell=true] .bwp-client{display:none}.brawndo-workspace-pilot[data-visual-surface] .bwp-theme,.brawndo-workspace-pilot[data-shared-shell=true] .bwp-theme{margin-left:auto}.brawndo-workspace-pilot[data-visual-surface][data-navigation=closed] .app-sidebar,.brawndo-workspace-pilot[data-shared-shell=true][data-navigation=closed] .app-sidebar{display:none}.brawndo-workspace-pilot[data-visual-surface][data-navigation=open] .app-sidebar,.brawndo-workspace-pilot[data-shared-shell=true][data-navigation=open] .app-sidebar{position:fixed;display:flex;width:260px;z-index:45;left:0;top:60px}.brawndo-workspace-pilot[data-visual-surface] .bwp-nav-backdrop,.brawndo-workspace-pilot[data-shared-shell=true] .bwp-nav-backdrop{display:block;inset:60px 0 0;background:var(--scrim)}}
 @media(prefers-reduced-motion:reduce){.brawndo-workspace-pilot[data-visual-surface] *{animation:none!important;transition:none!important}}
 .brawndo-workspace-pilot[data-visual-surface=portfolio] .bsb-link {color:var(--fg2)}
 .brawndo-workspace-pilot[data-visual-surface=portfolio] .bsb-link svg,.brawndo-workspace-pilot[data-visual-surface=portfolio] .bsb-group-label {color:var(--muted)}
@@ -191,9 +221,10 @@ html[data-visual-surface] :is(.ui-dialog,.ui-sheet) :is(button,a,input,select,te
 .brawndo-workspace-pilot[data-visual-surface=portfolio] .bsb-link.is-active svg {color:var(--rail)}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-topbar [data-testid=notification-bell],
 .brawndo-workspace-pilot[data-additional-surface] .bwp-topbar [data-testid=notification-bell],
-.brawndo-workspace-pilot[data-cis-visual=true] .bwp-topbar [data-testid=notification-bell] {display:grid;place-items:center;width:36px;height:36px;padding:0;color:#a8bad5;border-radius:8px}
+.brawndo-workspace-pilot[data-cis-visual=true] .bwp-topbar [data-testid=notification-bell],
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-topbar [data-testid=notification-bell] {display:grid;place-items:center;width:36px;height:36px;padding:0;color:#a8bad5;border-radius:8px}
 .brawndo-workspace-pilot[data-visual-surface=portfolio] .bwp-topbar [data-testid=notification-bell] {color:var(--fg2)}
-@media(max-width:520px) { .brawndo-workspace-pilot[data-visual-surface] .bwp-topbar [data-testid=notification-bell] {display:none} }
+@media(max-width:520px) { .brawndo-workspace-pilot[data-visual-surface] .bwp-topbar [data-testid=notification-bell], .brawndo-workspace-pilot[data-shared-shell=true] .bwp-topbar [data-testid=notification-bell] {display:none} }
 /* Full native records retain every tab and command inside the target side-panel frame. */
 html[data-visual-surface]:not([data-visual-surface=portfolio]) .ui-dialog[data-testid$="-drawer"][data-state] {inset:0 0 0 auto;transform:none;width:min(520px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;display:flex;flex-direction:column;gap:0;padding:0;border:0;border-left:1px solid var(--border);border-radius:0;overflow:hidden;box-shadow:var(--shadow);animation:none}
 html[data-visual-surface]:not([data-visual-surface=portfolio]) .ui-dialog[data-testid$="-drawer"] > .border-b,html[data-visual-surface]:not([data-visual-surface=portfolio]) .ui-dialog[data-testid$="-drawer"] > .ticket-heading {padding:18px 20px 16px 24px;flex:none;margin:0;border-bottom:1px solid var(--border)}
@@ -213,36 +244,33 @@ html[data-visual-surface] {color-scheme:normal}
 html[data-visual-surface][data-visual-theme=dark] {color-scheme:dark}
 
 .bsb-client-industry {display:none}
-.brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bsb-client .bsb-group-label {display:none}
+.brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bsb-client .bsb-group-label, .brawndo-workspace-pilot[data-shared-shell=true] .bsb-client .bsb-group-label {display:none}
 .brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bsb-client-mark,
 .brawndo-workspace-pilot[data-additional-surface] .bsb-client-mark,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client-mark {width:30px;height:30px;font-size:13px}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client-mark,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb-client-mark {width:30px;height:30px;font-size:13px}
 .brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bsb-client-name,
 .brawndo-workspace-pilot[data-additional-surface] .bsb-client-name,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client-name {font-size:13.5px;line-height:1.3}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client-name,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb-client-name {font-size:13.5px;line-height:1.3}
 .brawndo-workspace-pilot[data-visual-surface]:not([data-visual-surface=portfolio]) .bsb-client-industry,
 .brawndo-workspace-pilot[data-additional-surface] .bsb-client-industry,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client-industry {display:block;font:400 11.5px/1.5 var(--font);color:#a8bad5}
+.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client-industry,
+.brawndo-workspace-pilot[data-shared-shell=true] .bsb-client-industry {display:block;font:400 11.5px/1.5 var(--font);color:#a8bad5}
 /* Match the reference's separate navigation row and client-card margins. */
-.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-head {
+.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-head,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-head {
   display:grid; gap:2px; padding:16px 12px 2px;
 }
-.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-back,
-.brawndo-workspace-pilot[data-additional-surface] .bsb-back,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-back {
+.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-back,.brawndo-workspace-pilot[data-additional-surface] .bsb-back,.brawndo-workspace-pilot[data-cis-visual=true] .bsb-back,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-back {
   display:flex; align-self:stretch; width:100%; gap:10px; padding:7px 10px;
   border-radius:7px; font:400 13px/1.5 var(--font); color:#c9d6eb;
 }
-.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-back svg,
-.brawndo-workspace-pilot[data-additional-surface] .bsb-back svg,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-back svg {
+.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-back svg,.brawndo-workspace-pilot[data-additional-surface] .bsb-back svg,.brawndo-workspace-pilot[data-cis-visual=true] .bsb-back svg,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-back svg {
   width:16px; height:16px; flex:none;
 }
-.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-client {
+.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-client,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-client {
   margin:8px 0 2px;
 }
-.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-client-mark,
-.brawndo-workspace-pilot[data-additional-surface] .bsb-client-mark,
-.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client-mark {
+.brawndo-workspace-pilot:is([data-visual-surface=dashboard],[data-visual-surface=calendar],[data-visual-surface=reviews],[data-visual-surface=actions],[data-visual-surface=risks]) .bsb-client-mark,.brawndo-workspace-pilot[data-additional-surface] .bsb-client-mark,.brawndo-workspace-pilot[data-cis-visual=true] .bsb-client-mark,.brawndo-workspace-pilot[data-shared-shell=true] .bsb-client-mark {
   border-radius:8px; background:#25416a; color:#edf3ff; box-shadow:inset 0 0 0 1px #263c58;
 }

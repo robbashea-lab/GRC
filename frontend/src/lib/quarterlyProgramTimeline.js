@@ -7,6 +7,7 @@ import {ticketStage} from './remediationTickets';
 import {riskIsClosed} from './riskRegister';
 import {isOpen} from './grcWork';
 import {cisClientProgram} from './cisExperience';
+import {sharedClientPrograms} from './sharedExperience';
 import {reviewExecutions} from './brawndoDemoReviews';
 
 export const QUARTERLY_REVIEW_LEGEND = [
@@ -32,8 +33,12 @@ export const QUARTERLY_RISK_LEGEND = [
 // Chart-local state identity only; the native route and commands still authorize access.
 export function quarterlyChartScope(user,workspaceMode,currentClient) {
   const program=cisClientProgram(currentClient);
-  return JSON.stringify([user?.user_id,user?.role,Array.isArray(user?.client_ids)?[...user.client_ids].sort():[],
-    workspaceMode,user?.workspace_mode,currentClient?.client_id,program?.programId,program?.implementationGroup,program?.version]);
+  const identity=[user?.user_id,user?.role,Array.isArray(user?.client_ids)?[...user.client_ids].sort():[],
+    workspaceMode,user?.workspace_mode,currentClient?.client_id,program?.programId,program?.implementationGroup,program?.version];
+  // Enrollment/category changes withdraw old chart popups without changing native records or dates.
+  const otherPrograms=sharedClientPrograms(currentClient).filter(item=>item.frameworkKey!=='cis-ig1')
+    .map(item=>[item.programId,item.version,item.frameworkKey==='soc-2'?[...item.configuration.categories].sort():null]);
+  return JSON.stringify(otherPrograms.length?[...identity,otherPrograms]:identity);
 }
 
 // Match the native Calendar's viewer-local day while retaining literal due dates.

@@ -1,10 +1,10 @@
-import {cisExperienceEligible} from './cisExperience';
+import {sharedExperienceEligible} from './sharedExperience';
 // Presentation only. OrgContext resolves this object from the authorized client list.
 // Gate-only rollback: set this constant to false; no records or history are changed.
 export const BRAWNDO_DEMO_DASHBOARD_ENABLED = true;
 
 export function brawndoDemoDashboard(context) {
-  return BRAWNDO_DEMO_DASHBOARD_ENABLED && cisExperienceEligible(context) && context.pathname === '/dashboard';
+  return BRAWNDO_DEMO_DASHBOARD_ENABLED && sharedExperienceEligible(context) && context.pathname === '/dashboard';
 }
 
 // Do not infer enrollment, version or group from a label or a default.
