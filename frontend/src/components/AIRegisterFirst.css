@@ -20,3 +20,12 @@
 :root .ui-dialog.airf-dialog[data-state]{width:min(1120px,calc(100vw - 40px));max-width:1120px;max-height:calc(100dvh - 36px);overflow:hidden;border-radius:12px;box-shadow:0 24px 90px #06132b40}
 :root .ui-overlay[data-state]:has(+ .ui-dialog.airf-dialog){background:#05132870;backdrop-filter:blur(3px)}
 @media(max-width:650px){:root .ui-dialog.airf-dialog[data-state]{width:calc(100vw - 18px);max-height:calc(100dvh - 18px)}}
+
+/* Keep the six native body columns independent of the approved spanning controls row. */
+.airf .native-controls-row>th{width:auto;padding:12px 17px}
+.airf .native-column-controls{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.airf .native-column-controls .column-control{font-size:10px;font-weight:500}
+.airf .table-filter-chips{padding:8px 17px}
+.airf .table-filter-chips button[aria-label]{border:1px solid var(--color-border);background:var(--color-bg-surface)}
+.airf .table-filter-chips button[aria-label]:hover{background:var(--color-bg-subtle)}
+.airf .archive-toggle[aria-pressed="true"]{color:var(--blue);text-decoration:underline;text-underline-offset:3px}

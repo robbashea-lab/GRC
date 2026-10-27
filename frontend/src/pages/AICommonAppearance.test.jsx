@@ -139,7 +139,7 @@ test.each(['demo','standard'].flatMap(mode=>['cis-ig1','iso-27001','soc-2'].map(
     const before=JSON.stringify(records);await render();
     expect([...host.querySelectorAll('.metric-label')].map(node=>node.textContent)).toEqual(['AI systems','High risk','Pending approval','Needing attention']);
     expect([...host.querySelectorAll('.filter-chip')].map(node=>node.dataset.testid)).toEqual(['active','due','high','third','customer','pending'].map(value=>'ai-system-view-'+value));
-    expect([...host.querySelectorAll('.table-scroll th')].map(node=>node.textContent)).toEqual(['AI system','Screening','Approval','Owner','Risk register','Expand']);
+    expect([...host.querySelectorAll('.table-scroll .register-headings th')].map(node=>node.textContent)).toEqual(['AI system','Screening','Approval','Owner','Risk register','Expand']);
     expect(host.textContent).not.toContain('More controls');
     const attention=host.querySelector('[aria-label="Needing attention 4"]');expect(attention).not.toBeNull();
     await click(attention);
