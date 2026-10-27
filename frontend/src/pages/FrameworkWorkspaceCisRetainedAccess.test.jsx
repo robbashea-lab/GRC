@@ -5,7 +5,7 @@ import FrameworkWorkspace from './FrameworkWorkspace';
 import CisResultTable from '@/components/CisResultTable';
 import {cis,FRAMEWORKS} from '@/lib/frameworks';
 import api from '@/lib/api';
-import {cisClient} from '@/testUtils/cisExperience';
+import {cisClient,cisWorkspace} from '@/testUtils/cisExperience';
 
 let mockAuth,mockOrg,mockOmniProps;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -18,9 +18,10 @@ jest.mock('@/components/RecordDrawer',()=>()=>null);
 // dialog focus/portals are independent of this access regression and covered elsewhere.
 jest.mock('@/components/AssessmentLayout',()=>({__esModule:true,default:({children})=><div>{children}</div>,AssessmentChecklist:()=>null,AssessmentRequirement:()=>null}));
 jest.mock('@/components/ui/dialog',()=>{
-  const R=require('react');
-  return {Dialog:({open,children})=>open?<div>{children}</div>:null,
-    DialogContent:R.forwardRef(({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,onEscapeKeyDown,...props},ref)=><div ref={ref} {...props}>{children}</div>),
+  const R=require('react'),CloseContext=R.createContext(()=>{});
+  return {Dialog:({open,children,onOpenChange})=>open?<CloseContext.Provider value={onOpenChange}><div>{children}</div></CloseContext.Provider>:null,
+    DialogClose:R.forwardRef(({children,...props},ref)=>{const close=R.useContext(CloseContext);return <button ref={ref} type="button" {...props} onClick={()=>close(false)}>{children}</button>;}),
+    DialogContent:R.forwardRef(({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,onEscapeKeyDown,showCloseButton,...props},ref)=><div ref={ref} {...props}>{children}</div>),
     DialogTitle:R.forwardRef(({children,...props},ref)=><h2 ref={ref} {...props}>{children}</h2>),DialogDescription:({children})=><p>{children}</p>};
 });
 jest.mock('@/components/ui/sheet',()=>{
@@ -53,7 +54,7 @@ function fixture(){
 }
 function LocationReceipt(){const location=useLocation();return <output data-testid="location">{location.pathname+location.search}</output>;}
 let root,host,data;
-const render=(entry='/compliance/cis-ig1')=>act(async()=>root.render(<MemoryRouter initialEntries={[entry]}><LocationReceipt/><FrameworkWorkspace frameworkKey="cis-ig1" clientId="demo_brawndo"/></MemoryRouter>));
+const render=(entry='/compliance/cis-ig1')=>act(async()=>root.render(<MemoryRouter initialEntries={[entry]}><LocationReceipt/><FrameworkWorkspace frameworkKey="cis-ig1" clientId={mockOrg.currentClientId}/></MemoryRouter>));
 const button=(scope,name)=>[...scope.querySelectorAll('button')].find(element=>element.textContent.trim()===name);
 async function click(element){expect(element).toBeTruthy();await act(async()=>element.click());}
 async function search(value){
@@ -87,6 +88,58 @@ beforeEach(()=>{
   host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);
 });
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.clearAllMocks();});
+
+function configureNativeGroup(group){
+  const client=cisClient('synthetic-cis-context-'+group,group);
+  sessionStorage.setItem('grc_client_id',client.client_id);
+  mockOrg={...mockOrg,currentClientId:client.client_id,currentClient:client,clients:[client]};
+  data=cisWorkspace(client.client_id,group);
+  data.work=Object.fromEntries(data.assessments.map(row=>[row.framework_assessment_id,work()]));
+  return client;
+}
+
+test.each([1,2,3])('native IG%s assessment breadcrumb matches configured context and retains exact route/close behavior',async group=>{
+  const client=configureNativeGroup(group),record=data.assessments.find(row=>row.definition_id==='1.1'),before=JSON.stringify(data);
+  const entry='/compliance/cis-ig1?'+new URLSearchParams({client_id:client.client_id,assessment:record.framework_assessment_id});
+  await render(entry);
+  const assessment=()=>host.querySelector('[data-testid="brawndo-cis-assessment"]');
+  expect(assessment()).toBeTruthy();
+  const breadcrumb=assessment().querySelector(`[aria-label="CIS IG${group} location"]`);
+  expect(breadcrumb).toBeTruthy();
+  expect(breadcrumb.querySelector('li').textContent).toBe(`CIS IG${group}`);
+  expect(assessment().querySelector('h2').textContent).toBe(cis.requirements.find(row=>row.id==='1.1').title);
+  expect(api.get).toHaveBeenCalledWith(`/framework_assessments/${record.framework_assessment_id}/related`,expect.any(Object));
+  expect(host.querySelector('[data-testid="location"]').textContent).toBe(entry);
+  await click(button(assessment(),'Close'));
+  expect(assessment()).toBeNull();
+  expect(host.querySelector('[data-testid="location"]').textContent).toBe('/compliance/cis-ig1?client_id='+client.client_id);
+  expect(host.querySelector('.now-head p').textContent).toBe(`0 of ${data.active_definition_ids.length} safeguards implemented`);
+  await click(host.querySelector('.head-actions .primary'));
+  expect(assessment()).toBeTruthy();
+  const location=new URL(host.querySelector('[data-testid="location"]').textContent,'http://localhost');
+  expect(location.searchParams.get('assessment')).toBe(record.framework_assessment_id);
+  expect(location.searchParams.get('client_id')).toBe(client.client_id);
+  await click(button(assessment(),`CIS IG${group}`));
+  expect(assessment()).toBeNull();
+  expect(host.querySelector('[data-testid="location"]').textContent).toBe('/compliance/cis-ig1?client_id='+client.client_id);
+  expect(JSON.stringify(data)).toBe(before);
+  ['patch','put','post','delete'].forEach(method=>expect(api[method]).not.toHaveBeenCalled());
+});
+
+test.each([1,2])('native IG%s retained caption names current scope without including retained records in totals',async group=>{
+  const client=configureNativeGroup(group),definition=cis.requirements.find(row=>row.implementation_group===group+1);
+  const record={...data.assessments[0],framework_assessment_id:client.client_id+':'+definition.id,definition_id:definition.id};
+  data.definitions.push({...definition});data.assessments.push(record);data.work[record.framework_assessment_id]=work();
+  const before=JSON.stringify(data),activeCount=data.active_definition_ids.length;
+  await render('/compliance/cis-ig1?client_id='+client.client_id);
+  expect(retained()).toBeNull();await click(toggle());
+  expect(retained().textContent).toContain(`These records are outside the current IG${group} scope and excluded from active program totals.`);
+  expect(retained().querySelectorAll('tbody tr')).toHaveLength(1);
+  expect(retained().querySelector(`[data-testid="requirement-${definition.id}"]`)).toBeTruthy();
+  expect(host.querySelector('.now-head p').textContent).toBe(`0 of ${activeCount} safeguards implemented`);
+  expect(JSON.stringify(data)).toBe(before);
+  ['patch','put','post','delete'].forEach(method=>expect(api[method]).not.toHaveBeenCalled());
+});
 
 test('retained toggle, search and filter open exact native records and management history without changing active IG1 totals',async()=>{
   const before=JSON.stringify(data);await render();expectActiveScope();
