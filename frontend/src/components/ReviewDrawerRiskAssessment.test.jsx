@@ -2,8 +2,9 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ReviewDrawer from './ReviewDrawer';
 import api from '@/lib/api';
-import {ids,saveStore} from '@/preview/store';
+import {ids,readStore,saveStore} from '@/preview/store';
 import {rememberClient} from '@/lib/clientSelection';
+import {reviewExecutions} from '@/lib/brawndoDemoReviews';
 import {toast} from 'sonner';
 
 let mockAuth,mockOrg;
@@ -193,4 +194,53 @@ test('late scope resolution loads current Risk information and ignores the prior
   expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
   await complete(target.framework);expect(completion(post,target.review).risk_assessment).toEqual({});
   expectUnchanged(target.risk,await riskRow(target.risk));expect((await riskHistory(target.risk))[0].outcome).toBe('Reviewed — No Change');
+});
+
+const historicalSummary=()=>[...document.querySelectorAll('.review-workflow-body > p.text-sm')].find(value=>value.textContent.startsWith('Completed ')||value.textContent==='Cancelled');
+async function closedRiskReview(){
+  const target=await fixture('cis-ig1');await api.post('/risks/'+target.risk.risk_id+'/close',{reason:'remediated'});
+  target.risk=await riskRow(target.risk);target.review=await reviewRow(target.review);
+  expect(target.risk.status).toBe('closed');expect(target.review.status).toBe('cancelled');return target;
+}
+function expectFrozenReview(){
+  expect(node('review-complete')).toBeNull();expect(node('review-start')).toBeNull();expect(node('drawer-save')).toBeNull();
+  expect(document.querySelector('[aria-label="Review recommendation"]')).toBeNull();
+  expect(document.querySelector('[aria-label="Review assessment rationale"]').disabled).toBe(true);
+}
+
+test.each(['recorded cancellation','missing cancellation metadata'])('a cancelled native Risk Review history entry never claims completion (%s)',async mode=>{
+  const target=await closedRiskReview(),execution=reviewExecutions([target.review])[0].execution;
+  expect(execution.status).toBe('cancelled');expect(execution.completed_at).toBeUndefined();
+  // Retained rows may lack cancellation metadata or still carry unrelated old completion fields.
+  const occurrence=mode==='recorded cancellation'?execution:{...execution,cancelled_at:undefined,cancelled_by:undefined,completed_at:'2025-01-01T00:00:00Z',completed_by_name:'Unrelated completion actor',outcome:'Old completion outcome'};
+  const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');await renderReview(target,{initialValues:{occurrence}});
+  expect(historicalSummary()?.textContent).toBe('Cancelled');expect(document.body.textContent).not.toContain('Legacy completion');
+  expect(document.body.textContent).not.toContain('Completed — by Unassigned');expectFrozenReview();
+  expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
+  expect(await reviewRow(target.review)).toEqual(target.review);expect(await riskRow(target.risk)).toEqual(target.risk);
+});
+
+test('a current cancelled native Risk Review remains frozen without a completion summary or writes',async()=>{
+  const target=await closedRiskReview(),post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');await renderReview(target);
+  expect(historicalSummary()).toBeUndefined();expect(document.body.textContent).not.toContain('Legacy completion');expectFrozenReview();
+  expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();expect(await reviewRow(target.review)).toEqual(target.review);
+});
+
+test('a genuinely completed native occurrence retains its recorded date, actor and outcome',async()=>{
+  const target=await fixture('cis-ig1'),done=(await api.post('/reviews/'+target.review.review_id+'/complete',{occurrence_id:target.review.current_occurrence_id,risk_assessment:{},risk_outcome:'Reviewed — No Change'})).data;
+  target.review=done.review;const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');await renderReview(target,{initialValues:{occurrence:done.occurrence}});
+  const day=new Date(done.occurrence.completed_at.slice(0,10)+'T00:00:00').toLocaleDateString();
+  expect(historicalSummary().textContent).toBe(`Completed ${day} by ${done.occurrence.completed_by_name} · Reviewed — No Change`);
+  expect(node('review-complete')).toBeNull();expect(node('drawer-save')).toBeNull();expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
+});
+
+test('retained legacy completed history still reports its original actor and Legacy completion wording',async()=>{
+  const target=await fixture('cis-ig1'),db=readStore(),legacyId='synthetic-qa007-legacy-completed';
+  db.users.push({user_id:'retained-qa007-actor',name:'Retained legacy actor',role:'client_contributor',status:'active',client_ids:[target.review.client_id]});
+  db.reviews.push({review_id:legacyId,client_id:target.review.client_id,title:'Retained legacy Review',review_type:'access',status:'completed',recurrence:'none',due_date:'2025-01-01',completion_date:'2025-01-02T12:00:00Z',completion_snapshot:{by:'retained-qa007-actor'}});saveStore(db);
+  const review=(await api.get('/reviews/'+legacyId)).data,occurrence=(await api.get('/reviews/'+legacyId+'/history')).data[0];expect(occurrence.legacy).toBe(true);
+  const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');await renderReview({review},{initialValues:{occurrence}});
+  const day=new Date(occurrence.completed_at.slice(0,10)+'T00:00:00').toLocaleDateString();
+  expect(historicalSummary().textContent).toBe(`Completed ${day} by Retained legacy actor · Legacy completion`);
+  expect(node('review-complete')).toBeNull();expect(node('drawer-save')).toBeNull();expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
 });
