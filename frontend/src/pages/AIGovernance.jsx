@@ -70,7 +70,10 @@ function AIWorkspace({identity}){
   // Attention and inactive controls remain separate from these established filters.
   const nativeRegister=additional&&!priorSharedRegister&&!referenceWorkflow?{
     searchedRows:searched,applyRows:table.apply,
-    filters:Object.fromEntries(presets.filter(([id])=>['due','high','third','customer'].includes(id)).map(([id,,test])=>[id,test])),
+    filters:{
+      ...Object.fromEntries(presets.filter(([id])=>['due','high','third','customer'].includes(id)).map(([id,,test])=>[id,test])),
+      attention:aiNeedsAttention,
+    },
     screening:row=>row.risk_tier?<SeverityBadge value={row.risk_tier}/>:<span className="register-empty">Not screened</span>,
   }:null;
   const writable=isInternal(user);

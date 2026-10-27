@@ -2,7 +2,7 @@ import {Fragment,useRef,useState} from 'react';
 import {Cpu,FileText,ChevronDown,Plus,Grid2X2,Shield,Clock,TriangleAlert,Search,X} from 'lucide-react';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {attentionFor,catalogKeys,tools} from '@/lib/aiOnboarding';
-import {aiApproval,aiNeedsAttention} from '@/lib/brawndoAI';
+import {aiApproval} from '@/lib/brawndoAI';
 import logos from '@/lib/aiOnboardingLogos.json';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import './AIRegisterFirst.css';
@@ -55,7 +55,7 @@ export default function AIRegisterFirst({clientName,rows,users,intake,canCreate,
     if(filter==='due')return dateLabel(row.next_review)!=='Not recorded'&&row.next_review.slice(0,10)>=today&&row.next_review.slice(0,10)<=until;
     if(filter==='third')return !!(row.vendor_id||row.provider||row.screening?.third_party);
     if(filter==='customer')return row.purposes?.includes('Customer-Facing')||row.screening?.customer_facing===true;
-    if(filter==='attention')return aiNeedsAttention(row);
+    if(filter==='attention')return tier==='High'||tier==='Needs assessment'||pending(row)||dateLabel(row.next_review)!=='Not recorded'&&row.next_review.slice(0,10)<today;
     return true;
   };
   const active=rows.filter(row=>!inactive(row));

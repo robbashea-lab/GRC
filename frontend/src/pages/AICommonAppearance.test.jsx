@@ -123,6 +123,30 @@ test.each(['demo','standard'])('%s Needing attention uses saved alerts rather th
   expect(JSON.stringify(records)).toBe(before);expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
+test.each(['demo','standard'].flatMap(mode=>['cis-ig1','iso-27001','soc-2'].map(framework=>[mode,framework])))(
+  '%s %s preserves the approved Brawndo attention card, filters and register',async(mode,framework)=>{
+    context(mode,framework);
+    const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    const records=[
+      {...row,ai_system_id:'high-without-alert',name:'High without a saved alert',risk_tier:'high',alerts:[]},
+      {...row,ai_system_id:'low-with-alert',name:'Low with a saved alert',risk_tier:'low',alerts:[{key:'owner'}]},
+      {...row,ai_system_id:'pending-low',name:'Pending low',risk_tier:'low',approval_status:'pending_assessment',alerts:[]},
+      {...row,ai_system_id:'overdue-low',name:'Overdue low',risk_tier:'low',next_review:yesterday,alerts:[]},
+      {...row,ai_system_id:'uncertain',name:'Screening not assessed',alerts:[]},
+      {...row,ai_system_id:'retired-high',name:'Retired high',risk_tier:'high',status:'retired',alerts:[]},
+    ],get=api.get.getMockImplementation();
+    api.get.mockImplementation(path=>path==='/ai_systems'?Promise.resolve({data:records}):get(path));
+    const before=JSON.stringify(records);await render();
+    expect([...host.querySelectorAll('.metric-label')].map(node=>node.textContent)).toEqual(['AI systems','High risk','Pending approval','Needing attention']);
+    expect([...host.querySelectorAll('.filter-chip')].map(node=>node.dataset.testid)).toEqual(['active','due','high','third','customer','pending'].map(value=>'ai-system-view-'+value));
+    expect([...host.querySelectorAll('.table-scroll th')].map(node=>node.textContent)).toEqual(['AI system','Screening','Approval','Owner','Risk register','Expand']);
+    expect(host.textContent).not.toContain('More controls');
+    const attention=host.querySelector('[aria-label="Needing attention 4"]');expect(attention).not.toBeNull();
+    await click(attention);
+    expect([...host.querySelectorAll('.system-name strong')].map(node=>node.textContent)).toEqual(['High without a saved alert','Pending low','Overdue low','Screening not assessed']);
+    expect(JSON.stringify(records)).toBe(before);expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+  });
+
 test.each(['demo','standard'].flatMap(mode=>[null,'general','hipaa','nist-csf-2','cmmc'].map(framework=>[mode,framework])))('%s %s retained generic AI preserves native missing/overdue dates and provider-only Third-Party meaning',async(mode,framework)=>{
   context(mode,framework);
   const today=new Date().toISOString().slice(0,10),day=Date.parse(today+'T12:00:00Z');
