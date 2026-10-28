@@ -65,6 +65,47 @@ const expectSizing=enabled=>{
 
 const eligibleRoutes=['/dashboard','/calendar','/reviews','/action-items','/compliance/cis-ig1','/risks','/policies','/vendors','/ai-governance'];
 
+test.each(['demo','standard'].flatMap(mode=>['super_admin','platform_admin'].map(role=>[mode,role])))(
+  '%s %s Administration shares native shell geometry without requiring any client',async(mode,role)=>{
+    setContext('unused-client',1,mode,role);
+    mockOrg={currentClientId:null,currentClient:null,clients:[],loading:true,error:'No client selected'};
+    const before=JSON.stringify({auth:mockAuth,org:mockOrg});
+    let input;
+    for(const pathname of ['/admin/clients','/admin/users','/admin/roles','/admin/security','/admin/audit']) {
+      mockLocation={pathname,search:''};await render();
+      expect(shell().getAttribute('data-shared-shell')).toBe('true');expectSizing(false);
+      expect(shell().hasAttribute('data-additional-surface')).toBe(false);
+      expect(shell().hasAttribute('data-visual-surface')).toBe(false);
+      expect(host.querySelector('.bwp-native-tagline').textContent).toBe('CLARITY FOR A STRONGER TOMORROW');
+      if(input)expect(host.querySelector('label input')).toBe(input);
+      input=host.querySelector('label input');
+    }
+    expect(JSON.stringify({auth:mockAuth,org:mockOrg})).toBe(before);
+    expect(mockMounts).toBe(1);expect(mockUnmounts).toBe(0);expect(api.get).not.toHaveBeenCalled();
+    for(const pathname of ['/admin','/admin/clients/other','/platform/security','/clients']) {
+      mockLocation={pathname,search:''};await render();expect(shell().hasAttribute('data-shared-shell')).toBe(false);
+    }
+  }
+);
+
+test.each(['demo','standard'])('%s unresolved or unauthorized actors cannot enable Administration chrome',async mode=>{
+  const invalidations=[
+    ()=>{mockAuth.loading=true;},()=>{mockAuth.error='Identity unavailable';},()=>{mockAuth.user=null;},
+    ()=>{mockAuth.user.user_id=null;},()=>{mockAuth.user.role='unknown';},
+    ()=>{mockAuth.user.role='client_contributor';},()=>{mockAuth.user.role='client_readonly';},
+    ()=>{mockAuth.user.password_change_required=true;},
+    ()=>{mockAuth.user.workspace_mode=mode==='demo'?'standard':'demo';},
+    ()=>{require('@/lib/api').PREVIEW_MODE=mode!=='demo';},
+  ];
+  for(const invalidate of invalidations) {
+    setContext('unused',1,mode);mockLocation={pathname:'/admin/clients',search:''};
+    mockOrg={currentClientId:null,currentClient:null,clients:[]};
+    await render();expect(shell().getAttribute('data-shared-shell')).toBe('true');
+    invalidate();await render();expect(shell().hasAttribute('data-shared-shell')).toBe(false);
+  }
+  expect(api.get).not.toHaveBeenCalled();
+});
+
 test.each(['demo','standard'])('%s native navigation destinations retain the existing shell without activating page or portal presentation',async mode=>{
   setContext(`navigation-${mode}`,1,mode);
   await render();

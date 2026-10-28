@@ -9,11 +9,12 @@ import PageHeader from "@/components/PageHeader";
 import ClientDialog from "@/components/ClientDialog";
 import TablePagination from '@/components/TablePagination';
 import ClientRelationshipValue from '@/components/ClientRelationshipValue';
+import ClientIdentityMark from '@/components/ClientIdentityMark';
 import {primaryContact, grcLead} from '@/lib/clientRelationships';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ClientManagement() {
@@ -76,30 +77,32 @@ export default function ClientManagement() {
     finally { setBusy(null); }
   }
   if (!authorized) return <div role="alert" className="page-content">Client Management is available to platform administrators only.</div>;
-  return <div>
+  return <div className="admin-page admin-clients-page">
     <PageHeader title="Client Management" subtitle="Manage client organizations, ownership, and lifecycle."
       action={<Button ref={addClientButton} size="sm" onClick={event => {dialogOpener.current=event.currentTarget; setDialog({ client: null });}} data-testid="add-client-button" className="bg-primary hover:bg-primary/90"><Plus className="h-3.5 w-3.5 mr-1" /> Add Client</Button>} />
-    <div className="page-gutter py-4 space-y-4">
-      <div className="flex items-center gap-3 flex-wrap">
-        <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search client, industry, GRC lead..." aria-label="Search client organizations" className="max-w-sm" />
+    <div className="admin-body">
+      <section className="admin-panel" aria-label="Client organizations">
+      <div className="admin-panel-head"><div><h2>Client organizations</h2><p>Ownership, program condition and client lifecycle.</p></div><span className="admin-record-meta">{clients.length} clients</span></div>
+      <div className="admin-toolbar">
+        <div className="admin-search"><Search aria-hidden="true" /><Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search client, industry, GRC lead..." aria-label="Search client organizations" /></div>
         <select aria-label="Client status" value={status} onChange={e => setStatus(e.target.value)} className="rounded-md border border-line bg-surface-card p-2 text-sm">
           <option value="all">All statuses</option><option value="active">Active</option><option value="onboarding">Onboarding</option><option value="inactive">Inactive</option><option value="archived">Archived</option>
         </select>
-        <span className="text-xs text-ink-help">{rows.length} clients</span>
+        <span className="admin-matching">{rows.length} matching</span>
       </div>
       {error && <div role="alert">{error} <Button variant="outline" onClick={load}>Retry</Button></div>}
       <TableFilterChips table={table} />
-      <div className="register-table-frame overflow-x-auto rounded-lg border border-line bg-surface-card">
-        <table className="w-full text-sm" data-testid="client-management-table">
+      <div className="admin-table-wrap">
+        <table className="admin-table admin-clients-table" data-testid="client-management-table">
           <thead className="bg-surface-subtle"><tr>{columns.map(c => <th key={c.key} className="tbl-cell text-left font-medium"><ColumnControl table={table} column={c} /></th>)}<th className="tbl-cell text-left font-medium">Actions</th></tr></thead>
           <tbody className="divide-y divide-line">
             {loading ? <tr><td colSpan={6} className="tbl-cell">Loading clients…</td></tr> : rows.slice((currentPage - 1) * 25, currentPage * 25).map(c => <tr key={c.client_id} className="row-hover">
-              <td className="tbl-cell"><button className="text-link hover:text-link-hover" onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}>{c.name}</button></td>
+              <td className="tbl-cell"><div className="admin-client-identity"><span className="admin-client-logo" aria-hidden="true"><ClientIdentityMark client={c} /></span><button className="admin-record-link" onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}>{c.name}</button></div></td>
               <td className="tbl-cell">{c.industry || "—"}</td>
               <td className="tbl-cell"><ClientRelationshipValue client={c} /></td>
-              <td className="tbl-cell capitalize">{(programs[c.client_id] || "—").replaceAll("_", " ")}</td>
-              <td className="tbl-cell capitalize">{c.status || "active"}</td>
-              <td className="tbl-cell"><div className="flex gap-2">
+              <td className="tbl-cell capitalize"><span className="admin-badge" data-status={programs[c.client_id]}>{(programs[c.client_id] || "—").replaceAll("_", " ")}</span></td>
+              <td className="tbl-cell capitalize"><span className="admin-badge" data-status={c.status || 'active'}>{c.status || "active"}</span></td>
+              <td className="tbl-cell"><div className="admin-row-actions">
                 <Button size="sm" variant="outline" onClick={event => {dialogOpener.current=event.currentTarget; setDialog({ client: c });}}>Edit</Button>
                 <Button size="sm" variant="outline" disabled={busy === c.client_id} onClick={event => {dialogOpener.current=event.currentTarget; setConfirmation(c);}}>{c.status === "archived" ? "Restore" : "Archive"}</Button>
               </div></td>
@@ -108,7 +111,8 @@ export default function ClientManagement() {
           </tbody>
         </table>
       </div>
-      <TablePagination page={currentPage} onPageChange={setPage} total={rows.length} />
+      <div className="admin-pagination"><TablePagination page={currentPage} onPageChange={setPage} total={rows.length} /></div>
+      </section>
     </div>
     <Dialog open={!!confirmation} onOpenChange={open => { if (!open) setConfirmation(null); }}>
       <DialogContent onCloseAutoFocus={returnFocus}><DialogHeader><DialogTitle>{confirmation?.status === 'archived' ? 'Restore' : 'Archive'} {confirmation?.name}</DialogTitle>
