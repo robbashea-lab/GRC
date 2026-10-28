@@ -157,6 +157,38 @@ const workDisclosure = (title, dialog = document.querySelector('[data-testid="en
   return button;
 };
 const workDetails = button => document.getElementById(button.getAttribute('aria-controls'));
+
+test.each(['name', 'next'])('named Demo Portfolio sort control applies %s and keeps it after the lead-view round trip', async sort => {
+  const rows = [
+    ['demo_prestige', 'Prestige Worldwide', '2026-10-21'],
+    ['demo_krusty_krab', 'The Krusty Krab', '2026-10-25'],
+    ['demo_initech', 'Initech', '2026-10-24'],
+    ['demo_dunder', 'Dunder Mifflin', '2026-10-22'],
+    ['demo_brawndo', 'Brawndo', null]
+  ].map(([client_id, name, next]) => ({
+    ...client, client_id, name, environment: 'Demo',
+    metric_items: {past_due: [], due_30d: next ? [{...item, key: client_id + '-next', entity_id: client_id + '-next', client_id, due_date: next}] : [], due_31_90d: []}
+  }));
+  api.get.mockImplementation(async path => ({data: path.endsWith('/overview')
+    ? {as_of: AT, clients: rows, programs: []} : {clients: rows}}));
+  await act(async () => root.render(<EnhancedPortfolio user={mockAuth.user}/>));
+  const visibleIds = () => [...host.querySelectorAll('[data-client-id]')].map(row => row.dataset.clientId);
+  const canonical = ['demo_brawndo', 'demo_initech', 'demo_krusty_krab', 'demo_dunder', 'demo_prestige'];
+  expect(visibleIds()).toEqual(canonical);
+  const select = host.querySelector('select[aria-label="Sort clients"]');
+  await act(async () => {select.value = sort; select.dispatchEvent(new Event('change', {bubbles: true}));});
+  const expected = sort === 'name'
+    ? ['demo_brawndo', 'demo_dunder', 'demo_initech', 'demo_prestige', 'demo_krusty_krab']
+    : ['demo_prestige', 'demo_dunder', 'demo_initech', 'demo_krusty_krab', 'demo_brawndo'];
+  expect(select.value).toBe(sort);
+  expect(visibleIds()).toEqual(expected);
+  await click('By lead'); await click('Clients');
+  expect(visibleIds()).toEqual(expected);
+  await act(async () => {select.value = 'attention'; select.dispatchEvent(new Event('change', {bubbles: true}));});
+  expect(visibleIds()).toEqual(canonical);
+  expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();
+});
+
 test('native work, consistent lead/KPI filters and exact navigation survive missing lead and programs', async () => {
   await act(async () => root.render(<EnhancedPortfolio user={{
     user_id: 'u'

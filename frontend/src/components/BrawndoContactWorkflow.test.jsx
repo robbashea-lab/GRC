@@ -34,6 +34,47 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();window.history.replaceState({},'','/');});
 
+test.each([1,2,3].flatMap(group=>[false,true].map(isNew=>[group,isNew])))('client-bound read-only role names arbitrary IG%s client (new invitation draft: %s) without granting access',async(group,isNew)=>{
+  const scopedClient={...client,client_id:'synthetic-qa003-ig'+group,name:'QA20261027-CIS'+group,framework_settings:{'cis-ig1':{implementation_group:group}}};
+  const scopedContact={...contact,client_id:scopedClient.client_id,linked_user_id:null};
+  api.get.mockImplementation(async path=>({data:path==='/clients/'+scopedClient.client_id?scopedClient:[]}));
+  await render(isNew?null:scopedContact,{clientId:scopedClient.client_id});
+  if(isNew){
+    const invite=[...document.querySelectorAll('input[type="checkbox"]')].find(node=>node.parentElement.textContent.includes('Invite to GoverNara'));
+    expect(invite.checked).toBe(false);expect(invite.disabled).toBe(false);
+    expect(document.querySelector('.roles')).toBeNull();await click(invite);
+  }else await click(button('Platform access'));
+  const cards=[...document.querySelectorAll('.roles button')],readOnly=cards.find(node=>node.querySelector('b').textContent==='Read only');
+  expect(cards.map(node=>node.querySelector('b').textContent)).toEqual(['GRC Manager','Contributor','Read only']);
+  expect(readOnly.querySelector('small').textContent).toBe(`Sees ${scopedClient.name}’s program. Can’t change records or be assigned work.`);
+  expect(readOnly.getAttribute('aria-pressed')).toBe('true');
+  expect(cards.every(node=>node.disabled===!isNew)).toBe(true);
+  if(!isNew){await click(cards.find(node=>node.querySelector('b').textContent==='Contributor'));expect(readOnly.getAttribute('aria-pressed')).toBe('true');}
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('client-bound read-only role preserves exact Brawndo wording and neutral missing-name context',async()=>{
+  await render(contact);await click(button('Platform access'));
+  const description=()=>[...document.querySelectorAll('.roles button')].find(node=>node.querySelector('b').textContent==='Read only').querySelector('small').textContent;
+  expect(description()).toBe('Sees Brawndo’s program. Can’t change records or be assigned work.');
+  const unnamed={...client,client_id:'synthetic-qa003-unnamed',name:''};
+  api.get.mockImplementation(async path=>({data:path==='/clients/'+unnamed.client_id?unnamed:[]}));
+  await render({...contact,client_id:unnamed.client_id,linked_user_id:null},{clientId:unnamed.client_id});
+  expect(description()).toBe('Sees the program. Can’t change records or be assigned work.');
+  expect([...document.querySelectorAll('.roles button')].every(node=>node.disabled)).toBe(true);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('client-bound read-only role change does not enable invitation or save for a reader',async()=>{
+  mockUser={...mockUser,role:'client_readonly'};
+  await render(null);
+  const invite=[...document.querySelectorAll('input[type="checkbox"]')].find(node=>node.parentElement.textContent.includes('Invite to GoverNara'));
+  expect(invite.checked).toBe(false);expect(invite.disabled).toBe(true);
+  await click(invite);expect(invite.checked).toBe(false);expect(document.querySelector('.roles')).toBeNull();
+  expect(button('Create contact')).toBeUndefined();
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
 test('new contact uses unique input IDs and creates no account without the explicit invitation',async()=>{
   await render(null);const ids=[...document.querySelectorAll('[id]')].map(node=>node.id);expect(new Set(ids).size).toBe(ids.length);
   const title=document.querySelector('#contact-workflow-title');expect(document.querySelector('label[for="contact-workflow-title"]').textContent).toBe('Role in the program');expect(title.tagName).toBe('INPUT');

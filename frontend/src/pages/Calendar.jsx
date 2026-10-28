@@ -15,6 +15,7 @@ import {selectedClient} from '@/lib/clientSelection';
 import {brawndoDemoCalendar} from '@/lib/brawndoDemoCalendar';
 import BrawndoDemoCalendar from './BrawndoDemoCalendar';
 import BrawndoCalendarView,{calendarEntries} from './BrawndoCalendar';
+import {sharedClientPrograms} from '@/lib/sharedExperience';
 
 const emptyBuckets=()=>({reviews:{},findings:{},tasks:{}});
 function verifiedCalendarEntries(data,clientId){
@@ -156,7 +157,7 @@ export default function Calendar() {
   </>;
   const CalendarView=demoCalendar?BrawndoDemoCalendar:BrawndoCalendarView;
   // Keep native editor drafts mounted while the appearance gate is rechecked.
-  return <><CalendarView key={`${actorKey}:${currentClientId}:${demoCalendar}`} members={memberResult?.key===memberKey?memberResult.data:[]} memberError={memberResult?.key===memberKey?memberResult.error:null} summaryEntries={summaryResult?.key===summaryKey?summaryResult.entries:null} summaryError={summaryResult?.key===summaryKey?summaryResult.error:null} clientName={currentClient?.name||'Client'} anchor={anchor} setAnchor={setAnchor} view={view} setView={setView} period={period} days={days} itemsForDay={itemsForDay} today={today}
+  return <><CalendarView key={`${actorKey}:${currentClientId}:${demoCalendar}`} nativeBehavior={sharedClientPrograms(currentClient).length===0} members={memberResult?.key===memberKey?memberResult.data:[]} memberError={memberResult?.key===memberKey?memberResult.error:null} summaryEntries={summaryResult?.key===summaryKey?summaryResult.entries:null} summaryError={summaryResult?.key===summaryKey?summaryResult.error:null} clientName={currentClient?.name||'Client'} anchor={anchor} setAnchor={setAnchor} view={view} setView={setView} period={period} days={days} itemsForDay={itemsForDay} today={today}
     entries={entries} loading={loading} error={error} errorNode={<RegisterLoadError error={error} onRetry={reload} name="Calendar"/>} busy={busy}
     dragging={dragging} dragOverDay={dragOverDay} setDragOverDay={setDragOverDay} setDragging={setDragging} expanded={expanded} setExpanded={setExpanded}
     onDragStart={onDragStart} onDrop={onDrop} openSchedule={openSchedule} ymd={localCalendarDate}

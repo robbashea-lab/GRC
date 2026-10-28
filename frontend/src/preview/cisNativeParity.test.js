@@ -106,7 +106,7 @@ test.each([1,2,3])('IG%i AI approval retains explicit human decision, stale-writ
   expect(original.approval_history).toHaveLength(1);
 });
 
-test('company names and new-client payloads do not activate configured native behavior; non-CIS lifecycle remains unchanged',()=>{
+test('company names and draft payloads do not enable CIS behavior; common AI metadata retains native field, role and tenant denials',()=>{
   const db=fixture(),cid=db.clients[0].client_id;
   db.clients[0]={client_id:cid,name:'Brawndo',status:'active',onboarding_baseline:{completed:true,requirements:{'cis-ig1':'does_not_apply'}},framework_settings:{'cis-ig1':{implementation_group:3}}};
   db.requirements[0].baseline_response='does_not_apply';
@@ -120,7 +120,19 @@ test('company names and new-client payloads do not activate configured native be
   db.vendors.push({...vendor,assurance_records:[{type:'SOC 2',required:true}]});
   syncVendorReview(db,{client_id:cid,vendor_id:'v',vendor_purpose:'assurance',occurrences:[{occurrence_id:'old-native',completed_at:'2026-10-21'}],due_date:'2027-10-13'});
   expect(db.vendors[0].assurance_records[0]).toMatchObject({last_reviewed:'2026-10-21',review_occurrence_id:'old-native'});
-  expect(()=>aiRequest(db,'/ai_systems','post',{}, {client_id:cid,name:'Non-CIS AI',environment:'not enabled'})).toThrow(/read-only AI fields/);
+  const ai=aiRequest(db,'/ai_systems','post',{}, {client_id:cid,name:'Non-CIS AI',environment:'Synthetic evaluation'});
+  expect(db.ai_systems).toHaveLength(1);
+  expect(db.ai_systems[0]).toMatchObject({ai_system_id:ai.ai_system_id,client_id:cid,environment:'Synthetic evaluation',status:'draft'});
+  expect(isCisClient(db,cid)).toBe(false);
+  expect(db.ai_systems[0].approval_status).toBeUndefined();
+  const saved=JSON.stringify(db.ai_systems);
+  expect(()=>aiRequest(db,`/ai_systems/${ai.ai_system_id}`,'patch',{}, {approval_status:'approved',expected_updated_at:ai.updated_at})).toThrow(/read-only AI fields/);
+  expect(JSON.stringify(db.ai_systems)).toBe(saved);
+  db.user={...db.user,role:'client_readonly',client_ids:[cid]};
+  expect(()=>aiRequest(db,`/ai_systems/${ai.ai_system_id}`,'patch',{}, {environment:'Unpermitted edit',expected_updated_at:ai.updated_at})).toThrow(/Read-only/);
+  db.user={...db.user,role:'client_contributor',client_ids:['unrelated-client']};
+  expect(()=>aiRequest(db,`/ai_systems/${ai.ai_system_id}`,'patch',{}, {environment:'Foreign edit',expected_updated_at:ai.updated_at})).toThrow(/Forbidden/);
+  expect(JSON.stringify(db.ai_systems)).toBe(saved);
 });
 
 test('assurance origin follows an actual same-client document identity, without borrowing another client or inventing a missing document',()=>{

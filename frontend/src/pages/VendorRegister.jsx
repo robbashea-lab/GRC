@@ -15,6 +15,7 @@ import {vendorSignals,VENDOR_DATA_TYPES,ASSURANCE_TYPES} from '@/lib/vendorGover
 import {isReferencePresentation,isReferenceWorkflow,isCisReference} from '@/lib/reference';
 import {vendorViews,vendorMatches,vendorColumns,assuranceSummary,renewalAction} from '@/lib/brawndoVendors';
 import { tableColumns } from '@/lib/tableColumns';
+import {applyTableFilters,EMPTY} from '@/lib/tableFilters';
 import { useEffect, useMemo, useState, useRef } from "react";
 import api, { formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
@@ -113,7 +114,7 @@ export default function VendorRegister() {
   const [searchParams,setSearchParams] = useSearchParams();
   // ?view= deep links (dashboard signals) open the register already filtered.
   const brawndoExtendedViews = isCisReference(currentClientId,user,currentClient);
-  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) || (brawndoExtendedViews && ['all','unassigned'].includes(searchParams.get('view'))) ? searchParams.get("view") : "all_active";
+  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) || ((brawndoExtendedViews||presentation) && ['all','unassigned'].includes(searchParams.get('view'))) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
   useEffect(() => setView(linkedView), [linkedView]);
   const [loading, setLoading] = useState(true);
@@ -191,7 +192,15 @@ export default function VendorRegister() {
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
   function selectView(id) { if(pilot){table.replaceState({...table.state,filters:{}});setView(id);return;}const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',critical_high:'criticality',review_due:'next_review',review_overdue:'next_review',contract_soon:'contract_renewal'})[id]; if (key) table.setFilter(key, []); setView(id); }
-  const counts = Object.fromEntries([...(pilot?vendorViews:VIEWS).map(v => v.id),'critical_high','unassigned','all', ...Object.keys(LINKED_VIEWS)].map(id => [id, tableSource.filter(v => matches(v, id)).length]));
+  // The generic native register expresses Unassigned through its existing Owner filter.
+  const unassignedRows=()=>applyTableFilters(tableSource.filter(v=>matches(v,'all_active')),columns,{filters:{business_owner_id:[EMPTY]}});
+  const counts = Object.fromEntries([...(pilot?vendorViews:VIEWS).map(v => v.id),'critical_high','unassigned','all', ...Object.keys(LINKED_VIEWS)].map(id => [id, id==='unassigned'&&!vendorWorkflow?unassignedRows().length:tableSource.filter(v => matches(v, id)).length]));
+  useEffect(()=>{
+    if(!additional||vendorWorkflow||searchParams.get('view')!=='unassigned')return;
+    table.replaceState({...table.state,filters:{business_owner_id:[EMPTY]}});
+    setView('all_active');
+    const next=new URLSearchParams(searchParams);next.delete('view');setSearchParams(next,{replace:true});
+  },[additional,vendorWorkflow,searchParams,setSearchParams,table]);
   const tabs = pilot?vendorViews:LINKED_VIEWS[view] ? [...VIEWS, { id: view, label: LINKED_VIEWS[view] }] : VIEWS;
 
   function exportCsv() {
@@ -220,13 +229,16 @@ export default function VendorRegister() {
     </section>;
   } else if(additional){
     const selectAdditionalView = id => {
-      selectView(id);
+      const nativeOwnerFilter=id==='unassigned'&&!vendorWorkflow;
+      selectView(nativeOwnerFilter?'all_active':id);
+      if(nativeOwnerFilter)table.replaceState({...table.state,filters:{business_owner_id:[EMPTY]}});
       const next=new URLSearchParams(searchParams);
-      if(id==='all_active')next.delete('view');else next.set('view',id);
+      if(id==='all_active'||nativeOwnerFilter)next.delete('view');else next.set('view',id);
       setSearchParams(next,{replace:true});
     };
     surface = <>
       <BrawndoAdditionalVendors quarterlyChart scopeKey={vendorWorkScope} workAvailable={acceptedTaskScope===`${vendorReadScope}:${vendorWorkScope}`} recordOpen={drawer.open||addOpen||!!taskDrawer} clientName={currentClient?.name||'Client'} rows={tableSource} filteredRows={filtered} reviews={reviews} tasks={tasks} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
+        viewCounts={counts} contractDate={contractDate} contractDateLabel={vendor=>!vendorWorkflow&&!vendor.contract_renewal?'Expiration / end':''}
         onOpen={(record,tab,assuranceId)=>setDrawer({open:true,record,tab,assuranceId})}
         onOpenTask={record=>{if(record.client_id===currentClientId)setTaskDrawer(record);}}
         onOpenReview={review=>navigate(`/reviews?id=${encodeURIComponent(review.review_id)}&client_id=${encodeURIComponent(currentClientId)}&occurrence=${encodeURIComponent(occurrenceId(review))}`)}

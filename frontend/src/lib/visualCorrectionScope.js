@@ -1,4 +1,4 @@
-import {sharedExperienceEligible} from './sharedExperience';
+import {sharedAppearanceEligible} from './sharedExperience';
 // Appearance only. Native page permissions and record guards remain authoritative.
 export function visualCorrectionSurface(context) {
   const {pathname, user, authLoading} = context;
@@ -7,6 +7,6 @@ export function visualCorrectionSurface(context) {
   const surfaces = {'/dashboard': 'dashboard', '/calendar': 'calendar', '/reviews': 'reviews',
     '/action-items': 'actions', '/risks': 'risks'};
   const surface = surfaces[pathname];
-  if (!surface || !sharedExperienceEligible(context) || surface === 'actions' && !internal) return null;
+  if (!surface || !sharedAppearanceEligible(context) || surface === 'actions' && !internal) return null;
   return surface;
 }

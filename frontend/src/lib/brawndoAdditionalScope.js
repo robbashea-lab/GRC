@@ -3,8 +3,7 @@ import {createContext, useContext, useLayoutEffect, useState} from 'react';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import {selectedClient} from './clientSelection';
-import {cisExperienceEligible,cisPresentationEligible} from './cisExperience';
-import {sharedExperienceEligible,sharedPresentationEligible,sharedClientRoute} from './sharedExperience';
+import {sharedAppearanceEligible,sharedPresentationEligible} from './sharedExperience';
 
 export const ADDITIONAL_SECTION_ROUTES = Object.freeze({
   '/policies': 'policies',
@@ -35,13 +34,13 @@ export function additionalAppearanceSurface(context, appearance) {
   return surface === appearance.surface ? surface : null;
 }
 
-// Route chrome needs only the current authorized enrollment, not a completed page read.
+// Route chrome needs the current authorized client, not enrollment or a completed page read.
 // Loaded page controls and portal appearance keep their separate strict receipt.
 export function additionalSectionChrome(context) {
   const identity={...context};
   delete identity.loadedClientId;
   const surface=ADDITIONAL_SECTION_ROUTES[identity.pathname];
-  const eligible=sharedClientRoute(identity.pathname)?sharedPresentationEligible(identity):cisPresentationEligible(identity);
+  const eligible=sharedPresentationEligible(identity);
   return surface&&eligible?surface:null;
 }
 
@@ -50,8 +49,7 @@ export function additionalSectionSurface({pathname, workspaceMode, user, current
   currentClient, clients, selectedClientId, routeClientId, loadedClientId, authLoading, authError,
   orgLoading, orgError}) {
   const surface = ADDITIONAL_SECTION_ROUTES[pathname];
-  const eligible=sharedClientRoute(pathname)?sharedExperienceEligible:cisExperienceEligible;
-  if (!surface || !eligible({pathname, workspaceMode, user, currentClientId, currentClient,
+  if (!surface || !sharedAppearanceEligible({pathname, workspaceMode, user, currentClientId, currentClient,
     clients, selectedClientId, routeClientId, loadedClientId,
     authLoading, authError, orgLoading, orgError})) return null;
   return surface;
@@ -60,7 +58,7 @@ export function additionalSectionSurface({pathname, workspaceMode, user, current
 // Native routes such as Risks can use this only for a record-free pending frame.
 export function useCisPresentation() {
   const auth=useAuth(),org=useOrg(),{pathname,search}=useLocation();
-  return (sharedClientRoute(pathname)?sharedPresentationEligible:cisPresentationEligible)({...org,...auth,pathname,selectedClientId:selectedClient(),
+  return sharedPresentationEligible({...org,...auth,pathname,selectedClientId:selectedClient(),
     routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,
     authError:auth.error,orgLoading:org.loading,orgError:org.error});
 }

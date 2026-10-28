@@ -5,6 +5,7 @@ import {useCompliance} from '@/context/ComplianceContext';
 import {canOperate} from '@/lib/permissions';
 import {SCHEMAS} from '@/lib/schemas';
 import {FRAMEWORKS} from '@/lib/frameworks';
+import {cisClientProgram} from '@/lib/cisExperience';
 import {formatError} from '@/lib/api';
 import PageHeader from '@/components/PageHeader';
 import {PrimaryAction,SearchField} from '@/components/Register';
@@ -45,6 +46,7 @@ function EvidenceWorkspace(){
   const data=verifiedCatalog?catalog:null;
   const additional=useAdditionalSectionsSurface('evidence',data&&!result.error?currentClientId:null);
   const additionalPresentation=useAdditionalSectionsPresentation('evidence');
+  const cisProgram=currentClient?.client_id===currentClientId?cisClientProgram(currentClient):null;
   const presentationError=result.error||(Object.hasOwn(result,'data')&&!verifiedCatalog?'Evidence could not be verified for this client.':null);
   const refreshEvidence=()=>{if(!additional)result.reload();setAdditionalRevision(value=>value+1);};
   const openUpload=selectedArea=>{setUploadArea(selectedArea||'Unassigned');setAdding(true);};
@@ -79,7 +81,7 @@ function EvidenceWorkspace(){
         </tr>)}</tbody></table></div>}{!landing&&<EvidencePagination data={data} page={page} setPage={setPage}/>}</section>}
     </div>
   </>;
-  const presentation=additionalPresentation&&!additional?<AdditionalPagePending className="bae-page" headerClassName="bae-page-head" title={`${currentClient.name} Evidence Library`} subtitle="Evidence repository" name="Evidence" loadingMessage="Loading evidence…" error={presentationError} onRetry={result.reload}/>:additional?<AdditionalEvidence clientId={currentClientId} clientName={currentClient?.name||'Client'} canUpload={canOperate(user)} onUpload={openUpload} onOpenItem={setItemId} onOpenSource={openSource} revision={additionalRevision} viewState={additionalView} onViewStateChange={setAdditionalView}/>:pilot?<BrawndoSurface className="register-surface evidence-repository bevidence" data-testid="brawndo-evidence">{body}</BrawndoSurface>:<div className="register-surface evidence-repository">{body}</div>;
+  const presentation=additionalPresentation&&!additional?<AdditionalPagePending className="bae-page" headerClassName="bae-page-head" title={`${currentClient.name} Evidence Library`} subtitle="Evidence repository" name="Evidence" loadingMessage="Loading evidence…" error={presentationError} onRetry={result.reload}/>:additional?<AdditionalEvidence clientId={currentClientId} clientName={currentClient?.name||'Client'} cisProgram={cisProgram} frameworkItems={compliance.items} frameworkError={compliance.error} frameworkLoading={compliance.loading} frameworkFolderName={folderName} canUpload={canOperate(user)} onUpload={openUpload} onOpenItem={setItemId} onOpenSource={openSource} revision={additionalRevision} viewState={additionalView} onViewStateChange={setAdditionalView}/>:pilot?<BrawndoSurface className="register-surface evidence-repository bevidence" data-testid="brawndo-evidence">{body}</BrawndoSurface>:<div className="register-surface evidence-repository">{body}</div>;
   // Presentation can withdraw during an organization refresh. Keep native editors
   // at stable sibling positions; the outer identity key still resets real scope changes.
   return <>{presentation}

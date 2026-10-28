@@ -1,4 +1,4 @@
-import {cisExperienceEligible, cisIdentityEligible, cisImplementationGroup} from './cisExperience';
+import {sharedAppearanceEligible} from './sharedExperience';
 import {CADENCES, FRAMEWORKS, existingFrameworkReview, genericReviews, reviewConfig, sharedFrameworkPlans} from '@/lib/frameworks';
 import {cisProgramName} from '@/lib/cisScope';
 import {existingBaseline} from '@/lib/onboardingHandoff';
@@ -6,10 +6,7 @@ import {reviewSchedule, scheduledDate} from '@/lib/reviewOccurrences';
 
 // Presentation only. Native controllers and API authorization own every operation.
 export function brawndoOnboardingGate(context) {
-  const draft = context.nativeDraft;
-  const selectedDraft = draft?.requirements?.['cis-ig1'] === 'applies'
-    && cisImplementationGroup({framework_settings:draft.framework_settings}) !== null;
-  return (cisExperienceEligible(context) || cisIdentityEligible(context) && selectedDraft) && !context.hasError && context.pathname === '/client-profile'
+  return sharedAppearanceEligible(context) && !context.hasError && context.pathname === '/client-profile'
     && [context.loadedClientId, context.profileClientId, context.handoffClientId].every(id => id === context.currentClientId);
 }
 

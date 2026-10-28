@@ -3,9 +3,10 @@ import { createRoot } from 'react-dom/client';
 import RecordListPage from './RecordListPage';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
+import {cisClientProgram} from '@/lib/cisExperience';
 import BrawndoAdditionalPolicies from '@/components/BrawndoAdditionalPolicies';
 import { savedDate } from '@/components/BrawndoAdditionalPolicyVendorCells';
-import {frameworkCatalog} from '@/lib/frameworks';
+import {FRAMEWORKS,frameworkCatalog} from '@/lib/frameworks';
 
 jest.setTimeout(15000);
 let mockAuth, mockOrg, mockDrawerProps, mockLocationSearch;
@@ -133,11 +134,11 @@ test('same-client role and actor changes await their own alignment snapshot and 
   expect(container.textContent).not.toContain('Mapped to CIS IG3');
 });
 
-test.each([['iso-27001','mapped'],['soc-2','mapped'],['iso-27001','column'],['soc-2','column']])('retained %s %s filter after actual alignment failure stays unknown and clears back to its saved custom policy',async(framework,mappingFilter)=>{
+test.each(['iso-27001','soc-2','hipaa','nist-csf-2'].flatMap(framework=>['mapped','column'].map(filter=>[framework,filter])))('retained %s %s filter after actual alignment failure stays unknown and clears back to its saved custom policy',async(framework,mappingFilter)=>{
   const clientId='synthetic-native-policy',catalog=frameworkCatalog(framework),definitionId=catalog.requirements[0].id;
   const client={client_id:clientId,name:'Synthetic native client',status:'active',onboarding_baseline:{completed:true,requirements:{[framework]:'applies'}},
     framework_settings:framework==='soc-2'?{[framework]:{categories:['security']}}:{},
-    shared_programs:[{client_id:clientId,program_id:clientId+':'+framework,framework_key:framework,version:catalog.version,selected:true}]};
+    shared_programs:['iso-27001','soc-2'].includes(framework)?[{client_id:clientId,program_id:clientId+':'+framework,framework_key:framework,version:catalog.version,selected:true}]:[]};
   mockAuth={workspaceMode:'standard',user:{user_id:'native-actor',role:'super_admin',workspace_mode:'standard'}};
   mockOrg={currentClientId:clientId,currentClient:client,clients:[client]};
   sessionStorage.setItem('grc_client_id',clientId);localStorage.setItem('grc_client_id',clientId);
@@ -155,10 +156,10 @@ test.each([['iso-27001','mapped'],['soc-2','mapped'],['iso-27001','column'],['so
   });
   await act(async()=>root.render(<RecordListPage kind="policies"/>));
   if(mappingFilter==='column'){
-    const heading=catalog.label+' '+(framework==='iso-27001'?'alignment':'criteria');
+    const heading=['iso-27001','soc-2'].includes(framework)?catalog.label+' '+(framework==='iso-27001'?'alignment':'criteria'):'Framework alignment';
     const control=container.querySelector(`[aria-label="${heading}: filter"]`);
     await act(async()=>control.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0,ctrlKey:false})));
-    const option=[...document.querySelectorAll('[role=menuitemcheckbox]')].find(node=>node.textContent==='Supports '+catalog.label);
+    const option=[...document.querySelectorAll('[role=menuitemcheckbox]')].find(node=>node.textContent==='Supports '+FRAMEWORKS.find(item=>item.key===framework).label);
     expect(option).toBeTruthy();await click(option);
     await act(async()=>document.querySelector('[role=menu]')?.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
   }
@@ -167,7 +168,7 @@ test.each([['iso-27001','mapped'],['soc-2','mapped'],['iso-27001','column'],['so
   mockAuth={...mockAuth,user:{...mockAuth.user,...(mappingFilter==='column'?{role:'platform_admin'}:{user_id:'next-native-actor'})}};
   await act(async()=>root.render(<RecordListPage kind="policies"/>));
   const mapping=container.querySelector('[data-testid=additional-policy-metric-mapped]');
-  expect(mapping.textContent).toContain('Mapped to '+catalog.label);expect(mapping.querySelector('strong').textContent).toBe('—');
+  expect(mapping.textContent).toContain(['iso-27001','soc-2'].includes(framework)?'Mapped to '+catalog.label:'Framework-mapped');expect(mapping.querySelector('strong').textContent).toBe('—');
   expect(container.textContent).not.toContain('CIS');expect(container.textContent).not.toContain('No policies match');expect(container.textContent).not.toContain('Showing 0');
   expect(container.querySelector('.bapv-empty[role=alert]').textContent).toContain('Policy mappings unavailable');
   expect(container.querySelector('.bapv-summary [role=status]').textContent).toBe('Policy mapping counts unavailable.');
@@ -279,12 +280,14 @@ test.each([[true, '', 'Loading policies…'], [false, 'Unavailable', 'Policies u
 });
 
 
-test('configured CIS standard client retains appearance while invalid group is denied',async()=>{
+test('common Policies appearance never validates or invents an invalid CIS group',async()=>{
   mockAuth={...mockAuth,workspaceMode:'standard',user:{...mockAuth.user,workspace_mode:'standard'}};
   await act(async()=>root.render(<RecordListPage kind="policies"/>));
   expect(container.querySelector('[data-testid="additional-policies"]')).toBeTruthy();
   mockOrg={...mockOrg,currentClient:cisClient('demo_brawndo',4)};
   await act(async()=>root.render(<RecordListPage kind="policies"/>));
-  expect(container.querySelector('[data-testid="additional-policies"]')).toBeNull();
+  expect(container.querySelector('[data-testid="additional-policies"]')).toBeTruthy();
+  expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
+  expect(container.textContent).not.toContain('Mapped to CIS IG4');
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

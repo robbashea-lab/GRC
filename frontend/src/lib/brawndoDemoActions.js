@@ -1,4 +1,4 @@
-import {sharedExperienceEligible} from './sharedExperience';
+import {sharedAppearanceEligible} from './sharedExperience';
 import {daysDue} from './actionItems';
 import {ticketStage} from './remediationTickets';
 import {calendarDay} from './tableFilters';
@@ -7,7 +7,7 @@ import {isInternal} from './permissions';
 // Presentation only; every read and command retains native server authorization.
 export const BRAWNDO_DEMO_ACTIONS_ENABLED=true;
 export function brawndoDemoActionsGate(context) {
-  return BRAWNDO_DEMO_ACTIONS_ENABLED && sharedExperienceEligible(context) && context.pathname === '/action-items' && isInternal(context.user);
+  return BRAWNDO_DEMO_ACTIONS_ENABLED && sharedAppearanceEligible(context) && context.pathname === '/action-items' && isInternal(context.user);
 }
 
 export const brawndoTicketActive=row=>!['completed','accepted','cancelled'].includes(ticketStage(row));

@@ -1,4 +1,4 @@
-import {sharedExperienceEligible} from './sharedExperience';
+import {sharedAppearanceEligible} from './sharedExperience';
 import {calendarDay,managementDay} from './managementDates';
 import {riskIsClosed} from './riskRegister';
 import {isOpen} from './grcWork';
@@ -7,7 +7,7 @@ import {timelineBounds} from './brawndoAdditionalPolicyVendor';
 // Presentation only; rollback leaves native records, commands and history intact.
 export const BRAWNDO_DEMO_RISKS_ENABLED=true;
 export function brawndoDemoRisksGate(context) {
-  return BRAWNDO_DEMO_RISKS_ENABLED && sharedExperienceEligible(context) && context.pathname === '/risks';
+  return BRAWNDO_DEMO_RISKS_ENABLED && sharedAppearanceEligible(context) && context.pathname === '/risks';
 }
 
 export function riskHorizon(now=new Date()) {

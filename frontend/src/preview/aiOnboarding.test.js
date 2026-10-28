@@ -55,7 +55,7 @@ test.each(['demo_dunder','demo_prestige'])('native shared onboarding for %s reta
   expect(readStore().ai_systems).toEqual(frozen);
 });
 
-test.each(['iso-27001','soc-2'].flatMap(framework=>['approved','approved_with_conditions'].map(status=>[framework,status])))(
+test.each([null,'general','hipaa','iso-27001','soc-2'].flatMap(framework=>['approved','approved_with_conditions'].map(status=>[framework,status])))(
   'retained %s AI %s cannot acquire changed approval boundaries after CIS retirement',async(framework,status)=>{
     const body=payload();body.ai.restrictions='Use only the recorded managed training environment';
     const created=(await add(body)).data.ai_system;
@@ -64,7 +64,7 @@ test.each(['iso-27001','soc-2'].flatMap(framework=>['approved','approved_with_co
     })).data;
     const db=readStore();
     db.requirements=db.requirements.filter(row=>row.client_id!==cid||row.baseline_key!=='cis-ig1');
-    db.requirements.push({requirement_id:'synthetic-later-'+framework,client_id:cid,baseline_key:framework,baseline_response:'applies'});
+    if(framework&&framework!=='general')db.requirements.push({requirement_id:'synthetic-later-'+framework,client_id:cid,baseline_key:framework,baseline_response:'applies'});
     saveStore(db);
     const noop=(await api.patch('/ai_systems/'+created.ai_system_id,{environment:approved.environment,expected_updated_at:approved.updated_at})).data;
     expect(noop.approval_status).toBe(status);expect(noop.approval_history).toEqual(approved.approval_history);
@@ -85,13 +85,60 @@ test('invalid or unauthorized requests retain no partial native records',async()
   await expect(add(payload())).rejects.toThrow();
   expect(readStore().ai_systems).toEqual(before.ai_systems);
 });
-test('completed replay rechecks enrollment and returns current native projection',async()=>{
+test('completed replay is framework independent but rechecks actual client availability and returns current native projection',async()=>{
   const body=payload(),first=(await add(body)).data,db=readStore();
   db.ai_systems.find(row=>row.ai_system_id===first.ai_system_id).name='Native saved edit';saveStore(db);
   expect((await add(body)).data.ai_system.name).toBe('Native saved edit');
   const withdrawn=readStore();withdrawn.requirements=withdrawn.requirements.filter(row=>row.client_id!==cid||row.baseline_key!=='cis-ig1');saveStore(withdrawn);
-  await expect(add(body)).rejects.toThrow(/active CIS/);
+  const before=readStore();
+  expect((await add(body)).data.ai_system.name).toBe('Native saved edit');
+  expect(readStore().ai_systems).toEqual(before.ai_systems);
+  const inactive=readStore();inactive.clients.find(row=>row.client_id===cid).status='inactive';saveStore(inactive);
+  await expect(add(body)).rejects.toThrow(/active|onboarding/);
+  expect(readStore().ai_systems).toEqual(before.ai_systems);
 });
+
+test.each([null,'general','hipaa','nist-csf-2','cmmc'].flatMap(framework=>['active','onboarding'].map(status=>[framework,status])))(
+  '%s %s client stays empty until an explicit guided save, then reloads exact linked records and replays safely',async(framework,status)=>{
+    const db=readStore(),clientId='synthetic-universal-ai';
+    const client={client_id:clientId,name:'QA universal AI — SYNTHETIC',status,onboarding_baseline:{completed:status==='active',requirements:framework&&framework!=='general'?{[framework]:'applies'}:{}}};
+    db.clients.push(client);saveStore(db);
+    const before=readStore();
+    expect((await api.get('/ai_systems',{params:{client_id:clientId}})).data).toEqual([]);
+    expect((await api.get('/ai-intake',{params:{client_id:clientId}})).data).toMatchObject({usage:'unsure'});
+    for(const kind of ['ai_systems','vendors','risks','reviews','requirements'])expect(readStore()[kind]).toEqual(before[kind]);
+    const body={...payload('create'),client_id:clientId},first=(await add(body)).data;
+    const reloaded=(await api.get('/ai_systems',{params:{client_id:clientId}})).data;
+    expect(reloaded).toHaveLength(1);
+    expect(reloaded[0]).toMatchObject({ai_system_id:first.ai_system_id,client_id:clientId,vendor_id:first.vendor_id,environment:body.ai.environment,onboarding_screening:{answers:body.screening.answers}});
+    expect(reloaded[0].related_links).toContainEqual(expect.objectContaining({kind:'risks',id:first.risk_id}));
+    const saved=readStore();
+    expect(saved.reviews.find(row=>row.review_id===first.review_id)).toMatchObject({client_id:clientId,ai_system_id:first.ai_system_id,recurrence:'annual'});
+    expect(saved.risks.find(row=>row.risk_id===first.risk_id)).toMatchObject({client_id:clientId,likelihood_score:body.risk.likelihood,impact_score:body.risk.impact});
+    expect((await add(body)).data).toEqual(first);
+    for(const kind of ['ai_systems','vendors','risks','reviews','requirements'])expect(readStore()[kind]).toEqual(saved[kind]);
+    expect(readStore().clients.find(row=>row.client_id===clientId)).toEqual(client);
+    const update=(await api.patch('/ai_systems/'+first.ai_system_id,{environment:'Saved synthetic account',expected_updated_at:reloaded[0].updated_at})).data;
+    expect(update.environment).toBe('Saved synthetic account');
+    const frozen=readStore().ai_systems;
+    await expect(api.post('/ai_systems/'+first.ai_system_id+'/approval',{status:'approved',note:'No expanded approval authority',expected_updated_at:update.updated_at})).rejects.toThrow(/configured CIS/);
+    expect(readStore().ai_systems).toEqual(frozen);
+  });
+
+test.each(['client_readonly','client_contributor','foreign','archived','archived_at','inactive','intake-no'])(
+  'universal onboarding still denies %s without partial effects',async boundary=>{
+    const db=readStore(),clientId='synthetic-denied-ai';
+    db.clients.push({client_id:clientId,name:'QA denied — SYNTHETIC',status:'onboarding'});
+    if(boundary.startsWith('client_'))db.user.role=boundary;
+    if(boundary==='foreign'){db.user.role='platform_admin';db.user.all_clients=false;db.user.client_ids=[cid];}
+    if(boundary==='archived')db.clients.at(-1).archived=true;
+    if(boundary==='archived_at')db.clients.at(-1).archived_at='2026-10-27T00:00:00Z';
+    if(boundary==='inactive')db.clients.at(-1).status='inactive';
+    if(boundary==='intake-no'){db.ai_intake||={};db.ai_intake[clientId]={client_id:clientId,usage:'no',indicators:[]};}
+    saveStore(db);const before=readStore();
+    await expect(add({...payload('create'),client_id:clientId})).rejects.toThrow();
+    for(const kind of ['ai_systems','vendors','risks','reviews','requirements','logs'])expect(readStore()[kind]).toEqual(before[kind]);
+  });
 test('verified Vendor IDs are explicit; matching names never deduplicate',async()=>{
   const body=payload('create'),db=readStore();body.vendor.name=db.vendors.find(row=>row.client_id===cid).name;
   const existingIds=db.vendors.map(row=>row.vendor_id),first=(await add(body)).data;

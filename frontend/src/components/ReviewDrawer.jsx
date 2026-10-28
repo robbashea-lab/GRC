@@ -170,12 +170,13 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       ]);
       if (!accepted()) return {ok:false};
       setHistory(h.data); setRelated(r.data);setBasisError('');
-      if(current.risk_id) {const risk=r.data.risks?.find(x=>x.risk_id===current.risk_id); if(risk){const next={likelihood_score:risk.likelihood_score,impact_score:risk.impact_score,assessment_rationale:risk.assessment_rationale||'',treatment:risk.treatment||(pilot?'':'monitor')},base=riskBase.current;setRiskDraft(previous=>previous&&base?Object.fromEntries(Object.keys(next).map(k=>[k,previous[k]!==base[k]?previous[k]:next[k]])):next);riskBase.current=next;}} setEvidenceVersion(v=>v+1); setComments(c.data); setActivity(a.data);
+      if(current.risk_id) {const risk=r.data.risks?.find(x=>x.risk_id===current.risk_id); if(risk){const next={likelihood_score:risk.likelihood_score,impact_score:risk.impact_score,assessment_rationale:risk.assessment_rationale||'',treatment:risk.treatment||''},base=riskBase.current;setRiskDraft(previous=>previous&&base?Object.fromEntries(Object.keys(next).map(k=>[k,previous[k]!==base[k]?previous[k]:next[k]])):next);riskBase.current=next;}} setEvidenceVersion(v=>v+1); setComments(c.data); setActivity(a.data);
       return {ok:true};
     } catch(e) { if (accepted()) {setBasisError(formatError(e));toast.error(formatError(e));} return {ok:false}; }
     finally {if(accepted())setBasisLoading(false);}
-  }, [open,rid,oid,current?.review_id,current?.risk_id,selected,pilot]);
-  useEffect(() => { reload(); },[reload]);
+  }, [open,rid,oid,current?.review_id,current?.risk_id,selected]);
+  // Scope resolution resets the detail state above even when Review IDs stay the same.
+  useEffect(() => { reload(); },[reload,pilot]);
   // Only the new linked-Risk command requires confirmed parent refresh before success.
   async function refreshAfterLinkedRisk() {
     const version=generation.current,identity=focusIdentity;
@@ -238,7 +239,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const lifecycle = action => run(async () => {
     if(draftProtected&&(comment.trim()||finding)) throw new Error('Post or discard the unfinished comment or Finding before starting or completing this Review.');
     const saved = await saveChanges();
-    const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved),...(action==='complete'?evaluation:{}),...(action==='complete'&&saved.risk_id?{risk_assessment:pilot&&riskDraft?Object.fromEntries(Object.entries(riskDraft).filter(([k,v])=>(v??'')!==(riskBase.current?.[k]??''))):riskDraft||{},risk_outcome:riskOutcome,...(pilot&&riskNext?{risk_next_review:riskNext}:{})}:{})});
+    const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved),...(action==='complete'?evaluation:{}),...(action==='complete'&&saved.risk_id?{risk_assessment:riskDraft?Object.fromEntries(Object.entries(riskDraft).filter(([k,v])=>(v??'')!==(riskBase.current?.[k]??''))):{},risk_outcome:riskOutcome,...(pilot&&riskNext?{risk_next_review:riskNext}:{})}:{})});
     const updated = data.review || data;
     setCurrent(updated); setForm({...updated,due_date:updated.due_date?.slice(0,10) || ''});
     if (data.occurrence) setHistory(items => [data.occurrence,...items.filter(o => o.occurrence_id !== data.occurrence.occurrence_id)]);
@@ -249,7 +250,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   function picker(label,value,onChange,options,disabled=false,testId) {
     return <div className="space-y-1"><Label>{label}</Label><Select value={value || '__none__'} onValueChange={v => onChange(v === '__none__' ? '' : v)} disabled={disabled}>
       <SelectTrigger aria-label={label} data-testid={testId}><SelectValue /></SelectTrigger><SelectContent>
-        <SelectItem value="__none__">{label.includes('Owner') ? 'Unassigned' : pilot&&label==='Risk treatment'?'Not Yet Decided':'Select…'}</SelectItem>
+        <SelectItem value="__none__">{label.includes('Owner') ? 'Unassigned' : label==='Risk treatment'?riskTreatments['']:'Select…'}</SelectItem>
         {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
       </SelectContent></Select></div>;
   }
@@ -324,7 +325,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             <p className="my-2 text-ink-secondary">Completion records the activity; Finding counts and effectiveness are separate. Notes, existing records or external references may support your judgment. A separate uploaded file is not required. Evaluation below is recorded when you complete this occurrence.</p>
             {frozen?(()=>{const recorded=selected||current.occurrences?.find(o=>o.occurrence_id===oid)||{};return <div className="space-y-2">{evaluationFields.map(([key,label])=>recorded[key]?<p key={key} className="whitespace-pre-wrap break-words"><strong>{label}: </strong>{recorded[key]}</p>:null)}{'checklist_confirmed' in recorded&&<p>Reviewer checklist confirmed: {recorded.checklist_confirmed?'Yes':'No'} (not an effectiveness conclusion)</p>}{!evaluationFields.some(([key])=>recorded[key])&&!('checklist_confirmed' in recorded)&&<p>No evaluation recorded for this occurrence.</p>}</div>;})():<fieldset disabled={!writable||busy} className="space-y-2">{evaluationFields.map(([key,label,max])=><label key={key} className="block">{label}<Textarea aria-label={label} maxLength={max} rows={key==='conclusion'?3:2} value={evaluation[key]||''} onChange={e=>setEvaluation(p=>({...p,[key]:e.target.value}))}/></label>)}<label className="flex gap-2 items-center"><input type="checkbox" checked={evaluation.checklist_confirmed||false} onChange={e=>setEvaluation(p=>({...p,checklist_confirmed:e.target.checked}))}/>Reviewer checklist confirmed (not an effectiveness conclusion)</label></fieldset>}
           </details>}
-          {selected && <p className="text-sm">Completed {date(selected.completed_at || selected.completion_date)} by {selected.completed_by_name || person(selected.completed_by)} · {outcome(selected)}</p>}
+          {selected && <p className="text-sm">{selected.status==='cancelled'?'Cancelled':<>Completed {date(selected.completed_at || selected.completion_date)} by {selected.completed_by_name || person(selected.completed_by)} · {outcome(selected)}</>}</p>}
           {current && !frozen && writable && <div className="review-workflow-actions flex flex-wrap gap-2">
             {!workflowPresentation&&current.status !== 'in_progress' && <Button size="sm" variant="outline" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-start" onClick={() => lifecycle('start')}>Start Review</Button>}
             <Button size="sm" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-complete" onClick={() => {
@@ -361,7 +362,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           <RemediationTickets records={{findings:groups.map(g=>g.finding),tasks:groups.flatMap(g=>g.actions),reviews:[current]}} clientId={cid} users={members} onOpen={setLinked} disabled={busy}/>
           {!relatedRows.length ? (!groups.length && <p className="text-sm text-ink-help">{historicalCount&&!showHistorical?'No outstanding remediation or other active related records.':'No related records.'}</p>) : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Type / ID','Item','Owner','Status / Completion','Due'].map(t => <th key={t} className="text-left py-2 pr-3">{t}</th>)}</tr></thead><tbody>{relatedRows.map(({kind,item}) => {
             const id = item[{tasks:'task_id',findings:'finding_id',policies:'policy_id',vendors:'vendor_id',risks:'risk_id',framework_assessments:'framework_assessment_id'}[kind]];
-            return <tr key={id} className="border-t border-line"><td className="py-3 pr-3 text-xs">{{tasks:'Action Item',findings:'Finding',policies:'Policy',vendors:'Vendor',risks:'Risk',framework_assessments:'Framework Requirement'}[kind]}<button className="block underline break-all text-left" onClick={() => setLinked({kind,record:item})}>{id}</button></td><td className="pr-3"><button className="underline text-left" onClick={() => setLinked({kind,record:item})}>{item.title || item.name}</button></td><td className="pr-3">{person(item.assignee_id || item.owner_id)}</td><td className="pr-3"><StatusBadge value={kind==='tasks'&&item.status==='done'?'completed':item.status} />{(item.completed_at || item.closed_at || item.validated_at) && <div className="text-xs mt-1">{item.status === 'closed' ? 'Closed' : 'Completed'} {date(item.completed_at || item.closed_at || item.validated_at)} by {person(item.completed_by || item.closed_by || item.validated_by)}</div>}</td><td>{date(item.due_date)}</td></tr>;
+            return <tr key={id} className="border-t border-line"><td className="py-3 pr-3 text-xs">{{tasks:'Action Item',findings:'Finding',policies:'Policy',vendors:'Vendor',risks:'Risk',framework_assessments:'Framework Requirement'}[kind]}<button className="block underline break-all text-left" onClick={() => setLinked({kind,record:item})}>{id}</button></td><td className="pr-3"><button className="underline text-left" onClick={() => setLinked({kind,record:item})}>{item.title || item.name}</button></td><td className="pr-3">{person(kind==='vendors'?item.business_owner_id:item.assignee_id || item.owner_id)}</td><td className="pr-3"><StatusBadge value={kind==='tasks'&&item.status==='done'?'completed':item.status} />{(item.completed_at || item.closed_at || item.validated_at) && <div className="text-xs mt-1">{item.status === 'closed' ? 'Closed' : 'Completed'} {date(item.completed_at || item.closed_at || item.validated_at)} by {person(item.completed_by || item.closed_by || item.validated_by)}</div>}</td><td>{date(item.due_date)}</td></tr>;
           })}</tbody></table></div>}
         </>}
         {(tab==='Evidence'||workflowPresentation)&&<div hidden={tab!=='Evidence'}>

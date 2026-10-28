@@ -1,9 +1,8 @@
 import {aiRequest} from './aiGovernance';
 import {commandRequest} from './commandRequests';
-import {isSharedClient} from './sharedCapability';
 import {clientAccess} from './assignmentEligibility';
 import {record,write,audit,now} from './store';
-import {aiProjection} from '../lib/aiGovernance';
+import {aiProjection,aiClientAvailable} from '../lib/aiGovernance';
 import {annualDate,questions,proposalFor,detailsError,screeningScope} from '../lib/aiOnboarding';
 
 const reject=(message,status=422)=>{throw Object.assign(new Error(message),{status});};
@@ -11,7 +10,7 @@ const exact=(object,keys)=>object&&typeof object==='object'&&!Array.isArray(obje
 export function aiOnboardingRequest(db,body,key) {
   const cid=body.client_id;
   if(!['super_admin','platform_admin'].includes(db.user.role)||!clientAccess(db.user,cid))reject('AI onboarding is not permitted for this client',403);
-  if(!isSharedClient(db,cid))reject('AI onboarding requires an active CIS, ISO 27001 or SOC 2 client',403);
+  if(!aiClientAvailable(record(db,'clients',cid)))reject('AI onboarding requires an active or onboarding client that is not archived',403);
   if(db.ai_intake?.[cid]?.usage==='no')reject('Update the client AI profile before adding an AI system',409);
   if(typeof key!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(key))reject('Invalid Idempotency-Key');
   const result=commandRequest(db,'/ai_systems/onboard',cid,key,body,()=>{

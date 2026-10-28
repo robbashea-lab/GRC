@@ -1,9 +1,9 @@
-import {sharedExperienceEligible} from './sharedExperience';
+import {sharedAppearanceEligible} from './sharedExperience';
 import {occurrenceId,reviewSchedule,scheduledDate} from './reviewOccurrences';
 import {calendarDay,reviewMatches} from './tableFilters';
 
 export function brawndoDemoReviewsGate(context) {
-  return sharedExperienceEligible(context) && context.pathname === '/reviews' && !context.loading && !context.error;
+  return sharedAppearanceEligible(context) && context.pathname === '/reviews' && !context.loading && !context.error;
 }
 
 export function reviewExecutions(reviews) {

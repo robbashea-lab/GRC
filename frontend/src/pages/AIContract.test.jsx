@@ -6,6 +6,7 @@ import AIDrawer from '@/components/AIDrawer';
 import api from '@/lib/api';
 import {AI_KEYS,AI_RELATIONSHIP_NOTICE} from '@/lib/aiGovernance';
 import {AI_PILOT_KEYS} from '@/lib/brawndoAI';
+import {readStore,saveStore} from '@/preview/store';
 
 let mockUser,mockClient,mockClients;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:mockUser?.workspace_mode==='demo'?'demo':'standard',loading:false})}));
@@ -104,6 +105,27 @@ test('standard identity presentation sends the approved shared metadata contract
  expect(post.mock.calls.find(([path])=>path==='/ai_systems')[1].technical_owner_id).toBe(candidate.user_id);
  expect(buttons('Record Decision')).toHaveLength(0);
 });
+
+test.each(['demo','standard'].flatMap(mode=>[null,'general','hipaa','nist-csf-2','cmmc'].map(framework=>[mode,framework])))(
+ '%s %s native detail editor retains guided metadata without adding approval authority',async(mode,framework)=>{
+  mockClient='synthetic-detail-ai';
+  const db=readStore();db.clients.push({client_id:mockClient,name:'QA AI detail — SYNTHETIC',status:'onboarding',
+   onboarding_baseline:{completed:false,requirements:framework&&framework!=='general'?{[framework]:'applies'}:{}}});saveStore(db);
+  mockClients=(await api.get('/clients')).data;
+  if(mode==='standard')mockUser={...mockUser,workspace_mode:undefined};
+  const close=jest.fn();
+  const row=(await api.post('/ai_systems',{client_id:mockClient,name:'Saved synthetic AI',environment:'Original managed account',
+   restrictions:'Original conditions',data_settings:'Original settings',permitted_data_types:['Public']})).data;
+  await act(async()=>root.render(<AIDrawer open clientId={mockClient} record={row} onOpenChange={close}/>));
+  expect(document.querySelector('[aria-label="Environment / Account Type"]').value).toBe('Original managed account');
+  await input('Environment / Account Type','Edited managed account');
+  await click(buttons('Data & Access')[0]);await input('Data, integrations & account settings','Edited native settings');
+  await click(buttons('Save Changes')[0]);
+  expect(close).toHaveBeenCalledWith(false);
+  const saved=(await mine()).find(record=>record.ai_system_id===row.ai_system_id);
+  expect(saved).toMatchObject({environment:'Edited managed account',restrictions:'Original conditions',data_settings:'Edited native settings',permitted_data_types:['Public']});
+  expect(saved.approval_history).toBeUndefined();expect(buttons('Record Decision')).toHaveLength(0);
+ });
 
 test('Prestige stale edit keeps its draft and does not overwrite the concurrent record',async()=>{
  const row=(await api.post('/ai_systems',{client_id:mockClient,name:'Concurrent Prestige AI'})).data;

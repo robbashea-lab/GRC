@@ -15,3 +15,18 @@ test('Calendar view filters retain history and vendor identity without changing 
   expect(filterCalendarItems(rows,{...options,owner:'u'}).map(x=>x.key)).toEqual(['late']);
   expect(JSON.stringify(rows)).toBe(copy);
 });
+
+test('native scheduled summary includes saved Vendor and represented Finding dates without changing enrolled exclusions',()=>{
+  const rows=[
+    {key:'vendor-overdue',kind:'vendor_contract_notice',date:'2026-10-15',historical:false},
+    {key:'finding-overdue',kind:'finding',date:'2026-10-15',historical:false,represented:true},
+    {key:'vendor-soon',kind:'vendor_assurance',date:'2026-10-20',historical:false},
+    {key:'closed',kind:'task',date:'2026-10-15',historical:true,status:'cancelled'},
+  ];
+  const before=JSON.stringify(rows),options={types:['review','task','finding','vendor'],scope:'all',owner:'all',today:'2026-10-16'};
+  expect(filterCalendarItems(rows,{...options,highlight:'overdue'})).toEqual([]);
+  expect(filterCalendarItems(rows,{...options,highlight:'week'})).toEqual([]);
+  expect(filterCalendarItems(rows,{...options,nativeScheduledItems:true,highlight:'overdue'}).map(row=>row.key)).toEqual(['vendor-overdue','finding-overdue']);
+  expect(filterCalendarItems(rows,{...options,nativeScheduledItems:true,highlight:'week'}).map(row=>row.key)).toEqual(['vendor-soon']);
+  expect(JSON.stringify(rows)).toBe(before);
+});

@@ -1,5 +1,6 @@
 """Authorized native onboarding, replay, and tenant boundaries in isolated test storage."""
 import copy
+import asyncio
 import uuid
 import unittest
 from datetime import datetime,timezone
@@ -76,16 +77,111 @@ class AIOnboardingTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual((await self.add(foreign)).status_code,403)
                 self.sign_in('admin')
                 await server.db.requirements.delete_many({'client_id': 'a'})
+                counts={kind:await server.db[kind].count_documents({}) for kind in ('ai_systems','risks','vendors','reviews','audit_logs')}
+                self.assertEqual((await self.add(body,key)).json(),result)
+                self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts},counts)
+                await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'archived'}})
                 self.assertEqual((await self.add(body,key)).status_code,422)
+                self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts},counts)
+                await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'active'}})
+
+    async def test_all_native_client_cohorts_allow_explicit_guided_creation_without_implicit_records(self):
+        for status in ('active','onboarding'):
+            for cohort,framework in (('none',None),('general',None),('hipaa','hipaa'),('nist','nist-csf-2'),('cmmc','cmmc')):
+                with self.subTest(status=status,cohort=cohort):
+                    cid=f'new-{status}-{cohort}'
+                    client={'client_id':cid,'name':'Synthetic '+cohort,'status':status,
+                            'onboarding_baseline':{'completed':False,'requirements':{framework:'applies'} if framework else {}}}
+                    await server.db.clients.insert_one(client)
+                    if framework:
+                        await server.db.requirements.insert_one({'requirement_id':'selected-'+cid,'client_id':cid,
+                            'baseline_key':framework,'baseline_response':'applies'})
+                    before=await server.db.clients.find_one({'client_id':cid})
+                    requirements=await server.db.requirements.find({'client_id':cid}).to_list(None)
+                    self.assertEqual((await self.client.get('/api/ai_systems',params={'client_id':cid})).json(),[])
+                    intake=await self.client.get('/api/ai-intake',params={'client_id':cid})
+                    self.assertEqual(intake.status_code,200,intake.text)
+                    self.assertEqual(intake.json(),{'client_id':cid,'usage':'unsure','indicators':[]})
+                    for kind in ('ai_intake','ai_systems','risks','vendors','reviews','findings','tasks','policies','framework_assessments'):
+                        self.assertEqual(await server.db[kind].count_documents({'client_id':cid}),0,kind)
+                    body=self.payload();body['client_id']=cid
+                    body['vendor'].update(mode='create',name='Synthetic explicit AI Vendor',service='Synthetic service')
+                    key=uuid.uuid4().hex;response=await self.add(body,key)
+                    self.assertEqual(response.status_code,200,response.text)
+                    result=response.json();ai=result['ai_system']
+                    self.assertEqual((ai['client_id'],ai['status'],ai['approval_status']),(cid,'draft','pending_assessment'))
+                    self.assertEqual(ai['vendor_id'],result['vendor_id'])
+                    self.assertEqual(ai['onboarding_screening']['answers'],body['screening']['answers'])
+                    self.assertEqual(ai['onboarding_screening']['recorded_by'],'admin')
+                    self.assertEqual(ai['related_links'],[{'kind':'risks','id':result['risk_id'],'classification':'Context','source':'','rationale':body['risk']['rationale']}])
+                    self.assertNotIn('approval_history',ai)
+                    risk=await server.db.risks.find_one({'risk_id':result['risk_id']})
+                    self.assertEqual((risk['client_id'],risk['likelihood_score'],risk['impact_score']),(cid,3,2))
+                    self.assertEqual(risk['next_review'],annual_date(risk['created_at']))
+                    self.assertEqual(await server.db.reviews.count_documents({'client_id':cid,'ai_system_id':ai['ai_system_id']}),1)
+                    self.assertEqual(await server.db.reviews.count_documents({'client_id':cid,'risk_id':risk['risk_id']}),1)
+                    counts={kind:await server.db[kind].count_documents({'client_id':cid}) for kind in ('ai_systems','risks','vendors','reviews','audit_logs')}
+                    self.assertEqual((counts['ai_systems'],counts['risks'],counts['vendors']),(1,1,1))
+                    self.assertEqual((await self.add(body,key)).json(),result)
+                    self.assertEqual({kind:await server.db[kind].count_documents({'client_id':cid}) for kind in counts},counts)
+                    reloaded=(await self.client.get('/api/ai_systems',params={'client_id':cid})).json()
+                    self.assertEqual(reloaded,[ai])
+                    self.assertEqual(await server.db.clients.find_one({'client_id':cid}),before)
+                    self.assertEqual(await server.db.requirements.find({'client_id':cid}).to_list(None),requirements)
+                    for kind in ('findings','tasks','policies','framework_assessments'):
+                        self.assertEqual(await server.db[kind].count_documents({'client_id':cid}),0,kind)
+
+    async def test_unenrolled_guided_creation_keeps_permission_intake_and_client_status_denials(self):
+        await server.db.requirements.delete_many({'client_id':'a'})
+        counts={kind:await server.db[kind].count_documents({}) for kind in ('ai_systems','risks','vendors','reviews','create_requests')}
+        self.sign_in('member')
+        for role in ('client_contributor','client_readonly','client_viewer'):
+            await server.db.users.update_one({'user_id':'member'},{'$set':{'role':role}})
+            self.assertEqual((await self.add()).status_code,403)
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'platform_admin'}})
+        foreign=self.payload();foreign['client_id']='b'
+        self.assertEqual((await self.add(foreign)).status_code,403)
+        self.sign_in('admin')
+        missing=self.payload();missing['client_id']='missing-native-client'
+        self.assertEqual((await self.add(missing)).status_code,404)
+        for changes in ({'status':'archived'},{'status':'suspended'},{'archived':True},{'archived_at':'2026-01-01T00:00:00Z'}):
+            with self.subTest(client_changes=changes):
+                await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'active'},'$unset':{'archived':'','archived_at':''}})
+                await server.db.clients.update_one({'client_id':'a'},{'$set':changes})
+                self.assertEqual((await self.add()).status_code,422)
+        await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'active'},'$unset':{'archived':'','archived_at':''}})
+        await server.db.ai_intake.insert_one({'client_id':'a','usage':'no','indicators':[]})
+        self.assertEqual((await self.add()).status_code,409)
+        self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts},counts)
+        denials=await server.db.audit_logs.find({}).to_list(None)
+        self.assertEqual(len(denials),4)
+        self.assertTrue(all(event['action']=='access-denied' and event['user_id']=='member' for event in denials))
+
+    async def test_unenrolled_concurrent_replay_keeps_one_explicit_native_creation(self):
+        await server.db.requirements.delete_many({'client_id':'a'})
+        body=self.payload();key=uuid.uuid4().hex
+        attempts=await asyncio.gather(*(self.add(body,key) for _ in range(3)))
+        self.assertTrue(all(response.status_code in (200,409) for response in attempts),[response.text for response in attempts])
+        saved=await self.add(body,key);self.assertEqual(saved.status_code,200,saved.text)
+        result=saved.json()
+        self.assertEqual(await server.db.ai_systems.count_documents({}),1)
+        self.assertEqual(await server.db.risks.count_documents({}),1)
+        self.assertEqual(await server.db.reviews.count_documents({'ai_system_id':result['ai_system_id']}),1)
+        self.assertEqual(await server.db.reviews.count_documents({'risk_id':result['risk_id']}),1)
+        self.assertEqual(await server.db.audit_logs.count_documents({'action':'AI use case created','entity_id':result['ai_system_id']}),1)
+        self.assertEqual((await self.add(body,key)).json(),result)
 
     async def test_retained_shared_ai_approval_scope_is_not_expanded_by_metadata_or_screening(self):
-        for framework in ('iso-27001', 'soc-2'):
+        for framework in (None,'hipaa','nist-csf-2','cmmc','iso-27001','soc-2'):
             for status in ('approved', 'approved_with_conditions'):
                 with self.subTest(framework=framework,status=status):
                     await server.db.requirements.delete_many({'client_id':'a'})
-                    await server.db.requirements.insert_one({'requirement_id':'selected-'+framework,
-                        'client_id':'a','baseline_key':framework,'baseline_response':'applies'})
-                    created=(await self.add()).json()['ai_system']
+                    if framework:
+                        await server.db.requirements.insert_one({'requirement_id':'selected-'+framework,
+                            'client_id':'a','baseline_key':framework,'baseline_response':'applies'})
+                    response=await self.add()
+                    self.assertEqual(response.status_code,200,response.text)
+                    created=response.json()['ai_system']
                     aid=created['ai_system_id']
                     history=[{'status':status,'note':'Synthetic retained original approval','by':'original-approver',
                               'at':'2026-01-01T12:00:00+00:00','scope':{'environment':created['environment']}}]
@@ -110,9 +206,15 @@ class AIOnboardingTests(unittest.IsolatedAsyncioTestCase):
         self.sign_in('admin')
         for change in [lambda b:b['screening'].update(schema_version=True),lambda b:b['screening']['answers'].update(managed='yes'),
                        lambda b:b['risk'].update(likelihood=5),lambda b:b['confirmations'].update(details=False),
-                       lambda b:b['ai'].update(data_types=['No Sensitive Data','PII']),lambda b:b.update(client_id='b')]:
+                       lambda b:b['ai'].update(data_types=['No Sensitive Data','PII'])]:
             body=self.payload();change(body);response=await self.add(body)
             self.assertIn(response.status_code,(403,422),response.text)
+        # The global owner can use both clients; verify a real tenant denial
+        # with an administrator whose saved membership is limited to client A.
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'platform_admin'}})
+        self.sign_in('member')
+        foreign=self.payload();foreign['client_id']='b'
+        self.assertEqual((await self.add(foreign)).status_code,403)
         self.assertEqual(await server.db.ai_systems.count_documents({}),0)
         self.assertEqual(await server.db.risks.count_documents({}),0)
 
@@ -123,7 +225,16 @@ class AIOnboardingTests(unittest.IsolatedAsyncioTestCase):
         await server.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{'name':'Native edit'}})
         self.assertEqual((await self.add(body,key)).json()['ai_system']['name'],'Native edit')
         await server.db.requirements.delete_many({'client_id':'a'})
+        counts={kind:await server.db[kind].count_documents({}) for kind in ('ai_systems','risks','vendors','reviews','audit_logs')}
+        self.assertEqual((await self.add(body,key)).json()['ai_system']['name'],'Native edit')
+        self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts},counts)
+        self.sign_in('member')
+        self.assertEqual((await self.add(body,key)).status_code,403)
+        self.sign_in('admin')
+        await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'archived'}})
         self.assertEqual((await self.add(body,key)).status_code,422)
+        self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts},{**counts,'audit_logs':counts['audit_logs']+1})
+        self.assertEqual(await server.db.audit_logs.count_documents({'action':'access-denied','user_id':'member'}),1)
 
     async def test_calendar_anchor_leap_boundary(self):
         self.assertEqual(annual_date('2024-02-29T23:59:59Z'),'2025-02-28')

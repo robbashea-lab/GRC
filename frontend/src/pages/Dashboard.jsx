@@ -1,10 +1,10 @@
 import {cisClientProgram} from '@/lib/cisExperience';
-import {sharedClientPrograms,sharedPresentationEligible} from '@/lib/sharedExperience';
+import {sharedClientPrograms,sharedAppearanceEligible,sharedPresentationEligible} from '@/lib/sharedExperience';
 import {frameworkDashboardPrograms} from '@/lib/frameworkDashboard';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {selectedClient} from '@/lib/clientSelection';
 import {useEffect,useRef,useState} from 'react';
-import {useLocation,useSearchParams} from 'react-router-dom';
+import {Link,useLocation,useSearchParams} from 'react-router-dom';
 import api,{formatError} from '@/lib/api';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
@@ -13,6 +13,7 @@ import RegisterLoadError from '@/components/RegisterLoadError';
 import ClientWorkDashboard from '@/components/ClientWorkDashboard';
 import BrawndoDemoDashboard,{CisDashboardPending} from '@/components/BrawndoDemoDashboard';
 import BrawndoDemoProgram from '@/components/BrawndoDemoProgram';
+import FrameworkProgramCard from '@/components/FrameworkProgramCard';
 import {BRAWNDO_DEMO_DASHBOARD_ENABLED,brawndoDemoDashboard} from '@/lib/brawndoDemoDashboard';
 import {loadCompleteDemoWork} from '@/lib/brawndoDemoWork';
 import {usePortfolioRefresh} from '@/lib/usePortfolioRefresh';
@@ -29,8 +30,9 @@ export default function Dashboard(){
   const org=useOrg(),auth=useAuth(),{currentClient,currentClientId}=org,{user,workspaceMode}=auth,[params,setParams]=useSearchParams();
   const {pathname,search}=useLocation();
   const demoDashboard=brawndoDemoDashboard({...org,...auth,pathname,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')});
+  const commonDashboard=BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&sharedAppearanceEligible({...org,...auth,authLoading:auth.loading,orgLoading:org.loading,orgError:org.error,authError:auth.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')});
   // Appearance rechecks must not change the native data scope or discard open editor drafts.
-  const demoPresentation=demoDashboard&&visualCorrectionSurface({...org,...auth,pathname,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')})==='dashboard';
+  const demoPresentation=commonDashboard&&visualCorrectionSurface({...org,...auth,pathname,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')})==='dashboard';
   const conceptFrame=BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&sharedPresentationEligible({...org,...auth,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id')});
   const [snapshot,setSnapshot]=useState(null),[error,setError]=useState(null),[revision,setRevision]=useState(0),[selection,setSelection]=useState(null);
   const [linked,setLinked]=useState(null),[refreshVersion,setRefreshVersion]=useState(0),[refreshError,setRefreshError]=useState('');
@@ -54,7 +56,7 @@ export default function Dashboard(){
     return()=>controller.abort();
   },[currentClientId,user,requestKey,demoDashboard]);
   // Keep native dirty drawers intact; background reads update only dashboard projections.
-  usePortfolioRefresh(()=>{if(demoDashboard&&!linked&&snapshot?.key===requestKey)refreshDashboard(false);});
+  usePortfolioRefresh(()=>{if(commonDashboard&&!linked&&snapshot?.key===requestKey)refreshDashboard(false);});
   const shell=body=>conceptFrame?<CisDashboardPending client={currentClient}>{body}</CisDashboardPending>:<div><PageHeader title={`${currentClient?.name||'Client'} Dashboard`}/><div className="section-body">{body}</div></div>;
   function nativeRecord(){return linked?.key===recordContextKey?<RecordDrawer key="dashboard-native-record" open kind={linked.kind} record={linked.record} initialValues={linked.initialValues} schema={SCHEMAS[linked.kind]?.fields} clientId={currentClientId} reviewsPilot onSaved={()=>refreshDashboard()} onOpenChange={open=>{if(!open){setLinked(null);requestAnimationFrame(()=>{const target=linkedOpener.current?.isConnected?linkedOpener.current:demoPresentation?document.getElementById('bdd-work-heading'):null;target?.focus({preventScroll:true});});}}}/>:null;}
   // A stored selection is not a resolved client; wait before choosing any client presentation.
@@ -74,7 +76,7 @@ export default function Dashboard(){
   }
   const close=()=>{selectionVersion.current++;detailRequest.current?.abort();setSelection(null);};
   async function loadDetail(key,offset,signal,options={}){
-    const {data:result}=await api.get('/dashboard',{params:{client_id:currentClientId,scope:'org',work_queue:true,...(demoDashboard?{work_metadata:true}:{}),detail:key,offset,limit:25,...options},signal});
+    const {data:result}=await api.get('/dashboard',{params:{client_id:currentClientId,scope:'org',work_queue:true,...(commonDashboard?{work_metadata:true}:{}),detail:key,offset,limit:25,...options},signal});
     if(result.client_id!==currentClientId)throw new Error('Dashboard detail belongs to another client.');return result;
   }
   async function refreshDashboard(saved=true){
@@ -86,7 +88,7 @@ export default function Dashboard(){
       setSnapshot({key:requestKey,result});setRefreshVersion(n=>n+1);
       if(saved&&selection?.item){
         // Event dates and eligible owners belong to the queue projection, not generic record fields.
-        const rows=demoDashboard?await loadCompleteDemoWork(loadDetail,controller.signal):null;
+        const rows=commonDashboard?await loadCompleteDemoWork(loadDetail,controller.signal):null;
         const selected=rows?rows.find(row=>row.key===selection.item.key):selection.item;
         if(!selected){
           if(!controller.signal.aborted&&activeRequest.current===requestKey&&selectionVersion.current===selectedVersion)setSelection(null);
@@ -98,11 +100,17 @@ export default function Dashboard(){
     }catch(e){if(!controller.signal.aborted&&activeRequest.current===requestKey)setRefreshError((saved?'The record was saved, but dashboard refresh failed: ':'Dashboard refresh failed: ')+formatError(e));}
   }
   const programs=demoDashboard?frameworkDashboardPrograms(data.programs,data.programMetadata,currentClientId):[];
+  const otherPrograms=data.programs.filter(value=>!['cis-ig1','iso-27001','soc-2'].includes(value.key));
+  const trackedProgramUnavailable=!programs.length&&(demoDashboard||data.programs.some(value=>['cis-ig1','iso-27001','soc-2'].includes(value.key)));
   const program=programs.find(value=>value.framework_key===params.get('program'))||programs[0];
   const chooseProgram=key=>{const next=new URLSearchParams(params);next.set('program',key);setParams(next);};
   return <>{demoPresentation?<BrawndoDemoDashboard key={requestKey} queue={data.queue} programs={data.programs} client={currentClient} members={data.members}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} concept programOptions={programs} selectedProgram={program} onProgramSelect={chooseProgram}>
-      {program?<BrawndoDemoProgram key={program.program_id} client={currentClient} program={program} members={data.members} refreshToken={refreshVersion} cisDashboardProfile concept domainSource={data.programSources?.[program.framework_key]||data.cisDomainSource} contextKey={requestKey}/>:<section className="bdd-card" aria-label={configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}><header><h2>{configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} {configuredCis?`CIS v8.1 IG${configuredCis.implementationGroup} program`:'program'} is unavailable. Review its native configuration.</p></section>}
+      {program?<BrawndoDemoProgram key={program.program_id} client={currentClient} program={program} members={data.members} refreshToken={refreshVersion} cisDashboardProfile concept domainSource={data.programSources?.[program.framework_key]||data.cisDomainSource} contextKey={requestKey}/>:trackedProgramUnavailable?<section className="bdd-card" aria-label={configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}><header><h2>{configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} {configuredCis?`CIS v8.1 IG${configuredCis.implementationGroup} program`:'program'} is unavailable. Review its native configuration.</p></section>:null}
+      {otherPrograms.map(value=>data.programRows?.[value.key]
+        ? <div key={value.key} className="bdash" style={{padding:0,minHeight:0}}><FrameworkProgramCard program={value} rows={data.programRows[value.key]} workspacePilot={pilot}/></div>
+        : <section key={value.key} className="bdd-card"><header><h2>{value.label}</h2></header><p className="bdd-empty">{value.explanation} <Link to={value.to}>Open workspace</Link></p></section>)}
+      {!data.programs.length&&!demoDashboard&&<section className="bdd-card"><p className="bdd-empty">No frameworks configured. <Link to="/client-profile">Review client configuration</Link></p></section>}
     </BrawndoDemoDashboard>:<ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} workspacePilot={pilot}/>}
     {refreshError&&<p role="alert">{refreshError} <button onClick={()=>refreshDashboard(false)}>Retry dashboard refresh</button></p>}

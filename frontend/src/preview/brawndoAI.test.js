@@ -2,6 +2,7 @@ import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {aiRequest} from './aiGovernance';
 import {aiMatches,aiApproval,aiUseLabel,aiThirdParty} from '../lib/brawndoAI';
+import {readStore,saveStore} from './store';
 const api=axios.create({adapter:previewAdapter});
 const cid='demo_brawndo';
 beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');});
@@ -26,9 +27,16 @@ test('decision validation, stale writes, explicit conditions and client isolatio
   const approved=await decide(row,'approved_with_conditions');await expect(decide(row)).rejects.toThrow(/changed/);
   expect(approved.approval_history).toHaveLength(1);
   const other=(await api.post('/clients',{name:'Other AI client'})).data.client_id;
-  await expect(create({client_id:other})).rejects.toThrow(/read-only/);
+  const universal=await create({client_id:other});
+  expect(universal.environment).toBe('Managed QA workspace');
+  expect(universal.approval_status).toBeUndefined();
   const foreign=(await api.post('/ai_systems',{client_id:other,name:'Other'})).data;
   expect(foreign.approval_status).toBeUndefined();await expect(decide(foreign)).rejects.toThrow('Approval decisions require a configured CIS program');
+  const db=readStore(),before=db.ai_systems;
+  db.user={...db.user,role:'platform_admin',all_clients:false,client_ids:[cid]};saveStore(db);
+  await expect(create({client_id:other})).rejects.toThrow(/Forbidden/);
+  await expect(decide(foreign)).rejects.toThrow(/Forbidden/);
+  expect(readStore().ai_systems).toEqual(before);
 });
 test('non-administrator cannot decide; legacy lifecycle is never interpreted as approval',()=>{
   const row={ai_system_id:'a',client_id:cid,status:'active',updated_at:'2026-01-01'};

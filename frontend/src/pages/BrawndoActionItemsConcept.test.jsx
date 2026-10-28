@@ -2,6 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import BrawndoActionItems from './BrawndoActionItems';
 import {displayDay,displayRecordedAt} from '@/lib/managementDates';
+import {cisClient as mockCisClient} from '@/testUtils/cisExperience';
 
 let mockEligible=true;
 let mockNativeProps;
@@ -11,9 +12,9 @@ const mockRows=jest.requireActual('@/lib/brawndoActions').unifiedActions({tasks:
   {task_id:'historical-owner',client_id:'client',title:'Unavailable owner retained',owner_id:'former',priority:'high',status:'open',source_type:'manual'},
 ]},'client');
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'reader',role:'client_readonly'},workspaceMode:'standard'})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'client',currentClient:{client_id:'client',name:'Client'}})}));
-// This suite isolates the reader controller from enrollment; shared eligibility owns rollout.
-jest.mock('@/lib/sharedExperience',()=>({...jest.requireActual('@/lib/sharedExperience'),sharedExperienceEligible:()=>mockEligible}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'client',currentClient:{...mockCisClient('client'),name:'Client'}})}));
+// This suite isolates the reader controller from common appearance eligibility.
+jest.mock('@/lib/sharedExperience',()=>({...jest.requireActual('@/lib/sharedExperience'),sharedAppearanceEligible:()=>mockEligible}));
 jest.mock('@/lib/brawndoActions',()=>({...jest.requireActual('@/lib/brawndoActions'),unifiedActions:()=>mockRows}));
 jest.mock('@/lib/useActionRegisterData',()=>({useActionRegisterData:()=>({data:{},users:[],loading:false,error:null,load:jest.fn()})}));
 jest.mock('react-router-dom',()=>({Navigate:()=>null,useLocation:()=>({state:null}),useNavigationType:()=> 'POP',useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});

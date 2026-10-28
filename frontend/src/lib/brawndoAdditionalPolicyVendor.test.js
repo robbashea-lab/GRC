@@ -104,6 +104,31 @@ test.each([1,2,3])('CIS IG%s and prior CIS+HIPAA semantics stay unchanged withou
   expect(policyOverview([custom],[],['iso-27001',...programs],[assessment],group).mapped).toBe(1);
 });
 
+test.each(['hipaa','nist-csf-2'])('%s common appearance preserves its native catalog and saved-link mapping cohort',framework=>{
+  const mapping=CATALOGS[framework].policy_mappings[0];
+  const mapped={...policy,baseline_key:mapping.policy_key};
+  const custom={...policy,policy_id:'own-custom-link'};
+  const assessment={client_id:policy.client_id,framework_key:framework,
+    definition_id:CATALOGS[framework].requirements[0].id,related_links:[{kind:'policies',id:custom.policy_id}]};
+  const before=JSON.stringify({mapped,custom,assessment});
+  expect(policyOverview([mapped,custom],[],[framework],[assessment]).mapped).toBe(2);
+  expect(policyOverview([mapped,{...mapped}],[],[framework],[assessment]).mapped).toBe(1);
+  expect(policyVisualMatches(custom,'mapped','',[framework],[assessment],1)).toBe(true);
+  expect(policyVisualMatches(custom,'mapped','',[framework],[{...assessment,client_id:'foreign'}],1)).toBe(false);
+  const presentation=policyMappingPresentation([framework]);
+  expect(presentation.mappedLabel).not.toMatch(/CIS/);
+  expect(presentation.alignmentHeading).toBe('Framework alignment');
+  expect(policyMappedFilterUnavailable('mapped','Read failed',[framework])).toBe(true);
+  expect(JSON.stringify({mapped,custom,assessment})).toBe(before);
+});
+
+test.each([[[]],[['cmmc']]])('no mapped catalog in %j remains honest without a fabricated CIS scope',programs=>{
+  expect(policyMappingPresentation(programs)).toEqual({mappedLabel:'Framework-mapped',alignmentHeading:'Framework alignment'});
+  expect(policyOverview([policy],[],programs).mapped).toBe(0);
+  expect(policyMappedFilterUnavailable('mapped','Read failed',programs)).toBe(true);
+  expect(policyMappedFilterUnavailable('approved','Read failed',programs)).toBe(false);
+});
+
 test.each(['iso-27001','soc-2'])('healthy zero %s mapping is zero without inventing enrollment or policy identity',framework=>{
   expect(policyOverview([],[],[framework]).mapped).toBe(0);
   expect(policyOverview([policy],[],[framework]).mapped).toBe(0);

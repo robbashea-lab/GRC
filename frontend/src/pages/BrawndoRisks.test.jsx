@@ -3,7 +3,11 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RiskRegister,{RISK_SCORE_MAX} from './RiskRegister';
 import api from '@/lib/api';
-// Brawndo now uses the shared CIS overview. Retain these legacy register assertions on a non-CIS client.
+import {useOrg} from '@/context/OrgContext';
+import {useAuth} from '@/context/AuthContext';
+import {cisClientProgram} from '@/lib/cisExperience';
+import {brawndoFullRecordEligible} from '@/lib/brawndoFullRecord';
+// Common register appearance is independent of enrollment; native Risk controls remain authoritative.
 let mockClient='demo_dunder';
 let mockSearch='';
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
@@ -13,8 +17,14 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(
 jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/risks',search:mockSearch}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams(mockSearch))}),{virtual:true});
 jest.mock('@/components/RecordDrawer',()=>()=>null);
 let root,container,rows;
-const button=text=>[...document.querySelectorAll('button')].find(b=>b.textContent===text||b.textContent.startsWith(text));
 const click=async node=>act(async()=>node.click());
+const openFilters=async()=>{if(!container.querySelector('[aria-label="Risk filters"]'))await click(container.querySelector('.filter-button'));};
+const rowTitles=()=>[...container.querySelectorAll('#actionRows .risk-title')].map(node=>node.textContent);
+function expectNoProgramCommands(){
+ const context={...useOrg(),...useAuth(),pathname:'/risks',clientId:mockClient,selectedClientId:mockClient};
+ expect(cisClientProgram(context.currentClient)).toBeNull();
+ expect(brawndoFullRecordEligible(context)).toBe(false);
+}
 beforeEach(()=>{
  // Keep the existing UTC management day fixed, including an evening in western time zones.
  jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-14T00:30:00Z'));
@@ -25,38 +35,49 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();jest.useRealTimers();});
 
-test('retained significant-risk deep link visibly explains its scope and can be cleared',async()=>{
+test('retained significant-risk deep link exposes its native scope in common filters and can be cleared',async()=>{
  mockSearch='?view=significant';mockUser.workspace_mode='standard';
  await act(async()=>root.render(<RiskRegister/>));
- expect(container.querySelector('[data-testid="significant-risk-filter"]').textContent).toContain('High / Critical Risks');
+ expect(container.querySelector('[data-testid="cis-risks-concept"]')).not.toBeNull();
  expect(container.querySelector('tbody').textContent).not.toContain('Undated risk');
- expect(container.querySelectorAll('[aria-label="Risk views"] button')).toHaveLength(7);
- await click(button('Clear risk filter'));
- expect(container.querySelector('[data-testid="significant-risk-filter"]')).toBeNull();
+ await openFilters();
+ const significant=container.querySelector('[data-testid="risk-view-significant"]');
+ expect(significant.textContent).toBe('High or critical');expect(significant.getAttribute('aria-pressed')).toBe('true');
+ expect(container.querySelectorAll('[aria-label="Risk views"] button')).toHaveLength(8);
+ await click(container.querySelector('#clearFilters'));
+ expect(container.querySelector('[data-testid="risk-view-all_active"]').getAttribute('aria-pressed')).toBe('true');
+ expect(container.querySelector('#clearFilters')).toBeNull();
  expect(container.querySelector('tbody').textContent).toContain('Undated risk');
+ expectNoProgramCommands();expect(api.post).not.toHaveBeenCalled();
 });
-test('approved filters replace summary cards and preserve client isolation',async()=>{
+test('common presentation retains native filters and client isolation without inventing enrollment',async()=>{
  await act(async()=>root.render(<RiskRegister/>));
- expect(container.querySelector('[aria-label="Risk summaries"]')).toBeNull();
- expect([...container.querySelectorAll('[aria-label="Risk views"] button')].map(b=>b.textContent.split(' · ')[0])).toEqual(['All active','Critical','High','Due for review','Accepted','Closed','Review due in 30 days']);
+ expect(container.querySelector('[aria-label="Risk summaries"]')).not.toBeNull();
+ await openFilters();
+ expect([...container.querySelectorAll('[aria-label="Risk views"] button')].map(b=>b.textContent)).toEqual(['All active','High or critical','In treatment','Accepted','Review due in 30 days','Critical','High','Due for Review']);
+ expect(container.querySelector('[data-testid="risk-view-closed"]')).not.toBeNull();
  await click(container.querySelector('[data-testid="risk-view-review_due"]'));
  expect(container.querySelector('tbody').textContent).toContain('Late risk');
  expect(container.querySelector('tbody').textContent).not.toContain('Undated risk');
  await click(container.querySelector('[data-testid="risk-view-high"]'));
- expect(container.querySelectorAll('tbody tr')).toHaveLength(1);
- expect(container.querySelector('.brisk-level').textContent).toBe('High');
+ expect(container.querySelectorAll('#actionRows tr')).toHaveLength(1);
+ expect(container.querySelector('.score-badge').textContent).toBe('12 · High');
+ expectNoProgramCommands();
  mockClient='future_client';rememberClient(mockClient);mockUser.workspace_mode='standard';rows=rows.map(r=>({...r,client_id:mockClient,category:'operational'}));
  await act(async()=>root.render(<RiskRegister/>));
  expect(container.querySelector('.approved-risk-register')).not.toBeNull();
  expect(container.querySelector('tbody').textContent).not.toContain('Operational');
- expect(container.querySelectorAll('thead th')).toHaveLength(7);
- expect(container.querySelector('[data-testid="risk-view-all_active"]').textContent).toContain('2');
+ expect(container.querySelectorAll('.risk-table thead th')).toHaveLength(6);
+ expect(container.querySelector('[aria-label="Risk summaries"] .kpi-active strong').textContent).toBe('2');
+ expect(api.get).toHaveBeenCalledWith('/risks',{params:{client_id:mockClient}});
+ expectNoProgramCommands();expect(api.post).not.toHaveBeenCalled();
 });
 
 test('new risk has annual/undecided defaults and protects an unfinished draft',async()=>{
- await act(async()=>root.render(<RiskRegister/>));await click(button('New Risk'));
+ await act(async()=>root.render(<RiskRegister/>));await click(container.querySelector('[data-testid="new-risk"]'));
  const dialog=document.querySelector('[role="dialog"]');
  expect(dialog.className).toContain('brawndo-cis-assessment');expect(dialog.textContent).toContain('Not Yet Decided');expect(dialog.textContent).toContain('Annual');
+ expect(dialog.className).not.toContain('brawndo-risk-workflow');expectNoProgramCommands();
  await act(async()=>{const input=dialog.querySelector('input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Unsaved risk');input.dispatchEvent(new Event('input',{bubbles:true}));});
  await click([...dialog.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
  expect(document.querySelector('[role="alertdialog"]')).not.toBeNull();expect(api.post).not.toHaveBeenCalled();
@@ -69,10 +90,12 @@ test('review filters partition authoritative dates for normal and Demo clients',
   mockUser.workspace_mode=mode;
   rows=[-1,0,1,30,31].map(n=>({risk_id:String(n),client_id:mockClient,title:'Review '+n,status:'identified',next_review:days[n]}));
   await act(async()=>root.render(<RiskRegister key={mode}/>));
+  await openFilters();
   await click(container.querySelector('[data-testid="risk-view-review_due"]'));
-  expect([...container.querySelectorAll('tbody .register-record-link')].map(b=>b.textContent)).toEqual(['Review -1','Review 0']);
+  expect(rowTitles()).toEqual(['Review -1','Review 0']);
   await click(container.querySelector('[data-testid="risk-view-upcoming"]'));
-  expect([...container.querySelectorAll('tbody .register-record-link')].map(b=>b.textContent)).toEqual(['Review 1','Review 30']);
+  expect(rowTitles()).toEqual(['Review 1','Review 30']);
+  expectNoProgramCommands();
  }
- expect(RISK_SCORE_MAX).toBe(25);
+ expect(RISK_SCORE_MAX).toBe(25);expect(api.post).not.toHaveBeenCalled();
 });

@@ -63,7 +63,7 @@ function DateBadge({value, now}) {
 // This component projects the authorized collections; all commands remain in RiskRegister/RecordDrawer.
 export default function CisRisksConcept({rows, filtered, users, matches, view, onView, search, onSearch,
   table, filters, onOpenRisk, onOpenEvent, onNewRisk, onRiskScale, onExport, canWrite,
-  clientId, clientName, refreshLabel, scope, recordOpen = false, now = new Date()}) {
+  clientId, clientName, refreshLabel, scope, recordOpen = false, nativeDefaultOrder = false, now = new Date()}) {
   const [theme] = useBrawndoTheme();
   const [quarter, setQuarter] = useState(() => currentQuarter(now));
   const [mode, setMode] = useState('upcoming');
@@ -143,7 +143,7 @@ export default function CisRisksConcept({rows, filtered, users, matches, view, o
   const active = rows.filter(risk => matches(risk, 'all_active', now));
   const accepted = rows.filter(risk => matches(risk, 'accepted', now));
   const closed = rows.filter(riskIsClosed);
-  const registerRows = table.state.sort ? filtered : [...filtered].sort((a, b) => String(idLabel(a)).localeCompare(String(idLabel(b)), undefined, {numeric: true}) || a.risk_id.localeCompare(b.risk_id));
+  const registerRows = table.state.sort || nativeDefaultOrder ? filtered : [...filtered].sort((a, b) => String(idLabel(a)).localeCompare(String(idLabel(b)), undefined, {numeric: true}) || a.risk_id.localeCompare(b.risk_id));
   const filterCount = Object.values(table.state.filters || {}).filter(values => values.length).length
     + (!['all_active', 'accepted', 'closed'].includes(view) ? 1 : 0);
   const selectedTab = view === 'all' ? null : view === 'closed' ? 'closed' : view === 'accepted' ? 'accepted' : 'active';

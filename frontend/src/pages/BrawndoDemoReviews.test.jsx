@@ -22,6 +22,68 @@ test('History opens the original review with exact persisted occurrence and acto
   expect(onOpen.mock.calls[0][0]._review).toBe(review);expect(onOpen.mock.calls[0][0]._execution.occurrence_id).toBe('completed-original');
 });
 
+test.each([
+  ['empty client people',[]],
+  ['renamed current account',[{user_id:'actor',name:'Renamed current account'}]],
+])('History retains the saved occurrence actor with %s',async(label,users)=>{
+  const occurrence={...review.occurrences[0],completed_by_name:'Saved completion actor'};
+  const row={...review,completed_by_name:'Latest parent actor',occurrences:[occurrence]};
+  await act(async()=>root.render(<BrawndoReviewRows rows={[row]} users={users} checked={new Set()} history onOpen={()=>{}} rowMenu={()=>null}/>));
+  expect(container.querySelector('.bdr-owner').textContent).toBe('SCSaved completion actor');
+  expect(container.textContent).not.toContain('Latest parent actor');
+  expect(container.textContent).not.toContain('Renamed current account');
+  expect(container.textContent).not.toContain('Former user');
+});
+
+test('History keeps each saved actor and exact native opening identity without changing cancelled history or records',async()=>{
+  const occurrences=[
+    {occurrence_id:'first',status:'completed',completed_by:'first-actor',completed_by_name:'First reviewer',due_date:'2026-08-31',completed_at:'2026-09-01'},
+    {occurrence_id:'second',status:'completed',completed_by:'second-actor',completed_by_name:'Second reviewer',due_date:'2026-09-30',completed_at:'2026-10-01'},
+    {occurrence_id:'cancelled',status:'cancelled',due_date:'2026-10-31'},
+  ];
+  const row={...review,completed_by:'latest-parent',completed_by_name:'Latest parent actor',occurrences};
+  const before=JSON.stringify(row),onOpen=jest.fn(),toggleOne=jest.fn(),toggleAll=jest.fn();
+  await act(async()=>root.render(<BrawndoReviewRows rows={[row]} users={[]} checked={new Set()} history onOpen={onOpen} toggleOne={toggleOne} toggleAll={toggleAll} rowMenu={()=>null}/>));
+  expect([...container.querySelectorAll('.bdr-owner > span:last-child')].map(node=>node.textContent)).toEqual(['First reviewer','Second reviewer','Actor not recorded']);
+  expect(container.querySelectorAll('tbody input')).toHaveLength(0);
+  const renderedRows=[...container.querySelectorAll('tbody tr')];
+  expect(renderedRows[2].textContent).toContain('Cancelled');
+  expect(renderedRows[2].querySelector('.bdr-c-cad').textContent).toBe('Cancelled');
+  expect(renderedRows[0].querySelector('time').dateTime).toBe(occurrences[0].due_date);
+  for(const renderedRow of renderedRows)await act(async()=>renderedRow.querySelector('.bdr-name').click());
+  expect(onOpen).toHaveBeenCalledTimes(3);
+  onOpen.mock.calls.forEach(([opened],index)=>{
+    expect(opened._review).toBe(row);expect(opened._execution).toBe(occurrences[index]);
+    expect(opened.review_id).toBe(row.review_id);expect(opened.occurrence_id).toBe(occurrences[index].occurrence_id);
+  });
+  expect(toggleOne).not.toHaveBeenCalled();expect(toggleAll).not.toHaveBeenCalled();
+  expect(JSON.stringify(row)).toBe(before);
+});
+
+test.each([
+  ['legacy occurrence without actor',{occurrence_id:'legacy',status:'completed'},[], 'Actor not recorded'],
+  ['legacy occurrence with current scoped actor',{occurrence_id:'legacy-scoped',status:'completed',completed_by:'legacy-actor'},[{user_id:'legacy-actor',name:'Scoped historical actor'}],'Scoped historical actor'],
+  ['unresolved opaque actor',{occurrence_id:'unknown',status:'completed',completed_by:'opaque-private-actor'},[],'Former user'],
+])('History preserves the safe fallback for %s without inheriting the parent name',async(label,occurrence,users,expected)=>{
+  const row={...review,completed_by:'latest-parent',completed_by_name:'Latest parent actor',occurrences:[occurrence]};
+  await act(async()=>root.render(<BrawndoReviewRows rows={[row]} users={users} checked={new Set()} history onOpen={()=>{}} rowMenu={()=>null}/>));
+  expect(container.querySelector('.bdr-owner > span:last-child').textContent).toBe(expected);
+  expect(container.textContent).not.toContain('Latest parent actor');
+  expect(container.textContent).not.toContain('opaque-private-actor');
+});
+
+test('History displays a saved name-only occurrence while Active keeps the current owner',async()=>{
+  const occurrence={occurrence_id:'name-only',status:'completed',completed_by_name:'Name-only reviewer'};
+  const row={...review,completed_by_name:'Latest parent actor',occurrences:[occurrence]};
+  const users=[{user_id:'owner',name:'Current assigned owner'}];
+  await act(async()=>root.render(<BrawndoReviewRows rows={[row]} users={users} checked={new Set()} history onOpen={()=>{}} rowMenu={()=>null}/>));
+  expect(container.querySelector('.bdr-owner > span:last-child').textContent).toBe('Name-only reviewer');
+  await act(async()=>root.render(<BrawndoReviewRows rows={[row]} users={users} checked={new Set()} allChecked={false} toggleAll={()=>{}} toggleOne={()=>{}} onOpen={()=>{}} rowMenu={()=>null}/>));
+  expect(container.querySelector('.bdr-owner > span:last-child').textContent).toBe('Current assigned owner');
+  expect(container.textContent).not.toContain('Name-only reviewer');
+  expect(container.textContent).not.toContain('Latest parent actor');
+});
+
 test('reference status labels preserve native values, unknown fallback and exact row opening',async()=>{
   const rows=['upcoming','in_progress','not_started','needs_scheduling','custom_status','__proto__','constructor','toString'].map((status,index)=>({...review,review_id:`status-${index}`,status}));
   const before=JSON.stringify(rows),onOpen=jest.fn();

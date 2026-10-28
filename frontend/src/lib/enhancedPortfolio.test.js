@@ -148,3 +148,43 @@ test('missing lead preserves work while missing monitoring does not imply onboar
     kpi: 'notstarted'
   }), 'lead1', asOf)).toEqual([]);
 });
+
+const namedDemoClients = () => [
+  ['demo_prestige', 'Prestige Worldwide', '2026-10-21'],
+  ['demo_krusty_krab', 'The Krusty Krab', '2026-10-25'],
+  ['demo_initech', 'Initech', '2026-10-24'],
+  ['demo_dunder', 'Dunder Mifflin', '2026-10-22'],
+  ['demo_brawndo', 'Brawndo', null]
+].map(([client_id, name, next]) => ({
+  client_id, name, environment: 'Demo', assigned_owner_id: 'lead1',
+  monitoring: {onboarding: 'complete'},
+  metric_items: {past_due: [], due_30d: next ? [item(client_id + '-next', next, {client_id})] : []}
+}));
+const namedDemoContext = {trustedDemo: true, workspaceMode: 'demo', user: {user_id: 'lead1', workspace_mode: 'demo'}};
+const canonicalDemoIds = ['demo_brawndo', 'demo_initech', 'demo_krusty_krab', 'demo_dunder', 'demo_prestige'];
+const explicitDemoOrder = {
+  name: ['demo_brawndo', 'demo_dunder', 'demo_initech', 'demo_prestige', 'demo_krusty_krab'],
+  next: ['demo_prestige', 'demo_dunder', 'demo_initech', 'demo_krusty_krab', 'demo_brawndo']
+};
+
+test.each(['attention', undefined])('named Demo Portfolio preserves canonical default ordering for %s', sort => {
+  expect(filterPortfolio(namedDemoClients(), [], state({sort}), 'lead1', asOf, true, namedDemoContext)
+    .map(row => row.client_id)).toEqual(canonicalDemoIds);
+});
+
+test.each(['name', 'next'])('named Demo Portfolio honors explicit %s order for both filtered and base cohorts', sort => {
+  const clients = namedDemoClients(), original = [...clients];
+  for (const includeKpi of [false, true]) {
+    expect(filterPortfolio(clients, [], state({sort}), 'lead1', asOf, includeKpi, namedDemoContext)
+      .map(row => row.client_id)).toEqual(explicitDemoOrder[sort]);
+  }
+  expect(clients).toEqual(original);
+  expect(filterPortfolio(clients, [], state({sort, search: 'Initech'}), 'lead1', asOf, true, namedDemoContext))
+    .toEqual([clients.find(row => row.client_id === 'demo_initech')]);
+});
+
+test.each(['name', 'next'])('named Demo Portfolio keeps the existing normal-mode %s order', sort => {
+  const standard = {trustedDemo: false, workspaceMode: 'standard', user: {user_id: 'lead1', workspace_mode: 'standard'}};
+  expect(filterPortfolio(namedDemoClients(), [], state({sort}), 'lead1', asOf, true, standard)
+    .map(row => row.client_id)).toEqual(explicitDemoOrder[sort]);
+});

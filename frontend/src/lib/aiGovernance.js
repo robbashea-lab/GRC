@@ -1,6 +1,11 @@
 import catalog from './aiGovernanceCatalog.json';
 import {onboardingProjection,governanceAnswers} from './aiOnboarding';
 export {catalog};
+// AI availability follows the real client lifecycle, independently of framework enrollment.
+// Callers retain actor, tenant and operation-specific authorization.
+export function aiClientAvailable(client){
+  return !!client?.client_id&&['active','onboarding'].includes(client.status)&&!client.archived&&!client.archived_at;
+}
 export const AI_RELATIONSHIP_NOTICE='Some stored AI relationships could not be read. Linked context may be incomplete. Existing data has been preserved; an authorized review is required.';
 export const AI_DEFAULTS={catalog_key:null,name:'',description:'',owner_id:null,technical_owner_id:null,provider:'',vendor_id:null,product_model:'',status:'draft',purposes:[],data_types:[],access:[],roles:[],risk_topics:[],screening:{},human_review_required:null,human_approval_required:null,oversight_owner_id:null,oversight_notes:'',governance_notes:''};
 export const AI_KEYS=Object.keys(AI_DEFAULTS);

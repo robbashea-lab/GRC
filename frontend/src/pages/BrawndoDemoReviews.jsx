@@ -31,7 +31,7 @@ export default function BrawndoDemoReviews({clientName='Client',children,rows=[]
   </div>;
 }
 
-export function BrawndoReviewRows({rows,users,checked,toggleOne,toggleAll,allChecked,onOpen,rowMenu,history,controls,loading,error,widths={},sortBy,sortDir='desc'}){
+export function BrawndoReviewRows({rows,users,checked,toggleOne,toggleAll,allChecked,onOpen,rowMenu,history,nativeParentRows=false,controls,loading,error,widths={},sortBy,sortDir='desc'}){
   const executions=history?reviewExecutions(rows).filter(({execution})=>['completed','cancelled'].includes(execution.status)).map(({review,execution})=>({...review,...execution,review_id:review.review_id,due_date:execution.due_date,completed_by:execution.completed_by,completed_at:execution.completed_at,completion_date:execution.completion_date,_review:review,_execution:execution})):rows;
   // Completion belongs to the saved occurrence, never the recurring parent record.
   const completedTime=row=>{const value=Date.parse(row.completed_at||row.completion_date||'');return Number.isNaN(value)?null:value;};
@@ -57,16 +57,20 @@ export function BrawndoReviewRows({rows,users,checked,toggleOne,toggleAll,allChe
         <th style={widths.recurrence?{width:widths.recurrence}:undefined}>{history?'Completed':'Cadence'}</th><th className="open-col"><span className="sr-only">Open review</span></th>
       </tr></thead>
       <tbody>{loading||error||!displayRows.length?<tr><td colSpan={history?5:7} className="bdr-empty" role={error?'alert':loading?'status':undefined}>{loading?'Loading reviews…':error?'Reviews unavailable':'No reviews match these filters.'}</td></tr>:displayRows.slice((current-1)*10,current*10).map((row,index)=>{
-        const owner=history&&!row.completed_by?'Actor not recorded':personLabel(users,history?row.completed_by:row.owner_id);
+        const owner=history
+          ? row._execution.completed_by_name||(row.completed_by?personLabel(users,row.completed_by):'Actor not recorded')
+          : personLabel(users,row.owner_id);
         const urgency=cisReviewUrgency(row.due_date),schedule=reviewSchedule(row);
+        // Closed native parents can be selected through Status filters on any tab.
+        const closedParent=nativeParentRows&&['completed','cancelled','closed'].includes(row.status);
         const status=history?reviewDisplayValue('status',row.status):cisReviewStatusLabel(row.status);
-        return <tr key={row.occurrence_id||row.review_id} className={'bdr-trow'+(checked.has(row.review_id)?' bdr-selected':'')+(!history&&urgency.days!==null&&urgency.days<0?' overdue-row':'')} onClick={()=>onOpen(row)} data-testid={`reviews-row-${index}`}>
+        return <tr key={row.occurrence_id||row.review_id} className={'bdr-trow'+(checked.has(row.review_id)?' bdr-selected':'')+(!history&&!closedParent&&urgency.days!==null&&urgency.days<0?' overdue-row':'')} onClick={()=>onOpen(row)} data-testid={`reviews-row-${index}`}>
           {!history&&<td className="check-col" onClick={event=>event.stopPropagation()}><input type="checkbox" className="bdr-cb" checked={checked.has(row.review_id)} onChange={()=>toggleOne(row.review_id)} aria-label={'Select '+row.title}/></td>}
           <td className="bdr-c-item"><button className="bdr-name" onClick={event=>{event.stopPropagation();onOpen(row);}}>{row.title}</button><div className="bdr-meta"><span>{reviewDisplayValue('review_type',row.review_type)}</span><span className="bdr-fwchip">{basisSummary(row)}</span>{history&&row.status==='cancelled'&&<span>Cancelled</span>}</div></td>
           <td><div className="bdr-owner"><span className="bdr-avatar">{owner.split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase()}</span><span>{owner}</span></div></td>
           {!history&&<td><span className={'bdr-st'+(row.status==='in_progress'?' bdr-st-prog':'')}>{status}</span></td>}
-          <td className="bdr-c-due"><time dateTime={row.due_date||undefined}>{calendarDay(row.due_date)===null?(history?'Due date not recorded':'Not scheduled'):formatCisReviewDate(row.due_date,{year:true})}</time>{!history&&<small className={'due-badge '+urgency.tone}>{urgency.days===null?'Set a due date':urgency.text}</small>}</td>
-          <td className="bdr-c-cad">{history?<span>{row.status==='cancelled'?'Cancelled':displayRecordedAt(row.completed_at||row.completion_date)||'Date not recorded'}</span>:<><span>{reviewDisplayValue('recurrence',row.recurrence)}</span><small>Next cycle {displayDay(schedule.next_review_date)||'—'}</small></>}</td>
+          <td className="bdr-c-due"><time dateTime={row.due_date||undefined}>{calendarDay(row.due_date)===null?(history?'Due date not recorded':'Not scheduled'):formatCisReviewDate(row.due_date,{year:true})}</time>{!history&&!closedParent&&<small className={'due-badge '+urgency.tone}>{urgency.days===null?'Set a due date':urgency.text}</small>}</td>
+          <td className="bdr-c-cad">{history?<span>{row.status==='cancelled'?'Cancelled':displayRecordedAt(row.completed_at||row.completion_date)||'Date not recorded'}</span>:<><span>{reviewDisplayValue('recurrence',row.recurrence)}</span>{!closedParent&&<small>Next cycle {displayDay(schedule.next_review_date)||'—'}</small>}</>}</td>
           <td className="bdr-row-menu" onClick={event=>event.stopPropagation()}>{rowMenu(row,index)}</td>
         </tr>;
       })}</tbody>

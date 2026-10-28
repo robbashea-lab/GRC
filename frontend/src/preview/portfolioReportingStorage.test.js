@@ -754,6 +754,23 @@ test('many distinct enrollment variants fall back eagerly when scope metadata el
   expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
 });
 
+test.each([1,2])('V%s repeated scope variants reserve shared canonical metadata once and retain independent native views',version=>{
+  const fixture=pooledScopeFixture(version,JSON.stringify({padding:'x'.repeat(180000),unknown:{retained:'✓'}}));
+  const template=fixture.portfolio_reporting.snapshots[0];
+  fixture.portfolio_reporting.snapshots=Array.from({length:32},(_,index)=>({...copy(template),snapshot_id:'shared-scope-'+index,current:copy(template.current)}));
+  const saved=JSON.stringify(fixture),actual=readPortfolioStore(saved),repeated=readPortfolioStore(saved),expected=restorePortfolioReporting(codec.decodeDemoStore(saved));
+  for(const restored of [actual,repeated])for(const snapshot of restored.portfolio_reporting.snapshots)
+    expect(typeof Object.getOwnPropertyDescriptor(snapshot.current,'scope').get).toBe('function');
+  expect(JSON.stringify(compactPortfolioReporting(actual))).toBe(JSON.stringify(compactPortfolioReporting(expected)));
+  expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+  const first=actual.portfolio_reporting.snapshots[0].current.scope,last=actual.portfolio_reporting.snapshots.at(-1).current.scope;
+  first.unknown.retained='Explicit change';first.enrollment_ids.push('new');
+  expect(last.unknown.retained).toBe('✓');expect(last.enrollment_ids).toEqual(['second','first']);
+  expect(repeated.portfolio_reporting.snapshots[0].current.scope.unknown.retained).toBe('✓');
+  expect(repeated.portfolio_reporting.snapshots[0].current.scope.enrollment_ids).toEqual(['second','first']);
+  expect(JSON.stringify(fixture)).toBe(saved);
+});
+
 
 test('valid deeply nested pooled scope remains readable when optional canonical preparation exceeds the stack',()=>{
   const depth=16000,text='{"a":'.repeat(depth)+'0'+'}'.repeat(depth);

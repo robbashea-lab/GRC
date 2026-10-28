@@ -1,6 +1,6 @@
 /* Sizing only. Do not publish font defaults/tokens to ancestors or native portals. */
 /* Reserve workspace scroll space, but leave native modal scroll compensation alone. */
-html:has(.brawndo-workspace-pilot[data-cis-sizing=true]):not(:has(.ui-overlay)) {scrollbar-gutter:stable;}
+html:has(.brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])):not(:has(.ui-overlay)) {scrollbar-gutter:stable;}
 .brawndo-workspace-pilot:is([data-cis-sizing=true],[data-shared-shell=true])[data-theme][data-navigation] {
   --bwp-top:60px;
   --bwp-sidebar:240px;

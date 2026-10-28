@@ -26,6 +26,31 @@ test('pilot filters are read-only and open native items; month overflow navigate
  } finally {await act(async()=>root.unmount());container.remove();if(previousTheme===null)localStorage.removeItem(THEME_KEY);else localStorage.setItem(THEME_KEY,previousTheme);}
 });
 
+test('newly covered clients keep native month expansion and all saved overdue event populations',async()=>{
+ global.IS_REACT_ACT_ENVIRONMENT=true;const container=document.createElement('div');document.body.appendChild(container);const root=createRoot(container);
+ const anchor=new Date(2026,9,16),period=calendarPeriod(anchor),openSchedule=jest.fn(),setView=jest.fn(),setAnchor=jest.fn();
+ const tasks=Array.from({length:4},(_,n)=>({key:`native-${n}`,kind:'task',title:`Native task ${n}`,date:'2026-10-16',historical:false,status:'open'}));
+ const entries=[...tasks,{key:'vendor-overdue',kind:'vendor_contract_notice',title:'Saved notice deadline',date:'2026-10-15',historical:false,status:'open'},
+   {key:'represented-overdue',kind:'finding',title:'Represented Finding',date:'2026-10-15',historical:false,status:'open',represented:true}];
+ const before=JSON.stringify(entries),props={anchor,setAnchor,view:'month',setView,period,days:period.days,today:'2026-10-16',entries,summaryEntries:entries,openSchedule,ymd:localCalendarDate};
+ function NativeCalendar(){const [expanded,setExpanded]=React.useState({});return <CalendarView {...props} nativeBehavior expanded={expanded} setExpanded={setExpanded}/>;}
+ try{
+  await act(async()=>root.render(<NativeCalendar/>));
+  const day=()=>container.querySelector('[data-testid="cal-day-2026-10-16"]');
+  expect(day().querySelectorAll('.ev')).toHaveLength(3);expect(day().querySelector('.more').textContent).toBe('+1 more');
+  await act(async()=>day().querySelector('.more').click());
+  expect(day().querySelectorAll('.ev')).toHaveLength(4);expect(day().querySelector('.more').textContent).toBe('Show fewer');
+  expect(setView).not.toHaveBeenCalled();expect(setAnchor).not.toHaveBeenCalled();
+  await act(async()=>day().querySelector('[data-testid="cal-item-native-3"]').click());expect(openSchedule.mock.calls[0][0]).toBe(tasks[3]);
+  await act(async()=>day().querySelector('.more').click());expect(day().querySelectorAll('.ev')).toHaveLength(3);
+  const overdue=container.querySelectorAll('.kcell')[1];expect(overdue.querySelector('strong').textContent).toBe('2');
+  expect(overdue.textContent).not.toContain('Nothing past due');await act(async()=>overdue.click());
+  expect(container.querySelector('[data-testid="cal-attn-vendor-overdue"]')).toBeTruthy();
+  expect(container.querySelector('[data-testid="cal-attn-represented-overdue"]')).toBeTruthy();
+  expect(JSON.stringify(entries)).toBe(before);
+ }finally{await act(async()=>root.unmount());container.remove();}
+});
+
 test('Completed summary excludes accepted/cancelled records and retains their historical access',async()=>{
  global.IS_REACT_ACT_ENVIRONMENT=true;const container=document.createElement('div');document.body.appendChild(container);const root=createRoot(container);
  const anchor=new Date(2026,9,16),period=calendarPeriod(anchor);

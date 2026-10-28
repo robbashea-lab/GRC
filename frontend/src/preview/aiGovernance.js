@@ -1,6 +1,5 @@
 import {isCisClient} from './cisCapability';
-import {isSharedClient} from './sharedCapability';
-import {AI_DEFAULTS,AI_KEYS,aiProjection,validateAI,catalog} from '../lib/aiGovernance';
+import {AI_DEFAULTS,AI_KEYS,aiProjection,aiClientAvailable,validateAI,catalog} from '../lib/aiGovernance';
 import {validateCatalogKey} from '../lib/registerCatalogIdentity';
 import {record,write,audit,uid,now,ids} from './store';
 import {reviewView} from '../lib/reviewOccurrences';
@@ -26,7 +25,7 @@ export function aiRequest(db,path,method,params,body){
   if(!id&&method==='get'){checkClient(params.client_id);return db.ai_systems.filter(r=>r.client_id===params.client_id).map(view);}
   const old=id?record(db,'ai_systems',id):null;checkClient(old?.client_id||body.client_id);
   const pilot=isCisClient(db,old?.client_id||body.client_id);
-  const sharedWorkflow=isSharedClient(db,old?.client_id||body.client_id);
+  const aiWorkflow=aiClientAvailable(record(db,'clients',old?.client_id||body.client_id));
   if(method==='get'&&action==='activity'){
     const reviewIds=db.reviews.filter(r=>r.client_id===old.client_id&&r.ai_system_id===id).map(r=>r.review_id);
     return db.logs.filter(l=>l.client_id===old.client_id&&[id,...reviewIds].includes(l.entity_id));
@@ -66,19 +65,19 @@ export function aiRequest(db,path,method,params,body){
   if(old&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
   body={...body};delete body.expected_updated_at;
   const screeningReview=body.onboarding_screening;
-  if(Object.hasOwn(body,'onboarding_screening')&&(!old||!sharedWorkflow||!screeningReview))throw new Error('Screening review requires an existing versioned CIS, ISO 27001 or SOC 2 AI record');
+  if(Object.hasOwn(body,'onboarding_screening')&&(!old||!aiWorkflow||!screeningReview))throw new Error('Screening review requires an existing versioned AI record for an active or onboarding client');
   delete body.onboarding_screening;
-  if(Object.keys(body).some(k=>![...AI_KEYS,...(sharedWorkflow?AI_PILOT_KEYS:[]),'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
+  if(Object.keys(body).some(k=>![...AI_KEYS,...(aiWorkflow?AI_PILOT_KEYS:[]),'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
   if(Object.prototype.hasOwnProperty.call(body,'catalog_key'))body.catalog_key=validateCatalogKey('ai_systems',body.catalog_key);
   const row={...AI_DEFAULTS,...(pilot?AI_PILOT_DEFAULTS:{}),...old,...body};validateAI(db,row,old);validateAssignment(db,'ai_systems',row,old);
-  if(sharedWorkflow&&!pilot&&old)for(const [key,value] of Object.entries(AI_PILOT_DEFAULTS))
+  if(aiWorkflow&&!pilot&&old)for(const [key,value] of Object.entries(AI_PILOT_DEFAULTS))
     if(!Object.hasOwn(old,key)&&JSON.stringify(row[key])===JSON.stringify(value))delete row[key];
   if(screeningReview)row.onboarding_screening=reviewedScreening(old,row,screeningReview,db.user.user_id,now());
-  // Retiring CIS must not make an old approval silently cover a different deployment.
-  if(sharedWorkflow&&!pilot&&old&&['approved','approved_with_conditions'].includes(old.approval_status)
+  // Framework changes must not make an old approval silently cover a different deployment.
+  if(!pilot&&old&&['approved','approved_with_conditions'].includes(old.approval_status)
     &&(JSON.stringify(aiScope(old))!==JSON.stringify(aiScope(row))||screeningReview&&screeningReviewSnapshot(old)!==screeningReviewSnapshot(row)))
     throw Object.assign(new Error('This change affects a recorded AI approval scope; reassessment is not supported for this program. The original decision and record are unchanged.'),{status:409});
-  if(sharedWorkflow){
+  if(aiWorkflow){
     for(const key of ['environment','restrictions','data_settings'])if(Object.hasOwn(row,key)&&(typeof row[key]!=='string'||row[key].length>10000))throw new Error('Invalid '+key);
     if(Object.hasOwn(row,'permitted_data_types')&&(!Array.isArray(row.permitted_data_types)||row.permitted_data_types.some(v=>!catalog.data_types.includes(v))))throw new Error('Invalid permitted data classifications');
     if(!old&&pilot)row.approval_status='pending_assessment';

@@ -57,7 +57,7 @@ test('a failed organization bootstrap does not remain stuck behind the neutral p
   expect(container.querySelector('.brawndo-demo-dashboard')).toBeNull();
 });
 
-test('a resolved non-CIS client keeps its native dashboard', async () => {
+test('a resolved unconfigured client receives common appearance with its native empty state', async () => {
   const client = {client_id: 'demo_brawndo', name: 'Synthetic native client', status: 'active'};
   useOrg.mockReturnValue({...cisContext(), currentClient: null, loading: true});
   loadClientDashboard.mockResolvedValue(snapshot);
@@ -66,6 +66,9 @@ test('a resolved non-CIS client keeps its native dashboard', async () => {
   useOrg.mockReturnValue({...cisContext(), currentClient: client, clients: [client], loading: false});
   await act(async () => root.render(<Dashboard/>));
   expect(container.querySelector('h1').textContent).toBe('Synthetic native client Dashboard');
-  expect(container.textContent).toContain('Priority overview');
-  expect(container.querySelector('.brawndo-demo-dashboard')).toBeNull();
+  expect(container.textContent).toContain('Priority work');
+  expect(container.textContent).toContain('No frameworks configured.');
+  expect(container.querySelector('a[href="/client-profile"]').textContent).toBe('Review client configuration');
+  expect(container.querySelector('.brawndo-demo-dashboard')).not.toBeNull();
+  expect(container.textContent).not.toContain('CIS IG');
 });

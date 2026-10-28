@@ -61,9 +61,10 @@ test.each(Object.entries(ADDITIONAL_SECTION_ROUTES))('%s chrome is ready before 
   expect(additionalAppearanceSurface(pending,null)).toBeNull();
   for(const patch of [{user:null},{authLoading:true},{authError:'Denied'},{orgError:'Unavailable'},
     {currentClient:null},{selectedClientId:'other'},{routeClientId:'other'},
-    {user:{...context.user,workspace_mode:'standard'}},{currentClient:{...context.currentClient,status:'archived'}},
-    {currentClient:{...context.currentClient,onboarding_baseline:{completed:true,requirements:{'cis-ig1':'does_not_apply'}}}}]){
+    {user:{...context.user,workspace_mode:'standard'}},{currentClient:{...context.currentClient,status:'archived'}}]){
     expect(additionalSectionChrome({...pending,...patch})).toBeNull();
   }
+  expect(additionalSectionChrome({...pending,currentClient:{...context.currentClient,
+    onboarding_baseline:{completed:true,requirements:{'cis-ig1':'does_not_apply'}}}})).toBe(surface);
   expect(additionalSectionChrome({...pending,pathname:pathname+'/archive'})).toBeNull();
 });
