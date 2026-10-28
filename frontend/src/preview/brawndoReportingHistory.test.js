@@ -1,7 +1,7 @@
 import {enrichBrawndoReportingHistory,getBrawndoScenarioContext,getBrawndoScenarioDateMetadata,createBrawndoScenarioDateSelector} from './brawndoReportingHistory';
 import {buildBrawndoScenario,BRAWNDO_HISTORY_VERSION,canonicalScenarioStates} from './brawndoHistoryScenario';
 import {forecastImplementation,canConnectHistoryPositions,historyWindow,isDemoScenarioPosition} from '../lib/portfolioProgress';
-import {seedStore,readStore,saveStore,STORE_KEY,clone} from './store';
+import {buildLegacyDemoStore,readStore,saveStore,STORE_KEY,clone} from './store';
 import {captureDemoReporting,compactPortfolioReporting,demoCurrentPositions,portfolioReportingRequest,restorePortfolioReporting} from './portfolioReporting';
 import {activeDefinitions} from '../lib/frameworks';
 import axios from 'axios';
@@ -12,11 +12,17 @@ const AT='2026-10-18T18:00:00.000Z',PROGRAM='demo_brawndo:cis-ig1';
 const report=(db,range='3m')=>portfolioReportingRequest(db,'/portfolio/reporting/history',{client_id:'demo_brawndo',program_key:'cis-ig1',range});
 const fixtures=db=>db.portfolio_reporting.snapshots.filter(row=>row.observation_kind==='demo_fixture'&&row.client_id==='demo_brawndo'&&row.program_id===PROGRAM);
 const otherFixtures=db=>db.portfolio_reporting.snapshots.filter(row=>row.observation_kind==='demo_fixture'&&row.client_id!=='demo_brawndo');
+// Retained 19-point Brawndo history-v2 compatibility. Fresh showcase-v2 posture
+// and its five reporting points are tested separately by cisDemoRefresh.test.
+const enterLegacyDemo=async(api=axios.create({adapter:previewAdapter}))=>{
+  saveStore(buildLegacyDemoStore(),{resetFiles:true});
+  return api.post('/demo/enter');
+};
 beforeEach(()=>{jest.useFakeTimers().setSystemTime(new Date(AT));sessionStorage.clear();});
 afterEach(()=>jest.useRealTimers());
 
 test('an installed joined scenario needs no native projection during migration checks',async()=>{
-  await axios.create({adapter:previewAdapter}).post('/demo/enter');
+  await enterLegacyDemo();
   const db=readStore(),before=clone(db);
   expect(db.portfolio_reporting.fixture_versions[BRAWNDO_HISTORY_VERSION].join_snapshot_id).toBeTruthy();
   const projection=jest.spyOn(require('./portfolioReporting'),'demoCurrentPositions');
@@ -28,7 +34,7 @@ test('an installed joined scenario needs no native projection during migration c
 });
 
 test('carried scenario boundary retains its original identity and provenance after the clock advances',async()=>{
-  await axios.create({adapter:previewAdapter}).post('/demo/enter');
+  await enterLegacyDemo();
   const db=readStore(),before=clone(db);
   jest.setSystemTime(new Date('2026-10-18T18:01:00.000Z'));
   for(const range of ['1m','3m','6m','12m']){
@@ -51,8 +57,8 @@ test('carried scenario boundary retains its original identity and provenance aft
   expect(db).toEqual(before);
 });
 
-test('fresh native seed has dated fixture observations with exact scope and four reconciled counts in every range',async()=>{
-  await axios.create({adapter:previewAdapter}).post('/demo/enter');
+test('retained legacy native preset has dated fixture observations with exact scope and four reconciled counts in every range',async()=>{
+  await enterLegacyDemo();
   const db=readStore(),before=clone(db);
   expect(fixtures(db)).toHaveLength(buildBrawndoScenario(db.portfolio_reporting.fixture_versions[BRAWNDO_HISTORY_VERSION].anchor).positions.length);
   for(const range of ['1m','3m','6m','12m']){
@@ -77,7 +83,7 @@ test('fresh native seed has dated fixture observations with exact scope and four
 
 test('native saved status reloads into current summaries and appends history without replacing fixtures',async()=>{
   const api=axios.create({adapter:previewAdapter});
-  await api.post('/demo/enter');
+  await enterLegacyDemo(api);
   const before=readStore(),original=clone(fixtures(before));
   const row=before.framework_assessments.find(value=>value.client_id==='demo_brawndo'&&value.definition_id==='1.1');
   expect(row.status).toBe('needs_attention');
@@ -100,7 +106,7 @@ test('native saved status reloads into current summaries and appends history wit
 });
 
 test('existing sessions with an earlier enabled framework enrich only the exact CIS program',()=>{
-  const db=seedStore();delete db.portfolio_reporting;
+  const db=buildLegacyDemoStore();delete db.portfolio_reporting;
   adjustProgram(db,'demo_brawndo','hipaa',{applicability:'applies'});
   db.requirements.find(row=>row.client_id==='demo_brawndo'&&row.baseline_key==='hipaa').status='active';
   const client=db.clients.find(row=>row.client_id==='demo_brawndo');
@@ -127,7 +133,7 @@ test('existing sessions with an earlier enabled framework enrich only the exact 
 });
 
 test('existing edited session preserves every record and previous observation, and later native capture remains authoritative',()=>{
-  const db=seedStore();delete db.portfolio_reporting;
+  const db=buildLegacyDemoStore();delete db.portfolio_reporting;
   captureDemoReporting(db,null,'2026-10-17T12:00:00.000Z');
   const row=db.framework_assessments.find(row=>row.client_id==='demo_brawndo'&&row.status==='addressed');
   row.status='in_progress';row.notes='Retain my local edit';row.last_saved=AT;
@@ -150,7 +156,7 @@ test('existing edited session preserves every record and previous observation, a
 });
 
 test('native scope changes retain the fixture scope and report the real denominator transition',()=>{
-  const db=seedStore();captureDemoReporting(db,null,AT);
+  const db=buildLegacyDemoStore();captureDemoReporting(db,null,AT);
   // saveStore first captures the current source, then installs the fixture atomically.
   enrichBrawndoReportingHistory(db);
   const prior=clone(db),row=db.framework_assessments.find(value=>value.client_id==='demo_brawndo');
@@ -165,7 +171,7 @@ test('native scope changes retain the fixture scope and report the real denomina
 });
 
 test('failed enrichment commit leaves old storage intact and retries safely',()=>{
-  const db=seedStore();delete db.portfolio_reporting;saveStore(db);
+  const db=buildLegacyDemoStore();delete db.portfolio_reporting;saveStore(db);
   const persisted=restorePortfolioReporting(JSON.parse(sessionStorage.getItem(STORE_KEY)));
   persisted.portfolio_reporting.snapshots=persisted.portfolio_reporting.snapshots.filter(row=>row.observation_kind!=='demo_fixture');
   delete persisted.portfolio_reporting.fixture_versions;
@@ -177,7 +183,7 @@ test('failed enrichment commit leaves old storage intact and retries safely',()=
 });
 
 test('scenario resolves exact native terminal states, four deltas and explicitly scoped positive forecast',()=>{
-  const db=seedStore();saveStore(db);const saved=readStore(),before=clone(saved);
+  const db=buildLegacyDemoStore();saveStore(db);const saved=readStore(),before=clone(saved);
   const context=getBrawndoScenarioContext(saved);expect(context).not.toBeNull();
   const marker=saved.portfolio_reporting.fixture_versions[BRAWNDO_HISTORY_VERSION];
   expect(marker.terminal).toEqual(canonicalScenarioStates());
@@ -198,7 +204,7 @@ test('scenario resolves exact native terminal states, four deltas and explicitly
 });
 
 test('scenario metadata round trips, unknown fixture mutation is rejected, and narrative saves do not invent new dates',async()=>{
-  const api=axios.create({adapter:previewAdapter});await api.post('/demo/enter');
+  const api=axios.create({adapter:previewAdapter});await enterLegacyDemo(api);
   const db=readStore(),row=db.framework_assessments.find(row=>row.client_id==='demo_brawndo'&&row.definition_id==='2.1');
   const date=getBrawndoScenarioDateMetadata(db,row);expect(date.kind).toBe('implementation_transition');
   jest.setSystemTime(new Date('2026-10-18T18:01:00.000Z'));
@@ -210,7 +216,7 @@ test('scenario metadata round trips, unknown fixture mutation is rejected, and n
 });
 
 test('accepted regression and reimplementation create a new completion episode without resetting native data',async()=>{
-  const api=axios.create({adapter:previewAdapter});await api.post('/demo/enter');
+  const api=axios.create({adapter:previewAdapter});await enterLegacyDemo(api);
   const before=readStore(),row=before.framework_assessments.find(value=>value.client_id==='demo_brawndo'&&value.definition_id==='2.1');
   const original=getBrawndoScenarioDateMetadata(before,row);
   jest.setSystemTime(new Date('2026-10-18T18:01:00.000Z'));
@@ -224,7 +230,7 @@ test('accepted regression and reimplementation create a new completion episode w
 });
 
 function legacySession(){
-  const db=seedStore();delete db.portfolio_reporting;captureDemoReporting(db,null,AT);
+  const db=buildLegacyDemoStore();delete db.portfolio_reporting;captureDemoReporting(db,null,AT);
   const client=db.clients.find(row=>row.client_id==='demo_brawndo'),definitions=activeDefinitions('cis-ig1',{implementation_group:1});
   const rows=db.framework_assessments.filter(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1');
   const targets=[[360,8,12,10],[300,12,14,10],[240,16,16,8],[180,20,16,8],[120,24,16,6],[75,26,16,6],[45,28,16,6],[21,29,16,6],[14,30,15,6],[7,30,16,6],[2,31,15,6]];
@@ -266,7 +272,7 @@ test('unknown or modified v1 payloads and unsafe edited joins remain byte-for-by
 });
 
 test('scenario policy is opt-in and cannot be selected for another program or damaged provenance',()=>{
-  const db=seedStore();saveStore(db);const saved=readStore();
+  const db=buildLegacyDemoStore();saveStore(db);const saved=readStore();
   const request=changes=>portfolioReportingRequest(saved,'/portfolio/reporting/history',{client_id:'demo_brawndo',program_key:'cis-ig1',...changes});
   expect(request({}).scenario_context).toBeUndefined();
   expect(request({demo_scenario:'arbitrary'}).scenario_context).toBeUndefined();
@@ -277,7 +283,7 @@ test('scenario policy is opt-in and cannot be selected for another program or da
 
 test.each(['unknown-kind','nested-provenance','source-event','foreign-scope','invalid-effective','invalid-captured','reversed-time','future-capture','calendar-rollover'])(
   'native join proof rejects %s instead of trusting an observation label',variant=>{
-    const db=seedStore();saveStore(db);const saved=readStore();
+    const db=buildLegacyDemoStore();saveStore(db);const saved=readStore();
     expect(getBrawndoScenarioContext(saved)).not.toBeNull();
     const marker=saved.portfolio_reporting.fixture_versions[BRAWNDO_HISTORY_VERSION];
     const join=saved.portfolio_reporting.snapshots.find(row=>row.snapshot_id===marker.join_snapshot_id);
@@ -302,7 +308,7 @@ test.each(['2026-02-30T00:00:00Z','2026-10-18T18:01:00Z'])(
   });
 
 test('date metadata respects the supplied historical context clock rather than a later wallclock',async()=>{
-  await axios.create({adapter:previewAdapter}).post('/demo/enter');
+  await enterLegacyDemo();
   const db=readStore(),context=getBrawndoScenarioContext(db,new Date(AT));
   const row=db.framework_assessments.find(record=>record.client_id==='demo_brawndo'&&record.definition_id==='2.1');
   expect(getBrawndoScenarioDateMetadata(db,row,context)).not.toBeNull();
@@ -310,7 +316,7 @@ test('date metadata respects the supplied historical context clock rather than a
 });
 
 test('duplicate owned fixture IDs are retained but cannot enter scenario calculations or date metadata',async()=>{
-  await axios.create({adapter:previewAdapter}).post('/demo/enter');
+  await enterLegacyDemo();
   const db=readStore(),duplicate=clone(fixtures(db)[0]);duplicate.current.implemented++;
   db.portfolio_reporting.snapshots.push(duplicate);const before=clone(db);
   expect(getBrawndoScenarioContext(db)).toBeNull();
@@ -332,7 +338,7 @@ test('legacy upgrade does not skip an earlier nonterminal native position to joi
 });
 
 test('a joinless initial scenario adopts a subsequently captured genuine baseline once, retaining the anchor',()=>{
-  const db=seedStore();
+  const db=buildLegacyDemoStore();
   // Owned isolated unit data only: remove seed save metadata to exercise the
   // otherwise-unavailable joinless branch. Never clear a hosted/user record.
   db.framework_assessments.filter(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1').forEach(row=>delete row.last_saved);
@@ -362,7 +368,7 @@ test('a joinless initial scenario adopts a subsequently captured genuine baselin
 
 test.each(['narrative','verification','ownership'])(
   'accepted %s source refresh preserves explicit endpoint continuity without creating posture votes',async kind=>{
-    const api=axios.create({adapter:previewAdapter});await api.post('/demo/enter');
+    const api=axios.create({adapter:previewAdapter});await enterLegacyDemo(api);
     const before=readStore(),row=before.framework_assessments.find(value=>value.client_id==='demo_brawndo'&&value.definition_id==='2.1');
     const snapshots=clone(before.portfolio_reporting.snapshots),date=getBrawndoScenarioDateMetadata(before,row);
     const body=kind==='narrative'?{implementation:'Synthetic QA accepted unchanged status'}:kind==='verification'?{verification:'not_verified'}:{owner_id:null};
@@ -382,7 +388,7 @@ test.each(['narrative','verification','ownership'])(
   });
 
 test('unlogged source version changes and failed persistence cannot manufacture accepted refresh proofs',async()=>{
-  const api=axios.create({adapter:previewAdapter});await api.post('/demo/enter');
+  const api=axios.create({adapter:previewAdapter});await enterLegacyDemo(api);
   const original=readStore(),tampered=clone(original),row=tampered.framework_assessments.find(value=>value.client_id==='demo_brawndo'&&value.definition_id==='2.1');
   jest.setSystemTime(new Date('2026-10-18T18:01:00.000Z'));row.last_saved=new Date().toISOString();
   saveStore(tampered);
@@ -398,7 +404,7 @@ test('unlogged source version changes and failed persistence cannot manufacture 
 });
 
 test('validated scenario adds a bounded current-state endpoint to both history views without persistence or forecast votes',async()=>{
-  const api=axios.create({adapter:previewAdapter});await api.post('/demo/enter');
+  const api=axios.create({adapter:previewAdapter});await enterLegacyDemo(api);
   const db=readStore(),before=clone(db),stored=sessionStorage.getItem(STORE_KEY);
   const request=scoped=>portfolioReportingRequest(db,'/portfolio/reporting/history',{client_id:'demo_brawndo',program_key:'cis-ig1',range:'6m',
     ...(scoped?{demo_scenario:BRAWNDO_HISTORY_VERSION}:{})});
@@ -418,7 +424,7 @@ test('validated scenario adds a bounded current-state endpoint to both history v
 });
 
 test('request-local date selector agrees with single-record projection, returns copies and refreshes after accepted mutation',async()=>{
-  const api=axios.create({adapter:previewAdapter});await api.post('/demo/enter');
+  const api=axios.create({adapter:previewAdapter});await enterLegacyDemo(api);
   const db=readStore(),before=clone(db),bytes=sessionStorage.getItem(STORE_KEY),context=getBrawndoScenarioContext(db);
   const select=createBrawndoScenarioDateSelector(db,context);
   const rows=db.framework_assessments.filter(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1');
@@ -439,7 +445,7 @@ test('request-local date selector agrees with single-record projection, returns 
 });
 
 test.each(['standard','lookalike','archived','invalid-scope','missing-provenance','imported-id'])('does not enrich %s or other program/client data',variant=>{
-  const db=seedStore();delete db.portfolio_reporting;
+  const db=buildLegacyDemoStore();delete db.portfolio_reporting;
   if(variant==='standard')db.user.workspace_mode='standard';
   if(variant==='lookalike')db.clients.find(row=>row.client_id==='demo_brawndo').client_id='demo_brawndo_copy';
   if(variant==='archived')db.clients.find(row=>row.client_id==='demo_brawndo').status='archived';
@@ -451,7 +457,7 @@ test.each(['standard','lookalike','archived','invalid-scope','missing-provenance
 
 
 test.each(['scenario context','date selector'])('%s rejects unrelated history identity before reading its source payload',async consumer=>{
-  await axios.create({adapter:previewAdapter}).post('/demo/enter');
+  await enterLegacyDemo();
   const db=readStore(),context=getBrawndoScenarioContext(db,new Date(AT));
   expect(context).not.toBeNull();
   const record=db.framework_assessments.find(row=>row.client_id==='demo_brawndo'&&row.definition_id==='2.1');

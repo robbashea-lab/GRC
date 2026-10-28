@@ -11,11 +11,10 @@ import { validateClientRelationships } from './clientRelationships';
 import { portfolio } from './summaries';
 import {latestPortfolioActivity} from '../lib/portfolioOverview';
 import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
-import {CIS_DEMO_REVISION} from './cisDemoSelection';
+import {CIS_SHOWCASE_VERSION,cisDemoFixtureDates} from './cisDemoFixtureDates';
 const api = axios.create({
   adapter: previewAdapter
 });
-const SCENARIO_VERSION='brawndo-cis-ig1-history-v2';
 beforeEach(() => {
   jest.useFakeTimers().setSystemTime(new Date('2026-10-13T17:00:00.000Z'));
   sessionStorage.clear();
@@ -31,6 +30,7 @@ test('same day produces byte-identical seed and dates advance with the clock', (
   const reference=c.reviews.find(r=>r.client_id==='demo_prestige'&&r.baseline_key==='policy-review');
   expect(reference).toBeTruthy();
   expect(reference.due_date).toBe(demoDates(new Date('2030-01-01'))(-8));
+  if(process.env.CIS_DEMO_QA_DIAGNOSTICS==='true')console.info('CIS_STORE_SIZE',JSON.stringify(Object.fromEntries(Object.entries(a).map(([key,value])=>[key,JSON.stringify(value).length]))));
   expect(JSON.stringify(a).length).toBeLessThan(4000000);
 });
 test('canonical framework programs, real profiles, scoped people and valid assessments', () => {
@@ -66,13 +66,16 @@ test('canonical framework programs, real profiles, scoped people and valid asses
   expect(db.framework_assessments.some(a => a.framework_key === 'cmmc')).toBe(false);
 });
 test('historical occurrences, remediation chronology and downloadable evidence reconcile', () => {
-  const db = seedStore(),
-    today = demoDates()(0);
+  const db = seedStore();
   expect(db.reviews.some(r => r.occurrences.length)).toBe(true);
   for (const r of db.reviews) {
     for (const o of r.occurrences) {
-      expect(o.completed_at <= today).toBe(true);
-      expect(o.completed_at <= o.due_date).toBe(true);
+      expect(Date.parse(o.completed_at)).toBeLessThanOrEqual(Date.now());
+      const resolvedLate=['demo_brawndo','demo_initech','demo_krusty_krab'].includes(r.client_id)&&(r.risk_id||r.vendor_id||r.ai_system_id);
+      // New operational examples intentionally retain a one-day late completion;
+      // untouched programs and required governance retain their original timing.
+      if(resolvedLate)expect(Date.parse(o.completed_at)-Date.parse(o.due_date)).toBe(86400000);
+      else expect(Date.parse(o.completed_at)).toBeLessThanOrEqual(Date.parse(o.due_date));
       expect(o.finding_count).toBe(db.findings.filter(f => f.review_id === r.review_id && f.occurrence_id === o.occurrence_id).length);
     }
   }
@@ -96,20 +99,36 @@ test('historical occurrences, remediation chronology and downloadable evidence r
     expect(atob(e.content_base64)).toContain('Collected: ' + e.evidence_date);
   }
   for (const risk of db.risks.filter(r => r.status === 'closed')) expect(risk.last_reviewed <= risk.closed_at).toBe(true);
-  for (const c of db.clients.filter(c=>['demo_brawndo','demo_dunder','demo_prestige'].includes(c.client_id))) expect(db.evidence.filter(e => e.client_id === c.client_id).length).toBeGreaterThanOrEqual(8);
-  for(const clientId of ['demo_initech','demo_krusty_krab']){
-    const samples=db.evidence.filter(e=>e.client_id===clientId);
-    expect(samples).toHaveLength(1);
-    const sample=samples[0];
-    expect(sample).toMatchObject({evidence_id:clientId+'_evidence_inventory',filename:'inventory-sample.txt',mime_type:'text/plain',linked_type:'framework_assessment'});
-    const assessment=db.framework_assessments.find(row=>row.framework_assessment_id===sample.linked_id);
-    expect(assessment.client_id).toBe(clientId);
-    expect(assessment.related_links).toContainEqual({kind:'evidence',id:sample.evidence_id});
-    expect(sample.relationships.some(link=>link.kind==='findings'&&link.id===clientId+'_finding_inventory')).toBe(true);
-    const reviewLink=sample.relationships.find(link=>link.kind==='reviews');
-    const occurrence=db.reviews.find(row=>row.review_id===reviewLink.id).occurrences.find(row=>row.occurrence_id===reviewLink.occurrence_id);
-    expect(sample.evidence_date).toBe(occurrence.completed_at.slice(0,10));
-    expect(atob(sample.content_base64)).toContain('unresolved owner tracked in '+clientId+'_finding_inventory');
+  for (const c of db.clients.filter(c=>['demo_dunder','demo_prestige'].includes(c.client_id))) expect(db.evidence.filter(e => e.client_id === c.client_id).length).toBeGreaterThanOrEqual(8);
+  // CIS samples are compact bundles rather than duplicate per-duty files. Each
+  // refreshed client still has real bytes across all three native parent types.
+  for(const cid of ['demo_brawndo','demo_initech','demo_krusty_krab']){
+    const types=new Set(db.evidence.filter(row=>row.client_id===cid).map(row=>row.linked_type));
+    expect(types).toEqual(new Set(['framework_assessment','vendor','task']));
+  }
+  // The current CIS cohort uses three operating bundles, with native assessment
+  // and current Review links. The old single-file v1 graph is tested at its legacy stage.
+  for(const clientId of ['demo_brawndo','demo_initech','demo_krusty_krab']){
+    for(const key of ['periodic','event','configuration']){
+      const samples=db.evidence.filter(e=>e.evidence_id===clientId+'_showcase_evidence_operating_'+key);
+      expect(samples).toHaveLength(1);
+      const sample=samples[0];
+      expect(sample).toMatchObject({client_id:clientId,filename:'cis-operating_'+key+'.csv',mime_type:'text/csv',linked_type:'framework_assessment'});
+      const assessment=db.framework_assessments.find(row=>row.framework_assessment_id===sample.linked_id);
+      expect(assessment.client_id).toBe(clientId);
+      expect(assessment.related_links).toContainEqual({kind:'evidence',id:sample.evidence_id});
+      for(const link of sample.relationships.filter(row=>row.kind==='framework_assessments')){
+        const linked=db.framework_assessments.find(row=>row.framework_assessment_id===link.id);
+        expect(linked.client_id).toBe(clientId);
+        expect(linked.related_links).toContainEqual({kind:'evidence',id:sample.evidence_id});
+        expect(atob(sample.content_base64)).toContain('\n'+linked.definition_id+',');
+      }
+      for(const link of sample.relationships.filter(row=>row.kind==='reviews')){
+        const review=db.reviews.find(row=>row.review_id===link.id);
+        expect(review.client_id).toBe(clientId);
+        expect(link.occurrence_id).toBe(review.current_occurrence_id);
+      }
+    }
   }
 });
 test('reset recovers creations edits deletions completions and baseline without touching standard storage', async () => {
@@ -147,38 +166,40 @@ test('reset recovers creations edits deletions completions and baseline without 
   expect(reporting.snapshots).toHaveLength(original.portfolio_reporting.snapshots.length);
   const currentSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind!=='demo_fixture');
   const allFixtures=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture');
-  const fixtureSnapshots=allFixtures.filter(snapshot=>snapshot.client_id==='demo_brawndo'&&snapshot.program_id==='demo_brawndo:cis-ig1');
   expect(currentSnapshots.length).toBeGreaterThan(0);
   expect(currentSnapshots.every(snapshot=>snapshot.captured_at===resetAt&&snapshot.current.captured_at===resetAt)).toBe(true);
   expect(allFixtures).toHaveLength(original.portfolio_reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture').length);
-  // At this fixed anchor, V2 has eighteen historical positions and one exact terminal position.
-  expect(fixtureSnapshots).toHaveLength(19);
-  expect(fixtureSnapshots.every(snapshot=>snapshot.program_id==='demo_brawndo:cis-ig1'
-    &&snapshot.current.provenance.fixture_version===SCENARIO_VERSION
-    &&snapshot.current.provenance.fixture_anchor===resetAt)).toBe(true);
-  expect(fixtureSnapshots.slice(0,-1).every(snapshot=>snapshot.captured_at<resetAt)).toBe(true);
-  expect(fixtureSnapshots.at(-1).captured_at).toBe(resetAt);
-  const nativeRows=restored.framework_assessments.filter(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1');
-  const nativeStates=Object.fromEntries(nativeRows.map(row=>[row.definition_id,row.status]));
-  const marker=reporting.fixture_versions[SCENARIO_VERSION];
-  expect(nativeRows).toHaveLength(56);
-  expect(marker).toMatchObject({version:SCENARIO_VERSION,anchor:resetAt,count:19,terminal:nativeStates});
-  expect(currentSnapshots.map(snapshot=>snapshot.snapshot_id)).toContain(marker.join_snapshot_id);
-  const references=fixtureSnapshots.at(-1).current.provenance.source_references;
-  expect(references.map(row=>row.id).sort()).toEqual(nativeRows.map(row=>row.framework_assessment_id).sort());
-  expect(Object.fromEntries(references.map(row=>[row.definition_id,row.status]))).toEqual(nativeStates);
+  expect(allFixtures).toHaveLength(18);
+  // Fixture history uses the persisted UTC initialization day. Native reset
+  // observations above retain the exact later reset commit timestamp.
+  const fixtureAnchor=cisDemoFixtureDates(new Date(resetAt)).anchor;
+  expect(restored.cis_demo_refresh).toMatchObject({version:CIS_SHOWCASE_VERSION,anchor:fixtureAnchor,timezone:'UTC'});
+  expect(reporting.fixture_versions?.['brawndo-cis-ig1-history-v2']).toBeUndefined();
   const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
   const canonicalIds=new Set();
   const canonical=seedStore();
-  for(const clientId of ['demo_initech','demo_krusty_krab']){
+  for(const [clientId,total] of [['demo_brawndo',56],['demo_initech',130],['demo_krusty_krab',153]]){
     const context=getCisDemoScenarioContext(restored,clientId,resetAt);
     expect(context).toBeTruthy();
-    expect(context.version).toBe(CIS_DEMO_REVISION);
-    expect(context.point_ids).toHaveLength(5);
+    expect(context).toMatchObject({version:CIS_SHOWCASE_VERSION,client_id:clientId,program_id:clientId+':cis-ig1',anchor:fixtureAnchor});
+    expect(context.point_ids).toHaveLength(6);
     const expected=getCisDemoScenarioContext(canonical,clientId,resetAt);
     expect(context).toEqual(expected);
     const points=reporting.snapshots.filter(point=>context.point_ids.includes(point.snapshot_id));
     expect(points).toEqual(canonical.portfolio_reporting.snapshots.filter(point=>expected.point_ids.includes(point.snapshot_id)));
+    expect(points).toHaveLength(6);
+    expect(points.every(point=>point.observation_kind==='demo_fixture'&&point.program_id===clientId+':cis-ig1'
+      &&point.current.provenance.fixture_revision===CIS_SHOWCASE_VERSION&&point.current.scenario_anchor===fixtureAnchor)).toBe(true);
+    expect(points.slice(0,-1).every(point=>point.captured_at<fixtureAnchor)).toBe(true);
+    expect(points.at(-1).captured_at).toBe(fixtureAnchor);
+    const nativeRows=restored.framework_assessments.filter(row=>row.client_id===clientId&&row.framework_key==='cis-ig1');
+    expect(nativeRows).toHaveLength(total);
+    const references=points.at(-1).current.provenance.source_references;
+    expect(references).toHaveLength(total);
+    expect(references.map(row=>row.id).sort()).toEqual(nativeRows.map(row=>row.framework_assessment_id).sort());
+    expect(references.every(row=>row.framework_version==='8.1')).toBe(true);
+    expect(Object.fromEntries(references.map(row=>[row.definition_id,row.status])))
+      .toEqual(Object.fromEntries(nativeRows.map(row=>[row.definition_id,row.status])));
     context.point_ids.forEach(id=>canonicalIds.add(id));
   }
   expect(reporting.snapshots.filter(snapshot=>oldIds.has(snapshot.snapshot_id)).every(snapshot=>canonicalIds.has(snapshot.snapshot_id))).toBe(true);
@@ -186,12 +207,12 @@ test('reset recovers creations edits deletions completions and baseline without 
   expect(restored.tasks.some(t => t.task_id === created.task_id)).toBe(false);
   expect(localStorage.getItem('standard-sentinel')).toBe('unchanged');
   const metrics = portfolio(restored, false);
-  expect(metrics.clients.filter(c=>['demo_brawndo','demo_dunder','demo_prestige'].includes(c.client_id)).every(c=>c.last_activity)).toBe(true);
+  expect(metrics.clients.filter(c=>['demo_dunder','demo_prestige'].includes(c.client_id)).every(c=>c.last_activity)).toBe(true);
   const nativeActivity=latestPortfolioActivity(restored.logs,new Date(resetAt),reporting.activity_proofs);
-  for(const clientId of ['demo_initech','demo_krusty_krab']){
+  for(const clientId of ['demo_brawndo','demo_initech','demo_krusty_krab']){
     const activity=metrics.clients.find(client=>client.client_id===clientId).last_activity;
     expect(activity).toEqual(nativeActivity.get(clientId)||null);
-    if(activity)expect(restored.logs.some(log=>log.client_id===clientId&&log.at===activity.at&&log.meta?.simulated===true&&log.meta?.fixture_revision===CIS_DEMO_REVISION)).toBe(true);
+    if(activity)expect(restored.logs.some(log=>log.client_id===clientId&&log.at===activity.at)).toBe(true);
   }
 });
 test('scoped demo actors cannot read or mutate another client or evidence', async () => {

@@ -16,6 +16,7 @@ import {finishDunder} from './programs/dunder';
 import {addInitech,finishInitech} from './programs/initech';
 import {removeRetiredDemoClients} from './retiredClients';
 import {applyCisDemoRollout} from './cisDemoRollout';
+import {refreshCanonicalCisDemo} from './cisDemoRefresh';
 import {action} from './workflows';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
@@ -58,7 +59,8 @@ function normalizePolicyDates(db) {
   }
   return db;
 }
-export function seedStore(clock=new Date()) {
+// Kept as a separate stage for retained v1 fixture compatibility and its tests.
+export function buildLegacyDemoStore(clock=new Date()) {
   const db = normalizePolicyDates(initializeRiskIds(buildDemoStore(Object.keys(ids),clock)));
   db.risks.forEach(risk => ensureRiskReview(db, risk));
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
@@ -78,6 +80,11 @@ export function seedStore(clock=new Date()) {
   applyCisDemoRollout(finished,{clock:new Date(demoDates(clock)(0)+'T00:00:00.000Z'),fresh:true});
   return finished;
 }
+export function seedStore(clock=new Date()) {
+  const db=buildLegacyDemoStore(clock);
+  refreshCanonicalCisDemo(db,{clock,fresh:true});
+  return db;
+}
 const requestBaselines=new WeakMap();
 export const releaseStoreBaseline=db=>{if(db)requestBaselines.delete(db);};
 export function transferStoreBaseline(from,to){
@@ -94,9 +101,10 @@ export function readStore({comparisonBaseline=false}={}) {
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
     if(initech){reconcileFramework(db,'demo_initech',db.baselines.demo_initech);finishInitech(db);}
     const cisRollout=applyCisDemoRollout(db,{fresh:false});
+    const cisRefresh=refreshCanonicalCisDemo(db,{fresh:false});
     const lightEvidence=lightweightEvidence(db.evidence,db.evidence);
     const enriched=enrichBrawndoReportingHistory(db);
-    const reconciled=retired||initech||cisRollout||enriched||lightEvidence.some((e,i)=>e!==db.evidence[i]);
+    const reconciled=retired||initech||cisRollout||cisRefresh||enriched||lightEvidence.some((e,i)=>e!==db.evidence[i]);
     if(reconciled)saveStore(db);
     const result=restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
     if(pair?.before&&!reconciled&&sessionStorage.getItem(STORE_KEY)===saved)requestBaselines.set(result,{saved,before:pair.before});

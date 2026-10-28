@@ -3,11 +3,11 @@ import {previewAdapter} from './adapter';
 import {STORE_KEY,readStore,saveStore,seedStore,clearEvidenceFiles,demoDiagnostics} from './store';
 import {compressDemoStore,decodeDemoStore} from './demoStorageCodec';
 import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
+import {CIS_SHOWCASE_VERSION,cisDemoFixtureDates} from './cisDemoFixtureDates';
 import {clearFileCache,getEvidenceCacheRevision,lightweightEvidence,lightweightStore,rememberFiles,restoreFiles,storageDiagnostics} from './evidenceStorage';
 const api=axios.create({adapter:previewAdapter});
 const persisted=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
 const OPENED_AT='2026-10-13T17:00:00.000Z',RESET_AT='2026-10-13T18:00:00.000Z';
-const SCENARIO_VERSION='brawndo-cis-ig1-history-v2';
 beforeEach(async()=>{jest.useFakeTimers().setSystemTime(new Date(OPENED_AT));sessionStorage.clear();localStorage.clear();clearFileCache();await api.post('/demo/enter');});
 afterEach(()=>jest.useRealTimers());
 const upload=async(bytes,name='sample.txt')=>(await api.post('/evidence',{client_id:persisted().clients[0].client_id,filename:name,mime_type:'text/plain',content_base64:btoa('x'.repeat(bytes))})).data;
@@ -128,6 +128,7 @@ test('legacy large payloads migrate without dropping evidence IDs or relationshi
 });
 test('full reset recovers corrupted data and restores canonical roles and frameworks',async()=>{
  const canonical=persisted();await upload(20000);const beforeReset=persisted();
+ localStorage.setItem('standard-reset-sentinel','untouched');
  expect(Object.values(beforeReset.portfolio_reporting.activity_proofs).some(proof=>proof.eligible)).toBe(true);
  sessionStorage.setItem(STORE_KEY,'{broken');
  await expect(api.get('/clients')).rejects.toMatchObject({response:{data:{storage_code:'UNKNOWN_STORAGE_ERROR'}}});
@@ -157,43 +158,46 @@ test('full reset recovers corrupted data and restores canonical roles and framew
  expect(reporting).toMatchObject({started_at:RESET_AT,last_captured_at:RESET_AT,activity_proofs:{}});
  expect(reporting.activity_proofs).toEqual({});
  expect(reporting.snapshots).toHaveLength(originalReporting.snapshots.length);
+ expect(reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture')).toHaveLength(18);
  const currentSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind!=='demo_fixture');
- const fixtureSnapshots=reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture'&&snapshot.client_id==='demo_brawndo');
  expect(currentSnapshots.length).toBeGreaterThan(0);
  expect(currentSnapshots.every(snapshot=>snapshot.captured_at===RESET_AT&&snapshot.current.captured_at===RESET_AT)).toBe(true);
- // At this fixed anchor, V2 has eighteen historical positions and one exact terminal position.
- expect(fixtureSnapshots).toHaveLength(19);
- expect(fixtureSnapshots.every(snapshot=>snapshot.program_id==='demo_brawndo:cis-ig1'
-   &&snapshot.current.provenance.fixture_version===SCENARIO_VERSION
-   &&snapshot.current.provenance.fixture_anchor===RESET_AT)).toBe(true);
- expect(fixtureSnapshots.slice(0,-1).every(snapshot=>snapshot.captured_at<RESET_AT)).toBe(true);
- expect(fixtureSnapshots.at(-1).captured_at).toBe(RESET_AT);
- const nativeRows=restored.framework_assessments.filter(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1');
- const nativeStates=Object.fromEntries(nativeRows.map(row=>[row.definition_id,row.status]));
- const marker=reporting.fixture_versions[SCENARIO_VERSION];
- expect(nativeRows).toHaveLength(56);
- expect(marker).toMatchObject({version:SCENARIO_VERSION,anchor:RESET_AT,count:19,terminal:nativeStates});
- expect(currentSnapshots.map(snapshot=>snapshot.snapshot_id)).toContain(marker.join_snapshot_id);
- const terminal=readStore().portfolio_reporting.snapshots.filter(snapshot=>snapshot.observation_kind==='demo_fixture'&&snapshot.client_id==='demo_brawndo').at(-1);
- const references=terminal.current.provenance.source_references;
- expect(references.map(row=>row.id).sort()).toEqual(nativeRows.map(row=>row.framework_assessment_id).sort());
- expect(Object.fromEntries(references.map(row=>[row.definition_id,row.status]))).toEqual(nativeStates);
+ // Synthetic observations are fixed to the UTC initialization day; current
+ // native positions still record the exact reset commit time above.
+ const fixtureAnchor=cisDemoFixtureDates(new Date(RESET_AT)).anchor;
+ expect(restored.cis_demo_refresh).toMatchObject({version:CIS_SHOWCASE_VERSION,anchor:fixtureAnchor,timezone:'UTC'});
+ expect(reporting.fixture_versions?.['brawndo-cis-ig1-history-v2']).toBeUndefined();
  const oldIds=new Set(beforeReset.portfolio_reporting.snapshots.map(snapshot=>snapshot.snapshot_id));
  const fresh=seedStore(),decoded=readStore(),canonicalIds=new Set();
- for(const clientId of ['demo_initech','demo_krusty_krab']){
+ for(const [clientId,total] of [['demo_brawndo',56],['demo_initech',130],['demo_krusty_krab',153]]){
    const context=getCisDemoScenarioContext(decoded,clientId,RESET_AT);
    const expected=getCisDemoScenarioContext(fresh,clientId,RESET_AT);
    expect(context).toBeTruthy();
+   expect(context).toMatchObject({version:CIS_SHOWCASE_VERSION,client_id:clientId,program_id:clientId+':cis-ig1',anchor:fixtureAnchor});
    expect(context).toEqual(expected);
-   expect(context.point_ids).toHaveLength(5);
-   expect(decoded.portfolio_reporting.snapshots.filter(point=>context.point_ids.includes(point.snapshot_id)))
-     .toEqual(fresh.portfolio_reporting.snapshots.filter(point=>expected.point_ids.includes(point.snapshot_id)));
+   expect(context.point_ids).toHaveLength(6);
+   const points=decoded.portfolio_reporting.snapshots.filter(point=>context.point_ids.includes(point.snapshot_id));
+   expect(points).toEqual(fresh.portfolio_reporting.snapshots.filter(point=>expected.point_ids.includes(point.snapshot_id)));
+   expect(points).toHaveLength(6);
+   expect(points.every(point=>point.observation_kind==='demo_fixture'&&point.program_id===clientId+':cis-ig1'
+     &&point.current.provenance.fixture_revision===CIS_SHOWCASE_VERSION&&point.current.scenario_anchor===fixtureAnchor)).toBe(true);
+   expect(points.slice(0,-1).every(point=>point.captured_at<fixtureAnchor)).toBe(true);
+   expect(points.at(-1).captured_at).toBe(fixtureAnchor);
+   const nativeRows=decoded.framework_assessments.filter(row=>row.client_id===clientId&&row.framework_key==='cis-ig1');
+   expect(nativeRows).toHaveLength(total);
+   const references=points.at(-1).current.provenance.source_references;
+   expect(references).toHaveLength(total);
+   expect(references.map(row=>row.id).sort()).toEqual(nativeRows.map(row=>row.framework_assessment_id).sort());
+   expect(references.every(row=>row.framework_version==='8.1')).toBe(true);
+   expect(Object.fromEntries(references.map(row=>[row.definition_id,row.status])))
+     .toEqual(Object.fromEntries(nativeRows.map(row=>[row.definition_id,row.status])));
    context.point_ids.forEach(id=>canonicalIds.add(id));
  }
  expect(reporting.snapshots.filter(snapshot=>oldIds.has(snapshot.snapshot_id)).every(snapshot=>canonicalIds.has(snapshot.snapshot_id))).toBe(true);
  expect(currentSnapshots.some(snapshot=>oldIds.has(snapshot.snapshot_id))).toBe(false);
  expect(new Set(restored.users.map(u=>u.role))).toEqual(new Set(canonical.users.map(u=>u.role)));
  expect((await api.get('/demo/storage')).data.memory_file_count).toBe(0);
+ expect(localStorage.getItem('standard-reset-sentinel')).toBe('untouched');
 });
 test.each([['QuotaExceededError','QUOTA_EXCEEDED'],['SecurityError','STORAGE_UNAVAILABLE'],['Error','WRITE_FAILED']])('%s classifies writes and retains the prior snapshot',async(name,code)=>{
  const before=sessionStorage.getItem(STORE_KEY),db=readStore();db.clients[0].name='Unsaved';

@@ -1,6 +1,7 @@
 import {activeDefinitions} from '../lib/frameworks';
 import {validImplementationPosition} from '../lib/portfolioProgress';
 import {CIS_DEMO_REVISION,CIS_DEMO_SCENARIOS} from './cisDemoSelection';
+import {CIS_SHOWCASE_VERSION} from './cisDemoFixtureDates';
 
 // Synthetic change detection, not cryptographic evidence or authorization.
 export function fixtureFingerprint(value){
@@ -10,16 +11,20 @@ export function fixtureFingerprint(value){
 }
 
 export function getCisDemoScenarioContext(db,clientId,at=new Date().toISOString()){
-  const scenario=CIS_DEMO_SCENARIOS.find(row=>row.client_id===clientId&&row.implementation_group>1);
+  const scenario=CIS_DEMO_SCENARIOS.find(row=>row.client_id===clientId);
   const client=db.clients?.find(row=>row.client_id===clientId),state=db.baselines?.[clientId],context=db.cis_demo_scenario_history?.[clientId];
+  const showcase=context?.version===CIS_SHOWCASE_VERSION;
+  const expectedPoints=showcase?6:5;
+  if(showcase&&(db.cis_demo_refresh?.version!==CIS_SHOWCASE_VERSION
+    ||db.cis_demo_refresh.anchor!==context.anchor||db.cis_demo_refresh.clients?.[clientId]?.version!==CIS_SHOWCASE_VERSION))return null;
   if(!scenario||db.user?.workspace_mode!=='demo'||!(db.user.client_ids||[]).includes(clientId)
     ||client?.environment!=='Demo'||client.status!=='active'||client.archived||client.archived_at
     ||!state?.completed||state.requirements?.['cis-ig1']!=='applies'
     ||client.framework_settings?.['cis-ig1']?.implementation_group!==scenario.implementation_group
-    ||!context||context.version!==CIS_DEMO_REVISION||context.client_id!==clientId||context.program_id!==clientId+':cis-ig1'
+    ||!context||(!showcase&&(scenario.implementation_group===1||context.version!==CIS_DEMO_REVISION))||context.client_id!==clientId||context.program_id!==clientId+':cis-ig1'
     ||context.implementation_group!==scenario.implementation_group||!Number.isFinite(Date.parse(at))||!Number.isFinite(Date.parse(context.anchor))||context.anchor>at
     ||!Array.isArray(context.source_rows)||fixtureFingerprint(context.source_rows)!==context.fingerprint
-    ||!Array.isArray(context.point_ids)||context.point_ids.length!==5||new Set(context.point_ids).size!==5)return null;
+    ||!Array.isArray(context.point_ids)||context.point_ids.length!==expectedPoints||new Set(context.point_ids).size!==expectedPoints)return null;
   const expected=activeDefinitions('cis-ig1',{implementation_group:scenario.implementation_group}).map(row=>row.id);
   if(context.source_rows.length!==expected.length||new Set(context.source_rows.map(row=>row[0])).size!==expected.length
     ||new Set(context.source_rows.map(row=>row[1])).size!==expected.length||expected.some(id=>!context.source_rows.some(row=>row[1]===id)))return null;
@@ -43,7 +48,7 @@ export function getCisDemoScenarioContext(db,clientId,at=new Date().toISOString(
     for(const [rid,definition,status,,events] of context.source_rows){
       const reference=refs.find(row=>row.id===rid&&row.definition_id===definition);
       const prior=events.filter(([eventAt])=>eventAt<=date).sort((a,b)=>a[0].localeCompare(b[0])).at(-1);
-      if(!reference||reference.framework_version!=='8.1'||reference.status!==(index===4?status:prior?.[1]||'not_assessed'))return null;
+      if(!reference||reference.framework_version!=='8.1'||reference.status!==(index===expectedPoints-1?status:prior?.[1]||'not_assessed'))return null;
     }
     points.push(point);
   }
