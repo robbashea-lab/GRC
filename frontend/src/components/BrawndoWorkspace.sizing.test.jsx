@@ -65,6 +65,39 @@ const expectSizing=enabled=>{
 
 const eligibleRoutes=['/dashboard','/calendar','/reviews','/action-items','/compliance/cis-ig1','/risks','/policies','/vendors','/ai-governance'];
 
+test.each(['demo','standard'])('%s native navigation destinations retain the existing shell without activating page or portal presentation',async mode=>{
+  setContext(`navigation-${mode}`,1,mode);
+  await render();
+  const input=host.querySelector('label input');
+  for(const pathname of ['/reports','/evidence','/contacts','/systems','/client-profile','/account','/reports','/systems']) {
+    mockLocation={...mockLocation,pathname};await render();
+    if(['/reports','/systems','/account'].includes(pathname)) {
+      expect(shell().getAttribute('data-shared-shell')).toBe('true');
+      expect(shell().hasAttribute('data-visual-surface')).toBe(false);
+      expect(shell().hasAttribute('data-additional-surface')).toBe(false);
+      expect(host.querySelector('.bwp-native-tagline').textContent).toBe('CLARITY FOR A STRONGER TOMORROW');
+    }
+    expectSizing(pathname!=='/account');
+    expect(host.querySelector('label input')).toBe(input);
+    expect(document.documentElement.hasAttribute('data-additional-surface')).toBe(false);
+    expect(document.documentElement.hasAttribute('data-brawndo-cis-visual')).toBe(false);
+  }
+  expect(mockMounts).toBe(1);expect(mockUnmounts).toBe(0);
+  expect(api.get).not.toHaveBeenCalled();
+  mockLocation={...mockLocation,pathname:'/vendors'};await render();
+  expect(shell().getAttribute('data-additional-surface')).toBe('vendors');
+  expect(shell().hasAttribute('data-shared-shell')).toBe(false);
+});
+
+test.each(['/reports','/systems','/account'])('%s does not retain native shell chrome for a mismatched or denied client',async pathname=>{
+  mockLocation={...mockLocation,pathname};
+  mockOrg={...mockOrg,error:'Client unavailable'};await render();
+  expect(shell().hasAttribute('data-shared-shell')).toBe(false);
+  mockOrg={...mockOrg,error:null};
+  sessionStorage.setItem('grc_client_id','another-client');await render();
+  expect(shell().hasAttribute('data-shared-shell')).toBe(false);
+});
+
 test.each(['demo','standard'].flatMap(mode=>[1,2,3].flatMap(group=>['super_admin','client_readonly'].map(role=>[mode,group,role]))))(
   '%s IG%i %s clients receive the shell marker across every sizing surface without a name whitelist',async(mode,group,role)=>{
     setContext(`arbitrary-${mode}-${group}-${role}`,group,mode,role);

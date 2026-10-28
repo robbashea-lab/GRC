@@ -109,6 +109,8 @@ html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] :is(.ui-dialog,.
 .brawndo-workspace-pilot[data-additional-surface] .bwp-brand small,
 .brawndo-workspace-pilot[data-cis-visual=true] .bwp-brand small,
 .brawndo-workspace-pilot[data-shared-shell=true] .bwp-brand small {margin:0;color:#a8bad5;font:600 10px/1.5 var(--font);letter-spacing:.08em;text-transform:uppercase}
+/* Preserve the native longer subtitle when only its navigation shell is shared. */
+.brawndo-workspace-pilot[data-shared-shell=true] .bwp-brand .bwp-native-tagline {font:650 8px/1.1 var(--font-body);letter-spacing:1.7px;margin-top:5px;color:var(--color-brand-lime);}
 .brawndo-workspace-pilot[data-visual-surface] .bwp-search,
 .brawndo-workspace-pilot[data-additional-surface] .bwp-search,
 .brawndo-workspace-pilot[data-cis-visual=true] .bwp-search,
