@@ -30,7 +30,8 @@ const STATUS_TONE = {
   disabled: "bg-surface-subtle text-ink-help border-line",
 };
 
-export function UsersTable({ scope = "platform", clientId = null, allowedRoles }) {
+// Administration is opt-in because ClientProfile shares this native controller.
+export function UsersTable({ scope = "platform", clientId = null, allowedRoles, adminPresentation = false }) {
   const { user: viewer } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -110,25 +111,26 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
   }
 
   const canManage = ["super_admin", "platform_admin"].includes(viewer?.role);
+  const addUserAction = canManage && (
+    <Button ref={addUserButton} size="sm" onClick={() => setAddOpen(true)} data-testid={`add-user-${scope}`} className="bg-primary hover:bg-primary/90">
+      <Plus className="h-3.5 w-3.5 mr-1" /> {scope === "client" ? "Add client user" : "Add user"}
+    </Button>
+  );
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="register-search relative">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
+  const content = (
+    <>
+      <div className={adminPresentation ? "admin-toolbar" : "flex items-center gap-3 flex-wrap"}>
+        <div className={`register-search relative${adminPresentation ? ' admin-search' : ''}`}>
+          <Search className={adminPresentation ? "h-3.5 w-3.5 text-ink-help" : "h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help"} />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users…" aria-label="Search users" className="pl-8 h-9 w-72 max-w-full text-sm" data-testid="users-search" />
         </div>
-        <div className="text-xs text-ink-help font-mono ml-auto">{filtered.length} / {users.length}</div>
-        {canManage && (
-          <Button ref={addUserButton} size="sm" onClick={() => setAddOpen(true)} data-testid={`add-user-${scope}`} className="bg-primary hover:bg-primary/90">
-            <Plus className="h-3.5 w-3.5 mr-1" /> {scope === "client" ? "Add client user" : "Add user"}
-          </Button>
-        )}
+        {!adminPresentation && <div className="text-xs text-ink-help font-mono ml-auto">{filtered.length} / {users.length}</div>}
+        {!adminPresentation && addUserAction}
       </div>
 
       <TableFilterChips table={table} />
-        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto">
-        <table className="w-full text-sm">
+        <div className={`register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto${adminPresentation ? ' admin-table-wrap' : ''}`}>
+        <table className={`w-full text-sm${adminPresentation ? ' admin-table' : ''}`}>
           <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
             <tr>
               <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="name" /></th>
@@ -136,7 +138,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
               {scope === "platform" && <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="client_ids" /></th>}
               <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="status" /></th>
               <th className="tbl-cell text-left font-medium"><ColumnControl table={table} columnKey="last_login_at" /></th>
-              <th className="tbl-cell text-right font-medium w-10" />
+              <th className="tbl-cell text-right font-medium w-10">{adminPresentation ? 'Actions' : null}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
@@ -145,81 +147,92 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
             {!loading && filtered.slice((currentPage - 1) * 25, currentPage * 25).map((u, i) => {
               const status = u.status || "active";
               const tone = STATUS_TONE[status] || STATUS_TONE.active;
+              const identity = <>
+                <div className={adminPresentation ? "admin-record-title admin-user-name" : "font-medium text-ink-primary"}>{u.name || u.email}{u.orphaned && <span className="ml-2 text-xs font-mono text-semantic-duesoon-text">ORPHANED</span>}</div>
+                <div className={adminPresentation ? "admin-record-meta" : "text-xs text-ink-help break-all"}>{u.email}</div>
+              </>;
+              const actions = canManage && u.user_id !== viewer?.user_id && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button ref={element => { actionButtons.current[u.user_id] = element; }} aria-label={`Actions for ${u.name || u.email}`} className="p-2 rounded hover:bg-surface-subtle text-ink-help" data-testid={`user-menu-${i}`}>
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={() => {
+                    const account = pendingAssignment.current;
+                    pendingAssignment.current = null;
+                    if (account) queueMicrotask(() => setAssignmentAccount(account));
+                  }}>
+                    <DropdownMenuItem onSelect={() => { pendingAssignment.current = u; }}>View active assignments</DropdownMenuItem>
+                    <EditAccountItem u={u} onSave={changes => patchUser(u, changes)} />
+                    {viewer?.role === "super_admin" && <DropdownMenuItem onClick={() => patchUser(u, {password_change_required: true}, "Password change required; active sessions revoked")}>Require password change</DropdownMenuItem>}
+                    <EditRoleItem u={u} allowedRoles={allowedRoles} onSave={(role) => patchUser(u, { role }, `Role changed to ${ROLE_LABEL[role]}`)} />
+                    {scope === "platform" && (
+                      <EditClientsItem u={u} clients={clients} canGrantAll={viewer?.role === "super_admin"} onEntitlement={(all_clients) => patchUser(u, { all_clients }, "All-client access updated")} onSave={(ids) => patchUser(u, { client_ids: ids }, "Client access updated")} />
+                    )}
+                    {scope === "client" && u.role !== "super_admin" && (
+                      <DropdownMenuItem
+                        onClick={() => patchUser(u, { client_ids: (u.client_ids || []).filter((x) => x !== clientId) }, "Removed from client")}
+                        className="text-sm text-semantic-critical"
+                        data-testid={`remove-from-client-${i}`}
+                      >
+                        Remove from this client
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    {status === "invited" && (
+                      <DropdownMenuItem onClick={() => resendInvite(u)} data-testid={`resend-invite-${i}`} className="text-sm">
+                        <Send className="h-3.5 w-3.5 mr-2" /> Resend invitation
+                      </DropdownMenuItem>
+                    )}
+                    {status === "disabled" ? (
+                      <DropdownMenuItem onClick={() => patchUser(u, { status: "active" }, "User re-enabled")} data-testid={`enable-user-${i}`} className="text-sm">
+                        <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Re-enable user
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={() => disableUser(u)} data-testid={`disable-user-${i}`} className="text-sm text-semantic-critical">
+                        <ShieldOff className="h-3.5 w-3.5 mr-2" /> Disable user
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
               return (
                 <tr key={u.user_id} className="row-hover" data-testid={`user-row-${i}`}>
                   <td className="tbl-cell">
-                    <div className="font-medium text-ink-primary">{u.name || u.email}{u.orphaned && <span className="ml-2 text-xs font-mono text-semantic-duesoon-text">ORPHANED</span>}</div>
-                    <div className="text-xs text-ink-help break-all">{u.email}</div>
+                    {adminPresentation ? <div className="admin-person">
+                      <span className="admin-avatar" aria-hidden="true">{(u.name || u.email || '').trim().split(/\s+/).slice(0, 2).map(part => Array.from(part)[0]).join('').toUpperCase()}</span>
+                      <div>{identity}</div>
+                    </div> : identity}
                   </td>
-                  <td className="tbl-cell text-ink-primary">{ROLE_LABEL[u.role] || u.role}</td>
+                  <td className={`tbl-cell text-ink-primary${adminPresentation ? ' admin-record-title' : ''}`}>{ROLE_LABEL[u.role] || u.role}</td>
                   {scope === "platform" && (
                     <td className="tbl-cell text-xs text-ink-secondary font-mono">
-                      {u.role === "super_admin" || u.all_clients ? "All clients" : `${(u.client_ids || []).length} client(s)`}
+                      {adminPresentation ? <div>
+                        <span className="admin-record-meta">{u.role === "super_admin" || u.all_clients ? "All clients" : `${(u.client_ids || []).length} client(s)`}</span>
+                        {u.role !== "super_admin" && !u.all_clients && <div className="flex flex-wrap gap-1 mt-1">{(u.client_ids || []).map(id => {
+                          const client = clients.find(c => c.client_id === id);
+                          return client ? <span key={id} className="admin-badge is-muted">{client.name}</span> : null;
+                        })}</div>}
+                      </div> : u.role === "super_admin" || u.all_clients ? "All clients" : `${(u.client_ids || []).length} client(s)`}
                     </td>
                   )}
                   <td className="tbl-cell">
-                    <StatusPill className={tone}>
+                    <StatusPill className={`${tone}${adminPresentation ? ' admin-badge' : ''}`} data-status={adminPresentation ? u.status : undefined}>
                       {status}
                     </StatusPill>
                   </td>
-                  <td className="tbl-cell text-xs font-mono text-ink-secondary">
+                  <td className={`tbl-cell text-xs font-mono text-ink-secondary${adminPresentation ? ' admin-record-meta' : ''}`}>
                     {u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : <span className="text-ink-help">—</span>}
                   </td>
-                  <td className="tbl-cell text-right">
-                    {canManage && u.user_id !== viewer?.user_id && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button ref={element => { actionButtons.current[u.user_id] = element; }} aria-label={`Actions for ${u.name || u.email}`} className="p-2 rounded hover:bg-surface-subtle text-ink-help" data-testid={`user-menu-${i}`}>
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={() => {
-                          const account = pendingAssignment.current;
-                          pendingAssignment.current = null;
-                          if (account) queueMicrotask(() => setAssignmentAccount(account));
-                        }}>
-                          <DropdownMenuItem onSelect={() => { pendingAssignment.current = u; }}>View active assignments</DropdownMenuItem>
-                          <EditAccountItem u={u} onSave={changes => patchUser(u, changes)} />
-                          {viewer?.role === "super_admin" && <DropdownMenuItem onClick={() => patchUser(u, {password_change_required: true}, "Password change required; active sessions revoked")}>Require password change</DropdownMenuItem>}
-                          <EditRoleItem u={u} allowedRoles={allowedRoles} onSave={(role) => patchUser(u, { role }, `Role changed to ${ROLE_LABEL[role]}`)} />
-                          {scope === "platform" && (
-                            <EditClientsItem u={u} clients={clients} canGrantAll={viewer?.role === "super_admin"} onEntitlement={(all_clients) => patchUser(u, { all_clients }, "All-client access updated")} onSave={(ids) => patchUser(u, { client_ids: ids }, "Client access updated")} />
-                          )}
-                          {scope === "client" && u.role !== "super_admin" && (
-                            <DropdownMenuItem
-                              onClick={() => patchUser(u, { client_ids: (u.client_ids || []).filter((x) => x !== clientId) }, "Removed from client")}
-                              className="text-sm text-semantic-critical"
-                              data-testid={`remove-from-client-${i}`}
-                            >
-                              Remove from this client
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          {status === "invited" && (
-                            <DropdownMenuItem onClick={() => resendInvite(u)} data-testid={`resend-invite-${i}`} className="text-sm">
-                              <Send className="h-3.5 w-3.5 mr-2" /> Resend invitation
-                            </DropdownMenuItem>
-                          )}
-                          {status === "disabled" ? (
-                            <DropdownMenuItem onClick={() => patchUser(u, { status: "active" }, "User re-enabled")} data-testid={`enable-user-${i}`} className="text-sm">
-                              <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Re-enable user
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem onClick={() => disableUser(u)} data-testid={`disable-user-${i}`} className="text-sm text-semantic-critical">
-                              <ShieldOff className="h-3.5 w-3.5 mr-2" /> Disable user
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </td>
+                  <td className="tbl-cell text-right">{adminPresentation ? <div className="admin-row-actions">{actions}</div> : actions}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-      <TablePagination page={currentPage} onPageChange={setPage} total={filtered.length} />
+      {adminPresentation ? <div className="admin-pagination"><TablePagination page={currentPage} onPageChange={setPage} total={filtered.length} /></div> : <TablePagination page={currentPage} onPageChange={setPage} total={filtered.length} />}
       <AddUserDialog
         open={addOpen}
         onCloseAutoFocus={event => { event.preventDefault(); addUserButton.current?.focus(); }}
@@ -231,8 +244,16 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles }
         onCreated={() => { setAddOpen(false); load(); }}
       />
       {assignmentAccount && <UserAssignments account={assignmentAccount} clientId={clientId} onClose={() => setAssignmentAccount(null)} />}
-    </div>
+    </>
   );
+  if (!adminPresentation) return <div className="space-y-4">{content}</div>;
+  return <>
+    <PageHeader eyebrow="Administration" title="Users & Access" subtitle="Invite internal team members, assign platform roles and manage which clients each user can access." action={addUserAction} />
+    <div className="admin-body"><section className="admin-panel">
+      <div className="admin-panel-head"><div><h2>Users & client access</h2><p>Account identity, assigned role and authorized client scope.</p></div><span className="admin-record-meta">{loading ? 'Loading users…' : `${filtered.length} / ${tableSource.length} users`}</span></div>
+      {content}
+    </section></div>
+  </>;
 }
 
 function EditAccountItem({u, onSave}) {
@@ -410,15 +431,8 @@ export default function PlatformAdmin() {
     ? ["super_admin", "platform_admin", "client_grc_manager", "client_contributor", "client_readonly"]
     : ["client_grc_manager", "client_contributor", "client_readonly"];
   return (
-    <div>
-      <PageHeader
-        eyebrow="Platform Administration"
-        title="Users & Access"
-        subtitle="Invite internal team members, assign platform roles and manage which clients each user can access."
-      />
-      <div className="page-content">
-        <UsersTable scope="platform" allowedRoles={allowedRoles} />
-      </div>
+    <div className="admin-page admin-users-page">
+      <UsersTable scope="platform" allowedRoles={allowedRoles} adminPresentation />
     </div>
   );
 }

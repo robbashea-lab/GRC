@@ -4,7 +4,7 @@ import {Menu,Moon,Sun,Search,ChevronDown} from 'lucide-react';
 import api,{formatError,PREVIEW_MODE} from '@/lib/api';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
-import {canExportReports} from '@/lib/permissions';
+import {canExportReports,isInternal} from '@/lib/permissions';
 import {useCompliance} from '@/context/ComplianceContext';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import {dashboardRecordHref} from '@/lib/dashboardItemSummary';
@@ -16,7 +16,7 @@ import {BRAWNDO_DEMO_DASHBOARD_ENABLED} from '@/lib/brawndoDemoDashboard';
 import './BrawndoWorkspace.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {selectedClient} from '@/lib/clientSelection';
-import {cisNativeClientRoute,cisPresentationEligible} from '@/lib/cisExperience';
+import {cisActorMode,cisNativeClientRoute,cisPresentationEligible} from '@/lib/cisExperience';
 import {sharedAppearanceClientRoute,sharedNativeClientRoute,sharedPresentationEligible} from '@/lib/sharedExperience';
 import './SixSurfaceAppearance.css';
 import {additionalAppearanceSurface, additionalSectionChrome, useAdditionalSectionsAppearance} from '@/lib/brawndoAdditionalScope';
@@ -73,6 +73,10 @@ export default function BrawndoWorkspace({children}){
   const sharedShell=verifiedChrome&&sharedNativeClientRoute(pathname)&&(!cisVerifiedChrome||!cisNativeClientRoute(pathname));
   // Native destinations keep the same navigation chrome without enabling page or portal presentation.
   const nativeNavigationShell=verifiedChrome&&['/reports','/systems','/account'].includes(pathname);
+  // Platform Administration does not depend on a selected client or framework enrollment.
+  const administrationShell=['/admin/clients','/admin/users','/admin/roles','/admin/security','/admin/audit'].includes(pathname)
+    && !auth.loading && !auth.error && !user?.password_change_required && isInternal(user) && cisActorMode(user,auth.workspaceMode)
+    && (auth.workspaceMode==='demo'?PREVIEW_MODE===true:PREVIEW_MODE===false);
   const risksPresentation=brawndoDemoRisksGate({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const visualSurface=visualCorrectionSurface(chromeContext);
   const visualChrome=visualCorrectionSurface({...chromeContext,orgLoading:verifiedChrome?false:org.loading});
@@ -98,10 +102,10 @@ export default function BrawndoWorkspace({children}){
     if(additionalSurface){root.dataset.additionalSurface=additionalSurface;root.dataset.additionalTheme=theme;}
     return()=>{delete root.dataset.additionalSurface;delete root.dataset.additionalTheme;};
   },[additionalSurface,theme]);
-  return <CisVisualPublisher.Provider value={publishCis}><div className="brawndo-workspace-pilot" data-cis-sizing={sizingChrome?'true':undefined} data-shared-shell={sharedShell||nativeNavigationShell?'true':undefined} data-cis-dashboard-concept={BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&verifiedChrome?'true':undefined} data-additional-surface={additionalChrome||undefined} data-visual-surface={visualChrome||undefined} data-cis-visual={cisChrome||undefined} data-theme={theme} data-navigation={navigation?'open':'closed'}>
+  return <CisVisualPublisher.Provider value={publishCis}><div className="brawndo-workspace-pilot" data-cis-sizing={sizingChrome?'true':undefined} data-shared-shell={sharedShell||nativeNavigationShell||administrationShell?'true':undefined} data-cis-dashboard-concept={BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&verifiedChrome?'true':undefined} data-additional-surface={additionalChrome||undefined} data-visual-surface={visualChrome||undefined} data-cis-visual={cisChrome||undefined} data-theme={theme} data-navigation={navigation?'open':'closed'}>
     <header className="bwp-topbar">
       <button type="button" className="bwp-mobile-nav" aria-label="Toggle client navigation" aria-expanded={navigation} onClick={()=>setNavigation(!navigation)}><Menu size={22}/></button>
-      <Link to={currentClientId?'/dashboard':'/clients'} className="bwp-brand" aria-label="GoverNara"><BrandMark className="bwp-mark"/><span>GoverNara<small className={nativeNavigationShell&&!sharedShell?'bwp-native-tagline':undefined}>{visualChrome||additionalChrome||risksPresentation||cisChrome||sharedShell?'By Prestige Worldwide':'CLARITY FOR A STRONGER TOMORROW'}</small></span></Link>
+      <Link to={currentClientId?'/dashboard':'/clients'} className="bwp-brand" aria-label="GoverNara"><BrandMark className="bwp-mark"/><span>GoverNara<small className={(nativeNavigationShell||administrationShell)&&!sharedShell?'bwp-native-tagline':undefined}>{visualChrome||additionalChrome||risksPresentation||cisChrome||sharedShell?'By Prestige Worldwide':'CLARITY FOR A STRONGER TOMORROW'}</small></span></Link>
       <WorkspaceSearch key={searchClient} clientId={searchClient}/>
       <div className="bwp-top-actions">
       {canOpenDirectory?<button type="button" className="bwp-client" onClick={()=>navigate('/clients')}><span className="bwp-client-name">{platform?'Portfolio':currentClient?.name||'Portfolio'}</span><ChevronDown size={15} aria-hidden="true"/><span className="sr-only">Open authorized client directory</span></button>:<span className="bwp-client">{currentClient?.name||'Client workspace'}</span>}
