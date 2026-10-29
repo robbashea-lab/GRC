@@ -1,13 +1,15 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
-import {readStore} from './store';
+import {buildLegacyDemoStore,readStore,saveStore} from './store';
 import {buildDemoStore} from './demoSeed';
 import {ids} from './store';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const active=r=>!['completed','cancelled'].includes(r.status);
 const policyReviews=()=>readStore().reviews.filter(r=>r.client_id===cid&&r.policy_id);
-test('every seeded Brawndo Policy has exactly one active annual Review that keeps its next-review date',()=>{
+test('every seeded Brawndo Policy has exactly one active annual Review that keeps its next-review date',async()=>{
+  // Retained v1 policies keep their original annual dates; fresh v2 has distinct draft states.
+  saveStore(buildLegacyDemoStore(),{resetFiles:true});await api.post('/demo/enter');
   const policies=readStore().policies.filter(p=>p.client_id===cid),seeded=buildDemoStore(Object.keys(ids),new Date()).policies.filter(p=>p.client_id===cid);
   expect(policies).toHaveLength(10);
   for(const p of policies){
@@ -30,8 +32,8 @@ test('a second active Review for a Policy is rejected on create and on relink',a
   await expect(api.patch('/reviews/'+other.review_id,{policy_id:p.policy_id})).rejects.toBeTruthy();
 });
 test('policy Review completion keeps its cycle, records history and leaves approval alone; its Finding stays visible',async()=>{
-  // Fresh CIS seed intentionally contains ten required approved policies. Create a disposable
-  // optional draft and its native annual Review rather than depending on removed seed extras.
+  // Create a disposable optional draft and its native annual Review independently
+  // of the canonical fixture's approved, draft and pending Policy mix.
   const draft=(await api.post('/policies',{client_id:cid,title:'Synthetic Optional BYOD Policy',status:'draft',presence:'needs_confirmation',version:'1'})).data;
   const review=(await api.post('/reviews',{client_id:cid,policy_id:draft.policy_id,title:'Synthetic Optional BYOD Policy Review',review_type:'policy',recurrence:'annual',due_date:'2026-12-01'})).data;
   const due=review.due_date.slice(0,10);

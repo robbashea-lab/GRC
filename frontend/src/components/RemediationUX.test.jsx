@@ -4,6 +4,7 @@ import RecordDrawer from './RecordDrawer';
 import ActionSourceChain from './ActionSourceChain';
 import api from '@/lib/api';
 import {completionHandoff,remediationOrigin} from '@/lib/remediation';
+import {buildLegacyDemoStore,saveStore} from '../preview/store';
 
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'demo_admin',role:'super_admin'}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/commandTestAdapter').previewAdapter}),formatError:e=>e.message,API:'/api'}));
@@ -77,6 +78,8 @@ test('multiple Actions remain in one ticket and outstanding work prevents valida
 });
 
 test('seeded framework ticket validates without changing its control conclusion',async()=>{
+  // This assertion concerns the retained v1 gap and its exact native ticket.
+  saveStore(buildLegacyDemoStore(),{resetFiles:true});await api.post('/demo/enter');
   const seeded=(await api.get('/tasks',{params:{client_id:'demo_brawndo'}})).data.find(t=>t.task_id==='demo_brawndo_cis_action_1.1');
   await act(async()=>root.render(<RecordDrawer open kind="tasks" record={seeded} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
   expect(container.textContent).not.toContain('Primary Action unavailable');

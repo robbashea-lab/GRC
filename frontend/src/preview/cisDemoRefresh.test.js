@@ -292,8 +292,8 @@ test.each([['demo_brawndo','4.1'],['demo_initech','16.6']])('%s remaining %s gap
   expect(assessment.related_links).toEqual(expect.arrayContaining([{kind:'findings',id:finding.finding_id},{kind:'tasks',id:action.task_id}]));
 });
 
-test('a genuine native assessment edit updates current posture and adds one committed observation without rewriting imported history',()=>{
-  const db=seedStore(new Date(NOW)),cid='demo_initech',row=recordsFor(db,cid).find(record=>record.status==='not_assessed');
+test.each(SCENARIOS.filter(scenario=>scenario.group<3))('$cid genuine native assessment edit adds one committed observation without rewriting imported history',({cid,counts})=>{
+  const db=seedStore(new Date(NOW)),row=recordsFor(db,cid).find(record=>record.status==='not_assessed');
   const originalContext=getCisDemoScenarioContext(db,cid,NOW);
   const imported=clone(db.portfolio_reporting.snapshots.filter(point=>originalContext.point_ids.includes(point.snapshot_id)));
   const before=clone(db),savedAt='2026-10-29T10:30:00.000Z';
@@ -302,8 +302,8 @@ test('a genuine native assessment edit updates current posture and adds one comm
     {status:'in_progress',notes:'Visitor-authored synthetic follow-up.',expected_last_assessed:row.last_saved??row.last_assessed??null});
   captureDemoReporting(db,before,savedAt);
   const current=demoCurrentPositions(db,db.clients,savedAt).find(position=>position.client_id===cid).current;
-  expect(current.included_counts.find(count=>count.key==='not_assessed').count).toBe(1);
-  expect(current.included_counts.find(count=>count.key==='in_progress').count).toBe(6);
+  expect(current.included_counts.find(count=>count.key==='not_assessed').count).toBe(counts[3]-1);
+  expect(current.included_counts.find(count=>count.key==='in_progress').count).toBe(counts[1]+1);
   // Native capture may append continuity proof to the predecessor. It must keep
   // its saved source population, status judgements, provenance and timestamps.
   const historicalPayload=point=>{

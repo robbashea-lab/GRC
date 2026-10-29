@@ -127,9 +127,20 @@ beforeEach(async()=>{
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.restoreAllMocks();jest.clearAllMocks();});
 
 test.each([
-  ['1.1','needs_attention','gap_identified','coverage','Servers'],
-  ['2.1','addressed','verified','requirements_0','publisher'],
+  ['1.1','in_progress','needs_validation','coverage','Servers'],
+  ['2.1','in_progress','needs_validation','requirements_0','publisher'],
 ])('fresh personal %s exposes sequential native questions and carries a reviewed result through the native save and Items history',async(id,status,verification,matrixId,rowText)=>{
+  if(id==='1.1'){
+    const workspace=(await api.get('/frameworks/cis-ig1',{params:{client_id:clientId}})).data;
+    const assessment=workspace.assessments.find(row=>row.definition_id===id);
+    expect(assessment).toBeTruthy();
+    // Arrange linked corrective work natively; v2's partial inventory has no seeded 1.1 Finding.
+    const finding=(await api.post(`/framework_assessments/${assessment.framework_assessment_id}/findings`,{
+      request_id:'guided-entry-linked-inventory-regression',title:'Synthetic inventory exception for linked-work regression',
+      remediation_title:'Reconcile the synthetic inventory exception',severity:'high'
+    })).data;
+    expect(finding).toMatchObject({client_id:clientId,framework_assessment_id:assessment.framework_assessment_id,status:'in_remediation'});
+  }
   await loadSafeguard(id);
   // Fresh personal progress coexists with the native seeded manual judgment and linked work.
   expect(baseline).toMatchObject({status,verification});expect(baseline.implementation.trim()).not.toBe('');
