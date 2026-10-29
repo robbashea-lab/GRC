@@ -40,6 +40,8 @@ beforeEach(() => {
     last_activity: {at: index ? '2026-09-01T12:00:00Z' : '2026-10-12T12:00:00Z', label: 'Assessment updated'}}));
   mockPortfolio = {as_of: AT, clients, programs: [program(clients[0], 'cis-ig3', 138, 80), program(clients[0], 'soc-2', 4, 10), program(clients[1], 'cis-ig3', 31, 28)]};
   api.get.mockImplementation(async (path, options) => {
+    if(path==='/clients') return {data:mockClients};
+    if(path==='/clients/grc-leads'||path==='/contacts') return {data:[]};
     if(path==='/portfolio/reporting/overview') return {data:mockPortfolio};
     if(path==='/clients/directory') return {data:{clients:mockPortfolio.clients.map(client=>({...client,metric_items:{past_due:[],due_30d:[],due_31_90d:[]}}))}};
     if(path==='/portfolio/reporting/history') {
@@ -154,22 +156,117 @@ test("sidebar search appears once the client list is long enough to scan", async
   expect(container.querySelectorAll('[data-testid^="sidebar-open-"]').length).toBe(1);
 });
 
-test("management reuses client form for add and edit; client role gets no controls", async () => {
+test("owner retains native create payload, retry idempotency and existing client edit", async () => {
+  mockClients = mockClients.map((client, index) => index ? client : {...client, updated_at: 'client-version-1'});
+  api.post.mockRejectedValueOnce(new Error('Response unavailable'));
   await render(<ClientManagement />);
   await click(container.querySelector('[data-testid="add-client-button"]'));
   expect(document.querySelector('[data-testid="new-client-name"]').value).toBe("");
   await change(document.querySelector('[data-testid="new-client-name"]'), "New organization");
+  await change(document.querySelector('[data-testid="new-client-industry"]'), "Services");
+  await change(document.querySelector('[data-testid="new-client-contact"]'), " Jordan Example ");
+  await change(document.querySelector('[aria-label="Primary Contact email"]'), "jordan@example.test");
+  await change(document.querySelector('[aria-label="Primary Contact title"]'), " GRC Lead ");
   await click(document.querySelector('[data-testid="new-client-save"]'));
-  expect(api.post).toHaveBeenCalledWith("/clients", expect.objectContaining({ name: "New organization" }), {headers:{'Idempotency-Key':expect.any(String)},pendingCommandGeneration:expect.any(Number)});
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(api.post).toHaveBeenLastCalledWith("/clients", {
+    name: "New organization", industry: "Services", status: "onboarding", environment: "Production",
+    assigned_owner_id: "", logo_url: "",
+    primary_contact_details: {name: "Jordan Example", email: "jordan@example.test", title: "GRC Lead"},
+  }, {
+    headers: {'Idempotency-Key': expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)},
+    pendingCommandGeneration: expect.any(Number),
+  });
+  expect(document.querySelector('[data-testid="add-client-dialog"] [role="alert"]').textContent).toBe('Response unavailable');
+  const originalRequest = api.post.mock.calls[0];
+  await click(document.querySelector('[data-testid="new-client-save"]'));
+  expect(api.post).toHaveBeenCalledTimes(2);
+  expect(api.post.mock.calls[1]).toEqual(originalRequest);
+  expect(document.querySelector('[data-testid="add-client-dialog"]')).toBeNull();
   api.post.mockClear();
   await click([...container.querySelectorAll("button")].find(b => b.textContent === "Edit"));
-  const c = mockFixtures.responses["/clients"][0];
+  const c = mockClients[0];
   expect(document.querySelector('[data-testid="new-client-name"]').value).toBe(c.name);
+  await change(document.querySelector('[data-testid="new-client-industry"]'), "Updated industry");
   await click(document.querySelector('[data-testid="new-client-save"]'));
-  expect(api.patch).toHaveBeenCalledWith(`/clients/${c.client_id}`, expect.objectContaining({ name: c.name, industry: c.industry }));
+  expect(api.patch).toHaveBeenCalledWith(`/clients/${c.client_id}`, {
+    name: c.name, industry: "Updated industry", status: c.status, primary_contact_id: "", environment: c.environment,
+    assigned_owner_id: c.assigned_owner_id, logo_url: "", expected_updated_at: 'client-version-1',
+  });
   expect(api.post).not.toHaveBeenCalled();
-  mockUser = { role: "client_readonly" };
+});
+
+test.each([['assigned clients', false], ['all clients', true]])("provider with %s retains management and native edit without Add Client", async (_, allClients) => {
+  const records = mockFixtures.responses["/clients"];
+  mockUser = {...mockUser, role: "platform_admin", client_ids: allClients ? [] : [records[0].client_id], all_clients: allClients};
+  mockClients = allClients ? records.map((client, index) => index ? {...client, status: 'archived'} : client) : [records[0]];
+  await render(<ClientManagement />);
+  expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
+  expect(container.querySelector('[role="alert"]')).toBeNull();
+  expect(container.querySelector('[aria-label="Search client organizations"]')).toBeTruthy();
+  expect(container.querySelector('select[aria-label="Client status"]')).toBeTruthy();
+  const buttons = [...container.querySelectorAll('button')];
+  expect(buttons.filter(button => button.textContent === 'Edit')).toHaveLength(mockClients.length);
+  expect(buttons.filter(button => button.textContent === 'Archive')).toHaveLength(1);
+  expect(buttons.filter(button => button.textContent === 'Restore')).toHaveLength(allClients ? 1 : 0);
+  await click(buttons.find(button => button.textContent === 'Edit'));
+  expect(document.querySelector('[data-testid="new-client-name"]').value).toBe(records[0].name);
+  await change(document.querySelector('[data-testid="new-client-industry"]'), 'Provider updated industry');
+  await click(document.querySelector('[data-testid="new-client-save"]'));
+  expect(api.patch).toHaveBeenCalledWith(`/clients/${records[0].client_id}`, expect.objectContaining({
+    name: records[0].name, industry: 'Provider updated industry', expected_updated_at: null,
+  }));
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+test("losing owner eligibility removes an already-open native create form and its save action", async () => {
+  await render(<ClientManagement />);
+  await click(container.querySelector('[data-testid="add-client-button"]'));
+  await change(document.querySelector('[data-testid="new-client-name"]'), 'Unsaved organization');
+  expect(document.querySelector('[data-testid="new-client-save"]')).toBeTruthy();
+  mockUser = {...mockUser, role: 'platform_admin', all_clients: true};
+  await render(<ClientManagement />);
+  expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
+  expect(document.querySelector('[data-testid="add-client-dialog"]')).toBeNull();
+  expect(document.querySelector('[data-testid="new-client-save"]')).toBeNull();
+  expect(container.querySelector('[data-testid="client-management-table"]')).toBeTruthy();
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.patch).not.toHaveBeenCalled();
+  mockUser = {...mockUser, role: 'super_admin'};
+  await render(<ClientManagement />);
+  expect(document.querySelector('[data-testid="add-client-dialog"]')).toBeNull();
+  expect(document.querySelector('[data-testid="new-client-save"]')).toBeNull();
+  await click(container.querySelector('[data-testid="add-client-button"]'));
+  expect(document.querySelector('[data-testid="new-client-name"]').value).toBe('');
+  await click([...document.querySelector('[data-testid="add-client-dialog"]').querySelectorAll('button')].find(button => button.textContent === 'Cancel'));
+  expect(document.querySelector('[data-testid="add-client-dialog"]')).toBeNull();
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test("an open existing client edit survives an owner-to-provider role update", async () => {
+  await render(<ClientManagement />);
+  await click([...container.querySelectorAll('button')].find(button => button.textContent === 'Edit'));
+  await change(document.querySelector('[data-testid="new-client-industry"]'), 'Retained edit draft');
+  mockUser = {...mockUser, role: 'platform_admin', client_ids: [mockClients[0].client_id], all_clients: false};
+  await render(<ClientManagement />);
+  expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
+  expect(document.querySelector('[data-testid="new-client-name"]').value).toBe(mockClients[0].name);
+  expect(document.querySelector('[data-testid="new-client-industry"]').value).toBe('Retained edit draft');
+  await click(document.querySelector('[data-testid="new-client-save"]'));
+  expect(api.patch).toHaveBeenCalledWith(`/clients/${mockClients[0].client_id}`, expect.objectContaining({industry: 'Retained edit draft'}));
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+test.each(['client_grc_manager', 'client_contributor', 'client_readonly'])("%s retains no client management controls", async role => {
+  mockUser = {...mockUser, role};
   await render(<ClientManagement />);
   expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
   expect(container.querySelector('[role="alert"]')).toBeTruthy();
+  expect(container.querySelector('[data-testid="client-management-table"]')).toBeNull();
+  expect(container.querySelector('button')).toBeNull();
+  expect(document.querySelector('[data-testid="new-client-save"]')).toBeNull();
+  expect(api.get).not.toHaveBeenCalled();
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.patch).not.toHaveBeenCalled();
 });

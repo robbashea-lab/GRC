@@ -1675,8 +1675,8 @@ async def grc_lead_candidates(client_id: Optional[str] = Query(None),
 
 @api.post("/clients")
 async def create_client(body: ClientIn, user: Dict = Depends(get_current_user), idempotency_key: Optional[str] = Header(None)):
-    if user.get("role") not in ("super_admin", "platform_admin"):
-        raise HTTPException(403, "Only platform admins can create clients")
+    if user.get("role") != authorization.OWNER:
+        raise HTTPException(403, "Platform Owner required")
     async def execute(identity):
         return await _create_client(body, user, identity)
     return await create_requests.run(db, idempotency_key, user["user_id"], None, "clients", body.model_dump(), execute)
