@@ -1,5 +1,6 @@
 import {useEffect, useId, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {ChevronLeft, ChevronRight, X} from 'lucide-react';
+import DeadlineClock from './DeadlineClock';
 import {Dialog, DialogContent, DialogTitle, DialogDescription} from '@/components/ui/dialog';
 import {personLabel} from '@/lib/people';
 import {reviewDisplayValue} from '@/lib/reviewPresentation';
@@ -11,7 +12,7 @@ const countLabel = count => `${count} ${count === 1 ? 'review' : 'reviews'}`;
 
 function DueBadge({date, now}) {
   const urgency = cisReviewUrgency(date, now);
-  return <span className={`due-badge ${urgency.tone}`}>{urgency.text}</span>;
+  return <span className={`due-badge ${urgency.tone}`}>{urgency.tone==='overdue'?<DeadlineClock>{urgency.text}</DeadlineClock>:urgency.text}</span>;
 }
 
 export default function CisReviewsConcept({rows = [], users = [], scopeKey, available = true,

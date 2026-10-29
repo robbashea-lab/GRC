@@ -6,6 +6,7 @@ import {calendarDay, displayDay} from '@/lib/managementDates';
 import {currentQuarter, quarterTimelineBounds, quarterToday, shiftQuarter} from '@/lib/quarterlyProgramTimeline';
 import {useQuarterWindow} from './QuarterlyProgramTimeline';
 import {vendorWorkUnits} from '@/lib/vendorOutstandingWork';
+import DeadlineClock from './DeadlineClock';
 
 const TYPES = [{kind: 'rev', label: 'Review', color: '#2f66c6'}, {kind: 'asr', label: 'Assurance follow-up', color: '#b38131'}, {kind: 'ren', label: 'Contract renewal', color: '#199681'}];
 export const vendorEventColor = event => TYPES.find(type => type.kind === event.kind)?.color || '#647491';
@@ -82,7 +83,7 @@ export default function VendorsConceptTimeline({events, users = [], available = 
   </section>;
 }
 
-export function EventBadge({event, now}) {const urgency = vendorEventUrgency(event, now); return <span className={`cv-due cv-${urgency.tone}`}>{urgency.label}</span>;}
+export function EventBadge({event, now}) {const urgency = vendorEventUrgency(event, now); return <span className={`cv-due cv-${urgency.tone}`}>{urgency.tone==='overdue'?<DeadlineClock>{urgency.label}</DeadlineClock>:urgency.label}</span>;}
 
 export function VendorsEventList({selection, events, available, recordOpen, users, theme, onClose, onOpen, now}) {
   const opening = useRef(false);

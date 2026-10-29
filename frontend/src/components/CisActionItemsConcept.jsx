@@ -8,6 +8,7 @@ import {currentQuarter,quarterToday,shiftQuarter} from '@/lib/quarterlyProgramTi
 import {ACTION_CONCEPT_PRIORITIES,actionConceptEvents,actionConceptPriority,actionConceptQuarter,actionConceptUrgency} from '@/lib/cisActionItemsConcept';
 import {brawndoEligibleOwnerIds,brawndoNeedsOwner} from '@/lib/brawndoDemoActions';
 import {personLabel} from '@/lib/people';
+import DeadlineClock from './DeadlineClock';
 import {ticketStage} from '@/lib/remediationTickets';
 import './CisActionItemsConcept.css';
 
@@ -29,7 +30,7 @@ export function ActionConceptPriority({value}){
 }
 export function ActionConceptDue({date,completed=false,now}){
   const urgency=actionConceptUrgency(date,now);
-  return <><time dateTime={calendarDay(date)===null?undefined:String(date).slice(0,10)}>{dateLabel(date)}</time>{!completed&&<span className={`due-badge ${urgency.className}`}>{urgency.text}</span>}</>;
+  return <><time dateTime={calendarDay(date)===null?undefined:String(date).slice(0,10)}>{dateLabel(date)}</time>{!completed&&<span className={`due-badge ${urgency.className}`}>{urgency.className==='overdue'?<DeadlineClock>{urgency.text}</DeadlineClock>:urgency.text}</span>}</>;
 }
 
 export function CisActionItemsSummary({metrics,ready,onSelect,activeKey}){
