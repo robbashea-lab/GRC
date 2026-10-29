@@ -28,6 +28,7 @@ import CisRisksConcept from '@/components/CisRisksConcept';
 import '@/components/CisRisksConcept.css';
 import managementRules from '@/lib/managementRules.json';
 import api, { formatError } from "@/lib/api";
+import {useCreateIntent} from '@/lib/createIntent';
 import { useOrg } from "@/context/OrgContext";
 import { useAuth } from "@/context/AuthContext";
 import {RiskSourceFields,RiskScheduleFields} from "@/components/RiskGovernanceFields";
@@ -334,7 +335,7 @@ export default function RiskRegister() {
       {drawer.open&&<RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} kind="risks" record={drawer.record} schema={SCHEMAS.risks.fields} clientId={currentClientId} users={users} onSaved={load}/>}
       {eventDrawer&&eventDrawer.scope===scope&&eventDrawer.record.client_id===currentClientId&&<RecordDrawer open record={eventDrawer.record} kind={eventDrawer.kind} clientId={currentClientId} users={users} onOpenChange={value=>{if(!value){eventRequest.current++;setEventDrawer(null);}}} onSaved={load}/>}
       <RiskMatrixModal open={matrixOpen} onOpenChange={setMatrixOpen}/>
-      {addOpen&&<NewRiskDialog pilot={pilot} open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}} onOpenMatrix={openMatrix}/>}
+      {addOpen&&<NewRiskDialog pilot={pilot} open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{if(currentScope.current!==scope)return;setAddOpen(false);load();}} onOpenMatrix={openMatrix}/>}
     </BrawndoSurface>;
 }
 
@@ -401,6 +402,9 @@ function RiskMatrixModal({ open, onOpenChange }) {
 }
 
 function NewRiskDialog({ pilot=false, open, onOpenChange, clientId, users, onCreated, onOpenMatrix }) {
+  const createRisk=useCreateIntent((...args)=>api.post(...args),clientId);
+  const mounted=useRef(false);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
   const fullRecord=useBrawndoFullRecord(null,clientId);
   const workflow=fullRecord&&window.location.pathname==='/risks';
   const dialogRef=useRef(null);
@@ -436,11 +440,12 @@ function NewRiskDialog({ pilot=false, open, onOpenChange, clientId, users, onCre
     try {
       const body = { ...form, client_id: clientId };
       if (!body.owner_id) delete body.owner_id;
-      await api.post("/risks", body);
+      await createRisk("/risks", body);
+      if(!mounted.current)return;
       toast.success(`${form.title} added to the register`);
       onCreated?.();
-    } catch (e) { toast.error(formatError(e)); }
-    finally { createLock.current=false;setSaving(false); }
+    } catch (e) { if(mounted.current)toast.error(formatError(e)); }
+    finally { createLock.current=false;if(mounted.current)setSaving(false); }
   }
   return (
     <Dialog open={open} onOpenChange={pilot?close:onOpenChange}>
