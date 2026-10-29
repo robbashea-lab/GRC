@@ -5,6 +5,7 @@ import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY,readStore,saveStore} from './store';
 import catalog from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,sharedFrameworkPlans,reviewConfig} from '../lib/frameworks';
+import {useNativeAsyncClock} from '@/testUtils/nativeAsyncClock';
 const api=axios.create({adapter:previewAdapter});
 const {setImmediate:yieldEventLoop}=jest.requireActual('timers');
 const get=async(path,cid,params={})=>(await api.get(path,{params:{client_id:cid,...params}})).data;
@@ -15,8 +16,9 @@ const copy=v=>JSON.parse(JSON.stringify(v));
 const ap=a=>'/framework_assessments/'+a.framework_assessment_id;
 const design=c=>Object.fromEntries(['name','description','frequency','design','owner_id','assessment_ids','related_links'].map(k=>[k,c[k]]));
 const cp=c=>'/organizational-controls/'+encodeURIComponent(c.control_id);
-beforeEach(async()=>{jest.useFakeTimers({doNotFake:['performance','nextTick','queueMicrotask']});clock('2027-01-01');sessionStorage.clear();localStorage.clear();await post('/demo/enter');});
-afterEach(()=>jest.useRealTimers());
+let restoreClock;
+beforeEach(async()=>{restoreClock=useNativeAsyncClock();clock('2027-01-01');sessionStorage.clear();localStorage.clear();await post('/demo/enter');});
+afterEach(()=>restoreClock?.());
 
 test('one organization operates five years across three frameworks without shared conclusions or lost history',async()=>{
   const originals=copy(decodeDemoStore(sessionStorage.getItem(STORE_KEY)));

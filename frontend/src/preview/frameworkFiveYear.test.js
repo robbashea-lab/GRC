@@ -9,6 +9,7 @@ import baseline from '@catalogs/onboardingCatalog.json';
 import {CATALOGS, FRAMEWORKS, activePlans} from '../lib/frameworks';
 import {auditPackage,blankAuditItem} from '../lib/isoAudit';
 import timeline from '@contracts/program-lifecycle.json';
+import {useNativeAsyncClock} from '@/testUtils/nativeAsyncClock';
 
 const api = axios.create({adapter: previewAdapter});
 const {setImmediate: yieldEventLoop} = jest.requireActual('timers');
@@ -30,14 +31,15 @@ const years=Number(process.env.FRAMEWORK_LIFECYCLE_YEARS||5),startYear=timeline.
 if(![3,5].includes(years))throw new Error('Framework lifecycle supports the verified three- or five-year scenarios');
 const addDays=(date,days)=>new Date(Date.parse(date.slice(0,10)+'T14:00:00Z')+days*86400000).toISOString().slice(0,10);
 
+let restoreClock;
 beforeEach(async () => {
   // Keep Axios/Promise cleanup live; only the application clock needs control.
-  jest.useFakeTimers({doNotFake: ['performance', 'nextTick', 'queueMicrotask']});
+  restoreClock=useNativeAsyncClock();
   clock('2027-01-01');
   sessionStorage.clear(); localStorage.clear();
   await post('/demo/enter');
 });
-afterEach(() => jest.useRealTimers());
+afterEach(() => restoreClock?.());
 
 test.each(timeline.frameworks)('%s fresh client retains the configured program lifecycle and period evidence', async framework => {
   const client = await post('/clients', {name: framework + ' '+years+'-year Lifecycle Validation — disposable'});

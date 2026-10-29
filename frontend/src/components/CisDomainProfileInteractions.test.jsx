@@ -11,6 +11,7 @@ const SEED=20261029;
 const ROUNDS=40;
 const LABELS={addressed:'Implemented',in_progress:'Partially implemented',needs_attention:'Not implemented',not_assessed:'Not assessed'};
 const INPUTS=new Set(['pointerover','pointerout','focusin','focusout','keydown','click']);
+const API_METHODS=['get','post','put','patch','delete'];
 
 // Same small deterministic generator as the existing lifecycle scenario. It only
 // chooses read-only domain triggers; no application timing or browser rate is measured.
@@ -82,6 +83,7 @@ test('seed 20261029: 252 safe DOM inputs preserve domain identity, counts, pinni
   // Real component, model and Radix popovers. Focus/pointer/key inputs below are
   // synthetic DOM dispatches, not real browser input, native focus traversal or a
   // 1,000-interaction/30-second, sustained-use or responsiveness qualification.
+  // Its 15s allowance bounds the complete functional scenario, not input latency.
   const profiles=[fixture('synthetic-interaction-a',1,0,'light'),fixture('synthetic-interaction-b',3,2,'dark')];
   const random=mulberry32(SEED),actions=[],contexts=[];
   let current=0,round=0,viewClientId;
@@ -91,48 +93,48 @@ test('seed 20261029: 252 safe DOM inputs preserve domain identity, counts, pinni
     await act(async()=>jest.advanceTimersByTime(200));
     await act(async()=>jest.advanceTimersByTime(0));
   };
-  const noWrites=()=>{
-    for(const method of ['get','post','put','patch','delete'])expect(api[method]).not.toHaveBeenCalled();
-    for(const profile of profiles)expect(JSON.stringify(profile.source)).toBe(profile.before);
-  };
+  const expectedSource={apiCalls:API_METHODS.map(()=>0),sources:profiles.map(profile=>profile.before)};
+  const sourceReceipt=()=>({apiCalls:API_METHODS.map(method=>api[method].mock.calls.length),sources:profiles.map(profile=>JSON.stringify(profile.source))});
+  const noWrites=()=>expect(sourceReceipt()).toEqual(expectedSource);
   const invariant=()=>{
-    expect(document.querySelectorAll('.cdp-domain-tip').length).toBeLessThanOrEqual(1);
-    expect(document.querySelectorAll('.cdp-domain-tip[data-state="closed"]')).toHaveLength(0);
-    expect(host.querySelectorAll('tbody tr.is-selected').length).toBeLessThanOrEqual(1);
-    expect(host.querySelectorAll('.cdp-concept-point.is-selected').length).toBeLessThanOrEqual(1);
-    expect(host.querySelectorAll('.cdp-concept-axis-label.is-selected').length).toBeLessThanOrEqual(1);
-    expect(activeListeners.size).toBe(1);
-    noWrites();
+    // Snapshot live collections only inside this synchronous observation. Do not
+    // retain them across an input, render, timer advance or other async boundary.
+    const details=Array.from(document.getElementsByClassName('cdp-domain-tip'));
+    const selected=Array.from(host.getElementsByClassName('is-selected'));
+    const selectedRows=selected.filter(node=>node.matches('tbody tr'));
+    const selectedPoints=selected.filter(node=>node.classList.contains('cdp-concept-point'));
+    const selectedAxes=selected.filter(node=>node.classList.contains('cdp-concept-axis-label'));
+    const counts={popups:details.length,rows:selectedRows.length,points:selectedPoints.length,axes:selectedAxes.length};
+    expect({...sourceReceipt(),countsOverOne:Object.entries(counts).filter(([,count])=>count>1),
+      closedPopups:details.filter(node=>node.getAttribute('data-state')==='closed').length,listeners:activeListeners.size})
+      .toEqual({...expectedSource,countsOverOne:[],closedPopups:0,listeners:1});
+    return{details,selected,selectedRows,counts};
   };
   const closed=()=>{
-    expect(popup()).toBeNull();
-    expect(host.querySelectorAll('.is-selected')).toHaveLength(0);
-    invariant();
+    const view=invariant();
+    expect({popups:view.details.length,selected:view.selected.length}).toEqual({popups:0,selected:0});
   };
   const checkProfile=profile=>{
-    expect(host.querySelector('.cdp-concept').dataset.theme).toBe(profile.theme);
     const rows=[...host.querySelectorAll('tbody tr')];
-    expect(rows).toHaveLength(profile.domains.length);
-    expect(host.querySelectorAll('.cdp-concept-point')).toHaveLength(profile.domains.length);
-    for(const [index,domain]of profile.domains.entries()){
-      expect(rows[index].querySelector('th').textContent).toBe(domain.label);
-      expect([...rows[index].querySelectorAll('td')].map(cell=>cell.textContent))
-        .toEqual([String(domain.implemented),String(domain.applicable),domain.rate]);
-    }
+    expect({theme:host.querySelector('.cdp-concept').dataset.theme,rows:rows.length,
+      points:host.getElementsByClassName('cdp-concept-point').length,
+      domains:rows.map(row=>({name:row.cells[0].textContent,nameTag:row.cells[0].tagName,headers:row.getElementsByTagName('th').length,
+        valueTags:Array.from(row.cells).slice(1).map(cell=>cell.tagName),values:Array.from(row.cells).slice(1).map(cell=>cell.textContent)}))})
+      .toEqual({theme:profile.theme,rows:profile.domains.length,points:profile.domains.length,
+        domains:profile.domains.map(domain=>({name:domain.label,nameTag:'TH',headers:1,valueTags:['TD','TD','TD'],
+          values:[String(domain.implemented),String(domain.applicable),domain.rate]}))});
   };
   const opened=(profile,domain)=>{
-    invariant();
-    const detail=popup();expect(detail).not.toBeNull();
-    expect(detail.getAttribute('aria-label')).toBe(`${domain.label} implementation details`);
-    expect(detail.dataset.theme).toBe(profile.theme);
-    expect(detail.querySelector('h3').textContent).toBe(domain.label);
-    expect(detail.querySelector('.cdp-tip-rate strong').textContent).toBe(domain.rate);
-    expect(detail.querySelector('.cdp-tip-rate span').textContent).toBe(`${domain.implemented} implemented / ${domain.applicable} applicable`);
-    expect([...detail.querySelectorAll('dl div')].map(row=>[row.querySelector('dt').textContent,row.querySelector('dd').textContent]))
-      .toEqual(Object.entries(LABELS).map(([key,label])=>[label,String(domain.counts[key])]));
-    expect([...host.querySelectorAll('tbody tr.is-selected th')].map(node=>node.textContent)).toEqual([domain.label]);
-    expect(host.querySelectorAll('.cdp-concept-point.is-selected')).toHaveLength(1);
-    expect(host.querySelectorAll('.cdp-concept-axis-label.is-selected')).toHaveLength(1);
+    const view=invariant(),detail=view.details[0];
+    expect({present:!!detail,label:detail?.getAttribute('aria-label'),theme:detail?.dataset.theme,
+      name:detail?.querySelector('h3').textContent,rate:detail?.querySelector('.cdp-tip-rate strong').textContent,
+      share:detail?.querySelector('.cdp-tip-rate span').textContent,
+      statuses:detail&&Array.from(detail.querySelectorAll('dl div'),row=>({tags:Array.from(row.children).map(node=>node.tagName),values:[row.children[0].textContent,row.children[1].textContent]})),
+      selectedRows:view.selectedRows.map(row=>({name:row.cells[0].textContent,nameTag:row.cells[0].tagName,headers:row.getElementsByTagName('th').length})),points:view.counts.points,axes:view.counts.axes})
+      .toEqual({present:true,label:`${domain.label} implementation details`,theme:profile.theme,name:domain.label,rate:domain.rate,
+        share:`${domain.implemented} implemented / ${domain.applicable} applicable`,
+        statuses:Object.entries(LABELS).map(([key,label])=>({tags:['DT','DD'],values:[label,String(domain.counts[key])]})),
+        selectedRows:[{name:domain.label,nameTag:'TH',headers:1}],points:1,axes:1});
   };
   const render=async(profile,clientId=profile.clientId,group=profile.group)=>{
     viewClientId=clientId;
@@ -233,4 +235,4 @@ test('seed 20261029: 252 safe DOM inputs preserve domain identity, counts, pinni
     error.message+=`\nSynthetic DOM seed=${SEED}; completedDispatches=${actions.length}; round=${round}; recent=${JSON.stringify(actions.slice(-12))}; contexts=${JSON.stringify(contexts.slice(-3))}`;
     throw error;
   }
-});
+},15000);

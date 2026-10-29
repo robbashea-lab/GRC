@@ -5,6 +5,7 @@ import {STORE_KEY} from './store';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {CATALOGS,FRAMEWORKS,activeDefinitions} from '../lib/frameworks';
 import {reviewSchedule} from '../lib/reviewOccurrences';
+import {useNativeAsyncClock} from '@/testUtils/nativeAsyncClock';
 
 const api=axios.create({adapter:previewAdapter});
 const {setImmediate:yieldLoop}=jest.requireActual('timers');
@@ -16,8 +17,9 @@ const db=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
 const copy=x=>JSON.parse(JSON.stringify(x));
 const count=(rows,key)=>rows.reduce((out,r)=>(out[r[key]||'not_recorded']=(out[r[key]||'not_recorded']||0)+1,out),{});
 const report={};
-beforeEach(async()=>{jest.useFakeTimers({doNotFake:['performance','nextTick','queueMicrotask']});clock('2026-09-30');sessionStorage.clear();localStorage.clear();await post('/demo/enter');});
-afterEach(()=>jest.useRealTimers());
+let restoreClock;
+beforeEach(async()=>{restoreClock=useNativeAsyncClock();clock('2026-09-30');sessionStorage.clear();localStorage.clear();await post('/demo/enter');});
+afterEach(()=>restoreClock?.());
 
 test('greenfield CIS-only intake retains 24 months of authoritative operations',async()=>{
  const catalog=CATALOGS['cis-ig1'];
