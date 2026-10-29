@@ -1,6 +1,8 @@
+@import './SemanticPresentation.css';
+
 /* The history dialog inherits the existing light/dark portal theme. */
-.governara-portfolio,.portfolio-history-dialog { --chart-implemented:#0F8C69; --chart-partial:#CC8B12; --chart-not:#CC4655; --chart-unassessed:#D3DBE5; --chart-track:#EDF1F5; --chart-grid:#EDF1F5; --chart-area:rgba(15,140,105,.10); }
-[data-brawndo-portal=dark] .portfolio-history-dialog,.governara-portfolio[data-theme=dark] { --chart-implemented:#2BA688; --chart-partial:#D4A13C; --chart-not:#E06A78; --chart-unassessed:#2C3747; --chart-track:#1B2430; --chart-grid:#1A2330; --chart-area:rgba(43,166,136,.14); }
+.governara-portfolio,.portfolio-history-dialog { --chart-implemented:var(--implementation-implemented-fill); --chart-partial:var(--implementation-partial-fill); --chart-not:var(--implementation-not-fill); --chart-unassessed:var(--implementation-unassessed-fill); --chart-track:#EDF1F5; --chart-grid:#EDF1F5; --chart-area:rgba(var(--implementation-implemented-rgb),.10); }
+[data-brawndo-portal=dark] .portfolio-history-dialog,.governara-portfolio[data-theme=dark] { --chart-track:#1B2430; --chart-grid:#1A2330; --chart-area:rgba(var(--implementation-implemented-rgb),.14); }
 .ph-current-overview { display:grid; grid-template-columns:minmax(180px,.65fr) minmax(0,1.5fr); gap:40px; margin:22px 0 28px; align-items:center; }
 .ph-interactive-bar { position:relative; }
 .ph-segment-detail { position:absolute; z-index:2; bottom:calc(100% + 8px); right:0; max-width:100%; padding:6px 10px; border:1px solid var(--color-border-strong); border-radius:6px; background:var(--color-bg-surface); color:var(--color-text-primary); box-shadow:0 4px 12px #0002; font-size:12px; pointer-events:none; }
@@ -53,10 +55,10 @@
 .portfolio-history-dialog :is(button,[tabindex]):focus-visible { outline:2px solid var(--color-focus-ring); outline-offset:2px; }
 @media(max-width:760px) { .portfolio-history-dialog { width:calc(100vw - 32px); max-height:calc(100dvh - 32px); }.ph-head { flex-wrap:wrap; padding-left:16px; }.ph-body,.ph-foot { padding-left:16px; padding-right:16px; }.ph-metrics { grid-template-columns:1fr; }.ph-legend { grid-template-columns:repeat(2,minmax(0,1fr)); }.ph-range .ph-segmented { max-width:100%; overflow-x:auto; }.ph-chart-card { padding:12px; }.ph-tab { min-width:110px; }.ph-head .ph-button { margin-left:46px; } }
 @media(prefers-reduced-motion:reduce) { .portfolio-history-dialog { animation:none!important; transition:none!important; } }
-/* Local reference palette: the Portfolio's approved colors remain independent. */
-.brawndo-demo-program,.ui-popover.cdp-domain-tip { --chart-implemented:#0A7358; --chart-partial:#E2AA30; --chart-not:#E46F7A; --chart-unassessed:#D3DBE5; --chart-track:#EDF1F5; --chart-grid:#EDF1F5; --chart-area:rgba(10,115,88,.10); --chart-flag-text:#FFFFFF; }
+/* Implementation chart roles share the current approved Dashboard palette. */
+.brawndo-demo-program,.ui-popover.cdp-domain-tip { --chart-implemented:var(--implementation-implemented-fill); --chart-partial:var(--implementation-partial-fill); --chart-not:var(--implementation-not-fill); --chart-unassessed:var(--implementation-unassessed-fill); --chart-track:#EDF1F5; --chart-grid:#EDF1F5; --chart-area:rgba(var(--implementation-implemented-rgb),.10); --chart-flag-text:#FFFFFF; }
 .brawndo-demo-program { min-width:0; padding:20px 24px; border:1px solid var(--color-border); border-radius:12px; background:var(--color-bg-surface); }
-[data-brawndo-portal=dark] .brawndo-demo-program,[data-brawndo-portal=dark] .ui-popover.cdp-domain-tip { --chart-implemented:#3CC2A0; --chart-partial:#D4A13C; --chart-not:#D9505F; --chart-unassessed:#2C3747; --chart-track:#1B2430; --chart-grid:#1A2330; --chart-area:rgba(60,194,160,.14); --chart-flag-text:#06251C; }
+[data-brawndo-portal=dark] .brawndo-demo-program,[data-brawndo-portal=dark] .ui-popover.cdp-domain-tip { --chart-track:#1B2430; --chart-grid:#1A2330; --chart-area:rgba(var(--implementation-implemented-rgb),.14); --chart-flag-text:#FFFFFF; }
 .brawndo-demo-program .ph-current-overview { grid-template-columns:240px minmax(0,1fr); gap:24px 40px; align-items:start; padding:4px 0 24px; border-bottom:1px solid var(--color-border); }
 .brawndo-demo-program .ph-current-value > strong { font-size:56px; }
 .brawndo-demo-program .ph-breakdown-head { margin-bottom:10px; }

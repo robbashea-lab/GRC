@@ -55,7 +55,7 @@
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-summary button > span { display:block; font-size:11px; color:var(--cc-muted); }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-summary strong { display:block; margin:6px 0; font-size:28px; line-height:1.2; font-weight:700; letter-spacing:-.5px; color:var(--cc-text); }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-summary small { display:block; font-size:10px; color:var(--cc-muted); }
-.brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-summary .bdd-late { color:#a62c32; }
+.brawndo-demo-dashboard[data-cis-dashboard-concept=true] .bdd-summary .bdd-late { color:var(--bdd-overdue); }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] {
   --chart-implemented:var(--cc-green); --chart-partial:var(--cc-amber); --chart-not:var(--cc-rose);
   --chart-unassessed:var(--cc-na); --chart-track:var(--cc-na); --chart-grid:var(--cc-border); --chart-flag-text:#fff;
@@ -110,6 +110,7 @@
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-chart-card { padding:0; border:0; border-radius:0; background:transparent; gap:4px; }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-chart { margin-top:0; }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-chart text { font:10px var(--font-body); fill:var(--cc-muted); }
+.brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-chart text.ph-current-flag-label { fill:var(--chart-flag-text); }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-grid { stroke-dasharray:3 3; }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-cis-history-tip { width:300px; padding:13px 14px; border-radius:9px; box-shadow:var(--cc-shadow); font:11px/1.45 var(--font-body); }
 .brawndo-demo-dashboard[data-cis-dashboard-concept=true] .brawndo-demo-program[data-concept=true] .ph-cis-history-tip .ph-tip-date { font-size:13px; font-weight:700; }

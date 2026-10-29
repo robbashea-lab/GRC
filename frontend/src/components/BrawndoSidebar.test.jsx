@@ -40,12 +40,12 @@ test('grouped navigation, labelled badges and the shared theme preference',async
   expect(container.querySelector('a[href="/compliance/cis-ig1"]')).toBeNull();
 });
 
-test.each(['client','platform'])('%s sidebar identifies product attribution separately from the selected client',async context=>{
+test.each(['client','platform'])('%s sidebar identifies the static product separately from the selected client',async context=>{
   mockOrg={currentClient:{name:'Independent lifecycle client'},currentClientId:'client-independent',clients:[]};
   api.get.mockImplementation(async path=>({data:path==='/dashboard'?{client_id:'client-independent',kpis:{}}:[]}));
   await act(async()=>root.render(context==='client'?<BrawndoSidebar isInternal/>:<BrawndoPlatformSidebar/>));
-  expect(container.querySelector('.bsb-sub').textContent).toBe('By Prestige Worldwide');
-  expect(container.querySelector('.bsb-brand').getAttribute('aria-label')).toBe('GoverNara by Prestige Worldwide');
+  expect(container.querySelector('.application-brand-tagline').textContent).toBe('Turn complexity into clarity.');
+  expect(container.querySelector('.bsb-brand').getAttribute('aria-label')).toBe('GoverNara');
   const selected=container.querySelector('[data-testid="context-header-client"]');
   if(context==='client'){
     expect(selected.textContent).toContain('Independent lifecycle client');

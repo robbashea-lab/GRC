@@ -1,6 +1,6 @@
 @font-face{font-family:CisVendorInter;src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');font-style:normal;font-weight:100 900;font-display:swap}
 .cv-page,.cv-tooltip,.cv-event-list{--cv-card:#fff;--cv-text:#10213b;--cv-muted:#647491;--cv-line:#dfe6f1;--cv-subtle:#f7f9fc;--cv-blue:#225aca;--cv-info:#edf4ff;--cv-danger:#ad2e45;--cv-danger-bg:#fff1f4;font-family:CisVendorInter,Inter,system-ui,sans-serif;color:var(--cv-text);font-size:12px;line-height:1.45}
-.cv-page[data-theme=dark],.cv-tooltip[data-theme=dark],.cv-event-list[data-theme=dark]{--cv-card:#1a2b40;--cv-text:#e5edf9;--cv-muted:#a7b8d0;--cv-line:#304158;--cv-subtle:#203249;--cv-blue:#75a3f8;--cv-info:#253d60;--cv-danger:#f2a7b8;--cv-danger-bg:#4e2c3d}
+.cv-page[data-theme=dark],.cv-tooltip[data-theme=dark],.cv-event-list[data-theme=dark]{--cv-card:#1a2b40;--cv-text:#e5edf9;--cv-muted:#a7b8d0;--cv-line:#304158;--cv-subtle:#203249;--cv-blue:#75a3f8;--cv-info:#253d60;--cv-danger:#f7a7b7;--cv-danger-bg:#402936}
 .brawndo-additional.cv-page{min-width:0;max-width:100%;padding:22px 25px 15px;background:#f4f6fb}
 .brawndo-additional.cv-page[data-theme=dark]{background:#111e30}
 .cv-page button,.cv-event-list button{font:inherit;cursor:pointer;color:inherit}
@@ -49,14 +49,14 @@
 .cv-agenda-entry>span.cv-agenda-bottom{display:flex;align-items:center;justify-content:space-between;gap:4px}
 .cv-agenda-bottom>.cv-due{margin:0 0 0 auto}
 .cv-due{display:inline-flex;align-items:center;justify-content:center;border-radius:4px;padding:3px 6px;font-size:9px;line-height:1.2;background:#f7f9fc;color:#647491;font-weight:500;white-space:nowrap}
-.cv-due.cv-overdue{background:#fff1f4;color:#ad2e45}
+.cv-due.cv-overdue{background:var(--cv-danger-bg);color:var(--cv-danger)}
 .cv-due.cv-today{background:#e9f0ff;color:#1459dc}
 .cv-due.cv-month{background:#edf4ff;color:#245da8}
 .cv-due.cv-week{background:#fff0cd;color:#a16b09}
 .cv-due.cv-fortnight{background:#fff5df;color:#966215}
 /* Approved urgency tokens also apply in native tooltip and date-list portals. */
 :is(.cv-page,.cv-tooltip,.cv-event-list)[data-theme=dark] .cv-due{background:#21334b;color:#a2b4d0}
-:is(.cv-page,.cv-tooltip,.cv-event-list)[data-theme=dark] .cv-due.cv-overdue{background:#402936;color:#f7a7b7}
+:is(.cv-page,.cv-tooltip,.cv-event-list)[data-theme=dark] .cv-due.cv-overdue{background:var(--cv-danger-bg);color:var(--cv-danger)}
 :is(.cv-page,.cv-tooltip,.cv-event-list)[data-theme=dark] .cv-due.cv-today{background:#233b5c;color:#b9d1ff}
 :is(.cv-page,.cv-tooltip,.cv-event-list)[data-theme=dark] .cv-due.cv-month{background:#233b5c;color:#b9d1ff}
 :is(.cv-page,.cv-tooltip,.cv-event-list)[data-theme=dark] .cv-due.cv-week{background:#403522;color:#f3c86f}

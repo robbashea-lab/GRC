@@ -16,6 +16,7 @@
   --bdd-hover:#F2F5F9; --bdd-line:#E3E8EF; --bdd-strong:#CDD5E0;
   --bdd-text:#0F1B2D; --bdd-secondary:#46566B; --bdd-muted:#5A687B;
   --bdd-accent:#215BC1; --bdd-soft:#EDF2FC; --bdd-danger:#B42318; --bdd-amber:#93370D;
+  --bdd-overdue:#ad2e45; --bdd-overdue-bg:#fff1f4; --bdd-today:#1459dc;
   --bdd-link:#1F56C3; --bdd-segment:#FFFFFF; --bdd-partial:#E2AA30;
   --bdd-shadow:0 1px 2px rgba(15,27,45,.05),0 1px 1px rgba(15,27,45,.02);
   --bdd-segment-shadow:0 1px 2px rgba(15,27,45,.10),0 0 0 1px rgba(15,27,45,.06);
@@ -30,6 +31,7 @@
   --bdd-hover:#19222F; --bdd-line:#222C3A; --bdd-strong:#34404F;
   --bdd-text:#EDF1F7; --bdd-secondary:#A7B3C4; --bdd-muted:#8E9BAE;
   --bdd-accent:#8EC5FF; --bdd-soft:#1B2738; --bdd-danger:#F2828C; --bdd-amber:#E9B65A;
+  --bdd-overdue:#f7a7b7; --bdd-overdue-bg:#402936; --bdd-today:#b9d1ff;
   --bdd-link:#8EC5FF; --bdd-segment:#243042; --bdd-partial:#D4A13C; --bdd-shadow:none;
   --bdd-segment-shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
 }
@@ -60,7 +62,8 @@
 .brawndo-demo-dashboard button:disabled {cursor:default;opacity:.45}
 .brawndo-demo-dashboard :is(button,a,input,select,[tabindex]):focus-visible {outline:2px solid var(--bdd-accent);outline-offset:2px}
 .brawndo-demo-dashboard small {font-size:12px;color:var(--bdd-muted)}
-.brawndo-demo-dashboard .bdd-late {color:var(--bdd-danger)}
+.brawndo-demo-dashboard .bdd-late {color:var(--bdd-overdue)}
+.brawndo-demo-dashboard .bdd-today {color:var(--bdd-today)}
 .brawndo-demo-dashboard .bdd-heading {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .brawndo-demo-dashboard .bdd-heading p {margin-top:3px;font-size:12.5px;color:var(--bdd-muted);font-variant-numeric:tabular-nums}
 .brawndo-demo-dashboard .bdd-heading > button {display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border:1px solid var(--bdd-line);border-radius:7px;background:var(--bdd-card);font-size:12.5px;font-weight:500;color:var(--bdd-secondary);box-shadow:var(--bdd-shadow)}
@@ -102,6 +105,7 @@
 .brawndo-demo-dashboard .bdd-table-scroll thead tr {padding-block:9px;background:var(--bdd-head);border-bottom:1px solid var(--bdd-line)}
 .brawndo-demo-dashboard .bdd-table-scroll tbody tr {padding-block:13px;border-bottom:1px solid var(--bdd-line);cursor:pointer;transition:background .12s}
 .brawndo-demo-dashboard .bdd-table-scroll tbody tr:last-child {border-bottom:0}
+.brawndo-demo-dashboard .bdd-table-scroll tbody tr.bdd-overdue-row {background:linear-gradient(90deg,var(--bdd-overdue-bg),var(--bdd-card));box-shadow:inset 2px 0 var(--bdd-overdue)}
 .brawndo-demo-dashboard .bdd-table-scroll tbody tr:hover {background:var(--bdd-subtle)}
 .brawndo-demo-dashboard .bdd-table-scroll td {min-width:0;padding:0;border:0;vertical-align:middle}
 .brawndo-demo-dashboard .bdd-item {font-weight:600;font-size:13.5px;letter-spacing:-.005em;line-height:1.35;text-align:left;background:none;border:0;padding:0}
@@ -114,7 +118,7 @@
 .brawndo-demo-dashboard .bdd-attention .bdd-avatar {box-shadow:inset 0 0 0 1px var(--bdd-strong);background:transparent}
 .brawndo-demo-dashboard .bdd-cell-due {font-size:12.5px;font-variant-numeric:tabular-nums}
 .brawndo-demo-dashboard .bdd-cell-due small {display:flex;align-items:center;gap:5px;font-size:12px}
-.brawndo-demo-dashboard .bdd-cell-due small.bdd-late {font-weight:600}
+.brawndo-demo-dashboard .bdd-cell-due small:is(.bdd-late,.bdd-today) {font-weight:600}
 .brawndo-demo-dashboard .bdd-cell-due svg {flex:none}
 .brawndo-demo-dashboard .bdd-status {display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--bdd-secondary);white-space:nowrap}
 .brawndo-demo-dashboard .bdd-status i {width:8px;height:8px;border-radius:50%;flex:none;background:var(--bdd-muted)}

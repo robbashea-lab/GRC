@@ -1,15 +1,17 @@
-/* Portfolio uses its own reviewed Inter palette, independently of the Brawndo pilots. */
+@import '../components/SemanticPresentation.css';
+
+/* Portfolio keeps its reviewed native layout; implementation fills share Dashboard roles. */
 .governara-portfolio {
  --gp-bg:#F4F6F9; --gp-surface:#FFFFFF; --gp-subtle:#F7F9FB; --gp-tablehead:#F9FAFC; --gp-hover:#F2F5F9; --gp-border:#E3E8EF; --gp-border-strong:#CDD5E0;
  --gp-fg:#0F1B2D; --gp-fg2:#46566B; --gp-muted:#5A687B; --gp-link:#1F56C3; --gp-selected:#EDF2FC; --gp-focus:#215BC1; --gp-good:#05603A; --gp-bad:#B42318; --gp-warn:#93370D;
- --chart-implemented:#0F8C69; --gp-part:#CC8B12; --gp-not:#CC4655; --gp-none:#D3DBE5;
+ --chart-implemented:var(--implementation-implemented-fill); --gp-part:var(--implementation-partial-fill); --gp-not:var(--implementation-not-fill); --gp-none:var(--implementation-unassessed-fill);
  --gp-shadow:0 1px 2px rgba(15,27,45,.05),0 1px 1px rgba(15,27,45,.02); --gp-seg-on:#FFFFFF; --gp-seg-shadow:0 1px 2px rgba(15,27,45,.10),0 0 0 1px rgba(15,27,45,.06);
  color:var(--gp-fg); background:var(--gp-bg); padding:28px 24px 120px; min-height:calc(100dvh - 60px); font:13.5px/1.5 Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif; font-optical-sizing:auto; -webkit-font-smoothing:antialiased;
 }
 .governara-portfolio[data-theme=dark] {
  --gp-bg:#0A0F16; --gp-surface:#111823; --gp-subtle:#151D29; --gp-tablehead:#131B26; --gp-hover:#19222F; --gp-border:#222C3A; --gp-border-strong:#34404F;
  --gp-fg:#EDF1F7; --gp-fg2:#A7B3C4; --gp-muted:#8E9BAE; --gp-link:#8EC5FF; --gp-selected:#1B2738; --gp-focus:#8EC5FF; --gp-good:#3DC79F; --gp-bad:#F2828C; --gp-warn:#E9B65A;
- --chart-implemented:#2BA688; --gp-part:#D4A13C; --gp-not:#E06A78; --gp-none:#2C3747; --gp-shadow:none; --gp-seg-on:#243042; --gp-seg-shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+ --gp-shadow:none; --gp-seg-on:#243042; --gp-seg-shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
 }
 .governara-portfolio *, .governara-portfolio *::before { box-sizing:border-box; }
 .governara-portfolio :is(button,input,select) { font-family:inherit; }

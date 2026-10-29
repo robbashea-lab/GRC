@@ -1,9 +1,11 @@
+@import './SemanticPresentation.css';
+
 /* Core palette/font/chrome share Dashboard; native CIS structure and status roles stay local. */
 html[data-brawndo-cis-visual=true] {
-  --c-impl:#0A7358; --c-part:#E2AA30; --c-not:#E46F7A; --c-none:#D3DBE5; --c-track:#EDF1F5;
+  --c-impl:var(--implementation-implemented-fill); --c-part:var(--implementation-partial-fill); --c-not:var(--implementation-not-fill); --c-none:var(--implementation-unassessed-fill); --c-track:#EDF1F5;
 }
 html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] {
-  --c-impl:#3CC2A0; --c-part:#D4A13C; --c-not:#D9505F; --c-none:#2C3747; --c-track:#1B2430;
+  --c-track:#1B2430;
 }
 /* main */
 .brawndo-cis-visual .main { min-width:0; }

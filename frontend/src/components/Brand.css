@@ -1,2 +1,4 @@
 .governara-feather { object-fit:contain; flex-shrink:0; }
 .brand-lockup .governara-feather { background:none; border:0; border-radius:0; }
+.application-brand { display:flex; align-items:center; cursor:default; text-decoration:none; }
+.application-brand-name,.application-brand-tagline { display:block; }
