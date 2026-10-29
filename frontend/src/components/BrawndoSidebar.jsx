@@ -11,7 +11,7 @@ import {canExportReports} from '@/lib/permissions';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import {clientDestination} from '@/lib/clientSelection';
 import NotificationBell from './NotificationBell';
-import {BrandMark} from './Brand';
+import {ApplicationBrand} from './Brand';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator} from './ui/dropdown-menu';
 import './BrawndoSidebar.css';
 import DemoNotice from '@/preview/DemoNotice';
@@ -51,7 +51,7 @@ export function ProfileMenu({compact=false,storageTools=false}){
       </DropdownMenu>;
   return <div className={compact?'bwp-profile':'bsb-foot'}>{storageTools?<DemoNotice renderTrigger={menu}/>:menu()}</div>;
 }
-const Brand=()=><div className="bsb-brand" aria-label="GoverNara by Prestige Worldwide"><BrandMark className="bsb-mark"/><span><span className="bsb-name">GoverNara</span><span className="bsb-sub">By Prestige Worldwide</span></span></div>;
+const Brand=()=><ApplicationBrand className="bsb-brand" markClassName="bsb-mark"/>;
 
 // Portfolio (platform) context in the reference theme: Portfolio, the client navigator, Administration.
 export function BrawndoPlatformSidebar({adminItems=[]}){

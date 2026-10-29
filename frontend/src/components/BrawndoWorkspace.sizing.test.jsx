@@ -76,7 +76,7 @@ test.each(['demo','standard'].flatMap(mode=>['super_admin','platform_admin'].map
       expect(shell().getAttribute('data-shared-shell')).toBe('true');expectSizing(false);
       expect(shell().hasAttribute('data-additional-surface')).toBe(false);
       expect(shell().hasAttribute('data-visual-surface')).toBe(false);
-      expect(host.querySelector('.bwp-native-tagline').textContent).toBe('CLARITY FOR A STRONGER TOMORROW');
+      expect(host.querySelector('.bwp-brand .application-brand-tagline').textContent).toBe('Turn complexity into clarity.');
       if(input)expect(host.querySelector('label input')).toBe(input);
       input=host.querySelector('label input');
     }
@@ -116,7 +116,7 @@ test.each(['demo','standard'])('%s native navigation destinations retain the exi
       expect(shell().getAttribute('data-shared-shell')).toBe('true');
       expect(shell().hasAttribute('data-visual-surface')).toBe(false);
       expect(shell().hasAttribute('data-additional-surface')).toBe(false);
-      expect(host.querySelector('.bwp-native-tagline').textContent).toBe('CLARITY FOR A STRONGER TOMORROW');
+      expect(host.querySelector('.bwp-brand .application-brand-tagline').textContent).toBe('Turn complexity into clarity.');
     }
     expectSizing(pathname!=='/account');
     expect(host.querySelector('label input')).toBe(input);

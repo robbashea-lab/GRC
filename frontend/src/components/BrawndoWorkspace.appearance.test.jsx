@@ -189,7 +189,7 @@ test('background dashboard chrome is stable while strict portal appearance is wi
   mockOrg={...mockOrg,loading:true};await render();
   expect(host.querySelector('.brawndo-workspace-pilot').dataset.visualSurface).toBe('dashboard');
   expect(document.documentElement.dataset.visualSurface).toBeUndefined();
-  expect(host.querySelector('.bwp-brand small').textContent).toBe('By Prestige Worldwide');
+  expect(host.querySelector('.bwp-brand small').textContent).toBe('Turn complexity into clarity.');
   for(const pathname of ['/systems','/reports','/compliance/iso-27001','/admin/clients']){
     mockLocation={pathname,search:''};await render();
     expect(host.querySelector('.brawndo-workspace-pilot').dataset.cisDashboardConcept).toBeUndefined();

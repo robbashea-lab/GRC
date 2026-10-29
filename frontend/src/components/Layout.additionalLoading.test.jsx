@@ -51,7 +51,7 @@ test('the real additional controller keeps approved route chrome while its initi
   expect(reads).toHaveLength(1);
   expect(shell().dataset.additionalSurface).toBe('contacts');
   expect(host.querySelector('[data-testid="interactive-demo-notice"]')).toBeNull();
-  expect(host.querySelector('.bwp-brand small').textContent).toBe('By Prestige Worldwide');
+  expect(host.querySelector('.bwp-brand small').textContent).toBe('Turn complexity into clarity.');
   expect(document.documentElement.dataset.additionalSurface).toBeUndefined();
   expect(host.textContent).not.toContain('Owned loaded contact');
   await act(async()=>reads[0].resolve({data:[contact('demo_brawndo','Owned loaded contact')]}));

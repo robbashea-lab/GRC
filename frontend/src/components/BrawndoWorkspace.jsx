@@ -10,8 +10,7 @@ import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import {dashboardRecordHref} from '@/lib/dashboardItemSummary';
 import {ProfileMenu} from './BrawndoSidebar';
 import NotificationBell from './NotificationBell';
-import {BrandMark} from './Brand';
-import {brawndoDemoRisksGate} from '@/lib/brawndoDemoRisks';
+import {ApplicationBrand} from './Brand';
 import {BRAWNDO_DEMO_DASHBOARD_ENABLED} from '@/lib/brawndoDemoDashboard';
 import './BrawndoWorkspace.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
@@ -24,6 +23,7 @@ import './AdditionalSectionsAppearance.css';
 import {CisVisualPublisher} from './BrawndoCisVisualAppearance';
 import './CisWorkspaceSizing.css';
 import './CisRegisterSizing.css';
+import './ApplicationShell.css';
 
 const PAGES=[['Dashboard','/dashboard'],['Calendar','/calendar'],['Reviews','/reviews'],['Action Items','/action-items'],['Risks','/risks'],['Policies','/policies'],['Vendors','/vendors'],['Reports','/reports'],['Evidence Library','/evidence'],['Contacts','/contacts'],['Systems & Scope','/systems'],['AI Governance','/ai-governance'],['Client Profile','/client-profile']];
 
@@ -77,7 +77,6 @@ export default function BrawndoWorkspace({children}){
   const administrationShell=['/admin/clients','/admin/users','/admin/roles','/admin/security','/admin/audit'].includes(pathname)
     && !auth.loading && !auth.error && !user?.password_change_required && isInternal(user) && cisActorMode(user,auth.workspaceMode)
     && (auth.workspaceMode==='demo'?PREVIEW_MODE===true:PREVIEW_MODE===false);
-  const risksPresentation=brawndoDemoRisksGate({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const visualSurface=visualCorrectionSurface(chromeContext);
   const visualChrome=visualCorrectionSurface({...chromeContext,orgLoading:verifiedChrome?false:org.loading});
   const cisChrome=cisVisual||cisVerifiedChrome&&pathname==='/compliance/cis-ig1'
@@ -102,10 +101,10 @@ export default function BrawndoWorkspace({children}){
     if(additionalSurface){root.dataset.additionalSurface=additionalSurface;root.dataset.additionalTheme=theme;}
     return()=>{delete root.dataset.additionalSurface;delete root.dataset.additionalTheme;};
   },[additionalSurface,theme]);
-  return <CisVisualPublisher.Provider value={publishCis}><div className="brawndo-workspace-pilot" data-cis-sizing={sizingChrome?'true':undefined} data-shared-shell={sharedShell||nativeNavigationShell||administrationShell?'true':undefined} data-cis-dashboard-concept={BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&verifiedChrome?'true':undefined} data-additional-surface={additionalChrome||undefined} data-visual-surface={visualChrome||undefined} data-cis-visual={cisChrome||undefined} data-theme={theme} data-navigation={navigation?'open':'closed'}>
+  return <CisVisualPublisher.Provider value={publishCis}><div className="brawndo-workspace-pilot" data-application-shell="true" data-cis-sizing={sizingChrome?'true':undefined} data-shared-shell={sharedShell||nativeNavigationShell||administrationShell?'true':undefined} data-cis-dashboard-concept={BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&verifiedChrome?'true':undefined} data-additional-surface={additionalChrome||undefined} data-visual-surface={visualChrome||undefined} data-cis-visual={cisChrome||undefined} data-theme={theme} data-navigation={navigation?'open':'closed'}>
     <header className="bwp-topbar">
       <button type="button" className="bwp-mobile-nav" aria-label="Toggle client navigation" aria-expanded={navigation} onClick={()=>setNavigation(!navigation)}><Menu size={22}/></button>
-      <Link to={currentClientId?'/dashboard':'/clients'} className="bwp-brand" aria-label="GoverNara"><BrandMark className="bwp-mark"/><span>GoverNara<small className={(nativeNavigationShell||administrationShell)&&!sharedShell?'bwp-native-tagline':undefined}>{visualChrome||additionalChrome||risksPresentation||cisChrome||sharedShell?'By Prestige Worldwide':'CLARITY FOR A STRONGER TOMORROW'}</small></span></Link>
+      <ApplicationBrand className="bwp-brand" markClassName="bwp-mark"/>
       <WorkspaceSearch key={searchClient} clientId={searchClient}/>
       <div className="bwp-top-actions">
       {canOpenDirectory?<button type="button" className="bwp-client" onClick={()=>navigate('/clients')}><span className="bwp-client-name">{platform?'Portfolio':currentClient?.name||'Portfolio'}</span><ChevronDown size={15} aria-hidden="true"/><span className="sr-only">Open authorized client directory</span></button>:<span className="bwp-client">{currentClient?.name||'Client workspace'}</span>}

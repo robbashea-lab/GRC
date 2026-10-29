@@ -7,7 +7,7 @@ import ClientSurface from './ClientSurface';
 import ClientIdentityMark from './ClientIdentityMark';
 import BrawndoWorkspace from './BrawndoWorkspace';
 import AdminSurface from './AdminSurface';
-import Brand from "@/components/Brand";
+import {ApplicationBrand} from "@/components/Brand";
 import './BrawndoPortalTheme.css';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {sharedAppearanceClientRoute,sharedNativeClientRoute,sharedPresentationEligible} from '@/lib/sharedExperience';
@@ -237,7 +237,7 @@ function Sidebar() {
   return (
     <aside className="app-sidebar w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">
       <div className={`px-4 py-4 ${atPlatform && isInternal ? "" : "border-b border-brand-metallic-3"}`}>
-        <Brand />
+        <ApplicationBrand />
         {(!atPlatform || !isInternal) && (
           <div className="mt-3">
             <ContextHeader isInternal={isInternal} atPlatform={atPlatform} />

@@ -1,0 +1,19 @@
+/* Current Dashboard implementation fills; these do not redefine severity or approval tones. */
+.governara-portfolio,
+.portfolio-history-dialog,
+.brawndo-demo-program,
+.ui-popover.cdp-domain-tip,
+html[data-brawndo-cis-visual=true] {
+  --implementation-implemented-fill:#168566;
+  --implementation-implemented-rgb:22,133,102;
+  --implementation-partial-fill:#dcb13e;
+  --implementation-not-fill:#d95e7d;
+  --implementation-unassessed-fill:#d2dae5;
+}
+.governara-portfolio[data-theme=dark],
+[data-brawndo-portal=dark] .portfolio-history-dialog,
+[data-brawndo-portal=dark] .brawndo-demo-program,
+[data-brawndo-portal=dark] .ui-popover.cdp-domain-tip,
+html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] {
+  --implementation-unassessed-fill:#607088;
+}

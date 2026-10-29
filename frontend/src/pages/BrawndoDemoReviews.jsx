@@ -1,4 +1,5 @@
 import CisReviewsConcept from '@/components/CisReviewsConcept';
+import DeadlineClock from '@/components/DeadlineClock';
 import '@/components/CisReviewsConcept.css';
 import {useEffect,useRef,useState} from 'react';
 import {reviewSummary,reviewExecutions} from '@/lib/brawndoDemoReviews';
@@ -69,7 +70,7 @@ export function BrawndoReviewRows({rows,users,checked,toggleOne,toggleAll,allChe
           <td className="bdr-c-item"><button className="bdr-name" onClick={event=>{event.stopPropagation();onOpen(row);}}>{row.title}</button><div className="bdr-meta"><span>{reviewDisplayValue('review_type',row.review_type)}</span><span className="bdr-fwchip">{basisSummary(row)}</span>{history&&row.status==='cancelled'&&<span>Cancelled</span>}</div></td>
           <td><div className="bdr-owner"><span className="bdr-avatar">{owner.split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase()}</span><span>{owner}</span></div></td>
           {!history&&<td><span className={'bdr-st'+(row.status==='in_progress'?' bdr-st-prog':'')}>{status}</span></td>}
-          <td className="bdr-c-due"><time dateTime={row.due_date||undefined}>{calendarDay(row.due_date)===null?(history?'Due date not recorded':'Not scheduled'):formatCisReviewDate(row.due_date,{year:true})}</time>{!history&&!closedParent&&<small className={'due-badge '+urgency.tone}>{urgency.days===null?'Set a due date':urgency.text}</small>}</td>
+          <td className="bdr-c-due"><time dateTime={row.due_date||undefined}>{calendarDay(row.due_date)===null?(history?'Due date not recorded':'Not scheduled'):formatCisReviewDate(row.due_date,{year:true})}</time>{!history&&!closedParent&&<small className={'due-badge '+urgency.tone}>{urgency.days===null?'Set a due date':urgency.tone==='overdue'?<DeadlineClock>{urgency.text}</DeadlineClock>:urgency.text}</small>}</td>
           <td className="bdr-c-cad">{history?<span>{row.status==='cancelled'?'Cancelled':displayRecordedAt(row.completed_at||row.completion_date)||'Date not recorded'}</span>:<><span>{reviewDisplayValue('recurrence',row.recurrence)}</span>{!closedParent&&<small>Next cycle {displayDay(schedule.next_review_date)||'—'}</small>}</>}</td>
           <td className="bdr-row-menu" onClick={event=>event.stopPropagation()}>{rowMenu(row,index)}</td>
         </tr>;
