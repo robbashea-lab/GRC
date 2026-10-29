@@ -12,7 +12,7 @@ export const snapshotTime = snapshot => position(snapshot)?.effective_at || posi
 export function isDemoScenarioPosition(snapshot, context){
   const value=position(snapshot);
   return !!context&&!!namedDemoClient(context.client_id)?.historyVersion
-    && context.version===namedDemoClient(context.client_id).historyVersion
+    && namedDemoClient(context.client_id).historyVersions.includes(context.version)
     &&context.program_id===`${context.client_id}:cis-ig1`&&value?.program_id===context.program_id
     &&value.observation_kind==='demo_fixture'&&value.provenance?.kind==='demo_fixture'
     &&value.scenario_version===context.version&&value.scenario_anchor===context.anchor

@@ -873,10 +873,12 @@ export function portfolioReportingRequest(db,path,params={}){
   if(path.endsWith('/history')){
     const position=programs.find(p=>p.client_id===params.client_id&&p.program_key===params.program_key);if(!position)return fail(404,'Enabled Demo program not found');
     const available=snapshots.filter(s=>s.client_id===position.client_id&&s.framework_key===position.framework_key);
-    const scenario_context=params.demo_scenario==='brawndo-cis-ig1-history-v2'&&position.program_id==='demo_brawndo:cis-ig1'
-      ?getBrawndoScenarioContext(db,new Date(asOf))
-      : params.demo_scenario===namedDemoClient(position.client_id)?.historyVersion && position.framework_key==='cis-ig1'
-        ?getCisDemoScenarioContext(db,position.client_id,asOf):null;
+    const admitted=namedDemoClient(position.client_id)?.historyVersions.includes(params.demo_scenario)
+      &&position.framework_key==='cis-ig1';
+    // Existing native links retain their history parameter; the qualified source
+    // selects the installed fixture revision without changing any calculation.
+    const scenario_context=admitted?(getCisDemoScenarioContext(db,position.client_id,asOf)
+      ||(position.program_id==='demo_brawndo:cis-ig1'?getBrawndoScenarioContext(db,new Date(asOf)):null)):null;
     return {...position,as_of:asOf,...demoHistory(db,position,available,range,asOf,scenario_context),coverage:coverage(db,available),...(scenario_context?{scenario_context}:{})};
   }
   if(path.endsWith('/activity')){

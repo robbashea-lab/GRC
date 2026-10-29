@@ -1,4 +1,6 @@
-import {seedStore} from './store';
+// The v1 rollout remains a compatibility stage for retained sessions. The v2
+// fresh canonical fixture and its new posture are exercised in cisDemoRefresh.
+import {buildLegacyDemoStore as seedStore} from './store';
 import {applyCisDemoRollout} from './cisDemoRollout';
 import {CIS_DEMO_SCENARIOS,cisDemoSelection} from './cisDemoSelection';
 import {activeDefinitions} from '../lib/frameworks';

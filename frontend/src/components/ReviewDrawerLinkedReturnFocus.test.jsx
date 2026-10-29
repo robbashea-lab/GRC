@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import ReviewDrawer from './ReviewDrawer';
 import RemediationTicketDrawer from './RemediationTicketDrawer';
 import api from '@/lib/api';
-import {readStore} from '../preview/store';
+import {buildLegacyDemoStore,readStore,saveStore} from '../preview/store';
 
 let mockUser,mockOrg;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:'demo',loading:false})}));
@@ -93,6 +93,8 @@ test('native ticket without an explicit parent return still restores its connect
   expect(patch).not.toHaveBeenCalled();expect(post).not.toHaveBeenCalled();
 });
 test('seeded Account Authorization & Access Review Q3 ticket Cancel returns to its open Q4 parent Review heading',async()=>{
+  // The Q3/Q4 history and fixed Finding identity belong to the retained v1 cohort.
+  saveStore(buildLegacyDemoStore(),{resetFiles:true});await api.post('/demo/enter');
   const historicalFinding=readStore().findings.find(row=>row.finding_id==='demo_brawndo_finding_0');
   expect(historicalFinding?.review_id).toBeTruthy();
   record=(await api.get('/reviews/'+historicalFinding.review_id)).data;

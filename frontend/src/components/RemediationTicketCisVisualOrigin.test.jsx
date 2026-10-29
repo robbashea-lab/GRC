@@ -4,6 +4,7 @@ import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
 import {visibleQuestions} from '@/lib/guidedAssessment';
 import {omniCisSummary} from '@/lib/omniCisSummary';
+import {buildLegacyDemoStore,saveStore} from '../preview/store';
 
 let mockAuth,mockOrg;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -67,6 +68,8 @@ async function savePersonalProgress(completed=false){
 beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
 beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
+  // These native source-return cases deliberately retain the v1 1.1 ticket identity.
+  saveStore(buildLegacyDemoStore(),{resetFiles:true});
   const user=(await api.post('/demo/enter')).data.user;mockAuth={user,workspaceMode:'demo',loading:false,error:null};
   const clients=(await api.get('/clients')).data;mockOrg={currentClientId:clientId,currentClient:clients.find(row=>row.client_id===clientId),clients,loading:false,error:null};
   sessionStorage.setItem('grc_client_id',clientId);window.history.replaceState({},'','/compliance/cis-ig1?client_id='+clientId);

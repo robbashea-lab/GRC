@@ -15,7 +15,7 @@
 import axios from 'axios';
 import {performance} from 'perf_hooks';
 import {previewAdapter} from './commandTestAdapter';
-import {STORE_KEY,ids as ID_FIELDS} from './store';
+import {STORE_KEY,ids as ID_FIELDS,buildLegacyDemoStore,saveStore} from './store';
 import {restoreFiles} from './evidenceStorage';
 import {registerSignals} from '../lib/registerSignals';
 import {riskMatchesView} from '../lib/riskRegister';
@@ -937,6 +937,10 @@ async function runSimulation() {
   jest.useFakeTimers('modern');
   setClock(START);
   storage.clear(); localStorage.clear();
+  // This fixed ten-year event ledger targets retained v1 Risk/Vendor identities.
+  // Install that explicit input; all subsequent operations still use native APIs.
+  // Fresh showcase lifecycle coverage remains in cisDemoRefresh/cisDemoOperations.
+  saveStore(buildLegacyDemoStore(), {resetFiles: true});
   await api.post('/demo/enter');
   // This operating campaign explicitly exercises an optional Acceptable Use
   // Policy. Strict CIS Demo onboarding excludes it until an organization opts in.

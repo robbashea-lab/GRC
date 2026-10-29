@@ -12,7 +12,7 @@ test('bounded queue pages reconcile every total and use authoritative CIS record
   const before=(await api.get('/frameworks/cis-ig1',{params:{client_id:cid}})).data;
   const loaded=await loadClientDashboard(api,{clientId:cid,user:(await api.get('/auth/me')).data,scope:{kind:'org'},workQueue:true});
   expect(loaded.programs.map(p=>p.key)).toEqual(['cis-ig1']);
-  expect(cisSummary(loaded.cisRows)).toMatchObject({addressed:32,assessed:49,total:56});
+  expect(cisSummary(loaded.cisRows)).toMatchObject({addressed:41,partial:8,gap:4,notAssessed:3,assessed:53,total:56});
   for(const [key,group] of Object.entries(loaded.queue.groups)) {
     expect(group.items.length).toBe(Math.min(9,group.total));
     const all=[];
@@ -60,7 +60,7 @@ test('pilot validates the actual demo program and enriches the same complete nat
  await api.post('/demo/enter');const clientId='demo_brawndo';
  const before=JSON.stringify(readStore());
  const data=await loadClientDashboard(api,{clientId,user:(await api.get('/auth/me')).data,scope:{kind:'org'},workQueue:true,includeProgramMetadata:true});
- expect(brawndoDemoProgram(data.programs,data.programMetadata,clientId)).toMatchObject({program_id:'demo_brawndo:cis-ig1',current:expect.objectContaining({implemented:32,denominator:56})});
+ expect(brawndoDemoProgram(data.programs,data.programMetadata,clientId)).toMatchObject({program_id:'demo_brawndo:cis-ig1',current:expect.objectContaining({implemented:41,denominator:56,assessed:53})});
  const response=(await api.get('/dashboard',{params:{client_id:clientId,work_queue:true,work_metadata:true,detail:'all',offset:0,limit:100}})).data;
  expect(response.total).toBe(data.queue.groups.all.total);expect(response.items).toHaveLength(response.total);
  expect(response.items.every(row=>Array.isArray(row.framework_keys)&&typeof row.framework_membership_known==='boolean')).toBe(true);

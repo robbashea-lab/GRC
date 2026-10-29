@@ -3,6 +3,7 @@ import {demoCurrentPositions} from './portfolioReporting';
 import {stable} from './commandRequests';
 import {buildBrawndoScenario,BRAWNDO_HISTORY_VERSION,canonicalScenarioStates,scenarioAssessmentId,validScenarioInstant} from './brawndoHistoryScenario';
 import {validImplementationPosition} from '../lib/portfolioProgress';
+import {CIS_SHOWCASE_VERSION} from '../lib/demoClients';
 
 const VERSION='brawndo-cis-ig1-history-v1',CLIENT='demo_brawndo',PROGRAM=CLIENT+':cis-ig1',DAY=86400000;
 // Explicit synthetic Demo observations, not a reconstruction of today's records.
@@ -155,6 +156,17 @@ function scenarioSnapshots(db,source,scenario){
 }
 
 export function enrichBrawndoReportingHistory(db,clock=new Date()){
+  const refresh=db.cis_demo_refresh,member=refresh?.clients?.[CLIENT];
+  const showcaseContext=db.cis_demo_scenario_history?.[CLIENT];
+  const client=db.clients?.find(row=>row.client_id===CLIENT);
+  // Fresh showcase-v2 explicitly superseded this installer. Reporting still
+  // validates its full native source context separately; no history is admitted here.
+  if(db.user?.workspace_mode==='demo'&&client?.environment==='Demo'&&client.status==='active'
+    &&!client.archived&&!client.archived_at&&refresh?.version===CIS_SHOWCASE_VERSION
+    &&refresh.timezone==='UTC'&&member?.version===CIS_SHOWCASE_VERSION&&member.state==='fresh_fixture'
+    &&showcaseContext?.version===CIS_SHOWCASE_VERSION&&showcaseContext.client_id===CLIENT&&showcaseContext.program_id===PROGRAM
+    &&showcaseContext.implementation_group===1&&showcaseContext.anchor===refresh.anchor
+    &&/^\d{4}-\d\d-\d\dT00:00:00\.000Z$/.test(refresh.anchor)&&validInstant(refresh.anchor,clock))return false;
   const history=db.portfolio_reporting||{};
   const installed=history.fixture_versions?.[BRAWNDO_HISTORY_VERSION];
   // A joined fixture has no migration work. Reporting admission still validates

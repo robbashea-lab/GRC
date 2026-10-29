@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
-import {STORE_KEY, seedStore, write} from './store';
+import {STORE_KEY, buildLegacyDemoStore, saveStore, seedStore, write} from './store';
 
 const api = axios.create({adapter: previewAdapter});
 const retainedRiskId = 'demo_brawndo_risk_0';
@@ -9,6 +9,8 @@ const storedRisk = () => JSON.parse(sessionStorage.getItem(STORE_KEY)).risks.fin
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 
 test('retained seeded Risk keeps its original Added fallback through save, review and reload', async () => {
+  // Exercise retained records without an identification date, not the new showcase fixture.
+  saveStore(buildLegacyDemoStore(), {resetFiles: true});
   await api.post('/demo/enter');
   const original = storedRisk();
   expect(original.date_identified).toBeUndefined();

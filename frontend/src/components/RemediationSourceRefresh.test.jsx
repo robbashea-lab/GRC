@@ -2,6 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordDrawer from './RecordDrawer';
 import api from '@/lib/api';
+import {buildLegacyDemoStore,saveStore} from '../preview/store';
 
 let mockUser={user_id:'demo_admin',role:'super_admin'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -34,6 +35,8 @@ beforeAll(()=>Object.defineProperty(globalThis,'crypto',{value:require('crypto')
 beforeEach(async()=>{
   mockUser={user_id:'demo_admin',role:'super_admin'};
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
+  // Preserve the fixed v1 source/ticket input while exercising the current native recovery flow.
+  saveStore(buildLegacyDemoStore(),{resetFiles:true});
   await api.post('/demo/enter');
   task=(await api.get('/tasks',{params:{client_id:'demo_brawndo'}})).data.find(row=>row.task_id==='demo_brawndo_cis_action_1.1');
   await api.patch('/tasks/'+task.task_id,{status:'done',description:'Synthetic saved corrective plan.',resolution:'Synthetic completed work retained on reopen.'});

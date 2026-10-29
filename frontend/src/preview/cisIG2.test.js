@@ -4,6 +4,7 @@ import {readStore,STORE_KEY,clone} from './store';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,activeDefinitions,activePlans,reviewDrivers} from '../lib/frameworks';
 import {cisDemoSelection,CIS_DEMO_REVISION} from './cisDemoSelection';
+import {CIS_SHOWCASE_VERSION} from './cisDemoFixtureDates';
 import {cisReviewBriefs} from '../lib/cisOperations';
 import {complianceNavigation} from '../lib/complianceNavigation';
 const api=axios.create({adapter:previewAdapter});
@@ -20,11 +21,19 @@ test('canonical partition and explicit fictional Initech match the strict IG2 ma
   const db=readStore(),id='demo_initech',rows=db.framework_assessments.filter(r=>r.client_id===id);
   expect(rows).toHaveLength(130);expect(new Set(rows.map(r=>r.definition_id)).size).toBe(130);
   const manifest=cisDemoSelection(2);
+  expect(db.cis_demo_refresh).toMatchObject({version:CIS_SHOWCASE_VERSION,timezone:'UTC'});
+  expect(db.cis_demo_refresh.clients[id]).toMatchObject({version:CIS_SHOWCASE_VERSION,state:'fresh_fixture',history_months:24});
+  const origin=db.cis_demo_refresh.clients[id].assessment_origin+'T00:00:00.000Z';
+  expect(Number.isFinite(Date.parse(origin))).toBe(true);
+  expect(origin<=db.cis_demo_refresh.anchor).toBe(true);
   expect(rows.map(row=>row.definition_id).sort()).toEqual(activeDefinitions('cis-ig1',{implementation_group:2}).map(row=>row.id).sort());
   expect(rows.some(row=>row.assessment_history.length)).toBe(true);
   for(const row of rows){
     expect(db.contacts.some(contact=>contact.client_id===id&&contact.contact_id===row.process_owner_id)).toBe(true);
-    for(const event of row.assessment_history)expect(event.source).toBe('Explicit fictional Demo operating history');
+    for(const event of row.assessment_history){
+      expect(event.source).toBe('Fictional Demo import');
+      expect(event.at>=origin&&event.at<=db.cis_demo_refresh.anchor).toBe(true);
+    }
   }
   expect(db.contacts.filter(r=>r.client_id===id).map(r=>r.name)).toEqual(['Bill Lumbergh','Peter Gibbons','Michael Bolton','Samir Nagheenanajar','Tom Smykowski','Milton Waddams','Nina']);
   expect(db.users.some(r=>r.user_id.startsWith(id))).toBe(false);
@@ -33,9 +42,28 @@ test('canonical partition and explicit fictional Initech match the strict IG2 ma
   expect(policies).toHaveLength(10);
   expect(policies.map(row=>row.baseline_key).sort()).toEqual(manifest.policies.filter(row=>row.include).map(row=>row.policy_key).sort());
   const reviews=db.reviews.filter(row=>row.client_id===id);
-  expect(reviews).toHaveLength(18);
+  expect(reviews).toHaveLength(37);
   expect(reviews.filter(row=>row.framework_key==='cis-ig1')).toHaveLength(15);
-  for(const followup of manifest.native_followups)expect(reviews.find(row=>row.review_id===followup.review_id)).toBeTruthy();
+  expect(reviews.filter(row=>row.policy_id)).toHaveLength(10);
+  expect(reviews.filter(row=>row.risk_id)).toHaveLength(4);
+  expect(reviews.filter(row=>row.vendor_id)).toHaveLength(5);
+  expect(reviews.filter(row=>row.ai_system_id)).toHaveLength(3);
+  for(const followup of manifest.native_followups.filter(row=>row.source_kind!=='ai_systems'))expect(reviews.find(row=>row.review_id===followup.review_id)).toBeTruthy();
+  // The current showcase replaces the legacy single AI example with three native deployments.
+  const systems=db.ai_systems.filter(row=>row.client_id===id);
+  expect(systems.map(row=>row.catalog_key).sort()).toEqual(['chatgpt','claude','m365']);
+  for(const system of systems){
+    const linked=reviews.filter(row=>row.ai_system_id===system.ai_system_id);
+    expect(linked).toHaveLength(1);
+    expect(linked[0]).toMatchObject({client_id:id,ai_review_purpose:'periodic',review_type:'ai_governance'});
+  }
+  expect(reviews.some(row=>row.review_id===id+'_review_ai')).toBe(false);
+  for(const review of reviews.filter(row=>row.risk_id||row.vendor_id||row.ai_system_id)){
+    expect(review.governance_context).toMatchObject({category:'organizational',cadence_source:'organization_defined'});
+    expect(db.users.some(user=>user.user_id===review.owner_id)).toBe(true);
+    const [kind,key,parent]=review.risk_id?['risks','risk_id',review.risk_id]:review.vendor_id?['vendors','vendor_id',review.vendor_id]:['ai_systems','ai_system_id',review.ai_system_id];
+    expect(db[kind].some(row=>row.client_id===id&&row[key]===parent)).toBe(true);
+  }
   for(const kind of ['findings','tasks','evidence','risks'])expect(db[kind].filter(row=>row.client_id===id).length).toBeGreaterThan(0);
 });
 
