@@ -22,6 +22,7 @@ export default function ClientManagement() {
   const { switchClient, refresh } = useOrg();
   const navigate = useNavigate();
   const authorized = ["super_admin", "platform_admin"].includes(user?.role);
+  const canCreateClient = user?.role === "super_admin";
   const [clients, setClients] = useState([]);
   const [programs, setPrograms] = useState({});
   const [query, setQuery] = useState("");
@@ -30,6 +31,9 @@ export default function ClientManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState(null);
+  useEffect(() => {
+    if (!canCreateClient) setDialog(current => current?.client ? current : null);
+  }, [canCreateClient]);
   const dialogOpener = useRef(null);
   const addClientButton = useRef(null);
   const returnFocus = event => { event.preventDefault(); (dialogOpener.current?.isConnected ? dialogOpener.current : addClientButton.current)?.focus(); };
@@ -79,7 +83,7 @@ export default function ClientManagement() {
   if (!authorized) return <div role="alert" className="page-content">Client Management is available to platform administrators only.</div>;
   return <div className="admin-page admin-clients-page">
     <PageHeader title="Client Management" subtitle="Manage client organizations, ownership, and lifecycle."
-      action={<Button ref={addClientButton} size="sm" onClick={event => {dialogOpener.current=event.currentTarget; setDialog({ client: null });}} data-testid="add-client-button" className="bg-primary hover:bg-primary/90"><Plus className="h-3.5 w-3.5 mr-1" /> Add Client</Button>} />
+      action={canCreateClient && <Button ref={addClientButton} size="sm" onClick={event => {dialogOpener.current=event.currentTarget; setDialog({ client: null });}} data-testid="add-client-button" className="bg-primary hover:bg-primary/90"><Plus className="h-3.5 w-3.5 mr-1" /> Add Client</Button>} />
     <div className="admin-body">
       <section className="admin-panel" aria-label="Client organizations">
       <div className="admin-panel-head"><div><h2>Client organizations</h2><p>Ownership, program condition and client lifecycle.</p></div><span className="admin-record-meta">{clients.length} clients</span></div>
@@ -120,6 +124,6 @@ export default function ClientManagement() {
         <DialogFooter><Button variant="outline" onClick={() => setConfirmation(null)}>Cancel</Button><Button variant={confirmation?.status === 'archived' ? 'default' : 'destructive'} onClick={() => archive(confirmation)}>Confirm {confirmation?.status === 'archived' ? 'restore' : 'archive'}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
-    <ClientDialog onCloseAutoFocus={returnFocus} open={!!dialog} client={dialog?.client || null} onOpenChange={open => { if (!open) setDialog(null); }} onCreated={saved} />
+    <ClientDialog onCloseAutoFocus={returnFocus} open={!!dialog && (!!dialog.client || canCreateClient)} client={dialog?.client || null} onOpenChange={open => { if (!open) setDialog(null); }} onCreated={saved} />
   </div>;
 }
