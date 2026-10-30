@@ -16,7 +16,6 @@ jobs:
         working-directory: frontend
     env:
       CI: 'true'
-      ATTRIBUTION_OUTPUT: ${{ runner.temp }}/iso-reporting-preparation
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -28,6 +27,8 @@ jobs:
       - run: corepack enable
       - run: yarn install --frozen-lockfile
       - name: First-attempt authority and bounded harness preflight
+        env:
+          ATTRIBUTION_OUTPUT: ${{ runner.temp }}/iso-reporting-preparation
         run: |
           node - <<'NODE'
           const fs = require('node:fs'), path = require('node:path'), {spawnSync} = require('node:child_process');
@@ -43,6 +44,8 @@ jobs:
           process.exitCode = result.status === 0 && !result.error ? 0 : 1;
           NODE
       - name: One original C1 then attribution D1 then original C2
+        env:
+          ATTRIBUTION_OUTPUT: ${{ runner.temp }}/iso-reporting-preparation
         run: node scripts/reporting-prep-diagnostic.cjs "$ATTRIBUTION_OUTPUT"
       - name: Preserve every available result and partial capture
         if: ${{ always() }}

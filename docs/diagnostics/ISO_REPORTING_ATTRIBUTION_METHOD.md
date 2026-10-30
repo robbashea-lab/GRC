@@ -1,6 +1,6 @@
 # Reporting-preparation attribution — method frozen before workload execution
 
-Protocol v1, October 30, 2026 (America/Los_Angeles). Authority: Robb authorized **one bounded attribution diagnostic, measurement only**. No application correction, integration, release, deployment, new persistence experiment or SOC 2 modernization. This is not permission to adopt the candidate.
+Protocol v1.1, October 30, 2026 (America/Los_Angeles). Authority: Robb authorized **one bounded attribution diagnostic, measurement only**. No application correction, integration, release, deployment, new persistence experiment or SOC 2 modernization. This is not permission to adopt the candidate.
 
 ## Source and coordination
 
@@ -12,7 +12,7 @@ Use an isolated diagnostic branch `codex/iso-reporting-attribution-20261030` fro
 
 ## Fixed run budget and order
 
-One workflow run, attempt1 only; no manual/automatic retry or additional diagnostic campaign.
+One executable workflow campaign, attempt1 only; no retry after any job starts and no additional diagnostic campaign. The documented pre-execution repair below permits exactly one replacement workflow record for a zero-job validation failure.
 
 1. **C1:** fresh-process, unmodified complete `frameworkFiveYear.test.js` sequence via unchanged normal campaign driver.
 2. **D1:** exactly one fresh-process complete sequence using a disposable checkout of392, instrumenting only the three initializers described below.
@@ -69,3 +69,11 @@ Reject a correction if preserving native and conservative fallback behavior need
 ## Delivery
 
 Preserve raw C1/D1/C2 results, including failures/timeouts, source/runtime proofs, calibration, observer overhead, resources, counts and decision screens in a secret-free packet. Separate normal controls, instrumented attribution, compatibility review, historical CI307 and release acceptance. Provide measured candidate cost, variability/limitations, whether useful savings appear plausible and whether genuinely small compatible handling is supported. No application patch or deployment follows automatically.
+
+## Pre-execution administrative amendment (no workload data)
+
+The first publication produced GitHub validation record41072018113 at commit1d32a7e23938c3602bb6dc90308a778926283654. It failed immediately with zero jobs; neither preflight nor C1/D1/C2 started. The record is preserved. Local actionlint reproduced an invalid job-level runner.temp context; GitHub documents runner as available at steps.env, not jobs.env. The repair moves the same output declaration into the two consuming steps. No harness logic, application source, fixture, assertion, deadline, measured-process count or timing/rejection criterion changes.
+
+Before collecting any workload data, protocolv1's single-workflow-record wording is amended to allow one replacement publication under Robb's existing authority to complete this one diagnostic. Count both GitHub records honestly. Only one executable C1-D1-C2 campaign remains permitted; no further validation/preflight/workload replacement or retry is authorized by this amendment. A failure after this repair stops the campaign and is reported. This is not selection among measured outcomes: none exist from the rejected declaration.
+
+Originalv1 remains in METHOD-v1-ORIGINAL.md with its original pre-execution hash. Actionlint before/after logs and verified utility provenance are retained outside the application. Semantic workflow validation passes locally; Linux group cleanup and actual lifecycle results still require the one hosted execution.
