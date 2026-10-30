@@ -305,3 +305,67 @@ test('native inline SOC criterion editor remains outside the floating guide pres
   expect(guide.querySelector('.cis-omni-owl')).toBeNull();
   expect(guide.querySelector('section[aria-label="SOC 2 interview"]')).toBeTruthy();
 });
+
+async function openSequential(){
+  await render({inline:true,sequential:true,inlineOpen:true});
+  await click(stored.revision?'Resume guided assessment':'Begin guided assessment');
+}
+async function answerSequential(value){
+  const fieldset=document.querySelector('.cis-sequential-interview fieldset'),select=fieldset?.querySelector('select');
+  if(!select)return;
+  if(!value&&select.value)return;
+  const key=fieldset.dataset.questionId,choice=value||(key==='additional_gap'||key==='additional_confirmation'?'No':[...select.options].find(option=>['Yes','Relevant'].includes(option.value))?.value);
+  if(choice)await act(async()=>{select.value=choice;select.dispatchEvent(new Event('change',{bubbles:true}));});
+}
+async function completeSequential(){
+  for(let guard=0;guard<80&&!document.body.textContent.includes('Review your assessment summary');guard++){
+    await answerSequential();
+    await click(button('Review summary')?'Review summary':button('Review answers')?'Review answers':'Continue');
+  }
+  expect(document.body.textContent).toContain('Review your assessment summary');
+}
+test.each(['CC1.1','A1.1','C1.1','PI1.1','P1.1'])('%s sequential inline questions retain group checkpoints and require the separate native assessment save',async id=>{
+  setup(id);await openSequential();await completeSequential();
+  const groups=socGroups(id,stored.answers,stored.version),steps=[...groups.slice(1).map((_,index)=>index+1),groups.length-1];
+  expect(api.put.mock.calls.map(([,body])=>body.step)).toEqual(steps);expect(stored.completed).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(props.current.implementation).toBe('');expect(props.current.status).toBe('not_assessed');expect(props.current.verification).toBe('not_verified');
+  const text=document.querySelector('[aria-label="Assessment implementation summary"]').value;expect(text).toContain('\n\nControls in place\n');
+  await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledWith(expect.objectContaining({implementation:text,status:'addressed',guided_assessment_source:{version:stored.version,revision:stored.revision,generated_at:stored.generated_at}}),expect.any(String));
+  expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+  await act(async()=>root.unmount());root=createRoot(container);await openSequential();expect(document.querySelector('[aria-label="Assessment implementation summary"]').value).toBe(text);
+});
+test('sequential Pause retains unsaved answers and cursor without checkpoint or native writes',async()=>{
+  setup('P6.1');await openSequential();await answerSequential();await click('Continue');await answerSequential('Outside the selected system');
+  const question=document.querySelector('.cis-sequential-interview fieldset').dataset.questionId,reads=api.get.mock.calls.length;
+  await click('Pause & return');expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+  expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onDraftChange).toHaveBeenLastCalledWith(true);
+  expect(document.activeElement).toBe(button('Resume guided assessment'));await click('Resume guided assessment');
+  expect(document.activeElement).toBe(document.querySelector('.cis-sequential-interview h3'));
+  expect(document.querySelector('.cis-sequential-interview fieldset').dataset.questionId).toBe(question);expect(document.querySelector('.cis-sequential-interview select').value).toBe('Outside the selected system');
+  expect(api.get.mock.calls.length).toBe(reads);expect(stored.answers).toEqual({});
+  await click('Save & close');expect(stored.completed).toBe(false);expect(stored.step).toBe(0);expect(stored.answers[question]).toBe('Outside the selected system');expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+test('sequential required scope explanation and failed checkpoint retain the same native question and answers',async()=>{
+  setup('P6.1');await openSequential();await answerSequential();await click('Continue');await answerSequential('Outside the selected system');
+  await click('Continue');await answerSequential();await click('Continue');await answerSequential();await click('Review answers');await click('Review summary');
+  expect(document.body.textContent).toContain('Explain why this context is outside the selected system.');expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await click('Edit answer 2');const detail=document.getElementById('soc-detail-P6.1-disclosure-context');
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(detail,'Recorded scope decision.');detail.dispatchEvent(new Event('input',{bubbles:true}));});
+  await answerSequential('Relevant');failWrite=true;await click('Continue');expect(document.body.textContent).toContain('Synthetic save unavailable');
+  expect(document.querySelector('.cis-sequential-interview fieldset').dataset.questionId).toBe('P6.1-disclosure-context');expect(detail.value).toBe('Recorded scope decision.');expect(stored.answers).toEqual({});
+  failWrite=false;await click('Continue');expect(stored.step).toBe(1);expect(stored.answers['P6.1-disclosure-context_detail']).toBe('Recorded scope decision.');expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+test('sequential answer review preserves manual wording and replacement cancellation before a guarded native update',async()=>{
+  props.current={...props.current,implementation:'Existing saved native wording.',status:'addressed'};props.form=copy(props.current);
+  await openSequential();await completeSequential();const reviewed='Exact manual wording.\n\nRetained second paragraph.';
+  const summary=document.querySelector('[aria-label="Assessment implementation summary"]');await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(summary,reviewed);summary.dispatchEvent(new Event('input',{bubbles:true}));});
+  await click('Back to questions');await answerSequential('Partially');await completeSequential();
+  expect(document.querySelector('[aria-label="Assessment implementation summary"]').value).toBe(reviewed);expect(button('Update assessment').disabled).toBe(true);
+  await click('Keep my wording after review');await click('Update assessment');await click('Cancel');expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.current.implementation).toBe('Existing saved native wording.');
+  await click('Update assessment');await click('Yes, update assessment');expect(props.onSaveAssessment).toHaveBeenCalledWith(expect.objectContaining({implementation:reviewed,status:'in_progress'}),expect.any(String));
+});
+test('sequential read-only and related drafts retain their separate write boundaries',async()=>{
+  await render({disabled:true});await openSequential();expect(button('Start').disabled).toBe(true);expect(api.put).not.toHaveBeenCalled();
+  await render({disabled:false,relatedDraft:true});await click('Start');await completeSequential();expect(stored.completed).toBe(true);expect(button('Save assessment').disabled).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await render({relatedDraft:false,assessmentDirty:true});expect(button('Save assessment').disabled).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
