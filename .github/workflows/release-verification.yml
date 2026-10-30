@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main, codex/brawndo-guided-assessor]
   push:
-    branches: [main, codex/cis-demo-data-refresh-20261028, codex/owner-only-client-creation-20261029, codex/visual-consistency-20261029]
+    branches: [main, codex/cis-demo-data-refresh-20261028, codex/owner-only-client-creation-20261029, codex/visual-consistency-20261029, codex/soc2-program-modernization-20261030]
   workflow_dispatch:
 
 permissions:

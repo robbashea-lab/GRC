@@ -32,6 +32,54 @@ const prestige=async({clientId='demo_prestige',selected=true}={})=>{mockUser.wor
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));return response;};
 const socSettings=()=>[...container.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='Scope and observation period settings');
 
+test('SOC workspace rejects foreign-client assessment and canonical-position responses',async()=>{
+ const definition=frameworkCatalog('soc-2').requirements[0];
+ for(const foreignPosition of [false,true]){
+  const response={configured:true,selected:true,definitions:[definition],configuration:socConfiguration(),active_definition_ids:[definition.id],work:{},
+   assessments:[{framework_assessment_id:'foreign-soc',framework_key:'soc-2',definition_id:definition.id,client_id:foreignPosition?'a':'other-client',status:'addressed'}],
+   ...(foreignPosition?{implementation_position:{program_id:'other-client:soc-2'}}:{})};
+  api.get.mockResolvedValue({data:response});
+  await act(async()=>root.render(<FrameworkWorkspace key={String(foreignPosition)} frameworkKey="soc-2" clientId="a"/>));
+  expect(container.textContent).toContain('SOC 2 workspace records could not be verified for this client.');
+  expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeNull();
+ }
+});
+
+test.each([null,{framework_assessment_id:' '},{definition_id:'unknown'},{framework_key:'iso-27001'}])('SOC mixed response still rejects malformed current records %p',async invalid=>{
+ const definition=frameworkCatalog('soc-2').requirements[0],valid={framework_assessment_id:'valid-soc',framework_key:'soc-2',definition_id:definition.id,client_id:'a',status:'addressed'};
+ const response={configured:true,selected:true,definitions:[definition],configuration:socConfiguration(),active_definition_ids:[definition.id],work:{},
+  assessments:[valid,{...valid,client_id:'other-client',framework_assessment_id:'foreign'},invalid===null?null:{...valid,...invalid}]};
+ api.get.mockResolvedValue({data:response});
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId="a"/>));
+ expect(container.textContent).toContain('SOC 2 workspace records could not be verified for this client.');
+ expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeNull();
+ expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('SOC presentation withdraws previous actor data while the same client is reauthorized',async()=>{
+ const response=await prestige({clientId:'existing-auth-soc'});
+ expect(container.querySelector('[data-testid="soc-readiness-percentage"]')).toBeTruthy();
+ let resolveCurrent;
+ api.get.mockImplementation(path=>path.endsWith('/members')?Promise.resolve({data:[]}):new Promise(resolve=>{resolveCurrent=resolve;}));
+ mockUser={user_id:'reader',role:'client_viewer'};
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId="existing-auth-soc"/>));
+ expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeNull();
+ expect(container.textContent).toContain('Loading program workspace');
+ await act(async()=>resolveCurrent({data:response}));
+ expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeTruthy();
+});
+
+test.each([null,{}, {id:'  '}])('SOC malformed definition %p stays in the native error and retry path',async definition=>{
+ api.get.mockResolvedValue({data:{configured:true,selected:true,definitions:[definition],assessments:[],configuration:socConfiguration(),work:{}}});
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId="a"/>));
+ expect(container.textContent).toContain('SOC 2 workspace records could not be verified for this client.');
+ expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeNull();
+ const retry=[...container.querySelectorAll('button')].find(button=>button.textContent==='Retry workspace');expect(retry).toBeTruthy();
+ const valid=frameworkCatalog('soc-2').requirements[0];
+ api.get.mockResolvedValue({data:{configured:true,selected:true,definitions:[valid],assessments:[{framework_assessment_id:'recovered-soc',client_id:'a',definition_id:valid.id,status:'not_assessed'}],configuration:socConfiguration(),work:{}}});
+ await act(async()=>retry.click());expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeTruthy();
+});
+
 test.each(['cis-ig1','soc-2','iso-27001'])('%s requirement rows expose exact contextual management separately from assessment',async frameworkKey=>{
  const definition=frameworkCatalog(frameworkKey).requirements[0];
  const row={framework_assessment_id:'exact-assessment',framework_key:frameworkKey,definition_id:definition.id,client_id:'a',status:'not_assessed'};
@@ -117,7 +165,7 @@ test('Prestige SOC 2 uses scoped progress and category-first hierarchy without p
  await prestige();const workspace=container.querySelector('[data-testid="prestige-soc-workspace"]');expect(workspace).toBeTruthy();
  expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).not.toContain('Client organizational Controls');expect(workspace.textContent).toContain('Include retained out-of-scope criteria');expect(socSettings()).toBeUndefined();
  const summary=workspace.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(summary).toContain('Addressed (Readiness)28 of 38');expect(summary).toContain('Assessed35 of 38');expect(workspace.querySelector('.bd-donut-value').textContent).toBe('73.7%');expect(summary).toContain('3 still to assess');
+ expect(summary).toContain('Addressed (Readiness)');expect(summary).toContain('28 of 38 applicable criteria addressed');expect(summary).toContain('Assessed 35 of 38');expect(workspace.querySelector('[data-testid="soc-readiness-percentage"]').textContent).toBe('73.7%');expect(summary).toContain('3 still to assess');
  const partial=workspace.querySelector('[data-testid="psoc-seg-partial"]');expect(partial.tabIndex).toBe(0);expect(partial.getAttribute('aria-label')).toBe('Partially Addressed: 5 of 38 criteria, 13%');expect(partial.querySelector('.bcis-tip').textContent).toBe('Partially Addressed5 of 38 criteria13%');
  const addressed=workspace.querySelector('[data-testid="psoc-seg-addressed"]');expect(addressed.getAttribute('aria-label')).toBe('Addressed (Readiness): 28 of 38 criteria, 74%');expect(addressed.querySelector('.bcis-tip').textContent).toBe('Addressed (Readiness)28 of 38 criteria74%');
  expect(workspace.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);expect(workspace.querySelector('[data-testid="soc-category-security"]').textContent).toContain('Security — Common Criteria33');

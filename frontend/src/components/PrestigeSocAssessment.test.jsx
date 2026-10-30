@@ -25,7 +25,7 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 const render=async(clientId='demo_prestige')=>act(async()=>root.render(<FrameworkDrawer open record={{...record,client_id:clientId}} clientId={clientId} onOpenChange={close} position="33 of 38 in framework order" breadcrumb={[{label:'SOC 2',onClick:jest.fn()},{label:'Security',onClick:jest.fn()},{label:'CC9',onClick:jest.fn()},{label:'CC9.2'}]}/>));
-const expandSummary=async()=>act(async()=>{const disclosure=container.querySelector('.assessment-summary');expect(disclosure).not.toBeNull();if(!disclosure.open)disclosure.querySelector('summary').click();expect(disclosure.open).toBe(true);});
+const expandSummary=async()=>act(async()=>{const disclosure=container.querySelector('.cis-collapsible-requirement');expect(disclosure).not.toBeNull();if(!disclosure.open)disclosure.querySelector('summary').click();expect(disclosure.open).toBe(true);});
 
 test('removed linked-work footer leaves stored control descriptions and mappings unchanged',async()=>{
  record.management_controls=[{control_id:'legacy',name:'Saved vendor monitoring',description:'Quarterly provider assurance',frequency:'quarterly',design:'adequate',operating:'effective'}];
@@ -56,8 +56,8 @@ test('Prestige SOC criterion workspace is focused, source-qualified and ordered'
  expect([...container.querySelectorAll('[role=tab]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
  expect(container.querySelector('[role=tabpanel][data-state=active]').textContent).toContain('What SOC 2 requires');
  expect(container.querySelector('h2').textContent).toBe('Third-party risk oversight');
- expect(container.querySelector('.assessment-summary').open).toBe(false);
- expect(container.querySelector('.assessment-summary').querySelectorAll('summary')).toHaveLength(1);
+ expect(container.querySelector('.cis-collapsible-requirement').open).toBe(false);
+ expect(container.querySelector('.cis-collapsible-requirement').querySelectorAll('summary')).toHaveLength(1);
  expect(container.querySelector('[data-source-kind="authored"]').textContent).toBe(socGuidance.criteria['CC9.2'].practical.summary);
  expect(container.textContent).toContain('Requirement summary · Omnisciente');
  expect(container.querySelector('[data-source-kind="official"]')).toBeNull();
@@ -221,11 +221,14 @@ test('Prestige Findings tab retains tickets and creates one sourced Finding and 
  expect(api.post).toHaveBeenCalledWith('/framework_assessments/soc-a/findings',expect.objectContaining({title:expect.stringContaining('CC9.2'),remediation_title:expect.stringContaining('CC9.2'),request_id:expect.any(String)}));
  expect(container.textContent).toContain('Ticket saved. Assessment changes remain separate.');
 });
-test('embedded interview stays inside the collapsed summary above the criterion and preserves native fields',async()=>{
- await render();const disclosure=container.querySelector('.assessment-summary');expect(disclosure.open).toBe(false);
- expect(disclosure.compareDocumentPosition(container.querySelector('.assessment-requirement'))&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+test('collapsed source and independent guided entry preserve native fields without writes',async()=>{
+ await render();const disclosure=container.querySelector('.cis-collapsible-requirement');expect(disclosure.open).toBe(false);
+ expect(disclosure.querySelector('.assessment-requirement')).toBeTruthy();
+ expect(disclosure.compareDocumentPosition(container.querySelector('section[aria-label="SOC 2 interview"]'))&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
  await act(async()=>disclosure.querySelector('summary').click());expect(disclosure.open).toBe(true);
- expect(disclosure.querySelector('section[aria-label="SOC 2 interview"]')).toBeTruthy();expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+ expect(disclosure.querySelector('section[aria-label="SOC 2 interview"]')).toBeNull();expect(button('Begin guided assessment')).toBeTruthy();
+ expect(container.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+ await act(async()=>button('Begin guided assessment').click());expect(container.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(false);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
  expect(container.textContent).not.toContain('Unsaved assessment changes');
  expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
  expect(container.querySelector('input[value="in_progress"]').checked).toBe(true);
@@ -233,11 +236,11 @@ test('embedded interview stays inside the collapsed summary above the criterion 
 
 });
 test('guide expansion and selected answer reset when navigating between criteria',async()=>{
- await render();await act(async()=>container.querySelector('.assessment-summary summary').click());await expandSummary();
+ await render();await act(async()=>container.querySelector('.cis-collapsible-requirement summary').click());await expandSummary();
  record={...record,framework_assessment_id:'soc-b',definition_id:'A1.3'};await render();
- expect(container.querySelector('.assessment-summary').open).toBe(false);
+ expect(container.querySelector('.cis-collapsible-requirement').open).toBe(false);
  expect(container.querySelector('[role=tab][data-state=active]').textContent).toBe('Requirement & implementation');
- expect(container.querySelector('.assessment-summary p').textContent).toContain('Recovery procedures must be tested');
+ expect(container.querySelector('.cis-collapsible-requirement p').textContent).toContain('Recovery procedures must be tested');
  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 
 });

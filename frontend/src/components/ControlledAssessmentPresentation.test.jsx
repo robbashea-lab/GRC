@@ -42,12 +42,14 @@ function Native({record,context=true,retainedConfiguration,writable=true}){
   return framework==='soc-2'?<PrestigeSocAssessment state={state} actions={actions}/>:<FrameworkAssessmentWorkspace state={state} actions={actions}/>;
 }
 
-test.each([['iso-27001','4.1'],['iso-27001','A.8.11'],['soc-2','CC1.1']])('%s %s starts with native content and embeds the guide in summary, adds Items and retains native data and drafts',async(framework,id)=>{
+test.each([['iso-27001','4.1'],['iso-27001','A.8.11'],['soc-2','CC1.1']])('%s %s retains its source disclosure, guide, Items and native data and drafts',async(framework,id)=>{
   const record=recordFor(framework,id),saved=JSON.stringify(record);await render(<Native record={record}/>);
   const main=document.querySelector('.brawndo-assessment-main'),layout=main.querySelector('.assessment-layout'),guide=main.querySelector('[data-testid="guide-boundary"]');
-  expect(main.firstElementChild).toBe(layout);expect(guide.closest('.assessment-summary')).toBeTruthy();
+  expect(main.firstElementChild).toBe(layout);
+  if(framework==='soc-2'){expect(guide.closest('.assessment-summary')).toBeNull();expect(layout.querySelector('.cis-collapsible-requirement').compareDocumentPosition(guide)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();}
+  else expect(guide.closest('.assessment-summary')).toBeTruthy();
   expect([...document.querySelectorAll('[role=tab]')].map(el=>el.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
-  const disclosure=document.querySelector('.assessment-summary');expect(disclosure.open).toBe(false);
+  const disclosure=document.querySelector(framework==='soc-2'?'.cis-collapsible-requirement':'.assessment-summary');expect(disclosure.open).toBe(false);
   await act(async()=>{disclosure.open=true;disclosure.dispatchEvent(new Event('toggle'));});expect(disclosure.open).toBe(true);
   expect(document.querySelector('.assessment-inline-criteria')).toBeNull();
   expect(record[framework==='soc-2'?'soc_assessment_checks':'iso_assessment_checks']).toEqual([framework==='soc-2'?'retained-soc-id':'retained-iso-id']);
@@ -85,7 +87,7 @@ test.each([['iso-27001','A.8.11'],['soc-2','CC1.1']])('%s retained configuration
 
 test.each([['iso-27001','4.1'],['soc-2','CC1.1']])('%s read-only native guidance remains available without write controls',async(framework,id)=>{
   await render(<Native record={recordFor(framework,id)} writable={false}/>);
-  await act(async()=>{const summary=document.querySelector('.assessment-summary');summary.open=true;summary.dispatchEvent(new Event('toggle'));});
+  await act(async()=>{const summary=document.querySelector(framework==='soc-2'?'.cis-collapsible-requirement':'.assessment-summary');summary.open=true;summary.dispatchEvent(new Event('toggle'));});
   expect(button('Save assessment')).toBeUndefined();expect([...document.querySelectorAll('.assessment-check input')].every(el=>el.matches(':disabled'))).toBe(true);
   expect(document.querySelector('[aria-label="Current implementation"]').matches(':disabled')).toBe(true);expect(callbacks.put).not.toHaveBeenCalled();
 });
