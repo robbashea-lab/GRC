@@ -120,9 +120,12 @@ function socResponseMatches(data,clientId){
   const identity=value=>typeof value==='string'&&!!value.trim();
   if(!record(data)||!Array.isArray(data.definitions)||!Array.isArray(data.assessments))return false;
   if(!data.definitions.every(definition=>record(definition)&&identity(definition.id)))return false;
+  if(!data.assessments.every(record))return false;
+  // Preserve the native client filter without treating a foreign-only response as an empty program.
+  const scoped=data.assessments.filter(row=>row.client_id===clientId);
+  if(data.assessments.length&&!scoped.length)return false;
   const ids=new Set(data.definitions.map(definition=>definition.id));
-  return data.assessments.every(row=>record(row)&&row.client_id===clientId
-    &&identity(row.framework_assessment_id)&&identity(row.definition_id)&&ids.has(row.definition_id)
+  return scoped.every(row=>identity(row.framework_assessment_id)&&identity(row.definition_id)&&ids.has(row.definition_id)
     &&(row.framework_key===undefined||row.framework_key==='soc-2'))
     &&(data.framework===undefined||data.framework?.key==='soc-2')
     &&(data.implementation_position?.program_id===undefined||data.implementation_position.program_id===`${clientId}:soc-2`);

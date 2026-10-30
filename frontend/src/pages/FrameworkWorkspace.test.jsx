@@ -45,6 +45,17 @@ test('SOC workspace rejects foreign-client assessment and canonical-position res
  }
 });
 
+test.each([null,{framework_assessment_id:' '},{definition_id:'unknown'},{framework_key:'iso-27001'}])('SOC mixed response still rejects malformed current records %p',async invalid=>{
+ const definition=frameworkCatalog('soc-2').requirements[0],valid={framework_assessment_id:'valid-soc',framework_key:'soc-2',definition_id:definition.id,client_id:'a',status:'addressed'};
+ const response={configured:true,selected:true,definitions:[definition],configuration:socConfiguration(),active_definition_ids:[definition.id],work:{},
+  assessments:[valid,{...valid,client_id:'other-client',framework_assessment_id:'foreign'},invalid===null?null:{...valid,...invalid}]};
+ api.get.mockResolvedValue({data:response});
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId="a"/>));
+ expect(container.textContent).toContain('SOC 2 workspace records could not be verified for this client.');
+ expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeNull();
+ expect(api.patch).not.toHaveBeenCalled();
+});
+
 test('SOC presentation withdraws previous actor data while the same client is reauthorized',async()=>{
  const response=await prestige({clientId:'existing-auth-soc'});
  expect(container.querySelector('[data-testid="soc-readiness-percentage"]')).toBeTruthy();
