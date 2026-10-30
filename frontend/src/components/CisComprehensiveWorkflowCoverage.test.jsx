@@ -77,7 +77,19 @@ function setup(id,implementationGroup,{completed=false,nativeText=''}={}){
 }
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={copy(native)} clientId={mockClient} onOpenChange={opened}/>));}
 async function remount(){await act(async()=>root.unmount());root=createRoot(container);navigationAnswers=copy(stored.answers);await render();}
-async function open(){const launcher=container.querySelector('.cis-guided-launch button');if(launcher){expect(launcher).toBeTruthy();if(launcher.getAttribute('aria-expanded')!=='true')await act(async()=>launcher.click());expect(workspace()).toBeTruthy();}else{const disclosure=container.querySelector('.assessment-summary');expect(disclosure).toBeTruthy();await act(async()=>{disclosure.open=true;disclosure.dispatchEvent(new Event('toggle'));});}expect(document.querySelector('.omni-character,.omni-launch-button,.omni-workspace-window')).toBeNull();}
+async function open(interviewLabel='CIS assessment interview'){
+  const launcher=container.querySelector('.cis-guided-launch button');
+  if(launcher){
+    expect(launcher.disabled).toBe(false);
+    if(launcher.getAttribute('aria-expanded')!=='true')await act(async()=>launcher.click());
+    const interview=document.querySelector(`section[aria-label="${interviewLabel}"]`);
+    expect(interview).toBeTruthy();expect(interview.hidden).toBe(false);
+  }else{
+    const disclosure=container.querySelector('.assessment-summary');expect(disclosure).toBeTruthy();
+    await act(async()=>{disclosure.open=true;disclosure.dispatchEvent(new Event('toggle'));});
+  }
+  expect(document.querySelector('.omni-character,.omni-launch-button,.omni-workspace-window')).toBeNull();
+}
 async function click(name){const element=guideButton(name);expect(element).toBeTruthy();expect(element.disabled).toBe(false);await act(async()=>element.click());}
 async function setValue(element,value){
   expect(element).toBeTruthy();const prototype=element.tagName==='SELECT'?HTMLSelectElement.prototype:element.tagName==='INPUT'?HTMLInputElement.prototype:HTMLTextAreaElement.prototype;
@@ -279,14 +291,19 @@ test.each(['scope-disabled','group-inapplicable','foreign-client','soc-2','iso-2
   if(kind==='foreign-client')native.client_id='synthetic-foreign';
   if(kind==='soc-2'){native.framework_key='soc-2';native.definition_id='CC1.1';stored={...stored,version:socGuidedCatalog.version,answers:{},completed:false,revision:0,narrative:'',result:null};configurationExtra.categories=['security'];}
   if(kind==='iso-27001'){native.framework_key='iso-27001';native.definition_id='A.5.1';}
-  const baseline=copy(native);await render();
+  const baseline=copy(native),interviewBaseline=copy(stored);await render();
+  expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
+  expect(document.querySelector('section[aria-label="CIS assessment interview"]')).toBeNull();
   if(kind==='soc-2'){
-    expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();expect(document.querySelector('[data-testid="soc-guided-assessment"]')).toBeTruthy();
-    await open();const interview=document.querySelector('section[aria-label="SOC 2 interview"]');expect(interview).toBeTruthy();expect(interview.hidden).toBe(false);expect(interview.closest('.assessment-summary')).toBeTruthy();expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
-  }else{
-    expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
-    expect(document.querySelector('section[aria-label="CIS assessment interview"]')).toBeNull();
-    expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
+    expect(document.querySelector('[data-testid="soc-guided-assessment"]')).toBeTruthy();
+    await open('SOC 2 interview');
+    const interview=document.querySelector('section[aria-label="SOC 2 interview"]');
+    expect(interview.closest('[data-testid="soc-guided-assessment"]')).toBeTruthy();
+    expect(interview.closest('.cis-collapsible-requirement')).toBeNull();
   }
-  expect(native).toEqual(baseline);expect(api.put).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+  expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
+  expect(document.querySelector('section[aria-label="CIS assessment interview"]')).toBeNull();
+  expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
+  expect(native).toEqual(baseline);expect(stored).toEqual(interviewBaseline);
+  expect(api.put).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
