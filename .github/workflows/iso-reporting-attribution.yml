@@ -1,0 +1,54 @@
+name: ISO reporting preparation attribution
+
+on:
+  push:
+    branches: [codex/iso-reporting-attribution-20261030]
+
+permissions:
+  contents: read
+
+jobs:
+  bounded-attribution:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      CI: 'true'
+      ATTRIBUTION_OUTPUT: ${{ runner.temp }}/iso-reporting-preparation
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.4'
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile
+      - name: First-attempt authority and bounded harness preflight
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs'), path = require('node:path'), {spawnSync} = require('node:child_process');
+          const directory = process.env.ATTRIBUTION_OUTPUT;
+          fs.mkdirSync(directory, {recursive: true});
+          const allowed = process.env.GITHUB_RUN_ATTEMPT === '1';
+          const result = allowed ? spawnSync(process.execPath, ['--test', 'scripts/reporting-prep-diagnostic.test.cjs', 'scripts/reporting-prep-observer.test.cjs'],
+            {encoding: 'utf8', timeout: 60000, maxBuffer: 1024 * 1024}) : {status: 1, stderr: 'Only the first workflow attempt is authorized.'};
+          fs.writeFileSync(path.join(directory, 'preflight.json'), JSON.stringify({attempt: process.env.GITHUB_RUN_ATTEMPT,
+            source_sha: process.env.GITHUB_SHA, node: process.version, status: result.status, signal: result.signal || null,
+            error: result.error?.code || null, stdout: result.stdout || '', stderr: result.stderr || ''}, null, 2));
+          process.stdout.write(result.stdout || ''); process.stderr.write(result.stderr || '');
+          process.exitCode = result.status === 0 && !result.error ? 0 : 1;
+          NODE
+      - name: One original C1 then attribution D1 then original C2
+        run: node scripts/reporting-prep-diagnostic.cjs "$ATTRIBUTION_OUTPUT"
+      - name: Preserve every available result and partial capture
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: iso-reporting-preparation
+          path: ${{ runner.temp }}/iso-reporting-preparation/**/*.json
+          if-no-files-found: error
+          retention-days: 7
