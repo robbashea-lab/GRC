@@ -99,6 +99,15 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   }, `${cid}:${record?.review_id}:${finding?.request_id}`);
   const rid = shown?.review_id;
   const oid = selected?.occurrence_id || (shown ? occurrenceId(shown) : null);
+  const commandOwner=useRef(null),commandContext=useRef(null);
+  // Incoming identity retires UI continuations; a command may advance its own local occurrence.
+  const commandScope=JSON.stringify([user?.user_id,user?.role,user?.workspace_mode,workspaceMode,
+    clientId,currentClientId,record?.client_id,record?.review_id,record&&occurrenceId(record),
+    initialValues?.occurrence?.occurrence_id,selected?.occurrence_id,open,writable,!!authError,!!orgError]);
+  useLayoutEffect(()=>{
+    commandContext.current=commandScope;commandOwner.current=null;setBusy(false);
+    return()=>{commandContext.current=null;commandOwner.current=null;};
+  },[commandScope]);
   const evidenceScope=`${user?.workspace_mode}:${user?.user_id}:${user?.role}:${cid}:${rid}:${oid}`;
   const onEvidenceSummary=useCallback(total=>setEvidenceSummary(previous=>previous?.scope===evidenceScope&&previous.total===total?previous:{scope:evidenceScope,total}),[evidenceScope]);
   const evidenceCount=evidenceSummary?.scope===evidenceScope?evidenceSummary.total:null;
@@ -199,9 +208,13 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     return () => { clearInterval(timer); window.removeEventListener('focus',reload); };
   },[open,tab,reload]);
   const run = async fn => {
-    if (busy) return;
+    if (!open||!writable||authError||orgError||commandContext.current!==commandScope||commandOwner.current) return;
+    const owner={scope:commandScope};commandOwner.current=owner;
+    const owns=()=>commandOwner.current===owner&&commandContext.current===owner.scope;
     setBusy(true);
-    try { await fn(); } catch(e) { toast.error(formatError(e)); } finally { setBusy(false); }
+    try { await fn(owns); }
+    catch(e) { if(owns())toast.error(formatError(e)); }
+    finally { if(owns()){commandOwner.current=null;setBusy(false);} }
   };
   function changes() {
     const fields = admin ? [...configFields.map(f => f.name),'notes','governance_context'] : ['notes'];
@@ -223,27 +236,39 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     window.addEventListener('beforeunload',warn);
     return ()=>window.removeEventListener('beforeunload',warn);
   },[open,dirty]);
-  async function saveChanges() {
+  async function saveChanges(owns) {
+    if(!owns())return null;
     if(updateRecord.unconfirmed())throw new Error('Save is unconfirmed. Use Retry unconfirmed save before another edit or Review action.');
     const patch = changes();
     if (!current) {
       const {data} = await createRecord('/reviews',{...patch,client_id:cid});
+      if(!owns())return null;
       setCurrent(data); setForm({...data,due_date:data.due_date?.slice(0,10) || ''}); onSaved?.(); return data;
     }
     if (Object.keys(patch).length) {
       const {data} = await updateRecord(`/reviews/${current.review_id}`,{...patch,expected_occurrence_id:occurrenceId(current),expected_updated_at:current.updated_at??null});
+      if(!owns())return null;
       setCurrent(data); onSaved?.(); return data;
     }
     return current;
   }
-  const lifecycle = action => run(async () => {
+  const lifecycle = action => run(async owns => {
     if(draftProtected&&(comment.trim()||finding)) throw new Error('Post or discard the unfinished comment or Finding before starting or completing this Review.');
-    const saved = await saveChanges();
+    const saved = await saveChanges(owns);
+    if(!saved||!owns())return;
     const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,{occurrence_id:occurrenceId(saved),...(action==='complete'?evaluation:{}),...(action==='complete'&&saved.risk_id?{risk_assessment:riskDraft?Object.fromEntries(Object.entries(riskDraft).filter(([k,v])=>(v??'')!==(riskBase.current?.[k]??''))):{},risk_outcome:riskOutcome,...(pilot&&riskNext?{risk_next_review:riskNext}:{})}:{})});
+    if(!owns())return;
     const updated = data.review || data;
-    setCurrent(updated); setForm({...updated,due_date:updated.due_date?.slice(0,10) || ''});
+    setCurrent(updated);
+    setForm(previous=>{
+      const next={...updated,due_date:updated.due_date?.slice(0,10) || ''};
+      // Keep only newer native edits; untouched dates follow the completed cycle.
+      for(const [key,value] of Object.entries(previous))
+        if(JSON.stringify(value)!==JSON.stringify(form[key]))next[key]=value;
+      return next;
+    });
     if (data.occurrence) setHistory(items => [data.occurrence,...items.filter(o => o.occurrence_id !== data.occurrence.occurrence_id)]);
-    setSelected(null); setRiskNext(''); setComment(''); onSaved?.();
+    setSelected(null); setRiskNext(''); setComment(previous=>previous===comment?'':previous); onSaved?.();
     if(action==='complete')setEvaluation({});
     toast.success(action === 'start' ? 'Review started' : updated.status === 'completed' ? 'Completed and preserved in Review history' : 'Occurrence completed; next Review scheduled');
   });
@@ -267,7 +292,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   // Ordinary concept Reviews need no legacy Related tab. Preserve access where real extra native relationships exist.
   const extraRelationships=remediation.standaloneTasks.length||['policies','vendors','risks'].some(kind=>related[kind]?.length);
   const visibleTabs=workflowPresentation&&!extraRelationships?tabs.filter(value=>value!=='Related'):tabs;
-  const evidenceUpload=!frozen&&writable?<Input className={workflowPresentation?'review-workflow-file-input':'mt-2'} aria-label="Choose files" type="file" multiple disabled={busy} data-testid="drawer-evidence-input" onChange={e=>{const files=Array.from(e.target.files);run(async()=>{for(const file of files)await api.post('/evidence',{client_id:cid,linked_type:'review',linked_id:rid,occurrence_id:oid,filename:file.name,mime_type:file.type,content_base64:await fileData(file)});await reload();toast.success('Evidence attached');});}}/>:null;
+  const evidenceUpload=!frozen&&writable?<Input className={workflowPresentation?'review-workflow-file-input':'mt-2'} aria-label="Choose files" type="file" multiple disabled={busy} data-testid="drawer-evidence-input" onChange={e=>{const files=Array.from(e.target.files);run(async owns=>{for(const file of files){const content=await fileData(file);if(!owns())return;await api.post('/evidence',{client_id:cid,linked_type:'review',linked_id:rid,occurrence_id:oid,filename:file.name,mime_type:file.type,content_base64:content});if(!owns())return;}await reload({accept:owns});if(owns())toast.success('Evidence attached');});}}/>:null;
   const evidenceHeader=linkButton=>evidenceUpload?<div className="review-workflow-upload"><span className="review-workflow-upload-icon" aria-hidden="true"><Upload size={20}/></span><strong>Attach evidence to {shown?.period||derived.period||'this occurrence'}</strong><p className="review-workflow-help">Choose files. Exports, screenshots, sign-off emails.</p><div className="review-workflow-upload-controls"><label className="review-workflow-file-choice"><span>Choose files</span>{evidenceUpload}</label>{linkButton}</div></div>:linkButton;
   return <Dialog open={open} onOpenChange={close}>
     <DialogContent ref={detailSurface} aria-modal="true" {...{
@@ -370,7 +395,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           <EvidencePanel key={evidenceScope} hideSinglePagePagination={workflowPresentation} clientId={cid} kind="reviews" id={rid} occurrenceId={oid} refreshKey={evidenceVersion} allowLink={!frozen} onSummary={workflowPresentation?onEvidenceSummary:undefined} renderHeader={workflowPresentation?evidenceHeader:undefined} directPresentation={workflowPresentation?{heading:'This occurrence',countUnit:'files',singularCountUnit:'file',emptyClassName:'review-workflow-empty',emptyMessage:`No evidence on ${shown?.period||derived.period||'this occurrence'} yet. Evidence is optional, but it's what proves the review happened.`}:undefined} onOpen={async ref=>{const version=generation.current;try{const target=await resolveEvidenceSource(ref,cid);if(version===generation.current)setLinked(target);}catch(e){toast.error(formatError(e));}}}/>
         </div>}
         {tab === 'Comments' && <ReviewCommentsLayout eligible={workflowPresentation} comments={comments} date={date} showComposer={!frozen&&writable}>
-          {!frozen && writable && <><Textarea id={workflowPresentation?"review-comment":undefined} aria-label={workflowPresentation?"Add a comment":"Comment"} data-testid="comment-input" value={comment} onChange={e => setComment(e.target.value)} placeholder={workflowPresentation?"Ask a question or leave context for the reviewer.":"Add a comment…"} /><Button size="sm" data-testid="comment-submit" disabled={busy || !comment.trim()} onClick={() => run(async () => { await api.post('/comments',{entity_type:'reviews',entity_id:rid,occurrence_id:oid,body:comment}); setComment(''); await reload(); })}>Post comment</Button></>}
+          {!frozen && writable && <><Textarea id={workflowPresentation?"review-comment":undefined} aria-label={workflowPresentation?"Add a comment":"Comment"} data-testid="comment-input" value={comment} onChange={e => setComment(e.target.value)} placeholder={workflowPresentation?"Ask a question or leave context for the reviewer.":"Add a comment…"} /><Button size="sm" data-testid="comment-submit" disabled={busy || !comment.trim()} onClick={() => run(async owns => { await api.post('/comments',{entity_type:'reviews',entity_id:rid,occurrence_id:oid,body:comment});if(!owns())return;setComment(previous=>previous===comment?'':previous);await reload({accept:owns}); })}>Post comment</Button></>}
         </ReviewCommentsLayout>}
         {tab === 'Activity' && (workflowPresentation?<><ReviewWorkflowActivity activity={activity} selected={selected} history={history} record={current}/>{selected&&(evaluationFields.some(([key])=>selected[key])||Object.prototype.hasOwnProperty.call(selected,'checklist_confirmed'))&&<details className="review-workflow-completion-record"><summary>Completion record</summary>{evaluationFields.map(([key,label])=>selected[key]?<p key={key}><strong>{label}: </strong>{selected[key]}</p>:null)}{Object.prototype.hasOwnProperty.call(selected,'checklist_confirmed')&&<p>Reviewer checklist confirmed: {selected.checklist_confirmed?'Yes':'No'}</p>}</details>}</>:<>
           {!selected && <p className="text-sm text-ink-secondary">Major events across this Review's occurrences.</p>}
@@ -378,7 +403,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           {activity.map(a => <div key={a.log_id || a.audit_id} className="border-b border-line py-2 text-sm"><div className="text-xs text-ink-help">{new Date(a.at).toLocaleString()} · {a.meta?.by_name || a.user_name || a.user_email}</div><p>{a.action}{a.meta?.task_id ? ` · ${a.meta.task_id}` : a.meta?.finding_id ? ` · ${a.meta.finding_id}` : ''}{a.meta?.filename ? ` · ${a.meta.filename}` : ''}{a.meta?.due_date ? ` · ${date(a.meta.due_date)}` : ''}</p></div>)}
         </>)}
       </div>
-      <div className="review-workflow-footer px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{workflowPresentation&&<span className="review-workflow-feedback">{busy?'Working…':dirty?'Unsaved changes':'No unsaved changes'}</span>}{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(async()=>{const {data}=await updateRecord.retry();setCurrent(data);await reload();onSaved?.();toast.success('Saved');})}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && (workflowPresentation||['Overview','Requirements'].includes(tab)) && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type || workflowPresentation&&current&&!Object.keys(changes()).length} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
+      <div className="review-workflow-footer px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{workflowPresentation&&<span className="review-workflow-feedback">{busy?'Working…':dirty?'Unsaved changes':'No unsaved changes'}</span>}{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(async owns=>{const {data}=await updateRecord.retry();if(!owns())return;setCurrent(data);await reload({accept:owns});if(!owns())return;onSaved?.();toast.success('Saved');})}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && (workflowPresentation||['Overview','Requirements'].includes(tab)) && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type || workflowPresentation&&current&&!Object.keys(changes()).length} onClick={() => run(async owns => {const saved=await saveChanges(owns);if(!saved||!owns())return;await reload({accept:owns});if(owns())toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
     </DialogContent>
     {<AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}>
       <AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle>
@@ -399,7 +424,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     }}} onRiskLinked={refreshAfterLinkedRisk} onSaved={() => {reload();onSaved?.();}} />}
     <Sheet open={!!finding} onOpenChange={v => {if (!v) leave(()=>setFinding(null),true);}}>
       <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className={'w-full sm:max-w-xl overflow-y-auto'+(findingPresentation?' brawndo-review-finding':'')} data-testid="review-finding-form"><SheetHeader className={findingPresentation?'review-finding-header':undefined}><div className={findingPresentation?'review-finding-heading':undefined}>{findingPresentation&&<span className="review-finding-icon" aria-hidden="true"><AlertTriangle size={18}/></span>}<SheetTitle>Raise Finding</SheetTitle></div>{findingPresentation&&<div className="review-finding-context"><span>From {current.title}</span><span>{current.period||reviewSchedule(current).period} occurrence</span></div>}</SheetHeader>
-        {finding && <form className={findingPresentation?'review-finding-form':'mt-5 space-y-4'} onSubmit={e => {e.preventDefault();run(async () => {await createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>
+        {finding && <form className={findingPresentation?'review-finding-form':'mt-5 space-y-4'} onSubmit={e => {e.preventDefault();run(async owns => {await createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});if(!owns())return;setFinding(null);await reload({accept:owns});if(!owns())return;onSaved?.();toast.success('Finding and Action Item created');});}}>
           {findingPresentation?<BrawndoReviewFindingFields finding={finding} onChange={setFinding} record={current} occurrenceId={occurrenceId(current)} users={members} clientId={cid} busy={busy} onCancel={()=>leave(()=>setFinding(null),true)}/>:<>
           <Label className="block">Finding title *<Input required data-testid="finding-title" value={finding.title} onChange={e => setFinding(p => ({...p,title:e.target.value}))} /></Label>
           <Label className="block">Description<Textarea value={finding.description} onChange={e => setFinding(p => ({...p,description:e.target.value}))} /></Label>

@@ -5,13 +5,15 @@ import baseline from '@catalogs/onboardingCatalog.json';
 import {cis,FRAMEWORKS,reviewDrivers,activePlans} from '../lib/frameworks';
 import {cisReviewBriefs} from '../lib/cisOperations';
 import {reviewSchedule} from '../lib/reviewOccurrences';
+import {useNativeAsyncClock} from '@/testUtils/nativeAsyncClock';
 const api=axios.create({adapter:previewAdapter});
 const {setImmediate:yieldLoop}=jest.requireActual('timers');
 async function post(path,body){const r=await api.post(path,body);jest.runOnlyPendingTimers();await new Promise(resolve=>yieldLoop(resolve));return r.data;}
 const get=async(path,cid)=>(await api.get(path,{params:{client_id:cid}})).data;
 const clock=day=>jest.setSystemTime(new Date(day+'T14:00:00Z'));
-beforeEach(async()=>{jest.useFakeTimers({doNotFake:['performance','nextTick','queueMicrotask']});clock('2026-10-04');sessionStorage.clear();localStorage.clear();await post('/demo/enter');});
-afterEach(()=>jest.useRealTimers());
+let restoreClock;
+beforeEach(async()=>{restoreClock=useNativeAsyncClock();clock('2026-10-04');sessionStorage.clear();localStorage.clear();await post('/demo/enter');});
+afterEach(()=>restoreClock?.());
 
 test('a fresh cumulative IG2 program retains source duties through 24 months of all 15 governance Reviews',async()=>{
  const cid=(await post('/clients',{name:'Synthetic IG2 operating-cycle regression'})).client_id;

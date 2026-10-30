@@ -11,6 +11,7 @@ import TablePagination from '@/components/TablePagination';
 import ClientRelationshipValue from '@/components/ClientRelationshipValue';
 import ClientIdentityMark from '@/components/ClientIdentityMark';
 import {primaryContact, grcLead} from '@/lib/clientRelationships';
+import {clientDestination} from '@/lib/clientSelection';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,7 +67,8 @@ export default function ClientManagement() {
   async function saved(client) {
     const created = dialog && !dialog.client;
     setDialog(null);
-    toast.success(`${client.name} saved`, created ? {position:'top-right', closeButton:true, duration:10000, action:{label:'Open Client Profile',onClick:()=>{switchClient(client.client_id);navigate('/client-profile');}}} : undefined);
+    // Keep the requested tenant explicit while OrgProvider refreshes its authorized list.
+    toast.success(`${client.name} saved`, created ? {position:'top-right', closeButton:true, duration:10000, action:{label:'Open Client Profile',onClick:()=>{switchClient(client.client_id);navigate(clientDestination(client.client_id,'/client-profile'));}}} : undefined);
     await load(); await refresh();
   }
   async function archive(client) {

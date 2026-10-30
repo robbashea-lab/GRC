@@ -66,11 +66,12 @@ test('scale changes are drafts; create keeps optional owner and native fields th
   api.post.mockRejectedValueOnce(new Error('Request failed'));
   await click(dialog.querySelector('[data-testid="new-risk-save"]'));
   expect(document.querySelector('[aria-label="Risk title"]').value).toBe('Restore dependencies');
-  expect(api.post).toHaveBeenLastCalledWith('/risks',expect.objectContaining({client_id:'demo_brawndo',likelihood_score:3,impact_score:4,review_cadence:'annual',treatment:''}));
+  expect(api.post).toHaveBeenLastCalledWith('/risks',expect.objectContaining({client_id:'demo_brawndo',likelihood_score:3,impact_score:4,review_cadence:'annual',treatment:''}),expect.objectContaining({headers:{'Idempotency-Key':expect.any(String)}}));
   expect(api.post.mock.calls[0][1]).not.toHaveProperty('owner_id');
   expect(api.post.mock.calls[0][1]).not.toHaveProperty('display_id');
   await click(dialog.querySelector('[data-testid="new-risk-save"]'));
   expect(api.post).toHaveBeenCalledTimes(2);
+  expect(api.post.mock.calls[1]).toEqual(api.post.mock.calls[0]);
   expect(document.querySelector('[data-testid="new-risk-dialog"]')).toBeNull();
 });
 
@@ -114,6 +115,6 @@ test('organization loading withholds creation until the matching client context 
   await complete(dialog);
   await click(dialog.querySelector('[data-testid="new-risk-save"]'));
   expect(api.post).toHaveBeenCalledTimes(1);
-  expect(api.post).toHaveBeenCalledWith('/risks',expect.objectContaining({client_id:'demo_brawndo',title:'Restore dependencies',likelihood_score:3,impact_score:4}));
+  expect(api.post).toHaveBeenCalledWith('/risks',expect.objectContaining({client_id:'demo_brawndo',title:'Restore dependencies',likelihood_score:3,impact_score:4}),expect.objectContaining({headers:{'Idempotency-Key':expect.any(String)}}));
   expect(document.querySelector('[data-testid="new-risk-dialog"]')).toBeNull();
 });

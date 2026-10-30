@@ -27,6 +27,31 @@ class CreateRequestTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await server.db.findings.count_documents({}), 2)
         self.assertEqual(await server.db.audit_logs.count_documents({"action": "create"}), 2)
 
+    async def test_risk_retry_replays_original_record_and_linked_review(self):
+        self.sign_in('admin')
+        body = {'client_id': 'a', 'title': 'SYNTHETIC Risk response recovery',
+                'description': 'Disposable retry fixture', 'category': 'operational',
+                'likelihood_score': 3, 'impact_score': 3, 'review_cadence': 'annual',
+                'next_review': '2099-01-01'}
+        headers = {'Idempotency-Key': 'synthetic-risk-recovery-0001'}
+        first = await self.client.post('/api/risks', json=body, headers=headers)
+        self.assertEqual(first.status_code, 200, first.text)
+        # The caller may lose the first response after commit. Replaying the
+        # same command must not create another Risk, Review or history entry.
+        counts = {kind: await server.db[kind].count_documents({})
+                  for kind in ('risks', 'reviews', 'audit_logs')}
+        retry = await self.client.post('/api/risks', json=body, headers=headers)
+        self.assertEqual(retry.status_code, 200, retry.text)
+        self.assertEqual(retry.json(), first.json())
+        self.assertEqual(counts['risks'], 1)
+        self.assertEqual(counts['reviews'], 1)
+        self.assertEqual({kind: await server.db[kind].count_documents({}) for kind in counts}, counts)
+        different = await self.client.post('/api/risks', json=body,
+                                           headers={'Idempotency-Key': 'synthetic-risk-recovery-0002'})
+        self.assertEqual(different.status_code, 200, different.text)
+        self.assertNotEqual(different.json()['risk_id'], first.json()['risk_id'])
+        self.assertEqual(await server.db.risks.count_documents({}), 2)
+
     async def test_audit_failure_recovers_original_primary(self):
         self.sign_in("admin")
         with patch.object(server, "audit", AsyncMock(side_effect=RuntimeError("injected audit outage"))):

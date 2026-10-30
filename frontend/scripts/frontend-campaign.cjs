@@ -9,6 +9,26 @@ const LIFECYCLE_SUITES = Object.freeze({
 });
 const SHARDS = [...Object.keys(LIFECYCLE_SUITES), '1', '2', '3'];
 function requireThat(condition, message) { if (!condition) throw new Error(message); }
+function pinnedNodeEnvironment(environment = process.env, executable = process.execPath, platform = process.platform) {
+  const windows = platform === 'win32', paths = windows ? path.win32 : path.posix;
+  const pathKeys = Object.keys(environment).filter(key => windows ? key.toLowerCase() === 'path' : key === 'PATH').sort();
+  const pathKey = pathKeys[0] || 'PATH', inheritedPath = environment[pathKey];
+  const result = {...environment, CI: 'true'};
+  // CRACO spawns literal `node`; Windows forwards only the first case-insensitive PATH key.
+  for (const key of pathKeys) delete result[key];
+  result[pathKey] = paths.dirname(executable) + (inheritedPath ? paths.delimiter + inheritedPath : '');
+  return result;
+}
+function verifyRuntime(runtime, sha) {
+  requireThat(runtime && runtime.node === process.version, 'Jest runtime Node version differs from campaign');
+  requireThat(typeof runtime.execPath === 'string' && path.isAbsolute(runtime.execPath), 'Missing absolute Jest executable path');
+  const normalize = file => process.platform === 'win32' ? path.normalize(file).toLowerCase() : path.normalize(file);
+  requireThat(normalize(runtime.execPath) === normalize(process.execPath), 'Jest executable differs from campaign');
+  requireThat(runtime.source_sha === sha, 'Jest runtime source SHA differs from campaign');
+  requireThat(runtime.phase_logging === false && runtime.synthetic_exports === false, 'Diagnostic execution cannot qualify a normal campaign');
+  requireThat(runtime.lifecycle_years === '5', 'Normal campaign requires the original five-year lifecycle');
+  requireThat(runtime.completed === true, 'Jest runtime receipt is incomplete');
+}
 function normalized(file, root) {
   const relative = path.relative(root, path.resolve(root, file)).split(path.sep).join('/');
   requireThat(relative && !relative.startsWith('../') && !path.isAbsolute(relative), 'Test outside frontend: ' + file);
@@ -57,6 +77,7 @@ function audit(receipts, sha) {
   const executed = [];
   for (const receipt of receipts) {
     requireThat(JSON.stringify(receipt.manifest) === JSON.stringify(first), 'Shard discovery/source inventories differ');
+    verifyRuntime(receipt.runtime, sha);
     executed.push(...verifyResult(receipt.manifest, receipt.shard, receipt.result, receipt.exitCode, receipt.frontendRoot));
   }
   requireThat(JSON.stringify(uniqueSorted(executed)) === JSON.stringify(first.discovered), 'Campaign is not exhaustive');
@@ -64,7 +85,7 @@ function audit(receipts, sha) {
 }
 function jest(args, options = {}) {
   return spawnSync(process.execPath, [require.resolve('@craco/craco/dist/bin/craco.js'), 'test', '--watchAll=false', '--runInBand', ...args],
-    {cwd: process.cwd(), env: {...process.env, CI: 'true'}, ...options});
+    {cwd: process.cwd(), ...options, env: pinnedNodeEnvironment(options.env || process.env)});
 }
 function run(shard, output) {
   requireThat(SHARDS.includes(shard), 'Unknown shard');
@@ -74,11 +95,21 @@ function run(shard, output) {
   const manifest = plan(JSON.parse(discovery.stdout).map(file => normalized(file, process.cwd())), process.env.GITHUB_SHA);
   fs.writeFileSync(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
   const resultPath = path.resolve(output, 'jest.json');
-  const execution = jest(['--runTestsByPath', ...manifest.partitions[shard], '--json', '--outputFile=' + resultPath], {stdio: 'inherit'});
+  const runtimePath = path.resolve(output, 'runtime.json');
+  for (const previous of [runtimePath, resultPath, path.resolve(output, 'receipt.json')]) fs.rmSync(previous, {force: true});
+  const environment = {...process.env, FRONTEND_RUNTIME_RECEIPT: runtimePath, FRAMEWORK_LIFECYCLE_YEARS: '5'};
+  delete environment.ISO_PHASE_LOG_DIR;
+  delete environment.FRAMEWORK_LIFECYCLE_EXPORT_DIR;
+  const execution = jest(['--runTestsByPath', ...manifest.partitions[shard], '--json', '--outputFile=' + resultPath,
+    '--reporters=default', '--reporters=' + path.join(__dirname, 'frontend-runtime-reporter.cjs')],
+  {stdio: 'inherit', env: environment});
   requireThat(fs.existsSync(resultPath), 'Jest result file missing');
+  requireThat(fs.existsSync(runtimePath), 'Fresh Jest runtime receipt missing');
   const result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
-  const receipt = {manifest, shard, exitCode: execution.status, frontendRoot: process.cwd(), result};
+  const runtime = JSON.parse(fs.readFileSync(runtimePath, 'utf8'));
+  const receipt = {manifest, shard, exitCode: execution.status, frontendRoot: process.cwd(), result, runtime};
   fs.writeFileSync(path.join(output, 'receipt.json'), JSON.stringify(receipt));
+  verifyRuntime(runtime, process.env.GITHUB_SHA);
   verifyResult(manifest, shard, result, execution.status, process.cwd());
 }
 if (require.main === module) {
@@ -91,4 +122,4 @@ if (require.main === module) {
     } else throw new Error('Usage: frontend-campaign.cjs run <shard> <output> | audit <artifacts>');
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
-module.exports = {plan, verifyResult, audit, LIFECYCLE_SUITES, SHARDS};
+module.exports = {plan, verifyResult, verifyRuntime, pinnedNodeEnvironment, run, audit, LIFECYCLE_SUITES, SHARDS};
