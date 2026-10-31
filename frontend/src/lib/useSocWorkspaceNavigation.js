@@ -6,17 +6,24 @@ function target(location,query){
 }
 
 // Same-page URL changes ask the mounted native editor to close before replacing its identity.
-export function useSocWorkspaceNavigation({enabled,origin,location,params,setParams:routerSetParams,records=[]}){
+export function useSocWorkspaceNavigation({enabled,origin,location,params,setParams:routerSetParams,records=[],additionalRecord}){
   const query=params.toString(),actual=useMemo(()=>target(location,query),[location,query]),pathname=location.pathname;
   const [state,setState]=useState(()=>({enabled,origin,pathname,accepted:actual,pending:null,closeRequest:0}));
   const approval=useRef(null),current=useRef(null);
   const sameContext=enabled&&state.enabled&&state.origin===origin&&state.pathname===pathname;
   const currentId=state.accepted.params.get('assessment');
-  const validCurrent=sameContext&&!!currentId&&records.some(row=>row.framework_assessment_id===currentId);
+  const assessmentCurrent=sameContext&&!!currentId&&records.some(row=>row.framework_assessment_id===currentId);
+  // ISO audit workpapers have local item identities, while package/occurrence/section live in the URL.
+  // Only the actually mounted workpaper may hold those same-origin URL identities for its native guard.
+  const auditCurrent=sameContext&&additionalRecord?.origin===origin&&additionalRecord.query
+    &&Object.entries(additionalRecord.query).every(([key,value])=>state.accepted.params.get(key)===value);
+  const validCurrent=assessmentCurrent||auditCurrent;
   const approved=approval.current?.origin===origin&&approval.current?.pathname===pathname?approval.current:null;
   const waiting=!!approved&&actual.key===approved.from;
   const permitted=!!approved&&!waiting&&(approved.any||approved.query===actual.query);
-  const guarding=validCurrent&&currentId!==params.get('assessment')&&!waiting&&!permitted;
+  const identityChanged=assessmentCurrent&&currentId!==params.get('assessment')
+    ||auditCurrent&&Object.entries(additionalRecord.query).some(([key,value])=>params.get(key)!==value);
+  const guarding=validCurrent&&identityChanged&&!waiting&&!permitted;
   const effective=sameContext&&(guarding||waiting&&validCurrent)?state.accepted:actual;
   const pending=guarding?actual:null;
   current.current={enabled,origin,pathname,actual,effective,pending,routerSetParams};

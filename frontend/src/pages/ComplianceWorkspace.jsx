@@ -15,9 +15,9 @@ export default function ComplianceWorkspace() {
   const { user } = useAuth();
   const loadingProgram=useCisLoadingProgram(requirementKey,currentClientId);
   const section = items.find(item => item.key === requirementKey)||COMPLIANCE_SECTIONS.find(item => item.key === requirementKey);
-  // Loaded SOC workspaces provide one scoped header, including their native empty/error states.
+  // Loaded SOC and ISO workspaces provide one scoped header, including native empty/error states.
   const ownHeader = requirementKey === 'cis-ig1' && isWorkspacePresentation(currentClientId, user) && !error && (!loading||!!loadingProgram)
-    || requirementKey === 'soc-2' && !!currentClientId && !loading && !error && section?.implemented;
+    || ['soc-2','iso-27001'].includes(requirementKey) && !!currentClientId && !loading && !error && section?.implemented;
   const enabled = items.some(item => item.key === requirementKey);
   // The sidebar names the client; the subtitle names the framework version the workspace carries.
   const edition = section && (section.version && !section.name.includes(section.version) ? `${section.name} · ${section.version}` : section.name);

@@ -20,7 +20,7 @@ beforeEach(async()=>{
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   await act(async()=>root.render(<IsoAuditWorkspace clientId="c"/>));
   await act(async()=>button('Expand all audit areas').click());
-  await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('4.1 ·')).click());
+  await act(async()=>container.querySelector('[data-audit-item="4-1"]').click());
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
 test('wide audit shell separates result and progress and preserves a failed-save draft',async()=>{
@@ -62,7 +62,7 @@ test('audit criteria tab saves selections without changing progress or result',a
 test('audit checklist retains saved unknown selections while editing known checks',async()=>{
   await act(async()=>button('Close assessment').click());
   review.iso_audit.items['4-1']={status:'not_started',result:'',notes:'',na_rationale:'',evidence_ids:[],finding_ids:[],assessment_checks:['retired:audit-context']};
-  await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('4.1 ·')).click());
+  await act(async()=>container.querySelector('[data-audit-item="4-1"]').click());
   await act(async()=>button('Assessment criteria').click());
   expect(document.body.textContent).toContain('Previous checklist responses');
   await act(async()=>document.querySelector('.assessment-check input').click());
@@ -85,7 +85,7 @@ test('historical audit selections remain frozen and do not rewrite current cycle
   await act(async()=>root.render(<IsoAuditWorkspace clientId="c"/>));
   await fill('Audit occurrence','history-o');
   await act(async()=>button('Expand all audit areas').click());
-  await act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('4.1 ·')).click());
+  await act(async()=>container.querySelector('[data-audit-item="4-1"]').click());
   await act(async()=>button('Assessment criteria').click());
   expect(document.querySelector('.assessment-check input').checked).toBe(true);
   expect(document.querySelector('.assessment-check input').closest('fieldset').disabled).toBe(true);
@@ -118,8 +118,8 @@ test('package cards distinguish completed history from the upcoming cycle',async
   await act(async()=>new Promise(resolve=>requestAnimationFrame(resolve)));
   await act(async()=>button('All audit packages').click());
   expect(container.textContent).toContain('Last completed 2029-12-30 · Findings raised');
-  expect(container.textContent).toContain('0 / 28 complete');
-  const card=container.querySelector('.framework-category-row');card.focus();
+  expect(container.querySelector('.iso-audit-packages .g-impl b').textContent).toBe('0 of '+auditPackage('governance-risk').items.length);
+  const card=container.querySelector('.iso-audit-packages .grow');card.focus();
   await act(async()=>card.click());
   expect(document.activeElement.tagName).toBe('H3');
   expect(document.activeElement.textContent).toBe(auditPackage('governance-risk').title);
@@ -154,14 +154,15 @@ test('audit three-tab round trip retains workpaper, checklist, full Finding draf
  expect(button('Save & next').disabled).toBe(true);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
-test('native audit areas expand by keyboard and retain catalogue workpaper order without writes',async()=>{
+test('native audit area buttons preserve keyboard focus and catalogue workpaper order without writes',async()=>{
   await act(async()=>button('Close assessment').click());
   await act(async()=>button('Collapse all audit areas').click());
   const pack=auditPackage('governance-risk'),labels=[...new Set(pack.items.map(item=>item.area))],before=JSON.stringify(review);
-  expect([...container.querySelectorAll('[data-audit-area]')].map(element=>element.dataset.auditArea)).toEqual(labels);
+  expect([...container.querySelectorAll('.iso-audit-areas [data-control]')].map(element=>element.dataset.control)).toEqual(labels);
   expect(container.querySelectorAll('[data-audit-item]')).toHaveLength(0);
-  const area=container.querySelector('[data-audit-area]');area.focus();
-  await act(async()=>area.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true})));
+  const area=container.querySelector('.iso-audit-areas [data-control]');expect(area.tagName).toBe('BUTTON');expect(area.tabIndex).toBe(0);area.focus();expect(document.activeElement).toBe(area);
+  // JSDOM does not synthesize a native button click from Enter; retain native button semantics.
+  await act(async()=>area.click());
   expect(area.getAttribute('aria-expanded')).toBe('true');
   expect(document.getElementById(area.getAttribute('aria-controls'))).not.toBeNull();
   expect([...container.querySelectorAll('[data-audit-item]')].map(element=>element.dataset.auditItem)).toEqual(pack.items.filter(item=>item.area===labels[0]).map(item=>item.key));
@@ -174,14 +175,14 @@ test('audit search reveals exact workpapers with truthful full-area counts and c
   await act(async()=>button('Close assessment').click());
   await fill('Search audit items','4.2');
   expect([...container.querySelectorAll('[data-audit-item]')].map(element=>element.dataset.auditItem)).toEqual(['4-2']);
-  const area=container.querySelector('[data-audit-area]');
+  const area=container.querySelector('.iso-audit-areas [data-control]');
   expect(area.disabled).toBe(true);expect(area.getAttribute('aria-expanded')).toBe('true');
   expect(area.textContent).toContain('0 of 4 checks complete');
   await act(async()=>area.click());
   expect(container.querySelectorAll('[data-audit-item]')).toHaveLength(1);
   await act(async()=>button('Clear audit search').click());
   expect(container.querySelector('[aria-label="Search audit items"]').value).toBe('');
-  expect(container.querySelector('[data-audit-area]').disabled).toBe(false);
+  expect(container.querySelector('.iso-audit-areas [data-control]').disabled).toBe(false);
   expect(container.querySelectorAll('[data-audit-item]')).toHaveLength(auditPackage('governance-risk').items.length);
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
@@ -192,10 +193,10 @@ test('Next reveals the destination audit area and preserves the workpaper return
     await act(async()=>button('Close assessment').click());await act(async()=>button('Collapse all audit areas').click());
     const pack=auditPackage('governance-risk'),firstArea=pack.items[0].area,lastIndex=pack.items.findIndex(item=>item.area!==firstArea)-1;
     const last=pack.items[lastIndex],destination=pack.items[lastIndex+1];
-    await act(async()=>container.querySelector('[data-audit-area]').click());
+    await act(async()=>container.querySelector('.iso-audit-areas [data-control]').click());
     await act(async()=>container.querySelector(`[data-audit-item="${last.key}"]`).click());
     await act(async()=>button('Next').click());
-    expect(container.querySelector(`[data-audit-area="${destination.area}"]`).getAttribute('aria-expanded')).toBe('true');
+    expect(container.querySelector(`.iso-audit-areas [data-control="${destination.area}"]`).getAttribute('aria-expanded')).toBe('true');
     await act(async()=>button('Close assessment').click());await act(async()=>new Promise(resolve=>requestAnimationFrame(resolve)));
     const target=container.querySelector(`[data-audit-item="${destination.key}"]`);
     expect(target).not.toBeNull();expect(document.activeElement).toBe(target);
@@ -234,9 +235,52 @@ test('collapsible audit source preserves the native workpaper form without savin
 test('package progress presentation counts examined workpapers without closing findings or activating a schedule',async()=>{
   review.status='upcoming';review.iso_audit.items['4-1']={status:'reviewed',result:'nonconformity',notes:'Recorded examination',na_rationale:'',evidence_ids:[],finding_ids:[],assessment_checks:[]};
   await act(async()=>button('Close assessment').click());await act(async()=>button('All audit packages').click());
-  const card=container.querySelector('.iso-audit-package');
-  expect(card.textContent).toContain('1 / 28 complete');expect(card.textContent).toContain('1 Nonconformities');
-  expect(card.querySelector('[role="img"]').getAttribute('aria-label')).toContain('1 of 28 checks complete');
+  const card=container.querySelector('.iso-audit-packages .grow');
+  expect(card.querySelector('.g-impl b').textContent).toBe('1 of '+auditPackage('governance-risk').items.length);expect(card.textContent).toContain('1 Nonconformities');
+  expect(card.querySelector('[role="img"]').getAttribute('aria-label')).toContain('Reviewed: 1');
+  expect(card.querySelector('.g-ass b').textContent).toBe('1 of '+auditPackage('governance-risk').items.length);
   expect(review.status).toBe('upcoming');expect(review.iso_audit.items['4-1'].finding_ids).toEqual([]);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('audit summary preserves native statuses and separates valid results from workpaper completion',async()=>{
+  const definitions=auditPackage('governance-risk').items;
+  review.iso_audit.items={
+    [definitions[0].key]:{status:'reviewed',result:'',notes:'Reviewed without result',na_rationale:'',evidence_ids:[],finding_ids:[]},
+    [definitions[1].key]:{status:'not_applicable',result:'',notes:'Outside agreed scope',na_rationale:'Documented scope exclusion',evidence_ids:[],finding_ids:[]},
+    [definitions[2].key]:{status:'in_progress',result:'observation',notes:'Examination in progress',na_rationale:'',evidence_ids:[],finding_ids:[]},
+    [definitions[3].key]:{status:'reviewed',result:'conforming',notes:'Examined',na_rationale:'',evidence_ids:[],finding_ids:[]},
+  };
+  const before=JSON.stringify(review);
+  await act(async()=>button('Close assessment').click());
+  const summary=container.querySelector('.iso-audit-program > [aria-labelledby]');
+  expect(summary.querySelector('.now-value').textContent).toBe((2/definitions.length*100).toFixed(1)+'%');
+  expect(summary.textContent).toContain('2 of '+definitions.length+' planned checks complete');expect(summary.textContent).toContain('2 results recorded');
+  expect(summary.querySelector('[aria-label^="Audit workpaper status"]').getAttribute('aria-label')).toContain('Reviewed: 2');
+  expect(summary.querySelector('[aria-label^="Audit workpaper status"]').getAttribute('aria-label')).toContain('N/A: 1');
+  expect(summary.textContent).not.toMatch(/Not implemented|Not assessed/);expect(summary.querySelectorAll('.lg button')).toHaveLength(0);
+  expect(container.querySelector('.iso-audit-register select')).toBeNull();expect(JSON.stringify(review)).toBe(before);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('no audit plan or work remains Not scheduled with an undefined completion percentage and no implicit activation',async()=>{
+  const get=api.get.getMockImplementation();
+  api.get.mockImplementation((path,...args)=>path==='/iso-audit'?Promise.resolve({data:{program:null,reviews:[]}}):get(path,...args));
+  await act(async()=>button('Close assessment').click());
+  const summary=container.querySelector('.iso-audit-program > [aria-labelledby]');
+  expect(summary.querySelector('.now-value').textContent).toBe('—');expect(summary.textContent).toContain('0 of 0 planned checks complete');
+  expect(summary.textContent).toContain('Not scheduled');expect(summary.querySelectorAll('.sbar i')).toHaveLength(0);
+  expect(container.querySelectorAll('.iso-audit-quarter')).toHaveLength(4);
+  for(const quarter of container.querySelectorAll('.iso-audit-quarter'))expect(quarter.textContent).toContain('Not scheduled');
+  expect(container.textContent).toContain('Program not activated');expect(container.querySelectorAll('.iso-audit-packages .grow')).toHaveLength(0);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test.each([[30,'Upcoming'],[-30,'Overdue']])('audit package timing follows its actual due date offset %s, not its quarter or workpaper status',async(offset,label)=>{
+  review.due_date=new Date(Date.now()+offset*86400000).toISOString().slice(0,10);review.status='upcoming';const before=JSON.stringify(review);
+  await act(async()=>button('Close assessment').click());await act(async()=>button('All audit packages').click());
+  const card=container.querySelector('.iso-audit-packages .grow');expect(card.querySelector('.gname small').textContent).toContain(label);
+  expect(card.querySelector('.g-impl b').textContent).toBe('0 of '+auditPackage('governance-risk').items.length);
+  expect(card.textContent).not.toContain('Not implemented');expect(JSON.stringify(review)).toBe(before);
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });

@@ -165,17 +165,59 @@ test.each([
   expect(JSON.stringify(fixture.source)).toBe(before);
 });
 
-test('SOC display labels leave native navigation labels and protected ISO and CIS domain models unchanged', () => {
+test('readable framework display labels leave native navigation labels and protected CIS domain models unchanged', () => {
   const iso = frameworkDashboardFixture('iso-27001'), isoBefore = build(iso);
   const cis = cisWorkspace('synthetic-protected-cis', 1), cisBefore = buildCisDomainProfile(cis, {clientId: 'synthetic-protected-cis', implementationGroup: 1});
   const soc = frameworkDashboardFixture('soc-2');
   expect(build(soc).domains[0].name).toBe('Governance and accountability');
   expect(hierarchyPath('soc-2', soc.source.definitions[0]).at(-1).label).toBe('CC1 — Governance and accountability');
   expect(isoBefore.available).toBe(true);
-  expect(isoBefore.domains.map(domain => domain.name)).toEqual([...new Map(iso.source.definitions.map(row => [hierarchyPath('iso-27001', row).map(part => part.id).join('/'), hierarchyPath('iso-27001', row).at(-1).label])).values()]);
-  expect(isoBefore.domains[0].name).toBe('4 — Context of the Organization');
+  expect(isoBefore.domains.map(domain => domain.name)).toEqual([...new Map(iso.source.definitions.map(row => [hierarchyPath('iso-27001', row).map(part => part.id).join('/'), hierarchyPath('iso-27001', row).at(-1).label.replace(/^\d+\s+[—-]\s+/, '')])).values()]);
+  expect(isoBefore.domains[0].name).toBe('Context of the Organization');
+  expect(hierarchyPath('iso-27001', iso.source.definitions[0]).at(-1).label).toBe('4 — Context of the Organization');
   expect(build(iso)).toEqual(isoBefore);
   expect(cisBefore.available).toBe(true);
   expect(cisBefore.domains.map(domain => [domain.id, domain.name])).toEqual(cisSecurityDomainMapping(1).map(domain => [domain.id, domain.label]));
   expect(buildCisDomainProfile(cis, {clientId: 'synthetic-protected-cis', implementationGroup: 1})).toEqual(cisBefore);
+});
+
+test.each(['existing-demo-iso', 'new-authenticated-iso', 'later-added-mixed-iso'])('ISO readable names preserve every native zero-progress group for %s', clientId => {
+  const fixture=frameworkDashboardFixture('iso-27001', undefined, clientId);
+  fixture.source.assessments.forEach(row=>{row.status='not_assessed';});
+  fixture.refresh();
+  const before=JSON.stringify(fixture.source),model=build(fixture);
+  const expected=[...new Map(fixture.source.definitions.map(row=>{
+    const path=hierarchyPath('iso-27001',row);
+    return [path.map(part=>part.id).join('/'),path.at(-1).label.replace(/^\d+\s+[—-]\s+/, '')];
+  })).entries()];
+  expect(model.available).toBe(true);expect(model.domains.map(domain=>[domain.id,domain.name])).toEqual(expected);
+  expect(model.domains.flatMap(domain=>domain.subjectIds)).toEqual(fixture.source.active_definition_ids);
+  for(const domain of model.domains){
+    const ids=fixture.source.definitions.filter(row=>hierarchyPath('iso-27001',row).map(part=>part.id).join('/')===domain.id).map(row=>row.id);
+    expect(domain.name).not.toMatch(/^\d+\s+[—-]\s+/);
+    expect(domain.subjectIds).toEqual(ids);expect(domain.assessmentIds).toEqual(ids.map(id=>`${clientId}:${id}`));
+    expect(domain.counts).toEqual({addressed:0,in_progress:0,needs_attention:0,not_assessed:ids.length});
+    expect(domain.implemented).toBe(0);expect(domain.applicable).toBe(ids.length);expect(domain.rate).toBe(0);
+  }
+  expect(model.totals.subjectIds).toEqual(fixture.source.active_definition_ids);
+  expect(JSON.stringify(fixture.source)).toBe(before);
+});
+
+test('ISO readable names retain excluded-only and unresolved themes without inventing rates or changing scope',()=>{
+  const fixture=frameworkDashboardFixture('iso-27001');
+  // Native assessments are joined to their definitions by definition_id, rather than carrying catalog grouping fields.
+  const excluded=fixture.source.definitions.filter(row=>row.control==='A.6').map(row=>row.id);
+  const unresolved=fixture.source.definitions.filter(row=>row.control==='A.7').map(row=>row.id);
+  fixture.source.assessments.forEach(row=>{
+    if(excluded.includes(row.definition_id)){row.soa_applicability='excluded';row.soa_justification='Synthetic supported exclusion';}
+    if(unresolved.includes(row.definition_id)){row.soa_applicability='';row.soa_justification='';}
+  });
+  fixture.refresh();const before=JSON.stringify(fixture.source),model=build(fixture);
+  expect(model.available).toBe(true);
+  const people=model.domains.find(domain=>domain.id==='annex_control/A.6'),physical=model.domains.find(domain=>domain.id==='annex_control/A.7');
+  expect(people.name).toBe('People');expect(people.subjectIds).toEqual(excluded);expect(people.excludedIds).toEqual(excluded);
+  expect(physical.name).toBe('Physical');expect(physical.subjectIds).toEqual(unresolved);expect(physical.undeterminedIds).toEqual(unresolved);
+  for(const domain of [people,physical]){expect(domain.applicable).toBe(0);expect(domain.implemented).toBe(0);expect(domain.rate).toBeNull();}
+  expect(model.domains.flatMap(domain=>domain.subjectIds)).toEqual(fixture.source.active_definition_ids);
+  expect(JSON.stringify(fixture.source)).toBe(before);
 });
