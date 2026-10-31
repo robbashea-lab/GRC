@@ -57,7 +57,7 @@ test('loaded SOC uses one native header and exact edition without the duplicate 
   expect(main.querySelector('.soc-program-heading p').textContent).toContain(frameworkCatalog('soc-2').version);
   expect(main.querySelector('.soc-program-heading p').textContent).toContain('SOC 2 Type 2');
   expect(main.querySelectorAll('.soc-program-heading p')).toHaveLength(1);
-  expect(main.querySelectorAll('.soc-program-snapshot')).toHaveLength(1);
+  expect(main.querySelectorAll('[aria-labelledby="bcis-summary-heading"]')).toHaveLength(1);
 });
 
 test('SOC requirement loading and errors retain the outer metadata heading',async()=>{
@@ -73,7 +73,7 @@ test('SOC requirement loading and errors retain the outer metadata heading',asyn
   expect(container.querySelectorAll('main h1')).toHaveLength(1);
   expect(container.querySelector('main [role="alert"]').textContent).toContain('SOC requirement unavailable');
   expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
-  expect(container.querySelector('.soc-program-snapshot')).toBeNull();
+  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
 });
 
 test('SOC framework empty and error states retain a single metadata heading without assessment actions',async()=>{
@@ -83,7 +83,7 @@ test('SOC framework empty and error states retain a single metadata heading with
   expect(container.querySelector('main h1').textContent).toBe('SOC 2');
   expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
   expect(container.querySelector('main').textContent).toContain('Select Applies in Client Profile to initialize this program after onboarding.');
-  expect(container.querySelector('.soc-program-snapshot')).toBeNull();
+  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
   expect(container.querySelector('[aria-label^="Continue assessment"]')).toBeNull();
   const serve=api.get.getMockImplementation();
   api.get.mockImplementation((path,...args)=>path==='/frameworks/soc-2'?Promise.reject(new Error('SOC framework unavailable')):serve(path,...args));
@@ -104,10 +104,10 @@ test('SOC framework loading keeps one metadata heading after the outer requireme
   expect(container.querySelector('main h1').textContent).toBe('SOC 2');
   expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
   expect(container.querySelector('main').textContent).toContain('Loading program workspace');
-  expect(container.querySelector('.soc-program-snapshot')).toBeNull();
+  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
   await act(async()=>resolveFramework({data:socWorkspace()}));
   expect(container.querySelectorAll('main h1')).toHaveLength(1);
-  expect(container.querySelectorAll('.soc-program-snapshot')).toHaveLength(1);
+  expect(container.querySelectorAll('[aria-labelledby="bcis-summary-heading"]')).toHaveLength(1);
 });
 test('direct compliance routes render client empty states and preserve existing sidebar links', async () => {
   for (const [key, label] of [['hipaa','HIPAA'],['iso-27001','ISO 27001'],['cmmc','CMMC']]) {
