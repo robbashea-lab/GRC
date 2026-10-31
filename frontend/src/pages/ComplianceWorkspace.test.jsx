@@ -6,6 +6,7 @@ import MockRecordListPage from './RecordListPage';
 import {THEME_KEY} from '@/lib/brawndoTheme';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
+import {FRAMEWORKS,frameworkCatalog} from '@/lib/frameworks';
 let mockClient, mockPath, mockKey, mockAuth;
 jest.mock('@/context/OrgContext', () => ({ useOrg: () => ({ currentClientId: mockClient.client_id, currentClient: mockClient, clients: [mockClient] }) }));
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => mockAuth }));
@@ -32,7 +33,82 @@ beforeEach(() => {
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); localStorage.removeItem(THEME_KEY); });
-const render = async () => { await act(async () => root.render(<Layout />)); };
+const render = async key => { await act(async () => root.render(<Layout key={key}/>)); };
+
+function socWorkspace(configured=true){
+  const catalog=frameworkCatalog('soc-2'),definitions=catalog.requirements,categories=['security','availability','confidentiality'];
+  return {framework:FRAMEWORKS.find(framework=>framework.key==='soc-2'),configured,selected:true,
+    configuration:{categories},active_definition_ids:definitions.filter(definition=>categories.includes(definition.category)).map(definition=>definition.id),
+    definitions:configured?definitions:[],assessments:configured?definitions.map(definition=>({client_id:mockClient.client_id,framework_key:'soc-2',framework_assessment_id:`${mockClient.client_id}:${definition.id}`,definition_id:definition.id,status:'not_assessed'})):[],work:{}};
+}
+function serveSoc(response){
+  api.get.mockImplementation(async path=>({data:path==='/onboarding/baseline'?{state:{completed:true,requirements:{'soc-2':'applies'}}}
+    :path==='/requirements'?[{client_id:mockClient.client_id,baseline_key:'soc-2',baseline_response:'applies'}]
+    :path==='/frameworks/soc-2'?response:[]}));
+}
+
+test('loaded SOC uses one native header and exact edition without the duplicate outer client heading',async()=>{
+  mockKey='soc-2';mockPath='/compliance/soc-2';serveSoc(socWorkspace());
+  await render();
+  const main=container.querySelector('main');
+  expect(main.querySelectorAll('h1')).toHaveLength(1);expect(main.querySelector('h1').textContent).toBe('SOC 2');
+  expect(main.querySelector('.bpage-eyebrow')).toBeNull();
+  expect(main.textContent).not.toContain('Assessment workspace ·');
+  expect(main.querySelector('.soc-program-heading p').textContent).toContain(frameworkCatalog('soc-2').version);
+  expect(main.querySelector('.soc-program-heading p').textContent).toContain('SOC 2 Type 2');
+  expect(main.querySelectorAll('.soc-program-heading p')).toHaveLength(1);
+  expect(main.querySelectorAll('.soc-program-snapshot')).toHaveLength(1);
+});
+
+test('SOC requirement loading and errors retain the outer metadata heading',async()=>{
+  mockKey='soc-2';mockPath='/compliance/soc-2';
+  let rejectRequirements;const requirements=new Promise((resolve,reject)=>{rejectRequirements=reject;});
+  api.get.mockImplementation(path=>path==='/requirements'?requirements:Promise.resolve({data:{state:{completed:true}}}));
+  await render();
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main h1').textContent).toBe('SOC 2');
+  expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Client A');
+  expect(container.querySelector('main').textContent).toContain('Loading client requirement');
+  await act(async()=>rejectRequirements(new Error('SOC requirement unavailable')));
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main [role="alert"]').textContent).toContain('SOC requirement unavailable');
+  expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
+  expect(container.querySelector('.soc-program-snapshot')).toBeNull();
+});
+
+test('SOC framework empty and error states retain a single metadata heading without assessment actions',async()=>{
+  mockKey='soc-2';mockPath='/compliance/soc-2';serveSoc(socWorkspace(false));
+  await render();
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main h1').textContent).toBe('SOC 2');
+  expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
+  expect(container.querySelector('main').textContent).toContain('Select Applies in Client Profile to initialize this program after onboarding.');
+  expect(container.querySelector('.soc-program-snapshot')).toBeNull();
+  expect(container.querySelector('[aria-label^="Continue assessment"]')).toBeNull();
+  const serve=api.get.getMockImplementation();
+  api.get.mockImplementation((path,...args)=>path==='/frameworks/soc-2'?Promise.reject(new Error('SOC framework unavailable')):serve(path,...args));
+  await render('soc-framework-error');
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main [role="alert"]').textContent).toContain('SOC framework unavailable');
+  expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
+  expect(container.querySelector('[aria-label^="Continue assessment"]')).toBeNull();
+});
+
+test('SOC framework loading keeps one metadata heading after the outer requirement load completes',async()=>{
+  mockKey='soc-2';mockPath='/compliance/soc-2';serveSoc(socWorkspace());
+  const serve=api.get.getMockImplementation();let resolveFramework;
+  const framework=new Promise(resolve=>{resolveFramework=resolve;});
+  api.get.mockImplementation((path,...args)=>path==='/frameworks/soc-2'?framework:serve(path,...args));
+  await render();
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main h1').textContent).toBe('SOC 2');
+  expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
+  expect(container.querySelector('main').textContent).toContain('Loading program workspace');
+  expect(container.querySelector('.soc-program-snapshot')).toBeNull();
+  await act(async()=>resolveFramework({data:socWorkspace()}));
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelectorAll('.soc-program-snapshot')).toHaveLength(1);
+});
 test('direct compliance routes render client empty states and preserve existing sidebar links', async () => {
   for (const [key, label] of [['hipaa','HIPAA'],['iso-27001','ISO 27001'],['cmmc','CMMC']]) {
     mockKey = key; mockPath = `/compliance/${key}`; await render();

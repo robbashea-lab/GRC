@@ -1,8 +1,14 @@
 /* Reuse the approved CIS program's density and structure within SOC only. */
 .soc-program-visual { min-width:0; gap:20px; font-size:13.5px; line-height:1.5; }
+.soc-program-visual.soc-program-fallback { min-height:0; margin:0; padding:0; }
 .soc-program-visual .soc-program-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.soc-program-visual .soc-program-heading-copy { min-width:0; }
 .soc-program-visual .soc-program-heading h1 { margin:0; font:650 24px/1.2 var(--font-heading); letter-spacing:-.025em; }
-.soc-program-visual .soc-program-heading p { margin:3px 0 0; color:var(--cs-muted); font-size:12.5px; }
+.soc-program-visual .soc-program-heading h1:focus-visible { outline:2px solid var(--cs-focus); outline-offset:4px; }
+.soc-program-visual .soc-program-heading p { margin:3px 0 0; color:var(--cs-muted); font-size:12.5px; font-variant-numeric:tabular-nums; }
+.soc-program-visual .soc-program-back { display:inline-flex; align-items:center; gap:6px; margin-bottom:6px; color:var(--cs-link); font-size:12.5px; font-weight:500; }
+.soc-program-visual .soc-program-back:hover { text-decoration:underline; text-underline-offset:3px; }
+.soc-program-visual .soc-program-back:focus-visible { outline:2px solid var(--cs-focus); outline-offset:3px; }
 .soc-program-visual .soc-program-heading-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
 .soc-program-visual .soc-program-heading-actions :is(button,.ui-button) { min-height:32px; height:auto; padding:6px 12px; font-size:12.5px; border-radius:7px; }
 .soc-program-visual .soc-program-snapshot { padding:0; border-radius:10px; }
@@ -17,10 +23,15 @@
 .soc-program-visual .soc-readiness-distribution-heading>span:first-child { color:var(--cs-text); font-size:12.5px; font-weight:600; }
 .soc-program-visual .soc-readiness-distribution .bcis-bar { height:12px; margin:0; }
 .soc-program-visual .soc-readiness-legend { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; margin:0 -12px; }
-.soc-program-visual .soc-readiness-legend button { display:grid; grid-template-columns:10px minmax(0,1fr); gap:6px 7px; align-content:space-between; padding:10px 12px; border-radius:8px; font-size:12.5px; text-align:left; white-space:normal; }
-.soc-program-visual .soc-readiness-legend button>span { margin-top:4px; }
-.soc-program-visual .soc-readiness-legend button>strong { grid-column:2; margin:0; font-size:22px; font-weight:600; line-height:1.15; font-variant-numeric:tabular-nums; }
-.soc-program-visual .soc-readiness-legend button>small { grid-column:2; color:var(--cs-muted); font-size:12px; }
+.soc-program-visual .soc-readiness-legend button { display:grid; gap:6px; align-content:space-between; padding:10px 12px; border-radius:8px; font-size:12.5px; text-align:left; white-space:normal; }
+.soc-program-visual .soc-readiness-legend-label { display:flex; align-items:baseline; gap:7px; }
+.soc-program-visual .soc-readiness-legend button>span { width:auto; height:auto; border-radius:0; background:transparent; }
+.soc-program-visual .soc-readiness-legend-label i { width:10px; height:10px; flex-shrink:0; border-radius:2px; background:var(--cs-neutral-fill); }
+.soc-program-visual .soc-readiness-legend .is-good i { background:var(--cs-good); }
+.soc-program-visual .soc-readiness-legend .is-attention i, .soc-program-visual .soc-readiness-legend .is-critical i { background:var(--cs-attention); }
+.soc-program-visual .soc-readiness-legend-value { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 8px; font-variant-numeric:tabular-nums; }
+.soc-program-visual .soc-readiness-legend-value strong { font-size:20px; font-weight:600; line-height:1.15; }
+.soc-program-visual .soc-readiness-legend-value small { color:var(--cs-muted); font-size:12px; }
 .soc-program-visual .soc-readiness-legend button:hover { background:var(--cs-subtle); }
 .soc-program-visual .soc-readiness-legend button[aria-pressed=true] { box-shadow:inset 0 0 0 1px var(--cs-border); }
 .soc-program-visual .soc-readiness-qualification { padding:12px 24px; border-top:1px solid var(--cs-border); background:var(--cs-subtle); color:var(--cs-muted); font-size:12px; }

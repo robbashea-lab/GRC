@@ -1,6 +1,6 @@
-import {Moon,Sun} from 'lucide-react';
+import {ArrowLeft,Moon,Sun} from 'lucide-react';
 import {Button} from './ui/button';
-import {socCategoryLabel,SOC_STATUS_LABELS} from './PrestigeSocNavigator';
+import {SOC_STATUS_LABELS} from './PrestigeSocNavigator';
 import {segmentShare} from './BrawndoCisOverview';
 import './SocProgramVisual.css';
 
@@ -9,10 +9,14 @@ const SEGMENTS=[
   ['needs_attention','gap','critical'],['not_assessed','notAssessed','neutral'],
 ];
 
-export function SocProgramHeader({categories,summary,resume,onContinue,theme,onTheme}){
+export function SocProgramHeader({categories,summary,resume,onContinue,theme,onTheme,categoryLabel='',onOverview,edition='',sourceLabel=''}){
+  const count=Number.isInteger(summary.total)?`${summary.total} criteria${categoryLabel?' in this category':' in scope'}`:'Criterion count unavailable';
+  const scope=categoryLabel||!Number.isInteger(summary.total)?count:`${categories.length} selected Trust Services ${categories.length===1?'Category':'Categories'} · ${count}`;
   return <header className="soc-program-heading">
-    <div><h1>SOC 2</h1><p>{categories.map(category=>socCategoryLabel(category.id)).join(' · ')}</p>
-      <p>{categories.length} selected Trust Services {categories.length===1?'Category':'Categories'} · {summary.total} criteria in scope</p></div>
+    <div className="soc-program-heading-copy">
+      {categoryLabel&&onOverview&&<button type="button" className="soc-program-back" onClick={onOverview}><ArrowLeft size={14} aria-hidden="true"/>Back to SOC 2</button>}
+      <h1 tabIndex={-1}>{categoryLabel||'SOC 2'}</h1><p>{[sourceLabel,edition,scope].filter(Boolean).join(' · ')}</p>
+    </div>
     <div className="soc-program-heading-actions">
       <button type="button" className="bcis-theme" aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'} aria-pressed={theme==='dark'} onClick={onTheme}>
         {theme==='dark'?<Sun size={15} aria-hidden="true"/>:<Moon size={15} aria-hidden="true"/>}{theme==='dark'?'Light':'Dark'}</button>
@@ -22,7 +26,7 @@ export function SocProgramHeader({categories,summary,resume,onContinue,theme,onT
 }
 
 // Counts and conclusions remain owned by the native SOC workspace/canonical position.
-export function SocProgramSnapshot({summary:s,filter,onFilter,resume}){
+export function SocProgramSnapshot({summary:s,filter,onFilter}){
   const available=s.available!==false;
   // Match the existing SOC donut's display precision without changing the calculation.
   const percentage=available&&s.applicable>0?(s.addressed/s.applicable*100).toFixed(1):null;
@@ -33,7 +37,7 @@ export function SocProgramSnapshot({summary:s,filter,onFilter,resume}){
       <div className="soc-readiness-current"><span>Addressed (Readiness)</span>
         <strong data-testid="soc-readiness-percentage">{percentage??'—'}{percentage!==null&&<small>%</small>}</strong>
         <p>{available?`${s.addressed} of ${s.applicable} applicable criteria addressed`:'Implementation source unavailable'}</p>
-        <p>{available?`${s.notAssessed} still to assess${resume?` · Continue with criterion ${resume.definition_id}`:''}`:s.reason||'Implementation counts are unavailable.'}</p>
+        <p>{available?`${s.notAssessed} still to assess`:s.reason||'Implementation counts are unavailable.'}</p>
       </div>
       <div className="soc-readiness-distribution">
         <div className="soc-readiness-distribution-heading"><span>Status of {available?s.applicable:'—'} applicable criteria</span>
@@ -46,8 +50,8 @@ export function SocProgramSnapshot({summary:s,filter,onFilter,resume}){
         </div>
         <div className="bcis-legend soc-readiness-legend" role="group" aria-label="Filter by assessment status">
           {SEGMENTS.map(([status,count,tone])=><button type="button" key={status} className={`is-${tone}`} aria-pressed={filter===status} onClick={()=>pick(status)}>
-            <span aria-hidden="true"/>{SOC_STATUS_LABELS[status]}<strong>{available?s[count]:'—'}</strong>
-            <small>{available?`${segmentShare(s[count],s.applicable)}% of applicable criteria`:'Counts unavailable'}</small>
+            <span className="soc-readiness-legend-label"><i aria-hidden="true"/>{SOC_STATUS_LABELS[status]}</span>
+            <span className="soc-readiness-legend-value"><strong>{available&&s.applicable>0?`${(s[count]/s.applicable*100).toFixed(1)}%`:'—'}</strong><small>{available?`${s[count]} of ${s.applicable}`:'Counts unavailable'}</small></span>
           </button>)}
         </div>
       </div>

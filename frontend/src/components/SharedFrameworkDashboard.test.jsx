@@ -5,6 +5,7 @@ import BrawndoDemoDashboard from './BrawndoDemoDashboard';
 import {frameworkDashboardFixture} from '@/testUtils/frameworkDashboard';
 import {frameworkDashboardPrograms} from '@/lib/frameworkDashboard';
 import {buildFrameworkDomainProfile} from '@/lib/frameworkDomainProfile';
+import {frameworkCatalog} from '@/lib/frameworks';
 import {scopeNote} from './PortfolioReports';
 import api from '@/lib/api';
 
@@ -124,4 +125,70 @@ test('SOC scope-change explanations retain readiness and validation meanings',()
     {verb:'addressed',statusLabels:{needs_attention:'Needs Remediation / Validation',in_progress:'Partially Addressed'}});
   expect(note).toContain('Addressed share');expect(note).toContain('The addressed count is unchanged; the applicable denominator changed.');
   expect(note).toContain('Needs Remediation / Validation → Partially Addressed');expect(note).not.toContain('Not Implemented');
+});
+
+const SOC_UNASSESSED_SCOPES = [
+  [['security', 'availability', 'confidentiality'], 11],
+  [['security', 'availability', 'confidentiality', 'processing_integrity', 'privacy'], 20],
+];
+
+test.each(SOC_UNASSESSED_SCOPES)('SOC categories %j show every unassessed native group with identical readable chart, table and hover names', async (categories, groupCount) => {
+  const fixture = frameworkDashboardFixture('soc-2', categories);
+  fixture.source.assessments.forEach(row => { row.status = 'not_assessed'; }); fixture.refresh();
+  const program = fixtureProgram(fixture), before = JSON.stringify(fixture.db), destination = program.to;
+  const expected = [...new Map(fixture.source.definitions.map(row => [`${row.category}/${row.control}`, row.control_name])).entries()];
+  api.get.mockImplementation(async path => ({data: path === '/risks' ? [] : history(program)}));
+  await act(async () => root.render(<BrawndoDemoProgram client={fixture.client} program={program} domainSource={fixture.source} cisDashboardProfile concept/>));
+  const profile = host.querySelector('.cdp-concept');
+  const axes = [...profile.querySelectorAll('.cdp-concept-axis-label')], points = [...profile.querySelectorAll('.cdp-concept-point')];
+  const rows = [...profile.querySelectorAll('.cdp-table-wrap tbody tr')];
+  expect(expected).toHaveLength(groupCount); expect(axes).toHaveLength(groupCount); expect(points).toHaveLength(groupCount); expect(rows).toHaveLength(groupCount);
+  for (const [index, [id, name]] of expected.entries()) {
+    const count = fixture.source.definitions.filter(row => `${row.category}/${row.control}` === id).length;
+    const label = `${name}: 0.0%, 0 of ${count} addressed. Show domain details.`;
+    expect([...axes[index].querySelectorAll('tspan:not(.cdp-axis-rate)')].map(line => line.textContent).join(' ')).toBe(name);
+    expect(axes[index].getAttribute('aria-label')).toBe(label); expect(points[index].getAttribute('aria-label')).toBe(label);
+    expect(rows[index].querySelector('.cdp-domain-name').textContent).toBe(name);
+    expect(rows[index].querySelector('.cdp-domain-name').getAttribute('aria-label')).toBe(label);
+    expect([...rows[index].querySelectorAll('td')].map(cell => cell.textContent)).toEqual(['0', String(count), '0.0%']);
+  }
+  for (const target of [points[0], axes[0]]) {
+    await act(async () => target.focus());
+    const popup = document.querySelector('.cdp-concept-tip');
+    expect(popup.querySelector('h3').textContent).toBe(expected[0][1]);
+    expect(popup.getAttribute('aria-label')).toBe(expected[0][1] + ' implementation details');
+    expect(profile.querySelectorAll('tbody tr.is-selected')).toHaveLength(1);
+    expect(rows[0].classList.contains('is-selected')).toBe(true);
+    await act(async () => target.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true})));
+    expect(document.querySelector('.cdp-concept-tip')).toBeNull(); expect(document.activeElement).toBe(target);
+  }
+  expect(program.to).toBe(destination); expect(mockNavigate).not.toHaveBeenCalled(); expect(JSON.stringify(fixture.db)).toBe(before);
+});
+
+const socHoverCases = SOC_UNASSESSED_SCOPES.flatMap(([categories, groupCount]) =>
+  [...new Map(frameworkCatalog('soc-2').requirements.filter(row => categories.includes(row.category))
+    .map(row => [`${row.category}/${row.control}`, row.control_name])).entries()]
+    .map(([id, name], index) => ({categories, groupCount, id, name, index})));
+
+// Separate native groups retain full hover coverage within the existing per-test deadline.
+test.each(socHoverCases)('$id in the $groupCount-group scope keeps its exact readable hover heading and focus workflow', async ({categories, groupCount, name, index}) => {
+  const fixture = frameworkDashboardFixture('soc-2', categories);
+  fixture.source.assessments.forEach(row => { row.status = 'not_assessed'; }); fixture.refresh();
+  const program = fixtureProgram(fixture), before = JSON.stringify(fixture.db), destination = program.to;
+  api.get.mockImplementation(async path => ({data: path === '/risks' ? [] : history(program)}));
+  await act(async () => root.render(<BrawndoDemoProgram client={fixture.client} program={program} domainSource={fixture.source} cisDashboardProfile concept/>));
+  const profile = host.querySelector('.cdp-concept'), rows = [...profile.querySelectorAll('.cdp-table-wrap tbody tr')];
+  expect(rows).toHaveLength(groupCount);
+  const target = rows[index].querySelector('.cdp-domain-name');
+  await act(async () => target.focus());
+  const popup = document.querySelector('.cdp-concept-tip');
+  expect(popup.querySelector('h3').textContent).toBe(name);
+  expect(popup.getAttribute('aria-label')).toBe(name + ' implementation details');
+  expect([...popup.querySelectorAll('dl dd')].map(cell => cell.textContent)).toEqual(['0', '0', '0', rows[index].querySelectorAll('td')[1].textContent]);
+  expect(profile.querySelectorAll('tbody tr.is-selected')).toHaveLength(1); expect(rows[index].classList.contains('is-selected')).toBe(true);
+  expect(profile.querySelectorAll('.cdp-concept-axis-label.is-selected')).toHaveLength(1);
+  expect(profile.querySelectorAll('.cdp-concept-point.is-selected')).toHaveLength(1);
+  await act(async () => target.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true})));
+  expect(document.querySelector('.cdp-concept-tip')).toBeNull(); expect(document.activeElement).toBe(target);
+  expect(program.to).toBe(destination); expect(mockNavigate).not.toHaveBeenCalled(); expect(JSON.stringify(fixture.db)).toBe(before);
 });

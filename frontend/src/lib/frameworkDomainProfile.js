@@ -63,7 +63,7 @@ export function buildFrameworkDomainProfile(source, {clientId, frameworkKey} = {
   const groups = new Map();
   for (const definition of definitions) {
     const path = hierarchyPath(frameworkKey, definition), leaf = path.at(-1), id = path.map(part => part.id).join('/');
-    if (!groups.has(id)) groups.set(id, {id, name:leaf.label, counts:emptyCounts(), applicable:0, implemented:0,
+    if (!groups.has(id)) groups.set(id, {id, name:frameworkKey === 'soc-2' ? definition.control_name : leaf.label, counts:emptyCounts(), applicable:0, implemented:0,
       subjectIds:[], applicableIds:[], excludedIds:[], undeterminedIds:[], assessmentIds:[]});
     const domain = groups.get(id), row = records.get(definition.id), decision = scope.applicability?.[definition.id];
     domain.subjectIds.push(definition.id);domain.assessmentIds.push(row.framework_assessment_id);
