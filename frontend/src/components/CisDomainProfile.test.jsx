@@ -3,6 +3,8 @@ import {createRoot} from 'react-dom/client';
 import CisDomainProfile from './CisDomainProfile';
 import {cisWorkspace} from '@/testUtils/cisExperience';
 import {cisSecurityDomainMapping} from '@/lib/brawndoSecurityDomains';
+import {frameworkDashboardFixture} from '@/testUtils/frameworkDashboard';
+import {buildFrameworkDomainProfile} from '@/lib/frameworkDomainProfile';
 
 // Preserve the real native popover while observing requested placement: JSDOM
 // has no layout, so its collision solver's final data-side is not a viewport test.
@@ -330,4 +332,28 @@ test('one responsive listener moves concept details below narrow triggers and is
     if(descriptor)Object.defineProperty(window,'matchMedia',descriptor);
     else delete window.matchMedia;
   }
+});
+
+test('ISO readable names agree across zero-progress axes, table and native hover heading without changing records',async()=>{
+  jest.useFakeTimers();
+  const fixture=frameworkDashboardFixture('iso-27001');
+  fixture.source.assessments.forEach(row=>{row.status='not_assessed';});fixture.refresh();
+  const before=JSON.stringify(fixture.source),model=buildFrameworkDomainProfile(fixture.source,{clientId:fixture.client.client_id,frameworkKey:'iso-27001'});
+  await act(async()=>root.render(<CisDomainProfile clientId={fixture.client.client_id} nativeModel={model} concept theme="light"/>));
+  const rows=host.querySelectorAll('tbody tr'),axes=host.querySelectorAll('.cdp-concept-axis-label');
+  expect(rows).toHaveLength(model.domains.length);expect(axes).toHaveLength(model.domains.length);
+  for(const [index,domain] of model.domains.entries()){
+    expect(rows[index].querySelector('.cdp-domain-name').textContent).toBe(domain.name);
+    expect(axes[index].getAttribute('aria-label')).toBe(`${domain.name}: 0.0%, 0 of ${domain.applicable} implemented. Show domain details.`);
+    expect([...axes[index].querySelectorAll('tspan:not(.cdp-axis-rate)')].map(line=>line.textContent).join(' ')).toBe(domain.name);
+    expect(rows[index].querySelector('td:last-child').textContent).toBe('0.0%');
+  }
+  const triggers=host.querySelectorAll('.cdp-domain-name');
+  await act(async()=>triggers[0].focus());
+  expect(document.querySelector('.cdp-domain-tip h3').textContent).toBe('Context of the Organization');
+  const annexIndex=model.domains.findIndex(domain=>domain.id==='annex_control/A.5');
+  await pointer(triggers[annexIndex],'pointerover');await act(async()=>jest.advanceTimersByTime(200));
+  expect(document.querySelectorAll('.cdp-domain-tip')).toHaveLength(1);
+  expect(document.querySelector('.cdp-domain-tip h3').textContent).toBe('Organizational');
+  expect(JSON.stringify(fixture.source)).toBe(before);
 });

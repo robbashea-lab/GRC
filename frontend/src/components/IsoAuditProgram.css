@@ -1,39 +1,16 @@
-.iso-audit-program { min-width: 0; }
-.iso-audit-program .iso-audit-quarter { padding: 18px 20px; }
-.iso-audit-program .iso-audit-quarter h3, .iso-audit-program .iso-audit-register-toolbar h3 { color: var(--cs-text); font: 600 15px/1.35 var(--font-heading); }
-.iso-audit-program .iso-audit-quarter p, .iso-audit-program .iso-audit-register-toolbar p { margin-top: 4px; color: var(--cs-muted); font-size: 12px; }
-.iso-audit-program .iso-audit-progress-bar { display: flex; height: 10px; min-width: 0; overflow: hidden; border-radius: 4px; background: var(--cs-subtle); }
-.iso-audit-program .iso-audit-progress-bar i { display: block; height: 100%; background: var(--cs-good); }
-.iso-audit-program .iso-audit-quarter .iso-audit-progress-bar { margin: 12px 0; }
-.iso-audit-program .iso-audit-package { grid-template-columns: minmax(0,1fr) minmax(140px,.65fr); gap: 8px 20px; padding: 13px 16px; }
-.iso-audit-program .iso-audit-package h3 { font: 600 13.5px/1.35 var(--font-heading); }
-.iso-audit-program .iso-audit-package .iso-audit-progress-bar { grid-column: 2; grid-row: 1; align-self: center; }
-.iso-audit-program .iso-audit-register-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border: 1px solid var(--cs-border); border-radius: 10px; background: var(--cs-card); }
-.iso-audit-program .iso-audit-register-toolbar input { width: min(320px,100%); }
-.iso-audit-program .iso-audit-areas { overflow: hidden; border: 1px solid var(--cs-border); border-radius: 10px; background: var(--cs-card); }
-.iso-audit-program .iso-audit-area + .iso-audit-area { border-top: 1px solid var(--cs-border); }
-.iso-audit-program .iso-audit-area-toggle { display: grid; grid-template-columns: 16px minmax(0,1fr) minmax(140px,.55fr); align-items: center; gap: 16px; width: 100%; padding: 13px 16px; text-align: left; }
-.iso-audit-program .iso-audit-area-toggle > svg { width: 14px; height: 14px; color: var(--cs-muted); }
-.iso-audit-program .iso-audit-area-toggle[aria-expanded="true"] > svg { transform: rotate(90deg); }
-.iso-audit-program .iso-audit-area-toggle strong { color: var(--cs-text); font: 600 13.5px/1.35 var(--font-heading); }
-.iso-audit-program .iso-audit-area-toggle small { display: block; margin-top: 3px; color: var(--cs-muted); font-size: 12px; }
-.iso-audit-program .iso-audit-area-toggle:hover, .iso-audit-program .iso-audit-item:hover { background: var(--cs-subtle); }
-.iso-audit-program .iso-audit-area-toggle:disabled { cursor: default; }
-.iso-audit-program .iso-audit-area-toggle:disabled:hover { background: transparent; }
-.iso-audit-program .iso-audit-area-items { padding: 0 14px 12px 32px; }
-.iso-audit-program .iso-audit-item { display: grid; grid-template-columns: minmax(0,1fr) minmax(130px,.45fr); align-items: center; gap: 10px 18px; width: 100%; padding: 12px 14px; color: var(--cs-text); text-align: left; border-top: 1px solid var(--cs-border); font-size: 13px; }
-.iso-audit-program .iso-audit-item small { display: block; margin-top: 3px; color: var(--cs-muted); font-size: 12px; }
-.iso-audit-program .iso-audit-item > :last-child { color: var(--cs-muted); font-size: 12px; }
-.iso-audit-program :is(button,input,select,summary):focus-visible { outline: 2px solid var(--cs-focus); outline-offset: -3px; }
+.iso-audit-program { display:grid; gap:20px; min-width:0; }
+.iso-cis-program-visual .iso-audit-quarter { padding:18px 24px; }
+.iso-cis-program-visual .iso-audit-quarter h3, .iso-cis-program-visual .iso-audit-program > header h3 { color:var(--fg); font:600 15px/1.35 var(--font); }
+.iso-cis-program-visual .iso-audit-quarter p { margin-top:4px; color:var(--muted); font-size:12.5px; }
+.iso-cis-program-visual .iso-audit-progress-bar { background:var(--c-track); }
+.iso-cis-program-visual .iso-audit-quarter .iso-audit-progress-bar { margin:12px 0; }
+.iso-cis-program-visual .iso-audit-packages .card-head { padding-bottom:18px; }
+.iso-cis-program-visual .iso-audit-year { justify-self:start; }
+.iso-cis-program-visual .iso-audit-areas .grow:disabled { cursor:default; }
+.iso-cis-program-visual .iso-audit-areas .grow:disabled:hover, .iso-cis-program-visual .iso-audit-status-legend .lg-cell:hover { background:transparent; }
+.iso-cis-program-visual .iso-audit-program :is(button,input,select,summary):focus-visible { outline:2px solid var(--focus); outline-offset:-3px; }
 [data-testid="iso-audit-workpaper"] .iso-audit-source { margin: 14px 0; padding: 14px 16px; border: 1px solid var(--color-border); border-radius: 8px; }
 [data-testid="iso-audit-workpaper"] .iso-audit-source > summary { cursor: pointer; font-size: 13px; font-weight: 600; }
 [data-testid="iso-audit-workpaper"] .iso-audit-source .assessment-requirement { margin-top: 12px; }
 
-@media(max-width:760px) {
-  .iso-audit-program .iso-audit-area-toggle { grid-template-columns: 14px minmax(0,1fr); gap: 8px 12px; }
-  .iso-audit-program .iso-audit-area-toggle .iso-audit-progress-bar { grid-column: 2; }
-  .iso-audit-program .iso-audit-area-items { padding: 0 8px 8px 22px; }
-  .iso-audit-program .iso-audit-item, .iso-audit-program .iso-audit-package { grid-template-columns: minmax(0,1fr); }
-  .iso-audit-program .iso-audit-package .iso-audit-progress-bar { grid-column: 1; grid-row: auto; }
-  .iso-audit-program .iso-audit-register-toolbar input { width: 100%; }
-}
+@media(max-width:860px) { .iso-cis-program-visual .iso-audit-quarter { padding:16px; } }

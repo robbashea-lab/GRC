@@ -11,14 +11,21 @@ const validCount=value=>Number.isInteger(value)&&value>=0;
 const VERIFY={done:['success','Verified'],partial:['moderate','Not verified'],gap:['critical','Gap identified'],missing:['neutral','Not established']};
 function Tag({tone,children}){return <span className={`cis-flag cis-tone-${tone}`}>{children}</span>;}
 
+// Preserve the existing evidence/freshness-derived result for ISO presentation adapters.
+export function resultVerification(row,today=new Date()){
+  const state=verificationLadder(row,{today}).find(step=>step.key==='validated').state;
+  const [tone,label]=row.status==='not_applicable'?['info','Not applicable']:VERIFY[state];
+  return {state,tone,label};
+}
+
 export default function CisResultTable({rows,onOpen,onManage,label,framework='cis-ig1',nativeFacts=false}){
   const today=new Date(),v=operatorVocabulary(framework),verificationLabel=nativeFacts?'Saved verification':'Verification';
   return <div className="cis-results" role="region" aria-label={`${label}: ${rows.length} ${v.items}`}>
     <table>
       <thead><tr><th scope="col">{v.item.charAt(0).toUpperCase()+v.item.slice(1)}</th><th scope="col">Assessment</th><th scope="col">{verificationLabel}</th><th scope="col">Evidence</th><th scope="col">Last assessed</th><th scope="col">Remediation</th></tr></thead>
       <tbody>{rows.map(r=>{
-        const w=r.work||{},fresh=freshness(r,today),verified=nativeFacts?null:verificationLadder(r,{today}).find(s=>s.key==='validated');
-        const saved=nativeFacts?verificationOf(r):null,[vt,vl]=nativeFacts?[SAVED_VERIFICATION_TONE[saved],VERIFICATION_LABELS[saved]]:r.status==='not_applicable'?['info','Not applicable']:VERIFY[verified.state];
+        const w=r.work||{},fresh=freshness(r,today),verified=nativeFacts?null:resultVerification(r,today);
+        const saved=nativeFacts?verificationOf(r):null,[vt,vl]=nativeFacts?[SAVED_VERIFICATION_TONE[saved],VERIFICATION_LABELS[saved]]:[verified.tone,verified.label];
         // Retained rows may lack the active workspace's joined-work projection.
         const evidenceKnown=!nativeFacts||w.context_complete===true&&validCount(w.evidence_count);
         const remediationKnown=!nativeFacts||w.context_complete===true&&validCount(w.overdue_actions)&&validCount(w.direct_findings??w.open_findings);
