@@ -3,7 +3,7 @@
 .portfolio-history-dialog,
 .brawndo-demo-program,
 .ui-popover.cdp-domain-tip,
-html[data-brawndo-cis-visual=true] {
+html[data-brawndo-cis-visual=true], .soc-cis-program-visual[data-theme] {
   --implementation-implemented-fill:#168566;
   --implementation-implemented-rgb:22,133,102;
   --implementation-partial-fill:#dcb13e;
@@ -14,6 +14,6 @@ html[data-brawndo-cis-visual=true] {
 [data-brawndo-portal=dark] .portfolio-history-dialog,
 [data-brawndo-portal=dark] .brawndo-demo-program,
 [data-brawndo-portal=dark] .ui-popover.cdp-domain-tip,
-html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] {
+html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark], .soc-cis-program-visual[data-theme=dark] {
   --implementation-unassessed-fill:#607088;
 }

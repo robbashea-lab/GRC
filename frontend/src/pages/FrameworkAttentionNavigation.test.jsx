@@ -39,7 +39,7 @@ function frameworkData(clientId){
     ['A1.1','needs_attention','2024-01-01',{}],
   ];
   const definitions=frameworkCatalog('soc-2').requirements.filter(d=>fixtures.some(([id])=>d.id===id));
-  const assessments=fixtures.map(([id,status,date])=>({definition_id:id,framework_assessment_id:clientId+id,framework_key:'soc-2',client_id:clientId,status,last_assessed:date}));
+  const assessments=fixtures.map(([id,status,date])=>({definition_id:id,framework_assessment_id:clientId+id,framework_key:'soc-2',client_id:clientId,status,last_assessed:date,assessment_recorded_at:date.includes('T')?date:date+'T00:00:00Z'}));
   return {configured:true,selected:true,definitions,assessments,configuration:socConfiguration(),organizational_controls:[],
     active_definition_ids:definitions.filter(d=>d.category==='security').map(d=>d.id),
     work:Object.fromEntries(fixtures.map(([id,,,work])=>[clientId+id,work]))};
@@ -68,7 +68,7 @@ test.each(['demo_prestige','new-soc-client'])('SOC attention links open exactly 
       {...data.assessments[4],client_id:'another-client',framework_assessment_id:'foreign',status:'needs_attention'}]}}));
     await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));
     expect([...container.querySelectorAll('[data-testid^="requirement-"]')].map(row=>row.dataset.testid.replace('requirement-',''))).toEqual(ids);
-    expect(container.querySelector('.bcis-crumbs').textContent).toContain(label);
+    expect(container.querySelector('.bcis-crumbs').textContent).toContain(({needs_attention:'Implementation not established',stale:'Needs reassessment',unevidenced:'Implemented without evidence'})[view]||label);
     expect(api.get).toHaveBeenCalledWith('/frameworks/soc-2',expect.objectContaining({params:{client_id:clientId}}));
     expect(api.patch).not.toHaveBeenCalled();
   }
@@ -82,9 +82,25 @@ test('choosing another workspace status after dashboard arrival keeps the chosen
   await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));
   const ids=()=>[...container.querySelectorAll('[data-testid^="requirement-"]')].map(row=>row.dataset.testid.replace('requirement-',''));
   expect(ids()).toEqual(['CC1.4','CC1.5']);
-  const button=[...container.querySelectorAll('.bcis-legend button')].find(b=>b.textContent.startsWith('Not Assessed'));
+  const button=[...container.querySelectorAll('.lg button')].find(b=>b.textContent.startsWith('Not assessed'));
   await act(async()=>button.click());
   expect(ids()).toEqual(['CC2.1']);
   expect(button.getAttribute('aria-pressed')).toBe('true');
   expect(api.patch).not.toHaveBeenCalled();
+});
+
+
+test('retained SOC narrative timestamps do not fabricate judgment freshness while Dashboard remains unchanged',async()=>{
+  const clientId='retained-soc-date-gap',data=frameworkData(clientId);
+  for(const row of data.assessments)delete row.assessment_recorded_at;
+  const before=JSON.stringify(data);mockParams=new URLSearchParams('view=stale');
+  await act(async()=>root.render(<FrameworkProgramCard program={{key:'soc-2',label:'SOC 2'}} rows={data.assessments.filter(row=>data.active_definition_ids.includes(row.definition_id))}/>));
+  const nativeDashboardLink=container.querySelector('.bd-gaps a[href="/compliance/soc-2?view=stale"]');
+  expect(nativeDashboardLink.querySelector('strong').textContent).toBe('2');
+  api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[]:data}));
+  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));
+  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(0);
+  expect(container.querySelector('.soc-register-result-count').textContent).toBe('0 matching criteria');
+  expect(container.querySelector('.snap').textContent).toContain('Assessment date unavailable');
+  expect(JSON.stringify(data)).toBe(before);expect(api.patch).not.toHaveBeenCalled();
 });

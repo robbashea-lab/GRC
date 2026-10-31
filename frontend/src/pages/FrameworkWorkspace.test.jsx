@@ -58,7 +58,7 @@ test.each([null,{framework_assessment_id:' '},{definition_id:'unknown'},{framewo
 
 test('SOC presentation withdraws previous actor data while the same client is reauthorized',async()=>{
  const response=await prestige({clientId:'existing-auth-soc'});
- expect(container.querySelector('[data-testid="soc-readiness-percentage"]')).toBeTruthy();
+ expect(container.querySelector('.soc-cis-program-visual .now-value')).toBeTruthy();
  let resolveCurrent;
  api.get.mockImplementation(path=>path.endsWith('/members')?Promise.resolve({data:[]}):new Promise(resolve=>{resolveCurrent=resolve;}));
  mockUser={user_id:'reader',role:'client_viewer'};
@@ -86,7 +86,7 @@ test.each(['cis-ig1','soc-2','iso-27001'])('%s requirement rows expose exact con
  if(frameworkKey==='iso-27001')mockLocation.params=new URLSearchParams('iso_view=isms_clause');
  api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[]:{configured:true,selected:true,definitions:[definition],assessments:[row],active_definition_ids:[definition.id],configuration:{implementation_group:1,categories:['security']},work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey={frameworkKey} clientId="a"/>));
- const search=container.querySelector('input[aria-label^="Search"]');
+ const search=frameworkKey==='soc-2'?container.querySelector('.soc-criteria-register input[type="search"]'):container.querySelector('input[aria-label^="Search"]');
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,definition.id);search.dispatchEvent(new Event('input',{bubbles:true}));});
  const manage=container.querySelector(`button[aria-label="Manage ${definition.id} ${definition.title}"]`);
  expect(manage).toBeTruthy();await act(async()=>manage.click());
@@ -165,20 +165,21 @@ test('Prestige SOC 2 uses scoped progress and category-first hierarchy without p
  await prestige();const workspace=container.querySelector('[data-testid="prestige-soc-workspace"]');expect(workspace).toBeTruthy();
  expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).not.toContain('Client organizational Controls');expect(workspace.textContent).toContain('Include retained out-of-scope criteria');expect(socSettings()).toBeUndefined();
  const summary=workspace.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(summary).toContain('Addressed (Readiness)');expect(summary).toContain('28 of 38 applicable criteria addressed');expect(summary).toContain('Assessed 35 of 38');expect(workspace.querySelector('[data-testid="soc-readiness-percentage"]').textContent).toBe('73.7%');expect(summary).toContain('3 still to assess');
- const partial=workspace.querySelector('[data-testid="psoc-seg-partial"]');expect(partial.tabIndex).toBe(0);expect(partial.getAttribute('aria-label')).toBe('Partially Addressed: 5 of 38 criteria, 13%');expect(partial.querySelector('.bcis-tip').textContent).toBe('Partially Addressed5 of 38 criteria13%');
- const addressed=workspace.querySelector('[data-testid="psoc-seg-addressed"]');expect(addressed.getAttribute('aria-label')).toBe('Addressed (Readiness): 28 of 38 criteria, 74%');expect(addressed.querySelector('.bcis-tip').textContent).toBe('Addressed (Readiness)28 of 38 criteria74%');
+ expect(summary).toContain('Current implementation');expect(summary).toContain('28 of 38 criteria implemented');expect(summary).toContain('Assessed 35 of 38');expect(workspace.querySelector('.now-value').textContent).toBe('73.7%');expect(workspace.querySelector('[aria-label="Show criteria"]').textContent).toContain('Not assessed3');
+ const partial=workspace.querySelector('.snap .sbar button[aria-label="Partially implemented: 5 of 38"]');expect(partial.tabIndex).toBe(0);expect(partial.tagName).toBe('BUTTON');expect(partial.title).toBe('Partially implemented: 5 of 38');expect(partial.style.flex).toBe('5');
+ const addressed=workspace.querySelector('.snap .sbar button[aria-label="Implemented: 28 of 38"]');expect(addressed.title).toBe('Implemented: 28 of 38');expect(addressed.style.flex).toBe('28');
+ expect(workspace.querySelector('.lg').textContent).toContain('13.2%5 of 38');
  expect(workspace.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);expect(workspace.querySelector('[data-testid="soc-category-security"]').textContent).toContain('Security — Common Criteria33');
- expect(workspace.querySelector('[aria-label="Trust Services Categories"]').textContent).not.toMatch(/Processing Integrity|Privacy/);
+ expect(workspace.querySelector('.soc-criteria-register').textContent).not.toMatch(/Processing Integrity|Privacy/);
  await act(async()=>buttons('Dark')[0].click());expect(workspace.dataset.theme).toBe('dark');await act(async()=>buttons('Light')[0].click());expect(workspace.dataset.theme).toBe('light');
- await act(async()=>[...workspace.querySelectorAll('.bcis-legend button')].find(b=>b.textContent.startsWith('Not Assessed')).click());
- expect(workspace.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(3);expect(crumbs()).toEqual(['SOC 2','Not yet assessed']);
- await act(async()=>buttons('Clear filter')[0].click());expect(crumbs()).toEqual(['SOC 2']);
+ await act(async()=>[...workspace.querySelectorAll('.lg button')].find(b=>b.textContent.startsWith('Not assessed')).click());
+ expect(workspace.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(3);expect(crumbs()).toEqual(['SOC 2','Not assessed']);
+ await act(async()=>container.querySelector('[aria-label="Clear search and filters"]').click());expect(crumbs()).toEqual(['SOC 2']);
 });
-test('Prestige SOC 2 rows support keyboard navigation, native groups, criteria and breadcrumbs',async()=>{
- await prestige();await key(container.querySelector('[data-testid="soc-category-security"]'),'Enter');expect(crumbs()).toEqual(['SOC 2','Security']);expect(container.querySelectorAll('[data-testid^="soc-group-"]')).toHaveLength(9);
- await key(container.querySelector('[data-testid="soc-group-CC1"]'),' ');expect(crumbs()).toEqual(['SOC 2','Security','CC1']);expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(5);
- const criterion=container.querySelector('[data-testid="requirement-CC1.1"]');expect(criterion.getAttribute('role')).toBe('link');expect(criterion.textContent).toContain('Addressed (Readiness)');expect(criterion.textContent).toContain('David Wallace');
+test('Prestige SOC 2 rows retain native button/link semantics, groups, criteria and breadcrumbs',async()=>{
+ await prestige();expect(container.querySelector('[data-testid="soc-category-security"]').tagName).toBe('BUTTON');await act(async()=>container.querySelector('[data-testid="soc-category-security"]').click());expect(crumbs()).toEqual(['SOC 2','Security']);expect(container.querySelectorAll('[data-testid^="soc-group-"]')).toHaveLength(9);
+ expect(container.querySelector('[data-testid="soc-group-CC1"]').tagName).toBe('BUTTON');await act(async()=>container.querySelector('[data-testid="soc-group-CC1"]').click());expect(crumbs()).toEqual(['SOC 2','Security','CC1']);expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(5);
+ const criterion=container.querySelector('[data-testid="requirement-CC1.1"]');expect(criterion.getAttribute('role')).toBe('link');expect(criterion.textContent).toContain('Implemented');expect(criterion.textContent).toContain('David Wallace');
  await act(async()=>criterion.click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('CC1.1');expect(crumbs()).toEqual(['SOC 2','Security','CC1','CC1.1']);
  mockLocation.state=null;await act(async()=>[...container.querySelectorAll('[data-drawer-crumb]')].find(b=>b.textContent==='CC1').click());expect(container.querySelector('[data-testid="opened"]')).toBeNull();expect(crumbs()).toEqual(['SOC 2','Security','CC1']);
  await act(async()=>buttons('SOC 2')[0].click());await act(async()=>container.querySelector('[data-testid="soc-category-availability"]').click());expect(crumbs()).toEqual(['SOC 2','Availability']);expect(container.querySelectorAll('[data-testid^="soc-group-"]')).toHaveLength(1);expect(container.querySelector('[data-testid="soc-group-A1"]')).toBeTruthy();
@@ -325,12 +326,12 @@ test('retained SOC criteria keep contextual management reachable after scope red
  const response=await prestige();
  const retained=response.definitions.find(d=>d.category==='privacy');
  const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- const continueLabel=[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue with')).textContent;
+ const continueLabel=[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue:')).textContent;
  const toggle=[...container.querySelectorAll('label')].find(l=>l.textContent==='Include retained out-of-scope criteria').querySelector('input');
  await act(async()=>toggle.click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toBe(summary);
- expect([...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue with')).textContent).toBe(continueLabel);
- const search=container.querySelector('input[aria-label="Search criteria"]');
+ expect([...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue:')).textContent).toBe(continueLabel);
+ const search=container.querySelector('.soc-criteria-register input[type="search"]');
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,retained.id);search.dispatchEvent(new Event('input',{bubbles:true}));});
  const manage=container.querySelector(`button[aria-label="Manage ${retained.id} ${retained.title}"]`);
  expect(manage).not.toBeNull();await act(async()=>manage.click());

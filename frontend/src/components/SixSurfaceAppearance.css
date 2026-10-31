@@ -33,7 +33,7 @@ html[data-additional-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-
 html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true],
 html[data-brawndo-cis-visual=true],
 .shared-program-omni,
-.brawndo-workspace-pilot[data-shared-shell=true] :is(.bwp-topbar,.app-sidebar,.bwp-nav-backdrop) {
+.brawndo-workspace-pilot[data-shared-shell=true] :is(.bwp-topbar,.app-sidebar,.bwp-nav-backdrop), .soc-cis-program-visual[data-theme] {
   --bg:#EDF3FA; --surface:#FFFFFF; --subtle:#F3F7FC; --tablehead:#F3F7FC; --hover:#EAF1FA; --border:#C6D4E4; --border-strong:#B6C6DB;
   --fg:#132A49; --fg2:#4A617B; --muted:#536A84; --link:#215BC1; --selected:#E4EEFC; --rail:#215BC1; --focus:#215BC1;
   --good:#05603A; --good-bg:#ECFDF3; --bad:#B42318; --bad-bg:#FEF3F2; --warn:#93370D; --warn-bg:#FFFAEB;
@@ -52,7 +52,7 @@ html[data-additional-surface][data-additional-theme=dark] :is(.ui-dialog,.ui-she
 html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true][data-theme=dark],
 html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark],
 .shared-program-omni[data-theme=dark],
-.brawndo-workspace-pilot[data-shared-shell=true][data-theme=dark] :is(.bwp-topbar,.app-sidebar,.bwp-nav-backdrop) {
+.brawndo-workspace-pilot[data-shared-shell=true][data-theme=dark] :is(.bwp-topbar,.app-sidebar,.bwp-nav-backdrop), .soc-cis-program-visual[data-theme=dark] {
   --bg:#071321; --surface:#0C1B30; --subtle:#11243A; --tablehead:#112238; --hover:#172B45; --border:#263C58; --border-strong:#3D5778;
   --fg:#EDF3FF; --fg2:#A8BAD5; --muted:#A2AEC4; --link:#85D4FF; --selected:#25416A; --rail:#85D4FF; --focus:#85D4FF;
   --good:#39C7A5; --good-bg:#0E312E; --bad:#FA7B85; --bad-bg:#321C2B; --warn:#F5BC4F; --warn-bg:#332715;
@@ -70,7 +70,7 @@ html[data-additional-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-
 html[data-brawndo-cis-visual=true],
 .brawndo-workspace-pilot[data-cis-visual=true],
 body[data-brawndo-cis-visual=true] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-select-content,.ui-popover),
-.brawndo-workspace-pilot[data-shared-shell=true] :is(.bwp-topbar,.app-sidebar) {
+.brawndo-workspace-pilot[data-shared-shell=true] :is(.bwp-topbar,.app-sidebar), .soc-cis-program-visual[data-theme] {
  --font-body:var(--font);--font-heading:var(--font);--color-bg-app:var(--bg);--color-bg-surface:var(--surface);--color-bg-subtle:var(--subtle);--color-bg-tablehead:var(--tablehead);--color-bg-row-hover:var(--hover);--color-border:var(--border);--color-border-strong:var(--border-strong);--color-input-border:var(--border-strong);--color-text-primary:var(--fg);--color-text-secondary:var(--fg2);--color-text-muted:var(--muted);--color-link:var(--link);--color-focus-ring:var(--focus);--color-selected-bg:var(--selected);--color-brand-accent:var(--rail);--color-brand-on-accent:#fff;
  --bwp-top:60px;--bwp-sidebar:240px;--bwp-bg:var(--bg);--bwp-card:var(--surface);--bwp-line:var(--border);--bwp-text:var(--fg);--bwp-muted:var(--fg2);--bwp-accent:var(--link);--bwp-subtle:var(--subtle);--bwp-focus:var(--focus);
  font:13.5px/1.5 var(--font);font-optical-sizing:auto;-webkit-font-smoothing:antialiased;
@@ -82,7 +82,7 @@ html[data-visual-surface]:not([data-visual-surface="portfolio"])[data-visual-the
 html[data-additional-surface][data-additional-theme=dark] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating),
 html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark],
 .brawndo-workspace-pilot[data-cis-visual=true][data-theme=dark],
-html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-select-content,.ui-popover) {
+html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-select-content,.ui-popover), .soc-cis-program-visual[data-theme=dark] {
   --color-brand-on-accent:var(--surface);
 }
 .brawndo-workspace-pilot[data-visual-surface] .bwp-topbar,

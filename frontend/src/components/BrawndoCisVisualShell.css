@@ -1,6 +1,6 @@
 /* Qualified loading chrome shares shell geometry; loaded-origin markers alone style external portals. */
-html[data-brawndo-cis-visual=true] {color-scheme:normal}
-html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark] {color-scheme:dark}
+html[data-brawndo-cis-visual=true], .soc-cis-program-visual[data-theme] {color-scheme:normal}
+html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark], .soc-cis-program-visual[data-theme=dark] {color-scheme:dark}
 html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .bwp-topbar,
 html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .bwp-topbar {padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
 html[data-brawndo-cis-visual=true] .bwp-search kbd,
@@ -48,32 +48,32 @@ html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visua
 html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .app-workspace,
 html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .app-workspace {background:var(--bg)}
 html[data-brawndo-cis-visual=true] .client-surface,
-html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .client-surface {padding:0;background:transparent;min-height:0}
+html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .client-surface, .client-surface:has(.section-body > .soc-cis-program-visual) {padding:0;background:transparent;min-height:0}
 html[data-brawndo-cis-visual=true] .section-body,
-html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .section-body {padding:0}
+html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .section-body, .section-body:has(> .soc-cis-program-visual) {padding:0}
 /* Storage/recovery remains available in the existing account menu. */
 html[data-brawndo-cis-visual=true] .demo-notice,
 html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .demo-notice {display:none}
 html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .brawndo-cis-visual[data-theme],
-html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .brawndo-cis-visual[data-theme] {display:grid;align-content:start;gap:20px;margin:0;padding:28px max(24px,env(safe-area-inset-right,0px)) 120px 24px;max-width:1600px;min-height:0;transition:none;background:transparent;color:var(--fg);font:13.5px/1.5 var(--font)}
-.brawndo-cis-visual>* {min-width:0}
-.brawndo-cis-visual>.guided-pilot {display:contents}
-.brawndo-cis-visual :is(h1,h2,h3,h4,p) {margin:0}
-.brawndo-cis-visual :is(button,input,select) {font-family:inherit;color:inherit}
-.brawndo-cis-visual button {cursor:pointer}
-.brawndo-cis-visual .page-head h1 {color:var(--fg)}
-.brawndo-cis-visual .head-actions .primary {max-width:280px;overflow:hidden;text-overflow:ellipsis;display:block}
-.brawndo-cis-visual .ver {display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--fg2);min-width:0}
-.brawndo-cis-visual .ver small {display:block;font-size:12px;color:var(--muted)}
-.brawndo-cis-visual .ver svg {flex:none}
-.brawndo-cis-visual .f-search {font:inherit}
-.brawndo-cis-visual .f-field {font-weight:400}
-.brawndo-cis-visual .v-verified svg {color:var(--good)}
-.brawndo-cis-visual .v-gap_identified svg {color:var(--bad)}
-.brawndo-cis-visual .v-needs_validation svg {color:var(--warn)}
+html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .brawndo-cis-visual[data-theme], .soc-cis-program-visual[data-theme] {display:grid;align-content:start;gap:20px;margin:0;padding:28px max(24px,env(safe-area-inset-right,0px)) 120px 24px;max-width:1600px;min-height:0;transition:none;background:transparent;color:var(--fg);font:13.5px/1.5 var(--font)}
+.brawndo-cis-visual>*, .soc-cis-program-visual>* {min-width:0}
+.brawndo-cis-visual>.guided-pilot, .soc-cis-program-visual>.guided-pilot {display:contents}
+.brawndo-cis-visual :is(h1,h2,h3,h4,p), .soc-cis-program-visual :is(h1,h2,h3,h4,p) {margin:0}
+.brawndo-cis-visual :is(button,input,select), .soc-cis-program-visual :is(button,input,select) {font-family:inherit;color:inherit}
+.brawndo-cis-visual button, .soc-cis-program-visual button {cursor:pointer}
+.brawndo-cis-visual .page-head h1, .soc-cis-program-visual .page-head h1 {color:var(--fg)}
+.brawndo-cis-visual .head-actions .primary, .soc-cis-program-visual .head-actions .primary {max-width:280px;overflow:hidden;text-overflow:ellipsis;display:block}
+.brawndo-cis-visual .ver, .soc-cis-program-visual .ver {display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--fg2);min-width:0}
+.brawndo-cis-visual .ver small, .soc-cis-program-visual .ver small {display:block;font-size:12px;color:var(--muted)}
+.brawndo-cis-visual .ver svg, .soc-cis-program-visual .ver svg {flex:none}
+.brawndo-cis-visual .f-search, .soc-cis-program-visual .f-search {font:inherit}
+.brawndo-cis-visual .f-field, .soc-cis-program-visual .f-field {font-weight:400}
+.brawndo-cis-visual .v-verified svg, .soc-cis-program-visual .v-verified svg {color:var(--good)}
+.brawndo-cis-visual .v-gap_identified svg, .soc-cis-program-visual .v-gap_identified svg {color:var(--bad)}
+.brawndo-cis-visual .v-needs_validation svg, .soc-cis-program-visual .v-needs_validation svg {color:var(--warn)}
 body[data-brawndo-cis-visual=true] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-select-content,.ui-popover) {background:var(--surface);color:var(--fg);border-color:var(--border)}
 body[data-brawndo-cis-visual=true] .ui-overlay[data-state] {background:var(--scrim);backdrop-filter:blur(3px)}
-body[data-brawndo-cis-visual=true] :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible {outline:2px solid var(--focus);outline-offset:2px}
+body[data-brawndo-cis-visual=true] :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible, .soc-cis-program-visual :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible {outline:2px solid var(--focus);outline-offset:2px}
 @media(min-width:861px) and (max-width:1023px) {
   html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .app-sidebar,
   html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .app-sidebar {display:flex}
@@ -96,12 +96,12 @@ body[data-brawndo-cis-visual=true] :is(button,a,input,select,textarea,summary,[t
   html[data-brawndo-cis-visual=true] .bwp-nav-backdrop,
   html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .bwp-nav-backdrop {display:block;inset:60px 0 0;background:var(--scrim)}
   html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot .brawndo-cis-visual[data-theme],
-  html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .brawndo-cis-visual[data-theme] {padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-  .brawndo-cis-visual :is(.card-head,.snap,.card-foot) {padding-left:16px;padding-right:16px}
-  .brawndo-cis-visual .snap {grid-template-columns:minmax(0,1fr)}
-  .brawndo-cis-visual .now-value {font-size:46px}
-  .brawndo-cis-visual .f-right {margin-left:0}
+  html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .brawndo-cis-visual[data-theme], .soc-cis-program-visual[data-theme] {padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .brawndo-cis-visual :is(.card-head,.snap,.card-foot), .soc-cis-program-visual :is(.card-head,.snap,.card-foot) {padding-left:16px;padding-right:16px}
+  .brawndo-cis-visual .snap, .soc-cis-program-visual .snap {grid-template-columns:minmax(0,1fr)}
+  .brawndo-cis-visual .now-value, .soc-cis-program-visual .now-value {font-size:46px}
+  .brawndo-cis-visual .f-right, .soc-cis-program-visual .f-right {margin-left:0}
 }
 @media(max-width:520px) {html[data-brawndo-cis-visual=true] .brawndo-workspace-pilot[data-cis-visual=true] .bwp-topbar [data-testid=notification-bell],html[data-brawndo-cis-visual=true] .bwp-client,
 html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .bwp-topbar [data-testid=notification-bell],html:not([data-brawndo-cis-visual=true]) .brawndo-workspace-pilot[data-cis-visual=true] .bwp-client {display:none}}
-@media(prefers-reduced-motion:reduce) {body[data-brawndo-cis-visual=true] * {animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce) {body[data-brawndo-cis-visual=true] *, .soc-cis-program-visual * {animation:none!important;transition:none!important}}
