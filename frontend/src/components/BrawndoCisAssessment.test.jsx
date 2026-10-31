@@ -188,10 +188,13 @@ test('other clients retain their assessment content with explicit modal semantic
 });
 test('ISO assessments omit supplemental organizational controls without changing stored records',async()=>{
  record={...record,client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1'};
+ const stored=JSON.parse(JSON.stringify(record));
  await act(async()=>root.render(<FrameworkDrawer open record={record} clientId="demo_dunder" onOpenChange={close} position="1 of 30"/>));
  expect(container.textContent).not.toContain('Organizational Controls');
-  expect(container.querySelector('.assessment-summary').open).toBe(false);
-  expect(container.querySelector('.assessment-summary p').textContent).toBeTruthy();
+ const disclosure=container.querySelector('.cis-collapsible-requirement');
+ expect(disclosure).not.toBeNull();expect(disclosure.open).toBe(false);
+ expect(disclosure.querySelector('p').textContent).toBeTruthy();
+ expect(record).toEqual(stored);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 test('in-workspace breadcrumb returns to the control, behind the unsaved-changes guard',async()=>{
  const toControl=jest.fn();
