@@ -1,17 +1,31 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const {plan, audit, LIFECYCLE_SUITES, SHARDS} = require('./frontend-campaign.cjs');
+const fs = require('node:fs');
+const os = require('node:os');
+const {plan, audit, LIFECYCLE_SUITES, SHARDS, pinnedNodeEnvironment, executionOptions,
+  verifyRuntime, clearExecutionArtifacts} = require('./frontend-campaign.cjs');
 const sha = 'a'.repeat(40), root = path.resolve('frontend');
 const lifecycleFiles = Object.values(LIFECYCLE_SUITES);
 function receipts() {
   const manifest = plan([...lifecycleFiles, 'src/a.test.js', 'src/b.test.js', 'src/c.test.js', 'src/new.test.jsx'], sha);
-  return SHARDS.map(shard => ({manifest, shard, exitCode: 0, frontendRoot: root, result: {
+  const rows = SHARDS.map(shard => ({manifest, shard, exitCode: 0, frontendRoot: root, result: {
     success: true, wasInterrupted: false, numTotalTestSuites: manifest.partitions[shard].length,
     numPassedTestSuites: manifest.partitions[shard].length, numFailedTestSuites: 0,
     numPendingTestSuites: 0, numRuntimeErrorTestSuites: 0,
     testResults: manifest.partitions[shard].map(file => ({name: path.join(root, file), status: 'passed'})),
   }}));
+  const selected = rows.find(row => row.shard === 'framework-five-year');
+  const cases = ['cis-ig1', 'soc-2', 'iso-27001'].map(name => ({fullName: name, status: 'passed', duration: 100}));
+  // Match the installed Jest JSON formatter: raw reporter durations are not included here.
+  selected.result.testResults[0].assertionResults = cases.map(({fullName, status}) => ({fullName, status}));
+  selected.runtimeLaunch = {invocation_id: 'unique-launch', node: 'v22.23.4', execPath: '/runtime/bin/node', source_sha: sha};
+  selected.runtime = {version: 1, ...selected.runtimeLaunch, completed: true, platform: 'linux', arch: 'x64', timezone: 'UTC',
+    lifecycle_years: '5', synthetic_exports: false, phase_logging: false, available_parallelism: 4,
+    cpu_model: 'Synthetic test CPU', total_memory: 1000, startup_free_memory: 500, elapsed_ms: 400,
+    cpu_usage_us: {user: 100, system: 50}, resource_usage: {maxRSS: 100}, memory_usage: {rss: 50},
+    cases: cases.map(value => ({name: value.fullName, status: value.status, duration_ms: value.duration}))};
+  return rows;
 }
 test('deterministic discovery assigns every suite once, including newly discovered suites', () => {
   const rows = receipts();
@@ -76,5 +90,78 @@ test('dedicated lifecycle receipts cannot be omitted, duplicated, reassigned or 
       const altered = receipts(); mutate(altered[dedicatedIndex]);
       assert.throws(() => audit(altered, sha));
     }
+  }
+});
+
+test('runtime pinning handles Unix and Windows PATH without mutating the caller', () => {
+  const unix = {PATH: '/usr/bin', OTHER: 'keep'};
+  assert.deepEqual(pinnedNodeEnvironment(unix, '/managed/bin/node', 'linux'), {PATH: '/managed/bin:/usr/bin', OTHER: 'keep'});
+  assert.equal(unix.PATH, '/usr/bin');
+  const windows = {Path: 'C:\\Windows', PATH: 'duplicate', OTHER: 'keep'};
+  assert.deepEqual(pinnedNodeEnvironment(windows, 'C:\\managed\\node.exe', 'win32'), {PATH: 'C:\\managed;duplicate', OTHER: 'keep'});
+  assert.equal(windows.PATH, 'duplicate');
+});
+
+test('only the selected execution adds passive provenance and pins inherited runtime', () => {
+  const manifest = receipts()[0].manifest, environment = {PATH: '/usr/bin', GITHUB_SHA: sha};
+  for (const shard of SHARDS) {
+    const selected = executionOptions(shard, manifest, '/result.json', '/runtime.json', 'one-launch', environment);
+    const original = ['--runTestsByPath', ...manifest.partitions[shard], '--json', '--outputFile=/result.json'];
+    if (shard !== 'framework-five-year') {
+      assert.deepEqual(selected, {args: original, options: {stdio: 'inherit'}});
+    } else {
+      assert.deepEqual(selected.args.slice(0, original.length), original);
+      assert.equal(selected.args[original.length], '--reporters=default');
+      assert.match(selected.args[original.length + 1], /frontend-runtime-reporter\.cjs$/);
+      assert.equal(selected.options.env.FRONTEND_RUNTIME_RECEIPT, '/runtime.json');
+      assert.equal(selected.options.env.FRONTEND_RUNTIME_INVOCATION, 'one-launch');
+      assert.equal(selected.options.env.GITHUB_SHA, sha);
+      assert.equal(selected.options.env.CI, 'true');
+    }
+  }
+  assert.deepEqual(environment, {PATH: '/usr/bin', GITHUB_SHA: sha});
+});
+
+test('aggregate audit rejects absent, stale, foreign, incomplete or instrumented lifecycle provenance', () => {
+  for (const mutate of [
+    row => { delete row.runtime; }, row => { delete row.runtimeLaunch; },
+    row => { row.runtime.completed = false; }, row => { row.runtime.invocation_id = 'previous'; },
+    row => { row.runtime.source_sha = 'b'.repeat(40); }, row => { row.runtimeLaunch.source_sha = 'b'.repeat(40); },
+    row => { row.runtime.node = 'v22.23.3'; }, row => { row.runtimeLaunch.node = 'v22.23.3'; },
+    row => { row.runtime.execPath = '/wrong/node'; }, row => { row.runtime.timezone = 'America/Los_Angeles'; },
+    row => { row.runtime.lifecycle_years = '3'; }, row => { row.runtime.synthetic_exports = true; },
+    row => { row.runtime.phase_logging = true; }, row => { row.runtime.available_parallelism = 0; },
+    row => { delete row.runtime.memory_usage; }, row => { row.runtime.resource_usage = {}; },
+    row => { row.runtime.cpu_usage_us = {}; }, row => { row.runtime.cases.pop(); },
+    row => { row.runtime.cases[0].duration_ms = null; }, row => { row.runtime.cases.reverse(); },
+  ]) {
+    const rows = receipts(); mutate(rows.find(row => row.shard === 'framework-five-year'));
+    assert.throws(() => audit(rows, sha));
+  }
+});
+
+test('runtime collection completion retains failed case evidence and cannot override Jest failure', () => {
+  const rows = receipts(), row = rows.find(value => value.shard === 'framework-five-year');
+  row.result.testResults[0].assertionResults[2].status = 'failed';
+  row.runtime.cases[2].status = 'failed';
+  // Matching raw evidence is valid provenance; the original qualification gate still rejects the failure.
+  verifyRuntime(row);
+  row.exitCode = 1; row.result.success = false; row.result.testResults[0].status = 'failed';
+  assert.throws(() => audit(rows, sha), /Unsuccessful/);
+});
+
+test('each execution removes stale generated results; selected runtime is removed without deleting unrelated files', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'campaign-test-'));
+  try {
+    for (const name of ['jest.json', 'receipt.json', 'runtime.json', 'keep.txt']) fs.writeFileSync(path.join(directory, name), 'old');
+    clearExecutionArtifacts(directory, '1');
+    assert.equal(fs.existsSync(path.join(directory, 'jest.json')), false);
+    assert.equal(fs.existsSync(path.join(directory, 'receipt.json')), false);
+    assert.equal(fs.existsSync(path.join(directory, 'runtime.json')), true);
+    clearExecutionArtifacts(directory, 'framework-five-year');
+    assert.deepEqual(fs.readdirSync(directory), ['keep.txt']);
+  } finally {
+    assert.equal(path.dirname(path.resolve(directory)), path.resolve(os.tmpdir()));
+    fs.rmSync(directory, {recursive: true});
   }
 });
