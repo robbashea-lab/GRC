@@ -1,0 +1,46 @@
+/* ISO-only presentation, using the approved CIS density and existing product tokens. */
+.iso-program-visual { min-width:0; }
+.iso-program-visual .bcis-head h1 { font-size:24px; font-weight:650; letter-spacing:-.025em; }
+.iso-program-visual .iso-program-overview { display:grid; gap:18px; min-width:0; }
+.iso-program-visual .iso-program-grid { gap:20px; }
+.iso-program-visual .iso-program-card { display:block; padding:20px 24px 22px; border-radius:10px; box-shadow:var(--shadow-sm); }
+.iso-program-visual .iso-program-title { font-size:15px; font-weight:600; letter-spacing:-.01em; }
+.iso-program-visual .iso-card-snapshot { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); align-items:start; gap:24px; margin-top:18px; }
+.iso-program-visual .iso-card-current { display:grid; gap:8px; min-width:0; }
+.iso-program-visual .iso-card-value { display:block; font-size:56px; font-weight:600; letter-spacing:-.022em; line-height:1; font-variant-numeric:tabular-nums; }
+.iso-program-visual .iso-card-value small { font-size:.5em; font-weight:500; margin-left:.08em; color:var(--cs-muted); }
+.iso-program-visual .iso-program-metric { margin:0; font-family:inherit; font-size:13px; font-weight:400; line-height:1.45; overflow-wrap:anywhere; }
+.iso-program-visual .iso-card-distribution { min-width:0; }
+.iso-program-visual .iso-program-bar { height:12px; border-radius:4px; margin-top:4px; }
+.iso-program-visual .iso-program-breakdown { gap:7px; margin-top:14px; font-size:12.5px; }
+.iso-program-visual .iso-program-progress { font-size:12px; }
+.iso-program-visual .iso-workspace-summary { display:grid; gap:14px; border-radius:10px; }
+.iso-program-visual .iso-workspace-figure { font-size:56px; font-weight:600; letter-spacing:-.022em; }
+.iso-program-visual .iso-workspace-summary .iso-program-bar { margin:0; }
+.iso-program-visual .iso-implementation-summary { border-radius:10px; box-shadow:var(--shadow-sm); overflow:visible; }
+.iso-program-visual .iso-summary-layout { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px 40px; padding:20px 24px 22px; }
+.iso-program-visual .iso-summary-current > span { font-size:12.5px; font-weight:500; color:var(--cs-muted); }
+.iso-program-visual .iso-summary-current > strong { display:block; margin:4px 0 6px; font-size:56px; line-height:1; font-weight:600; letter-spacing:-.022em; font-variant-numeric:tabular-nums; }
+.iso-program-visual .iso-summary-current > strong small { font-size:.5em; font-weight:500; color:var(--cs-muted); margin-left:.08em; }
+.iso-program-visual .iso-summary-current p { font-size:13px; line-height:1.45; margin-top:4px; }
+.iso-program-visual .iso-summary-current p + p { font-size:12px; color:var(--cs-muted); }
+.iso-program-visual .iso-summary-distribution { display:grid; align-content:start; gap:12px; min-width:0; }
+.iso-program-visual .iso-summary-distribution > p { font-size:12.5px; font-weight:600; }
+.iso-program-visual .iso-summary-distribution .bcis-bar { height:12px; border-radius:4px; }
+.iso-program-visual .iso-summary-legend { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; margin:0 -12px; }
+.iso-program-visual .iso-summary-legend button { display:grid; grid-template-columns:10px minmax(0,1fr); gap:6px 7px; padding:10px 12px; border-radius:8px; text-align:left; font-size:12.5px; min-width:0; }
+.iso-program-visual .iso-summary-legend button > span { margin-top:4px; }
+.iso-program-visual .iso-summary-legend button > strong { grid-column:2; font-size:22px; line-height:1.15; font-weight:600; }
+.iso-program-visual .iso-summary-legend button > small { grid-column:2; font-size:12px; color:var(--cs-muted); }
+.iso-program-visual .iso-summary-qualification { padding:12px 24px; border-top:1px solid var(--cs-border); background:var(--cs-subtle); font-size:12px; line-height:1.45; border-radius:0 0 10px 10px; }
+.iso-program-visual .iso-summary-qualification > :not(:first-child) { margin-top:8px; }
+.iso-program-visual .iso-summary-qualification [role=alert] { color:var(--cs-critical); }
+@media(max-width:1200px) { .iso-program-visual .iso-card-snapshot { grid-template-columns:minmax(0,1fr); gap:16px; } }
+@media(max-width:900px) { .iso-program-visual .iso-summary-layout { grid-template-columns:minmax(0,1fr); gap:20px; } }
+@media(max-width:760px) {
+  .iso-program-visual .iso-program-grid { grid-template-columns:minmax(0,1fr); }
+  .iso-program-visual .iso-program-card { padding:18px 16px; }
+  .iso-program-visual .iso-summary-layout { padding:18px 16px; }
+  .iso-program-visual .iso-summary-qualification { padding:12px 16px; }
+  .iso-program-visual .iso-summary-legend { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
