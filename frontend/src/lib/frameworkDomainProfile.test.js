@@ -1,5 +1,9 @@
 import {buildFrameworkDomainProfile} from './frameworkDomainProfile';
 import {frameworkDashboardFixture} from '../testUtils/frameworkDashboard';
+import {cisWorkspace} from '../testUtils/cisExperience';
+import {buildCisDomainProfile} from './cisDomainProfile';
+import {cisSecurityDomainMapping} from './brawndoSecurityDomains';
+import {hierarchyPath} from './frameworkWorkspace';
 
 const build=fixture=>buildFrameworkDomainProfile(fixture.source,{clientId:fixture.client.client_id,frameworkKey:fixture.source.framework.key});
 
@@ -96,4 +100,82 @@ test.each(['__proto__','toString',{}])('SOC rejects invalid or inherited categor
   const fixture=frameworkDashboardFixture('soc-2');
   fixture.source.configuration={categories:['security',extra]};
   expect(build(fixture).available).toBe(false);
+});
+
+test('SOC readable display names retain all eleven native groups when every criterion is unassessed', () => {
+  const fixture = frameworkDashboardFixture('soc-2', ['security', 'availability', 'confidentiality']);
+  fixture.source.assessments.forEach(row => { row.status = 'not_assessed'; });
+  fixture.refresh();
+  const before = JSON.stringify(fixture.source), model = build(fixture);
+  expect(model.available).toBe(true);
+  expect(model.domains.map(domain => [domain.id, domain.name])).toEqual([
+    ['security/CC1', 'Governance and accountability'],
+    ['security/CC2', 'Information and communications'],
+    ['security/CC3', 'Risk evaluation'],
+    ['security/CC4', 'Control monitoring'],
+    ['security/CC5', 'Control deployment'],
+    ['security/CC6', 'Access safeguards'],
+    ['security/CC7', 'System operations'],
+    ['security/CC8', 'Change governance'],
+    ['security/CC9', 'Risk mitigation'],
+    ['availability/A1', 'Availability'],
+    ['confidentiality/C1', 'Confidentiality'],
+  ]);
+  for (const domain of model.domains) {
+    const definitions = fixture.source.definitions.filter(row => `${row.category}/${row.control}` === domain.id);
+    expect(domain.name).toBe(definitions[0].control_name);
+    expect(domain.subjectIds).toEqual(definitions.map(row => row.id));
+    expect(domain.assessmentIds).toEqual(definitions.map(definition => fixture.source.assessments.find(row => row.definition_id === definition.id).framework_assessment_id));
+    expect(domain.counts).toEqual({addressed: 0, in_progress: 0, needs_attention: 0, not_assessed: definitions.length});
+    expect(domain.applicable).toBe(definitions.length); expect(domain.implemented).toBe(0); expect(domain.rate).toBe(0);
+  }
+  expect(model.totals.applicable).toBe(38); expect(model.totals.implemented).toBe(0);
+  expect(model.totals.counts.not_assessed).toBe(38);
+  expect(JSON.stringify(fixture.source)).toBe(before);
+});
+
+test.each([
+  [['security', 'processing_integrity'], 10, 38],
+  [['security', 'privacy'], 17, 51],
+  [['security', 'availability', 'confidentiality', 'processing_integrity', 'privacy'], 20, 61],
+])('SOC selected categories %j retain their canonical groups and readable titles', (categories, groups, criteria) => {
+  const fixture = frameworkDashboardFixture('soc-2', categories), before = JSON.stringify(fixture.source), model = build(fixture);
+  const expected = [...new Map(fixture.source.definitions.map(row => [`${row.category}/${row.control}`, row.control_name])).entries()];
+  expect(model.available).toBe(true); expect(model.domains).toHaveLength(groups);
+  expect(model.domains.map(domain => [domain.id, domain.name])).toEqual(expected);
+  expect(model.totals.subjectIds).toHaveLength(criteria); expect(model.totals.applicable).toBe(criteria);
+  expect(model.domains.flatMap(domain => domain.subjectIds)).toEqual(fixture.source.active_definition_ids);
+  for (const domain of model.domains) {
+    expect(domain.counts).toEqual(Object.fromEntries(['addressed', 'in_progress', 'needs_attention', 'not_assessed'].map(status => [status, fixture.source.assessments.filter(row => domain.subjectIds.includes(row.definition_id) && row.status === status).length])));
+    expect(domain.rate).toBe(domain.implemented / domain.applicable * 100);
+  }
+  expect(model.domains.some(domain => domain.id === 'processing_integrity/PI1')).toBe(categories.includes('processing_integrity'));
+  expect(model.domains.filter(domain => domain.id.startsWith('privacy/'))).toHaveLength(categories.includes('privacy') ? 8 : 0);
+  expect(JSON.stringify(fixture.source)).toBe(before);
+});
+
+test.each([
+  ['legacy catalog', fixture => { fixture.source.framework = {...fixture.source.framework, version: 'retained-unsupported-version'}; }],
+  ['missing criterion', fixture => { fixture.source.assessments.pop(); }],
+  ['missing group mapping', fixture => { fixture.source.definitions = fixture.source.definitions.filter(row => row.control !== 'CC9'); }],
+  ['mismapped readable title', fixture => { fixture.source.definitions = fixture.source.definitions.map((row, index) => index ? row : {...row, control_name: 'Untrusted alternate title'}); }],
+])('SOC label presentation still fails closed for %s', (_name, change) => {
+  const fixture = frameworkDashboardFixture('soc-2'); change(fixture); const before = JSON.stringify(fixture.source), model = build(fixture);
+  expect(model.available).toBe(false); expect(model.domains).toEqual([]); expect(model.totals).toBeNull();
+  expect(JSON.stringify(fixture.source)).toBe(before);
+});
+
+test('SOC display labels leave native navigation labels and protected ISO and CIS domain models unchanged', () => {
+  const iso = frameworkDashboardFixture('iso-27001'), isoBefore = build(iso);
+  const cis = cisWorkspace('synthetic-protected-cis', 1), cisBefore = buildCisDomainProfile(cis, {clientId: 'synthetic-protected-cis', implementationGroup: 1});
+  const soc = frameworkDashboardFixture('soc-2');
+  expect(build(soc).domains[0].name).toBe('Governance and accountability');
+  expect(hierarchyPath('soc-2', soc.source.definitions[0]).at(-1).label).toBe('CC1 — Governance and accountability');
+  expect(isoBefore.available).toBe(true);
+  expect(isoBefore.domains.map(domain => domain.name)).toEqual([...new Map(iso.source.definitions.map(row => [hierarchyPath('iso-27001', row).map(part => part.id).join('/'), hierarchyPath('iso-27001', row).at(-1).label])).values()]);
+  expect(isoBefore.domains[0].name).toBe('4 — Context of the Organization');
+  expect(build(iso)).toEqual(isoBefore);
+  expect(cisBefore.available).toBe(true);
+  expect(cisBefore.domains.map(domain => [domain.id, domain.name])).toEqual(cisSecurityDomainMapping(1).map(domain => [domain.id, domain.label]));
+  expect(buildCisDomainProfile(cis, {clientId: 'synthetic-protected-cis', implementationGroup: 1})).toEqual(cisBefore);
 });

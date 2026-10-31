@@ -1,7 +1,7 @@
 import {readEvidenceFile as readFile} from '@/lib/evidenceFile';
 import { EvidenceCatalogPicker } from './EvidencePanel';
 import { personLabel } from '@/lib/people';
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import {inventorySummaryEnabled} from '@/lib/omniInventorySummary';
 import {socGuidedEnabled} from '@/lib/socGuidedAssessment';
 import {isoGuidedEnabled} from '@/lib/isoGuidedAssessment';
@@ -39,7 +39,7 @@ import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,A
 
 const IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk_id',policies:'policy_id',requirements:'requirement_id',evidence:'evidence_id',vendors:'vendor_id'};
 const SELECT='w-full border border-line bg-surface-card rounded p-2 text-sm';
-export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSaved,onPrevious,onNext,position,breadcrumb,recordManagement=false,reviewManagement=false,onReviews,visualReference=false,cisVisualOrigin,onManage}){
+export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSaved,onPrevious,onNext,position,breadcrumb,recordManagement=false,reviewManagement=false,onReviews,visualReference=false,cisVisualOrigin,onManage,closeRequest=0,onCloseCancelled}){
   const auth=useAuth(),org=useOrg()||{},{user}=auth,aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
   const actorOriginKey=JSON.stringify([user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,PREVIEW_MODE]);
   const inheritedCisVisual=cisVisualOrigin?.key===actorOriginKey && cisVisualOrigin.clientId===clientId
@@ -73,7 +73,19 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   // Keep only this identity's guide mounted on context failure; saving still requires live context.
   const guidedConfiguration=ctx===null?guideConfiguration.current?.configuration:null;
   const dirty=JSON.stringify(form)!==JSON.stringify(savedForm),linkDraft=recordManagement&&!!link.id;
-  const leave=fn=>{if(busy)return;if(dirty||guidedDraft||reviewDraft||controlDraft||itemsDraft||finding||comment.trim()||linkDraft)setPending(()=>fn);else fn();};
+  const leave=useCallback(fn=>{if(busy)return;if(dirty||guidedDraft||reviewDraft||controlDraft||itemsDraft||finding||comment.trim()||linkDraft)setPending(()=>fn);else fn();},[busy,dirty,guidedDraft,reviewDraft,controlDraft,itemsDraft,finding,comment,linkDraft]);
+  // A newly mounted editor adopts the current token; later requests use its native leave guard.
+  const handledCloseRequest=useRef(closeRequest),externalClosePending=useRef(false);
+  useEffect(()=>{
+    if(!isSoc||!open||busy||!closeRequest||handledCloseRequest.current===closeRequest)return;
+    handledCloseRequest.current=closeRequest;
+    externalClosePending.current=true;
+    leave(()=>{externalClosePending.current=false;onOpenChange(false);});
+  },[isSoc,open,busy,closeRequest,leave,onOpenChange]);
+  function cancelLeave(){
+    setPending(null);
+    if(externalClosePending.current){externalClosePending.current=false;onCloseCancelled?.();}
+  }
   useEffect(()=>{if(!dirty&&!guidedDraft&&!reviewDraft&&!controlDraft&&!itemsDraft&&!finding&&!comment.trim()&&!linkDraft)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty,guidedDraft,reviewDraft,controlDraft,itemsDraft,finding,comment,linkDraft]);
   useEffect(()=>{
     const c=new AbortController();
@@ -157,7 +169,7 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     setFinding({request_id:recordUuid(),item_id:item.item_id,title,description:item.text+(item.resolution?'\n\nRecorded resolution: '+item.resolution:''),severity:'medium',owner_id:current.owner_id||'',due_date:'',remediation_title:title});
   }
   async function saveOwner(){return run(async()=>{const {data}=await api.patch(`/framework_assessments/${aid}`,{owner_id:form.owner_id||null,...(record.framework_key==='iso-27001'?{process_owner_id:form.process_owner_id||null}:{}),expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null});setForm(data);setSavedForm(data);setFeedback('Changes saved.');});}
-  const overlays=<><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved assessment is unchanged. Continue editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} cisVisualOrigin={nestedCisVisualOrigin} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>}</>;
+  const overlays=<><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)cancelLeave();}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved assessment is unchanged. Continue editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} cisVisualOrigin={nestedCisVisualOrigin} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>}</>;
   if(recordManagement||reviewManagement)return <><FrameworkRecordAccess reviewsOnly={reviewManagement} state={{open,current,definition,catalog,ctx,form,dirty,busy,error,feedback,writable,comment,link}} actions={{put,saveOwner,run,setComment,setLink,setNested,setReviewDraft,close:()=>leave(()=>onOpenChange(false)),openReviews:url=>leave(()=>onReviews?.(url)),reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}/>{overlays}</>;
 if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{visualReference:cisVisualReference,manageRecord:onManage?()=>leave(onManage):undefined,open,record,definition,form,current,ctx:liveCisContext,guidedConfiguration,related,finding,error,busy,dirty,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),feedback,writable,position,otherDraft:itemsDraft||guidedDraft||reviewDraft||!!finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,run,download,applyGuided,saveGuidedAssessment,stageGuidedImplementation,setGuidedDraft,setFinding,setNested,setFeedback,setReviewDraft,reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');},retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{open,record,definition,form,current,ctx,guidedConfiguration,error,busy,dirty,relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft,otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,saveGuidedAssessment,setGuidedDraft,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
     state={{open,record,definition,catalog,form,current,ctx,guidedConfiguration,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c),otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()}}
