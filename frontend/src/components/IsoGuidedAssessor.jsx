@@ -11,6 +11,7 @@ import OmniGuideCharacter from './OmniGuideCharacter';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import OmniDock from './OmniDock';
 import OmniWindow from './OmniWindow';
+import IsoSequentialInterview from './IsoSequentialInterview';
 import './GuidedAssessor.css';
 import './RefinedOmni.css';
 import './BrawndoCisVisualOmni.css';
@@ -26,7 +27,10 @@ export default function IsoGuidedAssessor(props){
   return <IsoPilot key={user.user_id+':'+props.clientId+':'+(props.record?.framework_assessment_id||'program')} {...props} user={user}/>;
 }
 
-function IsoPilot({clientId,user,record,current=record,programContent,programLabel='ISO 27001 programme with Omnibot',form,assessmentDirty=false,relatedDraft=false,onDraftChange,onSaveAssessment,disabled=false,inline=false,inlineOpen=false,onInlineClose}){
+function IsoPilot({clientId,user,record,current=record,programContent,programLabel='ISO 27001 programme with Omnibot',form,assessmentDirty=false,relatedDraft=false,onDraftChange,onSaveAssessment,disabled=false,inline=false,inlineOpen=false,onInlineClose,sequential=false}){
+  const sequentialInline = !!record && inline && sequential;
+  const [sequentialOpen, setSequentialOpen] = useState(false);
+  const returnSequentialFocus = useRef(false);
   const [theme]=useBrawndoTheme();
   const org=useOrg(),clientName=org?.clients?.find(client=>client.client_id===clientId)?.name||(org?.currentClient?.client_id===clientId?org.currentClient.name:null)||'The organization';
   // A directory refresh changes display context, not interview identity. Explicit
@@ -52,6 +56,19 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
   const stale=!!draft?.revision&&draft.lineage_stale!==false&&!ownApplication;
   const blocked=disabled||busy||!loaded||updated||stale||assessmentDirty||!!validationError;
   useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
+  useEffect(() => {
+    if (sequentialInline && sequentialOpen) {
+      returnSequentialFocus.current = true;
+      const target = heading.current?.querySelector('.iso-sequential-interview h3') || heading.current;
+      target?.focus({preventScroll: true});
+    }
+  }, [sequentialInline, sequentialOpen]);
+  useEffect(() => {
+    if (sequentialInline && !sequentialOpen && !busy && returnSequentialFocus.current) {
+      returnSequentialFocus.current = false;
+      launcher.current?.focus({preventScroll: true});
+    }
+  }, [sequentialInline, sequentialOpen, busy]);
   useEffect(()=>{if(!soaDirty){setSoa(soaFields(current));setSoaBase(JSON.stringify(soaFields(current)));}},[current,soaDirty]);
   useEffect(()=>{onDraftChange?.(dirty||busy);return()=>onDraftChange?.(false);},[dirty,busy,onDraftChange]);
   useEffect(()=>{
@@ -73,7 +90,23 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
     api.get(route,{signal:controller.signal}).then(({data})=>{if(!controller.signal.aborted){adopt(data,true);setLoaded(true);}}).catch(e=>{if(!controller.signal.aborted){setError(formatError(e));setLoaded(true);}});
     return()=>controller.abort();
   },[route,adopt]);
-  function changeMode(value){setMode(value);setPrompt(false);if(value!=='expanded'){if(inline)onInlineClose?.();else launcher.current?.focus({preventScroll:true});}}
+  function changeMode(value) {
+    setMode(value); setPrompt(false);
+    if (value === 'expanded') return;
+    if (!inline) { launcher.current?.focus({preventScroll: true}); return; }
+    if (sequentialInline) setSequentialOpen(false);
+    onInlineClose?.();
+  }
+  function pauseSequential() {
+    setSequentialOpen(false);
+    launcher.current?.focus({preventScroll: true});
+  }
+  function toggleSequential() {
+    if (sequentialOpen) { pauseSequential(); return; }
+    setSequentialOpen(true);
+    // Annex entry retains the native saved-position and separate applicability form.
+    if (!annex && !disabled && !soaDirty && !updated && !validationError && draft && view === 'position') start();
+  }
   function close(){if(busy)return;if(dirty)setConfirmClose(true);else changeMode('collapsed');}
   async function load(){setBusy(true);setError('');try{const {data}=await api.get(route);if(active.current){adopt(data,true);setLoaded(true);}return data;}catch(e){if(active.current)setError(formatError(e));return null;}finally{if(active.current)setBusy(false);}}
   function put(key,value){setAnswers(old=>({...old,[key]:value}));setNotice('');}
@@ -192,13 +225,23 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
   </section>}
   <div className="guided-actions"><Button disabled={disabled||busy||soaDirty||updated||!!validationError} onClick={start}>{draft.revision?'Resume your review':'Start'}</Button><Button variant="outline" disabled={disabled||busy||assessmentDirty||soaDirty} onClick={()=>interviewDirty?setConfirmReload('restart'):setRestart(true)}>Begin a new review</Button></div>
 </>}
-{view==='interview'&&group&&<><div className="omni-group-progress" aria-label={`Question group ${index+1} of ${groups.length}`}><p><strong>Question group {index+1} of {groups.length}</strong><span>{group.title}</span></p><div>{groups.map((g,i)=><span key={g.id} className={i===index?'current':i<index?'done':''}/>)}</div></div><fieldset disabled={blocked} className="omni-question-group"><legend className="sr-only">{group.title}</legend>{group.questions.map((q,i)=><section className="omni-question" key={q.id}>{i===0?<h3>{q.prompt}</h3>:<label htmlFor={'iso-answer-'+q.id}>{q.prompt}</label>}{q.help&&<p className="omni-help">{q.help}</p>}{q.type==='text'?<Textarea id={'iso-answer-'+q.id} aria-label={q.prompt} value={answers[q.id]||''} maxLength={2000} onChange={e=>put(q.id,e.target.value)}/>:<div className="omni-answer-choices" role="group" aria-label={q.prompt}>{q.choices.map(value=><button type="button" key={value} aria-pressed={answers[q.id]===value} onClick={()=>put(q.id,value)}>{value}</button>)}</div>}{q.type!=='text'&&<label className="omni-help" htmlFor={'iso-detail-'+q.id}>How this works / relevant context {q.type==='context'&&answers[q.id]==='Not relevant here'?'(required for this context answer)':'(optional)'}<Textarea id={'iso-detail-'+q.id} maxLength={2000} value={answers[q.id+'_detail']||''} onChange={e=>put(q.id+'_detail',e.target.value)}/></label>}</section>)}{index===groups.length-1&&<><p className="omni-help">Use the question choices for substantive gaps or uncertainty. These optional notes add context; they do not decide readiness.</p>{isoExtraQuestions(answers,version).filter(q=>q.id!=='evidence').map(q=><label key={q.id}>{q.prompt}{q.type==='text'?<Textarea maxLength={2000} value={answers[q.id]||''} onChange={e=>put(q.id,e.target.value)}/>:<select aria-label={q.prompt} value={answers[q.id]||''} onChange={e=>put(q.id,e.target.value)}><option value="">Select an answer</option>{q.choices.map(choice=><option key={choice}>{choice}</option>)}</select>}</label>)}</>}</fieldset><div className="omni-action-bar"><Button variant="outline" disabled={busy||index===0} onClick={()=>setStep(index-1)}>Back</Button><Button disabled={blocked} onClick={next}>Save &amp; next</Button><Button variant="outline" disabled={blocked} onClick={saveClose}>Save &amp; close</Button></div></>}
+{view==='interview'&&group&&(sequentialInline?<IsoSequentialInterview groups={groups} extras={isoExtraQuestions(answers,version).filter(question=>question.id!=='evidence')} answers={answers} step={index} setStep={setStep} put={put} blocked={blocked} busy={busy} onNext={next} onPause={pauseSequential} onSaveClose={saveClose}/>:<><div className="omni-group-progress" aria-label={`Question group ${index+1} of ${groups.length}`}><p><strong>Question group {index+1} of {groups.length}</strong><span>{group.title}</span></p><div>{groups.map((g,i)=><span key={g.id} className={i===index?'current':i<index?'done':''}/>)}</div></div><fieldset disabled={blocked} className="omni-question-group"><legend className="sr-only">{group.title}</legend>{group.questions.map((q,i)=><section className="omni-question" key={q.id}>{i===0?<h3>{q.prompt}</h3>:<label htmlFor={'iso-answer-'+q.id}>{q.prompt}</label>}{q.help&&<p className="omni-help">{q.help}</p>}{q.type==='text'?<Textarea id={'iso-answer-'+q.id} aria-label={q.prompt} value={answers[q.id]||''} maxLength={2000} onChange={e=>put(q.id,e.target.value)}/>:<div className="omni-answer-choices" role="group" aria-label={q.prompt}>{q.choices.map(value=><button type="button" key={value} aria-pressed={answers[q.id]===value} onClick={()=>put(q.id,value)}>{value}</button>)}</div>}{q.type!=='text'&&<label className="omni-help" htmlFor={'iso-detail-'+q.id}>How this works / relevant context {q.type==='context'&&answers[q.id]==='Not relevant here'?'(required for this context answer)':'(optional)'}<Textarea id={'iso-detail-'+q.id} maxLength={2000} value={answers[q.id+'_detail']||''} onChange={e=>put(q.id+'_detail',e.target.value)}/></label>}</section>)}{index===groups.length-1&&<><p className="omni-help">Use the question choices for substantive gaps or uncertainty. These optional notes add context; they do not decide readiness.</p>{isoExtraQuestions(answers,version).filter(q=>q.id!=='evidence').map(q=><label key={q.id}>{q.prompt}{q.type==='text'?<Textarea maxLength={2000} value={answers[q.id]||''} onChange={e=>put(q.id,e.target.value)}/>:<select aria-label={q.prompt} value={answers[q.id]||''} onChange={e=>put(q.id,e.target.value)}><option value="">Select an answer</option>{q.choices.map(choice=><option key={choice}>{choice}</option>)}</select>}</label>)}</>}</fieldset><div className="omni-action-bar"><Button variant="outline" disabled={busy||index===0} onClick={()=>setStep(index-1)}>Back</Button><Button disabled={blocked} onClick={next}>Save &amp; next</Button><Button variant="outline" disabled={blocked} onClick={saveClose}>Save &amp; close</Button></div></>)}
             {view==='summary'&&result&&<><h3>Review your assessment summary</h3><p>{id} — {record.title}</p><p>Proposed implementation status: <strong>{LABELS[result.status]}</strong></p>{edited&&basis!==JSON.stringify(answers)&&<section role="status"><p>Your answers changed after you edited the write-up. Your wording is retained; review it before saving.</p><Button variant="outline" disabled={blocked} onClick={()=>{setNarrative(inline?isoInlineNarrative(id,answers,version,clientName):result.narrative);setEdited(false);setBasis(JSON.stringify(answers));}}>Refresh from answers</Button><Button variant="outline" disabled={blocked} onClick={()=>setBasis(JSON.stringify(answers))}>Keep my wording after review</Button></section>}<label>Current Implementation<Textarea aria-label="Omnibot implementation summary" rows={14} maxLength={20000} disabled={disabled||busy} value={narrative} onChange={e=>{setNarrative(e.target.value);if(!edited)setBasis(JSON.stringify(answers));setEdited(true);}}/></label><p>Saving updates the native implementation and implementation status. Applicability, evidence verification and linked work remain separate.</p><div className="guided-actions"><Button variant="outline" disabled={busy} onClick={()=>{setView('interview');setStep(Math.max(0,groups.length-1));}}>Back to questions</Button><Button disabled={saveDisabled} onClick={()=>requestSave()}>{current?.implementation?.trim()||current?.status!=='not_assessed'?'Update assessment':'Save assessment'}</Button><Button variant="outline" disabled={saveDisabled} onClick={()=>requestSave(true)}>Save &amp; close</Button></div></>}
 {view==='history'&&<><h3>Retained interview history</h3>{history?.items?.map(item=><section key={item.revision}><p>Revision {item.revision} · {item.version} · {item.updated_at}</p><p className="whitespace-pre-wrap">{item.narrative||'Interview progress only.'}</p></section>)}{history&&!history.items.length&&<p>No earlier saved interview snapshots.</p>}{history?.has_more&&<Button variant="outline" disabled={busy} onClick={()=>historyLoad(true)}>Load earlier snapshots</Button>}<Button variant="outline" onClick={()=>setView('position')}>Return to current position</Button></>}
           </>}
         </div>;
   return <div className={'guided-pilot guided-lifecycle omni-refined '+(inline?'assessment-interview':(record?'guided-in-assessment ':'')+'shared-program-omni')} data-theme={!inline?theme:undefined} data-testid="iso-guided-assessment">
-    {inline?<section className="assessment-inline-interview" hidden={!inlineOpen} aria-label="ISO requirement interview"><h3 ref={heading} tabIndex={-1}>Requirement interview · {id}</h3>{panelBody}</section>:<>
+    {inline ? <>
+      {sequentialInline && <div className="cis-guided-launch">
+        <div><h3>Guided assessment</h3><p>One question at a time. Review your answers before updating the assessment. Applicability remains a separate decision.</p></div>
+        <Button ref={launcher} disabled={busy || !loaded} aria-expanded={sequentialOpen} aria-controls={panelId} onClick={toggleSequential}>
+          {sequentialOpen ? 'Pause & return' : dirty || Object.keys(answers).length || draft?.revision ? 'Resume guided assessment' : 'Begin guided assessment'}
+        </Button>
+      </div>}
+      <section id={sequentialInline ? panelId : undefined} ref={sequentialInline ? heading : undefined} tabIndex={sequentialInline ? -1 : undefined} className="assessment-inline-interview" hidden={sequentialInline ? !sequentialOpen : !inlineOpen} aria-label="ISO requirement interview">
+        <h3 ref={sequentialInline ? undefined : heading} tabIndex={-1}>Requirement interview · {id}</h3>{panelBody}
+      </section>
+    </> : <>
     <OmniDock preferenceKey={key} freePosition inAssessment={!!record} name="Omnibot" focused visualReference>
       {mode==='dismissed'?<Button variant="outline" size="sm" ref={launcher} onClick={()=>changeMode('collapsed')}>Show Omnibot</Button>:<>
         <button type="button" ref={launcher} className={'omni-launch-button '+(mode==='minimized'?'is-minimized':'')} aria-label="Open Omnibot guide" aria-expanded={mode==='expanded'} aria-controls={mode==='expanded'?panelId:undefined} aria-describedby={stateId} onClick={()=>changeMode('expanded')}><OmniGuideCharacter/></button>

@@ -1,4 +1,5 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useId,useRef,useState} from 'react';
+import {ChevronRight} from 'lucide-react';
 import {isoGuideEntry} from './IsoRequirementGuide';
 import IsoGuidedAssessor from './IsoGuidedAssessor';
 import IsoAuditGuide from './IsoAuditGuide';
@@ -8,13 +9,14 @@ import RemediationTickets from './RemediationTickets';
 import TicketAssignment from './TicketAssignment';
 import {auditProgrammeMetrics,auditProgrammeYears} from '@/lib/isoProgramMetrics';
 import './IsoAssessment.css';
+import './IsoAuditProgram.css';
 import './BrawndoCisSafeguard.css';
 import {useRescueFocus} from '@/lib/focusRescue';
 import {useSearchParams} from 'react-router-dom';
 import api,{formatError} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
 import {isInternal} from '@/lib/permissions';
-import {isoAuditCatalog,auditPackage,auditActivationPlan,auditQuarter,auditProgress,blankAuditItem,AUDIT_STATUSES,AUDIT_RESULTS} from '@/lib/isoAudit';
+import {isoAuditCatalog,auditPackage,auditActivationPlan,auditQuarter,auditProgress,auditItemComplete,blankAuditItem,AUDIT_STATUSES,AUDIT_RESULTS} from '@/lib/isoAudit';
 import {frameworkDefinition} from '@/lib/frameworks';
 import {sourcePresentation} from '@/lib/frameworkWorkspace';
 import {occurrenceId} from '@/lib/reviewOccurrences';
@@ -33,6 +35,8 @@ import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,A
 const SELECT='block w-full border border-line rounded p-2 bg-surface-card text-sm';
 const content=value=><p className="whitespace-pre-wrap text-sm">{value}</p>;
 const writableReview=(user,r)=>isInternal(user)||user?.role==='client_grc_manager'||user?.role==='client_contributor'&&[r.owner_id,r.reviewer_id].includes(user.user_id);
+const activate=callback=>event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();callback();}};
+const AuditProgressBar=({complete,total,label})=><span className="iso-audit-progress-bar" role="img" aria-label={`${label}: ${complete} of ${total} checks complete`}><i style={{width:`${total?complete/total*100:0}%`}}/></span>;
 
 function IssuedReport({id}) {
   const [report,setReport]=useState(null),[error,setError]=useState('');
@@ -94,7 +98,7 @@ function AuditItemWorkspace({review,centralReview=review,item,position,previous,
     <IsoGuidedAssessor clientId={review.client_id} configuration={configuration} programLabel="Internal Audit" programContent={({close})=><IsoAuditGuide review={review} item={item} historical={frozen} onOpen={()=>{close();setNested({kind:'reviews',record:centralReview,initialValues:frozen?{occurrence:review}:undefined});}}/>}/>
     <AssessmentLayout criteriaSummary="Omnisciente guidance for assessing this requirement. These are not additional ISO requirements." criteriaTitle="ISO assessment criteria" reference={`ISO/IEC 27001:2022 · ${item.definition_id}`} key={review.client_id+':'+review.review_id+':'+oid+':'+item.key}
       summary={`Examine ${item.reference} against the agreed audit criteria and record an independent conclusion. ${item.intent}`}
-      requirement={<AssessmentRequirement heading={item.definition_id.startsWith('A.')?'Annex A control & reference':'ISMS requirement & reference'} text={source.text||guide?.plain} official={!!source.text} trigger={criteria?.trigger} source={source.url} label="Official ISO source"/>}
+      requirement={<details className="iso-audit-source"><summary>{item.definition_id.startsWith('A.')?'Annex A control & reference':'ISMS requirement & reference'}</summary><AssessmentRequirement heading={item.definition_id.startsWith('A.')?'Annex A control & reference':'ISMS requirement & reference'} text={source.text||guide?.plain} official={!!source.text} trigger={criteria?.trigger} source={source.url} label="Official ISO source"/></details>}
       checklist={<AssessmentChecklist title={`${item.reference} checklist`} items={criteria?.coverage==='verified'?criteria.criteria:[]} value={form.assessment_checks||[]} disabled={disabled} onChange={value=>put('assessment_checks',value)}/>}
       findings={<AssessmentStep title="Findings"><p className="text-xs text-ink-secondary">Observations and Nonconformities need a shared Finding before package closure. Completing the audit does not complete remediation.</p>
       <RemediationTickets records={{findings:linkedFindings,tasks:(related?.tasks||[]).filter(t=>form.finding_ids.includes(t.finding_id)),reviews:[centralReview]}} clientId={review.client_id} users={users} onOpen={setNested} disabled={busy}/>
@@ -127,6 +131,9 @@ export default function IsoAuditWorkspace({clientId,configuration}) {
   const [data,setData]=useState(null),[users,setUsers]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
   const [draft,setDraft]=useState({start_date:'',first_package:isoAuditCatalog.packages[0].key,auditor_id:null,scope:'',independence:''}),[preview,setPreview]=useState(false);
   const [itemKey,setItemKey]=useState(null),[search,setSearch]=useState(''),[nested,setNested]=useState(null),packageHeading=useRef(null);
+  const [expandedAreas,setExpandedAreas]=useState([]),areaPrefix=useId();
+  const selectedPackage=params.get('package'),selectedOccurrence=params.get('audit_occurrence');
+  useEffect(()=>{setExpandedAreas([]);},[clientId,selectedPackage,selectedOccurrence]);
   useEffect(()=>{
     const c=new AbortController();setError('');setData(null);setUsers([]);setItemKey(null);setSearch('');
     Promise.all([api.get('/iso-audit',{params:{client_id:clientId},signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal})]).then(([a,b])=>{if(!c.signal.aborted){setData(a.data);setUsers(b.data);if(a.data.program?.status==='configuring')setDraft(a.data.program.configuration);}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});
@@ -138,17 +145,23 @@ export default function IsoAuditWorkspace({clientId,configuration}) {
   useRescueFocus(packageHeading,review?.review_id);
   const pack=review&&auditPackage(review.iso_audit.package_key),items=pack?.items.filter(i=>(i.reference+' '+i.title+' '+i.area).toLowerCase().includes(search.toLowerCase()))||[];
   const item=pack?.items.find(i=>i.key===itemKey),index=items.findIndex(i=>i.key===itemKey),plan=auditActivationPlan(draft.start_date,draft.first_package);
+  const areas=[];
+  for(const definition of pack?.items||[]){let area=areas.find(group=>group.label===definition.area);if(!area){area={label:definition.area,items:[]};areas.push(area);}area.items.push(definition);}
+  useEffect(()=>{if(item)setExpandedAreas(current=>current.includes(item.area)?current:[...current,item.area]);},[item]);
+  const matchingKeys=new Set(items.map(definition=>definition.key)),filtering=!!search.trim();
+  const allAreasExpanded=areas.length>0&&areas.every(area=>expandedAreas.includes(area.label));
   async function run(fn){setBusy(true);setError('');try{await fn();}catch(e){setError(formatError(e));}finally{setBusy(false);}}
   const savedReview=r=>setData(old=>({...old,reviews:old.reviews.map(x=>x.review_id===r.review_id?r:x)}));
   const writable=review&&!historical&&writableReview(user,review);
   if(!data)return <div role={error?'alert':'status'}>{error||'Loading audit program…'}{error&&<Button onClick={()=>setRevision(n=>n+1)}>Retry</Button>}</div>;
   const years=auditProgrammeYears(data.reviews),now=String(new Date().getFullYear()),year=params.get('audit_year')||(years.includes(now)?now:years.at(-1)||now),progress=auditProgrammeMetrics(data.reviews,year);
+  const yearOptions=[...new Set([...years,year])].sort();
   const openAudit=record=>{const p=new URLSearchParams(params);p.set('package',record.package_key);if(record.occurrence_id)p.set('audit_occurrence',record.occurrence_id);else p.delete('audit_occurrence');setParams(p);setItemKey(null);setSearch('');};
-  return <section className="space-y-4" aria-label="Internal Audit Program">
+  return <section className="space-y-4 iso-audit-program" aria-label="Internal Audit Program">
     {!item&&<IsoGuidedAssessor clientId={clientId} configuration={configuration} programLabel="Internal Audit" programContent={({close})=><IsoAuditGuide review={review} onOpen={review?()=>{close();setNested({kind:'reviews',record:current,initialValues:historical?{occurrence:historical}:undefined});}:undefined}/>}/>}
     <p className="text-sm text-ink-secondary">Quarterly grouping organizes this program; ISO requires planned intervals and does not mandate quarters. Audit completion is independent of corrective-action closure.</p>
-    <label className="block text-sm">Audit-program year <select aria-label="Audit-program year" className={SELECT} value={year} onChange={e=>{const p=new URLSearchParams(params);p.set('audit_year',e.target.value);setParams(p);}}>{(years.length?years:[now]).map(y=><option key={y}>{y}</option>)}</select></label>
-    <div className="iso-program-grid" aria-label="Quarterly audit progress">{progress.quarters.map(q=><section key={q.quarter} className="bcis-card p-4"><h3>Q{q.quarter} · {year}</h3><p>{q.total?`${q.complete} of ${q.total} planned checks complete · ${Math.round(q.complete/q.total*100)}%`:'Not scheduled'}</p>{q.records.map(r=><Button key={r.review_id+':'+r.occurrence_id} variant="ghost" size="sm" onClick={()=>openAudit(r)}>{auditPackage(r.package_key).title}{r.occurrence_id?' · historical occurrence':''}</Button>)}</section>)}</div>
+    <label className="block text-sm">Audit-program year <select aria-label="Audit-program year" className={SELECT} value={year} onChange={e=>{const p=new URLSearchParams(params);p.set('audit_year',e.target.value);setParams(p);}}>{yearOptions.map(y=><option key={y}>{y}</option>)}</select></label>
+    <div className="iso-program-grid" aria-label="Quarterly audit progress">{progress.quarters.map(q=><section key={q.quarter} className="bcis-card p-4 iso-audit-quarter"><h3>Q{q.quarter} · {year}</h3><p>{q.total?`${q.complete} of ${q.total} planned checks complete · ${Math.round(q.complete/q.total*100)}%`:'Not scheduled'}</p><AuditProgressBar complete={q.complete} total={q.total} label={`Q${q.quarter} ${year}`}/>{q.records.map(r=><Button key={r.review_id+':'+r.occurrence_id} variant="ghost" size="sm" onClick={()=>openAudit(r)}>{auditPackage(r.package_key).title}{r.occurrence_id?' · historical occurrence':''}</Button>)}</section>)}</div>
     {error&&<p role="alert" className="text-semantic-critical">{error}</p>}
     {!data.program||data.program.status==='configuring'?<section className="border border-line rounded-lg p-4 space-y-4"><h3 className="font-medium">{data.program?'Finish interrupted activation':'Program not activated'}</h3><p className="text-sm">Choose a prospective start. No audit deadlines are backdated to onboarding. Existing internal-audit Reviews remain unchanged; inspect them before activating a new package schedule.</p>
       {isInternal(user)?<fieldset disabled={busy} className="space-y-3">
@@ -163,12 +176,22 @@ export default function IsoAuditWorkspace({clientId,configuration}) {
     </section>:<>
       <p className="text-xs text-ink-secondary">Activated {data.program.activated_at.slice(0,10)} · program starts {data.program.configuration.start_date}. Current assignments and due dates come from Reviews.</p>
       <Button variant="ghost" size="sm" onClick={()=>selectPackage(null)}>All audit packages</Button>
-      {!review?<div className="framework-category-list">{data.reviews.map(r=>{const p=auditProgress(r.iso_audit),last=r.occurrences?.filter(o=>o.iso_audit&&o.completed_at).at(-1);return <button key={r.review_id} className="framework-category-row" onClick={()=>selectPackage(r.iso_audit.package_key)}><h3 className="font-medium">{auditPackage(r.iso_audit.package_key).title}</h3><p className="text-sm">{auditQuarter(r.due_date)} · Cycle {r.iso_audit.cycle} · {p.complete} / {p.total} complete</p><p className="text-xs text-ink-secondary">{r.status.replaceAll('_',' ')} · {p.nonconformities} Nonconformities · {p.observations} Observations</p>{last&&<p className="text-xs">Last completed {last.completed_at.slice(0,10)}{last.finding_count?' · Findings raised':''}</p>}</button>;})}</div>:<>
+      {!review?<div className="framework-category-list iso-audit-packages">{data.reviews.map(r=>{const p=auditProgress(r.iso_audit),last=r.occurrences?.filter(o=>o.iso_audit&&o.completed_at).at(-1);return <button key={r.review_id} className="framework-category-row iso-audit-package" onClick={()=>selectPackage(r.iso_audit.package_key)}><h3 className="font-medium">{auditPackage(r.iso_audit.package_key).title}</h3><p className="text-sm">{auditQuarter(r.due_date)} · Cycle {r.iso_audit.cycle} · {p.complete} / {p.total} complete</p><AuditProgressBar complete={p.complete} total={p.total} label={auditPackage(r.iso_audit.package_key).title}/><p className="text-xs text-ink-secondary">{r.status.replaceAll('_',' ')} · {p.nonconformities} Nonconformities · {p.observations} Observations</p>{last&&<p className="text-xs">Last completed {last.completed_at.slice(0,10)}{last.finding_count?' · Findings raised':''}</p>}</button>;})}</div>:<>
         <header className="flex flex-wrap justify-between gap-3"><div><h3 ref={packageHeading} className="font-semibold">{pack.title}</h3><p className="text-sm">Cycle {review.iso_audit.cycle} · {auditQuarter(review.due_date)} · {auditProgress(review.iso_audit).complete} / {pack.items.length} complete</p><p className="text-xs text-ink-secondary">Auditor: {users.find(u=>u.user_id===review.owner_id)?.name||'Historical / unassigned'} · Due {review.due_date?.slice(0,10)}</p></div><Button variant="outline" onClick={()=>setNested({kind:'reviews',record:current,initialValues:historical?{occurrence:historical}:undefined})}>Open central Review</Button></header>
         <p className="text-sm">{review.scope}</p>
         <label className="text-sm block">Audit occurrence<select className={SELECT} aria-label="Audit occurrence" value={historical?.occurrence_id||''} onChange={e=>{const p=new URLSearchParams(params);if(e.target.value)p.set('audit_occurrence',e.target.value);else p.delete('audit_occurrence');setParams(p);setItemKey(null);}}><option value="">{'Current cycle '+current.iso_audit.cycle}</option>{current.occurrences?.filter(o=>o.iso_audit).map(o=><option key={o.occurrence_id} value={o.occurrence_id}>{'Cycle '+o.iso_audit.cycle+' · completed '+o.completed_at.slice(0,10)}</option>)}</select></label>
-        <Input aria-label="Search audit items" placeholder="Reference, title or audit area…" value={search} onChange={e=>setSearch(e.target.value)}/>
-        <div className="divide-y divide-line border border-line rounded-lg">{items.map(i=>{const state=review.iso_audit.items[i.key]||blankAuditItem();return <button key={i.key} data-audit-item={i.key} className="w-full p-3 text-left flex flex-wrap justify-between gap-2 hover:bg-surface-subtle" onClick={()=>setItemKey(i.key)}><span className="text-sm">{i.reference} · {i.title}<span className="block text-xs text-ink-secondary">{i.area}</span></span><span className="text-xs">{AUDIT_STATUSES[state.status]} · {AUDIT_RESULTS[state.result]||'Result not recorded'}</span></button>;})}</div>
+        <div className="iso-audit-register-toolbar"><div><h3>Audit workpapers</h3><p>{items.length} of {pack.items.length} checks in this view.</p></div><Input aria-label="Search audit items" placeholder="Reference, title or audit area…" value={search} onChange={e=>setSearch(e.target.value)}/>
+          {filtering?<Button variant="ghost" size="sm" onClick={()=>setSearch('')}>Clear audit search</Button>:<Button variant="ghost" size="sm" onClick={()=>setExpandedAreas(allAreasExpanded?[]:areas.map(area=>area.label))}>{allAreasExpanded?'Collapse all audit areas':'Expand all audit areas'}</Button>}
+        </div>
+        <div className="iso-audit-areas">{areas.map((area,areaIndex)=>{
+          const hits=area.items.filter(definition=>matchingKeys.has(definition.key));if(!hits.length)return null;
+          const open=filtering||expandedAreas.includes(area.label),panelId=`${areaPrefix}-${areaIndex}`,complete=area.items.filter(definition=>auditItemComplete(review.iso_audit.items[definition.key]||blankAuditItem())).length;
+          const toggle=()=>setExpandedAreas(current=>current.includes(area.label)?current.filter(label=>label!==area.label):[...current,area.label]);
+          return <section key={area.label} className="iso-audit-area"><button type="button" className="iso-audit-area-toggle" data-audit-area={area.label} disabled={filtering} aria-expanded={open} aria-controls={panelId}
+            aria-label={filtering?`${area.label}. Matching results stay expanded; clear audit search to collapse.`:`Open ${area.label}`} onClick={filtering?undefined:toggle} onKeyDown={filtering?undefined:activate(toggle)}>
+            <ChevronRight aria-hidden="true"/><span><strong>{area.label}</strong><small>{complete} of {area.items.length} checks complete</small></span><AuditProgressBar complete={complete} total={area.items.length} label={area.label}/>
+          </button>{open&&<div id={panelId} className="iso-audit-area-items">{hits.map(i=>{const state=review.iso_audit.items[i.key]||blankAuditItem();return <button key={i.key} data-audit-item={i.key} className="iso-audit-item" onClick={()=>setItemKey(i.key)}><span>{i.reference} · {i.title}<small>{i.area}</small></span><span>{AUDIT_STATUSES[state.status]} · {AUDIT_RESULTS[state.result]||'Result not recorded'}</span></button>;})}</div>}</section>;
+        })}</div>
         {!items.length&&<p role="status">No audit items match this search.</p>}
         <details className="border border-line rounded p-4"><summary className="cursor-pointer text-sm font-medium">Issued report & package closure</summary><p className="text-xs my-3">All items need an audit result or justified N/A. Observations and Nonconformities require a shared Finding. Link the issued report, then complete the central Review. Open remediation remains open.</p>
           <IssuedReport id={review.iso_audit.report_evidence_id}/>

@@ -1,0 +1,56 @@
+.iso-program-register { min-width: 0; overflow: hidden; }
+.iso-program-register .iso-register-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px 18px; padding: 18px 24px; border-bottom: 1px solid var(--cs-border); }
+.iso-program-register h2 { margin: 0; color: var(--cs-text); font: 600 15px/1.35 var(--font-heading); }
+.iso-program-register .iso-register-toolbar p { margin-top: 3px; color: var(--cs-muted); font-size: 12.5px; }
+.iso-program-register .register-search { width: min(310px,100%); }
+.iso-program-register .iso-register-applicability { display: flex; flex-direction: column; gap: 5px; color: var(--cs-muted); font-size: 12px; }
+.iso-program-register .iso-register-applicability select { padding: 7px 10px; color: var(--cs-text); background: var(--cs-card); border: 1px solid var(--cs-border); border-radius: 7px; }
+.iso-program-register .iso-register-summary { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 24px; }
+.iso-program-register .bcis-crumbs { margin: 0; }
+.iso-program-register .iso-register-link { color: var(--cs-link); font-size: 12px; font-weight: 600; }
+.iso-program-register .iso-register-result-count { margin: 0; padding: 0 24px 12px; color: var(--cs-muted); font-size: 12px; }
+.iso-program-register .iso-register-group { border-top: 1px solid var(--cs-border); }
+.iso-program-register .iso-register-toggle { display: grid; grid-template-columns: 16px minmax(0,1fr) minmax(160px,.55fr); gap: 16px; align-items: center; width: 100%; padding: 13px 16px; color: var(--cs-text); text-align: left; }
+.iso-program-register .iso-register-toggle:hover { background: var(--cs-subtle); }
+.iso-program-register .iso-register-toggle:disabled { cursor: default; }
+.iso-program-register .iso-register-toggle:disabled:hover { background: transparent; }
+.iso-program-register .iso-register-chevron { width: 14px; height: 14px; color: var(--cs-muted); }
+.iso-program-register .iso-register-toggle[aria-expanded="true"] > .iso-register-chevron { transform: rotate(90deg); }
+.iso-program-register .iso-register-name { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.iso-program-register .iso-register-name strong { font: 600 13.5px/1.35 var(--font-heading); }
+.iso-program-register .iso-register-name small { color: var(--cs-muted); font-size: 12px; }
+.iso-program-register .iso-register-name small span { display: block; margin-top: 3px; }
+.iso-program-register .iso-register-status-bar { display: flex; gap: 2px; height: 10px; border-radius: 4px; overflow: hidden; background: var(--cs-subtle); }
+.iso-program-register .iso-register-status-bar i { display: block; height: 100%; min-width: 2px; }
+.iso-program-register .is-good { background: var(--cs-good); }
+.iso-program-register .is-attention { background: var(--cs-attention); }
+.iso-program-register .is-critical { background: var(--cs-critical); }
+.iso-program-register .is-neutral { background: var(--cs-neutral-fill); }
+.iso-program-register .iso-register-panel { min-width: 0; padding: 0 14px 14px; }
+.iso-program-register .iso-register-panel > .iso-register-group { border: 1px solid var(--cs-border); border-radius: 8px; overflow: hidden; }
+.iso-program-register .iso-register-panel > .iso-register-group + .iso-register-group { margin-top: 8px; }
+.iso-program-register .iso-register-warning { margin-top: 4px; color: var(--cs-critical); font-size: 12px; }
+.iso-program-register .iso-register-empty { padding: 18px 24px; color: var(--cs-muted); font-size: 13px; }
+.iso-program-register .cis-results { min-width: 0; }
+.iso-program-register .cis-results table { table-layout: fixed; width: 100%; }
+.iso-program-register .cis-results :is(th,td) { overflow-wrap: anywhere; }
+.iso-program-register .cis-results th { white-space: normal; }
+.iso-program-register .cis-results-open { width: 100%; min-width: 0; }
+.iso-program-register .cis-pill, .iso-program-register .cis-flag { white-space: normal; }
+.iso-program-register :is(button,input,select):focus-visible { outline: 2px solid var(--cs-focus); outline-offset: -3px; }
+
+@media(max-width:760px) {
+  .iso-program-register .iso-register-toolbar, .iso-program-register .iso-register-summary { padding: 16px; }
+  .iso-program-register .register-search { width: 100%; }
+  .iso-program-register .iso-register-result-count { padding: 0 16px 12px; }
+  .iso-program-register .iso-register-toggle { grid-template-columns: 14px minmax(0,1fr); gap: 8px 12px; }
+  .iso-program-register .iso-register-status-bar { grid-column: 2; }
+  .iso-program-register .iso-register-panel { padding: 0 8px 8px; }
+  .iso-program-register .cis-results thead { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); }
+  .iso-program-register .cis-results tbody { display: block; }
+  .iso-program-register .cis-results tr { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); border-bottom: 1px solid var(--cs-border); }
+  .iso-program-register .cis-results tr:last-child { border-bottom: 0; }
+  .iso-program-register .cis-results td:nth-child(n) { display: block; border: 0; padding: 10px; }
+  .iso-program-register .cis-results td:first-child { grid-column: 1/-1; }
+  .iso-program-register .cis-results td[data-label]::before { display: block; margin-bottom: 5px; color: var(--cs-muted); font-size: 11px; content: attr(data-label); }
+}

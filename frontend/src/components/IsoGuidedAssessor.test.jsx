@@ -527,3 +527,171 @@ test('native inline ISO editor remains outside the floating guide presentation',
   expect(guide.querySelector('.cis-omni-owl')).toBeNull();
   expect(guide.querySelector('section[aria-label="ISO requirement interview"]')).toBeTruthy();
 });
+
+async function openSequential({startAnnex = true, settle} = {}) {
+  await render({inline: true, inlineOpen: true, sequential: true});
+  await settle?.();
+  await click(button('Resume guided assessment') ? 'Resume guided assessment' : 'Begin guided assessment');
+  if (startAnnex && props.record.definition_id.startsWith('A.') && !props.disabled) await click(stored.revision ? 'Resume your review' : 'Start');
+}
+async function answerSequential(value) {
+  const fieldset = document.querySelector('.iso-sequential-interview fieldset');
+  const select = fieldset?.querySelector('select');
+  if (!select || !value && select.value) return;
+  const key = fieldset.dataset.questionId;
+  const choice = value || (key === 'additional_gap' || key === 'additional_confirmation' ? 'No' : [...select.options].find(option => ['Yes', 'Relevant'].includes(option.value))?.value);
+  if (choice) await changeInput(select, choice);
+}
+async function completeSequential(settle) {
+  for (let guard = 0; guard < 80 && !document.body.textContent.includes('Review your assessment summary'); guard++) {
+    await answerSequential();
+    await click(button('Review summary') ? 'Review summary' : button('Review answers') ? 'Review answers' : 'Continue');
+    await settle?.();
+  }
+  expect(document.body.textContent).toContain('Review your assessment summary');
+}
+
+test.each(['4.1', 'A.5.1', 'A.6.1', 'A.7.1', 'A.8.13'])('%s sequential questions keep group checkpoints separate from exact reviewed native saving', async id => {
+  setup(id); await openSequential(); await completeSequential();
+  const groups = isoGroups(id, stored.answers, stored.version);
+  expect(api.put.mock.calls.map(([, body]) => body.step)).toEqual([...groups.slice(1).map((_, index) => index + 1), groups.length - 1]);
+  expect(stored.completed).toBe(true); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(props.current.implementation).toBe(''); expect(props.current.status).toBe('not_assessed'); expect(props.current.verification).toBe('not_verified');
+  const text = document.querySelector('[aria-label="Omnibot implementation summary"]').value;
+  expect(text).toContain('\n\nControls in place\n'); expect(text).toBe(isoInlineNarrative(id, stored.answers, stored.version, 'Agent 2 ISO fixture'));
+  await click('Save assessment');
+  expect(props.onSaveAssessment).toHaveBeenCalledWith({implementation: text, status: 'addressed', guided_assessment_source: {version: stored.version, revision: stored.revision, generated_at: stored.generated_at}}, expect.any(String));
+  expect(document.querySelector('.assessment-inline-interview').hidden).toBe(true);
+  expect(document.activeElement).toBe(button('Resume guided assessment'));
+  await act(async () => root.unmount()); root = createRoot(container); await openSequential();
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(text);
+});
+
+test.each(['', 'included', 'excluded'])('sequential Annex entry keeps its %s applicability decision and Current position accessible before questions', async decision => {
+  setup('A.5.1');
+  props.current = {...props.current, soa_applicability: decision, soa_justification: decision ? 'Retained scoped justification.' : '', implementation: 'Existing native implementation.', status: 'in_progress'};
+  props.form = copy(props.current); const native = copy(props.current);
+  await openSequential({startAnnex: false});
+  expect(document.body.textContent).toContain('Current saved position');
+  expect(document.querySelector('[aria-label="Statement of Applicability decision"]')).toBeTruthy();
+  expect(document.body.textContent).toContain('Saved decision: ' + (decision === 'included' ? 'Included' : decision === 'excluded' ? 'Excluded' : 'Undetermined'));
+  expect(document.querySelector('.iso-sequential-interview')).toBeNull(); expect(button('Start')).toBeTruthy();
+  expect(api.put).not.toHaveBeenCalled(); expect(props.onSaveAssessment).not.toHaveBeenCalled(); expect(props.current).toEqual(native);
+  await click('Start'); expect(document.querySelector('.iso-sequential-interview')).toBeTruthy();
+  await click('Current position'); expect(document.querySelector('[aria-label="Statement of Applicability decision"]')).toBeTruthy();
+  expect(props.current).toEqual(native);
+});
+
+test('sequential Pause retains unsaved answers, cursor and dirty protection without writes', async () => {
+  setup('A.6.1'); await openSequential(); await answerSequential(); await click('Continue'); await answerSequential('Partially');
+  const question = document.querySelector('.iso-sequential-interview fieldset').dataset.questionId;
+  const reads = api.get.mock.calls.length;
+  await click('Pause & return'); expect(document.querySelector('.assessment-inline-interview').hidden).toBe(true);
+  expect(api.put).not.toHaveBeenCalled(); expect(props.onSaveAssessment).not.toHaveBeenCalled(); expect(props.onDraftChange).toHaveBeenLastCalledWith(true);
+  expect(document.activeElement).toBe(button('Resume guided assessment')); await click('Resume guided assessment');
+  expect(document.querySelector('.iso-sequential-interview fieldset').dataset.questionId).toBe(question);
+  expect(document.querySelector('.iso-sequential-interview select').value).toBe('Partially');
+  expect(document.activeElement).toBe(document.querySelector('.iso-sequential-interview h3'));
+  expect(api.get.mock.calls.length).toBe(reads); expect(stored.answers).toEqual({});
+  await click('Save & close'); expect(stored.completed).toBe(false); expect(stored.step).toBe(0); expect(stored.answers[question]).toBe('Partially');
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('sequential Pause also retains an unsaved applicability decision without checkpointing or saving it', async () => {
+  setup('A.5.1'); props.current = {...props.current, soa_applicability: '', soa_justification: ''}; props.form = copy(props.current);
+  await openSequential({startAnnex: false});
+  await changeInput('[aria-label="Omnibot SoA applicability"]', 'included');
+  await changeInput('[aria-label="Omnibot SoA justification"]', 'Unsaved deliberate risk-treatment justification.');
+  const reads = api.get.mock.calls.length;
+  await click('Pause & return'); expect(document.activeElement).toBe(button('Resume guided assessment'));
+  await click('Resume guided assessment');
+  expect(document.querySelector('[aria-label="Omnibot SoA applicability"]').value).toBe('included');
+  expect(document.querySelector('[aria-label="Omnibot SoA justification"]').value).toBe('Unsaved deliberate risk-treatment justification.');
+  expect(button('Start').disabled).toBe(true); expect(props.onDraftChange).toHaveBeenLastCalledWith(true);
+  expect(api.get.mock.calls.length).toBe(reads); expect(api.put).not.toHaveBeenCalled(); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(props.current.soa_applicability).toBe(''); expect(props.current.status).toBe('not_assessed');
+});
+
+test('sequential scope explanation and failed completion preserve answers without implying applicability or native saving', async () => {
+  setup('6.3'); await openSequential(); await answerSequential(); await click('Continue');
+  await answerSequential('Not relevant here'); await click('Continue'); await answerSequential(); await click('Continue'); await answerSequential(); await click('Review answers'); await click('Review summary');
+  expect(document.body.textContent).toContain('Explain why this context is not relevant here.'); expect(api.put).toHaveBeenCalledTimes(1);
+  await click('Edit answer 2'); await changeInput(document.getElementById('iso-detail-ISO-6.3-change-context'), 'No ISMS changes were identified for this specific period.');
+  await click('Continue'); await click('Continue'); await click('Review answers'); failWrite = true; await click('Review summary');
+  expect(document.body.textContent).toContain('Synthetic save unavailable');
+  expect(stored.step).toBe(1); expect(stored.completed).toBe(false); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  failWrite = false; await click('Review summary'); expect(document.body.textContent).toContain('Review your assessment summary');
+  expect(stored.answers['ISO-6.3-change-context_detail']).toBe('No ISMS changes were identified for this specific period.');
+  expect(stored.result.status).not.toBe('not_applicable'); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('sequential manual wording survives revised answers, replacement cancellation and an unconfirmed native save', async () => {
+  props.current = {...props.current, implementation: 'Existing saved native wording.', status: 'addressed'}; props.form = copy(props.current);
+  await openSequential(); await completeSequential(); const text = 'Exact reviewed wording.\n\nRetained second paragraph.';
+  await changeInput('[aria-label="Omnibot implementation summary"]', text); await click('Back to questions'); await answerSequential('Partially'); await completeSequential();
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(text); expect(button('Update assessment').disabled).toBe(true);
+  await click('Keep my wording after review'); await click('Update assessment'); await click('Cancel');
+  expect(props.onSaveAssessment).not.toHaveBeenCalled(); expect(props.current.implementation).toBe('Existing saved native wording.');
+  props.onSaveAssessment.mockResolvedValueOnce(false); await click('Update assessment'); await click('Yes, update assessment');
+  expect(document.body.textContent).toContain('The assessment save could not be confirmed'); expect(document.querySelector('.assessment-inline-interview').hidden).toBe(false);
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(text); expect(stored.narrative).toBe(text);
+  expect(props.current.implementation).toBe('Existing saved native wording.'); expect(props.current.verification).toBe('not_verified');
+});
+
+test('sequential applicability saving retains its two-field contract and still requires comparison of a changed interview base', async () => {
+  setup('A.5.1'); await openSequential(); await completeSequential(); const before = copy(stored);
+  props.current = {...props.current, implementation: stored.narrative, status: stored.result.status, guided_assessment_source: {version: stored.version, revision: stored.revision, by: 'iso-actor'}}; props.form = copy(props.current);
+  nativeDecisionWriter(); await render(); await click('Current position'); await click('Reassess applicability');
+  await changeInput('[aria-label="Omnibot SoA justification"]', 'Changed obligations require a fresh comparison.'); await click('Save applicability decision');
+  expect(props.onSaveAssessment.mock.calls[0][0]).toEqual({soa_applicability: 'included', soa_justification: 'Changed obligations require a fresh comparison.'});
+  expect(stored.answers).toEqual(before.answers); expect(stored.narrative).toBe(before.narrative); expect(stored.revision).toBe(before.revision);
+  expect(document.body.textContent).toContain('saved assessment or scope changed'); expect(button('Compare & continue')).toBeTruthy();
+  await click('Resume your review'); expect(button('Update assessment').disabled).toBe(true);
+  await click('Compare & continue'); await act(async () => document.querySelector('input[type="checkbox"]').click()); await click('Retain answers & continue');
+  expect(api.put.mock.calls.at(-1)[1]).toMatchObject({rebase: true, answers: before.answers, narrative: before.narrative, completed: false, result: null, expected_revision: before.revision, base_assessment_token: props.current.last_saved});
+  expect(props.current.implementation).toBe(before.narrative); expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);
+});
+
+test('sequential read-only, related drafts and native drafts retain their separate write boundaries', async () => {
+  await render({disabled: true}); await openSequential(); expect(button('Start').disabled).toBe(true); expect(api.put).not.toHaveBeenCalled();
+  await render({disabled: false, relatedDraft: true}); await click('Start'); await completeSequential();
+  expect(stored.completed).toBe(true); expect(button('Save assessment').disabled).toBe(true); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await render({relatedDraft: false, assessmentDirty: true}); expect(button('Save assessment').disabled).toBe(true); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('sequential entry cannot start or replace an unsupported retained question version', async () => {
+  stored = {...stored, revision: 3, version: 'iso27001-future', answers: {'future-question': 'Retained answer'}, narrative: 'Retained exact reviewer wording.'};
+  await openSequential();
+  expect(document.body.textContent).toContain('Saved answers and wording are retained');
+  expect(button('Resume your review').disabled).toBe(true); expect(document.querySelector('.iso-sequential-interview')).toBeNull();
+  expect(stored.answers).toEqual({'future-question': 'Retained answer'}); expect(stored.narrative).toBe('Retained exact reviewer wording.');
+  expect(api.put).not.toHaveBeenCalled(); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('sequential ISO questions use the actual preview checkpoint and exact reviewed native-save routes', async () => {
+  setup('A.5.1'); sessionStorage.clear(); const previewApi = axios.create({adapter: previewAdapter});
+  const db = Object.fromEntries(Object.keys(ids).map(kind => [kind, []]));
+  const row = {...props.current, technology: '', notes: 'Retained native note', na_rationale: '', owner_id: null, process_owner_id: null, iso_assessment_checks: [], assessment_history: []};
+  db.user = {user_id: 'iso-actor', name: 'SYNTHETIC ISO reviewer', role: 'super_admin', status: 'active', client_ids: ['iso-fixture']}; db.logs = [];
+  db.users.push(db.user); db.clients.push({client_id: 'iso-fixture', name: 'SYNTHETIC sequential ISO contract', status: 'active'});
+  db.framework_assessments.push(row); db.requirements.push({client_id: 'iso-fixture', baseline_key: 'iso-27001', baseline_response: 'applies'});
+  saveStore(db); await previewApi.post('/demo/enter'); props = {...props, current: row, record: row, form: copy(row), onInlineClose: jest.fn()};
+  const path = '/framework_assessments/' + row.framework_assessment_id, requests = new Set();
+  const track = request => { requests.add(request); request.then(() => requests.delete(request), () => requests.delete(request)); return request; };
+  const settle = () => act(async () => { while (requests.size) await Promise.all([...requests]); });
+  api.get.mockImplementation(url => track(previewApi.get(url)));
+  api.put.mockImplementation((url, body) => track(previewApi.put(url, body).then(response => { stored = copy(response.data); return response; })));
+  props.onSaveAssessment.mockImplementation(async (values, expected) => {
+    expect(expected).toBe(JSON.stringify(props.form));
+    const saved = (await track(previewApi.patch(path, {...values, expected_last_assessed: props.current.last_saved ?? props.current.last_assessed ?? null}))).data;
+    props = {...props, current: saved, form: copy(saved)}; return true;
+  });
+  await openSequential({settle}); await completeSequential(settle);
+  expect((await previewApi.get(path)).data).toEqual(row); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  const reviewed = document.querySelector('[aria-label="Omnibot implementation summary"]').value + '\nExact separately reviewed sequential wording.\n';
+  await changeInput('[aria-label="Omnibot implementation summary"]', reviewed); await click('Save assessment'); await settle();
+  const saved = (await previewApi.get(path)).data, interview = (await previewApi.get(path + '/guided-assessment')).data;
+  expect(saved.implementation).toBe(reviewed); expect(saved.status).toBe('addressed'); expect(saved.assessment_history.at(-1).implementation).toBe(reviewed);
+  expect(interview.narrative).toBe(reviewed); expect(interview.result.narrative).toBe(reviewed); expect(props.onInlineClose).toHaveBeenCalledTimes(1);
+  for (const key of ['verification', 'soa_applicability', 'soa_justification', 'owner_id', 'process_owner_id', 'iso_assessment_checks', 'technology', 'notes']) expect(saved[key]).toEqual(row[key]);
+});

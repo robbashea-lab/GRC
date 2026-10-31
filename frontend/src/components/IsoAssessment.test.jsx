@@ -9,12 +9,12 @@ let mockUser,root,container,record,related,next;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),post:jest.fn(),delete:jest.fn()},formatError:e=>e.message}));
 jest.mock('./RecordDrawer',()=>()=>null);
-jest.mock('./IsoGuidedAssessor',()=>({inline,inlineOpen,disabled})=><section data-testid="iso-inline-interview" data-inline={inline} hidden={!inlineOpen}><textarea aria-label="Retained ISO interview" defaultValue="Existing tailored interview" disabled={disabled}/></section>);
+jest.mock('./IsoGuidedAssessor',()=>({inline,inlineOpen,sequential,disabled})=><section data-testid="iso-inline-interview" data-inline={inline} data-sequential={sequential} hidden={!inlineOpen}><textarea aria-label="Retained ISO interview" defaultValue="Existing tailored interview" disabled={disabled}/></section>);
 jest.mock('./AssigneeSelect',()=>({label,value,disabled,onChange})=><select aria-label={label} value={value||''} disabled={disabled} onChange={e=>onChange(e.target.value)}><option value="">Unassigned</option><option value="u">Pam</option></select>);
 jest.mock('./ui/dialog',()=>{const R=require('react'),Close=R.createContext(null);return {Dialog:({children,onOpenChange})=><Close.Provider value={onOpenChange}><div>{children}</div></Close.Provider>,DialogContent:({children,onOpenAutoFocus,onCloseAutoFocus,onPointerDownOutside,onEscapeKeyDown,...props})=><div {...props}>{children}<Close.Consumer>{close=><button onClick={()=>close(false)}>Close</button>}</Close.Consumer></div>,DialogTitle:R.forwardRef(({children,...props},ref)=><h2 {...props} ref={ref}>{children}</h2>),DialogDescription:({children})=><p>{children}</p>};});
 const button=name=>[...container.querySelectorAll('button')].find(b=>b.textContent===name);
 const tick=async el=>act(async()=>el.click());
-async function guidance(){const disclosure=container.querySelector('.assessment-summary');expect(disclosure).not.toBeNull();if(!disclosure.open)await tick(disclosure.querySelector('summary'));await act(async()=>disclosure.dispatchEvent(new Event('toggle')));expect(disclosure.open).toBe(true);}
+async function guidance(){const disclosure=container.querySelector('.cis-collapsible-requirement');expect(disclosure).not.toBeNull();if(!disclosure.open)await tick(disclosure.querySelector('summary'));await act(async()=>disclosure.dispatchEvent(new Event('toggle')));expect(disclosure.open).toBe(true);}
 async function input(value){const el=container.querySelector('[aria-label="Current implementation"]');await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}));});}
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={record.client_id} onOpenChange={jest.fn()} onNext={next}/>));}
 beforeEach(()=>{
@@ -31,14 +31,17 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.r
 test('ISO inline interview and Items placement preserve stored ownership and mandatory status',async()=>{
  await render();expect(record.owner_id).toBe('u');expect(container.querySelector('[aria-label="Assessment Owner"]')).toBeNull();
  expect([...container.querySelectorAll('[role="tab"]')].map(t=>t.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
- expect(container.querySelectorAll('.assessment-summary')).toHaveLength(1);
+ expect(container.querySelectorAll('.cis-collapsible-requirement')).toHaveLength(1);
+ expect(container.querySelector('.cis-collapsible-requirement').open).toBe(false);
  expect(container.querySelector('input[value="in_progress"]').checked).toBe(true);
  expect(container.querySelector('input[value="not_applicable"]')).toBeNull();
  expect(container.querySelector('.bcsg-findings').closest('[role=tabpanel]').id).toMatch(/findings$/);
  expect(container.textContent).not.toContain('Evidence & verification');
  expect(container.textContent).not.toContain('Organizational Controls');
  expect(button('Create organizational Control')).toBeUndefined();
- expect(container.querySelector('.assessment-inline-criteria')).toBeNull();expect(container.querySelector('[data-testid="iso-inline-interview"]').closest('.assessment-summary')).toBeTruthy();
+ expect(container.querySelector('.assessment-inline-criteria')).toBeNull();expect(container.querySelector('[data-testid="iso-inline-interview"]').closest('.assessment-summary')).toBeNull();
+ expect(container.querySelector('[data-testid="iso-inline-interview"]').dataset.sequential).toBe('true');
+ expect(container.querySelector('.cis-collapsible-requirement').compareDocumentPosition(container.querySelector('[data-testid="iso-inline-interview"]'))&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
  expect(container.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
 });
 
@@ -49,7 +52,7 @@ test('legacy mandatory-clause N/A is reported without rewriting its saved value'
  expect(record.status).toBe('not_applicable');expect(api.patch).not.toHaveBeenCalled();
 });
 
-test('inline summary and Items tabs preserve draft without writes and reset across requirements and clients',async()=>{
+test('source disclosure, independent interview and Items tabs preserve drafts without writes and reset across requirements and clients',async()=>{
  await render();await input('Retain my draft');await guidance();
  expect(container.querySelector('[data-testid="iso-inline-interview"]').hidden).toBe(false);expect(container.textContent).toContain(guide.entries['4.1'].plain);
  await act(async()=>button('Items to address').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));expect(container.textContent).toContain('No current items to address are recorded.');
@@ -58,7 +61,8 @@ test('inline summary and Items tabs preserve draft without writes and reset acro
  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
  record={...record,framework_assessment_id:'iso-b',definition_id:'A.5.1'};await render();
  expect(button('Requirement & implementation').getAttribute('aria-selected')).toBe('true');
- expect(container.querySelector('.assessment-summary p').textContent).toBe(guide.entries['A.5.1'].plain);
+ expect(container.querySelector('.cis-collapsible-requirement p').textContent).toBe(guide.entries['A.5.1'].plain);
+ expect(container.querySelector('.cis-collapsible-requirement').open).toBe(false);
  await guidance();record={...record,framework_assessment_id:'iso-c',client_id:'new-iso'};await render();
  expect(button('Requirement & implementation').getAttribute('aria-selected')).toBe('true');
 });

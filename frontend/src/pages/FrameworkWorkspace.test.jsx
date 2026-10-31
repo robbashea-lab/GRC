@@ -274,7 +274,7 @@ test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps appro
  expect(panel.getAttribute('aria-labelledby')).toBe('iso-tab-isms_clause');
  expect(panel.tabIndex).toBe(0);
  await act(async()=>buttons('Statement of Applicability')[0].click());
- await act(async()=>buttons('All controls')[0].click());
+ await act(async()=>buttons('Expand all')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
  expect(container.textContent).toContain('Necessary — Implemented');
  await act(async()=>buttons('Annex A Controls')[0].click());
@@ -284,7 +284,7 @@ test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps appro
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
 });
 
-test('ISO default presentation preserves SoA scope and uses native category buttons and guarded drawer breadcrumbs',async()=>{
+test('ISO grouped presentation preserves SoA scope and native expansion with guarded drawer breadcrumbs',async()=>{
  const definitions=frameworkCatalog('iso-27001').requirements;
  const annex=definitions.filter(d=>d.specification==='annex_control');
  mockLocation.params=new URLSearchParams('iso_view=soa');
@@ -292,8 +292,8 @@ test('ISO default presentation preserves SoA scope and uses native category butt
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId="new-client"/>));
  expect(container.querySelector('.framework-presentation')).not.toBeNull();
   expect(container.querySelector('[aria-label="Statement of Applicability status"]').textContent).toContain('93 of 93 decisions recorded');
- expect(container.querySelector('.framework-category-row').tagName).toBe('BUTTON');
- await act(async()=>buttons('All controls')[0].click());
+ expect(container.querySelector('.iso-register-toggle').tagName).toBe('BUTTON');
+ await act(async()=>buttons('Expand all')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
  await act(async()=>container.querySelector(`[data-testid="requirement-${annex[0].id}"] button`).click());
  expect(container.querySelector('[aria-label="ISO workspace sections"] [aria-selected="true"]').textContent).toBe('Statement of Applicability');
