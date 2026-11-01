@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {spawnSync} = require('node:child_process');
 const {randomUUID} = require('node:crypto');
+const {performance} = require('node:perf_hooks');
 
 const RUNTIME_SHARD = 'framework-five-year';
 const PINNED_NODE = 'v22.23.4';
@@ -43,7 +44,7 @@ function verifyResult(manifest, shard, result, exitCode, root) {
   const expectedPlan = plan(manifest.discovered, manifest.sha);
   requireThat(JSON.stringify(manifest) === JSON.stringify(expectedPlan), 'Noncanonical campaign manifest');
   requireThat(SHARDS.includes(shard), 'Unknown shard');
-  requireThat(exitCode === 0 && result.success === true && result.wasInterrupted === false, 'Unsuccessful or interrupted Jest execution');
+  requireThat(exitCode === 0 && result && result.success === true && result.wasInterrupted === false, 'Unsuccessful or interrupted Jest execution');
   requireThat(Array.isArray(result.testResults), 'Missing Jest suite results');
   const executed = uniqueSorted(result.testResults.map(suite => normalized(suite.name, root)));
   requireThat(JSON.stringify(executed) === JSON.stringify(manifest.partitions[shard]), 'Executed suites differ from assigned partition');
@@ -61,11 +62,34 @@ function audit(receipts, sha) {
   const executed = [];
   for (const receipt of receipts) {
     requireThat(JSON.stringify(receipt.manifest) === JSON.stringify(first), 'Shard discovery/source inventories differ');
-    executed.push(...verifyResult(receipt.manifest, receipt.shard, receipt.result, receipt.exitCode, receipt.frontendRoot));
-    if (receipt.shard === RUNTIME_SHARD) verifyRuntime(receipt);
+    const verification = classifyReceipt(receipt);
+    requireQualification(verification);
+    executed.push(...verification.workload.executed);
   }
   requireThat(JSON.stringify(uniqueSorted(executed)) === JSON.stringify(first.discovered), 'Campaign is not exhaustive');
   return {sha, suites: executed.length, shards: SHARDS.length};
+}
+function environmentClass(value) {
+  if (value === undefined) return 'unset';
+  if (value === '') return 'empty';
+  return value === 'test' || value === 'production' ? value : 'other';
+}
+function launchProvenance(invocationId, environment = process.env, runtime = process) {
+  const selector = environment.JEST_JASMINE;
+  return {invocation_id: invocationId, node: runtime.version, execPath: runtime.execPath, source_sha: environment.GITHUB_SHA,
+    early_environment: {node_env: environmentClass(environment.NODE_ENV), babel_env: environmentClass(environment.BABEL_ENV)},
+    startup: {exec_argv_count: runtime.execArgv.length, exec_argv_empty: runtime.execArgv.length === 0,
+      node_options_present: environment.NODE_OPTIONS !== undefined, node_options_nonempty: Boolean(environment.NODE_OPTIONS),
+      v8_coverage_enabled: Boolean(environment.NODE_V8_COVERAGE),
+      jest_jasmine: selector === undefined ? 'unset' : selector === '' ? 'empty' : selector === '1' ? 'one' : 'other'}};
+}
+function verifyLaunch(launch) {
+  requireThat(launch.node === PINNED_NODE && launch.startup.exec_argv_empty === true && launch.startup.exec_argv_count === 0
+    && launch.startup.node_options_nonempty === false && launch.startup.v8_coverage_enabled === false
+    && ['unset', 'empty'].includes(launch.startup.jest_jasmine),
+  'Unexpected lifecycle launcher runtime/startup options');
+  requireThat(['unset', 'empty', 'test'].includes(launch.early_environment.node_env)
+    && ['unset', 'empty', 'test'].includes(launch.early_environment.babel_env), 'Unexpected pre-CRACO environment classification');
 }
 function pinnedNodeEnvironment(environment, executable = process.execPath, platform = process.platform) {
   const copy = {...environment};
@@ -81,7 +105,8 @@ function executionOptions(shard, manifest, resultPath, runtimePath, invocationId
   if (shard !== RUNTIME_SHARD) return {args, options: {stdio: 'inherit'}};
   return {args: [...args, '--reporters=default', '--reporters=' + path.resolve(__dirname, 'frontend-runtime-reporter.cjs')],
     options: {stdio: 'inherit', env: pinnedNodeEnvironment({...environment, CI: 'true',
-      FRONTEND_RUNTIME_RECEIPT: runtimePath, FRONTEND_RUNTIME_INVOCATION: invocationId})}};
+      FRONTEND_RUNTIME_RECEIPT: runtimePath, FRONTEND_RUNTIME_INVOCATION: invocationId,
+      FRONTEND_RUNTIME_EARLY_ENV: JSON.stringify({node_env: environmentClass(environment.NODE_ENV), babel_env: environmentClass(environment.BABEL_ENV)})})}};
 }
 function verifyRuntime(receipt) {
   const {runtime, runtimeLaunch: launch, result, manifest} = receipt;
@@ -92,9 +117,30 @@ function verifyRuntime(receipt) {
   // The coverage job runs on a separate host. Compare the child with its own launcher.
   requireThat(launch.node === PINNED_NODE && runtime.node === launch.node && runtime.execPath === launch.execPath,
     'Lifecycle child did not use the pinned launcher runtime');
+  verifyLaunch(launch);
+  const envelope = runtime.envelope;
+  requireThat(envelope && envelope.version === 1 && envelope.hook === 'onTestStart' && envelope.capture_status === 'admitted'
+    && envelope.identity_evidence === 'configured-selected-resolved' && envelope.actual_vm_module_execution === 'UNVERIFIED'
+    && envelope.early_environment?.node_env === launch.early_environment.node_env
+    && envelope.early_environment.babel_env === launch.early_environment.babel_env, 'Missing or invalid lifecycle configuration provenance');
+  requireThat(envelope.startup?.exec_argv_count === 0 && envelope.startup.exec_argv_empty === true
+    && envelope.startup.node_options_nonempty === false && envelope.startup.v8_coverage_enabled === false
+    && envelope.inner_environment?.node_env === 'test' && envelope.inner_environment.babel_env === 'test'
+    && ['unset', 'empty'].includes(envelope.startup.jest_jasmine), 'Unexpected actual lifecycle startup/environment');
+  requireThat(/^[a-f0-9]{64}$/.test(envelope.configured_fields_sha256)
+    && Array.isArray(envelope.selected_files) && envelope.selected_files.length > 0
+    && envelope.selected_files.every(file => typeof file.role === 'string' && typeof file.path === 'string'
+      && /^[a-f0-9]{64}$/.test(file.sha256) && Number.isInteger(file.bytes) && file.bytes > 0)
+    && Number.isFinite(envelope.overhead?.snapshot_ms) && envelope.overhead.snapshot_ms >= 0
+    && Number.isFinite(runtime.artifact_overhead?.completed_write_ms) && runtime.artifact_overhead.completed_write_ms >= 0
+    && Number.isInteger(runtime.artifact_overhead.completed_write_calls) && runtime.artifact_overhead.completed_write_calls > 0
+    && runtime.artifact_overhead.current_write_excluded === true
+    && Number.isFinite(launch.metadata_preflight_ms) && launch.metadata_preflight_ms >= 0,
+  'Incomplete lifecycle configured-file/metadata evidence');
   requireThat(runtime.platform === 'linux' && runtime.arch === 'x64' && runtime.timezone === 'UTC'
     && runtime.lifecycle_years === '5' && runtime.synthetic_exports === false && runtime.phase_logging === false,
   'Unexpected lifecycle workload or diagnostic instrumentation');
+  requireThat(Array.isArray(result?.testResults), 'Missing lifecycle original-case result evidence');
   const cases = result.testResults.flatMap(suite => suite.assertionResults || [])
     .map(value => ({name: value.fullName, status: value.status}));
   // Jest's JSON formatter omits per-case duration; retain those native reporter measurements separately.
@@ -113,9 +159,46 @@ function verifyRuntime(receipt) {
     && Number.isFinite(runtime.memory_usage?.rss) && runtime.memory_usage.rss > 0,
   'Incomplete lifecycle host/resource evidence');
 }
+function classifyReceipt(receipt) {
+  const verification = {workload: {valid: false}, runtime: {required: receipt.shard === RUNTIME_SHARD, valid: null}};
+  try {
+    requireThat(!receipt.signal && !receipt.spawn_error_code, 'Jest execution terminated before normal completion');
+    verification.workload.executed = verifyResult(receipt.manifest, receipt.shard, receipt.result, receipt.exitCode, receipt.frontendRoot);
+    verification.workload.valid = true;
+  } catch (error) { verification.workload.error = error.message; }
+  if (verification.runtime.required) {
+    try { verifyRuntime(receipt); verification.runtime.valid = true; }
+    catch (error) { verification.runtime.valid = false; verification.runtime.error = error.message; }
+  }
+  return verification;
+}
+function readJsonEvidence(file) {
+  try { return {value: JSON.parse(fs.readFileSync(file, 'utf8'))}; }
+  catch (error) { return {error: error.code === 'ENOENT' ? 'missing' : error instanceof SyntaxError ? 'invalid-json' : 'unreadable'}; }
+}
+function collectExecutionReceipt({manifest, shard, execution, frontendRoot, resultPath, runtimePath, launch}) {
+  const result = readJsonEvidence(resultPath);
+  const receipt = {manifest, shard, exitCode: execution.status, signal: execution.signal || null,
+    spawn_error_code: execution.error ? (/^[A-Z0-9_]{1,80}$/.test(execution.error.code) ? execution.error.code : 'unknown') : null,
+    frontendRoot, result: result.value ?? null};
+  if (result.error) receipt.resultError = result.error;
+  if (shard === RUNTIME_SHARD) {
+    receipt.runtimeLaunch = launch;
+    const runtime = readJsonEvidence(runtimePath);
+    if (runtime.error) receipt.runtimeError = runtime.error;
+    else receipt.runtime = runtime.value;
+  }
+  return receipt;
+}
+function requireQualification(verification) {
+  const errors = [];
+  if (!verification.workload.valid) errors.push('Workload verification failed: ' + verification.workload.error);
+  if (verification.runtime.required && !verification.runtime.valid) errors.push('Runtime verification failed: ' + verification.runtime.error);
+  requireThat(errors.length === 0, errors.join(' | '));
+}
 function clearExecutionArtifacts(output, shard) {
   const names = ['jest.json', 'receipt.json'];
-  if (shard === RUNTIME_SHARD) names.push('runtime.json');
+  if (shard === RUNTIME_SHARD) names.push('runtime.json', 'launch.json');
   for (const name of names) fs.rmSync(path.join(output, name), {force: true});
 }
 function jest(args, options = {}) {
@@ -126,27 +209,29 @@ function run(shard, output) {
   requireThat(SHARDS.includes(shard), 'Unknown shard');
   fs.mkdirSync(output, {recursive: true});
   clearExecutionArtifacts(output, shard);
+  const launchStarted = performance.now();
+  const invocationId = randomUUID();
+  const launch = launchProvenance(invocationId);
+  if (shard === RUNTIME_SHARD) {
+    // Preserve safe admission facts even when unexpected inherited options stop discovery.
+    fs.writeFileSync(path.join(output, 'launch.json'), JSON.stringify(launch, null, 2));
+    verifyLaunch(launch);
+    launch.metadata_preflight_ms = performance.now() - launchStarted;
+  }
   const discovery = jest(['--listTests', '--json'], {encoding: 'utf8', maxBuffer: 16 * 1024 * 1024});
   requireThat(discovery.status === 0, 'Jest discovery failed: ' + discovery.stderr);
   const manifest = plan(JSON.parse(discovery.stdout).map(file => normalized(file, process.cwd())), process.env.GITHUB_SHA);
   fs.writeFileSync(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
   const resultPath = path.resolve(output, 'jest.json');
-  const invocationId = randomUUID(), runtimePath = path.resolve(output, 'runtime.json');
-  const launch = {invocation_id: invocationId, node: process.version, execPath: process.execPath, source_sha: manifest.sha};
+  const runtimePath = path.resolve(output, 'runtime.json');
   const selected = executionOptions(shard, manifest, resultPath, runtimePath, invocationId);
   const execution = jest(selected.args, selected.options);
-  requireThat(fs.existsSync(resultPath), 'Jest result file missing');
-  const result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
-  const receipt = {manifest, shard, exitCode: execution.status, frontendRoot: process.cwd(), result};
-  if (shard === RUNTIME_SHARD) {
-    receipt.runtimeLaunch = launch;
-    // Preserve the original result and any partial provenance before rejecting a failed run.
-    try { receipt.runtime = JSON.parse(fs.readFileSync(runtimePath, 'utf8')); }
-    catch (error) { receipt.runtimeError = error.code || error.name; }
-  }
+  const receipt = collectExecutionReceipt({manifest, shard, execution, frontendRoot: process.cwd(), resultPath, runtimePath, launch});
   fs.writeFileSync(path.join(output, 'receipt.json'), JSON.stringify(receipt));
-  verifyResult(manifest, shard, result, execution.status, process.cwd());
-  if (shard === RUNTIME_SHARD) verifyRuntime(receipt);
+  // A failed original workload must not prevent independent metadata validation.
+  receipt.verification = classifyReceipt(receipt);
+  fs.writeFileSync(path.join(output, 'receipt.json'), JSON.stringify(receipt));
+  requireQualification(receipt.verification);
 }
 if (require.main === module) {
   try {
@@ -159,4 +244,5 @@ if (require.main === module) {
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
 module.exports = {plan, verifyResult, audit, LIFECYCLE_SUITES, SHARDS,
-  pinnedNodeEnvironment, executionOptions, verifyRuntime, clearExecutionArtifacts};
+  pinnedNodeEnvironment, executionOptions, verifyRuntime, clearExecutionArtifacts,
+  environmentClass, launchProvenance, verifyLaunch, classifyReceipt, requireQualification, collectExecutionReceipt};
