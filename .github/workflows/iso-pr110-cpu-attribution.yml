@@ -1,0 +1,48 @@
+name: ISO PR110 one offline CPU attribution
+on:
+  push:
+    branches: [codex/iso-pr110-cpu-attribution-20261101]
+permissions:
+  contents: read
+jobs:
+  cpu-attribution:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      CI: 'true'
+    steps:
+      - name: Establish work deadline before setup
+        working-directory: ${{ runner.temp }}
+        run: echo "CPU_ATTRIBUTION_DEADLINE_MS=$(( $(date +%s%3N) + 720000 ))" >> "$GITHUB_ENV"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.4'
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile
+      - name: Attempt1 and lightweight diagnostic checks
+        env:
+          DIAG_OUTPUT: ${{ runner.temp }}/iso-pr110-cpu-attribution
+        run: |
+          mkdir -p "$DIAG_OUTPUT"
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          node --test scripts/iso-pr110-cpu-attribution/run.test.cjs scripts/iso-pr110-cpu-attribution/runtime-reporter.test.cjs scripts/iso-pr110-cpu-attribution/profile-validation.test.cjs > "$DIAG_OUTPUT/preflight.log" 2>&1
+          cat "$DIAG_OUTPUT/preflight.log"
+      - name: One native configuration admission and original profiled sequence
+        env:
+          DIAG_OUTPUT: ${{ runner.temp }}/iso-pr110-cpu-attribution
+        run: node scripts/iso-pr110-cpu-attribution/run.cjs "$DIAG_OUTPUT"
+      - name: Preserve all available outcomes and raw profiles
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: iso-pr110-cpu-attribution
+          path: ${{ runner.temp }}/iso-pr110-cpu-attribution/
+          if-no-files-found: error
+          retention-days: 7
