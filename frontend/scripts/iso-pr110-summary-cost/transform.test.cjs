@@ -7,7 +7,8 @@ const vm = require('node:vm');
 const babel = require('@babel/core');
 const commonjs = require('@babel/plugin-transform-modules-commonjs');
 const transformer = require('./transform.cjs');
-const {plugin, SOURCE_SHA, BASELINE, TARGET, STOCK_PATH, ownSHA} = transformer._test;
+const {plugin, appendDiagnosticPlugin, createJestBabelTransform, SOURCE_SHA, BASELINE, TARGET,
+  STOCK_PATH, ownSHA, stockSHA, factorySHA} = transformer._test;
 const stock = require(STOCK_PATH);
 // Windows checkout fixtures use CRLF; the actual diagnostic transformer accepts only exact hosted LF bytes.
 const source = fs.readFileSync(TARGET, 'utf8').replace(/\r\n/g, '\n');
@@ -86,7 +87,7 @@ test('target file and original bytes are exact and mismatched source cannot be t
   assert.throws(() => transformer._test.verifySource(source, TARGET + '.other'), /wrong target/);
   assert.throws(() => transformer.process(source + '\n', TARGET, options()), /bytes differ/);
 });
-test('non-target transformation delegates unchanged to the stock CRA transformer', () => {
+test('non-target transformation delegates unchanged to the configured native CRACO transformer', () => {
   withEnvironment({NODE_ENV: 'test'}, () => {
     const filename = path.join(path.dirname(TARGET), 'unrelated.js'), text = 'export const value=1;';
     assert.deepEqual(transformer.process(text, filename, options()), stock.process(text, filename, options()));
@@ -105,6 +106,8 @@ test('actual target transformation retains source maps, emits one bounded proof 
       const proofFile = path.join(output, 'transform-proof.json'), proof = JSON.parse(fs.readFileSync(proofFile, 'utf8'));
       assert.equal(proof.matched_calls, 1);assert.equal(proof.original_source_sha256, SOURCE_SHA);
       assert.equal(proof.harness_sha256, ownSHA);assert.equal(proof.observed_source_sha, 'e'.repeat(40));
+      assert.equal(proof.native_route_sha256, stockSHA);assert.equal(proof.native_factory_sha256, factorySHA);
+      assert.equal(proof.config_control.other_arguments_unchanged, true);
       assert.equal(proof.original_sources_content_preserved, true);assert.equal(proof.actual_transform_pid, process.pid);
       assert.ok(fs.statSync(proofFile).size <= 4096);
       assert.throws(() => transformer.process(source, TARGET, options()), /more than once/);
@@ -124,7 +127,52 @@ test('wrong diagnostic provenance refuses target transform before source executi
     assert.throws(() => transformer.getCacheKey(source, TARGET, options()), /commit is missing/);
   });
 });
-test('CRACO overlay retains approved mapper/options and all routes, adding only the exact target first', () => {
+test('native presets/plugins remain intact and only a cloned target configuration receives the diagnostic plugin', () => {
+  const nativePlugin = () => ({}), diagnosticPlugin = () => ({}), presets = ['retained-native-preset'];
+  const configuration = {jest: {babel: {addPlugins: true, addPresets: true}}, babel: {plugins: [nativePlugin], presets, extra: 'retained'}};
+  const result = appendDiagnosticPlugin(configuration, diagnosticPlugin);
+  assert.notEqual(result, configuration);assert.notEqual(result.babel, configuration.babel);
+  assert.deepEqual(result.babel.plugins, [nativePlugin, diagnosticPlugin]);
+  assert.deepEqual(configuration.babel.plugins, [nativePlugin]);assert.equal(result.babel.presets, presets);
+  assert.equal(result.babel.extra, 'retained');assert.equal(result.jest, configuration.jest);
+  assert.throws(() => appendDiagnosticPlugin({jest: {babel: {addPlugins: false}}}, diagnosticPlugin), /additions are disabled/);
+});
+test('the installed CRACO factory retains a native plugin alongside the diagnostic observer', () => {
+  withEnvironment({NODE_ENV: 'test'}, () => {
+    let report;
+    const native = ({types: t}) => ({visitor: {Program(program) {
+      program.unshiftContainer('body', t.expressionStatement(t.stringLiteral('NATIVE_CONFIGURED_PLUGIN_RETAINED')));
+    }}});
+    const configuration = {jest: {babel: {addPlugins: true, addPresets: true}}, babel: {plugins: [native]}};
+    const compiled = createJestBabelTransform(appendDiagnosticPlugin(configuration,
+      [plugin, {report: value => {report = value;}}])).process(fixture, TARGET, options());
+    assert.match(compiled.code, /NATIVE_CONFIGURED_PLUGIN_RETAINED/);
+    assert.match(compiled.code, /__ISO_SUMMARY_COST__\.measure/);assert.equal(report.matches, 1);
+    assert.ok(compiled.map.sourcesContent.includes(fixture));assert.deepEqual(configuration.babel.plugins, [native]);
+  });
+});
+test('only the already-parsed owned CRACO config pair is consumed before Jest arguments are copied', () => {
+  withEnvironment({NODE_ENV: 'test'}, () => {
+    const helper = require('./diagnostic-craco.config.cjs')._test;
+    const own = require.resolve('./diagnostic-craco.config.cjs');
+    const argv = ['node', 'test.js', '--config', own, '--watchAll=false', '--json', '--runInBand'];
+    const result = helper.consumeOwnedConfigArgument(argv, own);
+    assert.deepEqual(argv, ['node', 'test.js', '--watchAll=false', '--json', '--runInBand']);
+    assert.deepEqual(result, {consumed_pairs: 1, removed_argument_count: 2, parsed_config_matches: true, other_arguments_unchanged: true});
+    const unrelated = ['node', 'test.js', '--config', 'unrelated-jest.config.cjs', '--json'];
+    const original = unrelated.slice();const absent = helper.consumeOwnedConfigArgument(unrelated, 'unrelated-jest.config.cjs');
+    assert.deepEqual(unrelated, original);assert.equal(absent.consumed_pairs, 0);
+    for (const pair of [
+      {argv: ['node', 'test.js', '--config', own], parsed: 'other.cjs'},
+      {argv: ['node', 'test.js', '--config', own, '--config', own], parsed: own},
+    ]) {
+      const before = pair.argv.slice();
+      assert.throws(() => helper.consumeOwnedConfigArgument(pair.argv, pair.parsed), /duplicated or was not parsed/);
+      assert.deepEqual(pair.argv, before);
+    }
+  });
+});
+test('CRACO overlay retains the actual native route, approved mapper/options and all other routes', () => {
   withEnvironment({NODE_ENV: 'test'}, () => {
     const overlay = require('./diagnostic-craco.config.cjs'), helper = overlay._test;
     const base = {testEnvironment: 'jsdom', customField: {retained: true},
@@ -136,6 +184,7 @@ test('CRACO overlay retains approved mapper/options and all routes, adding only 
     assert.equal(result.moduleNameMapper.existing, 'unchanged');assert.equal(result.moduleNameMapper['^@/(.*)$'], '<rootDir>/src/$1');
     for (const [key, value] of Object.entries(base.transform)) assert.equal(result.transform[key], value);
     assert.deepEqual(base.moduleNameMapper, {'existing': 'unchanged'});
+    assert.equal(helper.controlProof().general_route_matches, true);
     assert.throws(() => helper.configureDiagnostic({...base, transform: {[helper.JS]: 'unexpected'}}, {}), /routing differs/);
   });
 });

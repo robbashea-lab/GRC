@@ -78,6 +78,10 @@ function installDiagnostic() {
       || process.env.CI !== 'true' || process.env.FRAMEWORK_LIFECYCLE_YEARS !== '5' || process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR)
       throw Error('Actual Jest runtime refused before native bodies');
     if (!Object.values(guards()).every(value => value === true)) throw Error('Diagnostic transform/native guard unavailable');
+    const transform = JSON.parse(fs.readFileSync(path.join(output, 'transform-proof.json'), 'utf8'));
+    if (transform.config_control?.consumed_pairs !== 1 || transform.config_control.removed_argument_count !== 2
+      || !['parsed_config_matches','other_arguments_unchanged','general_route_matches'].every(key => transform.config_control[key] === true))
+      throw Error('Actual transform configuration handoff refused before native bodies');
     write('summary-cost-host.json', {version: 1, ...provenance, actual_jest_pid: process.pid, node: process.version, exec_path: process.execPath,
       versions: process.versions, platform: process.platform, arch: process.arch, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       profiler_enabled: false, gc_forced: false, target: 'portfolioReporting.js:552 cisSummary(included) only for ISO', max_calls: 16384, max_depth: 16,

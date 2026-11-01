@@ -4,13 +4,14 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const {spawn, spawnSync} = require('node:child_process');
 const {createArtifactWriter} = require('./artifact-writer.cjs');
+const {preflightArguments, parseConfiguration, verifyConfigurations} = require('./config-preflight.cjs');
 
 const BASELINE = '2303f958dd0fd8e02881aab3bbd7ac82450be469';
 const LIFECYCLE = 'frontend/src/preview/frameworkFiveYear.test.js';
 const LIFECYCLE_BLOB = 'f044a5166f02d5c5a7884a753b04ee23e5a0ea8c';
 const DIRECTORY = 'frontend/scripts/iso-pr110-summary-cost';
 const SCRIPTS = ['run.cjs', 'run.test.cjs', 'observer.cjs', 'observer.test.cjs', 'setup.cjs', 'setup.test.cjs', 'runtime-reporter.cjs',
-  'artifact-writer.cjs', 'artifact-writer.test.cjs', 'transform.cjs', 'transform.test.cjs', 'diagnostic-craco.config.cjs'];
+  'artifact-writer.cjs', 'artifact-writer.test.cjs', 'transform.cjs', 'transform.test.cjs', 'diagnostic-craco.config.cjs', 'config-preflight.cjs', 'config-preflight.test.cjs'];
 const ALLOWED = new Set([...SCRIPTS.map(name => DIRECTORY + '/' + name), '.github/workflows/iso-pr110-summary-cost.yml']);
 const PROTECTED = ['frontend/src', 'backend', 'shared', 'frontend/package.json', 'frontend/yarn.lock', 'frontend/craco.config.js',
   'frontend/scripts/frontend-campaign.cjs', '.github/workflows/release-verification.yml'];
@@ -143,7 +144,7 @@ function verifySequence(runtime, result, execution, environment, expected = obse
   return {original_tests_passed: allPassed, predecessors_passed: predecessorsPassed, censored_iso: !!censored,
     iso_failure_outside_deadline: cases[2].status === 'failed' && !censored, cases: runtime.cases, qualification: false};
 }
-function verifyObserver(summary, rawCases, host, calibration, runtime, environment, transform, expectedTransformHash) {
+function verifyObserver(summary, rawCases, host, calibration, runtime, environment, transform, expectedTransformHash, configurationProof) {
   const good = value => value?.application_baseline_sha === BASELINE && value.observed_source_sha === environment.GITHUB_SHA;
   const nonnegative = value => Number.isFinite(value) && value >= 0;
   requireThat(summary?.complete === true && summary.diagnostic_valid === true && good(summary)
@@ -170,6 +171,12 @@ function verifyObserver(summary, rawCases, host, calibration, runtime, environme
     && transform.target === 'frontend/src/preview/portfolioReporting.js'
     && ['generated_code_sha256','source_map_sha256','harness_sha256','stock_transform_sha256'].every(key => /^[a-f0-9]{64}$/.test(transform[key] || ''))
     && transform.harness_sha256 === expectedTransformHash
+    && transform.native_route_sha256 === configurationProof?.source_files?.approved_transform?.sha256
+    && transform.native_factory_sha256 === configurationProof?.source_files?.babel_transform_factory?.sha256
+    && transform.native_route === '@craco/craco/dist/lib/features/jest/jest-babel-transform'
+    && transform.native_factory === '@craco/craco/dist/lib/features/jest/create-jest-babel-transform'
+    && transform.config_control?.consumed_pairs === 1 && transform.config_control.removed_argument_count === 2
+    && ['parsed_config_matches','other_arguments_unchanged','general_route_matches'].every(key => transform.config_control[key] === true)
     && summary.loaded_source_sha256 === transform.source_sha256,
   'Diagnostic transform and actual module-loaded handshake differ');
   requireThat(summary.artifact_writes?.failed === 0 && summary.artifact_writes?.count > 0
@@ -277,7 +284,9 @@ function artifactIndex(directory, budgetRoot = directory) {
     .sort().map(name => { const bytes = fs.readFileSync(path.join(directory, name)); return [name, {bytes: bytes.length, sha256: hash(bytes)}]; }));
 }
 async function run(output, frontend = process.cwd(), {environment = process.env, runtime = observedRuntime(), prove = applicationProof,
-  launch = runChild, argumentsFor = diagnosticArguments} = {}) {
+  launch = runChild, argumentsFor = diagnosticArguments,
+  construct = (args, cwd, env, deadline) => runChild(args, cwd, env, deadline, {watchdogMs: 30000}),
+  validateConfiguration = verifyConfigurations, configurationArguments = preflightArguments} = {}) {
   requireThat(typeof output === 'string' && path.isAbsolute(output), 'An explicit absolute artifact directory is required');
   const root = path.resolve(frontend, '..'), relative = path.relative(root, output);
   requireThat(relative.startsWith('..' + path.sep) || path.isAbsolute(relative), 'Artifacts must be outside the original checkout');
@@ -301,6 +310,28 @@ async function run(output, frontend = process.cwd(), {environment = process.env,
     deadline = diagnosticDeadline(env);
     receipt.deadline_ms = deadline;receipt.remaining_when_driver_started_ms = deadline - Date.now();
     receipt.source_before = prove(root, env, deadline);
+    receipt.configuration_preflight = [];
+    const configurations = [];
+    for (const diagnostic of [false, true]) {
+      const name = diagnostic ? 'diagnostic' : 'baseline', configArgs = configurationArguments(frontend, diagnostic);
+      const execution = await construct(configArgs, frontend, env, deadline);
+      const {stdout, stderr, ...metadata} = execution;
+      requireThat(Buffer.isBuffer(stdout) && Buffer.isBuffer(stderr) && stdout.length <= LIMITS.outputBytes
+        && stderr.length <= LIMITS.outputBytes, 'Configuration output is missing or oversized');
+      requireThat(write.checkBudget(stdout.length + stderr.length), 'Configuration output exceeds artifact budget');
+      fs.writeFileSync(path.join(directory, 'config-' + name + '-stdout.log'), stdout, {flag: 'wx'});
+      fs.writeFileSync(path.join(directory, 'config-' + name + '-stderr.log'), stderr, {flag: 'wx'});
+      receipt.configuration_preflight.push({configuration_only: true, name, arguments: configArgs, ...metadata});
+      requireThat(execution.status === 0 && !execution.signal && !execution.error && !execution.hard_failure,
+        'Actual CRACO configuration construction failed: ' + name);
+      configurations.push(parseConfiguration(stdout.toString('utf8')));
+    }
+    const configurationProof = validateConfiguration(configurations[0], configurations[1], frontend);
+    requireThat(configurationProof?.valid === true, 'Actual configuration comparison did not pass');
+    requireThat(write('configuration-proof.json', {diagnostic_only: true, qualification: false,
+      application_baseline_sha: BASELINE, observed_source_sha: environment.GITHUB_SHA, ...configurationProof},
+      {maxBytes: LIMITS.footerBytes}), 'Configuration proof could not be preserved');
+    receipt.configuration_valid = true;
     const args = argumentsFor(frontend, directory); receipt.arguments = args;
     receipt.remaining_before_launch_ms = deadline - Date.now();
     requireThat(childBudget(deadline) === LIMITS.childMs, 'Insufficient remaining budget for the one bounded child');
@@ -318,7 +349,7 @@ async function run(output, frontend = process.cwd(), {environment = process.env,
     receipt.outcome = verifySequence(actualRuntime, result, execution, env, runtime);
     const observer = verifyObserver(readJSON(path.join(directory, 'summary-cost-summary.json')), FRAMEWORKS.map((_, index) => readJSON(path.join(directory, caseArtifact(index)))),
       readJSON(path.join(directory, 'summary-cost-host.json')), readJSON(path.join(directory, 'overhead-calibration.json')), actualRuntime, env,
-      readJSON(path.join(directory, 'transform-proof.json')), receipt.source_before.harness_sha256[DIRECTORY + '/transform.cjs']);
+      readJSON(path.join(directory, 'transform-proof.json')), receipt.source_before.harness_sha256[DIRECTORY + '/transform.cjs'], configurationProof);
     receipt.capture_valid = true; receipt.observation = observer;
     receipt.iso_attribution_valid = receipt.outcome.predecessors_passed && observer.predecessors_settled && !receipt.outcome.iso_failure_outside_deadline;
   } catch (error) { receipt.stop_reason = error.message; receipt.capture_valid = false; receipt.iso_attribution_valid = false; }

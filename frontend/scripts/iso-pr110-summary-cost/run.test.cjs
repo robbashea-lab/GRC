@@ -29,7 +29,10 @@ function fixture(failed = false) {
     environment:{export_enabled:false,lifecycle_years:'5',CI:true}};
   const transform={...proof,source_sha256:summary.loaded_source_sha256,observed_source_sha:SHA,matches:1,
     actual_transform_pid:4,source_map_preserved:true,original_sources_content_preserved:true,target:'frontend/src/preview/portfolioReporting.js',
-    generated_code_sha256:'c'.repeat(64),source_map_sha256:'c'.repeat(64),harness_sha256:'c'.repeat(64),stock_transform_sha256:'c'.repeat(64)};
+    generated_code_sha256:'c'.repeat(64),source_map_sha256:'c'.repeat(64),harness_sha256:'c'.repeat(64),stock_transform_sha256:'c'.repeat(64),
+    native_route_sha256:'c'.repeat(64),native_factory_sha256:'c'.repeat(64),native_route:'@craco/craco/dist/lib/features/jest/jest-babel-transform',
+    native_factory:'@craco/craco/dist/lib/features/jest/create-jest-babel-transform',config_control:{consumed_pairs:1,removed_argument_count:2,
+      parsed_config_matches:true,other_arguments_unchanged:true,general_route_matches:true}};
   return {raw,summary,host,calibration,actual,result,execution,transform};
 }
 test('preflight rejects a retry, wrong actual runtime and contaminated workload flags',()=>{
@@ -56,19 +59,25 @@ test('complete original timeout remains a failed outcome with valid censored att
   f.actual.cases.reverse();assert.throws(()=>driver.verifySequence(f.actual,f.result,f.execution,env(),runtime));
 });
 test('cost observation independently rejects missing binding, mismatched counts, caps and overhead refusal',()=>{
-  const verify=f=>driver.verifyObserver(f.summary,f.raw,f.host,f.calibration,f.actual,env(),f.transform,'c'.repeat(64));
+  const verify=f=>driver.verifyObserver(f.summary,f.raw,f.host,f.calibration,f.actual,env(),f.transform,'c'.repeat(64),
+    {source_files:{approved_transform:{sha256:'c'.repeat(64)},babel_transform_factory:{sha256:'c'.repeat(64)}}});
   assert.equal(verify(fixture()).predecessors_settled,true);
   for(const change of [f=>f.summary.loaded_source_sha256='bad',f=>f.transform.matches=0,f=>f.raw[2].calls[0].e=99,
     f=>f.raw[2].totals.pending=1,f=>f.raw[2].stopped=true,f=>f.calibration.blocks[0].observed_ms=100,
     f=>f.raw[2].calls[0].p=1,f=>f.transform.actual_transform_pid=99,f=>f.transform.harness_sha256='d'.repeat(64),
-    f=>f.transform.original_sources_content_preserved=false,f=>f.summary.loaded_count=2,f=>f.summary.out_of_case_calls=1]){const f=fixture();change(f);assert.throws(()=>verify(f));}
+    f=>f.transform.original_sources_content_preserved=false,f=>f.summary.loaded_count=2,f=>f.summary.out_of_case_calls=1,
+    f=>f.transform.native_factory_sha256='d'.repeat(64),f=>f.transform.config_control.consumed_pairs=0]){const f=fixture();change(f);assert.throws(()=>verify(f));}
 });
 test('driver preserves a timeout and partial output after exactly one mocked child, never retrying',async()=>{
   const temp=fs.mkdtempSync(path.join(os.tmpdir(),'iso-summary-driver-')), frontend=path.join(temp,'app/frontend'), output=path.join(temp,'out');
-  fs.mkdirSync(frontend,{recursive:true});let launches=0;
+  fs.mkdirSync(frontend,{recursive:true});let launches=0,configurations=0;
   try{
     const code=await driver.run(output,frontend,{environment:env(),runtime,prove:()=>({unchanged:true,
       harness_sha256:{'frontend/scripts/iso-pr110-summary-cost/transform.cjs':'c'.repeat(64)}}),argumentsFor:()=>['original'],
+      construct:async args=>{configurations++;assert.ok(args.includes('--showConfig'));
+        return {pid:2,status:0,signal:null,error:null,hard_failure:null,stdout:Buffer.from('{}'),stderr:Buffer.alloc(0)};},
+      validateConfiguration:()=>({valid:true,source_files:{approved_transform:{sha256:'c'.repeat(64)},babel_transform_factory:{sha256:'c'.repeat(64)}}}),
+      configurationArguments:(_frontend,diagnostic)=>['configuration','--showConfig',diagnostic?'diagnostic':'baseline'],
       launch:async(_args,_cwd,environment)=>{
         launches++;const f=fixture(true), folder=environment.ISO_SUMMARY_COST_OUTPUT;
         const files={'runtime.json':f.actual,'jest.json':f.result,'summary-cost-summary.json':f.summary,'summary-cost-host.json':f.host,
@@ -77,11 +86,27 @@ test('driver preserves a timeout and partial output after exactly one mocked chi
         for(const [name,value] of Object.entries(files))fs.writeFileSync(path.join(folder,name),JSON.stringify(value));
         return {...f.execution,stdout:Buffer.from('raw stdout'),stderr:Buffer.from('timeout original')};
       }});
-    assert.equal(code,1);assert.equal(launches,1);
+    assert.equal(code,1);assert.equal(launches,1);assert.equal(configurations,2);
     const latest=JSON.parse(fs.readFileSync(path.join(output,'latest.json'),'utf8'));
     const receipt=JSON.parse(fs.readFileSync(path.join(latest.directory,'diagnostic-receipt.json'),'utf8'));
     assert.equal(receipt.capture_valid,true);assert.equal(receipt.outcome.censored_iso,true);assert.equal(receipt.passed,false);
     assert.equal(fs.readFileSync(path.join(latest.directory,'stderr.log'),'utf8'),'timeout original');
     await assert.rejects(()=>driver.run(output,frontend,{environment:env(),runtime}),/EEXIST/);
+  }finally{fs.rmSync(temp,{recursive:true,force:true});}
+});
+test('failed actual configuration construction retains its evidence and never launches a lifecycle',async()=>{
+  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'iso-summary-config-')), frontend=path.join(temp,'app/frontend'), output=path.join(temp,'out');
+  fs.mkdirSync(frontend,{recursive:true});let launches=0,configurations=0;
+  try{
+    const code=await driver.run(output,frontend,{environment:env(),runtime,prove:()=>({unchanged:true}),
+      configurationArguments:()=>['configuration','--showConfig'],
+      construct:async()=>{configurations++;return {pid:2,status:1,signal:null,error:null,hard_failure:null,
+        stdout:Buffer.alloc(0),stderr:Buffer.from('real configuration failed')};},
+      launch:async()=>{launches++;throw Error('must not launch');}});
+    assert.equal(code,1);assert.equal(configurations,1);assert.equal(launches,0);
+    const latest=JSON.parse(fs.readFileSync(path.join(output,'latest.json'),'utf8'));
+    const receipt=JSON.parse(fs.readFileSync(path.join(latest.directory,'diagnostic-receipt.json'),'utf8'));
+    assert.equal(receipt.workload_started,false);assert.match(receipt.stop_reason,/construction failed: baseline/);
+    assert.equal(fs.readFileSync(path.join(latest.directory,'config-baseline-stderr.log'),'utf8'),'real configuration failed');
   }finally{fs.rmSync(temp,{recursive:true,force:true});}
 });

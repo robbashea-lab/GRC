@@ -1,7 +1,7 @@
-name: ISO PR110 unused summary cost observation
+name: ISO PR110 replacement summary cost observation
 on:
   push:
-    branches: [codex/iso-pr110-summary-cost-20261101]
+    branches: [codex/iso-pr110-summary-cost-replacement-20261101]
 permissions:
   contents: read
 jobs:
@@ -19,7 +19,7 @@ jobs:
         run: echo "ISO_SUMMARY_COST_DEADLINE_MS=$(( $(date +%s%3N) + 720000 ))" >> "$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
@@ -28,21 +28,21 @@ jobs:
       - run: yarn install --frozen-lockfile
       - name: First attempt and lightweight harness checks
         env:
-          DIAG_OUTPUT: ${{ runner.temp }}/iso-pr110-summary-cost
+          DIAG_OUTPUT: ${{ runner.temp }}/iso-pr110-summary-cost-replacement
         run: |
           mkdir -p "$DIAG_OUTPUT"
           test "$GITHUB_RUN_ATTEMPT" = 1
-          node --test scripts/iso-pr110-summary-cost/observer.test.cjs scripts/iso-pr110-summary-cost/artifact-writer.test.cjs scripts/iso-pr110-summary-cost/transform.test.cjs scripts/iso-pr110-summary-cost/setup.test.cjs scripts/iso-pr110-summary-cost/run.test.cjs > "$DIAG_OUTPUT/preflight.log" 2>&1
+          node --test scripts/iso-pr110-summary-cost/observer.test.cjs scripts/iso-pr110-summary-cost/artifact-writer.test.cjs scripts/iso-pr110-summary-cost/transform.test.cjs scripts/iso-pr110-summary-cost/setup.test.cjs scripts/iso-pr110-summary-cost/run.test.cjs scripts/iso-pr110-summary-cost/config-preflight.test.cjs > "$DIAG_OUTPUT/preflight.log" 2>&1
           cat "$DIAG_OUTPUT/preflight.log"
       - name: One original sequence with separate summary cost observation
         env:
-          DIAG_OUTPUT: ${{ runner.temp }}/iso-pr110-summary-cost
+          DIAG_OUTPUT: ${{ runner.temp }}/iso-pr110-summary-cost-replacement
         run: node scripts/iso-pr110-summary-cost/run.cjs "$DIAG_OUTPUT"
       - name: Preserve available outcomes and partial observations
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: iso-pr110-summary-cost-observation
-          path: ${{ runner.temp }}/iso-pr110-summary-cost/
+          name: iso-pr110-summary-cost-replacement
+          path: ${{ runner.temp }}/iso-pr110-summary-cost-replacement/
           if-no-files-found: error
           retention-days: 7
