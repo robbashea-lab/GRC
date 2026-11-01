@@ -24,8 +24,20 @@ function shareRule(name,native,local){
   for(const rule of found)expect(rule.selectors).toContain(local);
 }
 
+function withoutIsoAliases(source){
+  const sheet=postcss.parse(source);
+  sheet.walkRules(rule=>{
+    const alias=rule.selectors.find(selector=>selector.includes('.iso-cis-program-visual'));
+    if(!alias)return;
+    const start=rule.selector.indexOf(', '+alias);
+    if(start<0)throw new Error('ISO aliases must share the existing declaration block');
+    rule.selector=rule.selector.slice(0,start);
+  });
+  return sheet.toString();
+}
+
 test.each(Object.entries(baseline))('%s preserves every prior selector, declaration and order from ef5dfdd after removing local adapters',(name,digest)=>{
-  const original=sources[name].replace(SEGMENT_RESET,'').replace(SEGMENT_FOCUS,'').replace(', '+BOUNDARY,'').replace(', '+CANVAS,'')
+  const original=withoutIsoAliases(sources[name]).replace(SEGMENT_RESET,'').replace(SEGMENT_FOCUS,'').replace(', '+BOUNDARY,'').replace(', '+CANVAS,'')
     .replace(/, \.soc-cis-program-visual[^{]+?(?=\s+\{)/g,'');
   expect(createHash('sha256').update(original).digest('hex')).toBe(digest);
 });
@@ -53,9 +65,9 @@ test('optional interactive segments reuse the native bar geometry, rounding and 
   for(const suffix of ['',':first-child',':last-child',':only-child'])
     shareRule('BrawndoCisVisual.css','.brawndo-cis-visual .sbar i'+suffix,ROOT+' .sbar button.sbar-segment'+suffix);
   shareRule('BrawndoCisVisual.css','.brawndo-cis-visual .sbar.hl i:not(.on)',ROOT+' .sbar.hl button.sbar-segment:not(.on)');
-  const reset=rules('BrawndoCisVisual.css').find(rule=>rule.selector===ROOT+' .sbar button.sbar-segment'&&rule.nodes.some(node=>node.prop==='appearance'));
+  const reset=rules('BrawndoCisVisual.css').find(rule=>rule.selectors.includes(ROOT+' .sbar button.sbar-segment')&&rule.nodes.some(node=>node.prop==='appearance'));
   expect(reset.nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value])).toEqual([['border','0'],['padding','0'],['appearance','none']]);
-  const focus=rules('BrawndoCisVisual.css').find(rule=>rule.selector===ROOT+' .sbar button.sbar-segment:focus-visible');
+  const focus=rules('BrawndoCisVisual.css').find(rule=>rule.selectors.includes(ROOT+' .sbar button.sbar-segment:focus-visible'));
   expect(focus.nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value])).toEqual([['outline-offset','-2px']]);
 });
 

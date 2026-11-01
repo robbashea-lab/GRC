@@ -49,7 +49,8 @@ test.each(['existing-iso','new-multi-framework-client'])('ISO dashboard links pr
     await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId={clientId}/>));
     expect([...container.querySelectorAll('[data-testid^="requirement-"]')].map(el=>el.dataset.testid.replace('requirement-',''))).toEqual(ids);
     if(view==='not_applicable'){
-      const search=container.querySelector('input[aria-label="Search requirements"]');
+      const search=container.querySelector('input[type="search"]');
+      expect(search.closest('label').textContent).toContain('Search requirements');
       const type=async value=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,value);search.dispatchEvent(new Event('input',{bubbles:true}));});
       await type('no-matching-control');
       expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(0);

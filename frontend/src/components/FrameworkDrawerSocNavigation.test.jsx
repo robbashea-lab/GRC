@@ -114,12 +114,21 @@ test('ordinary SOC close cancellation does not report an external navigation can
   expect(props.onCloseCancelled).not.toHaveBeenCalled();expect(props.onOpenChange).not.toHaveBeenCalled();noWrites();
 });
 
-test.each([['cis-ig1','1.1'],['iso-27001','4.1']])('%s ignores the optional SOC request and retains its ordinary close behavior',async(framework,id)=>{
+test.each([['cis-ig1','1.1']])('%s ignores the optional request and retains its ordinary close behavior',async(framework,id)=>{
   record={...record,framework_key:framework,definition_id:id};await render({record});await render({closeRequest:1});
   expect(props.onOpenChange).not.toHaveBeenCalled();expect(container.querySelector('[role="alertdialog"]')).toBeNull();
   await act(async()=>mockNativeActions.put('implementation','Unaffected native draft'));
   await click('Native close');await click('Keep editing');expect(props.onCloseCancelled).not.toHaveBeenCalled();
   await click('Native close');await click('Discard changes');expect(props.onOpenChange).toHaveBeenCalledWith(false);noWrites();
+});
+
+test('ISO shares the existing external confirmation while retaining its exact native draft',async()=>{
+  record={...record,framework_key:'iso-27001',definition_id:'4.1'};
+  await render({record});await act(async()=>mockNativeActions.put('implementation','Exact protected ISO draft'));
+  await render({closeRequest:1});expect(props.onOpenChange).not.toHaveBeenCalled();
+  expect(container.querySelector('[role="alertdialog"]').textContent).toContain('Leave unsaved changes?');
+  await click('Keep editing');expect(mockNativeState.form.implementation).toBe('Exact protected ISO draft');
+  expect(props.onCloseCancelled).toHaveBeenCalledTimes(1);expect(record.implementation).toBe('Saved native implementation');noWrites();
 });
 
 test('read-only SOC can honor a clean close request without a write',async()=>{

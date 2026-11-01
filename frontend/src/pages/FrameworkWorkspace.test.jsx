@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import FrameworkWorkspace from './FrameworkWorkspace';
 import {cis, frameworkCatalog} from '@/lib/frameworks';
 import {socConfiguration} from '@/lib/socReadiness';
+import {frameworkDashboardFixture} from '@/testUtils/frameworkDashboard';
 import api from '@/lib/api';
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -86,7 +87,7 @@ test.each(['cis-ig1','soc-2','iso-27001'])('%s requirement rows expose exact con
  if(frameworkKey==='iso-27001')mockLocation.params=new URLSearchParams('iso_view=isms_clause');
  api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[]:{configured:true,selected:true,definitions:[definition],assessments:[row],active_definition_ids:[definition.id],configuration:{implementation_group:1,categories:['security']},work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey={frameworkKey} clientId="a"/>));
- const search=frameworkKey==='soc-2'?container.querySelector('.soc-criteria-register input[type="search"]'):container.querySelector('input[aria-label^="Search"]');
+ const search=['soc-2','iso-27001'].includes(frameworkKey)?container.querySelector('input[type="search"]'):container.querySelector('input[aria-label^="Search"]');
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,definition.id);search.dispatchEvent(new Event('input',{bubbles:true}));});
  const manage=container.querySelector(`button[aria-label="Manage ${definition.id} ${definition.title}"]`);
  expect(manage).toBeTruthy();await act(async()=>manage.click());
@@ -257,8 +258,9 @@ test('a deep-linked requirement closes in place without leaving the workspace',a
 });
 
 test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps approved sections without setup or redundant shortcuts for %s',async clientId=>{
- const definitions=frameworkCatalog('iso-27001').requirements;
- api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:clientId,status:'addressed',soa_applicability:d.specification==='annex_control'?'included':undefined})),work:{}}}));
+ const fixture=frameworkDashboardFixture('iso-27001',undefined,clientId);
+ fixture.source.assessments.forEach(row=>{row.status='addressed';});fixture.refresh();
+ api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:fixture.source}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId={clientId}/>));
  expect(container.querySelector('[aria-label="ISO workspace sections"]').children).toHaveLength(5);
  expect([...container.querySelector('[aria-label="ISO workspace sections"]').children].map(t=>t.textContent)).toEqual(['Overview','Statement of Applicability','ISMS Requirements','Annex A Controls','Internal Audit']);
@@ -269,7 +271,7 @@ test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps appro
  expect(container.textContent).not.toContain('Connected program records');
  await act(async()=>buttons('ISMS Requirements')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('30 of 30');
- expect(container.querySelector('.bwp-program-counts').textContent).toContain('30 of 30');
+ expect(container.querySelector('.now-head p').textContent).toContain('30 of 30');
  expect(container.querySelector('.bcis-explain')).toBeNull();
  const panel=container.querySelector('[role="tabpanel"]');
  expect(panel.getAttribute('aria-labelledby')).toBe('iso-tab-isms_clause');
@@ -277,7 +279,7 @@ test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps appro
  await act(async()=>buttons('Statement of Applicability')[0].click());
  await act(async()=>buttons('Expand all')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
- expect(container.textContent).toContain('Necessary — Implemented');
+ const soaRow=container.querySelector('[data-testid="requirement-A.5.1"]');expect(soaRow.querySelector('.st').textContent).toBe('Necessary');expect(soaRow.querySelector('.sg-secondary-info').textContent).toContain('Saved implementation: Implemented');expect(soaRow.querySelector('.ver').textContent).toContain('Not verified');
  await act(async()=>buttons('Annex A Controls')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('93 of 93');
  await act(async()=>buttons('Internal Audit')[0].click());
@@ -286,17 +288,18 @@ test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps appro
 });
 
 test('ISO grouped presentation preserves SoA scope and native expansion with guarded drawer breadcrumbs',async()=>{
- const definitions=frameworkCatalog('iso-27001').requirements;
- const annex=definitions.filter(d=>d.specification==='annex_control');
+ const fixture=frameworkDashboardFixture('iso-27001',undefined,'new-client');
+ const annex=fixture.source.definitions.filter(d=>d.specification==='annex_control');
+ fixture.source.assessments.forEach(row=>{row.status=row.definition_id===annex[0].id?'not_assessed':row.definition_id===annex[1].id?'not_applicable':'addressed';if(row.definition_id===annex[1].id)row.soa_applicability='excluded';});fixture.refresh();
  mockLocation.params=new URLSearchParams('iso_view=soa');
- api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'new-client',status:d.id===annex[0].id?'not_assessed':'addressed',soa_applicability:d.id===annex[1].id?'excluded':'included'})),work:{}}}));
+ api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:fixture.source}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId="new-client"/>));
- expect(container.querySelector('.framework-presentation')).not.toBeNull();
-  expect(container.querySelector('[aria-label="Statement of Applicability status"]').textContent).toContain('93 of 93 decisions recorded');
- expect(container.querySelector('.iso-register-toggle').tagName).toBe('BUTTON');
+ expect(container.querySelector('.iso-cis-program-visual')).not.toBeNull();
+ expect(container.querySelector('[aria-labelledby="iso-soa-summary"]').textContent).toContain('93 of 93 decisions documented');
+ expect(container.querySelector('.iso-program-register .grow').tagName).toBe('BUTTON');
  await act(async()=>buttons('Expand all')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
- await act(async()=>container.querySelector(`[data-testid="requirement-${annex[0].id}"] button`).click());
+ await act(async()=>container.querySelector(`[data-testid="requirement-${annex[0].id}"]`).click());
  expect(container.querySelector('[aria-label="ISO workspace sections"] [aria-selected="true"]').textContent).toBe('Statement of Applicability');
  expect(container.querySelector('[data-testid="opened"]').textContent).toContain('Statement of Applicability');
  await act(async()=>[...container.querySelectorAll('[data-drawer-crumb]')].find(b=>b.textContent==='Statement of Applicability').click());
@@ -304,7 +307,7 @@ test('ISO grouped presentation preserves SoA scope and native expansion with gua
  expect(mockHistory.at(-1).search).toBe('iso_view=soa');
  await act(async()=>buttons('Annex A Controls')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('91 of 92');
- await act(async()=>container.querySelector('.bcis-legend .is-good').click());
+ await act(async()=>[...container.querySelectorAll('.lg button')].find(button=>button.querySelector('.lg-label').textContent==='Implemented').click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(91);
  expect(container.querySelector(`[data-testid="requirement-${annex[1].id}"]`)).toBeNull();
 });

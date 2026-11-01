@@ -77,11 +77,11 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   // A newly mounted editor adopts the current token; later requests use its native leave guard.
   const handledCloseRequest=useRef(closeRequest),externalClosePending=useRef(false);
   useEffect(()=>{
-    if(!isSoc||!open||busy||!closeRequest||handledCloseRequest.current===closeRequest)return;
+    if((!isSoc&&record.framework_key!=='iso-27001')||!open||busy||!closeRequest||handledCloseRequest.current===closeRequest)return;
     handledCloseRequest.current=closeRequest;
     externalClosePending.current=true;
     leave(()=>{externalClosePending.current=false;onOpenChange(false);});
-  },[isSoc,open,busy,closeRequest,leave,onOpenChange]);
+  },[isSoc,record.framework_key,open,busy,closeRequest,leave,onOpenChange]);
   function cancelLeave(){
     setPending(null);
     if(externalClosePending.current){externalClosePending.current=false;onCloseCancelled?.();}
