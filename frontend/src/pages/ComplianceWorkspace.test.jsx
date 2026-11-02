@@ -122,16 +122,18 @@ test('SOC framework loading keeps one metadata heading after the outer requireme
   expect(container.querySelectorAll('[aria-labelledby="bcis-summary-heading"]')).toHaveLength(1);
 });
 test('loaded ISO uses one native metadata header while the sidebar retains the client identity',async()=>{
+  const catalogBefore=JSON.stringify(frameworkCatalog('iso-27001'));
   mockKey='iso-27001';mockPath='/compliance/iso-27001';serveIso(isoWorkspace());
   await render();
   const main=container.querySelector('main');
   expect(main.querySelectorAll('h1')).toHaveLength(1);expect(main.querySelector('h1').textContent).toBe('ISO 27001');
   expect(main.querySelector('.bpage-eyebrow')).toBeNull();expect(main.textContent).not.toContain('Assessment workspace ·');
   expect(main.querySelectorAll('.iso-program-heading p')).toHaveLength(1);
-  expect(main.querySelector('.iso-program-heading p').textContent).toContain(frameworkCatalog('iso-27001').version);
+  expect(main.querySelector('.iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
   expect(main.querySelectorAll('[aria-labelledby="bcis-summary-heading"]')).toHaveLength(1);
   expect(main.querySelectorAll('button.iso-program-card')).toHaveLength(4);
   expect(container.querySelector('[data-testid="context-header-client"]').textContent).toContain('Client A');
+  expect(JSON.stringify(frameworkCatalog('iso-27001'))).toBe(catalogBefore);
 });
 
 test('ISO requirement loading and errors retain one outer metadata heading until the native workspace can load',async()=>{
@@ -155,7 +157,7 @@ test('ISO framework unconfigured and error states keep one native metadata headi
   await render();
   expect(container.querySelectorAll('main h1')).toHaveLength(1);expect(container.querySelector('main h1').textContent).toBe('ISO 27001');
   expect(container.querySelector('main .bpage-eyebrow')).toBeNull();
-  expect(container.querySelector('main .iso-program-heading p').textContent).toContain(frameworkCatalog('iso-27001').version);
+  expect(container.querySelector('main .iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
   expect(container.querySelector('main').textContent).toContain('Select Applies in Client Profile to initialize this program after onboarding.');
   expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
   expect(container.querySelector('main .head-actions .primary')).toBeNull();
@@ -164,7 +166,7 @@ test('ISO framework unconfigured and error states keep one native metadata headi
   await render('iso-framework-error');
   expect(container.querySelectorAll('main h1')).toHaveLength(1);
   expect(container.querySelector('main [role="alert"]').textContent).toContain('ISO framework unavailable');
-  expect(container.querySelector('main .iso-program-heading p').textContent).toContain(frameworkCatalog('iso-27001').version);
+  expect(container.querySelector('main .iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
   expect(container.querySelector('main .head-actions .primary')).toBeNull();
 });
 
@@ -176,7 +178,7 @@ test('ISO framework loading and its completed native read keep a single metadata
   await render();
   expect(container.querySelectorAll('main h1')).toHaveLength(1);expect(container.querySelector('main h1').textContent).toBe('ISO 27001');
   expect(container.querySelector('main .bpage-eyebrow')).toBeNull();
-  expect(container.querySelector('main .iso-program-heading p').textContent).toContain(frameworkCatalog('iso-27001').version);
+  expect(container.querySelector('main .iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
   expect(container.querySelector('main').textContent).toContain('Loading program workspace');
   expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
   await act(async()=>resolveFramework({data:source}));
@@ -193,7 +195,7 @@ test('direct compliance routes render client empty states and preserve existing 
     if(key==='iso-27001'){
       // ISO owns its metadata header; the persistent sidebar still names the client.
       expect(container.querySelector('main .bpage-eyebrow')).toBeNull();
-      expect(container.querySelector('main .iso-program-heading p').textContent).toContain(frameworkCatalog('iso-27001').version);
+      expect(container.querySelector('main .iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
       expect(container.querySelector('main').textContent).not.toContain('Assessment workspace · ');
       expect(container.querySelector('[data-testid="context-header-client"]').textContent).toContain('Client A');
     }else{
