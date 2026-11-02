@@ -99,6 +99,17 @@ test('historical audit year survives overview card → audit → overview naviga
   expect(container.querySelector('[aria-label="Audit-program year"]').value).toBe('2025');expect(card('Internal Audit').textContent).toContain('3 of');noWrites();
 });
 
+test('Audit header and summary reconcile with the selected native audit records and their saved dates',async()=>{
+  const clientId='qa-audit-header',result=fixture(clientId),audits=reviews(clientId);
+  const saved='2026-10-28T09:15:00Z',date=new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(saved));
+  audits[0].iso_audit.items['4-1']={status:'in_progress',result:'',updated_at:saved};
+  const before=JSON.stringify(audits);serve(result.source,audits);await mount(clientId);await click(card('Internal Audit'));
+  expect(container.querySelector('.page-head p').textContent).toContain(`28 planned audit checks · As of ${date}`);
+  expect(container.querySelector('.now-head p').textContent).toBe('0 of 28 planned checks complete');
+  expect(container.querySelector('.now-head small').textContent).toBe(`As of ${date}`);
+  expect(JSON.stringify(audits)).toBe(before);noWrites();
+});
+
 test('actor change withdraws the old ISO view until its current authorized response arrives',async()=>{
   const result=fixture('qa-context');serve(result.source);await mount('qa-context');expect(card('Statement of Applicability')).toBeTruthy();
   let finish;api.get.mockImplementation(path=>path==='/frameworks/iso-27001'?new Promise(resolve=>{finish=resolve;}):Promise.resolve({data:[]}));
@@ -156,9 +167,13 @@ test('overview uses the native weighted 123-record population once and section s
   await click(card('ISMS Requirements'));expect(summary().querySelector('.now-head p').textContent).toBe('30 of 30 ISMS requirements implemented');
   await click(button('Expand all'));expect(ids()).toEqual(clauses.map(record=>record.definition_id));expect(new Set(ids()).size).toBe(clauses.length);
   await click(button('Back to ISO overview'));expect(summary().querySelector('.now-value').textContent).toBe('25.6%');
-  await click(card('Annex A Controls'));expect(summary().querySelector('.now-head p').textContent).toBe('1 of 91 applicable controls implemented');
+  await click(card('Annex A Controls'));expect(summary().querySelector('.now-head p').textContent).toBe('1 of 91 controls implemented');
+  expect(summary().querySelector('.bd-title').textContent).toBe('Status of 91 applicable controls');
+  expect(summary().textContent).not.toContain('applicable applicable');
   await click(button('Expand all'));expect(ids()).toEqual(controls.map(record=>record.definition_id));expect(new Set(ids()).size).toBe(controls.length);
-  expect(container.textContent).toContain('1 Annex A applicability decisions unresolved; 1 excluded');
+  expect(summary().querySelector('.card-foot').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
+  expect(group('annex_control/A.5').textContent).toContain('1 excluded');
+  expect(group('annex_control/A.5').textContent).toContain('1 applicability not determined');
   expect(JSON.stringify(result.source)).toBe(before);noWrites();
 });
 
@@ -189,7 +204,8 @@ test('retained duplicated grouping fields cannot remap an Annex record away from
   expect(summary().querySelector('.now-head p').textContent).toBe('122 of 123 requirements and controls implemented');
   expect(card('ISMS Requirements').textContent).toContain('30 of 30 requirements implemented');
   await click(card('Annex A Controls'));
-  expect(summary().querySelector('.now-head p').textContent).toBe('92 of 93 applicable controls implemented');
+  expect(summary().querySelector('.now-head p').textContent).toBe('92 of 93 controls implemented');
+  expect(summary().querySelector('.bd-title').textContent).toBe('Status of 93 applicable controls');
   const nativeTheme=group('annex_control/A.5');expect(nativeTheme).toBeTruthy();
   expect(nativeTheme.querySelector('.g-impl b').textContent).toBe(`${themeTotal-1} of ${themeTotal}`);
   expect(group('isms_clause/legacy-unknown-group')).toBeNull();await click(nativeTheme);
@@ -212,6 +228,7 @@ test('SoA and Annex open the same native control, Continue, history, owner and m
   const clientId='qa-same-control',result=fixture(clientId),control=result.source.assessments.find(record=>record.definition_id==='A.5.1');
   Object.assign(control,{status:'in_progress',owner_id:'qa-native-owner',implementation:'Retained native control narrative',assessment_history:[{status:'in_progress',at:'2026-10-01T12:00:00Z',soa_applicability:'included'}]});
   result.refresh();const before=JSON.stringify(result.source);serve(result.source);await mount(clientId);await click(card('Statement of Applicability'));
+  expect(container.textContent).not.toContain('Necessary organization-specific Controls');
   await click([...container.querySelectorAll('.head-actions button')].find(node=>node.textContent.startsWith('Continue: A.5.1 ')));
   expect(editor().dataset.assessment).toBe(control.framework_assessment_id);expect(editor().dataset.framework).toBe('iso-27001');expect(editor().dataset.version).toBe(result.source.framework.version);
   expect(editor().dataset.clientProp).toBe(clientId);expect(editor().dataset.owner).toBe(control.owner_id);expect(editor().dataset.management).toBe('false');
@@ -222,6 +239,7 @@ test('SoA and Annex open the same native control, Continue, history, owner and m
   expect([...editor().querySelectorAll('[data-drawer-crumb]')].map(node=>node.textContent)).toContain('Annex A Controls');
   await click(button('Close synthetic editor'));await click(row('A.5.1').querySelector('[aria-label^="Manage A.5.1 "]'));
   expect(editor().dataset.assessment).toBe(control.framework_assessment_id);expect(editor().dataset.management).toBe('true');
+  expect(container.textContent).not.toContain('Return to last opened:');
   expect(JSON.stringify(result.source)).toBe(before);noWrites();
 });
 

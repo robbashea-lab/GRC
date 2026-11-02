@@ -35,10 +35,10 @@ test.each([
 });
 
 test.each([
-  ['not_assessed','Not Assessed','Not established'],
-  ['in_progress','Partially Implemented','Gap identified'],
-  ['needs_attention','Not Implemented / Needs Validation','Gap identified'],
-  ['not_applicable','Not Applicable','Not applicable'],
+  ['not_assessed','Not assessed','Not established'],
+  ['in_progress','Partially implemented','Gap identified'],
+  ['needs_attention','Not implemented / needs validation','Gap identified'],
+  ['not_applicable','Not applicable','Not applicable'],
 ])('native ISO implementation terminology and independent verification are preserved for %s',async(status,label,verification)=>{
   await render(record({status}));expect(opener().querySelector('.st').textContent).toBe(label);
   expect(opener().querySelector(`[aria-label="Derived verification: ${verification}"]`)).not.toBeNull();
@@ -46,11 +46,11 @@ test.each([
 
 test('SoA decisions and saved implementation stay distinct, including unassessed necessary controls',async()=>{
   await render(record({status:'not_assessed'}),{soa:true});
-  expect(opener().querySelector('.st').textContent).toBe('Necessary');expect(opener().textContent).toContain('Saved implementation: Not Assessed');
-  expect(opener().textContent).not.toContain('Not Implemented');expect(opener().textContent).not.toContain('Justification needed');
+  expect(opener().querySelector('.st').textContent).toBe('Necessary');expect(opener().textContent).toContain('Implementation: Not assessed');
+  expect(opener().textContent).not.toContain('Not implemented');expect(opener().textContent).not.toContain('Justification needed');
   await render(record({status:'needs_attention',soa_justification:'  '}),{soa:true});
-  expect(opener().querySelector('.st').textContent).toBe('Necessary');expect(opener().textContent).toContain('Saved implementation: Not Implemented / Needs Validation');
-  expect(opener().textContent).toContain('Justification needed');expect(opener().textContent).not.toContain('Saved implementation: Partially Implemented');
+  expect(opener().querySelector('.st').textContent).toBe('Necessary');expect(opener().textContent).toContain('Implementation: Not implemented / needs validation');
+  expect(opener().textContent).toContain('Justification needed');expect(opener().textContent).not.toContain('Implementation: Partially implemented');
 });
 
 test.each([
@@ -63,7 +63,7 @@ test.each([
 ])('SoA applicability %s retains its own decision and documentation state',async(applicability,label,justification,warning)=>{
   await render(record({soa_applicability:applicability,soa_justification:justification}),{soa:true});
   expect(opener().querySelector('.st').textContent).toBe(label);expect(opener().textContent.includes('Justification needed')).toBe(warning);
-  expect(opener().textContent).toContain('Saved implementation: Implemented');
+  expect(opener().textContent).toContain('Implementation: Implemented');
 });
 
 test.each([undefined,null,-1,1.5,'2'])('missing or invalid evidence count %p is not fabricated as zero evidence',async count=>{
@@ -75,7 +75,7 @@ test.each([undefined,null,-1,1.5,'2'])('missing or invalid evidence count %p is 
 test('every native linked-work count is shown without replacing it with record-array lengths',async()=>{
   await render(record({work:{context_complete:true,evidence_count:0,open_findings:2,overdue_actions:1,overdue_reviews:3,finding_ids:[],review_ids:[]}}));
   expect(opener().textContent).toContain('Linked work: 2 open Findings · 1 overdue Action Item · 3 overdue Reviews');
-  expect(opener().textContent).toContain('0 Evidence');
+  expect(opener().textContent).not.toContain('0 Evidence');
 });
 
 test('row activation passes the original record while Manage stays isolated for clicks and keyboard input',async()=>{
@@ -92,5 +92,31 @@ test('row activation passes the original record while Manage stays isolated for 
 test('without record management, the whole row is one native button and unknown saved states are honest',async()=>{
   const row=record({status:'toString'}),props=await render(row,{soa:true});
   expect(opener().tagName).toBe('BUTTON');expect(opener().type).toBe('button');expect(opener().querySelector('button')).toBeNull();
-  expect(opener().textContent).toContain('Saved implementation: Status unavailable');await click(opener());expect(props.onOpen).toHaveBeenCalledWith(row);
+  expect(opener().textContent).toContain('Implementation: Status unavailable');await click(opener());expect(props.onOpen).toHaveBeenCalledWith(row);
+});
+
+test('known-zero evidence is compact while Manage remains available without a leading separator or fabricated work',async()=>{
+  const row=Object.freeze(record({work:{context_complete:true,evidence_count:0,open_findings:0,overdue_actions:0,overdue_reviews:0}})),before=JSON.stringify(row);
+  const props=await render(row,{onManage:jest.fn()});
+  expect(opener().querySelector('.sg-secondary-info').textContent).toBe('Manage');
+  expect(opener().textContent).not.toContain('0 Evidence');expect(opener().textContent).not.toContain('Linked work:');
+  await click(opener().querySelector('button'));expect(props.onManage.mock.calls).toEqual([[row]]);expect(props.onOpen).not.toHaveBeenCalled();
+  expect(JSON.stringify(row)).toBe(before);
+});
+
+test('title, status and verification pointer input open once; nested Manage focus and input stay independent',async()=>{
+  const row=Object.freeze(record()),props=await render(row,{onManage:jest.fn()}),open=opener();
+  for(const target of [open.querySelector('.sg-t'),open.querySelector('.st'),open.querySelector('.ver svg')]){
+    await act(async()=>{
+      target.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,cancelable:true}));
+      target.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,cancelable:true}));
+      target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+    });
+  }
+  expect(props.onOpen.mock.calls).toEqual([[row],[row],[row]]);
+  open.focus();expect(document.activeElement).toBe(open);await key(open,'Enter');await key(open,' ');
+  expect(props.onOpen.mock.calls).toEqual([[row],[row],[row],[row],[row]]);
+  const manage=open.querySelector('[aria-label^="Manage "]');manage.focus();expect(document.activeElement).toBe(manage);
+  await key(manage,'Enter');await key(manage,' ');await click(manage);
+  expect(props.onManage.mock.calls).toEqual([[row]]);expect(props.onOpen).toHaveBeenCalledTimes(5);
 });

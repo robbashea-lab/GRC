@@ -5,11 +5,11 @@ import IsoProgramRow from './IsoProgramRow';
 import IsoProgramApplicabilityBar from './IsoProgramApplicabilityBar';
 import {groupRequirements,hierarchyPath,matchesAssessment,sectionSummary} from '@/lib/frameworkWorkspace';
 import {cisSummary} from '@/lib/cisVerification';
-import {isoSoaCounts} from '@/lib/isoProgramPresentation';
-import {operatorStatuses} from '@/lib/frameworkOperator';
+import {isoSoaCounts,ISO_PROGRAM_STATUS_LABELS} from '@/lib/isoProgramPresentation';
 
 const VIEW_LABELS={soa:'Statement of Applicability',isms_clause:'ISMS Requirements',annex_control:'Annex A Controls'};
-const LABELS=operatorStatuses('iso-27001');
+const REGISTER_TITLES={soa:'Applicability register',isms_clause:'Requirements',annex_control:'Controls'};
+const LABELS=ISO_PROGRAM_STATUS_LABELS;
 const FILTER_LABELS={all:'All',attention:'Needs attention',not_assessed:'Not assessed',stale:'Needs reassessment',...LABELS};
 const APPLICABILITY_LABELS={all:'All controls',included:'Necessary',excluded:'Not Necessary',undetermined:'Decision needed'};
 const ratio=(value,total)=>total>0?value/total:1;
@@ -47,13 +47,19 @@ export default function IsoProgramNavigator({clientId,view,rows,visible,filtered
   const metadata=node=>{
     if(!countsAvailable)return 'Native record counts unavailable';
     const work=sectionSummary(node.rows),control=node.rows.every(row=>row.specification==='annex_control');
-    return <>{node.rows.length} {control?'controls':'requirements'}{control&&<> · {node.soa.excluded} excluded · {node.soa.undetermined} applicability not determined</>}
-      {soa&&<> · {node.soa.missingJustification} justification needed</>}
-      {node.rows.every(row=>row.work?.context_complete===true)&&<> · {work.findings} open Findings · {work.reviews} linked Reviews</>}</>;
+    const details=[`${node.rows.length} ${control?(node.rows.length===1?'control':'controls'):(node.rows.length===1?'requirement':'requirements')}`];
+    if(control&&node.soa.excluded>0)details.push(`${node.soa.excluded} excluded`);
+    if(control&&node.soa.undetermined>0)details.push(`${node.soa.undetermined} applicability not determined`);
+    if(soa&&node.soa.missingJustification>0)details.push(`${node.soa.missingJustification} justification needed`);
+    if(node.rows.every(row=>row.work?.context_complete===true)){
+      if(work.findings>0)details.push(`${work.findings} open Finding${work.findings===1?'':'s'}`);
+      if(work.reviews>0)details.push(`${work.reviews} linked Review${work.reviews===1?'':'s'}`);
+    }
+    return details.join(' · ');
   };
   return <section ref={register} className="pcard iso-program-register" aria-labelledby={`${panelPrefix}-register`}>
-    <ProgramVisualToolbar id={`${panelPrefix}-register`} title={title}
-      description={soa?'Annex A applicability decisions and supporting documentation, grouped by native theme.':view==='isms_clause'?'ISMS requirements grouped by native clause.':view==='annex_control'?'Annex A reference controls grouped by native theme.':'Native ISMS requirements and Annex A controls grouped by clause and theme.'}
+    <ProgramVisualToolbar id={`${panelPrefix}-register`} title={REGISTER_TITLES[view]||'Requirements and controls'}
+      description={soa?'Record which controls apply and document the reasons for inclusion or exclusion.':view==='isms_clause'?'Grouped by clause.':view==='annex_control'?'Grouped by theme.':'ISMS requirements and Annex A controls, grouped by clause and theme.'}
       search={search} onSearch={onSearch} searchLabel="Search requirements" filter={filter} onFilter={onFilter} counts={counts} filterLabels={FILTER_LABELS}
       order={order} onOrder={setOrder} orderOptions={soa?[['program','Program order'],['gaps','Least documented first']]:undefined}
       filterControls={soa?<label className="f-field">Applicability filter<select aria-label="Applicability filter" value={applicability} onChange={event=>chooseApplicability(event.target.value)}>{Object.entries(APPLICABILITY_LABELS).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>:undefined}

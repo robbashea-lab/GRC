@@ -260,6 +260,7 @@ test('a deep-linked requirement closes in place without leaving the workspace',a
 test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps approved sections without setup or redundant shortcuts for %s',async clientId=>{
  const fixture=frameworkDashboardFixture('iso-27001',undefined,clientId);
  fixture.source.assessments.forEach(row=>{row.status='addressed';});fixture.refresh();
+ const assessmentsBefore=JSON.stringify(fixture.source.assessments);
  api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:fixture.source}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId={clientId}/>));
  expect(container.querySelector('[aria-label="ISO workspace sections"]').children).toHaveLength(5);
@@ -279,12 +280,14 @@ test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps appro
  await act(async()=>buttons('Statement of Applicability')[0].click());
  await act(async()=>buttons('Expand all')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
- const soaRow=container.querySelector('[data-testid="requirement-A.5.1"]');expect(soaRow.querySelector('.st').textContent).toBe('Necessary');expect(soaRow.querySelector('.sg-secondary-info').textContent).toContain('Saved implementation: Implemented');expect(soaRow.querySelector('.ver').textContent).toContain('Not verified');
+ const soaRow=container.querySelector('[data-testid="requirement-A.5.1"]');expect(soaRow.querySelector('.st').textContent).toBe('Necessary');expect(soaRow.querySelector('.sg-secondary-info').textContent).toContain('Implementation: Implemented');expect(soaRow.querySelector('.ver').textContent).toContain('Not verified');
  await act(async()=>buttons('Annex A Controls')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('93 of 93');
  await act(async()=>buttons('Internal Audit')[0].click());
  expect(container.textContent).toContain('Program not activated');
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
+ expect(api.patch).not.toHaveBeenCalled();
+ expect(JSON.stringify(fixture.source.assessments)).toBe(assessmentsBefore);
 });
 
 test('ISO grouped presentation preserves SoA scope and native expansion with guarded drawer breadcrumbs',async()=>{
