@@ -32,9 +32,9 @@ export function ProgramVisualSummary({id,label='Program snapshot',children,foote
   return <section className="pcard" aria-labelledby={id}><h2 id={id} className="sr-only">{label}</h2><div className="snap">{children}</div><div className="card-foot">{footer}</div></section>;
 }
 
-export function ProgramVisualSnapshot({summary:s,filter,onFilter,asOf,asOfLabel='As of',missingAsOfLabel='Assessment date unavailable',noun='safeguards',id='cis-visual-snapshot',statusLabels=PROGRAM_IMPLEMENTATION_LABELS,qualification='Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.',onSegmentFilter,onNotApplicable}){
+export function ProgramVisualSnapshot({summary:s,filter,onFilter,asOf,asOfLabel='As of',missingAsOfLabel='Assessment date unavailable',noun='safeguards',id='cis-visual-snapshot',statusLabels=PROGRAM_IMPLEMENTATION_LABELS,qualification='Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.',onSegmentFilter,onNotApplicable,showExcludedNote=true}){
   const available=s.available!==false,pick=key=>onFilter(filter===key?'all':key);
-  return <ProgramVisualSummary id={id} footer={<>{qualification}{s.na>0&&(onNotApplicable?available&&<><span> </span><button type="button" className="link" aria-pressed={filter==='not_applicable'} onClick={()=>onNotApplicable(filter==='not_applicable'?'all':'not_applicable')}>{s.na} not applicable, excluded from implementation totals.</button></>:<> {s.na} not applicable, excluded from implementation totals.</>)}{!available&&<> {s.reason||'Refresh the program to retrieve implementation counts.'}</>}</>}>
+  return <ProgramVisualSummary id={id} footer={<>{qualification}{showExcludedNote&&s.na>0&&(onNotApplicable?available&&<><span> </span><button type="button" className="link" aria-pressed={filter==='not_applicable'} onClick={()=>onNotApplicable(filter==='not_applicable'?'all':'not_applicable')}>{s.na} not applicable, excluded from implementation totals.</button></>:<> {s.na} not applicable, excluded from implementation totals.</>)}{!available&&<> {s.reason||'Refresh the program to retrieve implementation counts.'}</>}</>}>
     <div className="now-head"><span className="now-label">Current implementation</span>
       <strong className="now-value">{available&&s.applicable>0?percent(s.addressed,s.applicable):'—'}{available&&s.applicable>0&&<span className="unit">%</span>}</strong>
       <p>{available?`${s.addressed} of ${s.applicable} ${noun} implemented`:'Implementation source unavailable'}</p><small>{asOf?`${asOfLabel} ${asOf}`:missingAsOfLabel}</small></div>
@@ -76,7 +76,7 @@ function linkedWorkSummary(work){
   return labels.length?`Linked work: ${labels.join(' · ')}`:null;
 }
 
-export function ProgramVisualRow({row,onOpen,statusLabels=PROGRAM_IMPLEMENTATION_LABELS,freshness,secondaryInfo,management,ariaLabel,statusContent,verificationContent}){
+export function ProgramVisualRow({row,onOpen,statusLabels=PROGRAM_IMPLEMENTATION_LABELS,freshness,secondaryInfo,management,ariaLabel,statusContent,verificationContent,compactManagement=false}){
   const segment=SEGMENTS.find(([key])=>key===row.status),verification=verificationOf(row);
   const fresh=freshness===undefined?assessmentFreshness(row):freshness;
   const workSummary=linkedWorkSummary(row.work);
@@ -84,7 +84,7 @@ export function ProgramVisualRow({row,onOpen,statusLabels=PROGRAM_IMPLEMENTATION
   const Row=management?'div':'button';
   return <Row type={management?undefined:'button'} role={management?'link':undefined} tabIndex={management?0:undefined} className="sg" aria-label={ariaLabel} data-testid={`requirement-${row.definition_id}`} onClick={()=>onOpen(row)}
     onKeyDown={management?event=>{if(event.target===event.currentTarget)activate(()=>onOpen(row))(event);}:undefined}>
-    <span className="sg-id">{row.definition_id}</span><span className="sg-t">{row.title}{(workSummary||secondaryInfo||management)&&<small className={secondaryInfo||management?'sg-secondary-info':undefined}>{workSummary}{secondaryInfo&&<>{workSummary?' · ':''}{secondaryInfo}</>}{management&&<span className="sg-management" onClick={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}> · {management}</span>}</small>}</span>
+    <span className="sg-id">{row.definition_id}</span><span className="sg-t">{row.title}{(workSummary||secondaryInfo||management)&&<small className={secondaryInfo||management?'sg-secondary-info':undefined}>{workSummary}{secondaryInfo&&<>{workSummary?' · ':''}{secondaryInfo}</>}{management&&<span className="sg-management" onClick={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}>{!compactManagement||workSummary||secondaryInfo?' · ':null}{management}</span>}</small>}</span>
     {statusContent??<span className="st"><i className={`s-${segment?.[1]||'none'}`}/>{segment?(statusLabels[row.status]??PROGRAM_IMPLEMENTATION_LABELS[row.status]):row.status==='not_applicable'?(statusLabels.not_applicable??'Not applicable'):'Status unavailable'}</span>}
     {verificationContent??<span className={`ver v-${verification}`}><Icon size={14} aria-hidden="true"/><span>{VERIFICATION_LABELS[verification]}<small>{fresh?.label??'Assessment date unavailable'}</small></span></span>}<span className="chev" aria-hidden="true">›</span></Row>;
 }

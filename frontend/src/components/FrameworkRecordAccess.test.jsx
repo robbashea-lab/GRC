@@ -17,13 +17,62 @@ beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;mockUser={user_id:'manager',role:'client_grc_manager'};mockGroup=1;
   node=document.createElement('div');document.body.appendChild(node);root=createRoot(node);
   record={framework_assessment_id:'assessment-4.1',framework_key:'iso-27001',definition_id:'4.1',client_id:'client',owner_id:'manager',last_assessed:'2026-10-01',status:'in_progress',implementation:'Saved scope',assessment_history:[{status:'in_progress',implementation:'Historical scope',at:'2026-10-01',by:'manager'}]};
-  api.get.mockImplementation(async path=>({data:path.endsWith('/related')?{reviews:[],evidence:[]}:path.endsWith('/members')?[{user_id:'manager',name:'Manager',role:'client_grc_manager',client_ids:['client']},{user_id:'contributor',name:'Contributor',role:'client_contributor',client_ids:['client']}]:path==='/comments'?[{comment_id:'comment',body:'Historical discussion',author_name:'Manager',created_at:'2026-10-01'}]:path.endsWith('/activity')?[{audit_id:'event',action:'assessment saved',at:'2026-10-01'}]:path.startsWith('/frameworks/')?{assessments:[record],configuration:{implementation_group:mockGroup}}:path==='/risks'?[{risk_id:'risk',client_id:'client',title:'Exact scoped risk'}]:[]}));
+  api.get.mockImplementation(async path=>({data:path==='/organizational-controls'?{items:[],migration_pending:0,has_more:false}:path==='/organizational-controls/candidates'?{items:[],has_more:false}:path==='/organizational-controls/assessments'?[record]:path.endsWith('/related')?{reviews:[],evidence:[]}:path.endsWith('/members')?[{user_id:'manager',name:'Manager',role:'client_grc_manager',client_ids:['client']},{user_id:'contributor',name:'Contributor',role:'client_contributor',client_ids:['client']}]:path==='/comments'?[{comment_id:'comment',body:'Historical discussion',author_name:'Manager',created_at:'2026-10-01'}]:path.endsWith('/activity')?[{audit_id:'event',action:'assessment saved',at:'2026-10-01'}]:path.startsWith('/frameworks/')?{assessments:[record],configuration:{implementation_group:mockGroup}}:path==='/risks'?[{risk_id:'risk',client_id:'client',title:'Exact scoped risk'}]:[]}));
   api.patch.mockImplementation(async(path,body)=>({data:{...record,...body}}));api.post.mockResolvedValue({data:{}});
 });
 afterEach(async()=>{await act(async()=>root.unmount());node.remove();jest.clearAllMocks();});
 const button=text=>[...node.querySelectorAll('button')].find(b=>b.textContent===text);
 const change=async(field,value)=>act(async()=>{Object.getOwnPropertyDescriptor(field.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLSelectElement.prototype,'value').set.call(field,value);field.dispatchEvent(new Event(field.tagName==='TEXTAREA'?'input':'change',{bubbles:true}));});
 const render=props=>act(async()=>root.render(<FrameworkDrawer open recordManagement record={record} clientId="client" onOpenChange={()=>{}} {...props}/>));
+const controlDialog=()=>document.querySelector('[role="dialog"]');
+const controlButton=text=>[...controlDialog().querySelectorAll('button')].find(b=>b.textContent===text);
+const nameControl=async value=>act(async()=>{
+  const field=controlDialog().querySelector('[aria-label="Organizational Control name"]');
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(field,value);
+  field.dispatchEvent(new Event('input',{bubbles:true}));
+});
+
+test('ISO Manage retains the client-wide Controls manager without narrowing or defaulting it to the selected requirement',async()=>{
+  mockUser.role='platform_admin';await render();
+  expect(node.querySelector('[aria-label="Organizational Controls"]')).toBeTruthy();
+  expect(api.get).toHaveBeenCalledWith('/organizational-controls',expect.objectContaining({params:{client_id:'client',assessment_id:undefined,offset:0}}));
+  expect(node.textContent).not.toContain('Show all client Controls to reuse an existing one');
+  expect(button('Create organizational Control')).toBeDefined();
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('an unsaved Control draft in ISO Manage activates the existing parent leave guard without saving either record',async()=>{
+  mockUser.role='platform_admin';const close=jest.fn();await render({onOpenChange:close});
+  await act(async()=>button('Create organizational Control').click());await nameControl('Unsaved operating Control');
+  await act(async()=>button('Close').click());
+  expect(close).not.toHaveBeenCalled();expect(node.textContent).toContain('Leave unsaved changes?');
+  expect(controlDialog().querySelector('[aria-label="Organizational Control name"]').value).toBe('Unsaved operating Control');
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+  await act(async()=>button('Discard changes').click());expect(close).toHaveBeenCalledWith(false);
+});
+
+test('saving a client-wide Control refreshes ISO management and the caller without changing the assessment or adding a default mapping',async()=>{
+  mockUser.role='platform_admin';const onSaved=jest.fn();
+  const control={control_id:'control-created',client_id:'client',name:'Client-wide operating Control',description:'',frequency:'',design:'not_assessed',owner_id:null,assessment_ids:[],related_links:[],conflicts:[],observations:[],legacy_sources:[],history:[],linked_records:{}};
+  const original=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...args)=>path==='/organizational-controls/control-created'?{data:control}:original(path,...args));
+  api.post.mockImplementation(async path=>({data:path==='/organizational-controls'?control:{}}));
+  await render({onSaved});await act(async()=>button('Create organizational Control').click());await nameControl(control.name);
+  await act(async()=>controlButton('Save Control').click());
+  expect(api.post).toHaveBeenCalledWith('/organizational-controls',{name:control.name,description:'',frequency:'',design:'not_assessed',owner_id:null,assessment_ids:[],related_links:[],client_id:'client',request_id:expect.any(String)});
+  expect(onSaved).toHaveBeenCalledTimes(1);
+  expect(api.get.mock.calls.filter(([path])=>path==='/frameworks/iso-27001').length).toBeGreaterThan(1);
+  expect(controlDialog().textContent).toContain('Control saved. Framework assessments are unchanged.');
+  expect(api.patch).not.toHaveBeenCalled();expect(record.implementation).toBe('Saved scope');
+  await act(async()=>button('Close').click());
+  expect(node.textContent).not.toContain('Leave unsaved changes?');
+});
+
+test('ISO Review-only management does not mount the client-wide Controls manager',async()=>{
+  await render({recordManagement:false,reviewManagement:true});
+  expect(node.querySelector('[aria-label="Organizational Controls"]')).toBeNull();
+  expect(api.get.mock.calls.some(([path])=>path==='/organizational-controls')).toBe(false);
+});
 
 test('Frameworks owner save uses only exact assessment owner and version guard; saved history/comments remain readable',async()=>{
   await render();expect(node.querySelector('[data-testid="framework-record-management"]')).toBeTruthy();
@@ -48,6 +97,7 @@ test('ISO comment and record link keep exact source context; Review navigation p
 test('readonly retains history but cannot assign, comment or link; Review management has no assessment-owner editor',async()=>{
   mockUser={user_id:'viewer',role:'client_viewer'};await render();
   expect(node.textContent).toContain('Historical scope');expect(button('Save owner').disabled).toBe(true);expect(button('Link record').disabled).toBe(true);expect(node.querySelector('[aria-label="Requirement comment"]')).toBeNull();
+  expect(node.querySelector('[aria-label="Organizational Controls"]')).toBeTruthy();expect(button('Create organizational Control')).toBeUndefined();
   await act(async()=>root.render(<FrameworkDrawer open reviewManagement record={record} clientId="client" onOpenChange={()=>{}}/>));
   expect(node.querySelector('[data-testid="framework-review-management"]')).toBeTruthy();expect(node.querySelector('[aria-label="Assessment Owner"]')).toBeNull();expect(button('Create or link recurring Review')).toBeUndefined();
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
@@ -108,6 +158,7 @@ test('ISO process owner remains a contact draft with guarded save and clear; rea
 test.each(['cis-ig1','soc-2'])('%s management does not add an ISO process owner control',async frameworkKey=>{
  record={...record,framework_key:frameworkKey,definition_id:frameworkKey==='cis-ig1'?'6.1':'CC1.1'};
  await render();expect(node.querySelector('[aria-label="Process Owner"]')).toBeNull();
+  expect(node.querySelector('[aria-label="Organizational Controls"]')).toBeNull();expect(api.get.mock.calls.some(([path])=>path==='/organizational-controls')).toBe(false);
  await change(node.querySelector('[aria-label="Assessment Owner"]'),'contributor');await act(async()=>button('Save owner').click());
  expect(api.patch.mock.calls[0][1]).not.toHaveProperty('process_owner_id');
 });

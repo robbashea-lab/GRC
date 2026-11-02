@@ -2,6 +2,8 @@ import {readFileSync} from 'fs';
 import {join} from 'path';
 import {createHash} from 'crypto';
 import postcss from 'postcss';
+import selectorParser from 'postcss-selector-parser';
+import {selectorSpecificity,compare} from '@csstools/selector-specificity';
 
 // Authored source/token contracts only; these are not computed browser geometry or pixel evidence.
 const ROOT='.iso-cis-program-visual',SOC='.soc-cis-program-visual';
@@ -15,7 +17,45 @@ const baseline={
 };
 const sources=Object.fromEntries(Object.keys(baseline).map(name=>[name,readFileSync(join(__dirname,name),'utf8').replace(/\r\n/g,'\n')]));
 const sheets=Object.fromEntries(Object.entries(sources).map(([name,source])=>[name,postcss.parse(source)]));
+const isoSheet=postcss.parse(readFileSync(join(__dirname,'IsoProgramVisual.css'),'utf8'));
+const cisSizingSheet=postcss.parse(readFileSync(join(__dirname,'CisWorkspaceSizing.css'),'utf8'));
+const designSheet=postcss.parse(readFileSync(join(__dirname,'../design-system.css'),'utf8'));
 const rules=name=>{const found=[];sheets[name].walkRules(rule=>found.push(rule));return found;};
+
+test('ISO destination figures and section tabs reuse the approved secondary/control scale without changing hero figures or other frameworks',()=>{
+  const localRules=[];isoSheet.walkRules(rule=>localRules.push(rule));
+  const values=selector=>Object.fromEntries(localRules.find(rule=>rule.selector===selector).nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value]));
+  const figure=values(ROOT+' .iso-card-current .now-value');
+  const reference=rules('BrawndoCisVisual.css').find(rule=>rule.selectors.includes('.brawndo-cis-visual .lg-val b'));
+  const referenceValues=Object.fromEntries(reference.nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value]));
+  for(const property of ['font-size','letter-spacing','line-height'])expect(figure[property]).toBe(referenceValues[property]);
+  const tabs=values(ROOT+' .framework-tabs .ui-button');
+  const segment=rules('BrawndoCisVisual.css').find(rule=>rule.selectors.includes('.brawndo-cis-visual .seg button'));
+  const segmentValues=Object.fromEntries(segment.nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value]));
+  for(const property of ['padding','border-radius'])expect(tabs[property]).toBe(segmentValues[property]);
+  // Cancel the old 36px minimum: intrinsic option height plus wrapper padding matches the shared segment.
+  expect(tabs['min-height']).toBe('0');expect(tabs.font).toBe('500 12.5px/1.5 var(--font)');
+  expect(values(ROOT+' .framework-tabs .ui-button[aria-selected="true"]')).toMatchObject({background:'var(--seg-on)',color:'var(--fg)','font-weight':'600','box-shadow':'var(--shadow-seg)'});
+  expect(localRules.some(rule=>rule.selector===ROOT+' .now-value')).toBe(false);
+  for(const rule of localRules)for(const selector of rule.selectors)expect(selector.startsWith(ROOT+' ')).toBe(true);
+});
+
+test('ISO program type matches the approved CIS sizing cascade, not only the smaller shared primitive defaults',()=>{
+  const declarations=(sheet,selector)=>{
+    let rule;sheet.walkRules(candidate=>{if(candidate.selectors.includes(selector))rule=candidate;});
+    expect(rule).toBeDefined();
+    return Object.fromEntries(rule.nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value]));
+  };
+  for(const [local,reference] of [
+    [ROOT+' .page-head h1','.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-cis-visual[data-theme] > .page-head h1'],
+    [ROOT+' :is(.iso-program-register,.iso-audit-packages,.iso-audit-register) .card-head h2','.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-cis-visual[data-theme] > .pcard .card-head h2'],
+    [ROOT+' .pcard :is(.now-head p,.now-head small,.bd-head,.lg-val > span,.card-foot,.summary,.ghead,.gname small,.fig > span,.sg-t small,.ver small)','.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-cis-visual[data-theme] > .pcard :is(.now-head p,.now-head small,.bd-head,.lg-val > span,.card-foot,.summary,.ghead,.gname small,.fig > span,.sg-t small,.ver small)'],
+    [ROOT+' .pcard :is(.gname b,.sg-t,.fig b)','.brawndo-workspace-pilot[data-cis-sizing=true] .brawndo-cis-visual[data-theme] > .pcard :is(.gname b,.sg-t,.fig b)'],
+  ]){
+    const iso=declarations(isoSheet,local),cis=declarations(cisSizingSheet,reference);
+    for(const [property,value] of Object.entries(cis))expect(iso[property]).toBe(value);
+  }
+});
 
 test.each(Object.entries(baseline))('%s retains every approved CIS/SOC selector, declaration and order from 333b0052 after removing only ISO aliases',(name,digest)=>{
   const sheet=postcss.parse(sources[name]);
@@ -76,6 +116,44 @@ const resolve=(values,property)=>{
 let fixture;
 beforeEach(()=>{fixture=document.createElement('div');document.body.appendChild(fixture);});
 afterEach(()=>fixture.remove());
+test.each(['light','dark'])('selected ISO tabs retain native segment colors in %s against real global hover/active rules regardless of source order',theme=>{
+  fixture.innerHTML=`<section class="bcis iso-cis-program-visual" data-theme="${theme}"><div class="framework-tabs"><button class="ui-button bg-primary" role="tab" aria-selected="true">Internal Audit</button></div></section>`;
+  const tab=fixture.querySelector('button'),tokens=authoredRootValues(fixture.firstElementChild);
+  // Bounded authored cascade for a fine pointer: state markers emulate selector matching, not browser paint.
+  const winner=(property,sheets)=>{
+    let selected;
+    for(const sheet of sheets)sheet.walkRules(rule=>{
+      if(rule.parent.type==='atrule'&&rule.parent.name==='media'&&!rule.parent.params.includes('(hover: hover)'))return;
+      for(const selector of rule.selectors){
+        if(!selector.includes('.ui-button'))continue;
+        const matching=selector.replaceAll(':hover','[data-test-hover]').replaceAll(':active','[data-test-active]');
+        if(!tab.matches(matching))continue;
+        const weight=selectorSpecificity(selectorParser().astSync(selector).nodes[0]);
+        for(const declaration of rule.nodes.filter(node=>node.type==='decl'&&node.prop===property)){
+          const important=Number(!!declaration.important);
+          if(!selected||important>selected.important||important===selected.important&&compare(weight,selected.weight)>=0)
+            selected={value:declaration.value,weight,important,selector};
+        }
+      }
+    });
+    return selected;
+  };
+  for(const state of ['hover','active']){
+    tab.setAttribute(`data-test-${state}`,'');
+    const globalSelector=`:root .ui-button.bg-primary:not(:disabled):${state}`;
+    let globalRule;designSheet.walkRules(rule=>{if(rule.selectors.includes(globalSelector))globalRule=rule;});
+    expect(globalRule).toBeDefined();
+    const globalWeight=selectorSpecificity(selectorParser().astSync(globalSelector).nodes[0]);
+    for(const order of [[designSheet,isoSheet],[isoSheet,designSheet]]){
+      const background=winner('background',order),foreground=winner('color',order);
+      expect(background.value).toBe('var(--seg-on)');expect(foreground.value).toBe('var(--fg)');
+      expect(compare(background.weight,globalWeight)).toBeGreaterThan(0);
+      expect(resolve({...tokens,background:background.value},'background')).toBe(theme==='dark'?'#243042':'#FFFFFF');
+      expect(resolve({...tokens,color:foreground.value},'color')).toBe(theme==='dark'?'#EDF3FF':'#132A49');
+    }
+    tab.removeAttribute(`data-test-${state}`);
+  }
+});
 test.each(['light','dark'])('ISO %s font, native token mappings and implementation fills equal the approved SOC source without document markers',theme=>{
   const markers=[document.documentElement.dataset.brawndoCisVisual,document.body.dataset.brawndoCisVisual];
   fixture.innerHTML=`<section class="bcis iso-cis-program-visual" data-theme="${theme}"></section><section class="bcis soc-cis-program-visual" data-theme="${theme}"></section><section class="dashboard"><div class="ui-dialog"></div></section>`;

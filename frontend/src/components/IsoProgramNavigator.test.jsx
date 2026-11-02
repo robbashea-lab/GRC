@@ -56,6 +56,21 @@ async function type(value){await act(async()=>{const input=searchInput();Object.
 async function order(value){await act(async()=>{const select=container.querySelector('.f-field select:not([aria-label="Applicability filter"])');select.value=value;select.dispatchEvent(new Event('change',{bubbles:true}));});}
 const key=(element,value)=>act(async()=>element.dispatchEvent(new KeyboardEvent('keydown',{key:value,bubbles:true,cancelable:true})));
 
+test.each([
+  ['soa','Applicability register','Statement of Applicability'],
+  ['isms_clause','Requirements','ISMS Requirements'],
+  ['annex_control','Controls','Annex A Controls'],
+  ['overview','Requirements and controls','ISO 27001 requirements'],
+])('the %s register has a distinct accessible heading while preserving its section breadcrumb',async(view,title,section)=>{
+  const rows=fixture().filter(record=>view==='overview'||record.specification===(view==='isms_clause'?'isms_clause':'annex_control'));
+  await render(rows,{view});
+  const register=container.querySelector('.iso-program-register'),heading=register.querySelector('.card-head h2');
+  expect(register.querySelectorAll('h2')).toHaveLength(1);expect(heading.textContent).toBe(title);
+  expect(register.getAttribute('aria-labelledby')).toBe(heading.id);
+  expect(register.querySelector('[aria-label="ISO category location"]').textContent).toContain(section);
+  if(view==='soa')expect(register.querySelector('.card-head p').textContent).toBe('Record which controls apply and document the reasons for inclusion or exclusion.');
+});
+
 test('clause groups expand in native catalog order and full rows open the exact requirement without writes',async()=>{
   const rows=Object.freeze(fixture().filter(record=>record.specification==='isms_clause')),before=JSON.stringify(rows),props=await render(rows,{view:'isms_clause'});
   expect(groupKeys()).toEqual(['isms_clause/4','isms_clause/5']);expect(ids()).toEqual([]);
@@ -74,8 +89,8 @@ test('one native SoA applicability filter preserves saved decisions, documentati
   expect(container.querySelector('[aria-label="Show requirements"]')).toBeNull();expect(container.querySelector('[aria-label="Group by"]')).toBeNull();
   await click(button('Expand all'));
   expect(row('A.5.1').querySelector('.st').textContent).toBe('Necessary');
-  expect(row('A.5.1').textContent).toContain('Saved implementation: Implemented');expect(row('A.5.1').textContent).toContain('2 Evidence');expect(row('A.5.1').textContent).toContain('1 open Finding');
-  expect(row('A.5.2').textContent).toContain('Justification needed');expect(row('A.5.2').textContent).toContain('Saved implementation: Not Assessed');
+  expect(row('A.5.1').textContent).toContain('Implementation: Implemented');expect(row('A.5.1').textContent).toContain('2 Evidence');expect(row('A.5.1').textContent).toContain('1 open Finding');
+  expect(row('A.5.2').textContent).toContain('Justification needed');expect(row('A.5.2').textContent).toContain('Implementation: Not assessed');
   await click(row('A.5.1').querySelector('[aria-label^="Manage "]'));
   expect(props.onManage).toHaveBeenCalledWith(rows.find(record=>record.definition_id==='A.5.1'));expect(props.onOpen).not.toHaveBeenCalled();
   await chooseApplicability('excluded');expect(ids()).toEqual(['A.5.2']);
@@ -91,7 +106,7 @@ test('Annex bars count only included-control implementation while excluded and u
   const rows=fixture().filter(record=>record.specification==='annex_control');await render(rows,{view:'annex_control'});
   const theme=group('annex_control/A.5');expect(theme.querySelector('.g-impl').textContent).toBe('1 of 1100.0%');expect(theme.querySelector('.g-ass').textContent).toBe('1 of 1');
   expect(theme.textContent).toContain('1 excluded · 1 applicability not determined');
-  expect(theme.querySelector('[role="img"]').getAttribute('aria-label')).toBe('Implemented: 1, Partially Implemented: 0, Not Implemented / Needs Validation: 0, Not Assessed: 0');
+  expect(theme.querySelector('[role="img"]').getAttribute('aria-label')).toBe('Implemented: 1, Partially implemented: 0, Not implemented / needs validation: 0, Not assessed: 0');
   await click(theme);expect(ids()).toEqual(['A.5.1','A.5.2','A.5.3']);
   expect(row('A.5.2').querySelector('[aria-label^="Manage "]')).not.toBeNull();
   expect([...container.querySelector('.ghead').children].map(element=>element.textContent)).toEqual(['','Theme','Status mix','Implemented','Assessed']);
@@ -139,8 +154,8 @@ test('search clear restores ordinary disclosure, the native dropdown and search 
 test('Annex filter chip counts match native included-scope status results',async()=>{
   const rows=fixture().filter(record=>record.specification==='annex_control'),props=await render(rows,{view:'annex_control'});
   const chips=container.querySelector('[aria-label="Show requirements"]');
-  expect(chips.textContent).toBe('All6Needs attention5Not Assessed1Needs reassessment0');
-  const notAssessed=[...chips.querySelectorAll('button')].find(element=>element.textContent.startsWith('Not Assessed'));
+  expect(chips.textContent).toBe('All6Needs attention5Not assessed1Needs reassessment0');
+  const notAssessed=[...chips.querySelectorAll('button')].find(element=>element.textContent.startsWith('Not assessed'));
   await click(notAssessed);expect(props.onFilter).toHaveBeenCalledWith('not_assessed');expect(ids()).toEqual(['A.7.1']);
 });
 
@@ -185,6 +200,18 @@ test('unavailable implementation figures cannot certify percentages while safe S
   await act(async()=>root.render(<Controller {...props} view="soa" available={false} countsAvailable={false}/>));
   expect(group('annex_control/A.5').querySelector('.g-impl').textContent).toBe('Unavailable—');expect(group('annex_control/A.5').querySelector('.sbar').getAttribute('aria-label')).toBe('Applicability counts unavailable');
   expect(container.querySelector('.iso-register-result-count').textContent).toBe('Record counts unavailable');
+});
+
+test('group metadata removes zero-count noise while retaining actual applicability, documentation and linked-work signals',async()=>{
+  const rows=fixture().filter(record=>record.specification==='annex_control'),before=JSON.stringify(rows);await render(rows);
+  expect(group('annex_control/A.5').querySelector('.gname small').textContent).toBe('3 controls · 1 excluded · 1 applicability not determined · 1 justification needed · 1 open Finding · 1 linked Review');
+  expect(group('annex_control/A.7').querySelector('.gname small').textContent).toBe('1 control');
+  expect(group('annex_control/A.7').textContent).not.toContain('0 excluded');
+  expect(group('annex_control/A.7').textContent).not.toContain('0 justification needed');
+  expect(group('annex_control/A.7').textContent).not.toContain('0 open Findings');
+  await click(button('Expand all'));
+  expect(row('A.5.2').textContent).toContain('Justification needed');expect(row('A.5.2').querySelector('.st').textContent).toBe('Not Necessary');
+  expect(row('A.5.3').querySelector('.st').textContent).toBe('Decision needed');expect(JSON.stringify(rows)).toBe(before);
 });
 
 test.each(['isms_clause','annex_control','soa','overview'])('all native %s records remain reachable exactly once in catalog grouping',async view=>{

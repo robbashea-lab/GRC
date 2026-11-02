@@ -85,6 +85,17 @@ test('SOC snapshot extensions reuse the same structure and explicit labels witho
   expect(JSON.stringify(s)).toBe(before);
 });
 
+test('ISO may omit the exclusion footer without changing native totals or the default CIS and SOC presentation',async()=>{
+  const s=Object.freeze(summary()),before=JSON.stringify(s);
+  await render(<ProgramVisualSnapshot summary={s} filter="all" onFilter={()=>{}} showExcludedNote={false}/>);
+  expect(container.querySelector('.card-foot').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
+  expect(container.querySelector('.now-head p').textContent).toBe('1 of 4 safeguards implemented');
+  expect(container.querySelector('.bd-head').textContent).toContain('Assessed 3 of 4');
+  expect(s.na).toBe(1);expect(JSON.stringify(s)).toBe(before);
+  await render(<ProgramVisualSnapshot summary={s} filter="all" onFilter={()=>{}}/>);
+  expect(container.querySelector('.card-foot').textContent).toContain('1 not applicable, excluded from implementation totals.');
+});
+
 test('zero applicable and unavailable snapshots do not invent percentages, dates or interactive segments',async()=>{
   const onSegmentFilter=jest.fn();
   await render(<ProgramVisualSnapshot summary={cisSummary([{status:'not_applicable'}])} filter="all" onFilter={jest.fn()} onSegmentFilter={onSegmentFilter}/>);
@@ -197,4 +208,13 @@ test('SOC management stays reachable without nested buttons or opening the crite
   await click(manage);expect(onManage).toHaveBeenCalledWith(native);expect(onOpen).not.toHaveBeenCalled();
   opener.focus();await key(opener,'Enter');await key(opener,' ');expect(onOpen).toHaveBeenCalledTimes(2);
   await click(opener);expect(onOpen).toHaveBeenLastCalledWith(native);expect(JSON.stringify(native)).toBe(before);
+});
+
+test('compact management only omits an empty leading separator; default rows and nested action behavior remain native',async()=>{
+  const native=row({work:{context_complete:true,open_findings:0,overdue_actions:0,overdue_reviews:0}}),onOpen=jest.fn(),onManage=jest.fn();
+  const view=compactManagement=><ProgramVisualRow row={native} onOpen={onOpen} {...{compactManagement}} management={<FrameworkRecordButton record={native} onManage={onManage}/>}/>;
+  await render(view(undefined));expect(container.querySelector('.sg-secondary-info').textContent).toBe(' · Manage');
+  await render(view(true));expect(container.querySelector('.sg-secondary-info').textContent).toBe('Manage');
+  await click(container.querySelector('.sg-management button'));expect(onManage).toHaveBeenCalledWith(native);expect(onOpen).not.toHaveBeenCalled();
+  await key(container.querySelector('.sg'),'Enter');expect(onOpen).toHaveBeenCalledTimes(1);
 });

@@ -4,6 +4,7 @@ import {IsoProgramHeader,IsoProgramSnapshot,IsoSoaSnapshot,ISO_PROGRAM_STATUS_LA
 import {isoProgramPresentation} from '@/lib/isoProgramPresentation';
 import {frameworkDashboardFixture} from '@/testUtils/frameworkDashboard';
 import {frameworkCatalog} from '@/lib/frameworks';
+import * as frameworks from '@/lib/frameworks';
 
 let root,container;
 beforeEach(()=>{
@@ -21,7 +22,7 @@ const statusButton=label=>[...container.querySelectorAll('.lg button')].find(nod
 
 test.each([
   ['overview','ISO 27001','123 requirements and controls'],
-  ['soa','Statement of Applicability','Annex A reference decisions'],
+  ['soa','Statement of Applicability','93 Annex A controls'],
   ['isms_clause','ISMS Requirements','30 ISMS requirements'],
   ['annex_control','Annex A Controls','93 Annex A reference controls'],
   ['audit','Internal Audit','Planned audit work'],
@@ -29,11 +30,31 @@ test.each([
   const source=fixture(),presentation=present(source),onOverview=jest.fn();
   await render(<IsoProgramHeader {...{view,presentation,onOverview}} theme="light" onTheme={()=>{}}/>);
   expect(container.querySelectorAll('h1')).toHaveLength(1);expect(container.querySelector('h1').textContent).toBe(title);
-  expect(container.querySelector('.page-head p').textContent).toContain(frameworkCatalog('iso-27001').version);
+  expect(container.querySelector('.page-head p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
+  expect(frameworkCatalog('iso-27001').version).toBe('2022 + Amd 1:2024');
   expect(container.querySelector('.page-head p').textContent).toContain(metadata);
   expect(container.querySelector('.page-head p').textContent).not.toContain('CIS Controls');
   if(view==='overview')expect(button('Back to ISO overview')).toBeUndefined();
   else{await click(button('Back to ISO overview'));expect(onOverview).toHaveBeenCalledTimes(1);}
+});
+
+test('readable reference follows configured edition metadata without changing the catalog or native inventory',async()=>{
+  const source=fixture(),presentation=present(source),catalog=frameworkCatalog('iso-27001');
+  const configured=jest.spyOn(frameworks,'frameworkCatalog').mockReturnValue({...catalog,version:'2028 + Amd 2:2030'});
+  try{
+    await render(<IsoProgramHeader view="overview" presentation={presentation} theme="light" onTheme={()=>{}}/>);
+    expect(container.querySelector('.page-head p').textContent).toContain('ISO/IEC 27001:2028 · Amendment 2:2030 · 123 requirements and controls');
+    expect(catalog.version).toBe('2022 + Amd 1:2024');
+  }finally{configured.mockRestore();}
+});
+
+test('Audit subtitle uses only its selected native plan count and workpaper save date, never the implementation timestamp',async()=>{
+  const presentation=present(fixture()),asOf='2026-10-27T15:30:00Z';
+  const date=new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(asOf));
+  await render(<IsoProgramHeader view="audit" presentation={presentation} auditSummary={{total:28,asOf}} theme="light" onTheme={()=>{}}/>);
+  expect(container.querySelector('.page-head p').textContent).toBe(`ISO/IEC 27001:2022 · Amendment 1:2024 · 28 planned audit checks · As of ${date}`);
+  await render(<IsoProgramHeader view="audit" presentation={presentation} auditSummary={{total:0,asOf:null}} theme="light" onTheme={()=>{}}/>);
+  expect(container.querySelector('.page-head p').textContent).toBe('ISO/IEC 27001:2022 · Amendment 1:2024 · 0 planned audit checks');
 });
 
 test('Continue and theme actions retain their supplied native callbacks and criterion identity',async()=>{
@@ -57,13 +78,14 @@ test('header and snapshot show only the actual source-state timestamp, never tod
   let presentation=present(source);
   const view=()=> <><IsoProgramHeader view="overview" presentation={presentation} theme="light" onTheme={()=>{}}/><IsoProgramSnapshot summary={presentation.overall} {...{presentation}} filter="all" onFilter={()=>{}}/></>;
   await render(view());
-  expect(container.querySelector('.page-head p').textContent).toContain(`Record state as of ${date}`);
-  expect(container.querySelector('.now-head small').textContent).toBe(`Record state as of ${date}`);
+  expect(container.querySelector('.page-head p').textContent).toContain(`As of ${date}`);
+  expect(container.querySelector('.now-head small').textContent).toBe(`As of ${date}`);
+  expect(container.textContent).not.toContain('Record state as of');
   expect(container.textContent).not.toContain('Assessed today');
   source.source.implementation_position.provenance.source_as_of=null;presentation=present(source);
   await render(view());
-  expect(container.querySelector('.page-head p').textContent).not.toContain('as of');
-  expect(container.querySelector('.now-head small').textContent).toBe('Record-state date unavailable');
+  expect(container.querySelector('.page-head p').textContent).not.toMatch(/as of/i);
+  expect(container.querySelector('.now-head small').textContent).toBe('Assessment date unavailable');
 });
 
 test('implementation snapshot keeps native composite wording, independent assessment counts and functioning status filters',async()=>{
@@ -74,14 +96,14 @@ test('implementation snapshot keeps native composite wording, independent assess
   expect(container.querySelector('.now-value').textContent).toBe(`${(implemented/records.length*100).toFixed(1)}%`);
   expect(container.querySelector('.now-head p').textContent).toBe(`${implemented} of ${records.length} requirements and controls implemented`);
   expect(container.querySelector('.bd-head').textContent).toContain(`Assessed ${assessed} of ${records.length}`);
-  expect(ISO_PROGRAM_STATUS_LABELS.needs_attention).toBe('Not Implemented / Needs Validation');
-  const negative=statusButton('Not Implemented / Needs Validation');expect(negative).toBeDefined();
+  expect(ISO_PROGRAM_STATUS_LABELS.needs_attention).toBe('Not implemented / needs validation');
+  const negative=statusButton('Not implemented / needs validation');expect(negative).toBeDefined();
   await click(negative);expect(onFilter).toHaveBeenLastCalledWith('needs_attention');
   const partial=container.querySelector('.sbar button.s-part');await click(partial);expect(onFilter).toHaveBeenLastCalledWith('in_progress');
   await render(<IsoProgramSnapshot summary={presentation.overall} {...{presentation,onFilter}} filter="needs_attention"/>);
-  expect(statusButton('Not Implemented / Needs Validation').getAttribute('aria-pressed')).toBe('true');
-  await click(statusButton('Not Implemented / Needs Validation'));expect(onFilter).toHaveBeenLastCalledWith('all');
-  expect(container.querySelector('.ver')).toBeNull();expect(container.querySelector('.card-foot').textContent).toContain('Verification and applicability decisions remain separate');
+  expect(statusButton('Not implemented / needs validation').getAttribute('aria-pressed')).toBe('true');
+  await click(statusButton('Not implemented / needs validation'));expect(onFilter).toHaveBeenLastCalledWith('all');
+  expect(container.querySelector('.ver')).toBeNull();expect(container.querySelector('.card-foot').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
   expect(JSON.stringify(source.source)).toBe(before);
 });
 
@@ -95,7 +117,8 @@ test('Annex snapshot excludes saved excluded/undetermined implementation claims 
   await render(<IsoProgramSnapshot summary={presentation.annex} {...{presentation}} noun="controls" filter="addressed" onFilter={()=>{}}/>);
   expect(container.querySelector('.now-head p').textContent).toBe('1 of 91 controls implemented');
   expect(container.querySelector('.now-value').textContent).toBe('1.1%');
-  expect(container.querySelector('.card-foot').textContent).toContain('1 Annex A applicability decisions unresolved; 1 excluded');
+  expect(container.querySelector('.card-foot').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
+  expect(presentation.soa).toMatchObject({undetermined:1,excluded:1});
   expect(statusButton('Implemented').getAttribute('aria-pressed')).toBe('true');
   expect(container.querySelector('.ver')).toBeNull();expect(JSON.stringify(source.source)).toBe(before);
 });
@@ -128,8 +151,7 @@ test('SoA snapshot measures documented decisions rather than implementation or m
   expect(container.querySelector('[role="status"]').textContent).toContain('1 recorded decision');
   expect(container.querySelector('[role="status"]').textContent).toContain('native justification');
   expect(container.querySelector('.sbar').getAttribute('aria-label')).toBe('Necessary: 2, Not Necessary: 1, Decision needed: 90');
-  expect(container.querySelector('.card-foot').textContent).toContain('Necessary organization-specific controls and complete-SoA evidence remain in the existing SoA workflow');
-  expect(container.querySelector('.card-foot').textContent).toContain('Applicability and implementation are separate');
+  expect(container.querySelector('.card-foot').textContent).toBe('Assessment progress, not a compliance percentage or certification.');
   expect(container.querySelector('.ver')).toBeNull();expect(JSON.stringify(source.source)).toBe(before);
 });
 

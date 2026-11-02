@@ -2,6 +2,11 @@ import {activeDefinitions,frameworkCatalog} from './frameworks';
 import {buildFrameworkDomainProfile} from './frameworkDomainProfile';
 import {isoProgramMetrics} from './isoProgramMetrics';
 import {calendarDay} from './managementDates';
+import {operatorStatuses} from './frameworkOperator';
+
+// Register labels use the approved sentence case without changing saved ISO conclusions.
+export const ISO_PROGRAM_STATUS_LABELS={...operatorStatuses('iso-27001'),in_progress:'Partially implemented',
+  needs_attention:'Not implemented / needs validation',not_applicable:'Not applicable',not_assessed:'Not assessed'};
 
 const KEY='iso-27001';
 const STATES=['addressed','in_progress','needs_attention','not_assessed'];
