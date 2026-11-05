@@ -158,6 +158,46 @@ const workDisclosure = (title, dialog = document.querySelector('[data-testid="en
 };
 const workDetails = button => document.getElementById(button.getAttribute('aria-controls'));
 
+test.each(['demo', 'standard'])('Portfolio keeps only Client, Programs and GRC Lead cells for every framework in %s mode', async mode => {
+  mockAuth = {user: {user_id: 'operator', role: 'platform_admin', workspace_mode: mode}, workspaceMode: mode};
+  const futureClient = {...client, client_id: 'future_client', name: 'Future client', assigned_owner_id: null, grc_lead_id: null, grc_lead: null};
+  const clients = [client, futureClient];
+  const frameworks = ['CIS IG1', 'CIS IG2', 'CIS IG3', 'ISO 27001', 'SOC 2'];
+  const programs = frameworks.map((label, index) => ({...program, program_id: `${CID}:${index}`, program_key: `framework-${index}`, program_label: label}));
+  api.get.mockImplementation(async path => ({data: path.endsWith('/overview')
+    ? {as_of: AT, clients, programs}
+    : {clients: clients.map(row => ({...row, metric_items: row.client_id === CID ? currentWork : {past_due: [], due_30d: [], due_31_90d: []}}))}}));
+  await act(async () => root.render(<EnhancedPortfolioBoundary><p>Legacy Portfolio</p></EnhancedPortfolioBoundary>));
+  const table = host.querySelector('[role="table"][aria-label="Client portfolio"]');
+  expect([...table.querySelectorAll('[role="columnheader"]')].map(node => node.textContent)).toEqual(['Client', 'Programs', 'GRC Lead']);
+  const rows = [...table.querySelectorAll('[data-client-id]')];
+  expect(rows).toHaveLength(2);
+  rows.forEach(row => expect(row.querySelectorAll(':scope > [role="cell"]')).toHaveLength(3));
+  const row = table.querySelector(`[data-client-id="${CID}"]`);
+  expect(row.querySelector('.ep-client').textContent).toContain('BrawndoBeverage');
+  expect(row.querySelector('.ep-avatar')).toBeTruthy();
+  expect([...row.querySelectorAll('.ep-framework')].map(node => node.textContent)).toEqual(frameworks);
+  row.querySelectorAll('.ep-program').forEach(tile => {
+    expect(tile.textContent).toContain('20.0%');
+    expect(tile.textContent).toContain('2/10');
+    expect(tile.querySelector('.gp-statusbar')).toBeTruthy();
+    expect(tile.querySelector('.ep-assessed').textContent).toBe('Assessed 4 of 10');
+    expect(tile.getAttribute('aria-label')).toContain('2 Implemented, 1 Partially implemented, 1 Not implemented, 6 Not assessed');
+  });
+  expect(row.querySelector('.ep-lead').textContent).toContain('Morgan Ellis');
+  expect(row.querySelector('.ep-lead > span').textContent).toBe('ME');
+  expect(row.querySelector('.ep-lead .ep-preview').getAttribute('aria-label')).toBe('Preview Brawndo implementation');
+  expect(table.querySelector('[data-client-id="future_client"] .ep-lead').textContent).toContain('Unassigned');
+  expect(table.querySelector('[data-client-id="future_client"] .ep-programs').textContent).toContain('No enabled programs');
+  expect(table.textContent).not.toMatch(/Needs attention|Needs a lead|Insufficient history|Real native action|Nothing scheduled/);
+  expect(table.querySelector('.ep-attention,.ep-trends,.ep-key-date')).toBeNull();
+  expect(host.querySelectorAll('.ep-kpi')).toHaveLength(4);
+  expect([...host.querySelectorAll('.ep-kpi > span')].map(node => node.textContent)).toEqual(['Needs attention', 'Overdue items', 'Due in 30 days', 'Not started']);
+  expect(host.querySelectorAll('.ep-kpi strong')[1].textContent).toBe('1');
+  expect(host.querySelector('select[aria-label="Sort clients"]').textContent).toContain('Next key date');
+  expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();
+});
+
 test.each(['name', 'next'])('named Demo Portfolio sort control applies %s and keeps it after the lead-view round trip', async sort => {
   const rows = [
     ['demo_prestige', 'Prestige Worldwide', '2026-10-21'],
