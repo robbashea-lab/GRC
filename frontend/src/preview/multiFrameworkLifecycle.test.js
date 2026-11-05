@@ -6,20 +6,52 @@ import {STORE_KEY,readStore,saveStore} from './store';
 import catalog from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,sharedFrameworkPlans,reviewConfig} from '../lib/frameworks';
 const api=axios.create({adapter:previewAdapter});
+const {createLifecycleTrace}=jest.requireActual('../testUtils/cisLifecycleOperationTrace.cjs');
+const operationTrace=createLifecycleTrace();
+operationTrace.calibrate(1000);
 const {setImmediate:yieldEventLoop}=jest.requireActual('timers');
-const get=async(path,cid,params={})=>(await api.get(path,{params:{client_id:cid,...params}})).data;
-async function write(method,path,body){let r;try{r=await api[method](path,body);}catch(error){console.info('Lifecycle failure context',{date:new Date().toISOString(),path,storeCharacters:sessionStorage.getItem(STORE_KEY)?.length});throw error;}jest.runOnlyPendingTimers();await new Promise(resolve=>yieldEventLoop(resolve));return r.data;}
+const get=async(path,cid,params={})=>{
+  const span=operationTrace.beginAPI('GET',path);let outcome='ok';
+  try{return (await api.get(path,{params:{client_id:cid,...params}})).data;}
+  catch(error){outcome='error';throw error;}finally{operationTrace.end(span,outcome);}
+};
+async function write(method,path,body){
+  let r;const nativeSpan=operationTrace.beginAPI(method,path);
+  try{r=await api[method](path,body);operationTrace.end(nativeSpan);}
+  catch(error){operationTrace.end(nativeSpan,'error');console.info('Lifecycle failure context',{date:new Date().toISOString(),path,storeCharacters:sessionStorage.getItem(STORE_KEY)?.length});throw error;}
+  const flushSpan=operationTrace.begin('timer_flush','existing_write_flush');
+  try{jest.runOnlyPendingTimers();operationTrace.end(flushSpan);}catch(error){operationTrace.end(flushSpan,'error');throw error;}
+  const yieldSpan=operationTrace.begin('real_yield','existing_write_yield');
+  try{await new Promise(resolve=>yieldEventLoop(resolve));operationTrace.end(yieldSpan);}catch(error){operationTrace.end(yieldSpan,'error');throw error;}
+  return r.data;
+}
 const post=(p,b)=>write('post',p,b),patch=(p,b)=>write('patch',p,b);
-const clock=date=>jest.setSystemTime(new Date(date+'T14:00:00Z'));
+const clock=date=>{jest.setSystemTime(new Date(date+'T14:00:00Z'));operationTrace.clock(new Date().toISOString());};
 const copy=v=>JSON.parse(JSON.stringify(v));
 const ap=a=>'/framework_assessments/'+a.framework_assessment_id;
 const design=c=>Object.fromEntries(['name','description','frequency','design','owner_id','assessment_ids','related_links'].map(k=>[k,c[k]]));
 const cp=c=>'/organizational-controls/'+encodeURIComponent(c.control_id);
-beforeEach(async()=>{jest.useFakeTimers({doNotFake:['performance','nextTick','queueMicrotask']});clock('2027-01-01');sessionStorage.clear();localStorage.clear();await post('/demo/enter');});
-afterEach(()=>jest.useRealTimers());
+beforeEach(async()=>{
+  operationTrace.phase('setup');const span=operationTrace.begin('phase','setup');let outcome='ok';
+  try{jest.useFakeTimers({doNotFake:['performance','nextTick','queueMicrotask']});clock('2027-01-01');sessionStorage.clear();localStorage.clear();await post('/demo/enter');}
+  catch(error){outcome='error';throw error;}finally{operationTrace.end(span,outcome);}
+});
+afterEach(()=>{
+  operationTrace.phase('afterEach');const span=operationTrace.begin('phase','afterEach');let outcome='ok';
+  try{jest.useRealTimers();}catch(error){outcome='error';throw error;}
+  finally{
+    operationTrace.end(span,outcome);
+    if(!process.env.CIS_OPERATION_TRACE_DIR)throw new Error('Diagnostic trace directory is required');
+    operationTrace.finish(process.env.CIS_OPERATION_TRACE_DIR);
+  }
+});
 
 test('one organization operates five years across three frameworks without shared conclusions or lost history',async()=>{
-  const originals=copy(decodeDemoStore(sessionStorage.getItem(STORE_KEY)));
+  operationTrace.phase('body');const bodySpan=operationTrace.begin('phase','body');let bodyOutcome='ok';
+  try{
+  let originals;const initialSnapshotSpan=operationTrace.begin('sync','initial_snapshot_decode_copy');
+  try{originals=copy(decodeDemoStore(sessionStorage.getItem(STORE_KEY)));operationTrace.end(initialSnapshotSpan);}
+  catch(error){operationTrace.end(initialSnapshotSpan,'error');throw error;}
   const client=await post('/clients',{name:'Aperture Research — Multi-Framework Reference',industry:'Synthetic research / technology services'}),cid=client.client_id;
   const state={version:3,step:3,policies:Object.fromEntries(catalog.policies.map(p=>[p.key,'yes'])),requirements:Object.fromEntries(FRAMEWORKS.map(f=>[f.key,['cis-ig1','iso-27001','soc-2'].includes(f.key)?'applies':'does_not_apply'])),reviews:[],framework_reviews:{}};
   for(const p of sharedFrameworkPlans(state)){const {conflict,...config}=reviewConfig(state,p);for(const d of p.drivers)state.framework_reviews[d.key]={...config,due_date:'2027-03-31'};}
@@ -38,7 +70,11 @@ test('one organization operates five years across three frameworks without share
   // Identity-only test boundary: Demo cannot accept real invitations. No client,
   // GRC record, assessment or history is seeded, and reference users are untouched.
   const replacement={user_id:'qa_aperture_operator',name:'Caroline',email:'caroline@example.test',role:'client_contributor',status:'active',client_ids:[cid]};
-  const identityStore=readStore();identityStore.users.push(replacement);saveStore(identityStore);
+  let identityStore;const identityReadSpan=operationTrace.begin('sync','identity_read');
+  try{identityStore=readStore();operationTrace.end(identityReadSpan);}catch(error){operationTrace.end(identityReadSpan,'error');throw error;}
+  identityStore.users.push(replacement);
+  const identitySaveSpan=operationTrace.begin('sync','identity_save');
+  try{saveStore(identityStore);operationTrace.end(identitySaveSpan);}catch(error){operationTrace.end(identitySaveSpan,'error');throw error;}
   for(const r of reviews)await patch('/reviews/'+r.review_id,{owner_id:replacement.user_id,scope:'Synthetic workforce identity service; original scope',expected_occurrence_id:r.current_occurrence_id});
   const policies=await get('/policies',cid);expect(policies).toHaveLength(17);
   expect(new Set(policies.map(p=>p.baseline_key)).size).toBe(17);
@@ -90,7 +126,7 @@ test('one organization operates five years across three frameworks without share
     let due,executions=0;
     while((due=(await get('/reviews',cid)).filter(r=>r.due_date&&r.due_date.slice(0,10)<=year+'-12-31'&&!['completed','cancelled'].includes(r.status)).sort((a,b)=>a.due_date.localeCompare(b.due_date))[0])){
       if(++executions>200)throw new Error('Schedule did not advance: '+due.title);
-      clock(due.due_date.slice(0,10));if(year===2029)jest.setSystemTime(new Date(Date.now()+12*86400000));
+      clock(due.due_date.slice(0,10));if(year===2029){jest.setSystemTime(new Date(Date.now()+12*86400000));operationTrace.clock(new Date().toISOString());}
       await post('/reviews/'+due.review_id+'/start',{occurrence_id:due.current_occurrence_id});
       const evidence=await post('/evidence',{client_id:cid,linked_type:'review',linked_id:due.review_id,occurrence_id:due.current_occurrence_id,filename:'DEMO-'+year+'-'+due.review_type+'.txt',mime_type:'text/plain',content_base64:Buffer.from('DEMO - SYNTHETIC DATA. Scope: '+(due.scope||due.title),'utf8').toString('base64')});
       if(due.review_id===access.review_id&&!firstEvidence){
@@ -181,13 +217,17 @@ test('one organization operates five years across three frameworks without share
   await write('delete',ap(mapped[0])+'/links',{data:{kind:'evidence',id:firstEvidence.evidence_id}});
   const evidence=await get('/evidence-library/items/'+firstEvidence.evidence_id);
   expect(evidence.references.filter(r=>r.kind==='framework_assessments')).toHaveLength(2);
-  await expect(api.delete('/evidence/'+firstEvidence.evidence_id)).rejects.toBeTruthy();
+  const deleteAssertionSpan=operationTrace.beginAPI('DELETE','/evidence/:id',true);
+  try{await expect(api.delete('/evidence/'+firstEvidence.evidence_id)).rejects.toBeTruthy();operationTrace.end(deleteAssertionSpan,'expected_rejection');}
+  catch(error){operationTrace.end(deleteAssertionSpan,'error');throw error;}
   await patch('/users/'+replacement.user_id,{status:'disabled'});
   expect((await get('/reviews/'+access.review_id)).occurrences[0]).toEqual(firstOccurrence);
   expect((await get('/clients/'+cid+'/assignees')).items.some(u=>u.user_id===replacement.user_id)).toBe(false);
   const userAssignments=await get('/users/'+replacement.user_id+'/open_assignments');expect(userAssignments.total).toBeGreaterThan(0);
   expect((await get('/dashboard',cid)).kpis.unassigned).toBeGreaterThan(0);
-  await expect(api.post('/tasks',{client_id:cid,title:'Invalid assignment',assignee_id:replacement.user_id})).rejects.toBeTruthy();
+  const postAssertionSpan=operationTrace.beginAPI('POST','/tasks',true);
+  try{await expect(api.post('/tasks',{client_id:cid,title:'Invalid assignment',assignee_id:replacement.user_id})).rejects.toBeTruthy();operationTrace.end(postAssertionSpan,'expected_rejection');}
+  catch(error){operationTrace.end(postAssertionSpan,'error');throw error;}
   for(const r of await get('/reviews',cid))if(r.owner_id===replacement.user_id)await patch('/reviews/'+r.review_id,{owner_id:owner,expected_occurrence_id:r.current_occurrence_id});
   await patch('/risks/'+risk.risk_id,{owner_id:owner});
   for(const t of await get('/tasks',cid))if(t.assignee_id===replacement.user_id&&!['done','cancelled'].includes(t.status))await patch('/tasks/'+t.task_id,{assignee_id:owner});
@@ -196,7 +236,9 @@ test('one organization operates five years across three frameworks without share
   // Calendar emits one event per authoritative Review, not one per framework driver.
   const cal=await get('/calendar',cid,{start:'2032-01-01',end:'2032-12-31',scope:'active'});
   const entries=Object.values(cal.reviews).flat().filter(e=>e.id===access.review_id);expect(entries).toHaveLength(1);
-  const final=decodeDemoStore(sessionStorage.getItem(STORE_KEY));
+  let final;const finalSnapshotSpan=operationTrace.begin('sync','final_snapshot_decode');
+  try{final=decodeDemoStore(sessionStorage.getItem(STORE_KEY));operationTrace.end(finalSnapshotSpan);}
+  catch(error){operationTrace.end(finalSnapshotSpan,'error');throw error;}
   for(const kind of ['clients','reviews','policies','risks','findings','tasks','vendors','assets','framework_assessments','evidence']){
     // Demo's existing bounded payload cache can move bytes to session memory.
     // Compare all authoritative metadata and verify a displaced download below.
@@ -208,8 +250,11 @@ test('one organization operates five years across three frameworks without share
   if(displaced)expect((await get('/evidence/'+displaced.evidence_id+'/download')).content_base64).toBe(displaced.content_base64);
   expect(new Set(final.evidence.map(e=>e.evidence_id)).size).toBe(final.evidence.length);
   expect(final.evidence.filter(e=>e.client_id===cid&&e.evidence_id===firstEvidence.evidence_id)).toHaveLength(1);
-  expect((await axios.create({adapter:previewAdapter}).get(cp(control))).data.observations[0]).toEqual(firstObservation);
+  const finalGetSpan=operationTrace.beginAPI('GET','/organizational-controls/:id',true);
+  try{expect((await axios.create({adapter:previewAdapter}).get(cp(control))).data.observations[0]).toEqual(firstObservation);operationTrace.end(finalGetSpan);}
+  catch(error){operationTrace.end(finalGetSpan,'error');throw error;}
   if(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR){const fs=jest.requireActual('fs'),path=jest.requireActual('path');fs.mkdirSync(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,{recursive:true});fs.writeFileSync(path.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,'multi-framework.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,store:final}));}
   console.info('Multi-framework five-year lifecycle',{reviews:reviews.length,executions:planCounts,occurrences:occurrences.size,assessments:rows.length,policies:policies.length,controls:1,evidence:final.evidence.filter(e=>e.client_id===cid).length,storeCharacters:sessionStorage.getItem(STORE_KEY).length});
+  }catch(error){bodyOutcome='error';throw error;}finally{operationTrace.end(bodySpan,bodyOutcome);}
 },240000);
 function nextDriver(review,key){return review.framework_drivers.find(d=>d.framework_key===key);}
