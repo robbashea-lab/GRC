@@ -64,7 +64,7 @@ export function BrawndoReviewRows({rows,users,checked,toggleOne,toggleAll,allChe
         const urgency=cisReviewUrgency(row.due_date),schedule=reviewSchedule(row);
         // Closed native parents can be selected through Status filters on any tab.
         const closedParent=nativeParentRows&&['completed','cancelled','closed'].includes(row.status);
-        const status=history?reviewDisplayValue('status',row.status):cisReviewStatusLabel(row.status);
+        const status=history?reviewDisplayValue('status',row.status):cisReviewStatusLabel(row.status,{execution:true});
         return <tr key={row.occurrence_id||row.review_id} className={'bdr-trow'+(checked.has(row.review_id)?' bdr-selected':'')+(!history&&!closedParent&&urgency.days!==null&&urgency.days<0?' overdue-row':'')} onClick={()=>onOpen(row)} data-testid={`reviews-row-${index}`}>
           {!history&&<td className="check-col" onClick={event=>event.stopPropagation()}><input type="checkbox" className="bdr-cb" checked={checked.has(row.review_id)} onChange={()=>toggleOne(row.review_id)} aria-label={'Select '+row.title}/></td>}
           <td className="bdr-c-item"><button className="bdr-name" onClick={event=>{event.stopPropagation();onOpen(row);}}>{row.title}</button><div className="bdr-meta"><span>{reviewDisplayValue('review_type',row.review_type)}</span><span className="bdr-fwchip">{basisSummary(row)}</span>{history&&row.status==='cancelled'&&<span>Cancelled</span>}</div></td>

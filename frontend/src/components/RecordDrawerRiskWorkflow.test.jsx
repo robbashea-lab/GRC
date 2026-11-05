@@ -55,6 +55,47 @@ test.each([1,2,3].flatMap(group=>['demo','standard'].map(mode=>[group,mode])))('
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
+test.each(['demo','standard'].flatMap(mode=>[['/risks',false],['/ai-governance',true]].map(([pathname,aiLinkedRisk])=>[mode,pathname,aiLinkedRisk])))('%s %s opens the same existing Risk workflow with unchanged actions and unchanged-Save behavior',async(mode,pathname,aiLinkedRisk)=>{
+  window.history.replaceState({},'',pathname);
+  mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
+  risk={...risk,risk_id:'demo_brawndo_risk_operating_1',display_id:'RISK-007',title:'Unverified AI procedure drafts could disrupt operating decisions.'};
+  rows=[risk];props={...props,record:risk};
+  await render({aiLinkedRisk});
+  expect(dialog().className).toContain('brawndo-risk-workflow');
+  expect(dialog().querySelector('.rw-kicker').textContent).toBe('RISK-007');
+  expect(dialog().querySelector('[aria-label="Title"]').value).toBe(risk.title);
+  for(const command of ['Review risk','Accept risk','Close risk'])expect(button(command).disabled).toBe(false);
+  expect(button('Save changes').disabled).toBe(true);
+  await click(button('Save changes'));
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+  expect(api.get).toHaveBeenCalledWith('/related',expect.objectContaining({params:{entity_type:'risks',entity_id:risk.risk_id}}));
+  expect(props.record.client_id).toBe('demo_brawndo');
+  await click(button('Close'));
+  expect(props.onOpenChange).toHaveBeenCalledWith(false);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test.each([['/ai-governance',false],['/vendors',true]])('linked AI Risk intent does not activate the current editor outside its caller and route (%s, %s)',async(pathname,aiLinkedRisk)=>{
+  window.history.replaceState({},'',pathname);
+  await render({aiLinkedRisk});
+  expect(dialog().className).not.toContain('brawndo-risk-workflow');
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('closing the AI-linked native Risk editor returns focus to its connected opener',async()=>{
+  window.history.replaceState({},'','/ai-governance');
+  const opener=document.createElement('button');opener.textContent='Open linked risk';document.body.append(opener);opener.focus();
+  try{
+    await render({aiLinkedRisk:true});
+    expect(dialog().contains(document.activeElement)).toBe(true);
+    await click(button('Close'));
+    await render({open:false,aiLinkedRisk:true});
+    await act(async()=>{await new Promise(resolve=>setTimeout(resolve,0));});
+    expect(document.activeElement).toBe(opener);
+    expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+  }finally{opener.remove();}
+});
+
 test('AI-origin creation exposes native required assessment without inventing ratings',async()=>{
   window.history.replaceState({},'','/ai-governance');
   api.post.mockRejectedValueOnce(new Error('Risk ratings must be whole numbers from 1 to 5.'));

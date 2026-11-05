@@ -88,9 +88,22 @@ test('reference status labels preserve native values, unknown fallback and exact
   const rows=['upcoming','in_progress','not_started','needs_scheduling','custom_status','__proto__','constructor','toString'].map((status,index)=>({...review,review_id:`status-${index}`,status}));
   const before=JSON.stringify(rows),onOpen=jest.fn();
   await act(async()=>root.render(<BrawndoReviewRows rows={rows} users={[]} checked={new Set()} allChecked={false} toggleAll={()=>{}} toggleOne={()=>{}} onOpen={onOpen} rowMenu={()=>null}/>));
-  expect([...container.querySelectorAll('.bdr-st')].map(node=>node.textContent)).toEqual(['Upcoming','In progress','Not started','Needs scheduling','custom status','  proto  ','constructor','toString']);
+  expect([...container.querySelectorAll('.bdr-st')].map(node=>node.textContent)).toEqual(['Not started','In progress','Not started','Needs scheduling','custom status','  proto  ','constructor','toString']);
   await act(async()=>container.querySelectorAll('.bdr-name')[1].click());
   expect(onOpen).toHaveBeenCalledWith(rows[1]);expect(JSON.stringify(rows)).toBe(before);
+});
+
+test('unstarted register executions keep their label independently of past, today and future due dates',async()=>{
+  jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-24T12:00:00'));
+  try{
+    const dates=['2026-10-23','2026-10-24','2026-10-25'];
+    const records=dates.map((due_date,index)=>({...review,review_id:`unstarted-${index}`,status:'upcoming',due_date}));
+    const before=JSON.stringify(records);
+    await act(async()=>root.render(<BrawndoReviewRows rows={records} users={[]} checked={new Set()} allChecked={false} toggleAll={()=>{}} toggleOne={()=>{}} onOpen={()=>{}} rowMenu={()=>null}/>));
+    expect([...container.querySelectorAll('.bdr-st')].map(node=>node.textContent)).toEqual(['Not started','Not started','Not started']);
+    expect([...container.querySelectorAll('.due-badge')].map(node=>node.textContent)).toEqual(['1 day overdue','Due today','In 1 day']);
+    expect(JSON.stringify(records)).toBe(before);
+  }finally{jest.useRealTimers();}
 });
 test('legacy missing historical dates and actor never inherit latest parent completion',async()=>{
   const row={...review,completed_by:'latest',completed_at:'2026-10-15',completion_date:'2026-10-15',occurrences:[{occurrence_id:'legacy',status:'completed'},{occurrence_id:'cancelled',status:'cancelled'}]};

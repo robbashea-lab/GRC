@@ -26,7 +26,8 @@ test('pilot preserves rows, columns, status, selection and authoritative record 
   expect(container.querySelector('th[data-column="basis"]').textContent).toContain('Basis');
   expect(container.querySelectorAll('tr[data-testid^="reviews-row-"]')).toHaveLength(2);
   expect(container.querySelector('[data-testid="reviews-row-0"]').textContent).toContain('Quarterly');
-  expect(container.querySelector('[data-testid="reviews-status-0"]').textContent).toBe('overdue');
+  expect(container.querySelector('[data-testid="reviews-status-0"]').textContent).toBe('Not started');
+  expect(container.querySelector('[data-testid="reviews-row-0"] [data-column="due_date"]').textContent).toContain('overdue');
   expect(container.querySelector('[data-testid="reviews-unassigned-1"]').textContent).toBe('Unassigned');
   await act(async()=>container.querySelector('[data-testid="reviews-select-0"]').click());
   expect(container.querySelector('[data-testid="reviews-row-0"]').dataset.selected).toBe('true');
@@ -42,6 +43,25 @@ test('quick-filter and history constraints remain unchanged',async()=>{
   await act(async()=>container.querySelector('[data-testid="reviews-history-link"]').click());
   expect(container.querySelectorAll('tr[data-testid^="reviews-row-"]')).toHaveLength(1);
   expect(container.querySelector('[data-testid="reviews-row-0"]').textContent).toContain('Historical check');
+});
+
+test('native register keeps unstarted execution separate from overdue, today and future due indicators',async()=>{
+  jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-24T12:00:00'));
+  try{
+    const records=['2026-10-23','2026-10-24','2026-10-25'].map((due_date,index)=>({review_id:`unstarted-${index}`,client_id:'visual-test',title:`Unstarted Review ${index}`,status:'upcoming',due_date,recurrence:'none'}));
+    records.push({...records[0],review_id:'working',title:'Working Review',status:'in_progress'});
+    const before=JSON.stringify(records);
+    api.get.mockImplementation(async path=>({data:path==='/reviews'?records:[]}));
+    await act(async()=>root.render(<RecordListPage kind="reviews"/>));
+    const rowFor=title=>[...container.querySelectorAll('tbody tr')].find(node=>node.querySelector('.register-record-link')?.textContent===title);
+    for(let index=0;index<3;index++)expect(rowFor(`Unstarted Review ${index}`).querySelector('[data-column="status"]').textContent).toBe('Not started');
+    expect(rowFor('Unstarted Review 0').querySelector('[data-column="status"] .pill').classList.contains('pill-critical')).toBe(true);
+    for(const title of ['Unstarted Review 1','Unstarted Review 2'])expect(rowFor(title).querySelector('[data-column="status"] .pill').classList.contains('pill-neutral')).toBe(true);
+    expect(records.slice(0,3).map(record=>rowFor(record.title).querySelector('[data-column="due_date"] .register-date > span:last-child').textContent)).toEqual(['1 day overdue','today','in 1 day']);
+    expect(rowFor('Working Review').querySelector('[data-column="status"]').textContent).toBe('in progress');
+    expect(rowFor('Working Review').querySelector('[data-column="status"] .pill').classList.contains('pill-critical')).toBe(true);
+    expect(JSON.stringify(records)).toBe(before);
+  }finally{jest.useRealTimers();}
 });
 test('other registers share the surface without inheriting Reviews column geometry',async()=>{
   await act(async()=>root.render(<RecordListPage kind="findings"/>));

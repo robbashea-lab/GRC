@@ -14,6 +14,7 @@ import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/Ta
 import { tableColumns } from '@/lib/tableColumns';
 import { reviewMatches } from '@/lib/tableFilters';
 import { reviewDisplayValue } from '@/lib/reviewPresentation';
+import {cisReviewStatusLabel} from '@/lib/cisReviewsConcept';
 import {occurrenceId,relatedReviewInitialValues} from '@/lib/reviewOccurrences';
 import {isReferenceWorkflow} from '@/lib/reference';
 import {policyStatus,policyStatusLabel,policyColumns,policyViewMatches,POLICY_COLUMN_ORDER} from '@/lib/brawndoPolicies';
@@ -869,9 +870,7 @@ function EntityListPage({ kind }) {
                     return (
                     <td key={`${row[idField] || i}-${c.key}`} data-column={isReviews ? c.key : undefined} className={`tbl-cell ${c.primary ? "font-medium text-ink-primary" : ""}`}>
                       {policiesPilot&&c.key==='alignment'?(alignmentError?<span className="text-xs text-ink-secondary">{alignmentError}</span>:<PolicyAlignment record={row} programs={programs} assessments={policyAssessments} cisGroup={cisGroup} onOpen={setAlignmentTarget}/>) : policiesPilot&&c.key==='status'?<StatusBadge value={policyStatus(row)} label={policyStatusLabel(policyStatus(row))}/> : c.badge ? (
-                        overdueReview && c.key === "status"
-                          ? <StatusBadge value="overdue" testid={`${kind}-status-${i}`} />
-                          : row[c.key] ? <StatusBadge value={row[c.key]} tone={isReviews && row[c.key] === 'needs_scheduling' ? 'duesoon' : undefined} testid={`${kind}-status-${i}`} /> : <span className="text-ink-help">—</span>
+                        row[c.key] ? <StatusBadge value={row[c.key]} label={isReviews&&c.key==='status'&&['upcoming','not_started'].includes(row.status)?cisReviewStatusLabel(row.status,{execution:true}):undefined} tone={overdueReview&&c.key==='status'?'critical':isReviews && row[c.key] === 'needs_scheduling' ? 'duesoon' : undefined} testid={`${kind}-status-${i}`} /> : <span className="text-ink-help">—</span>
                       ) :
                        c.user ? (
                          <OwnerCell people={users} id={row[c.key]} status={row.status} testid={!row[c.key] ? `${kind}-unassigned-${i}` : undefined} />

@@ -3,6 +3,7 @@ import {Clock3,Search} from 'lucide-react';
 import SurfaceThemeAction from './SurfaceThemeAction';
 import {calendarDay} from '@/lib/managementDates';
 import {dashboardStatus} from '@/lib/dashboardItemSummary';
+import {cisReviewStatusLabel} from '@/lib/cisReviewsConcept';
 import {grcLead} from '@/lib/clientRelationships';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import {formatError} from '@/lib/api';
@@ -74,7 +75,7 @@ export default function BrawndoDemoDashboard({queue,programs=[],client,members=[
               <td className="bdd-cell-item"><button type="button" className="bdd-item" onClick={event=>{event.stopPropagation();onOpen(item,event.currentTarget);}}>{item.title}</button><small className="bdd-meta"><span>{item.type}</span>{associations.map(label=><span className="bdd-framework-chip" key={label} title={label}>{label.replace(/^CIS Controls v8\.1 (\d+\.\d+)$/,'CIS $1')}</span>)}</small></td>
               <td className="bdd-cell-owner"><span className={`bdd-owner${item.unassigned?' bdd-attention':''}`}><i className="bdd-avatar" aria-hidden="true">{initials}</i><span>{item.unassigned?'Unassigned':item.owner}</span></span></td>
               <td className="bdd-cell-due"><time dateTime={day===null?undefined:item.due_date}>{dashboardDay(item.due_date)||'Not scheduled'}</time><small className={delta===null?'':delta<0?'bdd-late':delta===0?'bdd-today':''}>{delta!==null&&delta<=0&&<Clock3 aria-hidden="true" size={13}/>}<span>{delta===null?'No known due date':delta<0?`${-delta} day${delta===-1?'':'s'} overdue`:delta===0?'Due today':`In ${delta} day${delta===1?'':'s'}`}</span></small></td>
-              <td className="bdd-cell-status"><span className={`bdd-status bdd-status-${item.status}`}><i aria-hidden="true"/>{dashboardStatus(item.status)}</span></td>
+              <td className="bdd-cell-status"><span className={`bdd-status bdd-status-${item.status}`}><i aria-hidden="true"/>{item.kind==='reviews'&&item.status==='upcoming'?cisReviewStatusLabel(item.status,{execution:true}):dashboardStatus(item.status)}</span></td>
               <td className="bdd-chevron" aria-hidden="true">›</td>
             </tr>;
           })}</tbody>

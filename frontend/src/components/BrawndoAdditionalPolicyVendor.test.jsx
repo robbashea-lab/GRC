@@ -52,7 +52,7 @@ test('policy cards group saved states without reordering or changing native reco
     Object.freeze({ ...base, policy_id: 'unverified', status: 'approved' }),
   ]);
   await act(async () => root.render(<BrawndoAdditionalPolicies rows={rows} />));
-  expect([...container.querySelectorAll('.pc-status-card strong')].map(node => node.textContent)).toEqual(['1', '1', '1']);
+  expect([...container.querySelectorAll('.pc-status-card strong')].map(node => node.textContent)).toEqual(['1', '0', '1']);
   expect(container.querySelector('.pc-approval-track').getAttribute('aria-label')).toBe('1 of 4 policies approved');
   expect([...container.querySelectorAll('.bap-row[data-testid]')].map(node => node.dataset.testid)).toEqual(['policies-row-0', 'policies-row-1', 'policies-row-2', 'policies-row-3']);
   expect([...container.querySelectorAll('.bap-row[data-testid] .bap-state-label')].map(node => node.textContent)).toEqual(['Needs Creation', 'Approved', 'Draft', 'Needs Confirmation']);

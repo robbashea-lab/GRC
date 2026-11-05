@@ -46,7 +46,7 @@ export function policyColumns(columns,rows,programs,assessments=[],cisGroup) {
 }
 
 // Reference-page views and summary tiles. Derived from the same status and alignment rules as the register.
-export const AWAITING_APPROVAL=['draft','in_review','pending_approval'];
+export const AWAITING_APPROVAL=['in_review','pending_approval'];
 const reviewDays=(row,now=new Date())=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(row.next_review_date||''));return m?Math.round((Date.UTC(+m[1],m[2]-1,+m[3])-Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()))/86400000):null;};
 const live=row=>!['retired','not_applicable'].includes(policyStatus(row));
 export function policyViewMatches(row,view,now=new Date()){

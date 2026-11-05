@@ -9,7 +9,8 @@ export {currentQuarter,shiftQuarter,quarterToday} from './quarterlyProgramTimeli
 const reviewStatusLabels={upcoming:'Upcoming',in_progress:'In progress',not_started:'Not started',needs_scheduling:'Needs scheduling'};
 
 // Concept labels are display-only; native history and stored status values stay unchanged.
-export function cisReviewStatusLabel(value) {
+export function cisReviewStatusLabel(value,{execution=false}={}) {
+  if(execution&&value==='upcoming')return 'Not started';
   return Object.hasOwn(reviewStatusLabels,value)?reviewStatusLabels[value]:reviewDisplayValue('status',value);
 }
 

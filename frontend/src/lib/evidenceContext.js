@@ -1,5 +1,6 @@
 import api from './api';
 import {occurrenceId} from './reviewOccurrences';
+import {cisLabel} from './cisScope';
 export {evidenceSources,evidenceKind,evidenceSourceLabel,uploaderLabel,sourceReference} from './evidenceReferences';
 
 export async function resolveEvidenceSource(ref,clientId){
@@ -41,7 +42,11 @@ export async function downloadEvidence(row){
   }finally{URL.revokeObjectURL(url);}
 }
 
-export function EvidenceSource({source,onOpen}){
+export function EvidenceSource({source,onOpen,cisProgram=null}){
   if(!source)return <span className="text-ink-help">Not linked to a record</span>;
-  return <div className="min-w-0"><span className="text-xs text-ink-secondary">{source.label} · </span>{source.available?<button type="button" className="register-link break-words" aria-label={`Open ${source.label}: ${source.title}${source.period?' — '+source.period:''}`} onClick={()=>onOpen(source)}>{source.title}</button>:<span className="text-ink-help">Source unavailable</span>}{source.period&&<div className="text-xs text-ink-secondary">{source.period}</div>}{source.archived&&<div className="text-xs text-ink-help">Archived source</div>}</div>;
+  // Library callers supply the resolved client program; the shared CIS key is not an IG.
+  const title=source.kind==='framework_assessments'&&source.framework_key==='cis-ig1'&&typeof source.title==='string'
+    &&cisProgram?.frameworkKey==='cis-ig1'&&[1,2,3].includes(cisProgram.implementationGroup)
+    ?source.title.replace(/^CIS(?: IG[123])? /,`${cisLabel({implementation_group:cisProgram.implementationGroup})} `):source.title;
+  return <div className="min-w-0"><span className="text-xs text-ink-secondary">{source.label} · </span>{source.available?<button type="button" className="register-link break-words" aria-label={`Open ${source.label}: ${title}${source.period?' — '+source.period:''}`} onClick={()=>onOpen(source)}>{title}</button>:<span className="text-ink-help">Source unavailable</span>}{source.period&&<div className="text-xs text-ink-secondary">{source.period}</div>}{source.archived&&<div className="text-xs text-ink-help">Archived source</div>}</div>;
 }

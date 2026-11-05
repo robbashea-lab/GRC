@@ -28,10 +28,10 @@ test('five saved occurrences share one date and keep individual tooltip/list ide
   expect(onOpenReview).toHaveBeenCalledWith(rows[3]);
 });
 
-test.each([['upcoming','Upcoming'],['in_progress','In progress'],['not_started','Not started'],
-  ['needs_scheduling','Needs scheduling'],['custom_status','custom status'],['__proto__','  proto  '],
-  ['constructor','constructor'],['toString','toString']])(
-  'tooltip and date list share the approved status label for %s without changing the native record',async(status,label)=>{
+test.each([['upcoming','Upcoming','Not started'],['in_progress','In progress','In progress'],['not_started','Not started','Not started'],
+  ['needs_scheduling','Needs scheduling','Needs scheduling'],['custom_status','custom status','custom status'],['__proto__','  proto  ','  proto  '],
+  ['constructor','constructor','constructor'],['toString','toString','toString']])(
+  'tooltip retains its status and date list displays execution for %s without changing the native record',async(status,label,executionLabel)=>{
     const record={...rows[0],status},before=JSON.stringify(record),onOpenReview=jest.fn();
     await render({rows:[record],onOpenReview});
     const dot=container.querySelector('.review-dot');expect(dot).not.toBeNull();
@@ -39,10 +39,33 @@ test.each([['upcoming','Upcoming'],['in_progress','In progress'],['not_started',
     expect(container.querySelector('.tip-meta').textContent.endsWith(`· ${label}`)).toBe(true);
     await act(async()=>dot.click());
     const entry=document.querySelector('[role="dialog"] .date-review');expect(entry).not.toBeNull();
-    expect([...entry.querySelectorAll('.list-details span')].pop().textContent).toBe(label);
+    expect([...entry.querySelectorAll('.list-details span')].pop().textContent).toBe(executionLabel);
     await act(async()=>entry.click());
     expect(onOpenReview).toHaveBeenCalledWith(record);expect(JSON.stringify(record)).toBe(before);
   });
+
+test.each([['2026-10-23','1 day overdue'],['2026-10-24','Due today'],['2026-10-25','In 1 day']])(
+  'date popup separates unstarted execution from the %s due indicator',async(due_date,dueLabel)=>{
+    const record={...rows[0],due_date},before=JSON.stringify(record);
+    await render({rows:[record]});
+    await act(async()=>container.querySelector('.review-dot').click());
+    const entry=document.querySelector('[role="dialog"] .date-review');
+    expect([...entry.querySelectorAll('.list-details span')].pop().textContent).toBe('Not started');
+    expect(entry.querySelector('.due-badge').textContent).toBe(dueLabel);
+    expect(container.querySelector('.agenda-switch').textContent).toContain('Upcoming');
+    expect(JSON.stringify(record)).toBe(before);
+  });
+
+test.each(['data','agenda'])('quarter %s list and its shortcuts retain their established labels',async(type)=>{
+  const before=JSON.stringify(rows);await render();
+  expect(container.querySelector('.agenda-switch').textContent).toContain('Upcoming 5');
+  expect(container.querySelector('.agenda-all').textContent).toBe('View all 5 upcoming reviews →');
+  await act(async()=>type==='data'?button('View data').click():container.querySelector('.agenda-all').click());
+  const entries=[...document.querySelectorAll('[role="dialog"] .date-review')];
+  expect(entries).toHaveLength(5);
+  expect(entries.map(entry=>[...entry.querySelectorAll('.list-details span')].pop().textContent)).toEqual(Array(5).fill('Upcoming'));
+  expect(JSON.stringify(rows)).toBe(before);
+});
 
 test('quarter and cadence filter presentation without changing records, and Today appears only in current quarter',async()=>{
   await render();expect(container.querySelector('.today-line')).not.toBeNull();
