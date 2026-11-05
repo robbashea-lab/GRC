@@ -93,12 +93,17 @@ test('native ticket without an explicit parent return still restores its connect
   expect(patch).not.toHaveBeenCalled();expect(post).not.toHaveBeenCalled();
 });
 test('seeded Account Authorization & Access Review Q3 ticket Cancel returns to its open Q4 parent Review heading',async()=>{
-  // The Q3/Q4 history and fixed Finding identity belong to the retained v1 cohort.
-  saveStore(buildLegacyDemoStore(),{resetFiles:true});await api.post('/demo/enter');
-  const historicalFinding=readStore().findings.find(row=>row.finding_id==='demo_brawndo_finding_0');
+  // Anchor only this retained v1 Q3/Q4 fixture; the suite keeps its full setup and real timers.
+  saveStore(buildLegacyDemoStore(new Date('2026-11-04T12:00:00.000Z')),{resetFiles:true});await api.post('/demo/enter');
+  const fixture=readStore(),historicalFinding=fixture.findings.find(row=>row.finding_id==='demo_brawndo_finding_0');
   expect(historicalFinding?.review_id).toBeTruthy();
+  const savedParent=fixture.reviews.find(row=>row.review_id===historicalFinding.review_id);
+  expect(savedParent?.occurrences).toEqual(expect.arrayContaining([expect.objectContaining({occurrence_id:historicalFinding.occurrence_id,period:'Q3 2026',status:'completed'})]));
   record=(await api.get('/reviews/'+historicalFinding.review_id)).data;
   expect(record.client_id).toBe('demo_brawndo');expect(record.title).toBe('Account Authorization & Access Review');
+  expect(record.review_id).toBe(savedParent.review_id);expect(record.period).toBe('Q4 2026');
+  const parentOccurrenceId=record.current_occurrence_id;expect(parentOccurrenceId).toBeTruthy();
+  expect(historicalFinding.occurrence_id).not.toBe(parentOccurrenceId);
   await render();
   const history=drawer().querySelector('[data-testid="review-history"]');expect(history).toBeTruthy();
   expect(history.querySelector('.is-current td').textContent).toBe('Q4 2026');
@@ -112,5 +117,10 @@ test('seeded Account Authorization & Access Review Q3 ticket Cancel returns to i
   const patch=jest.spyOn(api,'patch'),post=jest.spyOn(api,'post');
   await click(button(ticket(),'Cancel'));await flushNativeFocus();
   expect(ticket()).toBeNull();expect(drawer()).toBeTruthy();expect(document.activeElement).toBe(parentHeading);
+  expect(heading()).toBe(parentHeading);expect(parentHeading.textContent).toBe(record.title);
+  expect(button(drawer(),'Back to current Review')).toBeUndefined();
+  expect(drawer().querySelector('[data-testid="review-history"] .is-current td').textContent).toBe('Q4 2026');
+  const returnedParent=readStore().reviews.find(row=>row.review_id===record.review_id);
+  expect(returnedParent).toEqual(expect.objectContaining({review_id:record.review_id,client_id:record.client_id,current_occurrence_id:parentOccurrenceId}));
   expect(onOpenChange).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();expect(post).not.toHaveBeenCalled();
 });
