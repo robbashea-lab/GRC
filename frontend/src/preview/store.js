@@ -17,6 +17,12 @@ import {addInitech,finishInitech} from './programs/initech';
 import {removeRetiredDemoClients} from './retiredClients';
 import {applyCisDemoRollout} from './cisDemoRollout';
 import {refreshCanonicalCisDemo} from './cisDemoRefresh';
+import {CIS_CANONICAL_SCENARIO_FIRST_ANCHOR} from './cisCanonicalArtifactBooks';
+import {cisDemoFixtureDates} from './cisDemoFixtureDates';
+import {prepareCisOnboardingFixture} from './cisCanonicalOnboarding';
+import {buildCanonicalBrawndoCandidate} from './cisCanonicalBrawndoCandidate';
+import {buildCanonicalInitechCandidate} from './cisCanonicalInitechCandidate';
+import {buildCanonicalKrustyCandidate} from './cisCanonicalKrustyCandidate';
 import {action} from './workflows';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
@@ -83,6 +89,40 @@ export function buildLegacyDemoStore(clock=new Date()) {
 export function seedStore(clock=new Date()) {
   const db=buildLegacyDemoStore(clock);
   refreshCanonicalCisDemo(db,{clock,fresh:true});
+  // Private, fresh-session QA only: exercise the existing onboarding UI for one
+  // canonical identity, without a reset control or a retained-session migration.
+  if(process.env.REACT_APP_PREVIEW==='true'&&process.env.REACT_APP_DEMO_ONBOARDING_CLIENT)
+    prepareCisOnboardingFixture(db,process.env.REACT_APP_DEMO_ONBOARDING_CLIENT);
+  // Private QA keeps its existing isolated construction/onboarding contract.
+  // Normal fresh Explore entry receives all three verified canonical scenarios.
+  if(process.env.REACT_APP_PREVIEW==='true'&&process.env.REACT_APP_CIS_BRAWNDO_CANDIDATE_QA==='true'){
+    if(process.env.REACT_APP_DEMO_ONBOARDING_CLIENT)throw new Error('Select one private Demo QA fixture.');
+    buildCanonicalBrawndoCandidate(db,{clock});
+  }
+  if(process.env.REACT_APP_PREVIEW==='true'&&process.env.REACT_APP_CIS_INITECH_CANDIDATE_QA==='true'){
+    if(process.env.REACT_APP_DEMO_ONBOARDING_CLIENT)throw new Error('Select one private Demo QA fixture.');
+    buildCanonicalInitechCandidate(db,{clock});
+  }
+  if(process.env.REACT_APP_PREVIEW==='true'&&process.env.REACT_APP_CIS_KRUSTY_CANDIDATE_QA==='true'){
+    if(process.env.REACT_APP_DEMO_ONBOARDING_CLIENT
+      ||process.env.REACT_APP_CIS_BRAWNDO_CANDIDATE_QA==='true'
+      ||process.env.REACT_APP_CIS_INITECH_CANDIDATE_QA==='true')throw new Error('Select one private Demo QA fixture.');
+    buildCanonicalBrawndoCandidate(db,{clock});
+    buildCanonicalInitechCandidate(db,{clock});
+    buildCanonicalKrustyCandidate(db,{clock});
+  }
+  const privateFixture=process.env.REACT_APP_PREVIEW==='true'&&(
+    process.env.REACT_APP_DEMO_ONBOARDING_CLIENT
+    ||process.env.REACT_APP_CIS_BRAWNDO_CANDIDATE_QA==='true'
+    ||process.env.REACT_APP_CIS_INITECH_CANDIDATE_QA==='true'
+    ||process.env.REACT_APP_CIS_KRUSTY_CANDIDATE_QA==='true');
+  // Earlier synthetic clocks retain the preceding fixture rather than inventing
+  // observations before the rebuilt scenario's dated source samples existed.
+  if(!privateFixture&&cisDemoFixtureDates(clock).anchor>=CIS_CANONICAL_SCENARIO_FIRST_ANCHOR){
+    buildCanonicalBrawndoCandidate(db,{clock});
+    buildCanonicalInitechCandidate(db,{clock});
+    buildCanonicalKrustyCandidate(db,{clock});
+  }
   return db;
 }
 const requestBaselines=new WeakMap();

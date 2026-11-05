@@ -12,10 +12,13 @@ import { portfolio } from './summaries';
 import {latestPortfolioActivity} from '../lib/portfolioOverview';
 import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
 import {CIS_SHOWCASE_VERSION,cisDemoFixtureDates} from './cisDemoFixtureDates';
+import {writePortfolioStore} from './portfolioReporting';
+import {MAX_DEMO_DECODE_BYTES} from './demoStorageCodec';
 const api = axios.create({
   adapter: previewAdapter
 });
 beforeEach(() => {
+  // Workflow cases retain this pre-publication fixture; the future-date probe below uses normal expanded seeds.
   jest.useFakeTimers().setSystemTime(new Date('2026-10-13T17:00:00.000Z'));
   sessionStorage.clear();
   localStorage.clear();
@@ -31,7 +34,18 @@ test('same day produces byte-identical seed and dates advance with the clock', (
   expect(reference).toBeTruthy();
   expect(reference.due_date).toBe(demoDates(new Date('2030-01-01'))(-8));
   if(process.env.CIS_DEMO_QA_DIAGNOSTICS==='true')console.info('CIS_STORE_SIZE',JSON.stringify(Object.fromEntries(Object.entries(a).map(([key,value])=>[key,JSON.stringify(value).length]))));
-  expect(JSON.stringify(a).length).toBeLessThan(4000000);
+  // Qualify native serialization against a controlled physical budget, not a measured Browser origin quota.
+  const physicalLimit=5*1024*1024;
+  let saved;
+  const storage={setItem(_key,value){
+    if(value.length*2>physicalLimit)throw new DOMException('Controlled existing 5MiB capacity','QuotaExceededError');
+    saved=value;
+  }};
+  writePortfolioStore(storage,'synthetic_portfolio_capacity',lightweightStore(a));
+  const encoded=JSON.parse(saved);
+  const encodedBytes=encoded.demo_storage_codec?encoded.utf8_bytes:new TextEncoder().encode(saved).length;
+  expect(encodedBytes).toBeLessThanOrEqual(MAX_DEMO_DECODE_BYTES);
+  expect(saved.length*2).toBeLessThanOrEqual(physicalLimit);
 });
 test('canonical framework programs, real profiles, scoped people and valid assessments', () => {
   const db = seedStore();

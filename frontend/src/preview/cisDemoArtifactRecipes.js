@@ -1,5 +1,6 @@
 import {CIS_SHOWCASE_VERSION, namedDemoClient} from '../lib/demoClients';
 import {DEMO_INLINE_LIMIT} from '../lib/demoStorageErrors';
+import {CIS_CANONICAL_SCENARIO_REVISION,canonicalArtifactLimit,resolveCanonicalArtifact,resolveCanonicalArtifacts} from './cisCanonicalArtifactBooks';
 
 const SCHEMA_VERSION = 1;
 const MAX_ARTIFACTS = 32;
@@ -35,6 +36,13 @@ function cohort(db, cid) {
   return {member, group, anchor: refresh.anchor};
 }
 
+// Only Krusty's current canonical books may exceed the legacy inventory limit.
+function artifactLimit(cid,context,recipe) {
+  return recipe?.kind==='scenario_book'&&recipe.client_id===cid
+    &&recipe.scenario_revision===context.member.canonical_revision
+    ?canonicalArtifactLimit(cid,recipe.scenario_revision):MAX_ARTIFACTS;
+}
+
 function boundedData(value, depth = 0) {
   if (depth > 4) return false;
   if (value === null || typeof value === 'boolean') return true;
@@ -45,10 +53,12 @@ function boundedData(value, depth = 0) {
     !['__proto__', 'prototype', 'constructor'].includes(key) && boundedData(item, depth + 1));
 }
 
-function recipeValid(recipe, cid, context) {
+function recipeValid(recipe, cid, context, canonicalSource=null) {
   const common = ['kind', 'schema_version', 'fixture_version', 'client_id', 'anchor', 'key'];
   if (!plain(recipe) || !boundedData(recipe) || recipe.schema_version !== SCHEMA_VERSION || recipe.fixture_version !== CIS_SHOWCASE_VERSION
     || recipe.client_id !== cid || recipe.anchor !== context.anchor || JSON.stringify(recipe).length > MAX_RECIPE_CHARS) return false;
+  if(recipe.kind==='scenario_book')return context.member.canonical_revision===CIS_CANONICAL_SCENARIO_REVISION
+    &&!!canonicalSource;
   if (recipe.kind === 'operation') {
     if (!keysAre(recipe, [...common, 'title', 'day']) || !Object.hasOwn(OPERATION_OFFSETS, recipe.key) || !shortText(recipe.title, 240)) return false;
     if (context.group !== 3 && !['evidence_vendor_current', 'evidence_pending_validation', 'evidence_validated'].includes(recipe.key)) return false;
@@ -75,18 +85,21 @@ function immutableMetadata(evidence) {
   return Object.fromEntries(IMMUTABLE_FIELDS.map(key => [key, evidence[key] ?? null]));
 }
 
-function metadataValid(metadata, recipe) {
+function metadataValid(metadata, recipe, canonicalSource=null) {
   const cid = recipe.client_id;
+  const book=recipe.kind==='scenario_book'?canonicalSource?.definition:null;
+  if(recipe.kind==='scenario_book'&&!book)return false;
   const operation = recipe.kind === 'operation';
-  const id = operation ? cid + '_' + recipe.key : cid + '_showcase_evidence_' + recipe.key;
+  const id = book?book.evidence_id:operation ? cid + '_' + recipe.key : cid + '_showcase_evidence_' + recipe.key;
   const timestamp = operation ? recipe.day + 'T00:00:00.000Z' : recipe.anchor;
   if (metadata.evidence_id !== id || metadata.client_id !== cid || metadata.version !== 1
     || !Number.isInteger(metadata.size) || metadata.size < 1 || metadata.size > DEMO_INLINE_LIMIT
-    || metadata.filename !== (operation ? recipe.key + '.txt' : 'cis-' + recipe.key + '.csv')
-    || metadata.mime_type !== (operation ? 'text/plain' : 'text/csv')
+    || metadata.filename !== (book?book.filename:operation ? recipe.key + '.txt' : 'cis-' + recipe.key + '.csv')
+    || metadata.mime_type !== (book?book.mime_type:operation ? 'text/plain' : 'text/csv')
     || metadata.created_at !== timestamp || metadata.uploaded_at !== timestamp
     || !shortText(metadata.uploaded_by, 160) || metadata.uploaded_by_email !== null && !shortText(metadata.uploaded_by_email, 320)
-    || metadata.occurrence_id !== null || metadata.sha256 !== null && !/^[a-f0-9]{64}$/.test(metadata.sha256)) return false;
+    || metadata.occurrence_id !== (book?book.occurrence_id:null) || metadata.sha256 !== null && !/^[a-f0-9]{64}$/.test(metadata.sha256)) return false;
+  if(book)return metadata.linked_type===book.linked_type&&metadata.linked_id===book.linked_id&&metadata.size===canonicalSource.size;
   if (!operation) return metadata.linked_type === 'framework_assessment'
     && metadata.linked_id === `fw_${cid}_assessment_${recipe.rows[0].id}`;
   const provider = recipe.key === 'evidence_vendor_current' || recipe.key === 'evidence_contract_0'
@@ -99,8 +112,8 @@ function metadataValid(metadata, recipe) {
 
 // Detect accidental/local record changes. This bounded fingerprint is not an
 // authorization mechanism or cryptographic proof against rewriting the store.
-function fingerprint(recipe, immutable) {
-  const text = JSON.stringify(canonical({recipe, immutable}));
+function fingerprint(recipe, immutable, originalContent) {
+  const text = JSON.stringify(canonical({recipe, immutable,...(recipe.kind==='scenario_book'?{original_content:originalContent}:{})}));
   let value = 2166136261;
   for (let index = 0; index < text.length; index += 1) value = Math.imul(value ^ text.charCodeAt(index), 16777619);
   return text.length + ':' + (value >>> 0);
@@ -114,16 +127,11 @@ function freeze(value) {
   return value;
 }
 
-// Only initial source builders call this, immediately after inserting a new row.
-// Reads never install missing proof or repair an unknown/retained artifact.
-export function registerCisDemoArtifact(db, evidence, recipe) {
-  if (!plain(evidence)) throw new Error('Invalid initial CIS Demo artifact record.');
-  const context = cohort(db, evidence.client_id);
-  if (!context) return false;
+function initialDescriptor(db,evidence,recipe,context,canonicalSource) {
   const records = db.evidence?.filter(row => row.evidence_id === evidence.evidence_id) || [];
   const immutable = immutableMetadata(evidence);
-  if (records.length !== 1 || records[0] !== evidence || !recipeValid(recipe, evidence.client_id, context)
-    || !metadataValid(immutable, recipe) || !shortText(evidence.content_base64, 4 * DEMO_INLINE_LIMIT))
+  if (records.length !== 1 || records[0] !== evidence || !recipeValid(recipe, evidence.client_id, context,canonicalSource)
+    || !metadataValid(immutable, recipe,canonicalSource) || !shortText(evidence.content_base64, 4 * DEMO_INLINE_LIMIT))
     throw new Error('Invalid initial CIS Demo artifact source.');
   try {
     const bytes = atob(evidence.content_base64);
@@ -131,31 +139,91 @@ export function registerCisDemoArtifact(db, evidence, recipe) {
   } catch {
     throw new Error('Invalid initial CIS Demo artifact bytes.');
   }
-  const descriptor = {recipe: clone(recipe), immutable, fingerprint: fingerprint(recipe, immutable)};
-  context.member.artifacts ||= {};
-  const prior = context.member.artifacts[evidence.evidence_id];
+  if(recipe.kind==='scenario_book') {
+    if(!canonicalSource||canonicalSource.size!==immutable.size||canonicalSource.content_base64!==evidence.content_base64)
+      throw new Error('Invalid initial canonical CIS Demo artifact bytes.');
+    if(evidence.relationships!==undefined&&(!Array.isArray(evidence.relationships)||evidence.relationships.length>100))
+      throw new Error('Invalid initial canonical CIS Demo artifact relationships.');
+  }
+  return {recipe: clone(recipe), immutable, fingerprint: fingerprint(recipe, immutable,evidence.content_base64)};
+}
+
+// Only initial source builders call this, immediately after inserting a new row.
+// Reads never install missing proof or repair an unknown/retained artifact.
+export function registerCisDemoArtifact(db, evidence, recipe) {
+  if (!plain(evidence)) throw new Error('Invalid initial CIS Demo artifact record.');
+  const context = cohort(db, evidence.client_id);
+  if (!context) return false;
+  const artifacts=context.member.artifacts===undefined?{}:context.member.artifacts;
+  const limit=artifactLimit(evidence.client_id,context,recipe);
+  if(!plain(artifacts)||Object.keys(artifacts).length>limit)
+    throw new Error('CIS Demo artifact source inventory is invalid or full.');
+  const canonicalSource=recipe?.kind==='scenario_book'?resolveCanonicalArtifact(recipe):null;
+  const descriptor=initialDescriptor(db,evidence,recipe,context,canonicalSource);
+  const prior = artifacts[evidence.evidence_id];
   if (prior) {
     if (!equal(prior, descriptor)) throw new Error('The original CIS Demo artifact source must be retained.');
     return true;
   }
-  if (!plain(context.member.artifacts) || Object.keys(context.member.artifacts).length >= MAX_ARTIFACTS)
+  if (Object.keys(artifacts).length >= limit)
     throw new Error('CIS Demo artifact source inventory is invalid or full.');
-  context.member.artifacts[evidence.evidence_id] = freeze(descriptor);
+  if(context.member.artifacts===undefined)context.member.artifacts=artifacts;
+  artifacts[evidence.evidence_id]=freeze(descriptor);
+  return true;
+}
+
+// The candidate's Evidence rows are already staged in db. Validate the complete
+// initial batch before changing its descriptor inventory; never call on reads.
+export function registerCisDemoArtifacts(db,evidenceRows,recipes) {
+  if(!Array.isArray(evidenceRows)||!evidenceRows.length||evidenceRows.length>40
+    ||evidenceRows.some(evidence=>!plain(evidence))||!Array.isArray(recipes)||recipes.length!==evidenceRows.length)
+    throw new Error('Invalid initial canonical CIS Demo artifact batch.');
+  const cid=evidenceRows[0].client_id;
+  if(evidenceRows.some(evidence=>evidence.client_id!==cid)
+    ||new Set(evidenceRows.map(evidence=>evidence.evidence_id)).size!==evidenceRows.length)
+    throw new Error('Invalid initial canonical CIS Demo artifact batch scope or identities.');
+  const context=cohort(db,cid);
+  if(!context)return false;
+  const limit=artifactLimit(cid,context,recipes[0]);
+  if(evidenceRows.length>limit)throw new Error('Invalid initial canonical CIS Demo artifact batch.');
+  const prior=context.member.artifacts===undefined?{}:context.member.artifacts;
+  if(!plain(prior)||Object.keys(prior).length>limit)
+    throw new Error('CIS Demo artifact source inventory is invalid or full.');
+  const sources=resolveCanonicalArtifacts(recipes);
+  if(!sources)throw new Error('Invalid initial canonical CIS Demo artifact batch source.');
+  const pending={};
+  for(const [index,evidence] of evidenceRows.entries()) {
+    const descriptor=initialDescriptor(db,evidence,recipes[index],context,sources[index]);
+    if(Object.hasOwn(prior,evidence.evidence_id)) {
+      if(!equal(prior[evidence.evidence_id],descriptor))throw new Error('The original CIS Demo artifact source must be retained.');
+    }else pending[evidence.evidence_id]=freeze(descriptor);
+  }
+  if(Object.keys(prior).length+Object.keys(pending).length>limit)
+    throw new Error('CIS Demo artifact source inventory is invalid or full.');
+  // This is the only commit. A bad final row cannot leave the preceding files registered.
+  if(Object.keys(pending).length)context.member.artifacts={...prior,...pending};
   return true;
 }
 
 // Internal source lookup only. The existing native adapter remains responsible
 // for current session, role and client authorization before any byte response.
-export function cisDemoArtifactDescriptor(db, evidence) {
+export function resolveCisDemoArtifact(db, evidence) {
   const context = cohort(db, evidence?.client_id);
-  if (!context || !plain(context.member.artifacts) || Object.keys(context.member.artifacts).length > MAX_ARTIFACTS) return null;
+  if (!context || !plain(context.member.artifacts)) return null;
+  const descriptor = context.member.artifacts[evidence.evidence_id];
+  if(Object.keys(context.member.artifacts).length>artifactLimit(evidence.client_id,context,descriptor?.recipe))return null;
   const records = db.evidence?.filter(row => row.evidence_id === evidence.evidence_id) || [];
   if (records.length !== 1 || records[0].client_id !== evidence.client_id
     || !equal(immutableMetadata(records[0]), immutableMetadata(evidence))) return null;
-  const descriptor = context.member.artifacts[evidence.evidence_id];
+  const original=descriptor?.recipe?.kind==='scenario_book'?resolveCanonicalArtifact(descriptor.recipe):null;
   if (!keysAre(descriptor, ['recipe', 'immutable', 'fingerprint']) || !keysAre(descriptor.immutable, IMMUTABLE_FIELDS)
-    || !recipeValid(descriptor.recipe, evidence.client_id, context) || !metadataValid(descriptor.immutable, descriptor.recipe)
-    || descriptor.fingerprint !== fingerprint(descriptor.recipe, descriptor.immutable)
+    || !recipeValid(descriptor.recipe, evidence.client_id, context,original) || !metadataValid(descriptor.immutable, descriptor.recipe,original)
+    || descriptor.recipe.kind==='scenario_book'&&!original
+    || descriptor.fingerprint !== fingerprint(descriptor.recipe, descriptor.immutable,original?.content_base64)
     || !equal(descriptor.immutable, immutableMetadata(evidence))) return null;
-  return descriptor;
+  return {descriptor,rendered:original?{content_base64:original.content_base64,size:original.size}:null};
+}
+
+export function cisDemoArtifactDescriptor(db,evidence) {
+  return resolveCisDemoArtifact(db,evidence)?.descriptor||null;
 }
