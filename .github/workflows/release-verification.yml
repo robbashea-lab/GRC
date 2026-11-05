@@ -22,7 +22,6 @@ jobs:
     env:
       CI: 'true'
       TZ: UTC
-      CIS_OPERATION_TRACE_DIR: ${{ runner.temp }}/cis-operation-trace
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -31,7 +30,8 @@ jobs:
         working-directory: .
         run: |
           set -euo pipefail
-          out="$CIS_OPERATION_TRACE_DIR"
+          out="$RUNNER_TEMP/cis-operation-trace"
+          printf 'CIS_OPERATION_TRACE_DIR=%s\n' "$out" >> "$GITHUB_ENV"
           mkdir -p "$out"
           base=261cabae2707ceb172c517b60afb75d216c63e2d
           git rev-parse HEAD > "$out/diagnostic-head.txt"
