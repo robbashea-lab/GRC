@@ -9,6 +9,22 @@ const rows=Array.from({length:32},(_,i)=>({key:`tasks:${i}`,id:String(i),kind:'t
 const queue={as_of:'2026-10-15',groups:{all:{total:32},pastDue:{total:0},due30:{total:32},unassigned:{total:0}}};
 const props={queue,client:{client_id:'demo_brawndo',name:'Brawndo'},programs:[],filter:'all',onFilter:jest.fn(),onOpen:jest.fn(),loadDetail:async(key,offset,signal,{limit})=>({items:rows.slice(offset,offset+limit),offset,limit,total:rows.length,has_more:offset+limit<rows.length})};
 
+test('Priority work scopes unstarted wording to Reviews while keeping date indicators and other execution labels',async()=>{
+ const reviewItems=['2026-10-14','2026-10-15','2026-10-16'].map((due_date,index)=>({...rows[index],key:`reviews:${index}`,id:String(index),kind:'reviews',title:`Review ${index}`,type:'Review',status:'upcoming',due_date}));
+ const cases=[...reviewItems,{...reviewItems[0],key:'reviews:working',title:'Working Review',status:'in_progress'},
+   {...reviewItems[0],key:'reviews:completed',title:'Completed Review',status:'completed'},
+   {...rows[0],key:'tasks:upcoming',title:'Other record',status:'upcoming'}];
+ const before=JSON.stringify(cases),testQueue={...queue,groups:{...queue.groups,all:{total:cases.length}}};
+ await act(async()=>root.render(<BrawndoDemoDashboard {...props} queue={testQueue} loadDetail={async()=>({items:cases,total:cases.length,offset:0,limit:25,has_more:false})}/>));
+ const rowFor=title=>[...container.querySelectorAll('tbody tr')].find(node=>node.querySelector('.bdd-item').textContent===title);
+ for(let index=0;index<3;index++)expect(rowFor(`Review ${index}`).querySelector('.bdd-status').textContent).toBe('Not started');
+ expect(reviewItems.map(item=>rowFor(item.title).querySelector('.bdd-cell-due small span').textContent)).toEqual(['1 day overdue','Due today','In 1 day']);
+ expect(rowFor('Working Review').querySelector('.bdd-status').textContent).toBe('In progress');
+ expect(rowFor('Completed Review').querySelector('.bdd-status').textContent).toBe('Completed');
+ expect(rowFor('Other record').querySelector('.bdd-status').textContent).toBe('Upcoming');
+ expect(JSON.stringify(cases)).toBe(before);
+});
+
 test('concept groups approved presentation while Priority work keeps its native markup and controls',async()=>{
  await act(async()=>root.render(<BrawndoDemoDashboard {...props}><section data-testid="program">Native CIS</section></BrawndoDemoDashboard>));
  const original=container.querySelector('[aria-labelledby="bdd-work-heading"]').outerHTML;

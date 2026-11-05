@@ -9,7 +9,7 @@ const vendor = { vendor_id: 'v1', client_id: 'demo_brawndo', name: 'Recorded ven
 test('policy status figures preserve verification and missing distinctions without manufacturing approval', () => {
   const rows = [policy, { ...policy, policy_id: 'p2', status: 'approved' }, { ...policy, policy_id: 'p3', presence: 'reported_missing' }, { ...policy, policy_id: 'p4', status: 'approved', approved_at: '2026-10-01' }];
   const result = policyOverview(rows);
-  expect(result).toMatchObject({ approved: 1, awaiting: 1, missing: 1, mapped: 0, review: null, covered: [], lastClosed: null });
+  expect(result).toMatchObject({ approved: 1, awaiting: 0, missing: 1, mapped: 0, review: null, covered: [], lastClosed: null });
   expect(policyVisualMatches(rows[2], 'missing', '', [], [], 1)).toBe(true);
   expect(policyVisualMatches(rows[1], 'missing', '', [], [], 1)).toBe(false);
   expect(policyVisualMatches(policy, '', 'Other', [], [], 1)).toBe(false);

@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom';
 import {Moon,Sun,ArrowRight,Building2} from 'lucide-react';
 import {displayDay} from '@/lib/managementDates';
 import {dashboardStatus as statusLabel} from '@/lib/dashboardItemSummary';
+import {cisReviewStatusLabel} from '@/lib/cisReviewsConcept';
 import FrameworkProgramCard,{shortName} from './FrameworkProgramCard';
 import {ViewTabs} from './Register';
 import {formatError} from '@/lib/api';
@@ -26,7 +27,7 @@ function WorkTable({items,onOpen,asOf,workspacePilot}) {
           {workspacePilot&&<td>{item.type}</td>}
           <td className={item.unassigned?'is-attention bd-strong':''}>{item.unassigned?'Unassigned':item.owner}</td>
           {workspacePilot&&<td><time className="bd-date" dateTime={item.due_date||undefined}>{displayDay(item.due_date)||'Not scheduled'}</time></td>}
-          <td><span className={`bd-status is-${STATUS_TONE[item.status]||'neutral'}`}>{statusLabel(item.status)}</span></td>
+          <td><span className={`bd-status is-${STATUS_TONE[item.status]||'neutral'}`}>{item.kind==='reviews'&&item.status==='upcoming'?cisReviewStatusLabel(item.status,{execution:true}):statusLabel(item.status)}</span></td>
         </tr>;
       })}</tbody>
     </table>

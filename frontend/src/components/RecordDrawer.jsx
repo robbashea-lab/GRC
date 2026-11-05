@@ -117,7 +117,7 @@ export default function RecordDrawer(props) {
   return props.kind === "reviews" ? <ReviewDrawer {...props} /> : <EntityDrawer {...props} />;
 }
 
-function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, users: passedUsers = [], onSaved, initialValues, aiRiskCreation = false }) {
+function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, users: passedUsers = [], onSaved, initialValues, aiRiskCreation = false, aiLinkedRisk = false }) {
   // Callers that already hold the client's people pass them; others (Calendar, deep links) load them here.
   const loadedPeople = useClientPeople(passedUsers.length ? '' : (record?.client_id || clientId));
   const users = passedUsers.length ? passedUsers : loadedPeople;
@@ -170,7 +170,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const fullRecord=useBrawndoFullRecord(record,clientId);
   // AI-origin creation has no existing-record tabs; keep its required assessment reachable.
   const aiRiskAssessment=aiRiskCreation&&fullRecord&&window.location.pathname==='/ai-governance'&&kind==='risks'&&!record;
-  const riskWorkflow=fullRecord&&kind==='risks'&&window.location.pathname==='/risks'&&!!record;
+  const riskWorkflow=fullRecord&&kind==='risks'&&!!record&&(window.location.pathname==='/risks'||aiLinkedRisk&&window.location.pathname==='/ai-governance');
   const vendorWorkflow=fullRecord&&kind==='vendors'&&window.location.pathname==='/vendors';
   const policyWorkflow=fullRecord&&kind==='policies'&&window.location.pathname==='/policies'&&!!record;
   const riskSupportingLocked=riskWorkflow&&(saving||commentPosting||acceptOpen||!!closure);

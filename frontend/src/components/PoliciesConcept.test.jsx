@@ -20,7 +20,7 @@ test('three cards preserve Robb-approved native grouping and totals independent 
   await act(async()=>root.render(<Policies clientId="client" rows={rows} filteredRows={[]} onView={onView}/>));
   expect(container.querySelectorAll('.pc-status-card')).toHaveLength(3);
   expect(container.querySelector('[data-testid="additional-policy-metric-approved"] strong').textContent).toBe('1');
-  expect(container.querySelector('[data-testid="additional-policy-metric-awaiting"] strong').textContent).toBe('2');
+  expect(container.querySelector('[data-testid="additional-policy-metric-awaiting"] strong').textContent).toBe('1');
   expect(container.querySelector('[data-testid="additional-policy-metric-missing"] strong').textContent).toBe('1');
   expect(container.querySelector('.pc-approval-track span').style.width).toBe('25%');
   await act(async()=>container.querySelector('[data-testid="additional-policy-metric-awaiting"]').click());

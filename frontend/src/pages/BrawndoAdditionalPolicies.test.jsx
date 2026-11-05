@@ -48,6 +48,32 @@ const click = node => act(async () => node.click());
 const input = (node, value) => act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(node, value); node.dispatchEvent(new Event('input', { bubbles: true })); });
 const visibleRows = () => [...container.querySelectorAll('[role="row"][data-testid^="policies-row-"]')];
 
+test.each(['demo','standard'])('awaiting card and results exclude drafts without changing the native pending-decisions cohort in %s',async mode=>{
+  mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
+  const clientId=mockOrg.currentClientId;
+  const policies=Object.freeze([
+    Object.freeze({policy_id:'draft',client_id:clientId,title:'Draft policy',status:'draft'}),
+    Object.freeze({policy_id:'pending',client_id:clientId,title:'Pending policy',status:'in_review',approval_request_id:'submitted-request'}),
+    Object.freeze({policy_id:'approved',client_id:clientId,title:'Approved policy',status:'approved',approved_at:'2026-10-01'}),
+  ]);
+  const before=JSON.stringify(policies),get=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...args)=>path==='/policies'?{data:policies}:path==='/policies/pending-decisions'?{data:[]}:get(path,...args));
+  await act(async()=>root.render(<RecordListPage kind="policies"/>));
+  const card=container.querySelector('[data-testid="additional-policy-metric-awaiting"]');
+  expect(card.querySelector('strong').textContent).toBe('1');
+  expect(container.querySelector('[aria-label="Policies awaiting my approval"]')).toBeNull();
+  expect(api.get).toHaveBeenCalledWith('/policies/pending-decisions',expect.objectContaining({params:{client_id:clientId}}));
+  await click(card);
+  expect(visibleRows()).toHaveLength(1);expect(visibleRows()[0].textContent).toContain('Pending policy');
+  expect(visibleRows()[0].textContent).not.toContain('Draft policy');
+  await click(container.querySelector('.bapv-name'));
+  expect(mockDrawerProps.record.policy_id).toBe('pending');
+  await click(container.querySelector('[data-testid="additional-policy-view-all"]'));
+  expect(visibleRows()).toHaveLength(3);expect(visibleRows().some(row=>row.textContent.includes('Draft policy'))).toBe(true);
+  expect(JSON.stringify(policies)).toBe(before);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+});
+
 test('strict canonical Policies target keeps native identity, read-only filters/sort and visible-subset selection', async () => {
   await act(async () => root.render(<RecordListPage kind="policies" />));
   expect(container.querySelector('[data-testid="additional-policies"]')).toBeTruthy();
@@ -181,6 +207,10 @@ test.each(['iso-27001','soc-2','hipaa','nist-csf-2'].flatMap(framework=>['mapped
   expect(new URLSearchParams(mockLocationSearch).get('client_id')).toBe(clientId);
   expect(visibleRows()).toHaveLength(2);
   await click(container.querySelector('[data-testid=additional-policy-view-awaiting]'));
+  expect(visibleRows()).toHaveLength(0);
+  await click(container.querySelector('[data-testid=additional-policy-view-all]'));
+  expect(visibleRows()).toHaveLength(2);
+  await input(container.querySelector('[data-testid=policies-search]'), custom.title);
   expect(visibleRows()).toHaveLength(1);expect(visibleRows()[0].textContent).toContain(custom.title);
   expect(container.querySelector('[data-testid=export-policies-button]').disabled).toBe(false);
   const customButton=[...container.querySelectorAll('.bapv-name')].find(button=>button.textContent===custom.title);

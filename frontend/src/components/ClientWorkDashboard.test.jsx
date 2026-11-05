@@ -8,6 +8,21 @@ beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createEl
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 const items=Array.from({length:30},(_,i)=>({key:`tasks:${i}`,id:String(i),kind:'tasks',title:`Action ${i}`,type:'Action Item',status:'open',owner:'Unassigned',unassigned:true,source_label:'Manual / Internal',due_date:'2026-09-01'}));
 const queue={as_of:'2026-09-27',groups:{all:{total:30,items:items.slice(0,9)},pastDue:{total:30,items:items.slice(0,9)},due30:{total:0,items:[]},unassigned:{total:30,items:items.slice(0,9)}}};
+
+test('Priority overview changes only unstarted Review labels and retains its native dates',async()=>{
+  const reviews=['2026-09-26','2026-09-27','2026-09-28'].map((due_date,index)=>({...items[index],key:`reviews:${index}`,kind:'reviews',title:`Review ${index}`,status:'upcoming',due_date}));
+  const cases=[...reviews,{...reviews[0],key:'reviews:working',title:'Working Review',status:'in_progress'},
+    {...reviews[0],key:'reviews:complete',title:'Completed Review',status:'completed'},
+    {...items[0],key:'tasks:upcoming',title:'Other record',status:'upcoming'}];
+  const before=JSON.stringify(cases),testQueue={...queue,groups:{...queue.groups,all:{total:cases.length,items:cases}}};
+  await act(async()=>root.render(<ClientWorkDashboard queue={testQueue} programs={[]} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={jest.fn()}/>));
+  const rowFor=title=>[...container.querySelectorAll('tbody tr')].find(node=>node.querySelector('.bd-item').textContent===title);
+  for(const item of reviews){expect(rowFor(item.title).querySelector('.bd-status').textContent).toBe('Not started');expect(rowFor(item.title).querySelector('time').dateTime).toBe(item.due_date);}
+  expect(rowFor('Working Review').querySelector('.bd-status').textContent).toBe('In progress');
+  expect(rowFor('Completed Review').querySelector('.bd-status').textContent).toBe('Completed');
+  expect(rowFor('Other record').querySelector('.bd-status').textContent).toBe('Upcoming');
+  expect(JSON.stringify(cases)).toBe(before);
+});
 test('rapid search changes dispatch one settled request and clearing cancels pending work',async()=>{
   jest.useFakeTimers();
   try {

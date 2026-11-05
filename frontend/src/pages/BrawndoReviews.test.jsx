@@ -112,7 +112,15 @@ test.each(['demo_brawndo','demo_dunder','demo_prestige','new-client'])('%s share
   expect(count()).toBe(1);
 
   expect(tab('overdue').getAttribute('aria-pressed')).toBe('true');
-  expect(container.querySelector('[data-testid="reviews-status-0"]').textContent).toBe('overdue');
+  const overdueRow=container.querySelector('[data-testid="reviews-row-0"]');
+  expect(overdueRow.querySelector('[data-column="title"] .register-record-link').textContent).toBe('Late active review');
+  const execution=overdueRow.querySelector('[data-testid="reviews-status-0"]');
+  expect(execution.textContent).toBe('in progress');expect(execution.getAttribute('data-status')).toBe('in_progress');
+  expect(execution.classList.contains('pill-critical')).toBe(true);
+  const due=overdueRow.querySelector('[data-column="due_date"] .register-date');expect(due).toBeTruthy();
+  expect(due.classList.contains('is-critical')).toBe(true);
+  expect(due.querySelector('span:nth-child(2)').textContent).toMatch(/^\d+ days? overdue$/);
+  expect(rows.find(row=>row.review_id==='late')).toEqual(expect.objectContaining({review_id:'late',client_id:clientId,status:'in_progress',due_date:'2020-01-01'}));
   await input(container.querySelector('[data-testid="reviews-search"]'),'no match');
   expect(tab('all').textContent).toBe('All3');
   await click(button('Clear filters'));

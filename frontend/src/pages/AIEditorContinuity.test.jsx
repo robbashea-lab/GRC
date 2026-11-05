@@ -39,6 +39,7 @@ async function openDirtyDrawer(){
 
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();
+  window.history.replaceState({},'','/ai-governance');
   mockOrg={currentClientId:'demo_brawndo',currentClient:{...cisClient(),name:'Brawndo'},clients:[cisClient()],loading:false};
   mockAuth={workspaceMode:'demo',user:{user_id:'actor-one',workspace_mode:'demo',role:'super_admin'}};
   api.get.mockImplementation(async path=>({data:path==='/ai_systems'?[{ai_system_id:'ai-one',client_id:mockOrg.currentClientId,name:'AI continuity record',status:'active',data_types:['Public']}]:path==='/ai-intake'?{client_id:mockOrg.currentClientId,usage:'yes',indicators:[],updated_at:'intake-v1'}:path==='/related'?{}:[]}));
@@ -190,6 +191,30 @@ test('a delayed linked record cannot open after its originating AI view closes',
   await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Close').click());
   await act(async()=>finish({data:risk}));
   expect(container.textContent).not.toContain('Delayed Risk');
+});
+
+test('Open linked risk retains the exact Risk identity and returns to the originating AI Linked risk view without writes',async()=>{
+  const get=api.get.getMockImplementation();
+  const risk={risk_id:'demo_brawndo_risk_operating_1',client_id:'demo_brawndo',display_id:'RISK-007',title:'Unverified AI procedure drafts could disrupt operating decisions.',status:'open',category:'operational',source_type:'manual',treatment:'mitigate',likelihood_score:3,impact_score:4,review_cadence:'annual'};
+  api.get.mockImplementation(path=>path==='/related'?Promise.resolve({data:{risks:[risk]}}):path===`/risks/${risk.risk_id}`?Promise.resolve({data:risk}):get(path));
+  await act(async()=>root.render(page()));
+  await act(async()=>container.querySelector('.system-name').click());
+  const find=text=>[...container.querySelectorAll('button')].find(button=>button.textContent===text);
+  await act(async()=>find('Open system record').click());
+  await act(async()=>find('Linked risk').click());
+  const opener=find('Open linked risk');
+  await act(async()=>opener.click());
+  const riskDrawer=document.querySelector('[data-testid="risks-drawer"]');
+  expect(riskDrawer.className).toContain('brawndo-risk-workflow');
+  expect(riskDrawer.querySelector('.rw-kicker').textContent).toBe('RISK-007');
+  expect(riskDrawer.querySelector('[aria-label="Title"]').value).toBe(risk.title);
+  expect(api.get).toHaveBeenCalledWith(`/risks/${risk.risk_id}`);
+  await act(async()=>[...riskDrawer.querySelectorAll('button')].find(button=>button.textContent==='Close').click());
+  expect(document.querySelector('[data-testid="risks-drawer"]')).toBeNull();
+  expect(find('Linked risk').getAttribute('aria-pressed')).toBe('true');
+  expect(opener.isConnected).toBe(true);
+  expect(container.textContent).toContain('AI continuity record');
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
 test('a retained owner missing from the directory is not reported as unassigned',async()=>{
