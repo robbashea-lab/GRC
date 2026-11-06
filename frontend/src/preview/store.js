@@ -27,6 +27,9 @@ import {normalizeRecordWrite} from '../lib/recordContracts';
 import {demoStorageError} from '../lib/demoStorageErrors';
 import {lightweightEvidence,lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
 import {decodeDemoStore} from './demoStorageCodec';
+import {prepareDunderNativeOnboarding} from './programs/dunderNativeOnboarding';
+import {createDunderEightYearCandidate} from './programs/dunderEightYearScenario';
+import {EIGHT_YEAR_ANCHOR} from './programs/isoSocEightYearSupport';
 export const STORE_KEY = 'grc_interactive_demo_v3';
 // Older Demo stores remain recoverable; a rollout never deletes a prior session key.
 export const clone = value => JSON.parse(JSON.stringify(value));
@@ -81,8 +84,17 @@ export function buildLegacyDemoStore(clock=new Date()) {
   return finished;
 }
 export function seedStore(clock=new Date()) {
-  const db=buildLegacyDemoStore(clock);
-  refreshCanonicalCisDemo(db,{clock,fresh:true});
+  const privateDunder=process.env.REACT_APP_PREVIEW==='true'&&process.env.REACT_APP_DUNDER_EIGHT_YEAR_QA==='true';
+  const seedClock=privateDunder?new Date(EIGHT_YEAR_ANCHOR):clock;
+  const db=buildLegacyDemoStore(seedClock);
+  refreshCanonicalCisDemo(db,{clock:seedClock,fresh:true});
+  if(privateDunder)return createDunderEightYearCandidate(db,{clock:seedClock}).db;
+  // Private source-QA build only; retained reads never call this preparation.
+  if(process.env.REACT_APP_PREVIEW==='true'&&process.env.REACT_APP_DUNDER_EIGHT_YEAR_ONBOARDING_QA==='true')
+    return prepareDunderNativeOnboarding(db,{clock,purpose:'native_onboarding_qa'}).db;
+  // Dunder's fixed source is available from its anchor; other clients keep the caller's clock.
+  if(process.env.REACT_APP_PREVIEW==='true'&&new Date(clock)>=new Date(EIGHT_YEAR_ANCHOR))
+    return createDunderEightYearCandidate(db,{clock:new Date(EIGHT_YEAR_ANCHOR)}).db;
   return db;
 }
 const requestBaselines=new WeakMap();

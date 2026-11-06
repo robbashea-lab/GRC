@@ -64,8 +64,12 @@ function ProgramHistory({
 }) {
   const program = programs.find(value => programIdentity(value) === selected) || programs[0];
   const auth=useAuth();
+  const demoClient = namedDemoClient(client.client_id);
   const demoScenario=PREVIEW_MODE && auth.user?.workspace_mode==='demo' && client.environment==='Demo'
-    && !!namedDemoClient(client.client_id)?.historyVersion && program.framework_key==='cis-ig1';
+    && !!demoClient?.historyVersion && (program.framework_key==='cis-ig1' && !demoClient.historyFramework
+      || demoClient.historyFramework==='iso-27001' && program.framework_key==='iso-27001' && program.program_key==='iso-27001'
+        && program.client_id===client.client_id
+        && program.program_id===`${client.client_id}:iso-27001`);
   const [range, setRange] = useState('3m'),
     [mode, setMode] = useState('line'),
     [showData, setShowData] = useState(false);

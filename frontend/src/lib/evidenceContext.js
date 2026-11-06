@@ -4,8 +4,18 @@ export {evidenceSources,evidenceKind,evidenceSourceLabel,uploaderLabel,sourceRef
 
 export async function resolveEvidenceSource(ref,clientId){
   if(!ref?.available)throw new Error('Source unavailable.');
-  const route=ref.kind==='organizational_controls'?'organizational-controls':ref.kind;
-  const {data}=await api.get(`/${route}/${encodeURIComponent(ref.id)}`);
+  let data;
+  if(ref.kind==='ai_systems'){
+    if(!ref.id||!clientId)throw new Error('Source not found for this client.');
+    // AI exposes scoped collection reads in both Explore and authenticated use.
+    const {data:rows}=await api.get('/ai_systems',{params:{client_id:clientId}});
+    const matches=Array.isArray(rows)?rows.filter(row=>row?.ai_system_id===ref.id&&row.client_id===clientId):[];
+    if(matches.length!==1)throw new Error('Source not found for this client.');
+    data=matches[0];
+  }else{
+    const route=ref.kind==='organizational_controls'?'organizational-controls':ref.kind;
+    ({data}=await api.get(`/${route}/${encodeURIComponent(ref.id)}`));
+  }
   if(data.client_id!==clientId)throw new Error('Source not found for this client.');
   let initialValues={};
   if(ref.kind==='reviews'){

@@ -1,8 +1,47 @@
-import {namedDemoClient} from './demoClients';
+import {DUNDER_ISO_HISTORY_VERSION, namedDemoClient} from './demoClients';
 const DAY = 86400000;
 const STATUS_KEYS = ['addressed', 'in_progress', 'needs_attention', 'not_assessed'];
 const position = value => value?.current ? {...value.current, ...Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'current'))} : value;
 const time = value => Date.parse(value);
+const DUNDER_PROGRAM = 'demo_dunder:iso-27001';
+const DUNDER_ANCHOR = '2026-11-02T00:00:00.000Z';
+const DUNDER_DATES = ['2024-03-18T00:00:00.000Z', '2024-09-20T00:00:00.000Z'];
+const DUNDER_POINTS = DUNDER_DATES.map((at, index) => `demo:${DUNDER_PROGRAM}:${at}:${index}`);
+const DUNDER_CONTEXT_KEYS = ['version', 'client_id', 'program_id', 'anchor', 'fingerprint', 'point_ids'];
+
+export function isDunderHistoryFixture(snapshot) {
+  const value = position(snapshot);
+  return value?.program_id === DUNDER_PROGRAM && value.observation_kind === 'demo_fixture';
+}
+
+export function isDunderModeledHistoryPosition(snapshot, context) {
+  if(context?.version!==DUNDER_ISO_HISTORY_VERSION)return false;
+  const value = position(snapshot), index = DUNDER_POINTS.indexOf(value?.snapshot_id);
+  if (!context || Object.getPrototypeOf(context) !== Object.prototype
+    || Object.keys(context).length !== DUNDER_CONTEXT_KEYS.length
+    || !DUNDER_CONTEXT_KEYS.every(key => Object.hasOwn(context, key))
+    || context.client_id !== 'demo_dunder'
+    || context.program_id !== DUNDER_PROGRAM || context.anchor !== DUNDER_ANCHOR
+    || typeof context.fingerprint !== 'string' || !context.fingerprint
+    || !Array.isArray(context.point_ids) || context.point_ids.length !== DUNDER_POINTS.length
+    || !DUNDER_POINTS.every((id, at) => context.point_ids[at] === id) || index < 0) return false;
+  // Fictional intervals cannot claim observed continuity or a join to later saves.
+  if ([snapshot, snapshot?.current, value, value?.provenance, context].filter(Boolean).some(row =>
+    Object.keys(row).some(key => key.startsWith('join_') || key.startsWith('held_')
+      || key.startsWith('continuity_') || key === 'effective_until'))) return false;
+  return value.program_id === DUNDER_PROGRAM
+    && (value.client_id === undefined || value.client_id === context.client_id)
+    && (value.framework_key === undefined || value.framework_key === 'iso-27001')
+    && value.observation_kind === 'demo_fixture' && value.provenance?.kind === 'demo_fixture'
+    && value.scenario_version === context.version && value.scenario_anchor === context.anchor
+    && value.scenario_fingerprint === context.fingerprint
+    && value.measure_version === 'native-implementation-v1'
+    && value.scope_signature === `demo-scope:${DUNDER_PROGRAM}:0`
+    && value.source_revision === `demo-source:${DUNDER_PROGRAM}:${index + 1}`
+    && value.captured_at === DUNDER_DATES[index] && value.effective_at === DUNDER_DATES[index]
+    && value.modeled_until === (DUNDER_DATES[index + 1] || DUNDER_ANCHOR)
+    && validPosition(value);
+}
 
 export const programIdentity = program => program.program_id || JSON.stringify([program.client_id, program.program_key]);
 export const snapshotTime = snapshot => position(snapshot)?.effective_at || position(snapshot)?.captured_at || position(snapshot)?.at;
@@ -24,6 +63,8 @@ export function canConnectHistoryPositions(previous,next,{demoScenario}={}){
   const before=position(previous),after=position(next);
   if(!before||!after||before.scope_signature!==after.scope_signature||before.measure_version!==after.measure_version)return false;
   const until=time(before.effective_until),at=time(snapshotTime(after));
+  if(isDunderHistoryFixture(before)||isDunderHistoryFixture(after))return isDunderModeledHistoryPosition(before,demoScenario)
+    &&isDunderModeledHistoryPosition(after,demoScenario)&&time(before.modeled_until)>=at&&at>=time(snapshotTime(before));
   return before.continuity_proven===true&&until>=at
     ||isDemoScenarioPosition(before,demoScenario)&&(isDemoScenarioPosition(after,demoScenario)&&time(before.modeled_until)>=at
       ||before.snapshot_id===demoScenario.point_ids.at(-1)&&after.snapshot_id===demoScenario.join_snapshot_id
