@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
+import {readPortfolioStore,writePortfolioStore} from './portfolioReporting';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,CATALOGS} from '../lib/frameworks';
 import {onboardingPreview} from '../lib/onboardingHandoff';
@@ -71,7 +72,7 @@ test('unlinking shared evidence preserves bytes, other assessment and origin; re
 
 test('client-only and readonly identities cannot cross scope or mutate assessments',async()=>{
   const w=await configure(),aid=w.assessments[0].framework_assessment_id;
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));db.user.role='client_readonly';db.user.client_ids=[cid];sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  const db=readPortfolioStore(sessionStorage.getItem(STORE_KEY));db.user.role='client_readonly';db.user.client_ids=[cid];writePortfolioStore(sessionStorage,STORE_KEY,db);
   await expect(api.patch('/framework_assessments/'+aid,{notes:'denied'})).rejects.toThrow(/Read-only/);
   await expect(api.delete('/framework_assessments/'+aid+'/links',{data:{kind:'evidence',id:'anything'}})).rejects.toThrow(/Read-only/);
   await expect(api.get('/frameworks/hipaa',{params:{client_id:'unrelated-client'}})).rejects.toThrow();

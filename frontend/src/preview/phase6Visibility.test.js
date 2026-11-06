@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
+import {readPortfolioStore,writePortfolioStore} from './portfolioReporting';
 import catalog from '@catalogs/onboardingCatalog.json';
 import {complianceProgress} from '../lib/complianceProgress';
 import {loadClientDashboard} from '../lib/loadClientDashboard';
@@ -21,7 +22,7 @@ test('Dashboard consumes 50/3/2/1 current CIS counts, truthful placeholders, the
   expect(programs[1]).toMatchObject({assessment:{total:33,status_counts:{not_assessed:33}},trackingAvailable:true,progress:0});
   expect(()=>complianceProgress('other',baseline.state,requirements,summary)).toThrow('another client');
   await api.patch('/framework_assessments/'+workspace.assessments[6].framework_assessment_id,{status:'in_progress'});
-  const data=await loadClientDashboard(api,{clientId:cid,user:JSON.parse(sessionStorage.getItem(STORE_KEY)).user,scope:{kind:'org'}});
+  const data=await loadClientDashboard(api,{clientId:cid,user:readPortfolioStore(sessionStorage.getItem(STORE_KEY)).user,scope:{kind:'org'}});
   expect(data.programs[0].assessment.status_counts).toMatchObject({not_assessed:49,in_progress:4});
   await api.patch('/onboarding/programs/cis-ig1',{client_id:cid,applicability:'does_not_apply'});
   expect((await get('frameworks/summary')).items.map(p=>p.key)).toEqual(['soc-2']);
@@ -55,16 +56,16 @@ test('Calendar preserves active/closed distinction and Review occurrences throug
 });
 test('summary and Calendar do not expose another client to a client-only account',async()=>{
   await configure();const other=(await api.post('/clients',{name:'Other client'})).data.client_id;
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));db.user={...db.user,role:'client_contributor',client_ids:[cid]};sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  const db=readPortfolioStore(sessionStorage.getItem(STORE_KEY));db.user={...db.user,role:'client_contributor',client_ids:[cid]};writePortfolioStore(sessionStorage,STORE_KEY,db);
   expect((await get('frameworks/summary')).client_id).toBe(cid);
   await expect(get('frameworks/summary',{client_id:other})).rejects.toThrow('Forbidden');
   await expect(get('calendar',{client_id:other})).rejects.toThrow('Forbidden');
 });
 
 test('accepted risks remain in severity totals and have their own paged detail',async()=>{
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  const db=readPortfolioStore(sessionStorage.getItem(STORE_KEY));
   db.risks.push({risk_id:'accepted-high',client_id:cid,title:'Accepted exposure',status:'accepted',likelihood_score:3,impact_score:4});
-  sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  writePortfolioStore(sessionStorage,STORE_KEY,db);
   const summary=await get('dashboard');
   expect(summary.posture.totals.acceptedRisks).toBe(1);
   expect(summary.posture.riskLevels.find(g=>g.label==='High').total).toBe(1);

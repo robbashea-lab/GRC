@@ -4,6 +4,7 @@ import {establishBrawndoBaseline} from './cisCanonicalBrawndoBaseline';
 import {seedBrawndoProgram} from './cisCanonicalBrawndoProgram';
 import {seedBrawndoOperations} from './cisCanonicalBrawndoOperations';
 import {seedBrawndoHistory} from './cisCanonicalBrawndoHistory';
+import {canonicalReviewForecast} from './cisCanonicalReviewForecast';
 import {reviewSchedule} from '../lib/reviewOccurrences';
 
 const CID = 'demo_brawndo';
@@ -187,6 +188,10 @@ test('closed Risks and inactive Vendors retain history and completed treatment w
     expect(risk.related_task_ids).toContain(task.task_id);
     const review = result.reviews.find(row => row.risk_id === risk.risk_id);
     expect(review.status).toBe('cancelled');
+    expect(review.occurrences.length).toBeGreaterThan(0);
+    expect(review.due_date).toBe(review.occurrences.at(-1).next_review_date);
+    expect(review.schedule_anchor).toEqual(review.occurrences.at(-1).schedule_anchor);
+    expect(review.current_occurrence_id).toBe('occ_' + review.review_id);
     expect(review.occurrences.every(row => row.completed_at <= risk.closed_at)).toBe(true);
     expect(review.occurrences.every(row => row.risk_after.status !== 'closed')).toBe(true);
   }
@@ -194,8 +199,74 @@ test('closed Risks and inactive Vendors retain history and completed treatment w
     expect(vendor.next_review).toBeNull();
     const review = result.reviews.find(row => row.vendor_id === vendor.vendor_id);
     expect(review.status).toBe('cancelled');
+    expect(review.occurrences.length).toBeGreaterThan(0);
+    expect(review.due_date).toBe(review.occurrences.at(-1).next_review_date);
+    expect(review.schedule_anchor).toEqual(review.occurrences.at(-1).schedule_anchor);
+    expect(review.current_occurrence_id).toBe('occ_' + review.review_id);
     expect(review.occurrences.every(row => row.completed_at <= vendor.offboarded_at)).toBe(true);
   }
+});
+
+test('the cancelled November 28 Risk Review retains its next native slot without a future completion or forecast', () => {
+  const state = fixture('2026-11-28T12:00:00.000Z');
+  const riskId = CID + '_canonical_risk_old-vpn', reviewId = 'risk_review_' + riskId;
+  const originalRisk = copy(state.operations.risks.find(row => row.risk_id === riskId));
+  const originalReview = copy(state.operations.reviews.find(row => row.review_id === reviewId));
+  expect(originalReview).toMatchObject({due_date: '2025-11-28', status: 'cancelled',
+    current_occurrence_id: 'occ_' + reviewId, cancelled_at: '2026-02-01T00:00:00.000Z'});
+  const result = install(state), review = result.reviews.find(row => row.review_id === reviewId);
+  const risk = state.db.risks.find(row => row.risk_id === riskId), last = review.occurrences.at(-1);
+  expect(review.occurrences).toHaveLength(1);
+  expect(last).toMatchObject({occurrence_id: reviewId + '_2025-11-28', current_occurrence_id: reviewId + '_2025-11-28',
+    due_date: '2025-11-28', status: 'completed', completed_at: '2025-11-28T00:00:00.000Z',
+    next_review_date: '2026-11-28T00:00:00.000Z'});
+  expect(last.risk_after.status).not.toBe('closed');
+  expect(last.cancelled_at).toBeUndefined();
+  expect(review).toMatchObject({due_date: last.next_review_date, status: 'cancelled', period: '2026',
+    current_occurrence_id: originalReview.current_occurrence_id,
+    cancelled_at: originalReview.cancelled_at, cancelled_by: originalReview.cancelled_by,
+    recurrence_due_date: null, next_review_date: '2027-11-28T00:00:00.000Z'});
+  expect(review.schedule_anchor).toEqual(originalReview.schedule_anchor);
+  expect(review.current_occurrence_id).not.toBe(last.occurrence_id);
+  expect(risk).toMatchObject({status: 'closed', closed_at: originalRisk.closed_at, closed_by: originalRisk.closed_by,
+    next_review: null, decision_history: originalRisk.decision_history});
+  expect(review.occurrences.every(row => row.completed_at <= review.cancelled_at && row.completed_at < state.dates.anchor)).toBe(true);
+  const beforeForecast = copy(review), forecast = canonicalReviewForecast([review], {client_id: CID, anchor: state.dates.anchor});
+  expect(forecast.summary).toMatchObject({active_parents: 0, excluded_terminal_parents: 1, total_dates: 0});
+  expect(forecast.items).toEqual([]);
+  expect(review).toEqual(beforeForecast);
+});
+
+test('the inactive November 28 Vendor retains its cancelled next slot and original offboarding record', () => {
+  const state = fixture('2026-11-28T12:00:00.000Z');
+  const vendorId = CID + '_canonical_vendor_retired', reviewId = 'vendor_review_' + vendorId + '_vendor';
+  const originalVendor = copy(state.operations.vendors.find(row => row.vendor_id === vendorId));
+  const originalReview = copy(state.operations.reviews.find(row => row.review_id === reviewId));
+  expect(originalVendor).toMatchObject({status: 'inactive', offboarded_at: '2026-06-01T00:00:00.000Z', next_review: null});
+  expect(originalReview).toMatchObject({due_date: '2026-05-22', status: 'cancelled', vendor_purpose: 'vendor',
+    current_occurrence_id: 'occ_' + reviewId, cancelled_at: originalVendor.offboarded_at});
+  const result = install(state), review = result.reviews.find(row => row.review_id === reviewId);
+  const vendor = state.db.vendors.find(row => row.vendor_id === vendorId), last = review.occurrences.at(-1);
+  expect(review.occurrences).toHaveLength(1);
+  expect(last).toMatchObject({occurrence_id: reviewId + '_2026-05-22', current_occurrence_id: reviewId + '_2026-05-22',
+    due_date: '2026-05-22', status: 'completed', completed_at: '2026-05-22T00:00:00.000Z',
+    next_review_date: '2027-05-22T00:00:00.000Z'});
+  expect(last.source_snapshot).toMatchObject({vendor_id: vendorId, status: 'active', review_purpose: 'vendor'});
+  expect(last.cancelled_at).toBeUndefined();
+  expect(review).toMatchObject({due_date: last.next_review_date, status: 'cancelled', period: '2027',
+    current_occurrence_id: originalReview.current_occurrence_id,
+    cancelled_at: originalReview.cancelled_at, cancelled_by: originalReview.cancelled_by,
+    recurrence_due_date: null, next_review_date: '2028-05-22T00:00:00.000Z'});
+  expect(review.schedule_anchor).toEqual(originalReview.schedule_anchor);
+  expect(review.current_occurrence_id).not.toBe(last.occurrence_id);
+  // Existing native synchronization records the last completion; all other Vendor fields stay unchanged.
+  expect(vendor).toEqual({...originalVendor, last_review: last.completed_at,
+    custom_recurrence_days: originalReview.custom_recurrence_days});
+  expect(review.occurrences.every(row => row.completed_at <= vendor.offboarded_at && row.completed_at < state.dates.anchor)).toBe(true);
+  const beforeForecast = copy(review), forecast = canonicalReviewForecast([review], {client_id: CID, anchor: state.dates.anchor});
+  expect(forecast.summary).toMatchObject({active_parents: 0, excluded_terminal_parents: 1, total_dates: 0});
+  expect(forecast.items).toEqual([]);
+  expect(review).toEqual(beforeForecast);
 });
 
 test('historical snapshots do not backdate later AI approvals, Risk acceptance or current document versions', () => {

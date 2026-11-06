@@ -34,7 +34,8 @@ test('retained seeded Risk keeps its original Added fallback through save, revie
 
 test.each([null, '2025-02-28T00:00:00.000Z'])('existing Risk identification value %s is preserved rather than defaulted on an edit', identification => {
   const db = seedStore();
-  const risk = db.risks.find(r => r.risk_id === retainedRiskId);
+  const risk = db.risks.find(r => r.client_id === 'demo_brawndo' && r.risk_id === 'demo_brawndo_canonical_risk_dispatch');
+  expect(risk).toBeDefined();
   risk.date_identified = identification;
   const createdAt = risk.created_at;
   const saved = write(db, 'risks', {notes: 'Synthetic metadata preservation check'}, risk.risk_id);

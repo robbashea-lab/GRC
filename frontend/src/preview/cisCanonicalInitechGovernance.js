@@ -239,9 +239,9 @@ function populate(db, {dates, owner, processOwners = {}} = {}) {
     const original = originalReviews.find(row => row.framework_plan_key === plan.key), work = PLAN_WORK[plan.key];
     const process = contact(db, ROLES[work.role], processOwners);
     const ids = [...new Set([...plan.safeguards, ...(work.extra || [])])];
-    const inventoryDue = plan.key === 'asset-inventory'
-      ? reviewSchedule({due_date:dates.month(-1), recurrence:'semiannual'}, true).next_review_date?.slice(0,10) : null;
-    const due = inventoryDue || dates.day(work.due);
+    const inventorySchedule = plan.key === 'asset-inventory'
+      ? reviewSchedule({due_date:dates.month(-1), recurrence:'semiannual'}, true) : null;
+    const due = inventorySchedule?.next_review_date?.slice(0,10) || dates.day(work.due);
     const row = {...copy(original), owner_id:account.user_id, reviewer_id:account.user_id,
       framework_drivers:[reviewDriver('cis-ig1', plan)], recurrence:plan.default_cadence, due_date:due,
       status:work.progress ? 'in_progress' : 'upcoming', current_occurrence_id:'occ_'+original.review_id,
@@ -252,7 +252,11 @@ function populate(db, {dates, owner, processOwners = {}} = {}) {
         cadence_source:'organization_defined', cadence_rationale:work.detail,
         citation:'CIS Controls v8.1, selected cumulative IG2 safeguards '+ids.join(', '), reference_url:SOURCE_URL}};
     if (work.progress) Object.assign(row, {started_at:dates.instant(-14), started_by:account.user_id});
-    Object.assign(row, reviewSchedule(row, true));
+    const resetSchedule = reviewSchedule(row, true);
+    // A clipped due date can be month-end when the interview anchor was not.
+    const schedule = inventorySchedule && !inventorySchedule.schedule_anchor.month_end && resetSchedule.schedule_anchor.month_end
+      ? reviewSchedule({...row,schedule_anchor:inventorySchedule.schedule_anchor}) : resetSchedule;
+    Object.assign(row, schedule);
     validateAssignment(db, 'reviews', row); validateGovernanceContext(row.governance_context);
     reviewManifest.push({review_id:row.review_id, plan_key:plan.key, safeguards:ids, process_owner_id:process.contact_id,
       source_obligations:ids.map(obligation), tracking_basis:'Existing native plan; a platform ticket is not mandated by CIS.',

@@ -11,6 +11,8 @@ import {MAX_DEMO_DECODE_BYTES} from './demoStorageCodec';
 import {DEMO_INLINE_LIMIT} from '../lib/demoStorageErrors';
 import {restoredCisDemoEvidence} from './cisDemoEvidence';
 import {canonicalReviewForecast} from './cisCanonicalReviewForecast';
+import {CIS_CANONICAL_SCENARIO_REVISION,canonicalArtifactLimit} from './cisCanonicalArtifactBooks';
+import {krustyHistoryVolumePlan} from './cisCanonicalKrustyVolume';
 
 const {createHash} = require('crypto');
 const CLOCK = new Date('2026-11-04T12:00:00.000Z'), K = 'demo_krusty_krab';
@@ -287,8 +289,28 @@ test('native twelve-month forecasting excludes all eleven terminal parents and d
   report.future_forecast = {through_date:forecast.through_date,...forecast.summary,saved_occurrences_created:0};
 }));
 
-test('the real normal 2030 cohort preserves all native records and ninety-eight files through unchanged codec and physical budgets', () => {
-  const futureClock = new Date('2030-01-01T12:00:00.000Z'), anchor = cisDemoFixtureDates(futureClock).anchor;
+test('the explicit pre-expansion 2028 leap-day cohort retains the original 4M full raw JSON ceiling', () => check('historical_4M_baseline', () => {
+  const clock = new Date('2028-02-29T12:00:00Z');
+  // Preserve both the original explicit seed clock and demoPortfolio's ambient fake clock.
+  const ambient = new Date('2026-10-13T17:00:00.000Z');jest.setSystemTime(ambient);
+  try {
+    const legacy = preExpansionCisFixture(clock);
+    for (const cid of CLIENTS) expect(legacy.cis_demo_refresh.clients[cid].canonical_revision).toBeUndefined();
+    report.historical_4M_baseline = {clock:clock.toISOString(),ambient_clock:ambient.toISOString(),construction:'preExpansionCisFixture; legacy v2 full whole cohort',
+      representation:'JSON.stringify(full legacy store), including file payloads',raw_characters:JSON.stringify(legacy).length,
+      original_raw_character_limit:4000000};
+    expect(JSON.stringify(legacy).length).toBeLessThan(4000000);
+  } finally {jest.setSystemTime(CLOCK);clearFileCache();}
+}));
+
+test.each([
+  ['the real normal 2030 cohort preserves all native records and ninety-eight files through unchanged codec and physical budgets',
+    '2030-01-01T12:00:00.000Z','FULL-COHORT-2030-CAPACITY.json'],
+  ['the real normal 2030-05-15 Dunder anchor cohort preserves all native records and original files through unchanged codec and physical budgets',
+    '2030-05-15T12:00:00.000Z','FULL-COHORT-2030-05-15-CAPACITY.json'],
+])('%s', (_name,clock,reportFile) => {
+  const futureClock = new Date(clock), anchor = cisDemoFixtureDates(futureClock).anchor;
+  const pinnedJan1 = clock === '2030-01-01T12:00:00.000Z';
   const futureReport = {anchor,timezone:'UTC',phase:'before normal construction',checks:{},
     scope:'Real normal seedStore 2030 cohort, including complete Brawndo,Initech,Krusty and source Dunder/Prestige.',
     limitation:'Source/storage regression only; controlled value budget is not actual Browser quota, downloads, authenticated use, hosted acceptance or responsiveness.',
@@ -300,7 +322,7 @@ test('the real normal 2030 cohort preserves all native records and ninety-eight 
     if (!process.env.CIS_REBUILD_AUDIT_OUTPUT) return;
     const fs = require('fs'), path = require('path'), directory = process.env.CIS_REBUILD_AUDIT_OUTPUT;
     fs.mkdirSync(directory,{recursive:true});
-    fs.writeFileSync(path.join(directory,'FULL-COHORT-2030-CAPACITY.json'),JSON.stringify(futureReport,null,2)+'\n');
+    fs.writeFileSync(path.join(directory,reportFile),JSON.stringify(futureReport,null,2)+'\n');
   };
   try {
     save();
@@ -308,9 +330,20 @@ test('the real normal 2030 cohort preserves all native records and ninety-eight 
     for (const flag of PRIVATE_FLAGS) expect(process.env[flag]).toBeUndefined();
     futureReport.phase = 'real normal 2030 construction';save();
     const future = seedStore(futureClock);
+    for (const cid of CLIENTS) {
+      expect(future.cis_demo_refresh.clients[cid].canonical_revision).toBe(CIS_CANONICAL_SCENARIO_REVISION);
+      expect(future.cis_demo_rollout.clients[cid].canonical_revision).toBe(CIS_CANONICAL_SCENARIO_REVISION);
+    }
     const source = domainRecords(future), files = new Map(future.evidence.filter(owned)
       .map(row => [row.evidence_id,fileFacts(row)]));
     const reviews = future.reviews.filter(row => row.client_id === K);
+    const marker = future.cis_demo_refresh.clients[K];
+    const volume = krustyHistoryVolumePlan(reviews,{anchor,organization_origin:marker.organizational_history_start,
+      framework_origin:marker.assessment_origin});
+    expect(volume.complete).toBe(true);expect(volume.unresolved).toEqual([]);
+    expect(volume.counts).toMatchObject({review_parents:70,framework_review_parents:19,supplemental_review_parents:51});
+    for (const review of reviews) expect(review.occurrences.map(row => row.due_date))
+      .toEqual(volume.reviews.find(row => row.review_id === review.review_id).due_dates);
     futureReport.raw_full_utf8_bytes = utf8(future);
     futureReport.source_client_order = future.clients.map(row => row.client_id);
     futureReport.canonical_file_counts = Object.fromEntries(CLIENTS.map(cid =>
@@ -323,9 +356,18 @@ test('the real normal 2030 cohort preserves all native records and ninety-eight 
     expect(futureReport.source_client_order).toEqual(db.clients.map(row => row.client_id));
     expect(futureReport.source_client_order).toEqual(expect.arrayContaining([...CLIENTS,'demo_dunder','demo_prestige']));
     expect(new Set(futureReport.source_client_order).size).toBe(futureReport.source_client_order.length);
-    expect(futureReport.canonical_file_counts).toEqual({demo_brawndo:31,demo_initech:30,[K]:37});
-    expect(files.size).toBe(98);
-    expect(futureReport.krusty_history).toEqual({parents:70,periods:979});
+    expect(futureReport.canonical_file_counts.demo_brawndo).toBe(31);
+    expect(futureReport.canonical_file_counts.demo_initech).toBe(30);
+    expect(futureReport.canonical_file_counts[K]).toBeGreaterThan(0);
+    expect(futureReport.canonical_file_counts[K]).toBeLessThanOrEqual(canonicalArtifactLimit(K,CIS_CANONICAL_SCENARIO_REVISION));
+    expect(files.size).toBe(Object.values(futureReport.canonical_file_counts).reduce((sum,count) => sum+count,0));
+    expect(futureReport.krusty_history).toEqual({parents:70,periods:volume.counts.planned_past_periods});
+    if (pinnedJan1) {
+      expect(futureReport.canonical_file_counts).toEqual({demo_brawndo:31,demo_initech:30,[K]:37});
+      expect(files.size).toBe(98);
+      expect(futureReport.krusty_history).toEqual({parents:70,periods:979});
+    }
+    futureReport.volume_plan = volume;
     for (const review of reviews) for (const occurrence of review.occurrences || []) {
       expect(occurrence.status).toBe('completed');
       expect(occurrence.completed_at < anchor).toBe(true);
@@ -381,10 +423,12 @@ test('the real normal 2030 cohort preserves all native records and ninety-eight 
     expect(checked).toBeGreaterThan(files.size);
     expect(restored.reviews.filter(row => row.client_id === K)).toHaveLength(70);
     expect(restored.reviews.filter(row => row.client_id === K)
+      .reduce((sum,row) => sum+(row.occurrences || []).length,0)).toBe(volume.counts.planned_past_periods);
+    if (pinnedJan1) expect(restored.reviews.filter(row => row.client_id === K)
       .reduce((sum,row) => sum+(row.occurrences || []).length,0)).toBe(979);
     futureReport.relationships_checked = checked;futureReport.checks.native_records_and_relationships = {state:'passed'};
 
-    futureReport.phase = 'all ninety-eight original file payloads';save();
+    futureReport.phase = 'all original file payloads ('+files.size+')';save();
     const recovered = {};
     let fallbackCount = 0;
     for (const row of restored.evidence.filter(owned)) {
@@ -397,7 +441,9 @@ test('the real normal 2030 cohort preserves all native records and ninety-eight 
       expect(recovered[row.evidence_id]).toEqual(files.get(row.evidence_id));
     }
     expect(Object.keys(recovered).sort()).toEqual([...files.keys()].sort());
-    expect(Object.keys(recovered)).toHaveLength(98);expect(fallbackCount).toBeGreaterThan(0);
+    expect(Object.keys(recovered)).toHaveLength(files.size);
+    if (pinnedJan1) expect(Object.keys(recovered)).toHaveLength(98);
+    expect(fallbackCount).toBeGreaterThan(0);
     expect(domainRecords(future)).toEqual(source);
     futureReport.restored_canonical_files = recovered;
     futureReport.files_restored_through_existing_fixture_provider = fallbackCount;

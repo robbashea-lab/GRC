@@ -17,7 +17,8 @@ test('rescheduling a Risk re-anchors its recurring Review on the new date',async
   expect(day(done.review.due_date)).toBe(expected);
 });
 test('rescheduling a Vendor review re-anchors on the new date',async()=>{
-  const vendor=readStore().vendors.find(v=>v.vendor_id==='demo_brawndo_vendor_0');
+  const vendor=readStore().vendors.find(v=>v.vendor_id==='demo_brawndo_canonical_vendor_m365');
+  expect(vendor).toMatchObject({client_id:cid,status:'active'});
   await api.patch('/vendors/'+vendor.vendor_id,{next_review:'2026-11-05'});
   const review=readStore().reviews.find(r=>r.vendor_id===vendor.vendor_id&&(r.vendor_purpose||'vendor')==='vendor');
   expect(review.schedule_anchor.day).toBe(5);

@@ -2,7 +2,8 @@ import {CATALOGS, activeDefinitions, reviewDrivers} from '../lib/frameworks';
 import {reviewSchedule, reviewView} from '../lib/reviewOccurrences';
 import {requirementBasis, validateGovernanceContext} from '../lib/requirementBasis';
 import {policyReviewIds} from '../lib/brawndoAdditionalPolicyVendor';
-import {ids, write} from './store';
+import {ids, write, seedStore} from './store';
+import {CIS_CANONICAL_SCENARIO_REVISION} from './cisCanonicalArtifactBooks';
 import {cisDemoFixtureDates} from './cisDemoFixtureDates';
 import {establishInitechBaseline, initechOnboardingSelection} from './cisCanonicalInitechBaseline';
 import {populateInitechAssessments} from './cisCanonicalInitechAssessments';
@@ -286,4 +287,78 @@ test('a late native synchronization failure leaves target and unrelated records 
   });
   expect(() => populate(db)).toThrow('Synthetic native synchronization failure');
   expect(calls).toBe(2); expect(db).toEqual(before);
+});
+
+function normalCandidateAt(day) {
+  const flags = ['REACT_APP_PREVIEW','REACT_APP_DEMO_ONBOARDING_CLIENT','REACT_APP_CIS_BRAWNDO_CANDIDATE_QA',
+    'REACT_APP_CIS_INITECH_CANDIDATE_QA','REACT_APP_CIS_KRUSTY_CANDIDATE_QA'];
+  const before = Object.fromEntries(flags.map(key => [key,process.env[key]]));
+  const clock = new Date(day+'T12:00:00.000Z');
+  try {
+    for (const key of flags) delete process.env[key];
+    jest.setSystemTime(clock);
+    return seedStore(clock);
+  } finally {
+    for (const [key,value] of Object.entries(before)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+    jest.setSystemTime(CLOCK);
+  }
+}
+
+test.each([
+  ['2026-11-30','2026-10-30','2027-04-30','2027-10-30'],
+  ['2027-09-30','2027-08-30','2028-02-29','2028-08-30']
+])('normal %s construction preserves the actual inventory interview anchor through a clipped six-month due date',
+  (day,interview,current,next) => {
+    const db = normalCandidateAt(day);
+    expect(db.cis_demo_refresh.clients[CID].canonical_revision).toBe(CIS_CANONICAL_SCENARIO_REVISION);
+    const matches = db.reviews.filter(row => row.client_id === CID && row.framework_plan_key === 'asset-inventory');
+    expect(matches).toHaveLength(1);
+    const inventory = matches[0], draft = db.guided_assessment_pilot['fw_'+CID+'_assessment_1.1:demo_admin'];
+    expect(draft.answers.last_review).toBe(interview);
+    expect(inventory.due_date).toBe(current);
+    expect(inventory.schedule_anchor).toEqual({day:30,month_end:false});
+    expect(inventory.next_review_date).toBe(next+'T00:00:00.000Z');
+    expect(reviewSchedule(inventory).next_review_date).toBe(next+'T00:00:00.000Z');
+    expect(inventory.occurrences.at(-1)).toMatchObject({due_date:interview,
+      completed_at:interview+'T00:00:00.000Z',next_review_date:current+'T00:00:00.000Z'});
+    expect(db.framework_assessments.find(row => row.client_id === CID && row.definition_id === '1.1')
+      .guided_assessment_source.answers.last_review).toBe(interview);
+    const krustyId = 'demo_krusty_krab';
+    expect(db.cis_demo_refresh.clients[krustyId].canonical_revision).toBe(CIS_CANONICAL_SCENARIO_REVISION);
+    const krustyMatches = db.reviews.filter(row => row.client_id === krustyId && row.framework_plan_key === 'asset-inventory');
+    expect(krustyMatches).toHaveLength(1);
+    const krustyInventory = krustyMatches[0], krustyDraft = db.guided_assessment_pilot['fw_'+krustyId+'_assessment_1.1:demo_admin'];
+    expect(krustyDraft.answers.last_review).toBe(interview);
+    expect(krustyInventory.due_date).toBe(current);
+    expect(krustyInventory.schedule_anchor).toEqual({day:30,month_end:false});
+    expect(krustyInventory.next_review_date).toBe(next+'T00:00:00.000Z');
+    expect(reviewSchedule(krustyInventory).next_review_date).toBe(next+'T00:00:00.000Z');
+    expect(krustyInventory.occurrences.at(-1)).toMatchObject({due_date:interview,
+      completed_at:interview+'T00:00:00.000Z',next_review_date:current+'T00:00:00.000Z'});
+    expect(db.framework_assessments.find(row => row.client_id === krustyId && row.definition_id === '1.1')
+      .guided_assessment_source.answers.last_review).toBe(interview);
+  });
+
+test('a genuine month-end interview retains the exact pre-repair native current-schedule bytes', () => {
+  const db = normalCandidateAt('2026-12-31');
+  const inventory = db.reviews.find(row => row.client_id === CID && row.framework_plan_key === 'asset-inventory');
+  const draft = db.guided_assessment_pilot['fw_'+CID+'_assessment_1.1:demo_admin'];
+  expect(draft.answers.last_review).toBe('2026-11-30');
+  // Frozen native reset projection, not a historical book/download manifest.
+  const projection = Object.fromEntries(['due_date','period','next_review_date','schedule_anchor','recurrence_due_date']
+    .map(key => [key,inventory[key]]));
+  expect(JSON.stringify(projection)).toBe('{"due_date":"2027-05-31","period":"H1 2027","next_review_date":"2027-11-30T00:00:00.000Z","schedule_anchor":{"day":31,"month_end":true},"recurrence_due_date":null}');
+  expect(inventory.occurrences.at(-1)).toMatchObject({due_date:'2026-11-30',
+    completed_at:'2026-11-30T00:00:00.000Z'});
+  const krustyId = 'demo_krusty_krab';
+  const krustyInventory = db.reviews.find(row => row.client_id === krustyId && row.framework_plan_key === 'asset-inventory');
+  const krustyDraft = db.guided_assessment_pilot['fw_'+krustyId+'_assessment_1.1:demo_admin'];
+  expect(krustyDraft.answers.last_review).toBe('2026-11-30');
+  const krustyProjection = Object.fromEntries(['due_date','period','next_review_date','schedule_anchor','recurrence_due_date']
+    .map(key => [key,krustyInventory[key]]));
+  expect(JSON.stringify(krustyProjection)).toBe('{"due_date":"2027-05-31","period":"H1 2027","next_review_date":"2027-11-30T00:00:00.000Z","schedule_anchor":{"day":31,"month_end":true},"recurrence_due_date":null}');
+  expect(krustyInventory.occurrences.at(-1)).toMatchObject({due_date:'2026-11-30',
+    completed_at:'2026-11-30T00:00:00.000Z'});
 });

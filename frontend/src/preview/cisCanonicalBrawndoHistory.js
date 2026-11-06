@@ -219,10 +219,25 @@ function reviewHistory(db, reviews, assessments, operations, dates, origin, owne
     review.fixture_history_origin_at = instant(start);
     if (review.risk_id) {
       const risk = db.risks.find(row => row.risk_id === review.risk_id);
-      risk.last_reviewed = review.occurrences.at(-1)?.completed_at || null;
+      const last = review.occurrences.at(-1);
+      if (terminal && review.status === 'cancelled' && risk.status === 'closed' && last?.next_review_date) {
+        // Closure cancels the next slot; it does not reuse a completed period.
+        review.due_date = last.next_review_date;
+        Object.assign(review, reviewSchedule({...review, recurrence_due_date: null}));
+      }
+      risk.last_reviewed = last?.completed_at || null;
       if (terminal) risk.next_review = null;
     }
-    if (review.vendor_id) syncVendorReview(db, review);
+    if (review.vendor_id) {
+      const vendor = db.vendors.find(row => row.vendor_id === review.vendor_id && row.client_id === review.client_id);
+      const last = review.occurrences.at(-1);
+      if (terminal && review.status === 'cancelled' && vendor?.status === 'inactive'
+        && (review.vendor_purpose || 'vendor') === 'vendor' && last?.next_review_date) {
+        review.due_date = last.next_review_date;
+        Object.assign(review, reviewSchedule({...review, recurrence_due_date: null}));
+      }
+      syncVendorReview(db, review);
+    }
     if (review.policy_id) syncPolicyReview(db, review);
   }
 }

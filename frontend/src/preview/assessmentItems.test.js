@@ -21,7 +21,7 @@ async function complete(answers={practice:'No',additional_gap:'Yes',gaps:'Report
 async function apply(draft){return (await api.patch(path,{implementation:draft.narrative,status:draft.result.status,guided_assessment_source:source(draft),expected_last_assessed:row.last_saved??row.last_assessed??null})).data;}
 
 test('final apply persists assessment-local items; completion notes leave native judgment and history unchanged',async()=>{
-  const draft=await complete();expect((await api.get(path)).data.items_to_address).toBeUndefined();
+  const draft=await complete();expect((await api.get(path)).data.items_to_address).toEqual(row.items_to_address);
   const saved=await apply(draft),item=saved.items_to_address.find(item=>item.question_id==='gaps');
   expect(item).toMatchObject({state:'open',resolution:'',finding_id:null,text:'Reported follow-up'});
   const protectedFields=['implementation','status','verification','last_assessed','last_saved','assessment_history'];

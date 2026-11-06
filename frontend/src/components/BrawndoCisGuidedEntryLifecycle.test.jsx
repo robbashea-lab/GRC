@@ -127,24 +127,18 @@ beforeEach(async()=>{
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.restoreAllMocks();jest.clearAllMocks();});
 
 test.each([
-  ['1.1','in_progress','needs_validation','coverage','Servers'],
-  ['2.1','in_progress','needs_validation','requirements_0','publisher'],
+  ['1.1','in_progress','gap_identified','coverage','Servers'],
+  ['2.1','addressed','verified','requirements_0','publisher'],
 ])('fresh personal %s exposes sequential native questions and carries a reviewed result through the native save and Items history',async(id,status,verification,matrixId,rowText)=>{
-  if(id==='1.1'){
-    const workspace=(await api.get('/frameworks/cis-ig1',{params:{client_id:clientId}})).data;
-    const assessment=workspace.assessments.find(row=>row.definition_id===id);
-    expect(assessment).toBeTruthy();
-    // Arrange linked corrective work natively; v2's partial inventory has no seeded 1.1 Finding.
-    const finding=(await api.post(`/framework_assessments/${assessment.framework_assessment_id}/findings`,{
-      request_id:'guided-entry-linked-inventory-regression',title:'Synthetic inventory exception for linked-work regression',
-      remediation_title:'Reconcile the synthetic inventory exception',severity:'high'
-    })).data;
-    expect(finding).toMatchObject({client_id:clientId,framework_assessment_id:assessment.framework_assessment_id,status:'in_remediation'});
-  }
   await loadSafeguard(id);
   // Fresh personal progress coexists with the native seeded manual judgment and linked work.
   expect(baseline).toMatchObject({status,verification});expect(baseline.implementation.trim()).not.toBe('');
-  if(id==='1.1')expect(relatedBefore.findings.length).toBeGreaterThan(0);
+  if(id==='1.1'){
+    // The current canonical inventory gap already has its native Finding; do not duplicate it.
+    expect(relatedBefore.findings.length).toBeGreaterThan(0);
+    expect(relatedBefore.findings).toContainEqual(expect.objectContaining({client_id:clientId,
+      framework_assessment_id:baseline.framework_assessment_id,status:'in_remediation'}));
+  }
   await render();expect(disclosure().open).toBe(false);expect(guide().hidden).toBe(true);await openSavedInterview();
   expect(questionId()).toBe(catalogForVersion(version).safeguards[id][0].id);expect(guide().querySelector('fieldset').disabled).toBe(false);
   expect(putSpy).not.toHaveBeenCalled();expect(patchSpy).not.toHaveBeenCalled();expect(postSpy).not.toHaveBeenCalled();

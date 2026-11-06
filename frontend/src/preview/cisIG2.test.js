@@ -1,9 +1,11 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {readStore,STORE_KEY,clone} from './store';
+import {writePortfolioStore} from './portfolioReporting';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,activeDefinitions,activePlans,reviewDrivers} from '../lib/frameworks';
-import {cisDemoSelection,CIS_DEMO_REVISION} from './cisDemoSelection';
+import {CIS_DEMO_REVISION} from './cisDemoSelection';
+import {initechOnboardingSelection} from './cisCanonicalInitechBaseline';
 import {CIS_SHOWCASE_VERSION} from './cisDemoFixtureDates';
 import {cisReviewBriefs} from '../lib/cisOperations';
 import {complianceNavigation} from '../lib/complianceNavigation';
@@ -20,7 +22,11 @@ test('canonical partition and explicit fictional Initech match the strict IG2 ma
   expect(activePlans('cis-ig1')).toHaveLength(12);expect(activePlans('cis-ig1',{implementation_group:2})).toHaveLength(15);
   const db=readStore(),id='demo_initech',rows=db.framework_assessments.filter(r=>r.client_id===id);
   expect(rows).toHaveLength(130);expect(new Set(rows.map(r=>r.definition_id)).size).toBe(130);
-  const manifest=cisDemoSelection(2);
+  expect(rows.filter(row=>row.status==='addressed')).toHaveLength(120);
+  expect(rows.filter(row=>row.status==='in_progress')).toHaveLength(7);
+  expect(rows.filter(row=>row.status==='needs_attention')).toHaveLength(1);
+  expect(rows.filter(row=>row.status==='not_assessed')).toHaveLength(2);
+  const manifest=initechOnboardingSelection();
   expect(db.cis_demo_refresh).toMatchObject({version:CIS_SHOWCASE_VERSION,timezone:'UTC'});
   expect(db.cis_demo_refresh.clients[id]).toMatchObject({version:CIS_SHOWCASE_VERSION,state:'fresh_fixture',history_months:24});
   const origin=db.cis_demo_refresh.clients[id].assessment_origin+'T00:00:00.000Z';
@@ -31,7 +37,7 @@ test('canonical partition and explicit fictional Initech match the strict IG2 ma
   for(const row of rows){
     expect(db.contacts.some(contact=>contact.client_id===id&&contact.contact_id===row.process_owner_id)).toBe(true);
     for(const event of row.assessment_history){
-      expect(event.source).toBe('Fictional Demo import');
+      expect(event.source).toBe('Explicit fictional Initech history; imported synthetic observations, not browser execution, client signatures or external assurance.');
       expect(event.at>=origin&&event.at<=db.cis_demo_refresh.anchor).toBe(true);
     }
   }
@@ -39,16 +45,42 @@ test('canonical partition and explicit fictional Initech match the strict IG2 ma
   expect(db.users.some(r=>r.user_id.startsWith(id))).toBe(false);
   expect(db.cis_demo_rollout.clients[id].revision).toBe(CIS_DEMO_REVISION);
   const policies=db.policies.filter(row=>row.client_id===id);
-  expect(policies).toHaveLength(10);
-  expect(policies.map(row=>row.baseline_key).sort()).toEqual(manifest.policies.filter(row=>row.include).map(row=>row.policy_key).sort());
+  expect(policies).toHaveLength(9);
+  expect(policies.map(row=>row.baseline_key).sort()).toEqual([...manifest.policy_keys].sort());
+  expect(policies.map(row=>row.policy_id).sort()).toEqual(manifest.policy_keys.map(key=>id+'_'+key).sort());
   const reviews=db.reviews.filter(row=>row.client_id===id);
-  expect(reviews).toHaveLength(37);
+  expect(reviews).toHaveLength(66);
   expect(reviews.filter(row=>row.framework_key==='cis-ig1')).toHaveLength(15);
-  expect(reviews.filter(row=>row.policy_id)).toHaveLength(10);
-  expect(reviews.filter(row=>row.risk_id)).toHaveLength(4);
-  expect(reviews.filter(row=>row.vendor_id)).toHaveLength(5);
+  expect(reviews.filter(row=>row.framework_plan_key).map(row=>row.framework_plan_key).sort()).toEqual(manifest.plans.map(row=>row.key).sort());
+  const manual=reviews.filter(row=>row.framework_key==='cis-ig1'&&!row.framework_plan_key);
+  expect(manual.map(row=>row.review_id).sort())
+    .toEqual(['fw_'+id+'_review_requirement:8.11','fw_'+id+'_review_requirement:11.5'].sort());
+  for(const review of manual)expect(review.framework_setup_key).toBe(review.review_id);
+  expect(reviews.filter(row=>row.policy_id)).toHaveLength(9);
+  expect(reviews.filter(row=>row.policy_id).map(row=>row.policy_id).sort()).toEqual(policies.map(row=>row.policy_id).sort());
+  expect(reviews.filter(row=>row.risk_id)).toHaveLength(29);
+  expect(reviews.filter(row=>row.vendor_id)).toHaveLength(19);
   expect(reviews.filter(row=>row.ai_system_id)).toHaveLength(3);
-  for(const followup of manifest.native_followups.filter(row=>row.source_kind!=='ai_systems'))expect(reviews.find(row=>row.review_id===followup.review_id)).toBeTruthy();
+  // Match the current native parents; the old small-register follow-up IDs are retired.
+  const risks=db.risks.filter(row=>row.client_id===id),vendors=db.vendors.filter(row=>row.client_id===id);
+  expect(risks).toHaveLength(29);expect(vendors).toHaveLength(15);
+  for(const risk of risks){
+    const linked=reviews.filter(row=>row.risk_id===risk.risk_id);
+    expect(linked).toHaveLength(1);expect(linked[0].recurrence).toBe('annual');
+    if(risk.status==='closed'){expect(linked[0].status).toBe('cancelled');expect(risk.next_review).toBeNull();}
+    else expect(linked[0].due_date).toBe(risk.next_review);
+  }
+  expect(vendors.filter(row=>row.status==='active')).toHaveLength(14);
+  expect(vendors.filter(row=>row.status==='inactive')).toHaveLength(1);
+  for(const vendor of vendors){
+    const linked=reviews.filter(row=>row.vendor_id===vendor.vendor_id&&row.vendor_purpose==='vendor');
+    expect(linked).toHaveLength(1);expect(linked[0].recurrence).toBe('annual');
+    if(vendor.status==='inactive'){expect(linked[0].status).toBe('cancelled');expect(vendor.next_review).toBeNull();}
+    else expect(linked[0].due_date).toBe(vendor.next_review);
+  }
+  expect(reviews.filter(row=>row.vendor_purpose==='contract')).toHaveLength(3);
+  expect(reviews.filter(row=>row.vendor_purpose==='assurance')).toHaveLength(1);
+  expect(reviews.filter(row=>['contract','assurance'].includes(row.vendor_purpose)).every(row=>row.recurrence==='none')).toBe(true);
   // The current showcase replaces the legacy single AI example with three native deployments.
   const systems=db.ai_systems.filter(row=>row.client_id===id);
   expect(systems.map(row=>row.catalog_key).sort()).toEqual(['chatgpt','claude','m365']);
@@ -56,6 +88,9 @@ test('canonical partition and explicit fictional Initech match the strict IG2 ma
     const linked=reviews.filter(row=>row.ai_system_id===system.ai_system_id);
     expect(linked).toHaveLength(1);
     expect(linked[0]).toMatchObject({client_id:id,ai_review_purpose:'periodic',review_type:'ai_governance'});
+    const riskLinks=system.related_links.filter(row=>row.kind==='risks');
+    expect(riskLinks).toHaveLength(1);expect(risks.some(row=>row.risk_id===riskLinks[0].id)).toBe(true);
+    expect(reviews.find(row=>row.risk_id===riskLinks[0].id).review_id).not.toBe(linked[0].review_id);
   }
   expect(reviews.some(row=>row.review_id===id+'_review_ai')).toBe(false);
   for(const review of reviews.filter(row=>row.risk_id||row.vendor_id||row.ai_system_id)){
@@ -134,6 +169,6 @@ test('new IG2, later enablement, persisted save failure and authorization bounda
   const storage=jest.spyOn(Storage.prototype,'setItem')
     .mockImplementation(()=>{throw new DOMException('Quota exceeded','QuotaExceededError');});
   await expect(scope(2)).rejects.toBeTruthy();storage.mockRestore();expect(readStore().clients.find(r=>r.client_id===cid).cis_configuration_updated_at).toBe(old);
-  db.user={...db.user,role:'client_grc_manager',client_ids:[cid]};sessionStorage.setItem(STORE_KEY,JSON.stringify(db));await expect(scope(2)).rejects.toMatchObject({response:{status:403}});
-  db.user={...db.user,role:'platform_admin',client_ids:['demo_brawndo']};sessionStorage.setItem(STORE_KEY,JSON.stringify(db));await expect(workspace()).rejects.toMatchObject({response:{status:403}});
+  db.user={...db.user,role:'client_grc_manager',client_ids:[cid]};writePortfolioStore(sessionStorage,STORE_KEY,db);await expect(scope(2)).rejects.toMatchObject({response:{status:403}});
+  db.user={...db.user,role:'platform_admin',client_ids:['demo_brawndo']};writePortfolioStore(sessionStorage,STORE_KEY,db);await expect(workspace()).rejects.toMatchObject({response:{status:403}});
 });
