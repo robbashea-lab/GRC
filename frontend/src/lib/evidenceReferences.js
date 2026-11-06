@@ -9,7 +9,11 @@ export const uploaderLabel=row=>row.uploader||row.uploaded_by_email||'Unknown up
 export function sourceReference(kind,row,id,occurrence) {
   const result={kind,id:id||row?.[sources[kind].key],label:sources[kind].label,available:!!row,title:row?.title||row?.name||'Source unavailable'};
   if(row){result.status=row.status;result.display_id=row.display_id;result.archived=!!(row.archived_at||row.status==='archived');}
-  if(row&&kind==='framework_assessments')result.title=`${FRAMEWORKS.find(f=>f.key===row.framework_key)?.label||row.framework_key} ${row.definition_id} · ${frameworkDefinition(row.framework_key,row.definition_id)?.title||row.definition_id}`;
+  if(row&&kind==='framework_assessments'){
+    // The native CIS namespace contains all IGs; it does not imply IG1 scope.
+    const label=row.framework_key==='cis-ig1'?'CIS':FRAMEWORKS.find(f=>f.key===row.framework_key)?.label||row.framework_key;
+    result.title=`${label} ${row.definition_id} · ${frameworkDefinition(row.framework_key,row.definition_id)?.title||row.definition_id}`;
+  }
   if(row&&kind==='reviews'){
     const oid=occurrence||'occ_'+row.review_id,old=row.occurrences?.find(o=>o.occurrence_id===oid),current=oid===occurrenceId(row);
     Object.assign(result,{occurrence_id:oid,period:old?.period||(old||current?reviewSchedule(old||row).period:'Occurrence not recorded'),available:!!(old||current)});

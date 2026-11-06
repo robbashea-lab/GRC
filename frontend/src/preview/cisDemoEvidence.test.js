@@ -168,7 +168,10 @@ test('initial registration rejects detached, invalid or oversized source records
 
 let canonicalSeed;
 function nativeSession() {
-  canonicalSeed ||= seedStore(new Date(NOW));
+  // These route cases exercise the current normal cohort; recipe probes above retain their original dates.
+  const clock = new Date('2026-11-05T12:00:00.000Z');
+  jest.setSystemTime(clock);
+  canonicalSeed ||= seedStore(clock);
   const db = copy(canonicalSeed);
   saveStore(db, {resetFiles: true});
   sessionStorage.setItem('grc_demo_entered', 'true');

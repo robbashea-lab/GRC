@@ -2,6 +2,8 @@
 import iso from '@catalogs/iso27001.json';
 import dunder from './dunder';
 import {seedStore} from '../store';
+import {preExpansionCisFixture} from '../../testUtils/preExpansionCisFixture';
+import {CIS_CANONICAL_SCENARIO_REVISION} from '../cisCanonicalArtifactBooks';
 import {auditProgress,auditQuarter} from '../../lib/isoAudit';
 import {lightweightStore} from '../evidenceStorage';
 
@@ -91,7 +93,7 @@ test('findings, review findings, risks and vendors are valid', () => {
 });
 
 test('canonical Dunder seed operates as one connected Year-2 ISMS',()=>{
-  const db=seedStore(new Date('2030-05-15T12:00:00Z')),cid='demo_dunder',own=kind=>db[kind].filter(r=>r.client_id===cid);
+  const clock=new Date('2030-05-15T12:00:00Z'),db=seedStore(clock),cid='demo_dunder',own=kind=>db[kind].filter(r=>r.client_id===cid);
   expect(own('requirements').filter(r=>r.baseline_response==='applies').map(r=>r.baseline_key)).toEqual(['iso-27001']);
   expect(own('contacts')).toHaveLength(9);
   expect(own('contacts').every(c=>c.name&&c.title&&c.email&&!('role' in c)&&!('grc_roles' in c))).toBe(true);
@@ -128,5 +130,12 @@ test('canonical Dunder seed operates as one connected Year-2 ISMS',()=>{
   expect(own('findings').some(f=>f.review_id?.startsWith(cid+'_audit_'))).toBe(true);
   expect(own('risks').every(r=>r.treatment_reference&&r.control_refs?.length&&r.related_links?.some(l=>l.kind==='framework_assessments'))).toBe(true);
   expect(own('evidence').map(e=>e.display_name)).toEqual(expect.arrayContaining(['ISO 27001 / Clauses / approved ISMS scope statement','ISO 27001 / SoA / approved Statement of Applicability v4','ISO 27001 / Management Review / approved minutes']));
-  expect(JSON.stringify(lightweightStore(db)).length).toBeLessThan(4.5*1024*1024);
+  const expanded=CIS_CANONICAL_SCENARIO_REVISION==='cis81-canonical-rebuild-v3'
+    &&['demo_brawndo','demo_initech','demo_krusty_krab'].every(id=>
+    db.cis_demo_refresh?.clients?.[id]?.canonical_revision===CIS_CANONICAL_SCENARIO_REVISION
+    &&db.cis_demo_rollout?.clients?.[id]?.canonical_revision===CIS_CANONICAL_SCENARIO_REVISION);
+  // Only exact canonical v3 uses the native same-anchor capacity gate in cisCanonicalFullCohortCapacity.test.js.
+  // Keep this separate original raw promise on the explicit same-clock pre-expansion cohort.
+  const capacityBaseline=expanded?preExpansionCisFixture(clock):db;
+  expect(JSON.stringify(lightweightStore(capacityBaseline)).length).toBeLessThan(4.5*1024*1024);
 });

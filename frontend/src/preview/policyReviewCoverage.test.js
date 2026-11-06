@@ -2,6 +2,7 @@ import {cisClient} from '../testUtils/cisExperience';
 import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {readStore,saveStore,STORE_KEY} from './store';
+import {decodeDemoStore} from './demoStorageCodec';
 import {effectivePolicySubject,policySetCoverage,advanceCoveredSchedule} from './policyReviewCoverage';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo',at='2026-10-21T12:00:00.000Z';
 const subject=id=>({subject_id:id+'-approved-1',policy_id:id,client_id:cid,title:id,version:'1',basis:{type:'external',reference:'https://example.test/'+id,document_version:'1'}});
@@ -144,7 +145,7 @@ test('native annual completion persists exact membership, completes covered obli
   const body={occurrence_id:annual.current_occurrence_id};
   const completed=(await api.post('/reviews/annual-set/complete',body)).data;
   expect(completed.occurrence.policy_coverage.map(member=>member.policy_id)).toEqual(['A','C']);
-  let stored=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  let stored=decodeDemoStore(sessionStorage.getItem(STORE_KEY));
   expect(JSON.stringify(stored.policies.map(p=>[p.status,p.version,p.approval_subject,p.approval_history,p.decision_history]))).toBe(approvalBefore);
   for(const id of ['A','C']){
     const review=stored.reviews.find(r=>r.review_id==='child-'+id);

@@ -55,7 +55,7 @@ async function raiseRisk(){
 }
 // Hold only the parent Review's four real adapter reads; the child ticket and command remain native.
 function holdReviewRefresh(){
-  const get=api.get.bind(api),reads=new Map();
+  const get=api.get.bind(api),reads=new Map(),allReadsIssued=deferred();
   jest.spyOn(api,'get').mockImplementation((path,config)=>{
     let name;
     if(path===`/reviews/${review.review_id}/history`)name='history';
@@ -64,9 +64,12 @@ function holdReviewRefresh(){
     if(path===`/reviews/${review.review_id}/activity`)name='activity';
     if(!name)return get(path,config);
     const gate=deferred();reads.set(name,gate);
-    return Promise.all([get(path,config),gate.promise]).then(([response])=>response);
+    const pendingRead=get(path,config);
+    // Signal issuance while all response gates remain held.
+    if(reads.size===4)allReadsIssued.resolve();
+    return Promise.all([pendingRead,gate.promise]).then(([response])=>response);
   });
-  return reads;
+  return {reads,allReadsIssued:allReadsIssued.promise};
 }
 const finishReads=reads=>act(async()=>{for(const gate of reads.values())gate.resolve();});
 const expectAllReads=reads=>expect([...reads.keys()]).toEqual(['history','related','comments','activity']);
@@ -79,8 +82,8 @@ const expectUnconfirmed=()=>{
 
 test('the actual Review-linked Finding waits for all parent reads and the parent callback before reporting verified',async()=>{
   const parent=deferred();parentSaved.mockImplementation(()=>parent.promise);
-  await render();await openFinding();const reads=holdReviewRefresh(),post=jest.spyOn(api,'post');
-  await raiseRisk();expectAllReads(reads);
+  await render();await openFinding();const {reads,allReadsIssued}=holdReviewRefresh(),post=jest.spyOn(api,'post');
+  await raiseRisk();await act(async()=>{await allReadsIssued;});expectAllReads(reads);
   expect(parentSaved).not.toHaveBeenCalled();expect(savedEvent).not.toHaveBeenCalled();
   await act(async()=>{for(const [name,gate] of reads)if(name!=='activity')gate.resolve();});
   expect(parentSaved).not.toHaveBeenCalled();
@@ -96,8 +99,8 @@ test('the actual Review-linked Finding waits for all parent reads and the parent
 });
 
 test.each(['history','related','comments','activity'])('a failed %s read keeps the linked Risk unconfirmed without calling the parent',async name=>{
-  await render();await openFinding();const reads=holdReviewRefresh(),post=jest.spyOn(api,'post');
-  await raiseRisk();expectAllReads(reads);
+  await render();await openFinding();const {reads,allReadsIssued}=holdReviewRefresh(),post=jest.spyOn(api,'post');
+  await raiseRisk();await act(async()=>{await allReadsIssued;});expectAllReads(reads);
   await act(async()=>{for(const [key,gate] of reads)key===name?gate.reject(new Error('Synthetic refresh read unavailable')):gate.resolve();});
   expectUnconfirmed();
   expect(post.mock.calls.filter(([path])=>path.endsWith('/raise-risk'))).toHaveLength(1);
@@ -109,8 +112,8 @@ test.each(['actor','role','mode','client','closed','unmounted'])('a stale %s par
   await render();await openFinding();
   const sentinel='Comment visible only in the superseded refresh';
   await api.post('/comments',{entity_type:'reviews',entity_id:review.review_id,occurrence_id:review.current_occurrence_id,body:sentinel});
-  const reads=holdReviewRefresh();
-  await raiseRisk();expectAllReads(reads);
+  const {reads,allReadsIssued}=holdReviewRefresh();
+  await raiseRisk();await act(async()=>{await allReadsIssued;});expectAllReads(reads);
   if(change==='actor')mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'different-native-actor'}};
   if(change==='role')mockAuth={...mockAuth,user:{...mockAuth.user,role:'platform_admin'}};
   if(change==='mode')mockAuth={...mockAuth,workspaceMode:'authenticated'};

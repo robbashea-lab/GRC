@@ -3,6 +3,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ReviewDrawer from './ReviewDrawer';
 import api from '@/lib/api';
+import {toast} from 'sonner';
 
 let mockUser,mockFullRecord,mockClient;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -89,8 +90,12 @@ test('In progress saves the native draft with concurrency guards before the nati
   const patch=jest.spyOn(api,'patch'),post=jest.spyOn(api,'post');
   await click(button('In progress'));
   expect(patch).toHaveBeenCalledWith('/reviews/'+record.review_id,expect.objectContaining({notes:'Native draft retained before start',expected_occurrence_id:record.current_occurrence_id,expected_updated_at:record.updated_at??null}),expect.anything());
+  // Starting follows the already-issued native draft save; node.click() returns no Promise.
+  await act(async()=>{await patch.mock.results[0].value;});
   expect(post).toHaveBeenCalledWith('/reviews/'+record.review_id+'/start',{occurrence_id:record.current_occurrence_id});
   expect(patch.mock.invocationCallOrder[0]).toBeLessThan(post.mock.invocationCallOrder[0]);
+  await act(async()=>{await post.mock.results[0].value;});
+  expect(toast.success).toHaveBeenCalledWith('Review started');
   const saved=(await api.get('/reviews/'+record.review_id)).data;
   expect(saved).toMatchObject({status:'in_progress',notes:'Native draft retained before start'});
   expect(button('In progress').disabled).toBe(true);

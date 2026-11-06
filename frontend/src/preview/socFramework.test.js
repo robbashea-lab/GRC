@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
+import {decodeDemoStore} from './demoStorageCodec';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,CATALOGS} from '../lib/frameworks';
 import {controlGap} from '../lib/socReadiness';
@@ -97,7 +98,7 @@ test('four frameworks reuse existing work and control descriptions do not imply 
     expect(operational).toEqual(original);expect(framework_drivers).toEqual(expect.arrayContaining(prior));
   }
   expect(after.some(r=>r.framework_drivers.some(d=>d.framework_key==='soc-2'))).toBe(true);
-  const snapshot=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  const snapshot=decodeDemoStore(sessionStorage.getItem(STORE_KEY));
   expect(snapshot.framework_assessments.filter(a=>a.client_id===cid)).toHaveLength(288);
   expect(snapshot.framework_assessments.filter(a=>a.client_id===cid).every(a=>a.status==='not_assessed')).toBe(true);
 });

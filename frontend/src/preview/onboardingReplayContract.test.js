@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {STORE_KEY} from './store';
+import {readPortfolioStore,writePortfolioStore} from './portfolioReporting';
 import catalog from '@catalogs/onboardingCatalog.json';
 
 const api=axios.create({adapter:previewAdapter});
@@ -39,16 +40,16 @@ test('source edits and lost tenant access cannot be overwritten by finalization'
   await api.post('/policies',{client_id:client.client_id,title:catalog.policies[0].name,onboarding_note:'New operator record'});
   await expect(api.post('/onboarding/baseline',body,{headers})).rejects.toMatchObject({response:{status:409}});
   expect((await api.get('/policies',{params:{client_id:client.client_id}})).data).toHaveLength(1);
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));db.user={...db.user,role:'client_viewer',client_ids:['demo_brawndo']};sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  const db=readPortfolioStore(sessionStorage.getItem(STORE_KEY));db.user={...db.user,role:'client_viewer',client_ids:['demo_brawndo']};writePortfolioStore(sessionStorage,STORE_KEY,db);
   await expect(api.post('/onboarding/baseline',body,{headers})).rejects.toMatchObject({response:{status:403}});
 });
 
 test('legacy finalization rejects foreign, archived and missing assessment Evidence before persisting',async()=>{
   const {client}=await setup();
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  const db=readPortfolioStore(sessionStorage.getItem(STORE_KEY));
   db.evidence.push({evidence_id:'foreign-evidence',client_id:'demo_brawndo'},
     {evidence_id:'archived-evidence',client_id:client.client_id,archived_at:'2026-01-01'});
-  sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  writePortfolioStore(sessionStorage,STORE_KEY,db);
   const before=sessionStorage.getItem(STORE_KEY);
   for(const id of ['foreign-evidence','archived-evidence','missing-evidence']){
     await expect(api.post('/onboarding/finalize',{client_id:client.client_id,

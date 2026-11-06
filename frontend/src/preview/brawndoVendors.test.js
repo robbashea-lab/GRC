@@ -1,9 +1,10 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {STORE_KEY} from './store';
+import {decodeDemoStore} from './demoStorageCodec';
 import {authorizeDemo} from './authorization';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
-const db=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
+const db=()=>decodeDemoStore(sessionStorage.getItem(STORE_KEY));
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const create=async extra=>(await api.post('/vendors',{client_id:cid,name:'Synthetic vendor QA',service:'Synthetic service',next_review:'2026-10-15',contract_renewal:'2027-04-01',...extra})).data;
 test('Brawndo lifecycle does not require Under Review; other clients keep the original transitions',async()=>{

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {readStore,STORE_KEY} from './store';
+import {writePortfolioStore} from './portfolioReporting';
 import {reviewSchedule} from '../lib/reviewOccurrences';
 import contract from '@contracts/governance-lifecycle.json';
 
@@ -77,6 +78,6 @@ test('stale writes and foreign-tenant reads reject without replacing saved state
   await api.patch(path,{title:scenario.new_title,expected_updated_at:row.updated_at});
   await expect(api.patch(path,{title:scenario.stale_title,expected_updated_at:row.updated_at})).rejects.toMatchObject({response:{status:scenario.status}});
   expect((await api.get(path)).data.title).toBe(scenario.new_title);
-  const db=readStore();db.user.role='client_contributor';db.user.client_ids=['another-client'];sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  const db=readStore();db.user.role='client_contributor';db.user.client_ids=['another-client'];writePortfolioStore(sessionStorage,STORE_KEY,db);
   await expect(api.get(path)).rejects.toMatchObject({response:{status:contract.tenant_denied_status}});
 });

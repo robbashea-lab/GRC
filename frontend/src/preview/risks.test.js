@@ -1,9 +1,10 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {STORE_KEY} from './store';
+import {decodeDemoStore} from './demoStorageCodec';
 const api=axios.create({adapter:previewAdapter});
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
-const db=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
+const db=()=>decodeDemoStore(sessionStorage.getItem(STORE_KEY));
 test('administrator schedule override is preserved for a shared, non-reference Risk Review',async()=>{
   const cid=(await api.post('/clients',{name:'Shared Risk override QA'})).data.client_id;
   const risk=(await api.post('/risks',{title:'Exposure',client_id:cid,likelihood_score:3,impact_score:4,next_review:'2026-11-02',review_cadence:'annual'})).data;

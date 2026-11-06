@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
+import {decodeDemoStore} from './demoStorageCodec';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,CATALOGS} from '../lib/frameworks';
 import {prioritizeCsfGaps,validateCsfProfile} from '../lib/csfProfile';
@@ -49,5 +50,5 @@ test('five frameworks share work and preserve policy records on Settings activat
   }
   expect(after.some(r=>r.framework_drivers.some(d=>d.framework_key==='nist-csf-2'))).toBe(true);
   expect(await get('/policies')).toEqual(policies);
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));expect(db.framework_assessments.filter(a=>a.client_id===cid)).toHaveLength(394);
+  const db=decodeDemoStore(sessionStorage.getItem(STORE_KEY));expect(db.framework_assessments.filter(a=>a.client_id===cid)).toHaveLength(394);
 });

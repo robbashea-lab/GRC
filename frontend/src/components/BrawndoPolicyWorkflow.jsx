@@ -11,6 +11,12 @@ const TABS=[['overview','Overview'],['evidence','Document & approval'],['require
 const dateText=value=>{const day=calendarDay(value);return day===null?'Not recorded':new Date(day*86400000).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});};
 const approvalTime=entry=>entry.action==='external_approval_recorded'?entry.reported_approved_at:entry.at;
 
+function externalApprovalApproverLabel(entry,users){
+  const named=entry.subject?.named_approver;
+  if(entry.reported_approver_id&&entry.reported_approver_id===named?.contact_id&&named.name)return named.name;
+  return personLabel(users,entry.reported_approver_id,named?.name||'Not recorded');
+}
+
 // These are recorded approval snapshots, not a reconstructed document-version registry.
 export function policyWorkflowApprovals(record){
   return [...(record.approval_history||[]).filter(entry=>entry.action==='approved'),...(record.decision_history||[]).filter(entry=>entry.action==='external_approval_recorded')]
@@ -28,7 +34,7 @@ function PolicyVersionHistory({record,users}){
     .sort((a,b)=>String(b.at||b.recorded_at||'').localeCompare(String(a.at||a.recorded_at||'')));
   const versions=[];
   for(const entry of rows){const identity=entry.subject?.subject_id;if(!identity||versions.some(row=>row.subject.subject_id===identity))continue;versions.push(entry);}
-  return <section className="pw-section"><h3>Version history</h3><div className="pw-table-wrap"><table><thead><tr>{['Version','Status','Approved','Approver','Recorded note'].map(title=><th key={title}>{title}</th>)}</tr></thead><tbody>{versions.map(entry=><tr key={entry.subject.subject_id}><td><b>v{entry.subject.version}</b></td><td><span className={`pw-chip ${entry.action==='approved'||entry.action==='external_approval_recorded'?'pw-good':entry.action==='submitted'?'pw-info':'pw-plain'}`}>{entry.action==='submitted'?(record.status==='in_review'&&entry.approval_request_id===record.approval_request_id?'Awaiting approval':'Submitted'):entry.action==='rejected'?'Returned to Draft':'Approved'}</span></td><td>{entry.action==='approved'||entry.action==='external_approval_recorded'?dateText(approvalTime(entry)):'—'}</td><td>{entry.action==='external_approval_recorded'?personLabel(users,entry.reported_approver_id,entry.subject.named_approver?.name||'Not recorded'):entry.action==='submitted'?entry.subject.named_approver?.name||'Not designated':entry.by_name||personLabel(users,entry.by,'Not recorded')}</td><td>{entry.comment||entry.reason||'—'}</td></tr>)}{!versions.length&&<tr><td colSpan={5}>No recorded version history.</td></tr>}</tbody></table></div></section>;
+  return <section className="pw-section"><h3>Version history</h3><div className="pw-table-wrap"><table><thead><tr>{['Version','Status','Approved','Approver','Recorded note'].map(title=><th key={title}>{title}</th>)}</tr></thead><tbody>{versions.map(entry=><tr key={entry.subject.subject_id}><td><b>v{entry.subject.version}</b></td><td><span className={`pw-chip ${entry.action==='approved'||entry.action==='external_approval_recorded'?'pw-good':entry.action==='submitted'?'pw-info':'pw-plain'}`}>{entry.action==='submitted'?(record.status==='in_review'&&entry.approval_request_id===record.approval_request_id?'Awaiting approval':'Submitted'):entry.action==='rejected'?'Returned to Draft':'Approved'}</span></td><td>{entry.action==='approved'||entry.action==='external_approval_recorded'?dateText(approvalTime(entry)):'—'}</td><td>{entry.action==='external_approval_recorded'?externalApprovalApproverLabel(entry,users):entry.action==='submitted'?entry.subject.named_approver?.name||'Not designated':entry.by_name||personLabel(users,entry.by,'Not recorded')}</td><td>{entry.comment||entry.reason||'—'}</td></tr>)}{!versions.length&&<tr><td colSpan={5}>No recorded version history.</td></tr>}</tbody></table></div></section>;
 }
 
 export default function BrawndoPolicyWorkflow({record,form,setForm,users=[],clientId,tab,setTab,canWrite,clientFields,saving,dirty,approvalDirty,heading,onClose,onSave,relatedReviews=[],onOpenReview,alignmentLabel,alignmentCount,purpose,onPurposeChange,nativeApproval,evidenceContent,alignmentContent,commentsContent,activityContent,retryControl,saveError,onOpenDocument,commentCount=0}){
@@ -38,7 +44,7 @@ export default function BrawndoPolicyWorkflow({record,form,setForm,users=[],clie
   const shownApproval=currentSubject?approvals.find(entry=>entry.subject?.subject_id&&entry.subject.subject_id===currentSubject.subject_id):lastApproval;
   const approvedSubject=currentSubject||lastApproval?.subject;
   const approvedAt=shownApproval?approvalTime(shownApproval):currentSubject?record.approved_at:null;
-  const approver=shownApproval?.action==='external_approval_recorded'?personLabel(users,shownApproval.reported_approver_id,approvedSubject?.named_approver?.name||'Not recorded'):shownApproval?.by_name||personLabel(users,shownApproval?.by,'Not recorded');
+  const approver=shownApproval?.action==='external_approval_recorded'?externalApprovalApproverLabel(shownApproval,users):shownApproval?.by_name||personLabel(users,shownApproval?.by,'Not recorded');
   const review=relatedReviews.filter(item=>item.client_id===record.client_id&&!['completed','cancelled'].includes(item.status)).sort((a,b)=>String(a.due_date||'9999').localeCompare(String(b.due_date||'9999')))[0];
   const nextReview=review?.due_date||record.next_review_date,days=calendarDay(nextReview)===null?null:calendarDay(nextReview)-managementDay();
   const sourcePurpose=purpose??form.governance_context?.rationale??(record.governance_context?.rationale||record.framework_purpose||form.summary||record.summary||'');

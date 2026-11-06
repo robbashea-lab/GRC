@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {STORE_KEY} from './store';
+import {readPortfolioStore,writePortfolioStore} from './portfolioReporting';
 import contract from '@contracts/review-command.json';
 
 const api=axios.create({adapter:previewAdapter});
@@ -41,9 +42,9 @@ test('storage failure commits neither command effects nor receipt; same intent r
 test('receipt replay checks current tenant access first',async()=>{
   const {path,body}=await setup();
   await api.post(path,body);
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  const db=readPortfolioStore(sessionStorage.getItem(STORE_KEY));
   db.user={...db.user,role:'client_viewer',client_ids:['demo_brawndo']};
-  sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  writePortfolioStore(sessionStorage,STORE_KEY,db);
   await expect(api.post(path,body)).rejects.toMatchObject({response:{status:contract.denied_status}});
 });
 
@@ -63,9 +64,9 @@ test('validation proves no Demo write, while saved conflicts and storage failure
 test('different actors using the same request ID retain separate Finding intents',async()=>{
   const {client,path,body}=await setup();
   const first=(await api.post(path,body)).data;
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  const db=readPortfolioStore(sessionStorage.getItem(STORE_KEY));
   db.user={...db.user,user_id:'second-release-operator'};db.users.push({...db.user,status:'active'});
-  sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  writePortfolioStore(sessionStorage,STORE_KEY,db);
   const second=(await api.post(path,{...body,title:'Second operator observation'})).data;
   expect(second.finding_id).not.toBe(first.finding_id);
   expect(second.title).toBe('Second operator observation');
@@ -74,11 +75,11 @@ test('different actors using the same request ID retain separate Finding intents
 
 test('assigned contributor cannot delegate a Review Finding to a provider account',async()=>{
   const {client,review,path,body}=await setup();
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY)),admin=db.user.user_id;
+  const db=readPortfolioStore(sessionStorage.getItem(STORE_KEY)),admin=db.user.user_id;
   db.user={...db.user,user_id:'release-contributor',role:'client_contributor',client_ids:[client.client_id]};
   db.users.push({...db.user,status:'active'});
   db.reviews.find(r=>r.review_id===review.review_id).owner_id=db.user.user_id;
-  sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  writePortfolioStore(sessionStorage,STORE_KEY,db);
   await expect(api.post(path,{...body,owner_id:admin})).rejects.toMatchObject({response:{status:403}});
   expect((await api.get('/findings',{params:{client_id:client.client_id}})).data).toHaveLength(0);
   expect((await api.post(path,body)).data.owner_id).toBe(db.user.user_id);

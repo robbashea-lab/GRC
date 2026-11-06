@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
+import {decodeDemoStore} from './demoStorageCodec';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,CATALOGS} from '../lib/frameworks';
 
@@ -72,5 +73,5 @@ test('shared evidence can be unlinked without deleting its original attribution;
   await api.delete(other+'/links',{data:{kind:'evidence',id:e.evidence_id}});
   expect((await get(p+'/related')).evidence.map(x=>x.evidence_id)).toContain(e.evidence_id);
   expect((await get(other+'/related')).evidence).toHaveLength(0);
-  expect(JSON.parse(sessionStorage.getItem(STORE_KEY)).evidence.find(x=>x.evidence_id===e.evidence_id).linked_id).toBe(a);
+  expect(decodeDemoStore(sessionStorage.getItem(STORE_KEY)).evidence.find(x=>x.evidence_id===e.evidence_id).linked_id).toBe(a);
 });

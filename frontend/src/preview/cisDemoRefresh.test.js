@@ -1,4 +1,5 @@
-import {seedStore,saveStore,readStore} from './store';
+import {saveStore,readStore} from './store';
+import {preExpansionCisFixture as legacyFixture} from '../testUtils/preExpansionCisFixture';
 import {refreshCanonicalCisDemo} from './cisDemoRefresh';
 import {cisDemoFixtureDates,CIS_SHOWCASE_VERSION} from './cisDemoFixtureDates';
 import {activeDefinitions,cis} from '../lib/frameworks';
@@ -11,6 +12,7 @@ import {reviewSchedule} from '../lib/reviewOccurrences';
 import {restoredCisDemoEvidence} from './cisDemoEvidence';
 import {forecastImplementation} from '../lib/portfolioProgress';
 
+// Retained v2 showcase compatibility; normal v3 entry is covered by activation tests.
 const NOW='2026-10-28T17:30:00.000Z';
 const clone=value=>JSON.parse(JSON.stringify(value));
 const SCENARIOS=[
@@ -31,7 +33,7 @@ test('descriptive CIS group metadata agrees with the existing released cumulativ
 });
 
 test('fictional completed occurrences retain coherent creation, completion, update and next-cycle dates',()=>{
-  const db=seedStore(new Date(NOW));
+  const db=legacyFixture(new Date(NOW));
   for(const review of db.reviews.filter(row=>SCENARIOS.some(scenario=>scenario.cid===row.client_id))){
     for(const occurrence of review.occurrences||[]){
       expect(Date.parse(occurrence.created_at)).toBeLessThanOrEqual(Date.parse(occurrence.completed_at));
@@ -54,7 +56,7 @@ afterEach(()=>{
 });
 
 test.each(SCENARIOS)('$cid current posture is the exact native v8.1 cumulative IG population',({cid,group,counts})=>{
-  const db=seedStore(new Date(NOW)),rows=recordsFor(db,cid);
+  const db=legacyFixture(new Date(NOW)),rows=recordsFor(db,cid);
   expect(rows.map(row=>row.definition_id).sort()).toEqual(activeDefinitions('cis-ig1',{implementation_group:group}).map(row=>row.id).sort());
   expect(STATUSES.map(status=>rows.filter(row=>row.status===status).length)).toEqual(counts);
   expect(new Set(rows.map(row=>row.framework_assessment_id)).size).toBe(rows.length);
@@ -78,7 +80,7 @@ test.each(SCENARIOS)('$cid current posture is the exact native v8.1 cumulative I
 });
 
 test.each(SCENARIOS)('$cid fixture history is qualified by actual native assessment events and cannot claim pre-v8.1 assessments',({cid})=>{
-  const db=seedStore(new Date(NOW)),context=getCisDemoScenarioContext(db,cid,NOW);
+  const db=legacyFixture(new Date(NOW)),context=getCisDemoScenarioContext(db,cid,NOW);
   expect(context).toMatchObject({version:CIS_SHOWCASE_VERSION,client_id:cid,program_id:cid+':cis-ig1'});
   expect(context.point_ids).toHaveLength(6);
   const rows=recordsFor(db,cid),points=db.portfolio_reporting.snapshots.filter(row=>context.point_ids.includes(row.snapshot_id));
@@ -103,7 +105,7 @@ test.each(SCENARIOS)('$cid fixture history is qualified by actual native assessm
 
 test.each(SCENARIOS.flatMap(scenario=>['1m','3m','6m','12m'].map(range=>({...scenario,range}))))(
   '$cid $range report compares qualified history against the same native denominator',({cid,group,counts,range})=>{
-    const db=seedStore(new Date(NOW));
+    const db=legacyFixture(new Date(NOW));
     const report=portfolioReportingRequest(db,'/portfolio/reporting/history',{
       client_id:cid,program_key:`cis-ig${group}`,range,as_of:NOW,demo_scenario:CIS_SHOWCASE_VERSION,
     });
@@ -126,8 +128,8 @@ test.each(SCENARIOS.flatMap(scenario=>['1m','3m','6m','12m'].map(range=>({...sce
   });
 
 test('same UTC day keeps complete fixture bytes and record IDs stable across initialization clocks',()=>{
-  const early=seedStore(new Date('2026-10-28T00:10:00.000Z'));
-  const late=seedStore(new Date('2026-10-28T23:50:00.000Z'));
+  const early=legacyFixture(new Date('2026-10-28T00:10:00.000Z'));
+  const late=legacyFixture(new Date('2026-10-28T23:50:00.000Z'));
   expect(late).toEqual(early);
   expect(cisDemoFixtureDates(new Date(NOW))).toMatchObject({anchor:'2026-10-28T00:00:00.000Z'});
   expect(cisDemoFixtureDates(new Date('2028-03-31T23:00:00Z')).month(-1)).toBe('2028-02-29');
@@ -135,7 +137,7 @@ test('same UTC day keeps complete fixture bytes and record IDs stable across ini
 });
 
 test('new and historical native links resolve inside the same client without adding application accounts',()=>{
-  const db=seedStore(new Date(NOW));
+  const db=legacyFixture(new Date(NOW));
   for(const {cid} of SCENARIOS){
     expect(db.ai_systems.filter(row=>row.client_id===cid).length).toBeGreaterThanOrEqual(3);
     expect(db.risks.filter(row=>row.client_id===cid).length).toBeGreaterThanOrEqual(4);
@@ -157,7 +159,7 @@ test('new and historical native links resolve inside the same client without add
 });
 
 test('fresh replacement preserves canonical client and framework identities, people, requirements and unrelated records',()=>{
-  const db=seedStore(new Date(NOW)),targets=new Set(SCENARIOS.map(row=>row.cid));
+  const db=legacyFixture(new Date(NOW)),targets=new Set(SCENARIOS.map(row=>row.cid));
   delete db.cis_demo_refresh;
   db.clients.push({client_id:'clients_demo_outside_refresh',name:'Outside the canonical cohort',environment:'Demo',status:'active'});
   db.risks.push({risk_id:'visitor-risk',client_id:'clients_demo_outside_refresh',title:'Visitor-owned synthetic record',notes:'Preserve exactly'});
@@ -188,7 +190,7 @@ test('fresh replacement preserves canonical client and framework identities, peo
 });
 
 test('intact initialization marker makes ordinary re-entry and repeated fresh calls exact no-ops',()=>{
-  const db=seedStore(new Date(NOW)),before=clone(db);
+  const db=legacyFixture(new Date(NOW)),before=clone(db);
   refreshCanonicalCisDemo(db,{clock:new Date('2026-10-29T10:00:00.000Z'),fresh:false});
   expect(db).toEqual(before);
   refreshCanonicalCisDemo(db,{clock:new Date('2026-10-30T10:00:00.000Z'),fresh:true});
@@ -196,7 +198,7 @@ test('intact initialization marker makes ordinary re-entry and repeated fresh ca
 });
 
 test('complete fresh seed downloads original canonical bytes after empty-cache reload while preserving other clients and the inline budget',()=>{
-  const db=seedStore(new Date(NOW)),targets=new Set(SCENARIOS.map(row=>row.cid));
+  const db=legacyFixture(new Date(NOW)),targets=new Set(SCENARIOS.map(row=>row.cid));
   const originals=db.evidence.filter(row=>row.content_base64).map(row=>({
     evidence_id:row.evidence_id,client_id:row.client_id,content_base64:row.content_base64,size:row.size,
   }));
@@ -235,7 +237,7 @@ test('complete fresh seed downloads original canonical bytes after empty-cache r
 });
 
 test('Policy states preserve real pending, draft and missing semantics while approved versions pass native coverage validation',()=>{
-  const db=seedStore(new Date(NOW)),brawndo=db.policies.filter(row=>row.client_id==='demo_brawndo');
+  const db=legacyFixture(new Date(NOW)),brawndo=db.policies.filter(row=>row.client_id==='demo_brawndo');
   const pending=brawndo.find(row=>row.status==='in_review'),draft=brawndo.find(row=>row.status==='draft');
   const missing=brawndo.find(row=>row.status==='needs_creation');
   expect(pending).toBeTruthy();expect(draft).toBeTruthy();expect(missing).toBeTruthy();
@@ -257,7 +259,7 @@ test('Policy states preserve real pending, draft and missing semantics while app
 });
 
 test('Krusty organization history preserves earlier document approval without inventing earlier v8.1 assessment work or overdue CIS gaps',()=>{
-  const db=seedStore(new Date(NOW)),cid='demo_krusty_krab',anchor=cisDemoFixtureDates(new Date(NOW));
+  const db=legacyFixture(new Date(NOW)),cid='demo_krusty_krab',anchor=cisDemoFixtureDates(new Date(NOW));
   const approved=db.policies.filter(policy=>policy.client_id===cid&&policy.status==='approved');
   expect(approved.length).toBeGreaterThan(0);
   for(const policy of approved){
@@ -283,7 +285,7 @@ test('Krusty organization history preserves earlier document approval without in
 });
 
 test.each([['demo_brawndo','4.1'],['demo_initech','16.6']])('%s remaining %s gap has real connected Finding and open Action without falsely implementing the safeguard',(cid,definition)=>{
-  const db=seedStore(new Date(NOW)),assessment=recordsFor(db,cid).find(row=>row.definition_id===definition);
+  const db=legacyFixture(new Date(NOW)),assessment=recordsFor(db,cid).find(row=>row.definition_id===definition);
   expect(assessment.status).toBe('needs_attention');
   const finding=db.findings.find(row=>row.client_id===cid&&row.framework_assessment_id===assessment.framework_assessment_id);
   expect(finding).toBeTruthy();
@@ -293,7 +295,7 @@ test.each([['demo_brawndo','4.1'],['demo_initech','16.6']])('%s remaining %s gap
 });
 
 test.each(SCENARIOS.filter(scenario=>scenario.group<3))('$cid genuine native assessment edit adds one committed observation without rewriting imported history',({cid,counts})=>{
-  const db=seedStore(new Date(NOW)),row=recordsFor(db,cid).find(record=>record.status==='not_assessed');
+  const db=legacyFixture(new Date(NOW)),row=recordsFor(db,cid).find(record=>record.status==='not_assessed');
   const originalContext=getCisDemoScenarioContext(db,cid,NOW);
   const imported=clone(db.portfolio_reporting.snapshots.filter(point=>originalContext.point_ids.includes(point.snapshot_id)));
   const before=clone(db),savedAt='2026-10-29T10:30:00.000Z';
@@ -317,7 +319,7 @@ test.each(SCENARIOS.filter(scenario=>scenario.group<3))('$cid genuine native ass
 });
 
 test('retained sessions preserve visitor edits, native identities, history, other clients and standard storage',()=>{
-  const db=seedStore(new Date(NOW)),cid='demo_brawndo';
+  const db=legacyFixture(new Date(NOW)),cid='demo_brawndo';
   // Removing the new marker models an existing session, not a fresh initialization.
   delete db.cis_demo_refresh;
   recordsFor(db,cid)[0].notes='Retained visitor narrative';

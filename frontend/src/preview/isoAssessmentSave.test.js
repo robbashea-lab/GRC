@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {STORE_KEY} from './store';
+import {readPortfolioStore,writePortfolioStore} from './portfolioReporting';
 import criteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 const api=axios.create({adapter:previewAdapter});
 beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');});
@@ -19,9 +20,9 @@ test('ISO checks validate the unit, deduplicate, retain legacy selections and su
   const rows=(await api.get('/frameworks/iso-27001',{params:{client_id:'demo_dunder'}})).data.assessments;
   const row=rows.find(a=>a.definition_id==='4.1'),path='/framework_assessments/'+row.framework_assessment_id;
   const selected=criteria.requirements['4.1'].criteria[0].id;
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  const db=readPortfolioStore(sessionStorage.getItem(STORE_KEY));
   db.framework_assessments.find(a=>a.framework_assessment_id===row.framework_assessment_id).iso_assessment_checks=['retired:context'];
-  sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  writePortfolioStore(sessionStorage,STORE_KEY,db);
   const saved=(await api.patch(path,{iso_assessment_checks:[selected,selected,'retired:context'],expected_last_assessed: row.last_saved ?? row.last_assessed ?? null})).data;
   expect(saved.iso_assessment_checks).toEqual([selected,'retired:context']);
   expect(saved.assessment_history.at(-1).iso_assessment_checks).toEqual(saved.iso_assessment_checks);

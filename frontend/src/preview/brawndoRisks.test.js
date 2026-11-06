@@ -2,6 +2,7 @@ import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {newRiskDefaults,nextRiskReview} from '../lib/brawndoRisks';
 import {STORE_KEY} from './store';
+import {decodeDemoStore} from './demoStorageCodec';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const create=async extra=>(await api.post('/risks',{...newRiskDefaults(),client_id:cid,title:'Synthetic pilot Risk',description:'Test only',likelihood_score:3,impact_score:4,...extra})).data;
@@ -10,7 +11,7 @@ test('undecided creation, Other descriptions and edits preserve assessment and s
  expect(r.treatment).toBe('');expect(r.risk_score).toBe(12);expect(r.last_reviewed).toBeFalsy();
  const updated=(await api.patch(path,{title:'Renamed Risk',expected_updated_at:r.updated_at})).data;
  expect(updated.next_review).toBe(r.next_review);expect(updated.last_reviewed).toBeFalsy();
- const stored=JSON.parse(sessionStorage.getItem(STORE_KEY)).risks.find(x=>x.risk_id===r.risk_id);
+ const stored=decodeDemoStore(sessionStorage.getItem(STORE_KEY)).risks.find(x=>x.risk_id===r.risk_id);
  expect(stored.category_other).toBe('Synthetic category');expect(stored.source_other).toBe('Synthetic incident');
 });
 test('proposed Accept is not an acceptance; formal decision retains severity and history',async()=>{

@@ -51,9 +51,9 @@ afterEach(async()=>{currentCase.active=false;await act(async()=>root.unmount());
 test('the actual Explore Demo seed supplies the exact 56-record native domain model and current assessment totals',async()=>{
   const data=await workspace(),rows=rowsOf(data),domains=securityDomainModel(data,rows,CLIENT);
   expect(mockUser).toMatchObject({user_id:'demo_admin',workspace_mode:'demo'});
-  expect(data).toMatchObject({selected:true,configured:true,framework:{key:'cis-ig1',version:'8.1'},configuration:{implementation_group:1},implementation_position:{program_id:CLIENT+':cis-ig1',denominator:56,excluded:0,implemented:41}});
+  expect(data).toMatchObject({selected:true,configured:true,framework:{key:'cis-ig1',version:'8.1'},configuration:{implementation_group:1},implementation_position:{program_id:CLIENT+':cis-ig1',denominator:56,excluded:0,implemented:48}});
   expect(rows).toHaveLength(56);expect(new Set(rows.map(row=>row.framework_assessment_id)).size).toBe(56);
-  expect(cisSummary(rows)).toMatchObject({total:56,applicable:56,addressed:41,partial:8,gap:4,notAssessed:3,assessed:53,na:0});
+  expect(cisSummary(rows)).toMatchObject({total:56,applicable:56,addressed:48,partial:4,gap:2,notAssessed:2,assessed:54,na:0});
   expect(securityDomainsEnabled(CLIENT,'cis-ig1',data,mockUser)).toBe(true);
   expect(domains).toHaveLength(11);expect(domains.every(domain=>domain.available)).toBe(true);
   expect(domains.flatMap(domain=>domain.rows)).toHaveLength(56);
@@ -81,7 +81,15 @@ test.each(['domain','Controls'])('an actual Demo %s save updates the canonical s
   const beforeStore=readStore(),unrelated=clone({evidence:beforeStore.evidence,findings:beforeStore.findings,tasks:beforeStore.tasks,guided:beforeStore.guided_assessment_pilot});
   await mount();if(entry==='domain')await openDomain('1.1');else await openControl('1.1');
   const implementation='Demo-only reviewed '+entry+' wording';await value('Current implementation',implementation);
-  await click(native().querySelector('input[value="addressed"]'));await click(button('Save assessment',native()));
+  await click(native().querySelector('input[value="addressed"]'));
+  const saveRequest=jest.spyOn(api,'patch');
+  try {
+    await click(button('Save assessment',native()));
+    expect(saveRequest).toHaveBeenCalledTimes(1);
+    expect(saveRequest.mock.calls[0][0]).toBe('/framework_assessments/'+original.framework_assessment_id);
+    // The native response resumes FrameworkDrawer's existing feedback update.
+    await act(async()=>{await saveRequest.mock.results[0].value;});
+  } finally {saveRequest.mockRestore();}
   expect(native().textContent).toContain('Assessment saved.');expect(snapshot().implementation).toBe(implementation);
   const after=await workspace(),saved=after.assessments.find(row=>row.definition_id==='1.1');
   expect(saved.framework_assessment_id).toBe(original.framework_assessment_id);expect(saved.client_id).toBe(CLIENT);
@@ -105,9 +113,9 @@ test('native Demo applicability excludes a justified safeguard without partial c
   const before=await workspace(),row=before.assessments.find(value=>value.status==='not_assessed');
   await api.patch('/framework_assessments/'+row.framework_assessment_id,{status:'not_applicable',na_rationale:'Isolated test rationale for this Demo session only.',expected_last_assessed:row.last_saved??row.last_assessed??null});
   const after=await workspace(),domains=modelOf(after),domain=domains.find(value=>value.safeguardIds.includes(row.definition_id));
-  expect(after.implementation_position).toMatchObject({total:56,denominator:55,excluded:1,implemented:41});
-  expect(after.implementation_position.percentage).toBeCloseTo(41/55*100);
-  expect(cisSummary(rowsOf(after))).toMatchObject({total:56,assessed:53,notAssessed:2,addressed:41,partial:8,gap:4,na:1,applicable:55});
+  expect(after.implementation_position).toMatchObject({total:56,denominator:55,excluded:1,implemented:48});
+  expect(after.implementation_position.percentage).toBeCloseTo(48/55*100);
+  expect(cisSummary(rowsOf(after))).toMatchObject({total:56,assessed:54,notAssessed:1,addressed:48,partial:4,gap:2,na:1,applicable:55});
   expect(domains.every(value=>value.available)).toBe(true);expect(domain.na).toBe(1);expect(domain.applicable).toBe(domain.total-1);
   expect(domain.addressed).toBe(domain.rows.filter(value=>value.status==='addressed').length);
 });

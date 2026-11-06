@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY} from './store';
+import {readPortfolioStore,writePortfolioStore} from './portfolioReporting';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS} from '../lib/frameworks';
 import {auditPackage,auditActivationPlan,auditProgress,blankAuditItem} from '../lib/isoAudit';
@@ -25,9 +26,9 @@ const token=r=>({occurrence_id:r.current_occurrence_id,expected_updated_at:r.upd
 
 test('audit checks are item-scoped, preserve omitted legacy selections and use existing concurrency',async()=>{
   const {data}=await activate(),r=data.reviews[0],key='4-1',path='/reviews/'+r.review_id+'/iso-audit/'+key;
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));
+  const db=readPortfolioStore(sessionStorage.getItem(STORE_KEY));
   db.reviews.find(x=>x.review_id===r.review_id).iso_audit.items[key]={...blankAuditItem(),assessment_checks:['retired:audit-context']};
-  sessionStorage.setItem(STORE_KEY,JSON.stringify(db));
+  writePortfolioStore(sessionStorage,STORE_KEY,db);
   let saved=(await api.patch(path,{...token(r),...blankAuditItem(),assessment_checks:['4.1:context','4.1:context','retired:audit-context']})).data;
   expect(saved.iso_audit.items[key].assessment_checks).toEqual(['4.1:context','retired:audit-context']);
   await expect(api.patch(path,{...token(saved),...blankAuditItem(),assessment_checks:['4.2:parties']})).rejects.toBeTruthy();
@@ -60,7 +61,7 @@ test('activation preserves existing Reviews, creates only four, and survives rel
   expect((await get('/reviews')).filter(r=>!r.iso_audit)).toEqual(old);
   await api.post('/iso-audit/activate',body);
   expect((await get('/iso-audit')).reviews).toHaveLength(4);
-  expect(JSON.parse(sessionStorage.getItem(STORE_KEY)).clients.find(c=>c.client_id===cid).iso_audit_program.status).toBe('active');
+  expect(readPortfolioStore(sessionStorage.getItem(STORE_KEY)).clients.find(c=>c.client_id===cid).iso_audit_program.status).toBe('active');
 });
 test('audit progress is independent of result; links, CAS, closure and historical evidence are preserved',async()=>{
   let r=(await activate()).data.reviews[0];

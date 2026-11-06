@@ -78,3 +78,54 @@ test('current snapshot metadata is not borrowed from a different historical appr
   expect(container.querySelector('.pw-document-meta').textContent).not.toContain('Feb 1, 2026');
   expect(container.querySelector('.pw-document-meta').textContent).not.toContain('Recorded externally');
 });
+
+test('external Contact approvers use each recorded version snapshot across all approval summaries',async()=>{
+  const current={...subject,named_approver:{contact_id:'business-contact',name:'Bill Lumbergh'}};
+  const earlier={...current,subject_id:'subject-1',version:'1.0',named_approver:{contact_id:'business-contact',name:'Earlier recorded approver'}};
+  const external={...record.decision_history[0],reported_approver_id:'business-contact'};
+  const value={...record,approver_contact_id:'different-current-designation',approval_subject:current,decision_history:[
+    {...external,subject:earlier,recorded_at:'2025-02-02',reported_approved_at:'2025-02-01'},
+    {...external,subject:current},
+  ]};
+  const props={record:value,form:value,setForm:()=>{},users,clientId:'demo_brawndo',setTab:()=>{}};
+  await act(async()=>root.render(<Workflow {...props} tab="overview"/>));
+  expect(container.querySelector('.pw-strip small').textContent).toContain('by Bill Lumbergh');
+  await act(async()=>root.render(<Workflow {...props} tab="evidence"/>));
+  expect(container.querySelector('.pw-document-meta').children[1].textContent).toBe('ApproverBill Lumbergh');
+  expect([...container.querySelectorAll('.pw-section tbody tr')].map(row=>[
+    row.querySelectorAll('td')[0].textContent,row.querySelectorAll('td')[3].textContent,
+  ])).toEqual([['v2.0','Bill Lumbergh'],['v1.0','Earlier recorded approver']]);
+  expect(container.textContent).not.toContain('Former user');
+});
+
+test.each([
+  ['distinct platform user','owner-1','Business Owner'],
+  ['unresolved platform user','deleted-user','Former user'],
+  ['unknown identifier','unknown-id','Former user'],
+  ['missing reported identifier',null,'Designated business Contact'],
+  ['legacy name snapshot','Legacy External Approver','Legacy External Approver'],
+])('external summaries preserve the existing %s label',async(_case,reportedId,expected)=>{
+  const approved={...subject,named_approver:{contact_id:'business-contact',name:'Designated business Contact'}};
+  const value={...record,approval_subject:approved,decision_history:[
+    {...record.decision_history[0],subject:approved,reported_approver_id:reportedId},
+  ]};
+  const props={record:value,form:value,setForm:()=>{},users,clientId:'demo_brawndo',setTab:()=>{}};
+  await act(async()=>root.render(<Workflow {...props} tab="overview"/>));
+  expect(container.querySelector('.pw-strip small').textContent).toContain('by '+expected);
+  await act(async()=>root.render(<Workflow {...props} tab="evidence"/>));
+  expect(container.querySelector('.pw-document-meta').children[1].textContent).toBe('Approver'+expected);
+  expect(container.querySelector('.pw-section tbody tr').querySelectorAll('td')[3].textContent).toBe(expected);
+});
+
+test('in-app approval summaries retain the actual platform actor beside a named business Contact',async()=>{
+  const approved={...subject,named_approver:{contact_id:'business-contact',name:'Business designee'}};
+  const value={...record,approval_subject:approved,decision_history:[],approval_history:[
+    {action:'approved',subject:approved,by:'owner-1',by_name:'Actual platform signer',at:'2026-02-01'},
+  ]};
+  const props={record:value,form:value,setForm:()=>{},users,clientId:'demo_brawndo',setTab:()=>{}};
+  await act(async()=>root.render(<Workflow {...props} tab="overview"/>));
+  expect(container.querySelector('.pw-strip small').textContent).toContain('by Actual platform signer');
+  await act(async()=>root.render(<Workflow {...props} tab="evidence"/>));
+  expect(container.querySelector('.pw-document-meta').children[1].textContent).toBe('ApproverActual platform signer');
+  expect(container.querySelector('.pw-section tbody tr').querySelectorAll('td')[3].textContent).toBe('Actual platform signer');
+});
