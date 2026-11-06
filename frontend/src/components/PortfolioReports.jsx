@@ -1,6 +1,6 @@
 import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
-import api, {formatError} from '@/lib/api';
+import api, {formatError, PREVIEW_MODE} from '@/lib/api';
 import {Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription} from '@/components/ui/dialog';
 import {X} from 'lucide-react';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/components/ui/tabs';
@@ -168,20 +168,26 @@ export function PortfolioSparkline({program, asOf, span}) {
 }
 
 export function useHistory(client, program, range, refreshToken, requireIdentity = false, demoScenario = false, expectedScope, expectedRevision) {
+  const demoClient = namedDemoClient(client.client_id);
+  const scenarioVersion = demoScenario && demoClient?.historyVersion
+    && (!demoClient.historyFramework || PREVIEW_MODE && client.environment === 'Demo'
+      && program.client_id === client.client_id
+      && program.framework_key === demoClient.historyFramework && program.program_key === demoClient.historyFramework
+      && program.program_id === `${client.client_id}:${demoClient.historyFramework}`) ? demoClient.historyVersion : null;
   const cisProgram = program.framework_key === 'cis-ig1' ? cisClientProgram(client) : null;
   const scope = (expectedScope && Object.keys(expectedScope).length ? expectedScope : undefined)
     || (program.framework_key === 'cis-ig1' ? program.current?.scope : undefined)
     || (cisProgram ? {framework_key:cisProgram.frameworkKey,catalog_version:cisProgram.version,
       configuration:{implementation_group:cisProgram.implementationGroup}} : undefined);
-  const key = JSON.stringify([client.client_id, program.program_key, range, demoScenario, scope, expectedRevision]);
+  const key = JSON.stringify([client.client_id, program.program_key, range, scenarioVersion, scope, expectedRevision]);
   const [state, setState] = useState({key: '', data: null, loading: true, error: ''}), [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
     setState(previous => ({key, data: previous.key === key ? previous.data : null, loading: true, error: ''}));
-    const [client_id, program_key, selectedRange, scenarioRequested, selectedScope, selectedRevision] = JSON.parse(key);
+    const [client_id, program_key, selectedRange, selectedScenario, selectedScope, selectedRevision] = JSON.parse(key);
     api.get('/portfolio/reporting/history', {params: {client_id, program_key, range: selectedRange, include_archived: false,
-      ...(scenarioRequested && namedDemoClient(client_id)?.historyVersion ? {demo_scenario:namedDemoClient(client_id).historyVersion} : {})}, signal: controller.signal}).then(({data}) => {
+      ...(selectedScenario ? {demo_scenario:selectedScenario} : {})}, signal: controller.signal}).then(({data}) => {
       if (!Array.isArray(data?.snapshots) || !data.current || !Number.isFinite(Date.parse(data.as_of))) throw new Error('The history response is incomplete.');
       if (data.client_id && data.client_id !== client_id || data.program_key && data.program_key !== program_key) throw new Error('The history does not belong to the selected client program.');
       if(requireIdentity && (data.client_id !== client_id || data.program_key !== program_key)) throw new Error('The history program identity is unavailable.');
@@ -295,14 +301,21 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
   const [referenceView, setReferenceView] = useState('line');
   const program = programs.find(value => programIdentity(value) === selected);
   const scopedScenario = demoScenario && inline && referenceHistory && !!namedDemoClient(client.client_id)?.historyVersion
+    && !namedDemoClient(client.client_id).historyFramework
     && program.program_id === `${client.client_id}:cis-ig1` && program.framework_key === 'cis-ig1' && program.framework_key === 'cis-ig1';
+  // ISO reuses qualified intervals without enabling CIS-only scenario presentation.
+  const modeledIsoScenario = demoScenario && inline && referenceHistory && PREVIEW_MODE && client.environment === 'Demo'
+    && namedDemoClient(client.client_id)?.historyFramework === 'iso-27001'
+    && program.client_id === client.client_id
+    && program.program_id === `${client.client_id}:iso-27001` && program.program_key === 'iso-27001' && program.framework_key === 'iso-27001';
+  const scenarioRequested = scopedScenario || modeledIsoScenario;
   const dashboardProfile = inline && cisDashboardProfile;
   const conceptPresentation = dashboardProfile && concept;
   const historyView = dashboardProfile || (referenceHistory && scopedScenario) ? referenceView : referenceHistory ? 'line' : chartView;
   const nativeDashboard = dashboardProfile && ['iso-27001','soc-2'].includes(program.framework_key);
-  const report = useHistory(client, program, range, refreshToken, inline, scopedScenario, nativeDashboard ? program.current?.scope : undefined,
+  const report = useHistory(client, program, range, refreshToken, inline, scenarioRequested, nativeDashboard ? program.current?.scope : undefined,
     nativeDashboard ? {source_revision:program.current?.source_revision,status_signature:program.current?.status_signature} : undefined);
-  const scenarioContext = scopedScenario ? report.data?.scenario_context : null;
+  const scenarioContext = scenarioRequested ? report.data?.scenario_context : null;
   const current = report.data?.current || program.current || {}, asOf = report.data?.as_of || overviewAsOf || current.retrieved_at || current.captured_at;
   const language = programLanguage({...program, current}), months = RANGES.find(([key]) => key === range)[2], start = calendarRangeStart(asOf, months);
   const points = historyWindow(report.data?.snapshots, start, asOf, report.data?.comparison), scopeChanges = report.data?.scope_changes || [];

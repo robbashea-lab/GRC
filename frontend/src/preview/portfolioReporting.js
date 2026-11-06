@@ -11,8 +11,9 @@ import {decodeDemoStore,writeDemoStore,writeDemoStoreAsync,MAX_DEMO_DECODE_BYTES
 import {latestPortfolioActivity} from '../lib/portfolioOverview';
 import {getBrawndoScenarioContext} from './brawndoReportingHistory';
 import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
-import {namedDemoClient} from '../lib/demoClients';
-import {isDemoScenarioPosition} from '../lib/portfolioProgress';
+import {getDunderDemoScenarioContext,qualifiedDunderPreparedHistory} from './programs/dunderPreparedHistory';
+import {DUNDER_ISO_HISTORY_VERSION,namedDemoClient} from '../lib/demoClients';
+import {isDemoScenarioPosition,isDunderHistoryFixture,isDunderModeledHistoryPosition} from '../lib/portfolioProgress';
 
 const VERSION='native-implementation-v1',DAY=86400000;
 const STATUS=['addressed','in_progress','needs_attention','not_assessed'];
@@ -585,6 +586,11 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
   // Capture owns native changes; explicit new scenario imports must survive the
   // first persistence boundary too. Existing committed points stay authoritative.
   const prior={...(previous?.portfolio_reporting||{})};
+  const preparedDunder=previous==null?qualifiedDunderPreparedHistory(db,at):null;
+  if(preparedDunder){
+    prior.snapshots=[...(prior.snapshots||[]),...preparedDunder.snapshots];
+    prior.identities=[...(prior.identities||[]),...preparedDunder.identities];
+  }
   const imported=[],retainedIds=new Set((prior.snapshots||[]).map(point=>point.snapshot_id));
   for(const client of db.clients||[]){
     const candidate=db.cis_demo_scenario_history?.[client.client_id];
@@ -622,7 +628,9 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
     const latest=[...snapshots].reverse().find(s=>s.client_id===position.client_id&&s.framework_key===position.framework_key);
     const before=beforePositions.find(before=>before.program_id===position.program_id);
     const membershipChanged=before&&stable(before.current.scope)!==stable(position.current.scope);
-    if(!latest||positionState(latest)!==positionState(position)||previous&&!before||membershipChanged){
+    // An authored position does not replace the actual first-save observation.
+    const firstDunderBaseline=!!preparedDunder&&preparedDunder.program_id===position.program_id;
+    if(firstDunderBaseline||!latest||positionState(latest)!==positionState(position)||previous&&!before||membershipChanged){
       const snapshot_id=`demo:${position.program_id}:${at}:${snapshots.length}`,kind=previous&&(!before||membershipChanged||positionState(before)!==positionState(position))?'committed_event':previous?'sampled':'current_baseline';
       if(latest&&beforePositions.some(before=>before.program_id===position.program_id&&positionState(before)===positionState(latest)))latest.current=Object.assign(copyCurrent(latest.current),{effective_until:at,continuity_proven:true,continuity_source_event:snapshot_id});
       snapshots.push({...position,snapshot_id,captured_at:at,effective_at:at,observation_sequence:snapshots.length+1,observation_kind:kind,source_revision:position.current.source_revision,source_event:snapshot_id,current:{...position.current,effective_at:at,source_event:snapshot_id,observation_kind:kind,provenance:{...position.current.provenance,kind,source_event:snapshot_id}}});
@@ -709,8 +717,12 @@ function comparison(snapshots,current,start,scenarioContext=null){
   const baseline=prior?{...prior.current,effective_at:effective(prior),...(scenarioContext?{
     snapshot_id:prior.snapshot_id,observation_kind:prior.observation_kind,captured_at:prior.captured_at
   }:{})}:null;
-  const modeled=prior&&isDemoScenarioPosition(prior,scenarioContext)&&prior.current.modeled_until&&timestamp(prior.current.modeled_until)>=timestamp(start);
-  const proven=!!baseline&&(timestamp(baseline.effective_at)===timestamp(start)||baseline.continuity_proven===true&&baseline.effective_until&&timestamp(baseline.effective_until)>=timestamp(start)||modeled);
+  const modeled=prior&&(isDemoScenarioPosition(prior,scenarioContext)||isDunderModeledHistoryPosition(prior,scenarioContext))
+    &&prior.current.modeled_until&&timestamp(prior.current.modeled_until)>=timestamp(start);
+  // Authored Dunder fixtures cannot masquerade as observed continuity when a
+  // missing or changed source proof leaves the modeled context unavailable.
+  const proven=!!baseline&&(timestamp(baseline.effective_at)===timestamp(start)
+    ||!isDunderHistoryFixture(prior)&&baseline.continuity_proven===true&&baseline.effective_until&&timestamp(baseline.effective_until)>=timestamp(start)||modeled);
   const result={baseline,change_pp:null,change_implemented:null,baseline_effective_at_start:!!proven,comparable:false,scope_changed:false,requested_start:start,available_from:ordered[0]?effective(ordered[0]):current.captured_at,coverage:'committed_demo_positions',continuous_history:false,reason:'No captured Demo position on or before the requested start.'};
   if(!baseline)return result;
   const signatures=new Set([...ordered.filter(s=>timestamp(effective(s))>=timestamp(baseline.effective_at)).map(s=>s.current.scope_signature),current.scope_signature]);
@@ -807,9 +819,20 @@ function events(db,clients,at,days,type){
 function demoHistory(db,position,available,range,asOf,scenarioContext=null){
   const start=demoRangeStart(asOf,range),forecastStart=demoRangeStart(asOf,'90d');
   const effective=snapshot=>snapshot.effective_at||snapshot.current.effective_at||snapshot.captured_at;
-  const lineageOrder=snapshot=>isDemoScenarioPosition(snapshot,scenarioContext)?0:snapshot.snapshot_id===scenarioContext?.join_snapshot_id?1:2;
-  const ordered=available.map(snapshot=>({...snapshot,current:normalizedCurrent(db,position.program_id,snapshot.current,snapshot)})).sort((a,b)=>timestamp(effective(a))-timestamp(effective(b))
-    ||(scenarioContext?lineageOrder(a)-lineageOrder(b):0)||(a.observation_sequence||0)-(b.observation_sequence||0));
+  const lineageOrder=snapshot=>isDemoScenarioPosition(snapshot,scenarioContext)||isDunderModeledHistoryPosition(snapshot,scenarioContext)?0:snapshot.snapshot_id===scenarioContext?.join_snapshot_id?1:2;
+  const order=(a,b)=>timestamp(effective(a))-timestamp(effective(b))
+    ||(scenarioContext?lineageOrder(a)-lineageOrder(b):0)||(a.observation_sequence||0)-(b.observation_sequence||0);
+  const raw=available.map(snapshot=>({...snapshot,current:normalizedCurrent(db,position.program_id,snapshot.current,snapshot)})).sort(order);
+  // Dunder's approved fictional intervals are read-only projections. Retain raw
+  // saved positions separately so they never become native forecast votes.
+  const ordered=scenarioContext?.version===DUNDER_ISO_HISTORY_VERSION?raw.map(snapshot=>{
+    const index=scenarioContext.point_ids.indexOf(snapshot.snapshot_id);
+    if(index<0)return snapshot;
+    const next=raw.find(point=>point.snapshot_id===scenarioContext.point_ids[index+1]);
+    return {...snapshot,current:{...snapshot.current,scenario_version:scenarioContext.version,
+      scenario_anchor:scenarioContext.anchor,scenario_fingerprint:scenarioContext.fingerprint,
+      modeled_until:next?effective(next):scenarioContext.anchor}};
+  }).sort(order):raw;
   const flat=snapshot=>({...thinCurrent(snapshot.current),snapshot_id:snapshot.snapshot_id,effective_at:effective(snapshot),captured_at:snapshot.captured_at,observation_kind:snapshot.observation_kind||'sampled',source_revision:snapshot.current.source_revision,source_event:snapshot.source_event||null,observation_sequence:snapshot.observation_sequence||0});
   const scopePoint=current=>current?Object.fromEntries(['total','denominator','implemented','included_counts','scope_signature','measure_version'].map(field=>[field,current[field]])):null;
   const membership = (before, after) => {
@@ -854,7 +877,7 @@ function demoHistory(db,position,available,range,asOf,scenarioContext=null){
       source_revision:position.current.source_revision,source_event:null,
       provenance:{kind:'current_state',label:'Current native assessment state',source_as_of:position.current.provenance.source_as_of}
     });
-  return {range,period_start:start,period_end:asOf,snapshots,forecast_snapshots:ordered.filter(snapshot=>timestamp(effective(snapshot))>=timestamp(forecastStart)).map(flat),comparison:result,scope_changes:changes.filter(change=>timestamp(change.at)>=timestamp(start)),forecast_scope_changes:changes.filter(change=>timestamp(change.at)>=timestamp(forecastStart)),capture_method:'Browser-local atomic committed posture/scope changes; no historical interpolation.'};
+  return {range,period_start:start,period_end:asOf,snapshots,forecast_snapshots:raw.filter(snapshot=>timestamp(effective(snapshot))>=timestamp(forecastStart)).map(flat),comparison:result,scope_changes:changes.filter(change=>timestamp(change.at)>=timestamp(start)),forecast_scope_changes:changes.filter(change=>timestamp(change.at)>=timestamp(forecastStart)),capture_method:'Browser-local atomic committed posture/scope changes; no historical interpolation.'};
 }
 
 export function portfolioReportingRequest(db,path,params={}){
@@ -878,7 +901,9 @@ export function portfolioReportingRequest(db,path,params={}){
     // Existing native links retain their history parameter; the qualified source
     // selects the installed fixture revision without changing any calculation.
     const scenario_context=admitted?(getCisDemoScenarioContext(db,position.client_id,asOf)
-      ||(position.program_id==='demo_brawndo:cis-ig1'?getBrawndoScenarioContext(db,new Date(asOf)):null)):null;
+      ||(position.program_id==='demo_brawndo:cis-ig1'?getBrawndoScenarioContext(db,new Date(asOf)):null))
+      :params.demo_scenario===DUNDER_ISO_HISTORY_VERSION&&position.framework_key==='iso-27001'
+        ?getDunderDemoScenarioContext(db,position.client_id,asOf):null;
     return {...position,as_of:asOf,...demoHistory(db,position,available,range,asOf,scenario_context),coverage:coverage(db,available),...(scenario_context?{scenario_context}:{})};
   }
   if(path.endsWith('/activity')){

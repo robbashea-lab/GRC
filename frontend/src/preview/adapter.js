@@ -34,6 +34,7 @@ import {clearEvidenceFiles,demoDiagnostics} from './store';
 import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
 import {fileBytes,getEvidenceCacheRevision} from './evidenceStorage';
 import {restoredCisDemoEvidence} from './cisDemoEvidence';
+import {restoredDunderDemoEvidence} from './dunderDemoEvidence';
 import {canForkPortfolioStore} from './portfolioReporting';
 import {pendingPolicyCoverage} from './policyReviewCoverage';
 import {validateCatalogKey} from '../lib/registerCatalogIdentity';
@@ -362,7 +363,7 @@ async function executePreviewAdapter(config,generation) {
         const original = record(db, kind, id);
         // Native authorization above remains authoritative. Only known immutable
         // synthetic artifacts can supply missing bytes; nothing is re-persisted.
-        const r = original.content_base64 ? original : restoredCisDemoEvidence(db,original)||original;
+        const r = original.content_base64 ? original : restoredCisDemoEvidence(db,original)||restoredDunderDemoEvidence(db,original)||original;
         if (!r.content_base64) throw new Error('Demo file content is not available after reload, clearing or cache eviction. Its metadata and relationships are preserved. Upload a new sample file to download content.');
         return respond(r);
       }
