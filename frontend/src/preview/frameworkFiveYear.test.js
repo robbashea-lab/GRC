@@ -12,18 +12,41 @@ import timeline from '@contracts/program-lifecycle.json';
 
 const api = axios.create({adapter: previewAdapter});
 const {setImmediate: yieldEventLoop} = jest.requireActual('timers');
-const get = async (path, client_id, params = {}) => (await api.get(path, {params: {client_id, ...params}})).data;
+// Diagnostic copy only: synchronous stderr breadcrumbs cannot qualify a release.
+const {writeSync: writeDiagnostic} = jest.requireActual('fs');
+let diagnosticFramework = 'setup', diagnosticYear = null, diagnosticSequence = 0, diagnosticLastCheckpoint = null;
+const diagnosticRequest = (method, path) => ({sequence: ++diagnosticSequence, method, resource: path.split('/')[1]});
+function markDiagnostic(stage, request = null) {
+  const line = 'DIAGNOSTIC_NONQUALIFYING ' + JSON.stringify({framework: diagnosticFramework, year: diagnosticYear,
+    request, stage, lastCompletedCheckpoint: diagnosticLastCheckpoint}) + '\n';
+  if (writeDiagnostic(2, line) !== Buffer.byteLength(line, 'utf8')) throw new Error('Incomplete lifecycle diagnostic write');
+}
+const get = async (path, client_id, params = {}) => {
+  const request = diagnosticRequest('get', path);
+  markDiagnostic('request-await', request);
+  const response = await api.get(path, {params: {client_id, ...params}});
+  markDiagnostic('request-complete', request);
+  return response.data;
+};
 async function write(method, path, body) {
+  const request = diagnosticRequest(method, path);
+  markDiagnostic('request-await', request);
   const response = await api[method](path, body);
   // Web Storage dispatches async events retaining old/new strings. Release them
   // as a real browser event loop would, instead of accumulating fake-timer work.
+  markDiagnostic('timer-drain', request);
   jest.runOnlyPendingTimers();
+  markDiagnostic('real-yield', request);
   await new Promise(resolve => yieldEventLoop(resolve));
+  markDiagnostic('request-complete', request);
   return response.data;
 }
 const post = (path, body) => write('post', path, body);
 const patch = (path, body) => write('patch', path, body);
-const clock = date => jest.setSystemTime(new Date(date.slice(0,10) + 'T14:00:00Z'));
+const clock = date => {
+  diagnosticYear = Number(date.slice(0,4));
+  return jest.setSystemTime(new Date(date.slice(0,10) + 'T14:00:00Z'));
+};
 const assessmentPath = row => '/framework_assessments/' + row.framework_assessment_id;
 const copy = value => JSON.parse(JSON.stringify(value));
 const years=Number(process.env.FRAMEWORK_LIFECYCLE_YEARS||5),startYear=timeline.start_year,endYear=startYear+years-1,changeYear=endYear-1;
@@ -31,6 +54,7 @@ if(![3,5].includes(years))throw new Error('Framework lifecycle supports the veri
 const addDays=(date,days)=>new Date(Date.parse(date.slice(0,10)+'T14:00:00Z')+days*86400000).toISOString().slice(0,10);
 
 beforeEach(async () => {
+  diagnosticFramework = 'setup'; diagnosticYear = null; diagnosticLastCheckpoint = null;
   // Keep Axios/Promise cleanup live; only the application clock needs control.
   jest.useFakeTimers({doNotFake: ['performance', 'nextTick', 'queueMicrotask']});
   clock('2027-01-01');
@@ -40,6 +64,8 @@ beforeEach(async () => {
 afterEach(() => jest.useRealTimers());
 
 test.each(timeline.frameworks)('%s fresh client retains the configured program lifecycle and period evidence', async framework => {
+  diagnosticFramework = framework;
+  markDiagnostic('case-start');
   const client = await post('/clients', {name: framework + ' '+years+'-year Lifecycle Validation — disposable'});
   const cid = client.client_id;
   const state = {
@@ -281,6 +307,8 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
     expect(entries.every(e=>e.client_id===cid)).toBe(true);
     const counts={framework,at:today,reviews:live.length,occurrences:live.reduce((n,r)=>n+(r.occurrences?.length||0),0),calendar_review_entries:entries.length,kpis:dash.kpis,events:copy(events)};
     checkpoints.push(counts);
+    diagnosticLastCheckpoint = year;
+    markDiagnostic('checkpoint-complete');
     if(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR){
       const fs=jest.requireActual('fs'),nodePath=jest.requireActual('path');fs.mkdirSync(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,{recursive:true});
       fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'-'+year+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,checkpoint:counts,store:decodeDemoStore(sessionStorage.getItem(STORE_KEY))}));
@@ -322,7 +350,11 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   expect(snapshot.evidence.reduce((bytes,e)=>bytes+(e.content_base64?.length||0)*2,0)).toBeLessThanOrEqual(64*1024);
   // Read through a new client instance to ensure results are persisted, not API-local state.
   const reloaded = axios.create({adapter:previewAdapter});
-  expect((await reloaded.get(path)).data.assessment_history[0]).toEqual(firstAssessmentHistory);
+  const reloadRequest = diagnosticRequest('get', path);
+  markDiagnostic('request-await', reloadRequest);
+  const reloadedResponse = await reloaded.get(path);
+  markDiagnostic('request-complete', reloadRequest);
+  expect(reloadedResponse.data.assessment_history[0]).toEqual(firstAssessmentHistory);
   await post('/onboarding/baseline', {client_id:cid,state,finalize:true});
   expect((await get('/reviews',cid)).map(r=>r.review_id)).toEqual(finalReviews.map(r=>r.review_id));
   expect((await get(path)).assessment_history[0]).toEqual(firstAssessmentHistory);
@@ -339,6 +371,8 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   expect(finalProbe.occurrences.find(o=>o.due_date.slice(0,10)==='2027-03-31').completed_at.slice(0,10)).toBe(timeline.month_end_probe.late_completion);
   expect(finalProbe.occurrences.filter(o=>timeline.month_end_probe.missed_due_dates.includes(o.due_date.slice(0,10))).map(o=>o.completed_at.slice(0,10))).toEqual([timeline.month_end_probe.catch_up,timeline.month_end_probe.catch_up]);
   if(years===3)expect(finalProbe.due_date.slice(0,10)).toBe(timeline.month_end_probe.next_after_change.at(-1));
+  markDiagnostic('terminal-summary');
   console.info('Framework lifecycle', {framework,years,checkpoints,reviews:histories.size, occurrences:occurrenceSnapshots.size,
     evidence:snapshot.evidence.filter(e=>e.client_id===cid).length, storeCharacters:sessionStorage.getItem(STORE_KEY).length});
+  markDiagnostic('case-complete');
 }, 180000);
