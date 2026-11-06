@@ -1,7 +1,7 @@
 import {cisDemoFixtureDates,CIS_SHOWCASE_VERSION} from './cisDemoFixtureDates';
 import {CIS_DEMO_REVISION} from './cisDemoSelection';
 import {populateBrawndoModel,CIS_CANONICAL_REVISION} from './cisCanonicalBrawndoModel';
-import {brawndoArtifactSpecs} from './cisCanonicalBrawndoBooks';
+import {brawndoArtifactSpecsFromModel} from './cisCanonicalBrawndoBooks';
 import {registerCisDemoArtifacts} from './cisDemoArtifactRecipes';
 
 const CID='demo_brawndo';
@@ -29,7 +29,7 @@ export function buildCanonicalBrawndoCandidate(db,{clock=new Date()}={}) {
     assessment_origin:model.history.origin,history_months:18,organizational_history_start:model.history.origin};
   staged.cis_demo_rollout.clients[CID]={revision:CIS_DEMO_REVISION,ownership:'fresh_fixture',superseded_by:CIS_SHOWCASE_VERSION,
     canonical_revision:CIS_CANONICAL_REVISION,applied_at:dates.anchor};
-  const books=brawndoArtifactSpecs(dates.anchor),evidence=[],recipes=[];
+  const books=brawndoArtifactSpecsFromModel(dates.anchor,{db:staged,dates,...model}),evidence=[],recipes=[];
   for(const book of books){
     const bytes=utf8(book.text),row={evidence_id:book.evidence_id,client_id:CID,filename:book.filename,
       display_name:'Brawndo — '+book.key.replaceAll('-',' '),mime_type:book.mime_type,evidence_type:'Report',

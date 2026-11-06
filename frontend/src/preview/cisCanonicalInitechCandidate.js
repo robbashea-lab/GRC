@@ -2,7 +2,7 @@ import {cisDemoFixtureDates,CIS_SHOWCASE_VERSION} from './cisDemoFixtureDates';
 import {CIS_DEMO_REVISION} from './cisDemoSelection';
 import {CIS_CANONICAL_SCENARIO_REVISION} from './cisCanonicalArtifactBooks';
 import {populateInitechModel} from './cisCanonicalInitechModel';
-import {initechArtifactSpecs} from './cisCanonicalInitechBooks';
+import {initechArtifactSpecsFromModel} from './cisCanonicalInitechBooks';
 import {registerCisDemoArtifacts} from './cisDemoArtifactRecipes';
 import {INITECH_SCENARIO_PROFILE} from './cisCanonicalInitechContent';
 
@@ -28,7 +28,7 @@ export function buildCanonicalInitechCandidate(db,{clock = new Date()} = {}) {
   staged.cis_demo_rollout.clients[CID] = {revision:CIS_DEMO_REVISION,ownership:'fresh_fixture',
     superseded_by:CIS_SHOWCASE_VERSION,canonical_revision:CIS_CANONICAL_SCENARIO_REVISION,applied_at:dates.anchor};
   const evidence = [], recipes = [];
-  for (const book of initechArtifactSpecs(dates.anchor)) {
+  for (const book of initechArtifactSpecsFromModel(dates.anchor,{db:staged,dates,...model})) {
     const content = utf8(book.text), row = {evidence_id:book.evidence_id,client_id:CID,filename:book.filename,
       display_name:'Initech — '+book.key,mime_type:book.mime_type,evidence_type:'Report',linked_type:book.linked_type,
       linked_id:book.linked_id,occurrence_id:book.occurrence_id,relationships:copy(book.relationships),

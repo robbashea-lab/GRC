@@ -14,7 +14,15 @@ const unique = links => [...new Map(links.map(link => [linkKey(link),link])).val
 // Complete records and snapshots remain in the scenario; each saved occurrence
 // and every safeguard receives an appropriate available excerpt or plan.
 export function initechArtifactSpecs(anchor) {
-  const {db, dates, program, operations, history} = initechArtifactModel(anchor), entries = [];
+  return initechArtifactSpecsFromModel(anchor,initechArtifactModel(anchor));
+}
+
+// Fresh construction source: {db,dates,program,operations,history}. Read-only here.
+// Immutable downloads and registration keep using the anchor-only wrapper above.
+export function initechArtifactSpecsFromModel(anchor,source) {
+  if (typeof anchor !== 'string' || !anchor || source?.dates?.anchor !== anchor)
+    throw new Error('Initech artifacts require the same frozen source anchor.');
+  const {db, dates, program, operations, history} = source, entries = [];
   const add = (kind, id, values, links = [], type = kind) => entries.push({kind,id,
     line:csv([type,id,...values]), links:unique(links.some(link => link.kind === kind && link.id === id && link.occurrence_id)
       ? links : [{kind,id},...links])});

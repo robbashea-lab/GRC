@@ -44,7 +44,15 @@ function pack(family, entries, anchor) {
 // editable current browser records. No cache, storage, clock override or download
 // authorization is introduced here; the existing native provider owns those.
 export function brawndoArtifactSpecs(anchor) {
-  const {dates, program, operations, history} = brawndoArtifactModel(anchor);
+  return brawndoArtifactSpecsFromModel(anchor,brawndoArtifactModel(anchor));
+}
+
+// Fresh construction source: {db,dates,program,operations,history}. Read-only here.
+// Immutable downloads and registration keep using the anchor-only wrapper above.
+export function brawndoArtifactSpecsFromModel(anchor,source) {
+  if (typeof anchor !== 'string' || !anchor || source?.dates?.anchor !== anchor)
+    throw new Error('Brawndo artifacts require the same frozen source anchor.');
+  const {dates, program, operations, history} = source;
   const families=[];
   families.push(['safeguards',program.assessments.map(row => {
     const content=brawndoSafeguardContent(row.definition_id,row.status);

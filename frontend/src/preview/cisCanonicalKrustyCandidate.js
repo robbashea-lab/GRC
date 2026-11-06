@@ -2,7 +2,7 @@ import {cisDemoFixtureDates,CIS_SHOWCASE_VERSION} from './cisDemoFixtureDates';
 import {CIS_DEMO_REVISION} from './cisDemoSelection';
 import {CIS_CANONICAL_SCENARIO_REVISION,canonicalArtifactLimit} from './cisCanonicalArtifactBooks';
 import {populateKrustyModel} from './cisCanonicalKrustyModel';
-import {krustyArtifactSpecs} from './cisCanonicalKrustyBooks';
+import {krustyArtifactSpecsFromModel} from './cisCanonicalKrustyBooks';
 import {registerCisDemoArtifacts} from './cisDemoArtifactRecipes';
 import {snapshotCanonicalCisClient} from './cisCanonicalScope';
 import {KRUSTY_SCENARIO_PROFILE,krustySafeguardContent} from './cisCanonicalKrustyContent';
@@ -145,7 +145,7 @@ export function buildCanonicalKrustyCandidate(db,{clock = new Date()} = {}) {
     history_months:KRUSTY_SCENARIO_PROFILE.history_months,organizational_history_start:model.history.organization_origin};
   staged.cis_demo_rollout.clients[CID] = {revision:CIS_DEMO_REVISION,ownership:'fresh_fixture',
     superseded_by:CIS_SHOWCASE_VERSION,canonical_revision:CIS_CANONICAL_SCENARIO_REVISION,applied_at:dates.anchor};
-  const books = krustyArtifactSpecs(dates.anchor), evidence = [], recipes = [];
+  const books = krustyArtifactSpecsFromModel(dates.anchor,{db:staged,dates,...model}), evidence = [], recipes = [];
   if (!Array.isArray(books) || !books.length || books.length > canonicalArtifactLimit(CID,CIS_CANONICAL_SCENARIO_REVISION)
     || new Set(books.map(book => book.key)).size !== books.length) reject('book count or source identities exceed the native contract.');
   for (const book of books) {

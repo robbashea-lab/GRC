@@ -93,12 +93,12 @@ test('ISO necessary control reuses the shared register, maps 6.1.3, saves/reopen
  const before=(await api.get('/frameworks/iso-27001',{params:{client_id:cid}})).data.assessments;
  const clause=before.find(r=>r.definition_id==='6.1.3');
  await act(async()=>root.render(<OrganizationalControls clientId={cid} assessmentId={clause.framework_assessment_id}/>));
- await click('Create organizational Control');await fill('Organizational Control name','Necessary export authorization');
- await fill('Organizational Control design','Necessary for export risk; two-person authorization; implementation reference register v1');await click('Save Control');await click('Close Control');
+ await settleNativeRequests('get',()=>click('Create organizational Control'));await fill('Organizational Control name','Necessary export authorization');
+ await fill('Organizational Control design','Necessary for export risk; two-person authorization; implementation reference register v1');await settleNativeRequests('post',()=>click('Save Control'));await click('Close Control');
  const saved=(await api.get('/organizational-controls',{params:{client_id:cid}})).data.items[0];
  expect(saved.assessment_ids).toContain(clause.framework_assessment_id);
- await click('Necessary export authorization');expect(document.querySelector('[aria-label="Organizational Control design"]').value).toContain('register v1');
- await fill('Organizational Control design','Necessary for export risk; revised design v2');await click('Save Control');
+ await settleNativeRequests('get',()=>click('Necessary export authorization'));expect(document.querySelector('[aria-label="Organizational Control design"]').value).toContain('register v1');
+ await fill('Organizational Control design','Necessary for export risk; revised design v2');await settleNativeRequests('patch',()=>click('Save Control'));
  const changed=(await api.get('/organizational-controls/'+encodeURIComponent(saved.control_id))).data;
  expect(changed.history.some(h=>h.description.includes('register v1'))).toBe(true);
  expect((await api.get('/frameworks/iso-27001',{params:{client_id:cid}})).data.assessments).toEqual(before);

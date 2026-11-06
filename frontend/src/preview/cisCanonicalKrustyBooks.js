@@ -25,7 +25,15 @@ const unique = links => [...new Map(links.map(link => [linkKey(link),link])).val
 // Available supporting excerpts and the complete dated occurrence ledger. Full
 // native questions, snapshots and narratives remain in the source records.
 export function krustyArtifactSpecs(anchor) {
-  const {db, dates, program, operations, history} = krustyArtifactModel(anchor), entries = [];
+  return krustyArtifactSpecsFromModel(anchor,krustyArtifactModel(anchor));
+}
+
+// Fresh construction source: {db,dates,program,operations,history}. Read-only here.
+// Immutable downloads and registration keep using the anchor-only wrapper above.
+export function krustyArtifactSpecsFromModel(anchor,source) {
+  if (typeof anchor !== 'string' || !anchor || source?.dates?.anchor !== anchor)
+    throw new Error('Krusty artifacts require the same frozen source anchor.');
+  const {db, dates, program, operations, history} = source, entries = [];
   const records = Object.fromEntries(Object.entries(IDS).map(([kind,field]) => [kind,
     new Map((db[kind] || []).filter(row => row.client_id === CID).map(row => [row[field],row]))]));
   const resolve = link => {
