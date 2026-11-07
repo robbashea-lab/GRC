@@ -50,8 +50,9 @@ test('a Finding raised in a Policy Review is visible from the Policy',async()=>{
 
 test('re-saving a Risk with the same next-review day in date-only form keeps the recurrence anchor',async()=>{
   // Keep the retained v1 Risk as the explicit input to this anchor regression.
-  saveStore(buildLegacyDemoStore(),{resetFiles:true});await api.post('/demo/enter');
+  saveStore(buildLegacyDemoStore(new Date('2026-11-02T12:00:00.000Z')),{resetFiles:true});await api.post('/demo/enter');
   const risk=readStore().risks.find(r=>r.risk_id==='demo_brawndo_risk_1');
+  expect(day(risk.next_review)).not.toBe('2027-01-31');
   await api.patch('/risks/'+risk.risk_id,{next_review:'2027-01-31'});
   let review=readStore().reviews.find(r=>r.risk_id===risk.risk_id&&!['completed','cancelled'].includes(r.status));
   await api.patch('/reviews/'+review.review_id,{recurrence:'monthly'}).catch(()=>{});
