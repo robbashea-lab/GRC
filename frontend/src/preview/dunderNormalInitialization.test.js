@@ -1,6 +1,7 @@
 import {seedStore, readStore, saveStore, resetStore, write, clone, STORE_KEY} from './store';
 import {clearFileCache, restoreFiles} from './evidenceStorage';
 import * as dunderScenario from './programs/dunderEightYearScenario';
+import * as prestigeFixture from './programs/prestigeEightYearFixture';
 import {DUNDER_ID as CID, DUNDER_SCENARIO_VERSION, EIGHT_YEAR_ANCHOR} from './programs/isoSocEightYearSupport';
 
 const RUNTIME = '2026-11-05T12:00:00.000Z';
@@ -14,7 +15,7 @@ const history = db => JSON.stringify({
   assessments: db.framework_assessments.filter(row => row.client_id === CID).map(row => row.assessment_history),
   reviews: db.reviews.filter(row => row.client_id === CID).map(row => row.occurrences),
 });
-let prior, legacy, normal, savedNormal, normalForeign;
+let prior, legacy, normal, savedNormal, beforePrestige, dunderForeign;
 
 function normalFlags() {
   process.env.REACT_APP_PREVIEW = 'true';
@@ -32,8 +33,18 @@ beforeAll(() => {
   process.env.REACT_APP_PREVIEW = 'false';
   legacy = seedStore(new Date(RUNTIME));
   process.env.REACT_APP_PREVIEW = 'true';
-  normal = seedStore(new Date(RUNTIME));
-  normalForeign = JSON.stringify(foreignArrays(normal));
+  // Compare Dunder's exact output before the separately qualified Prestige replacement.
+  // Keep normal as the actual combined seed for all startup and retained-state checks.
+  const nativeInstall = prestigeFixture.installPrestigeEightYearFixture;
+  const capture = jest.spyOn(prestigeFixture, 'installPrestigeEightYearFixture').mockImplementation((source, ...args) => {
+    beforePrestige = clone(source);
+    return nativeInstall(source, ...args);
+  });
+  try {
+    normal = seedStore(new Date(RUNTIME));
+    expect(capture).toHaveBeenCalledTimes(1);
+  } finally { capture.mockRestore(); }
+  dunderForeign = JSON.stringify(foreignArrays(beforePrestige));
   saveStore(normal, {resetFiles: true});
   savedNormal = sessionStorage.getItem(STORE_KEY);
 });
@@ -54,16 +65,20 @@ afterAll(() => {
   sessionStorage.clear(); localStorage.clear(); clearFileCache();
 });
 
-test('normal Preview installs the full fixed Dunder source while foreign clients keep the real clock', () => {
+test('normal Preview installs the full fixed Dunder source while its stage preserves foreign clients and their real clock', () => {
   expect(new Date().toISOString()).toBe(RUNTIME);
   expect(client(legacy).demo_program_version).not.toBe(DUNDER_SCENARIO_VERSION);
   expect(client(normal).demo_program_version).toBe(DUNDER_SCENARIO_VERSION);
+  expect(client(beforePrestige).demo_program_version).toBe(DUNDER_SCENARIO_VERSION);
   expect(normal.dunder_demo_artifacts.anchor).toBe(EIGHT_YEAR_ANCHOR);
   expect(normal.cis_demo_refresh.anchor).toBe('2026-11-05T00:00:00.000Z');
-  expect(normalForeign).toBe(JSON.stringify(foreignArrays(legacy)));
+  // Exact serialized equality still checks every foreign byte, including Prestige.
+  // Report the result rather than printing both multi-megabyte stores on failure.
+  expect({dunderForeignRecordsUnchanged: dunderForeign === JSON.stringify(foreignArrays(legacy))})
+    .toEqual({dunderForeignRecordsUnchanged: true});
   for (const user of legacy.users) expect(normal.users.find(row => row.user_id === user.user_id)).toEqual(user);
   for (const key of ['snapshots', 'identities', 'scope_events']) {
-    expect((normal.portfolio_reporting[key] || []).filter(foreign)).toEqual((legacy.portfolio_reporting[key] || []).filter(foreign));
+    expect((beforePrestige.portfolio_reporting[key] || []).filter(foreign)).toEqual((legacy.portfolio_reporting[key] || []).filter(foreign));
   }
   expect(normal.framework_assessments.filter(row => row.client_id === CID)).toHaveLength(123);
   const reviews = normal.reviews.filter(row => row.client_id === CID);
