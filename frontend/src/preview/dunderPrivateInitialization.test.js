@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import crypto from 'crypto';
-import {seedStore,readStore,saveStore,STORE_KEY} from './store';
+import {seedStore,seedStoreBeforePrestige,readStore,saveStore,STORE_KEY} from './store';
 import {previewAdapter} from './adapter';
 import {lightweightStore,clearFileCache} from './evidenceStorage';
 import {compactPortfolioReporting} from './portfolioReporting';
@@ -19,7 +19,8 @@ beforeAll(()=>{
   process.env.REACT_APP_PREVIEW='true';delete process.env.REACT_APP_DUNDER_EIGHT_YEAR_QA;delete process.env.REACT_APP_DUNDER_EIGHT_YEAR_ONBOARDING_QA;
   jest.useFakeTimers({doNotFake:['performance']});jest.setSystemTime(new Date(runtime));
   sessionStorage.clear();localStorage.clear();clearFileCache();
-  baseline=seedStore(new Date(EIGHT_YEAR_ANCHOR));
+  // This private source lane excludes the normal qualified Prestige overlay on both sides.
+  baseline=seedStoreBeforePrestige(new Date(EIGHT_YEAR_ANCHOR));
   process.env.REACT_APP_DUNDER_EIGHT_YEAR_QA='true';
   db=seedStore(new Date(runtime));
 });

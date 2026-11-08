@@ -113,11 +113,19 @@ export function installPrestigeEightYearFixture(source, fixture, {fresh = false,
     || Object.keys(payload.client_patch || {}).some(key => ![...PATCH, 'framework_settings'].includes(key))
     || Object.keys(payload.client_patch.framework_settings || {}).some(key => key !== 'soc-2'))
     fail('the bundled materialized fixture changed or has unsupported fields.');
+  const draft = payload.collections.policies.find(row => row.policy_id === fixture.provenance?.current_work?.draft_policy_id);
+  const policyCohort = payload.collections.policies.length === 16
+    || payload.collections.policies.length === 17 && draft?.status === 'draft'
+      && payload.collections.policies.filter(row => row !== draft).every(row => row.status === 'approved')
+      && !draft.baseline_key && draft.presence !== 'verified_existing'
+      && ['approval_status', 'approval_source', 'approval_subject', 'approval_request_id', 'approved_at',
+        'approved_by', 'effective_date', 'verified_at'].every(key => !draft[key])
+      && !(draft.approval_history?.length || draft.decision_history?.length);
   if (!payload.maps.baselines?.completed || payload.maps.baselines.requirements?.['soc-2'] !== 'applies'
     || payload.collections.framework_assessments.length !== 38
     || new Set(payload.collections.framework_assessments.map(row => row.definition_id)).size !== 38
     || payload.collections.framework_assessments.some(row => row.framework_key !== 'soc-2')
-    || payload.collections.policies.length !== 16 || payload.collections.vendors.length !== 23
+    || !policyCohort || payload.collections.vendors.length !== 23
     || payload.collections.ai_systems.length !== 4 || payload.collections.risks.length < 30
     || payload.collections.organizational_controls.length !== 25 || payload.collections.reviews.length < 103
     || !Number.isSafeInteger(payload.maps.riskSequences) || !Number.isSafeInteger(payload.maps.ai_counters))

@@ -13,6 +13,7 @@ import {createPrestigeOperatingArtifacts, bindPrestigeOperatingArtifacts} from '
 import {recordPrestigeOperatingObservations} from './prestigeOperatingObservations';
 import facts from './prestigeCurrentControlFacts.json';
 import {createPrestigeReportingHistory} from './prestigeReportingHistorySource';
+import {createPrestigeCurrentOperationalWork} from './prestigeCurrentOperationalWork';
 
 const CID = 'demo_prestige', ANCHOR = '2026-11-02T00:00:00.000Z';
 const copy = value => JSON.parse(JSON.stringify(value));
@@ -66,6 +67,7 @@ export async function createPrestigeEightYearSource(source, {purpose, document_f
   result = await recordPrestigeOperatingObservations(result, artifacts, installed.ids,
     {purpose: 'operating_observation_source_qa'});
   result = createPrestigeReportingHistory(result);
+  result = await createPrestigeCurrentOperationalWork(result, {purpose: 'current_operational_work_source_qa'});
   const owned = kind => result.db[kind].filter(row => row.client_id === CID);
   if (owned('framework_assessments').length !== 38 || owned('organizational_controls').length !== 25
     || owned('organizational_controls').reduce((n, row) => n + row.observations.length, 0) !== 31
@@ -80,6 +82,7 @@ export async function createPrestigeEightYearSource(source, {purpose, document_f
     binding_receipt_sha256: binding.receipt_sha256,
     operating_receipt_sha256: result.operatingManifest.receipt_sha256,
     reporting: result.reportingManifest,
+    current_work: result.currentWorkManifest,
     counts: Object.fromEntries(['framework_assessments', 'organizational_controls', 'reviews', 'policies',
       'vendors', 'risks', 'ai_systems', 'findings', 'tasks', 'assets', 'evidence'].map(kind => [kind, owned(kind).length])),
     evidence: artifacts.ledger,
