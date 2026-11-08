@@ -17,6 +17,7 @@ import RefinedOmniInterview from './RefinedOmniInterview';
 import CisSequentialInterview from './CisSequentialInterview';
 import {inventorySummaryEnabled} from '@/lib/omniInventorySummary';
 import {omniCisSummary} from '@/lib/omniCisSummary';
+import {brawndoInventoryDraft} from '@/lib/brawndoInventoryDraft';
 
 import {omniGroups,refinedSummary,recordedOmniReasons,multipleOmniSources} from '@/lib/refinedOmni';
 
@@ -38,7 +39,7 @@ export default function GuidedAssessor(props){
   if(props.record?.client_id&&props.record.client_id!==props.clientId||!pilotEnabled(props.clientId,props.framework,props.configuration,props.record?.definition_id))return null;
   return <Pilot key={user?.user_id+':'+props.clientId+':'+props.record?.framework_assessment_id+(focusedOmniEnabled(props.clientId,user,props.framework,props.configuration,props.record?.definition_id)?':'+(props.invitationContext||'program'):'')} {...props}/>;
 }
-function Pilot({clientId,framework,configuration,invitationContext,inventoryContext,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onSaveAssessment,onDraftChange,onUpdateImplementation,disabled=false,current=record,related={},contextComplete=false,assessmentDirty=false,onOpenNative,people=EMPTY_ROWS,inline=false,inlineOpen=false,onInlineClose,onFreshInterviewReady,visualReference=false,safeguard11=false,sequential=false}){
+function Pilot({clientId,framework,configuration,invitationContext,inventoryContext,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onSaveAssessment,onDraftChange,onUpdateImplementation,disabled=false,current=record,related={},contextComplete=false,assessmentDirty=false,onOpenNative,people=EMPTY_ROWS,inline=false,inlineOpen=false,onInlineClose,onFreshInterviewReady,visualReference=false,safeguard11=false,sequential=false,assessmentConcept=false}){
   const [sequentialOpen,setSequentialOpen]=useState(false);
   const auth=useAuth(),{user}=auth,org=useOrg(),key='guided-pilot-ui:'+user?.user_id+':'+clientId,initial=readPreference(key);
   const focused=focusedOmniEnabled(clientId,user,framework,configuration,record?.definition_id);
@@ -60,6 +61,9 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     &&typeof record.framework_assessment_id==='string'&&!!record.framework_assessment_id
     &&current?.client_id===clientId&&current.framework_key===framework&&current.framework_version==='8.1'
     &&current.framework_assessment_id===record.framework_assessment_id&&current.definition_id===record.definition_id;
+  const conceptPilot=assessmentConcept===true&&inline&&sequential&&boundedGuideCorrections&&PREVIEW_MODE
+    &&user?.workspace_mode==='demo'&&clientId==='demo_brawndo'&&configuration?.implementation_group===1
+    &&record?.definition_id==='1.1';
   const workspacePilot=focused,GuideContent=workspacePilot?OmniWindow:DialogContent;
   const clientName=org?.clients?.find(client=>client.client_id===clientId)?.name||(org?.currentClient?.client_id===clientId?org.currentClient.name:null)||'The organization';
   const botName=focused?'Omnibot':'Omni',invitationKey=key+':'+framework+':focused-invitations';
@@ -90,8 +94,11 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   const [confirmUpdate,setConfirmUpdate]=useState(false),[assessmentSaving,setAssessmentSaving]=useState(false),[assessmentSaved,setAssessmentSaved]=useState(false),[closeAfterAssessment,setCloseAfterAssessment]=useState(false);
 
   const [confirmClose,setConfirmClose]=useState(false),[summaryEdited,setSummaryEdited]=useState(false),[summaryBasis,setSummaryBasis]=useState('');
+  const [conceptAppliedText,setConceptAppliedText]=useState(null);
 
-  const dirty=JSON.stringify(answers)!==saved.current||!!result&&narrative!==(draft?.narrative||result.narrative)||refined&&summaryEdited&&narrative!==(draft?.narrative||'');
+  const narrativeDirty=!!result&&narrative!==(draft?.narrative||result.narrative)||refined&&summaryEdited&&narrative!==(draft?.narrative||'');
+  // Applying editable wording transfers its leave protection to the native form, without an interview write.
+  const dirty=JSON.stringify(answers)!==saved.current||narrativeDirty&&(!conceptPilot||narrative!==conceptAppliedText);
   const id=record?.definition_id,questions=id?visibleQuestions(id,answers,version):[],question=questions[Math.min(step,Math.max(0,questions.length-1))];
   const base=record?'/framework_assessments/'+record.framework_assessment_id+'/guided-assessment':null;
   const stateId=useId(),panelId=useId();
@@ -161,7 +168,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
   async function saveAndClose(){
 
-    if(directAssessment&&view==='result'&&result){requestAssessmentSave(true);return;}
+    if(!conceptPilot&&directAssessment&&view==='result'&&result){requestAssessmentSave(true);return;}
 
     if(requireFocusedComparison())return;
 
@@ -171,7 +178,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
   function discardAndClose(){
 
-    setAnswers(draft?.answers||{});saved.current=JSON.stringify(draft?.answers||{});setStep(draft?.step||0);
+    setConceptAppliedText(null);setAnswers(draft?.answers||{});saved.current=JSON.stringify(draft?.answers||{});setStep(draft?.step||0);
 
     setResult(draft?.completed?draft.result:null);setNarrative(draft?.narrative||'');setSummaryEdited(!!draft?.narrative);setSummaryBasis(draft?.completed?JSON.stringify(draft.answers):'');setIncremental(null);setConfirmClose(false);changeMode('collapsed');
 
@@ -254,7 +261,8 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     if(requireFocusedComparison())return;
     try{validateGuidedCompletion(id,answers,version);}catch(e){setError(formatError(e));return;}
 
-    const generated=directAssessment?omniCisSummary(id,answers,version,clientName,inline?new Date():null).result:refined?refinedSummary(id,answers,version):focusedResult(id,answers,version);
+    const nativeResult=directAssessment?omniCisSummary(id,answers,version,clientName,inline?new Date():null).result:refined?refinedSummary(id,answers,version):focusedResult(id,answers,version);
+    const generated=conceptPilot?{...nativeResult,narrative:brawndoInventoryDraft(answers,version,nativeResult,clientName)}:nativeResult;
 
     const output=summaryEdited?{...generated,narrative}:generated,expected=form?.implementation||'';
 
@@ -265,11 +273,12 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     if(requireFocusedComparison())return;
     const data=await save(step,true,answers,false,draft,output);if(!data)return;
     setResult(output);setNarrative(output.narrative);setReplace(false);setView('result');
-    setIncremental(null);setAssessmentSaved(false);
+    setIncremental(null);setAssessmentSaved(false);setConceptAppliedText(null);
     return data;
   }
 
   function putRefined(question,value){
+    setConceptAppliedText(null);
 
     setAnswers(previous=>{
 
@@ -289,7 +298,26 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
 
   }
 
-  function putRefinedDetail(key,value){setAnswers(previous=>({...previous,[key]:value}));setResult(null);setReplace(false);setSaveNotice('');}
+  function putRefinedDetail(key,value){setConceptAppliedText(null);setAnswers(previous=>({...previous,[key]:value}));setResult(null);setReplace(false);setSaveNotice('');}
+
+  async function saveConceptProgress(){
+    if(requireFocusedComparison())return;
+    if(await save(step,!!result,answers,false,draft,result?{...result,narrative}:null)){
+      setSaveNotice('Interview progress saved. The assessment record, status and verification are unchanged.');
+    }
+  }
+  function applyConceptDraft(){
+    if(!conceptPilot||disabled||busy||updated||assessmentDirty||!result||result.missingRecorded
+      ||JSON.stringify(answers)!==saved.current||!narrative.trim()||narrative.length>20000
+      ||summaryEdited&&summaryBasis!==JSON.stringify(answers)||!!form?.implementation&&!replace
+      ||requireFocusedComparison())return;
+    if(!nativeUpdate.current?.(narrative,form?.implementation||'')){
+      setError('The native implementation changed. Review it before applying; no text was overwritten.');return;
+    }
+    setConceptAppliedText(narrative);setStagedImplementation(narrative);setApplied(true);setReplace(false);
+    setSaveNotice('Current implementation is an unsaved native draft. Use Save assessment to save the record; status and verification remain unchanged.');
+    pauseSequential();
+  }
 
   async function nextRefinedGroup(index,groups,nextQuestionId){
     try{(boundedGuideCorrections?validateAnswers:validateGuidedCompletion)(id,answers,version);}catch(e){setError(formatError(e));return;}
@@ -425,7 +453,33 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
           {workspacePilot&&record&&!focused&&<><p>{context.summary}</p><div className="guided-actions">{context.actions.map(name=><Button key={name} variant="outline" disabled={busy} onClick={()=>action(name)}>{({start:'Start',resume:'Resume your review',current:'Review current position',findings:context.signals.openFindings>0?'Review findings':'Review linked records',changes:'Review changes',reassess:'Full reassessment',result:'Review recommendation'})[name]}</Button>)}</div>{assessmentDirty&&<p>Unsaved native assessment changes are present. Save or discard them in the assessment before applying a recommendation.</p>}</>}
           {updated&&<section><p>Updated assessment guidance is available. Your saved answers and narrative remain associated with their original question set. Continue saving interview progress here. Before saving a new native assessment, begin a current-source review and explicitly confirm which unchanged answers remain relevant.</p><Button disabled={disabled||busy} onClick={()=>setRestart(true)}>Begin a new review</Button></section>}
 
-          {!record?focused?<FocusedProgram visualReference={visualOmni} rows={rows} drafts={draftSummaries} contextComplete={contextComplete} onSelect={row=>{changeMode('minimized');onSelect?.(row);}}/>:workspacePilot?<ProgramPosition overview={overview} rows={rows} onSelect={row=>{close();onSelect?.(row);}} onViewAll={()=>{close();onViewAll?.();}}/>:<><p>Omni helps you see the full picture.</p>{prioritizeGuidedRows(rows.filter(r=>pilotEnabled(clientId,'cis-ig1',configuration,r.definition_id)),draftSummaries).map((r,i)=><section key={r.definition_id}><h3>{i===0?'Recommended next step':'Also needs attention'} · {r.definition_id} · {r.title}</h3><p>{draftSummaries[r.definition_id]?.completed?'Recommendation ready':draftSummaries[r.definition_id]?.revision?'Resume assessment':r.work?.overdue_reviews?'Overdue scheduled review':r.status==='not_assessed'?'Not Assessed':r.status==='addressed'?'Verification required':'Unresolved gap'}</p><Button onClick={()=>{close();onSelect(r);}}>{draftSummaries[r.definition_id]?.revision?'Resume':'Start'} safeguard {r.definition_id}</Button></section>)}<Button variant="outline" onClick={()=>{close();onViewAll?.();}}>View all safeguards</Button></>:refined&&draft&&view==='interview'&&sequential?<CisSequentialInterview safeguard11={safeguard11&&visualOmni&&id==='1.1'} visualReference={visualOmni} id={id} answers={answers} version={version} step={question?.id} setStep={questionId=>setStep(questions.findIndex(item=>item.id===questionId))} put={putRefined} detail={putRefinedDetail} blocked={disabled||busy||!!incremental||compareTarget!==null||restart} busy={busy} inventoryContext={inventoryContext} boundedGuideCorrections={boundedGuideCorrections} onNext={nextRefinedGroup} onPause={pauseSequential} onSaveClose={saveAndClose}/>:refined&&draft&&view==='interview'?<RefinedOmniInterview focusScopeKey={JSON.stringify([identity,user?.role,framework,version])} safeguard11={safeguard11&&visualOmni&&id==='1.1'} visualReference={visualOmni} id={id} answers={answers} version={version} step={question?.id} setStep={questionId=>{setStep(questions.findIndex(q=>q.id===questionId));heading.current?.focus({preventScroll:true});}} put={putRefined} detail={putRefinedDetail} blocked={disabled||busy||!!incremental||compareTarget!==null||restart} busy={busy} onNext={nextRefinedGroup} onSaveClose={saveAndClose} inventoryContext={inventoryContext} boundedGuideCorrections={boundedGuideCorrections}/> :directAssessment&&draft&&view==='result'&&result?<>
+          {!record?focused?<FocusedProgram visualReference={visualOmni} rows={rows} drafts={draftSummaries} contextComplete={contextComplete} onSelect={row=>{changeMode('minimized');onSelect?.(row);}}/>:workspacePilot?<ProgramPosition overview={overview} rows={rows} onSelect={row=>{close();onSelect?.(row);}} onViewAll={()=>{close();onViewAll?.();}}/>:<><p>Omni helps you see the full picture.</p>{prioritizeGuidedRows(rows.filter(r=>pilotEnabled(clientId,'cis-ig1',configuration,r.definition_id)),draftSummaries).map((r,i)=><section key={r.definition_id}><h3>{i===0?'Recommended next step':'Also needs attention'} · {r.definition_id} · {r.title}</h3><p>{draftSummaries[r.definition_id]?.completed?'Recommendation ready':draftSummaries[r.definition_id]?.revision?'Resume assessment':r.work?.overdue_reviews?'Overdue scheduled review':r.status==='not_assessed'?'Not Assessed':r.status==='addressed'?'Verification required':'Unresolved gap'}</p><Button onClick={()=>{close();onSelect(r);}}>{draftSummaries[r.definition_id]?.revision?'Resume':'Start'} safeguard {r.definition_id}</Button></section>)}<Button variant="outline" onClick={()=>{close();onViewAll?.();}}>View all safeguards</Button></>:refined&&draft&&view==='interview'&&sequential?<CisSequentialInterview assessmentConcept={conceptPilot} onSaveProgress={saveConceptProgress} safeguard11={safeguard11&&visualOmni&&id==='1.1'} visualReference={visualOmni} id={id} answers={answers} version={version} step={question?.id} setStep={questionId=>setStep(questions.findIndex(item=>item.id===questionId))} put={putRefined} detail={putRefinedDetail} blocked={disabled||busy||!!incremental||compareTarget!==null||restart} busy={busy} inventoryContext={inventoryContext} boundedGuideCorrections={boundedGuideCorrections} onNext={nextRefinedGroup} onPause={pauseSequential} onSaveClose={saveAndClose}/>:refined&&draft&&view==='interview'?<RefinedOmniInterview focusScopeKey={JSON.stringify([identity,user?.role,framework,version])} safeguard11={safeguard11&&visualOmni&&id==='1.1'} visualReference={visualOmni} id={id} answers={answers} version={version} step={question?.id} setStep={questionId=>{setStep(questions.findIndex(q=>q.id===questionId));heading.current?.focus({preventScroll:true});}} put={putRefined} detail={putRefinedDetail} blocked={disabled||busy||!!incremental||compareTarget!==null||restart} busy={busy} onNext={nextRefinedGroup} onSaveClose={saveAndClose} inventoryContext={inventoryContext} boundedGuideCorrections={boundedGuideCorrections}/> :conceptPilot&&draft&&view==='result'&&result?<section className="brawndo-pilot-draft" aria-label="Implementation draft">
+            <h3>Review implementation</h3>
+            <p>Review the reported practice, identified gaps and items requiring confirmation. Edit the wording before applying it.</p>
+            {summaryEdited&&summaryBasis!==JSON.stringify(answers)&&<section role="status">
+              <p>Your answers changed after you edited this draft. Your wording is preserved.</p>
+              <Button variant="outline" disabled={disabled||busy} onClick={async()=>{
+                const output=omniCisSummary(id,answers,version,clientName,inline?new Date():null).result;
+                if(await saveFocusedProposal({...output,narrative:brawndoInventoryDraft(answers,version,output,clientName)})){
+                  setSummaryEdited(false);setSummaryBasis(JSON.stringify(answers));
+                }
+              }}>Refresh from answers</Button>
+              <Button variant="outline" disabled={disabled||busy} onClick={()=>setSummaryBasis(JSON.stringify(answers))}>Keep my wording after review</Button>
+            </section>}
+            <label>Current implementation draft
+              <Textarea aria-label="Current implementation draft" rows={12} maxLength={20000} disabled={disabled||busy}
+                value={narrative} onChange={event=>{setNarrative(event.target.value);setSummaryEdited(true);setSummaryBasis(JSON.stringify(answers));setReplace(false);}}/>
+            </label>
+            <p>Apply draft updates Current implementation only. Select Save assessment to save the record. Implementation status and verification remain unchanged.</p>
+            {!!form?.implementation&&<label className="guided-replacement"><input type="checkbox" disabled={disabled||busy} checked={replace} onChange={event=>setReplace(event.target.checked)}/> I understand the existing Current implementation narrative will be replaced.</label>}
+            <div className="guided-actions">
+              <Button variant="outline" disabled={busy} onClick={backFromSummary}>Edit responses</Button>
+              <Button disabled={disabled||busy||updated||assessmentDirty||needsComparison||result.missingRecorded
+                ||JSON.stringify(answers)!==saved.current||!narrative.trim()||narrative.length>20000
+                ||summaryEdited&&summaryBasis!==JSON.stringify(answers)||!!form?.implementation&&!replace||!onUpdateImplementation}
+                onClick={applyConceptDraft}>Apply draft</Button>
+            </div>
+          </section>:directAssessment&&draft&&view==='result'&&result?<>
             <h3>Review your assessment summary</h3>
             <p>Safeguard {id} — {record.title}</p>
             <p>Proposed Implementation Status: <strong>{STATUSES[result.status]}</strong></p>

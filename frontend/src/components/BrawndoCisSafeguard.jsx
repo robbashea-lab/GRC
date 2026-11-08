@@ -26,6 +26,9 @@ import {safeguardDateFooter} from '@/lib/brawndoSafeguardDates';
 import {safeguard11Eligible} from '@/lib/brawndoSafeguard11';
 import {activePlans} from '@/lib/frameworks';
 import './BrawndoSafeguard11.css';
+import {PREVIEW_MODE} from '@/lib/api';
+import {brawndoAssessmentPilotEligible} from '@/lib/brawndoAssessmentPilot';
+import './BrawndoAssessmentPilot.css';
 
 // Shared CIS IG1 workspace. The historical name is retained for existing callers.
 // Read-only guidance never writes assessment responses, status or verification.
@@ -36,7 +39,7 @@ export const CURRENT_HELP='Document how the organization currently satisfies thi
 export const GUIDANCE_NOTE='Omnisciente guidance for assessing this safeguard, not additional CIS requirements.';
 
 export default function BrawndoCisSafeguard({state,actions}){
-  const {user}=useAuth();
+  const {user,workspaceMode}=useAuth();
   const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,breadcrumb,related,finding,otherDraft}=state;
   const guideConfiguration=ctx?ctx.configuration:state.guidedConfiguration;
   const {put,save,saveAndNext,close,previous,next,retry,run,setFinding,setNested,setFeedback}=actions;
@@ -49,6 +52,7 @@ export default function BrawndoCisSafeguard({state,actions}){
   const visualReference=state.visualReference===true,summary=summaryData.requirements[id];
   const brawndoRecord=useBrawndoFullRecord(record,clientId);
   const safeguard11=safeguard11Eligible({visualReference,brawndoRecord,record,current,definition,ctx});
+  const assessmentConcept=brawndoAssessmentPilotEligible({demoMode:PREVIEW_MODE,workspaceMode,user,safeguard11,directProgramOpener:state.directProgramOpener,record,current,ctx,pathname:window.location.pathname});
   const displayBreadcrumb=safeguard11&&definition.control_name?breadcrumb?.map(entry=>entry.label===`Control ${definition.control}`?{...entry,label:`${entry.label} · ${definition.control_name}`}:entry):breadcrumb;
   const inventoryReviewPlan=safeguard11&&activePlans(record.framework_key,ctx.configuration).some(plan=>plan.safeguards.includes(id)&&plan.default_cadence==='semiannual');
   const savedFooter=visualReference&&brawndoRecord&&current.client_id===clientId
@@ -70,9 +74,10 @@ export default function BrawndoCisSafeguard({state,actions}){
   }:undefined;
   const checklist=<AssessmentChecklist title={`Safeguard ${id} checklist`} items={criteria?.criteria} historicalItems={criteria?.legacy_criteria} value={form.cis_assessment_criteria||[]} disabled={disabled} onChange={value=>put('cis_assessment_criteria',value)}/>;
   const officialRequirement=<AssessmentRequirement reference={`CIS v8.1 · Safeguard ${id}`} heading="What CIS requires" text={source.text} official/>;
-  const requirement=<section className="cis-native-requirement"><details className="cis-collapsible-requirement"><summary>What CIS requires · CIS v8.1 safeguard {id}</summary>{officialRequirement}</details><div className="cis-native-requirement-meta">{presentation?.trigger&&<span><strong>Required operation / trigger:</strong> {presentation.trigger}</span>}{(presentation?.source||criteria?.source||source.url)&&<a href={presentation?.source||criteria?.source||source.url} target="_blank" rel="noopener noreferrer">Official CIS source</a>}</div></section>;
+  const requirementMeta=<div className="cis-native-requirement-meta">{presentation?.trigger&&<span><strong>Required operation / trigger:</strong> {assessmentConcept?<>Review and update the inventory <mark>at least every six months</mark>.</>:presentation.trigger}</span>}{(presentation?.source||criteria?.source||source.url)&&<a href={presentation?.source||criteria?.source||source.url} target="_blank" rel="noopener noreferrer">Official CIS source</a>}</div>;
+  const requirement=<section className="cis-native-requirement"><details className="cis-collapsible-requirement"><summary>What CIS requires · CIS v8.1 safeguard {id}</summary>{officialRequirement}{assessmentConcept&&requirementMeta}</details>{!assessmentConcept&&requirementMeta}</section>;
   return <AssessmentShell open={open} title={definition.title} description={<span className="sr-only">Safeguard assessment workspace</span>}
-    className={visualReference?'brawndo-cis-visual-safeguard'+(safeguard11?' brawndo-safeguard11':''):undefined}
+    className={visualReference?'brawndo-cis-visual-safeguard'+(safeguard11?' brawndo-safeguard11':'')+(assessmentConcept?' brawndo-assessment-pilot':''):undefined}
     closeInNavigation={visualReference}
     status={<><span aria-label="Saved implementation status"><CisStatusPill status={current.status} framework="cis-ig1"/></span><span aria-label="Saved verification" className={`cis-flag cis-tone-${VERIFICATION_TONE[saved]}`}>{VERIFICATION_LABELS[saved]}</span></>}
     {...{position,previous,next,close,busy}} testId="brawndo-cis-assessment" ariaModal
@@ -84,7 +89,7 @@ export default function BrawndoCisSafeguard({state,actions}){
     <AssessmentLayout inlineWorkflow guidedWorkflow criteriaSummary="Omnisciente guidance for assessing this safeguard. These are not additional CIS requirements." criteriaTitle="CIS assessment criteria" reference={`CIS v8.1 · Safeguard ${id}`} key={clientId+':'+id} summary={visualReference?undefined:summary?.plain} summaryLabel={visualReference?'Guided assessment':undefined}
       requirement={requirement} checklist={checklist} sectionCounts={sectionCounts} safeguard11={safeguard11}
       findings={<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback,safeguard11,error}}/>}
-      interview={({open,close})=>guideConfiguration?<GuidedAssessor sequential inline inlineOpen={open} onInlineClose={close} visualReference={visualReference} safeguard11={safeguard11} clientId={clientId} framework={record.framework_key} configuration={guideConfiguration} record={{...record,title:definition.title}} current={current} related={related} people={ctx?.users} inventoryContext={inventoryContext} contextComplete={!!ctx&&current.work?.context_complete===true} assessmentDirty={dirty&&!state.focusedImplementationOnly} onOpenNative={(kind,record)=>kind==='evidence'?actions.download?.(record):setNested({kind,record})} form={form} disabled={disabled} onApply={actions.applyGuided} onSaveAssessment={actions.saveGuidedAssessment} onDraftChange={actions.setGuidedDraft} onUpdateImplementation={disabled?undefined:actions.stageGuidedImplementation}/>:null}
+      interview={({open,close})=>guideConfiguration?<GuidedAssessor sequential inline inlineOpen={open} onInlineClose={close} visualReference={visualReference} safeguard11={safeguard11} assessmentConcept={assessmentConcept} clientId={clientId} framework={record.framework_key} configuration={guideConfiguration} record={{...record,title:definition.title}} current={current} related={related} people={ctx?.users} inventoryContext={inventoryContext} contextComplete={!!ctx&&current.work?.context_complete===true} assessmentDirty={dirty&&!state.focusedImplementationOnly} onOpenNative={(kind,record)=>kind==='evidence'?actions.download?.(record):setNested({kind,record})} form={form} disabled={disabled} onApply={actions.applyGuided} onSaveAssessment={actions.saveGuidedAssessment} onDraftChange={actions.setGuidedDraft} onUpdateImplementation={disabled?undefined:actions.stageGuidedImplementation}/>:null}
       itemsToAddress={<><AssessmentItems safeguard11={safeguard11} record={current} ctx={ctx} disabled={disabled} onSaved={actions.itemsSaved} onCreateFinding={actions.createItemFinding} onDraftChange={actions.setItemsDraft}/>{inventoryReviewPlan&&state.manageRecord&&<section className="sg11-review-schedule"><Button variant="outline" disabled={busy||!ctx} onClick={state.manageRecord}>Schedule six-monthly review in Manage</Button></section>}</>} findingDraft={!!finding}
       review={guidance.review} outcome={guidance.outcome}>
     <div className="assessment-implementation">

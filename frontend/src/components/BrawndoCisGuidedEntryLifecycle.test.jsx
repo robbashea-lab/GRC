@@ -118,7 +118,10 @@ function completedAnswers(){
 beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
   const user=(await api.post('/demo/enter')).data.user;
-  mockAuth={user,workspaceMode:'demo',loading:false,error:null};
+  // Preserve the established nonpilot CIS contract, including direct status/Items saves.
+  // The Preview adapter is only an isolated component-test transport here; this is
+  // not authenticated-backend proof. BrawndoAssessmentPilotNative covers the new Demo-only flow.
+  mockAuth={user:{...user,workspace_mode:'standard'},workspaceMode:'standard',loading:false,error:null};
   const clients=(await api.get('/clients')).data,currentClient=clients.find(client=>client.client_id===clientId);
   expect(currentClient.status).toBe('active');mockOrg={currentClientId:clientId,currentClient,clients,loading:false,error:null};
   sessionStorage.setItem('grc_client_id',clientId);window.history.replaceState({},'', '/compliance/cis-ig1?client_id='+clientId);

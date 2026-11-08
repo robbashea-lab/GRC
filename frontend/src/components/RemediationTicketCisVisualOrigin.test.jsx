@@ -34,7 +34,10 @@ async function openTicket(outer){
 }
 async function openSource(){
   const prior=assessments();await click(ticket(),'CIS Controls v8.1 Assessment → Safeguard 1.1');
-  const added=assessments().filter(node=>!prior.includes(node));expect(added).toHaveLength(1);return added[0];
+  const added=assessments().filter(node=>!prior.includes(node));expect(added).toHaveLength(1);
+  expect(added[0].classList.contains('brawndo-assessment-pilot')).toBe(false);
+  expect(added[0].querySelector('.brawndo-pilot-guidance')).toBeNull();
+  return added[0];
 }
 async function revealInterview(surface){
   const launcher=button(surface,'Resume guided assessment')||button(surface,'Begin guided assessment');

@@ -1,0 +1,40 @@
+/* Exact Demo Brawndo / IG1 / 1.1 opt-in. Native shell, typography and status tokens remain authoritative. */
+:root body .ui-dialog.brawndo-assessment-pilot[data-state] .assessment-interview {
+  width:100%; max-width:none; min-width:0; position:static;
+}
+.brawndo-assessment-pilot .cis-sequential-interview {
+  border:1px solid var(--sg-line); border-radius:12px; padding:18px 20px;
+  background:var(--sg-sunk); overflow-wrap:anywhere;
+}
+.brawndo-assessment-pilot .cis-sequential-interview > header { margin-bottom:10px; }
+.brawndo-assessment-pilot .cis-sequential-interview > header h3 { font-size:13px; font-weight:600; color:var(--sg-ink2); }
+.brawndo-assessment-pilot .cis-sequential-interview fieldset { gap:14px; padding:18px 0; }
+.brawndo-assessment-pilot .cis-sequential-interview legend { font:600 20px/1.4 var(--font); color:var(--sg-ink); }
+.brawndo-assessment-pilot .cis-sequential-interview .cis-omni-criterion { display:block; margin:6px 0 0; }
+.brawndo-assessment-pilot .cis-sequential-interview :is(select,input[type=date]) {
+  width:100%; max-width:100%; min-width:0; min-height:46px; padding:10px 12px;
+  border:1px solid var(--sg-line2); border-radius:8px; background:var(--sg-card); color:var(--sg-ink);
+  font:400 15px/1.5 var(--font);
+}
+.brawndo-assessment-pilot .cis-sequential-interview .omni-help { font-size:13px; color:var(--sg-ink2); }
+.brawndo-assessment-pilot .brawndo-pilot-guidance {
+  padding:12px 14px; border-left:3px solid var(--sg-accent); border-radius:0 8px 8px 0;
+  background:var(--sg-soft); color:var(--sg-ink); font-size:14px; line-height:1.6;
+}
+.brawndo-assessment-pilot .brawndo-pilot-guidance strong { font-size:12px; font-weight:600; }
+.brawndo-assessment-pilot .brawndo-pilot-guidance p { margin:4px 0 0; }
+.brawndo-assessment-pilot .brawndo-pilot-guidance > div + div { margin-top:9px; }
+.brawndo-assessment-pilot mark { padding:1px 3px; border-radius:3px; background:var(--sg-warn-bg); color:var(--sg-warn); font-weight:600; }
+.brawndo-assessment-pilot .cis-collapsible-requirement .cis-native-requirement-meta { margin:14px 0 0; padding-top:12px; border-top:1px solid var(--sg-line); }
+.brawndo-assessment-pilot .brawndo-pilot-tool-field { display:grid; gap:10px; min-width:0; }
+.brawndo-assessment-pilot .brawndo-pilot-tool-field p { font-size:13px; color:var(--sg-ink2); margin:0; }
+.brawndo-assessment-pilot .brawndo-pilot-draft { display:grid; gap:14px; min-width:0; }
+.brawndo-assessment-pilot .brawndo-pilot-draft h3 { font:600 20px/1.4 var(--font); }
+.brawndo-assessment-pilot .brawndo-pilot-draft textarea { min-height:260px; }
+.brawndo-assessment-pilot .cis-sequential-interview .guided-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.brawndo-assessment-pilot .cis-sequential-interview .cis-answer-review li { min-width:0; }
+@media(max-width:600px) {
+  .brawndo-assessment-pilot .cis-sequential-interview { padding:14px 12px; }
+  .brawndo-assessment-pilot .cis-sequential-interview legend { font-size:18px; }
+  .brawndo-assessment-pilot .guided-actions > button { min-height:44px; }
+}
