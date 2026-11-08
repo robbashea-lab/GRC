@@ -4,6 +4,7 @@ No environment/default connection is used. Each check gets a fresh database;
 only those generated database names are dropped, including on failed checks.
 """
 import argparse
+import asyncio
 import logging
 from pathlib import Path
 import sys
@@ -24,6 +25,10 @@ def main():
     parser.add_argument('--include-cis-ig3-scope', action='store_true', help='Also run actual IG3 catalog availability, preservation and negative-gate checks')
     parser.add_argument('--include-cis-six-year', action='store_true', help='Also run fresh onboarding and 2027–2032 cumulative CIS simulation')
     parser.add_argument('--include-generic-saves', action='store_true', help='Also run generic record save audit/relationship recovery regressions')
+    parser.add_argument('--include-portfolio-reporting', action='store_true', help='Also run reporting indexes, automatic snapshots and committed-event recovery')
+    parser.add_argument('--include-policy-coverage', action='store_true', help='Run annual Policy coverage interruption, retry, concurrency and identity checks')
+    parser.add_argument('--include-evidence-integrity', action='store_true', help='Run binary/Unicode Evidence persistence and tenant denial checks')
+    parser.add_argument('--include-ai-onboarding', action='store_true', help='Run native AI onboarding, replay and tenant/lifecycle checks')
     args = parser.parse_args()
     parsed = urlsplit(args.mongo_url)
     if (parsed.scheme != 'mongodb' or parsed.hostname != '127.0.0.1' or not parsed.port
@@ -38,6 +43,7 @@ def main():
     from test_onboarding_recovery import OnboardingRecoveryTests
     from test_record_integrity import RecordIntegrityTests
     from test_dashboard_work_queue import DashboardWorkQueueTests
+    from test_assessment_items import AssessmentItemsTests
     import routes.onboarding as onboarding
     from initialization import ensure_indexes
 
@@ -52,6 +58,7 @@ def main():
             real_db = self.mongo[name]
             async def remove_disposable_database():
                 await self.mongo.drop_database(name)
+                self.assertNotIn(name, await self.mongo.list_database_names())
             self.addAsyncCleanup(remove_disposable_database)
             # Copy only this test's isolated bootstrap identities, never user data.
             source = getattr(self, 'db', harness.server.db)
@@ -81,11 +88,142 @@ def main():
                 self.assertEqual(replay.json(), first.json())
                 self.assertEqual(await harness.server.db.tasks.count_documents({}), 1)
 
+    class ReconnectAssessmentItemTests(MongoStorage, AssessmentItemsTests):
+        async def test_items_and_finding_receipt_survive_a_new_database_connection(self):
+            base,row=await self.initial()
+            item=row['items_to_address'][0]
+            resolved=await self.client.patch(base+'/items/'+item['item_id'],json={
+                'expected_revision':row['items_revision'],'state':'resolved',
+                'resolution':'Synthetic completed work retained across connection restart.'})
+            self.assertEqual(resolved.status_code,200,resolved.text)
+            body={'item_id':item['item_id'],'title':'Explicit durable assessment follow-up',
+                'description':item['text'],'remediation_title':'Complete formal corrective work',
+                'request_id':'assessment-item-reconnect'}
+            first=await self.client.post(base+'/findings',json=body)
+            self.assertEqual(first.status_code,200,first.text)
+            saved=(await self.client.get(base)).json()
+            database_name=harness.server.db.name
+            self.mongo.close()
+            fresh=AsyncIOMotorClient(args.mongo_url,serverSelectionTimeoutMS=3000)
+            self.mongo=fresh
+            with patch.object(harness.server,'db',fresh[database_name]),patch.object(onboarding,'db',fresh[database_name]):
+                current=(await self.client.get(base)).json()
+                for field in ('items_to_address','items_revision','implementation','status','verification','assessment_history'):
+                    self.assertEqual(current.get(field),saved.get(field))
+                replay=await self.client.post(base+'/findings',json=body)
+                self.assertEqual(replay.status_code,200,replay.text)
+                self.assertEqual(replay.json(),first.json())
+                self.assertEqual(await harness.server.db.findings.count_documents({'framework_assessment_id':row['framework_assessment_id']}),1)
+                self.assertEqual(await harness.server.db.tasks.count_documents({'finding_id':first.json()['finding_id']}),1)
+                self.assertEqual((await self.client.get(base)).json()['items_to_address'],saved['items_to_address'])
+
     suite = unittest.TestSuite()
-    for base in (CreateRequestTests, ReviewRecoveryTests, ReviewAuditRecoveryTests, OnboardingRecoveryTests, RecordIntegrityTests, DashboardWorkQueueTests):
+    for base in (CreateRequestTests, ReviewRecoveryTests, ReviewAuditRecoveryTests, OnboardingRecoveryTests, RecordIntegrityTests, DashboardWorkQueueTests, AssessmentItemsTests):
         concrete = type('Mongo' + base.__name__, (MongoStorage, base), {})
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     suite.addTest(ReconnectReceiptTests('test_receipt_survives_a_new_database_connection'))
+    suite.addTest(ReconnectAssessmentItemTests('test_items_and_finding_receipt_survive_a_new_database_connection'))
+    if args.include_ai_onboarding:
+        from test_ai_onboarding import AIOnboardingTests
+        class MongoAIOnboardingTests(MongoStorage, AIOnboardingTests):
+            async def test_concurrent_replay_and_new_connection_preserve_ids_audit_and_vendor(self):
+                body = self.payload()
+                body['vendor'].update(mode='create', name='Synthetic AI provider', service='Synthetic AI service')
+                key = uuid.uuid4().hex
+                responses = await asyncio.gather(*(self.add(body, key) for _ in range(5)))
+                self.assertTrue(all(response.status_code in (200, 409) for response in responses),
+                                [response.text for response in responses])
+                first = await self.add(body, key)
+                self.assertEqual(first.status_code, 200, first.text)
+                result = first.json()
+                db = harness.server.db
+                before = {kind: await db[kind].count_documents({})
+                          for kind in ('ai_systems', 'risks', 'vendors', 'reviews', 'audit_logs')}
+                self.assertEqual((before['ai_systems'], before['risks'], before['vendors']), (1, 1, 1))
+                identities = {'ai_systems': 'ai_system_id', 'risks': 'risk_id',
+                              'vendors': 'vendor_id', 'reviews': 'review_id'}
+                original = {}
+                for kind, field in identities.items():
+                    row = await db[kind].find_one({field: result[field], 'client_id': 'a'}, {'_id': 0})
+                    self.assertIsNotNone(row, kind)
+                    original[kind] = row
+                anchor = result['ai_system']['created_at']
+                for kind in ('ai_systems', 'risks', 'vendors', 'reviews'):
+                    self.assertEqual(original[kind]['created_at'], anchor, kind)
+                self.assertEqual(original['risks']['date_identified'], anchor)
+                self.assertEqual(original['risks']['next_review'], original['reviews']['due_date'])
+                self.assertEqual(original['vendors']['next_review'], original['reviews']['due_date'])
+                self.assertEqual(original['reviews']['status'], 'upcoming')
+                self.assertEqual(original['reviews']['ai_system_id'], result['ai_system_id'])
+                self.assertEqual(original['ai_systems']['vendor_id'], result['vendor_id'])
+                self.assertEqual(await db.reviews.count_documents({'ai_system_id': result['ai_system_id']}), 1)
+                self.assertEqual(await db.reviews.count_documents({'risk_id': result['risk_id']}), 1)
+                expected = [('AI use case created', result['ai_system_id']),
+                            ('AI record linked', result['ai_system_id']),
+                            ('AI Governance Review scheduled', result['ai_system_id']),
+                            ('Risk created', result['risk_id']), ('Vendor created', result['vendor_id'])]
+                audits = {}
+                for action, entity_id in expected:
+                    query = {'action': action, 'entity_id': entity_id, 'client_id': 'a', 'user_id': 'admin'}
+                    rows = await db.audit_logs.find(query, {'_id': 0}).to_list(None)
+                    self.assertEqual(len(rows), 1, (action, rows))
+                    audits[action] = rows
+                database_name = db.name
+                self.mongo.close()
+                self.mongo = AsyncIOMotorClient(args.mongo_url, serverSelectionTimeoutMS=3000)
+                fresh = self.mongo[database_name]
+                with patch.object(harness.server, 'db', fresh), patch.object(onboarding, 'db', fresh):
+                    replay = await self.add(body, key)
+                    self.assertEqual(replay.status_code, 200, replay.text)
+                    self.assertEqual(replay.json(), result)
+                    self.assertEqual({kind: await fresh[kind].count_documents({}) for kind in before}, before)
+                    for kind, field in identities.items():
+                        self.assertEqual(await fresh[kind].find_one({field: result[field]}, {'_id': 0}), original[kind])
+                    for action, entity_id in expected:
+                        rows = await fresh.audit_logs.find({'action': action, 'entity_id': entity_id,
+                            'client_id': 'a', 'user_id': 'admin'}, {'_id': 0}).to_list(None)
+                        self.assertEqual(rows, audits[action])
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(MongoAIOnboardingTests))
+    if args.include_policy_coverage:
+        from test_policy_review_coverage import PolicyCoverageTests
+        class MongoPolicyCoverageTests(MongoStorage, PolicyCoverageTests):
+            async def test_interrupted_plan_survives_reconnect_and_preserves_concurrent_notes(self):
+                await self.policy('A')
+                with patch.object(harness.server.policy_review_coverage, 'reconcile', side_effect=RuntimeError('Synthetic interruption')):
+                    with self.assertRaises(RuntimeError):
+                        await self.complete()
+                database_name = harness.server.db.name
+                pending = await harness.server.db.reviews.find_one({'review_id': 'annual'})
+                self.assertIn('_policy_coverage_pending', pending)
+                self.mongo.close()
+                self.mongo = AsyncIOMotorClient(args.mongo_url, serverSelectionTimeoutMS=3000)
+                real_db = self.mongo[database_name]
+                # A separate writer updates the child while the parent's frozen execution is interrupted.
+                await real_db.reviews.update_one({'review_id': 'review-A'}, {'$set': {
+                    'notes': 'Concurrent synthetic note retained', 'updated_at': '2026-10-21T12:01:00+00:00'}})
+                with patch.object(harness.server, 'db', real_db):
+                    first = await self.complete()
+                    self.assertEqual(first.status_code, 200, first.text)
+                    replay = await self.complete()
+                    self.assertEqual(replay.status_code, 200, replay.text)
+                    self.assertEqual(first.json()['occurrence'], replay.json()['occurrence'])
+                    child = await real_db.reviews.find_one({'review_id': 'review-A'})
+                    self.assertEqual(child['notes'], 'Concurrent synthetic note retained')
+                    self.assertEqual(len(child['occurrences']), 1)
+                    self.assertEqual(len((await real_db.policies.find_one({'policy_id': 'A'}))['review_history']), 1)
+                    self.assertNotIn('_policy_coverage_pending', await real_db.reviews.find_one({'review_id': 'annual'}))
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(MongoPolicyCoverageTests))
+    if args.include_evidence_integrity:
+        from test_evidence_library import EvidenceLibraryTests
+        concrete = type('MongoEvidenceLibraryTests', (MongoStorage, EvidenceLibraryTests), {})
+        suite.addTest(concrete('test_binary_unicode_integrity_after_fresh_authenticated_client'))
+    if args.include_portfolio_reporting:
+        from test_portfolio_reporting import PortfolioReportingTests
+        from test_portfolio_activity import PortfolioActivityTests, PortfolioDeletionReceiptTests
+        from test_client_portfolio_dashboard import ClientPortfolioDashboardTests
+        for base in (PortfolioReportingTests, PortfolioActivityTests, PortfolioDeletionReceiptTests, ClientPortfolioDashboardTests):
+            concrete = type('Mongo' + base.__name__, (MongoStorage, base), {})
+            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     if args.include_generic_saves:
         from test_generic_save_recovery import GenericSaveRecoveryTests
         concrete = type('MongoGenericSaveRecoveryTests', (MongoStorage, GenericSaveRecoveryTests), {})
@@ -97,6 +235,9 @@ def main():
     if args.include_cis_ig2:
         from test_cis_ig2 import CisIG2Tests
         concrete = type('MongoCisIG2Tests', (MongoStorage, CisIG2Tests), {})
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
+        from test_onboarding_policy_selection import PolicySelectionTests
+        concrete = type('MongoCisPolicySelectionTests', (MongoStorage, PolicySelectionTests), {})
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(concrete))
     if args.include_remediation_tickets:
         from test_remediation_tickets import TicketIntegrityTests

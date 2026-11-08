@@ -7,6 +7,8 @@ export const OPERATOR_ROLES = [...INTERNAL_ROLES, 'client_grc_manager', 'client_
 export const isInternal = user => INTERNAL_ROLES.includes(user?.role);
 // Assigned work: notes, task fields, remediation plans, evidence upload, comments.
 export const canOperate = user => OPERATOR_ROLES.includes(user?.role);
+// Existing report downloads are readable by every recognized client role.
+export const canExportReports = user => !user?.password_change_required && [...OPERATOR_ROLES, 'client_readonly', 'client_viewer'].includes(user?.role);
 // Contributors act only on work assigned to them (authorization.OWNERS).
 export const isAssignedTo = (user, row, fields = ['owner_id', 'assignee_id']) => fields.some(f => row?.[f] && row[f] === user?.user_id);
 

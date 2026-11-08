@@ -4,6 +4,7 @@ import cis from '@catalogs/cisIG1.json';
 import GuidedAssessor from './GuidedAssessor';
 import {guidedCatalog,versionForSafeguard,visibleQuestions} from '@/lib/guidedAssessment';
 import {omniCisSummary} from '@/lib/omniCisSummary';
+import {localCalendarDate} from '@/lib/calendarView';
 import api from '@/lib/api';
 
 let mockClient,mockName;
@@ -13,7 +14,7 @@ jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClient:{client_id:moc
 let root,container,stored,props;
 const copy=value=>JSON.parse(JSON.stringify(value)),fingerprint='d'.repeat(64);
 const button=name=>[...document.querySelectorAll('button')].find(element=>element.textContent.trim()===name);
-const complete=id=>Object.fromEntries(guidedCatalog.safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':q.type==='date'?new Date().toISOString().slice(0,10):q.type==='multi'?['Quarantine or isolate']:q.id==='frequency'?(id==='1.1'?'Every six months':id==='1.3'?'Daily':'Weekly'):q.id==='sources'?'One source':q.id==='unresolved'?'No':q.choices.includes('Yes')?'Yes':q.choices[0]]));
+const complete=id=>Object.fromEntries(guidedCatalog.safeguards[id].map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':q.type==='date'?localCalendarDate(new Date()):q.type==='multi'?['Quarantine or isolate']:q.id==='frequency'?(id==='1.1'?'Every six months':id==='1.3'?'Daily':'Weekly'):q.id==='sources'?'One source':q.id==='unresolved'?'No':q.choices.includes('Yes')?'Yes':q.choices[0]]));
 async function render(){await act(async()=>root.render(<GuidedAssessor {...props}/>));}
 async function click(name){const element=button(name);expect(element).toBeTruthy();expect(element.disabled).toBe(false);await act(async()=>element.click());}
 async function open(){await act(async()=>document.querySelector('[aria-label="Open Omnibot guide"]').click());}

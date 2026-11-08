@@ -1,0 +1,68 @@
+{
+  "test": "test_calendar_limit_and_invalid_windows_never_return_partial_success",
+  "status": "passed",
+  "interval": [
+    "2027-01-01",
+    "2037-01-01"
+  ],
+  "as_of": "2037-01-15T12:00:00Z",
+  "clock_boundary": "Only server _now patched; no OS/shared clock change",
+  "persistence": "real_loopback_motor_mongo",
+  "identity": "isolated modeled signed actor; no live hosted role proof",
+  "measurements": [
+    {
+      "method": "GET",
+      "path": "/api/calendar",
+      "status": 200,
+      "elapsed_ms": 167.815,
+      "response_bytes": 1610071
+    },
+    {
+      "method": "GET",
+      "path": "/api/calendar",
+      "status": 413,
+      "elapsed_ms": 24.874,
+      "response_bytes": 94
+    },
+    {
+      "method": "GET",
+      "path": "/api/calendar",
+      "status": 422,
+      "elapsed_ms": 3.71,
+      "response_bytes": 69
+    },
+    {
+      "method": "GET",
+      "path": "/api/calendar",
+      "status": 422,
+      "elapsed_ms": 2.521,
+      "response_bytes": 69
+    },
+    {
+      "method": "GET",
+      "path": "/api/calendar",
+      "status": 422,
+      "elapsed_ms": 2.854,
+      "response_bytes": 69
+    }
+  ],
+  "volume": {
+    "cap_only_tasks": 5001,
+    "calendar_limit": 5000,
+    "window_limit_days_inclusive": 367
+  },
+  "owned_database": {
+    "origin": "mongodb://127.0.0.1:58749",
+    "database_name": "platform_acceptance_20261011_scale_449150daedd24421",
+    "fresh_collection_readback": [],
+    "cleanup": "drop_acknowledged_by_driver"
+  },
+  "limitations": [
+    "Historical saves/approval/closure are seeded load volume, not executed lifecycle proof.",
+    "No hosted backend/browser, real restricted identity or production capacity claim.",
+    "Latency observations have no invented pass threshold; adopted payload/cap budgets are separately asserted.",
+    "Mongo mock does not prove durability, index/query-plan or multiworker contention.",
+    "Board PDF date/generated labels and recent-policy 90-day cutoff use actual server.datetime; no recent-policy fixture or full-clock claim.",
+    "Cleanup receipt is author-harness evidence; coordinator independently checks the exact recorded database afterward."
+  ]
+}

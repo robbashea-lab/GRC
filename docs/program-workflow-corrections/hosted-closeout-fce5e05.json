@@ -1,0 +1,271 @@
+{
+  "revision": "fce5e056567bd276a997f948296e6857a777f330",
+  "deployment": "dep-db7etul9fdbs73e00fj0",
+  "service": "srv-db1s0cugekts73f72reg",
+  "before_writes": {
+    "render_status": "Deploy succeeded|Live",
+    "render_commit_link": "fce5e056567bd276a997f948296e6857a777f330",
+    "observed_js": "main.ad718a15.js",
+    "observed_css": "main.24a244a6.css"
+  },
+  "actor": {
+    "display_name": "Staging Administrator",
+    "displayed_role": "super admin",
+    "user_id": null,
+    "note": "Raw user ID was not exposed in the inspected UI."
+  },
+  "resources": {
+    "client_name": "Portfolio Workflow QA 20261014 fce5e05",
+    "client_id": "cli_3fe2af6a91e54ffffd5ac2415fd10de31397ed73dfa477d4f541743afb6fa10f",
+    "iso_definition": "4.2 — Stakeholder obligations",
+    "iso_assessment_id": "fw_aaa013f2c7205b129591082eee1518f5",
+    "cis_assessment_id": "fw_b18f2c661a825dd6a6623d0c59a5bf78",
+    "finding_id": "fw_f72d290696885697a5b7166ca70cdd94",
+    "child_action_ids": null
+  },
+  "iso_journey": {
+    "baseline": "Not Assessed; native Current implementation empty",
+    "answers": {
+      "parties": "Partially",
+      "parties_detail": "Synthetic staging QA only: some relevant parties are identified; the list is incomplete.",
+      "requirements": "Not sure",
+      "response": "Yes",
+      "response_detail_final": "Synthetic staging QA only: a bounded response route is reported in place. Follow-up context added during review.",
+      "additional_gap": "No",
+      "additional_confirmation": "No"
+    },
+    "group_checkpoints": "Saved groups 1 and 2; native conclusion remained Not Assessed and native text remained empty.",
+    "generated_review": "Proposed Partially Implemented; distinguished one partial-practice gap, one confirmation and one supported practice. Native conclusion/text still unchanged.",
+    "manual_protection": "Edited reviewed summary; returned to questions and changed response context. Exact wording retained; final save disabled until Keep my wording after review was selected.",
+    "native_final_save": "Partially Implemented; exact reviewed multiline text applied; two corresponding Items.",
+    "reload": "Exact multiline native text retained.",
+    "verification": "Not verified",
+    "unchanged_footer_first": "Text/status/Items preserved, but added a same-count position and false scope-change marker: FAIL no-op.",
+    "unchanged_footer_second": "Exact text retained; history remained five positions with latest 12:54 UTC."
+  },
+  "final_fixture_vectors": {
+    "order": [
+      "implemented_or_addressed",
+      "partial",
+      "needs_remediation_validation",
+      "not_assessed"
+    ],
+    "cis_ig3": {
+      "counts": [
+        0,
+        1,
+        0,
+        152
+      ],
+      "applicable": 153,
+      "assessed": 1
+    },
+    "iso27001": {
+      "counts": [
+        1,
+        1,
+        0,
+        29
+      ],
+      "applicable": 31,
+      "assessed": 2
+    },
+    "soc2": {
+      "counts": [
+        0,
+        0,
+        1,
+        32
+      ],
+      "applicable": 33,
+      "assessed": 1
+    },
+    "derived_diagnostic_total": {
+      "counts": [
+        1,
+        2,
+        1,
+        213
+      ],
+      "applicable": 217,
+      "assessed": 4
+    },
+    "note": "Native Dashboard and Portfolio agreed. Diagnostic counts are not a cross-framework score."
+  },
+  "finding_lifecycle": {
+    "observed_states": [
+      "Open",
+      "Pending validation",
+      "Completed",
+      "Open"
+    ],
+    "current_child_completed_at": "2026-10-14T12:56:05.132267+00:00",
+    "earlier_completed_child_retained_at": "2026-10-14T03:30:33.767735+00:00",
+    "after_reopen": "Same Finding ID; new open child retained copied plan; both completed children and resolutions retained.",
+    "source_after_reload": "Partially Implemented / Not verified; linked Finding Open."
+  },
+  "history": {
+    "selected_range": "3 UTC calendar months",
+    "iso_observed_positions": [
+      {
+        "effective_ui_utc": "2026-10-14 03:11",
+        "counts": [
+          0,
+          0,
+          0,
+          30
+        ],
+        "applicable": 30
+      },
+      {
+        "effective_ui_utc": "2026-10-14 03:33",
+        "counts": [
+          1,
+          0,
+          0,
+          30
+        ],
+        "applicable": 31
+      },
+      {
+        "effective_ui_utc": "2026-10-14 12:48",
+        "captured_ui_utc": "2026-10-14 12:52",
+        "counts": [
+          1,
+          0,
+          0,
+          30
+        ],
+        "applicable": 31
+      },
+      {
+        "effective_ui_utc": "2026-10-14 12:53",
+        "counts": [
+          1,
+          1,
+          0,
+          29
+        ],
+        "applicable": 31
+      },
+      {
+        "effective_ui_utc": "2026-10-14 12:54",
+        "counts": [
+          1,
+          1,
+          0,
+          29
+        ],
+        "applicable": 31,
+        "note": "First footer default-materialization defect"
+      }
+    ],
+    "second_unchanged_save": "Five positions still; latest 12:54 UTC matched current committed state.",
+    "period_delta": "Unavailable: no trustworthy snapshot on or before requested start.",
+    "forecast": "Not estimated",
+    "raw_revision_last_saved_started_at_current_epoch": null,
+    "cis_soc_current_modal_counts": null,
+    "limits": "No earlier history, interpolated states or customer activity asserted. Raw API tokens and current CIS/SOC modal point counts were not inspected."
+  },
+  "cleanup": {
+    "restored": "Only this existing disposable fixture",
+    "rearchived": true,
+    "fresh_reload": "Archived / Edit / Restore",
+    "active_portfolio": {
+      "clients": 22,
+      "programs": 27
+    },
+    "fixture_in_active_view": false,
+    "purge_reset_reseed": false,
+    "shared_slot": "Released to Agent 3"
+  },
+  "protected_after_values": {
+    "brawndo": "CIS IG1 2/56 implemented; 2 assessed; 3.6%; Oct 9 Assessment saved",
+    "hooli": "CIS IG3 0/153; Not started; no activity",
+    "initech": "CIS IG2 0/130; Not started; no activity",
+    "prestige": "SOC 2 0/38; Not started; no activity",
+    "dunder": "Absent from this authorized active Portfolio view; no whole-database absence claim."
+  },
+  "exports": {
+    "new_files": 0,
+    "full_phase_snapshots": "23 captured in memory; focused excerpts exported below",
+    "screenshots": "ISO saved-Items screenshot viewed through CUA only; no new screenshot file exported under read-only policy."
+  },
+  "evidence_classification": "Actual Agent2 hosted execution and focused exported phase excerpts; not independently reexecuted browser or a raw payload/response transcript",
+  "raw_operator_export_sha256": "439154882fe75d8e843b55c74cf88f1ca3651aa311bac5215f2e49a6d66c05ec",
+  "operator_export_text": "Closeout is **Fail pending one reproduced no-op defect**. The hosted ISO guided journey, manual wording protection, reload persistence, Finding closure/reopening and count reconciliation passed. The fixture is archived again, and **the shared staging slot is released to Agent 3**.\n\nThe first unchanged ISO footer save adds empty fields that were absent, creating another history position and a false scope-change marker. A second identical save adds no position. This is supported by the connected source: `FrameworkDrawer.jsx:128` supplies defaults; `framework_governance.py:723–724` treats them as changes; `portfolio_activity.py:300–303` marks the empty addressability addition as a scope change. No source or deployment edits were made.\n\nThe following is the operator receipt for Agent 3’s acceptance record.\n\n```json\n{\n  \"revision\": \"fce5e056567bd276a997f948296e6857a777f330\",\n  \"deployment\": \"dep-db7etul9fdbs73e00fj0\",\n  \"service\": \"srv-db1s0cugekts73f72reg\",\n  \"before_writes\": {\n    \"render_status\": \"Deploy succeeded|Live\",\n    \"render_commit_link\": \"fce5e056567bd276a997f948296e6857a777f330\",\n    \"observed_js\": \"main.ad718a15.js\",\n    \"observed_css\": \"main.24a244a6.css\"\n  },\n  \"actor\": {\n    \"display_name\": \"Staging Administrator\",\n    \"displayed_role\": \"super admin\",\n    \"user_id\": null,\n    \"note\": \"Raw user ID was not exposed in the inspected UI.\"\n  },\n  \"resources\": {\n    \"client_name\": \"Portfolio Workflow QA 20261014 fce5e05\",\n    \"client_id\": \"cli_3fe2af6a91e54ffffd5ac2415fd10de31397ed73dfa477d4f541743afb6fa10f\",\n    \"iso_definition\": \"4.2 — Stakeholder obligations\",\n    \"iso_assessment_id\": \"fw_aaa013f2c7205b129591082eee1518f5\",\n    \"cis_assessment_id\": \"fw_b18f2c661a825dd6a6623d0c59a5bf78\",\n    \"finding_id\": \"fw_f72d290696885697a5b7166ca70cdd94\",\n    \"child_action_ids\": null\n  },\n  \"iso_journey\": {\n    \"baseline\": \"Not Assessed; native Current implementation empty\",\n    \"answers\": {\n      \"parties\": \"Partially\",\n      \"parties_detail\": \"Synthetic staging QA only: some relevant parties are identified; the list is incomplete.\",\n      \"requirements\": \"Not sure\",\n      \"response\": \"Yes\",\n      \"response_detail_final\": \"Synthetic staging QA only: a bounded response route is reported in place. Follow-up context added during review.\",\n      \"additional_gap\": \"No\",\n      \"additional_confirmation\": \"No\"\n    },\n    \"group_checkpoints\": \"Saved groups 1 and 2; native conclusion remained Not Assessed and native text remained empty.\",\n    \"generated_review\": \"Proposed Partially Implemented; distinguished one partial-practice gap, one confirmation and one supported practice. Native conclusion/text still unchanged.\",\n    \"manual_protection\": \"Edited reviewed summary; returned to questions and changed response context. Exact wording retained; final save disabled until Keep my wording after review was selected.\",\n    \"native_final_save\": \"Partially Implemented; exact reviewed multiline text applied; two corresponding Items.\",\n    \"reload\": \"Exact multiline native text retained.\",\n    \"verification\": \"Not verified\",\n    \"unchanged_footer_first\": \"Text/status/Items preserved, but added a same-count position and false scope-change marker: FAIL no-op.\",\n    \"unchanged_footer_second\": \"Exact text retained; history remained five positions with latest 12:54 UTC.\"\n  },\n  \"final_fixture_vectors\": {\n    \"order\": [\"implemented_or_addressed\", \"partial\", \"needs_remediation_validation\", \"not_assessed\"],\n    \"cis_ig3\": {\"counts\": [0, 1, 0, 152], \"applicable\": 153, \"assessed\": 1},\n    \"iso27001\": {\"counts\": [1, 1, 0, 29], \"applicable\": 31, \"assessed\": 2},\n    \"soc2\": {\"counts\": [0, 0, 1, 32], \"applicable\": 33, \"assessed\": 1},\n    \"derived_diagnostic_total\": {\"counts\": [1, 2, 1, 213], \"applicable\": 217, \"assessed\": 4},\n    \"note\": \"Native Dashboard and Portfolio agreed. Diagnostic counts are not a cross-framework score.\"\n  },\n  \"finding_lifecycle\": {\n    \"observed_states\": [\"Open\", \"Pending validation\", \"Completed\", \"Open\"],\n    \"current_child_completed_at\": \"2026-10-14T12:56:05.132267+00:00\",\n    \"earlier_completed_child_retained_at\": \"2026-10-14T03:30:33.767735+00:00\",\n    \"after_reopen\": \"Same Finding ID; new open child retained copied plan; both completed children and resolutions retained.\",\n    \"source_after_reload\": \"Partially Implemented / Not verified; linked Finding Open.\"\n  },\n  \"history\": {\n    \"selected_range\": \"3 UTC calendar months\",\n    \"iso_observed_positions\": [\n      {\"effective_ui_utc\": \"2026-10-14 03:11\", \"counts\": [0, 0, 0, 30], \"applicable\": 30},\n      {\"effective_ui_utc\": \"2026-10-14 03:33\", \"counts\": [1, 0, 0, 30], \"applicable\": 31},\n      {\"effective_ui_utc\": \"2026-10-14 12:48\", \"captured_ui_utc\": \"2026-10-14 12:52\", \"counts\": [1, 0, 0, 30], \"applicable\": 31},\n      {\"effective_ui_utc\": \"2026-10-14 12:53\", \"counts\": [1, 1, 0, 29], \"applicable\": 31},\n      {\"effective_ui_utc\": \"2026-10-14 12:54\", \"counts\": [1, 1, 0, 29], \"applicable\": 31, \"note\": \"First footer default-materialization defect\"}\n    ],\n    \"second_unchanged_save\": \"Five positions still; latest 12:54 UTC matched current committed state.\",\n    \"period_delta\": \"Unavailable: no trustworthy snapshot on or before requested start.\",\n    \"forecast\": \"Not estimated\",\n    \"raw_revision_last_saved_started_at_current_epoch\": null,\n    \"cis_soc_current_modal_counts\": null,\n    \"limits\": \"No earlier history, interpolated states or customer activity asserted. Raw API tokens and current CIS/SOC modal point counts were not inspected.\"\n  },\n  \"cleanup\": {\n    \"restored\": \"Only this existing disposable fixture\",\n    \"rearchived\": true,\n    \"fresh_reload\": \"Archived / Edit / Restore\",\n    \"active_portfolio\": {\"clients\": 22, \"programs\": 27},\n    \"fixture_in_active_view\": false,\n    \"purge_reset_reseed\": false,\n    \"shared_slot\": \"Released to Agent 3\"\n  },\n  \"protected_after_values\": {\n    \"brawndo\": \"CIS IG1 2/56 implemented; 2 assessed; 3.6%; Oct 9 Assessment saved\",\n    \"hooli\": \"CIS IG3 0/153; Not started; no activity\",\n    \"initech\": \"CIS IG2 0/130; Not started; no activity\",\n    \"prestige\": \"SOC 2 0/38; Not started; no activity\",\n    \"dunder\": \"Absent from this authorized active Portfolio view; no whole-database absence claim.\"\n  },\n  \"exports\": {\n    \"new_files\": 0,\n    \"full_phase_snapshots\": \"23 captured in memory; focused excerpts exported below\",\n    \"screenshots\": \"ISO saved-Items screenshot viewed through CUA only; no new screenshot file exported under read-only policy.\"\n  }\n}\n```\n\nExact manually reviewed text, preserved on native save, reload and both footer saves:\n\n```text\nSynthetic staging QA manual wording for ISO 4.2.\nRelevant parties are partially identified; relevant requirements need confirmation.\nControls in place\n• A bounded response route is reported in place.\nIndependent verification remains separate; this disposable fixture is not a certification claim.\n```\n\nEssential captured phase DOM excerpts:\n\n```text\nBASELINE / CHECKPOINTS\ngeneric \"Saved conclusion\": Not Assessed\nradio \"Not Assessed\" [checked]\ntextbox \"Current implementation\": [empty]\nQuestion group 2 of 3\nQuestion group 3 of 3\n\nGENERATED REVIEW, BEFORE NATIVE SAVE\n\"Proposed implementation status:\" Partially Implemented\n\"Saved conclusion\": Not Assessed\n\"Reported gap: Stakeholder obligations: parties: reported partially in place — Synthetic staging QA only: some relevant parties are identified; the list is incomplete.\"\n\"Requires confirmation: Stakeholder obligations: requirements: needs confirmation.\"\n\"Controls in place\"\n\"• Stakeholder obligations: response: reported in place — Synthetic staging QA only: a bounded response route is reported in place.\"\n\nMANUAL REVIEW GUARD\n\"Your answers changed after you edited the write-up. Your wording is retained; review it before saving.\"\nbutton \"Refresh from answers\"\nbutton \"Keep my wording after review\"\nbutton \"Save assessment\" [disabled]\nbutton \"Save & close\" [disabled]\nExact edited textarea retained: true\n\nNATIVE FINAL / RELOAD\ngeneric \"Saved conclusion\": Partially Implemented\ngeneric: \"Last assessed: 2026-10-14\"\nradio \"Partially Implemented\" [checked]\nExact native multiline text retained: true\nstatus: \"Assessment saved. Applicability, verification and linked work are unchanged.\"\n\nSAVED ITEMS\ncheckbox \"Stakeholder obligations: parties: reported partially in place — Synthetic staging QA only: some relevant parties are identified; the list is incomplete.\"\nOpen\ncheckbox \"Stakeholder obligations: requirements: needs confirmation.\"\nOpen\nAfter reload and unchanged save, same Items text: true\n\nVERIFICATION / UNCHANGED FOOTER\n\"Implementation: Partially Implemented\"\n\"Verification: Not verified\"\nExact manual text retained: true\nstatus: \"Assessment saved.\"\nRaw timestamp/revision not exposed: no unchanged-token PASS asserted.\n\nFINDING PENDING VALIDATION\nfinding:fw_f72d290696885697a5b7166ca70cdd94\nPending validation\nWork completed 2026-10-14T12:56:05.132267+00:00\n\"Work is complete. A platform administrator must validate the resolution before this ticket is Completed.\"\nSource: Partially Implemented / Not verified\n\nTRUE PARENT COMPLETION\nfinding:fw_f72d290696885697a5b7166ca70cdd94\nCompleted\nbutton \"Reopen ticket\"\nstatus: \"Ticket completed. Validation saved.\"\nSource: Partially Implemented / Not verified\n\nREOPEN / SOURCE RELOAD\nfinding:fw_f72d290696885697a5b7166ca70cdd94\nOpen\nOne open child and two Work completed children retained\nstatus: \"Ticket reopened. Previous completed work and decisions are retained.\"\nAfter source reload: linked Finding open; assessment Partial / Not verified\n\nDASHBOARD AND PORTFOLIO\nCIS: 0 Implemented, 1 Partial, 0 Not Implemented, 152 Not Assessed\nISO: 1 Implemented, 1 Partial, 0 Needs Validation, 29 Not Assessed\nSOC: 0 Addressed, 0 Partial, 1 Needs Remediation, 32 Not Assessed\nPortfolio assessed: CIS 1/153; ISO 2/31; SOC 1/33\nLast activity: Oct 14 Finding validated\n\nCLEANUP, AFTER RELOAD\nPortfolio Workflow QA 20261014 fce5e05\nArchived / Archived / Edit / Restore\nActive Portfolio: 22 clients / 27 programs\nOwn fixture absent from active view\n```\n\nConsole collection used the supported `tab.dev.logs` API with warning/error filters and limit 100. **Every collection returned `[]`**: initial Portfolio; restored fixture; loaded ISO baseline; groups 1 and 2; generated review; manual review guard; native final save; reload; first footer save; Finding initial/Pending/Completed/Reopened/source reload; Dashboard; fixture Portfolio; both history checks; second footer save; archive; archive reload; protected Portfolio; final capture at `2026-10-14T13:08:40.602Z`.\n\nBrowser HTTP inspection and durations remain **Unverified**: the documented surface exposes console logs but no request/response inspector, HAR or request-timing API. Separately, the existing Render application-log UI exposed these server access statuses—all **200**, without request bodies or credentials:\n\n| Render displayed time, Oct 14 | Synthetic-resource request |\n|---|---|\n| 08:50:49 AM | GET ISO assessment `/guided-assessment` |\n| 08:51:24, 08:51:36, 08:51:48 AM | PUT ISO assessment `/guided-assessment` |\n| 08:52:33, 08:53:02 AM | PUT ISO assessment `/guided-assessment` |\n| 08:53:03 AM | PATCH ISO assessment — guided native apply |\n| 08:53:47–08:53:50 AM | ISO route reload and guided/native reads |\n| 08:54:19 AM | PATCH ISO assessment — first untouched footer |\n| 09:00:02 AM | PATCH ISO assessment — second untouched footer |\n| 08:56:14 AM | POST Finding `/validate` |\n| 08:56:33 AM | POST same Finding `/reopen` |\n\nThese are server-log event times/statuses, not browser latency measurements or an exhaustive network PASS.\n\nSelected full-snapshot SHA-256/UTF-8-byte metadata:\n\n```text\nISO baseline       8827  5ca96542acd6863336e7d4d0e7612ae6493262424a05b4b0147dd86f6d174565\nGroup 1            9380  bb495f7245e435bd834e6bf700b809e037eb490d60fe01bcc0d62ea486e2cf79\nGroup 2           10136  5bceb3cf046d6237a03e69f8ffb32e04913f6b294cb9519950fd17c88c9b8868\nGenerated review   9674  e5ec19ff9b5da5d3d15078528b2be51575281bcd61763524b1d72ccd7a20e0af\nManual guard       9497  5f5ebb4d76737706e1e1b06957ba0c6c19d94e2725339adf7601c46f5644a47d\nNative final       8443  b6b07a38d1d42c2d50fd6ea2526699335ee29e3f4109910e7782ed37bdb21b77\nSaved Items        8041  5c1c3269d3deaf5f0c4429a8c817a2ddb429fbb8b4088f5bc34f9579f2929dc8\nISO reload         8408  6dcb463c845786bd0c9a794d0768db09c5684b7d81ac6c84ac968250dc2a9ed4\nFirst footer       9420  5b3634f7193a651b9796e3e873db3ca4bb34e9dbd6ccda3d003c9089cefeed3d\nFinding Pending   14226  5a8042095ed09144532661ac29efa0b5ecc12ddbb6757c732bec359dc525dd84\nFinding Completed 13960  ca0cc08ae64882fb5904b9923c350e754a277f40cc72637139d93e5a192602c5\nFinding Reopened  15672  388cfffeb7fbffe41a529b97cdd924cbfee2c46ecbbf8b6bf39cd4f45e9bc506\nDashboard         12960  1b7b80e1931fac030c7663d2af73504fa0b028636f4fdd5e77b2315c1fe31b6a\nFixture Portfolio  9465  8d69519b3ea0b67aebd8831f1c5737097beffaa589d3cd2f3fb53339b93b2913\nHistory first     12166  04c3de8d127903623501465b8b88756088b5cb52217d46524044a5965b0a23aa\nSecond footer      8375  51ecba14d0183118096d6b2056659ea2ef856705e0e00907499cbe1d4f03bd6d\nHistory second    12166  35ce2c0edfaaf90ab3195e8fc4b7371a4051b0877e685f852e6f82a99d926ab8\nArchived reload    6131  e0b5a41b737adff9d718e9f960b22b693c6c16f026bedc31bb123d90a73a7319\nProtected view    43772  8a5544cdae81c0eacd001731ce204bbc46cc498ab3bfa7983c4817da0b27dee8\n```\n\nOutbound coordination was blocked because the messaging tool requires approval while this environment forbids approvals. Agent 3 can retrieve this inline receipt; repository acceptance remains under its ownership.\n\nUnverified: raw save tokens, browser request timing, licensed ISO validation and held security campaigns. The no-op defect needs correction and gated verification before closeout can pass.\n\n\n",
+  "console": {
+    "scope": "Finite collected closeout phase windows listed in the operator export",
+    "supported_api": "tab.dev.logs",
+    "levels": [
+      "warn",
+      "warning",
+      "error"
+    ],
+    "limit": 100,
+    "entries_at_each_collection": [],
+    "final_collection_utc": "2026-10-14T13:08:40.602Z"
+  },
+  "server_access_logs": {
+    "source": "Existing Render application log UI; observed by Agent2",
+    "http_status_each": 200,
+    "date_utc": "2026-10-14",
+    "sampled_requests": [
+      {
+        "method": "PUT",
+        "resource": "Own ISO4.2 /guided-assessment",
+        "times_utc": [
+          "12:51:24",
+          "12:51:36",
+          "12:51:48",
+          "12:52:33",
+          "12:53:02"
+        ]
+      },
+      {
+        "method": "PATCH",
+        "resource": "Own ISO4.2 native assessment",
+        "times_utc": [
+          "12:53:03",
+          "12:54:19",
+          "13:00:02"
+        ]
+      },
+      {
+        "method": "GET",
+        "resource": "Own ISO4.2 guided reload",
+        "times_utc": [
+          "12:53:50",
+          "12:59:45"
+        ]
+      },
+      {
+        "method": "POST",
+        "resource": "Own existing CIS Finding /validate",
+        "times_utc": [
+          "12:56:14"
+        ]
+      },
+      {
+        "method": "POST",
+        "resource": "Same CIS Finding /reopen",
+        "times_utc": [
+          "12:56:33"
+        ]
+      },
+      {
+        "method": "GET",
+        "resource": "Own-client Portfolio ISO history",
+        "times_utc": [
+          "13:00:17"
+        ]
+      }
+    ],
+    "unverified": [
+      "Browser request/response inspector",
+      "Request duration",
+      "Dashboard-specific HTTP metadata",
+      "Exhaustive status/response-body campaign"
+    ]
+  }
+}

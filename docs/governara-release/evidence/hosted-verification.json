@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "disposition": "Coordinated staging delivery complete. Deployed for validation — final acceptance pending.",
+  "tested_deployed_sha": "bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+  "tested_tree": "2aeb723a3df5fd6755660c85972a6331184915c5",
+  "application_source": "14fc37114bef6891fde31eb0d5897c3ce01c80c5",
+  "pr": 78,
+  "ci": {
+    "number": 165,
+    "run": 38446917191,
+    "result": "success; frontend/offline backend/Mongo backend/aggregate all completed success",
+    "frontend": {
+      "suites": 302,
+      "tests": 9111,
+      "snapshots": 1
+    },
+    "offline": {
+      "tests": 971,
+      "subtests": 12404,
+      "skipped": 3,
+      "warnings": 8
+    },
+    "mongo": {
+      "tests": 166,
+      "seconds": 241.741,
+      "provenance": "root supported provider UI"
+    },
+    "builds": "both success",
+    "skip_boundary": "3 optional real snapshot cases skipped in CI offline; separately executed local replica3PASS at byte-identical application14fc, not CI or hosted-auth denial proof"
+  },
+  "deployment": {
+    "service": "srv-db1s0cugekts73f72reg",
+    "id": "dep-db780cij9qps73bcu1sg",
+    "state": "Live",
+    "url": "https://omnisciente-staging.onrender.com",
+    "provider_source": "bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+    "health": 200,
+    "assets": {
+      "js": "main.d171f8c7.js",
+      "css": "main.e82e5c68.css"
+    },
+    "configuration": "preserved; existing main connection/specific-commit Auto-Deploy Off, no provider changes"
+  },
+  "hosted": [
+    {
+      "id": "Portfolio",
+      "result": "PASS bounded",
+      "detail": "22 active authorized clients/5 actual program identities; IG2 filter3clients/1framework/3changes; 30d/6m/12m selected-client history truthful with no comparable past baseline; live read labelled not retained history."
+    },
+    {
+      "id": "Collector",
+      "result": "PASS actual observation",
+      "detail": "First observed genuine captured position2026-10-13 19:03:52UTC; changed native SOC position automatically captured19:13:55UTC; later activity capture19:54:07UTC. No claims of pre-Oct13 program positions; retained older activity is partial. UI does not expose all internal heartbeat fields."
+    },
+    {
+      "id": "GN-QA-08",
+      "result": "PASS finite original hosted case",
+      "detail": "Hooli original8,82 preference case measured1280x720; transient Nara fit212.333,82. Return/Dashboard/Calendar/Reviews5sampled hits each clear; actual Return and Calendar pointer actions succeeded. Minimize/restore/expand/restore-size/Escape and focus/recommendation native1.1 navigation succeeded. No universal collision/device guarantee."
+    },
+    {
+      "id": "CIS preservation",
+      "result": "PASS read-only",
+      "detail": "Existing QA1.1 exact689chars,NotAssessed/notverified, savedNotSure/note and completed historical revision3 cis-v8.1-control1-3 readable. Embedded firstgroup, no floating native launcher. Hooli153 unassessed/native1.1 blank/current questions unselected. No CIS assessment writes/new reviews."
+    },
+    {
+      "id": "SOC native lifecycle",
+      "result": "PASS authorized fixture",
+      "client_id": "cli_7a5e4c04356a9e1e6b537ded5738fff5cb46a75c4272bc5245181b63fa5bf474",
+      "assessment_id": "fw_5be5723109f751d882c639a925888f1a",
+      "detail": "CC1.4 three current groups allNo syntheticabsence; question-progress kept native blank/NotAssessed/notverified; refresh/back restoredanswers andnote; finalgroup directsummary; exact7351char reviewedSaveclose→native needs_attention, notverified, no second save; refresh exact. Itemresolve/reopen note/history retained; native exact unchanged. Explicit Finding/Action only after form cancellation+submission, open/unassigned/noDueDate; link refreshed. Reopen preservedmanualtext; client/criterion replacement confirmation/cancel and Update passed, Items link retained."
+    },
+    {
+      "id": "ISO preservation",
+      "result": "PASS read-only",
+      "client_id": "cli_6623c0df3d49caed4d80c3c4fa73665a0d05e2fee418072c30ebdb2f8425d2ee",
+      "assessment_id": "fw_629e158508995714959689856cee92f0",
+      "detail": "A5.9 blank/NotAssessed/notverified,SoAUndetermined,existing2026-10-13 date unchanged. Embedded ISO entry/applicability separation present; no native/SoA saves."
+    },
+    {
+      "id": "Reports",
+      "result": "PASS actual downloads + independent artifact scope",
+      "detail": "6 authenticated Full/Executive downloads acrossCIS/SOC/ISO. Actual hosted snapshot capability exercised. Agent2 independently extracted148pages/visuallyinspected21; exactSOC7351/CIS689, groupcounts/applicability/status/Items and partial-history/session-read provenance match. Executives intentionally omitdetailednarrative/Items. Exact native opaqueFindingID equality not independently established; visible linkedtitle/context/durablelink are UI-proved."
+    },
+    {
+      "id": "Login/Demo",
+      "result": "PASS finite desktop/navigation",
+      "detail": "Approved Login1280x720 nohorizontaloverflow; Governance/Risk/Compliance panels, Tab/ShiftTabtrap, Escape/invokerreturn; recovery route only, noemail sent. Normal explicitDemo entered4client browser-local workspace, Loginroot/topicmodal gone; loadedBrawndo programme/Nara visual present. Existing actualadmin session remainedvalid,22clients/SuperAdmin onseparateownedtab."
+    },
+    {
+      "id": "Console",
+      "result": "PASS finite observation",
+      "detail": "Latest20warn/error query returnedempty in ownedadmin tab; selected providerstartup/health logs show successful startup/Live/health, no observed unresolvedreleaseerror. Not complete log or monitoring certification."
+    },
+    {
+      "id": "Portfolio themes and final assets",
+      "result": "PASS finite hosted observation",
+      "detail": "Existing light theme rendered and dark restored in owned 1280x720 administrator Portfolio; 22 clients/5 frameworks/71 recent changes retained. Final DOM served main.d171f8c7.js/main.e82e5c68.css. Owned temporary tabs25/27 closed; administrator Portfolio29 kept deliverable, provider26 handoff; original held Tab5 untouched."
+    }
+  ],
+  "independence": {
+    "source": "Actual Agent2 final composite + frozen workflow source PASS; actual Agent5 PR75 + compiled14fc interaction QA PASS; authors not self-certified.",
+    "artifacts": "Actual Agent2 six downloaded PDF artifacts PASS, source hashes stable; browser/download/deploy provenance attributed to root."
+  },
+  "unexecuted_or_held": [
+    "Actual logout/login/MFA/recovery-email delivery remain explicitly held; existing session is not a fresh sign-in test.",
+    "Restricted identity/wrong-client/Reader denial, account/grant changes, fault/tampering and real worker-disruption campaigns remain held; local modeled/realMongo evidence not relabeled hosted.",
+    "Hosted390x844 was not established: advertisedviewportset followed by two measured new tabs retained1280x720; bounded attempt ended without app changes. Local compiled390 evidence remains separate. Reduced-motion emulation unavailable: advertisedbrowser capabilities onlyvisibility/viewport; actual normal preferencefalse observed.",
+    "Human hardware drag/touchscreen/device playback and universal collision behavior not asserted.",
+    "21/148 PDF pages visually reviewed, all148 extracted; not all-pages visual certification.",
+    "Earlier153-source/339-placement/17.5 and Brawndo exception evidence retained at original revisions; not newly rerun or relabeled complete interviews."
+  ],
+  "protected_state": {
+    "main": "28b806716024ec149af2ec5da621a5a618c669d5 unchanged",
+    "source_branches": "preserved",
+    "accounts": "no activation/grant/role/membership/owner/credential/authentication changes",
+    "tab5": "original hold untouched",
+    "showcases": "Brawndo/Initech/Hooli/permanentemptyPrestige no synthetic saves or archives",
+    "qa_data": "All pending fixtures/history retained. New synthetic SOC native text/3Items/oneopenFinding+Action labelled clearly; no premature archive.",
+    "publication": "Existing Render staging only; no main merge,production,Sites,newhosting/providerconfiguration."
+  },
+  "recovery": "Keep current compatible CIS/SOC/ISO/Items readers and writers. Preserve data/history; redeploy exactbf59 if appropriate, or tested compatible forward fix. Do not fall back to older69/main writer or reset data.",
+  "evidence_cutoff": "Runtime frozen atbf59; final documentation-only head to be recorded separately with no redeployment.",
+  "final_recheck_at": "2026-10-13T20:23:04.830Z"
+}

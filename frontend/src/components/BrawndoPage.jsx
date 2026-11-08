@@ -7,12 +7,13 @@ export function BrawndoSurface({className='',children,...rest}){
   const [theme]=useBrawndoTheme();useBrawndoPortalTheme(true,theme);
   return <div className={`bpage ${className}`} data-theme={theme} {...rest}>{children}</div>;
 }
-export function BrawndoPageHeader({eyebrow,title,subtitle,children}){
+export function BrawndoPageHeader({eyebrow,title,subtitle,children,renderThemeAction}){
   const [theme,setTheme]=useBrawndoTheme();
+  const onTheme=()=>setTheme(theme==='dark'?'light':'dark');
   return <header className="bpage-head">
     <div><p className="bpage-eyebrow">{eyebrow}</p><h1>{title}</h1>{subtitle&&<p className="bpage-subtitle">{subtitle}</p>}</div>
     <div className="bpage-actions">
-      <button type="button" className="bpage-btn" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>
+      {renderThemeAction?renderThemeAction({theme,onTheme}):<button type="button" className="bpage-btn" onClick={onTheme} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>}
       {children}
     </div>
   </header>;

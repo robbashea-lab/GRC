@@ -1,0 +1,306 @@
+{
+  "metadata": {
+    "reviewer": "/root/cis_ig1_review",
+    "source_revision": "8e4466607255b0ca926f7da7181ff8e7c190e8d3",
+    "unique_definitions": 337,
+    "placements": 523,
+    "sampled_browser_unique_definitions": 6,
+    "sampled_framework_placement_layers": 8,
+    "independent_browser_executions": 0,
+    "root_operator": "/root",
+    "artifact_count": 27,
+    "artifacts": [
+      {
+        "name": "cis-absent-saved-4453.txt",
+        "sha256": "2a0af40381a419fbcfbc3fdcb3ecfad57b6aa697b1915151ad9c88230c8b142e",
+        "bytes": 2420,
+        "lines": 49
+      },
+      {
+        "name": "cis-item-resolved-refresh-4453.txt",
+        "sha256": "b6c6e7288a5dac504a31ab8a27f5b4253beea85d486a33544c1e66ac6b6a84f7",
+        "bytes": 2414,
+        "lines": 46
+      },
+      {
+        "name": "cis-unknown-saved-4453.txt",
+        "sha256": "582718919432d4c10777d9b711612ac332c98ceb0aa50f7739e9d57beee0f7d4",
+        "bytes": 2261,
+        "lines": 46
+      },
+      {
+        "name": "final-inventory-partial-proposal-87d37b6.txt",
+        "sha256": "8dfb9680f01171a37afcbeac71f786393a211c566fdefc922b529b32b7f662b6",
+        "bytes": 8678,
+        "lines": 113
+      },
+      {
+        "name": "final-inventory-partial-native-87d37b6.txt",
+        "sha256": "69f78075fa1907f027d5c80ec703de66b77d3a2906c03586e8e389fe99a96647",
+        "bytes": 5921,
+        "lines": 83
+      },
+      {
+        "name": "final-inventory-exact-items-87d37b6.txt",
+        "sha256": "d29a76c28287898d69cae24e757cc531bb0fd6422e5464603c5214ff4a8d628e",
+        "bytes": 2792,
+        "lines": 57
+      },
+      {
+        "name": "final-ig2-unknown-proposal-87d37b6.txt",
+        "sha256": "276512d1e7841ccea6c44c8ae175d62c687cdc90d79620556e94d22f0b340fe5",
+        "bytes": 5009,
+        "lines": 95
+      },
+      {
+        "name": "final-cis13-root-unknown-proposal-8e44666.txt",
+        "sha256": "f0e0f6ba7e5876450b1677fa29b4ea85a00034a98484b95902d8616a97fc0536",
+        "bytes": 5553,
+        "lines": 95
+      },
+      {
+        "name": "final-cis13-root-unknown-native-items-8e44666.txt",
+        "sha256": "3cf019f6ab3e77b3aeec6163dd637bf77b922af9271f77fc02e7d5c7304e3d05",
+        "bytes": 2525,
+        "lines": 46
+      },
+      {
+        "name": "final-cis13-root-note-native-noop-8e44666.txt",
+        "sha256": "51ba6388b3ace68f7f825a34ffb47188b8b20620634bb768639f208ce5472407",
+        "bytes": 2577,
+        "lines": 46
+      },
+      {
+        "name": "final-cis13-root-note-reloaded-8e44666.txt",
+        "sha256": "a8d8bb339e23f3c8ca987e7ec68eac893200d1df0132c124db41048086a22583",
+        "bytes": 2669,
+        "lines": 46
+      },
+      {
+        "name": "final-cis-blank-next-a46.txt",
+        "sha256": "65598cb0bd48961ac0af3957f86b589d28d4c6fa540a9fa1e5b2cefc28c24801",
+        "bytes": 5462,
+        "lines": 102
+      },
+      {
+        "name": "final-cis-partial-unknown-proposal-a46.txt",
+        "sha256": "277b49ec5fce637dfcc1e701a6434b8f52fc00f07e363dfc763adaf5eabbd229",
+        "bytes": 5623,
+        "lines": 96
+      },
+      {
+        "name": "final-cis-partial-unknown-native-a46.txt",
+        "sha256": "22c744ca86e77868d2dff2db6c47aba8eca782996475c22f784f3d03dd1641f0",
+        "bytes": 3168,
+        "lines": 55
+      },
+      {
+        "name": "final-source-closed-assessment-unchanged-87d37b6.txt",
+        "sha256": "d975ecbbea6e910f1550ca151bece1e4b64be9b52d3fc0644c17dd88ee5ec3f3",
+        "bytes": 2094,
+        "lines": 37
+      },
+      {
+        "name": "final-ig3-185-current-proposal-6281bb1.txt",
+        "sha256": "52d1874a12edeca08709ed3c7630b1807fbe24a73e22bd8740aa9f668394716e",
+        "bytes": 6111,
+        "lines": 101
+      },
+      {
+        "name": "final-ig3-185-current-native-6281bb1.txt",
+        "sha256": "02b9e5896017d9b06bab1b57d4dc602d770e6f56648fd5dffdf9e7c43a1016e2",
+        "bytes": 4219,
+        "lines": 77
+      },
+      {
+        "name": "final-soc-yes-empty-rejected-87d37b6.txt",
+        "sha256": "03ab5d26285911339e3201714f17f2e693233297bdfe5bb6e5f62ffaf709950a",
+        "bytes": 7049,
+        "lines": 128
+      },
+      {
+        "name": "final-soc-proposal-punctuation-corrected-6281bb1.txt",
+        "sha256": "a46baa1dc6308c859963743adfbe2bbf87cb84de36dfd0eb242606606314c3a3",
+        "bytes": 5931,
+        "lines": 102
+      },
+      {
+        "name": "final-soc-native-corrected-6281bb1.txt",
+        "sha256": "ba4814121eae4727e1116be0a7e300985ec3dfcf6493016612df8e7b0b1d8341",
+        "bytes": 4192,
+        "lines": 79
+      },
+      {
+        "name": "final-soc-items-corrected-6281bb1.txt",
+        "sha256": "24f8df7975e4ffc583544a19e5e7de05c6dada8306f9ded8c029f598fa158d2f",
+        "bytes": 2946,
+        "lines": 58
+      },
+      {
+        "name": "final-soc-reloaded-native-6281bb1.txt",
+        "sha256": "584dc7fd24a0aa8555ded71feaaa4d69cb4fb5e07b6b8c364d0c276ce480dc5c",
+        "bytes": 4156,
+        "lines": 79
+      },
+      {
+        "name": "final-iso-yes-empty-rejected-87d37b6.txt",
+        "sha256": "3697e8ea7c699ce0322010a89cfad67bfc9288836ba00b4977d1ecafe133b474",
+        "bytes": 7147,
+        "lines": 128
+      },
+      {
+        "name": "final-iso-no-hidden-manual-proposal-87d37b6.txt",
+        "sha256": "18c91a6581ac48916df49697a9fe23f1006de48098809d44505febaacac89cc3",
+        "bytes": 4992,
+        "lines": 93
+      },
+      {
+        "name": "final-iso-no-hidden-native-items-87d37b6.txt",
+        "sha256": "9354b85eda8ab58dc98233e04c870658d0bea03262ff6664b24e87f666f9aeec",
+        "bytes": 1962,
+        "lines": 41
+      },
+      {
+        "name": "final-iso-manual-native-before-87d37b6.txt",
+        "sha256": "998b5eb7f762e69ac7df0cab1915813ed0b8461239cd0200a05687ce37328861",
+        "bytes": 3737,
+        "lines": 72
+      },
+      {
+        "name": "final-iso-manual-native-after-noop-87d37b6.txt",
+        "sha256": "9285313a9d58157164cce5dd8e4d4c8b17e65b0133b7b26282b6cb660a7af6cc",
+        "bytes": 3673,
+        "lines": 72
+      }
+    ],
+    "loaded_bundle": {
+      "scripts": [
+        "http://127.0.0.1:4341/static/js/main.94f96200.js"
+      ],
+      "stylesheets": [
+        "http://127.0.0.1:4341/static/css/main.7e6897c1.css"
+      ],
+      "url": "http://127.0.0.1:4341/compliance/cis-ig1?assessment=fw_clients_demo_mv79rkv9_e6junuyj_assessment_1.3"
+    },
+    "loaded_asset_sha256": "43c5f1d3aac7bde4321cc839a5a074ad8e91b2dedf9406dc586baf86c87b0d2f",
+    "provenance_limit": "Loaded DOM names main.94f96200.js and the current file hash matches the local artifact. The source-SHA build association is operator-reported; this is loopback compiled Demo, not hosted release proof.",
+    "coverage_limit": "Earlier actual IG1 and actual IG2 reproduction are distinct from final inherited IG3 checks. No browser acceptance is inherited automatically into another placement. All 523 placement source/controlled review rows remain; no claim of 523 or337 E2E journeys."
+  },
+  "row_updates": [
+    {
+      "framework_experience": "CIS IG1",
+      "definition_id": "1.1",
+      "status": "Earlier sampled actual IG1 configuration at 4453",
+      "artifacts": [
+        "cis-absent-saved-4453.txt",
+        "cis-item-resolved-refresh-4453.txt",
+        "cis-unknown-saved-4453.txt"
+      ],
+      "observed": "Earlier root-operated states explicitly show CIS IG1 and 1 of 56 for absence, unknown, and a recorded Item resolution.",
+      "limit": "Earlier runtime evidence; not a new individual IG1-configuration journey at the final source. Current 1.1 was subsequently sampled as an inherited IG1-origin safeguard under IG3.",
+      "operator": "/root",
+      "independent_review": "Full accessibility-artifact inspection; this reviewer executed no browser interactions."
+    },
+    {
+      "framework_experience": "CIS IG3",
+      "definition_id": "1.1",
+      "status": "Sampled current inherited 1.1 under IG3 at 87d37b6",
+      "artifacts": [
+        "final-inventory-partial-proposal-87d37b6.txt",
+        "final-inventory-partial-native-87d37b6.txt",
+        "final-inventory-exact-items-87d37b6.txt"
+      ],
+      "observed": "Current partial inventory with separate unknown coverage remains partial/Not verified and retains separate assessment Items in the source-native workflow.",
+      "limit": "One IG1-origin definition under IG3, not an independent journey for every inherited placement. The later narrow root fix does not change the specialized 1.1 path.",
+      "operator": "/root",
+      "independent_review": "Full accessibility-artifact inspection; this reviewer executed no browser interactions."
+    },
+    {
+      "framework_experience": "CIS IG2",
+      "definition_id": "1.3",
+      "status": "Actual IG2 defect reproduction retained; shared-definition correction checked under IG3",
+      "artifacts": [
+        "final-ig2-unknown-proposal-87d37b6.txt"
+      ],
+      "observed": "Actual IG2 3 of 130 proposal correctly had Not Assessed but falsely listed Discovery tool use: Not sure as a control. This original failing artifact is retained. The same shared current 1.3 definition was corrected and retested under restored IG3 at 8e44666.",
+      "limit": "No final compiled repeat in the individual IG2 configuration is claimed. Source/controlled tests establish identical current definition, question identity and scope placement; the corrected browser run is recorded separately on the IG3 placement.",
+      "operator": "/root",
+      "independent_review": "Full accessibility-artifact inspection; this reviewer executed no browser interactions."
+    },
+    {
+      "framework_experience": "CIS IG3",
+      "definition_id": "1.3",
+      "status": "Corrected root uncertainty sampled in compiled Demo 8e44666",
+      "artifacts": [
+        "final-cis13-root-unknown-proposal-8e44666.txt",
+        "final-cis13-root-unknown-native-items-8e44666.txt",
+        "final-cis13-root-note-native-noop-8e44666.txt",
+        "final-cis13-root-note-reloaded-8e44666.txt"
+      ],
+      "observed": "Regenerated unknown-root summary omits Controls in place and retains the supplied discovery uncertainty context. The old saved native wording remains visible before explicit acceptance. Accepted native stays Not Assessed/Not verified with exactly one visible root confirmation Item. Saved clarification note stays Open, survives unchanged native Save, and is retained on reload.",
+      "limit": "Full AX does not expose the Item ID/fingerprint or hidden native full-record equality; controlled JS/Python/Demo and authenticated synthetic API tests separately verify those contracts. Final scope is restored IG3, not a new IG2 journey.",
+      "operator": "/root",
+      "independent_review": "Full accessibility-artifact inspection; this reviewer executed no browser interactions."
+    },
+    {
+      "framework_experience": "CIS IG3",
+      "definition_id": "1.4",
+      "status": "Sampled CIS 1.4 under IG3 across a46/87d37b6",
+      "artifacts": [
+        "final-cis-blank-next-a46.txt",
+        "final-cis-partial-unknown-proposal-a46.txt",
+        "final-cis-partial-unknown-native-a46.txt",
+        "final-source-closed-assessment-unchanged-87d37b6.txt"
+      ],
+      "observed": "Representative 1.4 blank-answer blocking, explicit partial plus cadence uncertainty, native save/verification separation, and the related remediation source return states were root-operated. Later current-source component checks cover root confirmation without changing the recorded partial journey.",
+      "limit": "Representative definition only; not all 153 CIS or every source/action lifecycle. Compiled artifact scope/version is retained per file.",
+      "operator": "/root",
+      "independent_review": "Full accessibility-artifact inspection; this reviewer executed no browser interactions."
+    },
+    {
+      "framework_experience": "CIS IG3",
+      "definition_id": "18.5",
+      "status": "Sampled IG3-native 18.5 at 6281bb1",
+      "artifacts": [
+        "final-ig3-185-current-proposal-6281bb1.txt",
+        "final-ig3-185-current-native-6281bb1.txt"
+      ],
+      "observed": "Source-specific internal penetration-test proposal and accepted native text were sampled in actual IG3 scope.",
+      "limit": "One IG3-only definition; not all IG3 additions or a claim of completed real penetration testing.",
+      "operator": "/root",
+      "independent_review": "Full accessibility-artifact inspection; this reviewer executed no browser interactions."
+    },
+    {
+      "framework_experience": "SOC 2",
+      "definition_id": "CC1.1",
+      "status": "Sampled SOC CC1.1 with corrected current prose at 6281bb1",
+      "artifacts": [
+        "final-soc-yes-empty-rejected-87d37b6.txt",
+        "final-soc-proposal-punctuation-corrected-6281bb1.txt",
+        "final-soc-native-corrected-6281bb1.txt",
+        "final-soc-items-corrected-6281bb1.txt",
+        "final-soc-reloaded-native-6281bb1.txt"
+      ],
+      "observed": "Representative optional-intent validation, current source-specific proposal, native assessment/Items, corrected prose, and reload were root-operated and artifacts reviewed.",
+      "limit": "One SOC criterion; not all 61 definitions, evidence verification, or an auditor opinion.",
+      "operator": "/root",
+      "independent_review": "Full accessibility-artifact inspection; this reviewer executed no browser interactions."
+    },
+    {
+      "framework_experience": "ISO 27001",
+      "definition_id": "4.1",
+      "status": "Sampled ISO 4.1 current native workflow at 87d37b6",
+      "artifacts": [
+        "final-iso-yes-empty-rejected-87d37b6.txt",
+        "final-iso-no-hidden-manual-proposal-87d37b6.txt",
+        "final-iso-no-hidden-native-items-87d37b6.txt",
+        "final-iso-manual-native-before-87d37b6.txt",
+        "final-iso-manual-native-after-noop-87d37b6.txt"
+      ],
+      "observed": "Representative additional-context gating and empty-detail validation, retained manually reviewed text, native save/Items, and unchanged native save were root-operated and artifacts reviewed.",
+      "limit": "One ISMS clause, not all 123 definitions, licensed full normative coverage, certification, or whole-application E2E.",
+      "operator": "/root",
+      "independent_review": "Full accessibility-artifact inspection; this reviewer executed no browser interactions."
+    }
+  ]
+}

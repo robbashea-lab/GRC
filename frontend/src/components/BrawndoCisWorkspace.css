@@ -4,11 +4,11 @@
 .cis-tone-critical { --tone: var(--color-critical); --tone-bg: var(--color-critical-bg); --tone-border: var(--color-critical-border); }
 .cis-tone-neutral { --tone: var(--color-neutral); --tone-bg: var(--color-neutral-bg); --tone-border: var(--color-neutral-border); }
 .cis-tone-info { --tone: var(--color-info); --tone-bg: var(--color-info-bg); --tone-border: var(--color-info-border); }
-.cis-fill-success { background: #12B76A; }
-.cis-fill-moderate { background: #F79009; }
-.cis-fill-critical { background: #D92D20; }
-.cis-fill-neutral { background: #C3CAD4; }
-.cis-fill-info { background: #84ADFF; }
+.cis-fill-success { background: var(--color-success); }
+.cis-fill-moderate { background: var(--color-moderate-text); }
+.cis-fill-critical { background: var(--color-critical); }
+.cis-fill-neutral { background: var(--color-status-neutral-fill); }
+.cis-fill-info { background: var(--color-info); }
 
 .cis-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tone); flex-shrink: 0; }
 .cis-pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--tone-border); background: var(--tone-bg); color: var(--tone); font-size: 12px; font-weight: 500; line-height: 18px; white-space: nowrap; }

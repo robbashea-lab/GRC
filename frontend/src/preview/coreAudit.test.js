@@ -68,5 +68,8 @@ test('portfolio counts a linked Risk review deadline once',()=>{
   db.reviews=[{review_id:'r',client_id,risk_id:'risk',status:'upcoming',due_date:'2000-01-01'}];
   db.risks=[{risk_id:'risk',client_id,status:'assessed',next_review:'2000-01-01'}];
   db.tasks=[];db.findings=[];
+  // This case measures only the Risk/linked Review pair, not independent
+  // supplier contracts, Policy schedules or other canonical obligations.
+  db.policies=[];db.vendors=[];db.exceptions=[];db.requirements=[];
   expect(portfolio(db,false).clients.find(c=>c.client_id===client_id).past_due).toBe(1);
 });

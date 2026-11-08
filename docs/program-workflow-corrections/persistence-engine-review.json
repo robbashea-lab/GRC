@@ -1,0 +1,177 @@
+{
+  "reviewer": "/root/soc2_review",
+  "review_kind": "Independent bounded source review and isolated ASGI regression verification",
+  "source_revision": "4453cf2a8229c6f03e0a57f204518ce29edc8ad3",
+  "test_commit": "43e8e468db1375436f552aecf2151fbbae353efb",
+  "test_commit_scope": "Exactly the six owned changed test files; unrelated modified and untracked files remain untouched. No push or release performed.",
+  "final_frozen_source_revision": "a46a3500583338917eb96949458cb75c6373546a",
+  "final_source_delta_review": {
+    "no_reproduced_source_findings": true,
+    "scope": "Immutable source-owner a160c80 delta integrated as d2e051a, then final native Risk deadline metadata delta integrated as a46a350",
+    "observations": [
+      "SOC/ISO selected-answer evaluators, no-op acknowledgement, live auth/scope/CAS and native source validation are unchanged from the original reviewed save-path source",
+      "Native Item delta preserves current partial Control 1 gaps and classifies the historical mixed deficiency/exclusion/uncertainty field as verification rather than an invented confirmed gap",
+      "Workspace reads remain bounded and client-scoped; closed Finding connectors are included only to prove an exact open gap's association with an active native Risk",
+      "Frontend severity ranking excludes closed records via the existing authoritative grcWork rules and uses exact assessment/client/Item/Finding/Risk associations",
+      "Risk metadata reuses existing backend grc_rules.risk_due and frontend riskDue, deriving due_date from next_review and accepted acceptance_expires_at; no Risk record mutation or new deadline rule",
+      "Fallback deadline and current supported-scope filters remain separate from gap severity; unknown native-source associations do not manufacture a rating"
+    ],
+    "source_review_only_limit": "Risk metadata delta was independently read in connected context; the final four repeated methods below verify replay/auth/storage, not an additional independent Risk-date test campaign."
+  },
+  "final_repeat_verification": {
+    "asgi": {
+      "test": "SocGuidedRoutes.test_current_replay_preserves_manual_wording_items_and_rechecks_live_authority",
+      "result": "1 passed, 18 deselected, 2 SOC/ISO subtests passed, 4 existing warnings in 8.43s",
+      "log": "soc-iso-final-a46-replay-ASGI.log"
+    },
+    "real_mongo": {
+      "executed_head": "a46a3500583338917eb96949458cb75c6373546a",
+      "result": "4 exact existing methods passed, 2 SOC/ISO subtests passed, no errors or failures in 37.561s",
+      "receipt": "soc-iso-final-a46-mongo-replay-review.json",
+      "log": "soc-iso-final-a46-mongo-replay-review.log",
+      "cleanup": "All four exact own test_grc_program UUID databases dropped and verified absent; earlier/root UUID databases untouched.",
+      "source_integrity": "Receipt contains execution-head and actual file SHA256 hashes; git diff against final frozen revision is empty for the eight exercised source/test files."
+    },
+    "earlier_receipts": "Original full 79-test/583-test campaigns and earlier real-Mongo result are retained with their original source revisions; not relabelled as final-source runs.",
+    "browser": "Independent artifact review pending final full root-operated captures and screenshots; no independent browser execution."
+  },
+  "subsequent_revision_reviewed": "3c10e38",
+  "subsequent_revision_scope": "CIS answer compatibility and frontend recommendation allowlist; reviewed SOC/ISO engines and backend persistence files have no changes after 4453cf2.",
+  "source_findings": [],
+  "conclusion": "No reproduced source defect in the reviewed current SOC/ISO outcome, native application, semantic replay, authorization and Item paths. This is not whole-platform security assurance or a release decision.",
+  "source_paths": [
+    "backend/guided_assessment.py",
+    "backend/framework_governance.py",
+    "backend/soc_guided_assessment.py",
+    "backend/iso_guided_assessment.py",
+    "backend/assessment_items.py",
+    "backend/portfolio_activity.py",
+    "frontend/src/lib/socGuidedAssessment.js",
+    "frontend/src/lib/isoGuidedAssessment.js"
+  ],
+  "reviewed_trust_boundaries": [
+    "Verified current actor, writable role, client membership, archived client and current enrolled scope before replay acknowledgement",
+    "Guided revision CAS and native expected_last_assessed token before unchanged acknowledgement",
+    "Same-application acknowledgement requires the recorded actor and exact generated source provenance and provided native fields",
+    "New native application retains current version, lineage, exact reviewed narrative, status and summary-review validation",
+    "ISO Annex control inclusion and nonblank SoA justification remain scope prerequisites",
+    "Native Items are derived from validated actual answers rather than client-provided proposed signals",
+    "No-op avoids duplicate source clocks, draft revisions, archived drafts and SOC judgment dates",
+    "Technical portfolio capture fields are removed from public source responses"
+  ],
+  "engine_acceptance": {
+    "current_versions": "SOC v2 and ISO v2",
+    "mandatory_unknown_only": "not_assessed",
+    "known_partial_with_unknown": "in_progress",
+    "known_no_with_unknown": "needs_attention",
+    "historical_v1": "Old readers retain their existing unknown/context behavior; explicit coverage added for all 61 SOC definitions and all 123 ISO definitions.",
+    "optional_gap_intent": "Missing, No or Not sure parent does not emit old hidden gap or confirmation text; affirmative Yes requires nonblank detail. A genuine extra gap does not override the canonical selected-answer status.",
+    "implementation_verification": "Implementation and verification remain distinct; actual native replay test checks stored verification is preserved.",
+    "manual_override": "Accepted manual narrative remains byte-for-byte stable across guided no-op and native source replay."
+  },
+  "new_route_regression": {
+    "test": "backend/tests/test_soc_guided_routes.py::SocGuidedRoutes::test_current_replay_preserves_manual_wording_items_and_rechecks_live_authority",
+    "frameworks": ["soc-2", "iso-27001"],
+    "fixture_boundary": "Initial campaign used isolated synthetic records with repository Mongo mock and actual route/auth/validation logic. The exact same existing test method subsequently passed with real loopback Mongo in a fresh owned test database; no hosted sessions used.",
+    "positive_checks": [
+      "Completed guided PUT replay with current expected revision returns exactly the unchanged draft DTO",
+      "Native application accepts manually reviewed exact wording and retains separate verification",
+      "Affirmative genuine gap and confirmation produce the expected gaps/gap and unknowns/verification native Item origins",
+      "Resolve a gap with analyst note, then replay the native application twice without changing resolved Item state or note",
+      "Repeated native source acknowledgement preserves raw native record, guided history and portfolio event collections",
+      "SOC source replay with record_assessment=true does not create another judgment clock",
+      "Synthetic _portfolio_activity_pending metadata remains stored server-side and is absent from public native replay DTO"
+    ],
+    "negative_checks": [
+      {"case": "Stale native expected_last_assessed token", "endpoint": "PATCH native", "expected_status": 409},
+      {"case": "Stale expected_revision", "endpoint": "PUT guided", "expected_status": 409},
+      {"case": "Forged generated_at in source provenance", "endpoint": "PATCH native", "expected_status": 409},
+      {"case": "Different verified actor replays the original member source", "endpoint": "PATCH native", "expected_status": 409},
+      {"case": "Current actor role changed to client_readonly", "endpoint": "PUT guided and PATCH native", "expected_status": 403},
+      {"case": "Current actor membership excludes target client", "endpoint": "PUT guided and PATCH native", "expected_status": 403},
+      {"case": "Target client archived", "endpoint": "PUT guided and PATCH native", "expected_status": 403},
+      {"case": "Current framework requirement changed to does_not_apply", "endpoint": "PUT guided and PATCH native", "expected_status": 404}
+    ],
+    "negative_integrity_check": "Native record, guided history and portfolio event collections exactly match the prior snapshots after all rejected requests."
+  },
+  "test_updates": {
+    "owned_changed_files": [
+      "backend/tests/test_soc_guided_assessment.py",
+      "backend/tests/test_soc_guided_routes.py",
+      "backend/tests/test_iso_guided_assessment.py",
+      "backend/tests/test_iso_guided_routes.py",
+      "frontend/src/lib/socGuidedAssessment.test.js",
+      "frontend/src/lib/isoGuidedAssessment.test.js"
+    ],
+    "changes": [
+      "Current catalog version assertions move from v1 to v2 and mandatory-unknown assertions to Not Assessed",
+      "Current optional select fixture defaults are No rather than implicitly reporting affirmative empty extras",
+      "Cross-language fixture import substitutions include the real new current and legacy catalog imports",
+      "Historical v1 reader cases explicitly retain old outcomes and context handling",
+      "Narrative checks distinguish confirmed control basis from explicit reported gap or confirmation paragraphs",
+      "Two history and lease tests make genuine reviewed narrative changes to exercise an archive boundary; existing pagination, conflict and successor-lease assertions are retained",
+      "New actual ASGI replay test verifies manual wording, native Items, metadata filtering and live authorization"
+    ],
+    "unchanged_constraints": "No source edits, timeout changes, weakened authorization assertions, component-test edits, or edits to other agents' assigned tests."
+  },
+  "verification": {
+    "backend_before": {
+      "scope": "Four assigned backend SOC/ISO files before fixture updates",
+      "result": "70 failed, 45 passed, 2358 subtests passed; 4 warnings",
+      "failure_disposition": "New version and outcome policy expectations, missing new imports in the cross-language fixture loader, and two archive fixtures previously relying on duplicate saves; failures corrected without changing product source or weakening negative checks.",
+      "log": "soc-iso-backend-before.log"
+    },
+    "frontend_before": {
+      "scope": "All seven assigned frontend SOC/ISO suites",
+      "result": "2 failed suites, 5 passed; 316 failed tests, 203 passed tests, 519 total",
+      "failure_disposition": "Current version/status fixtures and newly optional affirmative-parent defaults; retained historical readers now explicitly tested.",
+      "log": "soc-iso-frontend-before.log"
+    },
+    "backend_final": {
+      "command": "python -m pytest -c backend/pytest.ini -n 0 -q --tb=short backend/tests/test_soc_guided_assessment.py backend/tests/test_soc_guided_routes.py backend/tests/test_iso_guided_assessment.py backend/tests/test_iso_guided_routes.py backend/tests/test_assessment_unknowns.py backend/tests/test_assessment_items.py",
+      "result": "79 passed, 11738 subtests passed, 4 warnings in 41.25s",
+      "log": "soc-iso-backend-final.log",
+      "read_only_extra_suites": ["backend/tests/test_assessment_unknowns.py", "backend/tests/test_assessment_items.py"]
+    },
+    "frontend_final": {
+      "scope": "socGuidedAssessment, socPracticalGuidance, socRequirementGuide, socAssessmentPresentation, socAssessmentDates, isoGuidedAssessment, isoGuidedProgram",
+      "result": "7 suites passed, 583 tests passed, 0 snapshots in 4.515s",
+      "log": "soc-iso-frontend-final.log"
+    },
+    "focused_new_replay": {"result": "1 passed, 18 deselected, 2 framework subtests passed, 4 warnings in 2.44s", "log": "soc-iso-replay-focused.log"},
+    "diff_check": "git diff --check passed for all six assigned changed tests",
+    "warnings": "Existing FastAPI startup/shutdown on_event deprecation warnings appeared before and after; no warning was suppressed.",
+    "browser_checks": 0,
+    "hosted_checks": 0,
+    "durable_mongo_checks": 4,
+    "real_mongo_addendum": {
+      "source_revision_at_run": "eb7d6ab9fb28b3b6aa39ed40fce7673bc54fe4c9",
+      "reviewed_source_difference_from_4453cf2": "None in SOC/ISO frontend engines or the six reviewed backend persistence/engine paths",
+      "origin": "mongodb://127.0.0.1:58751",
+      "wrapper": "work/program-review/run_program_mongo_cross_review.py",
+      "command": "python work/program-review/run_program_mongo_cross_review.py --mongo-url mongodb://127.0.0.1:58751",
+      "test_scope": [
+        "SocGuidedRoutes.test_current_replay_preserves_manual_wording_items_and_rechecks_live_authority (SOC and ISO)",
+        "AssessmentItemsTests.test_unchanged_interview_and_applied_native_save_are_idempotent",
+        "AssessmentItemsTests.test_unchanged_native_application_can_acknowledge_the_same_committed_source",
+        "AssessmentItemsTests.test_items_response_filters_capture_fields_on_update_and_noop"
+      ],
+      "result": "4 tests passed, 2 framework subtests passed, no failures or errors in 18.532s",
+      "cleanup": "All four fresh test_grc_program_<uuid> databases were dropped by exact generated name and verified absent. No root runner databases or existing records were touched.",
+      "log": "soc-iso-mongo-replay-review.log",
+      "receipt": "soc-iso-mongo-replay-review.json",
+      "claim_limit": "Actual Mongo persistence and indexes exercised for these four methods; no hosted identity/session, process-crash or load assurance claimed."
+    }
+  },
+  "reference": {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+    "section": "Validate the Permissions on Every Request; Deny by Default",
+    "use": "Supports reviewing live server-side authorization before no-op acknowledgement; this review is not an ASVS conformance claim."
+  },
+  "remaining_boundaries": [
+    "Hosted authentication, real account permissions and held sessions remain unverified by this reviewer",
+    "The initial mock campaign is supplemented by four exact methods against disposable real Mongo; hosted deployment, provider failures, process-crash behavior and load remain outside this review",
+    "Agent 2 holds staging release ownership; this reviewer did not merge, push, release or publish",
+    "Normative content comparison and authored functional review are separately scoped in prior SOC/ISO receipts; this persistence review does not expand those claims"
+  ]
+}

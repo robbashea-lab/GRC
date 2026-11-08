@@ -57,6 +57,23 @@ class PortfolioOverviewTests(ClientDashboardSourcesTests):
         self.assertEqual(rows['a']['last_activity'], {'at':'2026-09-12T12:00:00+00:00', 'label':'Evidence added'})
         self.assertEqual(rows['b']['last_activity']['label'], 'Review started')
 
+    async def test_named_native_assessment_activity_uses_successful_saved_receipts_only(self):
+        self.sign_in('admin')
+        valid = {'client_id': 'a', 'entity_type': 'framework_assessments', 'action': 'Framework assessment updated',
+                 'at': '2026-09-12T12:00:00+00:00', 'meta': {'record_assessment': True, 'changed_fields': []}}
+        item = {**valid, 'action': 'Assessment item updated', 'at': '2026-09-13T12:00:00+00:00', 'meta': {}}
+        logs = [valid, item, {**valid, 'client_id': 'b', 'at': '2026-09-14T12:00:00+00:00'}]
+        for failed in ({'outcome': 'failed'}, {'outcome': 'requested'}, {'outcome': 'unknown'},
+                       {'committed': False}, {'success': False}, {'meta': {'outcome': 'denied'}},
+                       {'meta': {'_portfolio_activity_noop': True}}, {'action': 'update'}):
+            logs.append({**valid, 'at': '2026-09-14T12:00:00+00:00', **failed})
+        await server.db.audit_logs.insert_many(logs)
+        before = await server.db.audit_logs.find({}).to_list(None)
+        rows = {row['client_id']: row for row in (await self.directory())['clients']}
+        self.assertEqual(rows['a']['last_activity'], {'at': item['at'], 'label': 'Assessment item saved'})
+        self.assertEqual(rows['b']['last_activity']['label'], 'Assessment saved')
+        self.assertEqual(await server.db.audit_logs.find({}).to_list(None), before)
+
     async def test_authorized_scope_is_not_inferred_from_lead_and_url_tampering_fails(self):
         await server.db.users.insert_one({'user_id':'limited','email':'limited@example.test','role':'platform_admin','client_ids':['a'],'status':'active'})
         await server.db.clients.update_one({'client_id':'b'},{'$set':{'assigned_owner_id':'limited'}})

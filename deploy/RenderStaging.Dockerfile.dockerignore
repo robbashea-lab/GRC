@@ -1,6 +1,8 @@
 **
 !backend
 !backend/*.py
+!backend/fonts
+!backend/fonts/**
 !backend/common_passwords.txt
 !backend/requirements-runtime.txt
 !backend/routes

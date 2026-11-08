@@ -1,6 +1,25 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
-import OmniWindow,{fitOmniRect,besideOmniRect} from './OmniWindow';
+import OmniWindow,{fitOmniRect,besideOmniRect,cisOmniProgramRect} from './OmniWindow';
+
+test('CIS visual popup retains its compact width and fits above or below edge launchers',()=>{
+  for(const [width,height] of [[1440,1000],[1024,900],[390,844],[320,240]]){
+    for(const anchor of [{left:width-88,right:width-24,top:height-96,bottom:height-32},{left:12,right:76,top:90,bottom:154}]){
+      const rect=cisOmniProgramRect(anchor,width,height);
+      expect(rect.w).toBe(Math.min(360,width-32));expect(rect.x).toBeGreaterThanOrEqual(8);expect(rect.y).toBeGreaterThanOrEqual(8);
+      expect(rect.x+rect.w).toBeLessThanOrEqual(width-8);expect(rect.y+rect.h).toBeLessThanOrEqual(height-8);
+    }
+  }
+});
+
+test('CIS program popup leaves a saved middle-screen launcher reachable',()=>{
+  for(const [width,height] of [[1440,900],[1024,900],[390,844]]){
+    const anchor={left:width/2-32,right:width/2+32,top:height/2-32,bottom:height/2+32};
+    const rect=cisOmniProgramRect(anchor,width,height);
+    expect(rect.y+rect.h<=anchor.top-10||rect.y>=anchor.bottom+10).toBe(true);
+    expect(rect.x).toBeGreaterThanOrEqual(8);expect(rect.y+rect.h).toBeLessThanOrEqual(height-8);
+  }
+});
 
 test('focused guide follows the current launcher rectangle on either side and clamps narrow edges',()=>{
   const left=besideOmniRect({left:20,right:140,top:100},1440,900),right=besideOmniRect({left:1280,right:1400,top:120},1440,900);

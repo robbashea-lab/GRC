@@ -133,3 +133,18 @@ class DashboardWorkQueueTests(unittest.IsolatedAsyncioTestCase):
         await server.db.tasks.insert_one({'client_id':'a','task_id':'unicode','title':'Straße ÉQUIPE İpek','status':'open'})
         for query, count in [('straße équipe',1),('STRASSE',0),('i\u0307pek',1)]:
             self.assertEqual((await self.get_queue(detail='all',search=query)).json()['total'],count)
+
+    async def test_opt_in_metadata_is_client_scoped_and_preserves_work_identity(self):
+        self.sign_in('admin')
+        await server.db.framework_assessments.insert_many([
+            {'client_id':'a','framework_assessment_id':'own','framework_key':'cis-ig1','definition_id':'1.1'},
+            {'client_id':'b','framework_assessment_id':'foreign','framework_key':'cis-ig1','definition_id':'2.1'}])
+        await server.db.tasks.insert_many([
+            {'client_id':'a','task_id':'own','title':'Work','status':'open','framework_assessment_id':'own'},
+            {'client_id':'a','task_id':'foreign','title':'Work','status':'open','framework_assessment_id':'foreign'}])
+        ordinary=(await self.get_queue(detail='all')).json()['items']
+        enriched=(await self.get_queue(detail='all',work_metadata='true')).json()['items']
+        self.assertEqual([r['key'] for r in ordinary],[r['key'] for r in enriched])
+        self.assertTrue(all('safeguard_ids' not in row for row in ordinary))
+        self.assertEqual(next(r for r in enriched if r['id']=='own')['safeguard_ids'],['cis-ig1|1.1'])
+        self.assertEqual(next(r for r in enriched if r['id']=='foreign')['safeguard_ids'],[])

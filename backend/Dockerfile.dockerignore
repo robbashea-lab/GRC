@@ -1,6 +1,8 @@
 **
 !backend
 !backend/*.py
+!backend/fonts
+!backend/fonts/**
 !backend/common_passwords.txt
 !backend/requirements-runtime.txt
 !backend/routes
@@ -13,6 +15,7 @@
 !frontend/src/lib/managementRules.json
 !frontend/src/lib/portfolioRules.json
 !frontend/src/lib/aiGovernanceCatalog.json
+!frontend/src/lib/aiOnboardingCatalog.json
 !shared
 !shared/catalogs
 !shared/catalogs/**

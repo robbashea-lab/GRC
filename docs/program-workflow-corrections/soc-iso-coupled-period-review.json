@@ -1,0 +1,57 @@
+{
+  "reviewer": "/root/soc2_review",
+  "classification": "Independent non-author connected source review and focused automated execution",
+  "sourceOwnerCommit": "d5bb9587743bb93610bcbb07a91a99bbf4093121",
+  "integratedRootCommit": "19bb8bd5bd84ac30a958e62ec9db19235f51bb09",
+  "identicalRootAndOwnerGitBlobs": {
+    "frontend/src/lib/isoGuidedAssessment.js": "6344a352b33a40b36e3bb2a7c30ea692a80fec29",
+    "backend/assessment_items.py": "7d1b53a7772bc59cfbf6ad6a118a6e6162c6ee94",
+    "frontend/src/lib/inlineContextSentences.test.js": "b28e6769437a167f149f4042e1541960b7f8700f",
+    "backend/tests/test_assessment_items.py": "a04496ffe6adae935c57bfd34fcc28b3adf379a8",
+    "backend/tests/test_assessment_unknowns.py": "54bc9ab3258e202d3d811813dde2c3cdb818425f"
+  },
+  "findings": [],
+  "sourceDisposition": "The bounded coupled correction is coherent. Current ISO narrative facts/signals and canonical server SOC/ISO Item labels preserve supplied terminal .!? punctuation and append one period only when needed. Legacy V1 retains exact unconditional append behavior. Existing current SOC formatting is unchanged by this delta.",
+  "reviewedInvariants": [
+    "Both runtime gates compare the exact current framework version; historical V1 readers keep their prior text, rather than silently rewriting saved/manual prose.",
+    "Server label authority remains active authored questions plus validated answers/detail. Client-supplied result/signals are not Item authority.",
+    "The label correction does not change selected-answer status, applicable question scope, explicit optional-parent gating, evidence verification, source capture, source version, schema or lifecycle.",
+    "Stable native Item ID still derives assessment ID + question ID + kind; fingerprint still derives the actual answer/detail, rather than generated punctuation.",
+    "With unchanged fingerprint, explicit reconciliation can correct a generated label while retaining resolved state, analyst resolution and all prior history. The repeat with corrected label is a strict unchanged reconciliation.",
+    "The all-record JS/Python origin test now also checks actual signal labels. Explicit UTF8 decoding corrects Node JSON transport on Windows without deleting or weakening exact-label assertions.",
+    "This diff does not add permission bypasses or change CAS, native replay guards, actor/client scope, live archive/program checks or response filtering. Existing connected Item route/replay cases were rerun in the selected suites."
+  ],
+  "independentFrontendRun": {
+    "command": "CI=true node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand --runTestsByPath src/lib/inlineContextSentences.test.js src/lib/isoGuidedAssessment.test.js src/lib/socGuidedAssessment.test.js src/lib/assessmentUnknowns.test.js",
+    "suitesPassed": 4,
+    "testsPassed": 585,
+    "testsFailed": 0,
+    "seconds": 4.288,
+    "log": "soc-iso-coupled-independent-frontend.log"
+  },
+  "independentBackendRun": {
+    "command": "python -m pytest -c backend/pytest.ini -n 0 backend/tests/test_assessment_unknowns.py backend/tests/test_assessment_items.py",
+    "testsPassed": 28,
+    "testsFailed": 0,
+    "seconds": 6.92,
+    "warnings": 4,
+    "log": "soc-iso-coupled-independent-backend.log",
+    "subtestCount": "Not printed by this configured execution. Author9196 is separate and is not borrowed."
+  },
+  "regressionCoverage": [
+    "SOC current Partial literal detail and independent unknown; ISO current all-No literal detail and three genuine gap origins",
+    "all current SOC61/ISO123 definitions retain status, question identity, applicable conditional semantics and input immutability in their existing full library tests",
+    "current and explicit legacy No/Partially/Not sure labels with supplied .!?/ellipsis/no-punctuation endings",
+    "current and legacy same native Item ID/fingerprint for unchanged answer/detail",
+    "retained resolved notes/prior history and no-op corrected repeat",
+    "cross-runtime full Item-origin conformance including exact signal label comparison"
+  ],
+  "counterevidenceDisposition": "The reviewer independently reproduced the prior canonical SOC Item duplicate period in soc-backend-item-terminal-period-repro.json. This frozen correction addresses that exact source path and the connected ISO writer issue. Historical failing receipts remain retained; compiled final corrected ISO acceptance is separately owned by root.",
+  "storageBoundary": "Selected backend cases use the existing isolated mocked Mongo test harness and real ASGI routes where defined. No Mongo listener was contacted or restarted; final real-storage combined CI evidence is separately owned by coordinator.",
+  "limits": [
+    "Source and focused automated evidence, not an independently operated browser, hosted authentication or staging-release result",
+    "Current/legacy tests verify generated labels and explicit reconciliation; they do not authorize background rewriting of saved manual narrative",
+    "Focused counts overlap previous framework and canonical Item campaigns and must not be added together",
+    "No runtime source edits, account/grant changes, session or provider operations performed by this reviewer"
+  ]
+}

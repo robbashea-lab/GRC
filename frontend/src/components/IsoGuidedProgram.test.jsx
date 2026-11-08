@@ -11,13 +11,13 @@ let container,root;
 beforeEach(()=>{globalThis.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 
-test('next steps rank unresolved necessity, confirmed gaps, unassessed and partial work without duplicate SoA/Annex gaps',()=>{
+test('next steps put Not Assessed first and keep necessity and assessed work separate without duplicate SoA/Annex gaps',()=>{
   const undecided=assessment('A.5.2','needs_attention'),gap=assessment('7.2','needs_attention'),
     unassessed=assessment('10.2'),partial=assessment('A.6.3','in_progress',{soa_applicability:'included',soa_justification:'Synthetic risk basis'}),
     excluded=assessment('A.5.23','needs_attention',{soa_applicability:'excluded',soa_justification:'Synthetic justified exclusion'});
   const rows=[partial,unassessed,gap,undecided,excluded,undecided],before=JSON.stringify(rows);
   expect(isoRecommendedWork(rows,[],{},'2026-10-11').map(item=>[item.row.definition_id,item.view])).toEqual([
-    ['A.5.2','soa'],['7.2','isms_clause'],['10.2','isms_clause'],['A.6.3','annex_control']]);
+    ['10.2','isms_clause'],['A.5.2','soa'],['7.2','isms_clause'],['A.6.3','annex_control']]);
   expect(JSON.stringify(rows)).toBe(before);
 });
 
@@ -52,8 +52,10 @@ test('unfinished current-quarter and future audit work is not overdue without an
   const reviews=[{review_id:'future',due_date:'2026-12-31',iso_audit:{},status:'open'},
     {review_id:'today',due_date:'2026-10-11',iso_audit:{},status:'open'},
     {review_id:'unscheduled',iso_audit:{},status:'open'}];
-  const queue=isoRecommendedWork([],reviews,{},'2026-10-11');
+  const before=JSON.stringify(reviews),queue=isoRecommendedWork([],reviews,{},'2026-10-11');
   expect(queue.map(item=>[item.review.review_id,item.timing.key])).toEqual([
-    ['unscheduled','unscheduled'],['today','upcoming'],['future','upcoming']]);
+    ['today','upcoming'],['future','upcoming'],['unscheduled','unscheduled']]);
   expect(queue.some(item=>item.timing.key==='overdue')).toBe(false);
+  expect(queue.map(item=>item.review.due_date)).toEqual(['2026-10-11','2026-12-31',undefined]);
+  expect(JSON.stringify(reviews)).toBe(before);
 });

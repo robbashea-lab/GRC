@@ -34,6 +34,9 @@ export function portfolioFrameworks(clientId, baseline, requirements) {
   }));
 }
 export function meaningfulActivity(log, now = new Date()) {
+  if (log.success === false || log.committed === false || log.meta?._portfolio_activity_noop
+    || log.outcome != null && log.outcome !== 'success'
+    || ['denied', 'failed', 'error', 'cancelled', 'requested'].includes(log.meta?.outcome)) return null;
   const definition = rules.activity.find(r => [r.kind, r.kind === 'policy' ? 'policies' : r.kind + 's'].includes(log.entity_type) && r.actions.includes(log.action));
   const time = Date.parse(log.at);
   if (!definition || !Number.isFinite(time) || time > now.getTime()) return null;
@@ -42,9 +45,10 @@ export function meaningfulActivity(log, now = new Date()) {
     label: definition.labels?.[log.action] || log.action
   };
 }
-export function latestPortfolioActivity(logs, now = new Date()) {
+export function latestPortfolioActivity(logs, now = new Date(), activityProofs = {}) {
   const latest = new Map();
   for (const log of logs) {
+    if (activityProofs?.[log.audit_id || log.log_id]?.eligible === false) continue;
     const activity = meaningfulActivity(log, now),
       previous = latest.get(log.client_id);
     if (activity && (!previous || Date.parse(activity.at) > Date.parse(previous.at))) latest.set(log.client_id, activity);

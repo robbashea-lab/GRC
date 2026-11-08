@@ -18,8 +18,8 @@ export function peopleMap(people) {
   return map;
 }
 
-// Loads once per client; a response for a previous client is discarded.
-export function useClientPeople(clientId) {
+// Accepted record reloads may add referenced owners; previous responses are discarded.
+export function useClientPeople(clientId, refreshKey) {
   const [state, setState] = useState({ clientId: '', people: [] });
   useEffect(() => {
     if (!clientId) return undefined;
@@ -28,6 +28,6 @@ export function useClientPeople(clientId) {
       .then(({ data }) => { if (!controller.signal.aborted) setState({ clientId, people: Array.isArray(data) ? data : [] }); })
       .catch(() => { if (!controller.signal.aborted) setState({ clientId, people: [] }); });
     return () => controller.abort();
-  }, [clientId]);
+  }, [clientId, refreshKey]);
   return state.clientId === clientId ? state.people : [];
 }

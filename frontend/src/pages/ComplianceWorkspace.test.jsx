@@ -5,12 +5,15 @@ import MockComplianceWorkspace from './ComplianceWorkspace';
 import MockRecordListPage from './RecordListPage';
 import {THEME_KEY} from '@/lib/brawndoTheme';
 import api from '@/lib/api';
-let mockClient, mockPath, mockKey;
+import {cisClient} from '@/testUtils/cisExperience';
+import {frameworkDashboardFixture} from '@/testUtils/frameworkDashboard';
+import {FRAMEWORKS,frameworkCatalog} from '@/lib/frameworks';
+let mockClient, mockPath, mockKey, mockAuth;
 jest.mock('@/context/OrgContext', () => ({ useOrg: () => ({ currentClientId: mockClient.client_id, currentClient: mockClient, clients: [mockClient] }) }));
-jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ user: { role: 'super_admin', name: 'Alex Morgan', workspace_mode: 'demo' } }) }));
+jest.mock('@/context/AuthContext', () => ({ useAuth: () => mockAuth }));
 jest.mock('@/components/NotificationBell', () => () => null);
 jest.mock('@/preview/DemoNotice', () => () => null);
-jest.mock('@/lib/api', () => ({ __esModule: true, default: { get: jest.fn() }, formatError: e => e.message }));
+jest.mock('@/lib/api', () => ({ __esModule: true, PREVIEW_MODE:true, default: { get: jest.fn() }, formatError: e => e.message }));
 jest.mock('react-router-dom', () => ({
   useSearchParams: () => require('react').useState(new URLSearchParams()),
   useLocation: () => ({ pathname: mockPath }), useParams: () => ({ requirementKey: mockKey }), useNavigate: () => jest.fn(),
@@ -23,6 +26,7 @@ beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   localStorage.removeItem(THEME_KEY);
   mockClient = { client_id: 'a', name: 'Client A' }; mockKey = 'hipaa'; mockPath = '/compliance/hipaa';
+  mockAuth={user:{role:'super_admin',name:'Alex Morgan',workspace_mode:'demo'}};
   api.get.mockImplementation(async (path, config) => ({ data: path === '/onboarding/baseline' ? { state: { completed: true } }
     : path.startsWith('/frameworks/') ? {configured:false,selected:mockClient.client_id==='a',assessments:[],definitions:[]}
     : path.endsWith('/members') ? []
@@ -30,15 +34,174 @@ beforeEach(() => {
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); localStorage.removeItem(THEME_KEY); });
-const render = async () => { await act(async () => root.render(<Layout />)); };
+const render = async key => { await act(async () => root.render(<Layout key={key}/>)); };
+
+function socWorkspace(configured=true){
+  const catalog=frameworkCatalog('soc-2'),definitions=catalog.requirements,categories=['security','availability','confidentiality'];
+  return {framework:FRAMEWORKS.find(framework=>framework.key==='soc-2'),configured,selected:true,
+    configuration:{categories},active_definition_ids:definitions.filter(definition=>categories.includes(definition.category)).map(definition=>definition.id),
+    definitions:configured?definitions:[],assessments:configured?definitions.map(definition=>({client_id:mockClient.client_id,framework_key:'soc-2',framework_assessment_id:`${mockClient.client_id}:${definition.id}`,definition_id:definition.id,status:'not_assessed'})):[],work:{}};
+}
+function serveSoc(response){
+  api.get.mockImplementation(async path=>({data:path==='/onboarding/baseline'?{state:{completed:true,requirements:{'soc-2':'applies'}}}
+    :path==='/requirements'?[{client_id:mockClient.client_id,baseline_key:'soc-2',baseline_response:'applies'}]
+    :path==='/frameworks/soc-2'?response:[]}));
+}
+
+function isoWorkspace(configured=true){
+  const {source}=frameworkDashboardFixture('iso-27001',undefined,mockClient.client_id);
+  source.work={};
+  return configured?source:{...source,configured:false,definitions:[],assessments:[],active_definition_ids:[]};
+}
+function serveIso(response){
+  api.get.mockImplementation(async path=>({data:path==='/onboarding/baseline'?{state:{completed:true,requirements:{'iso-27001':'applies'}}}
+    :path==='/requirements'?[{client_id:mockClient.client_id,baseline_key:'iso-27001',baseline_response:'applies'}]
+    :path==='/frameworks/iso-27001'?response:path==='/iso-audit'?{reviews:[]}:[]}));
+}
+
+test('loaded SOC uses one native header and exact edition without the duplicate outer client heading',async()=>{
+  mockKey='soc-2';mockPath='/compliance/soc-2';serveSoc(socWorkspace());
+  await render();
+  const main=container.querySelector('main');
+  expect(main.querySelectorAll('h1')).toHaveLength(1);expect(main.querySelector('h1').textContent).toBe('SOC 2');
+  expect(main.querySelector('.bpage-eyebrow')).toBeNull();
+  expect(main.textContent).not.toContain('Assessment workspace ·');
+  expect(main.querySelector('.soc-program-heading p').textContent).toContain(frameworkCatalog('soc-2').version);
+  expect(main.querySelector('.soc-program-heading p').textContent).toContain('SOC 2 Type 2');
+  expect(main.querySelectorAll('.soc-program-heading p')).toHaveLength(1);
+  expect(main.querySelectorAll('[aria-labelledby="bcis-summary-heading"]')).toHaveLength(1);
+});
+
+test('SOC requirement loading and errors retain the outer metadata heading',async()=>{
+  mockKey='soc-2';mockPath='/compliance/soc-2';
+  let rejectRequirements;const requirements=new Promise((resolve,reject)=>{rejectRequirements=reject;});
+  api.get.mockImplementation(path=>path==='/requirements'?requirements:Promise.resolve({data:{state:{completed:true}}}));
+  await render();
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main h1').textContent).toBe('SOC 2');
+  expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Client A');
+  expect(container.querySelector('main').textContent).toContain('Loading client requirement');
+  await act(async()=>rejectRequirements(new Error('SOC requirement unavailable')));
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main [role="alert"]').textContent).toContain('SOC requirement unavailable');
+  expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
+  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
+});
+
+test('SOC framework empty and error states retain a single metadata heading without assessment actions',async()=>{
+  mockKey='soc-2';mockPath='/compliance/soc-2';serveSoc(socWorkspace(false));
+  await render();
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main h1').textContent).toBe('SOC 2');
+  expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
+  expect(container.querySelector('main').textContent).toContain('Select Applies in Client Profile to initialize this program after onboarding.');
+  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
+  expect(container.querySelector('[aria-label^="Continue assessment"]')).toBeNull();
+  const serve=api.get.getMockImplementation();
+  api.get.mockImplementation((path,...args)=>path==='/frameworks/soc-2'?Promise.reject(new Error('SOC framework unavailable')):serve(path,...args));
+  await render('soc-framework-error');
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main [role="alert"]').textContent).toContain('SOC framework unavailable');
+  expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
+  expect(container.querySelector('[aria-label^="Continue assessment"]')).toBeNull();
+});
+
+test('SOC framework loading keeps one metadata heading after the outer requirement load completes',async()=>{
+  mockKey='soc-2';mockPath='/compliance/soc-2';serveSoc(socWorkspace());
+  const serve=api.get.getMockImplementation();let resolveFramework;
+  const framework=new Promise(resolve=>{resolveFramework=resolve;});
+  api.get.mockImplementation((path,...args)=>path==='/frameworks/soc-2'?framework:serve(path,...args));
+  await render();
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main h1').textContent).toBe('SOC 2');
+  expect(container.querySelector('main').textContent).toContain(frameworkCatalog('soc-2').version);
+  expect(container.querySelector('main').textContent).toContain('Loading program workspace');
+  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
+  await act(async()=>resolveFramework({data:socWorkspace()}));
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelectorAll('[aria-labelledby="bcis-summary-heading"]')).toHaveLength(1);
+});
+test('loaded ISO uses one native metadata header while the sidebar retains the client identity',async()=>{
+  const catalogBefore=JSON.stringify(frameworkCatalog('iso-27001'));
+  mockKey='iso-27001';mockPath='/compliance/iso-27001';serveIso(isoWorkspace());
+  await render();
+  const main=container.querySelector('main');
+  expect(main.querySelectorAll('h1')).toHaveLength(1);expect(main.querySelector('h1').textContent).toBe('ISO 27001');
+  expect(main.querySelector('.bpage-eyebrow')).toBeNull();expect(main.textContent).not.toContain('Assessment workspace ·');
+  expect(main.querySelectorAll('.iso-program-heading p')).toHaveLength(1);
+  expect(main.querySelector('.iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
+  expect(main.querySelectorAll('[aria-labelledby="bcis-summary-heading"]')).toHaveLength(1);
+  expect(main.querySelectorAll('button.iso-program-card')).toHaveLength(4);
+  expect(container.querySelector('[data-testid="context-header-client"]').textContent).toContain('Client A');
+  expect(JSON.stringify(frameworkCatalog('iso-27001'))).toBe(catalogBefore);
+});
+
+test('ISO requirement loading and errors retain one outer metadata heading until the native workspace can load',async()=>{
+  mockKey='iso-27001';mockPath='/compliance/iso-27001';
+  let rejectRequirements;const requirements=new Promise((resolve,reject)=>{rejectRequirements=reject;});
+  api.get.mockImplementation(path=>path==='/requirements'?requirements:Promise.resolve({data:{state:{completed:true}}}));
+  await render();
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);expect(container.querySelector('main h1').textContent).toBe('ISO 27001');
+  expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Client A');
+  expect(container.querySelector('main').textContent).toContain('Loading client requirement');
+  expect(container.querySelector('main .iso-program-heading')).toBeNull();
+  await act(async()=>rejectRequirements(new Error('ISO requirement unavailable')));
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main [role="alert"]').textContent).toContain('ISO requirement unavailable');
+  expect(container.querySelector('main').textContent).toContain(frameworkCatalog('iso-27001').version);
+  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
+});
+
+test('ISO framework unconfigured and error states keep one native metadata heading without assessment actions',async()=>{
+  mockKey='iso-27001';mockPath='/compliance/iso-27001';serveIso(isoWorkspace(false));
+  await render();
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);expect(container.querySelector('main h1').textContent).toBe('ISO 27001');
+  expect(container.querySelector('main .bpage-eyebrow')).toBeNull();
+  expect(container.querySelector('main .iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
+  expect(container.querySelector('main').textContent).toContain('Select Applies in Client Profile to initialize this program after onboarding.');
+  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
+  expect(container.querySelector('main .head-actions .primary')).toBeNull();
+  const serve=api.get.getMockImplementation();
+  api.get.mockImplementation((path,...args)=>path==='/frameworks/iso-27001'?Promise.reject(new Error('ISO framework unavailable')):serve(path,...args));
+  await render('iso-framework-error');
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelector('main [role="alert"]').textContent).toContain('ISO framework unavailable');
+  expect(container.querySelector('main .iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
+  expect(container.querySelector('main .head-actions .primary')).toBeNull();
+});
+
+test('ISO framework loading and its completed native read keep a single metadata header',async()=>{
+  mockKey='iso-27001';mockPath='/compliance/iso-27001';const source=isoWorkspace();serveIso(source);
+  const serve=api.get.getMockImplementation();let resolveFramework;
+  const framework=new Promise(resolve=>{resolveFramework=resolve;});
+  api.get.mockImplementation((path,...args)=>path==='/frameworks/iso-27001'?framework:serve(path,...args));
+  await render();
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);expect(container.querySelector('main h1').textContent).toBe('ISO 27001');
+  expect(container.querySelector('main .bpage-eyebrow')).toBeNull();
+  expect(container.querySelector('main .iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
+  expect(container.querySelector('main').textContent).toContain('Loading program workspace');
+  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
+  await act(async()=>resolveFramework({data:source}));
+  expect(container.querySelectorAll('main h1')).toHaveLength(1);
+  expect(container.querySelectorAll('[aria-labelledby="bcis-summary-heading"]')).toHaveLength(1);
+});
+
 test('direct compliance routes render client empty states and preserve existing sidebar links', async () => {
   for (const [key, label] of [['hipaa','HIPAA'],['iso-27001','ISO 27001'],['cmmc','CMMC']]) {
     mockKey = key; mockPath = `/compliance/${key}`; await render();
     expect(container.querySelector('main').textContent).toContain(key!=='cmmc'?'Select Applies in Client Profile to initialize this program after onboarding.':'Program selected for this client. Detailed requirement assessment and mapping have not yet been configured in Omnisciente.');
     expect(container.querySelector('main').textContent).toContain(label);
-    // The shared header names the client and retains the framework edition.
-    expect(container.querySelector('main').textContent).toContain(key!=='cmmc'?'Assessment workspace · ':'Applicability only; no assessment catalog');
-    expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Client A');
+    expect(container.querySelectorAll('main h1')).toHaveLength(1);
+    if(key==='iso-27001'){
+      // ISO owns its metadata header; the persistent sidebar still names the client.
+      expect(container.querySelector('main .bpage-eyebrow')).toBeNull();
+      expect(container.querySelector('main .iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
+      expect(container.querySelector('main').textContent).not.toContain('Assessment workspace · ');
+      expect(container.querySelector('[data-testid="context-header-client"]').textContent).toContain('Client A');
+    }else{
+      expect(container.querySelector('main').textContent).toContain(key!=='cmmc'?'Assessment workspace · ':'Applicability only; no assessment catalog');
+      expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Client A');
+    }
     if(key!=='cmmc')expect(api.get.mock.calls.some(([path,config])=>path===`/frameworks/${key}`&&config?.params?.client_id==='a')).toBe(true);
     expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(3);
   }
@@ -58,6 +221,33 @@ test('failed loads show a safe error instead of a blank page', async () => {
   await render();
   expect(container.querySelector('[role="alert"]').textContent).toContain('Unable to retrieve requirements');
   expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(0);
+});
+
+test('enrolled CIS keeps one scoped loading header across requirement and framework reads without exposing assessments',async()=>{
+  mockClient={...cisClient('demo_brawndo',1),name:'Brawndo'};mockKey='cis-ig1';mockPath='/compliance/cis-ig1';
+  mockAuth={user:{user_id:'loading-demo',role:'super_admin',workspace_mode:'demo'},workspaceMode:'demo',loading:false};
+  sessionStorage.setItem('grc_client_id','demo_brawndo');
+  let resolveRequirements,rejectFramework;
+  const requirements=new Promise(resolve=>{resolveRequirements=resolve;});
+  const framework=new Promise((resolve,reject)=>{rejectFramework=reject;});
+  api.get.mockImplementation(path=>path==='/requirements'?requirements:path.startsWith('/frameworks/')?framework
+    :Promise.resolve({data:{state:{completed:true,requirements:{'cis-ig1':'applies'}},framework_settings:mockClient.framework_settings}}));
+  try{
+    await render();
+    expect(container.querySelectorAll('main h1')).toHaveLength(1);
+    expect(container.querySelector('main h1').textContent).toBe('CIS IG1');
+    expect(container.querySelector('[data-testid="cis-workspace-loading"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="cis-workspace"]')).toBeNull();
+    expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
+    await act(async()=>resolveRequirements({data:[{client_id:'demo_brawndo',baseline_key:'cis-ig1',baseline_response:'applies'}]}));
+    expect(api.get.mock.calls.some(([path])=>path==='/frameworks/cis-ig1')).toBe(true);
+    expect(container.querySelectorAll('main h1')).toHaveLength(1);
+    expect(container.querySelector('[data-testid="cis-workspace-loading"]')).toBeTruthy();
+    expect(container.querySelector('main').textContent).not.toContain('0 safeguards');
+    await act(async()=>rejectFramework(new Error('Framework unavailable')));
+    expect(container.querySelector('[role="alert"]').textContent).toContain('Framework unavailable');
+    expect(container.querySelector('[data-testid="cis-workspace-loading"]')).toBeNull();
+  }finally{sessionStorage.removeItem('grc_client_id');}
 });
 
 test.each(['demo_brawndo','demo_dunder','demo_prestige','new-client'])('%s Reviews inherits shared header, theme and portal surface from Layout',async clientId=>{

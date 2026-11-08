@@ -1,0 +1,912 @@
+{
+  "recorded_at_utc": "2026-10-14T18:09:38Z",
+  "operator": "Actual Agent 2, acknowledged sole existing staging/session operator and Portfolio owner",
+  "operator_thread_id": "01a134aa-6911-72a1-8ea1-c1adf0f26ad2",
+  "export_turn_id": "01a13b8f-ef8d-7d52-ac96-5a37763d4be8",
+  "record_owner": "Agent 3",
+  "attribution": "Operator independently executed hosted journeys; Agent 3 retained actual assistant exports; non-author soc2_review inspected exported artifacts without browser reexecution.",
+  "retained_export_sha256": "a7e4c14f4404a1b01436ea997e43deb4dd660c45e5c1e8141902e349ef4a6a5a",
+  "source_part_sha256": [
+    "baf1b1d4556933fa292ff9477750900f849d18588a1c6eb8cb815e90e48ff2ca",
+    "ef06dbfd9c279202f1c5320d8ddd6cd6d4abd6dfbfb86bd87500e1ece22c88f6",
+    "5c66d2e641379dedae834b871efc499e097689b0d2126f35f6f6f156546b7e8f"
+  ],
+  "original_dom_boundary": "30 critical full DOM captures remained in operator memory. Export contains phase/time/byte/hash metadata and selected exact narratives/rows; root and non-author reviewer did not inspect or rehash original full DOM. No new screenshot files.",
+  "parts": [
+    {
+      "receipt_export": "863-hosted-closeout-1-of-3",
+      "provenance": {
+        "branch": "codex/governara-portfolio-programs-20261014",
+        "runtime_sha": "863e391280da6606e7e2972bfe1367d877dd757b",
+        "program_sha": "a8f2ecc998619ac95b89d435b487e2b6cffd42e8",
+        "pr": "https://github.com/robbashea-lab/GRC/pull/81",
+        "pr_last_observed": {
+          "head_sha": "863e391280da6606e7e2972bfe1367d877dd757b",
+          "state": "open",
+          "draft": true,
+          "merged": false
+        },
+        "ci_run": 38598158538,
+        "ci_number": 173,
+        "ci_url": "https://github.com/robbashea-lab/GRC/actions/runs/38598158538",
+        "deployment_url": "https://dashboard.render.com/web/srv-db1s0cugekts73f72reg/deploys/dep-db7rhs1srm7s7391n1dg",
+        "deployment_id": "dep-db7rhs1srm7s7391n1dg",
+        "service_id": "srv-db1s0cugekts73f72reg",
+        "service_url": "https://omnisciente-staging.onrender.com",
+        "startup_utc": "2026-10-14T17:17:57Z",
+        "live_utc": "2026-10-14T17:18:02Z",
+        "authenticated_assets": [
+          "main.710be7a7.js",
+          "main.24a244a6.css"
+        ]
+      },
+      "ci": {
+        "all_four_jobs": "success",
+        "frontend": {
+          "suites": 312,
+          "tests": 9314,
+          "snapshots": 1,
+          "seconds": 2676.918,
+          "job": 115970154366
+        },
+        "backend": {
+          "passed": 1004,
+          "skipped": 3,
+          "warnings": 8,
+          "subtests": 16250,
+          "seconds": 1612.6,
+          "job": 115970154029,
+          "observer_entries": 0,
+          "node_down_entries": 0
+        },
+        "mongo": {
+          "job": 115970154232,
+          "status": "success",
+          "detailed_count": null
+        },
+        "release_gate": {
+          "job": 115992960222,
+          "status": "success"
+        },
+        "earlier_ci172_failed_attempts_retained": true,
+        "worker_loss_cause": "unknown"
+      },
+      "identity": {
+        "actor_ui": "Staging Administrator",
+        "role_ui": "super admin",
+        "actor_uid": null,
+        "client_name": "Portfolio Workflow QA 20261014 fce5e05",
+        "client_id": "cli_3fe2af6a91e54ffffd5ac2415fd10de31397ed73dfa477d4f541743afb6fa10f",
+        "iso41_assessment_id": "fw_a5211eef5ead5a6e963840910ea605d0",
+        "iso41_url": "https://omnisciente-staging.onrender.com/compliance/iso-27001?iso_view=isms_clause&assessment=fw_a5211eef5ead5a6e963840910ea605d0"
+      },
+      "iso41": {
+        "baseline": {
+          "status": "Not Assessed",
+          "text": "",
+          "last_assessed_ui": "Not assessed",
+          "items": 0
+        },
+        "draft": {
+          "first_internal_answer": "Partially",
+          "reload_resume_group": 2,
+          "reloaded_internal_pressed": true,
+          "native_status_unchanged": true,
+          "native_text_unchanged": true,
+          "items_still_empty": true
+        },
+        "answers": {
+          "internal": "Partially",
+          "external": "Not sure",
+          "climate_decision": "Yes",
+          "additional_gap": "No",
+          "additional_confirmation": "No",
+          "optional_context": ""
+        },
+        "generated_review": {
+          "status": "Partially Implemented",
+          "text": "Portfolio Workflow QA 20261014 fce5e05 reports partial or unresolved practices for 4.1 — Context and external issues within the ISMS scope. This is reported implementation, not independent verification or certification. Reported gap: Context and external issues: internal: reported partially in place. Requires confirmation: Context and external issues: external: needs confirmation. This assessment reflects practices reported on 2026-10-14; independent verification remains separate.\n\nControls in place\n• Context and external issues: climate decision: reported in place.",
+          "gap": "Context and external issues: internal: reported partially in place.",
+          "confirmation": "Context and external issues: external: needs confirmation.",
+          "supported_practice": "Context and external issues: climate decision: reported in place."
+        },
+        "reviewed_manual_text": "Synthetic staging postfix QA for ISO 4.1.\nInternal issues are partially identified; external issues require confirmation.\nControls in place\n• A climate-relevance decision is reported in place for this disposable test.\nIndependent verification remains separate; no certification claim.",
+        "native_final": {
+          "status_ui": "Partially Implemented",
+          "verification_ui": "Not verified",
+          "manual_exact_after_apply": true,
+          "manual_exact_after_final_reload": true,
+          "manual_exact_after_first_footer_reload": true,
+          "manual_exact_after_second_footer_reload": true,
+          "items_open": 2,
+          "linked_findings": 0
+        },
+        "changed_answer_manual_guard": "Not repeated on 863; earlier valid ISO4.2 receipt retained separately"
+      },
+      "history": {
+        "period": "3 months, Jul 14 to Oct 14 2026, UTC",
+        "row_columns": [
+          "effective_and_capture_date_ui",
+          "implemented",
+          "partial",
+          "needs",
+          "not_assessed",
+          "denominator",
+          "implemented_percent"
+        ],
+        "before_first_footer": {
+          "capture_utc": "2026-10-14T17:33:31.612Z",
+          "positions": 7,
+          "latest_ui": "Oct 14, 2026, 05:28 PM UTC · matches current committed state",
+          "rows_ui": [
+            [
+              "Oct 14, 2026, 05:28 PM UTCCaptured Oct 14, 2026, 05:28 PM UTC",
+              "1",
+              "2",
+              "0",
+              "28",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 05:20 PM UTCCaptured Oct 14, 2026, 05:23 PM UTC",
+              "1",
+              "1",
+              "0",
+              "29",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 12:54 PM UTCCaptured Oct 14, 2026, 12:54 PM UTC",
+              "1",
+              "1",
+              "0",
+              "29",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 12:53 PM UTCCaptured Oct 14, 2026, 12:53 PM UTC",
+              "1",
+              "1",
+              "0",
+              "29",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 12:48 PM UTCCaptured Oct 14, 2026, 12:52 PM UTC",
+              "1",
+              "0",
+              "0",
+              "30",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 03:33 AM UTCCaptured Oct 14, 2026, 03:33 AM UTC",
+              "1",
+              "0",
+              "0",
+              "30",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 03:11 AM UTC",
+              "0",
+              "0",
+              "0",
+              "30",
+              "30",
+              "0.0%"
+            ]
+          ]
+        },
+        "after_first_footer": {
+          "capture_utc": "2026-10-14T17:36:12.477Z",
+          "positions": 7,
+          "latest_ui": "Oct 14, 2026, 05:28 PM UTC · matches current committed state",
+          "rows_ui": [
+            [
+              "Oct 14, 2026, 05:28 PM UTCCaptured Oct 14, 2026, 05:28 PM UTC",
+              "1",
+              "2",
+              "0",
+              "28",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 05:20 PM UTCCaptured Oct 14, 2026, 05:23 PM UTC",
+              "1",
+              "1",
+              "0",
+              "29",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 12:54 PM UTCCaptured Oct 14, 2026, 12:54 PM UTC",
+              "1",
+              "1",
+              "0",
+              "29",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 12:53 PM UTCCaptured Oct 14, 2026, 12:53 PM UTC",
+              "1",
+              "1",
+              "0",
+              "29",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 12:48 PM UTCCaptured Oct 14, 2026, 12:52 PM UTC",
+              "1",
+              "0",
+              "0",
+              "30",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 03:33 AM UTCCaptured Oct 14, 2026, 03:33 AM UTC",
+              "1",
+              "0",
+              "0",
+              "30",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 03:11 AM UTC",
+              "0",
+              "0",
+              "0",
+              "30",
+              "30",
+              "0.0%"
+            ]
+          ]
+        },
+        "after_second_footer": {
+          "capture_utc": "2026-10-14T17:37:52.473Z",
+          "positions": 7,
+          "latest_ui": "Oct 14, 2026, 05:28 PM UTC · matches current committed state",
+          "rows_ui": [
+            [
+              "Oct 14, 2026, 05:28 PM UTCCaptured Oct 14, 2026, 05:28 PM UTC",
+              "1",
+              "2",
+              "0",
+              "28",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 05:20 PM UTCCaptured Oct 14, 2026, 05:23 PM UTC",
+              "1",
+              "1",
+              "0",
+              "29",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 12:54 PM UTCCaptured Oct 14, 2026, 12:54 PM UTC",
+              "1",
+              "1",
+              "0",
+              "29",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 12:53 PM UTCCaptured Oct 14, 2026, 12:53 PM UTC",
+              "1",
+              "1",
+              "0",
+              "29",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 12:48 PM UTCCaptured Oct 14, 2026, 12:52 PM UTC",
+              "1",
+              "0",
+              "0",
+              "30",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 03:33 AM UTCCaptured Oct 14, 2026, 03:33 AM UTC",
+              "1",
+              "0",
+              "0",
+              "30",
+              "31",
+              "3.2%"
+            ],
+            [
+              "Oct 14, 2026, 03:11 AM UTC",
+              "0",
+              "0",
+              "0",
+              "30",
+              "30",
+              "0.0%"
+            ]
+          ]
+        },
+        "scope_marker_count_each_observation": 7,
+        "scope_markers_ui_each_observation": [
+          "- paragraph: \"Oct 14, 2026, 03:33 AM UTC: Scope changed.\"",
+          "- paragraph: \"Oct 14, 2026, 03:33 AM UTC: Scope changed (30 → 31 applicable).\"",
+          "- paragraph: \"Oct 14, 2026, 03:35 AM UTC: Scope changed.\"",
+          "- paragraph: \"Oct 14, 2026, 12:48 PM UTC: Scope changed.\"",
+          "- paragraph: \"Oct 14, 2026, 12:54 PM UTC: Scope changed.\"",
+          "- paragraph: \"Oct 14, 2026, 01:01 PM UTC: Scope changed.\"",
+          "- paragraph: \"Oct 14, 2026, 05:20 PM UTC: Scope changed.\""
+        ],
+        "before_first_rows_equal_after_first": true,
+        "before_first_rows_equal_after_second": true,
+        "scope_equal_after_first": true,
+        "scope_equal_after_second": true,
+        "current_match_equal_after_first": true,
+        "current_match_equal_after_second": true,
+        "known_false_1254_row_preserved": true,
+        "repair_performed": false,
+        "period_change": "Unavailable",
+        "forecast": "Not estimated",
+        "proof_boundary": "Equality of rendered rows, scope markers and current-state label; raw tokens and database metadata were not inspected."
+      }
+    },
+    {
+      "receipt_export": "863-hosted-closeout-2-of-3",
+      "vectors": {
+        "order": [
+          "implemented",
+          "partial",
+          "needs",
+          "not_assessed"
+        ],
+        "dashboard_portfolio_equal": true,
+        "CIS_IG3": {
+          "denominator": 153,
+          "counts": [
+            0,
+            1,
+            0,
+            152
+          ],
+          "assessed": 1
+        },
+        "ISO_27001": {
+          "denominator": 31,
+          "counts": [
+            1,
+            2,
+            0,
+            28
+          ],
+          "assessed": 3,
+          "included_annex": 1,
+          "soa_undetermined": 92,
+          "excluded": 0
+        },
+        "SOC2": {
+          "denominator": 33,
+          "counts": [
+            0,
+            0,
+            1,
+            32
+          ],
+          "assessed": 1
+        },
+        "diagnostic_total": {
+          "denominator": 217,
+          "counts": [
+            1,
+            3,
+            1,
+            212
+          ],
+          "assessed": 5,
+          "not_a_cross_framework_score": true
+        }
+      },
+      "cleanup": {
+        "own_fixture_rearchived": true,
+        "archive_fresh_reload_utc": "2026-10-14T17:42:49.049Z",
+        "restore_available": true,
+        "active_clients": 22,
+        "active_programs": 27,
+        "own_fixture_absent_active": true,
+        "final_active_capture_utc": "2026-10-14T17:43:45.606Z",
+        "protected": {
+          "Brawndo": {
+            "implemented": 2,
+            "denominator": 56,
+            "assessed": 2
+          },
+          "Hooli": {
+            "implemented": 0,
+            "denominator": 153,
+            "assessed": 0
+          },
+          "Initech": {
+            "implemented": 0,
+            "denominator": 130,
+            "assessed": 0
+          },
+          "Prestige": {
+            "implemented": 0,
+            "denominator": 38,
+            "assessed": 0
+          },
+          "Dunder": "Absent only from active authorized view"
+        }
+      },
+      "http": {
+        "evidence_type": "Provider access-log method/path/status/event time, not browser network bodies or durations",
+        "iso41_selected": [
+          {
+            "datetime": "2026-10-14T17:21:45.153475961Z",
+            "method": "GET",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:21:45 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:24:36.066755684Z",
+            "method": "PUT",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:24:36 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:25:11.452139797Z",
+            "method": "GET",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:25:11 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:27:10.82024095Z",
+            "method": "PUT",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:27:10 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:27:11.571335833Z",
+            "method": "PUT",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:27:11 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:27:30.726952281Z",
+            "method": "PUT",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:27:30 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:28:40.173667872Z",
+            "method": "PUT",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:28:40 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:28:40.635803863Z",
+            "method": "PATCH",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0",
+            "providerTime": "01:28:40 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:30:38.24695942Z",
+            "method": "GET",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:30:38 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:34:21.649313053Z",
+            "method": "GET",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:34:21 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:35:01.199442544Z",
+            "method": "PATCH",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0",
+            "providerTime": "01:35:01 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:35:28.969616652Z",
+            "method": "GET",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:35:28 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:36:57.055196654Z",
+            "method": "GET",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:36:57 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:36:57.385878087Z",
+            "method": "PATCH",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0",
+            "providerTime": "01:36:57 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:37:01.05735738Z",
+            "method": "GET",
+            "path": "/api/framework_assessments/fw_a5211eef5ead5a6e963840910ea605d0/guided-assessment",
+            "providerTime": "01:37:01 PM",
+            "status": 200
+          }
+        ],
+        "own_client_selected": [
+          {
+            "datetime": "2026-10-14T17:36:11.940661352Z",
+            "method": "GET",
+            "path": "/api/portfolio/reporting/history?client_id=cli_3fe2af6a91e54ffffd5ac2415fd10de31397ed73dfa477d4f541743afb6fa10f&program_key=iso-27001&range=3m&include_archived=false",
+            "providerTime": "01:36:11 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:37:51.842166741Z",
+            "method": "GET",
+            "path": "/api/portfolio/reporting/history?client_id=cli_3fe2af6a91e54ffffd5ac2415fd10de31397ed73dfa477d4f541743afb6fa10f&program_key=iso-27001&range=3m&include_archived=false",
+            "providerTime": "01:37:51 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:38:51.842614695Z",
+            "method": "GET",
+            "path": "/api/portfolio/reporting/history?client_id=cli_3fe2af6a91e54ffffd5ac2415fd10de31397ed73dfa477d4f541743afb6fa10f&program_key=iso-27001&range=3m&include_archived=false",
+            "providerTime": "01:38:51 PM",
+            "status": 200
+          },
+          {
+            "datetime": "2026-10-14T17:42:46.983389599Z",
+            "method": "PATCH",
+            "path": "/api/clients/cli_3fe2af6a91e54ffffd5ac2415fd10de31397ed73dfa477d4f541743afb6fa10f",
+            "providerTime": "01:42:46 PM",
+            "status": 200
+          }
+        ],
+        "request_bodies": null,
+        "response_bodies": null,
+        "response_timings": null,
+        "save_tokens": null,
+        "raw_revision": null,
+        "baseline_history_get_status": null,
+        "restore_patch_status": null,
+        "log_completeness": "Selected visible provider rows; not a complete browser network trace or complete provider access-log export."
+      },
+      "console": {
+        "capture_count": 34,
+        "each_limit": 100,
+        "levels": [
+          "warn",
+          "warning",
+          "error"
+        ],
+        "all_captured_empty": true,
+        "first_utc": "2026-10-14T17:18:41.659Z",
+        "last_utc": "2026-10-14T17:51:33.588Z"
+      },
+      "limits": {
+        "new_files_written": 0,
+        "new_screenshot_files": 0,
+        "held_tab5_touched": false,
+        "held_campaigns_run": false,
+        "main_production_sites_changed": false,
+        "pr81_description_update": "Blocked by approval policy; no bypass",
+        "repository_closeout_owner": "Agent 3"
+      }
+    },
+    {
+      "receipt_export": "863-hosted-closeout-3-of-3",
+      "runtime_sha": "863e391280da6606e7e2972bfe1367d877dd757b",
+      "capture_columns": [
+        "phase",
+        "capture_utc",
+        "url_key",
+        "snapshot_utf8_bytes",
+        "snapshot_sha256",
+        "captured_console_entries"
+      ],
+      "urls": {
+        "assessment": "https://omnisciente-staging.onrender.com/compliance/iso-27001?iso_view=isms_clause&assessment=fw_a5211eef5ead5a6e963840910ea605d0",
+        "portfolio": "https://omnisciente-staging.onrender.com/clients",
+        "admin": "https://omnisciente-staging.onrender.com/admin/clients",
+        "dashboard": "https://omnisciente-staging.onrender.com/dashboard?client_id=cli_3fe2af6a91e54ffffd5ac2415fd10de31397ed73dfa477d4f541743afb6fa10f"
+      },
+      "critical_captures": [
+        [
+          "settled-live-protected-portfolio-baseline",
+          "2026-10-14T17:19:06.609Z",
+          "portfolio",
+          43763,
+          "bc7d01c29f6366e745338fe781aaf1de51c3ccc975a178d3177504088a69471e",
+          0
+        ],
+        [
+          "owned-fixture-archived-before-restore",
+          "2026-10-14T17:19:41.042Z",
+          "admin",
+          6131,
+          "029855c921bf427c7893eec8e196d8ae6fb6d7cc7116abd3c336b6b7c8a96f87",
+          0
+        ],
+        [
+          "iso41-virgin-native-baseline",
+          "2026-10-14T17:23:40.109Z",
+          "assessment",
+          8098,
+          "4828ba0effa4d284fc6b77b0ce910e56f7d6ef90579153ad92991de9233048cd",
+          0
+        ],
+        [
+          "iso41-empty-items-baseline",
+          "2026-10-14T17:23:55.873Z",
+          "assessment",
+          6975,
+          "0d195588a2352edec5256bc9d1425b3685a605f2adf75455bdc25387c9d04b52",
+          0
+        ],
+        [
+          "iso41-first-draft-checkpoint-native-unchanged",
+          "2026-10-14T17:24:36.273Z",
+          "assessment",
+          9448,
+          "cf0ecaf077534384e98ca05596b255f89cce21eef5350f4475c2c43c8e6d1ff2",
+          0
+        ],
+        [
+          "iso41-draft-reload-native-unchanged",
+          "2026-10-14T17:25:25.935Z",
+          "assessment",
+          8863,
+          "7f2e67156d7ef86b0a07848dd1a86d3aab8bef49d0157e2b3ebde32f7d63d87c",
+          0
+        ],
+        [
+          "iso41-draft-reload-items-still-empty",
+          "2026-10-14T17:25:58.216Z",
+          "assessment",
+          6975,
+          "0d195588a2352edec5256bc9d1425b3685a605f2adf75455bdc25387c9d04b52",
+          0
+        ],
+        [
+          "iso41-generated-review-before-native-apply",
+          "2026-10-14T17:28:11.575Z",
+          "assessment",
+          9560,
+          "565fb044352b4f5bb1472e5cd6a25bc8c6920f5a23d9eca6fcf9fd679ab27259",
+          0
+        ],
+        [
+          "iso41-manual-wording-reviewed-before-native-apply",
+          "2026-10-14T17:28:11.708Z",
+          "assessment",
+          9485,
+          "e462ad97453f188893b2d2e0be3a951e3dcc821988b22611b273b135b06be38d",
+          0
+        ],
+        [
+          "iso41-guided-native-apply-manual-exact",
+          "2026-10-14T17:29:30.396Z",
+          "assessment",
+          8468,
+          "93b0e5b2168cfd5de2447f97ce94375bb4f3f6248c397066b1da0d0e74db0d54",
+          0
+        ],
+        [
+          "iso41-guided-native-items-gap-and-confirmation",
+          "2026-10-14T17:29:30.805Z",
+          "assessment",
+          7824,
+          "66ebb38cce500f8216a47acba5f17caa3750b17abb952f974e6fb81c1a624c59",
+          0
+        ],
+        [
+          "iso41-final-native-reload-manual-exact-unverified",
+          "2026-10-14T17:30:38.172Z",
+          "assessment",
+          8720,
+          "154daf4329e8fcd46e15c3d5ac3ca7590c6ba752eff0b8ca5c736a7685143fcb",
+          0
+        ],
+        [
+          "iso41-final-reload-current-position-not-verified",
+          "2026-10-14T17:30:53.149Z",
+          "assessment",
+          9454,
+          "4a5588d9e44e1c198f11c4c9dbdf05a9d32a45b355d6696ee2fb7125a208156c",
+          0
+        ],
+        [
+          "iso41-final-reload-two-open-items",
+          "2026-10-14T17:30:53.522Z",
+          "assessment",
+          7789,
+          "f2b89cc5cb31dd27bc78983d263630c8b87820f4a3d2988a69b0ea67e3554f5d",
+          0
+        ],
+        [
+          "iso41-final-reload-no-linked-findings",
+          "2026-10-14T17:32:33.583Z",
+          "assessment",
+          7036,
+          "aa43537ecbd13fc3f5bec5199c4c0b6a960f9cbb405cff0dae0fa44d70211d99",
+          0
+        ],
+        [
+          "iso-history-settled-before-first-footer",
+          "2026-10-14T17:33:31.612Z",
+          "portfolio",
+          13185,
+          "230a4edc09c05ce86966125f5df33a2a71058e8265cfc4487676c56c91c86e6a",
+          0
+        ],
+        [
+          "iso41-before-first-unchanged-native-footer",
+          "2026-10-14T17:35:00.847Z",
+          "assessment",
+          8433,
+          "cca6a3532d61558283369f27fe0804bc04d3c22cd41999f31d199590144b9aa2",
+          0
+        ],
+        [
+          "iso41-first-footer-save-completed",
+          "2026-10-14T17:35:26.110Z",
+          "assessment",
+          8400,
+          "454944047f6dd97d5d50a62ff15c5cb6d20ea41c4c990470cb275671e1a50f51",
+          0
+        ],
+        [
+          "iso41-first-footer-reload-manual-status-verification-retained",
+          "2026-10-14T17:35:29.278Z",
+          "assessment",
+          9454,
+          "4a5588d9e44e1c198f11c4c9dbdf05a9d32a45b355d6696ee2fb7125a208156c",
+          0
+        ],
+        [
+          "iso41-first-footer-reload-two-open-items",
+          "2026-10-14T17:36:08.843Z",
+          "assessment",
+          7789,
+          "f2b89cc5cb31dd27bc78983d263630c8b87820f4a3d2988a69b0ea67e3554f5d",
+          0
+        ],
+        [
+          "iso-history-after-first-footer-zero-position-or-scope-delta",
+          "2026-10-14T17:36:12.477Z",
+          "portfolio",
+          13185,
+          "025f5415fb089b2bb23eaa78f0b2ee23fe1634739ccc48b3992dbf807c45b4c0",
+          0
+        ],
+        [
+          "iso41-second-unchanged-footer-completed",
+          "2026-10-14T17:36:57.575Z",
+          "assessment",
+          8400,
+          "454944047f6dd97d5d50a62ff15c5cb6d20ea41c4c990470cb275671e1a50f51",
+          0
+        ],
+        [
+          "iso41-second-footer-reload-manual-status-verification-retained",
+          "2026-10-14T17:37:01.342Z",
+          "assessment",
+          9454,
+          "4a5588d9e44e1c198f11c4c9dbdf05a9d32a45b355d6696ee2fb7125a208156c",
+          0
+        ],
+        [
+          "iso41-second-footer-reload-two-open-items",
+          "2026-10-14T17:37:48.558Z",
+          "assessment",
+          7789,
+          "f2b89cc5cb31dd27bc78983d263630c8b87820f4a3d2988a69b0ea67e3554f5d",
+          0
+        ],
+        [
+          "iso-history-after-second-footer-zero-position-or-scope-delta",
+          "2026-10-14T17:37:52.473Z",
+          "portfolio",
+          13185,
+          "0d72629a92369f95ff4820a86d2a3142eb36f662002b51c98e8d636595bdfc25",
+          0
+        ],
+        [
+          "own-final-portfolio-native-vector-parity",
+          "2026-10-14T17:38:53.592Z",
+          "portfolio",
+          9462,
+          "08a5a1715397732cf96070a22953b1f7cb188a90c9827db898d33ece9ba0b747",
+          0
+        ],
+        [
+          "own-final-dashboard-native-vector-parity",
+          "2026-10-14T17:38:56.241Z",
+          "dashboard",
+          12951,
+          "8132191a794035d6baa523392a1027741f28bb50e18dd29a53e6964820c6220f",
+          0
+        ],
+        [
+          "owned-fixture-rearchived-fresh-reload-restore-available",
+          "2026-10-14T17:42:49.049Z",
+          "admin",
+          6131,
+          "029855c921bf427c7893eec8e196d8ae6fb6d7cc7116abd3c336b6b7c8a96f87",
+          0
+        ],
+        [
+          "final-active-portfolio-22-clients-27-programs-protected-unchanged",
+          "2026-10-14T17:43:45.606Z",
+          "portfolio",
+          43772,
+          "9cf4dda657cd5c56b1878497e6005aa32fa967b64d37316702939a1712da20df",
+          0
+        ],
+        [
+          "final-cleanup-console-window",
+          "2026-10-14T17:51:33.588Z",
+          "portfolio",
+          43772,
+          "9cf4dda657cd5c56b1878497e6005aa32fa967b64d37316702939a1712da20df",
+          0
+        ]
+      ],
+      "console_capture_scope": {
+        "total_named_captures": 34,
+        "critical_dom_captures_exported_here": 30,
+        "each_console_limit": 100,
+        "levels": [
+          "warn",
+          "warning",
+          "error"
+        ],
+        "all_returned_console_arrays": [],
+        "first_capture_utc": "2026-10-14T17:18:41.659Z",
+        "last_capture_utc": "2026-10-14T17:51:33.588Z",
+        "claim": "No warnings or errors returned in these bounded captured windows; not proof of all possible browser activity."
+      },
+      "handoff": {
+        "slot_released": true,
+        "stage_tab": "6",
+        "ci_tab": "8",
+        "provider_tab": "9",
+        "held_tab5_touched": false,
+        "repository_closeout_owner": "Agent 3",
+        "runtime_vs_later_record_head": "Keep deployed runtime 863 distinct from any subsequent docs-only record HEAD; no docs-only redeployment requested.",
+        "pr81_description": "Update blocked by approval policy; existing description still contains older fce/CI171 provenance."
+      }
+    }
+  ]
+}

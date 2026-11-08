@@ -3,7 +3,7 @@ import {operatorStatuses} from '@/lib/frameworkOperator';
 import {Button} from './ui/button';
 
 export default function IsoGuidedProgram({rows,reviews,drafts,onSelect,onViewAll}) {
-  const recommendations=isoRecommendedWork(rows,reviews||[],drafts).slice(0,4),labels=operatorStatuses('iso-27001');
+  const recommendations=isoRecommendedWork(rows,reviews||[],drafts).slice(0,5),labels=operatorStatuses('iso-27001');
   return <><p className="omni-intro-label">A practical way forward</p><h3>Omnibot’s recommended next steps</h3>
     <p>Review necessity decisions, mandatory ISMS requirements, applicable controls and scheduled audit work. These are separate judgments, not certification results.</p>
     {reviews===null&&<p role="status">Audit scheduling is unavailable or still loading; missing information is not a zero count.</p>}

@@ -1,17 +1,29 @@
 import {FrameworkRecordButton} from '@/components/FrameworkRecordAccess';
+import CisWorkspaceLoading,{useCisLoadingProgram} from '@/components/CisWorkspaceLoading';
 import GuidedAssessor from '@/components/GuidedAssessor';
 import SocGuidedAssessor from '@/components/SocGuidedAssessor';
 import {focusedOmniEnabled} from '@/lib/focusedOmni';
 import FrameworkCategoryNavigator,{SoaTable} from '@/components/FrameworkCategoryNavigator';
 import IsoAuditWorkspace from '@/components/IsoAuditWorkspace';
-import IsoProgramWorkspace,{IsoSoaSummary} from '@/components/IsoProgramWorkspace';
-import {ISO_INTRODUCTIONS} from '@/lib/isoWorkspace';
-import {useEffect,useMemo,useState} from 'react';
+import IsoProgramWorkspace from '@/components/IsoProgramWorkspace';
+import {IsoProgramHeader,IsoProgramSnapshot,IsoSoaSnapshot} from '@/components/IsoProgramVisual';
+import {isoProgramPresentation} from '@/lib/isoProgramPresentation';
+import {isoAssessmentConflicts} from '@/lib/isoProgramMetrics';
+import IsoProgramNavigator from '@/components/IsoProgramNavigator';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import {focusFallback} from '@/lib/focusRescue';
 import {Link,useLocation,useNavigate,useSearchParams} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import {isWorkspacePresentation} from '@/lib/reference';
-import api,{formatError} from '@/lib/api';
-import {frameworkCatalog,frameworkWorkspace} from '@/lib/frameworks';
+import {useOrg} from '@/context/OrgContext';
+import {selectedClient} from '@/lib/clientSelection';
+import {brawndoCisVisualGate} from '@/lib/brawndoCisVisual';
+import {useCisVisualAppearance} from '@/components/BrawndoCisVisualAppearance';
+import CisVisualRegister,{CisVisualHeader,CisVisualSnapshot} from '@/components/BrawndoCisVisualRegister';
+import api,{formatError,PREVIEW_MODE} from '@/lib/api';
+import {FRAMEWORKS,frameworkCatalog,frameworkWorkspace} from '@/lib/frameworks';
+import {useSocWorkspaceNavigation} from '@/lib/useSocWorkspaceNavigation';
+import {SOC_PROGRAM_STATUS_LABELS,socProgramMatches,socProgramAsOf} from '@/lib/socProgramPresentation';
 import {SearchField} from '@/components/Register';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import {Button} from '@/components/ui/button';
@@ -20,15 +32,16 @@ import {readinessLabels} from '@/components/FrameworkProgramCard';
 import FrameworkDrawer from '@/components/FrameworkDrawer';
 import {operatorStatuses,operatorVocabulary,assessmentProgress} from '@/lib/frameworkOperator';
 import CisWorkspaceSummary from '@/components/CisWorkspaceSummary';
-import BrawndoCisOverview,{AssessmentOverview,BrawndoCisHeader,FrameworkHeader} from '@/components/BrawndoCisOverview';
-import PrestigeSocNavigator,{socCategoryCrumb} from '@/components/PrestigeSocNavigator';
-import {PrestigeSocHeader} from '@/components/PrestigeSocAssessment';
+import BrawndoCisOverview,{BrawndoCisHeader} from '@/components/BrawndoCisOverview';
+import PrestigeSocNavigator,{socCategoryCrumb,socCategoryLabel} from '@/components/PrestigeSocNavigator';
+import {SocProgramHeader,SocProgramSnapshot} from '@/components/SocProgramVisual';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import CisResultTable from '@/components/CisResultTable';
 import BrawndoCisControls from '@/components/BrawndoCisControls';
+import BrawndoSecurityDomains from '@/components/BrawndoSecurityDomains';
+import {securityDomainsEnabled,securityDomainModel} from '@/lib/brawndoSecurityDomains';
 import '@/components/FrameworkPresentation.css';
 import ProgramContext from '@/components/ProgramContext';
-import OrganizationalControls from '@/components/OrganizationalControls';
 import {CisStatusBar,CisStatusPill,statusCounts} from '@/components/CisStatus';
 import {cisSummary,freshness,lacksEvidence} from '@/lib/cisVerification';
 import '@/components/BrawndoCisWorkspace.css';
@@ -93,37 +106,115 @@ function Sections({nodes,expanded,toggle,openRecord,onManage,statuses,prototype,
     </section>;
   })}</div>;
 }
+function cisResponseMatches(data,clientId){
+  const record=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
+  const identity=value=>typeof value==='string'&&!!value.trim();
+  if(!record(data)||!Array.isArray(data.definitions)||!Array.isArray(data.assessments))return false;
+  if(!data.definitions.every(definition=>record(definition)&&identity(definition.id)))return false;
+  const definitionIds=new Set(data.definitions.map(definition=>definition.id));
+  // Every accepted assessment must survive the native definition join below.
+  return data.assessments.every(row=>record(row)&&row.client_id===clientId
+      &&identity(row.framework_assessment_id)&&identity(row.definition_id)&&definitionIds.has(row.definition_id)
+      &&(row.framework_key===undefined||row.framework_key==='cis-ig1'))
+    &&(data.framework===undefined||record(data.framework)&&data.framework.key==='cis-ig1')
+    &&(data.implementation_position?.program_id===undefined||data.implementation_position.program_id===`${clientId}:cis-ig1`);
+}
+function socResponseMatches(data,clientId){
+  const record=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
+  const identity=value=>typeof value==='string'&&!!value.trim();
+  if(!record(data)||!Array.isArray(data.definitions)||!Array.isArray(data.assessments))return false;
+  if(!data.definitions.every(definition=>record(definition)&&identity(definition.id)))return false;
+  if(!data.assessments.every(record))return false;
+  // Preserve the native client filter without treating a foreign-only response as an empty program.
+  const scoped=data.assessments.filter(row=>row.client_id===clientId);
+  if(data.assessments.length&&!scoped.length)return false;
+  const ids=new Set(data.definitions.map(definition=>definition.id));
+  return scoped.every(row=>identity(row.framework_assessment_id)&&identity(row.definition_id)&&ids.has(row.definition_id)
+    &&(row.framework_key===undefined||row.framework_key==='soc-2'))
+    &&(data.framework===undefined||data.framework?.key==='soc-2')
+    &&(data.implementation_position?.program_id===undefined||data.implementation_position.program_id===`${clientId}:soc-2`);
+}
 export default function FrameworkWorkspace({frameworkKey,clientId}){
-  const [params,setParams]=useSearchParams(),{user}=useAuth(),location=useLocation(),navigate=useNavigate();
+  const workspaceRef=useRef(null);
+  const auth=useAuth(),org=useOrg()||{},trustedDemo=PREVIEW_MODE;
+  const loadingProgram=useCisLoadingProgram(frameworkKey,clientId);
+  const [urlParams,setUrlParams]=useSearchParams(),{user}=auth,urlLocation=useLocation(),navigate=useNavigate();
+  const [loadedScope,setLoadedScope]=useState(null);
   const workspacePilot=isWorkspacePresentation(clientId,user);
   // The reference workspace (summary, derived views, result table) serves every assessed framework,
   // in that framework's own vocabulary. CMMC has no assessment tracking yet.
   const prototype=frameworkKey!=='cmmc',categoryFirst=['cis-ig1','iso-27001','soc-2'].includes(frameworkKey);
-  const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=useMemo(()=>viewLabels({...operatorVocabulary(frameworkKey),statuses:readinessLabels(frameworkKey)}),[frameworkKey]);
+  const vocab=operatorVocabulary(frameworkKey),VIEW_LABELS=useMemo(()=>frameworkKey==='soc-2'?{...viewLabels({statuses:SOC_PROGRAM_STATUS_LABELS}),not_assessed:'Not assessed',stale:'Needs reassessment'}:viewLabels({...operatorVocabulary(frameworkKey),statuses:readinessLabels(frameworkKey)}),[frameworkKey]);
   // Framework metadata selects the appropriate assessment structure for every client.
-  const workspace=frameworkWorkspace(frameworkKey),brawndoCis=workspace==='cis',prestigeSoc=workspace==='soc',referenceAssessment=brawndoCis||prestigeSoc,iso=workspace==='iso',[theme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
+  const workspace=frameworkWorkspace(frameworkKey),brawndoCis=workspace==='cis',prestigeSoc=workspace==='soc',referenceAssessment=brawndoCis||prestigeSoc,iso=workspace==='iso',[theme,setCisVisualTheme]=useBrawndoTheme();useBrawndoPortalTheme(referenceAssessment||iso,theme);
   const preferenceKey=`framework-workspace:${user?.user_id}:${clientId}:${frameworkKey}`;
   const [preference,setPreference]=useState(()=>readPreference(preferenceKey));
   const [expanded,setExpanded]=useState(()=>readPreference(preferenceKey).section?[readPreference(preferenceKey).section]:[]);
   const [data,setData]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[search,setSearch]=useState(''),[filter,setFilter]=useState('all');
   const [view,setView]=useState('all'),[showRetained,setShowRetained]=useState(false);
   const [additionsGroup,setAdditionsGroup]=useState(0);
-  const [controlsOpen,setControlsOpen]=useState(false),[managedId,setManagedId]=useState(null);
+  const [domainId,setDomainId]=useState(null);
+  const [managedId,setManagedId]=useState(null);
+  const [isoApplicability,setIsoApplicability]=useState('all');
+  const [auditRecord,setAuditRecord]=useState(null);
+  const [auditSummary,setAuditSummary]=useState(null);
+  const auditRecordChanged=useCallback(record=>setAuditRecord(record),[]);
+  const isoPresentation=useMemo(()=>iso?isoProgramPresentation(data,clientId):null,[iso,data,clientId]);
+  const rows=useMemo(()=>{
+    const byId=new Map((data?.assessments||[]).filter(a=>a.client_id===clientId).map(a=>[a.definition_id,a]));
+    // ISO view grouping follows the native catalog, including retained records with stale duplicated metadata.
+    return (data?.definitions||[]).filter(d=>byId.has(d.id)).map(d=>({...d,...byId.get(d.id),
+      ...(iso?{specification:d.specification,control:d.control,control_name:d.control_name,category:d.category}:{}),
+      work:data.work?.[byId.get(d.id).framework_assessment_id]}));
+  },[data,clientId,iso]);
+  const navigationOrigin=JSON.stringify([clientId,frameworkKey,user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,trustedDemo,
+    ...(iso?[urlParams.get('client_id')]:[])]);
+  const socNavigation=useSocWorkspaceNavigation({enabled:prestigeSoc||iso,
+    origin:navigationOrigin,location:urlLocation,params:urlParams,setParams:setUrlParams,records:rows,
+    additionalRecord:iso?auditRecord:undefined});
+  const {params,setParams,location}=socNavigation;
+  const auditPresentationKey=JSON.stringify([navigationOrigin,params.get('audit_year'),params.get('package'),params.get('audit_occurrence')]);
+  const socViewKey=prestigeSoc?`${clientId}:${params.get('soc_category')||''}`:null;
+  useEffect(()=>{
+    if(!socViewKey)return;
+    const frame=requestAnimationFrame(()=>workspaceRef.current?.querySelector('.soc-program-heading h1')?.focus());
+    return()=>cancelAnimationFrame(frame);
+  },[socViewKey]);
   // A dashboard deep link (?view=) opens the reference workspace on that derived view.
   const initialView=prototype?params.get('view'):null;
   useEffect(()=>{setFilter(initialView&&VIEW_LABELS[initialView]?initialView:'all');},[initialView,VIEW_LABELS]);
   useEffect(()=>{const p=readPreference(preferenceKey);setPreference(p);setExpanded(p.section?[p.section]:[]);setData(null);setSearch('');setFilter(initialView&&VIEW_LABELS[initialView]?initialView:'all');setView('all');setShowRetained(false);setAdditionsGroup(0);setManagedId(null);},[preferenceKey]);// eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(()=>{const c=new AbortController();setError('');if(!clientId)return;api.get('/frameworks/'+frameworkKey,{params:{client_id:clientId},signal:c.signal}).then(r=>{if(!c.signal.aborted)setData(r.data);}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[frameworkKey,clientId,revision,user?.user_id]);
+  // Preserve native drafts during same-origin refreshes. A different origin must
+  // discard its appearance receipt, including an away/back switch before reads finish.
+  useEffect(()=>{
+    const c=new AbortController();
+    const origin={clientId,frameworkKey,userId:user?.user_id,role:user?.role,workspaceMode:auth.workspaceMode,userWorkspaceMode:user?.workspace_mode,trustedDemo};
+    setLoadedScope(previous=>previous&&Object.entries(origin).every(([key,value])=>previous[key]===value)?previous:null);
+    setError('');
+    if(!clientId)return()=>c.abort();
+    api.get('/frameworks/'+frameworkKey,{params:{client_id:clientId},signal:c.signal}).then(r=>{
+      if(c.signal.aborted)return;
+      // Native response identity is required even when optional visual presentation is disabled.
+      if(frameworkKey==='cis-ig1'&&!cisResponseMatches(r.data,clientId))throw new Error('CIS workspace records could not be verified for this client.');
+      if(frameworkKey==='soc-2'&&!socResponseMatches(r.data,clientId))throw new Error('SOC 2 workspace records could not be verified for this client.');
+      setData(r.data);setLoadedScope(origin);
+    }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});
+    return()=>c.abort();
+  },[frameworkKey,clientId,revision,user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,trustedDemo]);
+  const visualReference=brawndoCisVisualGate({...org,...auth,trustedDemo,clientId,frameworkKey,data,loadedScope,error,pathname:location.pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(location.search).get('client_id'),authLoading:auth.loading,orgLoading:org.loading,orgError:org.error});
+  useCisVisualAppearance(visualReference,theme);
   const remember=value=>{const p={...preference,...value};setPreference(p);try{sessionStorage.setItem(preferenceKey,JSON.stringify(p));}catch{/* UI preference only; assessment persistence is server-owned. */}};
   const catalog=frameworkCatalog(frameworkKey),statuses=operatorStatuses(frameworkKey);
-  const rows=useMemo(()=>{
-    const byId=new Map((data?.assessments||[]).filter(a=>a.client_id===clientId).map(a=>[a.definition_id,a]));
-    return (data?.definitions||[]).filter(d=>byId.has(d.id)).map(d=>({...d,...byId.get(d.id),work:data.work?.[byId.get(d.id).framework_assessment_id]}));
-  },[data,clientId]);
+  const domainsEnabled=securityDomainsEnabled(clientId,frameworkKey,data,user);
+  const domains=useMemo(()=>domainsEnabled?securityDomainModel(data,rows,clientId):[],[domainsEnabled,data,rows,clientId]);
+  const selectedDomain=domains.find(domain=>domain.id===domainId&&domain.available);
+  useEffect(()=>{setDomainId(null);},[preferenceKey]);
+  useEffect(()=>{if(!domainsEnabled)setDomainId(null);},[domainsEnabled]);
   const selectedSpecification=rows.find(r=>r.framework_assessment_id===params.get('assessment'))?.specification;
   const isoView=frameworkKey==='iso-27001'?(selectedSpecification==='annex_control'&&params.get('iso_view')==='soa'?'soa':selectedSpecification||
     (ISO_VIEWS[params.get('iso_view')]?params.get('iso_view'):'overview')):'all';
   const dashboardIso=iso&&params.get('dashboard')==='1'&&!!initialView&&isoView==='overview';
+  useEffect(()=>{setIsoApplicability('all');},[clientId,isoView]);
   const scoped=rows.filter(r=>{
     if(!showRetained&&!workspaceScope(frameworkKey,data,r))return false;
     if(frameworkKey==='nist-csf-2'&&view!=='all')return r.csf_profile?.target_selected&&(view==='target'||r.csf_profile.gap_state==='gap');
@@ -131,10 +222,11 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     return true;
   });
   const activeRows=brawndoCis||prestigeSoc?rows.filter(r=>workspaceScope(frameworkKey,data,r)):scoped;
-  const readiness=cisSummary(brawndoCis||prestigeSoc?activeRows:iso&&isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped);
+  const readiness=cisSummary(brawndoCis||prestigeSoc?activeRows:iso&&isoView==='annex_control'?scoped.filter(r=>r.soa_applicability==='included'):scoped,
+    new Date(),!iso&&(brawndoCis||prestigeSoc||view==='all')?data?.implementation_position:undefined);
   const implementationFilter=iso&&isoView==='annex_control'&&['addressed','in_progress','needs_attention','not_assessed','assessed','gaps'].includes(filter);
-  const dashboardApplicable=r=>filter==='not_applicable'?(r.specification==='annex_control'?r.soa_applicability==='excluded':r.status==='not_applicable'):r.specification==='annex_control'?r.soa_applicability!=='excluded':r.status!=='not_applicable';
-  const visible=scoped.filter(r=>(!dashboardIso||!['addressed','in_progress','needs_attention','not_assessed','not_applicable'].includes(filter)||dashboardApplicable(r))&&(!additionsGroup||r.implementation_group===additionsGroup)&&(!implementationFilter||r.soa_applicability==='included')&&(matchesAssessment(r,dashboardIso&&filter==='not_applicable'?'all':filter,search))),nodes=groupRequirements(frameworkKey,visible);
+  const dashboardApplicable=r=>filter==='not_applicable'?(r.specification==='annex_control'?r.soa_applicability==='excluded':r.status==='not_applicable'):r.specification==='annex_control'?r.soa_applicability==='included':r.status!=='not_applicable';
+  const visible=scoped.filter(r=>(!dashboardIso||!['addressed','in_progress','needs_attention','not_assessed','not_applicable'].includes(filter)||dashboardApplicable(r))&&(!additionsGroup||r.implementation_group===additionsGroup)&&(!implementationFilter||r.soa_applicability==='included')&&(prestigeSoc?socProgramMatches(r,filter,search):matchesAssessment(r,dashboardIso&&filter==='not_applicable'?'all':filter,search))),nodes=groupRequirements(frameworkKey,visible);
   const linkedViewKey=prototype&&data&&filter!=='all'&&filter===initialView?`${clientId}:${filter}`:null;
   useEffect(()=>{if(linkedViewKey)setExpanded(groupRequirements(frameworkKey,visible).map(n=>n.key));},[linkedViewKey]);// eslint-disable-line react-hooks/exhaustive-deps
   const selected=rows.find(r=>r.framework_assessment_id===params.get('assessment'))||null;
@@ -143,52 +235,117 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
   const closeManagement=()=>{setManagedId(null);setRevision(n=>n+1);};
   // A requirement opened here is one history entry: Previous/Next replace it and closing steps back to the view it
   // was opened from. A deep-linked requirement has no such entry, so closing replaces the URL instead.
-  const openRecord=(row,guided=false)=>{const path=hierarchyPath(frameworkKey,row).map(p=>p.id);remember({lastId:row.framework_assessment_id,section:path[0],...(prestigeSoc?{'category:all':path}:{})});const next=new URLSearchParams(params);next.set('assessment',row.framework_assessment_id);if(guided)next.set('guided','pilot');else next.delete('guided');const within=params.has('assessment');setParams(next,{replace:within,state:{fromWorkspace:within?!!location.state?.fromWorkspace:true}});};
-  const closeRecord=()=>{if(location.state?.fromWorkspace)navigate(-1);else{const next=new URLSearchParams(params);next.delete('assessment');setParams(next,{replace:true});}setRevision(n=>n+1);};
+  const openRecord=(row,guided=false)=>{
+    // A completed native Save & next must not replace a newer queued browser destination.
+    if((prestigeSoc||iso)&&socNavigation.acceptPending()){setRevision(n=>n+1);return;}
+    const path=hierarchyPath(frameworkKey,row).map(part=>part.id);
+    remember({lastId:row.framework_assessment_id,section:path[0],...(prestigeSoc?{'category:all':path}:{})});
+    const next=new URLSearchParams(params);
+    next.set('assessment',row.framework_assessment_id);
+    if(iso&&isoView==='overview')next.set('iso_view',row.specification==='annex_control'&&(!['included','excluded'].includes(row.soa_applicability)||typeof row.soa_justification!=='string'||!row.soa_justification.trim())?'soa':row.specification);
+    if(guided)next.set('guided','pilot');else next.delete('guided');
+    const within=params.has('assessment');
+    setParams(next,{replace:within,state:{fromWorkspace:within?!!location.state?.fromWorkspace:true}});
+  };
+  const closeRecord=()=>{
+    if((prestigeSoc||iso)&&socNavigation.acceptPending()){setRevision(n=>n+1);return;}
+    if(location.state?.fromWorkspace){if(prestigeSoc||iso)socNavigation.allowNextLocation();navigate(-1);}
+    else{const next=new URLSearchParams(params);next.delete('assessment');if(prestigeSoc)next.delete('guided');setParams(next,{replace:true});}
+    setRevision(n=>n+1);
+  };
   const toggle=key=>{setExpanded(old=>old.includes(key)?old.filter(k=>k!==key):[...old,key]);remember({section:key.split('/')[0]});};
   const allKeys=ns=>ns.flatMap(n=>[n.key,...allKeys(n.children)]);
   const dropLinkedView=()=>{if(params.get('view')){const n=new URLSearchParams(params);n.delete('view');setParams(n,{replace:true});}};
   const chooseFilter=key=>{if(initialView){const n=new URLSearchParams(params);n.set('view',key);setParams(n);}setFilter(key);if(prototype)setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,key,search)))));};
   const changeSearch=value=>{setSearch(value);if(prototype&&value.trim())setExpanded(allKeys(groupRequirements(frameworkKey,scoped.filter(r=>matchesAssessment(r,filter,value)))));};
-  if(error)return <RegisterLoadError error={error} onRetry={prototype?()=>setRevision(n=>n+1):undefined} name="workspace"/>;
-  if(!data)return <p role="status" className="text-sm text-ink-secondary">Loading program workspace…</p>;
-  if(!data.configured)return <section className="border border-line bg-surface-card rounded p-6 text-sm"><p>{data.selected?'Program selected for this client.':'Program not currently selected.'}</p><p className="text-ink-secondary mt-2">Select Applies in Client Profile to initialize this program after onboarding. Existing records are not reset.</p><Link className="text-link underline" to="/client-profile?tab=program">Configure in Client Profile</Link></section>;
+  const socMetadata=FRAMEWORKS.find(item=>item.key==='soc-2');
+  const socFallback=content=>iso&&clientId?<div ref={workspaceRef} className="bcis iso-cis-program-visual" data-theme={theme}><IsoProgramHeader view="overview" presentation={isoPresentation} theme={theme} onTheme={()=>setCisVisualTheme(theme==='dark'?'light':'dark')}/>{content}</div>:prestigeSoc&&clientId?<div ref={workspaceRef} className="bcis soc-cis-program-visual" data-theme={theme}>
+    <SocProgramHeader categories={[]} summary={{available:false}} edition={socMetadata.version} sourceLabel={socMetadata.name} theme={theme} onTheme={()=>setCisVisualTheme(theme==='dark'?'light':'dark')}/>{content}</div>:content;
+  if(error)return socFallback(<RegisterLoadError error={error} onRetry={prototype?()=>setRevision(n=>n+1):undefined} name="workspace"/>);
+  const referenceScopeReady=(!prestigeSoc&&!iso)||(loadedScope?.clientId===clientId&&loadedScope.frameworkKey===frameworkKey
+    &&loadedScope.userId===user?.user_id&&loadedScope.role===user?.role
+    &&loadedScope.workspaceMode===auth.workspaceMode&&loadedScope.userWorkspaceMode===user?.workspace_mode&&loadedScope.trustedDemo===trustedDemo);
+  if(!data||!referenceScopeReady)return loadingProgram?<CisWorkspaceLoading program={loadingProgram}/>:socFallback(<p role="status" className="text-sm text-ink-secondary">Loading program workspace…</p>);
+  if(!data.configured)return socFallback(<section className="border border-line bg-surface-card rounded p-6 text-sm"><p>{data.selected?'Program selected for this client.':'Program not currently selected.'}</p><p className="text-ink-secondary mt-2">Select Applies in Client Profile to initialize this program after onboarding. Existing records are not reset.</p><Link className="text-link underline" to="/client-profile?tab=program">Configure in Client Profile</Link></section>);
   const navigationRows=additionsGroup?scoped.filter(r=>r.implementation_group===additionsGroup):scoped;
   const progress=assessmentProgress(activeRows),resume=nextAssessment(activeRows,preference.lastId),index=navigationRows.findIndex(r=>r.framework_assessment_id===selected?.framework_assessment_id);
   const attention=scoped.filter(needsAttention).length;
+  const isoResume=iso?nextAssessment(isoView==='overview'?rows.filter(row=>!data.active_definition_ids||data.active_definition_ids.includes(row.definition_id)):scoped,preference.lastId):null;
+  const chooseIsoOverviewFilter=key=>{const next=new URLSearchParams(params);next.delete('assessment');if(key==='all'){next.delete('view');next.delete('dashboard');}else{next.set('view',key);next.set('dashboard','1');}next.set('iso_view','overview');setParams(next);setSearch('');setFilter(key);};
   const controlKey=(preference['category:all']||[])[0]||'';
   const chooseControl=key=>{remember({'category:all':key?[key]:[]});if(selected)closeRecord();};
-  const socPath=preference['category:all']||[],chooseSocPath=path=>{remember({'category:all':path});if(selected)closeRecord();};
+  const chooseDomain=id=>{setDomainId(id);requestAnimationFrame(()=>{const controls=workspaceRef.current?.querySelector('.bcis-controls');controls?.scrollIntoView?.({block:'start'});focusFallback(controls?.querySelector('[aria-current="page"]')||controls);});};
+  const socCategories=prestigeSoc?groupRequirements('soc-2',activeRows):[];
+  // A direct criterion link supplies its own native category; stale URL hints cannot relabel it.
+  const socCategoryId=prestigeSoc&&selected?(socCategories.some(item=>item.id===selected.category)?selected.category:''):
+    prestigeSoc&&socCategories.some(item=>item.id===params.get('soc_category'))?params.get('soc_category'):'';
+  const socCategory=socCategories.find(item=>item.id===socCategoryId);
+  const socRows=socCategory?socCategory.rows:activeRows;
+  const socSummary=socCategory?{...cisSummary(socRows),...(readiness.available===false?{available:false,reason:readiness.reason}:{})}:readiness;
+  const socResume=nextAssessment(socRows,preference.lastId);
+  const socJudgment=socProgramAsOf(socRows);
+  const socAsOf=socJudgment?new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(socJudgment)):null;
+  const socPath=preference['category:all']||[];
+  const chooseSocCategory=(id,path=[])=>{
+    const next=new URLSearchParams(params);
+    next.delete('assessment');next.delete('guided');next.delete('view');
+    if(id)next.set('soc_category',id);else next.delete('soc_category');
+    remember({'category:all':path.length?path:id?[id]:[]});
+    setSearch('');setFilter('all');setParams(next);
+  };
+  const chooseSocPath=path=>{remember({'category:all':path});};
   const lastOpened=prototype&&!referenceAssessment&&scoped.find(r=>r.framework_assessment_id===preference.lastId);
   const selectedPath=selected?hierarchyPath(frameworkKey,selected):[];
-  const chooseIsoView=(key,options={})=>{const n=new URLSearchParams(params);n.set('iso_view',key);n.delete('view');n.delete('dashboard');n.delete('assessment');n.delete('package');n.delete('audit_occurrence');if(options.audit_year)n.set('audit_year',options.audit_year);setParams(n);setSearch('');setFilter('all');};
+  const chooseIsoView=(key,options={})=>{const n=new URLSearchParams(params);n.set('iso_view',key);n.delete('view');n.delete('dashboard');n.delete('assessment');n.delete('package');n.delete('audit_occurrence');if(options.audit_year)n.set('audit_year',options.audit_year);setParams(n);setSearch('');setFilter('all');setIsoApplicability('all');};
   const recommendIso=item=>{const n=new URLSearchParams(params);n.set('iso_view',item.view);n.delete('view');n.delete('dashboard');n.delete('assessment');n.delete('package');n.delete('audit_occurrence');n.delete('guided');
     if(item.row){n.set('assessment',item.row.framework_assessment_id);n.set('guided','pilot');remember({lastId:item.row.framework_assessment_id});}
     else if(item.review){n.set('package',item.review.iso_audit.package_key);n.set('audit_year',item.review.due_date?.slice(0,4)||String(new Date().getUTCFullYear()));}
     setParams(n);setSearch('');setFilter('all');};
   const isoCrumb=(view,path=[])=>{setSearch('');setFilter('all');remember({['category:'+view]:path});const n=new URLSearchParams(params);n.delete('assessment');n.set('iso_view',view);setParams(n,{replace:true});};
-  const drawerBreadcrumb=!selected?undefined:brawndoCis?[{label:`CIS IG${data.configuration?.implementation_group||1}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.definition_id.split('.')[0]}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(hierarchyPath(frameworkKey,selected)[0].id);}},{label:`Safeguard ${selected.definition_id}`}]:prestigeSoc?[{label:'SOC 2',onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}},{label:socCategoryCrumb(selected.category),onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([selectedPath[0].id]);}},{label:selected.control,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath(selectedPath.map(p=>p.id));}},{label:selected.definition_id}]:undefined;
-  return <div className={iso?'bcis framework-presentation':referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment||iso?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
-    {!selected&&!managed&&prestigeSoc&&data.selected&&data.configured&&<SocGuidedAssessor clientId={clientId} configuration={data.configuration} rows={activeRows} contextComplete={!!data.active_definition_ids?.length&&activeRows.length===data.active_definition_ids.length} draftSummaries={data.guided_assessment_drafts} onSelect={row=>openRecord(row,true)} onViewAll={()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}}/>}
+  const drawerBreadcrumb=!selected?undefined:brawndoCis?[{label:`CIS IG${data.configuration?.implementation_group||1}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.definition_id.split('.')[0]}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(hierarchyPath(frameworkKey,selected)[0].id);}},{label:`Safeguard ${selected.definition_id}`}]:prestigeSoc?[{label:'SOC 2',onClick:()=>chooseSocCategory('')},{label:socCategoryCrumb(selected.category),onClick:()=>chooseSocCategory(selected.category)},{label:selected.control,onClick:()=>chooseSocCategory(selected.category,selectedPath.map(p=>p.id))},{label:selected.definition_id}]:undefined;
+  if(visualReference){
+    const savedDates=activeRows.map(row=>row.last_saved||row.last_assessed).filter(value=>Number.isFinite(Date.parse(value))).sort((a,b)=>Date.parse(b)-Date.parse(a));
+    const asOf=savedDates[0]?new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(savedDates[0])):null;
+    const retainedRows=rows.filter(row=>!workspaceScope(frameworkKey,data,row));
+    const retainedVisible=visible.filter(row=>!workspaceScope(frameworkKey,data,row));
+    const visualBreadcrumb=selected?[{label:`CIS IG${data.configuration?.implementation_group||1}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl('');}},{label:`Control ${selected.control}`,onClick:()=>{dropLinkedView();setSearch('');setFilter('all');chooseControl(String(selected.control));}},{label:`Safeguard ${selected.definition_id}`}]:undefined;
+    return <div ref={workspaceRef} className="bcis brawndo-cis-visual" data-theme={theme} data-testid="cis-workspace">
+      {!selected&&!managed&&<GuidedAssessor visualReference invitationContext={controlKey?'control-'+controlKey:'program'} clientId={clientId} framework={frameworkKey} configuration={data.configuration} rows={activeRows.filter(row=>!controlKey||row.definition_id.split('.')[0]===String(controlKey))} contextComplete={!!data.active_definition_ids?.length&&activeRows.length===data.active_definition_ids.length} draftSummaries={data.guided_assessment_drafts} onSelect={row=>openRecord(row,!focusedOmniEnabled(clientId,user,frameworkKey,data.configuration,row.definition_id))} onViewAll={()=>{dropLinkedView();setSearch('');setFilter('all');}}/>}
+      <CisVisualHeader implementationGroup={data.configuration.implementation_group} rows={activeRows} summary={readiness} asOf={asOf} resume={resume} onContinue={()=>openRecord(resume)} theme={theme} onTheme={()=>setCisVisualTheme(theme==='dark'?'light':'dark')}/>
+      <CisVisualSnapshot summary={readiness} filter={filter} onFilter={chooseFilter} asOf={asOf}/>
+      {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
+      {selected&&!workspaceScope(frameworkKey,data,selected)&&<p role="status">Retained out-of-scope safeguard · history and linked work remain available. It is excluded from active program totals.</p>}
+      {retainedRows.length>0&&<label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showRetained} onChange={event=>setShowRetained(event.target.checked)}/>Include retained out-of-scope safeguards</label>}
+      <CisVisualRegister implementationGroup={data.configuration.implementation_group} controlKey={controlKey} onResetControl={()=>chooseControl('')} rows={activeRows} visible={visible} domains={domains} filter={filter} search={search} onFilter={chooseFilter} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');}} onOpen={openRecord}/>
+      {showRetained&&retainedRows.length>0&&<section className="pcard" aria-labelledby="cis-retained-heading"><div className="card-head"><div><h2 id="cis-retained-heading">Retained out-of-scope safeguards</h2><p>Showing {retainedVisible.length} of {retainedRows.length} retained safeguards. These records are outside the current IG{data.configuration?.implementation_group||1} scope and excluded from active program totals.</p></div></div>
+        {retainedVisible.length>0?<CisResultTable nativeFacts rows={retainedVisible} onOpen={openRecord} onManage={manageRecord} label="Retained out-of-scope safeguards"/>:<p role="status" className="p-4 text-sm">No retained safeguards match the current search and filters.</p>}
+      </section>}
+      {managed&&<FrameworkDrawer key={clientId+':'+managed.framework_assessment_id+':manage'} visualReference open recordManagement record={managed} clientId={clientId} onReviews={navigate} onSaved={()=>setRevision(n=>n+1)} onOpenChange={value=>{if(!value)closeManagement();}}/>}
+      {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} visualReference open record={selected} clientId={clientId} onManage={()=>{closeRecord();manageRecord(selected);}} onSaved={()=>setRevision(n=>n+1)} onOpenChange={value=>{if(!value)closeRecord();}}
+        onPrevious={index>0?()=>openRecord(navigationRows[index-1]):null} onNext={index>=0&&index<navigationRows.length-1?()=>openRecord(navigationRows[index+1]):null} position={index>=0?`${index+1} of ${navigationRows.length} in framework order`:'Retained assessment'} breadcrumb={visualBreadcrumb}/>}
+    </div>;
+  }
+  return <div ref={workspaceRef} className={iso?'bcis iso-cis-program-visual':prestigeSoc?'bcis soc-cis-program-visual':referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment||iso?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
+    {!selected&&!managed&&prestigeSoc&&data.selected&&data.configured&&<SocGuidedAssessor clientId={clientId} configuration={data.configuration} rows={activeRows} contextComplete={!!data.active_definition_ids?.length&&activeRows.length===data.active_definition_ids.length} draftSummaries={data.guided_assessment_drafts} onSelect={row=>openRecord(row,true)} onViewAll={()=>chooseSocCategory('')}/>}
     {!selected&&!managed&&(!controlKey||focusedOmniEnabled(clientId,user,frameworkKey,data.configuration))&&<GuidedAssessor invitationContext={controlKey?'control-'+controlKey:'program'} clientId={clientId} framework={frameworkKey} configuration={data.configuration} rows={activeRows.filter(row=>!controlKey||row.definition_id.split('.')[0]===String(controlKey))} contextComplete={!!data.active_definition_ids?.length&&activeRows.length===data.active_definition_ids.length} draftSummaries={data.guided_assessment_drafts} onSelect={row=>openRecord(row,!focusedOmniEnabled(clientId,user,frameworkKey,data.configuration,row.definition_id))} onViewAll={()=>{dropLinkedView();setSearch('');setFilter('all');setAdditionsGroup(0);}}/>}
-    {iso&&<FrameworkHeader eyebrow="ISO/IEC 27001:2022 · ISMS" title={ISO_VIEWS[isoView].label} subtitle={ISO_INTRODUCTIONS[isoView]} resume={resume} onContinue={()=>openRecord(resume)}/>}
+    {iso&&<IsoProgramHeader view={isoView} presentation={isoPresentation} auditSummary={auditSummary?.key===auditPresentationKey?auditSummary:undefined} resume={isoResume} onContinue={()=>openRecord(isoResume)} onOverview={()=>chooseIsoView('overview')} theme={theme} onTheme={()=>setCisVisualTheme(theme==='dark'?'light':'dark')}/>}
     {brawndoCis&&<BrawndoCisHeader implementationGroup={data.configuration?.implementation_group||1} resume={resume} onContinue={()=>openRecord(resume)}/>}
-    {prestigeSoc&&<PrestigeSocHeader resume={resume} onContinue={()=>openRecord(resume)}/>}
+    {prestigeSoc&&<SocProgramHeader categories={socCategories} categoryLabel={socCategory?socCategoryLabel(socCategoryId):''} onOverview={()=>chooseSocCategory('')} edition={socMetadata.version} sourceLabel={socMetadata.name} summary={socSummary} asOf={socAsOf} resume={socResume} onContinue={()=>openRecord(socResume)} theme={theme} onTheme={()=>setCisVisualTheme(theme==='dark'?'light':'dark')}/>}
     {!data.selected&&<p className="text-sm text-ink-secondary">Historical program · Assessments and linked work are retained.</p>}
     {iso&&<WorkspaceTabs label="ISO workspace sections" tabs={Object.entries(ISO_VIEWS).map(([key,v])=>[key,v.label])} selected={isoView} onSelect={chooseIsoView} idPrefix="iso-tab" panelId="iso-tabpanel"/>}
     <IsoPanel iso={iso} view={isoView}>
-    {brawndoCis?<BrawndoCisOverview workspacePilot={workspacePilot} controlCount={groupRequirements(frameworkKey,activeRows).length} implementationGroup={data.configuration?.implementation_group||1} summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume}/>:prestigeSoc?<AssessmentOverview workspacePilot={workspacePilot} programName="SOC 2" scopeLabel={`${readiness.total} criteria in scope`} implementedLabel={readinessLabels(frameworkKey).addressed} summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun="criteria" continueNoun="criterion" testIdPrefix="psoc" segmentLabels={{partial:'Partially Implemented',gap:'Not Implemented',notAssessed:'Not Assessed'}}/>:iso&&isoView==='soa'?<IsoSoaSummary rows={scoped}/>:iso&&isoView!=='audit'&&!ISO_VIEWS[isoView]?.custom?<><AssessmentOverview workspacePilot={workspacePilot} programName="ISO 27001" scopeLabel={`${readiness.total} ${isoView==='isms_clause'?'ISMS requirements':'necessary controls'}`} implementedLabel={vocab.statuses.addressed} summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} itemNoun={isoView==='isms_clause'?'requirements':'necessary controls'} continueNoun={isoView==='isms_clause'?'requirement':'control'} testIdPrefix="iso" segmentLabels={{partial:vocab.statuses.in_progress,gap:vocab.statuses.needs_attention,notAssessed:'Not Assessed'}}/>{isoView==='annex_control'&&<p className="iso-reference-count">{scoped.length} Annex A reference controls · {scoped.filter(r=>r.soa_applicability==='included').length} Necessary · {scoped.filter(r=>r.soa_applicability==='excluded').length} Not Necessary · {scoped.filter(r=>!r.soa_applicability).length} not yet determined</p>}</>:prototype&&!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
-    {frameworkKey==='iso-27001'&&(isoView==='audit'?<IsoAuditWorkspace clientId={clientId} configuration={{...data.configuration,__program_active:data.selected}}/>:ISO_VIEWS[isoView]?.custom&&!dashboardIso?<IsoProgramWorkspace clientId={clientId} mode={isoView} rows={rows} onSelect={chooseIsoView} configuration={{...data.configuration,__program_active:data.selected}} draftSummaries={data.guided_assessment_drafts} onRecommend={recommendIso}/>:null)}
+    {brawndoCis?<BrawndoCisOverview workspacePilot={workspacePilot} controlCount={groupRequirements(frameworkKey,activeRows).length} implementationGroup={data.configuration?.implementation_group||1} summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} securityDomains={domainsEnabled?<BrawndoSecurityDomains implementationGroup={data.configuration.implementation_group} domains={domains} selectedDomainId={selectedDomain?.id} onSelectDomain={chooseDomain} onClearDomain={()=>setDomainId(null)} onOpen={openRecord}/>:null}/>:prestigeSoc?<SocProgramSnapshot summary={socSummary} filter={filter} onFilter={chooseFilter} asOf={socAsOf}/>:iso&&isoView==='soa'?<IsoSoaSnapshot presentation={isoPresentation} applicability={isoApplicability} onApplicability={setIsoApplicability}/>:iso&&isoView!=='audit'?<><IsoProgramSnapshot presentation={isoPresentation} summary={isoView==='isms_clause'?isoPresentation.requirements:isoView==='annex_control'?isoPresentation.annex:isoPresentation.overall} filter={filter} onFilter={isoView==='overview'?chooseIsoOverviewFilter:chooseFilter} noun={isoView==='isms_clause'?'ISMS requirements':isoView==='annex_control'?'controls':'requirements and controls'}/>{isoView!=='overview'&&isoAssessmentConflicts(scoped).length>0&&<p role="alert">Legacy assessment conflicts require review: {isoAssessmentConflicts(scoped).map(row=>row.definition_id).join(', ')}. Saved values and history are retained; these records are not counted as implemented.</p>}</>:prototype&&!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))&&<CisWorkspaceSummary framework={frameworkKey} scopeLabel={frameworkKey==='iso-27001'?ISO_VIEWS[isoView]?.label:undefined} summary={readiness} filter={filter} onFilter={chooseFilter} resume={resume} onContinue={()=>openRecord(resume)}><ProgramContext frameworkKey={frameworkKey} rows={frameworkKey==='iso-27001'?rows:scoped} configuration={data.configuration} controls={data.organizational_controls}/></CisWorkspaceSummary>}
+    {frameworkKey==='iso-27001'&&(isoView==='audit'?<IsoAuditWorkspace clientId={clientId} configuration={{...data.configuration,__program_active:data.selected}} navigation={socNavigation} navigationOrigin={navigationOrigin} onWorkpaperChange={auditRecordChanged} onPresentation={setAuditSummary} presentationKey={auditPresentationKey}/>:ISO_VIEWS[isoView]?.custom&&!dashboardIso?<IsoProgramWorkspace clientId={clientId} mode={isoView} rows={rows} presentation={isoPresentation} auditYear={params.get('audit_year')||''} onAuditYearChange={year=>{const next=new URLSearchParams(params);next.set('audit_year',year);setParams(next,{replace:true});}} onSelect={chooseIsoView} configuration={{...data.configuration,__program_active:data.selected}} draftSummaries={data.guided_assessment_drafts} onRecommend={recommendIso}/>:null)}
     {(!(frameworkKey==='iso-27001'&&(isoView==='audit'||ISO_VIEWS[isoView]?.custom))||dashboardIso)&&<>
     {brawndoCis&&selected&&!workspaceScope(frameworkKey,data,selected)&&<p role="status">Retained out-of-scope safeguard · history and linked work remain available. It is excluded from active program totals.</p>}
-    {lastOpened&&lastOpened!==resume&&<button className="text-sm text-link underline text-left" onClick={()=>openRecord(lastOpened)}>Return to last opened: {lastOpened.definition_id} · {lastOpened.title}</button>}
+    {!iso&&lastOpened&&lastOpened!==resume&&<button className="text-sm text-link underline text-left" onClick={()=>openRecord(lastOpened)}>Return to last opened: {lastOpened.definition_id} · {lastOpened.title}</button>}
     {!prototype&&<><section aria-label="Assessment progress" className="space-y-2"><h2 className="font-semibold">Assessment Progress</h2><p className="text-sm">{progress.assessed} / {progress.applicable} applicable {(catalog?.labels?.items||'requirements').toLowerCase()} assessed · {scoped.length-progress.assessed-progress.excluded} not assessed · {progress.excluded} N/A</p><p className="text-xs text-ink-secondary">Assessment coverage includes partial and unresolved results. It is not certification or a compliance percentage.</p></section>
     <section className="border border-line rounded-lg p-4 bg-surface-card flex flex-wrap justify-between items-center gap-3" aria-label="Continue where you left off"><div><h2 className="text-sm font-semibold">Continue where you left off</h2><p className="text-sm text-ink-secondary mt-1">{resume?`${resume.definition_id} · ${resume.title}`:'No pending assessments or linked work requiring attention.'}</p></div>{resume&&<Button onClick={()=>openRecord(resume)}>Continue Assessment</Button>}</section>
     <div className="flex flex-wrap items-center gap-3 text-sm"><button className="text-link" onClick={()=>chooseFilter('attention')}>Needs Attention · {attention} items</button><span className="text-xs text-ink-secondary">Assessment gaps and linked operational work are separate conditions.</span></div></>}
     {frameworkKey==='soc-2'&&<>{rows.some(r=>!workspaceScope(frameworkKey,data,r))&&<label className="text-xs flex gap-2"><input type="checkbox" checked={showRetained} onChange={e=>setShowRetained(e.target.checked)}/>Include retained out-of-scope criteria</label>}</>}
+    {prestigeSoc&&selected&&!workspaceScope(frameworkKey,data,selected)&&<p role="status" className="text-sm text-ink-secondary">Retained out-of-scope criterion · history and linked work remain available. It is excluded from active program totals.</p>}
     {frameworkKey==='nist-csf-2'&&<label className="text-sm">CSF profile view<select className="border border-line rounded p-2 ml-2 bg-surface-card" aria-label="CSF profile view" value={view} onChange={e=>setView(e.target.value)}><option value="all">Current Profile</option>{[['target','Target Profile'],['gaps','Recorded Gaps']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>}
-    {iso&&isoView==='soa'&&<details className="border border-line rounded p-3" onToggle={e=>setControlsOpen(e.currentTarget.open)}><summary className="cursor-pointer font-medium text-sm">Necessary organization-specific Controls</summary><p className="text-sm text-ink-secondary my-3">Reuse existing client Controls, map necessary controls to 6.1.3 and link the risk/treatment, necessity justification and implementation records. The shared register also contains controls for other frameworks; a mapping alone is not a necessity or effectiveness conclusion. Record those decisions in the design/description and risk-treatment basis.</p><p className="text-xs text-ink-secondary mb-3">The built-in SoA view and frozen snapshots cover Annex A only. Retain a complete controlled SoA, including necessary custom controls, as supporting information for the SoA Review through existing Evidence/external references. A link alone does not establish completeness; later Control edits do not change an old snapshot or retained record.</p>{controlsOpen&&<OrganizationalControls clientId={clientId} onSaved={()=>setRevision(n=>n+1)}/>}</details>}
-    {referenceAssessment?null:prototype?<div className="cis-toolbar">
+    {referenceAssessment||iso?null:prototype?<div className="cis-toolbar">
       <SearchField value={search} onChange={changeSearch} label={`Search ${vocab.items}`} placeholder="Search by number or title…"/>
       {(search||filter!=='all')&&<p role="status" className="text-sm text-ink-secondary">{filter!=='all'&&<span className="cis-active-view">{VIEW_LABELS[filter]}</span>}Showing {visible.length} of {scoped.length} {vocab.items}</p>}
       {(search||filter!=='all')&&<Button size="sm" variant="ghost" onClick={e=>{const bar=e.currentTarget.closest('.cis-toolbar');dropLinkedView();setSearch('');setFilter('all');requestAnimationFrame(()=>bar?.querySelector('input')?.focus());}}>Clear search and filters</Button>}
@@ -196,13 +353,14 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     </div>:<>
     <SearchField value={search} onChange={changeSearch} label="Search requirements" placeholder="Search requirements…"/>
     <div className="flex flex-wrap gap-1 items-center">{Object.entries(FILTERS).map(([key,label])=><Button key={key} size="sm" variant={filter===key?'default':'ghost'} aria-pressed={filter===key} onClick={()=>chooseFilter(key)}>{label}</Button>)}<div className="ml-auto flex gap-1"><Button variant="ghost" size="sm" onClick={()=>setExpanded(allKeys(nodes))}>Expand all</Button><Button variant="ghost" size="sm" onClick={()=>setExpanded([])}>Collapse all</Button></div></div></>}
-    {!referenceAssessment&&!visible.length&&<p role="status" className="text-sm">{prototype?`No ${vocab.items} match this view.`:'No requirements match these filters.'}</p>}
+    {!referenceAssessment&&!iso&&!visible.length&&<p role="status" className="text-sm">{prototype?`No ${vocab.items} match this view.`:'No requirements match these filters.'}</p>}
     {params.get('assessment')&&!selected&&<p role="status">This assessment is not available in the current client workspace.</p>}
-{brawndoCis?<BrawndoCisControls workspacePilot={workspacePilot} implementationGroup={data.configuration?.implementation_group||1} scopeControls={<div className="flex flex-wrap gap-4 text-xs px-4 pb-3">{data.configuration?.implementation_group===2&&<label className="flex gap-2"><input type="checkbox" checked={additionsGroup===2} onChange={e=>setAdditionsGroup(e.target.checked?2:0)}/>Added in IG2 only · display filter; full program totals unchanged</label>}{data.configuration?.implementation_group===3&&<label className="flex gap-2">Safeguard scope<select aria-label="Safeguard scope" value={additionsGroup||0} onChange={e=>setAdditionsGroup(Number(e.target.value))}><option value={0}>All safeguards</option><option value={2}>Added in IG2 only</option><option value={3}>Added in IG3 only</option></select><span>Display filter; full program totals unchanged</span></label>}{rows.some(r=>!workspaceScope(frameworkKey,data,r))&&<label className="flex gap-2"><input type="checkbox" checked={showRetained} onChange={e=>setShowRetained(e.target.checked)}/>Include retained out-of-scope safeguards</label>}</div>} clientId={clientId} rows={scoped} visible={visible} filtered={!!additionsGroup||filter!=='all'||!!search.trim()} filterLabel={additionsGroup?`Added in IG${additionsGroup}`:filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');setAdditionsGroup(0);}} controlKey={controlKey} onControl={chooseControl} onOpen={openRecord} onManage={manageRecord} selected={selected}/>:prestigeSoc?<PrestigeSocNavigator clientId={clientId} rows={scoped} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');chooseSocPath([]);}} path={socPath} onPath={chooseSocPath} onOpen={openRecord} onManage={manageRecord} selected={selected}/>:prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='soa'?<SoaTable rows={visible} onOpen={openRecord} onManage={manageRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} onManage={manageRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} onManage={manageRecord} soa={frameworkKey==='iso-27001'&&isoView==='soa'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})}/>:<Sections {...{nodes,expanded,toggle,openRecord,onManage:manageRecord,statuses,prototype,framework:frameworkKey}}/>}
+{brawndoCis?<BrawndoCisControls workspacePilot={workspacePilot} implementationGroup={data.configuration?.implementation_group||1} scopeControls={<div className="flex flex-wrap gap-4 text-xs px-4 pb-3">{data.configuration?.implementation_group===2&&<label className="flex gap-2"><input type="checkbox" checked={additionsGroup===2} onChange={e=>setAdditionsGroup(e.target.checked?2:0)}/>Added in IG2 only · display filter; full program totals unchanged</label>}{data.configuration?.implementation_group===3&&<label className="flex gap-2">Safeguard scope<select aria-label="Safeguard scope" value={additionsGroup||0} onChange={e=>setAdditionsGroup(Number(e.target.value))}><option value={0}>All safeguards</option><option value={2}>Added in IG2 only</option><option value={3}>Added in IG3 only</option></select><span>Display filter; full program totals unchanged</span></label>}{rows.some(r=>!workspaceScope(frameworkKey,data,r))&&<label className="flex gap-2"><input type="checkbox" checked={showRetained} onChange={e=>setShowRetained(e.target.checked)}/>Include retained out-of-scope safeguards</label>}</div>} domainFocusKey={selectedDomain?`${selectedDomain.id}:${visible.map(row=>row.framework_assessment_id).join()}`:undefined} clientId={clientId} rows={scoped} visible={selectedDomain?visible.filter(row=>selectedDomain.safeguardIds.includes(row.definition_id)):visible} filtered={!!selectedDomain||!!additionsGroup||filter!=='all'||!!search.trim()} filterLabel={selectedDomain?`${selectedDomain.label}${filter!=='all'?` · ${VIEW_LABELS[filter]}`:''}`:additionsGroup?`Added in IG${additionsGroup}`:filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{if(selectedDomain){setDomainId(null);return;}dropLinkedView();setSearch('');setFilter('all');setAdditionsGroup(0);}} controlKey={controlKey} onControl={chooseControl} onOpen={openRecord} onManage={manageRecord} selected={selected}/>:prestigeSoc?<PrestigeSocNavigator clientId={clientId} rows={activeRows} visible={visible.filter(row=>workspaceScope(frameworkKey,data,row))} categoryId={socCategoryId} onCategory={chooseSocCategory} filter={filter} onFilter={chooseFilter} available={readiness.available!==false} retainedRows={showRetained?visible.filter(row=>!workspaceScope(frameworkKey,data,row)):[]} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');}} path={socPath} onPath={chooseSocPath} onOpen={openRecord} onManage={manageRecord} selected={selected}/>:iso?<IsoProgramNavigator key={clientId+':'+isoView} clientId={clientId} view={isoView} rows={scoped} filter={filter} onFilter={chooseFilter} available={isoPresentation.available} countsAvailable={isoPresentation.soa.countsAvailable} applicability={isoApplicability} onApplicability={setIsoApplicability} visible={visible} filtered={filter!=='all'||!!search.trim()} filterLabel={filter!=='all'?VIEW_LABELS[filter]:'Search results'} search={search} onSearch={changeSearch} onClear={()=>{dropLinkedView();setSearch('');setFilter('all');}} path={preference['category:'+isoView]||[]} onPath={path=>remember({['category:'+isoView]:path})} onOpen={openRecord} onManage={manageRecord} selected={selected}/>:prototype&&(filter!=='all'||search.trim())?(frameworkKey==='iso-27001'&&isoView==='soa'?<SoaTable rows={visible} onOpen={openRecord} onManage={manageRecord}/>:<CisResultTable framework={frameworkKey} rows={visible} onOpen={openRecord} onManage={manageRecord} label={filter!=='all'?VIEW_LABELS[filter]:'Search results'}/>):categoryFirst?<FrameworkCategoryNavigator key={clientId+frameworkKey+isoView} framework={frameworkKey} rows={visible} onOpen={openRecord} onManage={manageRecord} soa={frameworkKey==='iso-27001'&&isoView==='soa'} preference={preference['category:'+isoView]} onSelect={path=>remember({['category:'+isoView]:path})}/>:<Sections {...{nodes,expanded,toggle,openRecord,onManage:manageRecord,statuses,prototype,framework:frameworkKey}}/>}
     </>}
     </IsoPanel>
-    {managed&&<FrameworkDrawer key={clientId+':'+managed.framework_assessment_id} open recordManagement record={managed} clientId={clientId} onReviews={navigate} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeManagement();}}/>}
+    {managed&&<FrameworkDrawer key={clientId+':'+managed.framework_assessment_id+':manage'} open recordManagement record={managed} clientId={clientId} onReviews={navigate} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeManagement();}}/>}
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId}
+      closeRequest={prestigeSoc||iso?socNavigation.closeRequest:undefined} onCloseCancelled={prestigeSoc||iso?socNavigation.keepEditing:undefined}
       onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeRecord();}}
       onPrevious={index>0?()=>openRecord(navigationRows[index-1]):null} onNext={index>=0&&index<navigationRows.length-1?()=>openRecord(navigationRows[index+1]):null}
       position={index>=0?`${index+1} of ${navigationRows.length} in framework order`:'Retained assessment'} breadcrumb={iso&&selected?[{label:'ISO 27001',onClick:()=>isoCrumb('overview')},{label:ISO_VIEWS[isoView].label,onClick:()=>isoCrumb(isoView)},...selectedPath.slice(1).map((p,i)=>({label:p.label,onClick:()=>isoCrumb(isoView,selectedPath.slice(1,i+2).map((_,j)=>selectedPath.slice(0,j+2).map(x=>x.id).join('/')))})),{label:selected.definition_id}]:drawerBreadcrumb}/>}

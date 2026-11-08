@@ -1,0 +1,52 @@
+{
+  "evidence_class": "root-executed local real Motor/PyMongo/Mongo8.0.28; synthetic ASGI identities; not hosted authorization",
+  "runtime_base": "ea8b4d9706248dd865cda2edafa90bb091d497fa",
+  "backend_hashes": {
+    "backend/assessment_items.py": "6e88d0c064b3dee94043324698a9188b65ecc86d79dc025668640f55a37e5fba",
+    "backend/portfolio_activity.py": "be594fff9e250a36d33ea631599ece3b0f8b6490487e0eea1f7583b5b9306221",
+    "backend/framework_governance.py": "9f089abcc53170faf6c5b779e18d55e2bc530a8f1f8fd91b9e0f11f7579f94ae",
+    "backend/framework_reports.py": "2dbb6b18c4b2cc9423e286006bfa89136b4932e13c4c480b7938023414889642",
+    "backend/framework_report_pdf.py": "a5741fd0ba7fbe2256a3ac9ab37a4b28add23325c9e6805dae49a36c063023e8",
+    "backend/tests/test_framework_reports.py": "b79332ad17d9cc1993b39dd4a069d74f63094cf47f1c8303ce507c5b562b9627",
+    "backend/tests/test_portfolio_activity.py": "c483bb7cd178f478479496db5393c2c5f0bcf007214187d540ec4dc37c71e6c5"
+  },
+  "original": {
+    "log": "items-portfolio-real-mongo.log",
+    "tests": 111,
+    "seconds": 142.196,
+    "result": "failed",
+    "errors": 5,
+    "cause": "new synthetic fixtures omitted distinct native compound identities"
+  },
+  "corrected": {
+    "log": "items-portfolio-real-mongo-corrected.log",
+    "tests": 111,
+    "seconds": 134.408,
+    "result": "passed"
+  },
+  "snapshots": {
+    "log": "reports-real-mongo.log",
+    "tests": 3,
+    "seconds": 1.418,
+    "result": "passed",
+    "cases": [
+      "concurrent edits use one snapshot",
+      "no source writes",
+      "role/membership/program/session fences"
+    ]
+  },
+  "local_storage": {
+    "version": "8.0.28",
+    "bind": "127.0.0.1:58753",
+    "replica": "gnRelease20261013",
+    "owned_pid": 13896,
+    "stopped": true,
+    "remaining_databases": [
+      "admin",
+      "config",
+      "local"
+    ],
+    "old_runs": "untouched",
+    "logs_and_new_data": "retained"
+  }
+}

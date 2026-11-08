@@ -1,6 +1,6 @@
 /* Brawndo Risks: score cell (number + bar out of the 5×5 max of 25 + level pill) and toolbar filters. */
 .bpage .brisk-score { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
-.bpage .brisk-num { min-width: 22px; font: 600 18px/1 'Space Grotesk', var(--font-heading); font-variant-numeric: tabular-nums; color: var(--bp-text); }
+.bpage .brisk-num { min-width: 22px; font: 600 18px/1 var(--font-heading); font-variant-numeric: tabular-nums; color: var(--bp-text); }
 .bpage .brisk-num.is-critical { color: var(--bp-critical); }
 .bpage .brisk-num.is-high { color: var(--bp-attention); }
 .bpage .brisk-num.is-moderate { color: var(--bp-attention); }

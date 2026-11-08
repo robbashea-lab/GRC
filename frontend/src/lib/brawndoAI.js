@@ -6,6 +6,7 @@ export const AI_PILOT_DEFAULTS={environment:'',restrictions:'',data_settings:'',
 export const AI_PILOT_KEYS=Object.keys(AI_PILOT_DEFAULTS);
 export const AI_APPROVAL_LABELS={pending_assessment:'Pending Assessment',approved:'Approved',approved_with_conditions:'Approved with Conditions',not_approved:'Not Approved'};
 export const aiInactive=row=>['suspended','retired'].includes(row.status);
+export const aiNeedsAttention=row=>!aiInactive(row)&&row.alerts?.length>0;
 export const aiThirdParty=row=>row.screening?.third_party===true||!!row.vendor_id;
 export const aiCustomerFacing=row=>row.screening?.customer_facing===true||row.purposes?.includes('Customer-Facing');
 export const aiApproval=row=>Object.prototype.hasOwnProperty.call(AI_APPROVAL_LABELS,row.approval_status)?AI_APPROVAL_LABELS[row.approval_status]:'Approval not recorded';

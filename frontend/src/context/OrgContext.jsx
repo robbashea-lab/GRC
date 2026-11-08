@@ -1,11 +1,16 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import api from "@/lib/api";
 import {selectedClient, rememberClient} from '@/lib/clientSelection';
+import {useLocation} from 'react-router-dom';
+import {usePortfolioRefresh} from '@/lib/usePortfolioRefresh';
 
 const OrgContext = createContext(null);
 
 export function OrgProvider({ children }) {
+  const location = useLocation();
   const [clients, setClients] = useState([]);
+  const authorizedClients = useRef(clients);
+  authorizedClients.current = clients;
   const [currentClientId, setCurrentClientId] = useState(selectedClient);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,21 +49,32 @@ export function OrgProvider({ children }) {
   useEffect(() => {
     const generation = loadSequence;
     load();
-    const refreshScope = () => { if (!document.hidden) load(); };
-    window.addEventListener("focus", refreshScope);
-    const interval = window.setInterval(refreshScope, 60000);
-    return () => { generation.current++; window.removeEventListener("focus", refreshScope); window.clearInterval(interval); };
+    return () => { generation.current++; };
   }, [load]);
+  usePortfolioRefresh(load);
+
+  // A URL-selected tenant is resolved against the authorized list before any child reads it.
+  const requestedId = new URLSearchParams(location.search).get('client_id');
+  const resolvedId = requestedId ? clients.some(client => client.client_id === requestedId) ? requestedId : '' : currentClientId;
+  useEffect(() => {
+    if (requestedId && resolvedId) {
+      setCurrentClientId(resolvedId);
+      rememberClient(resolvedId);
+    }
+  }, [requestedId, resolvedId]);
 
   const switchClient = (id) => {
+    if (!authorizedClients.current.some(client => client.client_id === id)) return false;
     setCurrentClientId(id);
     rememberClient(id);
+    return true;
   };
 
-  const currentClient = clients.find((c) => c.client_id === currentClientId) || null;
+  const currentClient = clients.find((c) => c.client_id === resolvedId) || null;
 
   return (
-    <OrgContext.Provider value={{ clients, currentClient, currentClientId, switchClient, loading, error, refresh: load }}>
+    <OrgContext.Provider value={{ clients, currentClient, currentClientId: resolvedId, switchClient, loading,
+      error: error || (!loading && requestedId && !resolvedId ? 'This client is unavailable or outside your current access.' : ''), refresh: load }}>
       {children}
     </OrgContext.Provider>
   );

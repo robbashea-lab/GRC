@@ -10,6 +10,36 @@ class ClientRelationshipsTests(harness.ClientDashboardSourcesTests):
         await super().asyncSetUp()
         self.sign_in('admin')
 
+    async def test_shared_programs_follow_finalized_enrollment_without_read_writes_or_foreign_data(self):
+        from framework_catalog import CATALOGS
+        await server.db.clients.update_one({'client_id': 'a'}, {'$set': {'onboarding_baseline': {
+            'completed': True, 'requirements': {'cis-ig1': 'applies', 'soc-2': 'does_not_apply'}}}})
+        rows = [
+            {'requirement_id': ident, 'client_id': cid, 'baseline_key': key, 'baseline_response': response}
+            for ident, cid, key, response in [
+                ('a-iso', 'a', 'iso-27001', 'applies'), ('a-iso-duplicate', 'a', 'iso-27001', 'applies'),
+                ('a-soc', 'a', 'soc-2', 'applies'), ('b-cis', 'b', 'cis-ig1', 'applies'),
+                ('a-hipaa', 'a', 'hipaa', 'applies')]]
+        await server.db.requirements.delete_many({})
+        await server.db.requirements.insert_many(rows)
+        before = {name: await server.db[name].find({}, {'_id': 0}).to_list(None)
+                  for name in ('clients', 'requirements', 'framework_assessments', 'audit_logs')}
+        self.sign_in('member')
+        response = await self.client.get('/api/clients')
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertNotIn('b', [row['client_id'] for row in response.json()])
+        client = next(row for row in response.json() if row['client_id'] == 'a')
+        self.assertFalse(client['cis_program']['selected'])
+        self.assertEqual(client['shared_programs'], [{
+            'client_id': 'a', 'program_id': f'a:{key}', 'framework_key': key,
+            'version': CATALOGS[key]['version'], 'selected': True,
+        } for key in ('iso-27001', 'soc-2')])
+        after = {name: await server.db[name].find({}, {'_id': 0}).to_list(None) for name in before}
+        self.assertEqual(after, before)
+        await server.db.requirements.delete_many({'client_id': 'a'})
+        client = next(row for row in (await self.client.get('/api/clients')).json() if row['client_id'] == 'a')
+        self.assertEqual(client['shared_programs'], [])
+
     async def test_new_client_contact_once_without_account_or_membership_changes(self):
         before = await server.db.users.find({}, {'_id': 0}).to_list(None)
         with patch.object(server, 'send_email', new_callable=AsyncMock) as send:

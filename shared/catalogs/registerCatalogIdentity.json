@@ -1,0 +1,29 @@
+{
+  "vendors": {
+    "iventure-solutions": "iVenture Solutions",
+    "microsoft-365": "Microsoft 365",
+    "google-workspace": "Google Workspace",
+    "amazon-web-services": "Amazon Web Services",
+    "microsoft-azure": "Microsoft Azure",
+    "salesforce": "Salesforce",
+    "hubspot": "HubSpot",
+    "zoom": "Zoom",
+    "slack": "Slack",
+    "atlassian-jira-confluence": "Atlassian Jira & Confluence",
+    "dropbox": "Dropbox",
+    "box": "Box",
+    "docusign": "DocuSign",
+    "adobe-acrobat-creative-cloud": "Adobe Acrobat & Creative Cloud",
+    "okta": "Okta",
+    "1password": "1Password",
+    "knowbe4": "KnowBe4",
+    "adp": "ADP",
+    "quickbooks-online": "QuickBooks Online",
+    "stripe": "Stripe",
+    "cisco-meraki": "Cisco Meraki"
+  },
+  "ai_systems": [
+    "chatgpt", "m365", "claude", "gemini", "ghcopilot", "cstudio",
+    "perplexity", "zoomai", "agentforce", "grammarly"
+  ]
+}

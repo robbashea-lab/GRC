@@ -1,0 +1,258 @@
+import {deflateSync,strFromU8} from 'fflate';
+import {compressDemoStore,decodeDemoStore,writeDemoStore,writeDemoStoreAsync,MAX_DEMO_DECODE_BYTES} from './demoStorageCodec';
+import {restorePortfolioReporting} from './portfolioReporting';
+
+const quota=()=>new DOMException('Synthetic storage full','QuotaExceededError');
+const envelope=(bytes,declared=bytes.length)=>JSON.stringify({demo_storage_codec:'deflate-base64',version:1,
+  utf8_bytes:declared,payload:btoa(strFromU8(deflateSync(bytes),true))});
+const sample=()=>({clients:[{client_id:'synthetic',name:'Résumé 日本語 🔐'}],evidence:[{evidence_id:'e',
+  client_id:'synthetic',content_base64:'data:application/octet-stream;base64,AP+AAg==',relationships:[{kind:'review',id:'r'}]}],
+  reviews:[{review_id:'r',due_date:'2026-01-31',occurrences:[{occurrence_id:'old',completed_by:'original',
+    policy_coverage:[{policy_id:'p',version:'2',subject_id:'approved-exact'}]}]}],
+  unknown:JSON.parse('{"__proto__":{"retained":true},"null":null,"escape":"\\u0000\\ud800"}')});
+
+test('ordinary storage succeeds once with unchanged raw JSON and no envelope',()=>{
+  const storage={setItem:jest.fn()},json=JSON.stringify(sample());
+  writeDemoStore(storage,'demo',json);
+  expect(storage.setItem.mock.calls).toEqual([['demo',json]]);
+  expect(decodeDemoStore(json)).toEqual(sample());
+});
+
+test('actual quota failure retries the same key losslessly without dropping nested history or Evidence',()=>{
+  let saved='original';const json=JSON.stringify(sample());
+  const storage={setItem:jest.fn((key,value)=>{if(value===json)throw quota();saved=value;})};
+  writeDemoStore(storage,'demo',json);
+  expect(storage.setItem).toHaveBeenCalledTimes(2);
+  expect(storage.setItem.mock.calls.map(([key])=>key)).toEqual(['demo','demo']);
+  expect(JSON.parse(saved)).toMatchObject({demo_storage_codec:'deflate-base64',version:1});
+  expect(decodeDemoStore(saved)).toEqual(sample());
+  expect(JSON.stringify(decodeDemoStore(saved))).toBe(json);
+});
+
+test('all binary byte values and Unicode/native history remain exact through compressed reload',()=>{
+  const binary=String.fromCharCode(...Array.from({length:256},(_,i)=>i));
+  const original={...sample(),evidence:[{evidence_id:'all-byte-values',client_id:'synthetic',
+    filename:'résumé 日本語 🔐.bin',content_base64:btoa(binary),size:256}]};
+  const decoded=decodeDemoStore(compressDemoStore(JSON.stringify(original)));
+  expect(decoded).toEqual(original);
+  expect(Array.from(atob(decoded.evidence[0].content_base64),c=>c.charCodeAt(0)))
+    .toEqual(Array.from({length:256},(_,i)=>i));
+  expect(decoded.reviews).toEqual(original.reviews);
+});
+
+test('identical validated bytes reuse text but every read returns isolated mutable records; raw writes clear reuse',()=>{
+  const original={...sample(),cache_case:'immutable-text-only'},saved=compressDemoStore(JSON.stringify(original));
+  const decoder=jest.spyOn(jest.requireActual('fflate'),'inflateSync');
+  try{
+    const first=decodeDemoStore(saved);
+    first.reviews[0].occurrences[0].policy_coverage[0].version='mutated';
+    first.evidence.length=0;
+    const second=decodeDemoStore(saved);
+    expect(second).toEqual(original);
+    expect(second).not.toBe(first);
+    expect(second.reviews).not.toBe(first.reviews);
+    expect(decoder).toHaveBeenCalledTimes(1);
+    writeDemoStore({setItem:jest.fn()},'demo',JSON.stringify({raw:true}));
+    expect(decodeDemoStore(saved)).toEqual(original);
+    expect(decoder).toHaveBeenCalledTimes(2);
+  }finally{decoder.mockRestore();}
+});
+
+test('an externally replaced envelope validates independently; malformed versions and bounds cannot reuse prior text',()=>{
+  const first={...sample(),external_value:'first'},second={...sample(),external_value:'second'};
+  const firstSaved=compressDemoStore(JSON.stringify(first)),secondSaved=compressDemoStore(JSON.stringify(second));
+  expect(decodeDemoStore(firstSaved)).toEqual(first);
+  expect(decodeDemoStore(secondSaved)).toEqual(second);
+  expect(()=>decodeDemoStore({toString:()=>secondSaved})).toThrow();
+  const envelope=JSON.parse(secondSaved);
+  for(const patch of [{version:2},{utf8_bytes:MAX_DEMO_DECODE_BYTES+1},{payload:envelope.payload.slice(0,-4)}]){
+    expect(()=>decodeDemoStore(JSON.stringify({...envelope,...patch}))).toThrow();
+    expect(decodeDemoStore(secondSaved)).toEqual(second);
+  }
+  expect(decodeDemoStore(firstSaved)).toEqual(first);
+});
+
+test('a failed compressed retry retains the old valid stored envelope and its readable text',()=>{
+  const original={clients:[],evidence:[],retained:'original'},previous=compressDemoStore(JSON.stringify(original));
+  const values=new Map([['demo',previous]]);
+  const storage={setItem:jest.fn((key,value)=>{if(value.length>previous.length)throw quota();values.set(key,value);})};
+  expect(decodeDemoStore(values.get('demo'))).toEqual(original);
+  const next={...sample(),new_rows:Array.from({length:500},(_,i)=>'new-distinct-row-'+i)};
+  expect(()=>writeDemoStore(storage,'demo',JSON.stringify(next))).toThrow('Synthetic storage full');
+  expect(storage.setItem).toHaveBeenCalledTimes(3);
+  expect(values.get('demo')).toBe(previous);
+  expect(decodeDemoStore(values.get('demo'))).toEqual(original);
+});
+
+test('failed compressed retry preserves the prior storage value and reports the failure',()=>{
+  const previous=JSON.stringify({clients:[],evidence:[],retained:true}),values=new Map();
+  const storage={setItem:jest.fn((key,value)=>{
+    if(value.length>previous.length)throw quota();
+    values.set(key,value);
+  })};
+  storage.setItem('demo',previous);
+  expect(values.get('demo')).toBe(previous);
+  storage.setItem.mockClear();
+  expect(()=>writeDemoStore(storage,'demo',JSON.stringify(sample()))).toThrow('Synthetic storage full');
+  expect(storage.setItem).toHaveBeenCalledTimes(3);
+  expect(values.get('demo')).toBe(previous);
+});
+
+test.each(['SecurityError','NotAllowedError','Error'])('%s does not attempt a compression fallback',name=>{
+  const storage={setItem:jest.fn(()=>{throw new DOMException('Unavailable',name);})};
+  expect(()=>writeDemoStore(storage,'demo',JSON.stringify(sample()))).toThrow('Unavailable');
+  expect(storage.setItem).toHaveBeenCalledTimes(1);
+});
+
+test.each([1,2])('raw and compressed reporting V%s preserve exact legacy reference rows',version=>{
+  const row={id:'source',unknown:{caption:'café 日本語',nullable:null}};
+  const saved={portfolio_reporting:{storage_version:version,source_records:[row],
+    source_vectors:[version===1?JSON.stringify([row]):[0]],snapshots:[{client_id:'c',framework_key:'cis-ig1',
+      current:{provenance:{_portfolio_source_index:0}}}],scope_events:[]}};
+  const raw=JSON.stringify(saved),plain=restorePortfolioReporting(decodeDemoStore(raw));
+  const compressed=restorePortfolioReporting(decodeDemoStore(compressDemoStore(raw)));
+  expect(compressed).toEqual(plain);
+  expect(compressed.portfolio_reporting.snapshots[0].current.provenance.source_references).toEqual([row]);
+});
+
+test.each([
+  {version:2},{demo_storage_codec:'unknown'},{utf8_bytes:0},{utf8_bytes:1.5},{utf8_bytes:MAX_DEMO_DECODE_BYTES+1},
+  {payload:'bad_base64'},{payload:'AAAA='},{unexpected:true}
+])('unknown or malformed envelope is rejected without returning a domain store: %j',patch=>{
+  const valid=JSON.parse(compressDemoStore(JSON.stringify(sample())));
+  expect(()=>decodeDemoStore(JSON.stringify({...valid,...patch}))).toThrow();
+});
+
+test('a tiny declared size cannot accept a truncated decompression prefix',()=>{
+  const bytes=new TextEncoder().encode(JSON.stringify({history:'x'.repeat(10000)}));
+  expect(()=>decodeDemoStore(envelope(bytes,2))).toThrow();
+  expect(()=>decodeDemoStore(envelope(bytes,bytes.length-1))).toThrow();
+  expect(()=>decodeDemoStore(envelope(bytes,bytes.length+1))).toThrow();
+});
+
+test('truncated/corrupt DEFLATE and invalid UTF8/JSON fail closed',()=>{
+  const valid=JSON.parse(compressDemoStore(JSON.stringify(sample())));
+  const truncated=btoa(atob(valid.payload).slice(0,3));
+  expect(()=>decodeDemoStore(JSON.stringify({...valid,payload:truncated}))).toThrow();
+  expect(()=>decodeDemoStore(JSON.stringify({...valid,payload:btoa('invalid deflate')}))).toThrow();
+  expect(()=>decodeDemoStore(envelope(new Uint8Array([255,255])))).toThrow();
+  expect(()=>decodeDemoStore(envelope(new TextEncoder().encode('not json')))).toThrow();
+});
+
+test('a physical threshold that rejects the fast envelope still accepts the original level-six envelope',()=>{
+  const json=JSON.stringify({...sample(),rows:Array.from({length:2000},(_,i)=>`inventory repeated synthetic record ${i%200} owner ${i%7}`)});
+  const fast=compressDemoStore(json,1),original=compressDemoStore(json);
+  expect(fast.length).toBeGreaterThan(original.length);
+  const values=new Map([['demo','prior']]);
+  const storage={setItem:jest.fn((key,value)=>{if(value.length>original.length)throw quota();values.set(key,value);})};
+  writeDemoStore(storage,'demo',json);
+  expect(storage.setItem.mock.calls).toEqual([['demo',json],['demo',fast],['demo',original]]);
+  expect(JSON.stringify(decodeDemoStore(values.get('demo')))).toBe(json);
+});
+
+test.each(['SecurityError','NotAllowedError','Error'])('%s on the fast write propagates without a level-six retry',name=>{
+  const unavailable=new DOMException('Fast write unavailable',name);
+  const storage={setItem:jest.fn().mockImplementationOnce(()=>{throw quota();}).mockImplementationOnce(()=>{throw unavailable;})};
+  expect(()=>writeDemoStore(storage,'demo',JSON.stringify(sample()))).toThrow(unavailable);
+  expect(storage.setItem).toHaveBeenCalledTimes(2);
+});
+
+test('above conservative fast eligibility the writer uses only the original level-six retry',()=>{
+  const json=JSON.stringify({text:'x'.repeat(Math.floor((MAX_DEMO_DECODE_BYTES-1024*1024)/3)+1)});
+  const deflater=jest.spyOn(jest.requireActual('fflate'),'deflateSync');
+  const storage={setItem:jest.fn().mockImplementationOnce(()=>{throw quota();})};
+  try{
+    writeDemoStore(storage,'demo',json);
+    expect(storage.setItem).toHaveBeenCalledTimes(2);
+    expect(deflater).toHaveBeenCalledTimes(1);
+    expect(deflater.mock.calls[0][1]).toEqual({level:6});
+    expect(JSON.stringify(decodeDemoStore(storage.setItem.mock.calls[1][1]))).toBe(json);
+  }finally{deflater.mockRestore();}
+});
+
+test('fast codec failures propagate without swallowing them or attempting a stronger retry',()=>{
+  const failure=new Error('Synthetic compression failure');
+  const deflater=jest.spyOn(jest.requireActual('fflate'),'deflateSync').mockImplementationOnce(()=>{throw failure;});
+  const storage={setItem:jest.fn(()=>{throw quota();})};
+  try{
+    expect(()=>writeDemoStore(storage,'demo',JSON.stringify(sample()))).toThrow(failure);
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+    expect(deflater).toHaveBeenCalledTimes(1);
+  }finally{deflater.mockRestore();}
+});
+
+
+describe('asynchronous native compression commits',()=>{
+  const NativeCompressionStream=require('node:stream/web').CompressionStream;
+  let descriptor;
+  beforeEach(()=>{descriptor=Object.getOwnPropertyDescriptor(globalThis,'CompressionStream');
+    Object.defineProperty(globalThis,'CompressionStream',{configurable:true,writable:true,value:NativeCompressionStream});});
+  afterEach(()=>{if(descriptor)Object.defineProperty(globalThis,'CompressionStream',descriptor);else delete globalThis.CompressionStream;});
+
+  test('real native raw deflate preserves every byte and invokes the transaction guard before writes',async()=>{
+    const original={...sample(),binary:btoa(String.fromCharCode(...Array.from({length:256},(_,i)=>i)))},json=JSON.stringify(original);
+    let saved='prior';const events=[];
+    const storage={setItem:jest.fn((key,value)=>{events.push('write');if(value===json)throw quota();saved=value;})};
+    const result=await writeDemoStoreAsync(storage,'demo',json,{beforeCommit:()=>events.push('guard')});
+    expect(events).toEqual(['guard','write','guard','write']);
+    expect(result).toBe(saved);expect(decodeDemoStore(saved)).toEqual(original);
+    const first=decodeDemoStore(saved);first.clients.length=0;expect(decodeDemoStore(saved)).toEqual(original);
+  });
+  test.each(['absent','unsupported'])('%s native format retains the original synchronous fast stream',async kind=>{
+    globalThis.CompressionStream=kind==='absent'?undefined:class{constructor(){throw new TypeError('unsupported format');}};
+    const json=JSON.stringify(sample()),storage={setItem:jest.fn((key,value)=>{if(value===json)throw quota();})};
+    expect(await writeDemoStoreAsync(storage,'demo',json)).toBe(compressDemoStore(json,1));
+    expect(storage.setItem).toHaveBeenCalledTimes(2);
+  });
+  test('native quota preserves both original compression fallbacks',async()=>{
+    const json=JSON.stringify({...sample(),rows:Array.from({length:1000},(_,i)=>'native synthetic '+i)});
+    const original=compressDemoStore(json),fast=compressDemoStore(json,1);
+    const storage={setItem:jest.fn((key,value)=>{if(value!==original)throw quota();})};
+    expect(await writeDemoStoreAsync(storage,'demo',json)).toBe(original);
+    expect(storage.setItem.mock.calls.slice(-2)).toEqual([['demo',fast],['demo',original]]);
+    expect(storage.setItem).toHaveBeenCalledTimes(4);
+  });
+  test('raw success avoids constructing compression; nonquota errors never retry',async()=>{
+    globalThis.CompressionStream=jest.fn(()=>{throw new Error('must not construct');});
+    const json=JSON.stringify(sample()),storage={setItem:jest.fn()};
+    expect(await writeDemoStoreAsync(storage,'demo',json)).toBe(json);
+    expect(globalThis.CompressionStream).not.toHaveBeenCalled();
+    const failure=new DOMException('denied','SecurityError');
+    await expect(writeDemoStoreAsync({setItem:()=>{throw failure;}},'demo',json)).rejects.toBe(failure);
+  });
+  test('cancellation during compression leaves previous bytes and validated text intact',async()=>{
+    const prior=JSON.stringify({retained:true}),saved=compressDemoStore(prior);expect(decodeDemoStore(saved)).toEqual({retained:true});
+    const controller=new AbortController(),json=JSON.stringify(sample());let value=saved;
+    const storage={setItem:jest.fn((key,next)=>{if(next===json)throw quota();value=next;})};
+    const pending=writeDemoStoreAsync(storage,'demo',json,{signal:controller.signal});controller.abort();
+    await expect(pending).rejects.toMatchObject({name:'AbortError'});
+    expect(storage.setItem).toHaveBeenCalledTimes(1);expect(value).toBe(saved);expect(decodeDemoStore(saved)).toEqual({retained:true});
+  });
+  test('guard rejection after native compression cannot acknowledge or replace prior bytes',async()=>{
+    const json=JSON.stringify(sample()),failure=new Error('stale transaction');let calls=0;
+    const storage={setItem:jest.fn(()=>{throw quota();})};
+    await expect(writeDemoStoreAsync(storage,'demo',json,{beforeCommit:()=>{if(++calls===2)throw failure;}})).rejects.toBe(failure);
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+  });
+  test('runtime compressor errors and invalid compressed output propagate without a fallback',async()=>{
+    const {ReadableStream,WritableStream}=require('node:stream/web');
+    const failure=new Error('stream failure'),json=JSON.stringify(sample());
+    for(const invalidOutput of [false,true]){
+      globalThis.CompressionStream=class{constructor(){this.readable=new ReadableStream({start(c){if(invalidOutput){c.enqueue(new Uint8Array([1,2,3]));c.close();}else c.error(failure);}});this.writable=new WritableStream();}};
+      const storage={setItem:jest.fn(()=>{throw quota();})};
+      await expect(writeDemoStoreAsync(storage,'demo',json)).rejects.toThrow();expect(storage.setItem).toHaveBeenCalledTimes(1);
+    }
+  });
+});
+
+
+test('async callback quota errors are never mistaken for physical quota retries',async()=>{
+  const json=JSON.stringify(sample()),beforeError=quota(),afterError=quota();
+  const storage={setItem:jest.fn()};
+  await expect(writeDemoStoreAsync(storage,'demo',json,{beforeCommit:()=>{throw beforeError;}})).rejects.toBe(beforeError);
+  expect(storage.setItem).not.toHaveBeenCalled();
+  const events=[];
+  await expect(writeDemoStoreAsync(storage,'demo',json,{beforeCommit:()=>events.push('before'),afterCommit:()=>{events.push('after');throw afterError;}})).rejects.toBe(afterError);
+  expect(storage.setItem.mock.calls).toEqual([['demo',json]]);expect(events).toEqual(['before','after']);
+  expect(decodeDemoStore(json)).toEqual(sample());
+});

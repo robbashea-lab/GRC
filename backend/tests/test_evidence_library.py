@@ -1,8 +1,43 @@
+import base64
+import hashlib
 import json
 from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
 class EvidenceLibraryTests(ClientDashboardSourcesTests):
+    async def test_binary_unicode_integrity_after_fresh_authenticated_client(self):
+        """Reload the transport, not its cached response; real-Mongo runner reuses this test."""
+        import httpx
+        self.sign_in('admin')
+        fixtures = [('binary.bin', bytes([0, 255, 1, 128, 10, 13, 42, 0, 127, 200])),
+                    ('unicode.txt', 'SYNTHETIC Phase 2 evidence\ncafé ✓ 日本語\n'.encode('utf-8'))]
+        saved = []
+        for filename, content in fixtures:
+            encoded = base64.b64encode(content).decode('ascii')
+            row = await self.upload(filename=filename, content_base64=encoded)
+            saved.append((row['evidence_id'], filename, content))
+        # A new browser document has a new client but keeps its native authenticated identity.
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app), base_url='http://test',
+                                     headers=dict(self.client.headers)) as fresh:
+            for ident, filename, original in saved:
+                response = await fresh.get('/api/evidence/'+ident+'/download')
+                self.assertEqual(response.status_code, 200, response.text)
+                actual = base64.b64decode(response.json()['content_base64'], validate=True)
+                self.assertEqual(actual, original)
+                self.assertEqual(hashlib.sha256(actual).digest(), hashlib.sha256(original).digest())
+                self.assertEqual(response.json()['filename'], filename)
+                stored = await server.db.evidence.find_one({'evidence_id': ident})
+                self.assertEqual(base64.b64decode(stored['content_base64'].split(',')[-1]), original)
+        self.sign_in('member')
+        # These are client-a files. A synthetic user restricted to b cannot retrieve them.
+        await server.db.users.update_one({'user_id': 'member'}, {'$set': {'client_ids': ['b']}})
+        for ident, _, _ in saved:
+            denied = await self.client.get('/api/evidence/'+ident+'/download')
+            self.assertEqual(denied.status_code, 403, denied.text)
+        self.client.headers.pop('Authorization', None)
+        self.client.cookies.clear()
+        self.assertEqual((await self.client.get('/api/evidence/'+saved[0][0]+'/download')).status_code, 401)
+
     async def test_repository_paths_counts_and_archived_inventory(self):
         self.sign_in('admin')
         review=(await self.client.post('/api/reviews',json={'client_id':'a','title':'Restore validation','review_type':'backup','recurrence':'annual','due_date':'2027-03-01'})).json()

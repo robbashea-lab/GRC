@@ -1,0 +1,204 @@
+[
+  {
+    "client": "Platform Acceptance QA 20261011 — SOC 2",
+    "client_id": "cli_7a5e4c04356a9e1e6b537ded5738fff5cb46a75c4272bc5245181b63fa5bf474",
+    "framework": "soc-2",
+    "requirement": "A1.2",
+    "url": "https://omnisciente-staging.onrender.com/compliance/soc-2?assessment=fw_e4802d465e5455358e8a2d762bc0271b&guided=pilot",
+    "deployed_sha": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "observed_at": "2026-10-11T23:11:32.660Z",
+    "checks": [
+      "program invitation+recommendation native navigation",
+      "partial group Save & close native unchanged",
+      "refresh+resume answers/QA notes",
+      "Back/Save & next prior answer retained",
+      "4 groups/4 all unknown choices",
+      "last group opens summary directly",
+      "generated three headings/unknowns not affirmative deficiency",
+      "reviewer edit exact complete native Save & close",
+      "guide closes after success",
+      "refresh exact multiline text",
+      "native Not Assessed/Not verified retained",
+      "completed interview resumes exact manual wording",
+      "one Unknown→No; remaining unknowns preserved",
+      "manual review guard survives refresh; native unchanged by progress",
+      "explicit Refresh from answers separates absent from unknown",
+      "replacement confirmation client/criterion accurate",
+      "Cancel keeps old native exact text",
+      "Update explicit confirmation succeeds",
+      "updated exact text after refresh",
+      "native DOMcode needs_attention/friendly NotImplemented; Not verified unchanged",
+      "no automatic linked Finding before explicit Raise Finding",
+      "explicit synthetic Finding+Action+ticket evidence created",
+      "Action completion→Pending validation; no automatic Finding closure",
+      "explicit administrator validation→Completed, rationale/history/evidence retained",
+      "normal Reopen→new open Action + old completed Action/history retained",
+      "changed follow-up title saved on new Action only",
+      "native narrative/code/verification unchanged after remediation"
+    ],
+    "native_saves": 2,
+    "logout_login": "blocked human readiness",
+    "roles": "administrator only; no restricted proof",
+    "tooling_limits": [
+      "Synthetic evidence download button clicked once; download-event wait timed out and reset automation kernel. No receipt/bytes verification yet; application failure not established. Normal authenticated tab remains usable; no save or Complete work occurred in the timed-out sequence."
+    ],
+    "related_records": {
+      "finding_id": "fw_97f83f65e9f650ce9dc997f5eda242e7",
+      "old_completed_action": "tsk_ce068ac33313583da38453e28821ec82",
+      "new_open_action": "tsk_a25659e2fedd5efdaf245c6b68541a13",
+      "evidence_filename": "synthetic-platform-remediation-v1.txt",
+      "validation_actor_boundary": "existing administrator only; not a separate-person validation test"
+    },
+    "review_followup": {
+      "review": "Access Entitlement Review",
+      "cadence": "quarterly",
+      "scheduled_date": "2026-10-11",
+      "next_anchor": "2027-01-11",
+      "state": "in_progress",
+      "evidence": "existing synthetic-platform-remediation-v1.txt linked normally as one direct reference",
+      "unlink": "UNEXECUTED/unknown outcome: original tab5 stalled at window confirmation; no accept issued, user unavailable leaves pending",
+      "completion": "UNEXECUTED; no retry or new Review completion while confirmation pending"
+    }
+  },
+  {
+    "framework": "CIS IG1",
+    "client_id": "cli_20df1a50e4eae777cc8ec2d81cc30a370c379636d67fc1343b9e5af62117d1aa",
+    "assessment_id": "fw_1365ae1034435a7a943b717d7a02af8b",
+    "requirement": "1.1",
+    "revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "native_saves": 1,
+    "checks": [
+      "normal program recommendation/native navigation",
+      "unknown inventory active groups1 and5; conditional2–4 inactive",
+      "progress Saveclose refresh exact note without nativewrite",
+      "final applicable group opens summary",
+      "manual exact multiline summary Saveclose nativewrite",
+      "refresh native exacttext statusnot_assessed/unverified"
+    ],
+    "actual_logout_login": "BLOCKED human not ready"
+  },
+  {
+    "framework": "CIS IG2",
+    "client_id": "cli_6fbdc9c285b24b84ad081b7e34e204c2818beb9fa44e8323595adfeeb88db885",
+    "requirement": "3.10",
+    "assessment_id": "fw_4694e67405185d94af1d987fa532687a",
+    "revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "native_saves": 1,
+    "checks": [
+      "normal Control3→IG2addition3.10",
+      "three activegroups tailoredencryptedtransit",
+      "satisfied acceptedpractice+requirements; optionaltextblank notdowngrade",
+      "summary Saveclose exactmanualtext refresh addressed/unverified"
+    ],
+    "actual_logout_login": "BLOCKED human not ready"
+  },
+  {
+    "framework": "CIS IG3",
+    "client_id": "cli_da82b001a9242d337179193b1278a7d1f837862ce8faec4bf45a07b238b9c4fb",
+    "requirement": "3.13",
+    "assessment_id": "fw_e5c1bf8aa2385007968df379fc820442",
+    "revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "native_saves": 1,
+    "checks": [
+      "IG3-only tailoredDLP",
+      "fouractivegroups sixrequiredclauses",
+      "providercoverageNo otherfiveYes generates Partial+specificgap",
+      "exactmanualsummary Saveclose refresh in_progress/unverified"
+    ],
+    "actual_logout_login": "BLOCKED human not ready"
+  },
+  {
+    "framework": "ISO 27001",
+    "client_id": "cli_6623c0df3d49caed4d80c3c4fa73665a0d05e2fee418072c30ebdb2f8425d2ee",
+    "requirement": "4.1",
+    "assessment_id": "fw_208289eee6845a6090d31c4308b917cb",
+    "revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "native_saves": 1,
+    "checks": [
+      "mandatoryISMS nativeentry",
+      "threegroups specificinternalexternalclimatecontext",
+      "allYes optionalnotesblank stillImplemented",
+      "complete reviewedsummary Saveclose exactrefresh addressed",
+      "no fabricatedverification/applicability"
+    ],
+    "actual_logout_login": "BLOCKED human not ready"
+  },
+  {
+    "framework": "ISO 27001 Annex A",
+    "client_id": "cli_6623c0df3d49caed4d80c3c4fa73665a0d05e2fee418072c30ebdb2f8425d2ee",
+    "requirement": "A.5.1",
+    "assessment_id": "fw_39d3b00470b55d328e1843c2e0e938e8",
+    "revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "native_saves": 1,
+    "applicability_only_native_saves": 1,
+    "checks": [
+      "nativeSoA included justified normalSave refresh",
+      "sixunknownquestions fourtailoredpolicygroups",
+      "summary NotAssessed nofabricateddeficiency",
+      "exactmanualreviewedsummary Saveclose refresh",
+      "includedSoA unchanged/nativeNotAssessed separate"
+    ],
+    "actual_logout_login": "BLOCKED human not ready"
+  },
+  {
+    "framework": "Shared ISO fixture workflows",
+    "client_id": "cli_6623c0df3d49caed4d80c3c4fa73665a0d05e2fee418072c30ebdb2f8425d2ee",
+    "revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "checks": [
+      "syntheticRisk created3x4=12High",
+      "explicitAccept rationale/expiry10-18 preserves12 andsignificantexposure; revieweractivitypreserved",
+      "Policy uploadv1 +versionmetadata exactrefresh NeedsConfirmation/unapproved; actualapprovalblocked lackexisting delegatedapprover",
+      "Vendor assurancevalidationrequiredexpectedartifact; Questionnairemissing notverified; nativeAssurance-tabnavigation",
+      "System create defaultsserver/medium/active ownerunset; ordinaryCAS winner update",
+      "secondsameAdmin UI view stale save rejected; draftretained; refreshedwinner intact"
+    ],
+    "limitations": [
+      "No rawhosted409capture; actualUIserverconflict+unchangedrecord observed",
+      "Initial immediateafterreload assertion preceded recordloading; settled read confirmed winner; notappdata-loss",
+      "No actualrestricteduser/multiworker proof",
+      "Vendor date display today vsUTCpastdue remains timezone/wording interpretationreportonly"
+    ]
+  },
+  {
+    "framework": "Shared source and directory workflow",
+    "client_id": "cli_6623c0df3d49caed4d80c3c4fa73665a0d05e2fee418072c30ebdb2f8425d2ee",
+    "revision": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "checks": [
+      "Contact only synthetic@example.test withInviteunchecked; Noaccess/nolinkedaccount",
+      "VendorReview ordinaryStart/Complete once due2026-10-11 completed2026-10-12UTC currentdue2027-10-11 preservesanchor",
+      "completed2026 historicalReview read-only accessible",
+      "VendorNextReview2027-10-11 LastReview10-12 synchronized; missingassurance remainsmissing; lifecycleunder_review notautoActive"
+    ],
+    "limitations": [
+      "No mail/invitation/accountoperation",
+      "Admin selfexecution notindependenthumanreview",
+      "No findings recorded means none recorded, not assurance",
+      "UTCdate-vs-localrelativeTodaylabel ambiguity reportonly"
+    ]
+  },
+  {
+    "scenario": "scope derivative and existing-client additions",
+    "client_id": "cli_4e11466f42abf6827b025df85ddbb3ca352e270bc059052a14627600d6ba38cf",
+    "runtime": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "checks": [
+      "Normal CIS-only IG1 onboarding56; all other frameworks Unsure, no Contacts/accounts/owners",
+      "Manual native1.1 preservation marker explicitSave1 NotAssessed/unverified",
+      "First progress attempt reproduced PFA001 guard; no native loss; owned unsaved draft discarded after receipt",
+      "Fresh reload successful interview progress uncertainty/detail marker; no summaryapply",
+      "Normal IG1→IG2→IG3 scope confirmations130/153 preserve same assessmentID, manual text and saved interview marker",
+      "Normal SOC program addition33, tailoredCC1.1 guide (read-only Start/no answers applied)",
+      "Native synthetic SOC manual marker explicitSave1 NotAssessed/unverified",
+      "Normal ISO program addition123, ISMS30/AnnexA93undecided and existing launcher; internal-audit planning prerequisites read-only",
+      "SOC optional categories expanded33→61, then retirement with syntheticreason/date",
+      "Retired SOC absent active sidebar, retained program accessible; currentReviews25 retained",
+      "Reactivation retains61, exactsame CC1.1 nativeID/manual marker/NotAssessed/unverified",
+      "SOC optional categories deselected61→33; CIS153 and ISO123 remainconfigured"
+    ],
+    "native_saves": 2,
+    "summary_saves": 0,
+    "cis_assessment_id": "fw_9b96c56543c757ffba189a4b73530f13",
+    "soc_assessment_id": "fw_005757e3d3a6525a86a69fa1fcea80d0",
+    "audit_limit": "No eligible independent auditor/independence arrangements invented. Activation and auditor completion not executed.",
+    "cleanup": "Active, retain for affected PFA001 hosted retest; no primary-group or protected-showcase mutation."
+  }
+]

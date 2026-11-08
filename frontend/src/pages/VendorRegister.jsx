@@ -1,4 +1,9 @@
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import BrawndoAdditionalVendors from '@/components/BrawndoAdditionalVendors';
+import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
+import {occurrenceId} from '@/lib/reviewOccurrences';
+import { useAdditionalSectionsSurface, useAdditionalSectionsPresentation } from '@/lib/brawndoAdditionalScope';
+import { useBrawndoTheme } from '@/lib/brawndoTheme';
 import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from "@/components/Register";
 import { DueDate, HistoryDate, OwnerCell } from "@/components/RegisterCells";
 import StatusBadge, { SeverityBadge } from "@/components/StatusBadge";
@@ -7,9 +12,10 @@ import AssigneeSelect from '@/components/AssigneeSelect';
 import TableLoadingRow from '@/components/TableLoadingRow';
 import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
 import {vendorSignals,VENDOR_DATA_TYPES,ASSURANCE_TYPES} from '@/lib/vendorGovernance';
-import {isReferencePresentation,isReferenceWorkflow} from '@/lib/reference';
+import {isReferencePresentation,isReferenceWorkflow,isCisReference} from '@/lib/reference';
 import {vendorViews,vendorMatches,vendorColumns,assuranceSummary,renewalAction} from '@/lib/brawndoVendors';
 import { tableColumns } from '@/lib/tableColumns';
+import {applyTableFilters,EMPTY} from '@/lib/tableFilters';
 import { useEffect, useMemo, useState, useRef } from "react";
 import api, { formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
@@ -23,7 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Download,AlertCircle,CalendarDays,ListChecks,UserRound,ArrowRight } from "lucide-react";
+import { Download,AlertCircle,CalendarDays,ListChecks,UserRound,ArrowRight,Sun } from "lucide-react";
 import { toast } from "sonner";
 import {BrawndoSurface,BrawndoPageHeader,BrawndoTiles,BrawndoChips,shortDate} from '@/components/BrawndoPage';
 import './BrawndoVendors.css';
@@ -79,20 +85,36 @@ export function vendorTiles(rows,now=new Date(),matches=vendorMatches){
 }
 
 export default function VendorRegister() {
-  const { user } = useAuth();
+  const auth = useAuth();
+  const { user } = auth;
   const { currentClient, currentClientId } = useOrg();
+  const navigate = useNavigate();
+  const [theme,setTheme] = useBrawndoTheme();
+  const [loadedClientId,setLoadedClientId] = useState(null);
+  const vendorReadScope = `${user?.user_id}:${user?.role}:${auth.workspaceMode}:${user?.workspace_mode}:${currentClientId}`;
+  const [loadedReadScope,setLoadedReadScope] = useState('');
+  const [acceptedRefresh,setAcceptedRefresh] = useState(null);
+  const presentation = useAdditionalSectionsPresentation('vendors');
+  const additional = useAdditionalSectionsSurface('vendors',loadedReadScope===vendorReadScope?loadedClientId:null);
   const pilot=isReferencePresentation(currentClientId,user);
-  const vendorWorkflow=isReferenceWorkflow(currentClientId,user);
+  const vendorWorkflow=isReferenceWorkflow(currentClientId,user,currentClient);
   const matches=vendorWorkflow?vendorMatches:vendorMatchesView;
   const contractDate=v=>vendorWorkflow?v.contract_renewal:v.contract_renewal||v.contract_expiration||v.contract_end;
   const [rows, setRows] = useState([]);
   const [reviews,setReviews] = useState([]);
+  const [tasks,setTasks] = useState([]);
+  const [acceptedTaskScope,setAcceptedTaskScope] = useState(null);
+  const [taskDrawer,setTaskDrawer] = useState(null);
+  const previousPresentation = useRef(presentation);
+  const vendorWorkScope = quarterlyChartScope(user,auth.workspaceMode,currentClient);
+  const previousWorkScope = useRef(vendorWorkScope);
   const generation=useRef(0);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
   const [searchParams,setSearchParams] = useSearchParams();
   // ?view= deep links (dashboard signals) open the register already filtered.
-  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) ? searchParams.get("view") : "all_active";
+  const brawndoExtendedViews = isCisReference(currentClientId,user,currentClient);
+  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) || ((brawndoExtendedViews||presentation) && ['all','unassigned'].includes(searchParams.get('view'))) ? searchParams.get("view") : "all_active";
   const [view, setView] = useState(linkedView);
   useEffect(() => setView(linkedView), [linkedView]);
   const [loading, setLoading] = useState(true);
@@ -121,21 +143,36 @@ export default function VendorRegister() {
   async function load() {
     if (!currentClientId) return;
     const token=++generation.current;
-    setLoading(true); setLoadError('');
+    setLoading(true); setLoadError(''); setAcceptedRefresh(null);setAcceptedTaskScope(null);
     try {
-      const [v, u, r] = await Promise.all([
+      const [v, u, r, t] = await Promise.all([
         api.get("/vendors", { params: { client_id: currentClientId } }).then((r) => r.data),
         api.get(`/clients/${currentClientId}/members`).then((r) => r.data),
         api.get("/reviews",{params:{client_id:currentClientId}}).then(r=>r.data),
+        // Native lists fail with 413 above their cap; never publish a partial work total.
+        presentation ? api.get('/tasks',{params:{client_id:currentClientId}}).then(response=>response.data) : Promise.resolve([]),
       ]);
       if(token!==generation.current) return;
-      setRows(v || []); setUsers(u || []); setReviews(r||[]);
-    } catch (e) { if(token===generation.current){setRows([]);setLoadError(formatError(e));} }
+      if ([v,r,t].some(list => !Array.isArray(list) || list.some(row => !row || typeof row !== 'object' || row.client_id !== currentClientId))) {
+        setLoadedClientId(null); setLoadedReadScope('');
+        throw new Error('Vendors and linked Reviews could not be verified for this client.');
+      }
+      setRows(v); setUsers(u || []); setReviews(r);setTasks(t);setLoadedClientId(currentClientId);setLoadedReadScope(vendorReadScope);
+      setAcceptedTaskScope(presentation?`${vendorReadScope}:${vendorWorkScope}`:null);
+      setAcceptedRefresh({scope:vendorReadScope,at:new Date().toISOString()});
+    } catch (e) { if(token===generation.current){setRows([]);setReviews([]);setTasks([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
     finally { if(token===generation.current)setLoading(false); }
   }
-  useEffect(() => { const activeGeneration=generation; setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
+  useEffect(() => { const activeGeneration=generation; setAcceptedRefresh(null);setRows([]);setUsers([]);setReviews([]);setTasks([]);setTaskDrawer(null);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentClientId]);
+  }, [currentClientId,vendorReadScope]);
+  useEffect(() => {
+    // Later enrollment can enable CIS without changing the current client or actor.
+    const wasEligible=previousPresentation.current,oldScope=previousWorkScope.current;
+    previousPresentation.current=presentation;previousWorkScope.current=vendorWorkScope;
+    if(presentation&&(!wasEligible||oldScope!==vendorWorkScope))load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[presentation,vendorWorkScope]);
 
   const enriched = useMemo(() => rows.map(v=>{const value=vendorSignals(v,reviews);return {...value,_attention:vendorWorkflow?['review_overdue','review_due','contract_soon','renewal_soon','assurance'].some(view=>vendorMatches(value,view)):value._reviewDue||value._contractSoon||value._assuranceIssue};}),[rows,reviews,vendorWorkflow]);
 
@@ -155,7 +192,15 @@ export default function VendorRegister() {
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
   function selectView(id) { if(pilot){table.replaceState({...table.state,filters:{}});setView(id);return;}const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',critical_high:'criticality',review_due:'next_review',review_overdue:'next_review',contract_soon:'contract_renewal'})[id]; if (key) table.setFilter(key, []); setView(id); }
-  const counts = Object.fromEntries([...(pilot?vendorViews:VIEWS).map(v => v.id),'critical_high','unassigned','all', ...Object.keys(LINKED_VIEWS)].map(id => [id, tableSource.filter(v => matches(v, id)).length]));
+  // The generic native register expresses Unassigned through its existing Owner filter.
+  const unassignedRows=()=>applyTableFilters(tableSource.filter(v=>matches(v,'all_active')),columns,{filters:{business_owner_id:[EMPTY]}});
+  const counts = Object.fromEntries([...(pilot?vendorViews:VIEWS).map(v => v.id),'critical_high','unassigned','all', ...Object.keys(LINKED_VIEWS)].map(id => [id, id==='unassigned'&&!vendorWorkflow?unassignedRows().length:tableSource.filter(v => matches(v, id)).length]));
+  useEffect(()=>{
+    if(!additional||vendorWorkflow||searchParams.get('view')!=='unassigned')return;
+    table.replaceState({...table.state,filters:{business_owner_id:[EMPTY]}});
+    setView('all_active');
+    const next=new URLSearchParams(searchParams);next.delete('view');setSearchParams(next,{replace:true});
+  },[additional,vendorWorkflow,searchParams,setSearchParams,table]);
   const tabs = pilot?vendorViews:LINKED_VIEWS[view] ? [...VIEWS, { id: view, label: LINKED_VIEWS[view] }] : VIEWS;
 
   function exportCsv() {
@@ -174,10 +219,36 @@ export default function VendorRegister() {
     a.download = `vendor-register-${(currentClient?.name || "client").replace(/\s+/g, "-")}.csv`; a.click();
   }
 
-  if(pilot){
+  let surface;
+  if(presentation&&!additional){
+    surface = <section className="brawndo-additional bav-page" data-theme={theme} data-testid="vendors-navigation-loading" aria-busy={!loadError}>
+      <div className="bapv-page-head"><div><h1>{currentClient?.name||'Client'} Vendors</h1><p>Third-party register</p></div></div>
+      <RegisterLoadError error={loadError} onRetry={load} name="vendors"/>
+      {!loadError&&<p role="status">Loading vendors…</p>}
+      {recordLinkError&&<p role="alert">{recordLinkError}</p>}
+    </section>;
+  } else if(additional){
+    const selectAdditionalView = id => {
+      const nativeOwnerFilter=id==='unassigned'&&!vendorWorkflow;
+      selectView(nativeOwnerFilter?'all_active':id);
+      if(nativeOwnerFilter)table.replaceState({...table.state,filters:{business_owner_id:[EMPTY]}});
+      const next=new URLSearchParams(searchParams);
+      if(id==='all_active'||nativeOwnerFilter)next.delete('view');else next.set('view',id);
+      setSearchParams(next,{replace:true});
+    };
+    surface = <>
+      <BrawndoAdditionalVendors quarterlyChart scopeKey={vendorWorkScope} workAvailable={acceptedTaskScope===`${vendorReadScope}:${vendorWorkScope}`} recordOpen={drawer.open||addOpen||!!taskDrawer} clientName={currentClient?.name||'Client'} rows={tableSource} filteredRows={filtered} reviews={reviews} tasks={tasks} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
+        viewCounts={counts} contractDate={contractDate} contractDateLabel={vendor=>!vendorWorkflow&&!vendor.contract_renewal?'Expiration / end':''}
+        onOpen={(record,tab,assuranceId)=>setDrawer({open:true,record,tab,assuranceId})}
+        onOpenTask={record=>{if(record.client_id===currentClientId)setTaskDrawer(record);}}
+        onOpenReview={review=>navigate(`/reviews?id=${encodeURIComponent(review.review_id)}&client_id=${encodeURIComponent(currentClientId)}&occurrence=${encodeURIComponent(occurrenceId(review))}`)}
+        actions={<><button type="button" onClick={()=>setTheme(theme==='light'?'dark':'light')}><Sun size={15} aria-hidden="true"/>{theme==='light'?'Dark':'Light'}</button><button type="button" onClick={exportCsv} data-testid="vendors-export"><Download size={15} aria-hidden="true"/>Export CSV</button>{canWrite&&<button type="button" onClick={()=>setAddOpen(true)} data-testid="new-vendor">+ New vendor</button>}</>}/>
+      {recordLinkError&&<p role="alert">{recordLinkError}</p>}
+    </>;
+  } else if(pilot){
     const chipDefs=[...PILOT_CHIPS,...(LINKED_VIEWS[view]?[[view,LINKED_VIEWS[view]]]:[])];
     const pick=id=>selectView(view===id?'all_active':id);
-    return (
+    surface = (
       <BrawndoSurface className="bvendors">
         <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Third parties`} title="Vendors">
           <button type="button" className="bpage-btn" onClick={exportCsv} data-testid="vendors-export"><Download size={16} aria-hidden="true"/>Export CSV</button>
@@ -235,12 +306,10 @@ export default function VendorRegister() {
           </div>
         </div>
         {recordLinkError&&<p role="alert">{recordLinkError}</p>}
-      {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
-        {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}}/>}
       </BrawndoSurface>
     );
-  }
-  return (
+  } else {
+    surface = (
     <div>
       {recordLinkError&&<p role="alert">{recordLinkError}</p>}
       <PageHeader
@@ -309,10 +378,16 @@ export default function VendorRegister() {
           </table>
         </div>
       </div>
-      {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
-      {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} />}
     </div>
-  );
+    );
+  }
+  // Appearance can withdraw during an organization refresh; native drafts keep the same mounted editors.
+  return <>
+    {surface}
+    {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab,assuranceId:drawer.assuranceId}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
+    {taskDrawer&&taskDrawer.client_id===currentClientId&&<RecordDrawer open onOpenChange={open=>{if(!open)setTaskDrawer(null);}} kind="tasks" record={taskDrawer} schema={SCHEMAS.tasks.fields} clientId={currentClientId} users={users} onSaved={load}/>}
+    {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}}/>}
+  </>;
 }
 
 

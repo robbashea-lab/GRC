@@ -1,0 +1,202 @@
+/* Workspace leaf roles only: inherited page defaults and native overlays stay unchanged. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .page-heading h1,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .bpage-head h1,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .page-heading h1,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page > .bapv-page-head h1 {
+  font-size:26px;
+  line-height:1.25;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .quarter-card > .quarter-heading h2,
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .register > .register-heading > h2,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .quarter-card > .quarter-heading h2,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register > .cia-register-head h2,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid .panel-title h2,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid .quarter-heading h2,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register > .register-heading h2,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-quarter-heading h2,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page > .bapv-card > .cv-register-heading h2 {
+  font-size:16px;
+  line-height:1.4;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .kpis .kpi strong,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .kpis .kpi strong,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .kpis .kpi strong,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-kpis .cv-kpi strong {
+  font-size:32px;
+  line-height:1.2;
+}
+
+/* Supporting summary text does not become a typography source for record windows. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .page-heading p,
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .kpis .kpi :is(.label,small),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .bpage-head .bpage-subtitle,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .kpis .kpi :is(.label,small),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .page-heading :is(.eyebrow,p),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .kpis .kpi :is(.label,small),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page > .bapv-page-head p,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-kpis .cv-kpi :is(span,small) {
+  font-size:12.5px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .page-heading .page-actions > button,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .bpage-head :is(.bda-button,.bpage-btn,.bpage-actions button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .page-heading .page-actions > button,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page > .bapv-page-head .bapv-head-actions > button {
+  font-size:12.5px;
+}
+
+/* Quarter controls and agenda metadata; no selector reaches a date-list or hover panel. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .quarter-card .quarter-heading p,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .quarter-card .quarter-heading p,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid .quarter-heading p,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-quarter-heading p,
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .quarter-card .quarter-controls :is(strong,select,button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .quarter-card .quarter-controls :is(strong,select,button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid .quarter-controls :is(strong,select,button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-quarter-controls :is(strong,select,button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .quarter-card :is(.quarter-range,.legend button,.agenda-switch button,.agenda-switch button span,.agenda-caption,.agenda-date,.agenda .due-badge,.agenda-all,.timeline-foot > span,.timeline-foot > button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .quarter-card :is(.quarter-range,.legend button,.agenda-switch button,.agenda-switch button span,.agenda-caption,.agenda-date,.agenda .due-badge,.agenda-all,.timeline-foot > span,.timeline-foot > button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid :is(.legend button,.agenda-switch button,.agenda-switch button span,.agenda-caption,.agenda-date,.agenda .due-badge,.agenda-all,.timeline-foot > span,.timeline-foot > button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-quarter :is(.cv-legend button,.cv-agenda-switch button,.cv-agenda-switch span,.cv-agenda-caption,.cv-agenda-entry > span,.cv-agenda-bottom > span,.cv-agenda .cv-due,.cv-timeline-footer > span) {
+  font-size:12.5px;
+}
+
+/* These existing Vendor controls use important native font-size declarations. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-quarter :is(.cv-this-quarter,.cv-text-link,.cv-timeline-footer > button) {
+  font-size:12.5px!important;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .quarter-card .agenda-title,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .quarter-card .agenda-title,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid .agenda-title,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-quarter .cv-agenda-entry > b {
+  font-size:14px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .quarter-card :is(.agenda-empty,.agenda-empty > b,.chart-empty,.chart-empty b),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .quarter-card :is(.agenda-empty,.chart-empty,.cia-open-error),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid :is(.agenda-empty,.agenda-empty > b,.chart-empty,.chart-empty b),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-quarter .cv-empty {
+  font-size:14px;
+}
+
+/* Chart text grows without changing its native marker, date or axis geometry. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .quarter-card :is(.month-name,.date-label),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .quarter-card :is(.month-name,.date-label),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid :is(.month-name,.date-label),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-quarter :is(.cv-months > span,.cv-date-label) {
+  font-size:12.5px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .quarter-card :is(.today-label,.axis-label),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .quarter-card :is(.today-label,.axis-label),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid :is(.today-label,.axis-label),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-quarter :is(.cv-today > span,.cv-axis > span) {
+  font-size:11px;
+}
+
+/* The matrix leaves a narrower Risk plot: wrap its last dates without moving ticks. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid .date-axis {
+  min-height:34px;
+}
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid .date-axis .axis-label:nth-last-child(-n+2) {
+  max-width:29px;
+  white-space:normal;
+  line-height:1.2;
+  text-align:center;
+}
+
+/* Closed native selects use workspace text; their option lists keep native sizes. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .quarter-card .quarter-controls select option,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page > .quarter-card .quarter-controls select option,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .overview-grid .quarter-controls select option,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .cv-quarter-controls select option {
+  font-size:10px;
+}
+
+/* Reviews: main register only, including history's primary dates and cadence. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .register .bdr-table :is(.bdr-name,.bdr-owner > span:last-child,.bdr-c-due > time,.bdr-c-cad > span),
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .register .bdr-table td {
+  font-size:14px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .register .bdr-table :is(th,.bdr-meta,.bdr-fwchip,.bdr-st,.bdr-c-due > small,.bdr-c-cad > small),
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .register > .register-heading .segmented button,
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .register .register-toolbar :is(input,.review-view-row button,.bdr-filter-right label,.bdr-filter-right select),
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .register .bdr-summary > span,
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .register .bdr-summary > nav :is(span,button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .register .bdr-more > summary {
+  font-size:12.5px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .crr-root[data-visual-surface=reviews] > .register .register-toolbar .bdr-filter-right select option {
+  font-size:9px;
+}
+
+/* Actions: both native register controllers share the same text roles. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register :is(.bda-title,.register-record-link,.bda-owner > span > span,.register-owner > span,.bda-due > time,.bda-due > span:not(.due-badge)),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register :is(.bda-table-scroll,.brawndo-ai-table) td,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register .brawndo-ai-table .tbl-cell {
+  font-size:14px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register :is(.bda-table-scroll,.brawndo-ai-table) th,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register :is(.bda-table-scroll,.brawndo-ai-table) th .column-control,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register :is(.bda-meta,.bda-meta small,.bda-source-caption,.bda-origin > button,.bda-origin > span,.bpage-meta,.bda-owner small,.register-owner > span > span,.register-owner small,.bda-due small,.due-badge,.completed-meta,.validation-date,.bda-status,.priority-badge,.bda-no-finding,.bda-attention),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register-head p,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register :is(.cia-tabs button,.bda-show button,.bda-show span,.bda-more-controls label,.bda-more-controls select,.bda-search input,.register-toolbar input,.register-toolbar .bpage-chip),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register .bda-results > :is(span,button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register .bda-results > nav :is(span,button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register .bpage-foot {
+  font-size:12.5px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register .bda-more-controls select option {
+  font-size:10px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .cia-page .cia-register :is(.bda-empty,.bda-error) {
+  font-size:14px;
+}
+
+/* Risks: no matrix or popup text is selected through the shared concept class. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register .risk-table :is(.risk-title,.risk-owner,.next-review-cell > time),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register .risk-table td {
+  font-size:14px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register .risk-table :is(th,.risk-id,.score-badge,.risk-status,.review-relative),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register .register-actions :is(.segmented button,.segmented button span,.filter-button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register .register-toolbar :is(input,#matchCount,#clearFilters),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register .filter-panel :is(label,select,.column-control),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register .register-footer {
+  font-size:12.5px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register .filter-panel select option {
+  font-size:10px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register .empty-row > strong {
+  font-size:14px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .cis-risks-concept > .register .empty-row > span {
+  font-size:12.5px;
+}
+
+/* Vendor cells keep their existing column widths, logos and metadata. */
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .bav-row:not(.bav-header) > div,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .bav-row :is(.bapv-name,.bav-owner .bapv-owner > span,.bav-next > span,.bav-renewal > span) {
+  font-size:14px;
+}
+
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .bav-header > div,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .bav-header .column-control,
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page .bav-row :is(.bapv-meta,.bav-critical,.bav-data-type,.bav-next > small,.bav-renewal > small,.bav-assurance button,.bav-assurance small,.cv-assurance-status),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page > .bapv-card .bapv-filters :is(input,button),
+.brawndo-workspace-pilot[data-cis-sizing=true] .cv-page > .bapv-card .bapv-summary {
+  font-size:12.5px;
+}

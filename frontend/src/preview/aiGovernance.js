@@ -1,8 +1,11 @@
-import {AI_DEFAULTS,AI_KEYS,aiProjection,validateAI,catalog} from '../lib/aiGovernance';
+import {isCisClient} from './cisCapability';
+import {AI_DEFAULTS,AI_KEYS,aiProjection,aiClientAvailable,validateAI,catalog} from '../lib/aiGovernance';
+import {validateCatalogKey} from '../lib/registerCatalogIdentity';
 import {record,write,audit,uid,now,ids} from './store';
 import {reviewView} from '../lib/reviewOccurrences';
 import { validateAssignment, clientAccess } from './assignmentEligibility';
 import {AI_PILOT_DEFAULTS,AI_PILOT_KEYS,aiScope} from '../lib/brawndoAI';
+import {reviewedScreening,screeningReviewSnapshot} from '../lib/aiOnboarding';
 
 export function aiRequest(db,path,method,params,body){
   db.ai_systems||=[];db.ai_intake||={};db.ai_counters||={};
@@ -21,14 +24,15 @@ export function aiRequest(db,path,method,params,body){
   const [, ,id,action]=path.split('/');
   if(!id&&method==='get'){checkClient(params.client_id);return db.ai_systems.filter(r=>r.client_id===params.client_id).map(view);}
   const old=id?record(db,'ai_systems',id):null;checkClient(old?.client_id||body.client_id);
-  const pilot=(old?.client_id||body.client_id)==='demo_brawndo';
+  const pilot=isCisClient(db,old?.client_id||body.client_id);
+  const aiWorkflow=aiClientAvailable(record(db,'clients',old?.client_id||body.client_id));
   if(method==='get'&&action==='activity'){
     const reviewIds=db.reviews.filter(r=>r.client_id===old.client_id&&r.ai_system_id===id).map(r=>r.review_id);
     return db.logs.filter(l=>l.client_id===old.client_id&&[id,...reviewIds].includes(l.entity_id));
   }
   if(old?.status==='retired')throw new Error('Retired AI records remain historical');
   if(action==='approval'&&method==='post'){
-    admin();if(!pilot)throw new Error('Approval pilot is available only for Brawndo Demo');
+    admin();if(!pilot)throw new Error('Approval decisions require a configured CIS program');
     if(body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before deciding');
     if(Object.keys(body).some(k=>!['status','note','expected_updated_at'].includes(k)))throw new Error('Unknown decision fields');
     if(!['approved','approved_with_conditions','not_approved'].includes(body.status)||typeof body.note!=='string'||!body.note.trim()||body.note.length>10000)throw new Error('Choose a decision and document its rationale');
@@ -60,13 +64,24 @@ export function aiRequest(db,path,method,params,body){
   if(action||!['post','patch'].includes(method)||(!id&&method!=='post')||(id&&method!=='patch'))throw new Error('AI records are retained; use the supported lifecycle controls');
   if(old&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
   body={...body};delete body.expected_updated_at;
-  if(Object.keys(body).some(k=>![...AI_KEYS,...(pilot?AI_PILOT_KEYS:[]),'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
+  const screeningReview=body.onboarding_screening;
+  if(Object.hasOwn(body,'onboarding_screening')&&(!old||!aiWorkflow||!screeningReview))throw new Error('Screening review requires an existing versioned AI record for an active or onboarding client');
+  delete body.onboarding_screening;
+  if(Object.keys(body).some(k=>![...AI_KEYS,...(aiWorkflow?AI_PILOT_KEYS:[]),'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
+  if(Object.prototype.hasOwnProperty.call(body,'catalog_key'))body.catalog_key=validateCatalogKey('ai_systems',body.catalog_key);
   const row={...AI_DEFAULTS,...(pilot?AI_PILOT_DEFAULTS:{}),...old,...body};validateAI(db,row,old);validateAssignment(db,'ai_systems',row,old);
-  if(pilot){
-    for(const key of ['environment','restrictions','data_settings'])if(typeof row[key]!=='string'||row[key].length>10000)throw new Error('Invalid '+key);
-    if(!Array.isArray(row.permitted_data_types)||row.permitted_data_types.some(v=>!catalog.data_types.includes(v)))throw new Error('Invalid permitted data classifications');
-    if(!old)row.approval_status='pending_assessment';
-    else if(JSON.stringify(aiScope(old))!==JSON.stringify(aiScope(row))&&['approved','approved_with_conditions','not_approved'].includes(old.approval_status)){
+  if(aiWorkflow&&!pilot&&old)for(const [key,value] of Object.entries(AI_PILOT_DEFAULTS))
+    if(!Object.hasOwn(old,key)&&JSON.stringify(row[key])===JSON.stringify(value))delete row[key];
+  if(screeningReview)row.onboarding_screening=reviewedScreening(old,row,screeningReview,db.user.user_id,now());
+  // Framework changes must not make an old approval silently cover a different deployment.
+  if(!pilot&&old&&['approved','approved_with_conditions'].includes(old.approval_status)
+    &&(JSON.stringify(aiScope(old))!==JSON.stringify(aiScope(row))||screeningReview&&screeningReviewSnapshot(old)!==screeningReviewSnapshot(row)))
+    throw Object.assign(new Error('This change affects a recorded AI approval scope; reassessment is not supported for this program. The original decision and record are unchanged.'),{status:409});
+  if(aiWorkflow){
+    for(const key of ['environment','restrictions','data_settings'])if(Object.hasOwn(row,key)&&(typeof row[key]!=='string'||row[key].length>10000))throw new Error('Invalid '+key);
+    if(Object.hasOwn(row,'permitted_data_types')&&(!Array.isArray(row.permitted_data_types)||row.permitted_data_types.some(v=>!catalog.data_types.includes(v))))throw new Error('Invalid permitted data classifications');
+    if(!old&&pilot)row.approval_status='pending_assessment';
+    else if(pilot&&(JSON.stringify(aiScope(old))!==JSON.stringify(aiScope(row))||screeningReview&&screeningReviewSnapshot(old)!==screeningReviewSnapshot(row))&&['approved','approved_with_conditions','not_approved'].includes(old.approval_status)){
       row.approval_status='pending_assessment';row.material_change_at=now();row.material_change_note='Approval boundaries changed; reassessment required.';
       audit(db,'AI approval boundaries changed; reassessment required','ai_systems',row);
     }

@@ -1,0 +1,97 @@
+/* Core palette/font/chrome come from SixSurfaceAppearance; category colors retain their meaning. */
+.brawndo-workspace-pilot[data-additional-surface],
+html[data-additional-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating) {
+  --c-sched:#215BC1; --c-due:#B7791F; --c-over:#D64550; --m-rev:#215BC1; --m-asr:#B7791F; --m-ren:#0F8A7A;
+}
+.brawndo-workspace-pilot[data-additional-surface][data-theme=dark],
+html[data-additional-surface][data-additional-theme=dark] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating) {
+  --c-sched:#4A8BDB; --c-due:#C2862F; --c-over:#E66767; --m-rev:#4A8BDB; --m-asr:#C2862F; --m-ren:#1F9E89;
+}
+.brawndo-workspace-pilot[data-additional-surface],
+html[data-additional-surface] :is(.ui-dialog,.ui-sheet,.ui-menu,.ui-popover,.ui-select-content,.ui-floating) {
+  --ba-bg:var(--bg); --ba-surface:var(--surface); --ba-subtle:var(--subtle); --ba-hover:var(--hover); --ba-border:var(--border); --ba-strong:var(--border-strong);
+  --ba-text:var(--fg); --ba-muted:var(--muted); --ba-link:var(--link); --ba-selected:var(--selected); --ba-rail:var(--rail); --ba-good:var(--good); --ba-warn:var(--warn); --ba-tablehead:var(--tablehead);
+  --ba-fg2:var(--fg2); --ba-shadow:var(--shadow-sm); --ba-shadow-seg:var(--shadow-seg); --ba-seg-on:var(--seg-on); --ba-due:var(--c-due); --ba-bad:var(--bad);
+  background:var(--bg); color:var(--fg);
+}
+.brawndo-workspace-pilot[data-additional-surface] .bwp-topbar {padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.brawndo-workspace-pilot[data-additional-surface] .bwp-brand small {white-space:nowrap}
+.brawndo-workspace-pilot[data-additional-surface] .bwp-client {max-width:none}
+.brawndo-workspace-pilot[data-additional-surface] .bwp-client svg {width:16px;height:16px}
+.brawndo-workspace-pilot[data-additional-surface] .bwp-profile .bsb-profile >svg {display:none}
+.brawndo-workspace-pilot[data-additional-surface] .app-sidebar {display:flex}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-brand,.brawndo-workspace-pilot[data-additional-surface] .bsb-foot {display:none}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-head {display:grid;padding:16px 12px 0;gap:0}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-back {justify-content:start}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-client {display:flex;gap:10px;margin:8px 0 2px;padding:9px 10px;border-width:1px;border-style:solid}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-client .bsb-group-label {display:none}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-client-mark {flex:none}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-client-name {font:600 13.5px/1.3 var(--font)}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-client-industry {display:block}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-nav {padding:0 12px 16px;gap:2px}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-group {gap:2px;border:0;padding:0}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-group >.bsb-group-label {display:block;margin:16px 10px 6px;padding:0;font:600 11px/1.5 var(--font);letter-spacing:.06em}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-link {justify-content:start}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-link >span {display:initial}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-badge {min-width:18px;padding:0 6px;border-radius:999px;font:600 11px/18px var(--font)}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-badge.is-critical {background:var(--bad-bg);color:var(--bad)}
+.brawndo-workspace-pilot[data-additional-surface] .bsb-badge.is-attention {background:var(--warn-bg);color:var(--warn)}
+.brawndo-workspace-pilot[data-additional-surface] .app-workspace {background:var(--bg)}
+.brawndo-workspace-pilot[data-additional-surface] .client-surface {padding:0;background:transparent;min-height:0}
+.brawndo-additional {font:13.5px/1.5 var(--font);color:var(--fg);font-optical-sizing:auto}
+.brawndo-additional :is(h1,h2,h3,h4,p) {margin:0}
+.brawndo-additional :is(button,input,select,textarea) {font-family:inherit;color:inherit}
+.brawndo-additional :is(button,a,input,select,textarea,summary):focus-visible,
+.brawndo-workspace-pilot[data-additional-surface] :is(button,a,input,select,textarea,summary):focus-visible {outline:2px solid var(--focus);outline-offset:2px}
+/* Native viewport and scrollbar-corner paint follow the verified workspace theme. */
+html[data-additional-surface] {color-scheme:normal}
+html[data-additional-surface][data-additional-theme=dark] {color-scheme:dark}
+html[data-additional-surface] :is(.ui-sheet,.ui-dialog,.ui-popover,.ui-menu,.ui-select-content) {background:var(--surface);color:var(--fg);border-color:var(--border);font-family:var(--font)}
+html[data-additional-surface] :is(.ui-sheet,.ui-dialog) {box-shadow:var(--shadow)}
+html[data-additional-surface] .ui-dialog {border-radius:12px}
+html[data-additional-surface] :is(.ui-sheet,.ui-dialog) :is(h1,h2,h3) {font-family:var(--font);letter-spacing:-.01em}
+html[data-additional-surface] :is(.ui-sheet,.ui-dialog) .ui-button {min-height:32px;height:auto;padding:6px 12px;border-radius:7px;font:600 12.5px/1.5 var(--font)}
+html[data-additional-surface] :is(.ui-sheet,.ui-dialog) :is(input,select,textarea) {font:400 12.5px/1.5 var(--font);border-color:var(--border-strong);border-radius:7px}
+html[data-additional-surface] :is(.ui-sheet,.ui-dialog) [role=tablist] {gap:0;border-radius:0;background:transparent;border-bottom:1px solid var(--border)}
+html[data-additional-surface] :is(.ui-sheet,.ui-dialog) [role=tab] {padding:10px 14px;font:500 12.5px/1.5 var(--font);border-radius:0;color:var(--fg2)}
+html[data-additional-surface] :is(.ui-sheet,.ui-dialog) [role=tab][data-state=active] {border-bottom:2px solid var(--rail);background:transparent;color:var(--fg);box-shadow:none}
+/* Keep the complete native record in the references' side panel, including its extra tabs. */
+html[data-additional-surface] .ui-dialog[data-state]:is([data-testid=policies-drawer],[data-testid=vendors-drawer],[data-testid=ai-drawer]),
+html[data-additional-surface] .ui-sheet:is(.contact-workspace,.evidence-workspace) {
+  position:fixed;left:auto;right:0;top:0;bottom:0;width:min(520px,100vw);max-width:none;height:100dvh;max-height:100dvh;
+  transform:none;padding:0;border:0;border-radius:0;display:flex;flex-direction:column;overflow:hidden;background:var(--surface);color:var(--fg);box-shadow:var(--shadow);
+}
+html[data-additional-surface] .ui-dialog:is([data-testid=policies-drawer],[data-testid=vendors-drawer],[data-testid=ai-drawer]) >:is(.brawndo-assessment-header,.shrink-0:first-of-type),
+html[data-additional-surface] .ui-sheet:is(.contact-workspace,.evidence-workspace) >:first-child {padding:18px 20px 16px 24px;border-bottom:1px solid var(--border);text-align:left}
+html[data-additional-surface] :is([data-testid=policies-drawer],[data-testid=vendors-drawer],[data-testid=ai-drawer],.contact-workspace,.evidence-workspace) h2 {font:650 18px/1.3 var(--font);letter-spacing:-.02em}
+html[data-additional-surface] :is([data-testid=policies-drawer],[data-testid=vendors-drawer]) .record-fields {grid-template-columns:minmax(0,1fr);gap:16px}
+html[data-additional-surface] [data-testid=ai-drawer] .brawndo-ai-body {flex:1;min-height:0;overflow:auto;padding:20px 24px}
+html[data-additional-surface] [data-testid=ai-drawer] .brawndo-ai-body .grid {grid-template-columns:minmax(0,1fr)}
+html[data-additional-surface] [data-testid=ai-drawer] .brawndo-assessment-footer {flex:none;flex-wrap:wrap;padding:12px 24px;background:var(--subtle);border-top:1px solid var(--border)}
+html[data-additional-surface] .contact-workspace-form {flex:1;min-height:0;overflow:auto}
+html[data-additional-surface] .contact-workspace-body {padding:20px 24px}
+html[data-additional-surface] .contact-workspace-footer {padding:12px 24px;background:var(--subtle);border-top:1px solid var(--border)}
+html[data-additional-surface] .evidence-workspace >[role=tablist] {padding-inline:24px;flex:none}
+/* The native repository sets its sheet width with !important. Keep this override
+   within the verified additional-page scope, including the native mobile rule. */
+html[data-additional-surface] .evidence-workspace {width:min(520px,100vw)!important}
+/* Item tabs/content share a div; upload uses a form. Both must remain scrollable
+   below the fixed header, including long metadata and source-picker states. */
+html[data-additional-surface] .evidence-workspace >:is(.space-y-4,form) {flex:1;min-height:0;overflow:auto;padding:20px 24px}
+@media(max-width:860px) {
+  .brawndo-workspace-pilot[data-additional-surface] {--bwp-sidebar:0px}
+  .brawndo-workspace-pilot[data-additional-surface] .bwp-mobile-nav {display:grid;width:36px;height:36px}
+  .brawndo-workspace-pilot[data-additional-surface] .bwp-brand {width:auto;min-width:0}
+  .brawndo-workspace-pilot[data-additional-surface] :is(.bwp-brand small,.bwp-search) {display:none}
+  .brawndo-workspace-pilot[data-additional-surface] .bwp-client {display:flex;font-size:0;gap:0}
+  .brawndo-workspace-pilot[data-additional-surface][data-navigation=closed] .app-sidebar {display:none}
+  .brawndo-workspace-pilot[data-additional-surface][data-navigation=open] .app-sidebar {display:flex;position:fixed;left:0;top:60px;z-index:45;width:260px}
+  .brawndo-workspace-pilot[data-additional-surface] .bwp-nav-backdrop {display:block;position:fixed;inset:60px 0 0;z-index:40;background:var(--scrim)}
+}
+@media(max-width:520px) {
+  .brawndo-workspace-pilot[data-additional-surface] :is(.bwp-client,.bwp-topbar [data-testid=notification-bell]) {display:none}
+  .brawndo-workspace-pilot[data-additional-surface] .bwp-theme {margin-left:auto}
+}
+@media(prefers-reduced-motion:reduce) {
+  .brawndo-workspace-pilot[data-additional-surface] *,html[data-additional-surface] :is(.ui-sheet,.ui-dialog) * {animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}

@@ -39,6 +39,7 @@ export function reviewSchedule(review, resetAnchor = false) {
 }
 export function reviewView(review) {
   const result = {...review, ...reviewSchedule(review), current_occurrence_id:occurrenceId(review)};
+  delete result._policy_coverage_pending;
   if (!['completed','cancelled'].includes(review.status)) {
     const missing = !scheduledDate(review.due_date) || ('recurrence' in review && [null,''].includes(review.recurrence))
       || (!['none','',null,undefined].includes(review.recurrence) && !result.next_review_date);

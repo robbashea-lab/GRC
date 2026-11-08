@@ -12,6 +12,7 @@ import {dashboardPosture} from '../lib/dashboardPosture';
 import {COMPLIANCE_SECTIONS} from '../lib/complianceNavigation';
 import {dashboardWorkQueue,filterDashboardQueue} from '../lib/dashboardWorkQueue';
 import {eligible} from './assignmentEligibility';
+import {portfolioMonitoring} from './portfolioMonitoring';
 
 const sources=(db,cid)=>Object.fromEntries(DASHBOARD_KINDS.map(k=>[k,list(db,k,cid)]));
 const model=(db,cid,today,scope={kind:'org'})=>{
@@ -23,7 +24,7 @@ const emptyMetrics=()=>Object.fromEntries(rules.metrics.map(k=>[k,[]]));
 export function portfolio(db,includeArchived,today=new Date()) {
   if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Client directory is restricted to internal admins');
   const day=managementDay(today), allMetrics=emptyMetrics(), attention=[];
-  const latest=latestPortfolioActivity(db.logs,today);
+  const latest=latestPortfolioActivity(db.logs,today,db.portfolio_reporting?.activity_proofs);
   const rows=db.clients.filter(c=>evidenceAccess(db.user,c.client_id)&&(includeArchived||c.status!=='archived')).map(c=>{
     const m=model(db,c.client_id,today), active=!['archived','inactive'].includes(c.status);
     const metric_items=Object.fromEntries(rules.metrics.map(k=>[k,m.metrics[k].map(r=>portfolioItem(r,c,today))]));
@@ -42,7 +43,7 @@ export function portfolio(db,includeArchived,today=new Date()) {
       open_actions:m.counts.past_due+m.counts.due_30d,open_findings:m.activeRecords.findings.length,
       significant_risks:m.significantRisks.length,critical_high_findings:m.materialFindings.length,
       overdue_reviews:m.metrics.past_due.filter(r=>r.kind==='reviews').length,upcoming_reviews:m.metrics.due_30d.filter(r=>r.kind==='reviews').length,
-      last_activity:latest.get(c.client_id)||null};
+      last_activity:latest.get(c.client_id)||null, monitoring:portfolioMonitoring(db,c,today)};
   });
   const active=rows.filter(c=>!['archived','inactive'].includes(c.client_status));
   const action_required=active.filter(c=>c.program_status==='action_required').length, needs_attention=active.filter(c=>c.program_status==='needs_attention').length;
@@ -62,8 +63,8 @@ export function dashboard(db,params) {
   // Opt-in read-only queue contract; ordinary dashboards keep their current view.
   if(params.work_queue) {
     const base=dashboardWorkQueue(m,new Set(db.users.filter(u=>eligible(u,params.client_id)).map(u=>u.user_id)),records);
-    const groups=filterDashboardQueue(base,records,(db.framework_assessments||[]).filter(r=>r.client_id===params.client_id),(db.organizational_controls||[]).filter(r=>r.client_id===params.client_id),params.framework||'',params.search||'');
-    const brief=row=>({...Object.fromEntries(['key','id','kind','type','due_date','owner_id','unassigned','status','severity'].map(key=>[key,row[key]])),
+    const groups=filterDashboardQueue(base,records,(db.framework_assessments||[]).filter(r=>r.client_id===params.client_id),(db.organizational_controls||[]).filter(r=>r.client_id===params.client_id),params.framework||'',params.search||'',!!params.work_metadata);
+    const brief=row=>({...Object.fromEntries(['key','id','kind','type','due_date','owner_id','unassigned','status','severity','framework_keys','safeguard_ids','safeguard_labels','framework_membership_known'].map(key=>[key,row[key]])),
       title:String(row.title||'').slice(0,240),owner:String(row.owner||'Unassigned').slice(0,200),source_label:String(row.source_label||'').slice(0,240)});
     if(params.detail) {
       const rows=groups[params.detail],offset=Number(params.offset||0),limit=Number(params.limit||25);

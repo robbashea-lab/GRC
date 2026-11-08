@@ -1,0 +1,216 @@
+{
+  "recorded_at": "2026-10-14T16:22:00Z",
+  "status": "Full gate failed; passive observation prepared for a new exact-head run",
+  "runtime_candidate": "5941169e14fe8397ce477237615329d39b8e6ba6",
+  "workflow": {
+    "run_id": 38578915561,
+    "run_number": 172,
+    "url": "https://github.com/robbashea-lab/GRC/actions/runs/38578915561",
+    "final_api_status": "completed",
+    "final_api_conclusion": "cancelled",
+    "attempts": 2
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "jobs": [
+        {
+          "id": 115903271140,
+          "name": "frontend",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 115903271635,
+          "name": "backend",
+          "status": "completed",
+          "conclusion": "cancelled"
+        },
+        {
+          "id": 115903272068,
+          "name": "backend-mongo",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 115927562710,
+          "name": "Release gate",
+          "status": "completed",
+          "conclusion": "failure"
+        }
+      ],
+      "worker_loss_at": "2026-10-14T14:27:35.902Z",
+      "cancelled_at": "2026-10-14T14:45:54Z",
+      "faulthandler_top": "json.encoder.py line 0",
+      "backend_summary": null,
+      "assertion_failure_observed": false,
+      "worker_os_returncode": null,
+      "log_sha256": "b42fb8919c7a5f79ef79459c46051abb16f56c1b0e5539e81ca436bdd2077236",
+      "crash_item_announced": "CIS IG3 ten-year"
+    },
+    {
+      "attempt": 2,
+      "jobs": [
+        {
+          "id": 115928353898,
+          "name": "backend",
+          "status": "completed",
+          "conclusion": "cancelled"
+        },
+        {
+          "id": 115928355777,
+          "name": "backend-mongo",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 115928412754,
+          "name": "frontend",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 115943894076,
+          "name": "Release gate",
+          "status": "completed",
+          "conclusion": "failure"
+        }
+      ],
+      "worker_loss_at": "2026-10-14T15:12:03.705Z",
+      "cancelled_at": "2026-10-14T15:34:32Z",
+      "faulthandler_top": "fnmatch.py line 71 then unknown line 0",
+      "backend_summary": null,
+      "assertion_failure_observed": false,
+      "worker_os_returncode": null,
+      "log_sha256": "624c6f2e4e1fa41285ef160f1b7d1c9d5d971b0d73499e90422b7f94efd0647a",
+      "last_announced_case": "CIS IG2 ten-year; not a confirmed crash-item attribution"
+    }
+  ],
+  "frontend_actual_execution": {
+    "suites": 312,
+    "tests": 9314,
+    "snapshots": 1,
+    "result": "Pass",
+    "normal_build": {
+      "js": "main.710be7a7.js",
+      "css": "main.24a244a6.css"
+    },
+    "demo_build": {
+      "js": "main.b513de06.js",
+      "css": "main.27347f46.css"
+    },
+    "qualification": "Attempt 2 carries forward successful original frontend/Mongo jobs; no second executed frontend suite claimed"
+  },
+  "environment": {
+    "python": "3.12.15",
+    "pytest": "9.1.1",
+    "xdist": "3.8.0",
+    "execnet": "2.1.2",
+    "mongomock_motor": "0.0.36",
+    "displayed_install_versions_compared": 41,
+    "displayed_versions_match_old_green": true,
+    "old_image": "ubuntu24/20261004.327.1",
+    "new_image": "ubuntu24/20261012.334.1",
+    "image_causal_role": "Unverified"
+  },
+  "diagnosis": {
+    "channel_observation": "gw1 node down: Not properly terminated; normal crash recovery messages absent; channel EOF is not an OS exit status",
+    "root_cause": "Unknown",
+    "faulthandler": "60-second diagnostic stack dump, not a test timeout/exit setting",
+    "serial_ig3": {
+      "candidate": "5941169e14fe8397ce477237615329d39b8e6ba6",
+      "result": "Pass",
+      "tests": 1,
+      "seconds": 1421.61,
+      "warnings": 4,
+      "qualification": "Windows/Python3.12.14 -n0 isolated AsyncMongoMock diagnostic; not full Ubuntu two-worker gate"
+    },
+    "local_recovery_probe": {
+      "result": "Expected deliberate failure exit 1 with two passing survivors",
+      "lost_worker_exit": 17,
+      "normal_restart_completed": true,
+      "qualification": "Out-of-tree synthetic owned-process infrastructure check; no native security campaign"
+    }
+  },
+  "observer": {
+    "path": "backend/tests/run_isolated.py",
+    "scope": "Optional unexpected-node-down diagnostic hook only",
+    "fields": [
+      "worker id and error type",
+      "owned local Popen PID/returncode immediately and after five seconds",
+      "controller stack frames without locals",
+      "filtered controller RSS/HWM",
+      "root cgroup memory.events where available"
+    ],
+    "preserved": [
+      "original pytest argv and classifications",
+      "2 workers/loadscope/default restart",
+      "suite assertions and 30-minute budget",
+      "pytest exit result"
+    ],
+    "excluded": [
+      "environment/commands/error payloads",
+      "native/customer records",
+      "worker kill/waitpid/resource changes",
+      "new dependencies",
+      "configuration or provider changes"
+    ],
+    "source_sha256": "e9557e6310f731a74fc6dff80e5302e5674d28858b834abc4e04f8278ae5d454",
+    "selfcheck": {
+      "seconds": 7.485,
+      "checks_passed": 8,
+      "pid": 18996,
+      "immediate_returncode": null,
+      "deferred_returncode": 17,
+      "coordinator_returncode": 1,
+      "timed_out": false,
+      "cleanup_required": false,
+      "log_sha256": "bab33f425367923235d3b1e09516874cb4a52622081f02ff8f6f794df83c16d7",
+      "checks": {
+        "bounded_without_cleanup": true,
+        "expected_failure_preserved": true,
+        "normal_recovery_preserved": true,
+        "actual_deferred_exit17": true,
+        "non_popen_unavailable": true,
+        "timer_start_failure_safe": true,
+        "error_payload_not_logged": true,
+        "explicit_memory_telemetry": true
+      },
+      "qualification": "Author infrastructure selfcheck; expected deliberate pytest failure preserved. Timer.start RuntimeError fallback verified. Linux telemetry unavailable locally and reported explicitly."
+    },
+    "scheduling_failure_guard": "RuntimeError/OSError schedules no timer, records explicit deferred-unavailable and retains pytest exit behavior",
+    "telemetry_limit": "Root cgroup memory.events are aggregate counters, not attribution of worker OOM.",
+    "independent_review": {
+      "result": "Pass",
+      "reviewer": "soc2_review (non-author)",
+      "source_sha256": "e9557e6310f731a74fc6dff80e5302e5674d28858b834abc4e04f8278ae5d454",
+      "verified": "Actual frozen source, unchanged argv/classification/config, guarded scheduling fallback, retained selfcheck log and author-execution attribution",
+      "new_execution": false,
+      "limitations": [
+        "Already-running daemon captures may finish after close cancels pending timers",
+        "Root-cgroup counters do not attribute an OOM to this worker"
+      ]
+    }
+  },
+  "release": {
+    "deployed_revision": "fce5e056567bd276a997f948296e6857a777f330",
+    "deployment": "dep-db7etul9fdbs73e00fj0",
+    "corrected_candidate_deployed": false,
+    "owner": "Agent 2",
+    "fixture_state": "recoverably archived",
+    "next_required": "Reviewed passive-observer candidate through unchanged full release gates; only all four successes permit coordinated staging and virgin ISO4.1 postfix"
+  },
+  "primary_references": [
+    "https://pytest-xdist.readthedocs.io/en/stable/crash.html",
+    "https://docs.pytest.org/en/stable/how-to/failures.html#fault-handler",
+    "installed pytest9.1.1/xdist3.8.0/execnet2.1.2 source",
+    "https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334",
+    "https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261004.327"
+  ],
+  "limitations": [
+    "Worker/channel loss cause unknown; no OOM/signal/flakiness/pre-existing attribution",
+    "Synthetic/serial diagnostics are not release gate passes",
+    "Historical harness JSON source_revision is immutable older header; wrappers identify actually executed candidate",
+    "111 ISO normative units, three unrelated Reports replica-set tests, other deep browser coverage and held security restrictions unchanged"
+  ]
+}

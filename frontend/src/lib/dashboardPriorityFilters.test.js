@@ -35,3 +35,46 @@ test('record-side assessment links and framework baseline requirements retain me
   expect(result.all.map(r=>r.id)).toEqual(['risk','review','req']);
   expect(filterDashboardQueue({all},records,[],[],'','target').all).toHaveLength(5);
 });
+
+test('native safeguard metadata follows explicit assessment/control/source links without title inference',()=>{
+  const records={reviews:[{review_id:'r',framework_key:'cis-ig1',framework_safeguards:['1.1','1.2']}],
+    findings:[{finding_id:'f',framework_assessment_id:'cis'}],
+    tasks:[{task_id:'child',source_type:'finding',source_id:'f'},
+      {task_id:'review-child',review_id:'r'},{task_id:'control-child'},
+      {task_id:'same-title',title:'CIS Controls v8.1 1.1'},
+      {task_id:'foreign',framework_assessment_id:'not-in-authorized-assessments'}]};
+  const all=records.tasks.map(r=>({kind:'tasks',id:r.task_id,title:r.title||r.task_id}));
+  const assessments=[{framework_assessment_id:'cis',framework_key:'cis-ig1',definition_id:'1.1'},
+    {framework_assessment_id:'iso',framework_key:'iso-27001',definition_id:'A.5.1',related_links:[{kind:'tasks',id:'control-child'}]}];
+  const controls=[{assessment_ids:['cis'],related_links:[{kind:'tasks',id:'control-child'}]}];
+  const rows=filterDashboardQueue({all},records,assessments,controls,'','',true).all;
+  expect(rows.find(r=>r.id==='child').safeguard_ids).toEqual(['cis-ig1|1.1']);
+  expect(rows.find(r=>r.id==='review-child').safeguard_ids).toEqual(['cis-ig1|1.1','cis-ig1|1.2']);
+  expect(rows.find(r=>r.id==='control-child').safeguard_ids).toEqual(['cis-ig1|1.1','iso-27001|A.5.1']);
+  expect(rows.find(r=>r.id==='child').safeguard_labels).toEqual(['CIS Controls v8.1 1.1']);
+  for(const id of ['same-title','foreign'])expect(rows.find(r=>r.id===id).safeguard_ids).toEqual([]);
+  expect(rows).toHaveLength(all.length);
+});
+
+test('unresolved assessment evidence and inherited uncertainty cannot claim program-wide',()=>{
+  const records={reviews:[{review_id:'r',related_links:[{kind:'framework_assessments',id:'missing'}]}],tasks:[
+    {task_id:'parent',review_id:'r'},{task_id:'control'},{task_id:'general'},
+    {task_id:'direct',framework_assessment_id:'missing'}]};
+  const all=records.tasks.map(r=>({kind:'tasks',id:r.task_id}));
+  const controls=[{assessment_ids:['missing'],related_links:[{kind:'tasks',id:'control'}]}];
+  const rows=filterDashboardQueue({all},records,[],controls,'','',true).all;
+  for(const id of ['parent','control','direct'])expect(rows.find(r=>r.id===id).framework_membership_known).toBe(false);
+  expect(rows.find(r=>r.id==='general').framework_membership_known).toBe(true);
+});
+
+
+test('missing supported parent and source records keep framework membership uncertain',()=>{
+  const records={findings:[{finding_id:'f',review_id:'missing'}],tasks:[
+    {task_id:'source',source_type:'finding',source_id:'missing'},
+    {task_id:'parent',review_id:'missing'},{task_id:'descendant',finding_id:'f'},
+    {task_id:'general'}]};
+  const all=records.tasks.map(row=>({kind:'tasks',id:row.task_id}));
+  const rows=filterDashboardQueue({all},records,[],[],'','',true).all;
+  for(const id of ['source','parent','descendant'])expect(rows.find(row=>row.id===id).framework_membership_known).toBe(false);
+  expect(rows.find(row=>row.id==='general').framework_membership_known).toBe(true);
+});

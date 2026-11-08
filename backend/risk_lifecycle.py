@@ -102,5 +102,15 @@ Risk mutations reconcile this projection before editing, under the same lease.
     fields = {**latest['risk_after'], 'last_reviewed':latest['completed_at'],
               'next_review':review.get('due_date') if review.get('status') not in ('completed','cancelled') else None,
               'review_sync_occurrence_id':latest['occurrence_id'], 'updated_at':latest['completed_at']}
-    await db.risks.update_one({'risk_id':review['risk_id'],'client_id':review['client_id'],
-        'review_sync_occurrence_id':{'$ne':latest['occurrence_id']}}, {'$set':fields})
+    old = await db.risks.find_one({'risk_id': review['risk_id'], 'client_id': review['client_id']})
+    if not old or old.get('review_sync_occurrence_id') == latest['occurrence_id']:
+        return
+    from server import _portfolio_event_patch
+    actor = {'user_id': latest.get('completed_by'), 'name': latest.get('completed_by_name')}
+    capture, _event = _portfolio_event_patch('risks', review['risk_id'], review['client_id'], actor,
+        old, {**old, **fields}, latest['completed_at'])
+    fields.update(capture)
+    result = await db.risks.update_one({'risk_id':review['risk_id'],'client_id':review['client_id'],
+        'review_sync_occurrence_id':old.get('review_sync_occurrence_id'), 'updated_at':old.get('updated_at')}, {'$set':fields})
+    if not result.matched_count:
+        raise HTTPException(409, 'Risk changed during Review projection; retry to finish synchronization')

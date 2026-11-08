@@ -1,0 +1,50 @@
+{
+  "operation": "exact owned database list_collection_names only; no drops or global operation",
+  "rows": [
+    {
+      "database": "platform_acceptance_20261011_inventory_iso_60e691d1b59343ec",
+      "collections": []
+    },
+    {
+      "database": "platform_acceptance_20261011_scale_449150daedd24421",
+      "collections": []
+    },
+    {
+      "database": "platform_acceptance_20261011_scale_60ab1c0cee584006",
+      "collections": []
+    },
+    {
+      "database": "platform_acceptance_20261011_scale_6e4257a327164fe8",
+      "collections": []
+    },
+    {
+      "database": "platform_acceptance_20261011_scale_a80015ef8f93487d",
+      "collections": []
+    },
+    {
+      "database": "platform_acceptance_20261011_scale_abbe9c3bd7424a1c",
+      "collections": []
+    },
+    {
+      "database": "platform_acceptance_20261011_scale_bed62b781aaf46fd",
+      "collections": []
+    },
+    {
+      "database": "platform_acceptance_20261011_scale_c32aa2c901de462c",
+      "collections": []
+    },
+    {
+      "database": "platform_acceptance_20261011_scale_faf6c03310d943a7",
+      "collections": []
+    },
+    {
+      "database": "platform_acceptance_20261011_tenyear_33e8a2cf627f4c4b",
+      "collections": []
+    },
+    {
+      "database": "platform_acceptance_20261011_tenyear_46122b2b81a3468c",
+      "collections": []
+    }
+  ],
+  "result": "PASS"
+}

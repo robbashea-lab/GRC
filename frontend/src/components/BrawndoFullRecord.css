@@ -1,0 +1,62 @@
+/* This verified native-record class overrides the older route-specific side panels.
+   Compact previews, primitive defaults and unrelated clients keep their geometry. */
+:root :is(.ui-dialog,.ui-sheet).brawndo-full-record[data-state][data-testid][role=dialog] {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  /* Evidence's native sheet has an important width; override only this variant. */
+  width: min(1440px, calc(100vw - 64px)) !important;
+  max-width: calc(100vw - 64px) !important;
+  height: min(92dvh, 1000px);
+  max-height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  animation: none;
+}
+.brawndo-full-record > :is(header,.shrink-0,.contact-workspace-header) { flex: none; }
+.brawndo-full-record > button:last-child { z-index: 3; }
+:root .ui-dialog.brawndo-full-record.remediation-ticket-dialog[data-state][data-testid][role=dialog] > .ticket-heading { padding: 20px 56px 18px 24px; }
+:root .brawndo-full-record.remediation-ticket-dialog > .space-y-4 {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px 24px;
+  overscroll-behavior: contain;
+}
+:root .ui-dialog.brawndo-full-record.remediation-ticket-dialog[data-state][data-testid][role=dialog] > .ticket-footer {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+  font-size: 12px;
+}
+.brawndo-full-record .contact-workspace-form { flex: 1; min-height: 0; overflow: hidden; }
+.brawndo-full-record .contact-workspace-body { min-height: 0; overflow: auto; }
+.brawndo-full-record .contact-workspace-footer { flex: none; }
+.brawndo-full-record.evidence-workspace > .evidence-record-header { padding: 20px 56px 18px 24px; flex: none; }
+.brawndo-full-record.evidence-workspace > .space-y-4 { flex: 1; min-height: 0; overflow: auto; padding: 20px 24px; }
+@media (max-width: 600px) {
+  :root :is(.ui-dialog,.ui-sheet).brawndo-full-record[data-state][data-testid][role=dialog] {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    height: calc(100dvh - 32px);
+    max-height: calc(100dvh - 32px);
+  }
+}
+
+/* Sheet's close control precedes the header; older route rules target first-child. */
+:root .ui-sheet.brawndo-full-record[data-state][data-testid][role=dialog] > button:first-child {
+  padding: 0;
+  border: 0;
+  z-index: 3;
+}

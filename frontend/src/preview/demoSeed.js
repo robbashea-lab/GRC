@@ -4,6 +4,7 @@ import { reviewView } from '../lib/reviewOccurrences';
 import { assessedRisk } from '../lib/grcWork';
 import { demoOrganizations, demoDates, demoProfile, providerStaff, clientPersonaRoles } from './demoPortfolio';
 import { clientProgram } from './programs';
+import {cisDemoSelection} from './cisDemoSelection';
 export { demoOrganizations } from './demoPortfolio';
 
 // The current occurrence is the next unfinished period. A first due date more than
@@ -120,9 +121,12 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       }
     };
     db.clients.push(client);
+    const strictCis=cid==='demo_brawndo'?cisDemoSelection(1):null;
+    const selectedPolicies=strictCis?catalog.policies.filter(p=>strictCis.selected_policy_keys.includes(p.key)):catalog.policies;
     const policyResponses = {},
       requirementResponses = {};
-    catalog.policies.forEach((p, i) => {
+    selectedPolicies.forEach(p => {
+      const i=catalog.policies.findIndex(item=>item.key===p.key);
       policyResponses[p.key] = 'yes';
       db.policies.push({
         ...meta,
@@ -168,7 +172,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         description: 'Synthetic applicability decision only; no legal or certification claim.'
       });
     });
-    const selected = catalog.reviews.filter(r => ['user-access', 'user-lifecycle', 'inventory', 'awareness', 'vendor', 'restore', 'bcp-dr', 'policy-review'].includes(r.key));
+    const selected = strictCis?[]:catalog.reviews.filter(r => ['user-access', 'user-lifecycle', 'inventory', 'awareness', 'vendor', 'restore', 'bcp-dr', 'policy-review'].includes(r.key));
     const plans = org.frameworks.flatMap(key => (key==='cis-ig1'?activePlans(key):CATALOGS[key]?.review_plans || []).map(p => ({
       ...p,
       framework_key: key
@@ -195,7 +199,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
         reviewer_id: users[(index + 1) % 3],
         status: index === 1 ? 'in_progress' : 'upcoming',
         due_date: date(withinCadence(index === 0 ? -8 : index === 1 ? 12 : index === 2 ? 24 : 45 + index * 3, p.default_cadence)),
-        recurrence: p.default_cadence,
+        recurrence: cid==='demo_brawndo'&&p.baseline_key==='policy-review'?'annual':p.default_cadence,
         governance_context: {
           category: 'organizational',
           rationale: 'Recurring operating verification with retained occurrence evidence and management follow-up.',
@@ -219,6 +223,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       step: 3,
       completed: true,
       policies: policyResponses,
+      ...(strictCis?{selected_policy_keys:strictCis.selected_policy_keys,framework_settings:{'cis-ig1':{implementation_group:1}}}:{}),
       requirements: requirementResponses,
       reviews: selected.map(r => r.key),
       framework_reviews: configs
@@ -228,7 +233,7 @@ export function buildDemoStore(tableNames, clock = new Date()) {
       completed_by: lead,
       state: JSON.parse(JSON.stringify(db.baselines[cid])),
       counts: {
-        policies: catalog.policies.length,
+        policies: selectedPolicies.length,
         reviews: db.reviews.filter(r => r.client_id === cid).length
       },
       note: 'Synthetic initial onboarding baseline; current operational records evolve independently.'

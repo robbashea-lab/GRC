@@ -3,6 +3,7 @@ import {recordedBaseline} from '../lib/clientProfile';
 import { list, write, record, audit, clone } from './store';
 import {frameworkScope,validateFrameworkConfig,reconcileFramework} from './frameworks';
 import {genericReviews} from '../lib/frameworks';
+import {selectedPolicies} from '../lib/policySelection';
 export const matches = (row, item) => row.baseline_key === item.key || !row.baseline_key && [item.name,...(item.aliases||[])].some(n=>n.toLowerCase()===(row.title||'').trim().toLowerCase());
 const findExisting=(db,kind,cid,item)=>list(db,kind,cid).find(r=>r.baseline_key===item.key)||list(db,kind,cid).find(r=>matches(r,item));
 export function baselineRecordVersions(db,cid){
@@ -33,20 +34,23 @@ export function saveBaseline(db,cid,state,finalize,precondition={}) {
   if(!['super_admin','platform_admin','client_contributor'].includes(db.user.role))throw new Error('Read-only role');
   if(!Object.prototype.hasOwnProperty.call(precondition,'expected_updated_at'))throw Object.assign(new Error('Reload the record before saving; an edit version is required'),{status:428});
   if(precondition.expected_updated_at!==(db.baselines?.[cid]?.updated_at??null))throw Object.assign(new Error('Record changed since it was opened; reload before saving'),{status:409});
-  state=clone(state);validateFrameworkConfig(state);
+  state=clone(state);
+  if(state.selected_policy_keys==null&&db.baselines?.[cid]?.selected_policy_keys!=null)state.selected_policy_keys=clone(db.baselines[cid].selected_policy_keys);
+  validateFrameworkConfig(state);
   state.requirements||={};state.requirements['soc-2']||='does_not_apply';
   if(state.version>=3)for(const item of catalog.requirements)state.requirements[item.key]||='does_not_apply';
   for(const group of ['policies','requirements']) for(const [key,value] of Object.entries(state[group]||{})) {
     if(!catalog[group].some(i=>i.key===key)||!(group==='policies'?['','yes','no','unsure']:['','applies','does_not_apply','unsure']).includes(value))throw new Error('Invalid baseline response.');
   }
   if(!Array.isArray(state.reviews)||state.reviews.some(k=>!catalog.reviews.some(r=>r.key===k)))throw new Error('Invalid review selection.');
-  if(finalize)for(const group of ['policies','requirements'])if(catalog[group].some(i=>!state[group]?.[i.key]))throw new Error('Please answer every policy and requirement before completing onboarding.');
+  const policies=selectedPolicies(catalog,state);
+  if(finalize&&(policies.some(i=>!state.policies?.[i.key])||catalog.requirements.some(i=>!state.requirements?.[i.key])))throw new Error('Please answer every selected policy and requirement before completing onboarding.');
   if(finalize) {
     if(!precondition.expected_records)throw Object.assign(new Error('Reload setup before finalizing; source record versions are required'),{status:428});
     const versions=baselineRecordVersions(db,cid),expected=precondition.expected_records;
     if(Object.keys(expected).length!==Object.keys(versions).length||Object.entries(versions).some(([key,value])=>value===null?expected[key]!==null:!expected[key]||Object.entries(value).some(([field,item])=>expected[key][field]!==item)))throw Object.assign(new Error('Setup records changed since this form was opened; reload before finalizing'),{status:409});
     if(state.version>=3)state.reviews=genericReviews(catalog,state).map(r=>r.key);
-    for(const item of catalog.policies) {
+    for(const item of policies) {
       const old=findExisting(db,'policies',cid,item), response=state.policies[item.key];
       const status={yes:'needs_verification',no:'needs_creation',unsure:'needs_verification'}[response];
       const presence = ['verified_existing','not_applicable'].includes(old?.presence) ? old.presence : {yes:'reported_existing',no:'reported_missing',unsure:'needs_confirmation'}[response];

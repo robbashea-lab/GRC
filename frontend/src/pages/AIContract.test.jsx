@@ -1,3 +1,4 @@
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:()=>false,useAdditionalSectionsPresentation:()=>false}));
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import AIGovernance from './AIGovernance';
@@ -5,10 +6,11 @@ import AIDrawer from '@/components/AIDrawer';
 import api from '@/lib/api';
 import {AI_KEYS,AI_RELATIONSHIP_NOTICE} from '@/lib/aiGovernance';
 import {AI_PILOT_KEYS} from '@/lib/brawndoAI';
+import {readStore,saveStore} from '@/preview/store';
 
-let mockUser,mockClient;
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient})}));
+let mockUser,mockClient,mockClients;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:mockUser?.workspace_mode==='demo'?'demo':'standard',loading:false})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:mockClients.find(client=>client.client_id===mockClient),clients:mockClients,loading:false})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/adapter').previewAdapter}),formatError:e=>e.response?.data?.detail||e.message,API:'/api'}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
 jest.mock('@/lib/recordUuid',()=>({recordUuid:()=>require('crypto').randomUUID()}));
@@ -25,11 +27,12 @@ const mine=async()=>(await api.get('/ai_systems',{params:{client_id:mockClient}}
 beforeEach(async()=>{
  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();mockClient='demo_prestige';
  mockUser=(await api.post('/demo/enter')).data.user;
+ mockClients=(await api.get('/clients')).data;
  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.restoreAllMocks();});
 
-test('Prestige shared presentation creates and edits through the real canonical AI contract',async()=>{
+test('SOC shared presentation retains approved metadata through native create/edit while keeping approval separate',async()=>{
  const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');
  await act(async()=>root.render(<AIGovernance/>));
  await click(container.querySelector('[data-testid="new-ai-system"]'));
@@ -40,32 +43,39 @@ test('Prestige shared presentation creates and edits through the real canonical 
  expect(document.querySelector('[data-testid="ai-drawer"]')).toBeNull();
  const created=(await mine()).find(r=>r.name==='Prestige contract test');expect(created).toBeTruthy();
  const body=post.mock.calls.find(([path])=>path==='/ai_systems')[1];
- expect(Object.keys(body).sort()).toEqual(['client_id',...AI_KEYS].sort());
+ expect(Object.keys(body).sort()).toEqual(['client_id',...AI_KEYS,...AI_PILOT_KEYS].sort());
  expect(container.querySelector('.brawndo-ai-grid')).not.toBeNull();
  await click(container.querySelector('[aria-label="Open Prestige contract test"]'));
  await input('Product / System Name','Prestige contract edited');await click(buttons('Save Changes')[0]);
  expect(document.querySelector('[data-testid="ai-drawer"]')).toBeNull();
  const updated=(await mine()).find(r=>r.ai_system_id===created.ai_system_id);
  expect(updated.name).toBe('Prestige contract edited');expect(updated.description).toBe(created.description);
- expect(Object.keys(patch.mock.calls.find(([path])=>path==='/ai_systems/'+created.ai_system_id)[1]).sort()).toEqual(['client_id','expected_updated_at',...AI_KEYS].sort());
- for(const key of AI_PILOT_KEYS)expect(updated).not.toHaveProperty(key);
+ expect(Object.keys(patch.mock.calls.find(([path])=>path==='/ai_systems/'+created.ai_system_id)[1]).sort()).toEqual(['client_id','expected_updated_at',...AI_KEYS,...AI_PILOT_KEYS].sort());
+ for(const key of AI_PILOT_KEYS)expect(updated[key]).toEqual(created[key]);
+ expect(updated.approval_history).toBeUndefined();
 });
 
-test('Prestige does not advertise unsupported approval or pilot fields and direct writes remain rejected',async()=>{
+test.each(['demo_dunder','demo_prestige'])('%s retains shared metadata editing but cannot gain a CIS approval command',async clientId=>{
+ mockClient=clientId;
  const row=(await api.post('/ai_systems',{client_id:mockClient,name:'Canonical Prestige AI'})).data;
  await act(async()=>root.render(<AIGovernance/>));
  expect(container.querySelector('[data-testid="ai-system-view-pending"]')).toBeNull();
  expect(container.textContent).not.toMatch(/Approval not recorded|Permitted Data|Data permissions not established/);
- await click(container.querySelector('[aria-label="Open Canonical Prestige AI"]'));
+ await click(container.querySelector('[aria-label="Open Canonical Prestige AI"]')||buttons('Canonical Prestige AI')[0]);
  expect(document.body.textContent).not.toMatch(/Approval Status|Proposed Uses & Approval Conditions/);
- expect(document.querySelector('[aria-label="Environment / Account Type"]')).toBeNull();
+ expect(document.querySelector('[aria-label="Environment / Account Type"]')).not.toBeNull();
+ await input('Environment / Account Type','Managed training account');
  await click(buttons('Data & Access')[0]);
- expect(document.querySelector('[aria-label="Data, integrations & account settings"]')).toBeNull();
+ expect(document.querySelector('[aria-label="Data, integrations & account settings"]')).not.toBeNull();
+ await input('Data, integrations & account settings','Training settings retained');
  await click(buttons('Oversight & Review')[0]);
  expect(buttons('Schedule Review')).toHaveLength(1);expect(buttons('Record Decision')).toHaveLength(0);
  expect(document.querySelector('[aria-label="Decision"]')).toBeNull();
- await expect(api.patch('/ai_systems/'+row.ai_system_id,{environment:'Unsupported',expected_updated_at:row.updated_at})).rejects.toThrow('Unknown or read-only AI fields');
- await expect(api.post('/ai_systems/'+row.ai_system_id+'/approval',{status:'approved',note:'Unsupported',expected_updated_at:row.updated_at})).rejects.toThrow('Approval pilot is available only for Brawndo Demo');
+ await click(buttons('Save Changes')[0]);
+ const saved=(await mine()).find(record=>record.ai_system_id===row.ai_system_id);
+ expect(saved).toMatchObject({environment:'Managed training account',data_settings:'Training settings retained'});
+ expect(saved.approval_history).toBeUndefined();
+ await expect(api.post('/ai_systems/'+row.ai_system_id+'/approval',{status:'approved',note:'Unsupported',expected_updated_at:row.updated_at})).rejects.toThrow('Approval decisions require a configured CIS program');
 });
 
 test('Brawndo keeps its explicit pilot fields, pending view and administrator approval workflow',async()=>{
@@ -81,7 +91,7 @@ test('Brawndo keeps its explicit pilot fields, pending view and administrator ap
  expect(updated.approval_status).toBe('approved');expect(updated.approval_history).toHaveLength(1);expect(updated.approval_history[0].scope.environment).toBe('Managed test account');
 });
 
-test('standard authenticated presentation sends only the unchanged canonical fields',async()=>{
+test('standard identity presentation sends the approved shared metadata contract without adding approval controls',async()=>{
  mockUser={...mockUser,workspace_mode:undefined};const close=jest.fn(),post=jest.spyOn(api,'post');
  await act(async()=>root.render(<AIDrawer open clientId={mockClient} onOpenChange={close}/>));
  await input('Product / System Name','Standard contract test');
@@ -91,10 +101,31 @@ test('standard authenticated presentation sends only the unchanged canonical fie
  await click([...document.querySelectorAll('[aria-label="Technical Owner candidates"] button')].find(button=>button.textContent.includes(candidate.name||candidate.email)));
  await click(buttons('Create AI System')[0]);
  expect(close).toHaveBeenCalledWith(false);
- expect(Object.keys(post.mock.calls.find(([path])=>path==='/ai_systems')[1]).sort()).toEqual(['client_id',...AI_KEYS].sort());
+ expect(Object.keys(post.mock.calls.find(([path])=>path==='/ai_systems')[1]).sort()).toEqual(['client_id',...AI_KEYS,...AI_PILOT_KEYS].sort());
  expect(post.mock.calls.find(([path])=>path==='/ai_systems')[1].technical_owner_id).toBe(candidate.user_id);
  expect(buttons('Record Decision')).toHaveLength(0);
 });
+
+test.each(['demo','standard'].flatMap(mode=>[null,'general','hipaa','nist-csf-2','cmmc'].map(framework=>[mode,framework])))(
+ '%s %s native detail editor retains guided metadata without adding approval authority',async(mode,framework)=>{
+  mockClient='synthetic-detail-ai';
+  const db=readStore();db.clients.push({client_id:mockClient,name:'QA AI detail — SYNTHETIC',status:'onboarding',
+   onboarding_baseline:{completed:false,requirements:framework&&framework!=='general'?{[framework]:'applies'}:{}}});saveStore(db);
+  mockClients=(await api.get('/clients')).data;
+  if(mode==='standard')mockUser={...mockUser,workspace_mode:undefined};
+  const close=jest.fn();
+  const row=(await api.post('/ai_systems',{client_id:mockClient,name:'Saved synthetic AI',environment:'Original managed account',
+   restrictions:'Original conditions',data_settings:'Original settings',permitted_data_types:['Public']})).data;
+  await act(async()=>root.render(<AIDrawer open clientId={mockClient} record={row} onOpenChange={close}/>));
+  expect(document.querySelector('[aria-label="Environment / Account Type"]').value).toBe('Original managed account');
+  await input('Environment / Account Type','Edited managed account');
+  await click(buttons('Data & Access')[0]);await input('Data, integrations & account settings','Edited native settings');
+  await click(buttons('Save Changes')[0]);
+  expect(close).toHaveBeenCalledWith(false);
+  const saved=(await mine()).find(record=>record.ai_system_id===row.ai_system_id);
+  expect(saved).toMatchObject({environment:'Edited managed account',restrictions:'Original conditions',data_settings:'Edited native settings',permitted_data_types:['Public']});
+  expect(saved.approval_history).toBeUndefined();expect(buttons('Record Decision')).toHaveLength(0);
+ });
 
 test('Prestige stale edit keeps its draft and does not overwrite the concurrent record',async()=>{
  const row=(await api.post('/ai_systems',{client_id:mockClient,name:'Concurrent Prestige AI'})).data;

@@ -10,6 +10,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import RecordListPage from "@/pages/RecordListPage";
 import Evidence from "@/pages/Evidence";
+import Reports from "@/pages/Reports";
 import ComplianceWorkspace from "@/pages/ComplianceWorkspace";
 import ClientProfile, {LegacyClientSettings} from "@/pages/ClientProfile";
 import Calendar from "@/pages/Calendar";
@@ -102,6 +103,7 @@ function AppRouter() {
         <Route path="tasks" element={<RecordListPage kind="tasks" />} />
         <Route path="action-items" element={<ActionItems />} />
         <Route path="evidence" element={<Evidence />} />
+        <Route path="reports" element={<Reports />} />
         <Route path="compliance/:requirementKey" element={<ComplianceWorkspace />} />
         <Route path="onboarding" element={<Navigate to="/client-profile" replace />} />
       </Route>

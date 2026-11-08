@@ -56,7 +56,7 @@ test('Omni Finding navigation retains the existing native RecordDrawer callback'
 test('scoped Omni save reuses native PATCH, CAS and fields without changing verification',async()=>{
   api.patch.mockImplementation(async (_path,body)=>({data:{...saved,...body,last_saved:'2026-10-09T12:01:00Z',assessment_history:[saved]}}));
   await render();await click('Save Omni native assessment');
-  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.1',expect.objectContaining({implementation:'Reviewed synthetic inventory',status:'in_progress',verification:'verified',expected_last_assessed:null,guided_assessment_source:{version:'cis-v8.1-control1-3',revision:9,generated_at:'2026-10-09T12:00:00Z'}}));
+  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.1',expect.objectContaining({implementation:'Reviewed synthetic inventory',status:'in_progress',verification:'verified',expected_last_assessed:null,guided_assessment_source:{version:'cis-v8.1-control1-5',revision:9,generated_at:'2026-10-09T12:00:00Z'}}));
   expect(container.textContent).toContain('Assessment saved.');
 });
 
@@ -70,7 +70,9 @@ test('native rejection does not claim successful assessment saving',async()=>{
 });
 
 test.each(['1.2','2.1'])('native save adapter uses the same authoritative path for newly authorized CIS safeguard %s',async id=>{
-  const other={...saved,definition_id:id,framework_assessment_id:'native-'+id};api.patch.mockImplementation(async(_path,body)=>({data:{...other,...body}}));await act(async()=>root.render(<FrameworkDrawer open record={other} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
+  const other={...saved,definition_id:id,framework_assessment_id:'native-'+id},read=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...options)=>path.startsWith('/frameworks/')?{data:{configuration:{implementation_group:1},assessments:[saved,other],work:{[saved.framework_assessment_id]:{context_complete:true},[other.framework_assessment_id]:{context_complete:true}}}}:read(path,...options));
+  api.patch.mockImplementation(async(_path,body)=>({data:{...other,...body}}));await act(async()=>root.render(<FrameworkDrawer open record={other} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
   await click('Save Omni native assessment');expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-'+id,expect.objectContaining({verification:'verified',guided_assessment_source:expect.objectContaining({version:require('@/lib/guidedAssessment').versionForSafeguard(id)})}));
 });
 
@@ -82,4 +84,17 @@ test('native adapter guards duplicate pending submissions',async()=>{
   let finish;api.patch.mockImplementation(()=>new Promise(resolve=>{finish=()=>resolve({data:saved});}));await render();
   const target=[...container.querySelectorAll('button')].find(button=>button.textContent==='Save Omni native assessment');await act(async()=>{target.click();target.click();});
   expect(api.patch).toHaveBeenCalledTimes(1);await act(async()=>finish());
+});
+
+test('native adapter itself refuses CIS summary writes when joined context is unavailable',async()=>{
+  const original=JSON.stringify(saved);await render();await click('Open Omni native Finding');
+  const read=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...options)=>{if(path.startsWith('/frameworks/'))throw new Error('Synthetic native adapter context failure');return read(path,...options);});
+  await act(async()=>mockNested.mock.calls.at(-1)[0].onOpenChange(false));
+  expect(container.textContent).toContain('Synthetic native adapter context failure');
+  // This existing guide stub deliberately ignores disabled, isolating the
+  // real parent's callback boundary instead of masking it with the child guard.
+  await click('Save Omni native assessment');
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+  expect(JSON.stringify(saved)).toBe(original);expect(container.textContent).toContain('Synthetic native adapter context failure');expect(container.textContent).not.toContain('Assessment saved.');
 });

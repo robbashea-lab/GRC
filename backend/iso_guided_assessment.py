@@ -13,7 +13,10 @@ for filename in ('guidedIsoIsms.json', 'guidedIsoOrganizationalPeople.json', 'gu
     if part['version'] != VERSION or part['framework_id'] != 'iso-27001' or CATALOG['definitions'].keys() & part['definitions'].keys():
         raise ValueError('Incompatible or duplicate ISO interview definitions')
     CATALOG['definitions'].update(part['definitions'])
-VERSIONS = {VERSION: CATALOG}
+LEGACY = CATALOG
+CATALOG = json.loads((ROOT / 'guidedIsoV2.json').read_text(encoding='utf-8'))
+VERSION = CATALOG['version']
+VERSIONS = {VERSION: CATALOG, LEGACY['version']: LEGACY}
 CHOICES = ['Yes', 'Partially', 'No', 'Not sure']
 CONTEXT_CHOICES = ['Relevant', 'Not relevant here', 'Not sure']
 EXTRA_KEYS = {'gaps', 'unknowns', 'evidence'}
@@ -22,6 +25,11 @@ TEXT_WHITESPACE = ' \t\n\r\v\f\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u
 
 def _text(answers, key):
     return answers.get(key, '').strip(TEXT_WHITESPACE)
+
+
+def extra_questions(version=None):
+    return VERSIONS[version or VERSION].get('extra_questions',
+        [{'id': key, 'type': 'text'} for key in ('gaps', 'unknowns', 'evidence')])
 
 
 def _definition(id, version=None):
@@ -88,7 +96,7 @@ async def write_context(s, aid, user):
 
 def validate_answers(id, answers, version=None):
     questions = {question['id']: question for question in _questions(id, version)}
-    questions.update({key: {'type': 'text'} for key in EXTRA_KEYS})
+    questions.update({question['id']: question for question in extra_questions(version)})
     if not isinstance(answers, dict):
         raise HTTPException(422, 'Invalid ISO interview answers')
     for key, value in answers.items():
@@ -102,6 +110,10 @@ def validate_answers(id, answers, version=None):
 
 def validate_completion(id, answers, version=None):
     validate_answers(id, answers, version)
+    for question in extra_questions(version):
+        condition = question.get('condition')
+        if condition and answers.get(condition['id']) == condition['equals'] and not _text(answers, question['id']):
+            raise HTTPException(422, 'Describe the additional reported work before completing the interview')
     for question in _active_questions(id, answers, version):
         if question['type'] == 'text':
             continue
@@ -115,22 +127,24 @@ def validate_completion(id, answers, version=None):
 def result_status(id, answers, version=None):
     validate_answers(id, answers, version)
     meaningful = partial = confirmed_no = False
+    unknown = False
     for question in _active_questions(id, answers, version):
         value = answers.get(question['id'])
         if question['type'] == 'text':
             continue
         if question['type'] == 'context':
             if value != 'Relevant' and not (value == 'Not relevant here' and _text(answers, question['id'] + '_detail')):
-                partial = True
+                unknown = True
             continue
         meaningful |= value in ('Yes', 'Partially')
         confirmed_no |= value == 'No'
-        partial |= value != 'Yes'
+        partial |= value == 'Partially'
+        unknown |= value not in ('Yes', 'Partially', 'No')
     if confirmed_no:
         return 'needs_attention'
-    if not meaningful:
+    if not meaningful or (version or VERSION) != LEGACY['version'] and unknown and not partial:
         return 'not_assessed'
-    return 'in_progress' if partial else 'addressed'
+    return 'in_progress' if partial or unknown else 'addressed'
 
 
 def current_base(row, client):

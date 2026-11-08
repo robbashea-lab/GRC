@@ -1,0 +1,546 @@
+{
+  "reviewedOn": "2026-10-25",
+  "questions": [
+    {
+      "id": "managed",
+      "label": "Is this an organization-managed business account or deployment?",
+      "help": "Confirm the actual account and plan. A personal account is not a managed business workspace."
+    },
+    {
+      "id": "sensitive",
+      "label": "Will it process confidential, personal or regulated information?",
+      "help": "Consider prompts, uploads, source code, meetings and content reachable through integrations—not only what policy permits."
+    },
+    {
+      "id": "connected",
+      "label": "Is it connected to organizational content, APIs, plugins or integrations?",
+      "help": "Include read-only workspace retrieval. Access to content is different from permission to change it."
+    },
+    {
+      "id": "writes",
+      "label": "Can it change production systems, permissions or sensitive business records?",
+      "help": "Include enabled actions, tools, flows and write-capable credentials."
+    },
+    {
+      "id": "autonomous",
+      "label": "Can it take actions without individual human approval?",
+      "help": "Check agent mode, triggers and confirmation settings for the actual deployment."
+    },
+    {
+      "id": "external",
+      "label": "Are outputs customer-facing, externally published or used in operational workflows?",
+      "help": "Include code or summaries incorporated into business operations, even when they receive human review. Purely exploratory drafts can be treated differently."
+    },
+    {
+      "id": "consequential",
+      "label": "Does it support consequential decisions about employment, individuals, finances, legal matters or health?",
+      "help": "Answer for the documented use case, not hypothetical capabilities of the product."
+    },
+    {
+      "id": "harm",
+      "label": "Could incorrect output materially affect people, security, finances or operations?",
+      "help": "Assess plausible consequences and reliance. Human review reduces exposure but does not eliminate it."
+    },
+    {
+      "id": "oversight",
+      "label": "Is meaningful human validation required before important output is relied upon?",
+      "help": "This should be a defined operating practice, not an assumption based on having an enterprise license."
+    },
+    {
+      "id": "settings",
+      "label": "Have the applicable retention, training, sharing and access settings been reviewed and accepted?",
+      "help": "Defaults start at No because public documentation cannot confirm this client’s configuration. Change this after the actual review."
+    }
+  ],
+  "tools": [
+    {
+      "name": "ChatGPT",
+      "provider": "OpenAI",
+      "plan": "Business / Enterprise workspace — confirm purchased plan",
+      "purpose": "Internal drafting, summarization and document analysis, with human review before important output is used.",
+      "uses": [
+        "Internal Productivity",
+        "Content Generation"
+      ],
+      "data": [
+        "Public",
+        "Internal"
+      ],
+      "permitted": [
+        "Public",
+        "Internal"
+      ],
+      "access": [],
+      "answers": [
+        "Yes",
+        "No",
+        "No",
+        "No",
+        "No",
+        "No",
+        "No",
+        "No",
+        "Yes",
+        "No"
+      ],
+      "baselineLikelihood": 2,
+      "baselineImpact": 2,
+      "notes": [
+        "Profile assumes a managed business workspace and user-provided public/internal material. Connected apps and autonomous actions are outside this bounded starting profile.",
+        "Business data protections do not authorize confidential or personal data. Confirm account, retention, training options, enabled apps and actual organizational data policy."
+      ],
+      "sources": [
+        {
+          "title": "OpenAI enterprise privacy",
+          "url": "https://openai.com/enterprise-privacy/"
+        },
+        {
+          "title": "Connected apps in ChatGPT",
+          "url": "https://help.openai.com/en/articles/11487775-connected-apps-in-chatgpt"
+        }
+      ]
+    },
+    {
+      "name": "Microsoft 365 Copilot",
+      "provider": "Microsoft",
+      "plan": "Microsoft 365 Copilot in the client tenant — confirm license",
+      "purpose": "Draft email and documents, summarize meetings and chats, and retrieve workplace information within the user’s existing permissions.",
+      "uses": [
+        "Internal Productivity",
+        "Content Generation"
+      ],
+      "data": [
+        "Internal",
+        "Confidential",
+        "Employee Data",
+        "PII"
+      ],
+      "permitted": [
+        "Public",
+        "Internal"
+      ],
+      "access": [
+        "API / Integration Access"
+      ],
+      "answers": [
+        "Yes",
+        "Yes",
+        "Yes",
+        "No",
+        "No",
+        "Yes",
+        "No",
+        "No",
+        "Yes",
+        "No"
+      ],
+      "baselineLikelihood": 2,
+      "baselineImpact": 3,
+      "notes": [
+        "Connected productivity profile. Workspace content can include confidential or personal information; actual exposure depends on existing permissions and content.",
+        "Do not infer privileged access or autonomous production changes. Confirm source sharing, labels, agents and tools. Microsoft documentation may use the newer Microsoft Copilot name."
+      ],
+      "sources": [
+        {
+          "title": "Microsoft Copilot data, privacy and security",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/copilot/microsoft-365-copilot-privacy"
+        }
+      ]
+    },
+    {
+      "name": "Claude",
+      "provider": "Anthropic",
+      "plan": "Team / Enterprise workspace — confirm purchased plan",
+      "purpose": "Internal drafting, summarization and analysis of approved documents, with human review.",
+      "uses": [
+        "Internal Productivity",
+        "Content Generation"
+      ],
+      "data": [
+        "Public",
+        "Internal"
+      ],
+      "permitted": [
+        "Public",
+        "Internal"
+      ],
+      "access": [],
+      "answers": [
+        "Yes",
+        "No",
+        "No",
+        "No",
+        "No",
+        "No",
+        "No",
+        "No",
+        "Yes",
+        "No"
+      ],
+      "baselineLikelihood": 2,
+      "baselineImpact": 2,
+      "notes": [
+        "Bounded document-assistant profile with no connected apps or autonomous actions selected. Uploaded content remains within the organization’s approved boundary.",
+        "Enabled connectors can retrieve information and take actions; shared credentials can extend reach. Confirm the actual plan, connector scope and retention/training settings."
+      ],
+      "sources": [
+        {
+          "title": "Claude connectors and permissions",
+          "url": "https://support.claude.com/en/articles/11176164-use-connectors-to-extend-claude-s-capabilities"
+        },
+        {
+          "title": "Claude model training and commercial data",
+          "url": "https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training"
+        }
+      ]
+    },
+    {
+      "name": "Google Gemini",
+      "provider": "Google",
+      "plan": "Gemini in a qualifying Google Workspace edition",
+      "purpose": "Draft and summarize Gmail and Docs, research permitted Drive content, and assist with Sheets and presentations under human review.",
+      "uses": [
+        "Internal Productivity",
+        "Content Generation"
+      ],
+      "data": [
+        "Internal",
+        "Confidential",
+        "Employee Data",
+        "PII"
+      ],
+      "permitted": [
+        "Public",
+        "Internal"
+      ],
+      "access": [
+        "API / Integration Access"
+      ],
+      "answers": [
+        "Yes",
+        "Yes",
+        "Yes",
+        "No",
+        "No",
+        "Yes",
+        "No",
+        "No",
+        "Yes",
+        "No"
+      ],
+      "baselineLikelihood": 2,
+      "baselineImpact": 3,
+      "notes": [
+        "Workspace-integrated profile. Relevant content follows source permissions; potential data exposure is not a grant of organizational permission.",
+        "Confirm qualifying edition, work-account use, feature availability, source sharing and connected apps. Consumer or additional-service use can have different protections."
+      ],
+      "sources": [
+        {
+          "title": "Google Workspace generative AI privacy hub",
+          "url": "https://knowledge.workspace.google.com/admin/generative-ai/generative-ai-in-google-workspace-privacy-hub"
+        }
+      ]
+    },
+    {
+      "name": "GitHub Copilot",
+      "provider": "GitHub (Microsoft)",
+      "plan": "Copilot Business / Enterprise — approved repositories",
+      "purpose": "Assist developers with code suggestions, explanations, tests and documentation. Human review and testing are required before merge or deployment.",
+      "uses": [
+        "Software / Code Generation",
+        "Content Generation"
+      ],
+      "data": [
+        "Internal",
+        "Confidential",
+        "Source Code / IP"
+      ],
+      "permitted": [
+        "Public",
+        "Internal",
+        "Source Code / IP"
+      ],
+      "access": [],
+      "answers": [
+        "Yes",
+        "Yes",
+        "No",
+        "No",
+        "No",
+        "Yes",
+        "No",
+        "Yes",
+        "Yes",
+        "No"
+      ],
+      "baselineLikelihood": 2,
+      "baselineImpact": 3,
+      "notes": [
+        "Coding-assistant profile. Prompt context can include current/open files and repository content. Permitted source code means approved repositories under the company’s policy.",
+        "Secrets, credentials and production/customer datasets are excluded from the starting permitted-data selection. Agent mode, CLI, MCP and command execution need separate review.",
+        "The starting code-generation use can materially affect software security if output is incorrect. Human review and tests reduce exposure; they do not make that consequence impossible."
+      ],
+      "sources": [
+        {
+          "title": "GitHub Copilot context and prompt engineering",
+          "url": "https://docs.github.com/en/copilot/concepts/prompting-and-context/prompt-engineering"
+        },
+        {
+          "title": "Enterprise agent management",
+          "url": "https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/enterprise/agent-management"
+        }
+      ]
+    },
+    {
+      "name": "Microsoft Copilot Studio",
+      "provider": "Microsoft",
+      "plan": "Copilot Studio — authenticated internal knowledge agent",
+      "purpose": "Answer employee questions from approved read-only knowledge sources. No customer-facing channel, production writes or autonomous action is included in this starting profile.",
+      "uses": [
+        "Internal Productivity"
+      ],
+      "data": [
+        "Internal",
+        "Confidential"
+      ],
+      "permitted": [
+        "Public",
+        "Internal"
+      ],
+      "access": [
+        "API / Integration Access"
+      ],
+      "answers": [
+        "Yes",
+        "Yes",
+        "Yes",
+        "No",
+        "No",
+        "No",
+        "No",
+        "No",
+        "Yes",
+        "No"
+      ],
+      "baselineLikelihood": 2,
+      "baselineImpact": 3,
+      "notes": [
+        "This is a bounded example of an agent-building platform, not a default for every Copilot Studio agent. Confirm actual knowledge sources, tools, channels and triggers.",
+        "Maker versus end-user credentials and DLP policies can change reach. Review action permissions and human confirmation before enabling write-capable behavior."
+      ],
+      "sources": [
+        {
+          "title": "Copilot Studio security and governance",
+          "url": "https://learn.microsoft.com/en-us/microsoft-copilot-studio/security-and-governance"
+        },
+        {
+          "title": "Tools in custom agents",
+          "url": "https://learn.microsoft.com/en-us/microsoft-copilot-studio/add-tools-custom-agent"
+        }
+      ]
+    },
+    {
+      "name": "Perplexity",
+      "provider": "Perplexity AI",
+      "plan": "Enterprise — public-web research profile",
+      "purpose": "Research public sources and produce cited summaries, with human source checking. Approved internal documents may be added deliberately.",
+      "uses": [
+        "Internal Productivity",
+        "Content Generation"
+      ],
+      "data": [
+        "Public",
+        "Internal"
+      ],
+      "permitted": [
+        "Public",
+        "Internal"
+      ],
+      "access": [],
+      "answers": [
+        "Yes",
+        "No",
+        "No",
+        "No",
+        "No",
+        "No",
+        "No",
+        "No",
+        "Yes",
+        "No"
+      ],
+      "baselineLikelihood": 2,
+      "baselineImpact": 2,
+      "notes": [
+        "Research-only profile with no internal connectors or computer-use actions selected. Public-source results still require human checking.",
+        "Uploads and enterprise file connectors expand exposure. Computer, Comet, connectors and shared spaces require their own scope review; do not assume a personal account has Enterprise protections."
+      ],
+      "sources": [
+        {
+          "title": "Enterprise file connectors",
+          "url": "https://www.perplexity.ai/enterprise/videos/connecting-your-data-how-to-ingest-google-drive-sp-onedrive-box"
+        },
+        {
+          "title": "Perplexity data collection and account differences",
+          "url": "https://www.perplexity.ai/help-center/en/articles/11564572-data-collection-at-perplexity"
+        }
+      ]
+    },
+    {
+      "name": "Zoom AI Companion",
+      "provider": "Zoom",
+      "plan": "Organization-managed Zoom Workplace with approved AI features",
+      "purpose": "Prepare internal meeting summaries and action-item drafts. The host reviews accuracy and sharing; sensitive meeting types require explicit authorization.",
+      "uses": [
+        "Internal Productivity",
+        "Content Generation"
+      ],
+      "data": [
+        "Internal",
+        "Confidential",
+        "Employee Data",
+        "PII"
+      ],
+      "permitted": [
+        "Internal"
+      ],
+      "access": [],
+      "answers": [
+        "Yes",
+        "Yes",
+        "No",
+        "No",
+        "No",
+        "Yes",
+        "No",
+        "No",
+        "Yes",
+        "No"
+      ],
+      "baselineLikelihood": 2,
+      "baselineImpact": 3,
+      "notes": [
+        "Meeting-summary profile. Meeting speech-to-text can contain confidential information and participant details; enabled features can also use chat or screen content.",
+        "Review feature enablement, meeting notice, transcript retention and summary recipients. Summary distribution is a use of output even when the meeting itself is internal."
+      ],
+      "sources": [
+        {
+          "title": "Zoom AI Meeting Summary",
+          "url": "https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0058013"
+        },
+        {
+          "title": "How Zoom AI features handle data",
+          "url": "https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0057861"
+        }
+      ]
+    },
+    {
+      "name": "Salesforce Agentforce",
+      "provider": "Salesforce",
+      "plan": "Agentforce Employee agent — read-only internal knowledge profile",
+      "purpose": "Help employees find approved knowledge and CRM information within their authorized scope. Human review is required; customer-facing service and write actions are outside this starting profile.",
+      "uses": [
+        "Internal Productivity"
+      ],
+      "data": [
+        "Internal",
+        "Confidential",
+        "Customer Data",
+        "PII"
+      ],
+      "permitted": [
+        "Public",
+        "Internal"
+      ],
+      "access": [
+        "API / Integration Access"
+      ],
+      "answers": [
+        "Yes",
+        "Yes",
+        "Yes",
+        "No",
+        "No",
+        "Yes",
+        "No",
+        "No",
+        "Yes",
+        "No"
+      ],
+      "baselineLikelihood": 2,
+      "baselineImpact": 3,
+      "notes": [
+        "Explicit read-only Employee-agent scenario. Confirm actual accessible objects, fields and records; permitted data does not automatically include every CRM category.",
+        "Employee and Service agents can run in different security contexts. Confirm agent type, credentials, sharing and enabled actions before approving broader use."
+      ],
+      "sources": [
+        {
+          "title": "Agentforce user and agent context",
+          "url": "https://help.salesforce.com/s/articleView?id=005314096&language=no&type=1"
+        },
+        {
+          "title": "Permissions for Agentforce actions",
+          "url": "https://help.salesforce.com/s/articleView?id=ai.agent_actions_common_perms.htm&language=en_US&type=5"
+        }
+      ]
+    },
+    {
+      "name": "Grammarly",
+      "provider": "Grammarly",
+      "plan": "Enterprise — approved business apps and domains",
+      "purpose": "Improve writing, tone and clarity in approved business applications. Users review text before sending or publishing it.",
+      "uses": [
+        "Internal Productivity",
+        "Content Generation"
+      ],
+      "data": [
+        "Public",
+        "Internal",
+        "Confidential"
+      ],
+      "permitted": [
+        "Public",
+        "Internal"
+      ],
+      "access": [],
+      "answers": [
+        "Yes",
+        "Yes",
+        "No",
+        "No",
+        "No",
+        "Yes",
+        "No",
+        "No",
+        "Yes",
+        "No"
+      ],
+      "baselineLikelihood": 2,
+      "baselineImpact": 2,
+      "notes": [
+        "Writing-assistant profile. Text in enabled apps and generative prompts can include confidential information; approved data classes remain an organization decision.",
+        "Review app/domain restrictions, generative features and DLP controls. Newer document-agent capabilities are separately configurable and are not assumed by this preset."
+      ],
+      "sources": [
+        {
+          "title": "Grammarly Enterprise application controls",
+          "url": "https://support.grammarly.com/hc/en-us/articles/27454187430029-Manage-application-controls"
+        },
+        {
+          "title": "Grammarly privacy and security",
+          "url": "https://support.grammarly.com/hc/en-us/articles/20916119474829-Privacy-and-security-FAQs"
+        }
+      ]
+    }
+  ],
+  "methodology": {
+    "title": "Illustrative use-based risk proposal",
+    "note": "This mockup uses transparent internal proposal rules. Vendor documentation describes capabilities; it does not validate client configuration or prescribe these scores. Annual review is the selected product default, not a NIST-mandated period.",
+    "sources": [
+      {
+        "title": "NIST AI RMF Core — context, governance and assessment",
+        "url": "https://airc.nist.gov/airmf-resources/airmf/5-sec-core/"
+      }
+    ]
+  }
+}

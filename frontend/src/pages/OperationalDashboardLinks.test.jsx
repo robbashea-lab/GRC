@@ -7,7 +7,7 @@ let mockClient='a',mockSearch='',mockDrawer,mockSetParams;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'viewer',role:'client_viewer'}})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Client'}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:e=>e.message,API:'/api'}));
-jest.mock('react-router-dom',()=>({useSearchParams:()=>{const [params,setParams]=require('react').useState(new URLSearchParams(mockSearch));mockSetParams=setParams;return [params,setParams];}}),{virtual:true});
+jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/risks',search:mockSearch?'?'+mockSearch:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>{const [params,setParams]=require('react').useState(new URLSearchParams(mockSearch));mockSetParams=setParams;return [params,setParams];}}),{virtual:true});
 jest.mock('@/components/RecordDrawer',()=>props=>{mockDrawer=props;return props.open?<div data-testid="opened">{props.record.title||props.record.name}</div>:null;});
 let root,container,record;
 beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='a';mockDrawer=null;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});

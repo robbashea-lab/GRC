@@ -1,0 +1,16 @@
+{
+  "scope": "parsed exact-command/setup/service/budget preservation against14fc; no application tests rerun",
+  "result": "PASS",
+  "baseline": "14fc37114bef6891fde31eb0d5897c3ce01c80c5",
+  "workflow_sha256": "e0a5e4b7efe77576e95dcd8efe9e463faaa54e342fa19fd0cb2fba693a310966",
+  "invariants": [
+    "same triggers/read-only permissions/frontend60m/actions/builds",
+    "offline command/dependency pins/setup identical",
+    "full Mongo command with every flag/dependency pins/setup/service identical",
+    "fixed2workers pytest config unchanged",
+    "both backend phases30m",
+    "always aggregate requiring exact success of all3 jobs; no continue-on-error/skip"
+  ],
+  "checker_correction": "Initial deepStrict comparison of a REPL-created spread array versus parser-created array rejected equal structures due to cross-realm prototypes; serialized full value equality succeeds. No workflow alteration for that checker issue.",
+  "documentation": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idneeds"
+}

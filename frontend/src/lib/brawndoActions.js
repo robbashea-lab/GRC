@@ -4,6 +4,7 @@ import {findingOpen} from './findingMetrics';
 import {operatorProgram} from './frameworkOperator';
 import {occurrenceId,relatedReviewInitialValues} from './reviewOccurrences';
 import {ticketRecords,ticketStage} from './remediationTickets';
+import {assuranceKey} from './brawndoVendors';
 
 export const pilotPriority=value=>({medium:'Moderate',moderate:'Moderate',high:'High',low:'Low',informational:'Informational',critical:'Critical',immediate:'Critical / Immediate'})[value]||'Classification needed';
 export const finished=row=>['completed','accepted','cancelled'].includes(ticketStage(row));
@@ -38,7 +39,9 @@ export function actionOrigin(record,records={},finding) {
     const missing=target&&(!origin.occurrence_id||origin.occurrence_id!==occurrenceId(target)&&!initialValues.occurrence);
     return {kind:'reviews',target:missing?null:target,id:rid,label:target?.title||'Review unavailable',detail:missing?'Original occurrence unavailable':initialValues.occurrence?.period||target?.period,initialValues};}
   const origin=taskSource(source,records);
-  if(record.client_id==='demo_brawndo'&&record.assurance_id&&origin.kind==='vendors')return {...origin,detail:'Linked assurance document',initialValues:{vendorTab:'assurance',assuranceId:record.assurance_id}};
+  if(record.assurance_id&&origin.kind==='vendors'
+    &&origin.target?.assurance_records?.some((row,index)=>assuranceKey(row,index)===record.assurance_id))
+    return {...origin,detail:'Linked assurance document',initialValues:{vendorTab:'assurance',assuranceId:record.assurance_id}};
   if(origin.type==='manual')return {label:'Manual Entry'};
   if(origin.kind)return origin;
   return {label:source.source||'Origin not documented'};

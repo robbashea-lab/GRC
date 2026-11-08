@@ -1,0 +1,48 @@
+{
+  "evidence_layer": "actual authenticated hosted browser, existing administrator; no restricted-user or actual login proof",
+  "environment": "https://omnisciente-staging.onrender.com",
+  "service": "srv-db1s0cugekts73f72reg",
+  "deployed_sha": "b128eb2b178ab8507b42aaa8ec010fd004d1a9ea",
+  "deployment": "dep-db63fah42hec73ap0jog",
+  "ci": {"run": 38189841454, "number": 144, "conclusion": "success", "frontend_suites": 275, "frontend_tests": 8624, "snapshot": 1, "both_builds": "success", "backend_and_release_gate": "success"},
+  "served_assets": {"javascript": "main.b2bc4738.js", "css": "main.4c1f739f.css", "comparison": "fresh DOM asset names match CI authenticated build; no byte-identical cross-platform JS claim", "public_css_sha256": "e777200d86a17a5382abfa2f520f2c0f07d381ad0b334bdfd408dcfaecaed8f5", "baseline_css_bytes_equal": true, "hash_method": "unauthenticated public static CSS download only; no private endpoint, credential or session use"},
+  "checks": [
+    {
+      "id": "PFA001-HOSTED-B128-EMPTY",
+      "client_id": "cli_6fbdc9c285b24b84ad081b7e34e204c2818beb9fa44e8323595adfeeb88db885",
+      "framework": "CIS IG2",
+      "assessment_id": "fw_5f6998d2fa8c50b2aaf71dcc236875d8",
+      "safeguard": "1.1",
+      "sequence": "Load empty first guide; close without writing; normal native Save assessment; reopen guide; Not sure plus synthetic uncertainty; Save & close; refresh and reopen.",
+      "result": "PASS",
+      "native_saves": 1,
+      "interview_progress_saves": 1,
+      "summary_application_saves": 0,
+      "native_text": "SYNTHETIC PFA-001 IG2 native marker\n\nNo reported implementation. Preserve this exact manual text and Not Assessed status while saving interview progress.",
+      "interview_note": "SYNTHETIC PFA-001 IG2 progress marker — inventory remains unknown.",
+      "preservation": "Exact native textarea text after refresh; Not Assessed and Not verified unchanged by progress; saved Not sure and note restored.",
+      "original_receipts": {"pfa-b128-ig2-resume.txt": "239d97e4d25b10edafdf93945ef960697e4c03c388379c0953618713b99e32496", "pfa-b128-ig2-resume.png": "bdf6391dad9dfcb8c4f410717c9a5a55f85588e8b42138f485bd7784eada76e1"}
+    },
+    {
+      "id": "PFA001-HOSTED-B128-TYPED",
+      "client_id": "cli_da82b001a9242d337179193b1278a7d1f837862ce8faec4bf45a07b238b9c4fb",
+      "framework": "CIS IG3",
+      "assessment_id": "fw_4adf392921b1512394e2ab05dee57dd4",
+      "safeguard": "1.1",
+      "sequence": "Open fresh guide; Not sure plus synthetic uncertainty; minimize unsaved guide; normal native Save assessment; restore guide with typed input retained; Save & close.",
+      "result": "FAIL: actual stale-base rejection; retained draft and successful native receipt",
+      "visible_error": "Assessment or scope changed before this review started; reload before starting",
+      "native_saves": 1,
+      "successful_interview_progress_saves": 0,
+      "summary_application_saves": 0,
+      "native_text": "SYNTHETIC PFA-001 IG3 native marker\n\nNo reported implementation. Retain the typed uncertainty and this exact native text; no verification or review completion is asserted.",
+      "interview_note": "SYNTHETIC PFA-001 IG3 typed draft — retain this uncertainty after a native save.",
+      "preservation": "Typed Not sure and note remain in open guide; native textarea shows exact explicit marker; native Not Assessed/Not verified. Refresh persistence not asserted for rejected progress.",
+      "original_receipts": {"pfa-b128-ig3-stale-error.txt": "a633cc5be92669b7c4440c5987a7bcc31e10d235add6d6b0865012e36caef7ab", "pfa-b128-ig3-stale-error.png": "3c8a688dedac6b4b09513934819af6b1cefccbec86e6301f0e01a55569cf48c0"},
+      "disposition": "Confirmed in-scope missed context-refresh path; separate red regression and narrow receipt synchronization under review. Not a passing hosted retest."
+    }
+  ],
+  "separation": "The original complete hosted campaign remains attributed to 28b8067 in hosted-workflow-ledger.json; these are targeted b128 follow-ups only.",
+  "pending": ["Actual administrator logout/login (human not ready)", "Real restricted-user/server denial and wrong-client requests (identity window and supported request facility unavailable)", "Original tab5 Review Evidence unlink (user unavailable, no retry)", "Other documented source, independence and fault-facility gaps"],
+  "status": "Deployed for validation — final acceptance pending"
+}

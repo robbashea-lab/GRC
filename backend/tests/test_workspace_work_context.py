@@ -18,6 +18,7 @@ class WorkspaceWorkContextTests(unittest.IsolatedAsyncioTestCase):
             {'client_id': 'a', 'framework_assessment_id': 'assessment-a', 'framework_key': 'cis-ig1',
              'definition_id': '13.2', 'related_links': [{'kind': 'reviews', 'id': 'shared'},
                 {'kind': 'findings', 'id': 'narrow'}, {'kind': 'tasks', 'id': 'remediation'}],
+             'items_to_address': [{'item_id': 'host-item', 'kind': 'gap', 'state': 'open', 'finding_id': 'narrow'}],
              'unlinked_evidence_ids': ['unlinked']},
             {'client_id': 'a', 'framework_assessment_id': 'assessment-b', 'framework_key': 'cis-ig1',
              'definition_id': '13.3', 'related_links': [{'kind': 'reviews', 'id': 'shared'}]},
@@ -36,6 +37,7 @@ class WorkspaceWorkContextTests(unittest.IsolatedAsyncioTestCase):
         ])
         await server.db.findings.insert_many([
             {'finding_id': 'narrow', 'client_id': 'a', 'review_id': 'shared', 'title': 'Host coverage gap',
+             'framework_assessment_id': 'assessment-a', 'assessment_item_id': 'host-item', 'risk_id': 'host-risk',
              'status': 'in_remediation', 'severity': 'critical', 'owner_id': 'finding-owner',
              'due_date': '2026-01-02', 'description': 'Excluded finding narrative'},
             {'finding_id': 'shared-gap', 'client_id': 'a', 'review_id': 'shared', 'title': 'Shared gap',
@@ -43,7 +45,13 @@ class WorkspaceWorkContextTests(unittest.IsolatedAsyncioTestCase):
             {'finding_id': 'closed-gap', 'client_id': 'a', 'review_id': 'shared', 'status': 'closed'},
             {'finding_id': 'accepted-gap', 'client_id': 'a', 'review_id': 'shared', 'status': 'accepted'},
             {'finding_id': 'foreign-gap', 'client_id': 'b', 'framework_assessment_id': 'assessment-a',
-             'status': 'open', 'title': 'Private finding', 'severity': 'critical'},
+             'status': 'open', 'title': 'Private finding', 'severity': 'critical', 'risk_id': 'foreign-risk'},
+        ])
+        await server.db.risks.insert_many([
+            {'risk_id': 'host-risk', 'client_id': 'a', 'status': 'accepted', 'likelihood_score': 5, 'impact_score': 5,
+             'next_review': '2026-12-01', 'acceptance_expires_at': '2026-11-01', 'treatment': 'Excluded risk narrative'},
+            {'risk_id': 'foreign-risk', 'client_id': 'b', 'status': 'assessed', 'likelihood_score': 5, 'impact_score': 5,
+             'next_review': '2026-01-01', 'title': 'Private risk'},
         ])
         await server.db.tasks.insert_many([
             {'task_id': 'remediation', 'client_id': 'a', 'finding_id': 'narrow', 'review_id': 'shared',
@@ -93,8 +101,11 @@ class WorkspaceWorkContextTests(unittest.IsolatedAsyncioTestCase):
         records = {(r['kind'], r['id']): r for r in first['priority_records']}
         self.assertEqual(records[('findings', 'narrow')], {
             'kind': 'findings', 'id': 'narrow', 'finding_id': 'narrow', 'title': 'Host coverage gap',
+            'client_id': 'a', 'framework_assessment_id': 'assessment-a', 'assessment_item_id': 'host-item', 'risk_id': 'host-risk',
             'status': 'in_remediation', 'due_date': '2026-01-02', 'severity': 'critical',
             'owner_id': 'finding-owner', 'open_gap': True})
+        self.assertFalse(records[('findings', 'shared-gap')]['open_gap'])
+        self.assertEqual((records[('risks', 'host-risk')]['risk_level'], records[('risks', 'host-risk')]['due_date']), ('critical', '2026-11-01'))
         self.assertEqual(records[('tasks', 'remediation')]['assignee_id'], 'assignee')
         self.assertEqual(records[('tasks', 'remediation')]['owner_id'], 'legacy-owner')
         self.assertEqual(records[('tasks', 'remediation')]['priority'], 'high')
@@ -107,6 +118,8 @@ class WorkspaceWorkContextTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(any(r['id'] in ('narrow', 'remediation') for r in second['priority_records']))
         self.assertFalse(any(r['id'] in ('complete', 'cancelled', 'done', 'accepted-gap', 'closed-gap') for r in first['priority_records']))
         self.assertFalse(any('Private' in (r['title'] or '') for context in result.values() for r in context['priority_records']))
+        self.assertFalse(any(r['id'] == 'foreign-risk' for context in result.values() for r in context['priority_records']))
+        self.assertTrue(all(r['client_id'] == 'a' for context in result.values() for r in context['priority_records']))
 
     async def test_evidence_age_never_implies_verification_or_exposes_content(self):
         rows = await self.seed()
@@ -114,10 +127,12 @@ class WorkspaceWorkContextTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((first['evidence_count'], first['latest_evidence_at']), (1, '2026-01-05'))
         self.assertFalse(any('verif' in field for field in first))
         allowed = {'kind', 'id', 'review_id', 'finding_id', 'task_id', 'title', 'status', 'due_date',
-                   'owner_id', 'reviewer_id', 'assignee_id', 'severity', 'priority', 'open_gap'}
+                   'owner_id', 'reviewer_id', 'assignee_id', 'severity', 'priority', 'open_gap',
+                   'client_id', 'framework_assessment_id', 'assessment_item_id', 'risk_id', 'risk_level'}
         for record in first['priority_records']:
             self.assertLessEqual(set(record), allowed)
         self.assertFalse(any(r['kind'] == 'evidence' for r in first['priority_records']))
+        self.assertFalse(any('Excluded' in str(record) for record in first['priority_records']))
 
     async def test_nonpilot_keeps_original_shape_and_empty_pilot_context_is_complete(self):
         row = {'framework_assessment_id': 'empty', 'framework_key': 'cis-ig1', 'definition_id': '13.2'}
@@ -130,15 +145,15 @@ class WorkspaceWorkContextTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((pilot['priority_records'], pilot['task_ids']), ([], []))
         self.assertEqual((pilot['open_actions'], pilot['open_findings']), (0, 0))
 
-    async def test_five_bounded_queries_are_shared_across_assessments(self):
+    async def test_six_bounded_queries_are_shared_across_assessments(self):
         rows = await self.seed()
         bounded = AsyncMock(wraps=server._bounded)
         with patch.object(server, '_bounded', bounded):
             await self.work(rows, upgraded=True)
-        self.assertEqual(bounded.await_count, 5)
-        self.assertEqual([call.args[1] for call in bounded.await_args_list], [10000] * 5)
+        self.assertEqual(bounded.await_count, 6)
+        self.assertEqual([call.args[1] for call in bounded.await_args_list], [10000] * 6)
         self.assertEqual([call.args[2] for call in bounded.await_args_list], [
-            'workspace reviews', 'workspace findings', 'workspace finding scopes',
+            'workspace reviews', 'workspace findings', 'workspace linked risks', 'workspace finding scopes',
             'workspace actions', 'workspace evidence'])
 
     async def test_overflow_and_query_failure_do_not_return_complete_or_zero_context(self):

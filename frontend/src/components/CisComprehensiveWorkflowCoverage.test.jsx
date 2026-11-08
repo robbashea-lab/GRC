@@ -2,7 +2,8 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import cis from '@catalogs/cisIG1.json';
-import {catalogForVersion,versionForSafeguard,visibleQuestions} from '@/lib/guidedAssessment';
+import {catalogForVersion,versionForSafeguard,visibleQuestions,validateAnswers} from '@/lib/guidedAssessment';
+import {nativeCisQuestionTitle} from './RefinedOmniInterview';
 import {omniGroups} from '@/lib/refinedOmni';
 import {omniCisSummary} from '@/lib/omniCisSummary';
 import {socGuidedCatalog} from '@/lib/socGuidedAssessment';
@@ -28,30 +29,43 @@ jest.mock('./ui/dialog',()=>{
 const copy=value=>JSON.parse(JSON.stringify(value)),fingerprint='c'.repeat(64),token='2026-10-09T12:00:00Z';
 const sourceCases={1:ig1Cases.cases,2:ig2Cases.cases,3:ig3Cases.cases};
 const reviews=[...ig2Review.rows,...ig3Review.rows];
+const retiredCriteria={'11.1':['11.1-guided-backup-procedures'],'17.5':['17.5-guided-third-parties']};
 const placements=[1,2,3].flatMap(group=>cis.requirements.filter(row=>row.implementation_group<=group).map(row=>[group,row.id]));
 const representatives=['1.1','1.2','1.3','1.4','1.5','2.1','2.2','2.3','2.4','2.5','3.1','3.3','3.6','3.13','4.10','4.12','5.1','6.5','7.5','8.4','8.5','16.2','16.5','17.1','17.5'];
 
 // Accepted inputs come from source-authored cases; evaluator output does not choose them.
 function completeAnswers(id){
   const canonical=cis.requirements.find(row=>row.id===id),fixture=sourceCases[canonical.implementation_group].find(row=>row.safeguard_id===id&&(row.id==='IG1-'+id+'-complete'||row.id===id+':complete'));
-  if(fixture.answers)return copy(fixture.answers);
-  const pack=catalogForVersion(versionForSafeguard(id)),questions=pack.safeguards[id],definition=pack.definitions[id],review=reviews.find(row=>row.id===id),answers={};
-  for(const [criterion,value]of Object.entries(fixture.criterion_answers)){
+  const version=versionForSafeguard(id),pack=catalogForVersion(version),questions=pack.safeguards[id],definition=pack.definitions[id],review=reviews.find(row=>row.id===id),answers=copy(fixture.answers||{});
+  for(const [criterion,value]of Object.entries(fixture.criterion_answers||{})){
     const mapping=review.atomic_requirements.find(row=>row.requirement_id===criterion).answer_mapping;
     if(mapping.type==='matrix'){
-      const q=questions.find(q=>q.criterion_ids?.includes(criterion)),row=q.rows[q.criterion_ids.indexOf(criterion)];answers[q.id]={...answers[q.id],[row]:value};
+      const q=questions.find(q=>q.criterion_ids?.includes(criterion));
+      if(!q&&version==='cis-v8.1-program-5'&&retiredCriteria[id]?.includes(criterion)){
+        expect(definition.elements.some(element=>element.id===criterion)).toBe(false);continue;
+      }
+      expect(q).toBeTruthy();const row=q.rows[q.criterion_ids.indexOf(criterion)];answers[q.id]={...answers[q.id],[row]:value};
     }else{
       const q=questions.find(q=>q.id===mapping.field);answers[q.id]=q.choices.includes(value)?value:value==='Yes'?mapping.accepted[0]:value;
     }
   }
-  if(definition.root==='practice')answers.practice='Yes';
+  if(!fixture.answers&&definition.root==='practice')answers.practice='Yes';
   if(fixture.aggregate_answer!=null)answers[definition.root]=fixture.aggregate_answer;
   if(fixture.root_answer!=null)answers[definition.root]=fixture.root_answer;
-  return answers;
+  // The old direct 11.1 fixture retains its now-retired authored supplement.
+  if(id==='11.1'&&version==='cis-v8.1-program-5'&&answers.requirements_5){
+    expect(Object.keys(answers.requirements_5)).toEqual(['The documented recovery process includes detailed backup procedures.']);
+    expect(questions.some(question=>question.id==='requirements_5')).toBe(false);delete answers.requirements_5;
+  }
+  for(const question of questions.filter(question=>question.optional))answers[question.id]='No';
+  // Unknown fields still fail validation; only known inactive context is omitted from a fresh interview.
+  validateAnswers(id,answers,version);
+  const active=visibleQuestions(id,answers,version);
+  return Object.fromEntries(Object.entries(answers).filter(([key])=>active.some(question=>key===question.id||key===question.id+'_detail')));
 }
 
-let root,container,native,stored,group,interviewHistory,nativeHistory,opened,configurationExtra;
-const workspace=()=>document.querySelector('.omni-workspace-window');
+let root,container,native,stored,group,interviewHistory,nativeHistory,opened,configurationExtra,navigationAnswers;
+const workspace=()=>{const interview=document.querySelector('section[aria-label="CIS assessment interview"]');return interview&&!interview.hidden?interview:null;};
 const guideButton=name=>[...(workspace()?.querySelectorAll('button')||[])].find(button=>button.textContent.trim()===name);
 const readInterview=()=>({...copy(stored),current_assessment_token:native.last_saved,current_scope_fingerprint:fingerprint,lineage_known:true,lineage_stale:stored.base_assessment_token!==native.last_saved});
 function setup(id,implementationGroup,{completed=false,nativeText=''}={}){
@@ -59,38 +73,59 @@ function setup(id,implementationGroup,{completed=false,nativeText=''}={}){
   const row=cis.requirements.find(row=>row.id===id),version=versionForSafeguard(id),answers=completed?completeAnswers(id):{},result=completed?omniCisSummary(id,answers,version,mockName).result:null;
   native={client_id:mockClient,framework_key:'cis-ig1',framework_assessment_id:'synthetic-'+group+'-'+id,definition_id:id,title:row.title,status:'not_assessed',implementation:nativeText,verification:'not_verified',technology:'Preserved native technology',notes:'Preserved native notes',owner_id:null,na_rationale:'',last_saved:token,assessment_history:[]};
   stored={client_id:mockClient,assessment_id:native.framework_assessment_id,user_id:'qa-workflow-actor',version,answers,result,narrative:result?.narrative||'',completed,step:0,revision:completed?2:0,base_assessment_token:token,base_scope_fingerprint:fingerprint,generated_at:completed?token:null};
-  interviewHistory=[];nativeHistory=[];
+  interviewHistory=[];nativeHistory=[];navigationAnswers=copy(answers);
 }
 async function render(){await act(async()=>root.render(<FrameworkDrawer open record={copy(native)} clientId={mockClient} onOpenChange={opened}/>));}
-async function remount(){await act(async()=>root.unmount());root=createRoot(container);await render();}
-async function open(){const launcher=document.querySelector('[aria-label="Open Omnibot guide"]');expect(launcher).toBeTruthy();await act(async()=>launcher.click());}
+async function remount(){await act(async()=>root.unmount());root=createRoot(container);navigationAnswers=copy(stored.answers);await render();}
+async function open(interviewLabel='CIS assessment interview'){
+  const launcher=container.querySelector('.cis-guided-launch button');
+  if(launcher){
+    expect(launcher.disabled).toBe(false);
+    if(launcher.getAttribute('aria-expanded')!=='true')await act(async()=>launcher.click());
+    const interview=document.querySelector(`section[aria-label="${interviewLabel}"]`);
+    expect(interview).toBeTruthy();expect(interview.hidden).toBe(false);
+  }else{
+    const disclosure=container.querySelector('.assessment-summary');expect(disclosure).toBeTruthy();
+    await act(async()=>{disclosure.open=true;disclosure.dispatchEvent(new Event('toggle'));});
+  }
+  expect(document.querySelector('.omni-character,.omni-launch-button,.omni-workspace-window')).toBeNull();
+}
 async function click(name){const element=guideButton(name);expect(element).toBeTruthy();expect(element.disabled).toBe(false);await act(async()=>element.click());}
 async function setValue(element,value){
   expect(element).toBeTruthy();const prototype=element.tagName==='SELECT'?HTMLSelectElement.prototype:element.tagName==='INPUT'?HTMLInputElement.prototype:HTMLTextAreaElement.prototype;
   await act(async()=>{Object.getOwnPropertyDescriptor(prototype,'value').set.call(element,value);element.dispatchEvent(new Event(element.tagName==='SELECT'?'change':'input',{bubbles:true}));});
 }
 async function editSummary(text){await setValue(workspace().querySelector('[aria-label="Omnibot implementation summary"]'),text);}
-async function goToQuestion(questionId){
-  for(let i=0;i<12;i++){
-    const groups=omniGroups(native.definition_id,stored.answers,stored.version),target=groups.findIndex(g=>g.questions.some(q=>q.id===questionId));
-    expect(target).toBeGreaterThanOrEqual(0);const current=Number(workspace().querySelector('.omni-group-progress').getAttribute('aria-label').match(/group (\d+)/)[1])-1;
-    if(current===target)return;if(current>target)await click('Back');else await click('Save & next');
+const currentQuestion=()=>catalogForVersion(stored.version).safeguards[native.definition_id].find(question=>question.id===workspace()?.querySelector('.cis-sequential-interview fieldset')?.dataset.questionId);
+const questionField=q=>[...workspace().querySelectorAll('select,input,textarea')].find(field=>field.getAttribute('aria-label')===nativeCisQuestionTitle(native.definition_id,q));
+const matrixField=row=>[...workspace().querySelectorAll('select')].find(field=>field.getAttribute('aria-label')===row);
+async function goToQuestion(questionId,rowLabel){
+  for(let i=0;i<200;i++){
+    const groups=omniGroups(native.definition_id,navigationAnswers,stored.version),questions=groups.flatMap(group=>group.questions),target=questions.findIndex(question=>question.id===questionId),current=currentQuestion();
+    expect(target).toBeGreaterThanOrEqual(0);expect(current).toBeTruthy();
+    if(current.id===questionId){
+      if(!rowLabel||matrixField(rowLabel))return;
+      const select=workspace().querySelector('.cis-sequential-interview select'),rowIndex=current.rows.indexOf(select.getAttribute('aria-label'));
+      await click(rowIndex>current.rows.indexOf(rowLabel)?'Back':'Continue');
+    }else if(questions.findIndex(question=>question.id===current.id)>target)await click('Back');else await click('Continue');
   }
-  throw new Error('Question group was not reached: '+questionId);
+  throw new Error('Native sequential question was not reached: '+questionId);
 }
 async function fillQuestion(q,value){
+  expect(currentQuestion()?.id).toBe(q.id);
   if(value==null||q.type==='text'&&!value)return;
-  let section=[...workspace().querySelectorAll('.omni-question')].find(element=>element.querySelector('#omni-answer-'+q.id));
-  if(!section){const renderedSections=[...workspace().querySelectorAll('.omni-question')];section=renderedSections.find(element=>element.textContent.includes(q.prompt));if(!section&&native.definition_id==='1.1')section=renderedSections.find(element=>q.type==='matrix'?q.rows.every(row=>[...element.querySelectorAll('select')].some(select=>select.getAttribute('aria-label')===row)):['inventory','maintenance','reconciled'].includes(q.id)&&element.querySelector('[role="group"]'));}
-  expect(section).toBeTruthy();
-  if(q.type==='matrix')for(const row of q.rows)await setValue([...section.querySelectorAll('select')].find(select=>select.getAttribute('aria-label')===row),value[row]);
-  else if(q.type==='multi')for(const choice of value){const label=[...section.querySelectorAll('label')].find(label=>label.textContent===choice);expect(label).toBeTruthy();await act(async()=>label.querySelector('input').click());}
-  else if(q.type==='select'&&section.querySelector('button')){const target=[...section.querySelectorAll('button')].find(button=>button.textContent===value);expect(target).toBeTruthy();await act(async()=>target.click());}
-  else await setValue(section.querySelector('select,input,textarea'),value);
+  const section=workspace().querySelector('.cis-sequential-interview fieldset');expect(section).toBeTruthy();
+  if(q.type==='matrix')for(let index=0;index<q.rows.length;index++){
+    const row=q.rows[index];await setValue(matrixField(row),value[row]);
+    if(index<q.rows.length-1)await click('Continue');
+  }else if(q.type==='multi')for(const choice of value){const label=[...section.querySelectorAll('label')].find(label=>label.textContent===choice);expect(label).toBeTruthy();await act(async()=>label.querySelector('input').click());}
+  else await setValue(questionField(q),value);
+  navigationAnswers={...navigationAnswers,[q.id]:copy(value)};
 }
 beforeEach(()=>{
   // Source-authored dated answers use a controlled clock; real UI timers keep their budgets.
   jest.useFakeTimers({now:new Date('2026-10-10T12:00:00Z'),doNotFake:['setTimeout','clearTimeout','setInterval','clearInterval','setImmediate','clearImmediate','nextTick','queueMicrotask','performance']});
+  jest.setSystemTime(new Date('2026-10-10T12:00:00Z'));
   global.IS_REACT_ACT_ENVIRONMENT=true;mockRole='super_admin';localStorage.clear();sessionStorage.clear();window.history.replaceState({},'','/');
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);opened=jest.fn();
   api.get.mockImplementation(async path=>({data:path.endsWith('/guided-assessment/history')?{items:copy(interviewHistory),next_before_revision:null}:path.endsWith('/guided-assessment')?readInterview():path.endsWith('/related')?{reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]}:path.startsWith('/frameworks/')?{configuration:{implementation_group:group,...configurationExtra},assessments:[copy(native)],work:{[native.framework_assessment_id]:{context_complete:true,open_findings:0,open_actions:0,overdue_reviews:0,priority_records:[]}}}:[]}));
@@ -105,21 +140,43 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();jest.useRealTimers();});
 
+test('item finding prefill preserves an emoji at the 200-code-point title boundary and the full description',async()=>{
+  setup('2.1',1);
+  const prefix='x'.repeat(199),text=prefix+'🙂 additional reported context',title=prefix+'🙂';
+  native.items_revision=1;native.items_to_address=[{item_id:'unicode-boundary-item',question_id:'practice',kind:'gap',state:'open',text,resolution:'',finding_id:null}];
+  const before=copy(native);
+  await render();
+  const itemsTab=[...container.querySelectorAll('[role="tab"]')].find(tab=>tab.textContent.trim()==='Items to address');
+  expect(itemsTab).toBeTruthy();
+  await act(async()=>{itemsTab.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));itemsTab.click();});
+  const items=container.querySelector('[aria-label="Items to address"]');expect(items).toBeTruthy();
+  const create=[...items.querySelectorAll('button')].find(button=>button.textContent.trim()==='Create finding');
+  expect(create).toBeTruthy();expect(create.disabled).toBe(false);
+  await act(async()=>create.click());
+  const findingTitle=container.querySelector('[aria-label="Finding title"]'),actionTitle=container.querySelector('[aria-label="Corrective action"]');
+  expect(findingTitle).toBeTruthy();expect(actionTitle).toBeTruthy();
+  expect(findingTitle.value).toBe(title);expect(actionTitle.value).toBe(title);
+  expect(Array.from(findingTitle.value)).toHaveLength(200);expect(Array.from(actionTitle.value)).toHaveLength(200);
+  expect(container.querySelector('[aria-label="Finding description"]').value).toBe(text);
+  expect(native).toEqual(before);expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
 test.each(cis.requirements.map(row=>[row.id,row.implementation_group]))('fresh %s current interview visits every applicable group and requires explicit native save (IG%s)',async(id,minimumGroup)=>{
   setup(id,minimumGroup);const expected=completeAnswers(id);await render();await open();
-  const visited=[];
-  for(let i=0;i<12&&!workspace().querySelector('[aria-label="Omnibot implementation summary"]');i++){
-    const label=workspace().querySelector('.omni-group-progress').getAttribute('aria-label');
-    const currentGroups=omniGroups(id,stored.answers,stored.version),index=Number(label.match(/group (\d+)/)[1])-1;
-    // Read the rendered group's production questions; source fixtures supply the inputs.
-    for(const q of currentGroups[index].questions)await fillQuestion(q,expected[q.id]);
-    visited.push(workspace().querySelector('.omni-group-progress').getAttribute('aria-label'));
-    await click('Save & next');expect(api.patch).not.toHaveBeenCalled();
+  const visited=[],visitedQuestions=[];
+  for(let i=0;i<200&&!workspace().querySelector('[aria-label="Omnibot implementation summary"]');i++){
+    if(guideButton('Review summary')){await click('Review summary');continue;}
+    const question=currentQuestion();expect(question).toBeTruthy();
+    const currentGroups=omniGroups(id,expected,stored.version),index=currentGroups.findIndex(group=>group.ids.includes(question.id));expect(index).toBeGreaterThanOrEqual(0);
+    await fillQuestion(question,expected[question.id]);visitedQuestions.push(question.id);
+    const label='Question group '+(index+1)+' of '+currentGroups.length;if(visited.at(-1)!==label)visited.push(label);
+    await click(guideButton('Review answers')?'Review answers':'Continue');expect(api.patch).not.toHaveBeenCalled();
   }
   const summary=workspace().querySelector('[aria-label="Omnibot implementation summary"]');expect(summary).toBeTruthy();
   const expectedGroups=omniGroups(id,expected,stored.version).map((g,index)=>g.questions.length?'Question group '+(index+1)+' of '+omniGroups(id,expected,stored.version).length:null).filter(Boolean);
+  expect(visitedQuestions).toEqual(omniGroups(id,expected,stored.version).flatMap(group=>group.questions).map(question=>question.id));
   expect(visited).toEqual(expectedGroups);expect(stored.completed).toBe(true);expect(stored.result.status).toBe('addressed');
-  expect(summary.value).toContain('OVERVIEW\n\n');expect(summary.value).toContain('\n\nIMPLEMENTATION BREAKDOWN\n\n');expect(summary.value).toContain('\n\nITEMS TO ADDRESS\n\n');
+  expect(summary.value).toContain(mockName);expect(summary.value).toContain('\n\nControls in place\n');expect(summary.value).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);
   for(const [key,value]of Object.entries(expected))expect(stored.answers[key]).toEqual(value);
   expect(api.put.mock.calls.every(([path,body])=>path.endsWith('/guided-assessment')&&!('implementation'in body))).toBe(true);
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
@@ -168,16 +225,16 @@ const conditionalRows=cis.requirements.flatMap(row=>{
 test.each(conditionalRows)('conditional %s %s requires rationale and safely hides/reveals retained scope context',async(id,questionId,row)=>{
   setup(id,3,{completed:true});const baseline=copy(native),approvedNarrative=stored.narrative;
   await render();await open();await click('Back to questions');
-  const rowSelect=()=>[...workspace().querySelectorAll('.omni-question select')].find(element=>element.getAttribute('aria-label')===row);
-  await goToQuestion(questionId);expect(rowSelect()).toBeTruthy();
+  const rowSelect=()=>[...workspace().querySelectorAll('.cis-sequential-interview select')].find(element=>element.getAttribute('aria-label')===row);
+  await goToQuestion(questionId,row);expect(rowSelect()).toBeTruthy();
   await setValue(rowSelect(),'Not applicable');await click('Save & close');expect(stored.answers[questionId][row]).toBe('Not applicable');expect(stored.narrative).toBe(approvedNarrative);expect(native).toEqual(baseline);
   expect(omniCisSummary(id,stored.answers,stored.version,mockName).result.status).not.toBe('addressed');expect(omniCisSummary(id,stored.answers,stored.version,mockName).result.status).not.toBe('not_applicable');
   await remount();await open();
   await goToQuestion('scope_reason');
-  expect(workspace().querySelector('#omni-answer-scope_reason')).toBeTruthy();
-  const rationale='SYNTHETIC QA: source-conditioned scope review for '+id+'.';await setValue(workspace().querySelector('#omni-answer-scope_reason'),rationale);await click('Save & close');
+  expect(questionField(currentQuestion())).toBeTruthy();
+  const rationale='SYNTHETIC QA: source-conditioned scope review for '+id+'.';await setValue(questionField(currentQuestion()),rationale);await click('Save & close');
   expect(stored.answers.scope_reason).toBe(rationale);expect(native).toEqual(baseline);
-  await remount();await open();await goToQuestion(questionId);await setValue(rowSelect(),'Yes');await click('Save & close');
+  await remount();await open();await goToQuestion(questionId,row);await setValue(rowSelect(),'Yes');await click('Save & close');
   expect(stored.answers.scope_reason).toBe(rationale);expect(visibleQuestions(id,stored.answers,stored.version).some(q=>q.id==='scope_reason')).toBe(false);
   expect(omniCisSummary(id,stored.answers,stored.version,mockName).result.narrative).not.toContain(rationale);expect(stored.answers[questionId][row]).toBe('Yes');expect(native).toEqual(baseline);expect(api.patch).not.toHaveBeenCalled();
 });
@@ -187,18 +244,22 @@ test.each(['1.3','1.4','1.5'])('control1 %s root transitions retain inactive his
   stored.answers.system='SYNTHETIC retained inactive discovery system';const original=copy(stored.answers);
   await render();await open();await click('Back to questions');while(guideButton('Back')&&!guideButton('Back').disabled)await click('Back');
   const rootQuestion=catalogForVersion(stored.version).safeguards[id].find(q=>q.id===rootId);await fillQuestion(rootQuestion,'No');
-  expect(workspace().querySelector('[aria-label="Question group 1 of 2"]')).toBeTruthy();await click('Save & close');
+  const declaredGroupCount=id==='1.3'?4:5;
+  expect(catalogForVersion(stored.version).groups[id]).toHaveLength(declaredGroupCount);
+  expect(currentQuestion().id).toBe(rootId);expect(omniGroups(id,{[rootId]:'No'},stored.version)).toHaveLength(declaredGroupCount);await click('Save & close');
+  expect(omniGroups(id,stored.answers,stored.version).filter(group=>group.questions.length).map(group=>group.name)).toEqual(['Current practice','Review and confirmation']);
+  expect(visibleQuestions(id,stored.answers,stored.version).some(question=>question.id==='coverage')).toBe(false);
   expect(stored.answers.system).toBe(original.system);expect(stored.answers.coverage).toBe(original.coverage);
   const proposal=omniCisSummary(id,stored.answers,stored.version,mockName).result;expect(proposal.status).toBe('needs_attention');expect(proposal.narrative).not.toContain(original.system);expect(api.patch).not.toHaveBeenCalled();
   await remount();await open();while(guideButton('Back')&&!guideButton('Back').disabled)await click('Back');await fillQuestion(rootQuestion,'Yes');
-  expect(workspace().querySelector('#omni-answer-system').value).toBe(original.system);await click('Save & close');expect(stored.answers.coverage).toBe(original.coverage);expect(api.patch).not.toHaveBeenCalled();
+  await goToQuestion('system');expect(questionField(currentQuestion()).value).toBe(original.system);await click('Save & close');expect(stored.answers.coverage).toBe(original.coverage);expect(api.patch).not.toHaveBeenCalled();
 });
 
 test.each(['2.1','2.3','4.12','16.2'])('program %s root unknown or No never hides active atomic requirement questions',async id=>{
   setup(id,3);await render();await open();const rootQuestion=catalogForVersion(stored.version).safeguards[id].find(q=>q.id==='practice');
   for(const value of ['Not sure','No']){
-    await fillQuestion(rootQuestion,value);await click('Save & next');expect(workspace().querySelector('.omni-matrix')).toBeTruthy();
-    expect(visibleQuestions(id,stored.answers,stored.version).some(q=>q.critical&&q.type==='matrix')).toBe(true);await click('Back');
+    await fillQuestion(rootQuestion,value);const matrix=visibleQuestions(id,{practice:value},stored.version).find(question=>question.critical&&question.type==='matrix');expect(matrix).toBeTruthy();await goToQuestion(matrix.id);expect(workspace().querySelector('.cis-sequential-interview select')).toBeTruthy();
+    expect(visibleQuestions(id,stored.answers,stored.version).some(q=>q.critical&&q.type==='matrix')).toBe(true);await goToQuestion('practice');
   }
   expect(api.patch).not.toHaveBeenCalled();expect(native.status).toBe('not_assessed');
 });
@@ -221,7 +282,7 @@ test.each(['1.1','4.12','16.2'])('real native draft edit during %s summary persi
 test.each([[1,'1.1'],[2,'16.2'],[3,'4.12']])('IG%s %s read-only component context preserves current/native record and disables writes',async(implementationGroup,id)=>{
   setup(id,implementationGroup,{completed:true});mockRole='client_readonly';const baseline=copy(native);await render();await open();
   expect(guideButton('Save assessment').disabled).toBe(true);expect(guideButton('Save & close').disabled).toBe(true);expect(document.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
-  await click('Back to questions');expect(workspace().querySelector('.omni-question-group').disabled).toBe(true);expect(guideButton('Save & next').disabled).toBe(true);
+  await click('Back to questions');expect(workspace().querySelector('.cis-sequential-interview fieldset').disabled).toBe(true);const forward=guideButton('Continue')||guideButton('Review answers');expect(forward).toBeTruthy();expect(forward.disabled).toBe(true);
   expect(native).toEqual(baseline);expect(api.put).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
@@ -230,10 +291,19 @@ test.each(['scope-disabled','group-inapplicable','foreign-client','soc-2','iso-2
   if(kind==='foreign-client')native.client_id='synthetic-foreign';
   if(kind==='soc-2'){native.framework_key='soc-2';native.definition_id='CC1.1';stored={...stored,version:socGuidedCatalog.version,answers:{},completed:false,revision:0,narrative:'',result:null};configurationExtra.categories=['security'];}
   if(kind==='iso-27001'){native.framework_key='iso-27001';native.definition_id='A.5.1';}
-  const baseline=copy(native);await render();
+  const baseline=copy(native),interviewBaseline=copy(stored);await render();
+  expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
+  expect(document.querySelector('section[aria-label="CIS assessment interview"]')).toBeNull();
   if(kind==='soc-2'){
-    expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();expect(document.querySelector('[data-testid="soc-guided-assessment"]')).toBeTruthy();
-    await open();expect(document.body.textContent).toContain('Omnibot guide · Criterion CC1.1');expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
-  }else expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
-  expect(native).toEqual(baseline);expect(api.put).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-testid="soc-guided-assessment"]')).toBeTruthy();
+    await open('SOC 2 interview');
+    const interview=document.querySelector('section[aria-label="SOC 2 interview"]');
+    expect(interview.closest('[data-testid="soc-guided-assessment"]')).toBeTruthy();
+    expect(interview.closest('.cis-collapsible-requirement')).toBeNull();
+  }
+  expect(document.querySelector('[data-testid="guided-pilot"]')).toBeNull();
+  expect(document.querySelector('section[aria-label="CIS assessment interview"]')).toBeNull();
+  expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();
+  expect(native).toEqual(baseline);expect(stored).toEqual(interviewBaseline);
+  expect(api.put).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });

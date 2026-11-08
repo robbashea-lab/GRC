@@ -3,6 +3,70 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
 class RiskLifecycleTests(ClientDashboardSourcesTests):
+    async def test_omitted_reassessment_preserves_saved_decisions_and_native_history(self):
+        cases = [('missing', {}, 'admin'), ('null', {'treatment': None, 'assessment_rationale': None}, 'admin'),
+                 ('blank', {'treatment': '', 'assessment_rationale': ''}, 'admin'),
+                 ('legacy-monitor', {'treatment': 'monitor'}, 'admin'),
+                 ('assigned-contributor', {'treatment': '', 'assessment_rationale': None}, 'member')]
+        for name, fields, actor in cases:
+            with self.subTest(name=name):
+                self.sign_in('admin')
+                created = await self.client.post('/api/risks', json={
+                    'title': 'Synthetic unchanged ' + name, 'client_id': 'a', 'owner_id': 'member',
+                    'likelihood_score': 3, 'impact_score': 2, 'next_review': '2099-10-27',
+                    'review_cadence': 'annual', **fields})
+                self.assertEqual(created.status_code, 200, created.text)
+                risk = created.json()
+                review = (await self.client.post('/api/risks/' + risk['risk_id'] + '/review')).json()['review']
+                before = await server.db.risks.find_one({'risk_id': risk['risk_id']})
+                self.sign_in(actor)
+                path = '/api/reviews/' + review['review_id'] + '/complete'
+                body = {'occurrence_id': review['current_occurrence_id'], 'risk_assessment': {},
+                        'risk_outcome': 'Reviewed — No Change'}
+                response = await self.client.post(path, json=body)
+                self.assertEqual(response.status_code, 200, response.text)
+                completed = response.json()['occurrence']
+                self.assertEqual(completed['outcome'], 'Reviewed — No Change')
+                self.assertEqual(completed['risk_after'], completed['risk_before'])
+                self.assertEqual(completed['completed_by'], actor)
+                after = await server.db.risks.find_one({'risk_id': risk['risk_id']})
+                for key in ('risk_id', 'client_id', 'created_at', 'created_by', 'date_identified',
+                            'owner_id', 'status', 'treatment', 'assessment_rationale',
+                            'likelihood_score', 'impact_score', 'risk_score', 'risk_level',
+                            'acceptance_date', 'accepted_by', 'acceptance_rationale'):
+                    self.assertEqual(after.get(key), before.get(key), key)
+                self.assertEqual(after['last_reviewed'], completed['completed_at'])
+                self.assertEqual(after['next_review'][:10], '2100-10-27')
+                replay = await self.client.post(path, json=body)
+                self.assertEqual(replay.status_code, 200, replay.text)
+                self.assertEqual(replay.json()['occurrence'], completed)
+                saved = await server.db.reviews.find_one({'review_id': review['review_id']})
+                self.assertEqual(len(saved['occurrences']), 1)
+
+    async def test_omitted_treatment_retains_an_intervening_authorized_decision(self):
+        self.sign_in('admin')
+        risk = (await self.client.post('/api/risks', json={
+            'title': 'Synthetic concurrent treatment', 'client_id': 'a', 'treatment': '',
+            'likelihood_score': 3, 'impact_score': 2, 'next_review': '2099-10-27'})).json()
+        review = (await self.client.post('/api/risks/' + risk['risk_id'] + '/review')).json()['review']
+        await self.client.post('/api/reviews/' + review['review_id'] + '/start',
+                               json={'occurrence_id': review['current_occurrence_id']})
+        changed = await self.client.patch('/api/risks/' + risk['risk_id'], json={'treatment': 'monitor'})
+        self.assertEqual(changed.status_code, 200, changed.text)
+        response = await self.client.post('/api/reviews/' + review['review_id'] + '/complete', json={
+            'occurrence_id': review['current_occurrence_id'], 'risk_assessment': {},
+            'risk_outcome': 'Reviewed — No Change'})
+        self.assertEqual(response.status_code, 200, response.text)
+        completed = response.json()['occurrence']
+        self.assertEqual(completed['risk_before']['treatment'], risk['treatment'])
+        self.assertEqual(completed['risk_after']['treatment'], 'monitor')
+        self.assertEqual(completed['outcome'], 'Treatment Updated')
+        after = await server.db.risks.find_one({'risk_id': risk['risk_id']})
+        self.assertEqual(after['treatment'], 'monitor')
+        self.assertEqual(after['risk_score'], 6)
+        self.assertEqual(after['created_at'], risk['created_at'])
+        self.assertEqual(after['date_identified'], risk['date_identified'])
+
     async def test_admin_schedule_override_is_validated_preserved_and_replay_safe(self):
         self.sign_in('admin')
         risk=(await self.client.post('/api/risks',json={'title':'Synthetic override','client_id':'a','owner_id':'member','next_review':'2026-11-02','review_cadence':'annual'})).json()
@@ -60,6 +124,9 @@ class RiskLifecycleTests(ClientDashboardSourcesTests):
         self.assertEqual(len(linked['occurrences']),1)
         self.assertEqual((await self.client.delete(route)).status_code,409)
         self.assertEqual((await self.client.patch(route,json={'status':'assessed'})).status_code,409)
+        self.assertEqual((await self.client.post('/api/reviews/'+review['review_id']+'/complete',json={
+            'occurrence_id':linked['current_occurrence_id'],'risk_assessment':{},
+            'risk_outcome':'Reviewed — No Change'})).status_code,409)
 
     async def test_linking_preserves_source_and_rejects_private_provenance(self):
         self.sign_in('admin')
@@ -101,10 +168,14 @@ class RiskLifecycleTests(ClientDashboardSourcesTests):
         result = await self.client.post('/api/risks',json={'title':'Bad owner','client_id':'a','owner_id':'private'})
         self.assertEqual(result.status_code,422,result.text)
         risk = (await self.client.post('/api/risks',json={'title':'Private','client_id':'b','next_review':'2026-11-02'})).json()
+        foreign_review = (await self.client.post('/api/risks/'+risk['risk_id']+'/review')).json()['review']
         self.sign_in('member')
         for suffix in ['activity','review-history']:
             self.assertEqual((await self.client.get('/api/risks/'+risk['risk_id']+'/'+suffix)).status_code,403)
         self.assertEqual((await self.client.post('/api/risks/'+risk['risk_id']+'/review')).status_code,403)
+        self.assertEqual((await self.client.post('/api/reviews/'+foreign_review['review_id']+'/complete',json={
+            'occurrence_id':foreign_review['current_occurrence_id'],'risk_assessment':{},
+            'risk_outcome':'Reviewed — No Change'})).status_code,403)
 
     async def test_risk_raised_from_finding_uses_the_category_vocabulary(self):
         self.sign_in('admin')

@@ -16,6 +16,19 @@ def configuration(client):
             'expected_updated_at': (client or {}).get('cis_configuration_updated_at')}
 
 
+def experience_program(client, selected):
+    """Read projection of committed enrollment, independent of an editable setup draft."""
+    settings = client.get('framework_settings', {})
+    group = None
+    if isinstance(settings, dict) and isinstance(settings.get('cis-ig1', {}), dict):
+        candidate = configuration(client)['implementation_group']
+        if type(candidate) is int and candidate in available_groups():
+            group = candidate
+    cid = client['client_id']
+    return {'client_id': cid, 'program_id': cid + ':cis-ig1', 'framework_key': 'cis-ig1',
+            'version': CIS['version'], 'selected': bool(selected), 'implementation_group': group}
+
+
 def validate_settings(settings):
     if not isinstance(settings, dict) or set(settings) - {'cis-ig1'}:
         raise ValueError('Invalid onboarding framework settings')

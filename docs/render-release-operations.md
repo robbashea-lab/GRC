@@ -5,6 +5,9 @@ Render staging is the primary hosted target: `omnisciente-staging`, service
 Atlas remains Free. `DEMO_MODE=false` and legacy migrations remain disabled.
 Do not change credentials, seed accounts, reseed data or create another service.
 
+
+Current authorized unmerged GoverNara checkpoint (2026-10-13): [PR78](https://github.com/robbashea-lab/GRC/pull/78) records exact tested/deployed bf59aa8 on existing staging. Its normal specific-commit manual deployment preserved the observed Auto-Deploy Off setting; the main-delivery policy below was not reapplied or changed. No main merge or provider-setting change was authorized. See the [final coordinated handoff](governara-release/handoff.md).
+
 ## Release gate
 
 `.github/workflows/release-verification.yml` runs on every PR targeting main and
@@ -12,7 +15,8 @@ every main push, including documentation changes. It runs all classified offline
 backend suites, disposable loopback Mongo persistence/recovery/authorization
 checks, all frontend suites and both authenticated staging and isolated Demo
 builds. No staging database credentials are available to these jobs.
-The aggregate `Release gate` fails unless both jobs finish successfully, including
+The aggregate `Release gate` fails unless all three verification jobs (frontend, offline backend and Mongo backend)
+finish successfully, including
 when a prerequisite fails, is cancelled or skipped. Require this check in main's
 branch protection and follow the normal reviewed PR workflow.
 

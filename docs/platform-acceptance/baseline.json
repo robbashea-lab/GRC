@@ -1,0 +1,114 @@
+{
+  "starting_commit": "28b806716024ec149af2ec5da621a5a618c669d5",
+  "tree": "8ad5bb83d0c4c227ae8f9c4e9974377ba9c255eb",
+  "branch": "codex/platform-acceptance-20261011",
+  "deployed_commit": "28b806716024ec149af2ec5da621a5a618c669d5",
+  "deployment": "dep-db5v96navr4c73a6tmv0",
+  "service": "srv-db1s0cugekts73f72reg",
+  "url": "https://omnisciente-staging.onrender.com",
+  "provider_current_recheck": "Live/source directly reloaded and read in current acceptance turn",
+  "baseline_assets": {
+    "js": "main.2b2cfa22.js",
+    "css": "main.4c1f739f.css"
+  },
+  "permissions": {
+    "filesystem": "danger-full-access / unrestricted",
+    "network": "enabled",
+    "approval_policy": "never",
+    "connector": "GitHub read/write and existing authorized provider/browser session available; request/authentication test tooling remains separately limited"
+  },
+  "ownership": {
+    "coordinator": "root",
+    "staging_and_browser": "root exclusively",
+    "integration_and_shared_runtime": "root until exact handoff",
+    "workstreams": [
+      "CIS/SOC",
+      "ISO",
+      "shared lifecycle/data/scale",
+      "product/personas",
+      "security/independent review"
+    ]
+  },
+  "freeze": "All visuals and static copy, questions/guidance, current readers/writers/history. Business data and existing generated narratives may update only through approved workflows.",
+  "protected_clients": [
+    "Brawndo",
+    "Initech",
+    "Hooli",
+    "Prestige Worldwide (38 Not Assessed; permanent/read-only)",
+    "existing pending CIS/SOC/ISO QA clients",
+    "all unrelated clients and archived histories"
+  ],
+  "primary_qa_clients": [
+    {
+      "name": "Platform Acceptance QA 20261011 — CIS IG1",
+      "client_id": "cli_20df1a50e4eae777cc8ec2d81cc30a370c379636d67fc1343b9e5af62117d1aa",
+      "expected_inventory": 56,
+      "setup_result": "Normal hosted onboarding completed; refreshed program inventory and unknown/unassessed baseline verified",
+      "pending_role_evidence": "No client users created; actual restricted-user proof pending"
+    },
+    {
+      "name": "Platform Acceptance QA 20261011 — CIS IG2",
+      "client_id": "cli_6fbdc9c285b24b84ad081b7e34e204c2818beb9fa44e8323595adfeeb88db885",
+      "expected_inventory": 130,
+      "setup_result": "Normal hosted onboarding completed; refreshed program inventory and unknown/unassessed baseline verified",
+      "pending_role_evidence": "No client users created; actual restricted-user proof pending"
+    },
+    {
+      "name": "Platform Acceptance QA 20261011 — CIS IG3",
+      "client_id": "cli_da82b001a9242d337179193b1278a7d1f837862ce8faec4bf45a07b238b9c4fb",
+      "expected_inventory": 153,
+      "setup_result": "Normal hosted onboarding completed; refreshed program inventory and unknown/unassessed baseline verified",
+      "pending_role_evidence": "No client users created; actual restricted-user proof pending"
+    },
+    {
+      "name": "Platform Acceptance QA 20261011 — ISO 27001",
+      "client_id": "cli_6623c0df3d49caed4d80c3c4fa73665a0d05e2fee418072c30ebdb2f8425d2ee",
+      "expected_inventory": 123,
+      "setup_result": "Normal hosted onboarding completed; refreshed program inventory and unknown/unassessed baseline verified",
+      "pending_role_evidence": "No client users created; actual restricted-user proof pending"
+    },
+    {
+      "name": "Platform Acceptance QA 20261011 — SOC 2",
+      "client_id": "cli_7a5e4c04356a9e1e6b537ded5738fff5cb46a75c4272bc5245181b63fa5bf474",
+      "expected_inventory": 38,
+      "setup_result": "Normal hosted onboarding completed; refreshed program inventory and unknown/unassessed baseline verified",
+      "pending_role_evidence": "No client users created; actual restricted-user proof pending"
+    }
+  ],
+  "known_limits": [
+    "Actual logout/login requires human readiness; preserved administrator session must not be logged out.",
+    "Restricted identity remains disabled and unchanged; no new permissions/owners/credentials authorized. Old CIS/SOC approvals do not grant new primary-fixture memberships.",
+    "Supported session-bound direct-request editor/capture is not available in current IAB tooling; UI/admin/mocks do not prove denied backend writes.",
+    "Previously safety-blocked authentication campaign remains0/no retry or reroute.",
+    "Licensed ISO full normative comparisons remain unavailable.",
+    "Original32-row future-work register and G01-G08 remain retained and individually reconciled."
+  ],
+  "ci_baseline": {
+    "run": 38173242320,
+    "number": 142,
+    "result": "SUCCESS",
+    "frontend_suites": 274,
+    "frontend_tests": 8611,
+    "both_builds": true,
+    "evidence": "Exact main baseline run, not evidence for a later integrated revision."
+  },
+  "ten_year_contract": {
+    "clock": "isolated injected UTC/date clock, America/New_York boundary views; no shared/staging clock or future-dated writes",
+    "counts": "Independent oracle using approved anchor rules; no runtime-output-derived expectations",
+    "unsupported": "No autonomous occurrence-creation scheduler or native Backlog mode inferred; report unsupported themes explicitly",
+    "interval_executed": "[2027-01-01, 2037-01-01)"
+  },
+  "current_all_status_directory_count": 26,
+  "current_portfolio_count_archived_excluded": 22,
+  "directory_count_boundary": "Before derivative: Portfolio21/all-status25. After derivative: Portfolio22 observed. All-status26 is arithmetic from one normal creation, not a new direct all-status count. Neither measures lifecycle Active clients.",
+  "starting_portfolio_count_archived_excluded": 16,
+  "derivative": {
+    "name": "Platform Acceptance QA 20261011 — Scope derivative",
+    "client_id": "cli_4e11466f42abf6827b025df85ddbb3ca352e270bc059052a14627600d6ba38cf",
+    "cis_assessment_id": "fw_9b96c56543c757ffba189a4b73530f13",
+    "soc_assessment_id": "fw_005757e3d3a6525a86a69fa1fcea80d0",
+    "scope_history": "IG1→IG2→IG3; SOC added33→61→retired→reactivated61→33; ISO added123",
+    "data": "Explicit synthetic manual markers; uncertainty only, no real operating or verification claim",
+    "cleanup": "Retain active for PFA001 hosted retest; five primary and earlier pending fixtures retained."
+  }
+}

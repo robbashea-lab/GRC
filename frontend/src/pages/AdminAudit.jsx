@@ -236,13 +236,26 @@ export default function AdminAudit() {
   }, [clientFilter, userFilter, actionFilter, entityFilter, datePreset, debouncedQ]);
 
   return (
-    <div>
+    <div className="admin-page admin-audit-page">
       <PageHeader
         eyebrow="Administration"
         title="Audit Log"
-        subtitle="Application audit records are append-only through the Omnisciente interface."
+        subtitle="Application audit records and their recorded changes."
+        action={<Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting} className="h-9" data-testid="audit-export"><Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV</Button>}
       />
-      <div className="page-gutter pt-4 pb-2 flex items-center gap-3 flex-wrap" data-testid="audit-filters">
+      <div className="admin-body"><section className="admin-panel">
+      <div className="admin-panel-head"><div><h2>Audit events</h2><p>Application audit records are append-only through the Omnisciente interface.</p></div>
+        <span className="admin-record-meta" data-testid="audit-count">{loading ? "Loading…" : `${total.toLocaleString()} event${total === 1 ? "" : "s"}`}{total > 0 && ` · Page ${page} of ${totalPages}`}</span>
+      </div>
+      <div className="admin-toolbar" data-testid="audit-filters">
+        <div className="admin-search relative">
+          <Search className="h-3.5 w-3.5 text-ink-help" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search action, entity, user, record…"
+            aria-label="Search audit events" className="pl-8 h-9 text-sm" data-testid="audit-search" />
+        </div>
+        <span className="admin-record-meta">Displayed in your local time zone</span>
+        <div className="admin-filter-grid">
+        <label><span>Client</span>
         <Select value={clientFilter} onValueChange={setClientFilter}>
           <SelectTrigger className="h-9 w-56 text-sm" aria-label="Client filter" data-testid="audit-filter-client">
             <SelectValue placeholder="All clients" />
@@ -255,7 +268,9 @@ export default function AdminAudit() {
             ))}
           </SelectContent>
         </Select>
+        </label>
 
+        <label><span>User</span>
         <Select value={userFilter} onValueChange={setUserFilter}>
           <SelectTrigger className="h-9 w-56 text-sm" aria-label="User filter" data-testid="audit-filter-user">
             <SelectValue placeholder="All users" />
@@ -267,7 +282,9 @@ export default function AdminAudit() {
             ))}
           </SelectContent>
         </Select>
+        </label>
 
+        <label><span>Action</span>
         <Select value={actionFilter} onValueChange={setActionFilter}>
           <SelectTrigger className="h-9 w-44 text-sm" aria-label="Action filter" data-testid="audit-filter-action">
             <SelectValue placeholder="All actions" />
@@ -278,7 +295,9 @@ export default function AdminAudit() {
             ))}
           </SelectContent>
         </Select>
+        </label>
 
+        <label><span>Entity</span>
         <Select value={entityFilter} onValueChange={setEntityFilter}>
           <SelectTrigger className="h-9 w-44 text-sm" aria-label="Object or event type filter" data-testid="audit-filter-entity">
             <SelectValue placeholder="All entities" />
@@ -290,7 +309,9 @@ export default function AdminAudit() {
             ))}
           </SelectContent>
         </Select>
+        </label>
 
+        <label><span>Date range</span>
         <Select value={datePreset} onValueChange={setDatePreset}>
           <SelectTrigger className="h-9 w-40 text-sm" aria-label="Date range filter" data-testid="audit-filter-date">
             <SelectValue placeholder="Last 30 days" />
@@ -301,29 +322,19 @@ export default function AdminAudit() {
             ))}
           </SelectContent>
         </Select>
+        </label>
 
         {datePreset === "custom" && (
           <>
-            <Input type="date" value={customStart ? customStart.slice(0, 10) : ""}
+            <label><span>Range start</span><Input type="date" value={customStart ? customStart.slice(0, 10) : ""}
               onChange={(e) => setCustomStart(e.target.value ? new Date(e.target.value).toISOString() : "")}
-              aria-label="Audit range start" className="h-9 w-40 text-sm" data-testid="audit-filter-start" />
-            <Input type="date" value={customEnd ? customEnd.slice(0, 10) : ""}
+              aria-label="Audit range start" className="h-9 w-40 text-sm" data-testid="audit-filter-start" /></label>
+            <label><span>Range end</span><Input type="date" value={customEnd ? customEnd.slice(0, 10) : ""}
               onChange={(e) => setCustomEnd(e.target.value ? new Date(new Date(e.target.value).setHours(23, 59, 59, 999)).toISOString() : "")}
-              aria-label="Audit range end" className="h-9 w-40 text-sm" data-testid="audit-filter-end" />
+              aria-label="Audit range end" className="h-9 w-40 text-sm" data-testid="audit-filter-end" /></label>
           </>
         )}
-
-        <div className="relative w-72 ml-auto">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder="Search action, entity, user, record…"
-            aria-label="Search audit events" className="pl-8 h-9 text-sm" data-testid="audit-search" />
         </div>
-
-        <Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting}
-          className="h-9" data-testid="audit-export">
-          <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
-        </Button>
 
         {activeFilterCount > 0 && (
           <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 text-xs" data-testid="audit-reset">
@@ -332,14 +343,10 @@ export default function AdminAudit() {
         )}
       </div>
 
-      <div className="page-gutter pb-8">
+      <div>
         <TableFilterChips table={table} />
-        <div className="text-xs text-ink-help mb-2" data-testid="audit-count">
-          {loading ? "Loading…" : `${total.toLocaleString()} event${total === 1 ? "" : "s"}`}
-          {total > 0 && ` · Page ${page} of ${totalPages}`}
-        </div>
-        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="audit-table">
-          <table className="w-full text-sm">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto admin-table-wrap" data-testid="audit-table">
+          <table className="w-full text-sm admin-table">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
                 <th className="tbl-cell text-left"><ColumnControl table={table} columnKey="date" /></th>
@@ -367,28 +374,28 @@ export default function AdminAudit() {
                     </td>
                     <td className="tbl-cell text-xs">
                       {isPlatform ? (
-                        <span className="inline-flex px-2 py-0.5 rounded-full border border-line text-xs uppercase tracking-widest text-ink-secondary bg-surface-subtle">Platform</span>
+                        <span className="inline-flex px-2 py-0.5 rounded-full border border-line text-xs uppercase tracking-widest text-ink-secondary bg-surface-subtle admin-badge is-muted">Platform</span>
                       ) : (
                         <span className="text-ink-primary">{r.client_name || r.client_id}</span>
                       )}
                     </td>
                     <td className="tbl-cell text-xs">
-                      <div className="text-ink-primary">{r.user_name || r.user_email || "—"}</div>
+                      <div className="text-ink-primary admin-record-title">{r.user_name || r.user_email || "—"}</div>
                       {r.user_email && r.user_name && r.user_email !== r.user_name && (
-                        <div className="text-xs text-ink-help">{r.user_email}</div>
+                        <div className="text-xs text-ink-help admin-record-meta">{r.user_email}</div>
                       )}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-primary">{humanAction(r.action)}</td>
+                    <td className="tbl-cell text-xs text-ink-primary"><span className="admin-badge is-muted">{humanAction(r.action)}</span></td>
                     <td className="tbl-cell text-xs text-ink-secondary">{humanEntity(r.entity_type)}</td>
                     <td className="tbl-cell text-xs">
-                      <div className="text-ink-primary truncate max-w-[220px]">{r.entity_name || r?.meta?.title || r?.meta?.name || r.entity_id || "—"}</div>
-                      <div className="text-xs text-ink-help font-mono truncate max-w-[220px]">{r.entity_id}</div>
+                      <div className="text-ink-primary truncate max-w-[220px] admin-record-title">{r.entity_name || r?.meta?.title || r?.meta?.name || r.entity_id || "—"}</div>
+                      <div className="text-xs text-ink-help font-mono truncate max-w-[220px] admin-record-meta">{r.entity_id}</div>
                     </td>
-                    <td className="tbl-cell text-right">
+                    <td className="tbl-cell text-right"><div className="admin-row-actions">
                       <Button variant="ghost" size="sm" aria-label={`View ${humanAction(r.action)} event for ${r.entity_name || r.entity_id || "platform"}`} className="h-7 text-xs"
                         onClick={(e) => { e.stopPropagation(); setSelected(r); }}
                         data-testid={`audit-view-${i}`}>View</Button>
-                    </td>
+                    </div></td>
                   </tr>
                 );
               })}
@@ -396,7 +403,7 @@ export default function AdminAudit() {
           </table>
         </div>
 
-        <div className="mt-3 flex items-center justify-between text-xs text-ink-help">
+        <div className="mt-3 flex items-center justify-between text-xs text-ink-help admin-pagination">
           <div>{total > 0 && `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} of ${total.toLocaleString()}`}</div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="h-8" disabled={page <= 1}
@@ -411,6 +418,7 @@ export default function AdminAudit() {
           </div>
         </div>
       </div>
+      </section></div>
 
       <AuditDetailDrawer event={selected} onClose={() => setSelected(null)} />
     </div>

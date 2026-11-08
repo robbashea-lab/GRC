@@ -1,0 +1,10 @@
+PASS src/components/PlatformCisMinimizedNativeGuide.test.jsx (17.211 s)
+PASS src/components/PlatformCisNativeGuideRefresh.test.jsx
+PASS src/components/GuidedLifecycleNative.test.jsx
+PASS src/components/PlatformCisBreadcrumbContext.test.jsx (18.775 s)
+
+Test Suites: 4 passed, 4 total
+Tests:       43 passed, 43 total
+Snapshots:   0 total
+Time:        38.692 s
+Ran all test suites within paths "src/components/PlatformCisMinimizedNativeGuide.test.jsx", "src/components/PlatformCisNativeGuideRefresh.test.jsx", "src/components/PlatformCisBreadcrumbContext.test.jsx", "src/components/GuidedLifecycleNative.test.jsx".

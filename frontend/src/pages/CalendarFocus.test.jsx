@@ -1,3 +1,4 @@
+jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/calendar',search:''})}),{virtual:true});
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import Calendar from './Calendar';

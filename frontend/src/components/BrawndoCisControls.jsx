@@ -1,5 +1,5 @@
 import {useRef,useEffect,useMemo,useState} from 'react';
-import {useRescueFocus} from '@/lib/focusRescue';
+import {focusFallback,focusLost,useRescueFocus} from '@/lib/focusRescue';
 import api from '@/lib/api';
 import {SearchField} from './Register';
 import {CisStatusPill} from './CisStatus';
@@ -24,7 +24,9 @@ export function CisBreadcrumb({items,label='CIS IG1 location'}){
     return <li key={c.label}>{last||!c.onClick?<span ref={last?current:undefined} aria-current={last?'page':undefined}>{c.label}</span>:<button type="button" onClick={c.onClick}>{c.label}</button>}</li>;})}</ol></nav>;
 }
 
-export default function BrawndoCisControls({workspacePilot=false,implementationGroup=1,scopeControls,clientId,rows,visible,filtered,filterLabel,search,onSearch,onClear,controlKey,onControl,onOpen,onManage,selected}){
+export default function BrawndoCisControls({workspacePilot=false,implementationGroup=1,scopeControls,clientId,rows,visible,filtered,filterLabel,search,onSearch,onClear,controlKey,onControl,onOpen,onManage,selected,domainFocusKey}){
+  const section=useRef(null),previousDomainFocusKey=useRef(domainFocusKey);
+  useEffect(()=>{if((domainFocusKey||previousDomainFocusKey.current)&&focusLost())focusFallback(section.current?.querySelector('[aria-current="page"],h2')||section.current);previousDomainFocusKey.current=domainFocusKey;},[domainFocusKey]);
   const [members,setMembers]=useState([]);
   const [controlFilter,setControlFilter]=useState('all'),[controlSearch,setControlSearch]=useState('');
   useEffect(()=>{setControlFilter('all');setControlSearch('');},[clientId]);
@@ -35,12 +37,12 @@ export default function BrawndoCisControls({workspacePilot=false,implementationG
   const crumbs=[{label:`CIS IG${implementationGroup}`,onClick:()=>{onClear();onControl('');}}];
   if(filtered)crumbs.push({label:filterLabel});
   else if(control)crumbs.push({label:`Control ${controlParts(control.label).num??''}`.trim(),onClick:()=>onControl(control.key)});
-  if(selected)crumbs.push({label:`Safeguard ${selected.definition_id}`});
+  if(selected&&(!control||control.rows.some(row=>row.framework_assessment_id===selected.framework_assessment_id)))crumbs.push({label:`Safeguard ${selected.definition_id}`});
   const list=filtered?visible:control?control.rows:null;
   const controlOverview=workspacePilot&&!list;
   const matchingGroups=groups.filter(g=>(controlFilter==='all'||(controlFilter==='attention'?sectionSummary(g.rows).attention>0:cisSummary(g.rows).notAssessed>0))&&g.label.toLowerCase().includes(controlSearch.trim().toLowerCase()));
   const safeguardSearch=controlOverview&&controlSearch.trim()&&!matchingGroups.length?visible.filter(row=>matchesAssessment(row,'all',controlSearch)):null;
-  return <section className="bcis-card bcis-controls" aria-label="Controls">
+  return <section ref={section} className="bcis-card bcis-controls" aria-label="Controls">
     {controlOverview?<>
       <div className="bwp-controls-heading"><div><h2>Controls</h2><p>Explore your safeguards, implementation, and verification.</p></div><span>{groups.length} controls</span></div>
       <div className="bcis-controls-bar"><div className="bwp-control-filters" role="group" aria-label="Control filters">{[['all','All controls',groups.length],['attention','Needs attention',groups.filter(g=>sectionSummary(g.rows).attention>0).length],['not_assessed','Not assessed',groups.filter(g=>cisSummary(g.rows).notAssessed>0).length]].map(([key,label,count])=><button type="button" key={key} aria-pressed={controlFilter===key} onClick={()=>setControlFilter(key)}>{label} <span>{count}</span></button>)}</div><SearchField value={controlSearch} onChange={setControlSearch} label="Search controls" placeholder="Search controls…"/></div>

@@ -112,9 +112,10 @@ def router_for(s):
         s._require_snapshot(body.model_dump(exclude_unset=True),doc)
         patch=body.model_dump(mode='json',exclude={'expected_updated_at'},exclude_unset=True)
         patch['updated_at']=s._next_write_time(doc.get('updated_at'))
-        result=await s.db.evidence.update_one({'evidence_id':eid,'archived_at':None,'updated_at':doc.get('updated_at')},{'$set':patch})
+        portfolio_patch, portfolio_event = s._portfolio_event_patch('evidence', eid, doc['client_id'], user, doc, {**doc, **patch}, patch['updated_at'])
+        result=await s.db.evidence.update_one({'evidence_id':eid,'archived_at':None,'updated_at':doc.get('updated_at')},{'$set':{**patch, **portfolio_patch}})
         if not result.matched_count: raise HTTPException(409,'Evidence changed; reload before saving')
-        await s.audit(user,'Evidence metadata changed','evidence',eid,doc['client_id'],meta={'fields':sorted(set(patch)-{'updated_at'})})
+        await s.audit(user,'Evidence metadata changed','evidence',eid,doc['client_id'],meta={'fields':sorted(set(patch)-{'updated_at'}),'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None,'_portfolio_activity_noop':portfolio_event is None})
         return await detail(eid,user)
 
     @router.post('/items/{eid}/relationships')
@@ -148,10 +149,13 @@ def router_for(s):
         if body.remove and link not in links or not body.remove and link in links: return await detail(eid,user)
         if not body.remove and len(links)>=100: raise HTTPException(422,'Evidence supports at most 100 additional relationships')
         op='$pull' if body.remove else '$addToSet'
+        at = s._next_write_time(doc.get('updated_at'))
+        after_links = [r for r in links if r != link] if body.remove else [*links, link]
+        portfolio_patch, portfolio_event = s._portfolio_event_patch('evidence', eid, doc['client_id'], user, doc, {**doc, 'relationships': after_links}, at)
         result=await s.db.evidence.update_one({'evidence_id':eid,'archived_at':None,'updated_at':doc.get('updated_at')},
-            {op:{'relationships':link},'$set':{'updated_at':s._next_write_time(doc.get('updated_at'))}})
+            {op:{'relationships':link},'$set':{'updated_at':at, **portfolio_patch}})
         if not result.matched_count: raise HTTPException(409,'Evidence changed; reload before saving')
-        await s.audit(user,'Evidence relationship removed' if body.remove else 'Evidence relationship added','evidence',eid,doc['client_id'],meta=link)
+        await s.audit(user,'Evidence relationship removed' if body.remove else 'Evidence relationship added','evidence',eid,doc['client_id'],meta={**link,'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None})
         return await detail(eid,user)
 
     return router

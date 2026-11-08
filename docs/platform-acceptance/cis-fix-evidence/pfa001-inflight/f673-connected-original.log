@@ -1,0 +1,59 @@
+FAIL src/components/PlatformCisMinimizedNativeGuide.test.jsx
+  × in-flight deliberate comparison rechecks unavailable context before rebase PUT (232 ms)
+  × in-flight summary progress response cannot initiate native PATCH after context failure (71 ms)
+  √ queued older joined context response cannot supersede the later confirmed native receipt (117 ms)
+  ○ skipped immediate context refresh retains minimized fresh input and saves progress against native receipt B
+  ○ skipped pending context refresh must not leave the first minimized-guide progress write on superseded native token A
+  ○ skipped pending context refresh must retain persisted manual interview and require explicit comparison after native receipt B
+  ○ skipped failed context refresh after confirmed native save reports its error and retry without discarding minimized unsaved input
+  ○ skipped unavailable context never reuses cached guide eligibility after a client identity switch
+  ○ skipped unavailable context never reuses cached guide eligibility after a assessment identity switch
+  ○ skipped failed-context retry retains persisted manual wording and still requires explicit comparison
+  ○ skipped a successful context refresh omitting the selected assessment cannot reactivate earlier cached guide eligibility
+  ○ skipped in-flight first progress rechecks unavailable context before PUT and resumes only after retry
+
+  ● in-flight deliberate comparison rechecks unavailable context before rebase PUT
+
+    expect(jest.fn()).not.toHaveBeenCalled()
+
+    Expected number of calls: 0
+    Received number of calls: 2
+
+    1: "/framework_assessments/timing-1.1/guided-assessment", {"answers": {"inventory": "No", "inventory_detail": "Previously saved note"}, "base_assessment_token": "2026-10-11T12:01:00Z", "base_scope_fingerprint": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "completed": false, "expected_revision": 1, "narrative": "Previously reviewed manual wording.
+    Exact retained second line.", "rebase": true, "step": 0, "version": "cis-v8.1-control1-3"}
+    2: "/framework_assessments/timing-1.1/guided-assessment", {"answers": {"inventory": "Not sure", "inventory_detail": "SYNTHETIC typed uncertainty. Preserve this exact text."}, "completed": false, "expected_revision": 2, "narrative": "Previously reviewed manual wording.
+    Exact retained second line.", "result": null, "step": 0, "version": "cis-v8.1-control1-3"}
+
+      120 |   await act(async()=>pending.splice(0).forEach(response=>response.reject(new Error('Synthetic context failed while comparison awaits'))));
+      121 |   expect(container.textContent).toContain('Synthetic context failed while comparison awaits');expect([...workspace().querySelectorAll('button')].find(button=>button.textContent.trim()==='Retain answers & continue').disabled).toBe(true);expect(native).toEqual(savedNative);
+    > 122 |   await act(async()=>finishMetadata());expect(api.put).not.toHaveBeenCalled();expect(interview).toEqual(original);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);expect(container.textContent).toContain('Synthetic context failed while comparison awaits');expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+          |                                                            ^
+      123 | });
+      124 |
+      125 | test('in-flight summary progress response cannot initiate native PATCH after context failure',async()=>{
+
+      at Object.<anonymous> (src/components/PlatformCisMinimizedNativeGuide.test.jsx:122:60)
+
+  ● in-flight summary progress response cannot initiate native PATCH after context failure
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      26 | const readInterview=()=>({...copy(interview),current_assessment_token:native.last_saved,current_scope_fingerprint:fingerprint,lineage_known:true,lineage_stale:interview.base_assessment_token!==native.last_saved});
+      27 | const readWorkspace=()=>({configuration:{implementation_group:3},assessments:[copy(native)],work:{[native.framework_assessment_id]:{context_complete:true,open_findings:0,open_actions:0,overdue_reviews:0,priority_records:[]}}});
+    > 28 | async function click(name,scope=document){const target=[...scope.querySelectorAll('button')].find(button=>button.textContent.trim()===name);expect(target).toBeTruthy();expect(target.disabled).toBe(false);await act(async()=>target.click());}
+         |                                                                                                                                                                                                 ^
+      29 | async function value(selector,next){const target=document.querySelector(selector);expect(target).toBeTruthy();await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(target,next);target.dispatchEvent(new Event('input',{bubbles:true}));});}
+      30 | async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={record.client_id} onOpenChange={()=>{}}/>));}
+      31 | async function open(){const launcher=document.querySelector('[aria-label="Open Omnibot guide"]');expect(launcher).toBeTruthy();await act(async()=>launcher.click());}
+
+      at click (src/components/PlatformCisMinimizedNativeGuide.test.jsx:28:193)
+      at Object.<anonymous> (src/components/PlatformCisMinimizedNativeGuide.test.jsx:135:97)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 9 skipped, 1 passed, 12 total
+Snapshots:   0 total
+Time:        2.1 s
+Ran all test suites within paths "src/components/PlatformCisMinimizedNativeGuide.test.jsx".

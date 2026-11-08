@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import FrameworkWorkspace from './FrameworkWorkspace';
 import {cis, frameworkCatalog} from '@/lib/frameworks';
 import {socConfiguration} from '@/lib/socReadiness';
+import {frameworkDashboardFixture} from '@/testUtils/frameworkDashboard';
 import api from '@/lib/api';
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -32,13 +33,61 @@ const prestige=async({clientId='demo_prestige',selected=true}={})=>{mockUser.wor
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));return response;};
 const socSettings=()=>[...container.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='Scope and observation period settings');
 
+test('SOC workspace rejects foreign-client assessment and canonical-position responses',async()=>{
+ const definition=frameworkCatalog('soc-2').requirements[0];
+ for(const foreignPosition of [false,true]){
+  const response={configured:true,selected:true,definitions:[definition],configuration:socConfiguration(),active_definition_ids:[definition.id],work:{},
+   assessments:[{framework_assessment_id:'foreign-soc',framework_key:'soc-2',definition_id:definition.id,client_id:foreignPosition?'a':'other-client',status:'addressed'}],
+   ...(foreignPosition?{implementation_position:{program_id:'other-client:soc-2'}}:{})};
+  api.get.mockResolvedValue({data:response});
+  await act(async()=>root.render(<FrameworkWorkspace key={String(foreignPosition)} frameworkKey="soc-2" clientId="a"/>));
+  expect(container.textContent).toContain('SOC 2 workspace records could not be verified for this client.');
+  expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeNull();
+ }
+});
+
+test.each([null,{framework_assessment_id:' '},{definition_id:'unknown'},{framework_key:'iso-27001'}])('SOC mixed response still rejects malformed current records %p',async invalid=>{
+ const definition=frameworkCatalog('soc-2').requirements[0],valid={framework_assessment_id:'valid-soc',framework_key:'soc-2',definition_id:definition.id,client_id:'a',status:'addressed'};
+ const response={configured:true,selected:true,definitions:[definition],configuration:socConfiguration(),active_definition_ids:[definition.id],work:{},
+  assessments:[valid,{...valid,client_id:'other-client',framework_assessment_id:'foreign'},invalid===null?null:{...valid,...invalid}]};
+ api.get.mockResolvedValue({data:response});
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId="a"/>));
+ expect(container.textContent).toContain('SOC 2 workspace records could not be verified for this client.');
+ expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeNull();
+ expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('SOC presentation withdraws previous actor data while the same client is reauthorized',async()=>{
+ const response=await prestige({clientId:'existing-auth-soc'});
+ expect(container.querySelector('.soc-cis-program-visual .now-value')).toBeTruthy();
+ let resolveCurrent;
+ api.get.mockImplementation(path=>path.endsWith('/members')?Promise.resolve({data:[]}):new Promise(resolve=>{resolveCurrent=resolve;}));
+ mockUser={user_id:'reader',role:'client_viewer'};
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId="existing-auth-soc"/>));
+ expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeNull();
+ expect(container.textContent).toContain('Loading program workspace');
+ await act(async()=>resolveCurrent({data:response}));
+ expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeTruthy();
+});
+
+test.each([null,{}, {id:'  '}])('SOC malformed definition %p stays in the native error and retry path',async definition=>{
+ api.get.mockResolvedValue({data:{configured:true,selected:true,definitions:[definition],assessments:[],configuration:socConfiguration(),work:{}}});
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId="a"/>));
+ expect(container.textContent).toContain('SOC 2 workspace records could not be verified for this client.');
+ expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeNull();
+ const retry=[...container.querySelectorAll('button')].find(button=>button.textContent==='Retry workspace');expect(retry).toBeTruthy();
+ const valid=frameworkCatalog('soc-2').requirements[0];
+ api.get.mockResolvedValue({data:{configured:true,selected:true,definitions:[valid],assessments:[{framework_assessment_id:'recovered-soc',client_id:'a',definition_id:valid.id,status:'not_assessed'}],configuration:socConfiguration(),work:{}}});
+ await act(async()=>retry.click());expect(container.querySelector('[data-testid="prestige-soc-workspace"]')).toBeTruthy();
+});
+
 test.each(['cis-ig1','soc-2','iso-27001'])('%s requirement rows expose exact contextual management separately from assessment',async frameworkKey=>{
  const definition=frameworkCatalog(frameworkKey).requirements[0];
  const row={framework_assessment_id:'exact-assessment',framework_key:frameworkKey,definition_id:definition.id,client_id:'a',status:'not_assessed'};
  if(frameworkKey==='iso-27001')mockLocation.params=new URLSearchParams('iso_view=isms_clause');
  api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[]:{configured:true,selected:true,definitions:[definition],assessments:[row],active_definition_ids:[definition.id],configuration:{implementation_group:1,categories:['security']},work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey={frameworkKey} clientId="a"/>));
- const search=container.querySelector('input[aria-label^="Search"]');
+ const search=['soc-2','iso-27001'].includes(frameworkKey)?container.querySelector('input[type="search"]'):container.querySelector('input[aria-label^="Search"]');
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,definition.id);search.dispatchEvent(new Event('input',{bubbles:true}));});
  const manage=container.querySelector(`button[aria-label="Manage ${definition.id} ${definition.title}"]`);
  expect(manage).toBeTruthy();await act(async()=>manage.click());
@@ -117,18 +166,20 @@ test('Prestige SOC 2 uses scoped progress and category-first hierarchy without p
  await prestige();const workspace=container.querySelector('[data-testid="prestige-soc-workspace"]');expect(workspace).toBeTruthy();
  expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).not.toContain('Client organizational Controls');expect(workspace.textContent).toContain('Include retained out-of-scope criteria');expect(socSettings()).toBeUndefined();
  const summary=workspace.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(summary).toContain('Implemented28 of 38');expect(summary).toContain('Assessed35 of 38');expect(workspace.querySelector('.bd-donut-value').textContent).toBe('73.7%');expect(summary).toContain('3 still to assess');
- const partial=workspace.querySelector('[data-testid="psoc-seg-partial"]');expect(partial.tabIndex).toBe(0);expect(partial.getAttribute('aria-label')).toBe('Partially Implemented: 5 of 38 criteria, 13%');expect(partial.querySelector('.bcis-tip').textContent).toBe('Partially Implemented5 of 38 criteria13%');
+ expect(summary).toContain('Current implementation');expect(summary).toContain('28 of 38 criteria implemented');expect(summary).toContain('Assessed 35 of 38');expect(workspace.querySelector('.now-value').textContent).toBe('73.7%');expect(workspace.querySelector('[aria-label="Show criteria"]').textContent).toContain('Not assessed3');
+ const partial=workspace.querySelector('.snap .sbar button[aria-label="Partially implemented: 5 of 38"]');expect(partial.tabIndex).toBe(0);expect(partial.tagName).toBe('BUTTON');expect(partial.title).toBe('Partially implemented: 5 of 38');expect(partial.style.flex).toBe('5');
+ const addressed=workspace.querySelector('.snap .sbar button[aria-label="Implemented: 28 of 38"]');expect(addressed.title).toBe('Implemented: 28 of 38');expect(addressed.style.flex).toBe('28');
+ expect(workspace.querySelector('.lg').textContent).toContain('13.2%5 of 38');
  expect(workspace.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);expect(workspace.querySelector('[data-testid="soc-category-security"]').textContent).toContain('Security — Common Criteria33');
- expect(workspace.querySelector('[aria-label="Trust Services Categories"]').textContent).not.toMatch(/Processing Integrity|Privacy/);
+ expect(workspace.querySelector('.soc-criteria-register').textContent).not.toMatch(/Processing Integrity|Privacy/);
  await act(async()=>buttons('Dark')[0].click());expect(workspace.dataset.theme).toBe('dark');await act(async()=>buttons('Light')[0].click());expect(workspace.dataset.theme).toBe('light');
- await act(async()=>[...workspace.querySelectorAll('.bcis-legend button')].find(b=>b.textContent.startsWith('Not Assessed')).click());
- expect(workspace.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(3);expect(crumbs()).toEqual(['SOC 2','Not yet assessed']);
- await act(async()=>buttons('Clear filter')[0].click());expect(crumbs()).toEqual(['SOC 2']);
+ await act(async()=>[...workspace.querySelectorAll('.lg button')].find(b=>b.textContent.startsWith('Not assessed')).click());
+ expect(workspace.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(3);expect(crumbs()).toEqual(['SOC 2','Not assessed']);
+ await act(async()=>container.querySelector('[aria-label="Clear search and filters"]').click());expect(crumbs()).toEqual(['SOC 2']);
 });
-test('Prestige SOC 2 rows support keyboard navigation, native groups, criteria and breadcrumbs',async()=>{
- await prestige();await key(container.querySelector('[data-testid="soc-category-security"]'),'Enter');expect(crumbs()).toEqual(['SOC 2','Security']);expect(container.querySelectorAll('[data-testid^="soc-group-"]')).toHaveLength(9);
- await key(container.querySelector('[data-testid="soc-group-CC1"]'),' ');expect(crumbs()).toEqual(['SOC 2','Security','CC1']);expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(5);
+test('Prestige SOC 2 rows retain native button/link semantics, groups, criteria and breadcrumbs',async()=>{
+ await prestige();expect(container.querySelector('[data-testid="soc-category-security"]').tagName).toBe('BUTTON');await act(async()=>container.querySelector('[data-testid="soc-category-security"]').click());expect(crumbs()).toEqual(['SOC 2','Security']);expect(container.querySelectorAll('[data-testid^="soc-group-"]')).toHaveLength(9);
+ expect(container.querySelector('[data-testid="soc-group-CC1"]').tagName).toBe('BUTTON');await act(async()=>container.querySelector('[data-testid="soc-group-CC1"]').click());expect(crumbs()).toEqual(['SOC 2','Security','CC1']);expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(5);
  const criterion=container.querySelector('[data-testid="requirement-CC1.1"]');expect(criterion.getAttribute('role')).toBe('link');expect(criterion.textContent).toContain('Implemented');expect(criterion.textContent).toContain('David Wallace');
  await act(async()=>criterion.click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('CC1.1');expect(crumbs()).toEqual(['SOC 2','Security','CC1','CC1.1']);
  mockLocation.state=null;await act(async()=>[...container.querySelectorAll('[data-drawer-crumb]')].find(b=>b.textContent==='CC1').click());expect(container.querySelector('[data-testid="opened"]')).toBeNull();expect(crumbs()).toEqual(['SOC 2','Security','CC1']);
@@ -147,10 +198,42 @@ test('every client gets the reference workspace: categories start compact; open,
  await act(async()=>buttons('Next')[0].click());expect(container.querySelector('[data-testid="opened"]').textContent).toContain('2.1');
  expect(JSON.parse(sessionStorage.getItem('framework-workspace:u:a:cis-ig1')).lastId).toBe('a2');
 });
-test('a mismatched client response cannot populate the workspace or resume selection',async()=>{
+test('a mismatched client response is an error rather than an empty workspace',async()=>{
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="b"/>));
- expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);expect(container.querySelector('.bwp-program-counts').textContent).toContain('0 of 0');
+ expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);
+ expect(container.querySelector('[role="alert"]')?.textContent).toContain('CIS workspace records could not be verified for this client.');
+ expect(container.querySelector('.bwp-program-counts')).toBeNull();
  expect([...container.querySelectorAll('button')].some(b=>b.textContent.startsWith('Continue with'))).toBe(false);
+});
+
+test.each(['mixed-client','missing-id','non-array','null-row','foreign-position','missing-definition','missing-definitions'])('invalid current CIS %s response is rejected and Retry restores verified native records',async variant=>{
+ const valid=(await api.get()).data;
+ const invalid={...valid,assessments:valid.assessments.map(row=>({...row}))};
+ if(variant==='mixed-client')invalid.assessments[0].client_id='foreign';
+ if(variant==='missing-id')delete invalid.assessments[0].framework_assessment_id;
+ if(variant==='non-array')invalid.assessments={};
+ if(variant==='null-row')invalid.assessments=[null];
+ if(variant==='foreign-position')invalid.implementation_position={program_id:'foreign:cis-ig1'};
+ if(variant==='missing-definition')invalid.assessments[0].definition_id='missing-native-definition';
+ if(variant==='missing-definitions')invalid.definitions=[];
+ api.get.mockResolvedValue({data:invalid});
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="a"/>));
+ expect(container.querySelector('[role="alert"]')?.textContent).toContain('CIS workspace records could not be verified for this client.');
+ expect(container.querySelector('.bwp-program-counts')).toBeNull();
+ expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(0);
+ expect(api.patch).not.toHaveBeenCalled();
+ api.get.mockResolvedValue({data:valid});
+ await act(async()=>buttons('Retry workspace')[0].click());
+ expect(container.querySelector('[role="alert"]')).toBeNull();
+ expect(container.querySelectorAll('[data-testid^="control-row-"]')).not.toHaveLength(0);
+});
+
+test.each([true,false])('a valid empty unconfigured CIS response preserves selected=%s native setup state',async selected=>{
+ api.get.mockResolvedValue({data:{configured:false,selected,definitions:[],assessments:[],work:{}}});
+ await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="a"/>));
+ expect(container.querySelector('[role="alert"]')).toBeNull();
+ expect(container.textContent).toContain(selected?'Program selected for this client.':'Program not currently selected.');
+ expect(container.querySelector('a[href="/client-profile?tab=program"]')).not.toBeNull();
 });
 
 test('a requirement opened here is one history entry: Next replaces it and closing steps back to the view',async()=>{
@@ -175,8 +258,10 @@ test('a deep-linked requirement closes in place without leaving the workspace',a
 });
 
 test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps approved sections without setup or redundant shortcuts for %s',async clientId=>{
- const definitions=frameworkCatalog('iso-27001').requirements;
- api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:clientId,status:'addressed',soa_applicability:d.specification==='annex_control'?'included':undefined})),work:{}}}));
+ const fixture=frameworkDashboardFixture('iso-27001',undefined,clientId);
+ fixture.source.assessments.forEach(row=>{row.status='addressed';});fixture.refresh();
+ const assessmentsBefore=JSON.stringify(fixture.source.assessments);
+ api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:path==='/iso-audit'?{program:null,reviews:[]}:fixture.source}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId={clientId}/>));
  expect(container.querySelector('[aria-label="ISO workspace sections"]').children).toHaveLength(5);
  expect([...container.querySelector('[aria-label="ISO workspace sections"]').children].map(t=>t.textContent)).toEqual(['Overview','Statement of Applicability','ISMS Requirements','Annex A Controls','Internal Audit']);
@@ -187,34 +272,37 @@ test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps appro
  expect(container.textContent).not.toContain('Connected program records');
  await act(async()=>buttons('ISMS Requirements')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('30 of 30');
- expect(container.querySelector('.bwp-program-counts').textContent).toContain('30 of 30');
+ expect(container.querySelector('.now-head p').textContent).toContain('30 of 30');
  expect(container.querySelector('.bcis-explain')).toBeNull();
  const panel=container.querySelector('[role="tabpanel"]');
  expect(panel.getAttribute('aria-labelledby')).toBe('iso-tab-isms_clause');
  expect(panel.tabIndex).toBe(0);
  await act(async()=>buttons('Statement of Applicability')[0].click());
- await act(async()=>buttons('All controls')[0].click());
+ await act(async()=>buttons('Expand all')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
- expect(container.textContent).toContain('Necessary — Implemented');
+ const soaRow=container.querySelector('[data-testid="requirement-A.5.1"]');expect(soaRow.querySelector('.st').textContent).toBe('Necessary');expect(soaRow.querySelector('.sg-secondary-info').textContent).toContain('Implementation: Implemented');expect(soaRow.querySelector('.ver').textContent).toContain('Not verified');
  await act(async()=>buttons('Annex A Controls')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('93 of 93');
  await act(async()=>buttons('Internal Audit')[0].click());
  expect(container.textContent).toContain('Program not activated');
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]')).toBeNull();
+ expect(api.patch).not.toHaveBeenCalled();
+ expect(JSON.stringify(fixture.source.assessments)).toBe(assessmentsBefore);
 });
 
-test('ISO default presentation preserves SoA scope and uses native category buttons and guarded drawer breadcrumbs',async()=>{
- const definitions=frameworkCatalog('iso-27001').requirements;
- const annex=definitions.filter(d=>d.specification==='annex_control');
+test('ISO grouped presentation preserves SoA scope and native expansion with guarded drawer breadcrumbs',async()=>{
+ const fixture=frameworkDashboardFixture('iso-27001',undefined,'new-client');
+ const annex=fixture.source.definitions.filter(d=>d.specification==='annex_control');
+ fixture.source.assessments.forEach(row=>{row.status=row.definition_id===annex[0].id?'not_assessed':row.definition_id===annex[1].id?'not_applicable':'addressed';if(row.definition_id===annex[1].id)row.soa_applicability='excluded';});fixture.refresh();
  mockLocation.params=new URLSearchParams('iso_view=soa');
- api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'iso'+i,definition_id:d.id,client_id:'new-client',status:d.id===annex[0].id?'not_assessed':'addressed',soa_applicability:d.id===annex[1].id?'excluded':'included'})),work:{}}}));
+ api.get.mockImplementation(async path=>({data:['/reviews','/risks','/findings','/tasks','/policies'].includes(path)||path.endsWith('/members')?[]:fixture.source}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId="new-client"/>));
- expect(container.querySelector('.framework-presentation')).not.toBeNull();
-  expect(container.querySelector('[aria-label="Statement of Applicability status"]').textContent).toContain('93 of 93 decisions recorded');
- expect(container.querySelector('.framework-category-row').tagName).toBe('BUTTON');
- await act(async()=>buttons('All controls')[0].click());
+ expect(container.querySelector('.iso-cis-program-visual')).not.toBeNull();
+ expect(container.querySelector('[aria-labelledby="iso-soa-summary"]').textContent).toContain('93 of 93 decisions documented');
+ expect(container.querySelector('.iso-program-register .grow').tagName).toBe('BUTTON');
+ await act(async()=>buttons('Expand all')[0].click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(93);
- await act(async()=>container.querySelector(`[data-testid="requirement-${annex[0].id}"] button`).click());
+ await act(async()=>container.querySelector(`[data-testid="requirement-${annex[0].id}"]`).click());
  expect(container.querySelector('[aria-label="ISO workspace sections"] [aria-selected="true"]').textContent).toBe('Statement of Applicability');
  expect(container.querySelector('[data-testid="opened"]').textContent).toContain('Statement of Applicability');
  await act(async()=>[...container.querySelectorAll('[data-drawer-crumb]')].find(b=>b.textContent==='Statement of Applicability').click());
@@ -222,7 +310,7 @@ test('ISO default presentation preserves SoA scope and uses native category butt
  expect(mockHistory.at(-1).search).toBe('iso_view=soa');
  await act(async()=>buttons('Annex A Controls')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('91 of 92');
- await act(async()=>container.querySelector('.bcis-legend .is-good').click());
+ await act(async()=>[...container.querySelectorAll('.lg button')].find(button=>button.querySelector('.lg-label').textContent==='Implemented').click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(91);
  expect(container.querySelector(`[data-testid="requirement-${annex[1].id}"]`)).toBeNull();
 });
@@ -244,12 +332,12 @@ test('retained SOC criteria keep contextual management reachable after scope red
  const response=await prestige();
  const retained=response.definitions.find(d=>d.category==='privacy');
  const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- const continueLabel=[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue with')).textContent;
+ const continueLabel=[...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue:')).textContent;
  const toggle=[...container.querySelectorAll('label')].find(l=>l.textContent==='Include retained out-of-scope criteria').querySelector('input');
  await act(async()=>toggle.click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toBe(summary);
- expect([...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue with')).textContent).toBe(continueLabel);
- const search=container.querySelector('input[aria-label="Search criteria"]');
+ expect([...container.querySelectorAll('button')].find(b=>b.textContent.startsWith('Continue:')).textContent).toBe(continueLabel);
+ const search=container.querySelector('.soc-criteria-register input[type="search"]');
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,retained.id);search.dispatchEvent(new Event('input',{bubbles:true}));});
  const manage=container.querySelector(`button[aria-label="Manage ${retained.id} ${retained.title}"]`);
  expect(manage).not.toBeNull();await act(async()=>manage.click());

@@ -35,9 +35,29 @@ test('Risks cannot repaint shared High or Accepted pills in sibling modules',()=
   expect(shared).toContain('.pill-accepted { color: var(--color-neutral)');
 });
 
-test('Portfolio counts use tabular neutral surfaces and restrained rails, never alarm bubbles',()=>{
-  const css=read('pages/BrawndoPortfolio.css');expect(css).not.toMatch(/\.bp-count[^{}]*\{[^}]*background:\s*var\(--bp-(critical|attention)-bg\)/);
-  expect(css).toContain('border-inline-start: 2px solid transparent');expect(css).toContain('font-variant-numeric: tabular-nums');
-  expect(css).toContain('var(--metric-number-size)');expect(css).toContain('var(--page-title-size)');
-  const source=read('pages/ClientDirectory.jsx');expect(source).toContain("critical_high_issues: 'attention'");expect(source).toContain("unassigned: 'neutral'");
+test('Portfolio grouped table reflows at its container boundary with neutral metrics and shared implementation fills',()=>{
+  const css=read('pages/GoverNaraPortfolio.css');
+  expect(css).toMatch(/\.gp-table-frame\s*\{[^}]*container-type:\s*inline-size/);
+  expect(css).toMatch(/\.gp-table thead tr,\.gp-table tbody\s*\{[^}]*display:grid[^}]*grid-template-columns:/);
+  expect(css).toMatch(/@container\s*\(max-width:960px\)/);
+  expect(css).toContain('font-variant-numeric:tabular-nums');
+  expect(css).not.toMatch(/\.gp-(percent|progress-count)[^{}]*\{[^}]*background:\s*var\(--color-(critical|moderate)-bg\)/);
+  const palette = [['implemented','--chart-implemented'],['partial','--gp-part'],['not','--gp-not'],['unassessed','--gp-none']];
+  for(const [status,color] of palette)
+    expect(css).toContain(`.gp-statusbar .is-${status} { background:var(${color}); }`);
+  const roles=['implemented','partial','not','unassessed'];
+  const sheet = require('postcss').parse(css);
+  const aliases = new Map();
+  sheet.walkRules('.governara-portfolio', rule => rule.walkDecls(declaration => aliases.set(declaration.prop,declaration.value)));
+  expect(palette.map(([,token]) => aliases.get(token))).toEqual(roles.map(role=>`var(--implementation-${role}-fill)`));
+  const shared=require('postcss').parse(read('components/SemanticPresentation.css'));
+  const fills=new Map(),dark=new Map();
+  shared.walkRules(rule=>{
+    if(rule.selectors.includes('.governara-portfolio'))rule.walkDecls(declaration=>fills.set(declaration.prop,declaration.value));
+    if(rule.selectors.includes('.governara-portfolio[data-theme=dark]'))rule.walkDecls(declaration=>dark.set(declaration.prop,declaration.value));
+  });
+  expect(roles.map(role=>fills.get(`--implementation-${role}-fill`))).toEqual(['#168566','#dcb13e','#d95e7d','#d2dae5']);
+  expect(new Set(roles.map(role=>fills.get(`--implementation-${role}-fill`))).size).toBe(4);
+  expect(dark.get('--implementation-unassessed-fill')).toBe('#607088');
+  const source=read('pages/ClientDirectory.jsx');expect(source).toContain("import './GoverNaraPortfolio.css'");expect(source).not.toContain("import './BrawndoPortfolio.css'");
 });

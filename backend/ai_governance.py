@@ -6,19 +6,23 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional, Literal
 from fastapi import APIRouter, Depends, HTTPException, Header
-from pydantic import BaseModel, Field, ConfigDict, StrictBool, ValidationError, model_validator
+from pydantic import BaseModel, Field, ConfigDict, StrictBool, StrictStr, ValidationError, field_validator, model_validator
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 import review_occurrences
 import assignment_eligibility
 import create_requests
+import ai_onboarding
+from register_catalog_identity import validate_catalog_key
 
 CATALOG = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/aiGovernanceCatalog.json').read_text(encoding='utf-8'))
+AI_METADATA_DEFAULTS = {'environment':'','restrictions':'','data_settings':'','permitted_data_types':[]}
 
 class AIInput(BaseModel):
     model_config = ConfigDict(extra='forbid')
     client_id: str
     name: str = Field(min_length=1, max_length=240)
+    catalog_key: Optional[str] = None
     description: str = ''
     owner_id: Optional[str] = None
     technical_owner_id: Optional[str] = None
@@ -37,6 +41,22 @@ class AIInput(BaseModel):
     oversight_owner_id: Optional[str] = None
     oversight_notes: str = ''
     governance_notes: str = ''
+    environment: str = Field(default='', strict=True, max_length=10000)
+    restrictions: str = Field(default='', strict=True, max_length=10000)
+    data_settings: str = Field(default='', strict=True, max_length=10000)
+    permitted_data_types: list[StrictStr] = Field(default_factory=list, strict=True, max_length=len(CATALOG['data_types']))
+
+    @field_validator('catalog_key', mode='before')
+    @classmethod
+    def valid_catalog_key(cls, value):
+        return validate_catalog_key('ai_systems', value)
+
+    @field_validator('permitted_data_types')
+    @classmethod
+    def valid_permitted_data_types(cls, values):
+        if any(value not in CATALOG['data_types'] for value in values):
+            raise ValueError('Invalid permitted data classifications')
+        return values
 
 class AILinkInput(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
@@ -65,6 +85,8 @@ def readable_links(row):
     return links
 
 def screening(row):
+    onboarding=ai_onboarding.screening_projection(row)
+    if onboarding is not None:return onboarding
     answers = row.get('screening') or {}
     complete = all(type(answers.get(q['key'])) is bool for q in CATALOG['questions'])
     high = any(answers.get(q['key']) is True for q in CATALOG['questions'] if q.get('high'))
@@ -91,7 +113,7 @@ def projection(row, reviews, risks, today=None):
         return result
     def alert(key, label, condition):
         if condition: result['alerts'].append({'key':key,'label':label,'classification':'Recommended governance practice'})
-    answers = row.get('screening') or {}
+    answers = ai_onboarding.governance_answers(row)
     alert('owner','AI Owner Missing',not row.get('owner_id'))
     alert('schedule','AI Review Not Scheduled',not result['next_review'])
     alert('overdue','AI Review Overdue',bool(result['next_review'] and result['next_review'][:10] < (today or datetime.now(timezone.utc).date().isoformat())))
@@ -99,9 +121,9 @@ def projection(row, reviews, risks, today=None):
     assessed = any(r['client_id']==row['client_id'] and r.get('risk_id') in ids and r.get('status') not in ('closed','retired') and type(r.get('likelihood_score')) is int and type(r.get('impact_score')) is int for r in risks)
     alert('risk','High-Risk AI Without Risk Assessment',result['risk_tier']=='high' and not assessed)
     alert('screening','AI Governance Assessment Missing',not result['screening_complete'])
-    consequential = answers.get('consequential') or answers.get('employment') or 'HR / Employment' in row.get('purposes',[])
+    consequential = answers.get('consequential') or (row.get('screening') or {}).get('employment') or 'HR / Employment' in row.get('purposes',[])
     alert('oversight','Consequential AI Without Documented Oversight',consequential and not row.get('oversight_notes','').strip())
-    alert('vendor','Third-Party AI Without Vendor Relationship',(answers.get('third_party') or row.get('provider')) and not row.get('vendor_id'))
+    alert('vendor','Third-Party AI Without Vendor Relationship',((row.get('screening') or {}).get('third_party') or row.get('provider')) and not row.get('vendor_id'))
     sensitive = answers.get('sensitive') or bool(set(row.get('data_types',[]))-{'Public','Internal','No Sensitive Data'})
     alert('sensitive','Sensitive Data Without Completed Governance Review',sensitive and not result['last_review'])
     alert('change','Material Change Review Needed',row.get('material_change_at') and (not result['last_review'] or row['material_change_at'] > result['last_review']))
@@ -133,6 +155,12 @@ def router_for(s):
     async def view(row):
         q={'client_id':row['client_id']}
         return projection(row,await s.db.reviews.find({**q,'ai_system_id':row['ai_system_id']},{'_id':0}).to_list(None),await s.db.risks.find(q,{'_id':0}).to_list(None))
+    async def metadata_scope(cid,supplied):
+        if not set(supplied).intersection(AI_METADATA_DEFAULTS): return
+        client=await s.db.clients.find_one({'client_id':cid})
+        if not client or client.get('status') not in ('active','onboarding') \
+            or client.get('archived') or client.get('archived_at'):
+            raise HTTPException(422,'AI governance metadata requires an active or onboarding client that is not archived')
     async def validate(data,user,old=None):
         await client_scope(data['client_id'],user,True)
         if not data['name'].strip(): raise HTTPException(422,'Name is required')
@@ -171,21 +199,41 @@ def router_for(s):
     @router.post('/ai_systems')
     async def create_ai(body:AIInput,user=Depends(s.get_current_user),idempotency_key:Optional[str]=Header(None)):
         await client_scope(body.client_id,user,True)
+        await metadata_scope(body.client_id,body.model_fields_set)
         async def execute(identity):
+            await metadata_scope(body.client_id,body.model_fields_set)
             return await create_ai_record(body,user,identity)
-        return await create_requests.run(s.db,idempotency_key,user['user_id'],body.client_id,'ai_systems',body.model_dump(),execute)
-    async def create_ai_record(body,user,identity):
+        payload=body.model_dump()
+        if idempotency_key is not None and all(payload[key]==default for key,default in AI_METADATA_DEFAULTS.items()):
+            # Exact retained schemas only. Empty new metadata must not strand an
+            # old create, but a real association or governance edit stays hashed.
+            previous_payload={key:value for key,value in payload.items() if key not in AI_METADATA_DEFAULTS}
+            candidates=[previous_payload]
+            if body.catalog_key is None:
+                candidates.append({key:value for key,value in previous_payload.items() if key!='catalog_key'})
+            identity=create_requests.digest([user['user_id'],body.client_id,'ai_systems',idempotency_key])
+            receipt=await s.db.create_requests.find_one({'_id':identity},{'fingerprint':1})
+            for candidate in candidates:
+                if receipt and receipt.get('fingerprint')==create_requests.digest(candidate):
+                    payload=candidate
+                    break
+        return await create_requests.run(s.db,idempotency_key,user['user_id'],body.client_id,'ai_systems',payload,execute)
+    async def create_ai_record(body,user,identity,creation_metadata=None):
         existing=await s.db.ai_systems.find_one({'_id':'create:'+identity},{'_id':0})
         if existing:
             await s.audit(user,'AI use case created','ai_system',existing['ai_system_id'],existing['client_id'])
             return await view(existing)
-        data=body.model_dump();await validate(data,user)
+        data=body.model_dump(exclude=set(AI_METADATA_DEFAULTS)-body.model_fields_set)
+        await validate(data,user)
         counter_key='ai-display:'+data['client_id']
         try:
             counter=await s.db.business_counters.find_one_and_update({'_id':counter_key},{'$inc':{'sequence':1}},upsert=True,return_document=ReturnDocument.AFTER)
         except DuplicateKeyError:
             counter=await s.db.business_counters.find_one_and_update({'_id':counter_key},{'$inc':{'sequence':1}},return_document=ReturnDocument.AFTER)
         row={**data,'ai_system_id':s._uid('ai'),'display_id':f"AI-{counter['sequence']:03d}",'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'related_links':[]}
+        if creation_metadata:
+            row.update(creation_metadata)
+            row['_ai_onboarding_initial_version']=row['updated_at']
         row=await create_requests.insert_primary(s.db,'ai_systems',row,identity)
         await s.audit(user,'AI use case created','ai_system',row['ai_system_id'],row['client_id'])
         return await view(row)
@@ -194,13 +242,31 @@ def router_for(s):
         old=await parent(aid,user,True)
         s._require_snapshot(body,old)
         changes={k:v for k,v in body.items() if k!='expected_updated_at'}
+        reviewed_screening=changes.pop('onboarding_screening',None)
+        if 'onboarding_screening' in body and not isinstance(reviewed_screening,dict):
+            raise HTTPException(422,'Invalid screening review')
         if set(changes)-set(AIInput.model_fields): raise HTTPException(422,'Unknown or read-only AI fields')
+        await metadata_scope(old['client_id'],changes)
         async with lease(s.db,aid):
             old=await parent(aid,user,True)
             s._require_snapshot(body,old)
+            await metadata_scope(old['client_id'],changes)
             try: data=AIInput(**{**{k:old[k] for k in AIInput.model_fields if k in old},**changes}).model_dump()
             except Exception as exc: raise HTTPException(422,'Invalid AI fields') from exc
+            # Existing forms resend empty defaults; that is not a backfill or an
+            # edit to an absent legacy boundary. Existing fields still clear.
+            for key,default in AI_METADATA_DEFAULTS.items():
+                if key not in old and data[key]==default: data.pop(key)
             await validate(data,user,old)
+            if old.get('approval_status') in ('approved','approved_with_conditions') and any(
+                data.get(key,AIInput.model_fields[key].get_default(call_default_factory=True))
+                !=old.get(key,AIInput.model_fields[key].get_default(call_default_factory=True))
+                for key in AI_METADATA_DEFAULTS):
+                raise HTTPException(409,'This change affects a recorded AI approval scope; authenticated reassessment is not supported. The original decision and record are unchanged.')
+            data['updated_at']=s._next_write_time(old.get('updated_at'))
+            if reviewed_screening is not None:
+                await metadata_scope(old['client_id'],{'environment'})
+                data['onboarding_screening']=ai_onboarding.reassessment(old,{**old,**data},reviewed_screening,user,data['updated_at'])
             if data['status']=='retired':
                 # Started work may finish as a one-time closure obligation; history is retained.
                 for review in await s.db.reviews.find({'ai_system_id':aid,'client_id':old['client_id'],'status':{'$nin':['completed','cancelled']}},{'_id':0}).to_list(None):
@@ -208,11 +274,10 @@ def router_for(s):
                     if review['status']!='in_progress': changes['status']='cancelled'
                     await s.db.reviews.update_one({'review_id':review['review_id']},{'$set':changes})
                     await s._review_event(user,review,'AI retired; recurring review stopped')
-            data['updated_at']=s._next_write_time(old.get('updated_at'))
             changed_record=await s.db.ai_systems.update_one({'ai_system_id':aid,'updated_at':old.get('updated_at')},{'$set':data})
             if not changed_record.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
             changed=[k for k in data if k!='updated_at' and data[k]!=old.get(k)]
-            if changed: await s.audit(user,'AI '+('retired' if data['status']=='retired' else 'suspended' if data['status']=='suspended' else 'governance updated'),'ai_system',aid,old['client_id'],meta={'changed_fields':changed,'previous_tier':screening(old)['risk_tier'],'risk_tier':screening(data)['risk_tier']})
+            if changed: await s.audit(user,'AI '+('retired' if data['status']=='retired' else 'suspended' if data['status']=='suspended' else 'governance updated'),'ai_system',aid,old['client_id'],meta={'changed_fields':changed,'previous_tier':screening(old)['risk_tier'],'risk_tier':screening({**old,**data})['risk_tier']})
             return await view({**old,**data})
     @router.post('/ai_systems/{aid}/reviews')
     async def schedule_ai(aid:str,body:dict,user=Depends(s.get_current_user)):
@@ -258,4 +323,6 @@ def router_for(s):
         row=await parent(aid,user)
         reviews=await s.db.reviews.find({'client_id':row['client_id'],'ai_system_id':aid},{'review_id':1}).to_list(None)
         return await s.db.audit_logs.find({'client_id':row['client_id'],'entity_id':{'$in':[aid]+[r['review_id'] for r in reviews]}},{'_id':0}).sort('at',-1).to_list(500)
+    ai_onboarding.register(router,s,ai_model=AIInput,create_ai=create_ai_record,validate_ai=validate,
+        client_scope=client_scope,metadata_scope=metadata_scope,project_ai=view)
     return router

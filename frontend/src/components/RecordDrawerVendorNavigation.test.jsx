@@ -2,15 +2,19 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordDrawer from './RecordDrawer';
 import api from '@/lib/api';
+import {cisClient} from '@/testUtils/cisExperience';
+const mockCisClients=[cisClient('demo_brawndo'),cisClient('synthetic_normal_cis',2)];
+let mockOrg;
 let mockUser={user_id:'admin',role:'super_admin',workspace_mode:'standard'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:false}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>}),{virtual:true});
 jest.mock('./EvidencePanel',()=>()=>null);
 jest.mock('./ReviewDrawer',()=>({__esModule:true,default:({onSaved,onOpenChange})=><div data-testid="linked-review"><button onClick={onSaved}>Save linked Vendor Review</button><button onClick={()=>onOpenChange(false)}>Close linked Vendor Review</button></div>}));
 let root,container,mockStrict=false;
 const vendor={vendor_id:'v1',client_id:'future-client',name:'Generic vendor',service:'Hosting',status:'active',assurance_records:[]};
-const render=props=>act(async()=>{const drawer=<RecordDrawer open kind="vendors" clientId="future-client" record={vendor} onOpenChange={jest.fn()} {...props}/>;root.render(mockStrict?<React.StrictMode>{drawer}</React.StrictMode>:drawer);});
+const render=props=>act(async()=>{const cid=props?.clientId||'future-client';const client=mockCisClients.find(row=>row.client_id===cid)||{client_id:cid,name:'Generic client',status:'active'};mockOrg={currentClientId:cid,currentClient:client,clients:[client]};const drawer=<RecordDrawer open kind="vendors" clientId="future-client" record={vendor} onOpenChange={jest.fn()} {...props}/>;root.render(mockStrict?<React.StrictMode>{drawer}</React.StrictMode>:drawer);});
 const click=node=>act(async()=>node.click());
 const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(node.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
 const active=id=>expect(document.querySelector('[data-testid="tab-'+id+'"]').className).toContain('active');
@@ -44,20 +48,138 @@ test('clean refresh advances the editing version for a subsequent successful sav
   await click(document.querySelector('[data-testid="drawer-save"]'));
   expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({expected_updated_at:'version2',name:'Edited after refresh'}),expect.anything());expect(close).toHaveBeenCalledWith(false);
 });
-test.each([[false,false],[true,false],[false,true],[true,true]])('nested Vendor Review date refresh preserves draft=%s under StrictMode=%s',async(dirty,strict)=>{mockStrict=strict;
-  mockUser.workspace_mode='demo';const record={...vendor,client_id:'demo_brawndo',updated_at:'version1'},review={review_id:'review1',vendor_id:record.vendor_id,client_id:record.client_id,title:'Linked vendor Review'};
-  api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/reviews'?[review]:path==='/vendors/v1'?{...record,updated_at:'version2',last_review:'2026-10-07',next_review:'2027-10-07'}:[]}));
+test.each([[false,false],[true,false],[false,true],[true,true]])('nested Vendor Review refreshes saved status and dates while preserving draft=%s under StrictMode=%s',async(dirty,strict)=>{mockStrict=strict;
+  mockUser.workspace_mode='demo';const record={...vendor,client_id:'demo_brawndo',status:'onboarding',updated_at:'version1'},review={review_id:'review1',vendor_id:record.vendor_id,client_id:record.client_id,title:'Linked vendor Review'};
+  api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/reviews'?[review]:path==='/vendors/v1'?{...record,status:'under_review',updated_at:'version2',last_review:'2026-10-07',next_review:'2027-10-07'}:[]}));
   await render({clientId:record.client_id,record});if(dirty)await input(document.querySelector('[data-testid="field-name"]'),'Existing draft');
   await click(document.querySelector('[data-testid="tab-reviews_tab"]'));await click([...document.querySelectorAll('button')].find(b=>b.textContent.startsWith(review.title)));
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save linked Vendor Review'));await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close linked Vendor Review'));
-  await click(document.querySelector('[data-testid="tab-overview"]'));expect(document.querySelector('[data-testid="field-next_review"]').value).toBe('2027-10-07');if(!dirty)await input(document.querySelector('[data-testid="field-name"]'),'Edited after linked Review');api.patch.mockResolvedValue({data:{...record,updated_at:'version3'}});
+  await click(document.querySelector('[data-testid="tab-overview"]'));
+  expect(document.querySelector('dl').textContent).toContain('Under review');
+  expect(document.querySelector('[data-testid="field-status"]').value).toBe('under_review');
+  expect(document.querySelector('[data-testid="field-next_review"]').value).toBe('2027-10-07');if(!dirty)await input(document.querySelector('[data-testid="field-name"]'),'Edited after linked Review');api.patch.mockResolvedValue({data:{...record,updated_at:'version3'}});
   await click(document.querySelector('[data-testid="drawer-save"]'));expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({expected_updated_at:dirty?'version1':'version2',name:dirty?'Existing draft':'Edited after linked Review'}),expect.anything());
+  expect(api.patch.mock.calls.at(-1)[1]).not.toHaveProperty('status');
 });
-test.each([false,true])('Vendor date response observes in-flight edits under StrictMode=%s',async strict=>{mockStrict=strict;
-  mockUser.workspace_mode='demo';const record={...vendor,client_id:'demo_brawndo',updated_at:'version1'},review={review_id:'review1',vendor_id:record.vendor_id,client_id:record.client_id,title:'Linked vendor Review'};let resolveRefresh;
+test.each([['name',false],['name',true],['status',false],['status',true]])('Vendor date response observes in-flight %s edits under StrictMode=%s',async(field,strict)=>{mockStrict=strict;
+  mockUser.workspace_mode='demo';const record={...vendor,client_id:'demo_brawndo',status:'onboarding',updated_at:'version1'},review={review_id:'review1',vendor_id:record.vendor_id,client_id:record.client_id,title:'Linked vendor Review'};let resolveRefresh;
   api.get.mockImplementation(path=>path==='/vendors/v1'?new Promise(resolve=>{resolveRefresh=resolve;}):Promise.resolve({data:path==='/related'?{}:path==='/reviews'?[review]:[]}));
   await render({clientId:record.client_id,record});await click(document.querySelector('[data-testid="tab-reviews_tab"]'));await click([...document.querySelectorAll('button')].find(b=>b.textContent.startsWith(review.title)));
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save linked Vendor Review'));await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close linked Vendor Review'));await click(document.querySelector('[data-testid="tab-overview"]'));
-  await input(document.querySelector('[data-testid="field-name"]'),'Edited during refresh');await act(async()=>resolveRefresh({data:{...record,updated_at:'version2',next_review:'2027-10-07'}}));api.patch.mockResolvedValue({data:{...record,updated_at:'version3'}});
-  await click(document.querySelector('[data-testid="drawer-save"]'));expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({expected_updated_at:'version1',name:'Edited during refresh'}),expect.anything());
+  if(field==='name')await input(document.querySelector('[data-testid="field-name"]'),'Edited during refresh');
+  else await act(async()=>{const select=document.querySelector('[data-testid="field-status"]');select.value='active';select.dispatchEvent(new Event('change',{bubbles:true}));});
+  await act(async()=>resolveRefresh({data:{...record,status:'under_review',updated_at:'version2',next_review:'2027-10-07'}}));api.patch.mockResolvedValue({data:{...record,updated_at:'version3'}});
+  expect(document.querySelector('dl').textContent).toContain('Under review');
+  expect(document.querySelector('[data-testid="field-status"]').value).toBe(field==='status'?'active':'under_review');
+  await click(document.querySelector('[data-testid="drawer-save"]'));expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({expected_updated_at:'version1',...(field==='name'?{name:'Edited during refresh'}:{status:'active'})}),expect.anything());
+});
+
+test('a clean Vendor status refresh rebases its close guard without an extra save',async()=>{
+  mockUser.workspace_mode='demo';
+  const record={...vendor,client_id:'demo_brawndo',status:'onboarding',updated_at:'version1'},close=jest.fn();
+  const review={review_id:'review1',vendor_id:record.vendor_id,client_id:record.client_id,title:'Linked vendor Review'};
+  api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/reviews'?[review]:path==='/vendors/v1'?{...record,status:'under_review',updated_at:'version2'}:[]}));
+  await render({clientId:record.client_id,record,onOpenChange:close});
+  await click(document.querySelector('[data-testid="tab-reviews_tab"]'));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent.startsWith(review.title)));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save linked Vendor Review'));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close linked Vendor Review'));
+  await click(document.querySelector('[data-testid="tab-overview"]'));
+  expect(document.querySelector('[data-testid="field-status"]').value).toBe('under_review');
+  await click(document.querySelector('[data-testid="drawer-cancel"]'));
+  expect(close).toHaveBeenCalledWith(false);
+  expect(document.body.textContent).not.toContain('Discard unsaved changes?');
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('nested Vendor Review preserves a genuine status draft and its original conflict token',async()=>{
+  mockUser.workspace_mode='demo';
+  const record={...vendor,client_id:'demo_brawndo',status:'onboarding',updated_at:'version1'},close=jest.fn();
+  const review={review_id:'review1',vendor_id:record.vendor_id,client_id:record.client_id,title:'Linked vendor Review'};
+  api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/reviews'?[review]:path==='/vendors/v1'?{...record,status:'under_review',updated_at:'version2',next_review:'2027-10-07'}:[]}));
+  await render({clientId:record.client_id,record,onOpenChange:close});
+  await act(async()=>{const select=document.querySelector('[data-testid="field-status"]');select.value='active';select.dispatchEvent(new Event('change',{bubbles:true}));});
+  await click(document.querySelector('[data-testid="tab-reviews_tab"]'));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent.startsWith(review.title)));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save linked Vendor Review'));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close linked Vendor Review'));
+  await click(document.querySelector('[data-testid="tab-overview"]'));
+  expect(document.querySelector('dl').textContent).toContain('Under review');
+  expect(document.querySelector('[data-testid="field-status"]').value).toBe('active');
+  api.patch.mockRejectedValue(Object.assign(new Error('Record changed; reload before saving'),{response:{status:409,headers:{'x-create-rejected':'true'}}}));
+  await click(document.querySelector('[data-testid="drawer-save"]'));
+  expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({status:'active',expected_updated_at:'version1'}),expect.anything());
+  expect(close).not.toHaveBeenCalled();
+  expect(document.querySelector('[data-testid="field-status"]').value).toBe('active');
+  await click(document.querySelector('[data-testid="drawer-cancel"]'));
+  expect(document.body.textContent).toContain('Discard unsaved changes?');
+});
+
+test.each([
+  ['demo_prestige','demo',false],
+  ['demo_brawndo_lookalike','demo',false],
+  ['future-client','standard',false],
+  ['demo_brawndo','standard',true],
+  ['synthetic_normal_cis','standard',true],
+])('nested Review status reconciliation follows actual CIS enrollment for client=%s mode=%s',async(clientId,mode,configuredCis)=>{
+  mockUser.workspace_mode=mode;
+  const record={...vendor,client_id:clientId,status:'onboarding',updated_at:'version1'};
+  const review={review_id:'review1',vendor_id:record.vendor_id,client_id:clientId,title:'Linked vendor Review'};
+  api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/reviews'?[review]:path==='/vendors/v1'?{...record,status:'under_review',updated_at:'version2'}:[]}));
+  await render({clientId,record});
+  await click(document.querySelector('[data-testid="tab-reviews_tab"]'));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent.startsWith(review.title)));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save linked Vendor Review'));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close linked Vendor Review'));
+  await click(document.querySelector('[data-testid="tab-overview"]'));
+  expect(record.status).toBe(configuredCis?'under_review':'onboarding');
+  expect(document.body.textContent).toContain(configuredCis?'Under review':'Onboarding');
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test.each(['foreign-client','foreign-vendor','ended-record','closed-drawer','read-failure'])('nested Review status refresh rejects %s responses',async scenario=>{
+  mockUser.workspace_mode='demo';
+  const record={...vendor,client_id:'demo_brawndo',status:'onboarding',updated_at:'version1'},nextRecord={...vendor,vendor_id:'v2',client_id:'demo_brawndo',name:'Next vendor',status:'onboarding'};
+  const review={review_id:'review1',vendor_id:record.vendor_id,client_id:record.client_id,title:'Linked vendor Review'};
+  let resolveRefresh,rejectRefresh;
+  api.get.mockImplementation(path=>path==='/vendors/v1'?new Promise((resolve,reject)=>{resolveRefresh=resolve;rejectRefresh=reject;}):Promise.resolve({data:path==='/related'?{}:path==='/reviews'?[review]:[]}));
+  await render({clientId:record.client_id,record});
+  await click(document.querySelector('[data-testid="tab-reviews_tab"]'));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent.startsWith(review.title)));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save linked Vendor Review'));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close linked Vendor Review'));
+  if(scenario==='ended-record')await render({clientId:nextRecord.client_id,record:nextRecord});
+  if(scenario==='closed-drawer')await render({open:false,clientId:record.client_id,record});
+  await act(async()=>scenario==='read-failure'?rejectRefresh(new Error('Vendor read unavailable')):resolveRefresh({data:{...record,vendor_id:scenario==='foreign-vendor'?'other-vendor':record.vendor_id,client_id:scenario==='foreign-client'?'demo_prestige':record.client_id,status:'under_review',updated_at:'version2'}}));
+  if(scenario==='closed-drawer')await render({clientId:record.client_id,record});
+  await click(document.querySelector('[data-testid="tab-overview"]'));
+  expect(document.querySelector('[data-testid="field-status"]').value).toBe('onboarding');
+  expect(record.status).toBe('onboarding');
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test.each([false,true])('overlapping Vendor Review saves retain only the latest response without closing the child under StrictMode=%s',async strict=>{
+  mockStrict=strict;mockUser.workspace_mode='demo';
+  const record={...vendor,client_id:'demo_brawndo',status:'onboarding',next_review:'2026-10-07',updated_at:'version1'};
+  const review={review_id:'review1',vendor_id:record.vendor_id,client_id:record.client_id,title:'Linked vendor Review'},responses=[];
+  api.get.mockImplementation(path=>path==='/vendors/v1'?new Promise(resolve=>responses.push(resolve)):Promise.resolve({data:path==='/related'?{}:path==='/reviews'?[review]:[]}));
+  await render({clientId:record.client_id,record});
+  await click(document.querySelector('[data-testid="tab-reviews_tab"]'));
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent.startsWith(review.title)));
+  const save=()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='Save linked Vendor Review');
+  await click(save());await click(save());expect(responses).toHaveLength(2);
+  await act(async()=>responses[1]({data:{...record,status:'under_review',updated_at:'version3',last_review:'2026-10-07',next_review:'2027-10-07'}}));
+  expect(document.querySelector('[data-testid="linked-review"]')).not.toBeNull();
+  await act(async()=>responses[0]({data:{...record,status:'onboarding',updated_at:'version2',next_review:'2026-10-07'}}));
+  expect(document.querySelector('[data-testid="linked-review"]')).not.toBeNull();
+  await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close linked Vendor Review'));
+  await click(document.querySelector('[data-testid="tab-overview"]'));
+  expect(document.querySelector('dl').textContent).toContain('Under review');
+  expect(document.querySelector('[data-testid="field-status"]').value).toBe('under_review');
+  expect(document.querySelector('[data-testid="field-next_review"]').value).toBe('2027-10-07');
+  await input(document.querySelector('[data-testid="field-name"]'),'Edited after overlapping reviews');
+  api.patch.mockResolvedValue({data:{...record,updated_at:'version4'}});
+  await click(document.querySelector('[data-testid="drawer-save"]'));
+  expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({expected_updated_at:'version3',name:'Edited after overlapping reviews'}),expect.anything());
+  expect(api.patch.mock.calls.at(-1)[1]).not.toHaveProperty('status');
 });

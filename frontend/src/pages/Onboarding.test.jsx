@@ -9,7 +9,7 @@ jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'admin',role
 jest.mock('@/context/ComplianceContext',()=>({useCompliance:()=>({refresh:jest.fn()})}));
 jest.mock('@/components/AIIntake',()=>()=>null);
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn()},formatError:e=>e.message}));
-jest.mock('react-router-dom',()=>({Link:({to,children,...props})=><a href={to} {...props}>{children}</a>}),{virtual:true});
+jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/client-profile',search:''}),Link:({to,children,...props})=><a href={to} {...props}>{children}</a>}),{virtual:true});
 let root,container;
 const button=text=>Array.from(container.querySelectorAll('button')).find(b=>b.textContent===text);
 beforeEach(()=>{

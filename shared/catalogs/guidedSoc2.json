@@ -1,5 +1,5 @@
 {
-  "version": "soc2-omni-1",
+  "version": "soc2-omni-2",
   "framework_id": "soc-2",
   "source": {
     "edition": "AICPA/ASEC TSP Section 100, 2017 Trust Services Criteria with revised Points of Focus (2022)",
@@ -861,5 +861,52 @@
         ]}
       ]
     }
-  }
+  },
+  "extra_questions": [
+    {
+      "id": "additional_gap",
+      "type": "select",
+      "prompt": "Is there an additional confirmed gap relevant to this requirement?",
+      "choices": [
+        "Yes",
+        "No",
+        "Not sure"
+      ],
+      "optional": true
+    },
+    {
+      "id": "gaps",
+      "type": "text",
+      "prompt": "Confirmed gaps",
+      "condition": {
+        "id": "additional_gap",
+        "equals": "Yes"
+      }
+    },
+    {
+      "id": "additional_confirmation",
+      "type": "select",
+      "prompt": "Is there additional requirement information that needs confirmation?",
+      "choices": [
+        "Yes",
+        "No",
+        "Not sure"
+      ],
+      "optional": true
+    },
+    {
+      "id": "unknowns",
+      "type": "text",
+      "prompt": "Items requiring confirmation",
+      "condition": {
+        "id": "additional_confirmation",
+        "equals": "Yes"
+      }
+    },
+    {
+      "id": "evidence",
+      "type": "text",
+      "prompt": "Reported supporting records"
+    }
+  ]
 }

@@ -1,0 +1,126 @@
+{
+  "package": "Brawndo CIS IG1 Security Domains Pilot",
+  "preparedDate": "2026-10-14",
+  "scope": "Brawndo CIS IG1 only, existing authorized Render staging",
+  "provenance": {
+    "inputKind": "Explicit user-supplied local ZIP; not a Library materialization",
+    "archiveFilename": "Brawndo_CIS_IG1_Security_Domains_Pilot_Package.zip",
+    "archiveBytes": 45724,
+    "archiveSha256": "3a3dc88c25882a25d875ccbd1682b96e4f8f946206d38cf26aebca1bab535889",
+    "originalPreserved": true,
+    "workingCopyByteIdentical": true,
+    "originalManifestEntriesVerified": 6,
+    "materializedFileCount": 7
+  },
+  "originalManifest": {
+    "package": "Brawndo CIS IG1 Security Domains Pilot",
+    "preparedDate": "2026-10-14",
+    "scope": "Brawndo CIS IG1 only, existing authorized Render staging",
+    "files": [
+      {
+        "filename": "Acceptance_Checklist.txt",
+        "bytes": 5888,
+        "sha256": "269c4099d9a67bdb217a9ca987c9385cf46cca8c354019bcd183283ed46c8264"
+      },
+      {
+        "filename": "Blobdoll_Execution_Prompt.txt",
+        "bytes": 12623,
+        "sha256": "3a4f9b0856ccc0ac6046848bc2e03342de12e6f5f18183293231b66017fef1a9"
+      },
+      {
+        "filename": "Blobdoll_Launch_Prompt.txt",
+        "bytes": 2706,
+        "sha256": "db749cc78ed35e99a2a7d8648c699a23c053b0fb5a79484a011f6c6746d9542d"
+      },
+      {
+        "filename": "Brawndo_CIS_IG1_Domain_Mockup.html",
+        "bytes": 162919,
+        "sha256": "f71b8af48d07c2b6468000ac5b4262d4d00edab2929d14b184ecd2a51fd82a4a"
+      },
+      {
+        "filename": "Domain_Mapping.json",
+        "bytes": 4556,
+        "sha256": "10a938effe1707263fa090fa614ec64c59ed0712f002c5316632874ff413e677"
+      },
+      {
+        "filename": "README.txt",
+        "bytes": 2464,
+        "sha256": "ce4c1fc2f8fedd393430c22a2d131f9f8cb2ca433bffdc196d0d2ead30432142"
+      }
+    ]
+  },
+  "materializedFiles": [
+    {
+      "filename": "Acceptance_Checklist.txt",
+      "bytes": 5888,
+      "sha256": "269c4099d9a67bdb217a9ca987c9385cf46cca8c354019bcd183283ed46c8264"
+    },
+    {
+      "filename": "Blobdoll_Execution_Prompt.txt",
+      "bytes": 12623,
+      "sha256": "3a4f9b0856ccc0ac6046848bc2e03342de12e6f5f18183293231b66017fef1a9"
+    },
+    {
+      "filename": "Blobdoll_Launch_Prompt.txt",
+      "bytes": 2706,
+      "sha256": "db749cc78ed35e99a2a7d8648c699a23c053b0fb5a79484a011f6c6746d9542d"
+    },
+    {
+      "filename": "Brawndo_CIS_IG1_Domain_Mockup.html",
+      "bytes": 162919,
+      "sha256": "f71b8af48d07c2b6468000ac5b4262d4d00edab2929d14b184ecd2a51fd82a4a"
+    },
+    {
+      "filename": "Domain_Mapping.json",
+      "bytes": 4556,
+      "sha256": "10a938effe1707263fa090fa614ec64c59ed0712f002c5316632874ff413e677"
+    },
+    {
+      "filename": "Package_Manifest.json",
+      "bytes": 1157,
+      "sha256": "9681149ffcf45204b7a490a074655531d50f75edcad3180defbc784560601bb1"
+    },
+    {
+      "filename": "README.txt",
+      "bytes": 2464,
+      "sha256": "ce4c1fc2f8fedd393430c22a2d131f9f8cb2ca433bffdc196d0d2ead30432142"
+    }
+  ],
+  "mapping": {
+    "repositoryPath": "shared/catalogs/brawndoSecurityDomains.json",
+    "sourceFilename": "Domain_Mapping.json",
+    "sourceSha256": "10a938effe1707263fa090fa614ec64c59ed0712f002c5316632874ff413e677",
+    "standard": "CIS Controls",
+    "standardVersion": "8.1",
+    "implementationGroup": "IG1",
+    "mappingVersion": 1,
+    "taxonomyType": "Custom presentation taxonomy",
+    "domainCount": 11,
+    "controlCount": 15,
+    "uniqueSafeguardCount": 56,
+    "controlIds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 17],
+    "excludedControlIds": [13, 16, 18],
+    "domainSafeguardCounts": {
+      "assets": 5,
+      "data": 6,
+      "configuration": 8,
+      "identity": 9,
+      "vulnerabilities": 4,
+      "logging": 3,
+      "threat_protection": 5,
+      "recovery": 4,
+      "awareness": 8,
+      "providers": 1,
+      "incidents": 3
+    },
+    "nativeCatalogComparison": "PASS at b12e50718048d47704e944ab7e0d11b761c5b40d; candidate runtime verification remains separate"
+  },
+  "intake": {
+    "allPackageDocumentsRead": true,
+    "htmlSourceInspected": true,
+    "actualMockupVisualInspection": "WAIVED BY USER, NOT PASSED",
+    "waiverUserMessage": "Sentinel_8cd55e6f471c8191abc68b20ac533ebd",
+    "nativeApplicationQaStillRequired": true,
+    "mockupApplicationCodeOrDemoDataImported": false
+  }
+}

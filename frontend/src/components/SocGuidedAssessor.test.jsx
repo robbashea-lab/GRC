@@ -93,7 +93,8 @@ test('unconfirmed native save retains exact wording and does not claim rejection
 });
 test.each(['native','interview'])('new %s failure clears the prior success notice without closing or retrying',async stage=>{
   await render();await open();await complete();await click('Save assessment');
-  expect(document.body.textContent).toContain('Assessment saved.');
+  expect(document.querySelector('.omni-workspace-window')).toBeNull();
+  await open();expect(document.body.textContent).toContain('Assessment saved.');
   const wording=document.querySelector('[aria-label="Omnibot implementation summary"]').value;
   if(stage==='native')props.onSaveAssessment.mockResolvedValueOnce(false);else failWrite=true;
   await click('Save & close');
@@ -208,4 +209,163 @@ test.each(['compare','restart'])('%s requires explicit discard of unsaved answer
   expect(api.put.mock.calls.at(-1)[1]).toMatchObject(action==='compare'?{rebase:true,answers:savedInterview.answers,narrative:savedInterview.narrative}:{restart:true,answers:{},narrative:'',summary_review:null});
   expect(api.put.mock.calls.at(-1)[1].expected_revision).toBe(savedInterview.revision);
   expect(props.current).toEqual(nativeBefore);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(document.querySelector('.omni-refined-close')).toBeNull();
+});
+
+
+async function openInline(){await render({inline:true,inlineOpen:true,onInlineClose:jest.fn(()=>{props={...props,inlineOpen:false};root.render(<SocGuidedAssessor {...props}/>);})});}
+
+test.each(['CC1.1','A1.1','C1.1','PI1.1','P1.1'])('%s inline completion reuses category questions and saves a controls-only narrative',async id=>{
+ setup(id);await render();await openInline();
+ expect(document.querySelector('.omni-character,.omni-launch-button,.omni-workspace-window')).toBeNull();
+ await complete();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+ const text=document.querySelector('[aria-label="Assessment implementation summary"]').value;
+ expect(text).toContain('\n\nControls in place\n');expect(text).not.toMatch(/OVERVIEW|IMPLEMENTATION BREAKDOWN|ITEMS TO ADDRESS/);
+ await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledWith(expect.objectContaining({implementation:text,status:'addressed'}),expect.any(String));
+ expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+ await act(async()=>root.unmount());root=createRoot(container);await render();await openInline();await click('Resume your review');
+ expect(document.querySelector('[aria-label="Assessment implementation summary"]').value).toBe(text);
+});
+
+test('inline partial progress, Back and Save & close preserve answers without native application',async()=>{
+ await render();await openInline();await click('Start');
+ await act(async()=>document.querySelectorAll('.omni-answer-choices button').forEach(item=>{if(item.textContent==='Yes')item.click();}));
+ await click('Save & next');expect(stored.step).toBe(1);await click('Back');
+ expect(document.querySelector('.omni-answer-choices [aria-pressed="true"]').textContent).toBe('Yes');
+ await click('Save & close');expect(props.onSaveAssessment).not.toHaveBeenCalled();
+ expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+ const answers=copy(stored.answers);await act(async()=>root.unmount());root=createRoot(container);await render();await openInline();await click('Resume your review');
+ expect(stored.answers).toEqual(answers);expect(document.querySelector('.omni-answer-choices [aria-pressed="true"]').textContent).toBe('Yes');
+});
+
+test('collapsing and re-expanding the inline interview retains unsaved answers',async()=>{
+ await render();await openInline();await click('Start');
+ await act(async()=>document.querySelectorAll('.omni-answer-choices button').forEach(item=>{if(item.textContent==='No')item.click();}));
+ const reads=api.get.mock.calls.length;await render({inlineOpen:false});
+ expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+ await render({inlineOpen:true});expect(document.querySelector('.omni-answer-choices [aria-pressed="true"]').textContent).toBe('No');
+ expect(api.get.mock.calls.length).toBe(reads);expect(api.put).not.toHaveBeenCalled();
+});
+
+test('inline read-only, native drafts and related drafts preserve write boundaries',async()=>{
+ await render({disabled:true});await openInline();expect(button('Start').disabled).toBe(true);expect(api.put).not.toHaveBeenCalled();
+ await render({disabled:false,relatedDraft:true});await complete();expect(stored.completed).toBe(true);expect(button('Save assessment').disabled).toBe(true);
+ await render({relatedDraft:false,assessmentDirty:true});expect(button('Save assessment').disabled).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('inline failed application retains exact reviewed wording and independent native values',async()=>{
+ await render();await openInline();await complete();
+ const textarea=document.querySelector('[aria-label="Assessment implementation summary"]'),wording='Manual report paragraph.\n\nControls in place\n• Reported practice.';
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(textarea,wording);textarea.dispatchEvent(new Event('input',{bubbles:true}));});
+ props.onSaveAssessment.mockResolvedValueOnce(false);await click('Save & close');
+ expect(document.body.textContent).toContain('The assessment save could not be confirmed');
+ expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(false);
+ expect(document.querySelector('[aria-label="Assessment implementation summary"]').value).toBe(wording);expect(stored.narrative).toBe(wording);
+ expect(props.current.implementation).toBe('');expect(props.current.verification).toBe('not_verified');
+});
+
+test('program recommendations retain the Omnibot launcher and native open navigation',async()=>{
+ const onSelect=jest.fn(),row={client_id:'soc-fixture',framework_key:'soc-2',definition_id:'CC1.1',title:'Control environment',status:'not_assessed'};
+ await render({record:null,rows:[row],contextComplete:true,onSelect});
+ const launcher=document.querySelector('[aria-label="Open Omnibot guide"]');expect(launcher).toBeTruthy();
+ await act(async()=>launcher.click());expect(document.body.textContent).toContain('Omnibot’s recommended next steps');
+ await click('Open criterion CC1.1');expect(onSelect).toHaveBeenCalledWith(row);
+});
+
+
+test('configured SOC program guide uses local circular presentation and keeps native category destinations',async()=>{
+  localStorage.setItem('omnisciente:brawndo-dashboard-theme','dark');
+  const onSelect=jest.fn(),rows=[
+    {client_id:'soc-fixture',framework_key:'soc-2',definition_id:'CC1.1',title:'Control environment',category:'security',status:'not_assessed'},
+    {client_id:'soc-fixture',framework_key:'soc-2',definition_id:'A1.1',title:'Available capacity',category:'availability',status:'not_assessed'},
+    {client_id:'soc-fixture',framework_key:'soc-2',definition_id:'C1.1',title:'Confidential information',category:'confidentiality',status:'not_assessed'},
+  ];
+  await render({record:null,current:null,rows,contextComplete:true,onSelect});
+  const guide=document.querySelector('[data-testid="soc-guided-assessment"]');
+  expect(guide.classList.contains('shared-program-omni')).toBe(true);
+  expect(guide.dataset.theme).toBe('dark');
+  expect(guide.querySelector('.omni-launch-button .cis-omni-owl')).toBeTruthy();
+  expect(document.documentElement.hasAttribute('data-brawndo-cis-visual')).toBe(false);
+  await open();
+  const panel=guide.querySelector('.omni-workspace-window');
+  expect(panel.classList.contains('cis-omni-program-window')).toBe(true);
+  expect(parseFloat(panel.style.width)).toBe(360);
+  expect(document.body.textContent).toContain('3 criteria in the configured SOC 2 scope');
+  await act(async()=>guide.querySelector('[aria-label="Minimize Omnibot Guide"]').click());
+  expect(guide.querySelector('.omni-workspace-window')).toBeNull();
+  await open();await click('Open criterion C1.1');
+  expect(onSelect).toHaveBeenCalledWith(rows[2]);
+  expect(api.get).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
+test('native inline SOC criterion editor remains outside the floating guide presentation',async()=>{
+  await render({inline:true,inlineOpen:true});
+  const guide=document.querySelector('[data-testid="soc-guided-assessment"]');
+  expect(guide.classList.contains('shared-program-omni')).toBe(false);
+  expect(guide.hasAttribute('data-theme')).toBe(false);
+  expect(guide.querySelector('.cis-omni-owl')).toBeNull();
+  expect(guide.querySelector('section[aria-label="SOC 2 interview"]')).toBeTruthy();
+});
+
+async function openSequential(){
+  await render({inline:true,sequential:true,inlineOpen:true});
+  await click(stored.revision?'Resume guided assessment':'Begin guided assessment');
+}
+async function answerSequential(value){
+  const fieldset=document.querySelector('.cis-sequential-interview fieldset'),select=fieldset?.querySelector('select');
+  if(!select)return;
+  if(!value&&select.value)return;
+  const key=fieldset.dataset.questionId,choice=value||(key==='additional_gap'||key==='additional_confirmation'?'No':[...select.options].find(option=>['Yes','Relevant'].includes(option.value))?.value);
+  if(choice)await act(async()=>{select.value=choice;select.dispatchEvent(new Event('change',{bubbles:true}));});
+}
+async function completeSequential(){
+  for(let guard=0;guard<80&&!document.body.textContent.includes('Review your assessment summary');guard++){
+    await answerSequential();
+    await click(button('Review summary')?'Review summary':button('Review answers')?'Review answers':'Continue');
+  }
+  expect(document.body.textContent).toContain('Review your assessment summary');
+}
+test.each(['CC1.1','A1.1','C1.1','PI1.1','P1.1'])('%s sequential inline questions retain group checkpoints and require the separate native assessment save',async id=>{
+  setup(id);await openSequential();await completeSequential();
+  const groups=socGroups(id,stored.answers,stored.version),steps=[...groups.slice(1).map((_,index)=>index+1),groups.length-1];
+  expect(api.put.mock.calls.map(([,body])=>body.step)).toEqual(steps);expect(stored.completed).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(props.current.implementation).toBe('');expect(props.current.status).toBe('not_assessed');expect(props.current.verification).toBe('not_verified');
+  const text=document.querySelector('[aria-label="Assessment implementation summary"]').value;expect(text).toContain('\n\nControls in place\n');
+  await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledWith(expect.objectContaining({implementation:text,status:'addressed',guided_assessment_source:{version:stored.version,revision:stored.revision,generated_at:stored.generated_at}}),expect.any(String));
+  expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+  await act(async()=>root.unmount());root=createRoot(container);await openSequential();expect(document.querySelector('[aria-label="Assessment implementation summary"]').value).toBe(text);
+});
+test('sequential Pause retains unsaved answers and cursor without checkpoint or native writes',async()=>{
+  setup('P6.1');await openSequential();await answerSequential();await click('Continue');await answerSequential('Outside the selected system');
+  const question=document.querySelector('.cis-sequential-interview fieldset').dataset.questionId,reads=api.get.mock.calls.length;
+  await click('Pause & return');expect(document.querySelector('section[aria-label="SOC 2 interview"]').hidden).toBe(true);
+  expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onDraftChange).toHaveBeenLastCalledWith(true);
+  expect(document.activeElement).toBe(button('Resume guided assessment'));await click('Resume guided assessment');
+  expect(document.activeElement).toBe(document.querySelector('.cis-sequential-interview h3'));
+  expect(document.querySelector('.cis-sequential-interview fieldset').dataset.questionId).toBe(question);expect(document.querySelector('.cis-sequential-interview select').value).toBe('Outside the selected system');
+  expect(api.get.mock.calls.length).toBe(reads);expect(stored.answers).toEqual({});
+  await click('Save & close');expect(stored.completed).toBe(false);expect(stored.step).toBe(0);expect(stored.answers[question]).toBe('Outside the selected system');expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+test('sequential required scope explanation and failed checkpoint retain the same native question and answers',async()=>{
+  setup('P6.1');await openSequential();await answerSequential();await click('Continue');await answerSequential('Outside the selected system');
+  await click('Continue');await answerSequential();await click('Continue');await answerSequential();await click('Review answers');await click('Review summary');
+  expect(document.body.textContent).toContain('Explain why this context is outside the selected system.');expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await click('Edit answer 2');const detail=document.getElementById('soc-detail-P6.1-disclosure-context');
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(detail,'Recorded scope decision.');detail.dispatchEvent(new Event('input',{bubbles:true}));});
+  await answerSequential('Relevant');failWrite=true;await click('Continue');expect(document.body.textContent).toContain('Synthetic save unavailable');
+  expect(document.querySelector('.cis-sequential-interview fieldset').dataset.questionId).toBe('P6.1-disclosure-context');expect(detail.value).toBe('Recorded scope decision.');expect(stored.answers).toEqual({});
+  failWrite=false;await click('Continue');expect(stored.step).toBe(1);expect(stored.answers['P6.1-disclosure-context_detail']).toBe('Recorded scope decision.');expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+test('sequential answer review preserves manual wording and replacement cancellation before a guarded native update',async()=>{
+  props.current={...props.current,implementation:'Existing saved native wording.',status:'addressed'};props.form=copy(props.current);
+  await openSequential();await completeSequential();const reviewed='Exact manual wording.\n\nRetained second paragraph.';
+  const summary=document.querySelector('[aria-label="Assessment implementation summary"]');await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(summary,reviewed);summary.dispatchEvent(new Event('input',{bubbles:true}));});
+  await click('Back to questions');await answerSequential('Partially');await completeSequential();
+  expect(document.querySelector('[aria-label="Assessment implementation summary"]').value).toBe(reviewed);expect(button('Update assessment').disabled).toBe(true);
+  await click('Keep my wording after review');await click('Update assessment');await click('Cancel');expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.current.implementation).toBe('Existing saved native wording.');
+  await click('Update assessment');await click('Yes, update assessment');expect(props.onSaveAssessment).toHaveBeenCalledWith(expect.objectContaining({implementation:reviewed,status:'in_progress'}),expect.any(String));
+});
+test('sequential read-only and related drafts retain their separate write boundaries',async()=>{
+  await render({disabled:true});await openSequential();expect(button('Start').disabled).toBe(true);expect(api.put).not.toHaveBeenCalled();
+  await render({disabled:false,relatedDraft:true});await click('Start');await completeSequential();expect(stored.completed).toBe(true);expect(button('Save assessment').disabled).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await render({relatedDraft:false,assessmentDirty:true});expect(button('Save assessment').disabled).toBe(true);expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });

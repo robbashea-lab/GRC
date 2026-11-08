@@ -29,7 +29,15 @@ test('CIS review cadence provenance distinguishes recommended from CIS-stated in
   for(const r of reviews.filter(r=>r!==endpoint))expect(r.governance_context.cadence_source).toBe('organization_defined');
 });
 test('other demo clients keep their original cadence provenance',()=>{
-  for(const r of readStore().reviews.filter(r=>r.client_id!==cid&&r.governance_context))
+  for(const r of readStore().reviews.filter(r=>!['demo_brawndo','demo_initech','demo_krusty_krab'].includes(r.client_id)&&r.governance_context))
     // Dunder's ISO 27001 plans are legitimately 'recommended'; only CIS-catalog plans are checked here.
     {if(!String(r.framework_plan_key||'').startsWith('iso-'))expect(r.governance_context.cadence_source).not.toBe('recommended');expect(r.governance_context.cadence_rationale||'').not.toMatch(/Omnisciente recommended validation interval|Management adopted the most frequent CIS-stated interval/);}
+});
+
+test('all refreshed CIS clients distinguish recommended validation from source minimums',()=>{
+  for(const r of readStore().reviews.filter(r=>['demo_brawndo','demo_initech','demo_krusty_krab'].includes(r.client_id)&&r.framework_plan_key)){
+    const hasMinimum=r.framework_drivers.some(driver=>driver.framework_source_minimum);
+    expect(r.governance_context.cadence_source).toBe(hasMinimum?'organization_defined':'recommended');
+    expect(r.governance_context.cadence_rationale).toBeTruthy();
+  }
 });

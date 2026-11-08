@@ -1,0 +1,23 @@
+Independent source review — release verification job split
+
+Base application/source cutoff: 14fc37114bef6891fde31eb0d5897c3ce01c80c5
+Reviewed file: .github/workflows/release-verification.yml
+Frozen raw SHA256: e0a5e4b7efe77576e95dcd8efe9e463faaa54e342fa19fd0cb2fba693a310966
+Disposition: no material source blocker identified in the minimal workflow correction. Hash remained identical before parsing/comparison and at final receipt.
+
+The reported CI164 failure was the combined backend job exhausting its existing 30-minute ceiling after offline suites succeeded and Mongo was cancelled. That cause and run results are release-owner/provider evidence, not independently fetched or executed by this reviewer. This review covers the proposed phase separation only.
+
+Parsed source comparison against the immutable baseline confirms:
+- Workflow name, triggers, contents-read permission and the complete frontend job are unchanged.
+- The backend offline job preserves checkout/setup-Python action pins, Python3.12, dependency installation/pins, and the exact offline command. It retains the 30-minute timeout and ubuntu24.04 runner; its unused Mongo service moves to the Mongo job.
+- The new backend-mongo job preserves the existing Mongo8.0 service image, port and health checks; exact checkout/Python action pins and dependency install; and the complete original disposable-Mongo command. It has an independent 30-minute timeout on the same runner.
+- All seven Mongo flags are retained: include-program-lifecycle, include-cis-ig2, include-remediation-tickets, include-cis-ig3-scope, include-cis-six-year, include-generic-saves and include-portfolio-reporting. The loopback Mongo URL is unchanged.
+- The offline command still uses run_isolated.py -vv -o faulthandler_timeout=60. The unchanged baseline runner loads backend/pytest.ini, whose fixed addopts remain -n2 --dist loadscope; no worker override was added.
+- Release gate uses always(), directly needs frontend/backend/backend-mongo, and requires all three quoted result variables to equal literal success. Failure, cancelled, skipped, empty or absent-success results cannot satisfy that predicate. The hyphenated needs.backend-mongo.result property is valid under GitHub's documented context syntax. No conditional skip, continue-on-error, changed assertion, reduced campaign, or increased existing per-job timeout is introduced. Frontend remains60minutes and gate2minutes.
+
+Evidence and limits
+The file was parsed with the existing installed YAML1.10.3 parser and compared structurally; all preserved command/service/setup/frontend fields matched. A second source reviewer independently confirmed gate dependency/status semantics, exact flags, fixed worker configuration and GitHub context-name syntax. Its documentation reference: https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#available-contexts
+
+No application or workflow edits, tests, shell gate executions, builds, browser/provider actions, CI dispatch or real-resource operations were performed by this review. The correction was uncommitted when reviewed; the owner must preserve these bytes when committing and run exact-head CI. This is not GitHub runner execution, protected-branch configuration verification, whole-release acceptance or hosted/deployment evidence. Original CI164 cancellation/failure remains part of the release record.
+
+Not checked: actual revised workflow execution, subsequent CI results, provider state, hosted behavior or deployment. All required jobs must succeed at the new exact source revision before owner release acceptance.

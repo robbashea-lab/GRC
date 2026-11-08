@@ -1,0 +1,69 @@
+{
+  "reviewer":"/root/cis_ig1_review",
+  "role":"Independent non-author source, controlled runtime, and root-operated artifact review",
+  "source_revision":"8e4466607255b0ca926f7da7181ff8e7c190e8d3",
+  "author_isolated_revision":"729598ce45bc758a78e16f88e6d791a7ee0b4a8b",
+  "source_delta":"Five lines in guidedAssessment.js and three lines in assessment_items.py add the exact current Control1-5 root verification origin when root is missing or Not sure. Existing question template/detail and writer signal classification are reused; no writer heuristic, new question/version, priority weight, historical rewrite, or save flow is introduced.",
+  "review_disposition":"No material defect found in the narrow correction. The actual affected current definitions are 1.3/1.4/1.5; specialized current 1.1/1.2 already had the root confirmation behavior. Both paths remain gated to their existing versions. Required follow-up/optional context visibility, explicit No/Partially conclusions, source identity and Items reconciliation remain separate from native verification and historical records.",
+  "controlled_before_after":{
+    "before_revision":"ce9cac3a6c2c8a09f5b40182013dd0b0aa3d9df9",
+    "current_root_choice_cases":25,
+    "choices":["missing","Not sure","No","Partially","Yes with mandatory details unanswered"],
+    "before_affected_cases":6,
+    "before_failed_assertions":18,
+    "before_status_failures":0,
+    "after_failures":0,
+    "after_semantics":"Missing/Not sure root has exact root verification signal and one root confirmation Item with no unsupported Controls in place. No remains needs_attention; Partially remains in_progress. Yes without confirmed mandatory remainder remains not_assessed while the confirmed component may be reported as support. Inactive supplemental text remains hidden and supplied answers are unchanged.",
+    "historical_snapshots":19,
+    "historical_changed_snapshots":0,
+    "legacy_scope":"Actual historical result, writer and Item snapshots for every applicable original pilot/Control1-2/Control1-3/Control1-4/program3/program4 reader, compared byte-exact before/after on a fixed evaluation day.",
+    "root_triage_mappings":5,
+    "root_triage_omissions":0,
+    "priority_boundary":"Existing exact bare root question IDs already have tiers and rationales. The new root confirmation uses those source IDs; no new or formal framework risk weight was invented.",
+    "script":"work/program-review/cross-review/control1-root-review.cjs",
+    "receipts":["control1-root-controlled-before.json","control1-root-controlled-after.json"]
+  },
+  "python_demo_parity":{
+    "cases_passed":25,
+    "failures":0,
+    "compared":"Exact question ID, verification kind, template text and version; equivalent answer/detail fingerprint payload; each environment's native ID/fingerprint stable on repeat. Forged client-result origins are ignored by the Python generator.",
+    "identity_boundary":"Demo's existing encoded Item identity/canonical JSON fingerprint and backend's existing UUID5/digest representation intentionally differ across environments. An initial over-strict byte-ID parity probe was corrected to this actual contract; no product/test/gate was changed.",
+    "receipt":"control1-root-controlled-python-parity.json"
+  },
+  "frontend":{
+    "command":"CI=true node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand --runTestsByPath src/lib/control1InlineSupport.test.js src/lib/assessmentUnknowns.test.js src/preview/control1UnknownItems.test.js src/lib/omniInventorySummary.test.js src/lib/cisRolloutContentReview.test.js src/lib/cis175SourceCondition.test.js src/lib/cisRequiredUncertainty.test.js src/lib/inlineAssessment.test.js src/lib/programTriage.test.js",
+    "suites_passed":9,"tests_passed":4506,"tests_failed":0,"exit_code":0,"seconds":8.788,
+    "log":"control1-root-independent-8e44666-frontend.log",
+    "scope":"Current all5 root support and confirmation, actual Demo apply/no-op/resolution retention for 1.3/1.4/1.5, hidden retained mandatory answers, independent native verification, known partial/absence beside unknown cadence, all4267 historical authored vectors, current153 inline checks, current intent/retired criteria and deterministic triage."
+  },
+  "backend":{
+    "command":"python -m pytest -c backend/pytest.ini -n0 -q backend/tests/test_guided_assessment.py backend/tests/test_assessment_unknowns.py::AssessmentUnknownsTests::test_current_control1_unknown_root_keeps_exact_confirmation_origin_and_unchanged_notes backend/tests/test_assessment_items.py::AssessmentItemsTests::test_current_control1_root_confirmation_native_repeat_preserves_id_notes_and_history",
+    "tests_passed":29,"subtests_passed":165,"tests_failed":0,"exit_code":0,"seconds":7.62,
+    "warnings":4,
+    "warning_kind":"Existing FastAPI on_event deprecation warnings",
+    "log":"control1-root-independent-8e44666-backend.log",
+    "boundary":"Fresh serial isolated mongomock harness, explicit current Node PATH/PYTHONPATH, hosted Mongo variable absent. No hosted or durable Mongo claim."
+  },
+  "compiled_browser_artifact_review":{
+    "operator":"/root","independent_browser_executions":0,
+    "original_actual_ig2_reproduction":"final-ig2-unknown-proposal-87d37b6.txt explicitly CIS IG2 /3of130 and false Discovery tool use:Not sure control",
+    "final_scope":"Restored CIS IG3 /3of153; the shared inherited 1.3 definition was retested, not a separate final individual IG2 configuration journey",
+    "proposal":"final-cis13-root-unknown-proposal-8e44666.txt has no Controls in place within the regenerated summary field, keeps genuine discovery uncertainty/context and Not Assessed proposal. Old saved native prose remains until deliberate acceptance.",
+    "native":"final-cis13-root-unknown-native-items-8e44666.txt shows Not Assessed/Not verified and exactly one visible root confirmation checkbox.",
+    "notes_noop_reload":"final-cis13-root-note-native-noop-8e44666.txt and final-cis13-root-note-reloaded-8e44666.txt retain the exact clarification-ownership note, singular open root confirmation, and Not Assessed/Not verified after native Save and reload.",
+    "loaded_bundle":"main.94f96200.js",
+    "current_asset_sha256":"43c5f1d3aac7bde4321cc839a5a074ad8e91b2dedf9406dc586baf86c87b0d2f",
+    "provenance_limit":"Loaded DOM points to the matching current asset; source-SHA build association is operator-reported. Full AX cannot establish hidden full-record identity/equality; source/API/Demo fixtures separately establish those contracts. Loopback compiled Demo is not staging or hosted evidence."
+  },
+  "matrix_refresh":{
+    "matrix_placements":523,"unique_definitions":337,
+    "sampled_browser_unique_definitions":6,"sampled_framework_placement_layers":8,
+    "reviewed_full_artifacts":27,
+    "layers":"Earlier actual IG1 1.1 and final inherited1.1 under IG3; actual IG2 1.3 defect and final corrected inherited1.3 under IG3; IG3 1.4/18.5, SOC CC1.1, ISO4.1. Browser acceptance is not automatically inherited into other placements.",
+    "overlay":"definition-browser-overlay.json",
+    "complete_derived_matrix":"definition-review-browser-refresh.json",
+    "root_document_edits_by_reviewer":0
+  },
+  "source_and_test_edits_by_reviewer":0,
+  "remaining_dependencies":"No material source or controlled-runtime dependency in this narrow review. Final individual IG2-configuration browser repeat is not claimed; broader hosted/release and independent visual acceptance remain owned by root/Agent2."
+}

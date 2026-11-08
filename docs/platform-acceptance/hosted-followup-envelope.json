@@ -1,0 +1,8 @@
+{
+  "archive": "retained-evidence/original-followup-evidence.zip",
+  "sha256": "7378a30dd255038f9ed1e30ce7c4d1fe6622c7ff7dfde73176c62b9ce87a38b6",
+  "bytes": 586492,
+  "entry_count": 16,
+  "entry_manifest": "hosted-followup-manifest.json",
+  "byte_authority": "Manifest hashes describe original bytes preserved inside this ZIP. Expanded text views may be normalized by Git LF/CRLF checkout; do not equate them with raw original byte hashes."
+}

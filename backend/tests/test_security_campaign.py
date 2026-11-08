@@ -99,7 +99,12 @@ class SecurityCampaign(unittest.IsolatedAsyncioTestCase):
     async def test_failed_logout_delivery_preserves_session_until_successful_retry(self):
         for failure in ['network', 'server']:
             with self.subTest(failure=failure):
-                token = harness.server.create_access_token('member', 'member@example.test')
+                # Each failure case starts with an independent account fence.
+                # Reusing the just-revoked actor can issue at the same clock tick.
+                actor = 'logout-' + failure
+                member = await harness.server.db.users.find_one({'user_id': 'member'}, {'_id': 0})
+                await harness.server.db.users.insert_one({**member, 'user_id': actor, 'email': actor + '@example.test'})
+                token = harness.server.create_access_token(actor, actor + '@example.test')
                 headers = {'Authorization': 'Bearer ' + token}
                 transport = httpx.ASGITransport(app=harness.server.app)
                 fail_logout = True

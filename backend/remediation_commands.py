@@ -6,6 +6,17 @@ import assignment_eligibility
 import uuid
 
 
+async def capture_finding(s, finding, after, user, at, action):
+    patch,event=s._portfolio_event_patch('finding',finding['finding_id'],finding['client_id'],user,finding,after,at,action)
+    if event and finding.get('framework_assessment_id'):
+        source=await s.db.framework_assessments.find_one({
+            'framework_assessment_id':finding['framework_assessment_id'],'client_id':finding['client_id']},
+            {'_id':0,'framework_key':1})
+        if source and isinstance(source.get('framework_key'),str):
+            event['program_keys']=[source['framework_key']]
+    return patch,event
+
+
 async def require_settled(s, finding, identity):
     commands=[d.get('request_id') for d in finding.get('decision_history',[])]
     tasks=await s.db.tasks.find({'finding_id':finding['finding_id'],'client_id':finding['client_id']},{'_ticket_command':1}).to_list(None)
@@ -22,6 +33,7 @@ async def reopen(s, finding, body, user):
         current=await s.db.findings.find_one({'finding_id':fid,'client_id':cid},{'_id':0})
         await require_settled(s,current,identity)
         decision=next((d for d in current.get('decision_history',[]) if d.get('request_id')==identity),None)
+        portfolio_event_id=current.get('_portfolio_activity_decision_event_ids',{}).get(identity)
         if not decision:
             s._require_snapshot(body,current)
             if current.get('status') not in ('closed','accepted'):
@@ -53,11 +65,18 @@ async def reopen(s, finding, body, user):
                 tid=task['task_id']
             decision={'action':'reopened','by':user['user_id'],'at':s._next_write_time(current.get('updated_at')),
                       'request_id':identity,'previous_primary_task_id':current.get('primary_task_id')}
+            updates={'status':'in_remediation','primary_task_id':tid,'updated_at':decision['at']}
+            after={**current,**updates,'decision_history':[*current.get('decision_history',[]),decision]}
+            portfolio_patch,portfolio_event=await capture_finding(s,current,after,user,decision['at'],'reopen')
+            if portfolio_event:
+                portfolio_event_id=portfolio_event['event_id']
+                portfolio_patch['_portfolio_activity_decision_event_ids.'+identity]=portfolio_event_id
             await s.db.create_requests.update_one({'_id':identity},{'$set':{'primary_started':True}})
             changed=await s.db.findings.update_one({'finding_id':fid,'client_id':cid,'updated_at':current.get('updated_at')},
-                {'$set':{'status':'in_remediation','primary_task_id':tid,'updated_at':decision['at']},'$push':{'decision_history':decision}})
+                {'$set':{**updates,**portfolio_patch},'$push':{'decision_history':decision}})
             if not changed.modified_count:raise HTTPException(409,'Finding changed; reload before reopening')
-        await s.audit(user,'Remediation reopened','finding',fid,cid,meta=decision)
+        await s.audit(user,'Remediation reopened','finding',fid,cid,meta={
+            **decision,'_portfolio_activity_event_id':portfolio_event_id})
         receipt=await s.db.create_requests.find_one({'_id':identity})
         if receipt.get('reopen_task'):
             task=receipt['reopen_task']
@@ -95,6 +114,7 @@ async def validate(s, finding, body, user, action='validate'):
         current = await s.db.findings.find_one({'finding_id':fid, 'client_id':cid}, {'_id':0})
         await require_settled(s,current,identity)
         decision = next((d for d in current.get('decision_history', []) if d.get('request_id') == identity), None)
+        portfolio_event_id=current.get('_portfolio_activity_decision_event_ids',{}).get(identity)
         if not decision:
             if action == 'accept' or 'expected_updated_at' in payload:
                 s._require_snapshot(payload, current)
@@ -106,16 +126,21 @@ async def validate(s, finding, body, user, action='validate'):
                         'rationale':body.rationale.strip(), 'request_id':identity}
             if not body.request_id:
                 decision.update(legacy_key=key, legacy_payload=create_requests.digest(payload))
+            updates={'status':'closed' if action=='validate' else 'accepted','updated_at':decision['at'],
+                **({'validated_by':user['user_id'],'validated_at':decision['at'],'closed_by':user['user_id'],'closed_at':decision['at']} if action=='validate' else {})}
+            after={**current,**updates,'decision_history':[*current.get('decision_history',[]),decision]}
+            portfolio_patch,portfolio_event=await capture_finding(s,current,after,user,decision['at'],action)
+            if portfolio_event:
+                portfolio_event_id=portfolio_event['event_id']
+                portfolio_patch['_portfolio_activity_decision_event_ids.'+identity]=portfolio_event_id
             await s.db.create_requests.update_one({'_id':identity}, {'$set':{'primary_started':True}})
             result = await s.db.findings.update_one({'finding_id':fid, 'client_id':cid,
-                'status':current.get('status'), 'updated_at':current.get('updated_at')}, {'$set':{
-                    'status':'closed' if action=='validate' else 'accepted', 'updated_at':decision['at'],
-                    **({'validated_by':user['user_id'],'validated_at':decision['at'],'closed_by':user['user_id'],'closed_at':decision['at']} if action=='validate' else {})},
+                'status':current.get('status'), 'updated_at':current.get('updated_at')}, {'$set':{**updates,**portfolio_patch},
                 '$push':{'decision_history':decision}})
             if not result.modified_count:
                 raise HTTPException(409, 'Finding changed; reload before validating', headers={'X-Create-Rejected':'true'})
         # Identity travels in the business write, surviving lost acknowledgements.
-        await s.audit(user, action, 'finding', fid, cid, meta=decision)
+        await s.audit(user, action, 'finding', fid, cid, meta={**decision,'_portfolio_activity_event_id':portfolio_event_id})
         for task in await s.db.tasks.find({'finding_id':fid,'client_id':cid}, {'_id':0}).to_list(None):
             await s.audit(user, 'Related Finding validated and closed' if action=='validate' else 'Related Finding accepted', 'task', task['task_id'], cid, meta={'finding_id':fid})
         if current.get('review_id'):

@@ -1,0 +1,104 @@
+{
+  "checked_at": "2026-10-13T20:26:07.338Z",
+  "runtime": "bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+  "application_source": "14fc37114bef6891fde31eb0d5897c3ce01c80c5",
+  "application_changes": "none since tested/deployed bf59",
+  "source_hashes": [
+    {
+      "path": "backend/assessment_items.py",
+      "sha256": "6e88d0c064b3dee94043324698a9188b65ecc86d79dc025668640f55a37e5fba",
+      "match": true
+    },
+    {
+      "path": "backend/portfolio_activity.py",
+      "sha256": "be594fff9e250a36d33ea631599ece3b0f8b6490487e0eea1f7583b5b9306221",
+      "match": true
+    },
+    {
+      "path": "backend/framework_governance.py",
+      "sha256": "9f089abcc53170faf6c5b779e18d55e2bc530a8f1f8fd91b9e0f11f7579f94ae",
+      "match": true
+    },
+    {
+      "path": "backend/framework_reports.py",
+      "sha256": "2dbb6b18c4b2cc9423e286006bfa89136b4932e13c4c480b7938023414889642",
+      "match": true
+    },
+    {
+      "path": "backend/framework_report_pdf.py",
+      "sha256": "a5741fd0ba7fbe2256a3ac9ab37a4b28add23325c9e6805dae49a36c063023e8",
+      "match": true
+    },
+    {
+      "path": "backend/tests/test_framework_reports.py",
+      "sha256": "b79332ad17d9cc1993b39dd4a069d74f63094cf47f1c8303ce507c5b562b9627",
+      "match": true
+    },
+    {
+      "path": "backend/tests/test_portfolio_activity.py",
+      "sha256": "c483bb7cd178f478479496db5393c2c5f0bcf007214187d540ec4dc37c71e6c5",
+      "match": true
+    },
+    {
+      "path": "frontend/src/components/OmniDock.jsx",
+      "sha256": "b2e56143feb14ee05208323a051f348e4521f6fea52cd3e3981a9425b0c92c21",
+      "match": true
+    },
+    {
+      "path": "frontend/src/components/OmniDockCollision.test.jsx",
+      "sha256": "1b9eb71f1ff9d9f98711a26263f5a5a56442593a54b9dc085610ad5a2e213616",
+      "match": true
+    },
+    {
+      "path": "frontend/src/preview/frameworks.js",
+      "sha256": "72f9009255a89cfd032eb06eaaff32ae9112a299fb37ec79d3f7018192e0f843",
+      "match": true
+    },
+    {
+      "path": "frontend/src/preview/portfolioReporting.js",
+      "sha256": "b39c7bad0a869ac53cf8c4063aa50a5c41f4ec494bba7974592d7b7a54cc68a6",
+      "match": true
+    },
+    {
+      "path": "frontend/src/preview/portfolioReporting.test.js",
+      "sha256": "17a9660067f1cd1a76b37bec84ccc621b45b5c4ce670a9ce9029fe6d5b0e7b23",
+      "match": true
+    }
+  ],
+  "workflow_sha256": "e0a5e4b7efe77576e95dcd8efe9e463faaa54e342fa19fd0cb2fba693a310966",
+  "json_parse": "PASS",
+  "downloaded_pdf_hashes": [
+    {
+      "name": "soc-full",
+      "sha256": "76a9a558e26931217381f70355386b35b8c56228a15a9f03de490189d77b1f15",
+      "unchanged": true
+    },
+    {
+      "name": "soc-executive",
+      "sha256": "cc9058af2b34c6a6e023c97170cb7b21bb41ff7ecca13d041b70e93d4c5f1c68",
+      "unchanged": true
+    },
+    {
+      "name": "cis-full",
+      "sha256": "3490971123fe8392650cf1e3d55d13a61da90338830893503f54f30eb8487127",
+      "unchanged": true
+    },
+    {
+      "name": "cis-executive",
+      "sha256": "aa77b9998824cd578412c15eed43dfb211272b4b5c98e9ca9202667c2329e807",
+      "unchanged": true
+    },
+    {
+      "name": "iso-full",
+      "sha256": "ebbc34a0f5d3223c15939b005adcee8473180c4efaae624f7de5beeae8a988a9",
+      "unchanged": true
+    },
+    {
+      "name": "iso-executive",
+      "sha256": "d670e5389f29baa016c181463b0b39ec0a6b86561ab581ed7a83534d04a417d5",
+      "unchanged": true
+    }
+  ],
+  "scope": "documentation-only release evidence; no additional product tests/build/deployment",
+  "rg_secret_pattern_scan": "no matches in selected new handoff/receipts; bounded check, not whole-repository secret certification"
+}

@@ -22,14 +22,14 @@ PROJECTION = {key: 1 for key in (
     'contract_renewal', 'contract_expiration', 'contract_end', 'contract_lead_days',
     'applicability', 'baseline_key', 'baseline_response')}
 PROJECTION.update({key: 1 for key in ('finding_id', 'review_id', 'risk_id', 'vendor_id', 'policy_id',
-                                     'framework_key', 'framework_drivers', 'source_type', 'source_id', 'source',
+                                     'framework_key', 'framework_drivers', 'framework_safeguards', 'source_type', 'source_id', 'source',
                                      'title_generated', 'governance_context')})
 PROJECTION['_id'] = 0
 PROJECTION.update(framework_assessment_id=1, related_links=1)
 FRAMEWORK_KEYS = {framework['key'] for framework in FRAMEWORKS}
 
 
-def framework_membership(records, assessments, controls):
+def framework_membership(records, assessments, controls, include_metadata=False):
     """Explicit mappings and source ancestry within one authorized client.
 
     Sources inform dependent work, not sibling tasks. Titles never imply membership.
@@ -40,17 +40,31 @@ def framework_membership(records, assessments, controls):
         v if isinstance(v, str) else v.get('framework_key') for v in r.get('framework_drivers') or []]]))
         for key, r in nodes.items()}
     by_assessment = {r['framework_assessment_id']: r.get('framework_key') for r in assessments}
+    assessment_rows = {r['framework_assessment_id']: r for r in assessments}
+    known = {key: not r.get('framework_assessment_id') or r['framework_assessment_id'] in assessment_rows for key, r in nodes.items()}
+    safeguards = {key: set(f"{r.get('framework_key')}|{did}" for did in r.get('framework_safeguards') or []) for key, r in nodes.items()}
+    def add_assessment(key, aid):
+        a = assessment_rows.get(aid)
+        if aid and not a and key in known:
+            known[key] = False
+        if key in safeguards and a and a.get('definition_id') and a.get('framework_key'):
+            safeguards[key].add(f"{a['framework_key']}|{a['definition_id']}")
     for key, record in nodes.items():
+        add_assessment(key, record.get('framework_assessment_id'))
         if key[0] == 'requirements' and record.get('baseline_key') in FRAMEWORK_KEYS:
             membership[key].add(record['baseline_key'])
         for link in record.get('related_links') or []:
+            if link.get('kind') == 'framework_assessments':
+                add_assessment(key, link.get('id'))
             if link.get('kind') == 'framework_assessments' and by_assessment.get(link.get('id')):
                 membership[key].add(by_assessment[link['id']])
+                add_assessment(key, link['id'])
     for assessment in assessments:
         for link in assessment.get('related_links') or []:
             key = (link.get('kind'), link.get('id'))
             if key in membership and assessment.get('framework_key'):
                 membership[key].add(assessment['framework_key'])
+                add_assessment(key, assessment['framework_assessment_id'])
     for control in controls:
         frameworks = {by_assessment[aid] for aid in control.get('assessment_ids') or []
                       if by_assessment.get(aid)}
@@ -58,6 +72,8 @@ def framework_membership(records, assessments, controls):
             key = (link.get('kind'), link.get('id'))
             if key in membership:
                 membership[key].update(frameworks)
+                for aid in control.get('assessment_ids') or []:
+                    add_assessment(key, aid)
     parents = {}
     for key, record in nodes.items():
         aid = record.get('framework_assessment_id')
@@ -69,15 +85,27 @@ def framework_membership(records, assessments, controls):
                        'policy':'policies', 'vendor':'vendors'}.get(record.get('source_type'))
         if source_kind and record.get('source_id'):
             links.append((source_kind, record['source_id']))
+        if any(parent not in membership for parent in links):
+            known[key] = False
         parents[key] = [parent for parent in links if parent in membership]
     changed = True
     while changed:
         changed = False
         for key, links in parents.items():
-            before = len(membership[key])
+            before = len(membership[key]), len(safeguards[key])
             for parent in links:
                 membership[key].update(membership[parent])
-            changed |= len(membership[key]) != before
+                safeguards[key].update(safeguards[parent])
+                if known[key] and not known[parent]:
+                    known[key] = False
+                    changed = True
+            changed |= (len(membership[key]), len(safeguards[key])) != before
+    if include_metadata:
+        names = {f['key']: 'CIS Controls v8.1' if f['key'] == 'cis-ig1' else f['label'] for f in FRAMEWORKS}
+        metadata = {key: {'framework_membership_known': known[key], 'framework_keys': sorted(k for k in membership[key] if k in FRAMEWORK_KEYS),
+                          'safeguard_ids': sorted(safeguards[key]),
+                          'safeguard_labels': [f"{names.get(value.split('|')[0], value.split('|')[0])} {value.split('|')[1]}" for value in sorted(safeguards[key])]} for key in nodes}
+        return membership, metadata
     return membership
 
 
@@ -120,6 +148,7 @@ def brief(row):
     kind = row['kind']
     result = {key: row.get(key) for key in (
         'key', 'id', 'kind', 'event', 'type', 'due_date', 'owner_id', 'unassigned', 'status', 'severity')}
+    result.update({key: row[key] for key in ('framework_keys', 'safeguard_ids', 'safeguard_labels', 'framework_membership_known') if key in row})
     result.update(title=str(row.get('title') or '')[:240], owner=str(row.get('owner') or 'Assigned user')[:200],
                   priority_label=row.get('priority_label') or (row.get('severity') or 'Attention').capitalize(),
                   action={'reviews':'Open Review','tasks':'Open Action','policies':'Open Policy','vendors':'Open Vendor',
