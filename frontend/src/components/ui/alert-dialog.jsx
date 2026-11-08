@@ -22,9 +22,9 @@ const AlertDialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
 ))
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
 
-const AlertDialogContent = React.forwardRef(({ className, ...props }, ref) => (
-  <AlertDialogPortal>
-    <AlertDialogOverlay />
+const AlertDialogContent = React.forwardRef(({ className, overlayClassName, portalContainer, ...props }, ref) => (
+  <AlertDialogPortal container={portalContainer}>
+    <AlertDialogOverlay className={overlayClassName} />
     <AlertDialogPrimitive.Content
       ref={useSurfaceRef(ref)}
       className={cn(

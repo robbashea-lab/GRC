@@ -12,7 +12,8 @@ import {Textarea} from './ui/textarea';
 import api,{formatError,PREVIEW_MODE} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
-import {cisExperienceEligible} from '@/lib/cisExperience';
+import {cisExperienceEligible,cisClientProgram} from '@/lib/cisExperience';
+import {brawndoAssessmentPilotEligible} from '@/lib/brawndoAssessmentPilot';
 import {selectedClient} from '@/lib/clientSelection';
 import {frameworkCatalog,frameworkDefinition,frameworkWorkspace} from '@/lib/frameworks';
 import {recordUuid} from '@/lib/recordUuid';
@@ -42,17 +43,23 @@ const SELECT='w-full border border-line bg-surface-card rounded p-2 text-sm';
 export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSaved,onPrevious,onNext,position,breadcrumb,recordManagement=false,reviewManagement=false,onReviews,visualReference=false,cisVisualOrigin,onManage,closeRequest=0,onCloseCancelled}){
   const auth=useAuth(),org=useOrg()||{},{user}=auth,aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
   const actorOriginKey=JSON.stringify([user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,PREVIEW_MODE]);
+  const cisIdentityContext={...org,...auth,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,
+    selectedClientId:selectedClient(),routeClientId:new URLSearchParams(window.location.search).get('client_id')};
+  const nativeCisExperience=cisExperienceEligible(cisIdentityContext);
   const inheritedCisVisual=cisVisualOrigin?.key===actorOriginKey && cisVisualOrigin.clientId===clientId
     && cisVisualOrigin.programId===`${clientId}:cis-ig1`
     && cisVisualOrigin.assessmentId===aid && cisVisualOrigin.definitionId===record.definition_id && record.framework_key==='cis-ig1'
-    && cisExperienceEligible({...org,...auth,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,
-      selectedClientId:selectedClient(),routeClientId:new URLSearchParams(window.location.search).get('client_id')});
+    && nativeCisExperience;
   const visualOriginKey=visualReference||inheritedCisVisual?actorOriginKey:null;
   const catalog=frameworkCatalog(record.framework_key),isCsf=record.framework_key==='nist-csf-2',isSoc=record.framework_key==='soc-2',isCis=record.framework_key==='cis-ig1',item=catalog?.labels?.item||(isCis?'Safeguard':'Requirement'),program=operatorProgram(record.framework_key);
   const statuses=operatorStatuses(record.framework_key);
   const workspace=record.client_id===clientId?frameworkWorkspace(record.framework_key):'generic';
   const brawndoCis=workspace==='cis';
-  const cisAssessmentOnly=brawndoCis&&!recordManagement&&!reviewManagement;
+  const pilotContextOnly=brawndoCis&&!recordManagement&&!reviewManagement&&visualReference===true
+    && auth.workspaceMode==='demo'&&user?.workspace_mode==='demo'&&(PREVIEW_MODE||auth.demoMode===true)
+    && clientId==='demo_brawndo'&&record.client_id===clientId&&record.definition_id==='1.1'&&record.framework_version==='8.1'
+    && window.location.pathname==='/compliance/cis-ig1'&&nativeCisExperience
+    && cisClientProgram(cisIdentityContext.currentClient)?.implementationGroup===1;
   const prestigeSoc=workspace==='soc';
   const prototype=['cis-ig1','iso-27001','soc-2'].includes(record.framework_key);
   const writable=['super_admin','platform_admin','client_grc_manager'].includes(user?.role) ||
@@ -63,6 +70,8 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   const [itemsDraft,setItemsDraft]=useState(false);
   const [stagedImplementationForm,setStagedImplementationForm]=useState(null);
   const [savedForm,setSavedForm]=useState(record),[feedback,setFeedback]=useState(''),[pending,setPending]=useState(null);
+  const [assessmentSurface,setAssessmentSurface]=useState(null);
+  const pendingFocus=useRef(null),restorePilotFocus=useRef(false);
   const guideConfiguration=useRef(null);
   const liveGuideContext=prototype&&ctx?.current?.framework_assessment_id===aid&&ctx.current.client_id===clientId&&ctx.current.framework_key===record.framework_key?ctx:null;
   const liveCisContext=brawndoCis?liveGuideContext:null;
@@ -74,7 +83,12 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   // Keep only this identity's guide mounted on context failure; saving still requires live context.
   const guidedConfiguration=ctx===null?guideConfiguration.current?.configuration:null;
   const dirty=JSON.stringify(form)!==JSON.stringify(savedForm),linkDraft=recordManagement&&!!link.id;
-  const leave=useCallback(fn=>{if(busy)return;if(dirty||guidedDraft||reviewDraft||controlDraft||itemsDraft||finding||comment.trim()||linkDraft)setPending(()=>fn);else fn();},[busy,dirty,guidedDraft,reviewDraft,controlDraft,itemsDraft,finding,comment,linkDraft]);
+  const leave=useCallback(fn=>{
+    if(busy)return;
+    if(dirty||guidedDraft||reviewDraft||controlDraft||itemsDraft||finding||comment.trim()||linkDraft){
+      pendingFocus.current=document.activeElement;restorePilotFocus.current=false;setPending(()=>fn);
+    }else fn();
+  },[busy,dirty,guidedDraft,reviewDraft,controlDraft,itemsDraft,finding,comment,linkDraft]);
   // A newly mounted editor adopts the current token; later requests use its native leave guard.
   const handledCloseRequest=useRef(closeRequest),externalClosePending=useRef(false);
   useEffect(()=>{
@@ -95,11 +109,21 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     setCtx(old=>prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId
       &&(old.visualOrigin?.key??null)===visualOriginKey?old:null);
     setError('');const opts={params:{client_id:clientId},signal:c.signal};
-    // Ordinary CIS assessments do not render these management details; Manage loads them freshly.
-    Promise.all([api.get(`/framework_assessments/${aid}/related`,{signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal}),cisAssessmentOnly?Promise.resolve({data:[]}):api.get('/contacts',opts),cisAssessmentOnly?Promise.resolve({data:[]}):api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),cisAssessmentOnly?Promise.resolve({data:[]}):api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal}),api.get('/frameworks/'+record.framework_key,opts)]).then(([related,users,contacts,comments,activity,workspace])=>{
-      if(!c.signal.aborted)setCtx(old=>({visualOrigin:visualOriginKey?{key:visualOriginKey,selected:workspace.data.selected,configured:workspace.data.configured,framework:workspace.data.framework,programId:workspace.data.implementation_position?.program_id}:null,related:related.data,users:users.data,contacts:contacts.data,comments:comments.data,activity:activity.data,configuration:{...(workspace.data.configuration||{}),...(['soc-2','iso-27001'].includes(record.framework_key)?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid)),options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}));
+    // Only the exact pilot may omit unused detail reads. Other native openers retain their ordered reads.
+    Promise.all([api.get(`/framework_assessments/${aid}/related`,{signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal}),pilotContextOnly?Promise.resolve({data:[]}):api.get('/contacts',opts),pilotContextOnly?Promise.resolve({data:[]}):api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),pilotContextOnly?Promise.resolve({data:[]}):api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal}),api.get('/frameworks/'+record.framework_key,opts)]).then(async ([related,users,contacts,comments,activity,workspace])=>{
+      if(c.signal.aborted)return;
+      const context={visualOrigin:visualOriginKey?{key:visualOriginKey,selected:workspace.data.selected,configured:workspace.data.configured,framework:workspace.data.framework,programId:workspace.data.implementation_position?.program_id}:null,related:related.data,users:users.data,configuration:{...(workspace.data.configuration||{}),...(['soc-2','iso-27001'].includes(record.framework_key)?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid))};
+      const freshPilot=pilotContextOnly&&cisVisualRecordMatches(record,context,visualOriginKey)
+        &&brawndoAssessmentPilotEligible({demoMode:PREVIEW_MODE||auth.demoMode===true,workspaceMode:auth.workspaceMode,user,
+          safeguard11:true,directProgramOpener:visualReference===true,record,current:context.current,ctx:context,pathname:window.location.pathname});
+      // The earlier client DTO is only a hint: a fresh scope/record mismatch restores full context before rendering.
+      if(pilotContextOnly&&!freshPilot)[contacts,comments,activity]=await Promise.all([
+        api.get('/contacts',opts),api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),
+        api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal})]);
+      if(!c.signal.aborted)setCtx(old=>({...context,contacts:contacts.data,comments:comments.data,activity:activity.data,
+        options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}));
     }).catch(e=>{if(!c.signal.aborted){setCtx(null);setError(formatError(e));}});return()=>c.abort();
-  },[aid,clientId,record.framework_key,revision,prototype,visualOriginKey,cisAssessmentOnly]);
+  },[aid,clientId,record,revision,prototype,visualOriginKey,pilotContextOnly,auth.demoMode,auth.workspaceMode,user,visualReference]);
   const contextLoaded=!!ctx;
   useEffect(()=>{
     if(!contextLoaded)return;
@@ -157,6 +181,20 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   async function save({recordAssessment=false,assessment=form}={}){return run(async()=>{const body=Object.fromEntries(['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale',...(definition.specification==='annex_control'?['soa_applicability','soa_justification']:[]),...(isCsf?['csf_profile']:[]),...(record.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...(brawndoCis?['verification','cis_assessment_criteria']:prestigeSoc?['verification','soc_assessment_checks']:[])].map(k=>[k,assessment[k]??(k==='csf_profile'?EMPTY_CSF_PROFILE:k==='verification'?'not_verified':['cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks'].includes(k)?[]:k.endsWith('_id')?null:'')]));const {data}=await api.patch(`/framework_assessments/${aid}`,{...body,...(brawndoCis&&assessment.cis_operation?{cis_operation:assessment.cis_operation}:{}),...(assessment.guided_assessment_source&&JSON.stringify(assessment.guided_assessment_source)!==JSON.stringify(savedForm.guided_assessment_source)?{guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,assessment.guided_assessment_source[k]]))}:{}),...(isSoc&&recordAssessment?{record_assessment:true}:{}),expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null});setForm(data);setSavedForm(data);if(brawndoCis||assessment!==form)setCtx(previous=>previous?{...previous,current:{...data,work:previous.current?.work}}:previous);setFeedback(isSoc?(recordAssessment||(data.assessment_recorded_at??null)!==(savedForm.assessment_recorded_at??null)?'Assessment recorded.':'Changes saved; assessment date unchanged.'):'Assessment saved.');});}
   async function download(e){await run(async()=>{const {data}=await api.get(`/evidence/${e.evidence_id}/download`);const a=document.createElement('a');a.href=data.content_base64.startsWith('data:')?data.content_base64:`data:${data.mime_type};base64,${data.content_base64}`;a.download=data.filename;a.click();});}
   const current=(prototype?liveGuideContext?.current:ctx?.current)||(prototype&&savedForm.client_id===clientId&&savedForm.framework_assessment_id===aid&&savedForm.framework_key===record.framework_key?savedForm:record),related=ctx?.related||{};
+  const pilotPresentation=pilotContextOnly&&cisVisualReference&&brawndoAssessmentPilotEligible({demoMode:PREVIEW_MODE,
+    workspaceMode:auth.workspaceMode,user,safeguard11:true,directProgramOpener:visualReference===true,
+    record,current,ctx:liveCisContext,pathname:window.location.pathname});
+  const pilotDialogProps=pilotPresentation?{className:'brawndo-assessment-pilot gn-dialog-box',
+    overlayClassName:'brawndo-assessment-pilot gn-dialog-layer',portalContainer:assessmentSurface||undefined,
+    onEscapeKeyDown:()=>{restorePilotFocus.current=true;},
+    onCloseAutoFocus:event=>{
+      if(!restorePilotFocus.current)return;
+      event.preventDefault();restorePilotFocus.current=false;
+      const opener=pendingFocus.current;
+      const target=opener?.isConnected&&!opener.closest('[hidden],[inert],[aria-hidden="true"],[data-state="closed"]')
+        ?opener:assessmentSurface?.querySelector('.gn-details-trigger');
+      target?.focus({preventScroll:true});
+    }}:{};
   function itemsSaved(data){
     if(data.framework_assessment_id!==aid||data.client_id!==clientId)return;
     const fields={items_to_address:data.items_to_address,items_revision:data.items_revision};
@@ -171,9 +209,18 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     setFinding({request_id:recordUuid(),item_id:item.item_id,title,description:item.text+(item.resolution?'\n\nRecorded resolution: '+item.resolution:''),severity:'medium',owner_id:current.owner_id||'',due_date:'',remediation_title:title});
   }
   async function saveOwner(){return run(async()=>{const {data}=await api.patch(`/framework_assessments/${aid}`,{owner_id:form.owner_id||null,...(record.framework_key==='iso-27001'?{process_owner_id:form.process_owner_id||null}:{}),expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null});setForm(data);setSavedForm(data);setFeedback('Changes saved.');});}
-  const overlays=<><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)cancelLeave();}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved assessment is unchanged. Continue editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} cisVisualOrigin={nestedCisVisualOrigin} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>}</>;
+  const overlays=<><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)cancelLeave();}}>
+    <AlertDialogContent {...pilotDialogProps}>
+      <AlertDialogTitle>{pilotPresentation?'Unsaved changes':'Leave unsaved changes?'}</AlertDialogTitle>
+      <AlertDialogDescription>Your saved assessment is unchanged. Continue editing or discard this draft.</AlertDialogDescription>
+      <AlertDialogFooter className={pilotPresentation?'gn-dialog-actions':undefined}>
+        <AlertDialogCancel className={pilotPresentation?'gn-button':undefined} onClick={pilotPresentation?()=>{restorePilotFocus.current=true;}:undefined}>Keep editing</AlertDialogCancel>
+        <AlertDialogAction className={pilotPresentation?'gn-button gn-primary':undefined} onClick={()=>{const fn=pending;setPending(null);fn?.();}}>{pilotPresentation?'Discard & close':'Discard changes'}</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} cisVisualOrigin={nestedCisVisualOrigin} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>}</>;
   if(recordManagement||reviewManagement)return <><FrameworkRecordAccess reviewsOnly={reviewManagement} state={{open,current,definition,catalog,ctx,form,dirty,busy,error,feedback,writable,comment,link}} controlsManagement={current.framework_key==='iso-27001'&&!reviewManagement?<OrganizationalControls clientId={current.client_id} onDraftChange={setControlDraft} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>:undefined} actions={{put,saveOwner,run,setComment,setLink,setNested,setReviewDraft,close:()=>leave(()=>onOpenChange(false)),openReviews:url=>leave(()=>onReviews?.(url)),reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}/>{overlays}</>;
-if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{visualReference:cisVisualReference,directProgramOpener:visualReference===true,manageRecord:onManage?()=>leave(onManage):undefined,open,record,definition,form,current,ctx:liveCisContext,guidedConfiguration,related,finding,error,busy,dirty,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),feedback,writable,position,otherDraft:itemsDraft||guidedDraft||reviewDraft||!!finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,run,download,applyGuided,saveGuidedAssessment,stageGuidedImplementation,setGuidedDraft,setFinding,setNested,setFeedback,setReviewDraft,reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');},retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{open,record,definition,form,current,ctx,guidedConfiguration,error,busy,dirty,relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft,otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,saveGuidedAssessment,setGuidedDraft,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
+if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{visualReference:cisVisualReference,directProgramOpener:visualReference===true,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,open,record,definition,form,current,ctx:liveCisContext,guidedConfiguration,related,finding,error,busy,dirty,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),feedback,writable,position,otherDraft:itemsDraft||guidedDraft||reviewDraft||!!finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,run,download,applyGuided,saveGuidedAssessment,stageGuidedImplementation,setGuidedDraft,setFinding,setNested,setFeedback,setReviewDraft,reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');},retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{open,record,definition,form,current,ctx,guidedConfiguration,error,busy,dirty,relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft,otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,saveGuidedAssessment,setGuidedDraft,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
     state={{open,record,definition,catalog,form,current,ctx,guidedConfiguration,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c),otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()}}
     actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,saveGuidedAssessment,setGuidedDraft,run,download,setComment,setFinding,setTab,setNested,setFeedback,setReviewDraft,setLink,setControlDraft,
       controlSaved:()=>{setRevision(n=>n+1);onSaved?.();},

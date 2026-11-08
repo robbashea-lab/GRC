@@ -96,9 +96,21 @@ async function loadSafeguard(id = '1.1', selectedClient = 'demo_brawndo') {
   return initial;
 }
 
-async function render(visualReference = true) {
+async function render(visualReference = true, onManage) {
   await nativeAction(() => root.render(<FrameworkDrawer open visualReference={visualReference}
-    record={record} clientId={clientId} onOpenChange={onClose}/>));
+    record={record} clientId={clientId} onOpenChange={onClose} onManage={onManage}/>));
+}
+
+async function chooseAssessmentDetails(label) {
+  const trigger=button(surface(),'Assessment details');
+  expect(trigger).toBeTruthy();
+  await nativeAction(()=>trigger.dispatchEvent(new KeyboardEvent('keydown',{bubbles:true,key:'ArrowDown'})));
+  const menu=document.querySelector('[role="menu"]');
+  expect(menu).toBeTruthy();
+  const item=[...menu.querySelectorAll('[role="menuitem"]')].find(node=>node.textContent===label);
+  expect(item).toBeTruthy();
+  expect(item.hasAttribute('data-disabled')).toBe(false);
+  await nativeAction(()=>item.click());
 }
 
 async function remount() {
@@ -209,7 +221,8 @@ test('the exact joined Demo Brawndo 1.1 pilot starts blank with requirement meta
   expect(questionId()).toBe('inventory');
   expect(guide().querySelector('fieldset select').value).toBe('');
   expect(guide().querySelector('fieldset textarea').value).toBe('');
-  expect(guide().querySelector('.brawndo-pilot-guidance').textContent).toContain('CIS requirement');
+  expect(guide().querySelector('.brawndo-pilot-guidance').textContent).toContain('Framework requirement');
+  expect(guide().querySelector('.brawndo-pilot-guidance').textContent).toContain('CIS v8.1 · 1.1');
   expect((await api.get(base + '/guided-assessment')).data).toMatchObject({revision: 0, answers: {}, completed: false});
   expect(putSpy).not.toHaveBeenCalled();
   expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(baseline.implementation);
@@ -240,6 +253,120 @@ test('a sparse native checkpoint leaves actual cadence blank instead of copying 
   await assertAssessmentUnchanged();
 });
 
+test('the header notes editor keeps the same unsaved field, native Save and reload contract', async () => {
+  await loadSafeguard();
+  await render();
+  const revised='Fictional QA note: retain the native assessment notes field.';
+  await chooseAssessmentDetails('Recorded notes');
+  let dialog=document.querySelector('[role="dialog"][aria-modal="true"]:not([data-assessment-shell])');
+  expect(dialog.querySelector('[aria-label="Recorded notes"]').value).toBe(baseline.notes);
+  await edit(dialog.querySelector('[aria-label="Recorded notes"]'),'');
+  await click(dialog,'Back to assessment');
+  await chooseAssessmentDetails('Recorded notes');
+  expect(document.querySelector('[aria-label="Recorded notes"]').value).toBe('');
+  dialog=document.querySelector('[aria-label="Recorded notes"]').closest('[role="dialog"]');
+  await edit(dialog.querySelector('[aria-label="Recorded notes"]'),revised);
+  await click(dialog,'Back to assessment');
+  expect(document.activeElement).toBe(button(surface(),'Assessment details'));
+  expect(surface().querySelector('[aria-label="Previously recorded notes"]')).toBeNull();
+  expect(button(surface(),'Manage')).toBeUndefined();
+  expect(button(surface(),'Review interview history')).toBeUndefined();
+  await assertAssessmentUnchanged();
+  await chooseAssessmentDetails('Recorded notes');
+  expect(document.querySelector('[aria-label="Recorded notes"]').value).toBe(revised);
+  await click(document.querySelector('[aria-label="Recorded notes"]').closest('[role="dialog"]'),'Back to assessment');
+  await click(surface(),'Save assessment');
+  expect(patchSpy).toHaveBeenCalledTimes(1);
+  expect(patchSpy.mock.calls[0][0]).toBe(base);
+  expect(patchSpy.mock.calls[0][1]).toMatchObject({notes:revised,expected_last_assessed:baseline.last_saved??baseline.last_assessed??null});
+  const saved=(await api.get(base)).data;
+  expect(saved.notes).toBe(revised);
+  for(const key of ['status','implementation','verification','owner_id','technology'])expect(saved[key]).toEqual(baseline[key]);
+  expect(saved.assessment_history.slice(0,baseline.assessment_history.length)).toEqual(baseline.assessment_history);
+  expect(saved.assessment_history).toHaveLength(baseline.assessment_history.length+1);
+  await remount();
+  await chooseAssessmentDetails('Recorded notes');
+  expect(document.querySelector('[aria-label="Recorded notes"]').value).toBe(revised);
+});
+
+test('header management uses the existing leave guard and never saves a recorded-notes draft implicitly', async () => {
+  await loadSafeguard();
+  const manage=jest.fn();
+  await render(true,manage);
+  await chooseAssessmentDetails('Recorded notes');
+  await edit(document.querySelector('[aria-label="Recorded notes"]'),'Unsaved fictional notes');
+  await click(document.querySelector('[aria-label="Recorded notes"]').closest('[role="dialog"]'),'Back to assessment');
+  await chooseAssessmentDetails('Ownership & assessment history');
+  expect(manage).not.toHaveBeenCalled();
+  expect(document.querySelector('[role="alertdialog"]').textContent).toContain('Unsaved changes');
+  await click(document.querySelector('[role="alertdialog"]'),'Keep editing');
+  expect(document.activeElement).toBe(button(surface(),'Assessment details'));
+  await chooseAssessmentDetails('Recorded notes');
+  expect(document.querySelector('[aria-label="Recorded notes"]').value).toBe('Unsaved fictional notes');
+  await click(document.querySelector('[aria-label="Recorded notes"]').closest('[role="dialog"]'),'Back to assessment');
+  await chooseAssessmentDetails('Ownership & assessment history');
+  await click(document.querySelector('[role="alertdialog"]'),'Discard & close');
+  expect(manage).toHaveBeenCalledTimes(1);
+  for(const write of writes())expect(write).not.toHaveBeenCalled();
+  expect((await api.get(base)).data).toEqual(baseline);
+});
+
+test('the header interview archive uses the native personal history read and preserves its recorded content', async () => {
+  const nativeRead=api.get.bind(api);
+  await loadSafeguard();
+  const archived={revision:3,version,completed:true,user_id:mockAuth.user.user_id,updated_at:'2026-11-08T12:00:00Z',
+    narrative:'Original fictional personal interview snapshot.',answers:{inventory:'Not sure'},result:null};
+  getSpy.mockImplementation((url,options)=>url===base+'/guided-assessment/history'
+    ?Promise.resolve({data:{items:[archived],next_before_revision:null}}):nativeRead(url,options));
+  await render();
+  await chooseAssessmentDetails('Interview history');
+  const dialog=document.querySelector('.brawndo-pilot-history[role="dialog"]');
+  expect(dialog.getAttribute('aria-modal')).toBe('true');
+  expect(surface().contains(dialog)).toBe(true);
+  expect(dialog.textContent).toContain(archived.narrative);
+  expect(dialog.querySelector('pre').textContent).toBe(JSON.stringify(archived.answers,null,2));
+  expect(dialog.textContent).toContain('Saved interview snapshots for your account.');
+  expect(getSpy).toHaveBeenCalledWith(base+'/guided-assessment/history',{params:{limit:25}});
+  await click(dialog,'Close');
+  expect(document.activeElement).toBe(button(surface(),'Assessment details'));
+  for(const write of writes())expect(write).not.toHaveBeenCalled();
+  await assertAssessmentUnchanged();
+});
+
+test.each(['unanswered inventory', 'multiple sources without scope'])('the lower implementation entry preserves the native %s guard without writes', async scenario => {
+  await loadSafeguard();
+  if (scenario === 'multiple sources without scope') await checkpoint({inventory: 'Yes', sources: 'Multiple reconciled sources'}, 'sources');
+  clearWrites();
+  await render();
+  await click(surface(), 'Review implementation');
+  expect(guide().hidden).toBe(false);
+  expect(questionId()).toBe(scenario === 'unanswered inventory' ? 'inventory' : 'sources');
+  expect(guide().textContent).toContain(scenario === 'unanswered inventory'
+    ? 'Choose an answer before continuing. Not sure is a valid response.'
+    : 'List each source and what it covers, or record what still needs confirmation.');
+  expect(document.querySelector('.brawndo-pilot-draft')).toBeNull();
+  for (const spy of writes()) expect(spy).not.toHaveBeenCalled();
+  await assertAssessmentUnchanged();
+});
+
+test('the lower implementation entry accepts native Not sure without inventing an answer or saving the assessment', async () => {
+  await loadSafeguard();
+  const answers = {inventory: 'Not sure'};
+  await checkpoint(answers, 'inventory');
+  clearWrites();
+  await render();
+  await click(surface(), 'Review implementation');
+  expect(putSpy).toHaveBeenCalledTimes(1);
+  expect(putSpy.mock.calls[0]).toEqual([base + '/guided-assessment', expect.objectContaining({version, answers, completed: true})]);
+  const draftDialog = document.querySelector('.brawndo-pilot-draft[role="dialog"]');
+  expect(draftDialog).toBeTruthy();
+  expect(draftDialog.querySelector('[aria-label="Implementation draft"]').value).toContain('not confirmed');
+  expect(patchSpy).not.toHaveBeenCalled();
+  expect(postSpy).not.toHaveBeenCalled();
+  expect(deleteSpy).not.toHaveBeenCalled();
+  await assertAssessmentUnchanged();
+});
+
 test('native group checkpoints preserve custom tools and context through pause, resume and reload', async () => {
   await loadSafeguard();
   await render();
@@ -263,7 +390,7 @@ test('native group checkpoints preserve custom tools and context through pause, 
   expect(grouped.answers).not.toHaveProperty('frequency');
   await edit(guide().querySelector('fieldset select'), 'Not sure');
   await edit(guide().querySelector('[aria-label="Known gaps or uncertainties"]'), 'Unconfirmed scope remains a local draft.');
-  await click(guide(), 'Pause & return');
+  await click(surface(), 'Pause & return');
   expect(guide().hidden).toBe(true);
   expect((await api.get(base + '/guided-assessment')).data).toEqual(grouped);
   await openInterview();
@@ -318,7 +445,7 @@ test('full native response review saves only the interview, edited Apply draft s
   await navigateTo('unknowns');
   clearWrites();
   expect(questionId()).toBe('unknowns');
-  await click(guide(), 'Review answers');
+  await click(guide(), 'Review responses');
   const active = visibleQuestions('1.1', answers, version);
   expect(guide().querySelectorAll('.cis-answer-review > li')).toHaveLength(active.length);
   for (const question of catalogForVersion(version).safeguards['1.1'].filter(item => item.type === 'matrix')) {
@@ -334,24 +461,29 @@ test('full native response review saves only the interview, edited Apply draft s
   expect(completed).toMatchObject({version, answers, completed: true});
   expect(completed.result).toBeTruthy();
   await assertAssessmentUnchanged();
-  const draft = guide().querySelector('[aria-label="Current implementation draft"]');
+  const draftDialog = document.querySelector('.brawndo-pilot-draft[role="dialog"]');
+  expect(draftDialog).toBeTruthy();
+  expect(draftDialog.getAttribute('aria-modal')).toBe('true');
+  expect(surface().contains(draftDialog)).toBe(true);
+  const draft = draftDialog.querySelector('[aria-label="Implementation draft"]');
+  expect(document.activeElement).toBe(draft);
   expect(draft.value).toContain('Identified gaps');
   expect(draft.value).toContain('Items requiring confirmation');
   expect(draft.value).toContain('reviewed and updated annually');
   const reviewed = 'Reviewed synthetic native draft.\n\n' + draft.value + '\n\nRetain this exact edited wording.';
   await edit(draft, reviewed);
-  expect(button(guide(), 'Apply draft').disabled).toBe(true);
-  const replacement = guide().querySelector('.guided-replacement input');
+  expect(button(draftDialog, 'Apply draft').disabled).toBe(true);
+  const replacement = draftDialog.querySelector('.guided-replacement input');
   expect(replacement).toBeTruthy();
   await act(async () => replacement.click());
-  await click(guide(), 'Apply draft');
+  await click(draftDialog, 'Apply draft');
   expect(guide().hidden).toBe(true);
   expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(reviewed);
   expect(surface().querySelector('input[name="bcsg-status"]:checked').value).toBe(baseline.status);
   expect(putSpy).toHaveBeenCalledTimes(1);
   await assertAssessmentUnchanged();
   await nativeAction(() => surface().querySelector('.brawndo-assessment-navigation-close').click());
-  expect(document.querySelector('[role="alertdialog"]').textContent).toContain('Leave unsaved changes?');
+  expect(document.querySelector('[role="alertdialog"]').textContent).toContain('Unsaved changes');
   await click(document.body, 'Keep editing');
   expect(onClose).not.toHaveBeenCalled();
   expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(reviewed);
@@ -426,7 +558,7 @@ test('discarding a native implementation draft leaves the original saved assessm
   await edit(surface().querySelector('[aria-label="Current implementation"]'), 'Unsaved synthetic wording to discard.');
   await nativeAction(() => surface().querySelector('.brawndo-assessment-navigation-close').click());
   expect(document.querySelector('[role="alertdialog"]').textContent).toContain('Your saved assessment is unchanged.');
-  await click(document.body, 'Discard changes');
+  await click(document.body, 'Discard & close');
   expect(onClose).toHaveBeenCalledTimes(1);
   expect(onClose).toHaveBeenCalledWith(false);
   expect(putSpy).not.toHaveBeenCalled();
@@ -485,6 +617,7 @@ test('read-only pilot presentation retains disabled native answers and exposes n
   expect(guide().querySelector('fieldset').disabled).toBe(true);
   expect(button(guide(), 'Continue').disabled).toBe(true);
   expect(button(guide(), 'Save progress').disabled).toBe(true);
+  expect(button(surface(), 'Review implementation').disabled).toBe(true);
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
   expect(button(surface(), 'Save assessment')).toBeUndefined();
   expect(putSpy).not.toHaveBeenCalled();

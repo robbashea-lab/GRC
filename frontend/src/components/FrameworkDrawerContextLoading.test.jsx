@@ -15,30 +15,33 @@ jest.mock('@/lib/api', () => ({__esModule: true, PREVIEW_MODE: true, API: '/api'
 jest.mock('./GuidedAssessor', () => props => { mockGuideProps = props; return null; });
 
 const copy = value => JSON.parse(JSON.stringify(value));
-const clientId = 'demo_brawndo';
 const token = '2026-10-01T12:00:00Z';
 const savedToken = '2026-10-02T12:00:00Z';
-let root, host, record, native, users, contacts, comments, activity, related, work;
+let root, host, clientId, record, native, users, contacts, comments, activity, related, work, workspaceOverride;
 const base = () => '/framework_assessments/' + record.framework_assessment_id;
-const memberPath = '/clients/' + clientId + '/members';
+const memberPath = () => '/clients/' + clientId + '/members';
 const frameworkPath = () => '/frameworks/' + record.framework_key;
 const surface = () => document.querySelector('[data-testid="brawndo-cis-assessment"]');
 const button = (scope, name) => [...scope.querySelectorAll('button')].find(node => node.textContent.trim() === name);
 const readPaths = () => api.get.mock.calls.map(([path]) => path);
-const requiredPaths = () => [base() + '/related', memberPath, frameworkPath()];
+const requiredPaths = () => [base() + '/related', memberPath(), frameworkPath()];
 const allPaths = () => [...requiredPaths(), '/contacts', '/comments', base() + '/activity'];
+const detailPaths = () => ['/contacts', '/comments', base() + '/activity'];
+const orderedAllPaths = () => [base() + '/related', memberPath(), ...detailPaths(), frameworkPath()];
+const fallbackPaths = () => [...requiredPaths(), ...detailPaths()];
 
 function workspace() {
-  return {selected: true, configured: true,
+  const data = {selected: true, configured: true,
     framework: {key: native.framework_key, version: native.framework_version},
     configuration: {implementation_group: 1},
     implementation_position: {program_id: clientId + ':' + native.framework_key},
     assessments: [native], work: {[native.framework_assessment_id]: work}};
+  return workspaceOverride ? workspaceOverride(data) : data;
 }
 
 function response(path) {
   if (path === base() + '/related') return related;
-  if (path === memberPath) return users;
+  if (path === memberPath()) return users;
   if (path === frameworkPath()) return workspace();
   if (path === '/contacts') return contacts;
   if (path === '/comments') return comments;
@@ -73,6 +76,8 @@ beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   sessionStorage.clear();
   localStorage.clear();
+  clientId = 'demo_brawndo';
+  workspaceOverride = null;
   mockOrg = {...cisContext(), loading: false, error: null};
   mockAuth = {user: {user_id: 'context-actor', role: 'super_admin', workspace_mode: 'demo'},
     workspaceMode: 'demo', loading: false, error: null};
@@ -113,7 +118,7 @@ afterEach(async () => {
   jest.clearAllMocks();
 });
 
-test('ordinary CIS reads only required context and refreshes related records, members and workspace after Save', async () => {
+test('the exact direct Demo Brawndo IG1 v8.1 safeguard 1.1 pilot refreshes all required context after Save', async () => {
   await render();
   expect(readPaths().sort()).toEqual(requiredPaths().sort());
   expect(mockGuideProps.people).toEqual(users);
@@ -138,7 +143,7 @@ test('ordinary CIS reads only required context and refreshes related records, me
   expect(api.delete).not.toHaveBeenCalled();
 });
 
-test('all required ordinary context reads share the native abort boundary and editing waits for completion', async () => {
+test('all exact-pilot required context reads share the native abort boundary and editing waits for completion', async () => {
   const pending = [];
   api.get.mockImplementation((path, config) => new Promise(resolve => pending.push({path, config, resolve})));
   await render();
@@ -154,8 +159,8 @@ test('all required ordinary context reads share the native abort boundary and ed
   expectNoWrites();
 });
 
-test.each(['related', 'members', 'workspace'])('ordinary CIS fails closed when required %s context rejects', async kind => {
-  const failed = kind === 'related' ? base() + '/related' : kind === 'members' ? memberPath : frameworkPath();
+test.each(['related', 'members', 'workspace'])('the exact pilot fails closed when required %s context rejects', async kind => {
+  const failed = kind === 'related' ? base() + '/related' : kind === 'members' ? memberPath() : frameworkPath();
   api.get.mockImplementation(path => path === failed ? Promise.reject(new Error('Required ' + kind + ' unavailable.'))
     : Promise.resolve({data: copy(response(path))}));
   await render();
@@ -211,5 +216,123 @@ test('the generic framework fallback retains native owner, contacts, comments, h
   await act(async () => button(generic, 'Activity / History').click());
   expect(generic.textContent).toContain('Original history narrative.');
   expect(generic.textContent).toContain('Native retained activity.');
+  expectNoWrites();
+});
+
+test.each([
+  'safeguard 1.2', 'indirect source opener', 'other client', 'standard mode',
+  'IG2', 'IG3', 'old framework version', 'other route', 'selected-client mismatch', 'Org identity mismatch',
+])('%s retains the original ordered six context reads outside the exact pilot', async scenario => {
+  let props = {};
+  if (scenario === 'safeguard 1.2') {
+    native = {...native, definition_id: '1.2'};
+    record = copy(native);
+  } else if (scenario === 'indirect source opener') {
+    props = {visualReference: false, cisVisualOrigin: {
+      key: JSON.stringify([mockAuth.user.user_id, mockAuth.user.role, mockAuth.user.workspace_mode, mockAuth.workspaceMode, true]),
+      clientId, programId: clientId + ':cis-ig1', assessmentId: record.framework_assessment_id, definitionId: record.definition_id,
+    }};
+  } else if (scenario === 'other client') {
+    clientId = 'demo_initech';
+    native = {...native, client_id: clientId};
+    record = copy(native);
+    mockOrg = {...cisContext(clientId), loading: false, error: null};
+    sessionStorage.setItem('grc_client_id', clientId);
+    window.history.replaceState({}, '', '/compliance/cis-ig1?client_id=' + clientId);
+  } else if (scenario === 'standard mode') {
+    mockAuth = {...mockAuth, workspaceMode: 'standard', user: {...mockAuth.user, workspace_mode: 'standard'}};
+  } else if (scenario === 'IG2' || scenario === 'IG3') {
+    const implementationGroup = scenario === 'IG2' ? 2 : 3;
+    mockOrg = {...cisContext(clientId, implementationGroup), loading: false, error: null};
+    workspaceOverride = data => ({...data, configuration: {implementation_group: implementationGroup}});
+  } else if (scenario === 'old framework version') {
+    native = {...native, framework_version: '8.0'};
+    record = copy(native);
+  } else if (scenario === 'other route') {
+    window.history.replaceState({}, '', '/tasks?client_id=' + clientId);
+  } else if (scenario === 'selected-client mismatch') {
+    sessionStorage.setItem('grc_client_id', 'demo_initech');
+  } else if (scenario === 'Org identity mismatch') {
+    mockOrg = {...mockOrg, currentClientId: 'demo_initech'};
+  }
+  await render(props);
+  expect(readPaths()).toEqual(orderedAllPaths());
+  expect(surface().classList.contains('brawndo-assessment-pilot')).toBe(false);
+  expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
+  if (scenario === 'indirect source opener') expect(surface().classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
+  expectNoWrites();
+});
+
+test.each(['IG2', 'unselected', 'unconfigured', 'current identity mismatch'])(
+  'fresh workspace %s restores all three detail reads before publishing context', async scenario => {
+    workspaceOverride = data => scenario === 'IG2' ? {...data, configuration: {implementation_group: 2}}
+      : scenario === 'unselected' ? {...data, selected: false}
+        : scenario === 'unconfigured' ? {...data, configured: false}
+          : {...data, assessments: [{...native, client_id: 'foreign-client', implementation: 'Foreign workspace implementation.'}]};
+    const pending = [];
+    api.get.mockImplementation((path, config) => detailPaths().includes(path)
+      ? new Promise(resolve => pending.push({path, config, resolve}))
+      : Promise.resolve({data: copy(response(path))}));
+    await render();
+    expect(readPaths()).toEqual(fallbackPaths());
+    expect(pending.map(item => item.path)).toEqual(detailPaths());
+    const signal = api.get.mock.calls[0][1].signal;
+    expect(api.get.mock.calls.every(([, config]) => config.signal === signal)).toBe(true);
+    expect(signal.aborted).toBe(false);
+    expect(mockGuideProps).toBeNull();
+    expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
+    expect(button(surface(), 'Save assessment').disabled).toBe(true);
+    await act(async () => pending.forEach(item => item.resolve({data: copy(response(item.path))})));
+    expect(readPaths()).toEqual(fallbackPaths());
+    expect(surface().classList.contains('brawndo-assessment-pilot')).toBe(false);
+    if (scenario === 'current identity mismatch') {
+      expect(mockGuideProps).toBeNull();
+      expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
+      expect(surface().textContent).not.toContain('Foreign workspace implementation.');
+    } else {
+      expect(mockGuideProps.current.framework_assessment_id).toBe(record.framework_assessment_id);
+      expect(mockGuideProps.configuration.implementation_group).toBe(scenario === 'IG2' ? 2 : 1);
+      expect(mockGuideProps.related).toEqual(related);
+      expect(mockGuideProps.people).toEqual(users);
+      expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(false);
+    }
+    expectNoWrites();
+  },
+);
+
+test.each(['contacts', 'comments', 'activity'])('a restored %s detail read failure fails closed without writes', async kind => {
+  workspaceOverride = data => ({...data, configuration: {implementation_group: 2}});
+  const failed = kind === 'activity' ? base() + '/activity' : '/' + kind;
+  api.get.mockImplementation(path => path === failed ? Promise.reject(new Error('Restored ' + kind + ' unavailable.'))
+    : Promise.resolve({data: copy(response(path))}));
+  await render();
+  expect(readPaths()).toEqual(fallbackPaths());
+  const signal = api.get.mock.calls[0][1].signal;
+  expect(api.get.mock.calls.every(([, config]) => config.signal === signal)).toBe(true);
+  expect(surface().querySelector('[role="alert"]').textContent).toContain('Restored ' + kind + ' unavailable.');
+  expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
+  expect(button(surface(), 'Save assessment').disabled).toBe(true);
+  expect(mockGuideProps).toBeNull();
+  expectNoWrites();
+});
+
+test('aborting while restored detail reads are pending prevents late context publication', async () => {
+  workspaceOverride = data => ({...data, configuration: {implementation_group: 2}});
+  const pending = [];
+  api.get.mockImplementation((path, config) => detailPaths().includes(path)
+    ? new Promise(resolve => pending.push({path, config, resolve}))
+    : Promise.resolve({data: copy(response(path))}));
+  await render();
+  expect(readPaths()).toEqual(fallbackPaths());
+  const signal = api.get.mock.calls[0][1].signal;
+  expect(pending).toHaveLength(3);
+  expect(api.get.mock.calls.every(([, config]) => config.signal === signal)).toBe(true);
+  expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
+  await act(async () => root.render(null));
+  expect(signal.aborted).toBe(true);
+  await act(async () => pending.forEach(item => item.resolve({data: copy(response(item.path))})));
+  expect(surface()).toBeNull();
+  expect(mockGuideProps).toBeNull();
+  expect(readPaths()).toEqual(fallbackPaths());
   expectNoWrites();
 });

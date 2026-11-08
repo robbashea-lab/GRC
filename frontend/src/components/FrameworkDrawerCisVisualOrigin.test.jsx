@@ -107,12 +107,12 @@ test('gated inline Close preserves the native dirty guard and exact draft until 
   await render();const text='Retain this exact unsaved native wording.';await editNativeImplementation(text);
   expect([...host.querySelectorAll('button')].filter(element=>element.textContent==='Close')).toHaveLength(1);
   await clickNative(inlineClose());
-  expect(document.body.textContent).toContain('Leave unsaved changes?');
+  expect(document.body.textContent).toContain('Unsaved changes');
   expect(onClose).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
   await clickNative(nativeButton('Keep editing'));
   expect(host.querySelector('[aria-label="Current implementation"]').value).toBe(text);
   expect(native.implementation).toBe('Saved native implementation');
-  await clickNative(inlineClose());await clickNative(nativeButton('Discard changes'));
+  await clickNative(inlineClose());await clickNative(nativeButton('Discard & close'));
   expect(onClose).toHaveBeenCalledTimes(1);expect(onClose).toHaveBeenCalledWith(false);
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
@@ -124,6 +124,7 @@ test('gated inline Close cannot dismiss or open discard while the native save is
   expect(api.patch).toHaveBeenCalledTimes(1);
   await clickNative(inlineClose());
   expect(onClose).not.toHaveBeenCalled();expect(document.body.textContent).not.toContain('Leave unsaved changes?');
+  expect(document.body.textContent).not.toContain('Unsaved changes');
   expect(host.querySelector('[aria-label="Current implementation"]').value).toBe(text);
   await act(async()=>{native={...native,implementation:text,last_saved:savedToken};pending.resolve({data:native});});
   await clickNative(inlineClose());
@@ -137,11 +138,24 @@ test('a clean assessment with an unsaved child interview still uses the existing
   expect(host.querySelector('[aria-label="Current implementation"]').value).toBe(native.implementation);
   expect(host.querySelector('.brawndo-assessment-footer [role="status"]').textContent).not.toContain('Unsaved assessment changes');
   await clickNative(inlineClose());
-  expect(document.body.textContent).toContain('Leave unsaved changes?');expect(onClose).not.toHaveBeenCalled();
+  expect(document.body.textContent).toContain('Unsaved changes');expect(onClose).not.toHaveBeenCalled();
   await clickNative(nativeButton('Keep editing'));
-  await clickNative(inlineClose());expect(document.body.textContent).toContain('Leave unsaved changes?');
-  await clickNative(nativeButton('Discard changes'));
+  await clickNative(inlineClose());expect(document.body.textContent).toContain('Unsaved changes');
+  await clickNative(nativeButton('Discard & close'));
   expect(onClose).toHaveBeenCalledTimes(1);expect(onClose).toHaveBeenCalledWith(false);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('nonpilot native Close keeps its existing unsaved title and discard action',async()=>{
+  await render(false);
+  await editNativeImplementation('Keep the native nonpilot draft guard.');
+  await clickNative(nativeButton('Close'));
+  expect(document.body.textContent).toContain('Leave unsaved changes?');
+  expect(nativeButton('Discard changes')).toBeTruthy();
+  expect(nativeButton('Discard & close')).toBeUndefined();
+  await clickNative(nativeButton('Keep editing'));
+  expect(host.querySelector('[aria-label="Current implementation"]').value).toBe('Keep the native nonpilot draft guard.');
+  expect(onClose).not.toHaveBeenCalled();
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 

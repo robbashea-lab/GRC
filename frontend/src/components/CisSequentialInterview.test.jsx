@@ -34,6 +34,37 @@ test('permission denial disables response mutation and forward actions without b
   configure('1.1');props.blocked=true;await render();expect(container.querySelector('fieldset').disabled).toBe(true);expect(button('Continue').disabled).toBe(true);await click('Pause & return');expect(props.onPause).toHaveBeenCalledTimes(1);expect(props.put).not.toHaveBeenCalled();expect(props.onNext).not.toHaveBeenCalled();
 });
 
+test('the 1.1 pilot does not skip a matrix row when Continue is activated twice before commit',async()=>{
+  configure('1.1');
+  const coverage=visibleQuestions('1.1',{inventory:'Yes'},props.version).find(question=>question.id==='coverage');
+  expect(coverage.rows.length).toBeGreaterThan(2);
+  props={...props,assessmentConcept:true,visualReference:true,step:'coverage',answers:{inventory:'Yes',
+    coverage:Object.fromEntries(coverage.rows.map((row,index)=>[row,index===1?'Not sure':'Yes'])),
+    coverage_detail:'Retained scope uncertainty'}};
+  const before=JSON.parse(JSON.stringify(props.answers));
+  await render();
+  expect(container.querySelector('select').getAttribute('aria-label')).toBe(coverage.rows[0]);
+  await act(async()=>{
+    const next=button('Continue');
+    next.dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1}));
+    expect(container.querySelector('select').getAttribute('aria-label')).toBe(coverage.rows[0]);
+    next.dispatchEvent(new MouseEvent('click',{bubbles:true,detail:2}));
+  });
+  expect(container.querySelector('fieldset').dataset.questionId).toBe('coverage');
+  expect(container.querySelector('select').getAttribute('aria-label')).toBe(coverage.rows[1]);
+  expect(container.querySelector('select').value).toBe(before.coverage[coverage.rows[1]]);
+  expect(props.answers).toEqual(before);
+  expect(props.put).not.toHaveBeenCalled();
+  expect(props.detail).not.toHaveBeenCalled();
+  expect(props.onNext).not.toHaveBeenCalled();
+  await click('Continue');
+  expect(container.querySelector('select').getAttribute('aria-label')).toBe(coverage.rows[2]);
+  await click('Back');
+  expect(container.querySelector('select').getAttribute('aria-label')).toBe(coverage.rows[1]);
+  expect(container.querySelector('select').value).toBe(before.coverage[coverage.rows[1]]);
+  expect(props.answers).toEqual(before);
+});
+
 
 test.each(['1.3','1.5'])('%s preserves non-matrix native question types, branches and exact option values',async id=>{
   configure(id);const initial=visibleQuestions(id,{},props.version);props.answers={[initial[0].id]:'Yes'};
