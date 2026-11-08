@@ -14,22 +14,75 @@ const CID = 'demo_prestige';
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 let source, sourceBefore, candidate, report;
 
+const phaseOrder = ['seedStoreBeforePrestige', 'source_json_snapshot', 'preparePrestigeNativeOnboarding',
+  'independent_stable_source_hash', 'createPrestigeCurrentModel'];
+const phaseMarkers = [];
+let measurementStarted = null, markerBookkeepingNs = 0n, modelAwaitState = 'not_started';
+function markPhase(phase, boundary) {
+  const bookkeepingStarted = process.hrtime.bigint();
+  if (measurementStarted === null) measurementStarted = bookkeepingStarted;
+  phaseMarkers.push({phase, boundary, elapsed_ms: Number(bookkeepingStarted - measurementStarted) / 1e6,
+    cpu_us: process.cpuUsage(), memory_bytes: process.memoryUsage()});
+  markerBookkeepingNs += process.hrtime.bigint() - bookkeepingStarted;
+}
+
 beforeAll(async () => {
   // Preserve the deployed d358 baseline for this lower-bound comparison; full fixture capacity is tested separately.
   const priorPreview = process.env.REACT_APP_PREVIEW;
   process.env.REACT_APP_PREVIEW = 'true';
-  try { source = seedStoreBeforePrestige(CLOCK); }
+  try {
+    markPhase('seedStoreBeforePrestige', 'start');
+    source = seedStoreBeforePrestige(CLOCK);
+    markPhase('seedStoreBeforePrestige', 'end');
+  }
   finally {
     if (priorPreview === undefined) delete process.env.REACT_APP_PREVIEW;
     else process.env.REACT_APP_PREVIEW = priorPreview;
   }
+  markPhase('source_json_snapshot', 'start');
   sourceBefore = JSON.stringify(source);
+  markPhase('source_json_snapshot', 'end');
+  markPhase('preparePrestigeNativeOnboarding', 'start');
   const prepared = preparePrestigeNativeOnboarding(source, {clock: CLOCK, purpose: 'native_onboarding_qa'});
-  candidate = await createPrestigeCurrentModel(prepared, {clock: CLOCK,
-    purpose: 'current_model_source_qa', expected_source_sha256: hash(stable(prepared.backup))});
+  markPhase('preparePrestigeNativeOnboarding', 'end');
+  markPhase('independent_stable_source_hash', 'start');
+  const expectedSourceSha256 = hash(stable(prepared.backup));
+  markPhase('independent_stable_source_hash', 'end');
+  markPhase('createPrestigeCurrentModel', 'start');
+  modelAwaitState = 'awaiting';
+  try {
+    candidate = await createPrestigeCurrentModel(prepared, {clock: CLOCK,
+      purpose: 'current_model_source_qa', expected_source_sha256: expectedSourceSha256});
+    modelAwaitState = 'resolved';
+    markPhase('createPrestigeCurrentModel', 'end');
+  } finally {
+    if (modelAwaitState === 'awaiting') modelAwaitState = 'threw_or_rejected';
+  }
 });
 
 afterAll(() => clearFileCache());
+
+afterAll(() => {
+  const phases = phaseOrder.map(phase => {
+    const start = phaseMarkers.find(marker => marker.phase === phase && marker.boundary === 'start');
+    const end = phaseMarkers.find(marker => marker.phase === phase && marker.boundary === 'end');
+    return {phase, status: end ? 'complete' : start ? 'end_not_reached' : 'not_reached',
+      duration_ms: start && end ? end.elapsed_ms - start.elapsed_ms : null};
+  });
+  console.log('PRESTIGE_CAPACITY_HOOK_DIAGNOSTIC ' + JSON.stringify({
+    kind: 'test-only setup phase diagnostic; not qualification',
+    baseline_commit: 'f6a15b8d84726a49d7cd62d7f77063f8d6ac3e70',
+    diagnostic_commit: process.env.GITHUB_SHA || null, node: process.version,
+    worker: process.env.JEST_WORKER_ID || null, clock: CLOCK.toISOString(), phases, markers: phaseMarkers,
+    model_await_state_at_flush: modelAwaitState,
+    marker_bookkeeping_ms: Number(markerBookkeepingNs) / 1e6,
+    limits: ['Complete boundary durations include marker bookkeeping; no savings are subtracted.',
+      'Marker timing omits some function-entry, clock/counter-update, settlement-state and flush cost.',
+      'CPU/memory are process snapshots including GC/native threads, not per-function allocations.',
+      'Runner load, scheduling, GC and warm caches can affect wall time; frontend uses runInBand.',
+      'Missing phase ends do not establish final cost, savings or test-body coverage.']
+  }));
+});
 
 test('measure the complete deployed cohort and current-model lower bound without changing storage limits', () => {
   const json = JSON.stringify(candidate.db);
