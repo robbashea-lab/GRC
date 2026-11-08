@@ -1,11 +1,39 @@
 import {evidenceKind,evidenceSources,sourceReference} from '../lib/evidenceReferences';
 import {dateMatches} from '../lib/tableFilters';
 import {occurrenceId,reviewView,assertCurrentOccurrence,belongsToOccurrence} from '../lib/reviewOccurrences';
-import {audit,record} from './store';
+import {audit,record,now} from './store';
+import {checkDemoFileSize} from '../lib/demoStorageErrors';
+import {fileBytes} from './evidenceStorage';
 import {auditEvidenceIds} from '../lib/isoAudit';
 import {EVIDENCE_AREAS,evidenceFolders,folderCounts} from '../lib/evidenceRepository';
 
 export const areas=EVIDENCE_AREAS;
+// Shared by normal Demo uploads and explicit synthetic fixture construction.
+// Request authorization stays with the adapter; this preserves the native file/parent contract.
+export async function prepareDemoEvidenceUpload(db, input, id) {
+  if (id) throw new Error('Evidence versions are immutable. Upload a new artifact.');
+  const body = {...input};
+  if (!body.filename || !body.content_base64) throw new Error('Select a file to upload.');
+  checkDemoFileSize(fileBytes(body.content_base64));
+  if (!!body.linked_type !== !!body.linked_id) throw new Error('Evidence requires both parent type and ID');
+  if (body.linked_id) {
+    if (!evidenceKind(body.linked_type)) throw new Error('Unsupported parent record type');
+    const target = record(db, evidenceKind(body.linked_type), body.linked_id);
+    if (target.client_id !== body.client_id) throw new Error('Evidence must belong to the same client.');
+    if (['review', 'reviews'].includes(body.linked_type) && target.status === 'completed') throw new Error('Completed review evidence is frozen.');
+    if (['review', 'reviews'].includes(body.linked_type)) assertCurrentOccurrence(target, body.occurrence_id);
+  }
+  body.version = 1;
+  const bytes = Uint8Array.from(atob(body.content_base64.split(',').pop()), char => char.charCodeAt(0));
+  body.size = bytes.length;
+  if (globalThis.crypto?.subtle)
+    body.sha256 = Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', bytes)), byte => byte.toString(16).padStart(2, '0')).join('');
+  else delete body.sha256;
+  body.uploaded_at = now();
+  body.uploaded_by = db.user.user_id;
+  body.uploaded_by_email = db.user.email;
+  return body;
+}
 export const controlEvidenceLinks=c=>[c,...c.history||[],...(c.observations||[]).map(o=>o.design_snapshot)].flatMap(v=>v?.related_links||[]).filter(l=>l.kind==='evidence');
 export const auditEvidenceLinks=r=>[r,...r.occurrences||[]].flatMap(o=>auditEvidenceIds(o.iso_audit).map(id=>({id,occurrence_id:o.occurrence_id||occurrenceId(r)})));
 export function evidenceReferences(db,e){

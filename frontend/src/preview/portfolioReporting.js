@@ -12,6 +12,7 @@ import {latestPortfolioActivity} from '../lib/portfolioOverview';
 import {getBrawndoScenarioContext} from './brawndoReportingHistory';
 import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
 import {getDunderDemoScenarioContext,qualifiedDunderPreparedHistory} from './programs/dunderPreparedHistory';
+import {qualifiedPrestigePreparedHistory,getPrestigeDemoScenarioContext} from './programs/prestigePreparedHistory';
 import {DUNDER_ISO_HISTORY_VERSION,namedDemoClient} from '../lib/demoClients';
 import {isDemoScenarioPosition,isDunderHistoryFixture,isDunderModeledHistoryPosition} from '../lib/portfolioProgress';
 
@@ -591,6 +592,11 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
     prior.snapshots=[...(prior.snapshots||[]),...preparedDunder.snapshots];
     prior.identities=[...(prior.identities||[]),...preparedDunder.identities];
   }
+  const preparedPrestige=previous==null?qualifiedPrestigePreparedHistory(db,at):null;
+  if(preparedPrestige){
+    prior.snapshots=[...(prior.snapshots||[]),...preparedPrestige.snapshots];
+    prior.identities=[...(prior.identities||[]),...preparedPrestige.identities];
+  }
   const imported=[],retainedIds=new Set((prior.snapshots||[]).map(point=>point.snapshot_id));
   for(const client of db.clients||[]){
     const candidate=db.cis_demo_scenario_history?.[client.client_id];
@@ -629,8 +635,8 @@ export function captureDemoReporting(db,previous,at=new Date().toISOString()){
     const before=beforePositions.find(before=>before.program_id===position.program_id);
     const membershipChanged=before&&stable(before.current.scope)!==stable(position.current.scope);
     // An authored position does not replace the actual first-save observation.
-    const firstDunderBaseline=!!preparedDunder&&preparedDunder.program_id===position.program_id;
-    if(firstDunderBaseline||!latest||positionState(latest)!==positionState(position)||previous&&!before||membershipChanged){
+    const firstPreparedBaseline=[preparedDunder,preparedPrestige].some(prepared=>prepared?.program_id===position.program_id);
+    if(firstPreparedBaseline||!latest||positionState(latest)!==positionState(position)||previous&&!before||membershipChanged){
       const snapshot_id=`demo:${position.program_id}:${at}:${snapshots.length}`,kind=previous&&(!before||membershipChanged||positionState(before)!==positionState(position))?'committed_event':previous?'sampled':'current_baseline';
       if(latest&&beforePositions.some(before=>before.program_id===position.program_id&&positionState(before)===positionState(latest)))latest.current=Object.assign(copyCurrent(latest.current),{effective_until:at,continuity_proven:true,continuity_source_event:snapshot_id});
       snapshots.push({...position,snapshot_id,captured_at:at,effective_at:at,observation_sequence:snapshots.length+1,observation_kind:kind,source_revision:position.current.source_revision,source_event:snapshot_id,current:{...position.current,effective_at:at,source_event:snapshot_id,observation_kind:kind,provenance:{...position.current.provenance,kind,source_event:snapshot_id}}});
@@ -719,10 +725,13 @@ function comparison(snapshots,current,start,scenarioContext=null){
   }:{})}:null;
   const modeled=prior&&(isDemoScenarioPosition(prior,scenarioContext)||isDunderModeledHistoryPosition(prior,scenarioContext))
     &&prior.current.modeled_until&&timestamp(prior.current.modeled_until)>=timestamp(start);
+  const prestigeFixture=prior?.program_id==='demo_prestige:soc-2'&&prior.observation_kind==='demo_fixture';
+  const authoredPrestige=prestigeFixture&&scenarioContext?.version==='prestige-eight-year-v1'
+    &&scenarioContext.point_ids.includes(prior.snapshot_id);
   // Authored Dunder fixtures cannot masquerade as observed continuity when a
   // missing or changed source proof leaves the modeled context unavailable.
-  const proven=!!baseline&&(timestamp(baseline.effective_at)===timestamp(start)
-    ||!isDunderHistoryFixture(prior)&&baseline.continuity_proven===true&&baseline.effective_until&&timestamp(baseline.effective_until)>=timestamp(start)||modeled);
+  const proven=!!baseline&&((!prestigeFixture||authoredPrestige)&&timestamp(baseline.effective_at)===timestamp(start)
+    ||!isDunderHistoryFixture(prior)&&!prestigeFixture&&baseline.continuity_proven===true&&baseline.effective_until&&timestamp(baseline.effective_until)>=timestamp(start)||modeled);
   const result={baseline,change_pp:null,change_implemented:null,baseline_effective_at_start:!!proven,comparable:false,scope_changed:false,requested_start:start,available_from:ordered[0]?effective(ordered[0]):current.captured_at,coverage:'committed_demo_positions',continuous_history:false,reason:'No captured Demo position on or before the requested start.'};
   if(!baseline)return result;
   const signatures=new Set([...ordered.filter(s=>timestamp(effective(s))>=timestamp(baseline.effective_at)).map(s=>s.current.scope_signature),current.scope_signature]);
@@ -730,7 +739,7 @@ function comparison(snapshots,current,start,scenarioContext=null){
   if(result.scope_changed){result.reason='Native program scope changed; raw endpoint change uses each position\'s own denominator.';if(proven&&baseline.percentage!=null&&current.percentage!=null)Object.assign(result,{change_pp:current.percentage-baseline.percentage,change_implemented:current.implemented-baseline.implemented});}
   else if(signatures.has(null)||baseline.percentage==null||current.percentage==null)result.reason='A complete comparable implementation position is unavailable.';
   else if(!proven)result.reason='The older observation does not establish the state effective at the period boundary.';
-  else Object.assign(result,{comparable:true,change_pp:current.percentage-baseline.percentage,change_implemented:current.implemented-baseline.implemented,calculation_basis:modeled?'demo_scenario':'committed_history',reason:modeled?'Illustrative demo scenario interval at the period boundary.':'Actual browser-local committed dates and proven predecessor state.'});
+  else Object.assign(result,{comparable:true,change_pp:current.percentage-baseline.percentage,change_implemented:current.implemented-baseline.implemented,calculation_basis:modeled||authoredPrestige?'demo_scenario':'committed_history',reason:authoredPrestige?'New fictional Demo positions at the exact period boundary; no intervening continuity is inferred.':modeled?'Illustrative demo scenario interval at the period boundary.':'Actual browser-local committed dates and proven predecessor state.'});
   return result;
 }
 
@@ -817,6 +826,7 @@ function events(db,clients,at,days,type){
 }
 
 function demoHistory(db,position,available,range,asOf,scenarioContext=null){
+  scenarioContext=scenarioContext||getPrestigeDemoScenarioContext(db,position.client_id,asOf);
   const start=demoRangeStart(asOf,range),forecastStart=demoRangeStart(asOf,'90d');
   const effective=snapshot=>snapshot.effective_at||snapshot.current.effective_at||snapshot.captured_at;
   const lineageOrder=snapshot=>isDemoScenarioPosition(snapshot,scenarioContext)||isDunderModeledHistoryPosition(snapshot,scenarioContext)?0:snapshot.snapshot_id===scenarioContext?.join_snapshot_id?1:2;

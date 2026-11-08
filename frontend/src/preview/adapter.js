@@ -28,13 +28,14 @@ import {retainFinding} from './remediationTickets';
 import { guardEdit } from './decisions';
 import { history, reviewEvent } from './reviews';
 import { reviewView, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
-import {evidencePage,evidenceAccess,evidenceLibraryRequest,controlEvidenceLinks,auditEvidenceLinks} from './evidence';
+import {evidencePage,evidenceAccess,evidenceLibraryRequest,controlEvidenceLinks,auditEvidenceLinks,prepareDemoEvidenceUpload} from './evidence';
 import {evidenceKind} from '../lib/evidenceReferences';
 import {clearEvidenceFiles,demoDiagnostics} from './store';
-import {checkDemoFileSize,demoStorageError} from '../lib/demoStorageErrors';
-import {fileBytes,getEvidenceCacheRevision} from './evidenceStorage';
+import {demoStorageError} from '../lib/demoStorageErrors';
+import {getEvidenceCacheRevision} from './evidenceStorage';
 import {restoredCisDemoEvidence} from './cisDemoEvidence';
 import {restoredDunderDemoEvidence} from './dunderDemoEvidence';
+import {restoredPrestigeDemoEvidence} from './prestigeDemoEvidence';
 import {canForkPortfolioStore} from './portfolioReporting';
 import {pendingPolicyCoverage} from './policyReviewCoverage';
 import {validateCatalogKey} from '../lib/registerCatalogIdentity';
@@ -363,7 +364,7 @@ async function executePreviewAdapter(config,generation) {
         const original = record(db, kind, id);
         // Native authorization above remains authoritative. Only known immutable
         // synthetic artifacts can supply missing bytes; nothing is re-persisted.
-        const r = original.content_base64 ? original : restoredCisDemoEvidence(db,original)||restoredDunderDemoEvidence(db,original)||original;
+        const r = original.content_base64 ? original : restoredCisDemoEvidence(db,original)||restoredDunderDemoEvidence(db,original)||restoredPrestigeDemoEvidence(db,original)||original;
         if (!r.content_base64) throw new Error('Demo file content is not available after reload, clearing or cache eviction. Its metadata and relationships are preserved. Upload a new sample file to download content.');
         return respond(r);
       }
@@ -558,25 +559,9 @@ async function executePreviewAdapter(config,generation) {
         });
       }
       if (kind === 'evidence') {
-        if (id) throw new Error('Evidence versions are immutable. Upload a new artifact.');
-        if (!body.filename || !body.content_base64) throw new Error('Select a file to upload.');
-        checkDemoFileSize(fileBytes(body.content_base64));
-        if(!!body.linked_type!==!!body.linked_id)throw new Error('Evidence requires both parent type and ID');
-        if (body.linked_id) {
-          if(!evidenceKind(body.linked_type))throw new Error('Unsupported parent record type');
-          const target = record(db, evidenceKind(body.linked_type), body.linked_id);
-          if (target.client_id !== body.client_id) throw new Error('Evidence must belong to the same client.');
-          if (['review','reviews'].includes(body.linked_type) && target.status === 'completed') throw new Error('Completed review evidence is frozen.');
-          if (['review','reviews'].includes(body.linked_type)) assertCurrentOccurrence(target,body.occurrence_id);
-        }
-        body.version = 1;
-        const bytes=Uint8Array.from(atob(body.content_base64.split(',').pop()),c=>c.charCodeAt(0));
-        body.size = bytes.length;
-        if(globalThis.crypto?.subtle){body.sha256=Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');}
-        else delete body.sha256; // Never invent a digest where Web Crypto is unavailable.
-        body.uploaded_at = now();
-        body.uploaded_by = db.user.user_id;
-        body.uploaded_by_email = db.user.email;
+        const prepared = await prepareDemoEvidenceUpload(db, body, id);
+        Object.assign(body, prepared);
+        if (!Object.hasOwn(prepared, 'sha256')) delete body.sha256;
       }
       if (kind === 'reviews' && id) {
         assertCurrentOccurrence(record(db,kind,id),body.expected_occurrence_id);

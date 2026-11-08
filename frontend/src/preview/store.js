@@ -30,6 +30,8 @@ import {decodeDemoStore} from './demoStorageCodec';
 import {prepareDunderNativeOnboarding} from './programs/dunderNativeOnboarding';
 import {createDunderEightYearCandidate} from './programs/dunderEightYearScenario';
 import {EIGHT_YEAR_ANCHOR} from './programs/isoSocEightYearSupport';
+import prestigeEightYearFixture from './programs/prestigeEightYearFixtureData.json';
+import {installPrestigeEightYearFixture} from './programs/prestigeEightYearFixture';
 export const STORE_KEY = 'grc_interactive_demo_v3';
 // Older Demo stores remain recoverable; a rollout never deletes a prior session key.
 export const clone = value => JSON.parse(JSON.stringify(value));
@@ -83,7 +85,8 @@ export function buildLegacyDemoStore(clock=new Date()) {
   applyCisDemoRollout(finished,{clock:new Date(demoDates(clock)(0)+'T00:00:00.000Z'),fresh:true});
   return finished;
 }
-export function seedStore(clock=new Date()) {
+// Explicit source-authoring baseline; normal fresh entry additionally installs qualified Prestige records below.
+export function seedStoreBeforePrestige(clock=new Date()) {
   const privateDunder=process.env.REACT_APP_PREVIEW==='true'&&process.env.REACT_APP_DUNDER_EIGHT_YEAR_QA==='true';
   const seedClock=privateDunder?new Date(EIGHT_YEAR_ANCHOR):clock;
   const db=buildLegacyDemoStore(seedClock);
@@ -95,6 +98,14 @@ export function seedStore(clock=new Date()) {
   // Dunder's fixed source is available from its anchor; other clients keep the caller's clock.
   if(process.env.REACT_APP_PREVIEW==='true'&&new Date(clock)>=new Date(EIGHT_YEAR_ANCHOR))
     return createDunderEightYearCandidate(db,{clock:new Date(EIGHT_YEAR_ANCHOR)}).db;
+  return db;
+}
+export function seedStore(clock=new Date()) {
+  const db=seedStoreBeforePrestige(clock);
+  const privateSource=['REACT_APP_DUNDER_EIGHT_YEAR_QA','REACT_APP_DUNDER_EIGHT_YEAR_ONBOARDING_QA',
+    'REACT_APP_PRESTIGE_EIGHT_YEAR_ONBOARDING_QA'].some(key=>process.env[key]==='true');
+  if(process.env.REACT_APP_PREVIEW==='true'&&!privateSource&&new Date(clock)>=new Date(EIGHT_YEAR_ANCHOR))
+    return installPrestigeEightYearFixture(db,prestigeEightYearFixture,{fresh:true,clock}).db;
   return db;
 }
 const requestBaselines=new WeakMap();
