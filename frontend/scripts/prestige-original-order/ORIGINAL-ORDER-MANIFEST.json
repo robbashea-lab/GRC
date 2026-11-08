@@ -1,0 +1,973 @@
+{
+  "schema_version": 1,
+  "kind": "one diagnostic explicit order; not qualification",
+  "baseline_commit": "f6a15b8d84726a49d7cd62d7f77063f8d6ac3e70",
+  "baseline_ci": 338,
+  "baseline_run": 42515474369,
+  "baseline_order_kind": "Saved-log first-unique suite-result order; baseline only",
+  "source_order_sha256": "87f643c090ff04dc61542921aa70b0d99b1ad77e8076b7b09e74bacc573f8e5e",
+  "baseline_jest_sha256": "0a9382217f6ccdb51320d1237e1e14001e58da41cf30a659523afbf3d57b55b9",
+  "baseline_campaign_sha256": "448b7f7b2b89367ad65cf4f71d6155c82e400613cb63dd437d6342fb834bbbac",
+  "expected_node": "v22.23.4",
+  "expected_jest": "27.5.1",
+  "default_timeout_ms": 5000,
+  "suite_count": 189,
+  "case_count": 7307,
+  "capacity_path": "src/preview/programs/prestigeCapacityPreflight.test.js",
+  "capacity_index_one_based": 85,
+  "identity_encoding": "sha256(JSON.stringify(sorted JSON.stringify([fullName,title,ancestorTitles]) strings)); duplicates retained; statuses excluded",
+  "paths": [
+    "src/preview/portfolioReportingStorage.test.js",
+    "src/preview/brawndoReportingHistory.test.js",
+    "src/components/BrawndoAssessmentPilotNative.test.jsx",
+    "src/pages/FrameworkWorkspace.test.jsx",
+    "src/components/OmniDockCollision.test.jsx",
+    "src/components/CisDashboardConcept.cascade.test.js",
+    "src/pages/FrameworkWorkspaceISOIntegration.test.jsx",
+    "src/pages/CisRisksConceptIntegration.test.jsx",
+    "src/preview/programs/prestigeEightYearRegisters.test.js",
+    "src/preview/programs/prestigeCurrentModel.test.js",
+    "src/components/GuidedLifecycle.test.jsx",
+    "src/components/PrestigeSocAssessment.test.jsx",
+    "src/pages/BrawndoDemoRisks.test.jsx",
+    "src/components/ReviewDrawerRiskAssessment.test.jsx",
+    "src/components/CisDomainProfile.test.jsx",
+    "src/components/PlatformCisMinimizedNativeGuide.test.jsx",
+    "src/components/BrawndoActionDetail.test.jsx",
+    "src/pages/AINativeControls.test.jsx",
+    "src/components/GuidedAssessor.test.jsx",
+    "src/preview/cisDemoOperations.test.js",
+    "src/pages/ComplianceWorkspace.test.jsx",
+    "src/pages/BrawndoAdditionalVendors.test.jsx",
+    "src/preview/programs/dunderModeledHistory.test.js",
+    "src/lib/socGuidedAssessment.test.js",
+    "src/lib/guidedLifecycle.test.js",
+    "src/preview/dunderModeledHistoryApi.test.js",
+    "src/preview/demoStorageCodec.test.js",
+    "src/lib/frameworkDomainProfile.test.js",
+    "src/preview/demoPortfolio.test.js",
+    "src/components/QuarterlyProgramTimeline.test.jsx",
+    "src/components/SharedSidebarTypography.cascade.test.js",
+    "src/components/RemediationSourceRefresh.test.jsx",
+    "src/lib/brawndoInventoryDraft.test.js",
+    "src/components/IsoCisVisualStyles.test.js",
+    "src/components/RefinedOmniInterviewSafeguard11.test.jsx",
+    "src/preview/cisDemoRollout.test.js",
+    "src/lib/guidedCisProgram.test.js",
+    "src/pages/BrawndoPolicies.test.jsx",
+    "src/components/AdditionalEvidence.test.jsx",
+    "src/components/ReviewDrawerLinkedFindingRiskRefresh.test.jsx",
+    "src/components/RecordDrawerPolicyWorkflow.test.jsx",
+    "src/components/ControlledGuideCompletion.test.jsx",
+    "src/pages/BrawndoActionItems.test.jsx",
+    "src/components/FrameworkDrawerIsoNavigation.test.jsx",
+    "src/pages/AIContract.test.jsx",
+    "src/preview/programs/prestigeEightYearContent.test.js",
+    "src/components/BrawndoWorkspace.appearance.test.jsx",
+    "src/preview/baseline.test.js",
+    "src/lib/programTriage.test.js",
+    "src/pages/BrawndoDemoCalendar.test.jsx",
+    "src/context/AuthContext.test.jsx",
+    "src/pages/Reports.test.jsx",
+    "src/components/BrawndoReviewWorkflow.test.jsx",
+    "src/components/ApplicationShellConsistency.test.jsx",
+    "src/components/CisActionItemsConcept.test.jsx",
+    "src/lib/omniInventorySummary.test.js",
+    "src/components/RemediationUX.test.jsx",
+    "src/components/VisualSemanticConsistency.test.jsx",
+    "src/components/AssessmentItemsSafeguard11.test.jsx",
+    "src/pages/BrawndoVendors.test.jsx",
+    "src/lib/cisRolloutContentReview.test.js",
+    "src/components/SocProgramVisual.test.jsx",
+    "src/components/BrawndoCisFindingsSafeguard11.test.jsx",
+    "src/preview/isoProgramPresentation.test.js",
+    "src/preview/socGuidedAssessment.test.js",
+    "src/components/IsoProgramRow.test.jsx",
+    "src/components/login/LoginWelcome.test.jsx",
+    "src/pages/RegisterGrammar.test.jsx",
+    "src/preview/assessmentVerification.test.js",
+    "src/components/OrganizationalControls.test.jsx",
+    "src/components/FrameworkOperator.test.jsx",
+    "src/pages/Onboarding.test.jsx",
+    "src/preview/isoAudit.test.js",
+    "src/lib/createIntent.test.js",
+    "src/lib/clientDashboard.test.js",
+    "src/lib/dashboardPosture.test.js",
+    "src/components/IsoSequentialInterview.test.jsx",
+    "src/preview/onboardingHandoff.test.js",
+    "src/pages/BrawndoRisks.test.jsx",
+    "src/preview/programs/dunder.test.js",
+    "src/preview/programs/prestigeNativeOnboarding.test.js",
+    "src/pages/DashboardAllClientsAppearance.test.jsx",
+    "src/lib/enhancedPortfolio.test.js",
+    "src/components/BrawndoCisVisualOmni.test.jsx",
+    "src/preview/programs/prestigeCapacityPreflight.test.js",
+    "src/lib/brawndoDemoRisks.test.js",
+    "src/preview/commandRequests.test.js",
+    "src/components/BrawndoSidebar.test.jsx",
+    "src/preview/organizationalControls.test.js",
+    "src/components/BrawndoSafeguard11FindingFields.test.jsx",
+    "src/pages/ReviewsPresentation.test.jsx",
+    "src/components/ActionDetailEvidenceScope.test.jsx",
+    "src/pages/RecordListDashboardLinks.test.jsx",
+    "src/components/AssigneeSelect.test.jsx",
+    "src/preview/hipaaFramework.test.js",
+    "src/lib/portfolioOverview.test.js",
+    "src/preview/aiGovernance.test.js",
+    "src/pages/SystemsOwnerLabels.test.jsx",
+    "src/preview/findingRiskNativeCommand.test.js",
+    "src/components/OmniCharacter.test.jsx",
+    "src/components/DashboardPrograms.test.jsx",
+    "src/preview/cisIG2OperatingCycles.test.js",
+    "src/components/ClientIdentityMark.test.jsx",
+    "src/lib/sharedClientAppearance.test.js",
+    "src/pages/AdminRoles.test.jsx",
+    "src/components/CisReviewsConcept.test.jsx",
+    "src/preview/clientProfile.test.js",
+    "src/preview/brawndoVendors.test.js",
+    "src/preview/programs/prestigeOrganizationReviews.test.js",
+    "src/components/SemanticPresentation.test.jsx",
+    "src/pages/PrestigePresentation.test.jsx",
+    "src/preview/registerCatalogIdentity.test.js",
+    "src/lib/reviewOccurrences.test.js",
+    "src/lib/brawndoAdditionalEvidence.test.js",
+    "src/components/BrawndoCisVisualShell.selector.test.js",
+    "src/lib/cisDashboardContract.test.js",
+    "src/lib/cisActionItemsConcept.test.js",
+    "src/components/RecordDrawerFindingCreateContract.test.jsx",
+    "src/lib/contactAccess.test.js",
+    "src/preview/brawndoActions.test.js",
+    "src/lib/peopleRefresh.test.jsx",
+    "src/lib/frameworkWorkspace.test.js",
+    "src/pages/EvidenceFrameworkScope.test.jsx",
+    "src/lib/loadClientDashboard.test.js",
+    "src/components/RecordDrawerVendorDescription.test.jsx",
+    "src/pages/CalendarFocus.test.jsx",
+    "src/components/IsoAuditGuide.test.jsx",
+    "src/preview/portfolioMonitoring.test.js",
+    "src/components/AIOnboardingWizard.test.jsx",
+    "src/preview/governance.test.js",
+    "src/preview/programs/isoSocEightYearPlans.test.js",
+    "src/lib/approvedLightSystem.test.js",
+    "src/preview/policyProvenance.test.js",
+    "src/components/RegisterIdentityLogo.test.jsx",
+    "src/lib/cisRequirementGuide.test.js",
+    "src/preview/requirementBasis.test.js",
+    "src/components/ProgramConfiguration.test.jsx",
+    "src/lib/registerCatalogLogo.test.js",
+    "src/preview/cisNewClientExperience.test.js",
+    "src/components/FrameworkContext.test.jsx",
+    "src/components/PolicyPendingDecisions.test.jsx",
+    "src/components/ContactAccess.test.jsx",
+    "src/lib/brawndoSafeguardDates.test.js",
+    "src/preview/brawndoSeedIntegrity.test.js",
+    "src/lib/brawndoDemoCalendar.test.js",
+    "src/components/BrawndoDemoProgram.test.jsx",
+    "src/components/EvidenceItemDrawer.test.jsx",
+    "src/lib/cisIG3Content.test.js",
+    "src/preview/riskCreationDate.test.js",
+    "src/components/ui/sheet.test.jsx",
+    "src/preview/cisFindingLifecycle.test.js",
+    "src/pages/Login.css.test.js",
+    "src/lib/brawndoAssessmentPilot.test.js",
+    "src/components/TableControls.test.jsx",
+    "src/components/CisStatus.test.jsx",
+    "src/components/BrawndoProfileOverview.test.jsx",
+    "src/components/IsoManagementReviewGuide.test.jsx",
+    "src/components/BrawndoPage.test.jsx",
+    "src/lib/brawndoRisks.test.js",
+    "src/context/OrgContextRouter.test.jsx",
+    "src/pages/PlatformFrameworkPresentation.test.jsx",
+    "src/lib/cisAssessmentPresentation.test.js",
+    "src/lib/additionalContactsPresentation.test.js",
+    "src/lib/brawndoPolicyTiles.test.js",
+    "src/components/login/prismContent.test.jsx",
+    "src/lib/visualCorrectionScope.test.js",
+    "src/preview/brawndoHistoryScenario.test.js",
+    "src/lib/isoGuidedProgram.test.js",
+    "src/lib/socRequirementGuide.test.js",
+    "src/preview/contactDirectory.test.js",
+    "src/pages/EnhancedPortfolioGeometry.test.js",
+    "src/pages/LoginPrism.css.test.js",
+    "src/lib/brawndoWorkspacePilot.test.js",
+    "src/preview/engineeringReliability.test.js",
+    "src/preview/createReplay.test.js",
+    "src/preview/DemoNotice.test.jsx",
+    "src/lib/focusRescue.test.jsx",
+    "src/lib/monthEndRecurrence.test.js",
+    "src/components/BrawndoRiskMatrix.test.jsx",
+    "src/lib/portfolioRefreshTransport.test.js",
+    "src/lib/reviewRemediation.test.js",
+    "src/lib/demoClientOrder.test.js",
+    "src/lib/usePortfolioRefresh.test.jsx",
+    "src/lib/useSurfaceRef.test.jsx",
+    "src/lib/interactionModality.test.js",
+    "src/lib/evidenceFile.test.js",
+    "src/lib/socAssessmentDates.test.js",
+    "src/lib/remediation.test.js",
+    "src/lib/recordUuid.test.js"
+  ],
+  "cases": {
+    "src/preview/portfolioReportingStorage.test.js": {
+      "count": 99,
+      "identity_sha256": "aa4a8eca9b744689dfc127f3b74324f6827cf859d44faf1ac0ed64e95db23ed0"
+    },
+    "src/preview/brawndoReportingHistory.test.js": {
+      "count": 44,
+      "identity_sha256": "9e15b5c6452a53525801fcdd68ca1c377840a97fcde625718c8cb960825e84ce"
+    },
+    "src/components/BrawndoAssessmentPilotNative.test.jsx": {
+      "count": 19,
+      "identity_sha256": "bf22a537cbabc480d6c1c38d7a4a368c2065e5f42652412ca9fc645cbac939c9"
+    },
+    "src/pages/FrameworkWorkspace.test.jsx": {
+      "count": 42,
+      "identity_sha256": "690ae548c45971a938c893d9e3d6d82fdeedd068661a76ac6d53fc632e1ea762"
+    },
+    "src/components/OmniDockCollision.test.jsx": {
+      "count": 18,
+      "identity_sha256": "5fa3e0dcec76c45487f327887de2b6347dd94b5d5121643dfa8230c09e421ed7"
+    },
+    "src/components/CisDashboardConcept.cascade.test.js": {
+      "count": 36,
+      "identity_sha256": "3f643cafb0538c67afc4da4e11741f592f510f851c76da56ee5613ccff741209"
+    },
+    "src/pages/FrameworkWorkspaceISOIntegration.test.jsx": {
+      "count": 25,
+      "identity_sha256": "a9e5f506495e166be965357f4e97c634831fe1dff6373954dd0f2eb336357a37"
+    },
+    "src/pages/CisRisksConceptIntegration.test.jsx": {
+      "count": 40,
+      "identity_sha256": "bde16e5314e2502fb65cc89e62bd9852deb9c83404fe9dc5123889218dbbb273"
+    },
+    "src/preview/programs/prestigeEightYearRegisters.test.js": {
+      "count": 91,
+      "identity_sha256": "f9ae4967017ea77d1b470b273efcb0feaaa612bb9793fbc7a8c2b5a7e751ead5"
+    },
+    "src/preview/programs/prestigeCurrentModel.test.js": {
+      "count": 43,
+      "identity_sha256": "7db5a5135f7f76014774475dbc6e832af68384502df68e5910e743a2592af9ff"
+    },
+    "src/components/GuidedLifecycle.test.jsx": {
+      "count": 32,
+      "identity_sha256": "13f62f1237b2b9a0c1c71c670ba98e262e2505549075896b59063ff135cc474f"
+    },
+    "src/components/PrestigeSocAssessment.test.jsx": {
+      "count": 84,
+      "identity_sha256": "f6993911ac8b55d03a6a58a79761701989aeb09282954bab167c37f696732d92"
+    },
+    "src/pages/BrawndoDemoRisks.test.jsx": {
+      "count": 31,
+      "identity_sha256": "ea2b980e7fdcf1bdc33c1f8c8ce2c5d5fd62491e1dc061fcaa2919f25996f008"
+    },
+    "src/components/ReviewDrawerRiskAssessment.test.jsx": {
+      "count": 25,
+      "identity_sha256": "86e8c1fbaacf6818c89dfebcb14218351202fc8fe19d620eaedc5b727bb11199"
+    },
+    "src/components/CisDomainProfile.test.jsx": {
+      "count": 24,
+      "identity_sha256": "e10b45067fe191cc3dd84eb99bb3174a246a7e136aa93365d63d4a0b43757d6c"
+    },
+    "src/components/PlatformCisMinimizedNativeGuide.test.jsx": {
+      "count": 12,
+      "identity_sha256": "1730c33e9344690b4eda81ab9d80eedcab85992d51406eb27077f353bb6d525e"
+    },
+    "src/components/BrawndoActionDetail.test.jsx": {
+      "count": 24,
+      "identity_sha256": "08cc0eb8144de19c3dec52e3d5c2aa6ea1720210ff6a7ccfe9ed38749829b4b0"
+    },
+    "src/pages/AINativeControls.test.jsx": {
+      "count": 38,
+      "identity_sha256": "b97c73d713740c88416d90ca5b18a501a6d52ef192225665a24262b07c4e00b1"
+    },
+    "src/components/GuidedAssessor.test.jsx": {
+      "count": 31,
+      "identity_sha256": "686239ecdb0dcbeff078627372f379ce1c6314aade86b4f061e87d228b0f51a3"
+    },
+    "src/preview/cisDemoOperations.test.js": {
+      "count": 37,
+      "identity_sha256": "d9bfb3af1ef1eb625d5f56e0605c8496b35e128b72b7310ca11295ac685bf6f5"
+    },
+    "src/pages/ComplianceWorkspace.test.jsx": {
+      "count": 15,
+      "identity_sha256": "9e3f5fd8d3b83cb7f2a2b802f6b32d35eec887e25ce23468e591f6add8d6bdc7"
+    },
+    "src/pages/BrawndoAdditionalVendors.test.jsx": {
+      "count": 25,
+      "identity_sha256": "796f398055cb2331c0b6540508dee424737b7e740041df04e0675a47edb375e1"
+    },
+    "src/preview/programs/dunderModeledHistory.test.js": {
+      "count": 64,
+      "identity_sha256": "21c3089ba08459b6385f0436cf045d5f910d103465e0087c8cbde40d5c11af14"
+    },
+    "src/lib/socGuidedAssessment.test.js": {
+      "count": 439,
+      "identity_sha256": "594fc754472c953d0aca6be7240905358c052ba0d515d74784c24715aff9965b"
+    },
+    "src/lib/guidedLifecycle.test.js": {
+      "count": 47,
+      "identity_sha256": "6ceed5bb64e1fc25da8d6c981b322f3338155046ed4bf4ba72c46eab2948af50"
+    },
+    "src/preview/dunderModeledHistoryApi.test.js": {
+      "count": 26,
+      "identity_sha256": "525162d85db4169c828d9fc3df4df3c5ed236a8f2ccf8f715995752b101ac301"
+    },
+    "src/preview/demoStorageCodec.test.js": {
+      "count": 37,
+      "identity_sha256": "a61601bd40905743cf90e62e009139efa69bfc79d3f4208dfc7a80ccd47445db"
+    },
+    "src/lib/frameworkDomainProfile.test.js": {
+      "count": 34,
+      "identity_sha256": "cee0f8b0842d55022f2f79dfa47536c0e4bfb273a8c27588525ece9098ff4dda"
+    },
+    "src/preview/demoPortfolio.test.js": {
+      "count": 5,
+      "identity_sha256": "87055e3a6964da72bde314eff2332305b9897628edd1b9ab18586afd13247f6c"
+    },
+    "src/components/QuarterlyProgramTimeline.test.jsx": {
+      "count": 20,
+      "identity_sha256": "c45d19d2474404f245afda4106a7a9a082599592b1f44d082802bcc071140a30"
+    },
+    "src/components/SharedSidebarTypography.cascade.test.js": {
+      "count": 23,
+      "identity_sha256": "35bdde678efa3f600787c84a0b3350213595c7ff4cf460f868732b0efe323ae6"
+    },
+    "src/components/RemediationSourceRefresh.test.jsx": {
+      "count": 7,
+      "identity_sha256": "112f53635f933a12d821eb9c83f3e858c49bd7abcdd491f74e800ed5cb0c4187"
+    },
+    "src/lib/brawndoInventoryDraft.test.js": {
+      "count": 26,
+      "identity_sha256": "7509f86e0731114b557fbae7512f3bda7a66a1fda9e2cbc0cf54ad6ddafe4fa2"
+    },
+    "src/components/IsoCisVisualStyles.test.js": {
+      "count": 13,
+      "identity_sha256": "8502f9b4351aa84217a8db6e463ba81af989b12fe3520bfced8126144dead5c6"
+    },
+    "src/components/RefinedOmniInterviewSafeguard11.test.jsx": {
+      "count": 16,
+      "identity_sha256": "afff8311e0d9aa5d363223e026f7c10746f0fe259d5e091fa295d0e78eada092"
+    },
+    "src/preview/cisDemoRollout.test.js": {
+      "count": 17,
+      "identity_sha256": "f591fb52698de95df808807cc97113790004e2c5be15290413daecc3b78d5afd"
+    },
+    "src/lib/guidedCisProgram.test.js": {
+      "count": 181,
+      "identity_sha256": "ac7d81846d71016f58c9c21c5d488d54e480d7c7fcca4a327ec5b71c96eeef85"
+    },
+    "src/pages/BrawndoPolicies.test.jsx": {
+      "count": 14,
+      "identity_sha256": "a85e69d97296e43dbeb66ad68d3614e9cff0999b79c7e22d26daac60572e3a86"
+    },
+    "src/components/AdditionalEvidence.test.jsx": {
+      "count": 7,
+      "identity_sha256": "2930200bed0544263f951c5246b39d86d3c5625645c00cbf1472ef3cd8eb39b8"
+    },
+    "src/components/ReviewDrawerLinkedFindingRiskRefresh.test.jsx": {
+      "count": 16,
+      "identity_sha256": "3876bd37f7449852e632e471a5a07b3370b85facdf275f0e028649c0e83a5079"
+    },
+    "src/components/RecordDrawerPolicyWorkflow.test.jsx": {
+      "count": 21,
+      "identity_sha256": "61c7c1101862a7328b5a81574ca76f4098ee958621927571848e386ec9732c9f"
+    },
+    "src/components/ControlledGuideCompletion.test.jsx": {
+      "count": 25,
+      "identity_sha256": "297b1b373877b48734bf997117b0e63aa8a798ee98a50744394d6edfc70bcbe9"
+    },
+    "src/pages/BrawndoActionItems.test.jsx": {
+      "count": 12,
+      "identity_sha256": "2498c97d6c2058bae189465eff6493d64f1310b54b02a3c150bdaa71239ed37b"
+    },
+    "src/components/FrameworkDrawerIsoNavigation.test.jsx": {
+      "count": 13,
+      "identity_sha256": "c0bd3fe49a99b8b7523ac9d93827c5408646c740304a544042e913be69302387"
+    },
+    "src/pages/AIContract.test.jsx": {
+      "count": 17,
+      "identity_sha256": "deb9d07e7e55f3e7350870878149f470b27ea2891aea2c281b54e66540aacfb5"
+    },
+    "src/preview/programs/prestigeEightYearContent.test.js": {
+      "count": 89,
+      "identity_sha256": "21c2143a7a158431be146d8605daf1e5d829ee7e4d31ac4c8c157a849ca6fc67"
+    },
+    "src/components/BrawndoWorkspace.appearance.test.jsx": {
+      "count": 3,
+      "identity_sha256": "050b057144f99a3feac9fcf1596de9624d7805978cf89480832e3b1db8a161d8"
+    },
+    "src/preview/baseline.test.js": {
+      "count": 9,
+      "identity_sha256": "873b946e6c75225fe2bac20de53a7f824c3acb186c9cfadbe6d9d186abc37d76"
+    },
+    "src/lib/programTriage.test.js": {
+      "count": 15,
+      "identity_sha256": "ff886657bf926d11468e05be34e397d986269f8328c33ee0fbe734cab56f4294"
+    },
+    "src/pages/BrawndoDemoCalendar.test.jsx": {
+      "count": 8,
+      "identity_sha256": "e7d2a8f6b3ccb8c1635cf9a1abebd7b12b16c62bb2682da5d7379eabdd7d9474"
+    },
+    "src/context/AuthContext.test.jsx": {
+      "count": 24,
+      "identity_sha256": "c4a36b792703686c535893b21c1f1d45f115a616ddeb600f49b168358fefe55c"
+    },
+    "src/pages/Reports.test.jsx": {
+      "count": 18,
+      "identity_sha256": "fd08471e7a98cc5ac212c9258cfc933d49307bc00dae44df6368be741aaa8d25"
+    },
+    "src/components/BrawndoReviewWorkflow.test.jsx": {
+      "count": 32,
+      "identity_sha256": "14d4de4cef53b3bdd7b6d6ecd1c2805f2fe1ea2953387deb7b958420000d24b0"
+    },
+    "src/components/ApplicationShellConsistency.test.jsx": {
+      "count": 24,
+      "identity_sha256": "bb922dfffe180d449ac63fea11888ead61a52464c0dc7cb5df2198ba53a84a52"
+    },
+    "src/components/CisActionItemsConcept.test.jsx": {
+      "count": 10,
+      "identity_sha256": "64006156eec99621cbe1d290bb9555a4e170f4ebbe71f4c84e23b07e556fe3bf"
+    },
+    "src/lib/omniInventorySummary.test.js": {
+      "count": 18,
+      "identity_sha256": "971d60150bfd8fa7de10a5b3926c8b14fb44d0b592c6610e26449ef34a79ca59"
+    },
+    "src/components/RemediationUX.test.jsx": {
+      "count": 9,
+      "identity_sha256": "e1b7e4c6d32c24d1afb5de0798c62c2ed1f30d51d00f40b7a28cc638176f496c"
+    },
+    "src/components/VisualSemanticConsistency.test.jsx": {
+      "count": 11,
+      "identity_sha256": "c8a339a92ccc0b79bf282d8cad4564d7cf08d61ec45da7025657eab9785aaac2"
+    },
+    "src/components/AssessmentItemsSafeguard11.test.jsx": {
+      "count": 13,
+      "identity_sha256": "3f9702c37219f78e1d5824f020e93a97d65d40bfdcfad6b6a495e4086b1b355c"
+    },
+    "src/pages/BrawndoVendors.test.jsx": {
+      "count": 7,
+      "identity_sha256": "728ee4701ab8fa95506b6b94b28ab0d7c6c41efb3c66ab1eebe3bda2d1579ff2"
+    },
+    "src/lib/cisRolloutContentReview.test.js": {
+      "count": 4275,
+      "identity_sha256": "1cf46107bd875ec3437f4117bd00257f958aaf86d6df568134ec4a0c4acddb53"
+    },
+    "src/components/SocProgramVisual.test.jsx": {
+      "count": 7,
+      "identity_sha256": "a38cc2228e3ff4530f4d8ab7e6adb0397a6af89d2c72e749c1872105b0095be8"
+    },
+    "src/components/BrawndoCisFindingsSafeguard11.test.jsx": {
+      "count": 8,
+      "identity_sha256": "029c918c62773a6bc05d0ff0f1f17f23651a942c3e3ca8a9b109fef663e42b0e"
+    },
+    "src/preview/isoProgramPresentation.test.js": {
+      "count": 4,
+      "identity_sha256": "f44921f75d8a65af5fa45c515aee44c1c181246cf5a8bf0ebe734cbc90e26a88"
+    },
+    "src/preview/socGuidedAssessment.test.js": {
+      "count": 5,
+      "identity_sha256": "df3e88a6a8c03d6a6c126341b146f289d79527b9427b0ea8b2e592efcc1a2ed0"
+    },
+    "src/components/IsoProgramRow.test.jsx": {
+      "count": 26,
+      "identity_sha256": "7ebc8a770290009d52bc6c03e789844f96ea8f9a9a1fcd0395ff9fc703c9a25b"
+    },
+    "src/components/login/LoginWelcome.test.jsx": {
+      "count": 12,
+      "identity_sha256": "00ecb452394fd521c50bcb26d0b47b9358c49a75f8dc96ea330a75978f566664"
+    },
+    "src/pages/RegisterGrammar.test.jsx": {
+      "count": 9,
+      "identity_sha256": "21f494a862adb7e4923996b9698bef01fef4c6b6b0ecd66e0791a8c898ea8e6f"
+    },
+    "src/preview/assessmentVerification.test.js": {
+      "count": 18,
+      "identity_sha256": "139cdd49d99f943231e1680c298728f03f0979abbaf480f509fbfb6e42e6e84e"
+    },
+    "src/components/OrganizationalControls.test.jsx": {
+      "count": 5,
+      "identity_sha256": "9d5922627fe186ccb82403b086db23ab79e292e31a785b3c0452ee52848be8e3"
+    },
+    "src/components/FrameworkOperator.test.jsx": {
+      "count": 8,
+      "identity_sha256": "ad12a576e907bdeadc6b2c42d7f9c8ab742629c33a17190294a454d5e10d05f4"
+    },
+    "src/pages/Onboarding.test.jsx": {
+      "count": 8,
+      "identity_sha256": "a9c56cdadfdccbd220291051c42b8cedf4167c1a69e07986f0311a6c23344641"
+    },
+    "src/preview/isoAudit.test.js": {
+      "count": 6,
+      "identity_sha256": "6f75fac0cf28897471a79ebc63d1c402ab4fbf3de37cf98c89a10c004fff4e06"
+    },
+    "src/lib/createIntent.test.js": {
+      "count": 16,
+      "identity_sha256": "67a446a4cf730c89eef754a91924c5fd18ee355bb73ea08c2cdc782dc199c6cf"
+    },
+    "src/lib/clientDashboard.test.js": {
+      "count": 9,
+      "identity_sha256": "04ed05b6edfe0b2caebfb2d2c3e634e9d0e105addc65ef31ad899acfd7b42fa7"
+    },
+    "src/lib/dashboardPosture.test.js": {
+      "count": 11,
+      "identity_sha256": "20c80e90cafcd8daca247d90c865c879beea747b3b86f759152f08fd9ab3c199"
+    },
+    "src/components/IsoSequentialInterview.test.jsx": {
+      "count": 10,
+      "identity_sha256": "c199ca1c47c918472c6528950e1c2a006b2d8f6ee01abaa5d6e4dcd74eba8c64"
+    },
+    "src/preview/onboardingHandoff.test.js": {
+      "count": 5,
+      "identity_sha256": "4b2b10b348ed29fe18abbcfcbb5a34aa57a0b382a959e613bfa5c170696df43c"
+    },
+    "src/pages/BrawndoRisks.test.jsx": {
+      "count": 4,
+      "identity_sha256": "90fcc9a48517f09e729b9aab0e2ef0d03e36b4fe8e326d99a724517a460cf232"
+    },
+    "src/preview/programs/dunder.test.js": {
+      "count": 6,
+      "identity_sha256": "8172cfa1e3740ccaa4ab6dc6769efbd21199dd61ef7b8f4baa73ec3d97d70529"
+    },
+    "src/preview/programs/prestigeNativeOnboarding.test.js": {
+      "count": 22,
+      "identity_sha256": "1726d0fc5ccbcb6ae66908500d7328e76231f80ace06e74a9b7a75ac33b7410c"
+    },
+    "src/pages/DashboardAllClientsAppearance.test.jsx": {
+      "count": 9,
+      "identity_sha256": "07019416cbf53b082d0df124d856479e335f2f9afa39245b1e89a52c6e045cdc"
+    },
+    "src/lib/enhancedPortfolio.test.js": {
+      "count": 10,
+      "identity_sha256": "85c895184eec51499b5222eab1c5a551ac22999bb3132f940f7aa9e54f2491db"
+    },
+    "src/components/BrawndoCisVisualOmni.test.jsx": {
+      "count": 8,
+      "identity_sha256": "9681a13032c61f415827da83c2a2ef969fb4cf7c546f83ceecc79c8da1a74513"
+    },
+    "src/preview/programs/prestigeCapacityPreflight.test.js": {
+      "count": 2,
+      "identity_sha256": "6d2d3ac09102c7a9a059080b9ecf9d050b3c892eb7f3b4d0d36e1c6a2876a5e1"
+    },
+    "src/lib/brawndoDemoRisks.test.js": {
+      "count": 7,
+      "identity_sha256": "604d859b2bc6ee290eb575726087db0f9eb00ff164deeaeb1e1720599117e7fb"
+    },
+    "src/preview/commandRequests.test.js": {
+      "count": 8,
+      "identity_sha256": "6e8b86ce37609fa11962b20ff760860dde06651dccebba52b97821ad2dcfe3c2"
+    },
+    "src/components/BrawndoSidebar.test.jsx": {
+      "count": 11,
+      "identity_sha256": "fff22c6ea4d59b94cdbd321141c1eaffbce99558cdc7800f378042e6c4a2ad44"
+    },
+    "src/preview/organizationalControls.test.js": {
+      "count": 4,
+      "identity_sha256": "209d5042b353f2882257cbf165b0c6653f0c107759c9598a64f97e19d3290403"
+    },
+    "src/components/BrawndoSafeguard11FindingFields.test.jsx": {
+      "count": 10,
+      "identity_sha256": "9a1752a04a1586b97ca907af21870c4fe721aa09473fde3f5558d7f05b6af63d"
+    },
+    "src/pages/ReviewsPresentation.test.jsx": {
+      "count": 5,
+      "identity_sha256": "a002df0824e31dad195037311db21b89fb763abaf883dfb0e71068180bbcf695"
+    },
+    "src/components/ActionDetailEvidenceScope.test.jsx": {
+      "count": 4,
+      "identity_sha256": "03de68948dff0b71b6ba2f22d85279ffd6c894c3df54e1941f40bcabe7d9789f"
+    },
+    "src/pages/RecordListDashboardLinks.test.jsx": {
+      "count": 10,
+      "identity_sha256": "16fdea3a63f8c208404ff9edf346a3883919a0d2e84a31c1a36d3543c59b19cc"
+    },
+    "src/components/AssigneeSelect.test.jsx": {
+      "count": 10,
+      "identity_sha256": "65283dff38420f5c4d07c2fe48e7e65144e545d93935b8407f6d8ecb0d48ba39"
+    },
+    "src/preview/hipaaFramework.test.js": {
+      "count": 6,
+      "identity_sha256": "cc9eb07920c4cf11f9bedf00522ba54afbfa4955fffe1c8bcbc895540bc18a77"
+    },
+    "src/lib/portfolioOverview.test.js": {
+      "count": 8,
+      "identity_sha256": "9a5172f6f1f10094703ad4bfc8aa7bf87a8928833eb8780102277211395c8de4"
+    },
+    "src/preview/aiGovernance.test.js": {
+      "count": 4,
+      "identity_sha256": "770b922d4c2f6cc7266e364049384a280163f73e632fb466122aa2b9e2582e32"
+    },
+    "src/pages/SystemsOwnerLabels.test.jsx": {
+      "count": 2,
+      "identity_sha256": "19f43bd38b9679a86bb3b1d4f9d5b20e8d67cbf35bbbd8f068eae1ff537343a1"
+    },
+    "src/preview/findingRiskNativeCommand.test.js": {
+      "count": 9,
+      "identity_sha256": "49064765da3ced0ca45155b8e4a82d6f40885e44eaaa257f6e54e439108fa23d"
+    },
+    "src/components/OmniCharacter.test.jsx": {
+      "count": 6,
+      "identity_sha256": "2bdd497cc1a75ce09367059d8c90839807dffc3b4b397a1471b854d58253b401"
+    },
+    "src/components/DashboardPrograms.test.jsx": {
+      "count": 5,
+      "identity_sha256": "377821343fbc117db77885f8d5e762e9e9ade0030faa8ae82e6a36df843e0ac8"
+    },
+    "src/preview/cisIG2OperatingCycles.test.js": {
+      "count": 1,
+      "identity_sha256": "f9749fc6289fbf437f898a56fd9222477fa95a67cb493335ba441844b1b13bb2"
+    },
+    "src/components/ClientIdentityMark.test.jsx": {
+      "count": 21,
+      "identity_sha256": "0399f7e4bcbf3af99ae96e9f1603a8ac3f549f7d414ac8a6a00f1552f7935da2"
+    },
+    "src/lib/sharedClientAppearance.test.js": {
+      "count": 12,
+      "identity_sha256": "4d7101bb843305102421280da6f2b5e7324dc47478296282531e8754ff366d22"
+    },
+    "src/pages/AdminRoles.test.jsx": {
+      "count": 3,
+      "identity_sha256": "2a9af905b3a2224187292a5a1097543ac28c12006a66fc7d940bb2265732b080"
+    },
+    "src/components/CisReviewsConcept.test.jsx": {
+      "count": 12,
+      "identity_sha256": "0051eeb7921c8f7279015559c160a2b2e8d794912e1c57478ad5b523ba5b7220"
+    },
+    "src/preview/clientProfile.test.js": {
+      "count": 6,
+      "identity_sha256": "e4decff035d0606900a2716007c4d31d62a2bd37e6ba52eaaba363419476b19c"
+    },
+    "src/preview/brawndoVendors.test.js": {
+      "count": 4,
+      "identity_sha256": "7461443d8d8e42e0796ab15501407d418b11af7f0a33a3f3c3f917411684336c"
+    },
+    "src/preview/programs/prestigeOrganizationReviews.test.js": {
+      "count": 6,
+      "identity_sha256": "79f0659874fa7d8ff8312d698dd8d173dd28cfc08c97c514f1104267ade13c6c"
+    },
+    "src/components/SemanticPresentation.test.jsx": {
+      "count": 4,
+      "identity_sha256": "bd660224294f4ba5f97440051bae7233d35ee7a4018d67c9df31d79e8733733f"
+    },
+    "src/pages/PrestigePresentation.test.jsx": {
+      "count": 4,
+      "identity_sha256": "5da21bb811c89e486d616340ae2984affdd27ba9fafcc787009015dd5ab55c67"
+    },
+    "src/preview/registerCatalogIdentity.test.js": {
+      "count": 6,
+      "identity_sha256": "9bcb53781acbc570d09d85c2b60f35b2100e26417df0f59eb8aacf7d4b01622d"
+    },
+    "src/lib/reviewOccurrences.test.js": {
+      "count": 19,
+      "identity_sha256": "c3a9ec9bbaada38d22fc44e0668892cfe3805b41f43ff81862651e93f134d667"
+    },
+    "src/lib/brawndoAdditionalEvidence.test.js": {
+      "count": 5,
+      "identity_sha256": "22ef427662023652fba8da73b4821c51ada38be0a80243c98c8f855a34cacba6"
+    },
+    "src/components/BrawndoCisVisualShell.selector.test.js": {
+      "count": 10,
+      "identity_sha256": "03850d1afd7c5333a4a1f036caa83606d18756a05ea4a3e34bf431b4e6eddb4f"
+    },
+    "src/lib/cisDashboardContract.test.js": {
+      "count": 5,
+      "identity_sha256": "005d91a65f69b1a2acc6e4556581a11c62b1a95080528c01955af6fe61140619"
+    },
+    "src/lib/cisActionItemsConcept.test.js": {
+      "count": 15,
+      "identity_sha256": "8cb579e8a831d24e6516346c7732c7b335afcac417b0c79c715a912aa3e20b73"
+    },
+    "src/components/RecordDrawerFindingCreateContract.test.jsx": {
+      "count": 2,
+      "identity_sha256": "9821f9fb87d3865ecda0f34bdde85679232c3e859f8ea13c8ef24379a39d5e00"
+    },
+    "src/lib/contactAccess.test.js": {
+      "count": 20,
+      "identity_sha256": "4088a10ddc2f6d642824695afed2326a09331911c926b9b0541e478af7568f44"
+    },
+    "src/preview/brawndoActions.test.js": {
+      "count": 4,
+      "identity_sha256": "c243a1f7b282435add296ddf5a4d373157f01e7b897a3a52d6b68cbb216e8a01"
+    },
+    "src/lib/peopleRefresh.test.jsx": {
+      "count": 5,
+      "identity_sha256": "85cff138b61b903d0536d974b4c8caf76f0c7ce113317e2de438130216088aff"
+    },
+    "src/lib/frameworkWorkspace.test.js": {
+      "count": 6,
+      "identity_sha256": "fc1a705e353f5e3a80b4bc5f360aca2ab67a0a69ef707a3ce5b4b0a7a88a0bbb"
+    },
+    "src/pages/EvidenceFrameworkScope.test.jsx": {
+      "count": 4,
+      "identity_sha256": "cc57079feb14a02502a455d9e7ea9213f808848ed02d08f8a0955de03bfd1b32"
+    },
+    "src/lib/loadClientDashboard.test.js": {
+      "count": 7,
+      "identity_sha256": "f2642458b620042e75ac41596a10dfb52340348aca723a29162e4593ec0a5923"
+    },
+    "src/components/RecordDrawerVendorDescription.test.jsx": {
+      "count": 8,
+      "identity_sha256": "be8738df056d151c718dae3256f439423cf99ca44700f0bee483382a7d7ed165"
+    },
+    "src/pages/CalendarFocus.test.jsx": {
+      "count": 1,
+      "identity_sha256": "7d3416db33f52f9576e5d5f3a4f63c345c0bc0116882661777c45728025f4b1d"
+    },
+    "src/components/IsoAuditGuide.test.jsx": {
+      "count": 14,
+      "identity_sha256": "a854c959c26f132016d49d0b4c60c9fff01cd38cbb60f407f7a67aff6b5ed44c"
+    },
+    "src/preview/portfolioMonitoring.test.js": {
+      "count": 3,
+      "identity_sha256": "163731ac82002c2264c825903efc105d4784f4053a023bdc4ff14ff2984cb953"
+    },
+    "src/components/AIOnboardingWizard.test.jsx": {
+      "count": 3,
+      "identity_sha256": "d7c554de4fc989775ee1e504b66ce8823e1356870512f11ba84c391572497e14"
+    },
+    "src/preview/governance.test.js": {
+      "count": 3,
+      "identity_sha256": "21ec7e41035225718774687a5b94b1cb985998c581dc197f09f1e54fce534b3c"
+    },
+    "src/preview/programs/isoSocEightYearPlans.test.js": {
+      "count": 6,
+      "identity_sha256": "43cae5b7c38dbc569e592f4a81fb9f18e73e57d9873d4043288e725b92761df7"
+    },
+    "src/lib/approvedLightSystem.test.js": {
+      "count": 5,
+      "identity_sha256": "9e0829360f10b07e4bd2e992d36a1113fd6588de524115c561e7f6e75d192b99"
+    },
+    "src/preview/policyProvenance.test.js": {
+      "count": 3,
+      "identity_sha256": "2b850dff3c6c6f80e1ea406fb8dd480f5de5424940a1cee8612f68744d653793"
+    },
+    "src/components/RegisterIdentityLogo.test.jsx": {
+      "count": 7,
+      "identity_sha256": "7cadc10903dd2aa636b36cec8ceaa8edccc2930dfecaebec30680fd34f7ffdf2"
+    },
+    "src/lib/cisRequirementGuide.test.js": {
+      "count": 34,
+      "identity_sha256": "7b7efa90066937d5125e6125681c950746050185f377235c134d20f72b43be34"
+    },
+    "src/preview/requirementBasis.test.js": {
+      "count": 4,
+      "identity_sha256": "2399333eea173c6eec69354a09bb63ccfa741e9c53c8fb207230fd70f7512e69"
+    },
+    "src/components/ProgramConfiguration.test.jsx": {
+      "count": 2,
+      "identity_sha256": "fd25eb8def2f6e725c4016023023882ab8dfc3a2c3d08f8a1cd0b41117911306"
+    },
+    "src/lib/registerCatalogLogo.test.js": {
+      "count": 14,
+      "identity_sha256": "c3816e39db6315b78a3af726be615543a77f89423036861fc0dc62d9ddc5b8fe"
+    },
+    "src/preview/cisNewClientExperience.test.js": {
+      "count": 3,
+      "identity_sha256": "9ec9f6d1badc6e8e1457176467cde85678f26fb9d66c8fe931568e4c2537b0e1"
+    },
+    "src/components/FrameworkContext.test.jsx": {
+      "count": 10,
+      "identity_sha256": "a8747549f0e0f89975e70057a810c6d3f327aefe56e54af33c5147b39ddce983"
+    },
+    "src/components/PolicyPendingDecisions.test.jsx": {
+      "count": 6,
+      "identity_sha256": "195398d31b29b9199145be2fdb123553d010ac3988f25a618c58a6587d8cdded"
+    },
+    "src/components/ContactAccess.test.jsx": {
+      "count": 6,
+      "identity_sha256": "daa94bf4d405faf245b11525a7c9a7986502efbe32b4062af452dc8d609fe724"
+    },
+    "src/lib/brawndoSafeguardDates.test.js": {
+      "count": 19,
+      "identity_sha256": "ffb955afa59afde0046bba811c154efe462e114ab58ce5330c8491472ad7ec51"
+    },
+    "src/preview/brawndoSeedIntegrity.test.js": {
+      "count": 5,
+      "identity_sha256": "2638858e955459ebf323cca3001a01d251304a7f757df2de3e4fd094f9784c04"
+    },
+    "src/lib/brawndoDemoCalendar.test.js": {
+      "count": 3,
+      "identity_sha256": "938f11d28adea831aabccb91a7ac72d5231b850f9ac52d048daab28e244dfdbb"
+    },
+    "src/components/BrawndoDemoProgram.test.jsx": {
+      "count": 2,
+      "identity_sha256": "7feadfe9e22db358c33643abbc24ac13b7090995cffdfbd0cd6c1e4ad5b78e20"
+    },
+    "src/components/EvidenceItemDrawer.test.jsx": {
+      "count": 4,
+      "identity_sha256": "f92a8b3811901be1e5f6746ec1b62d24755944dc8edd7f0d9f3ce0242096364d"
+    },
+    "src/lib/cisIG3Content.test.js": {
+      "count": 25,
+      "identity_sha256": "eae5bd8bf72b4469c3242a6427f987486b62980f9e99b37ca322c52263a0b80d"
+    },
+    "src/preview/riskCreationDate.test.js": {
+      "count": 4,
+      "identity_sha256": "b35985354259093efc8c285c9777b38667316f50f0a9985e4cb20d0374115a92"
+    },
+    "src/components/ui/sheet.test.jsx": {
+      "count": 4,
+      "identity_sha256": "4f5c97094d8f890841b9b40896458a741a11038bfcc128885a52cc556637a238"
+    },
+    "src/preview/cisFindingLifecycle.test.js": {
+      "count": 2,
+      "identity_sha256": "47d94055e6c27080ed82f9e3ac0b6bc72f31096d4b62b75b22dcf16271213a48"
+    },
+    "src/pages/Login.css.test.js": {
+      "count": 8,
+      "identity_sha256": "f7edd995a57f6ef5a2cd47df4b8710c7d4c61b124d2f98db4a8f13d66e0ba0b9"
+    },
+    "src/lib/brawndoAssessmentPilot.test.js": {
+      "count": 2,
+      "identity_sha256": "2e4fde36fd95183f7b1ba1803c152a2a95280be42463bf2efe7a2ee256b0a4b9"
+    },
+    "src/components/TableControls.test.jsx": {
+      "count": 2,
+      "identity_sha256": "ce8d94afd0ed48c6880ebc83b7722ca6e8838d222f826086b9da5e78d4d9c12e"
+    },
+    "src/components/CisStatus.test.jsx": {
+      "count": 8,
+      "identity_sha256": "399294a9593f0533ebbbdff9a549ab140dc2014708fc175dca42184be2de6562"
+    },
+    "src/components/BrawndoProfileOverview.test.jsx": {
+      "count": 2,
+      "identity_sha256": "76a71bc9b0fa8a1da18e7497d67e6e0f4df1d5ea4e793dd17a9ca1b2768aab62"
+    },
+    "src/components/IsoManagementReviewGuide.test.jsx": {
+      "count": 3,
+      "identity_sha256": "4ff7878bc3139ceca659e99fe133a00d05069aeda2b80889a1ec195eb95700c5"
+    },
+    "src/components/BrawndoPage.test.jsx": {
+      "count": 1,
+      "identity_sha256": "9345bd6bd7597c4b7fc24af1210c5ecd58fc5b9af37ec92a4dc792619abbde7e"
+    },
+    "src/lib/brawndoRisks.test.js": {
+      "count": 3,
+      "identity_sha256": "a6c9fd0e0e1949f23638ad3b13d35d8fdf8d0c85d0570eccd731e813bf799db0"
+    },
+    "src/context/OrgContextRouter.test.jsx": {
+      "count": 1,
+      "identity_sha256": "61a8a92604eb1e96f951314092249645b11bca974a71f4ce09ab0e8ce66acfdf"
+    },
+    "src/pages/PlatformFrameworkPresentation.test.jsx": {
+      "count": 1,
+      "identity_sha256": "80793f3992efbc89d7e53d6808d2ee6fdd86805a7031ebbf0699a538a1b2fd1a"
+    },
+    "src/lib/cisAssessmentPresentation.test.js": {
+      "count": 2,
+      "identity_sha256": "c8ec731a35b34d41da3fcbda394b3cc77f69929248e998124c3b6885c2dfccad"
+    },
+    "src/lib/additionalContactsPresentation.test.js": {
+      "count": 2,
+      "identity_sha256": "8b4b903e00faa1f39c21f495eb0a0435a85249053f383a6de7fdb9453c8005b0"
+    },
+    "src/lib/brawndoPolicyTiles.test.js": {
+      "count": 3,
+      "identity_sha256": "e0ce6d0ff1415bd873e79a435ebd4976120cbedb457d82158414c00be4d2acd4"
+    },
+    "src/components/login/prismContent.test.jsx": {
+      "count": 11,
+      "identity_sha256": "a6ed87743d4c1b11cdd29d888bff35e5acbfdff5be6401018fedcbbcbe87e999"
+    },
+    "src/lib/visualCorrectionScope.test.js": {
+      "count": 2,
+      "identity_sha256": "3273ed27ef418b92c9bf5b7cb906597f0c5c54e624b4e696a8bb8a3dfafb9ae3"
+    },
+    "src/preview/brawndoHistoryScenario.test.js": {
+      "count": 12,
+      "identity_sha256": "10e223e257434c9c5df141d57070c35778ee20b50cc4c84edb790b19a9448b0d"
+    },
+    "src/lib/isoGuidedProgram.test.js": {
+      "count": 3,
+      "identity_sha256": "a6ad84f03b830ef2c59460e8531fa69904f3727bdcfc00fee690226208b561d2"
+    },
+    "src/lib/socRequirementGuide.test.js": {
+      "count": 2,
+      "identity_sha256": "1f684aa37c62b4a23058ff5ccadd29709c4aec24e2bee88831768665c0fef5c4"
+    },
+    "src/preview/contactDirectory.test.js": {
+      "count": 1,
+      "identity_sha256": "ced51c19720d5d39e48eb23068293794b6c4306390f707754c80639d996553ea"
+    },
+    "src/pages/EnhancedPortfolioGeometry.test.js": {
+      "count": 1,
+      "identity_sha256": "e5d6df7a24a891e0dec4e2da96eacf99605c3183d602dc6f018af5c81f80c7cb"
+    },
+    "src/pages/LoginPrism.css.test.js": {
+      "count": 3,
+      "identity_sha256": "ec194b049141c634d3ee9bbffd45b8898eaeedb82d0d25b8d9e7972ff1acb721"
+    },
+    "src/lib/brawndoWorkspacePilot.test.js": {
+      "count": 7,
+      "identity_sha256": "6882e47e06cad62e57f8885155de6a18eec293f4f0b53711129e88af6ed67cd1"
+    },
+    "src/preview/engineeringReliability.test.js": {
+      "count": 2,
+      "identity_sha256": "b71b5210c5bc665577d6705207ab12992ca704ebe2d14253ea84501470002114"
+    },
+    "src/preview/createReplay.test.js": {
+      "count": 4,
+      "identity_sha256": "c7a719ad188eb44d09883c229178a1687640101490ed18c3ce2bcb37fbde65da"
+    },
+    "src/preview/DemoNotice.test.jsx": {
+      "count": 2,
+      "identity_sha256": "2d9d81b95238d0ddaa894b9495691dc6b6ab93fc2f23eda444b9d65ea585e0e8"
+    },
+    "src/lib/focusRescue.test.jsx": {
+      "count": 1,
+      "identity_sha256": "47b1f920a5b671fae1ca728c546efed5f8ab58a0d175dae221bd5950492d35c7"
+    },
+    "src/lib/monthEndRecurrence.test.js": {
+      "count": 4,
+      "identity_sha256": "baefa2177bd5bc2745bd6f6ebf2657e3fbcfac9069f7e8b5cac2aed04a903ed5"
+    },
+    "src/components/BrawndoRiskMatrix.test.jsx": {
+      "count": 1,
+      "identity_sha256": "bfb933efb4c96b6939f8d8355a7d0d0171c9e8af3c3b6a186a0241549a0156bf"
+    },
+    "src/lib/portfolioRefreshTransport.test.js": {
+      "count": 1,
+      "identity_sha256": "39228929378a989360804cb726cd0ac2767622a8a8e5c31a506f5a091483e0ec"
+    },
+    "src/lib/reviewRemediation.test.js": {
+      "count": 2,
+      "identity_sha256": "27c30ad1ad14247ad8799e7bb1768d884d8d9403bf7beb3ff0624dd13f63d3ef"
+    },
+    "src/lib/demoClientOrder.test.js": {
+      "count": 2,
+      "identity_sha256": "6bb58e8b6410656420026dc63f3145421a7045afc60fbce0647db454bed93654"
+    },
+    "src/lib/usePortfolioRefresh.test.jsx": {
+      "count": 1,
+      "identity_sha256": "1a535c2f5797b3e1a903c812c041605251b38b20979ed954adb0e6e5e2c948c0"
+    },
+    "src/lib/useSurfaceRef.test.jsx": {
+      "count": 1,
+      "identity_sha256": "2906587065bd916152d49f5f5c1ac5742d8cc49bb3d68d216d251cd84af8da30"
+    },
+    "src/lib/interactionModality.test.js": {
+      "count": 2,
+      "identity_sha256": "fc609754a9bffd752f7bb05a5bf5855b826388975261787befd82165d925f1d2"
+    },
+    "src/lib/evidenceFile.test.js": {
+      "count": 3,
+      "identity_sha256": "7c98587b47c2985237cd8266f39e58f6b8e9c33c5dd2ab33ad52b1bae688a353"
+    },
+    "src/lib/socAssessmentDates.test.js": {
+      "count": 1,
+      "identity_sha256": "c40504583f32c23cbd862b079844741575f6f79409c596cd1f9bda0f85b8ec05"
+    },
+    "src/lib/remediation.test.js": {
+      "count": 1,
+      "identity_sha256": "7c0f572a9f6ce8a13c151d0773b09b92d47ffa56e85888de379032904a79e7f6"
+    },
+    "src/lib/recordUuid.test.js": {
+      "count": 1,
+      "identity_sha256": "3daccf2d99080eac2251c2f3890a9d19c37342046ed1be98b3615c5ac5e8f988"
+    }
+  },
+  "limits": [
+    "Baseline is saved first-unique suite-result publication order, not direct original suite starts.",
+    "Exact case identities include the two original setup-blocked failures; diagnostic outcomes are retained independently.",
+    "A completed diagnostic does not qualify f6 or establish the original timeout cause."
+  ]
+}
