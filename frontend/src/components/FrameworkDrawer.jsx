@@ -42,6 +42,8 @@ const IDS={reviews:'review_id',findings:'finding_id',tasks:'task_id',risks:'risk
 const SELECT='w-full border border-line bg-surface-card rounded p-2 text-sm';
 export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSaved,onPrevious,onNext,position,breadcrumb,recordManagement=false,reviewManagement=false,onReviews,visualReference=false,cisVisualOrigin,onManage,closeRequest=0,onCloseCancelled}){
   const auth=useAuth(),org=useOrg()||{},{user}=auth,aid=record.framework_assessment_id,definition=frameworkDefinition(record.framework_key,record.definition_id);
+  const frameworkKey=record.framework_key,recordClientId=record.client_id,definitionId=record.definition_id,frameworkVersion=record.framework_version;
+  const demoMode=PREVIEW_MODE||auth.demoMode===true,workspaceMode=auth.workspaceMode,userWorkspaceMode=user?.workspace_mode;
   const actorOriginKey=JSON.stringify([user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,PREVIEW_MODE]);
   const cisIdentityContext={...org,...auth,authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error,
     selectedClientId:selectedClient(),routeClientId:new URLSearchParams(window.location.search).get('client_id')};
@@ -104,18 +106,20 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   useEffect(()=>{if(!dirty&&!guidedDraft&&!reviewDraft&&!controlDraft&&!itemsDraft&&!finding&&!comment.trim()&&!linkDraft)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty,guidedDraft,reviewDraft,controlDraft,itemsDraft,finding,comment,linkDraft]);
   useEffect(()=>{
     const c=new AbortController();
+    // Equivalent DTO copies must not restart the read loop; only these identity fields are consumed.
+    const openerRecord={framework_assessment_id:aid,client_id:recordClientId,framework_key:frameworkKey,definition_id:definitionId,framework_version:frameworkVersion};
     // Keep native linked rows mounted during same-origin refreshes. Clear a
     // changed visual origin so an away/back switch cannot reuse its old receipt.
     setCtx(old=>prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId
       &&(old.visualOrigin?.key??null)===visualOriginKey?old:null);
     setError('');const opts={params:{client_id:clientId},signal:c.signal};
     // Only the exact pilot may omit unused detail reads. Other native openers retain their ordered reads.
-    Promise.all([api.get(`/framework_assessments/${aid}/related`,{signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal}),pilotContextOnly?Promise.resolve({data:[]}):api.get('/contacts',opts),pilotContextOnly?Promise.resolve({data:[]}):api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),pilotContextOnly?Promise.resolve({data:[]}):api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal}),api.get('/frameworks/'+record.framework_key,opts)]).then(async ([related,users,contacts,comments,activity,workspace])=>{
+    Promise.all([api.get(`/framework_assessments/${aid}/related`,{signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal}),pilotContextOnly?Promise.resolve({data:[]}):api.get('/contacts',opts),pilotContextOnly?Promise.resolve({data:[]}):api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),pilotContextOnly?Promise.resolve({data:[]}):api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal}),api.get('/frameworks/'+frameworkKey,opts)]).then(async ([related,users,contacts,comments,activity,workspace])=>{
       if(c.signal.aborted)return;
-      const context={visualOrigin:visualOriginKey?{key:visualOriginKey,selected:workspace.data.selected,configured:workspace.data.configured,framework:workspace.data.framework,programId:workspace.data.implementation_position?.program_id}:null,related:related.data,users:users.data,configuration:{...(workspace.data.configuration||{}),...(['soc-2','iso-27001'].includes(record.framework_key)?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid))};
-      const freshPilot=pilotContextOnly&&cisVisualRecordMatches(record,context,visualOriginKey)
-        &&brawndoAssessmentPilotEligible({demoMode:PREVIEW_MODE||auth.demoMode===true,workspaceMode:auth.workspaceMode,user,
-          safeguard11:true,directProgramOpener:visualReference===true,record,current:context.current,ctx:context,pathname:window.location.pathname});
+      const context={visualOrigin:visualOriginKey?{key:visualOriginKey,selected:workspace.data.selected,configured:workspace.data.configured,framework:workspace.data.framework,programId:workspace.data.implementation_position?.program_id}:null,related:related.data,users:users.data,configuration:{...(workspace.data.configuration||{}),...(['soc-2','iso-27001'].includes(frameworkKey)?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid))};
+      const freshPilot=pilotContextOnly&&cisVisualRecordMatches(openerRecord,context,visualOriginKey)
+        &&brawndoAssessmentPilotEligible({demoMode,workspaceMode,user:{workspace_mode:userWorkspaceMode},
+          safeguard11:true,directProgramOpener:visualReference===true,record:openerRecord,current:context.current,ctx:context,pathname:window.location.pathname});
       // The earlier client DTO is only a hint: a fresh scope/record mismatch restores full context before rendering.
       if(pilotContextOnly&&!freshPilot)[contacts,comments,activity]=await Promise.all([
         api.get('/contacts',opts),api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),
@@ -123,7 +127,7 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
       if(!c.signal.aborted)setCtx(old=>({...context,contacts:contacts.data,comments:comments.data,activity:activity.data,
         options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}));
     }).catch(e=>{if(!c.signal.aborted){setCtx(null);setError(formatError(e));}});return()=>c.abort();
-  },[aid,clientId,record,revision,prototype,visualOriginKey,pilotContextOnly,auth.demoMode,auth.workspaceMode,user,visualReference]);
+  },[aid,clientId,recordClientId,frameworkKey,definitionId,frameworkVersion,revision,prototype,actorOriginKey,visualOriginKey,pilotContextOnly,demoMode,workspaceMode,userWorkspaceMode,visualReference]);
   const contextLoaded=!!ctx;
   useEffect(()=>{
     if(!contextLoaded)return;

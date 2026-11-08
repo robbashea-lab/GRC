@@ -336,3 +336,53 @@ test('aborting while restored detail reads are pending prevents late context pub
   expect(readPaths()).toEqual(fallbackPaths());
   expectNoWrites();
 });
+
+test.each([
+  ['the exact pilot', true],
+  ['a nonpilot opener', false],
+])('%s keeps its unsaved form and does not refetch for equivalent user and record DTO copies', async (_scope, visualReference) => {
+  const props = {visualReference};
+  await render(props);
+  const expectedReads = visualReference ? requiredPaths() : orderedAllPaths();
+  expect(readPaths()).toEqual(expectedReads);
+  expect(api.get).toHaveBeenCalledTimes(visualReference ? 3 : 6);
+  const signal = api.get.mock.calls[0][1].signal;
+  const implementation = surface().querySelector('[aria-label="Current implementation"]');
+  const originalSaved = copy(native);
+  const draft = 'Retain this unsaved native implementation across equivalent DTO copies.';
+  await edit(implementation, draft);
+  for (let rerender = 0; rerender < 2; rerender++) {
+    mockAuth = {...mockAuth, user: {...mockAuth.user}};
+    record = copy(record);
+    await render(props);
+    expect(readPaths()).toEqual(expectedReads);
+    expect(signal.aborted).toBe(false);
+    expect(surface().querySelector('[aria-label="Current implementation"]')).toBe(implementation);
+    expect(implementation.value).toBe(draft);
+    expect(implementation.disabled).toBe(false);
+    expect(mockGuideProps.form.implementation).toBe(draft);
+    expect(mockGuideProps.current.implementation).toBe(originalSaved.implementation);
+    expectNoWrites();
+  }
+  expect(native).toEqual(originalSaved);
+});
+
+test.each([
+  ['user_id', 'replacement-context-actor'],
+  ['role', 'client_viewer'],
+])('a real actor %s change still refreshes nonpilot context with a new abort boundary', async (field, value) => {
+  await render({visualReference: false});
+  expect(readPaths()).toEqual(orderedAllPaths());
+  const oldSignal = api.get.mock.calls[0][1].signal;
+  api.get.mockClear();
+  mockAuth = {...mockAuth, user: {...mockAuth.user, [field]: value}};
+  await render({visualReference: false});
+  expect(oldSignal.aborted).toBe(true);
+  expect(readPaths()).toEqual(orderedAllPaths());
+  const newSignal = api.get.mock.calls[0][1].signal;
+  expect(newSignal).not.toBe(oldSignal);
+  expect(newSignal.aborted).toBe(false);
+  expect(api.get.mock.calls.every(([, config]) => config.signal === newSignal)).toBe(true);
+  expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(field === 'role');
+  expectNoWrites();
+});

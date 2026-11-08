@@ -89,6 +89,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   useEffect(()=>()=>{activeIdentity.current=null;},[]);
   const [applied,setApplied]=useState(false),[contextPrompt,setContextPrompt]=useState(false);
   const [view,setView]=useState(workspacePilot?'position':'interview'),[loaded,setLoaded]=useState(!record),[changeAnswer,setChangeAnswer]=useState(''),[history,setHistory]=useState(null),[historyError,setHistoryError]=useState(''),[historyBusy,setHistoryBusy]=useState(false);
+  const historyRequestId=useRef(0);
   const currentVersion=record?versionForSafeguard(record.definition_id,workspacePilot):catalogForPilot(workspacePilot).version;
   const version=draft?.version||currentVersion,updated=version!==currentVersion;
 
@@ -442,7 +443,20 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     }else await stageAnswer(proposed,expected);
   }
   const uncertain=question&&(question.id==='unresolved'?['Yes','Partially','Not sure']:['Partially','No','Not sure']).some(v=>Array.isArray(answers[question.id])?answers[question.id].includes(v):typeof answers[question.id]==='object'?Object.values(answers[question.id]||{}).includes(v):answers[question.id]===v);
-  async function loadHistory(append=false){const readingIdentity=identity;setHistoryBusy(true);setHistoryError('');try{const {data}=await api.get(base+'/history',{params:{limit:25,...(append?{before_revision:history.next_before_revision}:{})}});if(activeIdentity.current===readingIdentity)setHistory({identity:readingIdentity,records:append?[...history.records,...data.items]:data.items,next_before_revision:data.next_before_revision});}catch(e){if(activeIdentity.current===readingIdentity)setHistoryError(formatError(e));}finally{if(activeIdentity.current===readingIdentity)setHistoryBusy(false);}}
+  async function loadHistory(append=false){
+    const readingIdentity=identity,requestId=++historyRequestId.current;
+    // A reopened history dialog can supersede an unfinished read for the same identity.
+    const isCurrentRead=()=>activeIdentity.current===readingIdentity&&historyRequestId.current===requestId;
+    setHistoryBusy(true);setHistoryError('');
+    try{
+      const {data}=await api.get(base+'/history',{params:{limit:25,...(append?{before_revision:history.next_before_revision}:{})}});
+      if(isCurrentRead())setHistory({identity:readingIdentity,records:append?[...history.records,...data.items]:data.items,next_before_revision:data.next_before_revision});
+    }catch(e){
+      if(isCurrentRead())setHistoryError(formatError(e));
+    }finally{
+      if(isCurrentRead())setHistoryBusy(false);
+    }
+  }
   useEffect(()=>{
     if(conceptPilot&&interviewHistoryOpen)loadHistory();
   },[conceptPilot,interviewHistoryOpen,identity]);// eslint-disable-line react-hooks/exhaustive-deps
