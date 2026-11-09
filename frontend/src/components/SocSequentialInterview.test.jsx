@@ -1,7 +1,10 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import SocSequentialInterview from './SocSequentialInterview';
-import {socGuidedCatalog,socGroups,socExtraQuestions} from '@/lib/socGuidedAssessment';
+import socGuidedCatalog from '@catalogs/guidedSoc2.json';
+import {socGroups,socExtraQuestions} from '@/lib/socGuidedAssessment';
+
+// These existing navigation assertions retain their exact immutable V2 question order.
 
 let root,container,props;
 const button=name=>[...container.querySelectorAll('button')].find(item=>item.textContent===name);

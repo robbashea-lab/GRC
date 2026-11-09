@@ -36,6 +36,9 @@ function engine(name) {
 }
 const cis = json('shared/catalogs/cisIG1.json'), soc = json('shared/catalogs/soc2.json');
 const guided = engine('guidedAssessment'), refined = engine('refinedOmni'), summary = engine('omniCisSummary'), socEngine = engine('socGuidedAssessment');
+// Explicit historical oracle only; no argument exercises the actual active default.
+const socVersion = process.argv[2] || socEngine.socGuidedCatalog.version;
+assert(['soc2-omni-2', socEngine.socGuidedCatalog.version].includes(socVersion), 'Unsupported SOC inventory vector version');
 const sourceCases = Object.fromEntries([1, 2, 3].map(group => [group, json('docs/omni-cis-rollout/ig' + group + '-status-cases.json').cases]));
 const reviewedMappings = [...json('docs/omni-cis-rollout/ig2-review.json').rows, ...json('docs/omni-cis-rollout/ig3-review.json').rows];
 // Only these authored supplements were retired by the approved Navigator reconciliation.
@@ -105,7 +108,7 @@ function cisVector(native, scenario) {
     checkpoints: checkpoints(id, version, answers, refined.omniGroups, true), result};
 }
 function socVector(native, scenario) {
-  const id = native.id, version = socEngine.socGuidedCatalog.version;
+  const id = native.id, version = socVersion;
   let answers = {};
   // Context determines its children before they are answered; hidden children are never injected.
   for (let pass = 0; pass < 3; pass++) for (const question of socEngine.socQuestions(id, answers, version)) {
@@ -140,4 +143,4 @@ for (const vector of vectors) {
   assert(vector.expected_basis && vector.expected_source);
   for (const heading of ['OVERVIEW', 'IMPLEMENTATION BREAKDOWN', 'ITEMS TO ADDRESS']) assert.equal(vector.result.narrative.split(heading).length, 2);
 }
-process.stdout.write(JSON.stringify({kind: 'Actual-engine serialization of source-accepted synthetic inputs, not independent prose approval', assessment_date: '2026-10-09', clients, vectors}));
+process.stdout.write(JSON.stringify({kind: 'Actual-engine serialization of source-accepted synthetic inputs, not independent prose approval', assessment_date: '2026-10-09', soc_question_version: socVersion, clients, vectors}));

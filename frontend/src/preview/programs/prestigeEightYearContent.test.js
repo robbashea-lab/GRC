@@ -1,6 +1,7 @@
 import onboardingCatalog from '@catalogs/onboardingCatalog.json';
 import {activeDefinitions, CATALOGS} from '../../lib/frameworks';
-import {socGuidedCatalog, socQuestions, validateSocAnswers, validateSocCompletion, socGuidedResult} from '../../lib/socGuidedAssessment';
+import socGuidedCatalog from '@catalogs/guidedSoc2.json';
+import {socQuestions, validateSocAnswers, validateSocCompletion, socGuidedResult} from '../../lib/socGuidedAssessment';
 import {reviewedProgress} from '../../lib/programProgress';
 import {eligible} from '../assignmentEligibility';
 import {buildLegacyDemoStore, ids as recordIds} from '../store';
@@ -9,6 +10,14 @@ import {frameworkRequest, prepareGuidedContext} from '../frameworks';
 import {preparePrestigeNativeOnboarding} from './prestigeNativeOnboarding';
 import {PRESTIGE_CURRENT_AS_OF, PRESTIGE_CURRENT_QUESTION_VERSION, PRESTIGE_CURRENT_CATEGORIES,
   PRESTIGE_CURRENT_ASSESSMENTS, preparePrestigeCurrentAssessment} from './prestigeEightYearContent';
+
+// This immutable authored-V2 fixture also qualifies its original V2 native-onboarding
+// contract. Keep that historical current-version context scoped to this test module;
+// unpatched rollout defaults and routes are covered by assessmentRolloutVersions.test.js.
+jest.mock('../../lib/socGuidedAssessment',()=>({
+  ...jest.requireActual('../../lib/socGuidedAssessment'),
+  socGuidedCatalog:jest.requireActual('@catalogs/guidedSoc2.json'),
+}));
 
 const CLIENT_ID = 'demo_prestige';
 const selected = activeDefinitions('soc-2', {categories: PRESTIGE_CURRENT_CATEGORIES});

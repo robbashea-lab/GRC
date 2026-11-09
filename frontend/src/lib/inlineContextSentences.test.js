@@ -1,8 +1,12 @@
 import {inventorySummary} from './omniInventorySummary';
 import {omniCisSummary} from './omniCisSummary';
 import {visibleQuestions} from './guidedAssessment';
-import {socGuidedCatalog,socQuestions,socGuidedResult,socInlineSummary} from './socGuidedAssessment';
-import {isoGuidedCatalog,isoQuestions,isoGuidedResult,isoInlineNarrative} from './isoGuidedAssessment';
+import socGuidedCatalog from '@catalogs/guidedSoc2.json';
+import isoGuidedCatalog from '@catalogs/guidedIsoV2.json';
+import {socQuestions,socGuidedResult,socInlineSummary} from './socGuidedAssessment';
+import {isoQuestions,isoGuidedResult,isoInlineNarrative} from './isoGuidedAssessment';
+
+// Exact V2 fixtures are also read under V1 below; new context keys must not leak into them.
 
 const date='2026-10-13';
 

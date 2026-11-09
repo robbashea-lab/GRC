@@ -93,9 +93,27 @@ test('applicable CIS clients start clean, ISO uses its own version, and inactive
   expect(interview.answers).toEqual({});expect(interview.revision).toBe(0);
   const iso=(await api.get('/frameworks/iso-27001',{params:{client_id:'demo_dunder'}})).data;
   const route='/framework_assessments/'+iso.assessments[0].framework_assessment_id+'/guided-assessment';
+  // Retained-V2 characterization. The unpatched fresh default is checked below;
+  // activating a new default must not reinterpret this saved interview version.
+  editStore(db=>{(db.guided_assessment_pilot||={})[iso.assessments[0].framework_assessment_id+':'+db.user.user_id]={
+    version:'iso27001-omni-2',answers:{},step:0,completed:false,revision:1,narrative:'Exact retained V2 checkpoint.',
+  };});
   expect((await api.get(route)).data.version).toBe('iso27001-omni-2');
   await api.patch('/onboarding/programs/iso-27001',{client_id:'demo_dunder',applicability:'does_not_apply'});
   await expect(api.get(route)).rejects.toMatchObject({response:{status:404}});
+});
+
+test('unpatched fresh ISO rollout starts clean, saves only interview progress and enforces the inactive-program gate',async()=>{
+  const workspace=(await api.get('/frameworks/iso-27001',{params:{client_id:'demo_dunder'}})).data;
+  const record=workspace.assessments.find(item=>item.definition_id==='4.1');expect(record).toBeTruthy();
+  const nativePath='/framework_assessments/'+record.framework_assessment_id,route=nativePath+'/guided-assessment',native=(await api.get(nativePath)).data;
+  const fresh=(await api.get(route)).data;expect(fresh).toMatchObject({version:'iso27001-assessment-rollout-2',answers:{},revision:0,completed:false,lineage_known:true,lineage_stale:false});
+  const payload={version:fresh.version,answers:{},step:0,completed:false,narrative:'',expected_revision:0,base_assessment_token:fresh.base_assessment_token,base_scope_fingerprint:fresh.base_scope_fingerprint};
+  const progress=(await api.put(route,payload)).data;expect(progress).toMatchObject({version:'iso27001-assessment-rollout-2',answers:{},revision:1,completed:false});
+  expect((await api.get(nativePath)).data).toEqual(native);await expect(api.put(route,payload)).rejects.toMatchObject({response:{status:409}});
+  await api.patch('/onboarding/programs/iso-27001',{client_id:'demo_dunder',applicability:'does_not_apply'});
+  await expect(api.get(route)).rejects.toMatchObject({response:{status:404}});await expect(api.put(route,continuation(progress))).rejects.toMatchObject({response:{status:404}});
+  expect((await api.get(nativePath)).data).toEqual(native);
 });
 
 test.each([1,2,3])('new IG%i clients receive canonical clean interviews and preserve inherited work on upgrade',async group=>{

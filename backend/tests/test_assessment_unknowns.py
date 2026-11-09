@@ -94,20 +94,43 @@ class AssessmentUnknownsTests(unittest.TestCase):
 
     def test_explicit_reported_notes_retain_origins_without_changing_status(self):
         for framework, engine in [('soc-2', soc_guided_assessment), ('iso-27001', iso_guided_assessment)]:
+            # Preserve the original non-scoring characterization under immutable saved versions.
+            for version in (engine.CATALOG['version'], engine.ROLLOUT['version']):
+                for identity in engine.CATALOG['definitions']:
+                    with self.subTest(framework=framework, version=version, definition=identity):
+                        answers = {q['id']: '' if q['type'] == 'text' else 'Relevant' if q['type'] == 'context' else 'Yes'
+                                   for q in engine._questions(identity,version)}
+                        answers.update(gaps='The selected service has a reported coverage gap.', unknowns='The supporting record location needs confirmation.')
+                        row = {'framework_key': framework, 'framework_assessment_id': 'test:' + identity, 'definition_id': identity}
+                        self.assertEqual(engine.result_status(identity, answers,version), 'addressed')
+                        self.assertEqual(assessment_items.generated(row, {'answers':answers,'version':version}), [])
+                        answers.update(additional_gap='Yes',additional_confirmation='Yes')
+                        engine.validate_completion(identity,answers,version)
+                        origins = assessment_items.generated(row, {'answers': answers, 'version':version})
+                        self.assertEqual([(item['question_id'], item['kind'], item['text']) for item in origins],
+                                         [('gaps', 'gap', answers['gaps']), ('unknowns', 'verification', answers['unknowns'])])
+                        self.assertEqual(engine.result_status(identity,answers,version),'addressed')
+                        with self.assertRaises(HTTPException) as error:
+                            engine.validate_completion(identity,{**answers,'gaps':''},version)
+                        self.assertEqual(error.exception.status_code,422)
+
+    def test_prospective_reported_concerns_constrain_status_and_retain_exact_item_origins(self):
+        for framework,engine,version in [('soc-2',soc_guided_assessment,'soc2-assessment-rollout-2'),
+                ('iso-27001',iso_guided_assessment,'iso27001-assessment-rollout-2')]:
             for identity in engine.CATALOG['definitions']:
-                with self.subTest(framework=framework, definition=identity):
-                    answers = {q['id']: '' if q['type'] == 'text' else 'Relevant' if q['type'] == 'context' else 'Yes'
-                               for q in engine._questions(identity)}
-                    answers.update(gaps='The selected service has a reported coverage gap.', unknowns='The supporting record location needs confirmation.')
-                    row = {'framework_key': framework, 'framework_assessment_id': 'test:' + identity, 'definition_id': identity}
-                    self.assertEqual(engine.result_status(identity, answers), 'addressed')
-                    self.assertEqual(assessment_items.generated(row, {'answers':answers,'version':engine.CATALOG['version']}), [])
-                    answers.update(additional_gap='Yes',additional_confirmation='Yes')
-                    engine.validate_completion(identity,answers)
-                    origins = assessment_items.generated(row, {'answers': answers, 'version': engine.CATALOG['version']})
-                    self.assertEqual([(item['question_id'], item['kind'], item['text']) for item in origins],
-                                     [('gaps', 'gap', answers['gaps']), ('unknowns', 'verification', answers['unknowns'])])
-                    self.assertEqual(engine.result_status(identity,answers),'addressed')
-                    with self.assertRaises(HTTPException) as error:
-                        engine.validate_completion(identity,{**answers,'gaps':''})
-                    self.assertEqual(error.exception.status_code,422)
+                self.assertEqual(engine.current_version(identity),version)
+                core={q['id']: '' if q['type']=='text' else 'Relevant' if q['type']=='context' else 'Yes'
+                      for q in engine._questions(identity,version)}
+                row={'framework_key':framework,'framework_assessment_id':'test:'+identity,'definition_id':identity}
+                gap={'additional_gap':'Yes','gaps':'The selected service has a reported coverage gap.'}
+                confirmation={'additional_confirmation':'Yes','unknowns':'The supporting record location needs confirmation.'}
+                for concerns,expected in [(gap,'needs_attention'),(confirmation,'not_assessed'),({**gap,**confirmation},'needs_attention')]:
+                    with self.subTest(framework=framework,definition=identity,concerns=tuple(concerns)):
+                        answers={**core,**concerns};before=dict(answers)
+                        engine.validate_completion(identity,answers)
+                        self.assertEqual(engine.result_status(identity,answers),expected)
+                        origins=assessment_items.generated(row,{'answers':answers,'version':version})
+                        expected_origins=[(key,kind,answers[key]) for key,kind in [('gaps','gap'),('unknowns','verification')]
+                                          if key in concerns]
+                        self.assertEqual([(item['question_id'],item['kind'],item['text']) for item in origins],expected_origins)
+                        self.assertEqual(answers,before)

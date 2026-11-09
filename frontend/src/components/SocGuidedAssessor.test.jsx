@@ -4,6 +4,13 @@ import SocGuidedAssessor from './SocGuidedAssessor';
 import {socGuidedCatalog,socGroups} from '@/lib/socGuidedAssessment';
 import api from '@/lib/api';
 
+// Preserve this suite's original V2 current-version lifecycle fixtures and assertions.
+// SocAssessmentRollout.test.jsx separately exercises the unpatched rollout default.
+jest.mock('@/lib/socGuidedAssessment',()=>({
+  ...jest.requireActual('@/lib/socGuidedAssessment'),
+  socGuidedCatalog:jest.requireActual('@catalogs/guidedSoc2.json'),
+}));
+
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'soc-actor',role:'super_admin'}})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));

@@ -11,6 +11,13 @@ import {reviewDrivers} from '../../lib/frameworks';
 import {onboardingProjection} from '../../lib/aiOnboarding';
 import {reviewedProgress} from '../../lib/programProgress';
 
+// Reconstruct this immutable authored-V2 source under its original current-version
+// context. Real rollout defaults/startup are qualified in separate unpatched suites.
+jest.mock('../../lib/socGuidedAssessment',()=>({
+  ...jest.requireActual('../../lib/socGuidedAssessment'),
+  socGuidedCatalog:jest.requireActual('@catalogs/guidedSoc2.json'),
+}));
+
 const CID = 'demo_prestige', CLOCK = new Date('2026-11-02T12:00:00.000Z');
 const MARKER = 'prestige_current_model_fixture';
 const copy = value => JSON.parse(JSON.stringify(value));

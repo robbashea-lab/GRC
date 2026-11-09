@@ -3,6 +3,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
+import * as rolloutPresentation from '@/lib/assessmentRolloutEligibility';
 
 let mockAuth,mockOrg,mockGuideProps;
 jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>true}));
@@ -51,9 +52,10 @@ beforeEach(()=>{
   api.patch.mockImplementation(async(_path,body)=>{const {expected_last_assessed,...fields}=body;native={...native,...fields,last_saved:savedToken};return {data:native};});
   host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);
 });
-afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.clearAllMocks();});
+afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.restoreAllMocks();jest.clearAllMocks();});
 
-test.each([false,true])('real native drawer retains the original manual save contract with appearance=%s',async variant=>{
+test.each([false,true])('legacy appearance toggle: real native drawer retains the original manual save contract with appearance=%s',async variant=>{
+  if(!variant)jest.spyOn(rolloutPresentation,'assessmentRolloutEligible').mockReturnValue(false);
   await render(variant);
   expect(!!visual()).toBe(variant);
   const input=host.querySelector('[aria-label="Current implementation"]');
@@ -172,7 +174,8 @@ test.each([
   ['different actor',{key:'another actor'}],['other client',{clientId:'other-client'}],
   ['other program',{programId:'demo_brawndo:iso-27001'}],['different source',{assessmentId:'another-assessment'}],
   ['different safeguard',{definitionId:'2.1'}],['missing receipt',null],
-])('nested appearance fails closed for %s',async(_label,changes)=>{
+])('legacy receipt appearance fails closed for %s',async(_label,changes)=>{
+  jest.spyOn(rolloutPresentation,'assessmentRolloutEligible').mockReturnValue(false);
   const receipt=changes?{...visualReceipt(),...changes}:undefined;
   await render(false,{cisVisualOrigin:receipt});
   expect(visual()).toBeNull();
@@ -180,7 +183,8 @@ test.each([
   expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
-test.each(['actor','role','workspace','user workspace','loading','error'])('a nested receipt is withdrawn for changed %s context',async change=>{
+test.each(['actor','role','workspace','user workspace','loading','error'])('legacy receipt appearance is withdrawn for changed %s context',async change=>{
+  jest.spyOn(rolloutPresentation,'assessmentRolloutEligible').mockReturnValue(false);
   const receipt=visualReceipt();await render(false,{cisVisualOrigin:receipt});expect(visual()).toBeTruthy();
   if(change==='actor')mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'new-actor'}};
   if(change==='role')mockAuth={...mockAuth,user:{...mockAuth.user,role:'client_grc_manager'}};
@@ -193,6 +197,9 @@ test.each(['actor','role','workspace','user workspace','loading','error'])('a ne
 });
 
 test.each(['assessment','definition','client','version','program'])('the nested receiver independently rejects mismatched joined %s context',async change=>{
+  // Only the old visual receipt uses the position projection's programId.
+  // Native assessment/client/definition/version mismatches retain real rollout eligibility.
+  if(change==='program')jest.spyOn(rolloutPresentation,'assessmentRolloutEligible').mockReturnValue(false);
   const receipt=visualReceipt();
   if(change==='assessment')native={...native,framework_assessment_id:'different-current'};
   if(change==='definition')native={...native,definition_id:'2.1'};

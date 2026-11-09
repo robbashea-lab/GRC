@@ -9,6 +9,13 @@ import {payloadBytes, fileBytes, clearFileCache, restoreFiles} from '../evidence
 import {compactPortfolioReporting} from '../portfolioReporting';
 import {decodeDemoStore, MAX_DEMO_DECODE_BYTES} from '../demoStorageCodec';
 
+// This historical capacity baseline reconstructs the authored-V2 source, not a
+// new rollout questionnaire. Keep native commands/validators and every size guard.
+jest.mock('../../lib/socGuidedAssessment',()=>({
+  ...jest.requireActual('../../lib/socGuidedAssessment'),
+  socGuidedCatalog:jest.requireActual('@catalogs/guidedSoc2.json'),
+}));
+
 const CLOCK = new Date('2026-11-02T12:00:00.000Z');
 const CID = 'demo_prestige';
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');

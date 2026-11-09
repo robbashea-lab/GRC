@@ -217,7 +217,7 @@
 }
 .ep-columns,.ep-row {
   display: grid;
-  grid-template-columns: minmax(170px,1.4fr) minmax(160px,1.35fr) minmax(170px,1.5fr) 122px 130px minmax(130px,1fr) 20px;
+  grid-template-columns: minmax(0,1.2fr) minmax(0,1.8fr) minmax(0,1fr);
   gap: 12px;
   align-items: center;
   padding: 0 16px
@@ -249,6 +249,9 @@
   display: flex;
   gap: 10px;
   align-items: center
+}
+.ep-client>div {
+  min-width: 0
 }
 .ep-avatar {
   width: 38px;
@@ -431,6 +434,10 @@
 .ep-preview:hover {
   background: var(--accent-soft);
   color: var(--accent)
+}
+.ep-lead .ep-preview {
+  margin-left: auto;
+  flex-shrink: 0
 }
 .enhanced-portfolio footer {
   display: flex;
@@ -962,37 +969,6 @@
   color: var(--ink);
   border-color: var(--line)
 }
-@media(max-width:1400px) and (min-width:761px) {
-.ep-columns {
-  display: none
-}
-.ep-row {
-  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-  grid-template-areas: 'client attention' 'programs trends' 'lead date';
-  row-gap: 12px
-}
-.ep-row> :nth-child(1) {
-  grid-area: client
-}
-.ep-row> :nth-child(2) {
-  grid-area: attention
-}
-.ep-row> :nth-child(3) {
-  grid-area: programs
-}
-.ep-row> :nth-child(4) {
-  grid-area: trends
-}
-.ep-row> :nth-child(5) {
-  grid-area: lead
-}
-.ep-row> :nth-child(6) {
-  grid-area: date
-}
-.ep-row> :nth-child(7) {
-  display: none
-}
-}
 @media(max-width:1180px) {
 .ep-kpis {
   grid-template-columns: repeat(3,minmax(0,1fr))
@@ -1021,9 +997,6 @@
 .ep-row {
   grid-template-columns: minmax(0,1fr);
   gap: 12px
-}
-.ep-row> :last-child {
-  display: none
 }
 .ep-toolbar input {
   flex: 1 1 100%;

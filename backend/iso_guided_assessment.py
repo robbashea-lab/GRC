@@ -14,13 +14,30 @@ for filename in ('guidedIsoIsms.json', 'guidedIsoOrganizationalPeople.json', 'gu
         raise ValueError('Incompatible or duplicate ISO interview definitions')
     CATALOG['definitions'].update(part['definitions'])
 LEGACY = CATALOG
-CATALOG = json.loads((ROOT / 'guidedIsoV2.json').read_text(encoding='utf-8'))
-VERSION = CATALOG['version']
-VERSIONS = {VERSION: CATALOG, LEGACY['version']: LEGACY}
+V2 = json.loads((ROOT / 'guidedIsoV2.json').read_text(encoding='utf-8'))
+ROLLOUT = json.loads((ROOT / 'guidedIso27001Rollout1.json').read_text(encoding='utf-8'))
+PROSPECTIVE = json.loads((ROOT / 'guidedIso27001Rollout2.json').read_text(encoding='utf-8'))
+# Keep the immutable V2 catalog available to historical readers and scope consumers.
+CATALOG = V2
+VERSION = PROSPECTIVE['version']
+VERSIONS = {V2['version']: V2, LEGACY['version']: LEGACY, ROLLOUT['version']: ROLLOUT, PROSPECTIVE['version']: PROSPECTIVE}
+INTENT_VERSIONS = frozenset((V2['version'], ROLLOUT['version'], PROSPECTIVE['version']))
 CHOICES = ['Yes', 'Partially', 'No', 'Not sure']
 CONTEXT_CHOICES = ['Relevant', 'Not relevant here', 'Not sure']
 EXTRA_KEYS = {'gaps', 'unknowns', 'evidence'}
 TEXT_WHITESPACE = ' \t\n\r\v\f\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff'
+
+
+def uses_intent_gates(version=None):
+    return (version or VERSION) in INTENT_VERSIONS
+
+
+def uses_inline_sentences(version=None):
+    return (version or VERSION) in INTENT_VERSIONS
+
+
+def uses_concern_status(version=None):
+    return (version or VERSION) == PROSPECTIVE['version']
 
 
 def _text(answers, key):
@@ -140,6 +157,9 @@ def result_status(id, answers, version=None):
         confirmed_no |= value == 'No'
         partial |= value == 'Partially'
         unknown |= value not in ('Yes', 'Partially', 'No')
+    if uses_concern_status(version):
+        confirmed_no |= answers.get('additional_gap') == 'Yes' and bool(_text(answers, 'gaps'))
+        unknown |= answers.get('additional_confirmation') == 'Yes' and bool(_text(answers, 'unknowns'))
     if confirmed_no:
         return 'needs_attention'
     if not meaningful or (version or VERSION) != LEGACY['version'] and unknown and not partial:

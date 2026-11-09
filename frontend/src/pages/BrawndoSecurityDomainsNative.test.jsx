@@ -8,6 +8,7 @@ import {versionForSafeguard,visibleQuestions} from '@/lib/guidedAssessment';
 import {focusedResult} from '@/lib/focusedOmni';
 import mapping from '@catalogs/brawndoSecurityDomains.json';
 import pilot from '@catalogs/brawndoSecurityDomainsPilot.json';
+import * as rolloutEligibility from '@/lib/assessmentRolloutEligibility';
 
 // Real routing, dialogs, native editor, items, findings and Omnibot are retained.
 // The Demo actor, network/persistence boundary and rollout flag are synthetic.
@@ -24,7 +25,7 @@ const definitions=cis.requirements.filter(definition=>definition.implementation_
 const routeCases=mapping.domains.flatMap(domain=>domain.safeguardIds.map(id=>[domain.id,id]));
 const clone=value=>JSON.parse(JSON.stringify(value));
 const emptyRelated=()=>({reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]});
-let root,container,records,interviews,related,group,workspaceClient,contextClient,deniedContext,saveRevision,currentCase;
+let root,container,records,interviews,related,group,workspaceClient,contextClient,deniedContext,saveRevision,currentCase,legacyPresentation;
 const query=selector=>document.querySelector(selector);
 const button=(name,scope=document)=>[...scope.querySelectorAll('button')].find(element=>element.textContent.trim()===name);
 const native=()=>query('[data-testid="brawndo-cis-assessment"]');
@@ -104,6 +105,8 @@ async function setOmniRootAnswer(answer){
 
 
 beforeEach(()=>{
+  // Retain the pre-rollout controller/route contract; current presentation is exercised separately below.
+  legacyPresentation=jest.spyOn(rolloutEligibility,'assessmentRolloutEligible').mockReturnValue(false);
   currentCase={active:true};
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();group=1;contextClient=CLIENT;deniedContext=false;saveRevision=0;pilot.enabled=true;
   mockUser={user_id:'native-actor',role:'super_admin',workspace_mode:'demo'};
@@ -139,7 +142,9 @@ beforeEach(()=>{
   api.post.mockImplementation(async path=>{throw new Error('Unexpected creation '+path);});
   api.delete.mockImplementation(async path=>{throw new Error('Unexpected deletion '+path);});
 });
-afterEach(async()=>{currentCase.active=false;await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+afterEach(async()=>{currentCase.active=false;await act(async()=>root.unmount());container.remove();legacyPresentation.mockRestore();jest.clearAllMocks();});
+
+describe('retained pre-rollout CIS domain controller compatibility',()=>{
 
 test('the independently mounted route cases cover exactly all 56 unique native IG1 safeguards',()=>{
   const ids=routeCases.map(([,id])=>id);
@@ -397,4 +402,47 @@ test.each(['domain','Controls'])('a reviewed Omnibot summary from %s uses native
   expect(record(id).assessment_history).toHaveLength(1);expect(record(id).notes).toBe(before.notes);expect(record(id).owner_id).toBe(before.owner_id);
   await closeNative();if(entry==='domain')await openControl(id);else await openDomain(id);
   expect(editorSnapshot().implementation).toBe('Exact operator-reviewed Omnibot wording');expect(editorSnapshot().status).toBe('addressed');
+});
+});
+
+describe('current rollout through the real domain and Controls routes',()=>{
+  beforeEach(()=>legacyPresentation.mockRestore());
+
+  test.each(['1.1','1.2','12.1'])('%s opens the same enrolled native record from both paths without writes',async id=>{
+    const before=clone(records);await mount();await openDomain(id);
+    expect(native().classList.contains('brawndo-assessment-pilot')).toBe(true);
+    expect(native().querySelector('h2').textContent).toBe(definitions.find(row=>row.id===id).title);
+    expect(native().querySelector('.gn-requirement-copy').textContent).toBe(definitions.find(row=>row.id===id).official_text);
+    expect(native().querySelector('[aria-label="Current implementation"]').value).toBe(record(id).implementation);
+    const fromDomain=route();expect(new URLSearchParams(fromDomain.search).get('assessment')).toBe('native-'+id);
+    await closeNative();await openControl(id);
+    expect(route()).toEqual(fromDomain);expect(native().classList.contains('brawndo-assessment-pilot')).toBe(true);
+    expect(records).toEqual(before);
+    expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+  });
+
+  test('a current domain save persists through Controls and remount without changing unrelated native fields',async()=>{
+    const before=clone(record('1.2'));await mount();await openDomain('1.2');
+    await value('Current implementation','Synthetic current domain implementation.');
+    await clickName('Save assessment',native());
+    expect(api.patch).toHaveBeenCalledTimes(1);
+    expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.2',expect.objectContaining({
+      implementation:'Synthetic current domain implementation.',status:before.status,verification:before.verification,expected_last_assessed:TOKEN,
+    }));
+    await closeNative();await remount();await openControl('1.2');
+    expect(native().querySelector('[aria-label="Current implementation"]').value).toBe('Synthetic current domain implementation.');
+    expect(record('1.2').assessment_history).toHaveLength(1);
+    for(const field of ['client_id','framework_key','framework_assessment_id','definition_id','owner_id','notes','status','verification'])expect(record('1.2')[field]).toEqual(before[field]);
+    expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+  });
+
+  test('the current domain presentation keeps unsaved wording until explicit native discard',async()=>{
+    const before=clone(records);await mount();await openDomain('1.2');
+    await value('Current implementation','Synthetic unsaved current domain wording.');await clickName('Close',native());
+    expect(document.body.textContent).toContain('Leave unsaved changes?');await clickName('Keep editing');
+    expect(native().querySelector('[aria-label="Current implementation"]').value).toBe('Synthetic unsaved current domain wording.');
+    await clickName('Close',native());await clickName('Discard changes');expect(native()).toBeNull();
+    await openControl('1.2');expect(native().querySelector('[aria-label="Current implementation"]').value).toBe(before.find(row=>row.definition_id==='1.2').implementation);
+    expect(records).toEqual(before);expect(api.patch).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+  });
 });

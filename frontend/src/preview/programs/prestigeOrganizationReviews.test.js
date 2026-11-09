@@ -7,6 +7,13 @@ import {createPrestigeOrganizationReviews} from './prestigeOrganizationReviews';
 import {createPrestigeScenarioAssets} from './prestigeScenarioSource';
 import {reviewDrivers} from '../../lib/frameworks';
 
+// Preserve the original authored-V2 source-construction context without changing
+// Review records, schedules, native command behavior or rollout default coverage.
+jest.mock('../../lib/socGuidedAssessment',()=>({
+  ...jest.requireActual('../../lib/socGuidedAssessment'),
+  socGuidedCatalog:jest.requireActual('@catalogs/guidedSoc2.json'),
+}));
+
 const CID = 'demo_prestige', clock = new Date('2026-11-02T12:00:00.000Z');
 const options = {purpose: 'organization_review_source_qa'};
 let model, result;

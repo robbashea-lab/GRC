@@ -20,6 +20,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 import test_framework_governance as harness
 from framework_catalog import CIS, SOC
+import soc_guided_assessment as soc_engine
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -41,11 +42,15 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
         node = shutil.which('node')
         if not node:
             raise unittest.SkipTest('Node is unavailable; current frontend-engine vectors were not executed')
-        completed = subprocess.run([node, str(Path(__file__).with_name('platform_cis_soc_vectors.cjs'))],
-                                   cwd=ROOT, capture_output=True, text=True, encoding='utf-8', check=False, timeout=60)
-        if completed.returncode:
-            raise AssertionError(f'Current frontend vector generation failed (exit {completed.returncode}):\n' + completed.stderr.strip())
-        cls.contract = json.loads(completed.stdout)
+        contracts = {}
+        for profile, arguments in (('current', []), ('historical_v2', ['soc2-omni-2'])):
+            completed = subprocess.run([node, str(Path(__file__).with_name('platform_cis_soc_vectors.cjs')), *arguments],
+                                       cwd=ROOT, capture_output=True, text=True, encoding='utf-8', check=False, timeout=60)
+            if completed.returncode:
+                raise AssertionError(f'{profile} frontend vector generation failed (exit {completed.returncode}):\n' + completed.stderr.strip())
+            contracts[profile] = json.loads(completed.stdout)
+        cls.current_contract = contracts['current']
+        cls.contract = contracts['historical_v2']
         cls.vectors = cls.contract['vectors']
 
     async def asyncSetUp(self):
@@ -79,7 +84,7 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
             self.storage_kind = 'actual Motor/Mongo loopback storage; modeled ASGI identities'
         self.sign_in('admin')
         self.ledger = {'source_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-                       'assessment_date': self.contract['assessment_date'],
+                       'assessment_date': self.contract['assessment_date'], 'soc_vector_version': self.contract['soc_question_version'],
                        'qa_working_file_sha256': {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                                                   for name in ('test_platform_cis_soc_inventory.py', 'platform_cis_soc_vectors.cjs')},
                        'storage': self.storage_kind, 'unique_definitions': 0, 'cis_read_placements': 0,
@@ -235,7 +240,11 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
                                           'exact_reviewed_text': True, 'native_history_count': len(reloaded['assessment_history'])})
         return reloaded
 
+    @patch.object(soc_engine, 'CURRENT_VERSION', 'soc2-omni-2')
     async def test_all_unique_definitions_placements_and_exact_current_native_lifecycles(self):
+        # Preserve the original current-at-authoring V2 oracle and every original
+        # assertion. Unpatched rollout activation is exercised separately below.
+        self.assertEqual(self.contract['soc_question_version'], 'soc2-omni-2')
         clients, workspaces = await self.setup_clients()
         await self.assert_scope_placements(clients, workspaces)
         primary_scopes = {alias: {row['definition_id'] for row in workspace['assessments']} for alias, workspace in workspaces.items()}
@@ -271,3 +280,114 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
         if output:
             Path(output).write_text(json.dumps(self.ledger, indent=2) + '\n', encoding='utf-8')
         print('CIS/SOC acceptance:', json.dumps({key: value for key, value in self.ledger.items() if key != 'case_results'}))
+
+    async def test_unpatched_rollout_inventory_optional_context_native_save_and_inactive_gates(self):
+        self.contract = self.current_contract
+        self.vectors = self.contract['vectors']
+        self.ledger['soc_vector_version'] = self.contract['soc_question_version']
+        self.assertEqual(self.contract['assessment_date'], self.ledger['assessment_date'])
+        self.assertEqual(soc_engine.CURRENT_VERSION, 'soc2-assessment-rollout-2')
+        self.assertEqual(self.contract['soc_question_version'], 'soc2-assessment-rollout-2')
+        clients, workspaces = await self.setup_clients()
+        await self.assert_scope_placements(clients, workspaces)
+        rows = {(alias, row['definition_id']): row for alias, workspace in workspaces.items() for row in workspace['assessments']}
+        current_vectors = [vector for vector in self.vectors if vector['framework'] == 'soc-2' and vector['scenario'] == 'adequate']
+        self.assertEqual(len(current_vectors), 61)
+        self.assertEqual({vector['id'] for vector in current_vectors}, {row['id'] for row in SOC['requirements']})
+        current_lifecycles = [vector for vector in self.vectors if vector['framework'] == 'soc-2']
+        expected_lifecycles = {(row['id'], scenario) for row in SOC['requirements'] for scenario in ('adequate', 'unknown')}
+        self.assertEqual(len(current_lifecycles), 122)
+        self.assertEqual({(vector['id'], vector['scenario']) for vector in current_lifecycles}, expected_lifecycles)
+        supplied_context, fields = {}, 0
+        for vector in current_vectors:
+            with self.subTest(current_soc_criterion=vector['id']):
+                row = rows[(vector['client'], vector['id'])]
+                path = '/api/framework_assessments/' + row['framework_assessment_id']
+                native_before = await self.request('GET', path)
+                foreign_before = await server.db.framework_assessments.find(
+                    {'definition_id': vector['id'], 'client_id': {'$ne': row['client_id']}}, {'_id': 0}).to_list(None)
+                draft = await self.request('GET', path + '/guided-assessment')
+                self.assertEqual(draft['version'], 'soc2-assessment-rollout-2')
+                self.assertEqual(draft['revision'], 0)
+                self.assertEqual(draft['answers'], {})
+                context = soc_engine.PROPOSAL['definitions'][vector['id']]['groups'][-1]
+                self.assertEqual(context['id'], 'implementation_context')
+                self.assertTrue(all(question['type'] == 'text' and question['optional'] is True for question in context['questions']))
+                answers = {question['id']: 'Synthetic reported context for ' + question['id'] for question in context['questions']}
+                supplied_context[vector['id']] = answers
+                fields += len(answers)
+                payload = {'version': draft['version'], 'answers': answers, 'step': 0, 'completed': False,
+                           'narrative': '', 'expected_revision': 0,
+                           **{key: draft[key] for key in ('base_assessment_token', 'base_scope_fingerprint')}}
+                progress = await self.request('PUT', path + '/guided-assessment', json=payload)
+                self.assertEqual(progress['answers'], answers)
+                self.assertEqual(progress['version'], 'soc2-assessment-rollout-2')
+                self.assertEqual(progress['revision'], 1)
+                self.assertFalse(progress['completed'])
+                self.assertIsNone(progress.get('result'))
+                self.assertEqual((await self.request('GET', path + '/guided-assessment'))['answers'], answers)
+                self.assertEqual(await self.request('GET', path), native_before)
+                await self.request('PUT', path + '/guided-assessment', expected=409, json=payload)
+                foreign_after = await server.db.framework_assessments.find(
+                    {'definition_id': vector['id'], 'client_id': {'$ne': row['client_id']}}, {'_id': 0}).to_list(None)
+                self.assertEqual(foreign_after, foreign_before)
+        self.assertEqual(fields, 220)
+        self.ledger['rollout_optional_context_writes'] = len(current_vectors)
+        self.ledger['rollout_optional_context_fields'] = fields
+        # Every actual-current SOC vector runs the original native lifecycle
+        # assertions; historical V2 coverage is not substituted for current proof.
+        visited = set()
+        for vector in current_lifecycles:
+            with self.subTest(current_soc_criterion=vector['id'], scenario=vector['scenario']):
+                self.assertEqual(vector['version'], 'soc2-assessment-rollout-2')
+                row = rows[(vector['client'], vector['id'])]
+                path = '/api/framework_assessments/' + row['framework_assessment_id']
+                if vector['scenario'] == 'adequate':
+                    # Native restart explicitly archives incomplete progress;
+                    # ordinary checkpoints do not archive every intermediate revision.
+                    before_restart = await self.request('GET', path + '/guided-assessment')
+                    self.assertEqual(before_restart['revision'], 1)
+                    restarted = await self.request('PUT', path + '/guided-assessment', json={
+                        'version': before_restart['version'], 'answers': {}, 'step': 0, 'completed': False,
+                        'narrative': '', 'summary_review': None, 'result': None, 'expected_revision': before_restart['revision'],
+                        'restart': True, 'base_assessment_token': before_restart['current_assessment_token'],
+                        'base_scope_fingerprint': before_restart['current_scope_fingerprint']})
+                    self.assertEqual(restarted['revision'], 2)
+                    self.assertEqual(restarted['answers'], {})
+                foreign_before = await server.db.framework_assessments.find(
+                    {'definition_id': vector['id'], 'client_id': {'$ne': row['client_id']}}, {'_id': 0}).to_list(None)
+                await self.run_vector(vector, row, await self.request('GET', path))
+                foreign_after = await server.db.framework_assessments.find(
+                    {'definition_id': vector['id'], 'client_id': {'$ne': row['client_id']}}, {'_id': 0}).to_list(None)
+                self.assertEqual(foreign_after, foreign_before)
+                if vector['scenario'] == 'adequate':
+                    archived = (await self.request('GET', path + '/guided-assessment/history'))['items']
+                    self.assertEqual(next(snapshot for snapshot in archived if snapshot['revision'] == 1)['answers'], supplied_context[vector['id']])
+                visited.add((vector['id'], vector['scenario']))
+        self.assertEqual(visited, expected_lifecycles)
+        self.assertEqual(self.ledger['native_writes'], 122)
+        self.assertEqual(self.ledger['explicit_rebases'], 61)
+        self.ledger['unique_definitions'] = len({id for id, _scenario in visited})
+        vector = next(vector for vector in current_vectors if vector['id'] == 'CC1.1')
+        row = rows[(vector['client'], vector['id'])]
+        path = '/api/framework_assessments/' + row['framework_assessment_id']
+        archived = (await self.request('GET', path + '/guided-assessment/history'))['items']
+        self.assertEqual(next(snapshot for snapshot in archived if snapshot['revision'] == 1)['answers'], supplied_context['CC1.1'])
+        for alias in ('soc38', 'soc61'):
+            row = workspaces[alias]['assessments'][0]
+            path = '/api/framework_assessments/' + row['framework_assessment_id']
+            native_before = await self.request('GET', path)
+            draft = await self.request('GET', path + '/guided-assessment')
+            stored_before = await server.db.guided_assessment_pilot.find(
+                {'client_id': clients[alias]}, {'_id': 0}).to_list(None)
+            await self.request('PATCH', '/api/onboarding/programs/soc-2', json={
+                'client_id': clients[alias], 'applicability': 'does_not_apply'})
+            await self.request('GET', path + '/guided-assessment', expected=404)
+            await self.request('PUT', path + '/guided-assessment', expected=404, json={
+                'version': draft['version'], 'answers': draft['answers'], 'step': draft['step'],
+                'completed': False, 'narrative': draft.get('narrative', ''), 'expected_revision': draft['revision'],
+                **{key: draft[key] for key in ('base_assessment_token', 'base_scope_fingerprint')}})
+            self.assertEqual(await self.request('GET', path), native_before)
+            self.assertEqual(await server.db.guided_assessment_pilot.find(
+                {'client_id': clients[alias]}, {'_id': 0}).to_list(None), stored_before)
+        print('Unpatched rollout inventory:', json.dumps({key: value for key, value in self.ledger.items() if key != 'case_results'}))

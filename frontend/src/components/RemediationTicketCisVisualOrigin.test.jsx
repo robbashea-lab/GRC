@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import {visibleQuestions} from '@/lib/guidedAssessment';
 import {omniCisSummary} from '@/lib/omniCisSummary';
 import {buildLegacyDemoStore,saveStore} from '../preview/store';
+import * as rolloutPresentation from '@/lib/assessmentRolloutEligibility';
 
 let mockAuth,mockOrg;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -69,7 +70,11 @@ async function savePersonalProgress(completed=false){
 }
 
 beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
+describe('legacy source-appearance compatibility (rollout presentation disabled)',()=>{
 beforeEach(async()=>{
+  // This file characterizes the old source-appearance/inline-guide contract.
+  // The unpatched rollout replacements use the real adapter in CisRolloutSourceAccessNative.test.jsx.
+  jest.spyOn(rolloutPresentation,'assessmentRolloutEligible').mockReturnValue(false);
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
   // These native source-return cases deliberately retain the v1 1.1 ticket identity.
   saveStore(buildLegacyDemoStore(),{resetFiles:true});
@@ -84,7 +89,7 @@ beforeEach(async()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.restoreAllMocks();jest.clearAllMocks();});
 
-test.each(['Close','Escape'])('the completed ticket opens its exact native CIS source and %s restores its source opener without changing saved progress',async closeMethod=>{
+test.each(['Close','Escape'])('legacy source appearance: the completed ticket opens its exact native CIS source and %s restores its source opener without changing saved progress',async closeMethod=>{
   // jsdom has no layout; keep real portals, focus scopes and hidden/aria attributes.
   jest.spyOn(HTMLElement.prototype,'getClientRects').mockImplementation(function(){return this.closest('[hidden]')?[]:[{}];});
   await savePersonalProgress(true);await render();const outer=assessments()[0];await openTicket(outer);
@@ -196,4 +201,5 @@ test('source refresh loss preserves an unsaved supported interview answer and no
   expect(after.records[3].status).toBe('done');expect(after.records[4].status).toBe('remediated');
   expect(patchSpy).toHaveBeenCalledTimes(1);expect(patchSpy.mock.calls[0][0]).toBe('/tasks/'+task.task_id);
   expect(putSpy).not.toHaveBeenCalled();expect(postSpy).not.toHaveBeenCalled();
+});
 });

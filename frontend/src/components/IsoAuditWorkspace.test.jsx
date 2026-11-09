@@ -1,19 +1,20 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import IsoAuditWorkspace from './IsoAuditWorkspace';
-import {initialAuditState,auditPackage} from '@/lib/isoAudit';
+import {initialAuditState,auditPackage,blankAuditItem} from '@/lib/isoAudit';
 import api from '@/lib/api';
-let mockUser;
+let mockUser,mockDrawerProps;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn(),post:jest.fn()},formatError:e=>e.message}));
-jest.mock('./RecordDrawer',()=>()=>null);
+jest.mock('./RecordDrawer',()=>props=>{mockDrawerProps=props;return null;});
 jest.mock('react-router-dom',()=>({useSearchParams:()=>require('react').useState(new URLSearchParams('package=governance-risk')),Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
 let root,container,review;
+const copyAudit=value=>JSON.parse(JSON.stringify(value));
 const button=name=>[...document.querySelectorAll('button')].find(b=>b.textContent===name);
 async function fill(label,value){await act(async()=>{const el=document.querySelector('[aria-label="'+label+'"]');Object.getOwnPropertyDescriptor(el.tagName==='SELECT'?HTMLSelectElement.prototype:el.tagName==='INPUT'?HTMLInputElement.prototype:HTMLTextAreaElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));});}
 beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;global.crypto=require('crypto').webcrypto;
-  mockUser={user_id:'u',role:'super_admin'};
+  mockUser={user_id:'u',role:'super_admin'};mockDrawerProps=null;
   review={review_id:'r',client_id:'c',title:'Audit',owner_id:'u',due_date:'2030-12-31',updated_at:'v1',current_occurrence_id:'o1',recurrence:'annual',iso_audit:initialAuditState('governance-risk'),occurrences:[]};
   api.get.mockImplementation(async path=>({data:path==='/iso-audit'?{program:{status:'active',activated_at:'2030-10-01',configuration:{start_date:'2030-10-01'}},reviews:[review]}:path==='/related'?{findings:[],tasks:[]}:path==='/evidence/catalog'?{items:[],total:0,page:1,page_size:25}:[]}));
   api.patch.mockImplementation(async(path,body)=>{review={...review,updated_at:'v2',iso_audit:{...review.iso_audit,items:{...review.iso_audit.items,[path.split('/').at(-1)]:body}}};return {data:review};});
@@ -232,6 +233,30 @@ test('collapsible audit source preserves the native workpaper form without savin
   expect(JSON.stringify(review)).toBe(before);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
+test.each(['governance-risk','people-access-suppliers','physical-technology','operations-improvement'])('%s workpaper presentation preserves native identity, fields and save contract without an interview engine',async packageKey=>{
+  await act(async()=>root.unmount());root=createRoot(container);
+  const clientId='synthetic-audit-'+packageKey,pack=auditPackage(packageKey),item=pack.items[0];
+  review={...review,client_id:clientId,iso_audit:initialAuditState(packageKey),updated_at:'v1'};
+  const before=copyAudit(review);
+  await act(async()=>root.render(<IsoAuditWorkspace clientId={clientId}/>));
+  if(packageKey!=='governance-risk')await act(async()=>container.querySelector('.iso-audit-packages .grow').click());
+  await act(async()=>button('Expand all audit areas').click());await act(async()=>container.querySelector(`[data-audit-item="${item.key}"]`).click());
+  const shell=document.querySelector('[data-testid="iso-audit-workpaper"]');
+  expect(shell.classList.contains('brawndo-assessment-pilot')).toBe(true);expect(shell.classList.contains('gn-window')).toBe(true);
+  expect(shell.querySelector('h2').textContent).toBe('ISO audit · '+item.reference+' — '+item.title);
+  expect([...shell.querySelectorAll('[role="tab"]')].map(tab=>tab.textContent)).toEqual(['Requirement & implementation','Assessment criteria','Findings']);
+  const disclosure=shell.querySelector('.iso-audit-source');expect(disclosure.open).toBe(false);expect(disclosure.querySelector('.assessment-requirement')).toBeTruthy();
+  expect(review).toEqual(before);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+  expect(api.get.mock.calls.some(([path])=>path.includes('/guided-assessment'))).toBe(false);
+  const notes='Exact native workpaper notes for '+packageKey;await fill('Auditor notes',notes);await fill('Audit progress','in_progress');
+  await act(async()=>button('Save assessment').click());
+  const [route,payload]=api.patch.mock.calls.at(-1);
+  expect(route).toBe('/reviews/r/iso-audit/'+item.key);expect(payload).toEqual({...blankAuditItem(),status:'in_progress',notes,occurrence_id:'o1',expected_updated_at:'v1'});
+  expect(payload).not.toHaveProperty('answers');expect(payload).not.toHaveProperty('guided_assessment_source');
+  expect(review.iso_audit.package_key).toBe(packageKey);expect(review.iso_audit.cycle).toBe(before.iso_audit.cycle);expect(review.due_date).toBe(before.due_date);expect(review.occurrences).toEqual(before.occurrences);
+});
+
+
 test('package progress presentation counts examined workpapers without closing findings or activating a schedule',async()=>{
   review.status='upcoming';review.iso_audit.items['4-1']={status:'reviewed',result:'nonconformity',notes:'Recorded examination',na_rationale:'',evidence_ids:[],finding_ids:[],assessment_checks:[]};
   await act(async()=>button('Close assessment').click());await act(async()=>button('All audit packages').click());
@@ -283,4 +308,72 @@ test.each([[30,'Upcoming'],[-30,'Overdue']])('audit package timing follows its a
   expect(card.querySelector('.g-impl b').textContent).toBe('0 of '+auditPackage('governance-risk').items.length);
   expect(card.textContent).not.toContain('Not implemented');expect(JSON.stringify(review)).toBe(before);
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+async function auditDetails(name){
+  await act(async()=>button('Assessment details').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true})));
+  const menu=document.querySelector('[role="menu"]');expect(menu).not.toBeNull();
+  const item=[...menu.querySelectorAll('[role="menuitem"]')].find(node=>node.textContent===name);expect(item).toBeTruthy();
+  if(name!=='Interview history'){expect(item.getAttribute('aria-disabled')).not.toBe('true');await act(async()=>item.click());}
+  return item;
+}
+
+test('enrolled audit guide is inline and keeps all native tabs, controls and workpaper data unchanged',async()=>{
+  const before=copyAudit(review);
+  await act(async()=>root.render(<IsoAuditWorkspace clientId="c" configuration={{__program_active:true}}/>));
+  const shell=document.querySelector('[data-testid="iso-audit-workpaper"]');
+  expect(shell.querySelector('.gn-guide')).not.toBeNull();expect(shell.querySelector('.omni-workspace-window')).toBeNull();
+  expect([...shell.querySelectorAll('[role="tab"]')].map(node=>node.textContent)).toEqual(['Requirement & implementation','Assessment criteria','Findings']);
+  await act(async()=>button('Begin audit guidance').click());
+  const native= shell.querySelector('[data-testid="iso-audit-guide"]'),definition=auditPackage('governance-risk').items[0];
+  expect(native).not.toBeNull();expect(native.textContent).toContain(definition.verify);expect(native.textContent).toContain(definition.inspect);expect(native.textContent).toContain(definition.questions);
+  await act(async()=>button('Pause & return').click());expect(document.activeElement).toBe(button('Open audit guidance'));
+  expect(document.querySelector('[aria-label="Audit progress"]').value).toBe('not_started');expect(document.querySelector('[aria-label="Audit result"]').value).toBe('');
+  expect(document.querySelector('[aria-label="Auditor notes"]').value).toBe('');expect(button('Save assessment')).toBeTruthy();
+  expect(review).toEqual(before);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.get.mock.calls.some(([path])=>path.includes('/guided-assessment'))).toBe(false);
+});
+
+test('header notes are the same native draft and retain leave protection, Save and header focus return',async()=>{
+  const history=await auditDetails('Interview history');expect(history.getAttribute('aria-disabled')).toBe('true');
+  await act(async()=>document.querySelector('[role="menu"]').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+  await auditDetails('Auditor notes');
+  const notes=document.querySelector('[aria-label="Auditor notes in assessment details"]');expect(notes.value).toBe('');expect(notes.maxLength).toBe(20000);expect(notes.disabled).toBe(false);
+  await fill('Auditor notes in assessment details','Shared native audit draft');
+  expect(document.querySelector('[aria-label="Auditor notes"]').value).toBe('Shared native audit draft');expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+  await act(async()=>button('Back to assessment').click());expect(document.activeElement).toBe(button('Assessment details'));
+  await act(async()=>button('Close assessment').click());expect(document.body.textContent).toContain('Leave unsaved changes?');await act(async()=>button('Keep editing').click());
+  expect(document.querySelector('[aria-label="Auditor notes"]').value).toBe('Shared native audit draft');
+  await act(async()=>button('Save assessment').click());
+  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenLastCalledWith('/reviews/r/iso-audit/4-1',{...blankAuditItem(),notes:'Shared native audit draft',occurrence_id:'o1',expected_updated_at:'v1'});
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+test('read-only header notes remain viewable with native mutation restrictions and no separate notes save',async()=>{
+  mockUser.role='client_readonly';await act(async()=>root.render(<IsoAuditWorkspace clientId="c"/>));
+  await auditDetails('Auditor notes');const notes=document.querySelector('[aria-label="Auditor notes in assessment details"]');
+  expect(notes.disabled).toBe(true);expect(notes.maxLength).toBe(20000);expect(button('Save assessment')).toBeUndefined();
+  expect(document.activeElement.textContent).toBe('Auditor notes');expect(document.querySelectorAll('[role="dialog"] textarea')).toHaveLength(2);
+  await act(async()=>button('Back to assessment').click());expect(document.activeElement).toBe(button('Assessment details'));
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('header audit context opens the exact central Review without converting the workpaper into an assessment record',async()=>{
+  const before=copyAudit(review);await auditDetails('Audit context & central Review');
+  const child=[...document.querySelectorAll('[role="dialog"]')].find(node=>!node.hasAttribute('data-assessment-shell'));
+  expect(child.textContent).toContain('Scope & objectivity');expect(child.textContent).toContain('User-provided audit guidance, not official ISO text.');
+  await act(async()=>[...child.querySelectorAll('button')].find(node=>node.textContent==='Open central Review').click());
+  expect(mockDrawerProps.kind).toBe('reviews');expect(mockDrawerProps.record).toBe(review);expect(mockDrawerProps.clientId).toBe('c');expect(mockDrawerProps.initialValues).toBeUndefined();
+  expect(review).toEqual(before);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('historical header context and notes preserve the selected frozen occurrence and current Review identity',async()=>{
+  await act(async()=>button('Close assessment').click());
+  const historical={...review,occurrence_id:'frozen-audit-occurrence',completed_at:'2029-12-30',iso_audit:{...initialAuditState('governance-risk'),items:{'4-1':{...blankAuditItem(),status:'reviewed',result:'conforming',notes:'Frozen native audit notes'}}}};
+  review.occurrences=[historical];const before=copyAudit(review);
+  await act(async()=>root.render(<IsoAuditWorkspace clientId="c"/>));await fill('Audit occurrence','frozen-audit-occurrence');await act(async()=>button('Expand all audit areas').click());await act(async()=>container.querySelector('[data-audit-item="4-1"]').click());
+  await auditDetails('Auditor notes');expect(document.querySelector('[aria-label="Auditor notes in assessment details"]').value).toBe('Frozen native audit notes');expect(document.querySelector('[aria-label="Auditor notes in assessment details"]').disabled).toBe(true);
+  await act(async()=>button('Back to assessment').click());await auditDetails('Audit context & central Review');
+  const child=[...document.querySelectorAll('[role="dialog"]')].find(node=>!node.hasAttribute('data-assessment-shell'));
+  await act(async()=>[...child.querySelectorAll('button')].find(node=>node.textContent==='Open central Review').click());
+  expect(mockDrawerProps.record).toBe(review);expect(mockDrawerProps.initialValues).toEqual({occurrence:historical});expect(button('Save assessment')).toBeUndefined();expect(review).toEqual(before);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });

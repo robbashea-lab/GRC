@@ -1,8 +1,10 @@
 import {useCallback,useEffect,useId,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
+import {ArrowRight,FilePenLine,Info,ListChecks} from 'lucide-react';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import api,{formatError} from '@/lib/api';
-import {isoGuidedCatalog,isoGuidedEnabled,isoGroups,isoGuidedResult,isoInlineNarrative,isoExtraQuestions,validateIsoCompletion} from '@/lib/isoGuidedAssessment';
+import {isoGuidedCatalog,isoGuidedEnabled,isoGroups,isoGuidedResult,isoInlineNarrative,isoExtraQuestions,validateIsoCompletion,isoUsesConcernStatus} from '@/lib/isoGuidedAssessment';
 import {operatorStatuses} from '@/lib/frameworkOperator';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
@@ -12,6 +14,7 @@ import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import OmniDock from './OmniDock';
 import OmniWindow from './OmniWindow';
 import IsoSequentialInterview from './IsoSequentialInterview';
+import SoaFieldGuidance from './SoaFieldGuidance';
 import './GuidedAssessor.css';
 import './RefinedOmni.css';
 import './BrawndoCisVisualOmni.css';
@@ -27,7 +30,8 @@ export default function IsoGuidedAssessor(props){
   return <IsoPilot key={user.user_id+':'+props.clientId+':'+(props.record?.framework_assessment_id||'program')} {...props} user={user}/>;
 }
 
-function IsoPilot({clientId,user,record,current=record,programContent,programLabel='ISO 27001 programme with Omnibot',form,assessmentDirty=false,relatedDraft=false,onDraftChange,onSaveAssessment,disabled=false,inline=false,inlineOpen=false,onInlineClose,sequential=false}){
+function IsoPilot({clientId,user,record,current=record,programContent,programLabel='ISO 27001 programme with Omnibot',form,assessmentDirty=false,relatedDraft=false,onDraftChange,onSaveAssessment,onUpdateImplementation,disabled=false,inline=false,inlineOpen=false,onInlineClose,sequential=false,assessmentRollout=false,assessmentModule,implementationReviewContainer=null,pilotPortalContainer=null,interviewHistoryOpen=false,onInterviewHistoryOpenChange,onInterviewHistoryCloseAutoFocus}){
+  assessmentRollout=assessmentRollout===true&&!!record&&inline&&sequential;
   const sequentialInline = !!record && inline && sequential;
   const [sequentialOpen, setSequentialOpen] = useState(false);
   const returnSequentialFocus = useRef(false);
@@ -40,16 +44,17 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
   const [mode,setMode]=useState(record&&new URLSearchParams(window.location.search).get('guided')==='pilot'?'expanded':'collapsed');
   const [prompt,setPrompt]=useState(!initial.invitationsDisabled),[draft,setDraft]=useState(null),[answers,setAnswers]=useState({}),[step,setStep]=useState(0),[view,setView]=useState('position');
   const [narrative,setNarrative]=useState(''),[edited,setEdited]=useState(false),[basis,setBasis]=useState(''),[busy,setBusy]=useState(false),[loaded,setLoaded]=useState(!record),[error,setError]=useState(''),[notice,setNotice]=useState('');
+  const [appliedNarrative,setAppliedNarrative]=useState(null),[replace,setReplace]=useState(false);
   const [confirmClose,setConfirmClose]=useState(false),[confirmReload,setConfirmReload]=useState(false),[confirmUpdate,setConfirmUpdate]=useState(false),[closeAfter,setCloseAfter]=useState(false),[compare,setCompare]=useState(false),[confirmed,setConfirmed]=useState(false),[history,setHistory]=useState(null),[restart,setRestart]=useState(false);
   const [soa,setSoa]=useState(()=>soaFields(current)),[soaBase,setSoaBase]=useState(()=>JSON.stringify(soaFields(current))),[soaEditing,setSoaEditing]=useState(false);
-  const launcher=useRef(null),heading=useRef(null),saved=useRef({answers:'{}',narrative:''}),pending=useRef(false),active=useRef(true),native=useRef(null);
-  native.current={form,current,assessmentDirty,relatedDraft,onSaveAssessment};
+  const launcher=useRef(null),heading=useRef(null),historyHeading=useRef(null),draftField=useRef(null),reviewedImplementation=useRef(null),saved=useRef({answers:'{}',narrative:''}),pending=useRef(false),active=useRef(true),native=useRef(null);
+  native.current={form,current,assessmentDirty,relatedDraft,onSaveAssessment,onUpdateImplementation};
   const id=record?.definition_id,route=record?'/framework_assessments/'+record.framework_assessment_id+'/guided-assessment':null;
   const version=draft?.version||isoGuidedCatalog.version,updated=version!==isoGuidedCatalog.version;
   let groups=[],result=null,validationError='';
   if(id){try{groups=isoGroups(id,answers,version);result=isoGuidedResult(id,answers,version,clientName);}catch(e){validationError=formatError(e);}}
   const index=Math.min(step,Math.max(0,groups.length-1)),group=groups[index];
-  const interviewDirty=JSON.stringify(answers)!==saved.current.answers||narrative!==saved.current.narrative;
+  const interviewDirty=JSON.stringify(answers)!==saved.current.answers||narrative!==saved.current.narrative&&(!assessmentRollout||narrative!==appliedNarrative);
   const annex=id?.startsWith('A.'),soaDirty=annex&&JSON.stringify(soa)!==soaBase;
   const dirty=interviewDirty||soaDirty,implementationAllowed=!annex||current?.soa_applicability==='included'&&!!current?.soa_justification?.trim();
   const ownApplication=!!draft?.completed&&draft.base_scope_fingerprint===draft.current_scope_fingerprint&&current?.guided_assessment_source?.by===user.user_id&&current?.guided_assessment_source?.version===draft.version&&current?.guided_assessment_source?.revision===draft.revision;
@@ -59,7 +64,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
   useEffect(() => {
     if (sequentialInline && sequentialOpen) {
       returnSequentialFocus.current = true;
-      const target = heading.current?.querySelector('.iso-sequential-interview h3') || heading.current;
+      const target = heading.current?.querySelector('.iso-sequential-interview [data-question-focus], .iso-sequential-interview h3') || heading.current;
       target?.focus({preventScroll: true});
     }
   }, [sequentialInline, sequentialOpen]);
@@ -75,7 +80,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
     if(!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);
   },[dirty]);
   const adopt=useCallback((data,restoring=false)=>{
-    setDraft(data);setAnswers(data.answers||{});setStep(data.step||0);setNarrative(data.narrative||'');saved.current={answers:JSON.stringify(data.answers||{}),narrative:data.narrative||''};
+    setDraft(data);setAnswers(data.answers||{});setStep(data.step||0);setNarrative(data.narrative||'');setAppliedNarrative(null);setReplace(false);saved.current={answers:JSON.stringify(data.answers||{}),narrative:data.narrative||''};
     if(restoring){
       let manual=!!data.narrative;
       try{manual=manual&&data.narrative!==(inline?isoInlineNarrative(id,data.answers||{},data.version,clientNameRef.current):isoGuidedResult(id,data.answers||{},data.version,clientNameRef.current).narrative);}catch{ /* Retain unreadable drafts; the validation alert prevents application. */ }
@@ -109,7 +114,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
   }
   function close(){if(busy)return;if(dirty)setConfirmClose(true);else changeMode('collapsed');}
   async function load(){setBusy(true);setError('');try{const {data}=await api.get(route);if(active.current){adopt(data,true);setLoaded(true);}return data;}catch(e){if(active.current)setError(formatError(e));return null;}finally{if(active.current)setBusy(false);}}
-  function put(key,value){setAnswers(old=>({...old,[key]:value}));setNotice('');}
+  function put(key,value){setAnswers(old=>({...old,[key]:value}));setAppliedNarrative(null);setReplace(false);setNotice('');}
   async function persist(nextStep,completed,override={}){
     if(disabled||pending.current||!draft)return null;
     pending.current=true;setBusy(true);setError('');
@@ -130,6 +135,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
   async function next(){
     try{for(const q of group.questions.filter(q=>q.type!=='text')){if(!answers[q.id])throw new Error('Choose an answer for each question. Not sure is a valid response.');if(q.type==='context'&&answers[q.id]==='Not relevant here'&&!answers[q.id+'_detail']?.trim())throw new Error('Explain why this context is not relevant here. This does not decide SoA applicability.');}
       if(index===groups.length-1){validateIsoCompletion(id,answers,version);const generated=inline?isoInlineNarrative(id,answers,version,clientName):result.narrative,keep=edited?narrative:generated;
+        if(assessmentRollout)captureImplementationSource();
         if(await persist(index,true,{narrative:keep,...(!edited?{summary_review:{version,answers}}:{})})){setNarrative(keep);if(!edited)setBasis(JSON.stringify(answers));setView('summary');}
       }else if(await persist(index+1,false))setStep(index+1);
       heading.current?.focus({preventScroll:true});
@@ -137,8 +143,52 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
   }
   async function saveClose(){
     if(soaDirty){await saveSoa(true);return;}
+    if(assessmentRollout){if(await saveProgress()){setConfirmClose(false);changeMode('collapsed');}return;}
     if(view==='summary'){requestSave(true);return;}
     if(await persist(index,false)){setConfirmClose(false);changeMode('collapsed');}
+  }
+  async function saveProgress(){
+    if(view==='summary'){
+      try{validateIsoCompletion(id,answers,version);}catch(e){setError(formatError(e));return null;}
+    }
+    const data=await persist(index,view==='summary',{narrative});
+    if(data)setNotice('Interview progress saved. The assessment record, status and verification are unchanged.');
+    return data;
+  }
+  async function reviewImplementation(){
+    if(!assessmentRollout||blocked||relatedDraft||soaDirty||!implementationAllowed)return;
+    setSequentialOpen(true);setReplace(false);
+    try{
+      validateIsoCompletion(id,answers,version);
+      const keep=edited?narrative:isoInlineNarrative(id,answers,version,clientName);
+      captureImplementationSource();
+      if(await persist(Math.max(0,groups.length-1),true,{narrative:keep,...(!edited?{summary_review:{version,answers}}:{})})){
+        setNarrative(keep);if(!edited)setBasis(JSON.stringify(answers));setView('summary');
+      }
+    }catch(e){
+      const incomplete=groups.findIndex(item=>item.questions.some(question=>question.type!=='text'&&(!answers[question.id]||question.type==='context'&&answers[question.id]==='Not relevant here'&&!answers[question.id+'_detail']?.trim())));
+      setStep(incomplete<0?Math.max(0,groups.length-1):incomplete);setView('interview');setError(formatError(e));
+    }
+  }
+  function captureImplementationSource(){
+    // Personal interview saves may await a response; their completion cannot approve a newer native source.
+    reviewedImplementation.current={clientId,assessmentId:record.framework_assessment_id,actorId:user.user_id,text:native.current.form?.implementation||''};
+  }
+  function applyDraft(){
+    if(!assessmentRollout||blocked||relatedDraft||soaDirty||!implementationAllowed||pending.current||!draft?.completed
+      ||JSON.stringify(answers)!==saved.current.answers||!narrative.trim()||narrative.length>20000
+      ||edited&&basis!==JSON.stringify(answers)||!!form?.implementation&&!replace)return;
+    const latest=native.current;
+    const reviewed=reviewedImplementation.current;
+    if(!reviewed||reviewed.clientId!==clientId||reviewed.assessmentId!==record.framework_assessment_id||reviewed.actorId!==user.user_id
+      ||latest.current?.client_id!==reviewed.clientId||latest.current?.framework_assessment_id!==reviewed.assessmentId
+      ||latest.assessmentDirty||latest.relatedDraft||(latest.form?.implementation||'')!==reviewed.text
+      ||!latest.onUpdateImplementation?.(narrative,reviewed.text)){
+      setError('The native implementation changed. Review it before applying; no text was overwritten.');return;
+    }
+    setAppliedNarrative(narrative);setReplace(false);
+    setNotice('Current implementation is an unsaved native draft. Use Save assessment to save the record; status and verification remain unchanged.');
+    pauseSequential();
   }
   function requestSave(close=true){setCloseAfter(close);if(current?.implementation?.trim()||current?.status!=='not_assessed')setConfirmUpdate(true);else commit(close);}
   async function commit(close=false){
@@ -183,10 +233,17 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
       setSoa(soaFields(native.current.current));setSoaBase(JSON.stringify(soaFields(native.current.current)));setSoaEditing(false);setConfirmReload(false);
     }
   }
-  async function historyLoad(more=false){setBusy(true);setError('');try{const {data}=await api.get(route+'/history',{params:more?{before_revision:history.next_before_revision}:{}});if(active.current){setHistory(previous=>({...data,items:more?[...previous.items,...data.items]:data.items}));setView('history');}}catch(e){setError(formatError(e));}finally{if(active.current)setBusy(false);}}
-  const start=()=>{setView(draft?.completed?'summary':'interview');heading.current?.focus({preventScroll:true});};
+  async function historyLoad(more=false,dialog=false){setBusy(true);setError('');try{const {data}=await api.get(route+'/history',{params:more?{before_revision:history.next_before_revision}:{}});if(active.current){setHistory(previous=>({...data,items:more?[...previous.items,...data.items]:data.items}));if(!dialog)setView('history');}}catch(e){setError(formatError(e));}finally{if(active.current)setBusy(false);}}
+  useEffect(()=>{if(assessmentRollout&&interviewHistoryOpen)historyLoad(false,true);},[assessmentRollout,interviewHistoryOpen,route]);// eslint-disable-line react-hooks/exhaustive-deps
+  const start=()=>{if(assessmentRollout){captureImplementationSource();setReplace(false);}setView(draft?.completed?'summary':'interview');heading.current?.focus({preventScroll:true});};
   const saveDisabled=blocked||relatedDraft||soaDirty||!implementationAllowed||!narrative.trim()||edited&&basis!==JSON.stringify(answers);
   const soaBlocked=disabled||busy||assessmentDirty||relatedDraft||interviewDirty;
+  const confirmationProps=assessmentRollout?{portalContainer:pilotPortalContainer||undefined,
+    overlayClassName:'brawndo-assessment-pilot brawndo-pilot-child-overlay gn-dialog-layer',showCloseButton:false,
+    className:'brawndo-assessment-pilot brawndo-pilot-child-dialog gn-dialog-box gn-wording-box','data-theme':theme,
+    onEscapeKeyDown:event=>{event.stopPropagation();if(busy)event.preventDefault();},
+    onPointerDownOutside:event=>event.preventDefault(),
+    onCloseAutoFocus:event=>{event.preventDefault();(heading.current?.closest('[hidden]')?launcher.current:heading.current)?.focus({preventScroll:true});}}:{className:'omni-refined-close'};
   const panelBody = <div className="guided-panel-body">
           {error&&<p role="alert">{error}<Button variant="outline" disabled={busy} onClick={()=>dirty?setConfirmReload(true):load()}>Reload saved interview</Button></p>}
           {validationError&&<p role="alert">{validationError} Saved answers and wording are retained. This interview cannot be generated or applied until its question version and answers are supported.</p>}
@@ -199,7 +256,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
           {compare&&<section><h3>Continue from the current saved assessment</h3><p className="whitespace-pre-wrap">{current?.implementation||'No saved implementation write-up.'}</p><label><input type="checkbox" checked={confirmed} disabled={busy} onChange={e=>setConfirmed(e.target.checked)}/> I compared the saved assessment and confirmed which answers remain relevant.</label><Button disabled={!confirmed||disabled||busy||assessmentDirty} onClick={()=>beginNew()}>Retain answers &amp; continue</Button><Button variant="outline" onClick={()=>setCompare(false)}>Cancel comparison</Button></section>}
           {updated&&<p role="alert">This interview uses retained historical guidance. Begin a new current-version review before updating the assessment.</p>}
           {!record?(typeof programContent==='function'?programContent({close:()=>changeMode('collapsed')}):programContent):draft&&<>
-            <div className="guided-actions"><Button variant="outline" disabled={busy} onClick={()=>setView('position')}>Current position</Button><Button variant="outline" disabled={busy||!draft.revision} onClick={()=>historyLoad()}>Interview history</Button></div>
+            <div className="guided-actions"><Button className={assessmentRollout?'gn-button gn-quiet':undefined} variant="outline" disabled={busy} onClick={()=>setView('position')}>Current position</Button>{!assessmentRollout&&<Button variant="outline" disabled={busy||!draft.revision} onClick={()=>historyLoad()}>Interview history</Button>}</div>
 {view==='position'&&<>
   <h3>Current saved position</h3><p>{id} — {record.title}</p>
   <p>Implementation: {LABELS[current?.status]||'Status unavailable'}</p>
@@ -214,9 +271,11 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
     <p className="whitespace-pre-wrap">{current?.soa_justification||'No applicability justification is recorded.'}</p>
     {current?.soa_applicability==='excluded'&&<p>Implementation and interview history are retained. Reassess applicability deliberately before applying a new implementation summary.</p>}
     {(soaEditing||!current?.soa_applicability||!current?.soa_justification?.trim())?<fieldset disabled={soaBlocked}>
+      {assessmentRollout&&assessmentModule==='statement_of_applicability'&&<SoaFieldGuidance definitionId={id} field="necessary"/>}
       <label>Applicability<select aria-label="Omnibot SoA applicability" required value={soa.soa_applicability} onChange={e=>{setSoa(old=>({...old,soa_applicability:e.target.value}));setNotice('');}}>
         <option value="">Choose a decision</option><option value="included">Include in the SoA</option><option value="excluded">Exclude with justification</option>
       </select></label>
+      {assessmentRollout&&assessmentModule==='statement_of_applicability'&&<SoaFieldGuidance definitionId={id} field="rationale"/>}
       <label>Risk, scope and obligations justification (required)<Textarea aria-label="Omnibot SoA justification" required maxLength={4000} value={soa.soa_justification} onChange={e=>{setSoa(old=>({...old,soa_justification:e.target.value}));setNotice('');}}/></label>
       <p>This explicit native save updates only applicability and justification. It preserves the recorded implementation, status and history.</p>
       <div className="guided-actions"><Button disabled={soaBlocked||!soaDirty||!soa.soa_applicability||!soa.soa_justification.trim()} onClick={()=>saveSoa()}>Save applicability decision</Button>
@@ -225,13 +284,58 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
   </section>}
   <div className="guided-actions"><Button disabled={disabled||busy||soaDirty||updated||!!validationError} onClick={start}>{draft.revision?'Resume your review':'Start'}</Button><Button variant="outline" disabled={disabled||busy||assessmentDirty||soaDirty} onClick={()=>interviewDirty?setConfirmReload('restart'):setRestart(true)}>Begin a new review</Button></div>
 </>}
-{view==='interview'&&group&&(sequentialInline?<IsoSequentialInterview groups={groups} extras={isoExtraQuestions(answers,version).filter(question=>question.id!=='evidence')} answers={answers} step={index} setStep={setStep} put={put} blocked={blocked} busy={busy} onNext={next} onPause={pauseSequential} onSaveClose={saveClose}/>:<><div className="omni-group-progress" aria-label={`Question group ${index+1} of ${groups.length}`}><p><strong>Question group {index+1} of {groups.length}</strong><span>{group.title}</span></p><div>{groups.map((g,i)=><span key={g.id} className={i===index?'current':i<index?'done':''}/>)}</div></div><fieldset disabled={blocked} className="omni-question-group"><legend className="sr-only">{group.title}</legend>{group.questions.map((q,i)=><section className="omni-question" key={q.id}>{i===0?<h3>{q.prompt}</h3>:<label htmlFor={'iso-answer-'+q.id}>{q.prompt}</label>}{q.help&&<p className="omni-help">{q.help}</p>}{q.type==='text'?<Textarea id={'iso-answer-'+q.id} aria-label={q.prompt} value={answers[q.id]||''} maxLength={2000} onChange={e=>put(q.id,e.target.value)}/>:<div className="omni-answer-choices" role="group" aria-label={q.prompt}>{q.choices.map(value=><button type="button" key={value} aria-pressed={answers[q.id]===value} onClick={()=>put(q.id,value)}>{value}</button>)}</div>}{q.type!=='text'&&<label className="omni-help" htmlFor={'iso-detail-'+q.id}>How this works / relevant context {q.type==='context'&&answers[q.id]==='Not relevant here'?'(required for this context answer)':'(optional)'}<Textarea id={'iso-detail-'+q.id} maxLength={2000} value={answers[q.id+'_detail']||''} onChange={e=>put(q.id+'_detail',e.target.value)}/></label>}</section>)}{index===groups.length-1&&<><p className="omni-help">Use the question choices for substantive gaps or uncertainty. These optional notes add context; they do not decide readiness.</p>{isoExtraQuestions(answers,version).filter(q=>q.id!=='evidence').map(q=><label key={q.id}>{q.prompt}{q.type==='text'?<Textarea maxLength={2000} value={answers[q.id]||''} onChange={e=>put(q.id,e.target.value)}/>:<select aria-label={q.prompt} value={answers[q.id]||''} onChange={e=>put(q.id,e.target.value)}><option value="">Select an answer</option>{q.choices.map(choice=><option key={choice}>{choice}</option>)}</select>}</label>)}</>}</fieldset><div className="omni-action-bar"><Button variant="outline" disabled={busy||index===0} onClick={()=>setStep(index-1)}>Back</Button><Button disabled={blocked} onClick={next}>Save &amp; next</Button><Button variant="outline" disabled={blocked} onClick={saveClose}>Save &amp; close</Button></div></>)}
-            {view==='summary'&&result&&<><h3>Review your assessment summary</h3><p>{id} — {record.title}</p><p>Proposed implementation status: <strong>{LABELS[result.status]}</strong></p>{edited&&basis!==JSON.stringify(answers)&&<section role="status"><p>Your answers changed after you edited the write-up. Your wording is retained; review it before saving.</p><Button variant="outline" disabled={blocked} onClick={()=>{setNarrative(inline?isoInlineNarrative(id,answers,version,clientName):result.narrative);setEdited(false);setBasis(JSON.stringify(answers));}}>Refresh from answers</Button><Button variant="outline" disabled={blocked} onClick={()=>setBasis(JSON.stringify(answers))}>Keep my wording after review</Button></section>}<label>Current Implementation<Textarea aria-label="Omnibot implementation summary" rows={14} maxLength={20000} disabled={disabled||busy} value={narrative} onChange={e=>{setNarrative(e.target.value);if(!edited)setBasis(JSON.stringify(answers));setEdited(true);}}/></label><p>Saving updates the native implementation and implementation status. Applicability, evidence verification and linked work remain separate.</p><div className="guided-actions"><Button variant="outline" disabled={busy} onClick={()=>{setView('interview');setStep(Math.max(0,groups.length-1));}}>Back to questions</Button><Button disabled={saveDisabled} onClick={()=>requestSave()}>{current?.implementation?.trim()||current?.status!=='not_assessed'?'Update assessment':'Save assessment'}</Button><Button variant="outline" disabled={saveDisabled} onClick={()=>requestSave(true)}>Save &amp; close</Button></div></>}
+{view==='interview'&&group&&(sequentialInline?<IsoSequentialInterview id={id} version={version} assessmentRollout={assessmentRollout} pilotGuideOpen={sequentialOpen} onSaveProgress={saveProgress} groups={groups} extras={assessmentRollout?isoExtraQuestions(answers,version):isoExtraQuestions(answers,version).filter(question=>question.id!=='evidence')} answers={answers} step={index} setStep={setStep} put={put} blocked={blocked} busy={busy} onNext={next} onPause={pauseSequential} onSaveClose={saveClose}/>:<><div className="omni-group-progress" aria-label={`Question group ${index+1} of ${groups.length}`}><p><strong>Question group {index+1} of {groups.length}</strong><span>{group.title}</span></p><div>{groups.map((g,i)=><span key={g.id} className={i===index?'current':i<index?'done':''}/>)}</div></div><fieldset disabled={blocked} className="omni-question-group"><legend className="sr-only">{group.title}</legend>{group.questions.map((q,i)=><section className="omni-question" key={q.id}>{i===0?<h3>{q.prompt}</h3>:<label htmlFor={'iso-answer-'+q.id}>{q.prompt}</label>}{q.help&&<p className="omni-help">{q.help}</p>}{q.type==='text'?<Textarea id={'iso-answer-'+q.id} aria-label={q.prompt} value={answers[q.id]||''} maxLength={2000} onChange={e=>put(q.id,e.target.value)}/>:<div className="omni-answer-choices" role="group" aria-label={q.prompt}>{q.choices.map(value=><button type="button" key={value} aria-pressed={answers[q.id]===value} onClick={()=>put(q.id,value)}>{value}</button>)}</div>}{q.type!=='text'&&<label className="omni-help" htmlFor={'iso-detail-'+q.id}>How this works / relevant context {q.type==='context'&&answers[q.id]==='Not relevant here'?'(required for this context answer)':'(optional)'}<Textarea id={'iso-detail-'+q.id} maxLength={2000} value={answers[q.id+'_detail']||''} onChange={e=>put(q.id+'_detail',e.target.value)}/></label>}</section>)}{index===groups.length-1&&<><p className="omni-help">{isoUsesConcernStatus(version)?'Affirmed, described gaps or uncertainty constrain the proposed implementation status. The saved assessment status remains your decision.':'Use the question choices for substantive gaps or uncertainty. These optional notes add context; they do not decide readiness.'}</p>{isoExtraQuestions(answers,version).filter(q=>q.id!=='evidence').map(q=><label key={q.id}>{q.prompt}{q.type==='text'?<Textarea maxLength={2000} value={answers[q.id]||''} onChange={e=>put(q.id,e.target.value)}/>:<select aria-label={q.prompt} value={answers[q.id]||''} onChange={e=>put(q.id,e.target.value)}><option value="">Select an answer</option>{q.choices.map(choice=><option key={choice}>{choice}</option>)}</select>}</label>)}</>}</fieldset><div className="omni-action-bar"><Button variant="outline" disabled={busy||index===0} onClick={()=>setStep(index-1)}>Back</Button><Button disabled={blocked} onClick={next}>Save &amp; next</Button><Button variant="outline" disabled={blocked} onClick={saveClose}>Save &amp; close</Button></div></>)}
+            {!assessmentRollout&&view==='summary'&&result&&<><h3>Review your assessment summary</h3><p>{id} — {record.title}</p><p>Proposed implementation status: <strong>{LABELS[result.status]}</strong></p>{edited&&basis!==JSON.stringify(answers)&&<section role="status"><p>Your answers changed after you edited the write-up. Your wording is retained; review it before saving.</p><Button variant="outline" disabled={blocked} onClick={()=>{setNarrative(inline?isoInlineNarrative(id,answers,version,clientName):result.narrative);setEdited(false);setBasis(JSON.stringify(answers));}}>Refresh from answers</Button><Button variant="outline" disabled={blocked} onClick={()=>setBasis(JSON.stringify(answers))}>Keep my wording after review</Button></section>}<label>Current Implementation<Textarea aria-label="Omnibot implementation summary" rows={14} maxLength={20000} disabled={disabled||busy} value={narrative} onChange={e=>{setNarrative(e.target.value);if(!edited)setBasis(JSON.stringify(answers));setEdited(true);}}/></label><p>Saving updates the native implementation and implementation status. Applicability, evidence verification and linked work remain separate.</p><div className="guided-actions"><Button variant="outline" disabled={busy} onClick={()=>{setView('interview');setStep(Math.max(0,groups.length-1));}}>Back to questions</Button><Button disabled={saveDisabled} onClick={()=>requestSave()}>{current?.implementation?.trim()||current?.status!=='not_assessed'?'Update assessment':'Save assessment'}</Button><Button variant="outline" disabled={saveDisabled} onClick={()=>requestSave(true)}>Save &amp; close</Button></div></>}
 {view==='history'&&<><h3>Retained interview history</h3>{history?.items?.map(item=><section key={item.revision}><p>Revision {item.revision} · {item.version} · {item.updated_at}</p><p className="whitespace-pre-wrap">{item.narrative||'Interview progress only.'}</p></section>)}{history&&!history.items.length&&<p>No earlier saved interview snapshots.</p>}{history?.has_more&&<Button variant="outline" disabled={busy} onClick={()=>historyLoad(true)}>Load earlier snapshots</Button>}<Button variant="outline" onClick={()=>setView('position')}>Return to current position</Button></>}
           </>}
         </div>;
   return <div className={'guided-pilot guided-lifecycle omni-refined '+(inline?'assessment-interview':(record?'guided-in-assessment ':'')+'shared-program-omni')} data-theme={!inline?theme:undefined} data-testid="iso-guided-assessment">
-    {inline ? <>
+    {inline ? assessmentRollout ? <>
+      <div className="gn-guide">
+        <header className="gn-guide-head"><h3><ListChecks size={16} aria-hidden="true"/>Guided assessment</h3>{sequentialOpen&&<Button className="gn-button gn-quiet" variant="outline" disabled={busy} onClick={pauseSequential}>Pause &amp; return</Button>}</header>
+        <div className="cis-guided-launch gn-start" hidden={sequentialOpen}>
+          <p>{assessmentModule==='statement_of_applicability'?'Record applicability separately, then review implementation. The native SoA decision and implementation remain distinct.':'One question at a time. Review your answers before updating the assessment. Applicability remains a separate decision.'}</p>
+          <Button ref={launcher} className="gn-button gn-primary" disabled={busy||!loaded||!draft} aria-expanded={sequentialOpen} aria-controls={panelId} onClick={toggleSequential}>{dirty||Object.keys(answers).length||draft?.revision?'Resume guided assessment':'Begin guided assessment'}<ArrowRight size={16} aria-hidden="true"/></Button>
+          <span className="gn-small gn-muted">{dirty?'Interview draft · not saved':draft?.revision?'Interview progress saved':'Interview not started'}</span>
+          {!draft&&error&&<p role="alert">{error}<Button className="gn-button gn-quiet" variant="outline" disabled={busy} onClick={load}>Retry</Button></p>}
+        </div>
+        <section id={panelId} ref={heading} tabIndex={-1} className="assessment-inline-interview" hidden={!sequentialOpen} aria-label="ISO requirement interview"><h3 className="sr-only">Assessment interview</h3>{panelBody}</section>
+        <div className="gn-guide-note"><Info size={16} aria-hidden="true"/><span>Moving between questions keeps answers in this draft. Continuing past a native question group or Save progress saves interview progress; it does not save the assessment. Pause retains unsaved work here; unsaved edits do not survive reload.</span></div>
+      </div>
+      <Dialog open={interviewHistoryOpen===true} onOpenChange={onInterviewHistoryOpenChange}>
+        <DialogContent aria-modal="true" portalContainer={pilotPortalContainer||undefined} overlayClassName="brawndo-assessment-pilot brawndo-pilot-child-overlay gn-dialog-layer" showCloseButton={false}
+          className="brawndo-assessment-pilot brawndo-pilot-child-dialog brawndo-pilot-history gn-dialog-box gn-wording-box" data-theme={theme}
+          onOpenAutoFocus={event=>{event.preventDefault();historyHeading.current?.focus({preventScroll:true});}}
+          onCloseAutoFocus={event=>{onInterviewHistoryCloseAutoFocus?.(event);if(!event.defaultPrevented){event.preventDefault();launcher.current?.focus({preventScroll:true});}}}
+          onEscapeKeyDown={event=>event.stopPropagation()} onPointerDownOutside={event=>event.preventDefault()}>
+          <DialogTitle ref={historyHeading} tabIndex={-1} className="gn-dialog-title">Interview history</DialogTitle>
+          <DialogDescription className="sr-only">Saved personal interview history for this ISO assessment.</DialogDescription>
+          {busy&&<p role="status">Loading interview history…</p>}{error&&<p role="alert">{error}</p>}
+          {history?.items?.map(item=><details key={item.revision}><summary>Revision {item.revision} · {item.version} · {item.updated_at}</summary><p className="whitespace-pre-wrap">{item.narrative||'Interview progress only.'}</p><pre>{JSON.stringify(item.answers,null,2)}</pre></details>)}
+          {history&&!history.items.length&&<p>No earlier saved interview snapshots are available.</p>}
+          {history?.has_more&&<Button className="gn-button gn-quiet" variant="outline" disabled={busy} onClick={()=>historyLoad(true,true)}>Load earlier snapshots</Button>}
+          <div className="gn-dialog-actions"><Button className="gn-button" variant="outline" onClick={()=>onInterviewHistoryOpenChange?.(false)}>Back to assessment</Button></div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={sequentialOpen&&view==='summary'&&!!result} onOpenChange={open=>{if(!open&&!busy){setView('interview');setReplace(false);}}}>
+        <DialogContent aria-modal="true" portalContainer={pilotPortalContainer||undefined} overlayClassName="brawndo-assessment-pilot brawndo-pilot-child-overlay gn-dialog-layer" showCloseButton={false}
+          className="brawndo-assessment-pilot brawndo-pilot-child-dialog brawndo-pilot-draft gn-dialog-box gn-wording-box" data-theme={theme}
+          onOpenAutoFocus={event=>{event.preventDefault();draftField.current?.focus({preventScroll:true});}}
+          onCloseAutoFocus={event=>{event.preventDefault();(heading.current?.closest('[hidden]')?launcher.current:heading.current)?.focus({preventScroll:true});}}
+          onEscapeKeyDown={event=>{event.stopPropagation();if(busy)event.preventDefault();}} onPointerDownOutside={event=>event.preventDefault()}>
+          <span className="gn-draft-label"><FilePenLine size={16} aria-hidden="true"/>Based on responses</span><DialogTitle className="gn-dialog-title">Review implementation</DialogTitle>
+          <DialogDescription className="gn-wording-intro">Confirm the description accurately reflects current practice.</DialogDescription>
+          {error&&<p role="alert" className="gn-error">{error}</p>}
+          <p>Proposed implementation status: <strong>{LABELS[result?.status]}</strong></p>
+          {edited&&basis!==JSON.stringify(answers)&&<section role="status"><p>Your answers changed after you edited this draft. Your wording is preserved.</p><Button className="gn-button" variant="outline" disabled={blocked} onClick={()=>{setNarrative(isoInlineNarrative(id,answers,version,clientName));setEdited(false);setBasis(JSON.stringify(answers));setAppliedNarrative(null);setReplace(false);}}>Refresh from answers</Button><Button className="gn-button" variant="outline" disabled={blocked} onClick={()=>setBasis(JSON.stringify(answers))}>Keep my wording after review</Button></section>}
+          <label className="gn-fieldlabel" htmlFor={panelId+'-draft'}>Implementation draft</label><Textarea id={panelId+'-draft'} ref={draftField} className="gn-field" aria-label="Implementation draft" rows={13} maxLength={20000} disabled={disabled||busy} value={narrative} onChange={event=>{setNarrative(event.target.value);if(!edited)setBasis(JSON.stringify(answers));setEdited(true);setAppliedNarrative(null);setReplace(false);}}/>
+          <p className="gn-wording-note">Apply draft updates Current implementation only. Select Save assessment to save the record. Implementation status and verification remain unchanged.</p>
+          {!!form?.implementation&&<label className="guided-replacement"><input type="checkbox" disabled={disabled||busy} checked={replace} onChange={event=>setReplace(event.target.checked)}/> I understand the existing Current implementation narrative will be replaced.</label>}
+          <div className="guided-actions gn-dialog-actions"><Button className="gn-button" variant="outline" disabled={busy} onClick={()=>{setView('interview');setReplace(false);}}>Edit responses</Button><Button className="gn-button gn-primary" disabled={saveDisabled||!draft?.completed||JSON.stringify(answers)!==saved.current.answers||!!form?.implementation&&!replace||!onUpdateImplementation} onClick={applyDraft}>Apply draft</Button></div>
+        </DialogContent>
+      </Dialog>
+      {implementationReviewContainer&&createPortal(<Button className="gn-button gn-wording-entry" variant="outline" disabled={blocked||relatedDraft||soaDirty||!implementationAllowed||!draft} onClick={reviewImplementation}><FilePenLine size={16} aria-hidden="true"/>Review implementation</Button>,implementationReviewContainer)}
+    </> : <>
       {sequentialInline && <div className="cis-guided-launch">
         <div><h3>Guided assessment</h3><p>One question at a time. Review your answers before updating the assessment. Applicability remains a separate decision.</p></div>
         <Button ref={launcher} disabled={busy || !loaded} aria-expanded={sequentialOpen} aria-controls={panelId} onClick={toggleSequential}>
@@ -257,13 +361,13 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
       </OmniWindow>}
     </Dialog>
     </>}
-    <Dialog open={!!confirmReload} onOpenChange={setConfirmReload}><DialogContent className="omni-refined-close">
+    <Dialog open={!!confirmReload} onOpenChange={setConfirmReload}><DialogContent {...confirmationProps}>
       <DialogTitle>{confirmReload==='restart'?'Discard edits and begin a new review?':confirmReload==='rebase'?'Discard edits and continue from the saved interview?':'Reload saved interview?'}</DialogTitle>
       <DialogDescription>{confirmReload==='restart'?'Your unsaved answers and wording will be discarded. The previously saved interview remains in history; the new interview begins empty.':confirmReload==='rebase'?'Your unsaved answers and wording will be discarded. Only the last saved answers and wording will be retained for continuation.':'Your unsaved answers, wording and applicability edits will be replaced by their saved values.'} Native records are unchanged.</DialogDescription>
       <div className="guided-actions"><Button variant="outline" onClick={()=>setConfirmReload(false)}>Keep editing</Button><Button disabled={busy||confirmReload!==true&&(disabled||assessmentDirty||soaDirty)} onClick={discardReload}>{confirmReload==='restart'?'Discard unsaved edits & begin new review':confirmReload==='rebase'?'Discard unsaved edits & continue':'Discard unsaved edits & reload'}</Button></div>
     </DialogContent></Dialog>
-    <Dialog open={confirmUpdate} onOpenChange={open=>{if(!busy)setConfirmUpdate(open);}}><DialogContent className="omni-refined-close"><DialogTitle>Update this assessment?</DialogTitle><DialogDescription>This will replace the saved Current Implementation and ISO 27001 implementation status for {clientName} — Requirement {id} with the reviewed summary. Verification, organizational Controls and linked work are unchanged.</DialogDescription><div className="guided-actions"><Button variant="outline" disabled={busy} onClick={()=>setConfirmUpdate(false)}>Cancel</Button><Button disabled={busy||disabled} onClick={()=>commit(closeAfter)}>Yes, update assessment</Button></div></DialogContent></Dialog>
-    <Dialog open={confirmClose} onOpenChange={setConfirmClose}><DialogContent className="omni-refined-close"><DialogTitle>Unsaved guide changes</DialogTitle><DialogDescription>Save your work before closing, keep editing, or discard the unsaved guide edits. Saved native records are not discarded.</DialogDescription><div className="guided-actions"><Button variant="outline" onClick={()=>setConfirmClose(false)}>Keep editing</Button><Button variant="outline" disabled={busy} onClick={()=>{adopt(draft);setSoa(soaFields(current));setSoaBase(JSON.stringify(soaFields(current)));setSoaEditing(false);setConfirmClose(false);changeMode('collapsed');}}>Discard changes</Button><Button disabled={disabled||busy||soaDirty&&(soaBlocked||!soa.soa_applicability||!soa.soa_justification.trim())||!soaDirty&&view==='summary'&&saveDisabled} onClick={saveClose}>Save &amp; close</Button></div></DialogContent></Dialog>
-    <Dialog open={restart} onOpenChange={setRestart}><DialogContent className="omni-refined-close"><DialogTitle>Begin a new review?</DialogTitle><DialogDescription>The previous interview is retained in history. The native assessment is unchanged until you review and explicitly save a new summary.</DialogDescription><div className="guided-actions"><Button variant="outline" onClick={()=>setRestart(false)}>Cancel</Button><Button disabled={disabled||busy||assessmentDirty} onClick={()=>beginNew(true)}>Begin a new review</Button></div></DialogContent></Dialog>
+    <Dialog open={confirmUpdate} onOpenChange={open=>{if(!busy)setConfirmUpdate(open);}}><DialogContent {...confirmationProps}><DialogTitle>Update this assessment?</DialogTitle><DialogDescription>This will replace the saved Current Implementation and ISO 27001 implementation status for {clientName} — Requirement {id} with the reviewed summary. Verification, organizational Controls and linked work are unchanged.</DialogDescription><div className="guided-actions"><Button variant="outline" disabled={busy} onClick={()=>setConfirmUpdate(false)}>Cancel</Button><Button disabled={busy||disabled} onClick={()=>commit(closeAfter)}>Yes, update assessment</Button></div></DialogContent></Dialog>
+    <Dialog open={confirmClose} onOpenChange={setConfirmClose}><DialogContent {...confirmationProps}><DialogTitle>Unsaved guide changes</DialogTitle><DialogDescription>Save your work before closing, keep editing, or discard the unsaved guide edits. Saved native records are not discarded.</DialogDescription><div className="guided-actions"><Button variant="outline" onClick={()=>setConfirmClose(false)}>Keep editing</Button><Button variant="outline" disabled={busy} onClick={()=>{adopt(draft);setSoa(soaFields(current));setSoaBase(JSON.stringify(soaFields(current)));setSoaEditing(false);setConfirmClose(false);changeMode('collapsed');}}>Discard changes</Button><Button disabled={disabled||busy||soaDirty&&(soaBlocked||!soa.soa_applicability||!soa.soa_justification.trim())||!soaDirty&&view==='summary'&&saveDisabled} onClick={saveClose}>Save &amp; close</Button></div></DialogContent></Dialog>
+    <Dialog open={restart} onOpenChange={setRestart}><DialogContent {...confirmationProps}><DialogTitle>Begin a new review?</DialogTitle><DialogDescription>The previous interview is retained in history. The native assessment is unchanged until you review and explicitly save a new summary.</DialogDescription><div className="guided-actions"><Button variant="outline" onClick={()=>setRestart(false)}>Cancel</Button><Button disabled={disabled||busy||assessmentDirty} onClick={()=>beginNew(true)}>Begin a new review</Button></div></DialogContent></Dialog>
   </div>;
 }

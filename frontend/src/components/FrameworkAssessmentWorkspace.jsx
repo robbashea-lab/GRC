@@ -1,3 +1,9 @@
+import AssessmentRolloutFrame from './AssessmentRolloutFrame';
+import AssessmentRequirementDisclosure from './AssessmentRequirementDisclosure';
+import SoaFieldGuidance from './SoaFieldGuidance';
+import {assessmentRolloutEntry} from '@/lib/assessmentRolloutPresentation';
+import {isoGuidedEnabled} from '@/lib/isoGuidedAssessment';
+import {useAuth} from '@/context/AuthContext';
 import {isoGuideEntry} from './IsoRequirementGuide';
 import IsoGuidedAssessor from './IsoGuidedAssessor';
 import AssessmentItems from './AssessmentItems';
@@ -23,6 +29,7 @@ import './BrawndoCisWorkspace.css';
 
 
 export default function FrameworkAssessmentWorkspace({state,actions}){
+  const {user}=useAuth()||{};
   const {open,record,definition,form,current,ctx,related,error,busy,dirty,feedback,writable,finding,position,otherDraft,breadcrumb}=state;
   const {put,save,saveAndNext,saveGuidedAssessment,setGuidedDraft,run,setFinding,setNested,close,previous,next,retry,setFeedback}=actions;
   const clientId=record.client_id,framework=record.framework_key,isCis=framework==='cis-ig1',isIso=framework==='iso-27001';
@@ -32,6 +39,49 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
   const disabled=!writable||busy||!ctx;
   const stack=useOrg()?.currentClient?.profile?.technical?.security_technology||[];
   const today=new Date(),ladder=verificationLadder(current,{stack,today}),presumed=isCis?stackCapability(definition.id,stack):null;
+  const assessmentRollout=isIso&&state.assessmentRollout===true;
+  const soaView=assessmentRollout&&state.isoView==='soa'&&definition.specification==='annex_control';
+  const assessmentModule=soaView?'statement_of_applicability':definition.specification==='isms_clause'?'isms':'annex_a';
+  const guideConfiguration=ctx?.configuration||state.guidedConfiguration;
+  const guideAvailable=isIso&&isoGuidedEnabled(clientId,user,framework,guideConfiguration,record.definition_id)
+    &&record.client_id===clientId&&current.client_id===clientId&&current.framework_assessment_id===record.framework_assessment_id;
+  const rolloutEntry=assessmentRollout?assessmentRolloutEntry(framework,definition.id,{module:assessmentModule}):null;
+  const nativeRequirement=<><p>{isoGuide?.plain||guide.meaning}</p><AssessmentRequirement heading={definition.specification==='isms_clause'?'ISMS requirement & reference':'Annex A control & reference'} text={source.text||guide.meaning} official={!!source.text}/></>;
+  const assessmentControls=<>
+              {definition.specification==='annex_control'&&<fieldset disabled={disabled} className="space-y-3 brawndo-inset">
+                <h4>Statement of Applicability</h4><p className="text-sm text-ink-secondary">Applicability is a risk-treatment decision, separate from implementation. Excluding a control does not erase its assessment or history.</p>
+                {soaView&&<SoaFieldGuidance definitionId={definition.id} field="necessary"/>}<label className="block">Applicability<select aria-label="SoA applicability" value={form.soa_applicability||''} onChange={e=>put('soa_applicability',e.target.value)}><option value="">Undetermined</option><option value="included">Applicable</option><option value="excluded">Not Applicable</option></select></label>
+                {soaView&&<SoaFieldGuidance definitionId={definition.id} field="rationale"/>}<label className="block">Applicability justification<Textarea aria-label="SoA justification" value={form.soa_justification||''} maxLength={4000} onChange={e=>put('soa_justification',e.target.value)}/></label>
+              </fieldset>}
+            <div className="assessment-implementation">
+            <Step title="Implementation status">
+              {soaView&&<SoaFieldGuidance definitionId={definition.id} field="implementation"/>}
+              {isIso&&current.status==='not_applicable'&&(definition.specification==='isms_clause'||current.soa_applicability==='included')&&<p role="alert" className="brawndo-caution">Legacy conflict: this mandatory requirement or applicable control has a Not Applicable implementation status. Review the decision explicitly; the saved value and history have not been changed.</p>}
+              <fieldset disabled={disabled}><legend className="sr-only">Assessment status</legend>
+                <div className={'brawndo-status-options'+(assessmentRollout?' gn-status-group':'')}>{['addressed','in_progress','needs_attention','not_applicable','not_assessed'].filter(status=>status!=='not_applicable'||definition.specification!=='isms_clause').map(status=><label key={status} className={`cis-tone-${implementationTone(status,framework)} ${form.status===status?'is-selected':''}${assessmentRollout?' gn-status-option':''}`}>
+                  <input type="radio" name="brawndo-assessment-status" value={status} checked={form.status===status} onChange={()=>put('status',status)}/><span className="cis-dot" aria-hidden="true"/><span>{statuses[status]}</span>
+                </label>)}</div>
+              </fieldset>
+
+              {isCis&&form.status==='addressed'&&current.status!=='addressed'&&!ladder.find(l=>l.key==='evidence').state.match(/done|partial/)&&<p className="brawndo-caution" role="note">No evidence is linked. Implemented should reflect verified operation, not a statement that a control exists.</p>}
+              {form.status==='not_applicable'&&definition.specification!=='annex_control'&&<label className="block">Why is this {vocab.item.toLowerCase()} not applicable?<Textarea aria-label="N/A Rationale" disabled={disabled} value={form.na_rationale||''} onChange={e=>put('na_rationale',e.target.value)} maxLength={4000}/></label>}
+            </Step>
+            <div><Step title="Current implementation">
+              <fieldset disabled={disabled} className="space-y-4">
+
+                {presumed&&!form.technology?.trim()&&<p className="text-xs text-ink-secondary">Client Profile lists {presumed} in the service stack. That suggests the capability exists; confirm deployment, coverage and configuration before relying on it.</p>}
+                <label className="block"><span className={assessmentRollout?'sr-only':undefined}>{isIso?'Current implementation':'Current state'}</span><Textarea aria-label={isIso?'Current implementation':'How is this requirement implemented?'} className={assessmentRollout?'gn-field':'brawndo-narrative'} rows={assessmentRollout?6:5} maxLength={20000} value={form.implementation||''} onChange={e=>put('implementation',e.target.value)} placeholder="What actually operates today: scope, coverage, who performs it, how often, and known exceptions."/></label>
+                <details><summary>Technology / process</summary>                <label className="block">Delivered by (technology / process)<Input aria-label="Technology / Processes Used" value={form.technology||''} onChange={e=>put('technology',e.target.value)}/></label></details>
+                {!assessmentRollout&&form.notes&&<details className="brawndo-disclosure"><summary>Previously recorded notes</summary><p className="text-xs text-ink-secondary">Retained separately to preserve existing information.</p><Textarea aria-label="Previously recorded notes" value={form.notes} onChange={e=>put('notes',e.target.value)}/></details>}
+              </fieldset>
+            </Step>
+        </div></div>
+  </>;
+  if(assessmentRollout)return <AssessmentRolloutFrame state={state} actions={actions} frameworkLabel="ISO 27001" testId="iso-assessment-workspace"
+    status={<><span aria-label="Saved conclusion"><CisStatusPill status={current.status} framework={framework}/></span>{soaView&&<span className="gn-tag gn-neutral" aria-label="Saved applicability">Applicability: {current.soa_applicability==='included'?'Included':current.soa_applicability==='excluded'?'Excluded':'Undetermined'}</span>}<span className="text-xs text-ink-secondary">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}</span></>}
+    requirement={<AssessmentRequirementDisclosure frameworkLabel={soaView?'ISO 27001 SoA':'ISO 27001'} reference={`ISO/IEC 27001:2022 · ${definition.id}`} text={rolloutEntry?.requirement?.text??nativeRequirement} trigger={rolloutEntry?.requirement?.trigger??criteria?.trigger} source={source.url?{url:source.url,label:'Official ISO source'}:undefined}/>}
+    interview={guideAvailable?({open,close,historyOpen,onHistoryOpenChange,onHistoryCloseAutoFocus,implementationReviewContainer,pilotPortalContainer})=><IsoGuidedAssessor assessmentRollout assessmentModule={assessmentModule} sequential inline inlineOpen={open} onInlineClose={close} clientId={clientId} configuration={guideConfiguration} record={record} current={current} form={form} assessmentDirty={dirty&&!state.focusedImplementationOnly} relatedDraft={state.relatedDraft} onDraftChange={setGuidedDraft} onSaveAssessment={saveGuidedAssessment} onUpdateImplementation={actions.stageGuidedImplementation} disabled={disabled} interviewHistoryOpen={historyOpen} onInterviewHistoryOpenChange={onHistoryOpenChange} onInterviewHistoryCloseAutoFocus={onHistoryCloseAutoFocus} implementationReviewContainer={implementationReviewContainer} pilotPortalContainer={pilotPortalContainer}/>:null}
+    itemsToAddress={<AssessmentItems record={current} ctx={ctx} disabled={disabled} onDraftChange={actions.setItemsDraft} onSaved={actions.itemsSaved} onCreateFinding={actions.createItemFinding}/>} findings={<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>}>{assessmentControls}</AssessmentRolloutFrame>;
   return <AssessmentShell open={open} title={definition.title}
     description={`${definition.control_name||definition.category||definition.specification||'Framework assessment'} · ${definition.source_citation||definition.id}`}
     status={<><span aria-label="Saved conclusion"><CisStatusPill status={current.status} framework={framework}/></span><span className="text-xs text-ink-secondary">Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}</span></>}
@@ -40,7 +90,7 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
     returnSelector={`[data-testid="requirement-${definition.id}"] button, [data-testid="requirement-${definition.id}"][tabindex], .cis-summary-head button`}
     footer={<><div className="min-w-0 flex-1">{error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}<span role="status" className="text-sm text-ink-secondary">{dirty?['Unsaved assessment changes',feedback].filter(Boolean).join(' · '):feedback||(!writable?'Read-only assessment':'Changes remain in your draft until saved.')}</span>{otherDraft&&<p id="brawndo-other-draft" className="text-xs text-ink-secondary">{isIso?'Save or discard the open interview or related-record draft before using Save & next.':'Finish or cancel the open Finding before using Save & next.'}</p>}</div><div className="flex flex-wrap gap-2">{writable&&<><Button variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button disabled={disabled||otherDraft} aria-describedby={otherDraft?'brawndo-other-draft':undefined} onClick={saveAndNext}>Save & next</Button>}</>}</div></>}>
     <AssessmentLayout inlineWorkflow={isIso} guidedWorkflow={isIso} criteriaSummary="Omnisciente guidance for assessing this requirement. These are not additional ISO requirements." criteriaTitle="ISO assessment criteria" reference={`ISO/IEC 27001:2022 · ${definition.id}`} key={clientId+':'+definition.id} summary={isoGuide?.plain||guide.meaning}
-      interview={isIso&&(ctx?.configuration||state.guidedConfiguration)?({open,close})=><IsoGuidedAssessor sequential inline inlineOpen={open} onInlineClose={close} clientId={clientId} configuration={ctx?.configuration||state.guidedConfiguration} record={record} current={current} form={form} assessmentDirty={dirty} relatedDraft={state.relatedDraft} onDraftChange={setGuidedDraft} onSaveAssessment={saveGuidedAssessment} disabled={disabled}/>:null}
+      interview={isIso&&(ctx?.configuration||state.guidedConfiguration)?({open,close})=><IsoGuidedAssessor sequential inline inlineOpen={open} onInlineClose={close} clientId={clientId} configuration={guideConfiguration} record={record} current={current} form={form} assessmentDirty={dirty} relatedDraft={state.relatedDraft} onDraftChange={setGuidedDraft} onSaveAssessment={saveGuidedAssessment} disabled={disabled}/>:null}
       itemsToAddress={isIso?<AssessmentItems record={current} ctx={ctx} disabled={disabled} onDraftChange={actions.setItemsDraft} onSaved={actions.itemsSaved} onCreateFinding={actions.createItemFinding}/>:null}
       findingDraft={!!finding}
       requirement={isIso ? <section className="cis-native-requirement">
@@ -57,33 +107,7 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
       checklist={<AssessmentChecklist title={`${definition.specification==='isms_clause'?'Clause':'Control'} ${definition.id} checklist`} items={criteria?.coverage==='verified'?criteria.criteria:[]} value={form.iso_assessment_checks||[]} disabled={disabled} onChange={value=>put('iso_assessment_checks',value)}/>}
       findings={<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>}
       review={isoGuide?.review} outcome={isoGuide?.outcome}>
-              {definition.specification==='annex_control'&&<fieldset disabled={disabled} className="space-y-3 brawndo-inset">
-                <h4>Statement of Applicability</h4><p className="text-sm text-ink-secondary">Applicability is a risk-treatment decision, separate from implementation. Excluding a control does not erase its assessment or history.</p>
-                <label className="block">Applicability<select aria-label="SoA applicability" value={form.soa_applicability||''} onChange={e=>put('soa_applicability',e.target.value)}><option value="">Undetermined</option><option value="included">Applicable</option><option value="excluded">Not Applicable</option></select></label>
-                <label className="block">Applicability justification<Textarea aria-label="SoA justification" value={form.soa_justification||''} maxLength={4000} onChange={e=>put('soa_justification',e.target.value)}/></label>
-              </fieldset>}
-            <div className="assessment-implementation">
-            <Step title="Implementation status">
-              {isIso&&current.status==='not_applicable'&&(definition.specification==='isms_clause'||current.soa_applicability==='included')&&<p role="alert" className="brawndo-caution">Legacy conflict: this mandatory requirement or applicable control has a Not Applicable implementation status. Review the decision explicitly; the saved value and history have not been changed.</p>}
-              <fieldset disabled={disabled}><legend className="sr-only">Assessment status</legend>
-                <div className="brawndo-status-options">{['addressed','in_progress','needs_attention','not_applicable','not_assessed'].filter(status=>status!=='not_applicable'||definition.specification!=='isms_clause').map(status=><label key={status} className={`cis-tone-${implementationTone(status,framework)} ${form.status===status?'is-selected':''}`}>
-                  <input type="radio" name="brawndo-assessment-status" value={status} checked={form.status===status} onChange={()=>put('status',status)}/><span className="cis-dot" aria-hidden="true"/><span>{statuses[status]}</span>
-                </label>)}</div>
-              </fieldset>
-
-              {isCis&&form.status==='addressed'&&current.status!=='addressed'&&!ladder.find(l=>l.key==='evidence').state.match(/done|partial/)&&<p className="brawndo-caution" role="note">No evidence is linked. Implemented should reflect verified operation, not a statement that a control exists.</p>}
-              {form.status==='not_applicable'&&definition.specification!=='annex_control'&&<label className="block">Why is this {vocab.item.toLowerCase()} not applicable?<Textarea aria-label="N/A Rationale" disabled={disabled} value={form.na_rationale||''} onChange={e=>put('na_rationale',e.target.value)} maxLength={4000}/></label>}
-            </Step>
-            <div><Step title="Current implementation">
-              <fieldset disabled={disabled} className="space-y-4">
-
-                {presumed&&!form.technology?.trim()&&<p className="text-xs text-ink-secondary">Client Profile lists {presumed} in the service stack. That suggests the capability exists; confirm deployment, coverage and configuration before relying on it.</p>}
-                <label className="block">{isIso?'Current implementation':'Current state'}<Textarea aria-label={isIso?'Current implementation':'How is this requirement implemented?'} className="brawndo-narrative" rows={5} maxLength={20000} value={form.implementation||''} onChange={e=>put('implementation',e.target.value)} placeholder="What actually operates today: scope, coverage, who performs it, how often, and known exceptions."/></label>
-                <details><summary>Technology / process</summary>                <label className="block">Delivered by (technology / process)<Input aria-label="Technology / Processes Used" value={form.technology||''} onChange={e=>put('technology',e.target.value)}/></label></details>
-                {form.notes&&<details className="brawndo-disclosure"><summary>Previously recorded notes</summary><p className="text-xs text-ink-secondary">Retained separately to preserve existing information.</p><Textarea aria-label="Previously recorded notes" value={form.notes} onChange={e=>put('notes',e.target.value)}/></details>}
-              </fieldset>
-            </Step>
-        </div></div>
+      {assessmentControls}
     </AssessmentLayout>
   </AssessmentShell>;
 }

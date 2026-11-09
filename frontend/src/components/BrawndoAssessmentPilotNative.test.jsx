@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import {catalogForVersion, versionForSafeguard, visibleQuestions} from '@/lib/guidedAssessment';
 import {omniGroups} from '@/lib/refinedOmni';
 import criteriaCatalog from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
+import * as rolloutPresentation from '@/lib/assessmentRolloutEligibility';
 
 let mockAuth, mockOrg;
 beforeAll(() => Object.defineProperty(global, 'crypto', {configurable: true, value: require('crypto').webcrypto}));
@@ -642,7 +643,10 @@ test.each([
   ['Brawndo safeguard 1.2', 'demo_brawndo', '1.2', 'demo'],
   ['Initech safeguard 1.1', 'demo_initech', '1.1', 'demo'],
   ['standard-mode safeguard 1.1', 'demo_brawndo', '1.1', 'standard'],
-])('%s retains its existing presentation and native record outside the exact pilot', async (_name, selectedClient, id, mode) => {
+])('forced legacy presentation fallback: %s retains its native record and compatibility controls', async (_name, selectedClient, id, mode) => {
+  // Isolate the retained fallback renderer, not current enrollment or write authority.
+  // CisAssessmentRolloutNative covers these same contexts with real default-on eligibility.
+  jest.spyOn(rolloutPresentation, 'assessmentRolloutEligible').mockReturnValue(false);
   await loadSafeguard(id, selectedClient);
   if (mode === 'standard') mockAuth = {...mockAuth, workspaceMode: 'standard', user: {...mockAuth.user, workspace_mode: 'standard'}};
   await render();

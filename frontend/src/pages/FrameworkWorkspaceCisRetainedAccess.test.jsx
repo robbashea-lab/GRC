@@ -6,6 +6,7 @@ import CisResultTable from '@/components/CisResultTable';
 import {cis,FRAMEWORKS} from '@/lib/frameworks';
 import api from '@/lib/api';
 import {cisClient,cisWorkspace} from '@/testUtils/cisExperience';
+import * as rolloutPresentation from '@/lib/assessmentRolloutEligibility';
 
 let mockAuth,mockOrg,mockOmniProps;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -87,7 +88,7 @@ beforeEach(()=>{
   });
   host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);
 });
-afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.clearAllMocks();});
+afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.restoreAllMocks();jest.clearAllMocks();});
 
 function configureNativeGroup(group){
   const client=cisClient('synthetic-cis-context-'+group,group);
@@ -98,7 +99,8 @@ function configureNativeGroup(group){
   return client;
 }
 
-test.each([1,2,3])('native IG%s assessment breadcrumb matches configured context and retains exact route/close behavior',async group=>{
+test.each([1,2,3])('legacy breadcrumb compatibility: native IG%s assessment breadcrumb matches configured context and retains exact route/close behavior',async group=>{
+  jest.spyOn(rolloutPresentation,'assessmentRolloutEligible').mockReturnValue(false);
   const client=configureNativeGroup(group),record=data.assessments.find(row=>row.definition_id==='1.1'),before=JSON.stringify(data);
   const entry='/compliance/cis-ig1?'+new URLSearchParams({client_id:client.client_id,assessment:record.framework_assessment_id});
   await render(entry);
@@ -107,6 +109,33 @@ test.each([1,2,3])('native IG%s assessment breadcrumb matches configured context
   const breadcrumb=assessment().querySelector(`[aria-label="CIS IG${group} location"]`);
   expect(breadcrumb).toBeTruthy();
   expect(breadcrumb.querySelector('li').textContent).toBe(`CIS IG${group}`);
+  expect(assessment().querySelector('h2').textContent).toBe(cis.requirements.find(row=>row.id==='1.1').title);
+  expect(api.get).toHaveBeenCalledWith(`/framework_assessments/${record.framework_assessment_id}/related`,expect.any(Object));
+  expect(host.querySelector('[data-testid="location"]').textContent).toBe(entry);
+  await click(button(assessment(),'Close'));
+  expect(assessment()).toBeNull();
+  expect(host.querySelector('[data-testid="location"]').textContent).toBe('/compliance/cis-ig1?client_id='+client.client_id);
+  expect(host.querySelector('.now-head p').textContent).toBe(`0 of ${data.active_definition_ids.length} safeguards implemented`);
+  await click(host.querySelector('.head-actions .primary'));
+  expect(assessment()).toBeTruthy();
+  const location=new URL(host.querySelector('[data-testid="location"]').textContent,'http://localhost');
+  expect(location.searchParams.get('assessment')).toBe(record.framework_assessment_id);
+  expect(location.searchParams.get('client_id')).toBe(client.client_id);
+  await click(button(assessment(),`CIS IG${group}`));
+  expect(assessment()).toBeNull();
+  expect(host.querySelector('[data-testid="location"]').textContent).toBe('/compliance/cis-ig1?client_id='+client.client_id);
+  expect(JSON.stringify(data)).toBe(before);
+  ['patch','put','post','delete'].forEach(method=>expect(api[method]).not.toHaveBeenCalled());
+});
+
+test.each([1,2,3])('current rollout IG%s client-first breadcrumb retains program navigation and exact native route/close behavior',async group=>{
+  const client=configureNativeGroup(group),record=data.assessments.find(row=>row.definition_id==='1.1'),before=JSON.stringify(data);
+  const entry='/compliance/cis-ig1?'+new URLSearchParams({client_id:client.client_id,assessment:record.framework_assessment_id});
+  await render(entry);
+  const assessment=()=>host.querySelector('[data-testid="brawndo-cis-assessment"]');
+  expect(assessment().classList.contains('brawndo-assessment-pilot')).toBe(true);
+  const breadcrumb=assessment().querySelector(`[aria-label="CIS IG${group} location"]`);
+  expect([...breadcrumb.querySelectorAll('li')].slice(0,2).map(node=>node.textContent)).toEqual([client.name,`CIS IG${group}`]);
   expect(assessment().querySelector('h2').textContent).toBe(cis.requirements.find(row=>row.id==='1.1').title);
   expect(api.get).toHaveBeenCalledWith(`/framework_assessments/${record.framework_assessment_id}/related`,expect.any(Object));
   expect(host.querySelector('[data-testid="location"]').textContent).toBe(entry);

@@ -77,7 +77,9 @@ test.each([
   ['iso-27001',isoGuidedCatalog,isoQuestions,isoGuidedResult,validateIsoCompletion],
 ])('%s additional work requires explicit intent, agrees with Items and preserves historical outcomes', (framework,catalog,questions,result,validate)=>{
   const id=Object.keys(catalog.definitions)[0],answers={};
-  for(let pass=0;pass<30;pass++)for(const q of questions(id,answers))if(!(q.id in answers))answers[q.id]=q.optional?'No':q.type==='text'?'':q.type==='context'?'Relevant':'Yes';
+  const historicalVersion=framework==='soc-2'?'soc2-omni-2':'iso27001-omni-2';
+  // This fixture is reused by the explicit V1 assertion; retain its immutable V2 keys.
+  for(let pass=0;pass<30;pass++)for(const q of questions(id,answers,historicalVersion))if(!(q.id in answers))answers[q.id]=q.optional?'No':q.type==='text'?'':q.type==='context'?'Relevant':'Yes';
   const row={framework_key:framework,framework_assessment_id:'isolated:'+id,definition_id:id},notes={...answers,gaps:'No outstanding gaps.',unknowns:'The optional document title is not recorded.'};
   for(const choice of [undefined,'No','Not sure']){
     const hidden={...notes,additional_gap:choice,additional_confirmation:choice};if(choice===undefined){delete hidden.additional_gap;delete hidden.additional_confirmation;}
@@ -85,7 +87,16 @@ test.each([
     expect(result(id,hidden).narrative).not.toContain(notes.gaps);expect(result(id,hidden).narrative).not.toContain(notes.unknowns);
   }
   const actual={...answers,additional_gap:'Yes',gaps:'The selected service has a reported coverage gap.',additional_confirmation:'Yes',unknowns:'Confirm the location of supporting records.'};
-  validate(id,actual);const output=result(id,actual);expect(output.status).toBe('addressed');
+  validate(id,actual);const output=result(id,actual);expect(output.status).toBe('needs_attention');
+  expect(catalog.version).toBe(framework==='soc-2'?'soc2-assessment-rollout-2':'iso27001-assessment-rollout-2');
+  // Preserve the original historical proposal oracle under its saved versions.
+  const rolloutVersion=framework==='soc-2'?'soc2-assessment-rollout-1':'iso27001-assessment-rollout-1';
+  for(const version of [historicalVersion,rolloutVersion]){
+    validate(id,actual,version);const historicalOutput=result(id,actual,version);
+    expect(historicalOutput.status).toBe('addressed');
+    expect(historicalOutput.signals).toEqual(output.signals);
+    expect(generatedItems(row,{answers:actual,version}).map(item=>({questionId:item.question_id,kind:item.kind,text:item.text}))).toEqual(historicalOutput.signals);
+  }
   expect(output.signals).toEqual([{questionId:'gaps',kind:'gap',text:actual.gaps},{questionId:'unknowns',kind:'verification',text:actual.unknowns}]);
   expect(generatedItems(row,{answers:actual,version:catalog.version}).map(item=>({questionId:item.question_id,kind:item.kind,text:item.text}))).toEqual(output.signals);
   expect(()=>validate(id,{...actual,gaps:''})).toThrow('Describe the additional reported work');

@@ -4,6 +4,13 @@ import {stable} from '../commandRequests';
 import * as preparation from './prestigeNativeOnboarding';
 import {createPrestigeCurrentModel} from './prestigeCurrentModel';
 
+// These original source-preservation seams require their authored-V2 construction
+// context. Keep real native commands, failure injections, guards and assertions.
+jest.mock('../../lib/socGuidedAssessment',()=>({
+  ...jest.requireActual('../../lib/socGuidedAssessment'),
+  socGuidedCatalog:jest.requireActual('@catalogs/guidedSoc2.json'),
+}));
+
 const CID = 'demo_prestige', CLOCK = new Date('2026-11-02T12:00:00.000Z');
 const MARKER = 'prestige_current_model_fixture';
 const PRESERVATION_ERROR = /foreign data, identity, source maps or unrelated settings changed/;

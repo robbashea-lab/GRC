@@ -15,6 +15,13 @@ jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:true,API:'/api',
   formatError:error=>error.response?.data?.detail||error.message}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
 jest.mock('sonner',()=>({toast:{error:jest.fn(),success:jest.fn()}}));
+// Only presentation eligibility is forced off. Native adapter, schemas, results,
+// permissions, saves, Items, history and concurrency remain real and unchanged.
+// This is compatibility isolation, not the current default authenticated layout.
+jest.mock('@/lib/assessmentRolloutEligibility',()=>({
+  ...jest.requireActual('@/lib/assessmentRolloutEligibility'),
+  assessmentRolloutEligible:()=>false,
+}));
 
 const clientId='demo_brawndo';
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -118,9 +125,9 @@ function completedAnswers(){
 beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
   const user=(await api.post('/demo/enter')).data.user;
-  // Preserve the established nonpilot CIS contract, including direct status/Items saves.
-  // The Preview adapter is only an isolated component-test transport here; this is
-  // not authenticated-backend proof. BrawndoAssessmentPilotNative covers the new Demo-only flow.
+  // Preserve legacy direct status/Items controller coverage in the forced fallback.
+  // Preview is isolated native transport, not authenticated-backend proof.
+  // CisAssessmentRolloutNative separately covers the real default-on presentation.
   mockAuth={user:{...user,workspace_mode:'standard'},workspaceMode:'standard',loading:false,error:null};
   const clients=(await api.get('/clients')).data,currentClient=clients.find(client=>client.client_id===clientId);
   expect(currentClient.status).toBe('active');mockOrg={currentClientId:clientId,currentClient,clients,loading:false,error:null};
@@ -129,6 +136,7 @@ beforeEach(async()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.restoreAllMocks();jest.clearAllMocks();});
 
+describe('forced legacy presentation compatibility; native lifecycle assertions unchanged',()=>{
 test.each([
   ['1.1','in_progress','needs_validation','coverage','Servers'],
   ['2.1','in_progress','needs_validation','requirements_0','publisher'],
@@ -281,4 +289,6 @@ test('a delayed fresh personal read cannot reopen an interview explicitly opened
   expect((await get(base+'/guided-assessment')).data).toMatchObject({revision:0,answers:{},completed:false});
   expect(putSpy).not.toHaveBeenCalled();expect(patchSpy).not.toHaveBeenCalled();expect(postSpy).not.toHaveBeenCalled();
   await assertNativeUnchanged();
+});
+
 });

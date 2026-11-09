@@ -12,6 +12,10 @@ jest.mock('./ui/dialog',()=>{
   const React=require('react'),Close=React.createContext(()=>{});
   return {
     Dialog:({open,children,onOpenChange})=>open?<Close.Provider value={onOpenChange}>{children}</Close.Provider>:null,
+    DialogClose:React.forwardRef(({children,onClick,...props},ref)=>{
+      const change=React.useContext(Close);
+      return <button ref={ref} type="button" {...props} onClick={event=>{onClick?.(event);if(!event.defaultPrevented)change(false);}}>{children}</button>;
+    }),
     DialogContent:React.forwardRef(({children,onOpenAutoFocus,onCloseAutoFocus,onEscapeKeyDown,onPointerDownOutside,...props},ref)=>{
       const change=React.useContext(Close);
       return <section ref={ref} {...props}>{children}<button aria-label="Close drawer" onClick={()=>change(false)}>Close</button></section>;
@@ -24,6 +28,16 @@ jest.mock('./ui/dialog',()=>{
 let container,root,task,finding,assessment,evidence;
 const button=(surface,text)=>[...surface.querySelectorAll('button')].find(node=>node.textContent===text);
 const click=(surface,text)=>act(async()=>button(surface,text).click());
+async function openFindingsTab(surface){
+  const tabs=[...surface.querySelectorAll('[role="tab"]')].filter(tab=>{
+    const label=tab.cloneNode(true);
+    label.querySelectorAll('.assessment-tab-count').forEach(badge=>badge.remove());
+    return label.textContent.trim()==='Findings';
+  });
+  expect(tabs).toHaveLength(1);
+  await act(async()=>tabs[0].dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));
+  expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+}
 const close=surface=>act(async()=>surface.querySelector('[aria-label="Close drawer"]').click());
 const text=async(surface,label,value)=>act(async()=>{
   const node=surface.querySelector('[aria-label="'+label+'"]');
@@ -58,7 +72,7 @@ test.each([false,true])('returning from the same source ticket reopen refreshes 
   if(withDraft)await text(original,'Planned action','Unsaved parent action draft stays here.');
   await click(original,'CIS Controls v8.1 Assessment → Safeguard 1.1');
   const source=container.querySelector('[data-testid="brawndo-cis-assessment"]');
-  await click(source,'Findings');
+  await openFindingsTab(source);
   const sourceTicket=source.querySelector('[data-ticket-id="finding:'+finding.finding_id+'"]');
   await act(async()=>sourceTicket.querySelector('button').click());
   const nested=[...container.querySelectorAll('[data-testid="remediation-ticket-drawer"]')].at(-1);
@@ -101,7 +115,7 @@ test.each([
   await text(original.querySelector('[data-ticket-task="'+editing.task_id+'"]'),'Planned action',localPlan);
   await click(original,'CIS Controls v8.1 Assessment → Safeguard 1.1');
   const source=container.querySelector('[data-testid="brawndo-cis-assessment"]');
-  await click(source,'Findings');
+  await openFindingsTab(source);
   await act(async()=>source.querySelector('[data-ticket-id="finding:'+finding.finding_id+'"] button').click());
   const nested=[...container.querySelectorAll('[data-testid="remediation-ticket-drawer"]')].at(-1),innerWork=nested.querySelector('[data-ticket-task="'+editing.task_id+'"]');
   if(sourcePlan)await text(innerWork,'Planned action',sourcePlan);

@@ -74,7 +74,7 @@ test("standard enhanced Portfolio preserves native All/Mine scope and its shared
   expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
   expect(container.querySelector('h1').textContent).toBe('Client portfolio');
   expect([...container.querySelectorAll('[aria-label="Scope"] button')].map(node=>node.textContent)).toEqual(['All clients','Assigned to me']);
-  expect([...container.querySelectorAll('[role="columnheader"]')].map(node=>node.textContent)).toEqual(['Client','Attention','Programs','Trend · 90 days','GRC lead','Next key date','History preview']);
+  expect([...container.querySelectorAll('[role="columnheader"]')].map(node=>node.textContent)).toEqual(['Client','Programs','GRC lead']);
   expect(container.querySelector('h1').parentElement.textContent).toContain('2 clients · 3 programs');
   expect(container.querySelectorAll('.ep-program')).toHaveLength(3);
   await click(scopeButton('Assigned to me'));

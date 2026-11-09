@@ -98,8 +98,14 @@ assert 'cis-v8.1-control1-4' in guided_assessment.VERSIONS
 assert 'cis-v8.1-program-3' in guided_assessment.VERSIONS
 assert soc_guided_assessment.CATALOG['version'] == 'soc2-omni-2'
 assert 'soc2-omni-1' in soc_guided_assessment.VERSIONS
+assert soc_guided_assessment.current_version('CC1.1') == 'soc2-assessment-rollout-2'
+assert 'soc2-assessment-rollout-1' in soc_guided_assessment.VERSIONS
+assert 'soc2-assessment-rollout-2' in soc_guided_assessment.VERSIONS
 assert iso_guided_assessment.CATALOG['version'] == 'iso27001-omni-2'
 assert 'iso27001-omni-1' in iso_guided_assessment.VERSIONS
+assert iso_guided_assessment.current_version('4.1') == 'iso27001-assessment-rollout-2'
+assert 'iso27001-assessment-rollout-1' in iso_guided_assessment.VERSIONS
+assert 'iso27001-assessment-rollout-2' in iso_guided_assessment.VERSIONS
 assert BASELINE_CATALOG['policies']
 assert framework_governance.SOC_GUIDANCE
 assert len(framework_catalog.active_definitions('cis-ig1')) == 56
