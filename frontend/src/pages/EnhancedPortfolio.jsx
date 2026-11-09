@@ -9,9 +9,9 @@ import { usePortfolioView } from '@/lib/usePortfolioView';
 import { useBrawndoTheme, useBrawndoPortalTheme } from '@/lib/brawndoTheme';
 import { grcLead } from '@/lib/clientRelationships';
 import { applicableCounts, currentPercentage, programIdentity, validImplementationPosition } from '@/lib/portfolioProgress';
-import { ClientMark, Attention, signedPoints } from '@/components/EnhancedPortfolioShared';
-import { enhancedPortfolioEligible, filterPortfolio, PORTFOLIO_KPIS, portfolioKpiValue, operationalItems, trailingChange } from '@/lib/enhancedPortfolio';
-import { PortfolioSparkline, PortfolioStatusBar, sparklineSpan, formatPortfolioDate } from '@/components/PortfolioReports';
+import { ClientMark } from '@/components/EnhancedPortfolioShared';
+import { enhancedPortfolioEligible, filterPortfolio, PORTFOLIO_KPIS, portfolioKpiValue } from '@/lib/enhancedPortfolio';
+import { PortfolioStatusBar, formatPortfolioDate } from '@/components/PortfolioReports';
 import EnhancedPortfolioHistory from '@/components/EnhancedPortfolioHistory';
 import './EnhancedPortfolio.css';
 
@@ -125,7 +125,6 @@ export function EnhancedPortfolio({
   const demoContext = {trustedDemo: PREVIEW_MODE, workspaceMode: useAuth().workspaceMode, user};
   const base = data ? filterPortfolio(clients, programs, state, user.user_id, asOf, false, demoContext) : [];
   const visible = data ? filterPortfolio(clients, programs, state, user.user_id, asOf, true, demoContext) : [];
-  const span = data ? sparklineSpan(programs, asOf) : 8;
   const selected = clients.find(client => client.client_id === selection?.clientId);
   const selectedPrograms = programs.filter(program => program.client_id === selected?.client_id);
   const selectionAvailable = selected && !selected.archived && !selected.archived_at
@@ -188,24 +187,14 @@ export function EnhancedPortfolio({
             view: value
           })}>{label}</button>)}</div>
     </div>
-    {report.loading ? <p className="ep-empty" role="status">Loading client portfolio…</p> : report.error ? <div className="ep-empty" role="alert"><p>{report.error}</p><button type="button" className="ep-button" onClick={load}>Retry</button></div> : state.view === 'clients' ? <div role="table" aria-label="Client portfolio"><div className="ep-columns" role="row">{['Client', 'Attention', 'Programs', 'Trend · 90 days', 'GRC lead', 'Next key date', 'History preview'].map(label => <span role="columnheader" key={label}>{label === 'History preview' ? <span className="sr-only">{label}</span> : label}</span>)}</div><div role="rowgroup">{visible.map(client => {
+    {report.loading ? <p className="ep-empty" role="status">Loading client portfolio…</p> : report.error ? <div className="ep-empty" role="alert"><p>{report.error}</p><button type="button" className="ep-button" onClick={load}>Retry</button></div> : state.view === 'clients' ? <div role="table" aria-label="Client portfolio"><div className="ep-columns" role="row">{['Client', 'Programs', 'GRC lead'].map(label => <span role="columnheader" key={label}>{label}</span>)}</div><div role="rowgroup">{visible.map(client => {
             const visiblePrograms = programs.filter(program => program.client_id === client.client_id && (!state.framework || program.program_key === state.framework));
             const lead = grcLead(client),
-              work = operationalItems(client, asOf),
               first = visiblePrograms[0];
             return <div className="ep-row" role="row" key={client.client_id} data-client-id={client.client_id}>
         <div className="ep-client" role="cell"><ClientMark client={client} /><div><button type="button" className="ep-client-link" onClick={() => enter(client)}>{client.name}</button><small>{client.industry || 'Not set'}</small></div></div>
-        <div role="cell"><Attention client={client} asOf={asOf} /></div>
         <div className="ep-programs" role="cell">{visiblePrograms.map(program => <ProgramCell key={programIdentity(program)} client={client} program={program} onPreview={event => preview(client, program, event)} />)}{!visiblePrograms.length && <><small>No enabled programs</small><button type="button" className="ep-link" onClick={event => preview(client, null, event)}>View existing work</button></>}</div>
-        <div className="ep-trends" role="cell">{visiblePrograms.map(program => {
-                  const change = trailingChange(program, asOf);
-                  return <div key={programIdentity(program)}><PortfolioSparkline program={program} asOf={asOf} span={span} /><small>{change.comparable ? <><b>{signedPoints(change.change_pp)} pts</b> · 90 days{change.scope_changed ? ' · scope changed' : ''}</> : 'Insufficient history'}</small></div>;
-                })}</div>
-        <div className="ep-lead" role="cell"><span aria-hidden="true">{lead.name.split(' ').map(part => part[0]).slice(0, 2).join('')}</span>{lead.name}</div>
-        <div className="ep-key-date" role="cell">{work.next ? <><b>{formatPortfolioDate(work.next.due_date, {
-                      year: undefined
-                    })}</b><small>{work.next.overdue ? 'Overdue · ' : ''}{work.next.title}</small></> : <><b>—</b><small>Nothing scheduled</small></>}</div>
-        <div role="cell"><button type="button" className="ep-preview" aria-label={`Preview ${client.name} implementation`} onClick={event => preview(client, first, event)}>›</button></div>
+        <div className="ep-lead" role="cell"><span aria-hidden="true">{lead.name.split(' ').map(part => part[0]).slice(0, 2).join('')}</span>{lead.name}<button type="button" className="ep-preview" aria-label={`Preview ${client.name} implementation`} onClick={event => preview(client, first, event)}>›</button></div>
       </div>;
           })}</div></div> : <div className="ep-leads">{groups.map(([id, group]) => <div className="ep-lead-card" key={id}><header><b>{group.lead}</b><small>{group.clients.length} clients</small></header><div className="ep-lead-numbers">{[['overdue', 'Overdue'], ['attention', 'Need attention'], ['due30', 'Due in 30 days']].map(([key, label]) => <div key={key}><b>{portfolioKpiValue(key, group.clients, asOf)}</b><small>{label}</small></div>)}</div><div className="ep-tags">{group.clients.map(client => <button key={client.client_id} type="button" onClick={() => enter(client)}>{client.name}</button>)}</div></div>)}</div>}
     {!report.loading && !report.error && !visible.length && <div className="ep-empty">{state.mine && !state.search.trim() && !state.framework && !state.kpi
